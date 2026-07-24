@@ -75,7 +75,7 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
-        run: pnpm exec tsx scripts/affected-plan.ts --github-output "$GITHUB_OUTPUT"
+        run: pnpm exec tsx scripts/affected-plan.ts --output .liteship/affected-plan.json --github-output "$GITHUB_OUTPUT"
 
   # Pull-request authority: cheap registry checks plus the canonical package-DAG
   # affected closure. Global authority changes fail broad to the full Node suite.
@@ -119,6 +119,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      - run: pnpm exec tsx scripts/affected-plan.ts --verify-current-head
+        env:
+          LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: pnpm exec vitest run --config vitest.browser.config.ts
         env:

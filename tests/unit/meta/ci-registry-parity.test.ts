@@ -267,6 +267,19 @@ describe('(b) every specialized job maps to a registry id or a named exemption',
 // ── (c) projected lane commands are byte-identical to the recorded baseline ──
 
 describe('(c) projected lane commands equal the recorded baseline (byte-identical)', () => {
+  it('projects executable prerequisites from the closed prerequisite catalog', () => {
+    expect(PLAN.schema).toBe('liteship/ci-plan@2');
+    for (const lane of Object.values(PLAN.lanes)) {
+      expect(lane.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
+    }
+    expect(PLAN.specializedChecks.format!.prerequisites.map((entry) => entry.id)).toEqual(['install']);
+    for (const [name, check] of Object.entries(PLAN.specializedChecks)) {
+      if (name !== 'format') {
+        expect(check.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
+      }
+    }
+  });
+
   it('the plan lane keys match the fixture lane keys', () => {
     expect(Object.keys(PLAN.lanes).sort()).toEqual(Object.keys(FIXTURE.lanes).sort());
   });
@@ -290,8 +303,11 @@ describe('(d) CI event tiers execute the intended authority', () => {
     const plan = JOB_BLOCKS.get('plan')!;
     expect(plan).toContain('affected: ${{ steps.affected.outputs.plan }}');
     expect(plan).toContain("if: github.event_name == 'pull_request'");
-    expect(plan).toContain('pnpm exec tsx scripts/affected-plan.ts --github-output "$GITHUB_OUTPUT"');
+    expect(plan).toContain(
+      'pnpm exec tsx scripts/affected-plan.ts --output .liteship/affected-plan.json --github-output "$GITHUB_OUTPUT"',
+    );
     expect(plan).not.toContain('echo "plan=$(');
+    expect(plan).not.toContain('continue-on-error: true');
   });
 
   it('runs quick plus affected Linux and Windows authority on pull requests', () => {
@@ -316,6 +332,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(browser).toContain(
       "if: github.event_name == 'pull_request' && fromJSON(needs.plan.outputs.affected).browserRequired",
     );
+    expect(browser).toContain('pnpm exec tsx scripts/affected-plan.ts --verify-current-head');
+    expect(browser).toContain('LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}');
     expect(browser).toContain('LITESHIP_VITEST_BROWSERS: chromium');
   });
 

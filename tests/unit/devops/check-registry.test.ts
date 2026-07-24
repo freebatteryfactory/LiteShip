@@ -26,6 +26,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
+import { EXECUTION_PREREQUISITES } from '../../../scripts/lib/execution-prerequisites.js';
 import {
   LITESHIP_WAIVERS,
   verifyGate,
@@ -148,6 +149,17 @@ describe('the check-registry PARTITION is total + disjoint against the root scri
       reason: 'Test plumbing: conservative package-DAG selector for the pull-request affected lane.',
     });
     expect(CHECK_REGISTRY.some((entry) => entry.command === 'pnpm run test:affected')).toBe(false);
+  });
+});
+
+describe('execution prerequisites are real repository operations', () => {
+  it('every pnpm-run prerequisite resolves to an existing root script', () => {
+    const scripts = new Set(rootScripts());
+    const missing = Object.values(EXECUTION_PREREQUISITES)
+      .map((entry) => ({ entry, match: /^pnpm run ([\w:-]+)$/u.exec(entry.command) }))
+      .filter(({ match }) => match !== null && !scripts.has(match[1]!))
+      .map(({ entry }) => `${entry.id}→${entry.command}`);
+    expect(missing).toEqual([]);
   });
 });
 

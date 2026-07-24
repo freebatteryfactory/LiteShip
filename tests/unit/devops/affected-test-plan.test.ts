@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
-import { writeAffectedGithubOutput } from '../../../scripts/affected-plan.js';
+import {
+  assertAffectedPlanHead,
+  createAffectedPlan,
+  writeAffectedGithubOutput,
+  writeAffectedPlanFile,
+} from '../../../scripts/affected-plan.js';
 import {
   AFFECTED_PLAN_PREREQUISITES,
   affectedPackageNames,
@@ -76,6 +81,10 @@ describe('affected test planning', () => {
     expect(plan.testFiles).not.toContain('tests/browser/core-boundary.test.ts');
     expect(plan.browserRequired).toBe(true);
     expect(plan.prerequisites).toEqual(AFFECTED_PLAN_PREREQUISITES);
+    expect(plan.planId).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(plan.changedPathDigest).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(plan.risk.highestAssurance).toBe('L1');
+    expect(plan.requiredChecks).toContain('check/test');
   });
 
   it.each(['package.json', 'pnpm-lock.yaml', 'scripts/package-catalog.ts', '.github/workflows/ci.yml'])(
@@ -94,9 +103,10 @@ describe('affected test planning', () => {
   it('rejects partial, foreign, and prerequisite-free plans at the process boundary', () => {
     const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
     expect(parseAffectedTestPlan(valid)).toEqual(valid);
-    expect(() => parseAffectedTestPlan({ ...valid, schemaVersion: 2 })).toThrow(/schemaVersion/u);
+    expect(() => parseAffectedTestPlan({ ...valid, schemaVersion: 1 })).toThrow(/schemaVersion/u);
     expect(() => parseAffectedTestPlan({ ...valid, prerequisites: [] })).toThrow(/workspace-build/u);
     expect(() => parseAffectedTestPlan({ ...valid, surprise: true })).toThrow(/keys/u);
+    expect(() => parseAffectedTestPlan({ ...valid, reason: 'tampered after addressing' })).toThrow(/integrity/u);
   });
 
   it('writes no GitHub output when plan validation fails', () => {
@@ -106,6 +116,9 @@ describe('affected test planning', () => {
       const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
       writeAffectedGithubOutput(output, valid);
       expect(readFileSync(output, 'utf8')).toBe(`plan=${JSON.stringify(valid)}\n`);
+      const planPath = join(directory, 'plan', 'affected.json');
+      writeAffectedPlanFile(planPath, valid);
+      expect(JSON.parse(readFileSync(planPath, 'utf8'))).toEqual(valid);
       const before = readFileSync(output, 'utf8');
       expect(() => writeAffectedGithubOutput(output, { ...valid, prerequisites: [] } as never)).toThrow(
         /workspace-build/u,
@@ -114,5 +127,32 @@ describe('affected test planning', () => {
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
+  });
+
+  it('propagates an unexpected planner-host failure instead of emitting a fallback success', () => {
+    expect(() =>
+      createAffectedPlan(process.cwd(), 'origin/main', () => {
+        throw new Error('planted planner crash');
+      }),
+    ).toThrow('planted planner crash');
+  });
+
+  it('addresses equal plan inputs identically and changes identity when evidence selection changes', () => {
+    const first = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
+    const second = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
+    const changed = planAffectedTests(['tests/unit/core/authoring/boundary.test.ts'], PACKAGE_CATALOG, inventory({}));
+    expect(second.planId).toBe(first.planId);
+    expect(changed.planId).not.toBe(first.planId);
+  });
+
+  it('refuses to execute a valid plan on a foreign checkout head', () => {
+    const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}), {
+      baseRef: 'origin/main',
+      baseSha: 'a'.repeat(40),
+      headSha: 'b'.repeat(40),
+      confidence: 'high',
+    });
+    expect(() => assertAffectedPlanHead(plan, 'c'.repeat(40))).toThrow(/does not match checkout/u);
+    expect(() => assertAffectedPlanHead(plan, 'b'.repeat(40))).not.toThrow();
   });
 });

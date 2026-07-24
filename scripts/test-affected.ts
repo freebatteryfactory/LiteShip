@@ -1,4 +1,4 @@
-import { createAffectedPlan } from './affected-plan.js';
+import { assertAffectedPlanHead, createAffectedPlan, readGitSha } from './affected-plan.js';
 import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
 import { runPnpm } from './support/pnpm-process.js';
 
@@ -7,6 +7,7 @@ const base = process.env['LITESHIP_AFFECTED_BASE'] ?? 'origin/main';
 const supplied = process.env['LITESHIP_AFFECTED_PLAN'];
 const plan =
   supplied === undefined ? createAffectedPlan(cwd, base) : parseAffectedTestPlan(JSON.parse(supplied) as unknown);
+if (supplied !== undefined) assertAffectedPlanHead(plan, readGitSha(cwd, 'HEAD'));
 
 process.stdout.write(`[affected] ${plan.mode}: ${plan.reason}\n`);
 if (plan.affectedPackages.length > 0)

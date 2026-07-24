@@ -32,6 +32,11 @@ import { pathToFileURL } from 'node:url';
 import { CHECK_REGISTRY } from '../packages/command/src/checks/registry.js';
 import { planChecks } from '../packages/command/src/checks/plan.js';
 import type { CheckPlatform, CheckProfile } from '../packages/command/src/checks/definition.js';
+import {
+  executionPrerequisites,
+  type ExecutionPrerequisite,
+  type ExecutionPrerequisiteId,
+} from './lib/execution-prerequisites.js';
 
 /** The platform the parallel merge gate runs on (ubuntu-latest). */
 const PLATFORM: CheckPlatform = 'linux';
@@ -74,6 +79,8 @@ export interface LaneSpec {
   readonly executorOnly?: readonly string[];
   /** For a `coverage` lane, the ordered commands the lane's jobs run. */
   readonly commands?: readonly string[];
+  /** Setup claims that must hold before the lane command is executable. */
+  readonly prerequisiteIds?: readonly ExecutionPrerequisiteId[];
 }
 
 /** A release check executed by a named CI job outside the gauntlet lane profiles. */
@@ -82,6 +89,8 @@ export interface SpecializedCheckSpec {
   readonly checkId: string;
   /** The ci.yml job that owns the check. */
   readonly job: string;
+  /** Setup claims that must hold before the specialized command is executable. */
+  readonly prerequisiteIds?: readonly ExecutionPrerequisiteId[];
 }
 
 /**
@@ -184,6 +193,7 @@ export const CI_SPECIALIZED_CHECK_SPECS: Readonly<Record<string, SpecializedChec
   format: {
     checkId: 'check/format',
     job: 'format',
+    prerequisiteIds: ['install'],
   },
   doctor: {
     checkId: 'check/doctor',
@@ -225,6 +235,8 @@ export interface CiPlanLane {
   readonly executorOnly: readonly string[];
   /** The shard fan-out width (present only on the sharded-test lane). */
   readonly shardCount?: number;
+  /** Canonical executable setup rows, resolved from the prerequisite catalog. */
+  readonly prerequisites: readonly ExecutionPrerequisite[];
 }
 
 /** One registry-derived check executed by a named specialized CI job. */
@@ -235,6 +247,8 @@ export interface CiPlanSpecializedCheck {
   readonly job: string;
   /** The exact command projected from CHECK_REGISTRY. */
   readonly command: string;
+  /** Canonical executable setup rows, resolved from the prerequisite catalog. */
+  readonly prerequisites: readonly ExecutionPrerequisite[];
 }
 
 /** One ownership claim used by the release-partition validator. */
@@ -256,7 +270,7 @@ export interface CiPlanBuildOptions {
 /** The full CI plan matrix — the projection the `plan` job publishes as its `matrix` output. */
 export interface CiPlan {
   /** Schema tag for the emitted artifact. */
-  readonly schema: 'liteship/ci-plan@1';
+  readonly schema: 'liteship/ci-plan@2';
   /** The check profile the lane partition projects (`release`). */
   readonly sourceProfile: CheckProfile;
   /** The platform the merge gate runs on (`linux`). */
@@ -331,6 +345,7 @@ function resolveLane(spec: LaneSpec): CiPlanLane {
     checkIds: spec.checkIds,
     executorOnly: spec.executorOnly ?? [],
     ...(spec.kind === 'sharded' ? { shardCount: SHARD_COUNT } : {}),
+    prerequisites: executionPrerequisites(spec.prerequisiteIds ?? ['install', 'workspace-build']),
   };
 }
 
@@ -381,6 +396,7 @@ export function buildCiPlan(options: CiPlanBuildOptions = {}): CiPlan {
       checkId: spec.checkId,
       job: spec.job,
       command: check.command,
+      prerequisites: executionPrerequisites(spec.prerequisiteIds ?? ['install', 'workspace-build']),
     };
   }
 
@@ -393,7 +409,7 @@ export function buildCiPlan(options: CiPlanBuildOptions = {}): CiPlan {
   const unfannedReleaseChecks = releasePlan.checks.map((check) => check.id).filter((id) => !assignedIds.has(id));
 
   return {
-    schema: 'liteship/ci-plan@1',
+    schema: 'liteship/ci-plan@2',
     sourceProfile: SOURCE_PROFILE,
     platform: PLATFORM,
     shardCount: SHARD_COUNT,
