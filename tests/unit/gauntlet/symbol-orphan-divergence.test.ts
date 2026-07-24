@@ -3,7 +3,7 @@
  * file-proxy cross-check).
  *
  * The gate folds the IR's `symbol-orphan`/symbol-evidenced facts (emitted by
- * `@czap/audit`'s LanguageService oracle) against the IR's file-proxy `refs`
+ * `@liteship/audit`'s LanguageService oracle) against the IR's file-proxy `refs`
  * reverse index, and reports a self-explaining divergence wherever the two
  * oracles disagree about whether an exported symbol is referenced across files.
  * This test proves:
@@ -19,7 +19,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-// The gate is NOT yet exported from @czap/gauntlet's barrel — the integrator wires
+// The gate is NOT yet exported from @liteship/gauntlet's barrel — the integrator wires
 // that (this agent builds in NEW files only, touching no shared index). Import it
 // via its src path (the established "src-path import = no public surface" pattern),
 // so the self-contained gate + its proof are fully tested before the ~10-line wire-in.
@@ -32,7 +32,7 @@ import {
   type RepoIR,
   type RefSite,
   type SymbolId,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const SYMBOL_ORACLE = 'ts-language-service';
 const DECL = 'packages/x/src/decl.ts';
@@ -53,8 +53,8 @@ function irFor(opts: {
   }
   return makeRepoIR({
     files: [
-      { id: DECL, contentDigest: 'placeholder:no-content-address', packageName: '@czap/x' },
-      { id: CONSUMER, contentDigest: 'placeholder:no-content-address', packageName: '@czap/x' },
+      { id: DECL, contentDigest: 'placeholder:no-content-address', packageName: '@liteship/x' },
+      { id: CONSUMER, contentDigest: 'placeholder:no-content-address', packageName: '@liteship/x' },
     ],
     symbols: [
       { id: `${DECL}#${opts.name}`, name: opts.name, kind: 'const', file: DECL, location: { file: DECL, line: 1 } },
@@ -161,16 +161,16 @@ describe('symbolOrphanDivergenceGate — symbol-evidenced ⊕ file-proxy orphan 
 });
 
 describe('symbol-orphan divergence — cross-module mirror drift-guard', () => {
-  // The lean @czap/gauntlet gate HARDCODES the oracle id + property strings it folds
+  // The lean @liteship/gauntlet gate HARDCODES the oracle id + property strings it folds
   // over ('ts-language-service' / 'symbol-orphan'), because it cannot import from
-  // @czap/audit (that would invert the dep direction + pull `typescript` into the lean
+  // @liteship/audit (that would invert the dep direction + pull `typescript` into the lean
   // engine — the same reason no-default-export-divergence mirrors 'ts-ast'). This pins
   // the canonical values the audit oracle EMITS against those mirrors: if the oracle
   // ever renames them, this fails LOUD, flagging that the gate's mirror must move in
   // lockstep (the head-probe LAW: the cross-check is only honest if both sides agree on
   // the fact vocabulary).
   it('the audit oracle constants match the strings the gauntlet gate mirrors', async () => {
-    const { LANGUAGE_SERVICE_ORACLE_ID, SYMBOL_ORPHAN_PROPERTY } = await import('@czap/audit');
+    const { LANGUAGE_SERVICE_ORACLE_ID, SYMBOL_ORPHAN_PROPERTY } = await import('@liteship/audit');
     expect(LANGUAGE_SERVICE_ORACLE_ID).toBe('ts-language-service');
     expect(SYMBOL_ORPHAN_PROPERTY).toBe('symbol-orphan');
   });

@@ -16,10 +16,10 @@
  * @module
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
-import type { AssemblyKind } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
+import { resetCapsuleCatalog } from '@liteship/core/testing';
+import * as Harness from '@liteship/core/harness';
+import type { AssemblyKind } from '@liteship/core';
 
 const SKIP_CALL = /\b(it|test|describe|bench)\.skip\(/;
 
@@ -27,8 +27,8 @@ const minimalCapsule = (kind: AssemblyKind) =>
   defineCapsule({
     _kind: kind,
     name: `degenerate.${kind}`,
-    input: S.unknown,
-    output: S.unknown,
+    input: schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: [], writes: [] },
     invariants: [],
     budgets: { p95Ms: 1 },

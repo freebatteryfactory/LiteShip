@@ -64,8 +64,8 @@
  * @module
  */
 
-import { CanonicalCbor, fnv1aBytes } from '@czap/canonical';
-import type { ContentAddress } from '@czap/canonical';
+import { CanonicalCbor, fnv1aBytes } from '@liteship/canonical';
+import type { ContentAddress } from '@liteship/canonical';
 import { ModelChannel, EmissionPolicies } from './reactive-model.js';
 import type { ChannelLike, ReentrancyPolicy } from './reactive-model.js';
 import { applyTransform, traceDigest } from './reactive-trace.js';

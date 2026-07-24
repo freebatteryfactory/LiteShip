@@ -10,7 +10,7 @@
  * evidence record. It RE-RUNS NOTHING — running a gate here would violate LS-001 /
  * the recompute Law (the report cites evidence, it does not regenerate it). A
  * required artifact that is MISSING is an evidence gap: the report throws rather than
- * emit a green it cannot substantiate (the report-satellite-scan discipline —
+ * emit a green it cannot substantiate (the report-adaptive-scan discipline —
  * index what exists, never guess).
  *
  * Output (committed): `reports/semantic-convergence.json` (machine) +
@@ -152,7 +152,7 @@ function buildReport(): ConvergenceReport {
     idx(
       'tests/component/reactive-no-effect-containment.test.ts',
       'acceptance-test',
-      'a realistic consumer over the public @czap/core barrel: every read a plain typed value, full idempotent teardown, no effect import (with permanent negative controls)',
+      'a realistic consumer over the public @liteship/core barrel: every read a plain typed value, full idempotent teardown, no effect import (with permanent negative controls)',
     ),
     idx(
       'docs/adr/0043-reactive-convergence.md',

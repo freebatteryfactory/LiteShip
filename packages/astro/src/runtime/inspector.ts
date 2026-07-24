@@ -1,7 +1,7 @@
 /**
  * Dev-mode boundary inspector overlay — BARREL.
  *
- * Visualizes every `[data-czap-boundary]` element, live signal values,
+ * Visualizes every `[data-liteship-boundary]` element, live signal values,
  * threshold tracks with draggable notches, and copy-back snippets. Rendered into
  * a render target (a shadow root) supplied by the host — the Astro dev-toolbar
  * app's `init(canvas)` ShadowRoot in production, an injected `attachShadow` root

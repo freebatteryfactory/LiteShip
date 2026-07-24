@@ -8,6 +8,6 @@
 
 > **Tier** = [`UIQualityTier`](../../../type-aliases/UIQualityTier.md)
 
-Defined in: [core/src/ui-quality.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ui-quality.ts#L104)
+Defined in: [core/src/evidence/ui-quality.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/ui-quality.ts#L105)
 
 Alias for [UIQualityTier](../../../type-aliases/UIQualityTier.md).

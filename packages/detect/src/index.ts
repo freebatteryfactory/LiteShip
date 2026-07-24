@@ -1,11 +1,11 @@
 /**
- * `@czap/detect` — **LiteShip** capability probes: device signals mapped to
- * the `CapTier` lattice and motion/design tiers in `@czap/core`.
+ * `@liteship/detect` — **LiteShip** capability probes: device signals mapped to
+ * the `CapTier` lattice and motion/design tiers in `@liteship/core`.
  *
  * Probes browser APIs for GPU tier, CPU cores, memory, input modality,
  * motion preferences, color scheme, viewport dimensions, DPR, and
  * network connection quality. Maps detected capabilities to the
- * `CapTier` lattice from `@czap/core`.
+ * `CapTier` lattice from `@liteship/core`.
  *
  * @module
  */

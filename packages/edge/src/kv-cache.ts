@@ -9,8 +9,8 @@
  * @module
  */
 
-import { Diagnostics, contentAddressOf, decodeLenient, S, type ContentAddress } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { Diagnostics, contentAddressOf, decodeLenient, type ContentAddress, schema } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import type { EdgeTierResult } from './edge-tier.js';
 import { tierKey } from './manifest.js';
 
@@ -79,7 +79,7 @@ export interface CompiledOutputs {
 /**
  * Serialized GLSL cast artifact stored on {@link CompiledOutputs.glsl}: the
  * shader preamble plus default uniform values. JSON-round-trippable subset of
- * `@czap/compiler`'s `GLSLCompileResult` (the structured `defines`/`uniforms`
+ * `@liteship/compiler`'s `GLSLCompileResult` (the structured `defines`/`uniforms`
  * arrays re-derive from `declarations`, so only the runtime-needed fields are
  * stored).
  */
@@ -90,7 +90,7 @@ export interface CompiledGLSLOutput {
   readonly uniformValues: Readonly<Record<string, number>>;
   /**
    * Per-state authored uniform values keyed by state name then `u_*` identifier.
-   * Rides the satellite payload so the live runtime resolves
+   * Rides the adaptive payload so the live runtime resolves
    * `stateUniforms[currentState]` and updates uniforms on each boundary crossing
    * — the GLSL analog of `CompiledOutputs.aria`. Absent when the boundary's
    * `@glsl` blocks authored no per-state values.
@@ -108,7 +108,7 @@ type WGSLUniformValue = number | WGSLUniformVector;
 /**
  * Serialized WGSL cast artifact stored on {@link CompiledOutputs.wgsl}: the
  * WebGPU preamble plus default binding values. JSON-round-trippable subset of
- * `@czap/compiler`'s `WGSLCompileResult`.
+ * `@liteship/compiler`'s `WGSLCompileResult`.
  */
 export interface CompiledWGSLOutput {
   /** State consts + uniform struct + `@group/@binding` preamble block. */
@@ -117,7 +117,7 @@ export interface CompiledWGSLOutput {
   readonly bindingValues: Readonly<Record<string, WGSLUniformValue>>;
   /**
    * Per-state authored binding values keyed by state name then field name — the
-   * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the satellite
+   * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the adaptive
    * payload so the runtime resolves `stateBindings[currentState]` and updates
    * struct fields on each crossing. Absent when no per-state values were authored.
    */
@@ -132,7 +132,7 @@ export interface BoundaryCache {
   /**
    * `qualifier` joins the key when two NAMES share one boundary
    * `ContentAddress` but carry different compiled CSS (the same
-   * `Boundary.make` definition referenced by two `@quantize` blocks) —
+   * `defineBoundary` definition referenced by two `@quantize` blocks) —
    * without it, the first name's compile result would serve every name.
    * `themeFp` likewise segregates outputs compiled under different resolved
    * themes (a per-request theme is a real input to the cached CSS).
@@ -191,7 +191,7 @@ interface CacheOptions {
    */
   readonly ttl?: number;
   /**
-   * KV key prefix (default `czap`). Doubles as the per-deploy CONTENT VERSION
+   * KV key prefix (default `liteship`). Doubles as the per-deploy CONTENT VERSION
    * for a bundled `compile` callback: when compile's output depends on
    * build-time content the boundary id does not cover, set `prefix` to a hash
    * of that compiled output (e.g. `layout-${fnv1a(compileLayoutCss())}`) so a
@@ -274,7 +274,7 @@ function parseTagIndex(raw: string | null): string[] {
 /** One-time diagnostic when invalidation can't run because the KV provider lacks a capability. */
 function warnInvalidationUnsupported(operation: string, missing: 'delete' | 'list'): void {
   Diagnostics.warnOnce({
-    source: 'czap/edge.kv-cache',
+    source: 'liteship/edge.kv-cache',
     code: 'invalidation-unsupported',
     message:
       `${operation} requires KVNamespace.${missing}, which this KV provider does not implement — ` +
@@ -419,18 +419,18 @@ function asWGSLUniformValue(value: unknown): WGSLUniformValue | undefined {
 // this file's own degradation policy.
 
 /** GLSL uniform values map — numeric leaves (`NaN`/`Infinity` ride through, as before). */
-const UniformValuesSchema = S.record(S.number);
+const UniformValuesSchema = schema.record(schema.number);
 
 /** Per-state GLSL uniforms — `state → (u_* → number)`. */
-const NestedUniformValuesSchema = S.record(UniformValuesSchema);
+const NestedUniformValuesSchema = schema.record(UniformValuesSchema);
 
 /** A WGSL binding value leaf: coerce-or-reject through {@link asWGSLUniformValue}. */
-const WGSLUniformValueSchema = S.brand(
-  S.unknown,
+const WGSLUniformValueSchema = schema.brand(
+  schema.unknown,
   (candidate: unknown): WGSLUniformValue => {
     const parsed = asWGSLUniformValue(candidate);
     if (parsed === undefined) {
-      throw ValidationError('czap/edge.kv-cache', 'expected a finite scalar or 2/3/4-vector WGSL value');
+      throw ValidationError('liteship/edge.kv-cache', 'expected a finite scalar or 2/3/4-vector WGSL value');
     }
     return parsed;
   },
@@ -438,22 +438,22 @@ const WGSLUniformValueSchema = S.brand(
 );
 
 /** A WGSL binding values map — `field → WGSLUniformValue`. */
-const WGSLBindingValuesSchema = S.record(WGSLUniformValueSchema);
+const WGSLBindingValuesSchema = schema.record(WGSLUniformValueSchema);
 
 /** Per-state WGSL bindings — `state → (field → WGSLUniformValue)`. */
-const NestedWGSLBindingValuesSchema = S.record(WGSLBindingValuesSchema);
+const NestedWGSLBindingValuesSchema = schema.record(WGSLBindingValuesSchema);
 
 /** GLSL cast head — the required `declarations` preamble (emptiness judged by the caller). */
-const GLSLCastHeadSchema = S.struct({ declarations: S.string });
+const GLSLCastHeadSchema = schema.struct({ declarations: schema.string });
 
 /** WGSL cast shape — preamble + default binding values. */
-const WGSLCastSchema = S.struct({ declarations: S.string, bindingValues: WGSLBindingValuesSchema });
+const WGSLCastSchema = schema.struct({ declarations: schema.string, bindingValues: WGSLBindingValuesSchema });
 
 /** Compiled-outputs entry head — the three required fields that carry the outer shape. */
-const CompiledEntryHeadSchema = S.struct({
-  css: S.unknown,
-  propertyRegistrations: S.unknown,
-  containerQueries: S.unknown,
+const CompiledEntryHeadSchema = schema.struct({
+  css: schema.unknown,
+  propertyRegistrations: schema.unknown,
+  containerQueries: schema.unknown,
 });
 
 /**
@@ -530,13 +530,13 @@ function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
  *
  * @example
  * ```ts
- * import { KVCache, EdgeTier } from '@czap/edge';
- * import { Boundary } from '@czap/core';
+ * import { KVCache, EdgeTier } from '@liteship/edge';
+ * import { defineBoundary } from '@liteship/core';
  *
  * const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
  * const cache = KVCache.createBoundaryCache(kv, { ttl: 3600, prefix: 'myapp' });
  *
- * const myBoundary = Boundary.make({
+ * const myBoundary = defineBoundary({
  *   input: 'viewport.width',
  *   at: [[0, 'compact'], [768, 'wide']],
  * });
@@ -561,7 +561,7 @@ function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
  * @returns A {@link BoundaryCache} instance
  */
 export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): BoundaryCache {
-  const prefix = options?.prefix ?? 'czap';
+  const prefix = options?.prefix ?? 'liteship';
   const ttl = options?.ttl;
 
   return {
@@ -583,7 +583,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         if (error instanceof SyntaxError) {
           invalidJson = true;
           Diagnostics.warnOnce({
-            source: 'czap/edge.kv-cache',
+            source: 'liteship/edge.kv-cache',
             code: 'invalid-cache-entry',
             message:
               `Boundary cache entry "${key}" could not be parsed and will be treated as a cache miss. ` +
@@ -637,7 +637,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       }
 
       Diagnostics.warnOnce({
-        source: 'czap/edge.kv-cache',
+        source: 'liteship/edge.kv-cache',
         code: 'cache-entry-shape-mismatch',
         message:
           `Boundary cache entry "${key}" parsed as JSON but is missing css, propertyRegistrations, or containerQueries and will be treated as a cache miss. ` +
@@ -717,7 +717,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
  *
  * @example
  * ```ts
- * import { KVCache } from '@czap/edge';
+ * import { KVCache } from '@liteship/edge';
  *
  * const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
  * const cache = KVCache.createBoundaryCache(kv, { ttl: 3600 });

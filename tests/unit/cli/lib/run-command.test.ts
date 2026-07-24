@@ -35,6 +35,7 @@ describe('projectCliResult', () => {
     const err = JSON.parse(stderr.trim());
     expect(err.status).toBe('failed');
     expect(err.command).toBe('asset.verify');
+    expect(err.code).toBe('cli/command-failed');
     expect(err.error).toBe('boom');
     expect(err.hint).toBe('try that');
   });
@@ -81,16 +82,13 @@ describe('projectCliResult', () => {
   it('surfaces an ok result that carries no payload as a structured failure (exit 1)', async () => {
     const projectOk = vi.fn(() => 0);
     const { exit, stderr } = await captureCli(async () =>
-      projectCliResult(
-        'asset.verify',
-        { status: 'ok', command: 'asset.verify', timestamp: 'T' },
-        projectOk,
-      ),
+      projectCliResult('asset.verify', { status: 'ok', command: 'asset.verify', timestamp: 'T' }, projectOk),
     );
     expect(exit).toBe(1);
     expect(projectOk).not.toHaveBeenCalled();
     const err = JSON.parse(stderr.trim());
     expect(err.status).toBe('failed');
+    expect(err.code).toBe('cli/no-output');
     expect(err.error).toContain('no payload');
   });
 });
@@ -99,13 +97,13 @@ describe('runCliCommand', () => {
   it('threads context overrides into the handler and hands the typed payload to projectOk', async () => {
     const { exit, stdout } = await captureCli(() =>
       runCliCommand('version', {}, { overrides: { hostVersion: () => 'TEST-9.9.9' } }, (payload) => {
-        // payload is CommandMap['version'] (VersionPayload) — .czap needs no cast.
-        emit({ czap: payload.czap });
+        // payload is CommandMap['version'] (VersionPayload) — .liteship needs no cast.
+        emit({ liteship: payload.liteship });
         return 0;
       }),
     );
     expect(exit).toBe(0);
     const rec = JSON.parse(stdout.trim());
-    expect(rec.czap).toBe('TEST-9.9.9');
+    expect(rec.liteship).toBe('TEST-9.9.9');
   });
 });

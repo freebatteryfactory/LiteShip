@@ -1,15 +1,15 @@
 /**
- * Surface audit CLI wrapper (CUT D9b-1). Engine in `@czap/audit`; this thin
+ * Surface audit CLI wrapper (CUT D9b-1). Engine in `@liteship/audit`; this thin
  * script re-exports it and provides the `pnpm run audit:surface` entry.
  *
  * @module
  */
-import { runSurfaceAudit, liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import { runSurfaceAudit, liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
 import { reportPaths } from './policy.js';
 import { createCounts, isDirectExecution, repoRoot, writeTextFile } from './shared.js';
 
-export { runSurfaceAudit } from '@czap/audit';
-export type { SurfaceSummary } from '@czap/audit';
+export { runSurfaceAudit } from '@liteship/audit';
+export type { SurfaceSummary } from '@liteship/audit';
 
 function main(): void {
   const result = runSurfaceAudit(withRepoRoot(liteshipDevopsProfile, repoRoot));

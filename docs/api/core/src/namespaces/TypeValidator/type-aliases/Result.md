@@ -8,7 +8,7 @@
 
 > **Result**\<`T`\> = `ErrorResult`\<`T`, [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)\>
 
-Defined in: [core/src/capsule.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L275)
+Defined in: [core/src/authoring/capsule.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L275)
 
 The value-or-tagged-error [TypeValidator.validate](../../../variables/TypeValidator.md#validate) returns on a strict decode.
 

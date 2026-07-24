@@ -1,5 +1,5 @@
-import type { Receipt, UIFrame } from '@czap/core';
-import { GenFrame } from '@czap/core';
+import type { Receipt, UIFrame } from '@liteship/core';
+import { GenFrame } from '@liteship/core';
 import { createReceiptChain } from './receipt-chain.js';
 import type { LLMRenderPipeline, LLMRenderHost } from './llm-render-pipeline.js';
 
@@ -41,7 +41,8 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
   let _compactionEpoch = 0;
 
   /**
-   * Auto-compact the receipt chain below `lastAck − margin`, OFF the hot path.
+   * Auto-compact the receipt chain below `lastAck − margin` during envelope
+   * ingestion and gap replay, never during per-frame recording.
    * Drop-only and bounded: resolves a watermark `margin` entries behind the
    * last-ack point in the canonical linearization and reclaims everything below
    * it. No-ops until enough entries have accumulated (margin + threshold) and is
@@ -106,8 +107,8 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
 
     rememberEnvelope(envelope: Receipt.Envelope): void {
       getReceiptChain().ingestEnvelope(envelope);
-      // Off the hot path: envelope ingestion (not per-frame recording) is the
-      // debounce tick for auto-compaction.
+      // Envelope ingestion (not per-frame recording) is the debounce tick for
+      // auto-compaction.
       compactBelowAck();
     },
 
@@ -127,7 +128,7 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
         }
       }
 
-      // Gap replay is a natural off-hot-path moment to reclaim history below ack.
+      // Gap replay is a natural non-frame-recording moment to reclaim history below ack.
       compactBelowAck();
 
       return strategy;

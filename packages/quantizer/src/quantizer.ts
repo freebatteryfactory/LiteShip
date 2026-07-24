@@ -1,7 +1,8 @@
 /**
- * `Q.from(boundary).outputs({ ... })` builder API.
- * Creates {@link QuantizerConfig} with content-addressed identity, and
- * {@link LiveQuantizer} with reactive output streams.
+ * Two-step quantizer API: {@link defineQuantizer} authors the immutable,
+ * content-addressed {@link QuantizerConfig}; {@link createQuantizer} allocates the
+ * live {@link LiveQuantizer} — an {@link OwnedQuantizer} that owns its own teardown
+ * via `dispose()` — with reactive output streams.
  *
  * Wired: MotionTier-gated output routing, springToLinearCSS auto-generation,
  * content-address memoization via {@link MemoCache}.
@@ -18,9 +19,10 @@ import type {
   OutputsFor,
   HLCBrand,
   Clock,
-} from '@czap/core';
-import { HLC, CellKernel, Lifetime } from '@czap/core';
-import type { MotionTier, LadderTarget } from '@czap/core';
+  DeepReadonly,
+} from '@liteship/core';
+import { HLC, CellKernel, Lifetime, attachLifetime } from '@liteship/core';
+import type { MotionTier, QualityTierTarget, AsyncOwnedResource } from '@liteship/core';
 import {
   StateName as mkStateName,
   CanonicalCbor,
@@ -28,9 +30,10 @@ import {
   Easing,
   fnv1aBytes,
   wallClock,
-  projectLadder,
-} from '@czap/core';
-import { ValidationError } from '@czap/error';
+  projectQualityTiers,
+} from '@liteship/core';
+import { ValidationError } from '@liteship/error';
+import { snapshotDefinitionValue } from '@liteship/core/evidence';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -40,11 +43,11 @@ import { MemoCache } from './memo-cache.js';
 // ---------------------------------------------------------------------------
 
 /**
- * Typed accessor for the initial state of a boundary. Boundary.make guarantees
+ * Typed accessor for the initial state of a boundary. defineBoundary guarantees
  * the states tuple is non-empty, so `states[0]` is always defined; this contains
  * the one unavoidable cast where a generic index access meets noUncheckedIndexedAccess.
  */
-function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
+function firstState<B extends Boundary>(boundary: B): StateUnion<B> {
   return boundary.states[0] as StateUnion<B>;
 }
 
@@ -58,38 +61,61 @@ function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
  * `css` emits style declarations, `glsl`/`wgsl` emit shader uniforms,
  * `aria` emits accessibility attributes, `ai` emits model-facing signals.
  * MotionTier gates which targets a device is permitted to receive; see
- * {@link QuantizerFromOptions.tier} for the tier → targets table.
+ * {@link DefineQuantizerOptions.tier} for the tier → targets table.
  *
- * Aliases `@czap/core`'s {@link LadderTarget} — the shared codomain of the
- * capability-admissibility ladder both this gate and the core escalation gate
- * project from — so the target vocabulary itself has a single source too.
+ * Aliases `@liteship/core`'s {@link QualityTierTarget} — the shared codomain of the
+ * capability-admissibility quality-tier scale both this gate and the core escalation
+ * gate project from — so the target vocabulary itself has a single source too.
  */
-export type OutputTarget = LadderTarget;
+export type OutputTarget = QualityTierTarget;
 
 // ---------------------------------------------------------------------------
-// MotionTier gating (canonical type from @czap/core)
+// MotionTier gating (canonical type from @liteship/core)
 // ---------------------------------------------------------------------------
 
-export type { MotionTier } from '@czap/core';
+export type { MotionTier } from '@liteship/core';
 
 /**
- * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@czap/core`'s
- * shared capability-admissibility ladder (`cap-ladder.ts`) onto the `MotionTier`
- * rung order. The core escalation chooser's `RUNG_TARGETS` projects the SAME
- * ladder onto the `CapTier` order; the two are therefore congruent by
- * construction (a drift guard pins them, computing `expected` from the ladder).
+ * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@liteship/core`'s
+ * shared capability-admissibility quality-tier scale (`quality-tiers.ts`) onto the
+ * `MotionTier` tier order. The core escalation chooser's `TIER_TARGET_SETS` projects
+ * the SAME scale onto the `CapTier` order; the two are therefore congruent by
+ * construction (a drift guard pins them, computing `expected` from the scale).
  *
  * Higher tiers include lower-tier targets. `none` only allows ARIA; `compute`
  * unlocks every target including WGSL and AI signal routing. `force()` can
  * override this gating per-target for prototype and test scenarios.
  */
-export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = projectLadder<MotionTier>([
+export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = projectQualityTiers<MotionTier>([
   'none',
   'transitions',
   'animations',
   'physics',
   'compute',
 ]);
+
+const OUTPUT_TARGETS = ['css', 'glsl', 'wgsl', 'aria', 'ai'] as const satisfies readonly OutputTarget[];
+
+/**
+ * Resolve the exact target set a live quantizer admits for a motion tier plus
+ * explicit force overrides. This is the single target-gating owner used by
+ * both runtime dispatch and higher-level explanations.
+ */
+export function resolveQuantizerTargets(
+  tier: MotionTier | undefined,
+  force: readonly OutputTarget[] = [],
+): ReadonlySet<OutputTarget> {
+  if (tier !== undefined && !(tier in TIER_TARGETS)) {
+    throw ValidationError(
+      'resolveQuantizerTargets',
+      `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
+    );
+  }
+
+  const admitted = new Set<OutputTarget>(tier === undefined ? OUTPUT_TARGETS : TIER_TARGETS[tier]);
+  for (const target of force) admitted.add(target);
+  return admitted;
+}
 
 // ---------------------------------------------------------------------------
 // Quantizer outputs shape
@@ -103,7 +129,7 @@ export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = proje
  * only, ARIA is string only, AI is unconstrained. Missing fields simply
  * skip that target during dispatch.
  */
-export interface QuantizerOutputs<B extends Boundary.Shape> {
+export interface QuantizerOutputs<B extends Boundary> {
   /** CSS property map per state (values are raw CSS, e.g. `'16px'` or `1`). */
   readonly css?: OutputsFor<B, Record<string, string | number>>;
   /** GLSL uniform values per state (numeric only). */
@@ -124,7 +150,7 @@ export interface QuantizerOutputs<B extends Boundary.Shape> {
  * Spring physics parameters for CSS easing auto-generation.
  *
  * When a {@link QuantizerConfig} carries a spring, its CSS outputs receive an
- * injected `--czap-easing` custom property derived via `Easing.springToLinearCSS`
+ * injected `--liteship-easing` custom property derived via `Easing.springToLinearCSS`
  * so native `linear()` timing matches the physical spring response.
  */
 export interface SpringConfig {
@@ -137,17 +163,23 @@ export interface SpringConfig {
 }
 
 // ---------------------------------------------------------------------------
-// Builder options
+// defineQuantizer options
 // ---------------------------------------------------------------------------
 
 /**
- * Options accepted by {@link Q.from}.
+ * Options accepted by {@link defineQuantizer} — the authored intent of a quantizer.
  *
- * `tier` gates which output targets get produced (see the table on
- * {@link QuantizerFromOptions.tier}).
- * `spring` enables automatic CSS `--czap-easing` injection on CSS outputs.
+ * `outputs` is the required per-target output tables (the sole positional argument
+ * of the retired `.outputs(...)` chain step). `tier` gates which output targets get
+ * produced (see the table on {@link DefineQuantizerOptions.tier}). `spring` enables
+ * automatic CSS `--liteship-easing` injection on CSS outputs. `force` is the
+ * per-target escape hatch (the retired `.force(...)` chain step), overriding tier
+ * gating for the listed targets. Every field is part of the config's
+ * content-addressed identity.
  */
-export interface QuantizerFromOptions {
+export interface DefineQuantizerOptions<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+  /** Per-target output tables keyed by boundary state. */
+  readonly outputs: O;
   /**
    * MotionTier for output gating; omit to allow all targets.
    *
@@ -162,12 +194,14 @@ export interface QuantizerFromOptions {
    * | `physics`     | `css`, `glsl`, `aria`               |
    * | `compute`     | `css`, `glsl`, `wgsl`, `aria`, `ai` |
    *
-   * Outputs defined for a gated-off target are silently dropped;
-   * `.force(...targets)` overrides the gating per target.
+   * Outputs defined for a gated-off target are silently dropped; list the target
+   * in `force` to override the gating per target.
    */
   readonly tier?: MotionTier;
   /** Spring config that drives CSS easing generation for CSS outputs. */
   readonly spring?: SpringConfig;
+  /** Targets to force-enable regardless of the current tier's gating set. */
+  readonly force?: readonly OutputTarget[];
 }
 
 // ---------------------------------------------------------------------------
@@ -175,23 +209,23 @@ export interface QuantizerFromOptions {
 // ---------------------------------------------------------------------------
 
 /**
- * Runtime injection for {@link QuantizerConfig.create}.
+ * Runtime injection for {@link createQuantizer}.
  *
  * The crossing `timestamp` is an HLC whose `wall_ms` is epoch ms, so the
- * monotonic clock is the {@link Clock} WALL boundary (`@czap/core`'s
+ * monotonic clock is the {@link Clock} WALL boundary (`@liteship/core`'s
  * `wallClock`), NOT the monotonic `systemClock`. It is injected here — at
- * instantiation, NOT in {@link QuantizerFromOptions} — so it never enters the
+ * instantiation, NOT in {@link DefineQuantizerOptions} — so it never enters the
  * content address (a clock is a volatile boundary, not part of a config's
  * identity; folding it into the address would also be unserializable). Each
- * `create()` call therefore owns a fresh monotonic HLC seeded from `node` and
- * advanced by `clock`: same input + a {@link Clock} of fixed time → identical
- * timestamps regardless of how many other quantizers evaluated first. There is
- * no process-wide HLC.
+ * {@link createQuantizer} call therefore owns a fresh monotonic HLC seeded from
+ * `node` and advanced by `clock`: same input + a {@link Clock} of fixed time →
+ * identical timestamps regardless of how many other quantizers evaluated first.
+ * There is no process-wide HLC.
  */
 export interface QuantizerRuntime {
   /**
    * Wall-clock boundary advancing this instance's HLC; defaults to
-   * `@czap/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
+   * `@liteship/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
    * deterministic, replayable crossing timestamps.
    */
   readonly clock?: Clock;
@@ -204,35 +238,27 @@ export interface QuantizerRuntime {
 // ---------------------------------------------------------------------------
 
 /**
- * Immutable, content-addressed quantizer definition.
+ * Immutable, content-addressed quantizer definition (authored intent).
  *
- * The `id` is an FNV-1a hash over the boundary id and outputs, so two
- * configs with identical definitions share the same address and are
- * deduplicated by the internal memo cache. `create()` materializes a
- * fresh {@link LiveQuantizer} paired with its owning {@link Lifetime}.
+ * The `id` is an FNV-1a hash over the boundary id, outputs, tier, spring, and
+ * forced targets, so two configs with identical definitions share the same
+ * address and are deduplicated by the internal memo cache. This is a PURE data
+ * definition — pass it to {@link createQuantizer} to materialize a fresh
+ * {@link LiveQuantizer} that owns its own teardown via `dispose()`.
  */
-export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
+export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   /** Boundary this config quantizes against. */
   readonly boundary: B;
   /** Per-target output tables keyed by state. */
-  readonly outputs: O;
-  /** Content-addressed identity (FNV-1a of boundary id + outputs). */
+  readonly outputs: DeepReadonly<O>;
+  /** Content-addressed identity (FNV-1a of boundary id + outputs + tier + spring + force). */
   readonly id: ContentAddress;
-  /** Motion tier gating active targets; see {@link QuantizerFromOptions.tier} for the tier → targets table. */
+  /** Motion tier gating active targets; see {@link DefineQuantizerOptions.tier} for the tier → targets table. */
   readonly tier?: MotionTier;
   /** Spring config driving CSS easing injection. */
-  readonly spring?: SpringConfig;
-  /**
-   * Instantiate a reactive {@link LiveQuantizer}, paired with the {@link Lifetime}
-   * that owns its teardown — disposing it closes the state / outputs / crossings
-   * kernels (completing every subscriber and making publish inert).
-   *
-   * Pass a {@link QuantizerRuntime} to inject the wall-clock boundary that
-   * advances this instance's monotonic crossing HLC; omit it to default to
-   * `@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
-   * the cached config's identity.
-   */
-  create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O>;
+  readonly spring?: DeepReadonly<SpringConfig>;
+  /** Targets force-enabled past their tier gate; part of the content address. */
+  readonly force?: readonly OutputTarget[];
 }
 
 // ---------------------------------------------------------------------------
@@ -253,23 +279,23 @@ type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { Q } from '@czap/quantizer';
+ * import { defineBoundary } from '@liteship/core';
+ * import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
  *
- * const b = Boundary.make({
+ * const b = defineBoundary({
  *   input: 'w',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });
- * const config = Q.from(b).outputs({
- *   css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } },
+ * const config = defineQuantizer(b, {
+ *   outputs: { css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } } },
  * });
- * const { quantizer: live, lifetime } = config.create();
+ * const live = createQuantizer(config);
  * live.evaluate(900); // triggers crossing; outputs kernel publishes CSS
- * await lifetime.dispose();
+ * await live.dispose();
  * ```
  */
 export interface LiveQuantizer<
-  B extends Boundary.Shape,
+  B extends Boundary,
   O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
 > extends ReactiveQuantizer<B> {
   /** The config this quantizer was created from. */
@@ -281,36 +307,19 @@ export interface LiveQuantizer<
 }
 
 /**
- * The pair {@link QuantizerConfig.create} returns: the live reactive quantizer
- * plus the {@link Lifetime} that owns its teardown. Dispose the lifetime to close
- * the state / outputs / crossings kernels (completing subscribers, making publish
- * inert).
+ * A live reactive quantizer that owns its teardown directly
+ * ({@link AsyncOwnedResource}): `await quantizer.dispose()` closes the state /
+ * outputs / crossings kernels (completing subscribers, making publish inert). The
+ * owning {@link Lifetime} stays reachable as `quantizer.lifetime` for advanced
+ * composition (e.g. threading it into an {@link AnimatedQuantizer}).
  */
-export interface LiveQuantizerHandle<B extends Boundary.Shape, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
-  readonly quantizer: LiveQuantizer<B, O>;
-  readonly lifetime: Lifetime.Shape;
-}
+export type OwnedQuantizer<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> = LiveQuantizer<
+  B,
+  O
+> &
+  AsyncOwnedResource;
 
-// ---------------------------------------------------------------------------
-// Builder
-// ---------------------------------------------------------------------------
-
-/**
- * Fluent builder returned by {@link Q.from}.
- *
- * Call `.outputs({ ... })` to produce a content-addressed
- * {@link QuantizerConfig}, optionally preceded by `.force(targets)` to
- * override MotionTier gating for specific targets (e.g., enabling AI
- * signals at the `none` tier for testing).
- */
-export interface QuantizerBuilder<B extends Boundary.Shape> {
-  /** Attach per-target output tables and produce a {@link QuantizerConfig}. */
-  outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O>;
-  /** Force-enable specific targets regardless of the current tier's gating set. */
-  force(...targets: OutputTarget[]): QuantizerBuilder<B>;
-}
-
-type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Boundary.Shape>>;
+type CachedQuantizerConfig = QuantizerConfig<Boundary, QuantizerOutputs<Boundary>>;
 
 // ---------------------------------------------------------------------------
 // Content-address via the ONE canonical encoder (CUT B1): CanonicalCbor (RFC
@@ -321,25 +330,25 @@ type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Bo
 
 /**
  * Config identity covers EVERYTHING the cached config closes over: boundary,
- * outputs, tier (gates `allowedTargets`), spring (drives `--czap-easing`),
- * and `force()` targets. Omitting any of these lets the first config minted
+ * outputs, tier (gates `allowedTargets`), spring (drives `--liteship-easing`),
+ * and forced targets. Omitting any of these lets the first config minted
  * for a boundary+outputs pair poison later configs built with different
  * options — the same outputs at `tier: 'physics'` would silently reuse a
  * `tier: 'transitions'` config and never emit glsl.
  */
-function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+function contentAddress<B extends Boundary, O extends QuantizerOutputs<B>>(
   boundary: B,
-  outputs: O,
+  outputs: DeepReadonly<O>,
   tier: MotionTier | undefined,
-  spring: SpringConfig | undefined,
-  forcedTargets: ReadonlySet<OutputTarget> | null,
+  spring: DeepReadonly<SpringConfig> | undefined,
+  force: readonly OutputTarget[] | undefined,
 ): ContentAddress {
   const payload = {
     boundaryId: boundary.id,
     outputs,
     tier: tier ?? null,
     spring: spring ? { stiffness: spring.stiffness, damping: spring.damping, mass: spring.mass ?? 1 } : null,
-    force: forcedTargets ? [...forcedTargets].sort() : null,
+    force: force ?? null,
   };
   return fnv1aBytes(CanonicalCbor.encode(payload));
 }
@@ -363,6 +372,11 @@ function outputCacheAddress(configId: ContentAddress, state: string): ContentAdd
 // ---------------------------------------------------------------------------
 
 const configCache = MemoCache.make<CachedQuantizerConfig>();
+// A deviceFilter is host-owned executable identity and deliberately absent from
+// Boundary's portable content label. Such boundaries may still memoize against
+// themselves, but must never collide globally with a portable twin or a
+// different closure that has the same portable bytes.
+const hostFilteredConfigCaches = new WeakMap<Boundary, MemoCache<CachedQuantizerConfig>>();
 const outputCache = MemoCache.make<Partial<{ [K in OutputTarget]: Record<string, unknown> }>>();
 const springCSSCache = new Map<string, string>();
 
@@ -378,20 +392,19 @@ const springCSSCache = new Map<string, string>();
  * produces a wide union that TS cannot collapse. This helper performs
  * the one bridging cast so callers stay type-clean.
  */
-function readTargetState<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
-  outputs: O,
+function readTargetState<B extends Boundary, O extends QuantizerOutputs<B>>(
+  outputs: DeepReadonly<O>,
   target: OutputTarget,
   state: StateUnion<B>,
 ): Record<string, unknown> | undefined {
-  const table = outputs[target] as Record<string, Record<string, unknown>> | undefined;
+  const table = outputs[target] as Readonly<Record<string, Readonly<Record<string, unknown>>>> | undefined;
   return table?.[state as string];
 }
 
-function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
-  outputs: O,
+function resolveOutputs<B extends Boundary, O extends QuantizerOutputs<B>>(
+  outputs: DeepReadonly<O>,
   state: StateUnion<B>,
-  allowedTargets: ReadonlySet<OutputTarget> | null,
-  forcedTargets: ReadonlySet<OutputTarget> | null,
+  admittedTargets: ReadonlySet<OutputTarget>,
   configId: ContentAddress,
   springCSS: string | null,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
@@ -401,22 +414,14 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
   if (cached) return cached;
 
   const result: Partial<{ [K in OutputTarget]: Record<string, unknown> }> = {};
-  const targets: OutputTarget[] = ['css', 'glsl', 'wgsl', 'aria', 'ai'];
-
-  for (const target of targets) {
-    // Check tier gating
-    if (allowedTargets !== null && !allowedTargets.has(target)) {
-      // Check force escape hatch
-      if (forcedTargets === null || !forcedTargets.has(target)) {
-        continue;
-      }
-    }
+  for (const target of OUTPUT_TARGETS) {
+    if (!admittedTargets.has(target)) continue;
 
     const stateOutputs = readTargetState(outputs, target, state);
     if (stateOutputs !== undefined) {
       if (target === 'css' && springCSS) {
         // Inject the spring easing CSS custom property alongside CSS outputs
-        result[target] = { ...stateOutputs, '--czap-easing': springCSS };
+        result[target] = { ...stateOutputs, '--liteship-easing': springCSS };
       } else {
         result[target] = stateOutputs;
       }
@@ -431,7 +436,7 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
 // Spring CSS computation with caching
 // ---------------------------------------------------------------------------
 
-function getSpringCSS(spring: SpringConfig): string {
+function getSpringCSS(spring: DeepReadonly<SpringConfig>): string {
   const key = `${spring.stiffness}:${spring.damping}:${spring.mass ?? 1}`;
   let css = springCSSCache.get(key);
   if (!css) {
@@ -442,236 +447,264 @@ function getSpringCSS(spring: SpringConfig): string {
 }
 
 // ---------------------------------------------------------------------------
-// Q.from(boundary) builder factory
+// defineQuantizer(boundary, options) — author the immutable config
 // ---------------------------------------------------------------------------
 
 /**
- * Create a quantizer builder from a boundary definition.
+ * Author a content-addressed {@link QuantizerConfig} from a boundary definition
+ * and its per-target outputs — the PURE, immutable definition (authored intent).
  *
- * Starts a fluent chain: `Q.from(boundary).outputs({...})` produces a
- * content-addressed `QuantizerConfig` whose `.create()` method yields a
- * reactive `LiveQuantizer` paired with its owning {@link Lifetime}.
+ * This performs validation and content-addressing up front: an unknown `tier`
+ * throws, tier-gated outputs warn once at definition time, and the config is
+ * memoized by its content address (identical definitions return the SAME object).
+ * Pass the result to {@link createQuantizer} to materialize a live reactive instance.
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { Q } from '@czap/quantizer';
+ * import { defineBoundary } from '@liteship/core';
+ * import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
  * });
- * const config = Q.from(boundary).outputs({
- *   css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } },
+ * const config = defineQuantizer(boundary, {
+ *   outputs: { css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } } },
  * });
- * const { quantizer: live, lifetime } = config.create();
+ * const live = createQuantizer(config);
  * const result = live.evaluate(800); // 'md'
- * await lifetime.dispose();
+ * await live.dispose();
  * ```
  *
  * @param boundary - The boundary definition to quantize against
- * @param options  - Optional motion tier and spring configuration
- * @returns A {@link QuantizerBuilder} for chaining `.outputs()` and `.force()`
+ * @param options  - The `outputs` tables plus optional `tier`, `spring`, and `force`
+ * @returns The immutable, content-addressed {@link QuantizerConfig}
  */
-function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B> {
-  const tier = options?.tier;
-  // Failing open on an invalid tier would disable gating entirely and allow
-  // every target (including ai/wgsl) — the inverse of what gating is for.
+export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
+  boundary: B,
+  options: DefineQuantizerOptions<B, O>,
+): QuantizerConfig<B, O> {
+  const { force } = options;
+  const tier = options.tier;
+  // Preserve defineQuantizer's public diagnostic owner even though the shared
+  // resolver also rejects hostile runtime values defensively.
   if (tier !== undefined && !(tier in TIER_TARGETS)) {
     throw ValidationError(
-      'Q.from',
+      'defineQuantizer',
       `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
     );
   }
-  const spring = options?.spring;
-  const allowedTargets = tier ? TIER_TARGETS[tier] : null;
-  let forcedTargets: Set<OutputTarget> | null = null;
+  // Snapshot, de-duplicate, canonically order, and freeze force BEFORE it is
+  // hashed or retained. Caller mutation can therefore never make the stored
+  // authored intent disagree with its content address.
+  const forceSnapshot =
+    force === undefined ? undefined : (snapshotDefinitionValue([...new Set(force)].sort()) as readonly OutputTarget[]);
+  const outputsSnapshot = snapshotDefinitionValue(options.outputs);
+  const springSnapshot = options.spring === undefined ? undefined : snapshotDefinitionValue(options.spring);
+  const admittedTargets = resolveQuantizerTargets(tier, forceSnapshot);
 
-  const builder: QuantizerBuilder<B> = {
-    outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O> {
-      const frozenForced = forcedTargets;
-      if (allowedTargets !== null && tier !== undefined) {
-        // Outputs for a tier-gated target silently never fire; say so once at
-        // build time with the literal escape hatches.
-        for (const target of Object.keys(outputs) as readonly OutputTarget[]) {
-          if (outputs[target] === undefined || allowedTargets.has(target) || frozenForced?.has(target)) continue;
-          Diagnostics.warnOnce({
-            source: 'czap/quantizer',
-            code: 'tier-gated-output-dropped',
-            message: `you defined \`${target}\` outputs but tier '${tier}' only emits ${[...allowedTargets].join('+')}, so they will never fire. Pass a tier that includes ${target} to Q.from(boundary, { tier }), or chain .force('${target}').`,
-          });
-        }
-      }
-      const id = contentAddress(boundary, outputs, tier, spring, frozenForced);
+  if (tier !== undefined) {
+    // Outputs for a tier-gated target silently never fire; say so once at
+    // definition time with the literal escape hatches.
+    for (const target of Object.keys(outputsSnapshot) as readonly OutputTarget[]) {
+      if (outputsSnapshot[target] === undefined || admittedTargets.has(target)) continue;
+      Diagnostics.warnOnce({
+        source: 'liteship/quantizer',
+        code: 'tier-gated-output-dropped',
+        message: `you defined \`${target}\` outputs but tier '${tier}' only emits ${[...TIER_TARGETS[tier]].join('+')}, so they will never fire. Pass a tier that includes ${target} to defineQuantizer(boundary, { tier }), or add '${target}' to the \`force\` option.`,
+      });
+    }
+  }
 
-      // Check config cache
-      const cachedConfig = configCache.get(id);
-      if (cachedConfig) return cachedConfig as QuantizerConfig<B, O>;
+  const id = contentAddress(boundary, outputsSnapshot, tier, springSnapshot, forceSnapshot);
 
-      // Compute spring CSS if spring config present and CSS outputs exist
-      const springCSS = spring && outputs.css ? getSpringCSS(spring) : null;
+  // Portable definitions share the global content-address cache. Definitions
+  // carrying a host-only closure share only within the same Boundary object:
+  // the closure has no canonical bytes, so global reuse would return whichever
+  // callback happened to populate the id first.
+  let cache = configCache;
+  if (boundary.spec?.deviceFilter !== undefined) {
+    let boundaryCache = hostFilteredConfigCaches.get(boundary);
+    if (boundaryCache === undefined) {
+      boundaryCache = MemoCache.make<CachedQuantizerConfig>();
+      hostFilteredConfigCaches.set(boundary, boundaryCache);
+    }
+    cache = boundaryCache;
+  }
+  const cachedConfig = cache.get(id);
+  if (cachedConfig) return cachedConfig as QuantizerConfig<B, O>;
 
-      const config: QuantizerConfig<B, O> = {
-        boundary,
-        outputs,
-        id,
-        tier,
-        spring,
-        create(runtime?: QuantizerRuntime): LiveQuantizerHandle<B, O> {
-          // Per-instantiation monotonic clock: this live quantizer OWNS its HLC,
-          // so its crossing timestamps depend only on its own evaluate() calls
-          // and the injected wall-clock boundary — never on how many other
-          // quantizers evaluated first in this process. No module global.
-          const tickClock: Clock = runtime?.clock ?? wallClock;
-          let hlc = HLC.create(runtime?.node ?? 'quantizer');
-
-          // Boundary.make guarantees non-empty states; head access widens to StateUnion<B>.
-          const initialState: StateUnion<B> = firstState(boundary);
-          const initialOutputs = resolveOutputs(outputs, initialState, allowedTargets, frozenForced, id, springCSS);
-
-          // Reactive substrate on the extracted CellKernel (was SubscriptionRef /
-          // Queue): a replay-1 current-state slot, a replay-1 outputs slot (its
-          // `subscribe` gives the outputChanges replay-1 stream, its `read` the
-          // currentOutputs read), and a no-replay crossing fan-out. The owning
-          // Lifetime closes all three on dispose (replacing the Effect scope).
-          const stateCell = CellKernel.replay1<StateUnion<B>>(initialState);
-          const outputCell = CellKernel.replay1<OutputRecord>(initialOutputs);
-          const crossingChannel = CellKernel.fanout<BoundaryCrossing<StateUnion<B> & string>>();
-
-          const lifetime = Lifetime.make();
-          lifetime.add(() => {
-            // Close ALL three channels even if one channel's completion pass throws
-            // (a `complete` callback can throw, and `CellKernel.close` rethrows the
-            // first fault per the sink-error law). A bare sequential
-            // `stateCell.close(); outputCell.close(); crossingChannel.close();` would
-            // let the first throw STRAND the later channels open, so a still-open
-            // channel could keep publishing to subscribers that were never completed.
-            // Complete every channel, then rethrow the first fault (same law the
-            // kernel's own `close` applies to its sinks).
-            let firstFault: { readonly error: unknown } | undefined;
-            for (const closeChannel of [stateCell.close, outputCell.close, crossingChannel.close]) {
-              try {
-                closeChannel();
-              } catch (error) {
-                if (firstFault === undefined) firstFault = { error };
-              }
-            }
-            if (firstFault !== undefined) throw firstFault.error;
-          });
-
-          let previousState: StateUnion<B> = initialState;
-
-          const quantizer: LiveQuantizer<B, O> = {
-            _tag: 'Quantizer',
-            boundary,
-            config,
-            state: stateCell,
-            stateSync: () => previousState,
-            changes: crossingChannel,
-
-            evaluate(value: number): StateUnion<B> {
-              // Disposed → the state/outputs/crossing kernels are closed and their publishes
-              // are inert; advancing `previousState`/HLC here would diverge `stateSync()` (and
-              // this return) from the frozen `state.read()`/`currentOutputs.read()` — and a
-              // disposed-but-referenced quantizer would report an advancing discrete state its
-              // own reactive channel never emits (Compositor.computeStateSync reads stateSync()).
-              // Freeze at the last committed state.
-              if (lifetime.disposed) return previousState;
-              const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
-
-              if (result.crossed) {
-                // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
-                // defines it as ≈ Date.now()), so advance through the injected
-                // wall-clock boundary (`tickClock`, defaulting to wallClock) —
-                // the epoch entropy boundary — not the monotonic systemClock.
-                // `hlc` is this instance's own clock, so the stamp is a
-                // function of this quantizer's crossings alone.
-                hlc = HLC.increment(hlc, tickClock.now());
-                const crossing: BoundaryCrossing<StateUnion<B> & string> = {
-                  from: mkStateName<StateUnion<B> & string>(previousState),
-                  to: mkStateName(result.state),
-                  timestamp: hlc satisfies HLCBrand,
-                  value,
-                };
-                previousState = result.state;
-
-                const newOutputs = resolveOutputs(outputs, result.state, allowedTargets, frozenForced, id, springCSS);
-                // Publish state + outputs + crossing as ONE consistent advance (were
-                // `Effect.runSync(Effect.all([...]))` + `Queue.offerUnsafe`). The kernel
-                // fan-out is fail-fast, so a bare sequential publish would let a throwing
-                // subscriber on the first channel ABORT before the later channels advance —
-                // stranding `currentOutputs`/`changes` on the old state while `previousState`
-                // has already moved (an inconsistent public view that can strand a
-                // crossing-driven AnimatedQuantizer). Attempt all three, then rethrow the
-                // first listener fault — the same sink-error law the disposal path applies.
-                let publishFault: { readonly error: unknown } | undefined;
-                for (const publish of [
-                  (): void => stateCell.publish(result.state),
-                  (): void => outputCell.publish(newOutputs),
-                  (): void => crossingChannel.publish(crossing),
-                ]) {
-                  try {
-                    publish();
-                  } catch (error) {
-                    if (publishFault === undefined) publishFault = { error };
-                  }
-                }
-                if (publishFault !== undefined) throw publishFault.error;
-              }
-
-              return result.state;
-            },
-
-            currentOutputs: outputCell,
-            outputChanges: outputCell,
-          };
-
-          return { quantizer, lifetime };
-        },
-      };
-
-      configCache.set(id, config);
-      forcedTargets = null;
-      return config;
-    },
-
-    force(...targets: OutputTarget[]): QuantizerBuilder<B> {
-      forcedTargets = new Set(targets);
-      return builder;
-    },
-  };
-
-  return builder;
+  const config: QuantizerConfig<B, O> = Object.freeze({
+    boundary,
+    outputs: outputsSnapshot,
+    id,
+    tier,
+    spring: springSnapshot,
+    force: forceSnapshot,
+  });
+  cache.set(id, config);
+  return config;
 }
 
+// ---------------------------------------------------------------------------
+// createQuantizer(definition) — allocate the live reactive instance
+// ---------------------------------------------------------------------------
+
 /**
- * Quantizer builder namespace.
+ * Allocate a live {@link LiveQuantizer} from an immutable {@link QuantizerConfig}
+ * definition, paired with the {@link Lifetime} that owns its teardown.
  *
- * `Q.from(boundary)` starts a fluent builder that produces a content-addressed
- * {@link QuantizerConfig}. Calling `config.create()` yields a reactive
- * {@link LiveQuantizer} (paired with its {@link Lifetime}) that evaluates numeric
- * input values against boundary thresholds, dispatches state transitions, and
- * routes per-state outputs (CSS, GLSL, WGSL, ARIA, AI) gated by MotionTier.
+ * The instance evaluates numeric input values against the boundary's thresholds,
+ * dispatches state transitions, and routes per-state outputs (CSS, GLSL, WGSL,
+ * ARIA, AI) gated by MotionTier. Disposing the lifetime closes the state /
+ * outputs / crossings kernels (completing every subscriber and making publish
+ * inert).
+ *
+ * Pass a {@link QuantizerRuntime} to inject the wall-clock boundary that advances
+ * this instance's monotonic crossing HLC; omit it to default to `@liteship/core`'s
+ * `wallClock`. The clock is per-instantiation, never part of the cached config's
+ * identity.
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { Q } from '@czap/quantizer';
+ * import { defineBoundary } from '@liteship/core';
+ * import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });
- * const config = Q.from(boundary).outputs({
- *   css: { sm: { display: 'block' }, lg: { display: 'grid' } },
+ * const config = defineQuantizer(boundary, {
+ *   outputs: { css: { sm: { display: 'block' }, lg: { display: 'grid' } } },
  * });
- * const { quantizer: live, lifetime } = config.create();
+ * const live = createQuantizer(config);
  * live.evaluate(1024);
  * const result = live.currentOutputs.read();
  * // result.css => { display: 'grid' }
- * await lifetime.dispose();
+ * await live.dispose();
  * ```
+ *
+ * @param definition - The immutable config authored by {@link defineQuantizer}
+ * @param runtime    - Optional per-instantiation clock / HLC node injection
+ * @returns An {@link OwnedQuantizer} — the live instance that owns its own teardown via `dispose()`
  */
-export const Q = {
-  from: fromBoundary,
-} as const;
+export function createQuantizer<B extends Boundary, O extends QuantizerOutputs<B>>(
+  definition: QuantizerConfig<B, O>,
+  runtime?: QuantizerRuntime,
+): OwnedQuantizer<B, O> {
+  const { boundary, outputs, id, tier, spring, force } = definition;
+  const admittedTargets = resolveQuantizerTargets(tier, force);
+  // Recompute (getSpringCSS is memoized): the easing string is derived reactive
+  // value, not part of the config's authored identity, so it lives on the instance.
+  const springCSS = spring && outputs.css ? getSpringCSS(spring) : null;
+
+  // Per-instantiation monotonic clock: this live quantizer OWNS its HLC,
+  // so its crossing timestamps depend only on its own evaluate() calls
+  // and the injected wall-clock boundary — never on how many other
+  // quantizers evaluated first in this process. No module global.
+  const tickClock: Clock = runtime?.clock ?? wallClock;
+  let hlc = HLC.create(runtime?.node ?? 'quantizer');
+
+  // defineBoundary guarantees non-empty states; head access widens to StateUnion<B>.
+  const initialState: StateUnion<B> = firstState(boundary);
+  const initialOutputs = resolveOutputs(outputs, initialState, admittedTargets, id, springCSS);
+
+  // Reactive substrate on the extracted CellKernel (was SubscriptionRef /
+  // Queue): a replay-1 current-state slot, a replay-1 outputs slot (its
+  // `subscribe` gives the outputChanges replay-1 stream, its `read` the
+  // currentOutputs read), and a no-replay crossing fan-out. The owning
+  // Lifetime closes all three on dispose (replacing the Effect scope).
+  const stateCell = CellKernel.replay1<StateUnion<B>>(initialState);
+  const outputCell = CellKernel.replay1<OutputRecord>(initialOutputs);
+  const crossingChannel = CellKernel.fanout<BoundaryCrossing<StateUnion<B> & string>>();
+
+  const lifetime = Lifetime.make();
+  lifetime.add(() => {
+    // Close ALL three channels even if one channel's completion pass throws
+    // (a `complete` callback can throw, and `CellKernel.close` rethrows the
+    // first fault per the sink-error law). A bare sequential
+    // `stateCell.close(); outputCell.close(); crossingChannel.close();` would
+    // let the first throw STRAND the later channels open, so a still-open
+    // channel could keep publishing to subscribers that were never completed.
+    // Complete every channel, then rethrow the first fault (same law the
+    // kernel's own `close` applies to its sinks).
+    let firstFault: { readonly error: unknown } | undefined;
+    for (const closeChannel of [stateCell.close, outputCell.close, crossingChannel.close]) {
+      try {
+        closeChannel();
+      } catch (error) {
+        if (firstFault === undefined) firstFault = { error };
+      }
+    }
+    if (firstFault !== undefined) throw firstFault.error;
+  });
+
+  let previousState: StateUnion<B> = initialState;
+
+  const quantizer: LiveQuantizer<B, O> = {
+    _tag: 'Quantizer',
+    boundary,
+    config: definition,
+    state: stateCell,
+    stateSync: () => previousState,
+    changes: crossingChannel,
+
+    evaluate(value: number): StateUnion<B> {
+      // Disposed → the state/outputs/crossing kernels are closed and their publishes
+      // are inert; advancing `previousState`/HLC here would diverge `stateSync()` (and
+      // this return) from the frozen `state.read()`/`currentOutputs.read()` — and a
+      // disposed-but-referenced quantizer would report an advancing discrete state its
+      // own reactive channel never emits (Compositor.computeStateSync reads stateSync()).
+      // Freeze at the last committed state.
+      if (lifetime.disposed) return previousState;
+      const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
+
+      if (result.crossed) {
+        // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
+        // defines it as ≈ Date.now()), so advance through the injected
+        // wall-clock boundary (`tickClock`, defaulting to wallClock) —
+        // the epoch entropy boundary — not the monotonic systemClock.
+        // `hlc` is this instance's own clock, so the stamp is a
+        // function of this quantizer's crossings alone.
+        hlc = HLC.increment(hlc, tickClock.now());
+        const crossing: BoundaryCrossing<StateUnion<B> & string> = {
+          from: mkStateName<StateUnion<B> & string>(previousState),
+          to: mkStateName(result.state),
+          timestamp: hlc satisfies HLCBrand,
+          value,
+        };
+        previousState = result.state;
+
+        const newOutputs = resolveOutputs(outputs, result.state, admittedTargets, id, springCSS);
+        // Publish state + outputs + crossing as ONE consistent advance (were
+        // `Effect.runSync(Effect.all([...]))` + `Queue.offerUnsafe`). The kernel
+        // fan-out is fail-fast, so a bare sequential publish would let a throwing
+        // subscriber on the first channel ABORT before the later channels advance —
+        // stranding `currentOutputs`/`changes` on the old state while `previousState`
+        // has already moved (an inconsistent public view that can strand a
+        // crossing-driven AnimatedQuantizer). Attempt all three, then rethrow the
+        // first listener fault — the same sink-error law the disposal path applies.
+        let publishFault: { readonly error: unknown } | undefined;
+        for (const publish of [
+          (): void => stateCell.publish(result.state),
+          (): void => outputCell.publish(newOutputs),
+          (): void => crossingChannel.publish(crossing),
+        ]) {
+          try {
+            publish();
+          } catch (error) {
+            if (publishFault === undefined) publishFault = { error };
+          }
+        }
+        if (publishFault !== undefined) throw publishFault.error;
+      }
+
+      return result.state;
+    },
+
+    currentOutputs: outputCell,
+    outputChanges: outputCell,
+  };
+
+  return attachLifetime(quantizer, lifetime);
+}

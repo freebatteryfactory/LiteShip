@@ -2,7 +2,7 @@
  * The banned-pattern invariant ledger (relocated from `scripts/check-invariants.ts`
  * when the gate became the `check-invariants` command). Pure data — no Node
  * coupling — so the CLI-only scan capability (`runCheckInvariants`, provisioned
- * by `@czap/cli`) can import it without pulling fs into the pure registry entry,
+ * by `@liteship/cli`) can import it without pulling fs into the pure registry entry,
  * and so `scripts/audit/report.ts` can import the rule set directly.
  *
  * `INVARIANTS` is the fast-lane rule set: each entry is a banned source pattern
@@ -39,20 +39,28 @@ const INVARIANT_GATE_FILES: readonly string[] = [
   'packages/command/src/registry.ts',
 ];
 
+/**
+ * Published consumer assets that happen to contain TypeScript, but are not
+ * executable source owned by the package that carries them. The CLI fragment
+ * tree is a byte-for-byte generated projection guarded by `gen-roster`; its
+ * authored owners remain `examples/` and `create-liteship/templates/`.
+ */
+const PACKAGED_ASSET_TREES: readonly string[] = ['packages/create-liteship/templates/', 'packages/cli/fragments/'];
+
 /** The fast-lane invariant rule set (repo-local; imported by the CLI scan + audit report). */
 export const INVARIANTS: readonly CheckInvariantEntry[] = [
   {
     name: 'NO_REQUIRE',
     pattern: /\brequire\s*\(/,
     dirs: ['packages'],
-    exclude: INVARIANT_GATE_FILES,
+    exclude: [...PACKAGED_ASSET_TREES, ...INVARIANT_GATE_FILES],
     message: 'Use ESM imports, not require().',
   },
   {
     name: 'NO_MODULE_EXPORTS',
     pattern: /module\.exports/,
     dirs: ['packages'],
-    exclude: INVARIANT_GATE_FILES,
+    exclude: [...PACKAGED_ASSET_TREES, ...INVARIANT_GATE_FILES],
     message: 'Use ESM exports, not module.exports.',
   },
   {
@@ -68,7 +76,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
     exclude: [
       'packages/astro/src/client-directives/',
       'packages/astro/src/runtime/inspector-toolbar-app.ts',
-      'packages/create-liteship/templates/',
+      ...PACKAGED_ASSET_TREES,
       ...INVARIANT_GATE_FILES,
     ],
     message: 'Named exports only, except Astro client directives.',
@@ -78,6 +86,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
     pattern: /\bvar\s+\w/,
     dirs: ['packages'],
     exclude: [
+      ...PACKAGED_ASSET_TREES,
       'packages/astro/src/integration.ts',
       'packages/remotion/src/hooks.ts',
       'packages/astro/src/client-directives/worker.ts',
@@ -86,7 +95,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
   },
   {
     // 0.3.0 signal source-of-truth: the runtime hot path must derive its signal
-    // axis from `inputToSource` (@czap/core, the SignalSource source of truth),
+    // axis from `inputToSource` (@liteship/core, the SignalSource source of truth),
     // never re-parse the dot-string with `startsWith('scroll.'/'viewport.')`.
     // The two diagnostic sites below legitimately namespace-check the input to
     // pick a teaching message (not to read a value), so they are excluded.
@@ -101,7 +110,7 @@ export const INVARIANTS: readonly CheckInvariantEntry[] = [
       'packages/astro/src/runtime/inspector/',
     ],
     message:
-      'Derive the signal axis from inputToSource(@czap/core), not a startsWith re-parse. ' +
+      'Derive the signal axis from inputToSource(@liteship/core), not a startsWith re-parse. ' +
       'If this is a diagnostic namespace check, add the file to the NO_SIGNAL_INPUT_REPARSE exclude.',
   },
 ] as const;

@@ -1,6 +1,6 @@
 {
-  "name": "@czap/core",
-  "version": "0.18.0",
+  "name": "@liteship/core",
+  "version": "0.19.0",
   "description": "The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "adaptive-rendering",
     "constraint-based",
@@ -23,12 +22,57 @@
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, `./testing`, `./harness`, and `./simulation` are importable. There is DELIBERATELY no `\"./*\"` wildcard: a wildcard would expose every `src/*.ts` module as a public subpath, leaking the internal layout and preventing safe refactoring. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the RUNG_TARGETS subpath leak). Internal relative imports `./validated-output.js` are unaffected. Both halves (no-wildcard + the deny) are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
+  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, the nine curated DOMAIN facades (`./authoring`, `./reactive`, `./motion`, `./graph`, `./evidence`, `./schema`, `./media`, `./clock`, `./wasm`), `./testing`, `./harness`, `./simulation`, and `./fs-walk` are importable. Each domain subpath resolves to a `src/<domain>/index.ts` facade that is EXPLICIT curated named re-exports only (no `export *`), so the subpath surface is the reviewed public surface of that domain — never the raw source layout. There is DELIBERATELY no `\"./*\"` wildcard and NO `./internal` subpath: a wildcard would expose every `src/*.ts` module as a public subpath and prevent safe refactoring. Public leaf utilities are owned by their semantic domains and exposed only through the curated facades. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts (under `src/evidence/`) holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the TIER_TARGET_SETS subpath leak). Internal relative imports `./evidence/validated-output.js` are unaffected. Both halves (no-wildcard + the deny) plus the closed domain allowlist are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.js",
+      "development": "./src/authoring/index.ts"
+    },
+    "./reactive": {
+      "types": "./dist/reactive/index.d.ts",
+      "import": "./dist/reactive/index.js",
+      "development": "./src/reactive/index.ts"
+    },
+    "./motion": {
+      "types": "./dist/motion/index.d.ts",
+      "import": "./dist/motion/index.js",
+      "development": "./src/motion/index.ts"
+    },
+    "./graph": {
+      "types": "./dist/graph/index.d.ts",
+      "import": "./dist/graph/index.js",
+      "development": "./src/graph/index.ts"
+    },
+    "./evidence": {
+      "types": "./dist/evidence/index.d.ts",
+      "import": "./dist/evidence/index.js",
+      "development": "./src/evidence/index.ts"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js",
+      "development": "./src/schema/index.ts"
+    },
+    "./media": {
+      "types": "./dist/media/index.d.ts",
+      "import": "./dist/media/index.js",
+      "development": "./src/media/index.ts"
+    },
+    "./clock": {
+      "types": "./dist/clock/index.d.ts",
+      "import": "./dist/clock/index.js",
+      "development": "./src/clock/index.ts"
+    },
+    "./wasm": {
+      "types": "./dist/wasm/index.d.ts",
+      "import": "./dist/wasm/index.js",
+      "development": "./src/wasm/index.ts"
     },
     "./testing": {
       "types": "./dist/testing.d.ts",
@@ -62,14 +106,14 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/_spine": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
+    "@liteship/_spine": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
     "@standard-schema/spec": "^1.1.0",
     "@noble/hashes": "^1.8.0",
     "cborg": "^4.2.0"
   },
-  "//peer-fast-check": "OPTIONAL peer: the core surface (`.`) needs none of it, but the opt-in `./harness` subpath (arbitrary-from-schema) imports fast-check at RUNTIME to realize schema-derived arbitraries. Declaring it here (optional) closes the public-subpath dependency closure — a fresh consumer importing `@czap/core/harness` is told to provide fast-check, instead of silently relying on a hoisted dev copy (the Wave-8 fast-check scar). Guarded by tests/unit/devops/declared-dependency-closure.test.ts.",
+  "//peer-fast-check": "OPTIONAL peer: the core surface (`.`) needs none of it, but the opt-in `./harness` subpath (arbitrary-from-schema) imports fast-check at RUNTIME to realize schema-derived arbitraries. Declaring it here (optional) closes the public-subpath dependency closure — a fresh consumer importing `@liteship/core/harness` is told to provide fast-check, instead of silently relying on a hoisted dev copy (the Wave-8 fast-check scar). Guarded by tests/unit/devops/declared-dependency-closure.test.ts.",
   "peerDependencies": {
     "fast-check": ">=4.0.0"
   },

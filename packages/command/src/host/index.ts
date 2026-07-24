@@ -1,5 +1,5 @@
 /**
- * `@czap/command/host` — Node host execution for the command registry. The
+ * `@liteship/command/host` — Node host execution for the command registry. The
  * canonical home for spawn, the vitest runner, the ffmpeg render backend, the
  * idempotency cache, manifest-path resolution, and the shared
  * `createNodeCommandContext()` factory. The CLI and MCP adapters both build
@@ -7,7 +7,7 @@
  * never imports the CLI.
  *
  * Importing this pulls Node-coupled code (child_process, fs, ffmpeg). The pure
- * `@czap/command` main entry (registry, descriptors, handlers, types) does NOT
+ * `@liteship/command` main entry (registry, descriptors, handlers, types) does NOT
  * import this — keep that boundary intact.
  *
  * @module

@@ -6,7 +6,7 @@
 
 # Interface: ComponentNode
 
-Defined in: [core/src/document-graph.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L71)
+Defined in: [core/src/graph/document-graph.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L71)
 
 3. Component — a boundary/token/style slot. Carries the kernel inputs inline so eval is reproducible.
 
@@ -20,7 +20,7 @@ Defined in: [core/src/document-graph.ts:71](https://github.com/freebatteryfactor
 
 > `readonly` **\_tag**: `"DocGraphComponentNode"`
 
-Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
+Defined in: [core/src/graph/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L49)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactor
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
+Defined in: [core/src/graph/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L50)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **boundaryRef?**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L73)
+Defined in: [core/src/graph/document-graph.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L73)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [core/src/document-graph.ts:73](https://github.com/freebatteryfactor
 
 > `readonly` **family**: `"component"`
 
-Defined in: [core/src/document-graph.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L51)
+Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L51)
 
 #### Inherited from
 
@@ -64,7 +64,7 @@ Defined in: [core/src/document-graph.ts:51](https://github.com/freebatteryfactor
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L53)
+Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 
 `fnv1a` content address over the node payload (set by `addressNode`/`sealNode`).
 
@@ -78,7 +78,7 @@ Defined in: [core/src/document-graph.ts:53](https://github.com/freebatteryfactor
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L55)
+Defined in: [core/src/graph/document-graph.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L55)
 
 HLC created/updated + version. Excluded from the content address (volatile).
 
@@ -92,7 +92,7 @@ HLC created/updated + version. Excluded from the content address (volatile).
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/document-graph.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L72)
+Defined in: [core/src/graph/document-graph.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L72)
 
 ***
 
@@ -100,7 +100,7 @@ Defined in: [core/src/document-graph.ts:72](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **states?**: readonly [`StateName`](../type-aliases/StateName.md)[]
 
-Defined in: [core/src/document-graph.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L75)
+Defined in: [core/src/graph/document-graph.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L75)
 
 ***
 
@@ -108,4 +108,4 @@ Defined in: [core/src/document-graph.ts:75](https://github.com/freebatteryfactor
 
 > `readonly` `optional` **thresholds?**: readonly `ThresholdValue`[]
 
-Defined in: [core/src/document-graph.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L74)
+Defined in: [core/src/graph/document-graph.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L74)

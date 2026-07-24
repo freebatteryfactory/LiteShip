@@ -4,7 +4,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** Registered asset id — validated by {@link AssetRegistry} against the module registry. */
 export type AssetRefId = string & { readonly __brand: unique symbol };

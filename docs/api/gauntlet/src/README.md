@@ -6,7 +6,7 @@
 
 # gauntlet/src
 
-`@czap/gauntlet` — the self-proving, extendable rigor engine.
+`@liteship/gauntlet` — the self-proving, extendable rigor engine.
 
 The foundations (Slice A): the [Finding](interfaces/Finding.md) vocabulary humans and agents
 share, [AssuranceLevel](type-aliases/AssuranceLevel.md) (the hazard model that aims rigor), the
@@ -34,6 +34,8 @@ change underneath them.
 - [AssuranceSurface](interfaces/AssuranceSurface.md)
 - [CapabilityLinkFacts](interfaces/CapabilityLinkFacts.md)
 - [CapabilityLinkResult](interfaces/CapabilityLinkResult.md)
+- [CheckGovernanceFacts](interfaces/CheckGovernanceFacts.md)
+- [CheckPartitionFacts](interfaces/CheckPartitionFacts.md)
 - [CiAuthorityFacts](interfaces/CiAuthorityFacts.md)
 - [CompositionFacts](interfaces/CompositionFacts.md)
 - [DeclaredFix](interfaces/DeclaredFix.md)
@@ -86,12 +88,14 @@ change underneath them.
 - [ModuleProofSignals](interfaces/ModuleProofSignals.md)
 - [MutantOutcome](interfaces/MutantOutcome.md)
 - [MutationFacts](interfaces/MutationFacts.md)
+- [NegativeControlFact](interfaces/NegativeControlFact.md)
 - [OracleDivergenceSpec](interfaces/OracleDivergenceSpec.md)
 - [PackageNode](interfaces/PackageNode.md)
 - [ProofFacts](interfaces/ProofFacts.md)
 - [ProofSignals](interfaces/ProofSignals.md)
 - [ProvenanceFacts](interfaces/ProvenanceFacts.md)
 - [RefSite](interfaces/RefSite.md)
+- [RegisteredCheckFact](interfaces/RegisteredCheckFact.md)
 - [ReplayDivergence](interfaces/ReplayDivergence.md)
 - [RepoIR](interfaces/RepoIR.md)
 - [RepoIRParts](interfaces/RepoIRParts.md)
@@ -126,6 +130,7 @@ change underneath them.
 - [TransitionFacts](interfaces/TransitionFacts.md)
 - [Waiver](interfaces/Waiver.md)
 - [WaiverApplication](interfaces/WaiverApplication.md)
+- [WaiverFreshnessFact](interfaces/WaiverFreshnessFact.md)
 - [WaiverSurface](interfaces/WaiverSurface.md)
 
 ## Type Aliases
@@ -175,6 +180,9 @@ change underneath them.
 - [ASSURANCE](variables/ASSURANCE.md)
 - [ASSURANCE\_LEVELS](variables/ASSURANCE_LEVELS.md)
 - [capabilityGateLinkGate](variables/capabilityGateLinkGate.md)
+- [checkNegativeControlGate](variables/checkNegativeControlGate.md)
+- [checkRegistryCompleteGate](variables/checkRegistryCompleteGate.md)
+- [checkWaiverFreshnessGate](variables/checkWaiverFreshnessGate.md)
 - [CLAIM\_PROPERTY\_RULE\_ID](variables/CLAIM_PROPERTY_RULE_ID.md)
 - [claimPropertyGate](variables/claimPropertyGate.md)
 - [COMPOSITION\_SEVERITY\_BY\_LEVEL](variables/COMPOSITION_SEVERITY_BY_LEVEL.md)
@@ -185,7 +193,9 @@ change underneath them.
 - [crdtLawsGate](variables/crdtLawsGate.md)
 - [declaredFixProtocolGate](variables/declaredFixProtocolGate.md)
 - [DEFAULT\_GAUNTLET\_GLOBS](variables/DEFAULT_GAUNTLET_GLOBS.md)
+- [diagnosticCodeRegisteredGate](variables/diagnosticCodeRegisteredGate.md)
 - [DIVERGENCE\_SEVERITY\_BY\_LEVEL](variables/DIVERGENCE_SEVERITY_BY_LEVEL.md)
+- [facadeExportBudgetGate](variables/facadeExportBudgetGate.md)
 - [FACT\_CHANNELS](variables/FACT_CHANNELS.md)
 - [FACT\_KINDS](variables/FACT_KINDS.md)
 - [fuzzCorpusGate](variables/fuzzCorpusGate.md)
@@ -213,6 +223,7 @@ change underneath them.
 - [noSkippedTestFactGate](variables/noSkippedTestFactGate.md)
 - [noSkippedTestGate](variables/noSkippedTestGate.md)
 - [noTsIgnoreGate](variables/noTsIgnoreGate.md)
+- [noUnregisteredTodoGate](variables/noUnregisteredTodoGate.md)
 - [noVarDivergenceGate](variables/noVarDivergenceGate.md)
 - [PERF\_CLAIM\_BENCH\_RULE\_ID](variables/PERF_CLAIM_BENCH_RULE_ID.md)
 - [perfClaimBenchGate](variables/perfClaimBenchGate.md)
@@ -252,6 +263,9 @@ change underneath them.
 - [coverageClassSeverity](functions/coverageClassSeverity.md)
 - [coverageDigestOf](functions/coverageDigestOf.md)
 - [decideActiveSurfaceReaders](functions/decideActiveSurfaceReaders.md)
+- [decideCheckNegativeControl](functions/decideCheckNegativeControl.md)
+- [decideCheckRegistryComplete](functions/decideCheckRegistryComplete.md)
+- [decideCheckWaiverFreshness](functions/decideCheckWaiverFreshness.md)
 - [decideSkips](functions/decideSkips.md)
 - [decideSkipSite](functions/decideSkipSite.md)
 - [defineFactGate](functions/defineFactGate.md)

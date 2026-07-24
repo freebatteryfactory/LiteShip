@@ -7,7 +7,7 @@
  * @module
  */
 
-import { wallClock } from '@czap/core';
+import { wallClock } from '@liteship/core';
 import { spawnArgvCapture } from '../lib/spawn.js';
 import { emit } from '../receipts.js';
 

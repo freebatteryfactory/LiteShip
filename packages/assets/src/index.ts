@@ -1,4 +1,4 @@
-/** `@czap/assets` — **LiteShip** asset capsules and cached analysis projections (waveform, beats, onsets). */
+/** `@liteship/assets` — **LiteShip** asset capsules and cached analysis projections (waveform, beats, onsets). */
 
 export {
   defineAsset,

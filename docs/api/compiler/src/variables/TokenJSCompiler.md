@@ -24,14 +24,14 @@ the build artifact stays 100% generated.
 
 Compile a token array into parallel `.ts` source and `.d.ts` declaration.
 
-Compile a list of [Token.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md) into a JS object + companion type
+Compile a list of [Token](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md) into a JS object + companion type
 declaration, grouped by category.
 
 #### Parameters
 
 ##### tokens
 
-readonly [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md)\<`string`, readonly `string`[]\>[]
+readonly [`Token`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md)[]
 
 #### Returns
 

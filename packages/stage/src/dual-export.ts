@@ -4,10 +4,10 @@
  *
  * This is the verb/orchestration layer. It owns no identity kernel of its own:
  * every content address is minted through `CanonicalCbor.encode` →
- * `AddressedDigest.of` (the `@czap/core` kernel, ADR-0003/0011), and every
- * caster it drives already EXISTS — `CSSCompiler.compile` (`@czap/compiler`),
- * `resolveInitialState`/`satelliteAttrs` (`@czap/astro`), `VideoRenderer.make`
- * over a `Compositor` (`@czap/core`). Stage reinvents none of them; it only
+ * `AddressedDigest.of` (the `@liteship/core` kernel, ADR-0003/0011), and every
+ * caster it drives already EXISTS — `CSSCompiler.compile` (`@liteship/compiler`),
+ * `resolveInitialState`/`adaptiveAttrs` (`@liteship/astro`), `VideoRenderer.make`
+ * over a `Compositor` (`@liteship/core`). Stage reinvents none of them; it only
  * walks the graph and binds the casters' outputs back to the graph's source.
  *
  * The shared-source hash is the **DocumentGraph.digest** itself — not a hash of
@@ -33,8 +33,8 @@ import type {
   ReceiptEnvelope,
   ContentAddress,
   Millis,
-} from '@czap/core';
-import type { AddressedDigest } from '@czap/core';
+} from '@liteship/core';
+import type { AddressedDigest } from '@liteship/core';
 import {
   CanonicalCbor,
   AddressedDigest as AddressedDigestNS,
@@ -45,10 +45,11 @@ import {
   Receipt,
   TypedRef,
   HLC,
-} from '@czap/core';
-import { ValidationError } from '@czap/error';
-import { CSSCompiler } from '@czap/compiler';
-import { resolveInitialState, satelliteAttrs } from '@czap/astro';
+  defineBoundary,
+} from '@liteship/core';
+import { ValidationError } from '@liteship/error';
+import { CSSCompiler } from '@liteship/compiler';
+import { resolveInitialState, adaptiveAttrs } from '@liteship/astro';
 // `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
 // requires OffscreenCanvas / createImageBitmap, which are not present in a
 // headless Node test env (see packages/web/src/capture/pipeline.ts). We import
@@ -58,8 +59,8 @@ import { resolveInitialState, satelliteAttrs } from '@czap/astro';
 // encode, so the digest is a true content address of the produced frames —
 // the byte-encode of the codec is the INJECTED seam (browser: WebCodecs via
 // `captureVideo`; node: the ffmpeg `FrameEncoder` adapter in `./ffmpeg-encoder`).
-import { escapeHtml } from '@czap/web';
-import type { captureVideo } from '@czap/web';
+import { escapeHtml } from '@liteship/web';
+import type { captureVideo } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // FrameEncoder — the injectable byte-encode seam (two real backends, one shape)
@@ -88,7 +89,7 @@ export interface EncodedVideo {
  * snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
  * is INJECTED at the call site so the pure graph-walk never imports a codec:
  *
- *  - browser/worker: WebCodecs over an OffscreenCanvas (`@czap/web` capture);
+ *  - browser/worker: WebCodecs over an OffscreenCanvas (`@liteship/web` capture);
  *  - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
  *
  * Both are real backends of this one shape; neither lives in `dual-export.ts`.
@@ -133,11 +134,11 @@ function poses(graph: DocumentGraph): readonly PoseNode[] {
  * the existing casters need: both `CSSCompiler.compile` and `Compositor` take a
  * boundary, and the graph node is the authoritative source for it.
  */
-function boundaryOf(component: ComponentNode): Boundary.Shape {
+function boundaryOf(component: ComponentNode): Boundary {
   const states = (component.states ?? []) as readonly string[];
   const thresholds = (component.thresholds ?? []) as readonly number[];
   const at = states.map((state, i) => [thresholds[i] ?? 0, state] as const);
-  // Boundary.make requires a non-empty tuple — validate before the cast lies,
+  // defineBoundary requires a non-empty tuple — validate before the cast lies,
   // so an empty ComponentNode fails with a clear message, not a cryptic one.
   if (at.length === 0) {
     throw ValidationError(
@@ -145,10 +146,10 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
       `ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
     );
   }
-  return Boundary.make({
+  return defineBoundary({
     input: component.name,
     at: at as unknown as readonly [readonly [number, string], ...(readonly [number, string])[]],
-  }) as Boundary.Shape;
+  }) as Boundary;
 }
 
 // ---------------------------------------------------------------------------
@@ -160,8 +161,8 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
  *
  * Walks each `css` {@link ProjectionNode} → its source {@link ComponentNode} →
  * `CSSCompiler.compile` (the existing compiler) for the `<style>` block, then
- * `resolveInitialState` + `satelliteAttrs` (the existing astro helpers) for the
- * satellite shell. The page bytes are content-addressed via
+ * `resolveInitialState` + `adaptiveAttrs` (the existing astro helpers) for the
+ * adaptive shell. The page bytes are content-addressed via
  * `AddressedDigest.of(CanonicalCbor.encode(...))` — the core kernel, never
  * JSON/cborg — and returned as a sealed `ExportNode{carrier:'astro-page'}`
  * whose `sourceRefs` are exactly the projection ids it consumed.
@@ -194,7 +195,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
     styleBlocks.push(compiled.raw);
 
     const initialState = resolveInitialState(boundary);
-    const attrs = satelliteAttrs({ boundary, initialState, directive: false });
+    const attrs = adaptiveAttrs({ boundary, initialState, directive: false });
     const attrStr = Object.entries(attrs)
       .map(([k, v]) => `${k}="${escapeHtml(String(v))}"`)
       .join(' ');
@@ -245,7 +246,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
  * them). The `CompositorQuantizer` return type is what `Compositor.add` requires —
  * the required `stateSync` proves at compile time this quantizer can produce a state.
  */
-function poseQuantizer(boundary: Boundary.Shape, initialState: string): CompositorQuantizer<Boundary.Shape> {
+function poseQuantizer(boundary: Boundary, initialState: string): CompositorQuantizer<Boundary> {
   let current = initialState;
   return {
     _tag: 'Quantizer',
@@ -284,11 +285,11 @@ type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<s
  */
 function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   const projections = cssProjections(graph);
-  // Compositor.create is now sync-first: it returns the live instance plus the
-  // Lifetime that owns its teardown (was `yield* Compositor.create()` in an
-  // Effect scope). `add`/`compute` are plain sync calls; the loop body was
-  // already fully synchronous, so the whole cast collapses to straight-line JS.
-  const { compositor, lifetime } = Compositor.create();
+  // Compositor.create is now sync-first: it returns the live instance that owns
+  // its own teardown (was `yield* Compositor.create()` in an Effect scope).
+  // `add`/`compute` are plain sync calls; the loop body was already fully
+  // synchronous, so the whole cast collapses to straight-line JS.
+  const compositor = Compositor.create();
   try {
     const posed = poses(graph);
     // Keep each added quantizer + its boundary so the per-frame schedule can
@@ -301,7 +302,7 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
     // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
     // a non-empty thresholds tuple (it throws otherwise), so the endpoints
     // are always present — no defensive fallback branch to leave uncovered.
-    const driven: { key: string; quantizer: Quantizer<Boundary.Shape>; lo: number; hi: number }[] = [];
+    const driven: { key: string; quantizer: Quantizer<Boundary>; lo: number; hi: number }[] = [];
     for (const projection of projections) {
       const component = componentFor(graph, projection.sourceRef);
       if (!component) continue;
@@ -342,7 +343,7 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   } finally {
     // The compositor's one disposable resource is its reactive `changes` kernel;
     // dispose closes it synchronously (its finalizer is sync) once the cast ends.
-    void lifetime.dispose();
+    void compositor.dispose();
   }
 }
 
@@ -489,9 +490,9 @@ async function childReceipt(
   graph: DocumentGraph,
 ): Promise<ReceiptEnvelope> {
   // TypedRef.create / Receipt.createEnvelope are now Promise-first (throwing
-  // tagged @czap/error), so this is a plain async function — the Effect.gen +
+  // tagged @liteship/error), so this is a plain async function — the Effect.gen +
   // yield* harness is gone, the receipt kernel identical.
-  const payload: TypedRef.Shape = await TypedRef.create(`czap/stage.export.${carrier}`, {
+  const payload: TypedRef = await TypedRef.create(`liteship/stage.export.${carrier}`, {
     carrier,
     exportId: exportNode.id,
     artifactDigest: exportNode.artifactDigest.display_id,
@@ -503,7 +504,7 @@ async function childReceipt(
     `stage.export.${carrier}`,
     { type: 'artifact', id: exportNode.id },
     payload,
-    HLC.increment(HLC.create('czap-stage'), 1),
+    HLC.increment(HLC.create('liteship-stage'), 1),
     Receipt.GENESIS,
   );
 }
@@ -541,7 +542,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
   const astroReceipt = await childReceipt('astro-page', astro, graph);
   const videoReceipt = await childReceipt('video', video, graph);
 
-  const mergePayload: TypedRef.Shape = await TypedRef.create('czap/stage.dual-export.merge', {
+  const mergePayload: TypedRef = await TypedRef.create('liteship/stage.dual-export.merge', {
     sharedSourceDigest: sharedSourceDigest.display_id,
     sharedSourceIntegrity: sharedSourceDigest.integrity_digest,
     graphId: graph.id,
@@ -553,7 +554,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
     'stage.dual-export',
     { type: 'artifact', id: graph.id },
     mergePayload,
-    HLC.increment(HLC.create('czap-stage'), 2),
+    HLC.increment(HLC.create('liteship-stage'), 2),
     [astroReceipt.hash, videoReceipt.hash],
   );
 
@@ -595,13 +596,13 @@ export interface DualExportNodeResult extends DualExportResult {
  * headless, identical to the browser path.
  *
  * Stage's core imports no codec: `encode` is injected. In node, wire
- * `ffmpegFrameEncoder()` from `@czap/stage/ffmpeg` (env-gate with
+ * `ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
  * `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
  *
  * @example
  * ```ts
- * import { dualExportNode } from '@czap/stage';
- * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+ * import { dualExportNode } from '@liteship/stage';
+ * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@liteship/stage/ffmpeg';
  *
  * if (ffmpegEncodeAvailable()) {
  *   const r = await dualExportNode(graph, ffmpegFrameEncoder());

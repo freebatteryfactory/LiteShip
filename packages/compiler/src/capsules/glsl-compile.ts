@@ -8,7 +8,7 @@
  *
  * WHY THE INPUT IS SEED MATERIAL (not a raw `Boundary` + `Record` map): the
  * arbitrary-from-schema walker supports string / number / array / struct
- * but THROWS on index signatures (`S.record`), so a per-state
+ * but THROWS on index signatures (`schema.record`), so a per-state
  * `Record<fieldName, number>` cannot be schema-arbitrary-minted, and a raw
  * `Boundary` carries a content-addressed `id` the walker can't forge. So the
  * input schema generates a small, fully-supported SEED domain — state-name and
@@ -28,8 +28,8 @@
  * @module
  */
 
-import { defineCapsule, Boundary, glslIdent, S } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { defineCapsule, glslIdent, defineBoundary, schema } from '@liteship/core';
+import type { Infer, Boundary } from '@liteship/core';
 import { GLSLCompiler } from '../glsl.js';
 import type { GLSLCompileResult } from '../glsl.js';
 
@@ -38,18 +38,18 @@ import type { GLSLCompileResult } from '../glsl.js';
  * fully supported kernel AST nodes). `run` normalizes it into a valid Boundary +
  * the per-state value maps.
  */
-const GLSLCompileSeed = S.struct({
+const GLSLCompileSeed = schema.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: S.array(S.string),
+  states: schema.array(schema.string),
   /** Candidate field names → deduped authored uniform key set. */
-  fields: S.array(S.string),
+  fields: schema.array(schema.string),
   /**
    * Value matrix `values[stateIdx][fieldIdx]`. A row shorter than `fields`
    * omits that state's trailing fields (ragged coverage → exercises the
    * omitted-uniform-reset completeness law). All values are integers (the
    * number arbitrary mints `fc.integer()`), so the int-type law holds.
    */
-  values: S.array(S.array(S.number)),
+  values: schema.array(schema.array(schema.number)),
 });
 
 type GLSLCompileSeedValue = Infer<typeof GLSLCompileSeed>;
@@ -67,12 +67,12 @@ interface GLSLCompileOutput {
 }
 
 /** Build a valid Boundary from a recorded (deduped) state-name list. */
-function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
+function makeBoundary(stateNames: readonly string[]): Boundary {
   const at = stateNames.map((name, i) => [i, name] as const);
-  return Boundary.make({
+  return defineBoundary({
     input: 'seed.signal',
     at: at as unknown as readonly [readonly [number, string]],
-  }) as unknown as Boundary.Shape;
+  }) as unknown as Boundary;
 }
 
 /**
@@ -84,7 +84,7 @@ function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
  * guards.
  */
 function buildInputs(seed: GLSLCompileSeedValue): {
-  boundary: Boundary.Shape;
+  boundary: Boundary;
   states: StateMaps;
   stateNames: string[];
   fieldNames: string[];
@@ -155,7 +155,7 @@ export const glslCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.glsl-compile',
   input: GLSLCompileSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

@@ -8,7 +8,7 @@
 
 > **collectBoundaryManifest**(`projectRoot`, `options?`): `Promise`\<`Readonly`\<`Record`\<`string`, `BoundaryManifestEntry`\>\>\>
 
-Defined in: [vite/src/boundary-manifest.ts:518](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L518)
+Defined in: [vite/src/boundary-manifest.ts:515](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L515)
 
 Derive the `BoundaryManifest` for a project.
 
@@ -44,10 +44,10 @@ The derived manifest (empty object when nothing is found).
 ## Example
 
 ```ts
-import { collectBoundaryManifest } from '@czap/vite';
-import { resolveOutputsByTier } from '@czap/edge';
+import { collectBoundaryManifest } from '@liteship/vite';
+import { resolveOutputsByTier } from '@liteship/edge';
 
 const manifest = await collectBoundaryManifest('/path/to/app');
-// manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)
+// manifest.viewport.id === 'fnv1a:…' (defineBoundary's address)
 // resolveOutputsByTier(manifest.viewport)['transitions:standard'].css
 ```

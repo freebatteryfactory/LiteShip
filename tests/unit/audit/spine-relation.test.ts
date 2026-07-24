@@ -1,11 +1,12 @@
+// PROVES-CHECK: check/spine-relation-gate
 /**
  * The two-axis spine-relation gate — acceptance (Wave 8.5, issue #156). This is the
  * NO-AUTHORITY-GAP proof: the gate must reproduce every frozen spine-conformance pin's
  * catch mechanically before those pins are absorbed (the S-conflict discipline — never
  * delete a pin ahead of a green gate that subsumes it).
  *
- * It drives the real @czap/audit builder (a ts.Program probe over the spine mirror +
- * the runtime surface) and folds the observed facts through the real @czap/gauntlet
+ * It drives the real @liteship/audit builder (a ts.Program probe over the spine mirror +
+ * the runtime surface) and folds the observed facts through the real @liteship/gauntlet
  * gate. GREEN on the reconciled spine; RED on each of the three historical drift
  * fixtures (CapSet Set→array, Millis brand loss, WGSL omission), injected in-memory via
  * the builder's overlay seam; deterministic; and self-proving through the authority
@@ -20,7 +21,7 @@ import { spineRelationGate } from '../../../packages/gauntlet/src/gates/spine-re
 import { memoryContext } from '../../../packages/gauntlet/src/engine.js';
 import { verifyGate } from '../../../packages/gauntlet/src/authority.js';
 import type { Finding } from '../../../packages/gauntlet/src/finding.js';
-import type { SpineRelationFacts } from '../../../packages/gauntlet/src/spine-relation-facts.js';
+import type { SpineRelationFacts } from '../../../packages/gauntlet/src/facts/spine-relation-facts.js';
 import { LITESHIP_SPINE_ADMISSIONS } from '../../../packages/cli/src/lib/spine-relation-policy.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
@@ -102,14 +103,17 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
       // same direction as the deliberately-wider `schema`. Decomposing Codec into field
       // admissions closes it — encode is pinned `exact`, so a transport widening reds.
       const { facts } = driftedFacts((c) =>
-        c.replace('encode(value: A): Result<I, ParseError>;', 'encode(value: A): Result<I, ParseError> | Promise<I>;'),
+        c.replace(
+          'encode(value: A): Codec.Result<I, Codec.ParseError>;',
+          'encode(value: A): Codec.Result<I, Codec.ParseError> | Promise<I>;',
+        ),
       );
-      const encode = facts.observations.find((o) => o.typeName === "Codec.Shape['encode']")!;
+      const encode = facts.observations.find((o) => o.typeName === "Codec['encode']")!;
       expect(encode.observedRelation).toBe('public-wider'); // widened past exact
-      const decode = facts.observations.find((o) => o.typeName === "Codec.Shape['decode']")!;
+      const decode = facts.observations.find((o) => o.typeName === "Codec['decode']")!;
       expect(decode.observedRelation).toBe('exact'); // decode untouched — the drift is localized
       const findings = gateFindings(facts);
-      expect(findings.some((f) => f.title.includes("Codec.Shape['encode']"))).toBe(true);
+      expect(findings.some((f) => f.title.includes("Codec['encode']"))).toBe(true);
     },
   );
 

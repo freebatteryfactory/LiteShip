@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Messages } from '@czap/worker';
+import { Messages } from '@liteship/worker';
 import { makeResolvedStateEnvelope } from '../../../packages/worker/src/messages.js';
 
 describe('Messages', () => {

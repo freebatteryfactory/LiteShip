@@ -32,7 +32,7 @@ Returns `null` when no viewport container names were collected
 default. A host whose layout can't have `:root` be a container (a
 size-contained `:root` removes it from its parent's size calc, which a
 fixed/absolute viewport-locked wrapper conflicts with) sets the plugin's
-`quantize.container` to a named selector (e.g. `.czap-vp`) and is then
+`quantize.container` to a named selector (e.g. `.liteship-vp`) and is then
 responsible for sizing that element to the viewport. Width-only sheets
 stay `inline-size`; a `viewport-height` name upgrades to `size` + a
 `100dvh` block-size on the chosen selector.

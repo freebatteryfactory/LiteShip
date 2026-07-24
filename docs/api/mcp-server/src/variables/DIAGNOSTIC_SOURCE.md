@@ -6,7 +6,7 @@
 
 # Variable: DIAGNOSTIC\_SOURCE
 
-> `const` **DIAGNOSTIC\_SOURCE**: `"czap-gauntlet"`
+> `const` **DIAGNOSTIC\_SOURCE**: `"liteship-gauntlet"`
 
 Defined in: [mcp-server/src/lsp/diagnostic.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L42)
 

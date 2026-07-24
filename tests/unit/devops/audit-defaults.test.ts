@@ -21,7 +21,7 @@ import {
   runAuditPasses,
   runSurfaceAudit,
   type DevopsProfile,
-} from '@czap/audit';
+} from '@liteship/audit';
 import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-defaults-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-defaults-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -128,7 +128,7 @@ describe('SurfacePolicyShape — every field is optional, absent = check skipped
 
   it('the CLI JSON loader accepts a profile without surfacePolicy', async () => {
     const root = acmeRepo();
-    const profilePath = resolve(root, 'czap.profile.json');
+    const profilePath = resolve(root, 'liteship.profile.json');
     writeFileSync(
       profilePath,
       JSON.stringify({ internalPackagePrefix: '@acme/', packageTopology: {} }),

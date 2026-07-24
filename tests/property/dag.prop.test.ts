@@ -6,7 +6,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { DAG, Receipt, HLC } from '@czap/core';
+import { DAG, Receipt, HLC } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helper: create a simple receipt envelope

@@ -1,0 +1,230 @@
+// @vitest-environment jsdom
+/**
+ * Factory defaults — sensible-default widenings on core factories.
+ *
+ * Covers: defineToken axes/fallback defaults + value-key validation,
+ * Component.make implied slots, Easing.spring engine defaults,
+ * Signal.make source-payload defaults, defineStyle plain-number durations,
+ * Signal.audio normalized-mode validation.
+ */
+
+import { describe, expect, test } from 'vitest';
+import {
+  AVBridge,
+  Easing,
+  Token,
+  defineToken,
+  defineStyle,
+  Signal,
+  createSignal,
+  createComponent,
+} from '@liteship/core';
+import { hasTag } from '@liteship/error';
+
+// ---------------------------------------------------------------------------
+// defineToken — axes default to ['default'], fallback derives from values.default
+// ---------------------------------------------------------------------------
+
+describe('defineToken defaults', () => {
+  test('axes default to ["default"] and fallback derives from values.default', () => {
+    const token = defineToken({ name: 'primary', category: 'color', values: { default: '#000' } });
+
+    expect(token.axes).toEqual(['default']);
+    expect(token.fallback).toBe('#000');
+  });
+
+  test('throws a teaching error when fallback is omitted and values has no "default" key', () => {
+    try {
+      defineToken({ name: 'primary', category: 'color', values: { light: '#000' } });
+      expect.unreachable('expected defineToken to throw');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+      expect(String(error)).toMatch(/values\.default/);
+    }
+  });
+
+  test('explicit axes + fallback behave as before', () => {
+    const token = defineToken({
+      name: 'gap',
+      category: 'spacing',
+      axes: ['density'],
+      values: { compact: '4px' },
+      fallback: '6px',
+    });
+
+    expect(token.axes).toEqual(['density']);
+    expect(Token.tap(token, { density: 'compact' })).toBe('4px');
+    expect(Token.tap(token, { density: 'spacious' })).toBe('6px');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// defineToken — value keys must have one segment per axis
+// ---------------------------------------------------------------------------
+
+describe('defineToken value-key validation', () => {
+  test('rejects keys whose segment count does not match the axis count', () => {
+    try {
+      defineToken({
+        name: 'bg',
+        category: 'color',
+        axes: ['theme', 'contrast'],
+        values: { light: '#fff' },
+        fallback: '#ccc',
+      });
+      expect.unreachable('expected defineToken to throw');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+      expect(String(error)).toMatch(/segment/);
+      expect(String(error)).toMatch(/<contrast>:<theme>/);
+    }
+  });
+
+  test('accepts keys with one value per axis', () => {
+    const token = defineToken({
+      name: 'bg',
+      category: 'color',
+      axes: ['theme', 'contrast'],
+      values: { 'normal:light': '#fff', 'normal:dark': '#111' },
+      fallback: '#ccc',
+    });
+
+    expect(Token.tap(token, { theme: 'dark', contrast: 'normal' })).toBe('#111');
+  });
+
+  test('value shorthand derives empty axes and uses value as fallback', () => {
+    const token = defineToken({ name: 'gap', category: 'spacing', value: '8px' });
+    expect(token.axes).toEqual([]);
+    expect(token.values).toEqual({});
+    expect(token.fallback).toBe('8px');
+    expect(Token.tap(token, {})).toBe('8px');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Component.make — implied default slot, optional `required`
+// ---------------------------------------------------------------------------
+
+describe('Component.make defaults', () => {
+  const styles = defineStyle({ base: { properties: { display: 'flex' } } });
+
+  test('slots default to an implied children slot with defaultSlot "children"', () => {
+    const component = createComponent({ name: 'button', styles });
+
+    expect(component.slots).toEqual({ children: { required: false } });
+    expect(component.defaultSlot).toBe('children');
+  });
+
+  test('omitted `required` normalizes to false and hashes like an explicit false', () => {
+    const implicit = createComponent({ name: 'card', styles, slots: { media: {} } });
+    const explicit = createComponent({ name: 'card', styles, slots: { media: { required: false } } });
+
+    expect(implicit.slots.media).toEqual({ required: false });
+    expect(implicit.id).toBe(explicit.id);
+  });
+
+  test('explicit slots keep defaultSlot unset unless provided', () => {
+    const component = createComponent({ name: 'panel', styles, slots: { header: { required: true } } });
+
+    expect(component.slots.header).toEqual({ required: true });
+    expect(component.defaultSlot).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Easing.spring — engine defaults (stiffness 170, damping 26, mass 1)
+// ---------------------------------------------------------------------------
+
+describe('Easing.spring defaults', () => {
+  test('spring({}) works with engine defaults', () => {
+    const fn = Easing.spring({});
+
+    expect(fn(0)).toBe(0);
+    expect(fn(1)).toBe(1);
+    expect(fn(0.5)).toBeGreaterThan(0);
+  });
+
+  test('spring({}) equals the explicit-default config', () => {
+    const defaulted = Easing.spring({});
+    const explicit = Easing.spring({ stiffness: 170, damping: 26, mass: 1 });
+
+    expect(defaulted(0.25)).toBe(explicit(0.25));
+    expect(defaulted(0.75)).toBe(explicit(0.75));
+  });
+
+  test('springNaturalDuration({}) resolves to a positive finite duration', () => {
+    const duration = Easing.springNaturalDuration({});
+
+    expect(Number.isFinite(duration)).toBe(true);
+    expect(duration).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Signal.make — source payload defaults
+// ---------------------------------------------------------------------------
+
+describe('Signal.make source defaults', () => {
+  test('viewport defaults to axis "width"', () => {
+    const signal = createSignal({ type: 'viewport' });
+    expect(signal.source).toEqual({ type: 'viewport', axis: 'width' });
+    void signal.dispose();
+  });
+
+  test('scroll defaults to axis "y", pointer to "x", time to mode "elapsed"', () => {
+    const scroll = createSignal({ type: 'scroll' });
+    const pointer = createSignal({ type: 'pointer' });
+    const time = createSignal({ type: 'time' });
+
+    expect(scroll.source).toEqual({ type: 'scroll', axis: 'y' });
+    expect(pointer.source).toEqual({ type: 'pointer', axis: 'x' });
+    expect(time.source).toEqual({ type: 'time', mode: 'elapsed' });
+
+    // Release listeners / the elapsed rAF loop (the old scope-close, now Lifetime).
+    void scroll.dispose();
+    void pointer.dispose();
+    void time.dispose();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// defineStyle — plain-number transition durations are branded internally
+// ---------------------------------------------------------------------------
+
+describe('defineStyle transition duration', () => {
+  test('accepts a plain number duration', () => {
+    const style = defineStyle({
+      base: { properties: { color: 'black' } },
+      transition: { duration: 200 },
+    });
+
+    expect(style.transition?.duration).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Signal.audio — normalized mode requires totalDurationSec (no silent degrade)
+// ---------------------------------------------------------------------------
+
+describe('Signal.audio normalized-mode validation', () => {
+  test('throws a ValidationError when totalDurationSec is missing or non-positive', () => {
+    const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
+
+    try {
+      Signal.audio(bridge, 'normalized');
+      expect.unreachable('expected Signal.audio to throw');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+      expect(String(error)).toMatch(/totalDurationSec > 0/);
+    }
+    expect(() => Signal.audio(bridge, 'normalized', 0)).toThrow(/totalDurationSec/);
+  });
+
+  test('sample mode still works without a duration', () => {
+    const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
+    bridge.advanceSamples(100);
+
+    const signal = Signal.audio(bridge);
+    expect(signal.poll()).toBe(100);
+  });
+});

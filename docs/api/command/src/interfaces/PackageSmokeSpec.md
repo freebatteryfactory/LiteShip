@@ -24,7 +24,7 @@ Defined in: [command/src/commands/package-smoke-registry.ts:21](https://github.c
 
 > `readonly` **imports**: readonly `string`[]
 
-Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L23)
+Defined in: [command/src/commands/package-smoke-registry.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L24)
 
 ***
 
@@ -33,3 +33,11 @@ Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.c
 > `readonly` **name**: `string`
 
 Defined in: [command/src/commands/package-smoke-registry.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L22)
+
+***
+
+### runtimeSurface
+
+> `readonly` **runtimeSurface**: `"types-only"` \| `"module"`
+
+Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L23)

@@ -1,7 +1,7 @@
 // PROVES: INV-VERDICT-CACHE-KEY-DETERMINISTIC, INV-TOOLCHAIN-DIGEST-INVALIDATES
 /**
  * Determinism + anti-lie laws for the B2 verdict cache key
- * (`@czap/gauntlet`'s {@link gateVerdictKey} + {@link coverageDigestOf}). The
+ * (`@liteship/gauntlet`'s {@link gateVerdictKey} + {@link coverageDigestOf}). The
  * verdict cache is the one place SOUNDNESS is everything: serving a stale "green"
  * when covered code has changed would let a real defect ship. Two laws pin it:
  *
@@ -35,7 +35,7 @@ import {
   type FileId,
   type FileNode,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ─────────────────────────── arbitraries ───────────────────────────
 

@@ -2,7 +2,7 @@
  * Unit tests for the create-liteship scaffolder. Everything runs against
  * temp dirs and the real embedded template (packages/create-liteship/
  * templates/default) — no network, no published packages. A full
- * `astro build` e2e of the scaffolded app needs the published @czap/*
+ * `astro build` e2e of the scaffolded app needs the published @liteship/*
  * tarballs and is the post-publish smoke, not a unit concern.
  */
 
@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   scaffold,
   defaultTemplateDir,
@@ -29,11 +29,11 @@ const EXPECTED_TREE = [
   '.gitignore',
   'README.md',
   'astro.config.ts',
+  'liteship.config.ts',
   'package.json',
-  'src/boundaries/layout.boundaries.ts',
+  'src/adaptive.ts',
   'src/layouts/Base.astro',
   'src/pages/index.astro',
-  'src/tokens/base.tokens.ts',
   'tsconfig.json',
 ];
 
@@ -74,28 +74,50 @@ describe('create-liteship scaffold', () => {
     expect(manifest.type).toBe('module');
     expect(manifest.scripts['dev']).toBe('astro dev');
     expect(manifest.scripts['build']).toBe('astro build');
-    // Every dependency must be a plain published range — workspace:/file:/link:
+    expect(manifest.scripts['check']).toBe('liteship check --profile quick');
+    // The curated facade (P13): the scaffold depends on `liteship` (one package, one
+    // import path) plus its `astro` host peer — never `@liteship/core` / `@liteship/astro`
+    // directly. Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
-    expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'typescript']),
-    );
+    expect(Object.keys(manifest.dependencies)).toEqual(expect.arrayContaining(['astro', 'liteship', 'typescript']));
+    // The individual scopes must NOT leak back into the scaffold — the whole point of
+    // the facade is that app authors meet ONE package, not the 23-package fleet.
+    expect(Object.keys(manifest.dependencies).some((dep) => dep.startsWith('@liteship/'))).toBe(false);
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).toMatch(/^\^\d+\.\d+\.\d+/);
     }
   });
 
-  it('scaffolds the working first-5-minutes idioms (boundary + satellite + @quantize)', () => {
+  it('scaffolds the paved define -> apply -> inspect route within the authoring budget', () => {
     const result = scaffold(join(workDir, 'idioms'));
+    // One Adaptive owns the definition, compiled plan, attrs, and explanation.
+    const adaptive = readFileSync(join(result.projectDir, 'src/adaptive.ts'), 'utf8');
+    expect(adaptive).toContain("import { defineAdaptive } from 'liteship'");
+    expect(adaptive).toContain('export const layout = defineAdaptive(');
+    const authoredLines = adaptive
+      .split(/\r?\n/)
+      .filter((line) => line.trim() !== '' && !line.trim().startsWith('//')).length;
+    expect(authoredLines, 'first adaptive definition must stay at or below 20 authored lines').toBeLessThanOrEqual(20);
+
     const index = readFileSync(join(result.projectDir, 'src/pages/index.astro'), 'utf8');
-    expect(index).toContain('satelliteAttrs({ boundary: layout');
-    expect(index).toContain('@quantize layout {');
-    const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
-    expect(boundary).toContain('Boundary.make(');
-    expect(boundary).toContain("import { Boundary } from '@czap/core'");
+    expect(index).toContain('{...layout.attrs()}');
+    expect(index).toContain('const plan = layout.plan()');
+    expect(index).toContain('const preview = layout.explain(940)');
+    expect(index).toContain('set:html={plan.css}');
+    expect(index).not.toContain('@quantize');
+    expect(index).not.toContain('@style');
+    const base = readFileSync(join(result.projectDir, 'src/layouts/Base.astro'), 'utf8');
+    expect(base).not.toContain('container-name');
+    expect(base).not.toContain('container-type');
+    // The astro.config wires the integration from the liteship/astro subpath.
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
-    expect(config).toContain("import { integration } from '@czap/astro'");
-    expect(index).toContain('@czap/genui');
-    expect(readFileSync(join(result.projectDir, 'README.md'), 'utf8')).toContain('@czap/genui');
+    expect(config).toContain("import { integration } from 'liteship/astro'");
+    // The README teaches the author model (define -> apply -> inspect) and the verify hint.
+    const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
+    expect(readme).toContain('define → apply → inspect');
+    expect(readme).toContain('pnpm check');
+    expect(readme).toContain('npm run check');
+    expect(readme).toContain('one 14-line definition');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -145,19 +167,24 @@ describe('create-liteship scaffold', () => {
 
   // Drift guard: a scaffolded app must pull the SAME release line the workspace
   // is publishing, not a stale one. `^0.1.5` once survived into a 0.2.0 cut
-  // because nothing pinned the template's @czap/* ranges to the release version
+  // because nothing pinned the template's liteship range to the release version
   // — `npm create liteship@latest` would then hand users a previous-minor app.
   // Pin the LAW (major.minor must match the workspace version), not the exact
-  // patch, so caret-compatible patch releases need no template churn.
-  it('template @czap/* ranges track the workspace release line (no stale-minor drift)', () => {
+  // patch, so caret-compatible patch releases need no template churn. Post-P13 the
+  // template depends on the `liteship` facade (the umbrella tracks the workspace
+  // version like every other publishable package), so the guard covers the bare
+  // `liteship` package plus any `@liteship/*` should one ever return.
+  it('the template liteship range tracks the workspace release line (no stale-minor drift)', () => {
     const rootVersion = workspaceVersion();
     const [rootMajor, rootMinor] = rootVersion.split('.');
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
-    const czapDeps = Object.entries(manifest.dependencies).filter(([dep]) => dep.startsWith('@czap/'));
-    expect(czapDeps.length, 'template should depend on at least one @czap/* package').toBeGreaterThan(0);
-    for (const [dep, spec] of czapDeps) {
+    const liteshipDeps = Object.entries(manifest.dependencies).filter(
+      ([dep]) => dep === 'liteship' || dep.startsWith('@liteship/'),
+    );
+    expect(liteshipDeps.length, 'template should depend on the liteship facade').toBeGreaterThan(0);
+    for (const [dep, spec] of liteshipDeps) {
       const match = spec.match(/^\^(\d+)\.(\d+)\.\d+/);
       expect(match, `${dep} spec ${spec} should be a caret range`).not.toBeNull();
       const [, major, minor] = match!;
@@ -167,7 +194,7 @@ describe('create-liteship scaffold', () => {
     }
   });
 
-  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @czap/core's one
+  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @liteship/core's one
   // peer; the shed moved every behavior effect carried to a LiteShip-native owner,
   // so a fresh `npm create liteship` must land with zero effect footprint — no
   // stale peer to install, no prerelease range to resolve.
@@ -213,6 +240,10 @@ describe('create-liteship run (CLI surface)', () => {
     expect(text).toContain('pnpm install');
     expect(text).toContain('pnpm dev');
     expect(text).toContain('cd ');
+    // The post-install verify hint teaches the package-script-owned quick check,
+    // which resolves the facade binary under both npm and pnpm.
+    expect(text).toContain('pnpm check');
+    expect(text).toContain('npm run check');
   });
 
   it('prompts when no dir is given and uses the answer', async () => {

@@ -24,11 +24,11 @@ import { taggedError, type TaggedError } from './contract.js';
  * structurally fine but semantically rejected (out of range, empty, mutually
  * exclusive options, call-order violation).
  *
- * Migration target for: `CzapValidationError`, `InvalidParamsError`, and the
+ * Migration target for: `LiteshipValidationError`, `InvalidParamsError`, and the
  * argument/config validation throws across `cli`, `core`, `cloudflare`.
  */
 export interface ValidationError extends TaggedError<'ValidationError'> {
-  /** The unit that rejected the input, e.g. `'Boundary.make'`. */
+  /** The unit that rejected the input, e.g. `'defineBoundary'`. */
   readonly module: string;
   /** What was wrong, in human terms. */
   readonly detail: string;

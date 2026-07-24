@@ -17,7 +17,7 @@
  * PURE AST, NO TYPE CHECKER: a syntactic export walk over `ts.SourceFile` (the
  * same substrate `structure.ts` / `extractSymbols` use). It is therefore
  * independent of the `WORKSPACE_ALIASES` resolution subset — it covers every
- * package, including `@czap/error` / `@czap/gauntlet` / `@czap/command`, whose
+ * package, including `@liteship/error` / `@liteship/gauntlet` / `@liteship/command`, whose
  * cross-package types a type-directed program would collapse to `any`.
  *
  * PUBLIC SURFACE, not every exported declaration: enumeration starts at a

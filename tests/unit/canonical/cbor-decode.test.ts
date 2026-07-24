@@ -4,19 +4,19 @@
  * The decoder is the inverse of `CanonicalCbor.encode` over the encoder's
  * NORMALIZED domain (top-level `undefined`→`null`, undefined object props
  * dropped). It accepts ONLY the RFC 8949 §4.2.1 deterministic subset the
- * encoder emits and rejects everything else with a typed `@czap/error`
+ * encoder emits and rejects everything else with a typed `@liteship/error`
  * `ParseError` (source `'cbor'`, `code` = the reason discriminant).
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import fc from 'fast-check';
-import { CanonicalCbor, decode } from '@czap/canonical';
-import { hasTag } from '@czap/error';
+import { CanonicalCbor, decode } from '@liteship/canonical';
+import { hasTag } from '@liteship/error';
 import { decode as decodeSchema } from '../../../packages/core/src/schema/index.js';
 import {
   canonicalCborDecodeCapsule,
   _canonicalCborDecodeInternals,
-} from '../../../packages/core/src/capsules/canonical-cbor-decode.js';
+} from '../../../packages/core/src/authoring/capsules/canonical-cbor-decode.js';
 
 const { normalize, isCanonicalCborBytes } = _canonicalCborDecodeInternals;
 
@@ -174,8 +174,8 @@ describe('decode — strict rejection of non-canonical input', () => {
 });
 
 describe('canonicalCborDecodeCapsule input schema', () => {
-  // The input is a kernel `S.bytes(Uint8Array)` DECLARATION wrapped in an
-  // `S.brand` DECODE-TIME refinement (and carrying a `withArbitrary` thunk).
+  // The input is a kernel `schema.bytes(Uint8Array)` DECLARATION wrapped in an
+  // `schema.brand` DECODE-TIME refinement (and carrying a `withArbitrary` thunk).
   // Strict kernel decode first checks the `Uint8Array` carrier, THEN runs the
   // canonical-CBOR refinement — so non-canonical bytes are rejected at decode,
   // not merely at the decoder's own run-time `decode()`. The canonical-CBOR

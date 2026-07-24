@@ -6,7 +6,7 @@
 
 # Interface: GateMutation
 
-Defined in: [gauntlet/src/gate.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L392)
+Defined in: [gauntlet/src/gate.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L405)
 
 A mutation of a gate's own logic + the reason it should be caught.
 
@@ -16,7 +16,7 @@ A mutation of a gate's own logic + the reason it should be caught.
 
 > `readonly` **describe**: `string`
 
-Defined in: [gauntlet/src/gate.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L393)
+Defined in: [gauntlet/src/gate.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L406)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/gate.ts:393](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **mutate**: (`gate`) => [`Gate`](Gate.md)
 
-Defined in: [gauntlet/src/gate.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L395)
+Defined in: [gauntlet/src/gate.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L408)
 
 Return a gate whose `run` is a plausible-but-wrong variant of the original.
 

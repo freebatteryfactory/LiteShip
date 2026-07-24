@@ -20,12 +20,38 @@ export interface StartOpts {
   readonly http?: number | string;
 }
 
-/** Start the MCP server on the requested transport. */
-export async function start(opts: StartOpts = {}): Promise<void> {
-  if (opts.http !== undefined) {
+/**
+ * The two transports `start` dispatches to, as an injectable bundle. Defaults to
+ * {@link nodeStartDeps} (the real Node transports), so the CLI bootstrap stays
+ * `start()` / `start({ http })` — byte-identical. A unit test passes scripted
+ * stand-ins to assert the transport DISPATCH (stdio vs http, plus the forwarded
+ * bind) without mocking `./stdio.js` / `./http.js` — the same parameter-injection
+ * idiom `runStdio(input, output)` already uses for its streams. Not re-exported
+ * from the package barrel: it stays an internal seam, off the public api surface.
+ */
+export interface StartDeps {
+  readonly runStdio: () => Promise<void>;
+  readonly runHttp: (bind: number | string) => Promise<void>;
+}
+
+/**
+ * The real Node transports. `runHttp` is loaded LAZILY so the default stdio path
+ * never pulls in the HTTP server module (`createServer`/`listen`) — identical to
+ * the inline `await import('./http.js')` this dispatch used before the seam.
+ */
+const nodeStartDeps: StartDeps = {
+  runStdio,
+  runHttp: async (bind) => {
     const { runHttp } = await import('./http.js');
-    await runHttp(opts.http);
+    await runHttp(bind);
+  },
+};
+
+/** Start the MCP server on the requested transport. */
+export async function start(opts: StartOpts = {}, deps: StartDeps = nodeStartDeps): Promise<void> {
+  if (opts.http !== undefined) {
+    await deps.runHttp(opts.http);
     return;
   }
-  await runStdio();
+  await deps.runStdio();
 }

@@ -3,9 +3,9 @@
  *
  * Scans a project for boundary definition modules (`boundaries.ts` /
  * `*.boundaries.ts`) and `@quantize` CSS blocks, then derives the
- * `BoundaryManifest` that `virtual:czap/boundaries` exports and the
- * `@czap/astro` integration writes to `czap-boundary-manifest.json`: each
- * boundary's `Boundary.make` content address plus precompiled
+ * `BoundaryManifest` that `virtual:liteship/boundaries` exports and the
+ * `@liteship/astro` integration writes to `liteship-boundary-manifest.json`: each
+ * boundary's `defineBoundary` content address plus precompiled
  * `CompiledOutputs` for every (motion x design) tier.
  *
  * This is the build half of the edge caching design (ADR-0003): identity
@@ -18,13 +18,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { Diagnostics } from '@czap/core';
-import type { Boundary } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
-import { CSSCompiler, dispatch, type CSSAtRuleGroup } from '@czap/compiler';
-import type { WGSLUniformValue, WGSLUniformVector } from '@czap/compiler';
-import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
-import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
+import { Diagnostics } from '@liteship/core';
+import type { Boundary } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { CSSCompiler, dispatch, type CSSAtRuleGroup } from '@liteship/compiler';
+import type { WGSLUniformValue, WGSLUniformVector } from '@liteship/compiler';
+import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@liteship/edge';
+import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@liteship/edge';
 import {
   CAST_TARGETS,
   parseQuantizeBlocks,
@@ -36,7 +36,7 @@ import {
 } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
 
-const DIAGNOSTIC_SOURCE = 'czap/vite.boundary-manifest';
+const DIAGNOSTIC_SOURCE = 'liteship/vite.boundary-manifest';
 
 /** Directory names never descended into while scanning a project. */
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.astro', '.wrangler', '.cache', '.output']);
@@ -63,10 +63,7 @@ export interface ProjectScan {
 }
 
 /** Project-wide boundary definitions keyed by export name, including their source module path. */
-export type BoundaryDefinitionMap = ReadonlyMap<
-  string,
-  { readonly primitive: Boundary.Shape; readonly source: string }
->;
+export type BoundaryDefinitionMap = ReadonlyMap<string, { readonly primitive: Boundary; readonly source: string }>;
 
 function isBoundaryModuleFile(fileName: string): boolean {
   return fileName === 'boundaries.ts' || fileName.endsWith('.boundaries.ts');
@@ -108,8 +105,8 @@ export function scanProject(projectRoot: string): ProjectScan {
  * `BoundaryDef`, keyed by export name. Import failures degrade to an
  * empty result with a diagnostic (same policy as `resolvePrimitive`).
  */
-async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<string, Boundary.Shape>> {
-  const found = new Map<string, Boundary.Shape>();
+async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<string, Boundary>> {
+  const found = new Map<string, Boundary>();
   let imported: Record<string, unknown> | null = null;
   try {
     // Native ESM caches dynamic imports by URL — after a dev-server edit
@@ -134,7 +131,7 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
     if (value && typeof value === 'object' && '_tag' in value && value._tag === 'BoundaryDef') {
       // Runtime `_tag` guard validates the shape; same containment cast as
       // the resolver import boundary in resolve-utils.ts.
-      found.set(exportName, value as Boundary.Shape);
+      found.set(exportName, value as Boundary);
     }
   }
   return found;
@@ -148,7 +145,7 @@ export async function collectBoundaryDefinitionsFromScan(
   projectRoot: string,
   scan: ProjectScan,
   options?: Pick<CollectBoundaryManifestOptions, 'boundaryDir'>,
-): Promise<Map<string, { readonly primitive: Boundary.Shape; readonly source: string }>> {
+): Promise<Map<string, { readonly primitive: Boundary; readonly source: string }>> {
   const boundaryFiles = new Set<string>(scan.boundaryFiles);
   if (options?.boundaryDir) {
     const dir = path.resolve(projectRoot, options.boundaryDir);
@@ -160,7 +157,7 @@ export async function collectBoundaryDefinitionsFromScan(
   }
 
   // Resolve every exported boundary definition, keyed by export name.
-  const boundariesByName = new Map<string, { readonly primitive: Boundary.Shape; readonly source: string }>();
+  const boundariesByName = new Map<string, { readonly primitive: Boundary; readonly source: string }>();
   for (const file of boundaryFiles) {
     for (const [exportName, boundary] of await importBoundaryExports(file)) {
       const existing = boundariesByName.get(exportName);
@@ -266,7 +263,7 @@ function wgslCastState(attrs: Record<string, string>): Record<string, WGSLUnifor
     const parsed = parseWgslCastValue(value);
     if (parsed === 'invalid') {
       Diagnostics.warnOnce({
-        source: 'czap/vite.wgsl-cast',
+        source: 'liteship/vite.wgsl-cast',
         code: `wgsl-cast-value-malformed:${key}`,
         message:
           `@wgsl uniform "${key}" value "${value}" is not a valid uniform -- expected a number, a ` +
@@ -297,7 +294,7 @@ interface CastDescriptor {
    * authored this cast (so the field stays absent — the `aria` policy).
    */
   readonly compile: (
-    boundary: Boundary.Shape,
+    boundary: Boundary,
     perState: Readonly<Record<string, Record<string, string>>>,
   ) => CastOutputs[CastTarget];
 }
@@ -373,7 +370,7 @@ const NON_CSS_CASTS: readonly CastDescriptor[] = [
  * the CSS cast stays inline above (it owns the tier grid + containment), while
  * every other target is one {@link NON_CSS_CASTS} descriptor.
  */
-function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, QuantizeStateBody>): Partial<CastOutputs> {
+function compileNonCssCasts(boundary: Boundary, states: Record<string, QuantizeStateBody>): Partial<CastOutputs> {
   const casts: Partial<Record<CastTarget, CastOutputs[CastTarget]>> = {};
   for (const descriptor of NON_CSS_CASTS) {
     // Per-state authored attribute maps for this target, dropping states that
@@ -404,7 +401,7 @@ function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, Qua
  * serializing the same CSS bytes per cell.
  */
 function compileOutputsByTier(
-  boundary: Boundary.Shape,
+  boundary: Boundary,
   states: Record<string, QuantizeStateBody>,
   container?: string,
 ): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'> {
@@ -503,11 +500,11 @@ export function serializeBoundaryOutput(output: CompiledOutputs): string {
  *
  * @example
  * ```ts
- * import { collectBoundaryManifest } from '@czap/vite';
- * import { resolveOutputsByTier } from '@czap/edge';
+ * import { collectBoundaryManifest } from '@liteship/vite';
+ * import { resolveOutputsByTier } from '@liteship/edge';
  *
  * const manifest = await collectBoundaryManifest('/path/to/app');
- * // manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)
+ * // manifest.viewport.id === 'fnv1a:…' (defineBoundary's address)
  * // resolveOutputsByTier(manifest.viewport)['transitions:standard'].css
  * ```
  *
@@ -566,7 +563,7 @@ export async function collectBoundaryManifestFromScan(
           message:
             `@quantize block in ${cssFile}:${block.line} references boundary "${block.boundaryName}", ` +
             `but no boundaries.ts / *.boundaries.ts module in ${projectRoot} exports it, so it has no manifest entry. ` +
-            `Fix: add \`export const ${block.boundaryName} = Boundary.make({ ... })\` to a boundary module.`,
+            `Fix: add \`export const ${block.boundaryName} = defineBoundary({ ... })\` to a boundary module.`,
         });
         continue;
       }

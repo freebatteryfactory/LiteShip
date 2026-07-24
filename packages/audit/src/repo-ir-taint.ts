@@ -7,9 +7,9 @@
  * dangerous SINK call argument, observing any SANITIZER on the path. It emits
  * GENERIC taint FACTS — `{ source, sink, sanitizedBy?, path }` — and stays
  * LiteShip-AGNOSTIC: the SOURCE / SINK / SANITIZER classification is INJECTED as a
- * parameter ({@link TaintRegistry}), so `@czap/audit` references NO LiteShip
+ * parameter ({@link TaintRegistry}), so `@liteship/audit` references NO LiteShip
  * source/sink name. The LiteShip-LOCAL registry (the shader-source fetch, the
- * AI-cast graph-apply, the runtime-URL SSRF seam, …) lives with the `@czap/cli`
+ * AI-cast graph-apply, the runtime-URL SSRF seam, …) lives with the `@liteship/cli`
  * HOST and is injected here, exactly the ADR-0012 / D7b boundary the
  * `invariant-regex` FactOracle hook uses.
  *
@@ -88,8 +88,8 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import { InvariantViolationError } from '@czap/error';
-import type { TaintFacts, TaintFlow, TaintEndpoint, SanitizerSite, TaintPathStep } from '@czap/gauntlet';
+import { InvariantViolationError } from '@liteship/error';
+import type { TaintFacts, TaintFlow, TaintEndpoint, SanitizerSite, TaintPathStep } from '@liteship/gauntlet';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { readProfileSourceFileRecords } from './shared.js';
@@ -118,7 +118,7 @@ export const DEFAULT_TAINT_INTERPROCEDURAL_DEPTH = 8;
 /**
  * The INJECTED source/sink/sanitizer classification — the host-supplied registry
  * (the ADR-0012 / D7b boundary). The oracle references NONE of these names itself;
- * the `@czap/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
+ * the `@liteship/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
  * call expression's CALLEE NAME — the bare identifier (`fetch`, `eval`) OR the
  * member name (`shaderSource`, `createShaderModule`, `innerHTML` as an assignment
  * target, `validateGraphPatchProposal`). {@link memberSinks} adds a third channel:

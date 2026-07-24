@@ -1,7 +1,7 @@
 /**
  * The LSP rigor server — the THIRD JSON-RPC skin over the one gauntlet fold.
  *
- * CLI (`czap check`), MCP (`tools/call`), and this LSP server are three faces of
+ * CLI (`liteship check`), MCP (`tools/call`), and this LSP server are three faces of
  * the SAME `Finding`: the CLI prints it, the MCP server returns it as
  * `structuredContent`, and the LSP publishes it as a live `textDocument/
  * publishDiagnostics` Diagnostic + offers its remediation as a
@@ -13,19 +13,19 @@
  * exactly like `dispatch.ts` gets its findings via `context.runGauntlet`. The
  * engine fold (the `node:fs` glob, the waiver-expiry wall-clock, the heavy audit
  * IR build) lives in the CLI host that constructs the runner — NEVER in this
- * server. So `@czap/mcp-server` stays free of the gauntlet + audit engines, and the
+ * server. So `@liteship/mcp-server` stays free of the gauntlet + audit engines, and the
  * server is testable with a stub runner over a fixed finding list.
  *
  * SCOPE: the rigor projection, NOT the full LSP. Advertised capabilities are
  * exactly `codeActionProvider` + a (no-op) text sync; there is no hover,
  * completion, rename, or semantic-tokens surface. Diagnostics are PUSHED on a
- * `czap/check` request (a custom method an editor extension triggers) and on
+ * `liteship/check` request (a custom method an editor extension triggers) and on
  * `initialized`; the server also answers a pull-style `workspace/diagnostic`.
  *
  * @module
  */
 
-import { InvariantViolationError, ValidationError, isTaggedError } from '@czap/error';
+import { InvariantViolationError, ValidationError, isTaggedError } from '@liteship/error';
 import {
   convertPatternsToRe,
   convertToPositivePattern,
@@ -50,7 +50,7 @@ import {
 } from './types.js';
 
 /** The custom request an editor extension sends to trigger a gauntlet run + diagnostic publish. */
-export const CZAP_CHECK_METHOD = 'czap/check' as const;
+export const LITESHIP_CHECK_METHOD = 'liteship/check' as const;
 
 /** The LSP protocol method the server pushes diagnostics over (§textDocument/publishDiagnostics). */
 const PUBLISH_DIAGNOSTICS_METHOD = 'textDocument/publishDiagnostics' as const;
@@ -77,7 +77,7 @@ export const LSP_SERVER_CAPABILITIES = {
 } as const;
 
 /** Server identity in the `initialize` response (§InitializeResult.serverInfo). */
-const LSP_SERVER_INFO = { name: 'czap-gauntlet-lsp', version: '0.4.1' } as const;
+const LSP_SERVER_INFO = { name: 'liteship-gauntlet-lsp', version: '0.4.1' } as const;
 
 /**
  * A message the server emits OUT-OF-BAND (a server→client notification, e.g.
@@ -94,7 +94,7 @@ export interface LspNotification {
 export interface LspHandleResult {
   /** The JSON-RPC response, or `null` for a notification / `exit` (which gets none). */
   readonly response: JsonRpcResponse | null;
-  /** Server→client notifications to emit (e.g. publishDiagnostics after czap/check). */
+  /** Server→client notifications to emit (e.g. publishDiagnostics after liteship/check). */
   readonly notifications: readonly LspNotification[];
   /** `true` once `exit` is received — the driver closes the loop. */
   readonly exit: boolean;
@@ -103,7 +103,7 @@ export interface LspHandleResult {
 /**
  * The server's mutable lifecycle state. Composition-over-inheritance: this is a
  * DATA record threaded through {@link handle}, not an object with methods. The
- * findings from the last `czap/check` are cached so a follow-up `codeAction`
+ * findings from the last `liteship/check` are cached so a follow-up `codeAction`
  * request resolves remediations against the same fold the diagnostics came from
  * (the §CodeAction.diagnostics back-link must reference the published squiggle).
  */
@@ -236,7 +236,7 @@ async function route(
     case 'initialized':
       // The client's post-initialize notification. No response (notification).
       return { state, result: { response: null, notifications: [], exit: false } };
-    case CZAP_CHECK_METHOD: {
+    case LITESHIP_CHECK_METHOD: {
       requireInitialized(state, method);
       const globs = readGlobs(params);
       const { findings } = await runGauntlet(globs);
@@ -413,13 +413,13 @@ function isMethodNotFound(err: unknown): boolean {
   );
 }
 
-/** Read the optional `globs` array from a `czap/check` params object (defaults to undefined → full scope). */
+/** Read the optional `globs` array from a `liteship/check` params object (defaults to undefined → full scope). */
 function readGlobs(params: unknown): readonly string[] | undefined {
   if (typeof params !== 'object' || params === null) return undefined;
   const raw = (params as { globs?: unknown }).globs;
   if (!Array.isArray(raw)) return undefined;
   if (!raw.every((g): g is string => typeof g === 'string')) {
-    throw ValidationError('czap/check', 'globs must be a string[] when provided');
+    throw ValidationError('liteship/check', 'globs must be a string[] when provided');
   }
   return raw;
 }

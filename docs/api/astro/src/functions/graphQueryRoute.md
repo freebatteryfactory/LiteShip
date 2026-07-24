@@ -10,7 +10,7 @@
 
 Defined in: [astro/src/graph-query-route.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/graph-query-route.ts#L92)
 
-Build a QUERY (or POST+`X-Czap-Query` fallback) handler that returns the host's
+Build a QUERY (or POST+`X-Liteship-Query` fallback) handler that returns the host's
 current sealed graph:
   - **200** on hit — body is `{ status: 'ok', graph, etag }` (sha256 digest);
   - **304** on conditional match (any `If-None-Match` member, or `*`);

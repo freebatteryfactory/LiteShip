@@ -10,17 +10,17 @@
  * The engine (manifest read, mtime `fast-path`, regeneration confirmation via a
  * `capsule:compile` spawn, the bench classifier, and the final `vitest run` over
  * `tests/generated/`) is INJECTED via `context.runCapsuleGate`, never imported
- * here, so `@czap/command` (and the MCP server that re-uses it) stays free of the
+ * here, so `@liteship/command` (and the MCP server that re-uses it) stays free of the
  * subprocess/child_process edge. Unlike `plumb`/`check-invariants` (pure
  * `node:fs` scans provisioned in the shared host factory), this gate is a
  * terminal-streaming SUBPROCESS orchestrator — in the same category as
  * `package-smoke`/`gauntlet`/`ship`. So it is CLI-only and NOT MCP-exposed: only
- * `@czap/cli` injects `runCapsuleGate`, and over MCP the command degrades to a
+ * `@liteship/cli` injects `runCapsuleGate`, and over MCP the command degrades to a
  * structured `capabilityUnavailable` failure.
  *
  * @module
  */
-import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import {
   capabilityUnavailable,
   failed,
@@ -80,7 +80,7 @@ export const capsuleVerifyGateCommand: HandledCommand = {
     // (runCapsuleGate spawns `capsule:compile` to confirm freshness and `vitest
     // run` over tests/generated/, mutating a scratch tree); terminal-streaming,
     // like package-smoke/gauntlet/ship, so cli-only by design.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

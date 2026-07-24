@@ -1,7 +1,7 @@
 /**
  * CUT D7b — the DevopsProfile boundary is executable (ADR-0012).
  *
- * `@czap/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
+ * `@liteship/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
  * the audit consumes — no aspirational fields"; that law lived only in a comment.
  * These guards make it teeth: the profile keeps exactly its 5 fields, and the
  * repo-local contracts (invariants / coverage / bench / artifact-paths) stay local —
@@ -15,7 +15,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { liteshipDevopsProfile } from '@czap/audit';
+import { liteshipDevopsProfile } from '@liteship/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');
@@ -35,7 +35,7 @@ const auditEngineSources = (): string[] => {
   return out;
 };
 
-// foundationalPackages (the runtime analogue of @czap/_spine — packages every
+// foundationalPackages (the runtime analogue of @liteship/_spine — packages every
 // package may import unlisted) is a CONSUMED field: structure.ts reads it to
 // bless foundational edges. So it is an approved profile field, not aspirational.
 const APPROVED_FIELDS = [
@@ -67,7 +67,7 @@ describe('D7b — DevopsProfile has exactly the approved fields (no aspirational
 describe('D7b — repo-local contracts stay local (not threaded through the profile, not in the engine)', () => {
   // The published audit engine must not reference any of the LiteShip-local contracts.
   const FORBIDDEN_IN_ENGINE = ['invariants', 'coverageExclude', 'directivePairs', 'DIRECTIVE_BENCH_PAIRS', 'reportPaths'];
-  it('the published @czap/audit engine surface references none of the local contracts', () => {
+  it('the published @liteship/audit engine surface references none of the local contracts', () => {
     const offenders: string[] = [];
     for (const file of auditEngineSources()) {
       const src = readFileSync(file, 'utf8');
@@ -78,7 +78,7 @@ describe('D7b — repo-local contracts stay local (not threaded through the prof
     expect(offenders).toEqual([]);
   });
 
-  it('invariants are a repo-local rule set in @czap/command (CUT A3: migrated off scripts/)', () => {
+  it('invariants are a repo-local rule set in @liteship/command (CUT A3: migrated off scripts/)', () => {
     const home = 'packages/command/src/commands/check-invariants-registry.ts';
     expect(existsSync(resolve(REPO, home))).toBe(true);
     expect(read(home)).toMatch(/INVARIANTS/);
@@ -88,10 +88,10 @@ describe('D7b — repo-local contracts stay local (not threaded through the prof
     expect(read('vitest.shared.ts')).toMatch(/export const coverageExclude/);
   });
 
-  it('bench is product-shaped: the directive suite value-imports and executes the CZAP runtime', () => {
+  it('bench is product-shaped: the directive suite value-imports and executes the LiteShip runtime', () => {
     const suite = read('scripts/bench/directive-suite.ts');
     // It imports the framework itself — there is nothing off-product to make configurable.
-    expect(suite).toMatch(/from '@czap\/core'/);
+    expect(suite).toMatch(/from '@liteship\/core'/);
   });
 
   it('artifact/report paths are repo-local in scripts/audit/policy.ts (D9b-1), not the engine', () => {

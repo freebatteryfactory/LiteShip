@@ -2,33 +2,61 @@
 
 ## Purpose
 
-How to author with LiteShip: the CZAP engine's rigging surface, shipped as `@czap/*` packages.
+How to author with LiteShip: install one `liteship` facade, define adaptive behavior from its root, then apply and inspect the resulting definition. Host integrations and lower-level owners remain available through explicit subpaths when the paved road is not enough.
 
 Naming: [GLOSSARY.md](./GLOSSARY.md).
 
-This is about construction, not migration. It assumes the mental model in [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md).
+This document is about construction. Existing CSS and token sources enter through the explicit adapters on `liteship/migrate`; migration diagnostics never become a second runtime.
 
 ## The shape
 
 <!-- BEGIN DIAGRAM (canonical mental model — keep byte-identical across README / GLOSSARY / AUTHORING-MODEL; pinned by tests/unit/meta/diagram-drift.test.ts) -->
 
 ```text
-signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
+defineAdaptive(...) ─▶ attrs() + plan() ─▶ explain(value)
 ```
 
-- **signal** — a continuous input from the world (viewport, scroll, audio…)
-- **boundary** — quantizes it into a few named states
-- **graph** — seals boundaries, tokens, and styles into one content-addressed truth
-- **cast** — projects (verb) that truth to CSS, GPU, ARIA, AI, TypeScript, and video
-- **patch** — the only way to change the truth: a validated mutation
+- **define** — describe the input, named states, and outputs once
+- **apply** — spread `attrs()` onto host markup and use the CSS from `plan()`
+- **inspect** — call `explain(value)` to see the selected state, thresholds, provenance, and identity
 
 <!-- END DIAGRAM -->
 
-## First-time reader vocabulary
+## The paved road
+
+The default authoring unit is one `Adaptive` definition:
+
+```ts
+import { defineAdaptive } from 'liteship';
+
+export const hero = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'stacked'], [760, 'split'], [1180, 'cinematic']],
+  },
+  style: {
+    base: { properties: { display: 'grid', gap: '1rem' } },
+    states: {
+      split: { properties: { 'grid-template-columns': '1.1fr 0.9fr' } },
+      cinematic: { properties: { 'grid-template-columns': '1.2fr 0.8fr' } },
+    },
+  },
+});
+```
+
+From that one value:
+
+- `hero.attrs()` returns the host attributes that identify and activate it.
+- `hero.plan()` returns matching, style-address-scoped CSS plus member identities.
+- `hero.explain(940)` reports the selected state, satisfied thresholds, style provenance, capability tier, and aggregate identity.
+
+These are projections of the real underlying boundary, style, quantizer, token, and theme constructors. The facade does not maintain a parallel semantic model. The runtime writes `data-liteship-state`; the plan's compiler-owned selectors follow that exact marker and scope it with `data-liteship-style`, so hysteresis and activation policy cannot drift from the visible CSS and unrelated definitions cannot style one another.
+
+## Engine vocabulary after the first feature
 
 For designers, brand directors, and agency PMs reading alongside an engineer. Engineering-fluent readers can skip this section.
 
-- **signal** — a continuously changing value the system watches, such as viewport width, scroll progress, device capability tier, or live audio amplitude/beat. The canonical input vocabulary is `SignalSource` in `@czap/core` (the dot-string forms like `viewport.width`, `audio.amplitude`).
+- **signal** — a continuously changing value the system watches, such as viewport width, scroll progress, device capability tier, or live audio amplitude/beat. The canonical input vocabulary is `SignalSource` in `@liteship/core` (the dot-string forms like `viewport.width`, `audio.amplitude`).
 - **boundary** — a definition that carves a continuous signal into a small set of named states (e.g. `stacked / split / cinematic`), so the rest of the system only ever sees discrete labels, not raw numbers.
 - **hysteresis** — a deliberate gap between the threshold where a state turns on and the threshold where it turns off, like a thermostat's dead-band that prevents the heater from flickering on and off when the temperature hovers near the setpoint.
 - **named state** — a label like `stacked`, `split`, or `cinematic` that the author chooses to stand in for a chunk of the signal range; the rest of the system reads names, not numbers.
@@ -41,24 +69,24 @@ For the full prose-register authority across this corpus, see [GLOSSARY.md](./GL
 
 ## What it feels like to author
 
-You start by naming the few states a surface has. *Stacked, split, cinematic.* You don't pick numbers yet; you pick names. Then you write a boundary that says where one becomes the next, with hysteresis where you'd want some grace. Then you write the styles for each named state, and you move on.
+You start by naming the few states a surface has: *stacked, split, cinematic*. Put the input partition and state-specific outputs in one `defineAdaptive` call, spread its attributes, emit its plan, and move on. Reach into the constituent definitions only when you actually need lower-level control.
 
 The CSS variable, the GLSL preamble, and the ARIA attribute all come out of that one boundary without you authoring them three times. The AI manifest is its own structured artifact authored alongside, sharing the same state vocabulary. When you drag the window edge, the CSS re-paints; if you wired a shader in, the uniform changes the same tick; a screen reader sees the same state your styles do.
 
 ---
 
-## The main authoring objects
+## Constituent definitions and escape hatches
 
-> The four things you author: a *boundary* (where state changes), *tokens* (the design materials), *themes* (palettes that swap together), and *styles* (what each state looks like).
+> `defineAdaptive` composes the common path. A *boundary*, *token*, *theme*, or *style* can also be authored directly when a compiler, integration, or reusable design system needs to own that layer.
 
-There are four primary authored definition types:
+The underlying authored definition types remain public:
 
 - `Boundary`
 - `Token`
 - `Theme`
 - `Style`
 
-Everything else composes around them.
+`Adaptive` lowers through these owners and exposes them as `adaptive.boundary`, `adaptive.style`, `adaptive.quantizer`, `adaptive.tokens`, and `adaptive.theme`. Direct construction is an escape hatch, not a prerequisite for the first feature.
 
 ### Boundary
 
@@ -130,17 +158,17 @@ Style guidance:
 
 ## The authoring order
 
-> Pick names before numbers, signals before states, states before styles. The order keeps the authored layer about *what the surface means* rather than *what numbers happened to fall out of CSS*.
+> Define, apply, inspect. Inside the definition, pick names before numbers, signals before states, and states before outputs.
 
 When building a new surface, the clean order is:
 
 1. name the signal
 2. name the states
-3. define the boundary
-4. define the tokens
-5. define the theme space
-6. define the style outputs
-7. decide the cheapest runtime that preserves intent
+3. put the boundary and style outputs in `defineAdaptive`
+4. apply `attrs()` and `plan()`
+5. inspect representative inputs with `explain()`
+6. add tokens, themes, quantized targets, or a lower-level constructor only when the surface needs them
+7. choose the cheapest runtime that preserves intent
 
 This order matters because it keeps authored behavior semantic.
 
@@ -205,14 +233,34 @@ Avoid IDs that merely restate the primitive type:
 
 ## Example shapes
 
-> Working code for each of the four primitives. Skim if you're getting the feel for the shapes; copy when you're authoring a real surface.
+> The first example is the default composition. The remaining examples are the constituent definitions for authors who need direct ownership.
+
+### Adaptive
+
+```ts
+import { defineAdaptive } from 'liteship';
+
+export const hero = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'stacked'], [760, 'split'], [1180, 'cinematic']],
+  },
+  style: {
+    base: { properties: { display: 'grid' } },
+    states: {
+      split: { properties: { 'grid-template-columns': '1.1fr 0.9fr' } },
+      cinematic: { properties: { 'grid-template-columns': '1.2fr 0.8fr' } },
+    },
+  },
+});
+```
 
 ### Boundary
 
 ```ts
-import { Boundary } from '@czap/core';
+import { defineBoundary } from 'liteship';
 
-export const heroLayout = Boundary.make({
+export const heroLayout = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'stacked'],
@@ -226,9 +274,9 @@ export const heroLayout = Boundary.make({
 ### Token
 
 ```ts
-import { Token } from '@czap/core';
+import { defineToken } from 'liteship';
 
-export const accent = Token.make({
+export const accent = defineToken({
   name: 'accent',
   category: 'color',
   axes: ['theme'],
@@ -243,9 +291,9 @@ export const accent = Token.make({
 ### Theme
 
 ```ts
-import { Theme } from '@czap/core';
+import { defineTheme } from 'liteship';
 
-export const brandTheme = Theme.make({
+export const brandTheme = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'],
   tokens: {
@@ -264,15 +312,15 @@ export const brandTheme = Theme.make({
 ### Style
 
 ```ts
-import { Style } from '@czap/core';
+import { defineStyle } from 'liteship';
 import { heroLayout } from './boundaries.js';
 
-export const heroShell = Style.make({
+export const heroShell = defineStyle({
   boundary: heroLayout,
   base: {
     properties: {
       display: 'grid',
-      gap: 'var(--czap-space-section)',
+      gap: 'var(--liteship-space-section)',
     },
   },
   states: {
@@ -300,21 +348,20 @@ export const heroShell = Style.make({
 
 ## File organization
 
-> One file per primitive type at the surface level: `boundaries.ts`, `tokens.ts`, `themes.ts`, `styles.ts`. The Vite plugin expects this shape; you can deviate, but you'll lose the convention-driven HMR behavior.
+> Start with `adaptive.ts`. Split constituent definitions by semantic owner only when reuse or scale earns the extra files.
 
-The cleanest repo-level shape is convention-driven:
+The default application shape is small:
 
-- `boundaries.ts`
-- `tokens.ts`
-- `themes.ts`
-- `styles.ts`
+- `adaptive.ts`
+- the host page or component that applies it
 
-The Vite plugin already expects this shape, and the resolver pipeline is built around it.
+When several surfaces share lower-level definitions, split them deliberately:
 
 Recommended section-level layout:
 
 ```text
 src/
+  adaptive.ts
   boundaries.ts
   tokens.ts
   themes.ts
@@ -324,7 +371,7 @@ src/
   narrative.css
 ```
 
-This works because authored definitions live in TypeScript, while emitted style consumers can stay in CSS with `@token`, `@theme`, `@style`, and `@quantize` blocks.
+The Vite plugin continues to support the conventional definition files and CSS directives. They are an advanced authoring route, not required ceremony for a single adaptive surface.
 
 ---
 
@@ -345,11 +392,11 @@ Example:
 
 ```css
 @token accent {
-  color: var(--czap-accent);
+  color: var(--liteship-accent);
 }
 
 @theme brand {
-  color: var(--czap-accent);
+  color: var(--liteship-accent);
 }
 
 @style heroShell {
@@ -370,7 +417,7 @@ Example:
 
 `@quantize` states accept two declaration forms, freely mixed:
 
-- **bare declarations** (`gap: 1rem;`) compile onto the boundary element selector (`.czap-boundary` by default), and
+- **bare declarations** (`gap: 1rem;`) compile onto the boundary element selector (`.liteship-boundary` by default), and
 - **nested selector rules** (`<selector> { ... }`) compile to one rule per selector inside the state's `@container` block — the form for adapting several elements per state:
 
 ```css
@@ -419,14 +466,14 @@ The projection is content-addressed: the boundary's FNV-1a hash (over the canoni
 
 > Boundaries that drive layout drive ARIA from the same definition. Author your `aria-expanded` / `aria-hidden` per state once on the boundary; the screen reader sees the same state your styles do, no second sync to maintain.
 
-Boundaries that drive layout almost always drive an a11y story too. The ARIA compiler (`packages/compiler/src/aria.ts`) takes the same boundary and a per-state attribute map; it validates that every key starts with `aria-` or is exactly `role`, drops anything else with a diagnostic warning, and emits the attributes via `applyBoundaryState` (`packages/astro/src/runtime/boundary.ts`) onto the same satellite element the CSS variable lives on. So the screen reader and the styled element observe the same boundary identity.
+Boundaries that drive layout almost always drive an a11y story too. The ARIA compiler (`packages/compiler/src/aria.ts`) takes the same boundary and a per-state attribute map; it validates that every key starts with `aria-` or is exactly `role`, drops anything else with a diagnostic warning, and emits the attributes via `applyBoundaryState` (`packages/astro/src/runtime/boundary.ts`) onto the same adaptive element the CSS variable lives on. So the screen reader and the styled element observe the same boundary identity.
 
 Two concrete patterns:
 
 ```ts
 // A disclosure surface: states correspond to expanded/collapsed; aria-expanded
 // flips with the layout.
-import { ARIACompiler } from '@czap/compiler';
+import { ARIACompiler } from 'liteship/compiler';
 import { disclosureBoundary } from './boundaries.js';
 
 const aria = ARIACompiler.compile(disclosureBoundary, {
@@ -439,10 +486,10 @@ const aria = ARIACompiler.compile(disclosureBoundary, {
 // A reduced-motion-aware surface: when motionTier is 'none', the boundary
 // pins to a still state and the live-region announces transitions instead of
 // animating them.
-import { Boundary } from '@czap/core';
-import { motionTierFromCapabilities } from '@czap/detect';
+import { defineBoundary } from 'liteship';
+import { motionTierFromCapabilities } from '@liteship/detect';
 
-export const heroMotion = Boundary.make({
+export const heroMotion = defineBoundary({
   input: 'motion.tier',
   at: [
     [0, 'still'], // motionTier === 'none'
@@ -459,7 +506,7 @@ A few rules of thumb:
 - For a *continuous* authored motion (a `Reveal.intent` scrubbed off scroll), author it once and let it project two ways: `MotionCompiler` compiles the native `animation-timeline` CSS, and `client:motion` runs the JS FLOOR wherever that is unsupported — both sampling the intent's ONE easing config, so the curve is identical (Law 4). The floor honors reduced-motion directly: with `policy.reducedMotion: 'settle'` it pins the final pose once and skips the tween (no per-frame writes). The runnable cookbook is `examples/showcase` → `/motion` (`src/server/motion-program.ts` + `src/pages/motion.astro`); the continuous-motion runtime is documented in [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md) under `### motion`.
 - For a *multi-step* motion — "A then B", "A with B", "A or B" — compose transitions into a `TransitionProgram` (ADR-0039), NOT a per-node `routing` label. `seq` sequences (total is `Σ` of the parts + delays, each mapped to a disjoint sub-window); `par` runs children together (total is the `max`; a short child holds its final pose); `choice` executes EXACTLY one branch, selected by a `BranchCondition` over a named signal (the pick is an auditable receipt; the unchosen arms never write). `interpretProgram` lowers the program to REAL multi-offset keyframes + per-window sub-samplers that scrub through the SAME `client:motion` floor. Author it with `Reveal.chain` (`lowerRevealChain`: a `seq` + optional trailing `choice`) or `staggerProgram` (a `par` over stagger children). Reduced-motion settles to the terminal step's `to` pose. The runnable cookbook is `examples/showcase` → `/motion-chain` (`src/server/motion-chain.ts` + `src/pages/motion-chain.astro`).
 - Never stash arbitrary attributes through the ARIA compiler. The validator drops anything that isn't `aria-*` or `role`; that's intentional. Use `data-*` attributes via your own template if you need extra DOM hooks.
-- Boundary state is applied as `data-czap-state` on the satellite, so CSS attribute selectors keyed on `[data-czap-state="expanded"]` and ARIA attributes resolve from the same evaluator on the same element. There is no two-write race; both are written synchronously inside `applyBoundaryState`.
+- Boundary state is applied as `data-liteship-state` on the adaptive, so CSS attribute selectors keyed on `[data-liteship-state="expanded"]` and ARIA attributes resolve from the same evaluator on the same element. There is no two-write race; both are written synchronously inside `applyBoundaryState`.
 
 ---
 
@@ -511,7 +558,8 @@ The visual effect should justify the runtime.
 
 Authoring in LiteShip means:
 
-- defining semantic partitions of reality
-- naming the states those partitions produce
-- mapping those states to intentional outputs
+- defining adaptive intent once
+- applying its attributes and compiled plan
+- inspecting why a named state and output won
+- dropping to constituent definitions when explicit ownership requires it
 - letting the host and runtime choose the cheapest valid execution path

@@ -20,8 +20,8 @@ import {
   noSkippedTestGate,
   noPlaceholderGate,
   type Gate,
-} from '@czap/gauntlet';
-import { ValidationError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { ValidationError } from '@liteship/error';
 
 // The gauntlet's own foundations are themselves gated by these tests: the
 // authority ratchet, the assurance ladder, and the error→finding bridge.
@@ -50,7 +50,7 @@ describe('Finding — the shared vocabulary', () => {
     expect('remediation' in a).toBe(false);
   });
 
-  it('projects a tagged @czap/error into a Finding (one vocabulary)', () => {
+  it('projects a tagged @liteship/error into a Finding (one vocabulary)', () => {
     const f = fromError(ValidationError('Mod.x', 'bad input'), { ruleId: 'gate/x', level: 'L2' });
     expect(f.ruleId).toBe('gate/x');
     expect(f.title).toBe('ValidationError');
@@ -145,7 +145,7 @@ describe('engine — runGates applies earned authority', () => {
 
   it('a clean context produces no findings and does not block', () => {
     const clean = memoryContext({
-      'x.ts': "import { ValidationError } from '@czap/error';\nthrow ValidationError('x', 'y');\n",
+      'x.ts': "import { ValidationError } from '@liteship/error';\nthrow ValidationError('x', 'y');\n",
     });
     const result = runGates([noBareThrowGate], clean);
     expect(result.findings).toEqual([]);

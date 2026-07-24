@@ -1,13 +1,13 @@
 /**
  * audit (CUT D9b-2) — run the profile-driven structure/integrity/surface audit
- * and report a structured summary. The engine (`@czap/audit`) is INJECTED via
- * `context.runAudit`, never imported here, so `@czap/command` (and the MCP
+ * and report a structured summary. The engine (`@liteship/audit`) is INJECTED via
+ * `context.runAudit`, never imported here, so `@liteship/command` (and the MCP
  * server that re-uses it) stays free of the TypeScript-compiler/fast-glob audit
  * engine. Not MCP-exposed: it needs the CLI-only `runAudit` capability.
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import {
   capabilityUnavailable,
   defineCommand,
@@ -114,12 +114,12 @@ export const auditCommand = defineCommand({
     } as const satisfies CommandJsonSchema,
     outputSchema: AuditPayloadSchema,
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
-    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },
-  argsSchema: S.struct({
-    profile: S.optional(S.string),
-    consumer: S.optional(S.boolean),
-    findings: S.optional(S.boolean),
+  argsSchema: schema.struct({
+    profile: schema.optional(schema.string),
+    consumer: schema.optional(schema.boolean),
+    findings: schema.optional(schema.boolean),
   }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

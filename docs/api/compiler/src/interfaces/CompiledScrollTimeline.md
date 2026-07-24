@@ -22,7 +22,7 @@ Defined in: [compiler/src/scroll-timeline-compile.ts:26](https://github.com/free
 
 ### graph
 
-> `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 Defined in: [compiler/src/scroll-timeline-compile.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/scroll-timeline-compile.ts#L28)
 

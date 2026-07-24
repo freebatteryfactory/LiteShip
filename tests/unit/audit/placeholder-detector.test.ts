@@ -27,8 +27,8 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { runIntegrityAudit } from '@czap/audit';
-import type { AuditFinding, DevopsProfile } from '@czap/audit';
+import { runIntegrityAudit } from '@liteship/audit';
+import type { AuditFinding, DevopsProfile } from '@liteship/audit';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -37,7 +37,7 @@ afterEach(() => {
 
 /** Materialize a one-file `@acme/probe` package whose src/index.ts is `body`. */
 function probeRepo(body: string): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-placeholder-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-placeholder-'));
   fixtures.push(root);
   const files: Record<string, string> = {
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),

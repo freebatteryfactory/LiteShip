@@ -1,0 +1,63 @@
+# Facade law (ADR-0045) — a package/domain barrel is a PURE re-export surface,
+# not a module. Files matching packages/*/src/*/index.ts (the domain-directory
+# facades) and packages/core/src/index.ts (the package root facade) may contain
+# ONLY:
+#   - `export {...} from './x.js'`      (explicit named re-export)
+#   - `export type {...} from './x.js'` (explicit named type re-export)
+#   - bare `export {...}`               (re-export composition of a local import)
+#   - `import ... from './x.js'`        (to compose a re-export)
+#   - comments / JSDoc `@module` block
+# No behavior, no local declarations. A facade is the SEAM, not a place values or
+# types are born; anything with a definition site belongs in a domain module and
+# is re-exported by name.
+#
+# This rule flags the DECLARATION and EXPRESSION-STATEMENT node kinds — the AST
+# shapes that carry behavior or a local definition into a facade:
+#   function_declaration / class_declaration / enum_declaration /
+#   interface_declaration, lexical_declaration (const/let) /
+#   variable_declaration (var), type_alias_declaration, and top-level
+#   expression_statement (a side effect).
+# It deliberately does NOT list export_statement / import_statement, so every
+# sanctioned facade line passes. An `export const FOO = 1` IS caught: the
+# lexical_declaration is the `declaration:` child of the export_statement and
+# matches by kind — behavior is behavior whether or not it is re-exported.
+#
+# SCOPE: the domain facades + the core root facade only (ADR-0045). Non-core
+# package ROOT facades (packages/*/src/index.ts) are NOT yet governed — they can
+# still carry migration-era declarations and ratchet in later; types.ts purity is
+# a separate rule (types-file-purity); internal/ files are modules, never facades.
+#
+# Facade exemptions: NONE. The exact nested implementation owners below are not
+# facade entries; ast-grep's globstar matcher reaches them through the top-level
+# `*.ts` pattern, so they are excluded by concrete path only.
+#
+# Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
+id: facade-only-reexports
+language: typescript
+severity: error
+message: 'Facade files (packages/*/src/*/index.ts and packages/core/src/index.ts) are pure re-export surfaces (ADR-0045) — no declarations or side effects. Move this definition into a domain module and re-export it by name with `export {...} from` / `export type {...} from`.'
+files:
+  - '**/packages/*/src/*/index.ts'
+  - '**/packages/core/src/index.ts'
+  # The `liteship` curated facade (P13): every top-level src/*.ts is a facade
+  # ENTRY — the root index.ts and the thirteen governed expert subpaths — as
+  # pure re-export surfaces. `export-budget.ts` alone is DATA rather than a
+  # facade and is excluded below.
+  - '**/packages/liteship/src/*.ts'
+ignores:
+  - '**/packages/liteship/src/export-budget.ts'
+  # ast-grep's globstar matcher lets the top-level `*.ts` pattern reach this
+  # nested implementation owner. Exempt only the concrete owner: a broad
+  # `*/*.ts` ignore would also disable the domain-index facade law below it.
+  - '**/packages/liteship/src/authoring/adaptive.ts'
+  - '**/packages/liteship/src/testing/package-roster.ts'
+rule:
+  any:
+    - kind: function_declaration
+    - kind: class_declaration
+    - kind: enum_declaration
+    - kind: interface_declaration
+    - kind: lexical_declaration
+    - kind: variable_declaration
+    - kind: type_alias_declaration
+    - kind: expression_statement

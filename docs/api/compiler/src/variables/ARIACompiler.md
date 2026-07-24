@@ -34,7 +34,7 @@ keys are dropped and trigger a diagnostic warning.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 #### Parameters
 
@@ -65,10 +65,10 @@ An [ARIACompileResult](../interfaces/ARIACompileResult.md) with validated state 
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { ARIACompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { ARIACompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'collapsed'], [768, 'expanded']],
 });
@@ -83,10 +83,10 @@ console.log(result.currentAttributes);
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { ARIACompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { ARIACompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

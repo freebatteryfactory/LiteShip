@@ -98,13 +98,13 @@ describe('browser morph with real DOM', () => {
     expect(oldTextarea.value).toBe('new content');
   });
 
-  test('isSameNode matches by semantic ID (data-czap-id)', () => {
+  test('isSameNode matches by semantic ID (data-liteship-id)', () => {
     const a = document.createElement('div');
-    a.setAttribute('data-czap-id', 'alpha');
+    a.setAttribute('data-liteship-id', 'alpha');
     const b = document.createElement('div');
-    b.setAttribute('data-czap-id', 'alpha');
+    b.setAttribute('data-liteship-id', 'alpha');
     const c = document.createElement('span');
-    c.setAttribute('data-czap-id', 'beta');
+    c.setAttribute('data-liteship-id', 'beta');
 
     // Same semantic ID → match
     expect(isSameNode(a, b)).toBe(true);
@@ -138,16 +138,16 @@ describe('browser morph with real DOM', () => {
 
   test('syncChildren updates content while preserving child count', () => {
     root.innerHTML = `
-      <div data-czap-id="a">A</div>
-      <div data-czap-id="b">B</div>
-      <div data-czap-id="c">C</div>
+      <div data-liteship-id="a">A</div>
+      <div data-liteship-id="b">B</div>
+      <div data-liteship-id="c">C</div>
     `;
 
     const newParent = document.createElement('section');
     newParent.innerHTML = `
-      <div data-czap-id="a">A updated</div>
-      <div data-czap-id="b">B updated</div>
-      <div data-czap-id="c">C updated</div>
+      <div data-liteship-id="a">A updated</div>
+      <div data-liteship-id="b">B updated</div>
+      <div data-liteship-id="c">C updated</div>
     `;
 
     syncChildren(root, newParent);
@@ -176,7 +176,7 @@ describe('browser morph with real DOM', () => {
 
   test('morph opaque subtrees preserve matched and omitted client-owned DOM', async () => {
     root.innerHTML = `
-      <section data-czap-id="island" ${MorphOpaque.ATTR}><span>client</span></section>
+      <section data-liteship-id="island" ${MorphOpaque.ATTR}><span>client</span></section>
       <aside ${MorphOpaque.ATTR}><input value="initial"></aside>
       <p>old</p>
     `;
@@ -188,7 +188,7 @@ describe('browser morph with real DOM', () => {
     Morph.morph(
       root,
       `
-          <section data-czap-id="island" ${MorphOpaque.ATTR}><span>server</span></section>
+          <section data-liteship-id="island" ${MorphOpaque.ATTR}><span>server</span></section>
           <p>new</p>
         `,
     );
@@ -202,11 +202,11 @@ describe('browser morph with real DOM', () => {
 
   test('findBestMatch prefers semantic ID over DOM id over tag match', () => {
     const target = document.createElement('div');
-    target.setAttribute('data-czap-id', 'target');
+    target.setAttribute('data-liteship-id', 'target');
     target.id = 'my-div';
 
     const semanticMatch = document.createElement('div');
-    semanticMatch.setAttribute('data-czap-id', 'target');
+    semanticMatch.setAttribute('data-liteship-id', 'target');
 
     const idMatch = document.createElement('div');
     idMatch.id = 'my-div';
@@ -220,8 +220,8 @@ describe('browser morph with real DOM', () => {
 
   test('morphWithState preserves element identity across semantic-id-based morph', async () => {
     root.innerHTML = `
-      <button data-czap-id="btn-1" id="btn1">Click</button>
-      <button data-czap-id="btn-2" id="btn2">Submit</button>
+      <button data-liteship-id="btn-1" id="btn1">Click</button>
+      <button data-liteship-id="btn-2" id="btn2">Submit</button>
     `;
 
     const btn1 = root.querySelector('#btn1')!;
@@ -230,8 +230,8 @@ describe('browser morph with real DOM', () => {
     const result = Morph.morphWithState(
       root,
       `
-        <button data-czap-id="btn-2" id="btn2">Submit Updated</button>
-        <button data-czap-id="btn-1" id="btn1">Click Updated</button>
+        <button data-liteship-id="btn-2" id="btn2">Submit Updated</button>
+        <button data-liteship-id="btn-1" id="btn1">Click Updated</button>
       `,
       { morphStyle: 'innerHTML' },
     );
@@ -243,33 +243,33 @@ describe('browser morph with real DOM', () => {
     expect(btn2.textContent).toBe('Submit Updated');
   });
 
-  test('morphWithState with remap updates data-czap-id attributes', async () => {
-    root.innerHTML = '<div data-czap-id="old-id">content</div>';
-    const el = root.querySelector('[data-czap-id="old-id"]')!;
+  test('morphWithState with remap updates data-liteship-id attributes', async () => {
+    root.innerHTML = '<div data-liteship-id="old-id">content</div>';
+    const el = root.querySelector('[data-liteship-id="old-id"]')!;
 
     const result = Morph.morphWithState(
       root,
-      '<div data-czap-id="new-id">updated content</div>',
+      '<div data-liteship-id="new-id">updated content</div>',
       { morphStyle: 'innerHTML' },
       { remap: { 'old-id': 'new-id' } },
     );
 
     expect(result.type).toBe('success');
-    expect(el.getAttribute('data-czap-id')).toBe('new-id');
+    expect(el.getAttribute('data-liteship-id')).toBe('new-id');
     expect(el.textContent).toBe('updated content');
   });
 
   test('morphWithState returns rejection when preserve constraint is violated', async () => {
-    root.innerHTML = '<div data-czap-id="required">must keep</div>';
+    root.innerHTML = '<div data-liteship-id="required">must keep</div>';
 
     const rejections: unknown[] = [];
-    root.addEventListener('czap:morph-rejected', ((e: CustomEvent) => {
+    root.addEventListener('liteship:morph-rejected', ((e: CustomEvent) => {
       rejections.push(e.detail);
     }) as EventListener);
 
     const result = Morph.morphWithState(
       root,
-      '<div data-czap-id="other">different</div>',
+      '<div data-liteship-id="other">different</div>',
       { morphStyle: 'innerHTML' },
       { preserve: ['required'] },
     );
@@ -297,13 +297,13 @@ describe('browser morph with real DOM', () => {
     expect(root.querySelector('span')?.textContent).toBe('new');
   });
 
-  test('SemanticId.buildIndex walks the DOM tree and indexes all data-czap-id elements', () => {
+  test('SemanticId.buildIndex walks the DOM tree and indexes all data-liteship-id elements', () => {
     root.innerHTML = `
-      <div data-czap-id="parent">
-        <span data-czap-id="child-1">one</span>
-        <span data-czap-id="child-2">two</span>
+      <div data-liteship-id="parent">
+        <span data-liteship-id="child-1">one</span>
+        <span data-liteship-id="child-2">two</span>
         <div>
-          <em data-czap-id="deep">deep</em>
+          <em data-liteship-id="deep">deep</em>
         </div>
       </div>
     `;

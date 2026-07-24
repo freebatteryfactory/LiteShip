@@ -1,17 +1,17 @@
 /**
- * Maps a Cloudflare Workers env binding to the {@link @czap/edge} KVNamespace shape.
+ * Maps a Cloudflare Workers env binding to the {@link @liteship/edge} KVNamespace shape.
  *
  * @module
  */
 
-import type { KVNamespace } from '@czap/edge';
-import { Diagnostics } from '@czap/core';
+import type { KVNamespace } from '@liteship/edge';
+import { Diagnostics } from '@liteship/core';
 
 /** Cloudflare Workers execution environment (bindings bag). */
 export type CloudflareWorkersEnv = Record<string, unknown>;
 
 export interface CloudflareEdgeCacheOptions {
-  /** KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`). */
+  /** KV namespace binding name (e.g. `LITESHIP_BOUNDARY_CACHE`). */
   readonly binding: string;
   /** Workers ExecutionContext; enables background Cache API population on KV hits. */
   readonly ctx?: { waitUntil(promise: Promise<unknown>): void };
@@ -49,7 +49,7 @@ export function resolveKvBinding(env: CloudflareWorkersEnv, binding: string): KV
 function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: string): void {
   const available = Object.keys(envSource());
   Diagnostics.warnOnce({
-    source: 'czap/cloudflare.edge-cache',
+    source: 'liteship/cloudflare.edge-cache',
     code: 'kv-binding-missing',
     message:
       `KV binding "${binding}" is not present in the Workers env` +
@@ -60,7 +60,7 @@ function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: stri
 
 function warnMissingCapability(binding: string, capability: 'delete' | 'list'): void {
   Diagnostics.warnOnce({
-    source: 'czap/cloudflare.edge-cache',
+    source: 'liteship/cloudflare.edge-cache',
     code: 'kv-binding-capability-missing',
     message:
       `KV binding "${binding}" does not implement ${capability}(), so active cache invalidation cannot use it. ` +
@@ -74,7 +74,7 @@ function resolveDefaultCache(): CloudflareCacheApi | null {
 }
 
 function cacheRequest(binding: string, key: string): Request {
-  return new Request(`https://czap.invalid/${encodeURIComponent(binding)}/${encodeURIComponent(key)}`);
+  return new Request(`https://liteship.invalid/${encodeURIComponent(binding)}/${encodeURIComponent(key)}`);
 }
 
 function kvGetOptions(cacheTtl: number | undefined): { cacheTtl: number } | undefined {
@@ -120,7 +120,7 @@ export function createCloudflareEdgeCache(
       await kv.put(key, value, putOptions);
     },
     // Workers KV implements delete/list, so expose them only when the live
-    // binding really has them. This keeps @czap/edge's capability checks honest
+    // binding really has them. This keeps @liteship/edge's capability checks honest
     // for tests/custom adapters while still allowing late-bound workerd env.
     get delete() {
       const current = resolveKvBinding(envSource(), options.binding);

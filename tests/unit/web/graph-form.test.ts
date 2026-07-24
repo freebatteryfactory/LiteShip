@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { bindGraphForm } from '@czap/web';
-import { Diagnostics, type DocumentGraph, type GraphMutationClient } from '@czap/core';
-import type { GraphMutationResponse, PatchOp, SignalNode } from '@czap/core';
+import { bindGraphForm } from '@liteship/web';
+import { Diagnostics, type DocumentGraph, type GraphMutationClient } from '@liteship/core';
+import type { GraphMutationResponse, PatchOp, SignalNode } from '@liteship/core';
 import { node, graph } from '../../helpers/graph-fixtures.js';
 
 const base = graph([node('base')]);
@@ -64,18 +64,18 @@ describe('bindGraphForm', () => {
 
     dispatchSubmit(form);
     dispatchSubmit(form);
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('pending');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('pending');
 
     responses[0]!(applied('first'));
     await flush();
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('pending');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('pending');
 
     responses[1]!({ status: 'refused', errors: ['invalid'] });
     await flush();
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('refused');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('refused');
   });
 
-  test('dispatches czap:mutation with the exact response object and calls onOutcome', async () => {
+  test('dispatches liteship:mutation with the exact response object and calls onOutcome', async () => {
     const form = fixtureForm();
     const exact = applied('exact');
     const seen: GraphMutationResponse[] = [];
@@ -85,7 +85,7 @@ describe('bindGraphForm', () => {
       adopt: () => {},
       submit: () => Promise.resolve(exact),
     };
-    document.getElementById('host')!.addEventListener('czap:mutation', (event) => {
+    document.getElementById('host')!.addEventListener('liteship:mutation', (event) => {
       seen.push((event as CustomEvent<GraphMutationResponse>).detail);
     });
     bindGraphForm(form, { client, toOps: () => [], onOutcome });
@@ -95,7 +95,7 @@ describe('bindGraphForm', () => {
 
     expect(seen).toEqual([exact]);
     expect(onOutcome).toHaveBeenCalledWith(exact);
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('applied');
   });
 
   test('warns loudly when toOps throws through the client submit builder', async () => {
@@ -124,9 +124,9 @@ describe('bindGraphForm', () => {
     dispatchSubmit(form);
     await flush();
 
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('error');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('error');
     expect(events).toHaveLength(1);
-    expect(events[0]!.source).toBe('czap/web.graphForm');
+    expect(events[0]!.source).toBe('liteship/web.graphForm');
     expect(events[0]!.code).toBe('to-ops-threw');
     expect(events[0]!.message).toContain('Fix:');
   });
@@ -147,17 +147,17 @@ describe('bindGraphForm', () => {
     dispatchSubmit(form);
     await flush();
     expect(submits).toBe(1);
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('applied');
 
     unbind();
     dispatchSubmit(form);
     await flush();
 
     expect(submits).toBe(1);
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('applied');
   });
 
-  test('a throwing onOutcome is contained loudly and the czap:mutation event still fires', async () => {
+  test('a throwing onOutcome is contained loudly and the liteship:mutation event still fires', async () => {
     const form = fixtureForm();
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
@@ -167,7 +167,7 @@ describe('bindGraphForm', () => {
       submit: () => Promise.resolve(applied()),
     };
     let eventFired = false;
-    form.addEventListener('czap:mutation', () => {
+    form.addEventListener('liteship:mutation', () => {
       eventFired = true;
     });
     bindGraphForm(form, {
@@ -182,7 +182,7 @@ describe('bindGraphForm', () => {
     await flush();
 
     expect(eventFired).toBe(true);
-    expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
+    expect(form.getAttribute('data-liteship-mutation-state')).toBe('applied');
     expect(events).toHaveLength(1);
     expect(events[0]!.code).toBe('on-outcome-threw');
     expect(events[0]!.message).toContain('Fix:');

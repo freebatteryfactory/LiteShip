@@ -1,22 +1,22 @@
 /**
- * audit-floor (CLI adapter, CUT A4) — thin projection over `@czap/command`'s
+ * audit-floor (CLI adapter, CUT A4) — thin projection over `@liteship/command`'s
  * audit-floor handler (the warning-floor gate, migrated from
- * `scripts/audit-floor.ts`). The pass/fail decision lives in `@czap/command`;
+ * `scripts/audit-floor.ts`). The pass/fail decision lives in `@liteship/command`;
  * the CLI is the ONLY adapter that wires the heavy `runAuditFloor` capability: it
- * imports `@czap/audit` (the three-pass engine), collects the `rule@file` warning
+ * imports `@liteship/audit` (the three-pass engine), collects the `rule@file` warning
  * inventory, and diffs it against the pinned `AUDIT_WARNING_FLOOR` (re-exported
- * from `@czap/command`). `@czap/command` and `@czap/mcp-server` never see the
+ * from `@liteship/command`). `@liteship/command` and `@liteship/mcp-server` never see the
  * engine. Exit 0 ok, 1 gate failed (drift or any error).
  *
  * @module
  */
-import { auditFloorCommand, type AuditFloorPayload, type AuditFloorSummary } from '@czap/command';
-import { AUDIT_WARNING_FLOOR, diffInventories } from '@czap/command';
-import type { CommandContext } from '@czap/command';
-import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@czap/audit';
+import { auditFloorCommand, type AuditFloorPayload, type AuditFloorSummary } from '@liteship/command';
+import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
+import type { CommandContext } from '@liteship/command';
+import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
-/** Receipt emitted by `czap audit-floor`. */
+/** Receipt emitted by `liteship audit-floor`. */
 export interface AuditFloorReceipt extends AuditFloorPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'audit-floor';
@@ -24,13 +24,33 @@ export interface AuditFloorReceipt extends AuditFloorPayload {
 }
 
 /**
+ * Injectable three-pass engine seam for the CLI-only warning-floor scan. Every
+ * field defaults (via {@link defaultAuditFloorDeps}) to the real `@liteship/audit`
+ * pass, so production `liteship audit-floor` runs the real repo-wide audit
+ * unchanged; tests pass scripted passes to pin the adapter's warning
+ * filter/sort/diff + receipt projection over synthetic findings without
+ * re-running the heavy engine. Kept unexported so the api-surface is unchanged.
+ */
+interface AuditFloorDeps {
+  readonly runStructureAudit: typeof runStructureAudit;
+  readonly runIntegrityAudit: typeof runIntegrityAudit;
+  readonly runSurfaceAudit: typeof runSurfaceAudit;
+}
+
+const defaultAuditFloorDeps: AuditFloorDeps = { runStructureAudit, runIntegrityAudit, runSurfaceAudit };
+
+/**
  * Collect the sorted `rule@file` warning inventory from the artifact-independent
- * three-pass `@czap/audit` engine (the heavy half of the deleted
+ * three-pass `@liteship/audit` engine (the heavy half of the deleted
  * `scripts/lib/audit-floor.ts`). Exported so meta-tests can assert the live repo
  * inventory matches the pinned floor without re-running the whole gate.
  */
-export function collectWarningInventory(): readonly string[] {
-  const all = [...runStructureAudit().findings, ...runIntegrityAudit().findings, ...runSurfaceAudit().findings];
+export function collectWarningInventory(deps: AuditFloorDeps = defaultAuditFloorDeps): readonly string[] {
+  const all = [
+    ...deps.runStructureAudit().findings,
+    ...deps.runIntegrityAudit().findings,
+    ...deps.runSurfaceAudit().findings,
+  ];
   return all
     .filter((f) => f.severity === 'warning')
     .map((f) => `${f.rule}@${f.location?.file ?? 'unknown'}`)
@@ -42,10 +62,10 @@ export function collectWarningInventory(): readonly string[] {
  * count from the three-pass engine and diff against the pinned floor. Ported
  * verbatim from the deleted `scripts/audit-floor.ts` + `scripts/lib/audit-floor.ts`.
  */
-function runAuditFloorScan(): AuditFloorSummary {
-  const structure = runStructureAudit();
-  const integrity = runIntegrityAudit();
-  const surface = runSurfaceAudit();
+function runAuditFloorScan(deps: AuditFloorDeps = defaultAuditFloorDeps): AuditFloorSummary {
+  const structure = deps.runStructureAudit();
+  const integrity = deps.runIntegrityAudit();
+  const surface = deps.runSurfaceAudit();
   const all = [...structure.findings, ...integrity.findings, ...surface.findings];
   const inventory = all
     .filter((f) => f.severity === 'warning')
@@ -66,11 +86,14 @@ function runAuditFloorScan(): AuditFloorSummary {
   };
 }
 
-/** Execute `czap audit-floor` — run the three-pass engine, diff the warning inventory; emit a verdict. */
-export async function auditFloor(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+/** Execute `liteship audit-floor` — run the three-pass engine, diff the warning inventory; emit a verdict. */
+export async function auditFloor(
+  opts: { cwd?: string; pretty?: boolean } = {},
+  deps: AuditFloorDeps = defaultAuditFloorDeps,
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  const context: CommandContext = { cwd, runAuditFloor: async () => runAuditFloorScan() };
+  const context: CommandContext = { cwd, runAuditFloor: async () => runAuditFloorScan(deps) };
 
   const result = await auditFloorCommand.handler({ name: 'audit-floor', args: {} }, context);
   const payload = result.payload as AuditFloorPayload;

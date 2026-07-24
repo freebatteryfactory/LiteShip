@@ -1,10 +1,10 @@
 /**
- * CUT D9b-1 — @czap/audit is a clean, downstream-installable audit engine.
+ * CUT D9b-1 — @liteship/audit is a clean, downstream-installable audit engine.
  *
  * Proves the package exposes the engine surface, that all three passes are
  * driven by a profile supplied THROUGH the package exports (synthetic @acme/),
  * that `profile.repoRoot` is the authoritative target, and that the package
- * source imports neither `scripts/` nor any heavy `@czap/*` runtime package.
+ * source imports neither `scripts/` nor any heavy `@liteship/*` runtime package.
  *
  * @module
  */
@@ -20,7 +20,7 @@ import {
   liteshipDevopsProfile,
   withRepoRoot,
   type DevopsProfile,
-} from '@czap/audit';
+} from '@liteship/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const ENGINE_SRC = resolve(REPO, 'packages/audit/src');
@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 function acmeRepo(): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-d9b-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-d9b-'));
   fixtures.push(root);
   const files: Record<string, string> = {
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
@@ -69,14 +69,14 @@ function tsFiles(dir: string): string[] {
   });
 }
 
-describe('D9b-1 — @czap/audit exposes the engine surface', () => {
+describe('D9b-1 — @liteship/audit exposes the engine surface', () => {
   it('exports the three passes, the combined runner, and the profile helpers', () => {
     expect(typeof runStructureAudit).toBe('function');
     expect(typeof runIntegrityAudit).toBe('function');
     expect(typeof runSurfaceAudit).toBe('function');
     expect(typeof runAuditPasses).toBe('function');
     expect(typeof withRepoRoot).toBe('function');
-    expect(liteshipDevopsProfile.internalPackagePrefix).toBe('@czap/');
+    expect(liteshipDevopsProfile.internalPackagePrefix).toBe('@liteship/');
   });
 });
 
@@ -87,7 +87,7 @@ describe('D9b-1 — a synthetic @acme/ profile drives ALL THREE passes through p
     expect(result.summary.packageCount).toBe(2);
   });
 
-  it('surface produces no @czap/ host-surface findings under an empty @acme/ policy', () => {
+  it('surface produces no @liteship/ host-surface findings under an empty @acme/ policy', () => {
     const result = runSurfaceAudit(acmeProfile(acmeRepo()));
     expect(result.findings.filter((f) => f.rule === 'host-surface')).toHaveLength(0);
   });
@@ -114,7 +114,7 @@ describe('D9b-1 — profile.repoRoot is the authoritative target through the pac
   });
 });
 
-describe('D9b-1 — @czap/audit dependency hygiene (source-grep)', () => {
+describe('D9b-1 — @liteship/audit dependency hygiene (source-grep)', () => {
   it('no engine source imports from scripts/', () => {
     for (const file of tsFiles(ENGINE_SRC)) {
       const src = readFileSync(file, 'utf8');
@@ -123,12 +123,12 @@ describe('D9b-1 — @czap/audit dependency hygiene (source-grep)', () => {
     }
   });
 
-  it('no engine source imports a heavy @czap runtime package or bench/coverage dep', () => {
+  it('no engine source imports a heavy @liteship runtime package or bench/coverage dep', () => {
     const forbidden = [
-      /from\s*['"]@czap\/core['"]/,
-      /from\s*['"]@czap\/edge['"]/,
-      /from\s*['"]@czap\/web['"]/,
-      /from\s*['"]@czap\/worker['"]/,
+      /from\s*['"]@liteship\/core['"]/,
+      /from\s*['"]@liteship\/edge['"]/,
+      /from\s*['"]@liteship\/web['"]/,
+      /from\s*['"]@liteship\/worker['"]/,
       /from\s*['"]tinybench['"]/,
       /from\s*['"]istanbul-lib-coverage['"]/,
     ];

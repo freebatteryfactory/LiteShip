@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { audioDecoder } from '@czap/assets';
+import { audioDecoder } from '@liteship/assets';
 
 /**
  * Build a minimal RIFF/WAVE container around the given fmt/data payloads.

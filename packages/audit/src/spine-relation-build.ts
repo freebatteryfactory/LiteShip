@@ -1,7 +1,7 @@
 /**
  * Spine-relation FACTS builder — the heavy `ts.Program` host that computes the
  * two-axis `SpineRelationFacts` the lean `spineRelationGate` folds (Wave 8.5,
- * ADR-0023: the host produces the facts, the lean gate folds them; @czap/gauntlet
+ * ADR-0023: the host produces the facts, the lean gate folds them; @liteship/gauntlet
  * carries no `typescript` dependency, so this work lives here).
  *
  * HOW IT OBSERVES THE RELATION (the compiler is the oracle, never a hand-rolled
@@ -38,14 +38,14 @@
 
 import { resolve } from 'node:path';
 import ts from 'typescript';
-import type { SpineAuthority, SpineRelationFacts, SpineRelationObservation, SurfaceRelation } from '@czap/gauntlet';
-import { classifyStructuralRelation } from '@czap/gauntlet';
+import type { SpineAuthority, SpineRelationFacts, SpineRelationObservation, SurfaceRelation } from '@liteship/gauntlet';
+import { classifyStructuralRelation } from '@liteship/gauntlet';
 import { typeDirectedCompilerOptions } from './ts-program.js';
 
 /**
  * One admitted mirror type — the host-supplied seed row (frozen from the current
- * spine-conformance pins). `spineExpr` is the type expression under the `@czap/_spine`
- * namespace (e.g. `CompositeState`, `Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>`,
+ * spine-conformance pins). `spineExpr` is the type expression under the `@liteship/_spine`
+ * namespace (e.g. `CompositeState`, `Codec<{ readonly a: 1 }, { readonly a: 1 }>`,
  * `Millis`); `runtimeExpr` the expression under the runtime module's namespace;
  * `runtimeModule` the repo-relative `.ts` source path of the runtime producer.
  */
@@ -71,7 +71,7 @@ export interface SpineRelationBuildOptions {
 
 /** The synthetic probe file's absolute path (never written to disk — served by the overlay host). */
 function syntheticPath(repoRoot: string): string {
-  return resolve(repoRoot, '__czap_spine_relation_probe__.ts');
+  return resolve(repoRoot, '__liteship_spine_relation_probe__.ts');
 }
 
 /**
@@ -79,9 +79,9 @@ function syntheticPath(repoRoot: string): string {
  * `from '<spine>'` import literal never appears verbatim in THIS module's source. It is
  * a mention inside generated string data, not a real import of this module; the b5
  * package-graph law greps raw text and would otherwise false-positive on it (the audit
- * import graph itself only reaches the blessed @czap/gauntlet leaf).
+ * import graph itself only reaches the blessed @liteship/gauntlet leaf).
  */
-const SPINE_PACKAGE = `@czap/${'_spine'}`;
+const SPINE_PACKAGE = `@liteship/${'_spine'}`;
 
 /** The import specifier for a runtime module: repo-relative `.ts` → `./…/x.js`. */
 function moduleSpecifier(runtimeModule: string): string {

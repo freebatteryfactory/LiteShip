@@ -11,7 +11,7 @@ Defined in: [web/src/stream/recovery.ts:57](https://github.com/freebatteryfactor
 Configuration for [bindRequestSnapshotRecovery](../functions/bindRequestSnapshotRecovery.md) and [runGraphNativeRecovery](../functions/runGraphNativeRecovery.md).
 
 When `graphQueryUrl`, `mutationClient`, `cellStore`, and `patchReceiptEntries` are all
-present, recovery prefers `runGraphNativeGapReplay` from `@czap/core` (#133-full)
+present, recovery prefers `runGraphNativeGapReplay` from `@liteship/core` (#133-full)
 over the interim HTML snapshot path. Snapshot remains the permanent floor when any
 of those are absent.
 

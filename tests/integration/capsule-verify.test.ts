@@ -3,10 +3,10 @@ import { readFileSync, writeFileSync, statSync, utimesSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
-import { classifyBenchSource } from '@czap/core/harness';
+import { classifyBenchSource } from '@liteship/core/harness';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 
-/** Spawn `czap capsule-verify` and return its parsed JSON receipt. */
+/** Spawn `liteship capsule-verify` and return its parsed JSON receipt. */
 async function runVerifyReceipt(): Promise<{ status: string; errors?: string[] }> {
   const lines: string[] = [];
   await withSpawned(
@@ -30,10 +30,10 @@ describe('capsule-verify', () => {
   // committed tests/generated/ files. This never rewrites that shared dir, so it
   // can't race the parent vitest run (which is executing those same files) or
   // other compile-spawning workers. The capsule:verify child inherits
-  // CZAP_CAPSULE_MANIFEST and runs the committed generated suite read-only.
+  // LITESHIP_CAPSULE_MANIFEST and runs the committed generated suite read-only.
   let iso: IsolatedCapsules;
   beforeAll(async () => {
-    iso = await compileManifestOnly('czap-capverify');
+    iso = await compileManifestOnly('liteship-capverify');
   }, scaledTimeout(90_000));
 
   afterAll(() => iso?.restore());

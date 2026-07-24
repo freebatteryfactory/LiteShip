@@ -13,13 +13,13 @@
  */
 
 /** Directive names the integration can register, in escalation order. */
-export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'motion' | 'svg';
+export type DirectiveName = 'adaptive' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'motion' | 'svg';
 
 /** A client-directive default export: `(load, opts, el)`. */
 export type DirectiveEntry = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement) => void;
 
 /** Tracks which directives already initialized an element across re-scans. */
-export const BOUND_ATTRIBUTE = 'data-czap-directive-bound';
+export const BOUND_ATTRIBUTE = 'data-liteship-directive-bound';
 
 /** The set of directive names already bound on `element`, read from {@link BOUND_ATTRIBUTE}. */
 export function boundNames(element: HTMLElement): Set<string> {

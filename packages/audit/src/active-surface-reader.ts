@@ -6,13 +6,13 @@
  * (interpreter / lowerer / runtime) and records which load-bearing fields are READ.
  *
  * Emits `ActiveSurfaceFacts` for the gauntlet FactGate — gauntlet stays lean
- * (no `typescript` dep); this module lives in `@czap/audit`.
+ * (no `typescript` dep); this module lives in `@liteship/audit`.
  *
  * @module
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import type { ActiveSurfaceFacts, ActiveSurfaceEntry, ActiveSurfacePromotion } from '@czap/gauntlet';
+import type { ActiveSurfaceFacts, ActiveSurfaceEntry, ActiveSurfacePromotion } from '@liteship/gauntlet';
 import { createTypeDirectedProgram } from './ts-program.js';
 
 /** The oracle id every active-surface fact is tagged with (traceability). */
@@ -31,7 +31,7 @@ interface EnrolledSurface {
 const TRANSITION_READER_FILES = [
   'packages/astro/src/runtime/graph-lower.ts',
   'packages/astro/src/runtime/graph-runtime.ts',
-  'packages/core/src/interpret-transition.ts',
+  'packages/core/src/motion/interpret-transition.ts',
 ] as const;
 
 /** Reader paths that MUST consume an active ExportNode when present. */
@@ -45,7 +45,7 @@ const ENROLLED_SURFACES: readonly EnrolledSurface[] = [
     family: 'transition',
     switchCaseLabel: 'transition',
     readerFiles: TRANSITION_READER_FILES,
-    dedicatedReaderFiles: new Set(['packages/core/src/interpret-transition.ts']),
+    dedicatedReaderFiles: new Set(['packages/core/src/motion/interpret-transition.ts']),
   },
   {
     family: 'export',
@@ -61,13 +61,13 @@ export interface ActiveSurfaceReaderOptions {
   readonly repoRoot: string;
   /**
    * Load-bearing field names for the active `transition` surface — injected by the
-   * HOST from the real `@czap/core` type (`keyof TransitionNode`), never derived
+   * HOST from the real `@liteship/core` type (`keyof TransitionNode`), never derived
    * inside audit (audit-leaf-purity / D9b).
    */
   readonly transitionRequiredFields: readonly string[];
   /**
    * Load-bearing field names for the active `export` surface — injected by the
-   * HOST from the real `@czap/core` type (`keyof ExportNode`).
+   * HOST from the real `@liteship/core` type (`keyof ExportNode`).
    */
   readonly exportRequiredFields?: readonly string[];
   /**

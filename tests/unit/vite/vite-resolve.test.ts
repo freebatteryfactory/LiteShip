@@ -1,16 +1,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-// The `'package'` source resolves @czap/core through the module graph, which a
-// synthetic temp root cannot model (and vitest's aliases would always resolve
-// the workspace @czap/core). Force it absent so the config/crate/public/null
-// ordering is exercised cleanly; the real resolver is covered in
-// tests/unit/core/wasm-shipping.test.ts.
-vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
-
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { resolveWASM } from '../../../packages/vite/src/wasm-resolve.js';
 import { fileExists, findConventionFiles } from '../../../packages/vite/src/resolve-fs.js';
 import { resolvePrimitive } from '../../../packages/vite/src/primitive-resolve.js';
@@ -18,7 +11,7 @@ import { resolvePrimitive } from '../../../packages/vite/src/primitive-resolve.j
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-resolve-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-resolve-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -36,7 +29,7 @@ afterEach(() => {
   }
 });
 
-describe('@czap/vite resolvers', () => {
+describe('@liteship/vite resolvers', () => {
   test('resolves from same-directory convention files', async () => {
     const root = makeTempDir();
     const sourceDir = join(root, 'src');
@@ -121,7 +114,11 @@ describe('@czap/vite resolvers', () => {
     mkdirSync(sourceDir, { recursive: true });
 
     writeModule(sourceDir, 'themes.ts', `export const other = { _tag: 'ThemeDef', id: 'theme', name: 'other' };`);
-    writeModule(sourceDir, 'feature.themes.ts', `export const brand = { _tag: 'ThemeDef', id: 'theme', name: 'brand' };`);
+    writeModule(
+      sourceDir,
+      'feature.themes.ts',
+      `export const brand = { _tag: 'ThemeDef', id: 'theme', name: 'brand' };`,
+    );
 
     expect((await resolvePrimitive('theme', 'brand', fromFile, root))?.source).toContain('feature.themes.ts');
   });
@@ -144,7 +141,11 @@ describe('@czap/vite resolvers', () => {
     const fromFile = join(sourceDir, 'panel.css');
     mkdirSync(sourceDir, { recursive: true });
 
-    writeModule(sourceDir, 'feature.themes.ts', `export const local = { _tag: 'ThemeDef', id: 'theme', name: 'local' };`);
+    writeModule(
+      sourceDir,
+      'feature.themes.ts',
+      `export const local = { _tag: 'ThemeDef', id: 'theme', name: 'local' };`,
+    );
     writeModule(root, 'brand.themes.ts', `export const remote = { _tag: 'ThemeDef', id: 'theme', name: 'remote' };`);
 
     expect((await resolvePrimitive('theme', 'local', fromFile, root))?.source).toContain('feature.themes.ts');
@@ -275,7 +276,7 @@ describe('@czap/vite resolvers', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/vite.boundary-resolve',
+        source: 'liteship/vite.boundary-resolve',
         code: 'import-failed',
         message: expect.stringContaining('Failed to import'),
       }),
@@ -299,7 +300,7 @@ describe('@czap/vite resolvers', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/vite.token-resolve',
+        source: 'liteship/vite.token-resolve',
         code: 'import-failed',
         message: expect.stringContaining('Failed to import'),
       }),
@@ -367,14 +368,14 @@ describe('@czap/vite resolvers', () => {
   });
 });
 
-describe('@czap/vite resolveWASM', () => {
+describe('@liteship/vite resolveWASM', () => {
   test('prefers an explicit config path', () => {
     const root = makeTempDir();
     const configured = join(root, 'bin', 'custom.wasm');
     mkdirSync(join(root, 'bin'), { recursive: true });
     writeFileSync(configured, 'wasm');
 
-    expect(resolveWASM(root, 'bin/custom.wasm')).toEqual({
+    expect(resolveWASM(root, 'bin/custom.wasm', () => null)).toEqual({
       filePath: configured,
       source: 'config',
     });
@@ -382,52 +383,52 @@ describe('@czap/vite resolveWASM', () => {
 
   test('falls back to crate output and public output', () => {
     const root = makeTempDir();
-    const cratePath = join(root, 'crates/czap-compute/target/wasm32-unknown-unknown/release');
+    const cratePath = join(root, 'crates/liteship-compute/target/wasm32-unknown-unknown/release');
     mkdirSync(cratePath, { recursive: true });
-    writeFileSync(join(cratePath, 'czap_compute.wasm'), 'crate');
+    writeFileSync(join(cratePath, 'liteship_compute.wasm'), 'crate');
 
-    expect(resolveWASM(root)?.source).toBe('crate');
+    expect(resolveWASM(root, undefined, () => null)?.source).toBe('crate');
 
-    rmSync(join(cratePath, 'czap_compute.wasm'));
+    rmSync(join(cratePath, 'liteship_compute.wasm'));
     const publicDir = join(root, 'public');
     mkdirSync(publicDir, { recursive: true });
-    writeFileSync(join(publicDir, 'czap-compute.wasm'), 'public');
+    writeFileSync(join(publicDir, 'liteship-compute.wasm'), 'public');
 
-    expect(resolveWASM(root)?.source).toBe('public');
+    expect(resolveWASM(root, undefined, () => null)?.source).toBe('public');
   });
 
   // The `'package'` (node_modules) source is resolved through the module graph
-  // (@czap/vite → @czap/core), which a synthetic temp root can't model; its
+  // (@liteship/vite → @liteship/core), which a synthetic temp root can't model; its
   // behavior — real resolution + hermeticity — is covered in
-  // tests/unit/core/wasm-shipping.test.ts (resolvePackagedWASM). A temp root has
-  // no @czap/vite, so the package branch is null here and the config/crate/public
-  // ordering below is exercised cleanly.
+  // tests/unit/core/wasm-shipping.test.ts (resolvePackagedWASM). These cases inject
+  // a `() => null` packaged-resolver seam to force that source absent, so the
+  // config/crate/public ordering is exercised cleanly off the temp root.
 
   test('falls back from a missing configured wasm path to the crate output', () => {
     const root = makeTempDir();
-    const cratePath = join(root, 'crates/czap-compute/target/wasm32-unknown-unknown/release');
+    const cratePath = join(root, 'crates/liteship-compute/target/wasm32-unknown-unknown/release');
     mkdirSync(cratePath, { recursive: true });
-    writeFileSync(join(cratePath, 'czap_compute.wasm'), 'crate');
+    writeFileSync(join(cratePath, 'liteship_compute.wasm'), 'crate');
 
-    expect(resolveWASM(root, 'missing/custom.wasm')).toEqual({
-      filePath: join(cratePath, 'czap_compute.wasm'),
+    expect(resolveWASM(root, 'missing/custom.wasm', () => null)).toEqual({
+      filePath: join(cratePath, 'liteship_compute.wasm'),
       source: 'crate',
     });
   });
 
   test('returns null when no wasm binary is available', () => {
-    expect(resolveWASM(makeTempDir())).toBeNull();
+    expect(resolveWASM(makeTempDir(), undefined, () => null)).toBeNull();
   });
 
   test('surfaces unexpected filesystem failures through diagnostics instead of collapsing to a miss', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    expect(() => fileExists(42 as unknown as string, 'czap/vite.test')).toThrow(TypeError);
+    expect(() => fileExists(42 as unknown as string, 'liteship/vite.test')).toThrow(TypeError);
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/vite.test',
+        source: 'liteship/vite.test',
         code: 'filesystem-stat-failed',
       }),
     ]);
@@ -438,11 +439,11 @@ describe('@czap/vite resolveWASM', () => {
     const dir = join(root, 'subdir');
     mkdirSync(dir, { recursive: true });
 
-    expect(fileExists(dir, 'czap/vite.test')).toBe(false);
+    expect(fileExists(dir, 'liteship/vite.test')).toBe(false);
   });
 
   test('findConventionFiles returns empty array for missing directory', () => {
-    const result = findConventionFiles('/nonexistent-czap-dir-' + Date.now(), '.tokens.ts', 'czap/vite.test');
+    const result = findConventionFiles('/nonexistent-liteship-dir-' + Date.now(), '.tokens.ts', 'liteship/vite.test');
     expect(result).toEqual([]);
   });
 
@@ -450,11 +451,11 @@ describe('@czap/vite resolveWASM', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    expect(() => findConventionFiles(42 as unknown as string, '.tokens.ts', 'czap/vite.test')).toThrow(TypeError);
+    expect(() => findConventionFiles(42 as unknown as string, '.tokens.ts', 'liteship/vite.test')).toThrow(TypeError);
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/vite.test',
+        source: 'liteship/vite.test',
         code: 'filesystem-readdir-failed',
       }),
     ]);
@@ -466,7 +467,7 @@ describe('@czap/vite resolveWASM', () => {
     writeFileSync(join(root, 'other.ts'), 'export const y = 2;');
     writeFileSync(join(root, 'theme.tokens.ts'), 'export const z = 3;');
 
-    const result = findConventionFiles(root, '.tokens.ts', 'czap/vite.test');
+    const result = findConventionFiles(root, '.tokens.ts', 'liteship/vite.test');
     expect(result).toHaveLength(2);
     expect(result.every((f: string) => f.endsWith('.tokens.ts'))).toBe(true);
   });
@@ -494,7 +495,12 @@ describe('resolvePrimitive() — generic resolver', () => {
       mkdirSync(sourceDir, { recursive: true });
 
       const tagMap = { boundary: 'BoundaryDef', token: 'TokenDef', theme: 'ThemeDef', style: 'StyleDef' } as const;
-      const fileMap = { boundary: 'boundaries.ts', token: 'tokens.ts', theme: 'themes.ts', style: 'styles.ts' } as const;
+      const fileMap = {
+        boundary: 'boundaries.ts',
+        token: 'tokens.ts',
+        theme: 'themes.ts',
+        style: 'styles.ts',
+      } as const;
       const tag = tagMap[kind];
       const file = fileMap[kind];
 

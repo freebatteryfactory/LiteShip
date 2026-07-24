@@ -1,8 +1,8 @@
 {
   "snapshotFormat": 1,
   "packages": {
-    "@czap/assets": {
-      "version": "0.18.0",
+    "@liteship/assets": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AssetRegistry",
@@ -91,9 +91,14 @@
         }
       ]
     },
-    "@czap/astro": {
-      "version": "0.18.0",
+    "@liteship/astro": {
+      "version": "0.19.0",
       "exports": [
+        {
+          "name": "adaptiveAttrs",
+          "kind": "function",
+          "signature": "(1)"
+        },
         {
           "name": "applyResponsiveMediaVary",
           "kind": "function",
@@ -101,21 +106,6 @@
         },
         {
           "name": "bridgeDiagnosticsToAstroLogger",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
-          "name": "czap",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
-          "name": "czapFetchLayer",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
-          "name": "czapMiddleware",
           "kind": "function",
           "signature": "(1)"
         },
@@ -141,6 +131,21 @@
         },
         {
           "name": "integration",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteship",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteshipFetchLayer",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteshipMiddleware",
           "kind": "function",
           "signature": "(1)"
         },
@@ -175,19 +180,14 @@
           "signature": "(1)"
         },
         {
-          "name": "satelliteAttrs",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
           "name": "serializeBoundaryCss",
           "kind": "function",
           "signature": "(1)"
         }
       ]
     },
-    "@czap/audit": {
-      "version": "0.18.0",
+    "@liteship/audit": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ACTIVE_SURFACE_ORACLE_ID",
@@ -206,10 +206,6 @@
           "kind": "const"
         },
         {
-          "name": "CZAP_PACKAGE_ROSTER",
-          "kind": "const"
-        },
-        {
           "name": "DEFAULT_SURFACE_READER",
           "kind": "namespace",
           "signature": "fileExists:function,readFile:function"
@@ -220,6 +216,10 @@
         },
         {
           "name": "LANGUAGE_SERVICE_ORACLE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_PACKAGE_ROSTER",
           "kind": "const"
         },
         {
@@ -611,8 +611,8 @@
         }
       ]
     },
-    "@czap/canonical": {
-      "version": "0.18.0",
+    "@liteship/canonical": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AddressedDigest",
@@ -666,8 +666,8 @@
         }
       ]
     },
-    "@czap/cli": {
-      "version": "0.18.0",
+    "@liteship/cli": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "run",
@@ -676,8 +676,8 @@
         }
       ]
     },
-    "@czap/cloudflare": {
-      "version": "0.18.0",
+    "@liteship/cloudflare": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "cloudflareAdapterCapsule",
@@ -700,8 +700,8 @@
         }
       ]
     },
-    "@czap/command": {
-      "version": "0.18.0",
+    "@liteship/command": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AUDIT_WARNING_FLOOR",
@@ -720,7 +720,31 @@
           "kind": "const"
         },
         {
+          "name": "CHECK_CONTEXTS",
+          "kind": "const"
+        },
+        {
+          "name": "CHECK_PLATFORMS",
+          "kind": "const"
+        },
+        {
+          "name": "CHECK_PROFILES",
+          "kind": "const"
+        },
+        {
+          "name": "CHECK_REGISTRY",
+          "kind": "const"
+        },
+        {
           "name": "COMMAND_CATALOG",
+          "kind": "const"
+        },
+        {
+          "name": "CONTEXT_MAP",
+          "kind": "const"
+        },
+        {
+          "name": "CONTEXT_TASK_IDS",
           "kind": "const"
         },
         {
@@ -744,6 +768,14 @@
           "name": "CommandRegistry",
           "kind": "namespace",
           "signature": "make:function"
+        },
+        {
+          "name": "ContextPayloadSchema",
+          "kind": "const"
+        },
+        {
+          "name": "ExplainPayloadSchema",
+          "kind": "const"
         },
         {
           "name": "GLOSSARY_ENTRIES",
@@ -775,6 +807,10 @@
         },
         {
           "name": "PlumbPayloadSchema",
+          "kind": "const"
+        },
+        {
+          "name": "SCRIPT_EXEMPTIONS",
           "kind": "const"
         },
         {
@@ -831,7 +867,7 @@
           "signature": "descriptor:const,handler:function"
         },
         {
-          "name": "checkCommand",
+          "name": "checkGatesCommand",
           "kind": "namespace",
           "signature": "argsSchema:const,descriptor:const,handler:function"
         },
@@ -844,6 +880,11 @@
           "name": "commandRegistry",
           "kind": "namespace",
           "signature": "get:function,list:function"
+        },
+        {
+          "name": "contextCommand",
+          "kind": "namespace",
+          "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
           "name": "defineCommand",
@@ -861,9 +902,19 @@
           "signature": "(2)"
         },
         {
+          "name": "explainCommand",
+          "kind": "namespace",
+          "signature": "argsSchema:const,descriptor:const,handler:function"
+        },
+        {
           "name": "failed",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "formatCheckPlan",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "glossaryCommand",
@@ -899,6 +950,11 @@
           "name": "packageSmokeCommand",
           "kind": "namespace",
           "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "planChecks",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "plumbCommand",
@@ -942,8 +998,8 @@
         }
       ]
     },
-    "@czap/compiler": {
-      "version": "0.18.0",
+    "@liteship/compiler": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AIManifestCompiler",
@@ -978,7 +1034,7 @@
         {
           "name": "StyleCSSCompiler",
           "kind": "namespace",
-          "signature": "compile:function"
+          "signature": "compile:function,compileAdaptive:function"
         },
         {
           "name": "ThemeCSSCompiler",
@@ -1057,8 +1113,8 @@
         }
       ]
     },
-    "@czap/core": {
-      "version": "0.18.0",
+    "@liteship/core": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AICast",
@@ -1086,14 +1142,9 @@
           "signature": "interpolate:function,run:function"
         },
         {
-          "name": "BlendTree",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Boundary",
           "kind": "namespace",
-          "signature": "evaluate:function,evaluateBatch:function,evaluateResult:function,evaluateWithHysteresis:function,isActive:function,make:function"
+          "signature": "evaluate:function,evaluateBatch:function,evaluateResult:function,evaluateWithHysteresis:function,isActive:function"
         },
         {
           "name": "BoundaryAttribute",
@@ -1132,11 +1183,6 @@
           "signature": "atLeast:function,empty:function,from:function,grant:function,has:function,intersection:function,ordinal:function,revoke:function,superset:function,union:function"
         },
         {
-          "name": "Cell",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "CellKernel",
           "kind": "namespace",
           "signature": "fanout:function,replay1:function"
@@ -1147,14 +1193,9 @@
           "signature": "make:function"
         },
         {
-          "name": "Component",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Composable",
           "kind": "namespace",
-          "signature": "compose:function,make:function,merge:function"
+          "signature": "compose:function,merge:function"
         },
         {
           "name": "ComposableWorld",
@@ -1167,14 +1208,9 @@
           "signature": "create:function"
         },
         {
-          "name": "CompositorStatePool",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Config",
           "kind": "namespace",
-          "signature": "make:function,toAstroConfig:function,toTestAliases:function,toViteConfig:function"
+          "signature": "toAstroConfig:function,toTestAliases:function,toViteConfig:function"
         },
         {
           "name": "ContentAddress",
@@ -1201,17 +1237,12 @@
         {
           "name": "Derived",
           "kind": "namespace",
-          "signature": "combine:function,make:function"
+          "signature": "combine:function"
         },
         {
           "name": "Diagnostics",
           "kind": "namespace",
-          "signature": "clearOnce:function,createBufferSink:function,error:function,reset:function,resetClock:function,resetSink:function,setClock:function,setSink:function,warn:function,warnOnce:function"
-        },
-        {
-          "name": "DirtyFlags",
-          "kind": "namespace",
-          "signature": "make:function"
+          "signature": "clearOnce:function,createBufferSink:function,error:function,errorRegistered:function,reset:function,resetClock:function,resetSink:function,setClock:function,setSink:function,warn:function,warnOnce:function,warnOnceRegistered:function,warnRegistered:function"
         },
         {
           "name": "DocumentGraphNodeSchema",
@@ -1234,11 +1265,6 @@
           "name": "EntityId",
           "kind": "function",
           "signature": "(1)"
-        },
-        {
-          "name": "FrameBudget",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "GRAPH_QUERY_FALLBACK_HEADER",
@@ -1265,22 +1291,9 @@
           "signature": "(1)"
         },
         {
-          "name": "LADDER_RUNGS",
-          "kind": "const"
-        },
-        {
-          "name": "LADDER_TARGETS",
-          "kind": "const"
-        },
-        {
           "name": "Lifetime",
           "kind": "namespace",
           "signature": "make:function"
-        },
-        {
-          "name": "LiveCell",
-          "kind": "namespace",
-          "signature": "make:function,makeBoundary:function"
         },
         {
           "name": "MS_PER_SEC",
@@ -1311,6 +1324,14 @@
           "signature": "fromCells:function"
         },
         {
+          "name": "QUALITY_TIER_COUNT",
+          "kind": "const"
+        },
+        {
+          "name": "QUALITY_TIER_TARGETS",
+          "kind": "const"
+        },
+        {
           "name": "Receipt",
           "kind": "namespace",
           "signature": "GENESIS:const,append:function,buildChain:function,createEnvelope:function,findByHash:function,findByKind:function,generateMACKey:function,hashEnvelope:function,head:function,isGenesis:function,macEnvelope:function,tail:function,validateChain:function,validateChainDetailed:function,verifyMAC:function"
@@ -1329,11 +1350,6 @@
           "name": "RuntimeCoordinator",
           "kind": "namespace",
           "signature": "create:function"
-        },
-        {
-          "name": "S",
-          "kind": "namespace",
-          "signature": "any:const,array:function,boolean:const,brand:function,bytes:function,hole:function,literal:function,number:const,optional:function,record:function,string:const,struct:function,tuple:function,union:function,unknown:const"
         },
         {
           "name": "SSE_BUFFER_SIZE",
@@ -1369,7 +1385,7 @@
         {
           "name": "Signal",
           "kind": "namespace",
-          "signature": "audio:function,controllable:function,make:function"
+          "signature": "audio:function,controllable:function"
         },
         {
           "name": "SignalInput",
@@ -1402,14 +1418,9 @@
           "signature": "(1)"
         },
         {
-          "name": "Store",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Style",
           "kind": "namespace",
-          "signature": "make:function,mergeLayers:function,tap:function"
+          "signature": "mergeLayers:function,tap:function"
         },
         {
           "name": "THEME_TRANSITION_DURATION_MS",
@@ -1422,7 +1433,7 @@
         {
           "name": "Theme",
           "kind": "namespace",
-          "signature": "make:function,tap:function"
+          "signature": "tap:function"
         },
         {
           "name": "ThresholdValue",
@@ -1430,19 +1441,9 @@
           "signature": "(1)"
         },
         {
-          "name": "Timeline",
-          "kind": "namespace",
-          "signature": "from:function"
-        },
-        {
           "name": "Token",
           "kind": "namespace",
-          "signature": "cssVar:function,make:function,tap:function"
-        },
-        {
-          "name": "TokenBuffer",
-          "kind": "namespace",
-          "signature": "make:function"
+          "signature": "cssVar:function,tap:function"
         },
         {
           "name": "TokenRef",
@@ -1492,11 +1493,6 @@
           "kind": "const"
         },
         {
-          "name": "World",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "Zap",
           "kind": "namespace",
           "signature": "debounce:function,filter:function,fromDOMEvent:function,make:function,map:function,merge:function,throttle:function"
@@ -1530,6 +1526,11 @@
           "name": "assertTokenBinds",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "attachLifetime",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "boundaryEvaluateCapsule",
@@ -1567,7 +1568,7 @@
           "signature": "(3)"
         },
         {
-          "name": "chooseRung",
+          "name": "chooseTier",
           "kind": "function",
           "signature": "(2)"
         },
@@ -1587,7 +1588,47 @@
           "signature": "(3)"
         },
         {
+          "name": "computed",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "contentAddressOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createBlendTree",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "createCell",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createComponent",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createComposable",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createCompositorStatePool",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "createDirtyFlags",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createFrameBudget",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1600,6 +1641,46 @@
           "name": "createGraphQueryRefreshBase",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "createLifetime",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "createLiveCell",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createLiveCellBoundary",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createSignal",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createStore",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createTimeline",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createTokenBuffer",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createWorld",
+          "kind": "function",
+          "signature": "(0)"
         },
         {
           "name": "decode",
@@ -1622,12 +1703,32 @@
           "signature": "(2)"
         },
         {
+          "name": "defineBoundary",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "defineCapsule",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "defineConfig",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineStyle",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineTheme",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineToken",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1652,7 +1753,7 @@
           "signature": "(2)"
         },
         {
-          "name": "escalationChooseRungCapsule",
+          "name": "escalationChooseTierCapsule",
           "kind": "namespace",
           "signature": "_kind:const,budgets:const,capabilities:const,decide:function,id:const,input:const,invariants:const,name:const,output:const,site:const"
         },
@@ -1732,6 +1833,11 @@
           "signature": "(1)"
         },
         {
+          "name": "inspectReceipt",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "interpolate",
           "kind": "function",
           "signature": "(4)"
@@ -1785,6 +1891,11 @@
           "name": "linearizeGraph",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "lowerAdaptive",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "lowerRevealChain",
@@ -1862,7 +1973,7 @@
           "signature": "(2)"
         },
         {
-          "name": "projectLadder",
+          "name": "projectQualityTiers",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1952,6 +2063,11 @@
           "signature": "(1)"
         },
         {
+          "name": "schema",
+          "kind": "namespace",
+          "signature": "any:const,array:function,boolean:const,brand:function,bytes:function,hole:function,literal:function,number:const,optional:function,record:function,string:const,struct:function,tuple:function,union:function,unknown:const"
+        },
+        {
           "name": "sealGraph",
           "kind": "function",
           "signature": "(1)"
@@ -2027,6 +2143,11 @@
           "signature": "next:function"
         },
         {
+          "name": "tierTargets",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "toJsonSchema",
           "kind": "function",
           "signature": "(1)"
@@ -2088,8 +2209,8 @@
         }
       ]
     },
-    "@czap/detect": {
-      "version": "0.18.0",
+    "@liteship/detect": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "CAP_AXES",
@@ -2188,8 +2309,8 @@
         }
       ]
     },
-    "@czap/edge": {
-      "version": "0.18.0",
+    "@liteship/edge": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ClientHints",
@@ -2266,9 +2387,17 @@
         }
       ]
     },
-    "@czap/error": {
-      "version": "0.18.0",
+    "@liteship/error": {
+      "version": "0.19.0",
       "exports": [
+        {
+          "name": "DIAGNOSTIC_AREAS",
+          "kind": "const"
+        },
+        {
+          "name": "DIAGNOSTIC_REGISTRY",
+          "kind": "const"
+        },
         {
           "name": "HostCapabilityError",
           "kind": "function",
@@ -2324,6 +2453,11 @@
           "signature": "(1)"
         },
         {
+          "name": "explainDiagnostic",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "getTag",
           "kind": "function",
           "signature": "(1)"
@@ -2375,8 +2509,8 @@
         }
       ]
     },
-    "@czap/gauntlet": {
-      "version": "0.18.0",
+    "@liteship/gauntlet": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ABSENT_SUFFIX",
@@ -2562,6 +2696,21 @@
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "checkNegativeControlGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
+          "name": "checkRegistryCompleteGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
+          "name": "checkWaiverFreshnessGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
           "name": "claimPropertyGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
@@ -2612,6 +2761,21 @@
           "signature": "(1)"
         },
         {
+          "name": "decideCheckNegativeControl",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideCheckRegistryComplete",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideCheckWaiverFreshness",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "decideSkipSite",
           "kind": "function",
           "signature": "(1)"
@@ -2647,6 +2811,11 @@
           "signature": "(1)"
         },
         {
+          "name": "diagnosticCodeRegisteredGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "diffStandardsSurface",
           "kind": "function",
           "signature": "(2)"
@@ -2655,6 +2824,11 @@
           "name": "earnedAuthority",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "facadeExportBudgetGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "factAccessEvidenceDigest",
@@ -2828,6 +3002,11 @@
         },
         {
           "name": "noTsIgnoreGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noUnregisteredTodoGate",
           "kind": "namespace",
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
@@ -3058,8 +3237,8 @@
         }
       ]
     },
-    "@czap/genui": {
-      "version": "0.18.0",
+    "@liteship/genui": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "ContentAddress",
@@ -3102,15 +3281,11 @@
         }
       ]
     },
-    "@czap/mcp-server": {
-      "version": "0.18.0",
+    "@liteship/mcp-server": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
-          "kind": "const"
-        },
-        {
-          "name": "CZAP_CHECK_METHOD",
           "kind": "const"
         },
         {
@@ -3141,6 +3316,10 @@
           "name": "JsonRpcServer",
           "kind": "namespace",
           "signature": "errorResponse:function,parse:function,successResponse:function"
+        },
+        {
+          "name": "LITESHIP_CHECK_METHOD",
+          "kind": "const"
         },
         {
           "name": "LSP_SERVER_CAPABILITIES",
@@ -3315,8 +3494,8 @@
         }
       ]
     },
-    "@czap/quantizer": {
-      "version": "0.18.0",
+    "@liteship/quantizer": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AnimatedQuantizer",
@@ -3329,24 +3508,34 @@
           "signature": "evaluate:function"
         },
         {
-          "name": "Q",
-          "kind": "namespace",
-          "signature": "from:function"
-        },
-        {
           "name": "Transition",
           "kind": "namespace",
           "signature": "for:function"
         },
         {
+          "name": "createQuantizer",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "defineQuantizer",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "evaluate",
           "kind": "function",
           "signature": "(3)"
+        },
+        {
+          "name": "resolveQuantizerTargets",
+          "kind": "function",
+          "signature": "(1)"
         }
       ]
     },
-    "@czap/remotion": {
-      "version": "0.18.0",
+    "@liteship/remotion": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "Provider",
@@ -3393,14 +3582,14 @@
           "signature": "(1)"
         },
         {
-          "name": "useCzapState",
+          "name": "useLiteshipState",
           "kind": "function",
           "signature": "(0)"
         }
       ]
     },
-    "@czap/scene": {
-      "version": "0.18.0",
+    "@liteship/scene": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "AudioSystem",
@@ -3577,8 +3766,8 @@
         }
       ]
     },
-    "@czap/stage": {
-      "version": "0.18.0",
+    "@liteship/stage": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "dualExport",
@@ -3617,8 +3806,8 @@
         }
       ]
     },
-    "@czap/vite": {
-      "version": "0.18.0",
+    "@liteship/vite": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "collectBoundaryManifest",
@@ -3661,11 +3850,6 @@
           "signature": "(2)"
         },
         {
-          "name": "czap",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
           "name": "handleHMR",
           "kind": "function",
           "signature": "(1)"
@@ -3676,7 +3860,22 @@
           "signature": "(1)"
         },
         {
+          "name": "liteship",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "loadProjectConfig",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "loadVirtualModule",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "mergePluginConfig",
           "kind": "function",
           "signature": "(2)"
         },
@@ -3703,7 +3902,7 @@
         {
           "name": "plugin",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(3)"
         },
         {
           "name": "primitiveSearchPatterns",
@@ -3742,17 +3941,9 @@
         }
       ]
     },
-    "@czap/web": {
-      "version": "0.18.0",
+    "@liteship/web": {
+      "version": "0.19.0",
       "exports": [
-        {
-          "name": "CZAP_EVENT_DOCS",
-          "kind": "const"
-        },
-        {
-          "name": "CZAP_EVENT_NAMES",
-          "kind": "const"
-        },
         {
           "name": "DEFAULT_SHADER_INTEGRITY_MODE",
           "kind": "const"
@@ -3777,6 +3968,14 @@
           "name": "Hints",
           "kind": "namespace",
           "signature": "empty:function,fromElement:function,merge:function,preserveFocus:function,preserveIds:function,preserveScroll:function,withIdMap:function,withSemanticIds:function"
+        },
+        {
+          "name": "LITESHIP_EVENT_DOCS",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_EVENT_NAMES",
+          "kind": "const"
         },
         {
           "name": "LLMAdapter",
@@ -3916,7 +4115,7 @@
           "signature": "(1)"
         },
         {
-          "name": "dispatchCzapEvent",
+          "name": "dispatchLiteshipEvent",
           "kind": "function",
           "signature": "(2)"
         },
@@ -3951,7 +4150,7 @@
           "signature": "(1)"
         },
         {
-          "name": "onCzap",
+          "name": "onLiteship",
           "kind": "function",
           "signature": "(4)"
         },
@@ -4036,8 +4235,8 @@
         }
       ]
     },
-    "@czap/worker": {
-      "version": "0.18.0",
+    "@liteship/worker": {
+      "version": "0.19.0",
       "exports": [
         {
           "name": "CompositorWorker",

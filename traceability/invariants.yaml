@@ -3,7 +3,7 @@
 #
 # These are SYSTEM LAWS (determinism / CRDT convergence / content-address identity
 # / assurance propagation / hermeticity), NOT the code-style banned-pattern rules in
-# @czap/command's INVARIANTS (NO_DEFAULT_EXPORT &c.) — do not conflate them.
+# @liteship/command's INVARIANTS (NO_DEFAULT_EXPORT &c.) — do not conflate them.
 #
 # RULE: only enroll an invariant that has a REAL proving test. The trace must be
 # genuine — never fabricate a law, never enroll one with no proof. The matching
@@ -19,53 +19,67 @@
 invariants:
   # ── HLC (hybrid logical clock) — the causal trust spine ─────────────────────
   - id: INV-HLC-JOIN-IDEMPOTENT
-    law: "HLC join (compare-max LUB, no clock tick) is idempotent: join(a, a) === a."
+    law: 'HLC join (compare-max LUB, no clock tick) is idempotent: join(a, a) === a.'
     level: L4
     category: crdt
   - id: INV-HLC-JOIN-COMMUTATIVE
-    law: "HLC join is commutative: join(a, b) === join(b, a)."
+    law: 'HLC join is commutative: join(a, b) === join(b, a).'
     level: L4
     category: crdt
   - id: INV-HLC-JOIN-ASSOCIATIVE
-    law: "HLC join is associative: join(join(a, b), c) === join(a, join(b, c))."
+    law: 'HLC join is associative: join(join(a, b), c) === join(a, join(b, c)).'
     level: L4
     category: crdt
   - id: INV-HLC-ORDER-TRANSITIVE
-    law: "HLC.compare induces a transitive happens-before: a<b && b<c ⟹ a<c."
+    law: 'HLC.compare induces a transitive happens-before: a<b && b<c ⟹ a<c.'
     level: L4
     category: crdt
   - id: INV-HLC-ORDER-TOTAL
-    law: "HLC.compare is a total order: exactly one of <, ===, > holds for every pair."
+    law: 'HLC.compare is a total order: exactly one of <, ===, > holds for every pair.'
     level: L4
     category: crdt
   - id: INV-HLC-MERGE-DOMINANCE
-    law: "HLC.merge is a monotone clock-advance: merge(local, remote, now) ≥ both inputs on (wall, counter)."
+    law: 'HLC.merge is a monotone clock-advance: merge(local, remote, now) ≥ both inputs on (wall, counter).'
     level: L4
     category: crdt
 
   # ── GraphPatch (document-graph CRDT) — the other half of the spine ──────────
   - id: INV-GRAPHPATCH-IDEMPOTENT
-    law: "GraphPatch.apply is idempotent on the content-address id: re-applying a patch to the same base converges to one id."
+    law: 'GraphPatch.apply is idempotent on the content-address id: re-applying a patch to the same base converges to one id.'
     level: L4
     category: crdt
   - id: INV-GRAPHPATCH-COMMUTATIVE
-    law: "GraphPatch non-conflicting (disjoint-cell) patches commute: apply orderings reach the same content-address id."
+    law: 'GraphPatch non-conflicting (disjoint-cell) patches commute: apply orderings reach the same content-address id.'
     level: L4
     category: crdt
   - id: INV-GRAPHPATCH-CONVERGENCE
-    law: "GraphPatch satisfies strong eventual consistency: all orderings of concurrent non-conflicting patches converge to one id."
+    law: 'GraphPatch satisfies strong eventual consistency: all orderings of concurrent non-conflicting patches converge to one id.'
     level: L4
     category: crdt
   - id: INV-GRAPHPATCH-CONFLICT-BOUNDARY
-    law: "GraphPatch.apply is LWW at the structural-delta layer; fork detection of concurrent writers lives on the receipt DAG (forkOf → DAG.isFork)."
+    law: 'GraphPatch.apply is LWW at the structural-delta layer; fork detection of concurrent writers lives on the receipt DAG (forkOf → DAG.isFork).'
     level: L4
     category: crdt
 
   # ── Content-address identity — the one identity kernel ──────────────────────
   - id: INV-CONTENT-ADDRESS-DETERMINISTIC
-    law: "Content addressing is deterministic: the same payload mints the same content address, distinct payloads mint distinct addresses (fnv1a over canonical CBOR)."
+    law: 'Content addressing is deterministic: the same payload mints the same content address, distinct payloads mint distinct addresses (fnv1a over canonical CBOR).'
     level: L4
     category: content-address
+
+  # ── Adaptive lowering — defineAdaptive is a pure facade, not a parallel impl ─
+  - id: INV-ADAPTIVE-LOWERING-PURE
+    law: 'defineAdaptive is a pure lowering: every member equals the independently hand-lowered constructor output — boundary/style ids and defs match, and the quantizer member is REFERENTIALLY the memoized defineQuantizer object (configCache identity).'
+    level: L4
+    category: content-address
+  - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
+    law: "The public liteship root adaptive plan compiles to BYTE-IDENTICAL state-marker CSS as the independently hand-lowered path: adaptive.plan().css equals StyleCSSCompiler.compileAdaptive(style), every selector is scoped by style identity, and browser-computed style follows the runtime data-liteship-state marker even through hysteresis."
+    level: L4
+    category: content-address
+  - id: INV-ADAPTIVE-TRACE-EQUAL
+    law: "A public-root adaptive is the SAME observable machine as the hand-lowered path: boundary/explanation traces agree over a below/at/above sweep, and live quantizer state, crossing receipts, and output delivery sequences are deep-equal under the same fixed clock."
+    level: L4
+    category: determinism
 
   # ── Assurance propagation — AUTHORITY decides assurance, not folder names ───
   - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
@@ -73,39 +87,45 @@ invariants:
     level: L4
     category: assurance
   - id: INV-ASSURANCE-PROPAGATION-DETERMINISTIC
-    law: "Assurance-level propagation is deterministic: computing the effective-level map twice over the same IR yields an identical map."
+    law: 'Assurance-level propagation is deterministic: computing the effective-level map twice over the same IR yields an identical map.'
     level: L4
     category: assurance
 
   # ── Deterministic simulation (DST) — the determinism spine substrate ────────
   - id: INV-DST-TRACE-CONTENT-ADDRESSED
-    law: "The DST trace digest is minted through the ONE content-address kernel (contentAddressOf), never a forked encoder — so a byte-exact replay comparison is sound."
+    law: 'The DST trace digest is minted through the ONE content-address kernel (contentAddressOf), never a forked encoder — so a byte-exact replay comparison is sound.'
     level: L4
     category: determinism
   - id: INV-DST-NO-AMBIENT-ENTROPY
-    law: "The DST harness reads time/randomness ONLY from the injected @czap/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code."
+    law: 'The DST harness reads time/randomness ONLY from the injected @liteship/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code.'
     level: L4
     category: determinism
 
   # ── Supply-chain hermeticity — runtime determinism needs a hermetic build ───
   - id: INV-SUPPLY-CHAIN-HERMETIC
-    law: "The supply-chain gate reds on a non-hermetic lockfile (git/URL dep, floating resolution) or an incomplete/drifted SBOM/ShipCapsule — the build is reproducible from the committed lockfile."
+    law: 'The supply-chain gate reds on a non-hermetic lockfile (git/URL dep, floating resolution) or an incomplete/drifted SBOM/ShipCapsule — the build is reproducible from the committed lockfile.'
     level: L4
     category: hermeticity
   - id: INV-SUPPLY-CHAIN-NO-AMBIENT-CI
-    law: "No long-lived publish secret (NPM_TOKEN, …) grants ambient CI authority: publish authority is the short-lived OIDC id-token only."
+    law: 'No long-lived publish secret (NPM_TOKEN, …) grants ambient CI authority: publish authority is the short-lived OIDC id-token only.'
     level: L4
     category: hermeticity
 
   # ── Mutation engine — the second-oracle determinism ─────────────────────────
   - id: INV-MUTATION-FACTS-DETERMINISTIC
-    law: "Mutation-fact construction is deterministic: the same source + runner yields byte-identical MutationFacts (so a survivor verdict is reproducible)."
+    law: 'Mutation-fact construction is deterministic: the same source + runner yields byte-identical MutationFacts (so a survivor verdict is reproducible).'
     level: L4
     category: mutation
 
+  # ── Transition cage — the transition-conformance second-oracle determinism ──
+  - id: INV-TRANSITION-FACTS-DETERMINISTIC
+    law: 'buildTransitionFacts is deterministic: the same runs + options yield BYTE-IDENTICAL TransitionFacts regardless of input order (cases sorted by (seed, traceDigest); observations SHA-256 content-addressed by the builder, never a hash-equality shortcut), so an equivalent/divergent bisimulation verdict is reproducible.'
+    level: L4
+    category: determinism
+
   # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
   - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
-    law: "gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot."
+    law: 'gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot.'
     level: L4
     category: determinism
   - id: INV-TOOLCHAIN-DIGEST-INVALIDATES
@@ -123,7 +143,7 @@ invariants:
     level: L3
     category: determinism
   - id: INV-TOKEN-BUFFER-ZERO-ALLOC
-    law: "The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing."
+    law: 'The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing.'
     level: L3
     category: determinism
 
@@ -132,12 +152,50 @@ invariants:
     law: "A fetched (external) GPU shader's BYTES are verified against an author-pinned SRI sha256 hash BEFORE they reach a compile sink (gl.shaderSource / device.createShaderModule): a matching hash compiles, a tampered byte is REFUSED (mismatch), and an external fetch with NO pin is REFUSED (secure-by-default). The verifier (verifyShaderIntegrity) sits ON the fetch→compile data path, so the taint oracle classifies the shader-content flows as genuinely SANITIZED."
     level: L4
     category: security
+  - id: INV-TAINT-SOURCE-SINK
+    law: 'The taint oracle (buildRepoIRTaint) + the lean taintFlowGate soundly trace a value from a SOURCE call to a SINK, observing the SANITIZER on the path (bounded interprocedural depth): an UNSANITIZED source→sink flow is emitted with sanitizedBy=null and reds an L4 error at the SINK naming both endpoints; a SANITIZED flow (taint broken on the path) is emitted CLEAN (sanitizedBy set) and the gate stays silent; and the trace is deterministic over unchanged source.'
+    level: L4
+    category: security
 
   # ── Meta — the coverage rail that keeps the spine from rotting ──────────────
   - id: INV-CRDT-LAWS-PINNED
-    law: "The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth)."
+    law: 'The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth).'
     level: L4
     category: meta
+
+  # ── Meta — the package catalog has ONE authored owner; consumers are generated projections ─
+  - id: INV-ROSTER-SINGLE-SOURCE
+    law: 'Package membership, dependency order, capabilities, public subpaths, and projection metadata have ONE authored owner (scripts/package-catalog.ts); audit, facade, smoke, release, topology, documentation, and agent-context consumers are generated projections, while package manifests remain the independently checked physical packaging oracle.'
+    level: L3
+    category: meta
+
+  # ── Meta — exactly one brand survives (the retired pre-v0.19 scope is gone) ──
+  - id: INV-BRAND-RESIDUE-ZERO
+    law: 'Exactly one brand survives: zero retired pre-v0.19 brand-scope residue exists in any tracked text file outside the single sanctioned ARCHITECTURE sentence and the frozen historical allowlist (ADR-0044).'
+    level: L3
+    category: meta
+
+  # ── Assurance — every blocking check carries a real negative control ────────
+  - id: INV-CHECK-NEGATIVE-CONTROL
+    law: 'Every BLOCKING check in CHECK_REGISTRY declares a `negativeControl` whose path EXISTS and whose executable proof drives the real authority against deterministic bad input to produce a red result. The check-negative-control gate reds on every missing or dangling control; no blocker is exempt from proving it can fail.'
+    level: L4
+    category: assurance
+
+  # ── Assurance — the liteship curated facade is a closed public surface (P13/P17) ─
+  - id: INV-FACADE-EXPORT-BUDGET
+    law: 'The liteship root export surface is a budgeted, EXACT-match allowlist: every runtime/type export is listed in ROOT_VALUE_BUDGET/ROOT_TYPE_BUDGET and every listed symbol is really exported (no sprawl, no phantom slot), each budget under its 30-symbol cap — the facade-export-budget gate reds an over-budget export AND a dropped listed export.'
+    level: L4
+    category: assurance
+  - id: INV-CONSUMER-SUBPATH-CLOSURE
+    law: 'Every public liteship subpath (the root plus the twelve domain facades) import-resolves through the package exports map to its built dist/*.d.ts from a packed consumer under BOTH node16 and bundler module resolution — no declared subpath is unresolvable downstream.'
+    level: L4
+    category: assurance
+
+  # ── Assurance — every emitted diagnostic code is enrolled + explainable ─────
+  - id: INV-DIAGNOSTIC-CODE-CLOSED
+    law: 'Every stable diagnostic emitted by the gauntlet, check registry, core runtime, schema decoder, compiler, Astro runtime, CLI envelope, or migration adapters is an exact @liteship/error DIAGNOSTIC_REGISTRY key with meaning, remediation, and owner metadata; typed emitter boundaries reject invented codes, explainDiagnostic resolves every enrolled identity, and the independently self-proven diagnostic-code-registered gate scans package source as a backstop.'
+    level: L3
+    category: assurance
 
   # ── A DECLARED-but-not-yet-traced invariant, covered by an owner waiver ──────
   # This is a REAL future law with NO proving test yet. It is enrolled to keep the
@@ -146,6 +204,6 @@ invariants:
   # proving test lands, move it to testing-ledger.yaml's `tests:` form and delete the
   # waiver. (Never fake a PROVES header to clear it — that would be laundering.)
   - id: INV-VECTOR-CLOCK-MONOTONIC
-    law: "A vector clock increment is strictly monotone per node and merge takes the component-wise max (the pre-HLC causal substrate); pending a dedicated property-test enrollment."
+    law: 'A vector clock increment is strictly monotone per node and merge takes the component-wise max (the pre-HLC causal substrate); pending a dedicated property-test enrollment.'
     level: L4
     category: crdt

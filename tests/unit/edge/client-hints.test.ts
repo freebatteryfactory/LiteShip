@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { ClientHints } from '@czap/edge';
+import { ClientHints } from '@liteship/edge';
 
 describe('ClientHints', () => {
   test('parseClientHints returns conservative defaults for empty headers', () => {

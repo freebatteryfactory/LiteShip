@@ -17,7 +17,7 @@
  * @module
  */
 import { describe, it, expect, vi } from 'vitest';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 
 /** A read error carrying a chosen errno `code`, mirroring `NodeJS.ErrnoException`. */
 function fsError(code: string): Error {

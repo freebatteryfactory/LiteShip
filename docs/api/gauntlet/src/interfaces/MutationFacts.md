@@ -6,7 +6,7 @@
 
 # Interface: MutationFacts
 
-Defined in: [gauntlet/src/mutation-facts.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L36)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L36)
 
 The host-supplied mutation evidence over one run. The mutation engine is HEAVY
 (a vitest run per mutant), so production runs it OPT-IN, scoped to the
@@ -21,7 +21,7 @@ committed score BASELINE the ratchet compares against.
 
 > `readonly` **outcomes**: readonly [`MutantOutcome`](MutantOutcome.md)[]
 
-Defined in: [gauntlet/src/mutation-facts.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L38)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L38)
 
 Every evaluated mutant's outcome — the substrate the gate folds.
 
@@ -31,7 +31,7 @@ Every evaluated mutant's outcome — the substrate the gate folds.
 
 > `readonly` **scoreBaseline**: `Readonly`\<`Record`\<`string`, `number`\>\>
 
-Defined in: [gauntlet/src/mutation-facts.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L47)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L47)
 
 The committed per-file mutation-score baseline (the ratchet artifact, e.g.
 `benchmarks/mutation-score.json`). A file whose freshly-computed score DROPS

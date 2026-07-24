@@ -8,7 +8,7 @@
 
 > **GraphPatch**: `object`
 
-Defined in: [core/src/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L65)
+Defined in: [core/src/graph/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L65)
 
 GraphPatch namespace — the tagged-delta mutation surface over
 [DocumentGraph](../interfaces/DocumentGraph.md). Propose a delta, apply/preview it (re-addressing through
@@ -236,7 +236,7 @@ here, before anyone commits it.
 ## Example
 
 ```ts
-import { GraphPatch } from '@czap/core';
+import { GraphPatch } from '@liteship/core';
 
 const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node }]);
 const next = GraphPatch.apply(base, patch);          // re-addressed: next.id !== base.id

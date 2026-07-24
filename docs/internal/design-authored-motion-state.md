@@ -43,7 +43,7 @@ snaps non-numeric values at 50%. No color / unit / transform interpolation.
 |---|---|---|
 | `ProjectionNode.target` (output surface) | `css, glsl, wgsl, aria, ai, config, svg` | `document-graph.ts:104` |
 | `ExportNode.carrier` (produced artifact) | `astro-page, video, svg, ship-capsule, receipt` | `document-graph.ts:133` |
-| `LadderTarget` (capability rung) | `css, glsl, wgsl, aria, ai` | `cap-ladder.ts:29` |
+| `QualityTierTarget` (quality tier) | `css, glsl, wgsl, aria, ai` | `quality-tiers.ts:29` |
 | `RuntimePhase` (execution lane) | `compute-discrete, compute-blend, emit-css/glsl/wgsl/aria` | `runtime-coordinator.ts:23` |
 
 `motion` / `html` / `runtime` / `dom` appear in **none** of them. `video` is a
@@ -59,13 +59,13 @@ Instead:
 ```
 MotionIntent  (authored)  lowers into ->
   1. CSS projection plan     (target: 'css')   — @property, @keyframes, transitions, @starting-style, animation-timeline
-  2. Runtime write plan      (NOT a projection) — typed leaf writes to CSS custom props / data-czap-* attrs
-  3. GPU uniform plan (opt.)  — czap:uniform-update for shader-bound values
+  2. Runtime write plan      (NOT a projection) — typed leaf writes to CSS custom props / data-liteship-* attrs
+  3. GPU uniform plan (opt.)  — liteship:uniform-update for shader-bound values
   4. Export plan     (opt.)   — stage/remotion frame consumption (carrier: 'video')
   5. Adapter plan    (opt.)   — Motion/GSAP/user backend, LATER, only when CSS+runtime cannot express it
 ```
 
-Consequences: **no change** to `ProjectionNode.target`, `LadderTarget`, or
+Consequences: **no change** to `ProjectionNode.target`, `QualityTierTarget`, or
 `RuntimePhase`. The runtime write plan rides the existing continuous-writer law
 (leaf write, never a per-frame patch). This keeps the taxonomy clean and is the
 whole content of the Step-0 ADR.
@@ -115,7 +115,7 @@ Upgrades `interpolate.ts`; fixes the `AnimatedQuantizer` snap-at-50% bug as a si
 ```ts
 export interface LoweredMotionPlan {
   readonly graphId: ContentAddress;
-  readonly target: string;              // element selector / data-czap-* key
+  readonly target: string;              // element selector / data-liteship-* key
   readonly signals: readonly SignalInput[];
   readonly css?: CssMotionPlan;         // @keyframes + @property + (animation-timeline | transition)
   readonly runtime?: RuntimeWritePlan;  // per-property leaf-write descriptors (the floor)
@@ -160,7 +160,7 @@ Generalize the shipping one-scalar writer, preserving the law:
 // today: writeContinuous(element, cssVar, blend)  — one scalar
 export function writeContinuousMap(el: HTMLElement, plan: RuntimeWritePlan, t: number): void;
 // for each prop: el.style.setProperty(prop.var, formatTyped(interpolateTyped(prop.from, prop.to, ease(t))))
-// dispatch czap:uniform-update for gpu-bound props (existing channel)
+// dispatch liteship:uniform-update for gpu-bound props (existing channel)
 // NEVER GraphPatch here — continuous write is a leaf write (law)
 ```
 
@@ -187,14 +187,14 @@ Lowers to REAL node families:
 ```
 SignalNode(input: 'scroll.progress' | view-timeline range)
 EntityNode(hero) + ComponentNode(hero)
-PoseNode(entityRef, state:'before', bindings:{ opacity:0, '--czap-hero-y':'24px' })
-PoseNode(entityRef, state:'after',  bindings:{ opacity:1, '--czap-hero-y':'0px' })
+PoseNode(entityRef, state:'before', bindings:{ opacity:0, '--liteship-hero-y':'24px' })
+PoseNode(entityRef, state:'after',  bindings:{ opacity:1, '--liteship-hero-y':'0px' })
 TransitionNode(fromPose:before, toPose:after, routing:'seq', durationMs:420)
 PolicyNode(appliesTo:[hero], requires:<CapTier>, grants:<CapSet+motion>, sites, budgets)   // reduced-motion/tier gate
 ProjectionNode(target:'css', sourceRef, keys, resultDigest)                                 // native cast — motion is NOT a new target
 ```
-Emits native CSS (`@starting-style` + `@property --czap-hero-y` + `@keyframes` +
-`[data-czap-reveal="hero"]`) with a runtime typed-property floor when the native
+Emits native CSS (`@starting-style` + `@property --liteship-hero-y` + `@keyframes` +
+`[data-liteship-reveal="hero"]`) with a runtime typed-property floor when the native
 timeline is unavailable. Gauntlet fixture pins: graph→CSS equivalence, reduced-motion
 resolves to `after` (settle), no per-frame patch, SSR first paint = resolved pose.
 
@@ -206,7 +206,7 @@ resolves to `after` (settle), no per-frame patch, SSR first paint = resolved pos
 
 - Continuous writes **never** `GraphPatch` per frame. Discrete crossings may patch/recast. (Already type-encoded via Pose addressing.)
 - `StateCell`/`ProjectionState` is a **typed authority over the existing** graph/boundary/quantizer/dirty model — **do not build fine-grained auto-tracking reactivity (SolidJS).** LiteShip is compile-first.
-- Sugar (`Reveal.intent`, presets) is **data over canonical intent**; it has no behavior authority and cannot bypass graph identity. (Precedent: `@czap/scene` already ships `fade`/`pulse`/`ease`/`syncTo`/`Beat` as sugar over primitives.)
+- Sugar (`Reveal.intent`, presets) is **data over canonical intent**; it has no behavior authority and cannot bypass graph identity. (Precedent: `@liteship/scene` already ships `fade`/`pulse`/`ease`/`syncTo`/`Beat` as sugar over primitives.)
 - Native CSS first; **typed runtime floor forever** (`@supports`-gated, feature-detected). Reduced-motion is honored at the primitive, once.
 - External adapters (Motion/GSAP) wait until the graph-native interpreter exists; **GSAP is barred as a first-party dep** while LiteShip is Webflow-competitive (license). Motion (MIT, vanilla) is the eventual first optional adapter.
 - WGSL honesty (#106/#107) lands **before** motion sugar — a multimedia-native framework cannot ship silent shader lies.
@@ -242,7 +242,7 @@ existing substrate. Keep as the standing "are we hallucinating?" check.
 rg -n "MotionIntent|RevealIntent|StaggerIntent|ScrollTimelineIntent|ResponsiveMediaIntent|StateCell|ProjectionState|AnimationBackend|MotionCompiler" packages docs tests   # EMPTY
 rg -n "TransitionNode|PoseNode|durationMs|routing|choice_then|choice_else|fromPose|toPose" packages docs tests                                                            # PRESENT (data)
 rg -n "animation-timeline|view-timeline|scroll-timeline|transition-behavior|interpolate-size|calc-size|view-transition" packages docs tests                               # mostly ABSENT
-rg -n "writeContinuous|--czap-blend|czap:uniform-update|style\.setProperty" packages/astro packages/web packages/scene tests                                               # PRESENT (scalar)
+rg -n "writeContinuous|--liteship-blend|liteship:uniform-update|style\.setProperty" packages/astro packages/web packages/scene tests                                               # PRESENT (scalar)
 rg -n "AnimatedQuantizer|interpolated|Animation\.run|springToLinearCSS|lerpOutputs|interpolate\(" packages tests                                                           # PRESENT (orphaned)
 rg -n "LiveCell|BoundaryCrossing|publishCrossing|RuntimeCoordinator|dirtyEpoch|stateIndex" packages tests                                                                 # PRESENT (state seed)
 rg -n "gsap|framer-motion|motion/react|motion/mini|motion/dom|AOS|data-aos" packages docs tests examples                                                                  # EMPTY (no engine leak)

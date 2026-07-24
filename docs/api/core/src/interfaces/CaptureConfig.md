@@ -6,7 +6,7 @@
 
 # Interface: CaptureConfig
 
-Defined in: [core/src/capture.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L17)
+Defined in: [core/src/evidence/capture.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L17)
 
 Encoder-facing configuration: target resolution and frame rate.
 
@@ -16,7 +16,7 @@ Encoder-facing configuration: target resolution and frame rate.
 
 > `readonly` **fps**: `number`
 
-Defined in: [core/src/capture.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L20)
+Defined in: [core/src/evidence/capture.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L20)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/capture.ts:20](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **height**: `number`
 
-Defined in: [core/src/capture.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L19)
+Defined in: [core/src/evidence/capture.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L19)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/capture.ts:19](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **width**: `number`
 
-Defined in: [core/src/capture.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L18)
+Defined in: [core/src/evidence/capture.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L18)

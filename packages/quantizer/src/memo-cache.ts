@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { ContentAddress } from '@czap/core';
+import type { ContentAddress } from '@liteship/core';
 
 interface MemoCacheShape<V> {
   get(key: ContentAddress): V | undefined;
@@ -52,7 +52,5 @@ export const MemoCache = {
   make: _make,
 };
 
-export declare namespace MemoCache {
-  /** Structural shape of a {@link MemoCache} with value type `V`. */
-  export type Shape<V> = MemoCacheShape<V>;
-}
+/** Public structural type for `MemoCache`. */
+export type MemoCache<V> = MemoCacheShape<V>;

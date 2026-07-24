@@ -11,7 +11,7 @@ Defined in: [worker/src/messages.ts:23](https://github.com/freebatteryfactory/Li
 Tunable knobs that the main thread sends to a worker at construction time.
 
 Omitted fields fall back to worker-local defaults chosen by
-[CompositorWorker](../namespaces/CompositorWorker/README.md) / [RenderWorker](../namespaces/RenderWorker/README.md).
+[CompositorWorker](../namespaces/CompositorWorker/README.md) / [RenderWorker](../type-aliases/RenderWorker.md).
 
 ## Properties
 

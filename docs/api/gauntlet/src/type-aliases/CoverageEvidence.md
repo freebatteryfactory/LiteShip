@@ -8,7 +8,7 @@
 
 > **CoverageEvidence** = \{ `_tag`: `"execution"`; `testId`: `string`; \} \| \{ `_tag`: `"static-reference"`; `testId`: `string`; \} \| \{ `_tag`: `"none"`; \}
 
-Defined in: [gauntlet/src/composition-facts.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L110)
+Defined in: [gauntlet/src/facts/composition-facts.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/composition-facts.ts#L110)
 
 How an integration-coverage verdict was evidenced — the provenance-honesty model,
 sibling to [CoverageClass](CoverageClass.md). A `_tag` discriminant (composition):

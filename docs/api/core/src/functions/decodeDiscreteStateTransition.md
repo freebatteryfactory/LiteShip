@@ -8,7 +8,7 @@
 
 > **decodeDiscreteStateTransition**(`value`): [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md)
 
-Defined in: [core/src/state-transition.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L176)
+Defined in: [core/src/motion/state-transition.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L176)
 
 VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED transition value (lowered
 from an SSE frame / persisted JSON). Mirrors [GraphPatch.decode](../variables/GraphPatch.md#decode): gates

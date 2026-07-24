@@ -13,7 +13,7 @@ import {
   type Ok,
   type Err,
   type LiteShipError,
-} from '@czap/error';
+} from '@liteship/error';
 
 // Result is the sync errors-as-values carrier every non-Effect package returns
 // instead of throwing, so these tests pin its LAWS — the discriminant is total,

@@ -3,19 +3,19 @@
  * scar (issue #157).
  *
  * A package's SHIPPED LOAD-TIME import graph — the STATIC imports that execute when
- * a consumer does `import '@czap/X'`, walked from its MAIN entrypoint — may only
+ * a consumer does `import '@liteship/X'`, walked from its MAIN entrypoint — may only
  * reach modules the package DECLARES (its own `dependencies`,
  * `optionalDependencies`, or `peerDependencies`) — plus Node builtins and its own
  * subpaths. A STATIC bare import satisfied SILENTLY by a root/hoisted dev
  * dependency, never declared by the package itself, is a leak: a fresh consumer
  * that installs only the package + its declared deps CRASHES on import. The monorepo
- * can conceal exactly this through root-level pnpm hoisting — `@czap/core` eagerly
+ * can conceal exactly this through root-level pnpm hoisting — `@liteship/core` eagerly
  * imported `fast-check` (via `withArbitrary`) while declaring it nowhere, and only a
  * from-tarball consumer install surfaced it.
  *
  * SCOPE: static (load-time) imports only. A GUARDED dynamic `import()` is the
- * sanctioned optional-integration seam — e.g. `@czap/cli` lazily imports the
- * `@czap/mcp-server` sibling behind a try/catch + "not installed" teaching error,
+ * sanctioned optional-integration seam — e.g. `@liteship/cli` lazily imports the
+ * `@liteship/mcp-server` sibling behind a try/catch + "not installed" teaching error,
  * deliberately undeclared to break the cli↔mcp dependency cycle. It never crashes a
  * fresh install (it degrades), so it is outside this load-time closure by design.
  *
@@ -82,7 +82,7 @@ export function isNodeBuiltin(specifier: string): boolean {
 
 /**
  * True for a non-npm specifier resolved by a bundler/build-tool plugin rather than
- * `node_modules` — a scheme like `virtual:czap/…`, `astro:…`, `vite:…`. npm package
+ * `node_modules` — a scheme like `virtual:liteship/…`, `astro:…`, `vite:…`. npm package
  * names never contain `:`, so a `:` in the specifier HEAD marks a build-tool
  * virtual (excluding `node:`, handled by {@link isNodeBuiltin}). These carry no
  * declared-dependency obligation.

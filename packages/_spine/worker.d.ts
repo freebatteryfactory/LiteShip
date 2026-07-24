@@ -1,8 +1,8 @@
 /**
- * @czap/worker type spine -- off-main-thread compositor and render workers.
+ * @liteship/worker type spine -- off-main-thread compositor and render workers.
  */
 
-import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.d.ts';
+import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. MESSAGES
@@ -279,8 +279,9 @@ export declare const SPSCRing: {
   attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape;
 };
 
+export interface SPSCRing extends SPSCRingBufferShape {}
+
 export declare namespace SPSCRing {
-  export type Shape = SPSCRingBufferShape;
   export type Pair = SPSCRingPair;
 }
 
@@ -288,10 +289,7 @@ export declare namespace SPSCRing {
 // § 3. COMPOSITOR WORKER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type CompositorWorkerStartupStage =
-  | 'claim-or-create'
-  | 'coordinator-reset-or-create'
-  | 'listener-bind';
+export type CompositorWorkerStartupStage = 'claim-or-create' | 'coordinator-reset-or-create' | 'listener-bind';
 
 export interface CompositorWorkerStartupTelemetry {
   recordStage(stage: CompositorWorkerStartupStage, durationNs: number): void;
@@ -326,7 +324,7 @@ export interface ResolvedStateAckPayload {
 
 /**
  * The boundary surface addQuantizer derives a registration from —
- * structurally satisfied by a `Boundary.make` result from @czap/core.
+ * structurally satisfied by a `defineBoundary` result from @liteship/core.
  */
 export interface QuantizerBoundarySource {
   readonly id: ContentAddress;
@@ -339,9 +337,9 @@ export interface QuantizerBoundarySource {
 
 export interface CompositorWorkerShape {
   readonly worker: Worker;
-  /** Runtime coordination surface (internal shape, see @czap/core RuntimeCoordinator). */
+  /** Runtime coordination surface (internal shape, see @liteship/core RuntimeCoordinator). */
   readonly runtime: unknown;
-  /** Register a quantizer from a Boundary.make result; name defaults to boundary.input. */
+  /** Register a quantizer from a defineBoundary result; name defaults to boundary.input. */
   addQuantizer(boundary: QuantizerBoundarySource): void;
   addQuantizer(
     name: string,
@@ -377,8 +375,9 @@ export declare const CompositorWorker: {
   create(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): CompositorWorkerShape;
 };
 
+export interface CompositorWorker extends CompositorWorkerShape {}
+
 export declare namespace CompositorWorker {
-  export type Shape = CompositorWorkerShape;
   export type State = CompositorWorkerState;
   export type Metrics = WorkerMetrics;
   export type BoundarySource = QuantizerBoundarySource;
@@ -405,9 +404,7 @@ export declare const RenderWorker: {
   create(config?: WorkerConfig): RenderWorkerShape;
 };
 
-export declare namespace RenderWorker {
-  export type Shape = RenderWorkerShape;
-}
+export type RenderWorker = RenderWorkerShape;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 5. WORKER HOST
@@ -445,7 +442,8 @@ export declare const WorkerHost: {
   create(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): WorkerHostShape;
 };
 
+export interface WorkerHost extends WorkerHostShape {}
+
 export declare namespace WorkerHost {
-  export type Shape = WorkerHostShape;
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;
 }

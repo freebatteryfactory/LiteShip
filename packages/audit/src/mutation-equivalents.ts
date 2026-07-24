@@ -40,7 +40,7 @@
  *
  * @module
  */
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 import type { EquivalentMutantRegistry } from './mutation-verdict.js';
 
 /**

@@ -2,12 +2,12 @@
  * Single-source-of-truth drift guard for the Astro head-inline GPU probe.
  *
  * The probe runs in the document `<head>` before any module graph exists, so
- * it cannot `import { classifyGPURenderer } from '@czap/detect'`. The 0.2.3
+ * it cannot `import { classifyGPURenderer } from '@liteship/detect'`. The 0.2.3
  * "detect-ladder" release shipped a real drift bug when an inline HAND-COPY of
  * the classifier + tier ladders silently diverged from canonical.
  *
  * The cure makes drift structurally impossible: `emitDetectUpgradeScript`
- * GENERATES the probe script from canonical `@czap/detect` — folding the
+ * GENERATES the probe script from canonical `@liteship/detect` — folding the
  * classifier from the one `GPU_TIER_PATTERNS` datum and emitting the canonical
  * `headProbeCapTier` / `headProbeMotionTier` ladders verbatim. This guard is
  * defence in depth: it executes the REAL emitted script and asserts it
@@ -40,7 +40,7 @@ const SCRIPT = emitDetectUpgradeScript();
 
 /**
  * Drive the REAL emitted probe in jsdom with a fixed renderer + navigator +
- * matchMedia, and return the `data-czap-*` attributes it writes. This is the
+ * matchMedia, and return the `data-liteship-*` attributes it writes. This is the
  * shipped script — not a reimplementation — so any divergence between the
  * emitted classifier/ladders and canonical surfaces here.
  */
@@ -71,8 +71,8 @@ function runEmittedProbe(input: {
     // new Function over eval: same IIFE execution, no eval lint violation.
     new Function(SCRIPT)();
     return {
-      tier: document.documentElement.getAttribute('data-czap-tier'),
-      motion: document.documentElement.getAttribute('data-czap-motion'),
+      tier: document.documentElement.getAttribute('data-liteship-tier'),
+      motion: document.documentElement.getAttribute('data-liteship-motion'),
     };
   } finally {
     HTMLCanvasElement.prototype.getContext = realGetContext;
@@ -81,12 +81,12 @@ function runEmittedProbe(input: {
 }
 
 afterEach(() => {
-  document.documentElement.removeAttribute('data-czap-tier');
-  document.documentElement.removeAttribute('data-czap-motion');
-  document.documentElement.removeAttribute('data-czap-tier-provisional');
+  document.documentElement.removeAttribute('data-liteship-tier');
+  document.documentElement.removeAttribute('data-liteship-motion');
+  document.documentElement.removeAttribute('data-liteship-tier-provisional');
 });
 
-describe('head-probe is a derived artifact of canonical @czap/detect', () => {
+describe('head-probe is a derived artifact of canonical @liteship/detect', () => {
   // ── Structural: the emitted classifier embeds EVERY canonical pattern ──
   // A pattern added to the canonical GPU_TIER_PATTERNS datum that did NOT flow
   // into the emitted script (impossible by construction — they share the datum)

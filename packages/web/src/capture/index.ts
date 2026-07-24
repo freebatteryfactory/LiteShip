@@ -1,5 +1,5 @@
 /**
- * `@czap/web` capture -- video capture pipeline.
+ * `@liteship/web` capture -- video capture pipeline.
  *
  * Re-exports WebCodecs capture, canvas rendering, and pipeline orchestration.
  *

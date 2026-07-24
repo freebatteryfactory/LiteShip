@@ -8,9 +8,9 @@
 
 > **BoundaryCrossing**\<`S`\> = `object`
 
-Defined in: [core/src/type-utils.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L44)
+Defined in: [core/src/reactive/types.ts:6](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/types.ts#L6)
 
-Discriminated union of boundary crossings
+A witnessed transition between two named boundary states.
 
 ## Type Parameters
 
@@ -24,7 +24,7 @@ Discriminated union of boundary crossings
 
 > `readonly` **from**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [core/src/type-utils.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L45)
+Defined in: [core/src/reactive/types.ts:7](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/types.ts#L7)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/type-utils.ts:45](https://github.com/freebatteryfactory/Li
 
 > `readonly` **timestamp**: [`HLCBrand`](../interfaces/HLCBrand.md)
 
-Defined in: [core/src/type-utils.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L47)
+Defined in: [core/src/reactive/types.ts:9](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/types.ts#L9)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/type-utils.ts:47](https://github.com/freebatteryfactory/Li
 
 > `readonly` **to**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [core/src/type-utils.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L46)
+Defined in: [core/src/reactive/types.ts:8](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/types.ts#L8)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [core/src/type-utils.ts:46](https://github.com/freebatteryfactory/Li
 
 > `readonly` **value**: `number`
 
-Defined in: [core/src/type-utils.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L48)
+Defined in: [core/src/reactive/types.ts:10](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/types.ts#L10)

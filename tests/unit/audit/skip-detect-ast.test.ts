@@ -13,8 +13,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { detectSkipsAST } from '@czap/audit';
-import type { SkipMatch, SkipConditionality } from '@czap/gauntlet';
+import { detectSkipsAST } from '@liteship/audit';
+import type { SkipMatch, SkipConditionality } from '@liteship/gauntlet';
 
 /**
  * Find the match whose token contains `needle` AT `line` (a single source can emit several matches —

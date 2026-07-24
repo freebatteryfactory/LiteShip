@@ -5,8 +5,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { Diagnostics } from '@czap/core';
-import { CompositorWorker } from '@czap/worker';
+import { Diagnostics } from '@liteship/core';
+import { CompositorWorker } from '@liteship/worker';
 import { MockWorker } from '../../helpers/mock-worker.js';
 
 let restoreWorker: () => void;

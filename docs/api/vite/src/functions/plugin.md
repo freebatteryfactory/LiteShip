@@ -6,11 +6,11 @@
 
 # Function: plugin()
 
-> **plugin**(`config?`): `Plugin`
+> **plugin**(`config?`, `resolvePackaged?`, `projectConfigLoader?`): `Plugin`
 
-Defined in: [vite/src/plugin.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L182)
+Defined in: [vite/src/plugin.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L197)
 
-Create the czap Vite plugin.
+Create the liteship Vite plugin.
 
 Transforms CSS files containing `@token`, `@theme`, `@style`, and
 `@quantize` blocks into native CSS custom properties,
@@ -25,6 +25,14 @@ uniform updates.
 
 [`PluginConfig`](../interfaces/PluginConfig.md)
 
+### resolvePackaged?
+
+() => `string` \| `null`
+
+### projectConfigLoader?
+
+(`configEnv`, `configFile?`, `configRoot?`, `logLevel?`, `customLogger?`, `configLoader?`) => `Promise`\<\{ \} \| `null`\>
+
 ## Returns
 
 `Plugin`
@@ -33,6 +41,11 @@ uniform updates.
 
 ```ts
 // vite.config.ts
-import { czap } from '@czap/vite';
-const config = { plugins: [czap()] };
+import { liteship } from '@liteship/vite';
+const config = { plugins: [liteship()] };
 ```
+
+`resolvePackaged` is an internal seam: the packaged-`@liteship/core` binary
+resolver, defaulting to the real [resolvePackagedWasm](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/wasm-package-resolve.ts). Production leaves
+it defaulted (call sites are `plugin(config)`, byte-identical); a test injects a
+stub to force the `'package'` WASM source absent against a synthetic project root.

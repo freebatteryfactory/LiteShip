@@ -6,8 +6,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
-import { CompositorWorker } from '@czap/worker';
+import { Diagnostics } from '@liteship/core';
+import { CompositorWorker } from '@liteship/worker';
 import { prepareRegistrationsForTransfer } from '../../packages/worker/src/compositor-startup.js';
 import { MockWorker } from '../helpers/mock-worker.js';
 
@@ -1551,14 +1551,14 @@ describe('CompositorWorker', () => {
       expect.arrayContaining([
         expect.objectContaining({
           level: 'error',
-          source: 'czap/worker.compositor-worker',
+          source: 'liteship/worker.compositor-worker',
           code: 'worker-message-error',
           message: 'Compositor worker reported an error.',
           detail: { message: 'compositor failed' },
         }),
         expect.objectContaining({
           level: 'error',
-          source: 'czap/worker.compositor-worker',
+          source: 'liteship/worker.compositor-worker',
           code: 'worker-unhandled-error',
           message:
             'Compositor worker raised an unhandled error (often the Blob-URL worker being blocked by a strict CSP — allow worker-src blob:). Detail: boom',

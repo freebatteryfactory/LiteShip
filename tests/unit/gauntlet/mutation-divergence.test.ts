@@ -30,10 +30,10 @@ import {
   type RepoIR,
   type MutationFacts,
   type MutantOutcome,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
-const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
+const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
 const HELPER = 'packages/x/src/helper.ts'; // a helper imported by the L4 file
 
@@ -45,12 +45,28 @@ function outcome(over: Partial<MutantOutcome> & Pick<MutantOutcome, 'file' | 've
     operator: 'equality',
     originalText: '===',
     mutatedText: '!==',
+    coveringTests: ['tests/fixture.test.ts'],
+    equivalentJustification: null,
+    equivalentJustificationDigest: null,
+    subsumedBy: [],
     ...over,
   };
 }
 
-function ctx(ir: RepoIR, mutation: MutationFacts): GateContext {
-  return { ...memoryContext({}), ir, mutation };
+type TestMutationFacts = Omit<MutationFacts, 'operatorApplicability'> &
+  Partial<Pick<MutationFacts, 'operatorApplicability'>>;
+
+function ctx(ir: RepoIR, mutation: TestMutationFacts): GateContext {
+  return {
+    ...memoryContext({}),
+    ir,
+    mutation: {
+      ...mutation,
+      operatorApplicability:
+        mutation.operatorApplicability ??
+        mutation.outcomes.map((item) => ({ file: item.file, operator: item.operator, applicableMutants: 1 })),
+    },
+  };
 }
 
 function simpleIR(files: readonly string[]): RepoIR {
@@ -164,7 +180,7 @@ describe('mutationDivergenceGate — THE LAW: the level is PROPAGATED from the l
     // The helper's glob level is L1, but the L4 file imports it → it inherits L4.
     const ir = makeRepoIR({
       files: [
-        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
         { id: HELPER, contentDigest: PLACEHOLDER_DIGEST, packageName: null },
       ],
       imports: [{ fromFile: L4_FILE, specifier: './helper.js', kind: 'relative', targetFile: HELPER }],
@@ -233,7 +249,10 @@ describe('mutationDivergenceGate — the guards fail LOUD', () => {
   });
 
   it('requireIR throws a tagged error when no IR was injected', () => {
-    const noIR: GateContext = { ...memoryContext({}), mutation: { outcomes: [], scoreBaseline: {} } };
+    const noIR: GateContext = {
+      ...memoryContext({}),
+      mutation: { outcomes: [], operatorApplicability: [], scoreBaseline: {} },
+    };
     expect.assertions(1);
     try {
       mutationDivergenceGate.run(noIR);

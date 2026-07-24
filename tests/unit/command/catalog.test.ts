@@ -1,16 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
+import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@liteship/command';
 
 /** Commands whose execution is CLI-owned (executionKind 'cli-orchestration', no handler). */
 const CLI_ORCHESTRATION = [
+  'add',
   'astro.dev',
   'astro.status',
   'astro.stop',
+  'build',
+  'check',
   'completion',
   'describe',
+  'dev',
   'doctor',
   'gauntlet',
   'help',
+  'info',
   'lsp',
   'mcp',
   'sbom',
@@ -18,8 +23,9 @@ const CLI_ORCHESTRATION = [
   'ship',
 ] as const;
 
-/** Every command czap currently routes — the single canonical catalog. */
+/** Every command liteship currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
+  'add',
   'asset.analyze',
   'asset.verify',
   'astro.dev',
@@ -27,18 +33,24 @@ const EXPECTED_NAMES = [
   'astro.stop',
   'audit',
   'audit-floor',
+  'build',
   'capsule-verify',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
   'check',
   'check-invariants',
+  'check.gates',
   'completion',
+  'context',
   'describe',
+  'dev',
   'doctor',
+  'explain',
   'gauntlet',
   'glossary',
   'help',
+  'info',
   'lsp',
   'mcp',
   'package-smoke',
@@ -54,14 +66,14 @@ const EXPECTED_NAMES = [
 ] as const;
 
 /**
- * The MCP-exposed subset: the 10 finite, handler-backed compute/verify/gate
- * commands. describe (catalog projection — tools/list already serves it) and
+ * The MCP-exposed subset: the 12 finite, handler-backed compute/verify/gate and
+ * reference (explain / context) commands. describe (catalog projection — tools/list already serves it) and
  * gauntlet (terminal-streaming orchestration) are CLI-owned orchestration, never
  * MCP tools. `plumb` IS exposed: it returns a structured skip work-list — an ideal
- * agent tool. `check` IS exposed: it runs the PURE gauntlet gate fold in-process
+ * agent tool. `check.gates` IS exposed: it runs the PURE gauntlet gate fold in-process
  * (`litelaunchGauntlet`) and returns the Finding[] work-list — the tasks-vs-gates
  * weld, an ideal agent tool (distinct from the CLI-owned `gauntlet` orchestrator).
- * `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
+ * `check-invariants` is NOT exposed: its scan needs `@liteship/audit`'s
  * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
  * `audit-floor` — it is CLI-only and the capability is absent over MCP.
  * `capsule-verify` is NOT exposed either: like `package-smoke` its engine is a
@@ -74,14 +86,16 @@ const EXPECTED_MCP_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
-  'check',
+  'check.gates',
+  'context',
+  'explain',
   'plumb',
   'scene.compile',
   'scene.render',
   'scene.verify',
 ] as const;
 
-describe('@czap/command canonical catalog', () => {
+describe('@liteship/command canonical catalog', () => {
   it('registry.list() is the full catalog, sorted and deduped', () => {
     const names = commandRegistry.list().map((d) => d.name);
     expect(names).toEqual([...EXPECTED_NAMES]);
@@ -107,7 +121,9 @@ describe('@czap/command canonical catalog', () => {
       const handled = typeof command.handler === 'function';
       const isHandlerKind = descriptor.executionKind === 'handler';
       // A finite command missing its handler is a bug; a cli-orchestration one is by design.
-      expect(handled, `${descriptor.name}: handler=${handled} but executionKind=${descriptor.executionKind}`).toBe(isHandlerKind);
+      expect(handled, `${descriptor.name}: handler=${handled} but executionKind=${descriptor.executionKind}`).toBe(
+        isHandlerKind,
+      );
     }
   });
 
@@ -170,7 +186,7 @@ describe('@czap/command canonical catalog', () => {
         fix: { type: 'boolean' },
         ci: { type: 'boolean' },
         preflight: { type: 'boolean' },
-        target: { type: 'string', enum: ['cloudflare', 'astro'] },
+        target: { type: 'string', enum: ['cloudflare', 'astro', 'consumer-app'] },
       },
     });
   });

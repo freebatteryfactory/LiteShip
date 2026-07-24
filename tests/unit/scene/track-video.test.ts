@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Track } from '@czap/scene';
+import { Track } from '@liteship/scene';
 
 describe('Track.video', () => {
   it('builds a VideoTrack with default layer=0', () => {

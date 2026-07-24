@@ -9,9 +9,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { run } from '@czap/cli';
-import { dispatchToolCall } from '@czap/mcp-server';
-import { mcpExposedDescriptors } from '@czap/command';
+import { run } from '@liteship/cli';
+import { dispatchToolCall } from '@liteship/mcp-server';
+import { mcpExposedDescriptors } from '@liteship/command';
 import { captureCli } from './cli/capture.js';
 
 let tmpDir: string;
@@ -28,7 +28,7 @@ const MANIFEST = {
 /** Catalog-derived shared handler commands — mcpExposed ∩ executionKind handler. */
 const SHARED_HANDLER_COMMANDS = mcpExposedDescriptors().filter((d) => d.executionKind === 'handler');
 
-/** Map MCP tool name → CLI argv (the `czap` invocation shape). */
+/** Map MCP tool name → CLI argv (the `liteship` invocation shape). */
 function cliArgvForTool(name: string): string[] {
   switch (name) {
     case 'asset.analyze':
@@ -43,6 +43,12 @@ function cliArgvForTool(name: string): string[] {
       return ['capsule', 'verify', 'alpha'];
     case 'check':
       return ['check'];
+    case 'check.gates':
+      return ['check', 'gates'];
+    case 'context':
+      return ['context', '--task', 'add-boundary'];
+    case 'explain':
+      return ['explain', 'gauntlet/no-bare-throw'];
     case 'plumb':
       return ['plumb'];
     case 'scene.compile':
@@ -60,8 +66,13 @@ function mcpArgsForTool(name: string): Record<string, unknown> {
   switch (name) {
     case 'capsule.list':
     case 'check':
+    case 'check.gates':
     case 'plumb':
       return {};
+    case 'context':
+      return { task: 'add-boundary' };
+    case 'explain':
+      return { query: 'gauntlet/no-bare-throw' };
     case 'capsule.inspect':
       return { id: 'alpha' };
     case 'capsule.verify':
@@ -108,26 +119,26 @@ function expectConvergedPayload(
 
 describe('A1-T5 — CLI and MCP converge on shared handler commands', () => {
   beforeAll(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'czap-xadapter-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'liteship-xadapter-'));
     manifestPath = join(tmpDir, 'capsule-manifest.json');
     mkdirSync(dirname(manifestPath), { recursive: true });
     writeFileSync(manifestPath, JSON.stringify(MANIFEST), 'utf8');
-    prevEnv = process.env.CZAP_CAPSULE_MANIFEST;
-    process.env.CZAP_CAPSULE_MANIFEST = manifestPath;
+    prevEnv = process.env.LITESHIP_CAPSULE_MANIFEST;
+    process.env.LITESHIP_CAPSULE_MANIFEST = manifestPath;
   });
   afterAll(() => {
-    if (prevEnv === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
-    else process.env.CZAP_CAPSULE_MANIFEST = prevEnv;
+    if (prevEnv === undefined) delete process.env.LITESHIP_CAPSULE_MANIFEST;
+    else process.env.LITESHIP_CAPSULE_MANIFEST = prevEnv;
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('catalog pin: shared handler set is exactly the 10 mcpExposed tools', () => {
+  it('catalog pin: shared handler set is exactly the 12 mcpExposed tools', () => {
     expect(SHARED_HANDLER_COMMANDS.map((d) => d.name).sort()).toEqual(
       mcpExposedDescriptors()
         .map((d) => d.name)
         .sort(),
     );
-    expect(SHARED_HANDLER_COMMANDS.length).toBe(10);
+    expect(SHARED_HANDLER_COMMANDS.length).toBe(12);
   });
 
   for (const descriptor of SHARED_HANDLER_COMMANDS) {

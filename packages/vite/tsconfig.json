@@ -7,7 +7,7 @@
     "rootDir": "./src",
     "paths": {
       "vite": ["./node_modules/vite/dist/node/index.d.ts"],
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],

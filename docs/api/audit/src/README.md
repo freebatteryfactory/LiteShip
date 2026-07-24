@@ -6,7 +6,7 @@
 
 # audit/src
 
-@czap/audit — the profile-driven, downstream-installable audit engine.
+@liteship/audit — the profile-driven, downstream-installable audit engine.
 
 Runs the structure / integrity / surface passes against a `DevopsProfile`
 (`profile.repoRoot` is the authoritative audit target). The LiteShip HICP
@@ -103,12 +103,12 @@ package — it stays repo-local and composes these passes.
 - [CAPABILITY\_LINK\_ORACLE\_ID](variables/CAPABILITY_LINK_ORACLE_ID.md)
 - [CODE\_ONLY\_ORACLE\_ID](variables/CODE_ONLY_ORACLE_ID.md)
 - [CONDITION\_FORCES](variables/CONDITION_FORCES.md)
-- [CZAP\_PACKAGE\_ROSTER](variables/CZAP_PACKAGE_ROSTER.md)
 - [DEFAULT\_SURFACE\_READER](variables/DEFAULT_SURFACE_READER.md)
 - [DEFAULT\_TAINT\_INTERPROCEDURAL\_DEPTH](variables/DEFAULT_TAINT_INTERPROCEDURAL_DEPTH.md)
 - [dynamicImportExemptions](variables/dynamicImportExemptions.md)
 - [foundationalPackages](variables/foundationalPackages.md)
 - [LANGUAGE\_SERVICE\_ORACLE\_ID](variables/LANGUAGE_SERVICE_ORACLE_ID.md)
+- [LITESHIP\_PACKAGE\_ROSTER](variables/LITESHIP_PACKAGE_ROSTER.md)
 - [liteshipDevopsProfile](variables/liteshipDevopsProfile.md)
 - [MUTATION\_OPERATORS](variables/MUTATION_OPERATORS.md)
 - [packageTopology](variables/packageTopology.md)

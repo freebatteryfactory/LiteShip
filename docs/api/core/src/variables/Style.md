@@ -6,37 +6,81 @@
 
 # Variable: Style
 
-> `const` **Style**: `StyleFactory` & `object`
+> `const` **Style**: `object`
 
-Defined in: [core/src/style.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/style.ts#L215)
+Defined in: [core/src/authoring/style.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L281)
 
-Style namespace -- adaptive style primitive for constraint-based rendering.
-
-Bind base styles to optional boundary states with per-state overrides and
-CSS transitions. Resolve to flat property maps for any given state.
+Style — the resolution namespace for a Style definition. Construction
+lives in the standalone [defineStyle](../functions/defineStyle.md); this object carries
+[Style.tap](#tap) (resolve a style to a flat property map for a state) and
+[Style.mergeLayers](#mergelayers) (deep-merge two style layers).
 
 ## Type Declaration
 
 ### mergeLayers
 
-> **mergeLayers**: *typeof* `_mergeLayers`
+> **mergeLayers**: (`base`, `override`) => [`StyleLayer`](../interfaces/StyleLayer.md) = `_mergeLayers`
+
+Deep merge two style layers: properties spread, pseudo merge per selector, boxShadow concat.
+
+Override properties win over base. Pseudo-element selectors are merged per
+key. Box shadows are concatenated (base first, then override).
+
+#### Parameters
+
+##### base
+
+[`StyleLayer`](../interfaces/StyleLayer.md)
+
+##### override
+
+[`StyleLayer`](../interfaces/StyleLayer.md)
+
+#### Returns
+
+[`StyleLayer`](../interfaces/StyleLayer.md)
+
+#### Example
+
+```ts
+const base = { properties: { color: 'red', padding: '4px' } };
+const override = { properties: { color: 'blue', margin: '8px' } };
+const merged = Style.mergeLayers(base, override);
+// merged.properties === { color: 'blue', padding: '4px', margin: '8px' }
+```
 
 ### tap
 
-> **tap**: *typeof* `_tap`
+> **tap**: (`style`, `state?`) => `Record`\<`string`, `string`\> = `_tap`
 
-## Example
+Resolve a style to a flat `Record<string, string>` for the given state.
+
+Merges base layer with the state-specific override (if any), flattens
+pseudo selectors and box-shadow into the result map.
+
+#### Parameters
+
+##### style
+
+`StyleDef`
+
+##### state?
+
+`string`
+
+#### Returns
+
+`Record`\<`string`, `string`\>
+
+#### Example
 
 ```ts
-import { Boundary, Style } from '@czap/core';
-
-const bp = Boundary.make({ input: 'viewport.width', at: [[0, 'sm'], [768, 'lg']] });
-const style = Style.make({
-  boundary: bp,
-  base: { properties: { 'font-size': '14px' } },
-  states: { lg: { properties: { 'font-size': '18px' } } },
-  transition: { duration: 200 },
+const style = defineStyle({
+  base: { properties: { color: 'black' } },
+  states: { dark: { properties: { color: 'white' } } },
 });
-const resolved = Style.tap(style, 'lg');
-// resolved === { 'font-size': '18px' }
+const props = Style.tap(style, 'dark');
+// props === { color: 'white' }
+const baseProps = Style.tap(style);
+// baseProps === { color: 'black' }
 ```

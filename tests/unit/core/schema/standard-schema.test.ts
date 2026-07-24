@@ -23,10 +23,10 @@ import {
   type KernelDecodeResult,
 } from '../../../../packages/core/src/schema/standard.js';
 import { toJsonSchema } from '../../../../packages/core/src/schema/to-json-schema.js';
-import { S } from '../../../../packages/core/src/schema/constructors.js';
+import { schema } from '../../../../packages/core/src/schema/constructors.js';
 import type { Infer } from '../../../../packages/core/src/schema/infer.js';
 
-const nameAge = S.struct({ name: S.string, age: S.number });
+const nameAge = schema.struct({ name: schema.string, age: schema.number });
 type NameAge = Infer<typeof nameAge>;
 
 // A deterministic stub decoder mirroring `decode`'s (schema, value) → Result

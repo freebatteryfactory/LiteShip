@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { PACKAGES } from '@czap/command';
+import { PACKAGES } from '@liteship/command';
 import {
   PACKAGE_METADATA_CATALOG,
   answerFirstViolation,
@@ -57,38 +57,38 @@ describe('catalog — the single source is complete and answer-first', () => {
 describe('answerFirstViolation — rejects the known anti-patterns, accepts real answers', () => {
   it('accepts a plain-English answer', () => {
     expect(
-      answerFirstViolation('Detect device capabilities for LiteShip and map them to render tiers.', '@czap/detect'),
+      answerFirstViolation('Detect device capabilities for LiteShip and map them to render tiers.', '@liteship/detect'),
     ).toBeNull();
   });
 
   it('rejects a type/symbol inventory ("Label: A, B, C, …")', () => {
-    // @czap/core's OLD description.
+    // @liteship/core's OLD description.
     expect(
       answerFirstViolation(
         'Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR)',
-        '@czap/core',
+        '@liteship/core',
       ),
     ).toMatch(/symbol inventory/);
-    // @czap/web's OLD description.
+    // @liteship/web's OLD description.
     expect(
-      answerFirstViolation('DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLM adapter', '@czap/web'),
+      answerFirstViolation('DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLM adapter', '@liteship/web'),
     ).toMatch(/symbol inventory/);
   });
 
   it('rejects a dependency list', () => {
-    // @czap/audit's OLD description tail.
+    // @liteship/audit's OLD description tail.
     expect(
       answerFirstViolation(
-        'Profile-driven surface audit engine (deps `@czap/canonical` / `@czap/error` / `@czap/gauntlet`)',
-        '@czap/audit',
+        'Profile-driven surface audit engine (deps `@liteship/canonical` / `@liteship/error` / `@liteship/gauntlet`)',
+        '@liteship/audit',
       ),
     ).toMatch(/dependencies/);
   });
 
   it('rejects an empty description, a name-only description, and a code-symbol opener', () => {
-    expect(answerFirstViolation('', '@czap/core')).toMatch(/empty/);
-    expect(answerFirstViolation('@czap/core', '@czap/core')).toMatch(/package name/);
-    expect(answerFirstViolation('`TaggedError` coproduct over an open contract', '@czap/error')).toMatch(/code symbol/);
+    expect(answerFirstViolation('', '@liteship/core')).toMatch(/empty/);
+    expect(answerFirstViolation('@liteship/core', '@liteship/core')).toMatch(/package name/);
+    expect(answerFirstViolation('`TaggedError` coproduct over an open contract', '@liteship/error')).toMatch(/code symbol/);
   });
 
   it('rejects a leaked workspace: protocol string', () => {
@@ -104,43 +104,43 @@ describe('checkPackedMetadata — validates a packed manifest against the catalo
   });
 
   it('passes a manifest that matches the catalog exactly', () => {
-    expect(checkPackedMetadata(good('@czap/core'), '@czap/core')).toEqual([]);
+    expect(checkPackedMetadata(good('@liteship/core'), '@liteship/core')).toEqual([]);
   });
 
   it('flags a package with no catalog entry', () => {
-    const v = checkPackedMetadata({ name: '@czap/ghost', description: 'x'.repeat(40), keywords: ['a'] }, '@czap/ghost');
+    const v = checkPackedMetadata({ name: '@liteship/ghost', description: 'x'.repeat(40), keywords: ['a'] }, '@liteship/ghost');
     expect(v.some((x) => x.field === 'catalog')).toBe(true);
   });
 
   it('flags a description that drifted from the catalog', () => {
-    const m = { ...good('@czap/core'), description: 'Some other perfectly fine plain-English sentence about core.' };
-    const v = checkPackedMetadata(m, '@czap/core');
+    const m = { ...good('@liteship/core'), description: 'Some other perfectly fine plain-English sentence about core.' };
+    const v = checkPackedMetadata(m, '@liteship/core');
     expect(v.some((x) => x.field === 'description' && /drifted from the catalog/.test(x.message))).toBe(true);
   });
 
   it('flags keywords that drifted from the catalog', () => {
-    const m = { ...good('@czap/core'), keywords: ['czap', 'wrong'] };
-    const v = checkPackedMetadata(m, '@czap/core');
+    const m = { ...good('@liteship/core'), keywords: ['liteship', 'wrong'] };
+    const v = checkPackedMetadata(m, '@liteship/core');
     expect(v.some((x) => x.field === 'keywords' && /drifted from the catalog/.test(x.message))).toBe(true);
   });
 
   it('flags a published package still marked private', () => {
-    const v = checkPackedMetadata({ ...good('@czap/core'), private: true }, '@czap/core');
+    const v = checkPackedMetadata({ ...good('@liteship/core'), private: true }, '@liteship/core');
     expect(v.some((x) => x.field === 'private')).toBe(true);
   });
 
   it('flags a stray "internal" keyword and empty keywords', () => {
     const withInternal = checkPackedMetadata(
       {
-        name: '@czap/_spine',
-        description: PACKAGE_METADATA_CATALOG['@czap/_spine']!.description,
+        name: '@liteship/_spine',
+        description: PACKAGE_METADATA_CATALOG['@liteship/_spine']!.description,
         keywords: ['internal'],
       },
-      '@czap/_spine',
+      '@liteship/_spine',
     );
     expect(withInternal.some((x) => x.field === 'keywords' && /internal/.test(x.message))).toBe(true);
 
-    const empty = checkPackedMetadata({ ...good('@czap/core'), keywords: [] }, '@czap/core');
+    const empty = checkPackedMetadata({ ...good('@liteship/core'), keywords: [] }, '@liteship/core');
     expect(empty.some((x) => x.field === 'keywords' && /missing or empty/.test(x.message))).toBe(true);
   });
 });

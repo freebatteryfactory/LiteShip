@@ -23,7 +23,7 @@ import {
   type GateContext,
   type TaintFacts,
   type TaintFlow,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 function ctx(facts: TaintFacts | undefined): GateContext {
   return facts === undefined ? memoryContext({}) : { ...memoryContext({}), taint: facts };

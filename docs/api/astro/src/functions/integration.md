@@ -8,9 +8,9 @@
 
 > **integration**(`config?`): `AstroIntegration`
 
-Defined in: [astro/src/integration.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L256)
+Defined in: [astro/src/integration.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L306)
 
-Build the czap `AstroIntegration`.
+Build the liteship `AstroIntegration`.
 
 Plug the returned object into `astro.config.mjs`'s `integrations`
 array. The integration wires Astro's `astro:config:setup`,
@@ -31,9 +31,9 @@ hooks.
 
 ```ts
 // astro.config.mjs
-import { integration as czap } from '@czap/astro';
+import { integration as liteship } from '@liteship/astro';
 
 const config = defineConfig({
-  integrations: [czap({ detect: true, workers: { enabled: true } })],
+  integrations: [liteship({ detect: true, workers: { enabled: true } })],
 });
 ```

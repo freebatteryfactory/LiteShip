@@ -4,7 +4,7 @@
  * the AI-apply seam (item D, `graph-ai-apply.ts`).
  *
  * Both seams ship as real, tested PRODUCERS but, until now, stopped at `export` —
- * nothing in the repo drove a REAL compiled `@czap/scene` through
+ * nothing in the repo drove a REAL compiled `@liteship/scene` through
  * {@link bridgeSceneToGraph} onto a live graph, and the AI seam's apply path had
  * no reference caller composing cast-OUT → admit-IN. This module is that caller:
  * a host integrates a stage by composing these two functions, so the
@@ -20,8 +20,8 @@
  * @module
  */
 
-import type { AIContext, CastContextOptions } from '@czap/core';
-import type { SceneRuntime } from '@czap/scene';
+import type { AIContext, CastContextOptions } from '@liteship/core';
+import type { SceneRuntime } from '@liteship/scene';
 import { bridgeSceneToGraph } from './scene-bridge.js';
 import type { BridgeClock, BridgeOptions, SceneBridgeHandle, SceneQueryEffect } from './scene-bridge.js';
 import { admitGraphPatchProposal, castGraphContext } from './graph-ai-apply.js';
@@ -30,7 +30,7 @@ import type { EntityElementResolver, GraphRuntimeHandle } from './graph-runtime.
 
 /**
  * The shape the bridge reads each queried entity as: a `trackId` plus its live
- * component map. The real `@czap/core` World's `query(...)` resolves to
+ * component map. The real `@liteship/core` World's `query(...)` resolves to
  * `{ id, components }` entities where `trackId` is itself a COMPONENT (a scene
  * spawns `world.spawn({ trackId, ...components })`), so {@link sceneStageRunQuery}
  * below lifts `components.get('trackId')` up to the top-level `trackId` the bridge
@@ -43,9 +43,9 @@ interface BridgeEntity {
 }
 
 /**
- * Project each real `@czap/scene` world-query row `{ components }` into the
+ * Project each real `@liteship/scene` world-query row `{ components }` into the
  * bridge's `{ trackId, components }` shape by lifting the `trackId` component to
- * the top level. `@czap/core`'s `World.query` is SYNCHRONOUS, so this is a pure,
+ * the top level. `@liteship/core`'s `World.query` is SYNCHRONOUS, so this is a pure,
  * synchronous projection — no runner, no Effect. It is passed as the bridge's
  * `runQuery` (see {@link driveSceneStage}).
  *
@@ -69,10 +69,10 @@ export function sceneStageRunQuery(query: SceneQueryEffect): readonly BridgeEnti
 export type SceneStageOptions = Omit<BridgeOptions, 'runQuery'>;
 
 /**
- * Drive a REAL compiled `@czap/scene` runtime handle through the live graph
+ * Drive a REAL compiled `@liteship/scene` runtime handle through the live graph
  * runtime — the reference wiring of {@link bridgeSceneToGraph}.
  *
- * The `@czap/scene` {@link SceneRuntime.Handle} satisfies the bridge's
+ * The `@liteship/scene` {@link SceneRuntime.Handle} satisfies the bridge's
  * `BridgeableScene` contract directly (it exposes `tick` + a queryable `world`),
  * so it is passed straight in. The one piece a real scene needs that a fake does
  * not — lifting `trackId` out of the world entity's component map — is supplied as

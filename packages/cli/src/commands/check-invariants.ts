@@ -1,14 +1,14 @@
 /**
  * check-invariants (CLI adapter, CUT A3 → B5b CLI-only) — thin projection over
- * `@czap/command`'s check-invariants command (the fast-lane invariant gate,
+ * `@liteship/command`'s check-invariants command (the fast-lane invariant gate,
  * migrated from `scripts/check-invariants.ts`). The pass/fail decision lives in
- * `@czap/command`; the CLI is the ONLY adapter that wires the `runCheckInvariants`
- * capability, because the scan needs `@czap/audit`'s `normalizeRepoPath` (the one
- * slash-normalize home — B5b cage). `@czap/command` must NOT import `@czap/audit`
- * (it would drag the heavy TS-compiler/glob engine into `@czap/mcp-server`), and
- * the primitive can't relocate to a shared low-level home (`@czap/audit` may not
- * import `@czap/core` — the D9b standalone law). So — exactly like `audit` and
- * `audit-floor` — this gate is CLI-only: the `@czap/audit`-dependent scan lives
+ * `@liteship/command`; the CLI is the ONLY adapter that wires the `runCheckInvariants`
+ * capability, because the scan needs `@liteship/audit`'s `normalizeRepoPath` (the one
+ * slash-normalize home — B5b cage). `@liteship/command` must NOT import `@liteship/audit`
+ * (it would drag the heavy TS-compiler/glob engine into `@liteship/mcp-server`), and
+ * the primitive can't relocate to a shared low-level home (`@liteship/audit` may not
+ * import `@liteship/core` — the D9b standalone law). So — exactly like `audit` and
+ * `audit-floor` — this gate is CLI-only: the `@liteship/audit`-dependent scan lives
  * here, and over MCP the capability is simply absent (capabilityUnavailable).
  *
  * This adapter owns the `node:fs` source-walk + the `git ls-files --eol`
@@ -20,9 +20,9 @@
  */
 import { readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
-import { IoError } from '@czap/error';
-import { normalizeRepoPath } from '@czap/audit';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { IoError } from '@liteship/error';
+import { normalizeRepoPath } from '@liteship/audit';
 import {
   checkInvariantsCommand,
   INVARIANTS,
@@ -32,16 +32,25 @@ import {
   type CheckInvariantEntry,
   type InvariantViolation,
   type InvariantViolationGroup,
-} from '@czap/command';
-import { spawnArgvCapture } from '@czap/command/host';
+} from '@liteship/command';
+import { spawnArgvCapture } from '@liteship/command/host';
 import { emit, type WallClockTimestamp } from '../receipts.js';
+import { scanWorkflowActionPins } from '../lib/workflow-action-pins.js';
 
-/** Receipt emitted by `czap check-invariants`. */
+/** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'check-invariants';
   readonly timestamp: WallClockTimestamp;
 }
+
+/**
+ * The subprocess-capture capability the `git ls-files --eol` line-ending probe
+ * shells out through. Injectable (defaulting to the real {@link spawnArgvCapture})
+ * so tests script the probe deterministically — no real `git` — while production
+ * call sites stay byte-identical.
+ */
+type SpawnArgvCapture = typeof spawnArgvCapture;
 
 interface LineEndingRule {
   readonly pattern: string;
@@ -62,11 +71,11 @@ export function findViolations(invariant: CheckInvariantEntry, root: string): In
   const violations: InvariantViolation[] = [];
 
   for (const dir of invariant.dirs) {
-    // The shared `@czap/core/fs-walk` walker (skips `dist`/`node_modules`, keeps
+    // The shared `@liteship/core/fs-walk` walker (skips `dist`/`node_modules`, keeps
     // `.ts`); a `.d.ts` is filtered here since `suffixes: ['.ts']` also matches it.
     // An invariant scoped to a subtree that doesn't exist in the scanned root
     // contributes zero violations -- walkFiles tolerates a missing dir (returns
-    // []), so a nested-`dirs` invariant whose subtree is absent in the satellite
+    // []), so a nested-`dirs` invariant whose subtree is absent in the adaptive
     // fixture root is empty, not a crash.
     for (const file of walkFiles(resolve(root, dir), { skipDirs: ['dist', 'node_modules'], suffixes: ['.ts'] })) {
       if (file.endsWith('.d.ts')) continue;
@@ -143,14 +152,17 @@ export function expectedLineEnding(
 }
 
 /** Files whose committed line endings violate the `.gitattributes` eol policy under `root`. */
-export async function findLineEndingViolations(root: string): Promise<readonly string[]> {
+export async function findLineEndingViolations(
+  root: string,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<readonly string[]> {
   const rules = parseLineEndingRules(readFileSync(resolve(root, '.gitattributes'), 'utf8'));
   const violations: string[] = [];
 
   // Route the `git ls-files --eol` probe through the canonical spawn helper (the
   // host bans raw node:child_process). captureBytes is bumped well past the 1 MiB
   // default — the per-file eol report scales with the whole tracked tree.
-  const probe = await spawnArgvCapture('git', ['ls-files', '--eol'], {
+  const probe = await spawn('git', ['ls-files', '--eol'], {
     cwd: root,
     captureBytes: 64 * 1024 * 1024,
   });
@@ -218,7 +230,10 @@ export async function findLineEndingViolations(root: string): Promise<readonly s
  * text file matches the `.gitattributes` eol policy. Returns a structured verdict
  * — no process.exit, no stdout.
  */
-export async function runCheckInvariantsScan(root: string): Promise<CheckInvariantsSummary> {
+export async function runCheckInvariantsScan(
+  root: string,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<CheckInvariantsSummary> {
   const groups: InvariantViolationGroup[] = [];
   for (const invariant of INVARIANTS) {
     const violations = findViolations(invariant, root);
@@ -226,7 +241,22 @@ export async function runCheckInvariantsScan(root: string): Promise<CheckInvaria
     groups.push({ name: invariant.name, message: invariant.message, violations });
   }
 
-  const lineEndings = await findLineEndingViolations(root);
+  const actionPinViolations: InvariantViolation[] = [];
+  for (const file of walkFiles(resolve(root, '.github/workflows'), { suffixes: ['.yml', '.yaml'] })) {
+    const rel = normalizeRepoPath(relative(root, file));
+    for (const violation of scanWorkflowActionPins(readFileSync(file, 'utf8'))) {
+      actionPinViolations.push({ file: rel, line: violation.line, content: violation.content });
+    }
+  }
+  if (actionPinViolations.length > 0) {
+    groups.push({
+      name: 'IMMUTABLE_WORKFLOW_ACTIONS',
+      message: 'Pin every third-party GitHub Action to an immutable 40-character commit SHA.',
+      violations: actionPinViolations,
+    });
+  }
+
+  const lineEndings = await findLineEndingViolations(root, spawn);
 
   return {
     ok: groups.length === 0 && lineEndings.length === 0,
@@ -235,13 +265,27 @@ export async function runCheckInvariantsScan(root: string): Promise<CheckInvaria
   };
 }
 
-/** Execute `czap check-invariants` — scan source for banned patterns + line-ending policy; emit a verdict. */
-export async function checkInvariants(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+/**
+ * Injectable scan seam for {@link checkInvariants}. `spawn` DEFAULTS (via the
+ * null-coalesce at its call site) to the real {@link spawnArgvCapture}, so
+ * production `liteship check-invariants` is byte-identical; tests pass a scripted
+ * spawn to pin the adapter's receipt + work-list projection without a real
+ * `git ls-files --eol` probe. Unexported + off the public barrel.
+ */
+interface CheckInvariantsDeps {
+  readonly spawn?: SpawnArgvCapture;
+}
+
+/** Execute `liteship check-invariants` — scan source for banned patterns + line-ending policy; emit a verdict. */
+export async function checkInvariants(
+  opts: { cwd?: string; pretty?: boolean } = {},
+  deps: CheckInvariantsDeps = {},
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
   const context: CommandContext = {
     cwd,
-    runCheckInvariants: async () => runCheckInvariantsScan(cwd),
+    runCheckInvariants: async () => runCheckInvariantsScan(cwd, deps.spawn ?? spawnArgvCapture),
   };
 
   const result = await checkInvariantsCommand.handler({ name: 'check-invariants', args: {} }, context);

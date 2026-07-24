@@ -8,7 +8,7 @@
 
 > **lowerScrollTimelineIntent**(`intent`): [`LoweredScrollTimeline`](../interfaces/LoweredScrollTimeline.md)
 
-Defined in: [core/src/scroll-timeline.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L130)
+Defined in: [core/src/motion/scroll-timeline.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L130)
 
 Lower a [ScrollTimelineIntent](../interfaces/ScrollTimelineIntent.md) into real DocumentGraph node families.
 

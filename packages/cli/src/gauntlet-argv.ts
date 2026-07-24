@@ -4,7 +4,10 @@
  * @module
  */
 
-import { wallClock } from '@czap/core';
+import { wallClock } from '@liteship/core';
+import type { DiagnosticCodeFor } from '@liteship/error';
+
+const UNEXPECTED_ARGV_CODE = 'cli/invalid-argument' satisfies DiagnosticCodeFor<'cli'>;
 
 /** Parsed gauntlet CLI argv. */
 export interface GauntletArgv {
@@ -97,6 +100,7 @@ export function formatUnexpectedArgvReceipt(argv: readonly string[]): string {
     JSON.stringify({
       status: 'failed',
       command: 'gauntlet',
+      code: UNEXPECTED_ARGV_CODE,
       error: 'unexpected_argv',
       argv,
       timestamp: new Date(wallClock.now()).toISOString(),

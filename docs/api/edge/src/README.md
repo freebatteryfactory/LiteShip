@@ -6,7 +6,7 @@
 
 # edge/src
 
-`@czap/edge` — **LiteShip** edge-station: server-side tier detection,
+`@liteship/edge` — **LiteShip** edge-station: server-side tier detection,
 content-addressed boundary cache, and theme **casting** for first paint.
 
 Parses HTTP Client Hints headers into device capabilities, maps them

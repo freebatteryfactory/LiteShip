@@ -17,16 +17,16 @@ import {
 import { getSlotRegistry } from '../../../packages/astro/src/runtime/slots.js';
 
 type PipelineWindow = Window & {
-  __CZAP_SLOT_REGISTRY__?: unknown;
-  __CZAP_SLOTS__?: unknown;
-  __CZAP_SWAP_PIPELINE__?: boolean;
+  __LITESHIP_SLOT_REGISTRY__?: unknown;
+  __LITESHIP_SLOTS__?: unknown;
+  __LITESHIP_SWAP_PIPELINE__?: boolean;
 };
 
 function reset(): void {
   const w = window as PipelineWindow;
-  delete w.__CZAP_SLOT_REGISTRY__;
-  delete w.__CZAP_SLOTS__;
-  delete w.__CZAP_SWAP_PIPELINE__;
+  delete w.__LITESHIP_SLOT_REGISTRY__;
+  delete w.__LITESHIP_SLOTS__;
+  delete w.__LITESHIP_SWAP_PIPELINE__;
   document.body.innerHTML = '';
 }
 
@@ -43,18 +43,18 @@ describe('swap pipeline', () => {
 
   test('runSwapPipeline rescans slots BEFORE reinitializing directives', () => {
     document.body.innerHTML = `
-      <section data-czap-slot="/next" data-czap-mode="partial"></section>
-      <div id="widget" data-czap-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
+      <section data-liteship-slot="/next" data-liteship-mode="partial"></section>
+      <div id="widget" data-liteship-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
     `;
 
     const order: string[] = [];
     // The slot rescan (step 1) writes the registry; record when the registry first
-    // sees /next. The reinit (step 3) dispatches czap:reinit; record that too.
-    document.getElementById('widget')?.addEventListener('czap:reinit', () => {
+    // sees /next. The reinit (step 3) dispatches liteship:reinit; record that too.
+    document.getElementById('widget')?.addEventListener('liteship:reinit', () => {
       order.push(`reinit:slotKnown=${getSlotRegistry().get('/next' as never) !== undefined}`);
     });
 
-    runSwapPipeline(['satellite']);
+    runSwapPipeline(['adaptive']);
 
     // By the time reinit fired, the slot rescan had already registered /next — i.e.
     // step 1 ran strictly before step 3.
@@ -63,16 +63,16 @@ describe('swap pipeline', () => {
   });
 
   test('installSwapPipeline wires exactly one after-swap listener and runs the steps on swap', () => {
-    document.body.innerHTML = `<div id="widget" data-czap-boundary='{"id":"h","input":"viewport.width","thresholds":[0],"states":["c"]}'></div>`;
+    document.body.innerHTML = `<div id="widget" data-liteship-boundary='{"id":"h","input":"viewport.width","thresholds":[0],"states":["c"]}'></div>`;
     const addSpy = vi.spyOn(document, 'addEventListener');
 
-    installSwapPipeline(['satellite']);
-    installSwapPipeline(['satellite']); // idempotent — no second listener
+    installSwapPipeline(['adaptive']);
+    installSwapPipeline(['adaptive']); // idempotent — no second listener
 
     expect(addSpy.mock.calls.filter(([type]) => type === 'astro:after-swap')).toHaveLength(1);
 
     let reinits = 0;
-    document.getElementById('widget')?.addEventListener('czap:reinit', () => {
+    document.getElementById('widget')?.addEventListener('liteship:reinit', () => {
       reinits += 1;
     });
 

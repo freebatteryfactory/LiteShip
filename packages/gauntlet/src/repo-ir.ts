@@ -4,10 +4,10 @@
  *
  * This module defines the {@link RepoIR} INTERFACE and a pure in-memory
  * constructor ({@link makeRepoIR}) ONLY. It deliberately carries NO `typescript`
- * dependency: `@czap/gauntlet` is the lean, downstream-installable engine, and
+ * dependency: `@liteship/gauntlet` is the lean, downstream-installable engine, and
  * the IR is an INJECTED capability (owner-ratified ⚑ decision 1). The gauntlet
  * DEFINES the shape; a host (the CLI, a later B1 step) BUILDS the real IR from
- * `@czap/audit`'s `ts.Program` and injects it via {@link GateContext.ir}. This
+ * `@liteship/audit`'s `ts.Program` and injects it via {@link GateContext.ir}. This
  * is the same injected-capability pattern as `CommandContext.runAudit`.
  *
  * Shape (design §1): ECS-style — parallel typed records keyed by stable ids
@@ -21,7 +21,8 @@
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
+import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import type { SourceLocation } from './finding.js';
 import type { AssuranceLevel } from './assurance.js';
 
@@ -49,7 +50,7 @@ export type PkgName = string;
 
 /**
  * How a fact was evidenced — the provenance-honesty model carried forward from
- * `@czap/audit`'s `coverageClassification`, so "0 findings" can never be read as
+ * `@liteship/audit`'s `coverageClassification`, so "0 findings" can never be read as
  * "checked and clean" when it was only ever a weak proxy. This is DATA the
  * divergence layer reads (design §2): a same-class disagreement is a real
  * contradiction; a cross-class one is a coverage gap + a retire-the-weak-oracle
@@ -175,14 +176,14 @@ export type SymbolKind =
   | 'export-assignment'
   | 're-export';
 
-/** How an import specifier resolves — mirrors `@czap/audit`'s `ResolvedImport.kind`. */
+/** How an import specifier resolves — mirrors `@liteship/audit`'s `ResolvedImport.kind`. */
 export type ImportKind = 'relative' | 'internal-package' | 'external';
 
 /** An edge in the import graph — one resolved `import`/`export-from` specifier. */
 export interface ImportEdge {
   /** The file the import appears in — MUST exist in {@link RepoIR.files}. */
   readonly fromFile: FileId;
-  /** The raw specifier as written (`'./x.js'`, `'@czap/core'`, `'node:fs'`). */
+  /** The raw specifier as written (`'./x.js'`, `'@liteship/core'`, `'node:fs'`). */
   readonly specifier: string;
   /** How it resolved. */
   readonly kind: ImportKind;
@@ -275,6 +276,8 @@ export interface RepoIR {
   readonly levels?: ReadonlyMap<FileId | SymbolId, AssuranceLevel>;
   /** The oracle-emitted facts — the substrate the triangulation layer folds. */
   readonly facts: readonly Fact[];
+  /** Optional host-qualified benchmark reachability evidence for this repository image. */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
 }
 
 /**
@@ -295,6 +298,7 @@ export interface RepoIRParts {
   readonly refs?: ReadonlyMap<SymbolId, readonly RefSite[]>;
   readonly levels?: ReadonlyMap<FileId | SymbolId, AssuranceLevel>;
   readonly facts?: readonly Fact[];
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
 }
 
 /**
@@ -383,6 +387,7 @@ export function makeRepoIR(parts: RepoIRParts): RepoIR {
     refs,
     ...(parts.levels !== undefined ? { levels: parts.levels } : {}),
     facts: Object.freeze([...facts]),
+    ...(parts.benchmarkSubjects !== undefined ? { benchmarkSubjects: parts.benchmarkSubjects } : {}),
   };
   return Object.freeze(ir);
 }

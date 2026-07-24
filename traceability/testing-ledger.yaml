@@ -17,113 +17,182 @@ traces:
   # ── HLC — tests/property/hlc-crdt-laws.prop.test.ts ─────────────────────────
   - id: INV-HLC-JOIN-IDEMPOTENT
     tests:
-      - "tests/property/hlc-crdt-laws.prop.test.ts::IDEMPOTENCE: join(a, a) ≡ a"
+      - 'tests/property/hlc-crdt-laws.prop.test.ts::IDEMPOTENCE: join(a, a) ≡ a'
   - id: INV-HLC-JOIN-COMMUTATIVE
     tests:
-      - "tests/property/hlc-crdt-laws.prop.test.ts::COMMUTATIVITY: join(a, b) ≡ join(b, a)"
+      - 'tests/property/hlc-crdt-laws.prop.test.ts::COMMUTATIVITY: join(a, b) ≡ join(b, a)'
   - id: INV-HLC-JOIN-ASSOCIATIVE
     tests:
-      - "tests/property/hlc-crdt-laws.prop.test.ts::ASSOCIATIVITY: join(join(a, b), c) ≡ join(a, join(b, c))"
+      - 'tests/property/hlc-crdt-laws.prop.test.ts::ASSOCIATIVITY: join(join(a, b), c) ≡ join(a, join(b, c))'
   - id: INV-HLC-ORDER-TRANSITIVE
     tests:
-      - "tests/property/hlc-crdt-laws.prop.test.ts::TRANSITIVITY of happens-before: compare(a,b)<0 && compare(b,c)<0 ⟹ compare(a,c)<0"
+      - 'tests/property/hlc-crdt-laws.prop.test.ts::TRANSITIVITY of happens-before: compare(a,b)<0 && compare(b,c)<0 ⟹ compare(a,c)<0'
   - id: INV-HLC-ORDER-TOTAL
     tests:
-      - "tests/property/hlc-crdt-laws.prop.test.ts::TOTALITY: exactly one of compare<0, ===0, compare>0 holds for every pair"
+      - 'tests/property/hlc-crdt-laws.prop.test.ts::TOTALITY: exactly one of compare<0, ===0, compare>0 holds for every pair'
   - id: INV-HLC-MERGE-DOMINANCE
     tests:
-      - "tests/property/hlc-crdt-laws.prop.test.ts::DOMINANCE: merge(local, remote, now) is ≥ BOTH inputs on (wall, counter)"
+      - 'tests/property/hlc-crdt-laws.prop.test.ts::DOMINANCE: merge(local, remote, now) is ≥ BOTH inputs on (wall, counter)'
 
   # ── GraphPatch — tests/property/graph-patch-crdt-laws.prop.test.ts ──────────
   - id: INV-GRAPHPATCH-IDEMPOTENT
     tests:
-      - "tests/property/graph-patch-crdt-laws.prop.test.ts::apply(base, p) twice yields the SAME content-address id"
+      - 'tests/property/graph-patch-crdt-laws.prop.test.ts::apply(base, p) twice yields the SAME content-address id'
   - id: INV-GRAPHPATCH-COMMUTATIVE
     tests:
-      - "tests/property/graph-patch-crdt-laws.prop.test.ts::apply(apply(G, p1), p2) and apply(apply(G, p2), p1) reach the SAME id"
+      - 'tests/property/graph-patch-crdt-laws.prop.test.ts::apply(apply(G, p1), p2) and apply(apply(G, p2), p1) reach the SAME id'
   - id: INV-GRAPHPATCH-CONVERGENCE
     tests:
-      - "tests/property/graph-patch-crdt-laws.prop.test.ts::3 concurrent non-conflicting adds converge to ONE id across all 6 orderings"
+      - 'tests/property/graph-patch-crdt-laws.prop.test.ts::3 concurrent non-conflicting adds converge to ONE id across all 6 orderings'
   - id: INV-GRAPHPATCH-CONFLICT-BOUNDARY
     tests:
-      - "tests/property/graph-patch-crdt-laws.prop.test.ts::conflicting patches (same logical cell, different payload) are ORDER-DEPENDENT at the apply layer"
-      - "tests/property/graph-patch-crdt-laws.prop.test.ts::the fork-detection seam SURFACES two concurrent patches off a shared base (forkOf → DAG.isFork)"
+      - 'tests/property/graph-patch-crdt-laws.prop.test.ts::conflicting patches (same logical cell, different payload) are ORDER-DEPENDENT at the apply layer'
+      - 'tests/property/graph-patch-crdt-laws.prop.test.ts::the fork-detection seam SURFACES two concurrent patches off a shared base (forkOf → DAG.isFork)'
 
   # ── Content-address — tests/property/content-address.prop.test.ts ───────────
   - id: INV-CONTENT-ADDRESS-DETERMINISTIC
     tests:
-      - "tests/property/content-address.prop.test.ts::same boundary config → same content address"
-      - "tests/property/content-address.prop.test.ts::different inputs → different content addresses"
+      - 'tests/property/content-address.prop.test.ts::same boundary config → same content address'
+      - 'tests/property/content-address.prop.test.ts::different inputs → different content addresses'
+
+  # ── Adaptive lowering — tests/property/adaptive-lowering-equivalence.prop.test.ts ─
+  - id: INV-ADAPTIVE-LOWERING-PURE
+    tests:
+      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-LOWERING-PURE: adaptive members equal the independently hand-lowered constructor outputs (ids, deep-equal, referential quantizer)'
+  - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
+    tests:
+      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-CSS-BYTE-EQUAL: the public adaptive plan CSS is byte-identical to the hand-lowered compiler output'
+      - 'tests/e2e/astro-directives.e2e.ts::attrs plus plan CSS follow runtime state without cross-definition bleed'
+  - id: INV-ADAPTIVE-TRACE-EQUAL
+    tests:
+      - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep'
 
   # ── Assurance propagation — tests/unit/gauntlet/assurance-propagation.test.ts ─
   - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
     tests:
-      - "tests/unit/gauntlet/assurance-propagation.test.ts::LAW: every file effective >= its base (propagation only raises) — over random DAGs+cycles"
+      - 'tests/unit/gauntlet/assurance-propagation.test.ts::LAW: every file effective >= its base (propagation only raises) — over random DAGs+cycles'
   - id: INV-ASSURANCE-PROPAGATION-DETERMINISTIC
     tests:
-      - "tests/unit/gauntlet/assurance-propagation.test.ts::determinism: computing twice yields an identical map"
+      - 'tests/unit/gauntlet/assurance-propagation.test.ts::determinism: computing twice yields an identical map'
 
   # ── DST substrate — tests/unit/core/simulation-determinism-substrate.test.ts ─
   - id: INV-DST-TRACE-CONTENT-ADDRESSED
     tests:
-      - "tests/unit/core/simulation-determinism-substrate.test.ts::the trace digest is minted through the ONE content-address kernel (contentAddressOf), never forked"
+      - 'tests/unit/core/simulation-determinism-substrate.test.ts::the trace digest is minted through the ONE content-address kernel (contentAddressOf), never forked'
   - id: INV-DST-NO-AMBIENT-ENTROPY
     tests:
-      - "tests/unit/core/simulation-determinism-substrate.test.ts::the harness imports its time/randomness ONLY from the @czap/core substrate (manualClock / seededRng)"
+      - 'tests/unit/core/simulation-determinism-substrate.test.ts::the harness imports its time/randomness ONLY from the @liteship/core substrate (manualClock / seededRng)'
 
   # ── Supply-chain — tests/unit/gauntlet/supply-chain-gate.test.ts ────────────
   - id: INV-SUPPLY-CHAIN-HERMETIC
     tests:
-      - "tests/unit/gauntlet/supply-chain-gate.test.ts::a git-URL lockfile violation reds the gate"
-      - "tests/unit/gauntlet/supply-chain-gate.test.ts::an incomplete SBOM reds the gate"
-      - "tests/unit/gauntlet/supply-chain-gate.test.ts::a drifted lockfile_address reds the gate"
+      - 'tests/unit/gauntlet/supply-chain-gate.test.ts::a git-URL lockfile violation reds the gate'
+      - 'tests/unit/gauntlet/supply-chain-gate.test.ts::an incomplete SBOM reds the gate'
+      - 'tests/unit/gauntlet/supply-chain-gate.test.ts::a drifted lockfile_address reds the gate'
   - id: INV-SUPPLY-CHAIN-NO-AMBIENT-CI
     tests:
-      - "tests/unit/gauntlet/supply-chain-gate.test.ts::an ambient NPM_TOKEN reds the gate"
+      - 'tests/unit/gauntlet/supply-chain-gate.test.ts::an ambient NPM_TOKEN reds the gate'
 
   # ── Mutation engine — tests/unit/audit/mutation-facts-build.test.ts ─────────
   - id: INV-MUTATION-FACTS-DETERMINISTIC
     tests:
-      - "tests/unit/audit/mutation-facts-build.test.ts::is deterministic — same source + runner → byte-identical facts"
+      - 'tests/unit/audit/mutation-facts-build.test.ts::is deterministic — same source + runner → byte-identical facts'
+
+  # ── Transition cage — tests/unit/audit/transition-facts-build.test.ts ───────
+  - id: INV-TRANSITION-FACTS-DETERMINISTIC
+    tests:
+      - 'tests/unit/audit/transition-facts-build.test.ts::is deterministic — same inputs → byte-identical facts (order-independent)'
+      - 'tests/unit/audit/transition-facts-build.test.ts::decides equivalent (digests agree) / divergent (digests differ) / unevidenced (a side missing)'
 
   # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
   - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
     tests:
-      - "tests/property/verdict-cache-determinism.prop.test.ts::SAME inputs ⇒ BYTE-IDENTICAL key, regardless of env insertion order"
-      - "tests/property/verdict-cache-determinism.prop.test.ts::coverageDigestOf is order- and multiplicity-independent (sorted, de-duped fold)"
+      - 'tests/property/verdict-cache-determinism.prop.test.ts::SAME inputs ⇒ BYTE-IDENTICAL key, regardless of env insertion order'
+      - 'tests/property/verdict-cache-determinism.prop.test.ts::coverageDigestOf is order- and multiplicity-independent (sorted, de-duped fold)'
   - id: INV-TOOLCHAIN-DIGEST-INVALIDATES
     tests:
-      - "tests/property/verdict-cache-determinism.prop.test.ts::a different toolchainDigest moves the key (a gate-logic edit invalidates every cached verdict)"
-      - "tests/property/verdict-cache-determinism.prop.test.ts::a different gateId / coverageDigest / env value each move the key (no stale serve across any input)"
-      - "tests/property/verdict-cache-determinism.prop.test.ts::a TAMPERED covered-file digest flips the coverage digest ⇒ flips the key (the cache would catch it)"
+      - 'tests/property/verdict-cache-determinism.prop.test.ts::a different toolchainDigest moves the key (a gate-logic edit invalidates every cached verdict)'
+      - 'tests/property/verdict-cache-determinism.prop.test.ts::a different gateId / coverageDigest / env value each move the key (no stale serve across any input)'
+      - 'tests/property/verdict-cache-determinism.prop.test.ts::a TAMPERED covered-file digest flips the coverage digest ⇒ flips the key (the cache would catch it)'
   - id: INV-REPO-IR-DETERMINISTIC
     tests:
-      - "tests/property/repo-ir-determinism.prop.test.ts::builds a BYTE-IDENTICAL IR twice over the same corpus — per-file digests + the full fold"
-      - "tests/property/repo-ir-determinism.prop.test.ts::a single edited byte CHANGES that file digest (the digest tracks content, the cache-miss trigger)"
+      - 'tests/property/repo-ir-determinism.prop.test.ts::builds a BYTE-IDENTICAL IR twice over the same corpus — per-file digests + the full fold'
+      - 'tests/property/repo-ir-determinism.prop.test.ts::a single edited byte CHANGES that file digest (the digest tracks content, the cache-miss trigger)'
 
   # ── Zero-allocation hot paths — the allocation gate (node --expose-gc) ───────
   - id: INV-COMPOSITOR-ZERO-ALLOC
     tests:
-      - "tests/property/compositor-zero-alloc.test.ts::the allocation gate reports the compositor compose hot path at ≈ 0 live bytes/op (within budget)"
+      - 'tests/property/compositor-zero-alloc.test.ts::the allocation gate reports the compositor compose hot path at ≈ 0 live bytes/op (within budget)'
   - id: INV-TOKEN-BUFFER-ZERO-ALLOC
     tests:
-      - "tests/property/token-buffer-zero-alloc.test.ts::the allocation gate reports the token-buffer hot path at ≈ 0 live bytes/op (within budget)"
+      - 'tests/property/token-buffer-zero-alloc.test.ts::the allocation gate reports the token-buffer hot path at ≈ 0 live bytes/op (within budget)'
 
   # ── Security (shader content integrity — defense-in-depth content guard) ────
   - id: INV-SHADER-CONTENT-INTEGRITY
     tests:
-      - "tests/unit/web/shader-integrity.test.ts::VERIFIES content whose bytes match the author-pinned hash"
-      - "tests/unit/web/shader-integrity.test.ts::reports a MISMATCH when a single byte is tampered"
-      - "tests/unit/web/shader-integrity.test.ts::an absent pin REFUSES under the secure default but is allowed under lenient"
-      - "tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched shader is REFUSED — security diagnostic fires, gl.shaderSource never sees the body"
-      - "tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched WGSL shader is REFUSED — no createShaderModule, security diagnostic fires"
-      - "tests/integration/cli/shader-taint-sanitized-live.test.ts::every fetch→shader-compile-sink flow is broken by verifyShaderIntegrity on the path"
+      - 'tests/unit/web/shader-integrity.test.ts::VERIFIES content whose bytes match the author-pinned hash'
+      - 'tests/unit/web/shader-integrity.test.ts::reports a MISMATCH when a single byte is tampered'
+      - 'tests/unit/web/shader-integrity.test.ts::an absent pin REFUSES under the secure default but is allowed under lenient'
+      - 'tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched shader is REFUSED — security diagnostic fires, gl.shaderSource never sees the body'
+      - 'tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched WGSL shader is REFUSED — no createShaderModule, security diagnostic fires'
+      - 'tests/integration/cli/shader-taint-sanitized-live.test.ts::every fetch→shader-compile-sink flow is broken by verifyShaderIntegrity on the path'
+
+  # ── Security (taint source→sink oracle) — the generic dataflow trace + gate ──
+  # Proven from BOTH ends: the host oracle (repo-ir-taint) traces real tmp corpora,
+  # the lean gate (taint-flow-gate) folds the facts. Both files carry `// PROVES:`.
+  - id: INV-TAINT-SOURCE-SINK
+    tests:
+      - 'tests/unit/audit/repo-ir-taint.test.ts::flags an UNSANITIZED source→sink flow with sanitizedBy null'
+      - 'tests/unit/audit/repo-ir-taint.test.ts::emits a SANITIZED flow (taint broken) when a sanitizer wraps the value'
+      - 'tests/unit/audit/repo-ir-taint.test.ts::is deterministic — tracing twice over unchanged source yields identical flows'
+      - 'tests/unit/gauntlet/taint-flow-gate.test.ts::reds an L4 error finding located at the SINK, naming both endpoints'
+      - 'tests/unit/gauntlet/taint-flow-gate.test.ts::emits NOTHING for a flow broken by a sanitizer (the guarded-seam green)'
 
   # ── Meta (crdt-laws coverage rail) — tests/property/crdt-laws-gate.test.ts ──
   - id: INV-CRDT-LAWS-PINNED
     tests:
-      - "tests/property/crdt-laws-gate.test.ts::FLAGS a repo whose law file pins only SOME of the required laws (the red fixture world)"
-      - "tests/property/crdt-laws-gate.test.ts::passes its OWN green fixture clean (no false positive on a fully-pinned repo)"
+      - 'tests/property/crdt-laws-gate.test.ts::FLAGS a repo whose law file pins only SOME of the required laws (the red fixture world)'
+      - 'tests/property/crdt-laws-gate.test.ts::passes its OWN green fixture clean (no false positive on a fully-pinned repo)'
+
+  # ── Assurance (negative-control partition) — tests/unit/devops/check-registry.test.ts ─
+  - id: INV-CHECK-NEGATIVE-CONTROL
+    tests:
+      - 'tests/unit/devops/check-registry.test.ts::every blocking check declares an existing negative control; no blocking exemption exists'
+      - 'tests/unit/devops/blocking-check-negative-controls.test.ts::every shared authority harness rejects deterministic bad input'
+
+  # ── Meta (single-source roster) — one typed catalog; every consumer is a projection ─
+  - id: INV-ROSTER-SINGLE-SOURCE
+    tests:
+      - 'tests/unit/devops/package-catalog.test.ts::accepts the exact 25-record catalog against independent manifests'
+      - 'tests/unit/devops/package-catalog.test.ts::rejects a second authored full-fleet list but permits generated and red-fixture sources'
+      - 'tests/unit/audit/package-roster.test.ts::equals the generated canonical roster in dependency order'
+      - 'tests/unit/meta/release-roster-projection.test.ts::carries no @liteship/* package literals in its run blocks'
+
+  # ── Meta (single brand) — tests/unit/meta/brand-residue.test.ts (this ledger file is allowlisted there) ─
+  - id: INV-BRAND-RESIDUE-ZERO
+    tests:
+      - 'tests/unit/meta/brand-residue.test.ts::no `czap` residue outside the sanctioned ARCHITECTURE sentence and the frozen allowlist'
+
+  # ── Assurance (facade export budget — exact-match, both directions) — tests/unit/liteship/facade-subpaths.test.ts ─
+  - id: INV-FACADE-EXPORT-BUDGET
+    tests:
+      - 'tests/unit/liteship/facade-subpaths.test.ts::self-proves (red caught, green clean, mutation killed)'
+      - 'tests/unit/liteship/facade-subpaths.test.ts::an UNLISTED export reds (the sprawl direction)'
+      - 'tests/unit/liteship/facade-subpaths.test.ts::a DROPPED listed export reds (the regression direction the old SUBSET gate was blind to)'
+
+  # ── Assurance (public subpath closure — node16 + bundler) — tests/unit/liteship/facade-subpaths.test.ts ─
+  - id: INV-CONSUMER-SUBPATH-CLOSURE
+    tests:
+      - 'tests/unit/liteship/facade-subpaths.test.ts::resolves every subpath to its built dist/*.d.ts under node16'
+      - 'tests/unit/liteship/facade-subpaths.test.ts::resolves every subpath to its built dist/*.d.ts under bundler'
+
+  # ── Assurance (diagnostic-code closure) — exact types + independent source backstop ─
+  - id: INV-DIAGNOSTIC-CODE-CLOSED
+    tests:
+      - 'tests/unit/error/diagnostic-registry-closure.test.ts::every key agrees with its area and carries complete explanation plus owner metadata'
+      - 'tests/unit/error/diagnostic-registry-closure.test.ts::the exact union rejects invented registry and runtime identities at compile time'
+      - 'tests/unit/command/explain.test.ts::explains schema/type with area schema and owner @liteship/core/schema'
+      - 'tests/unit/gauntlet/gates-dogfood.test.ts::each gate self-proves (red caught, green clean, mutation killed)'
 
   # ── The owner-signed deferral (a real future law, no proving test YET) ──────
   # WAIVED, not UNTRACED — the waiver keeps the path honest. When the expiry passes
@@ -132,5 +201,5 @@ traces:
   - id: INV-VECTOR-CLOCK-MONOTONIC
     waiver:
       owner: heyoub
-      justification: "The vector-clock monotonicity/merge-max law is exercised transitively by the HLC suite (the HLC carries a logical counter), but it has no DEDICATED property-test enrollment yet. Owner-signed deferral pending a tests/property/vector-clock.prop.test.ts law-marker pass. NOT a placeholder — a declared boundary with a clock: the expiry forces re-confirmation."
-      expiry: "2027-06-22"
+      justification: 'The vector-clock monotonicity/merge-max law is exercised transitively by the HLC suite (the HLC carries a logical counter), but it has no DEDICATED property-test enrollment yet. Owner-signed deferral pending a tests/property/vector-clock.prop.test.ts law-marker pass. NOT a placeholder — a declared boundary with a clock: the expiry forces re-confirmation.'
+      expiry: '2027-06-22'

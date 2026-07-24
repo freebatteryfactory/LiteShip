@@ -2,12 +2,12 @@
  * asset analyze / verify (CUT A1) — analysis + generated-test verification over
  * registered asset capsules. Pure structured logic: the adapter injects the
  * manifest read, asset-byte loading, the audio projection (DSP from
- * @czap/assets), the receipt cache, and the vitest runner. No fs/spawn/DSP edge
- * lives in @czap/command itself.
+ * @liteship/assets), the receipt cache, and the vitest runner. No fs/spawn/DSP edge
+ * lives in @liteship/command itself.
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -16,7 +16,7 @@ const PROJECTIONS = ['beat', 'onset', 'waveform'] as const;
 type Projection = (typeof PROJECTIONS)[number];
 
 /** Kernel argsSchema mirror of the `projection` enum — decodes the raw arg to a {@link Projection}. */
-const ProjectionArg = S.union(S.literal('beat'), S.literal('onset'), S.literal('waveform'));
+const ProjectionArg = schema.union(schema.literal('beat'), schema.literal('onset'), schema.literal('waveform'));
 
 /**
  * The descriptor `outputSchema` for asset.analyze — hand-written JSON-Schema,
@@ -52,6 +52,12 @@ const AssetVerifyPayloadSchema = {
   required: ['assetId', 'invariantsChecked'],
 } as const satisfies CommandJsonSchema;
 
+/** Structured payload returned by `asset.verify` — the asset id + count of invariants checked. */
+export type AssetVerifyPayload = {
+  readonly assetId: string;
+  readonly invariantsChecked: number;
+};
+
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return failed(command, { error }, exitCode);
@@ -71,7 +77,11 @@ export const assetAnalyzeCommand = defineCommand({
     outputSchema: AssetAnalyzePayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
-  argsSchema: S.struct({ asset: S.string, projection: ProjectionArg, force: S.optional(S.boolean) }),
+  argsSchema: schema.struct({
+    asset: schema.string,
+    projection: ProjectionArg,
+    force: schema.optional(schema.boolean),
+  }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('asset.analyze', loaded, context);
@@ -118,7 +128,7 @@ export const assetVerifyCommand = defineCommand({
     outputSchema: AssetVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
-  argsSchema: S.struct({ asset: S.string }),
+  argsSchema: schema.struct({ asset: schema.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('asset.verify', loaded, context);

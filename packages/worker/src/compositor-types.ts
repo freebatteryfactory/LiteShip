@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@czap/core';
+import type { RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@liteship/core';
 import type {
   WorkerUpdate,
   BootstrapQuantizerRegistration,
@@ -52,12 +52,12 @@ export interface ResolvedStateAckPayload {
 
 /**
  * The boundary surface {@link CompositorWorkerShape.addQuantizer} derives
- * a registration from — structurally satisfied by a `Boundary.make`
- * result from `@czap/core`, whose content-addressed `id` and `input`
+ * a registration from — structurally satisfied by a `defineBoundary`
+ * result from `@liteship/core`, whose content-addressed `id` and `input`
  * name make hand-assembled registrations unnecessary.
  */
 export interface QuantizerBoundarySource {
-  /** Content address computed by `Boundary.make` (ADR-0003). */
+  /** Content address computed by `defineBoundary` (ADR-0003). */
   readonly id: ContentAddress;
   /** Signal input name — used as the quantizer name when none is given. */
   readonly input: string;
@@ -77,10 +77,10 @@ export interface CompositorWorkerShape {
   /** The underlying Worker instance. */
   readonly worker: Worker;
   /** Shared runtime coordination surface reflecting host-side worker state. */
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
 
   /**
-   * Register a quantizer from a `Boundary.make` result — id, states, and
+   * Register a quantizer from a `defineBoundary` result — id, states, and
    * thresholds are derived; the quantizer name defaults to `boundary.input`.
    */
   addQuantizer(boundary: QuantizerBoundarySource): void;
@@ -183,7 +183,7 @@ export interface StandbyCompositorLease {
   /** The warm Worker instance. */
   readonly worker: Worker;
   /** Shared runtime coordinator already attached to the worker. */
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   /** Pooled pool capacity advertised by the lease. */
   readonly capacity: number;
   /** Worker constructor used to mint peers. */

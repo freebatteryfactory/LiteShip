@@ -1,0 +1,6 @@
+id: planted-negative-control
+language: TypeScript
+rule:
+  pattern: vi.mock($$$ARGS)
+severity: error
+message: planted internal-mock violation

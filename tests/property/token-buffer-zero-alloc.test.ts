@@ -1,6 +1,6 @@
 // PROVES: INV-TOKEN-BUFFER-ZERO-ALLOC
 /**
- * The MEASURED proof that `@czap/core`'s TokenBuffer `push` + `drainInto` hot path
+ * The MEASURED proof that `@liteship/core`'s TokenBuffer `push` + `drainInto` hot path
  * is GENUINELY zero-allocation — the claim the module doc makes ("zero-alloc
  * push/drainInto"), now held to a real allocation measurement instead of prose.
  *

@@ -8,7 +8,7 @@
 
 Defined in: [compiler/src/dispatch.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L59)
 
-Result of the `ConfigCompiler` arm — pretty-printed JSON of a `czap.config`.
+Result of the `ConfigCompiler` arm — pretty-printed JSON of a `liteship.config`.
 
 ## Properties
 

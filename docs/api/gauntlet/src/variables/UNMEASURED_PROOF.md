@@ -8,7 +8,7 @@
 
 > `const` **UNMEASURED\_PROOF**: `0`
 
-Defined in: [gauntlet/src/proof-facts.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/proof-facts.ts#L95)
+Defined in: [gauntlet/src/facts/proof-facts.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/proof-facts.ts#L95)
 
 The proof scalar the gate assigns a module the host did NOT measure — the WEAKEST
 link (`0`, fully unproven). This is the SOUND direction for a risk signal: an

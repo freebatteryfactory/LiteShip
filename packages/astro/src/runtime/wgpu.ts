@@ -4,14 +4,14 @@
  * @module
  */
 
-import { Diagnostics, systemClock, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@czap/core';
+import { Diagnostics, systemClock, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@liteship/core';
 import {
   verifyShaderIntegrity,
   isExternalShaderSource,
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
-} from '@czap/web';
-import type { ShaderIntegrity } from '@czap/web';
+} from '@liteship/web';
+import type { ShaderIntegrity } from '@liteship/web';
 import type { WgslUniformValue } from './boundary.js';
 
 const FULLSCREEN_WGSL = `@vertex
@@ -130,9 +130,9 @@ async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
   try {
     const response = await fetch(shaderSrc);
     if (!response.ok) {
-      Diagnostics.warn({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-fetch-failed',
+      Diagnostics.warnRegistered({
+        source: 'liteship/astro.gpu',
+        code: 'astro/wgpu/wgsl-fetch-failed',
         message: 'Failed to fetch WGSL shader source.',
         detail: response.statusText,
       });
@@ -140,9 +140,9 @@ async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
     }
     return await response.text();
   } catch (err) {
-    Diagnostics.warn({
-      source: 'czap/astro.gpu',
-      code: 'wgsl-fetch-threw',
+    Diagnostics.warnRegistered({
+      source: 'liteship/astro.gpu',
+      code: 'astro/wgpu/wgsl-fetch-threw',
       message: 'Fetching WGSL shader source threw an error.',
       cause: err,
     });
@@ -210,18 +210,18 @@ function wgslTypeInfo(
     case 'vec4u':
       return { align: 16, size: 16, kind: 'uvec4' };
     case 'bool':
-      Diagnostics.warnOnce({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-uniform-bool-unsupported',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.gpu',
+        code: 'astro/wgpu/wgsl-uniform-bool-unsupported',
         message:
           `WGSL uniform struct field type "bool" is not host-shareable in a uniform buffer; ` +
           `use u32 (0/1) instead. Field layout skipped.`,
       });
       return null;
     default:
-      Diagnostics.warnOnce({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-uniform-type-unrecognized',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.gpu',
+        code: 'astro/wgpu/wgsl-uniform-type-unrecognized',
         message:
           `Unrecognized WGSL uniform struct field type "${type}"; ` +
           `field layout skipped until the type is supported.`,
@@ -249,10 +249,10 @@ function warnUnfedWgslUniformFields(
         ? ' Rename to u_time for runtime auto-feed.'
         : field.name === 'resolution'
           ? ' Rename to u_resolution for runtime auto-feed.'
-          : ' Supply it via czap:uniform-update detail.wgsl, or use u_time / u_resolution for auto-feed.';
-    Diagnostics.warnOnce({
-      source: 'czap/astro.gpu',
-      code: 'wgsl-uniform-unfed',
+          : ' Supply it via liteship:uniform-update detail.wgsl, or use u_time / u_resolution for auto-feed.';
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.gpu',
+      code: 'astro/wgpu/wgsl-uniform-unfed',
       message: `WGSL uniform field "${field.name}" is declared but has no feed path.${renameHint}`,
     });
   }
@@ -353,9 +353,9 @@ function createUniformBinding(
     const offset = Math.ceil(cursor / align) * align;
     if (offset + size > UNIFORM_BUFFER_MAX_BYTES) {
       // Struct outgrows the buffer — drop the overflowing field.
-      Diagnostics.warnOnce({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-uniform-buffer-full',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.gpu',
+        code: 'astro/wgpu/wgsl-uniform-buffer-full',
         message:
           `WGSL uniform buffer holds ${UNIFORM_BUFFER_MAX_BYTES} bytes; field "${field.name}" overflows it. ` +
           `Fix: reduce @wgsl fields or widen UNIFORM_BUFFER_MAX_BYTES in wgpu.ts.`,
@@ -425,7 +425,7 @@ function createUniformBinding(
 /**
  * Initialize a WebGPU render loop for a WGSL shader source.
  *
- * Subscribes `element` (when provided) to `czap:uniform-update`: each event's
+ * Subscribes `element` (when provided) to `liteship:uniform-update`: each event's
  * `detail.wgsl` (bare snake_case field → scalar/vector value, from the compositor's
  * `emit-wgsl` cast) is written into a `@group(0) @binding(0)` uniform buffer the
  * render loop binds every frame, so boundary crossings drive the live shader.
@@ -482,9 +482,9 @@ export async function initWGSLRuntime(
       // warn removed), this comment + the bound `err` are the trace, and the
       // fallback is a deliberate, non-corrupting degradation — not a vanished error.
       fetched = null;
-      Diagnostics.warnOnce({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-fetch-fallback-builtin',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.gpu',
+        code: 'astro/wgpu/wgsl-fetch-fallback-builtin',
         message:
           `WGSL shader fetch for "${shaderSrc}" threw (${String((err as { message?: string })?.message ?? err)}); ` +
           `falling back to the built-in fullscreen shader.`,
@@ -504,22 +504,22 @@ export async function initWGSLRuntime(
       // tampered SUCCESSFUL fetch must never reach the GPU, even as a fallback.
       if (!decideShaderIntegrity(verification, DEFAULT_SHADER_INTEGRITY_MODE).proceed) {
         if (verification._tag === 'mismatch') {
-          Diagnostics.error({
-            source: 'czap/astro.gpu',
-            code: 'wgsl-integrity-mismatch',
+          Diagnostics.errorRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/wgpu/wgsl-integrity-mismatch',
             message:
               `WGSL shader content integrity check FAILED for "${shaderSrc}" — the fetched bytes do not match the ` +
               `author-pinned hash (a tampered or compromised shader). Refusing to compile. ` +
               `expected sha256 ${verification.expectedHex}, got ${verification.actualHex}.`,
           });
         } else {
-          Diagnostics.error({
-            source: 'czap/astro.gpu',
-            code: 'wgsl-integrity-absent',
+          Diagnostics.errorRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/wgpu/wgsl-integrity-absent',
             message:
               `External WGSL shader "${shaderSrc}" was fetched with NO integrity hash. An unverified external ` +
               `shader cannot be loaded (secure-by-default). Refusing to compile. ` +
-              `Fix: add a data-czap-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
+              `Fix: add a data-liteship-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
           });
         }
         return null;
@@ -570,9 +570,9 @@ export async function initWGSLRuntime(
       binding.apply({});
     } catch (cause) {
       binding = null;
-      Diagnostics.warnOnce({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-uniform-bindgroup-invalid',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.gpu',
+        code: 'astro/wgpu/wgsl-uniform-bindgroup-invalid',
         message:
           `WGSL @group(0) @binding(0) is not a buffer-compatible uniform; rendering without live uniforms. ` +
           String((cause as { message?: string })?.message ?? cause),
@@ -596,7 +596,7 @@ export async function initWGSLRuntime(
   // loop already redraws every frame, so writing the buffer here is enough — the
   // next frame samples the new values (no manual re-render needed).
   const onUniformUpdate = (event: Event): void => {
-    /* v8 ignore next — `czap:uniform-update` is always dispatched via `new CustomEvent(...)`;
+    /* v8 ignore next — `liteship:uniform-update` is always dispatched via `new CustomEvent(...)`;
        the guard narrows the generic `Event` parameter for TypeScript's typed `.detail` access. */
     if (!(event instanceof CustomEvent)) return;
     const wgsl = event.detail?.wgsl as Record<string, WgslUniformValue> | undefined;
@@ -609,7 +609,7 @@ export async function initWGSLRuntime(
       if (!feedsStandard) binding?.apply(wgsl);
     }
   };
-  element?.addEventListener('czap:uniform-update', onUniformUpdate);
+  element?.addEventListener('liteship:uniform-update', onUniformUpdate);
 
   let frame = 0;
   let running = true;
@@ -651,15 +651,15 @@ export async function initWGSLRuntime(
   return () => {
     running = false;
     cancelAnimationFrame(frame);
-    element?.removeEventListener('czap:uniform-update', onUniformUpdate);
+    element?.removeEventListener('liteship:uniform-update', onUniformUpdate);
   };
 }
 
 /** Log once when WebGPU is unavailable for a WGSL directive. */
 export function warnWebGpuUnavailable(): void {
-  Diagnostics.warnOnce({
-    source: 'czap/astro.gpu',
-    code: 'webgpu-unavailable',
+  Diagnostics.warnOnceRegistered({
+    source: 'liteship/astro.gpu',
+    code: 'astro/wgpu/webgpu-unavailable',
     message: 'WebGPU is unavailable; WGSL directives cannot render in-browser.',
   });
 }

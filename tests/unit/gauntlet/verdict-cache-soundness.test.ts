@@ -39,7 +39,7 @@ import {
   type GateContext,
   type MutationFacts,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── scaffolding ──────────────────────────────────────────────────────────────
 
@@ -205,8 +205,13 @@ function mutationCtx(verdict: 'killed' | 'survived'): GateContext {
         operator: 'conditional-boundary',
         originalText: 'a < b',
         mutatedText: 'a <= b',
+        coveringTests: ['tests/fixture.test.ts'],
+        equivalentJustification: null,
+        equivalentJustificationDigest: null,
+        subsumedBy: [],
       },
     ],
+    operatorApplicability: [{ file, operator: 'conditional-boundary', applicableMutants: 1 }],
     scoreBaseline: {},
   };
   return {

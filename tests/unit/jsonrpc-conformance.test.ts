@@ -17,7 +17,7 @@ import {
   InternalError,
   errorResponse,
   successResponse,
-} from '@czap/mcp-server';
+} from '@liteship/mcp-server';
 
 describe('JSON-RPC 2.0 §4.2 — parse error', () => {
   it('classifies malformed JSON as parse-error', () => {

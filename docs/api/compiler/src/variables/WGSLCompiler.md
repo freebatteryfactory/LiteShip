@@ -29,7 +29,7 @@ WGSL struct definitions, `@group/@binding` declarations, and state constants.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 #### Parameters
 
@@ -54,10 +54,10 @@ A [WGSLCompileResult](../interfaces/WGSLCompileResult.md) with structs, bindings
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { WGSLCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { WGSLCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport',
   at: [[0, 'mobile'], [768, 'desktop']],
 });
@@ -93,7 +93,7 @@ A WGSL declaration string
 #### Example
 
 ```ts
-import { WGSLCompiler } from '@czap/compiler';
+import { WGSLCompiler } from '@liteship/compiler';
 
 const result = WGSLCompiler.compile(boundary, states);
 const wgsl = WGSLCompiler.serialize(result);
@@ -103,10 +103,10 @@ const wgsl = WGSLCompiler.serialize(result);
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { WGSLCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { WGSLCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport',
   at: [[0, 'sm'], [768, 'lg']],
 });

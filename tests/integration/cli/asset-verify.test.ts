@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 import { captureCli } from './capture.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
 
-describe('czap asset verify', () => {
+describe('liteship asset verify', () => {
   // Manifest-only + temp manifest (CUT T1): the verify runs the committed
   // generated tests but this never rewrites the shared tests/generated/ dir.
   let iso: IsolatedCapsules;
   beforeAll(async () => {
-    iso = await compileManifestOnly('czap-asset-verify');
+    iso = await compileManifestOnly('liteship-asset-verify');
   }, scaledTimeout(120_000));
   afterAll(() => iso?.restore());
 

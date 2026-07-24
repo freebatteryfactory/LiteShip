@@ -1,5 +1,5 @@
 /**
- * Astro dev-toolbar app for the czap boundary inspector.
+ * Astro dev-toolbar app for the liteship boundary inspector.
  *
  * Registered via `addDevToolbarApp` in the integration's
  * `astro:config:setup` hook. Astro mounts this module as the entrypoint
@@ -8,8 +8,8 @@
  *
  * The `init(canvas, app, server)` body runs as a normal ES module in the
  * MAIN page realm — `document`/`window` ARE the host page — so the
- * inspector's page-DOM access (`document.querySelectorAll('[data-czap-boundary]')`,
- * `czap:uniform-update` subscriptions, `czap:reinit` dispatch,
+ * inspector's page-DOM access (`document.querySelectorAll('[data-liteship-boundary]')`,
+ * `liteship:uniform-update` subscriptions, `liteship:reinit` dispatch,
  * `document.styleSheets`) all work unchanged. The `canvas` ShadowRoot is
  * a render target, not a JS sandbox. Toggling is owned by Astro
  * (`app.onToggled`); there is no custom hotkey and no custom element.

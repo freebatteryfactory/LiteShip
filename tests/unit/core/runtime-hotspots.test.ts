@@ -1,9 +1,18 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
-import { Boundary, Millis, Part, S, SpeculativeEvaluator, Style, World } from '@czap/core';
-import { evaluate as evaluateQuantizer } from '@czap/quantizer';
-import { GLSLCompiler } from '@czap/compiler';
+import {
+  Millis,
+  Part,
+  SpeculativeEvaluator,
+  Style,
+  defineBoundary,
+  defineStyle,
+  schema,
+  createWorld,
+} from '@liteship/core';
+import { evaluate as evaluateQuantizer } from '@liteship/quantizer';
+import { GLSLCompiler } from '@liteship/compiler';
 import { captureSelection, findScrollable } from '../../../packages/web/src/physical/capture.js';
 import {
   restoreActiveElement,
@@ -13,12 +22,12 @@ import {
 
 describe('runtime hotspot coverage', () => {
   test('World regular systems handle empty queries, component add/remove, and missing dense stores', () => {
-    // World is a synchronous API as of the core-seams wave: make() returns
-    // { world, lifetime }, every method returns directly, and System.execute
-    // returns void (no Effect wrapper).
-    const { world } = World.make();
-    const hpPart = { name: 'hp', schema: S.number };
-    const labelPart = { name: 'label', schema: S.string };
+    // World is a synchronous API as of the core-seams wave: make() returns a
+    // world that owns its own dispose(), every method returns directly, and
+    // System.execute returns void (no Effect wrapper).
+    const world = createWorld();
+    const hpPart = { name: 'hp', schema: schema.number };
+    const labelPart = { name: 'label', schema: schema.string };
     const presentStore = Part.dense('present', 8);
     world.addDenseStore(presentStore);
 
@@ -85,7 +94,7 @@ describe('runtime hotspot coverage', () => {
       crossed: false,
     });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'small'],
@@ -101,7 +110,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('SpeculativeEvaluator handles zero velocity, reverse movement, and confidence clamping', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'small'],
@@ -132,7 +141,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('SpeculativeEvaluator skips low-confidence speculation and ignores prefetched states identical to current', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'small'],
@@ -144,7 +153,7 @@ describe('runtime hotspot coverage', () => {
     lowConfidence.evaluate(400);
     const slowApproach = lowConfidence.evaluate(401, 0.01);
 
-    const singleState = Boundary.make({
+    const singleState = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'only']] as const,
     });
@@ -160,14 +169,14 @@ describe('runtime hotspot coverage', () => {
 
   test('Style merge/tap keeps empty layers tidy and falls back to base for unknown states', () => {
     const emptyMerge = Style.mergeLayers({ properties: {} }, { properties: {} });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'base'],
         [768, 'wide'],
       ] as const,
     });
-    const adaptiveStyle = Style.make({
+    const adaptiveStyle = defineStyle({
       boundary,
       base: {
         properties: { color: 'red' },
@@ -249,7 +258,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('GLSLCompiler normalizes unusual names and missing state maps deterministically', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'ready-go'],
@@ -269,7 +278,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('GLSLCompiler skips undefined state maps and preserves int fallback declarations', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

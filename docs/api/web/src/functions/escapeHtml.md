@@ -16,7 +16,7 @@ attribute value. `&` is replaced first so the ampersands introduced by the
 later replacements are not double-escaped.
 
 This is the text-escape primitive behind the `'text'` HTML policy; it is
-also the single owner that emitters (`@czap/mcp-server`, stage) import
+also the single owner that emitters (`@liteship/mcp-server`, stage) import
 instead of re-hand-rolling the same five `replaceAll` chain.
 
 ## Parameters

@@ -6,7 +6,7 @@
 
 # Interface: SchemaPort\<A, I\>
 
-Defined in: [core/src/schema-port.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L20)
+Defined in: [core/src/schema/schema-port.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L20)
 
 The phantom `Type`/`Encoded` pair a schema value carries: `A` is the decoded
 type, `I` the encoded (wire) type. Structurally satisfied by every effect
@@ -33,7 +33,7 @@ covariant (readonly-only positions).
 
 > `readonly` **Encoded**: `I`
 
-Defined in: [core/src/schema-port.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L22)
+Defined in: [core/src/schema/schema-port.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L22)
 
 ***
 
@@ -41,4 +41,4 @@ Defined in: [core/src/schema-port.ts:22](https://github.com/freebatteryfactory/L
 
 > `readonly` **Type**: `A`
 
-Defined in: [core/src/schema-port.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L21)
+Defined in: [core/src/schema/schema-port.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L21)

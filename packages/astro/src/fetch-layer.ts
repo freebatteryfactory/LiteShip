@@ -1,13 +1,13 @@
 /**
- * `czapFetchLayer` — request-time adaptation as a fetch LAYER in front of Astro.
+ * `liteshipFetchLayer` — request-time adaptation as a fetch LAYER in front of Astro.
  *
- * {@link czapMiddleware} runs *inside* the Astro page pipeline as a `pre`
+ * {@link liteshipMiddleware} runs *inside* the Astro page pipeline as a `pre`
  * middleware: it can only act after Astro has decided to handle the request,
  * and it always calls `next()` to continue into rendering. That makes it
  * structurally unable to serve a response *instead of* invoking Astro.
  *
  * Astro 7's advanced routing (`src/fetch.ts` + `astro/fetch`) lets a handler
- * sit in FRONT of the page pipeline. `czapFetchLayer` is a thin layer for that
+ * sit in FRONT of the page pipeline. `liteshipFetchLayer` is a thin layer for that
  * seam. It calls the **same** `createEdgeHostAdapter().resolve()` the
  * middleware does (one resolution implementation, two presentation shells — the
  * fetch layer adds NO cache code, so ADR-0017's key/identity invariants are
@@ -22,19 +22,19 @@
  * The layer is a plain `(request, next)` function: framework-agnostic, trivially
  * composed into a `Fetchable` (`src/fetch.ts`), and Hono-compatible (Astro's own
  * `astro/hono` layers use the same Request-in / Response-out shape). The
- * existing `czapMiddleware` stays the zero-config default for Astro pages; this
+ * existing `liteshipMiddleware` stays the zero-config default for Astro pages; this
  * is the opt-in front-of-pipeline path.
  *
  * @module
  */
 
-import { ClientHints, createEdgeHostAdapter } from '@czap/edge';
-import type { CompiledOutputs, EdgeHostResolution } from '@czap/edge';
-import { applyCzapHeaders } from './headers.js';
+import { ClientHints, createEdgeHostAdapter } from '@liteship/edge';
+import type { CompiledOutputs, EdgeHostResolution } from '@liteship/edge';
+import { applyLiteshipHeaders } from './headers.js';
 import { applyResponsiveMediaVary } from './responsive-media.js';
 import { consumeIntegrationToggles } from './integration-toggles.js';
-import type { CzapRuntimeToggles } from './integration-toggles.js';
-import type { CzapMiddlewareConfig } from './middleware.js';
+import type { LiteshipRuntimeToggles } from './integration-toggles.js';
+import type { LiteshipMiddlewareConfig } from './middleware.js';
 
 /**
  * The downstream handler a layer wraps — typically the Astro pipeline
@@ -43,15 +43,15 @@ import type { CzapMiddlewareConfig } from './middleware.js';
  */
 export type FetchLayerNext = (request: Request) => Response | Promise<Response>;
 
-/** The composed layer returned by {@link czapFetchLayer}. */
-export type CzapFetchLayer = (request: Request, next: FetchLayerNext) => Promise<Response>;
+/** The composed layer returned by {@link liteshipFetchLayer}. */
+export type LiteshipFetchLayer = (request: Request, next: FetchLayerNext) => Promise<Response>;
 
 /**
- * Options for {@link czapFetchLayer}. Extends {@link CzapMiddlewareConfig} so the
+ * Options for {@link liteshipFetchLayer}. Extends {@link LiteshipMiddlewareConfig} so the
  * `edge` / `detect` / `workers` surface is shared verbatim — a consumer migrates
  * from middleware to layer by swapping the factory, not relearning config.
  */
-export interface CzapFetchLayerConfig extends CzapMiddlewareConfig {
+export interface LiteshipFetchLayerConfig extends LiteshipMiddlewareConfig {
   /**
    * Edge-serve predicate. Given the request and the resolution, decide whether to
    * serve the boundary CSS straight from the edge (returning WITHOUT invoking
@@ -102,24 +102,24 @@ function defaultRender(resolution: EdgeHostResolution): Response {
 }
 
 /**
- * Re-emit `response` with the czap Client-Hints / COOP-COEP headers applied, so
+ * Re-emit `response` with the liteship Client-Hints / COOP-COEP headers applied, so
  * both the edge-serve and pass-through responses ask the browser for the hints
- * tier detection needs next navigation. Mirrors {@link czapMiddleware}'s
+ * tier detection needs next navigation. Mirrors {@link liteshipMiddleware}'s
  * response decoration; the resolution's `responseHeaders` win when present.
  *
  * `mergeResponsiveMediaVary` merges the Save-Data / DPR axis into `Vary` exactly as
- * `czapMiddleware` does — set ONLY on the pass-through (Astro HTML) path, since that is
+ * `liteshipMiddleware` does — set ONLY on the pass-through (Astro HTML) path, since that is
  * the response that can carry `responsiveMedia()` output whose srcset changes per client
  * (F-RM-3). The edge-serve path returns boundary CSS with no responsive-media output, so
  * it omits the axis and stays cache-shared across clients.
  */
-function withCzapHeaders(
+function withLiteshipHeaders(
   response: Response,
   resolution: EdgeHostResolution | null,
-  toggles: CzapRuntimeToggles,
+  toggles: LiteshipRuntimeToggles,
   mergeResponsiveMediaVary: boolean,
 ): Response {
-  const headers = applyCzapHeaders(new Headers(response.headers), {
+  const headers = applyLiteshipHeaders(new Headers(response.headers), {
     detectEnabled: toggles.detectEnabled,
     workersEnabled: toggles.workersEnabled,
     ...(toggles.coep ? { coep: toggles.coep } : {}),
@@ -135,21 +135,21 @@ function withCzapHeaders(
 }
 
 /**
- * Create the czap fetch layer.
+ * Create the liteship fetch layer.
  *
  * @example
  * ```ts
  * // src/fetch.ts (Astro 7 advanced routing) — the module's default export is a
  * // Fetchable that runs the layer in front of the Astro pipeline.
  * import { FetchState, astro } from 'astro/fetch';
- * import { czapFetchLayer } from '@czap/astro/fetch-layer';
- * import type { EdgeHostCacheConfig, KVNamespace } from '@czap/edge';
+ * import { liteshipFetchLayer } from '@liteship/astro/fetch-layer';
+ * import type { EdgeHostCacheConfig, KVNamespace } from '@liteship/edge';
  *
- * declare const env: { CZAP_BOUNDARY_CACHE: KVNamespace };
+ * declare const env: { LITESHIP_BOUNDARY_CACHE: KVNamespace };
  * declare const boundaries: EdgeHostCacheConfig['boundaries'];
  *
- * const layer = czapFetchLayer({
- *   edge: { cache: { kv: env.CZAP_BOUNDARY_CACHE, boundaries } },
+ * const layer = liteshipFetchLayer({
+ *   edge: { cache: { kv: env.LITESHIP_BOUNDARY_CACHE, boundaries } },
  *   serveFromEdge: (req) => req.headers.get('Sec-Fetch-Dest') === 'style',
  * });
  *
@@ -159,7 +159,7 @@ function withCzapHeaders(
  * // Export `handler` from src/fetch.ts.
  * ```
  */
-export function czapFetchLayer(config?: CzapFetchLayerConfig): CzapFetchLayer {
+export function liteshipFetchLayer(config?: LiteshipFetchLayerConfig): LiteshipFetchLayer {
   const edgeConfig = config?.edge;
   const edgeAdapter = edgeConfig ? createEdgeHostAdapter(edgeConfig) : null;
   const toggles = consumeIntegrationToggles(config);
@@ -172,12 +172,12 @@ export function czapFetchLayer(config?: CzapFetchLayerConfig): CzapFetchLayer {
     // Edge serve: serve the boundary CSS from the edge and skip Astro entirely. No
     // responsive-media output rides a CSS response, so it does not advertise that Vary axis.
     if (resolution && serveFromEdge?.(request, resolution)) {
-      return withCzapHeaders(render(resolution), resolution, toggles, false);
+      return withLiteshipHeaders(render(resolution), resolution, toggles, false);
     }
 
     // Pass through: run the downstream (Astro) pipeline, then decorate headers. This HTML can
     // carry `responsiveMedia()` output, so it merges the Save-Data / DPR Vary axis (F-RM-3).
     const downstream = await next(request);
-    return withCzapHeaders(downstream, resolution, toggles, true);
+    return withLiteshipHeaders(downstream, resolution, toggles, true);
   };
 }

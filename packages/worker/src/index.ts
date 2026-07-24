@@ -1,5 +1,5 @@
 /**
- * `@czap/worker` — **LiteShip** off-deck crew: compositor and render workers
+ * `@liteship/worker` — **LiteShip** off-deck crew: compositor and render workers
  * that keep the main thread trim while boundaries and media stay live.
  *
  * This package ships:
@@ -54,6 +54,6 @@ export { WorkerHost } from './host.js';
 export type { WorkerHostShape, TransferableCanvas, WorkerHostRenderConfig } from './host.js';
 
 // Off-thread motion sampler (#130) — the MINIMAL authored-motion adapter: run the ONE
-// shared `sampleProgram` kernel off-thread and post its uniforms on `czap:uniform-update`.
+// shared `sampleProgram` kernel off-thread and post its uniforms on `liteship:uniform-update`.
 export { motionSampleMessage, sampleProgramUniforms } from './motion-sample.js';
 export type { MotionSampleMessage, ProgramUniforms } from './motion-sample.js';

@@ -1,22 +1,22 @@
 /**
- * The HOST injection path (Slice B, B1) — build the repo-IR with `@czap/audit`
+ * The HOST injection path (Slice B, B1) — build the repo-IR with `@liteship/audit`
  * and run the gauntlet with it injected.
  *
  * This is the CLI-only wiring that materializes the gauntlet's `RepoIR` (the
- * heavy `ts.Program` parse lives in `@czap/audit`) and threads it into
+ * heavy `ts.Program` parse lives in `@liteship/audit`) and threads it into
  * `litelaunchGauntlet`. It is the SAME injected-capability pattern as
- * `audit-floor.ts`'s `runAuditFloor`: `@czap/command` and `@czap/mcp-server`
- * stay LEAN (their `czap check` path runs `litelaunchGauntlet` with NO IR — the
+ * `audit-floor.ts`'s `runAuditFloor`: `@liteship/command` and `@liteship/mcp-server`
+ * stay LEAN (their `liteship check` path runs `litelaunchGauntlet` with NO IR — the
  * regex gates run, and an IR-fold gate folds only when an IR is present), while
- * the CLI — which already deps `@czap/audit` — is the one adapter that can build
+ * the CLI — which already deps `@liteship/audit` — is the one adapter that can build
  * and inject the IR.
  *
  * The LiteShip `invariant-regex` ORACLE is constructed HERE (the host), not in
- * `@czap/audit`. The audit engine is downstream-installable (ADR-0012) and must
+ * `@liteship/audit`. The audit engine is downstream-installable (ADR-0012) and must
  * reference NO LiteShip-local contract — so its repo-IR builder emits only the
  * STRUCTURAL AST facts (`is-default-export` / `bare-throw`, which any TS repo has)
  * and exposes a `FactOracle` injection hook. The CLI — which legitimately deps
- * `@czap/command` — builds the LiteShip-local oracle from the canonical
+ * `@liteship/command` — builds the LiteShip-local oracle from the canonical
  * `NO_DEFAULT_EXPORT` rule and INJECTS it via `extraFactOracles`. The composed IR
  * carries BOTH oracles' facts (the triangulation substrate), but the
  * LiteShip-specific one is host-injected, keeping the boundary clean.
@@ -34,10 +34,10 @@ import {
   detectEarlyReturnBeforeExpectAST,
   codeOnlyAST,
   type FactOracle,
-} from '@czap/audit';
-import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
-import { currentEnvFingerprint } from '@czap/command/host';
-import { InvariantViolationError } from '@czap/error';
+} from '@liteship/audit';
+import { INVARIANTS, type CheckInvariantEntry } from '@liteship/command/invariants';
+import { currentEnvFingerprint } from '@liteship/command/host';
+import { InvariantViolationError } from '@liteship/error';
 import {
   buildMutationFacts,
   buildMcdcFacts,
@@ -49,7 +49,7 @@ import {
   buildSpineRelationFacts,
   type EquivalentMutantRegistry,
   type SpineRelationBuildOptions,
-} from '@czap/audit';
+} from '@liteship/audit';
 import { LITESHIP_SPINE_ADMISSIONS } from './spine-relation-policy.js';
 import { LITESHIP_EXPORT_REQUIRED_FIELDS, LITESHIP_TRANSITION_REQUIRED_FIELDS } from './active-surface-policy.js';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
@@ -87,14 +87,14 @@ import {
   type CompositionFacts,
   type ActiveSurfaceFacts,
   type SpineRelationFacts,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { buildProofFacts, buildCompositionFacts } from './local-vs-global.js';
 import { buildTraceabilityFacts } from './traceability.js';
 import { buildStandardsIntegrityFacts, type StandardsFactsOptions } from './standards-surface.js';
 import { runSimulationCorpus } from './simulation-corpus.js';
 import { gauntletToolchainDigest, makeFsVerdictCache, makeFsMutantVerdictCache } from './gauntlet-verdict-cache.js';
 import { makeVitestMutationRunner } from './mutation-runner.js';
-import { l4SeamTargets, buildSeamCoverageMap } from './mutation-targets.js';
+import { l4SeamTargets, targetCensusErrors, buildSeamCoverageMap } from './mutation-targets.js';
 import { makeFsSeamCoverageProbeCache, type SeamExecutionCoverageOptions } from './seam-execution-coverage.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
@@ -160,7 +160,7 @@ const ORACLE_RULE_BINDINGS: readonly OracleRuleBinding[] = [
 ];
 
 /**
- * Look up a canonical rule from the committed `INVARIANTS` ledger (`@czap/command`),
+ * Look up a canonical rule from the committed `INVARIANTS` ledger (`@liteship/command`),
  * never hand-copied. The host's `invariant-regex` oracle runs THIS rule's `pattern`
  * + honours THIS rule's `exclude` list, so the text-only oracle is, by
  * construction, the same check the `check-invariants` gate runs — referencing the
@@ -172,7 +172,7 @@ function canonicalRule(ruleName: string): CheckInvariantEntry {
   if (rule === undefined) {
     throw InvariantViolationError(
       'repo-ir-gauntlet',
-      `the canonical ${ruleName} invariant rule is missing from @czap/command INVARIANTS — the host invariant-regex oracle cannot reference its source of truth`,
+      `the canonical ${ruleName} invariant rule is missing from @liteship/command INVARIANTS — the host invariant-regex oracle cannot reference its source of truth`,
     );
   }
   return rule;
@@ -270,15 +270,31 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
  * text-only) — the triangulation substrate the divergence gate folds.
  */
 export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = false): RepoIR {
+  const registryPath = join(repoRoot, 'benchmarks', 'distributions.json');
+  let benchmarkDistributions: readonly unknown[] | undefined;
+  if (existsSync(registryPath)) {
+    const registry = JSON.parse(readFileSync(registryPath, 'utf8')) as {
+      schemaVersion?: unknown;
+      distributions?: unknown;
+    };
+    if (registry.schemaVersion !== 2 || !Array.isArray(registry.distributions)) {
+      throw InvariantViolationError(
+        'benchmark-subject-facts',
+        'benchmarks/distributions.json must be a schema-v2 artifact with a distributions array',
+      );
+    }
+    benchmarkDistributions = registry.distributions;
+  }
   return buildRepoIR(withRepoRoot(liteshipDevopsProfile, repoRoot), {
     extraFactOracles: [liteshipRegexOracle],
     withSymbolReferences,
+    ...(benchmarkDistributions !== undefined ? { benchmarkDistributions } : {}),
   });
 }
 
 /**
  * Run the production gauntlet over `repoRoot` WITH the repo-IR injected. Builds
- * the IR via `@czap/audit`, then hands it to `litelaunchGauntletWithIR` so every
+ * the IR via `@liteship/audit`, then hands it to `litelaunchGauntletWithIR` so every
  * gate's context carries `ir` AND the IR-fold gates run: the regex `no-bare-throw`
  * is re-expressed as the IR-fold `noBareThrowIRGate`, and the live
  * `noDefaultExportDivergenceGate` triangulates the two `is-default-export` oracles
@@ -286,7 +302,7 @@ export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = fals
  * injected wall-clock for waiver expiry (the caller owns the date — never
  * `Date.now()` in here).
  *
- * The lean path (`czap check` over MCP/command, NO IR) keeps calling
+ * The lean path (`liteship check` over MCP/command, NO IR) keeps calling
  * `litelaunchGauntlet` and runs the six regex gates IR-free — the IR-fold gates
  * appear ONLY here, the IR-present composition.
  */
@@ -298,6 +314,13 @@ export async function runGauntletWithRepoIR(
 ): Promise<GauntletResult> {
   const withSymbols = cacheOpts.withSymbolReferences === true;
   const ir = buildRepoIRForRepo(repoRoot, withSymbols);
+  const benchmarkSubjects = ir.benchmarkSubjects;
+  if (benchmarkSubjects === undefined) {
+    throw InvariantViolationError(
+      'benchmark-subject-facts',
+      'the production gauntlet requires benchmarks/distributions.json qualification evidence',
+    );
+  }
   const cache = resolveVerdictCache(repoRoot, cacheOpts);
 
   // Each avionics opt-in composes its gate onto the IR-host set + injects its facts
@@ -392,7 +415,7 @@ export async function runGauntletWithRepoIR(
 
   // The `--simulate` opt-in (the determinism spine, DST going LIVE): drive the
   // committed scenario corpus — REAL L4 trust-spine SUTs (content-address / HLC /
-  // graph-patch / boundary-evaluator) — through the seeded `@czap/core/simulation`
+  // graph-patch / boundary-evaluator) — through the seeded `@liteship/core/simulation`
   // world, replaying each seed TWICE and comparing the two byte-exact trace digests.
   // A deterministic pair CERTIFIES byte-exact reproducibility (the positive result);
   // a divergence is a REAL nondeterminism bug surfaced honestly (never fake-passed).
@@ -405,7 +428,7 @@ export async function runGauntletWithRepoIR(
   }
 
   // The `--taint` opt-in (the TAINT-ANALYSIS family): trace the source→sink dataflow
-  // in the HOST via @czap/audit's GENERIC taint oracle, classified by the
+  // in the HOST via @liteship/audit's GENERIC taint oracle, classified by the
   // LiteShip-LOCAL source/sink/sanitizer registry injected HERE (the ADR-0012 / D7b
   // boundary — the audit engine references no LiteShip source/sink name). An
   // UNSANITIZED flow (an untrusted fetch/AI-cast/runtime-URL value reaching a
@@ -466,8 +489,8 @@ export async function runGauntletWithRepoIR(
   }
 
   // The `--spine-relation` opt-in (Wave 8.5, the public constitution's STATIC-projection
-  // half): the host probes each admitted `@czap/_spine` mirror type's bidirectional
-  // assignability against its runtime source via @czap/audit's `buildSpineRelationFacts` (a
+  // half): the host probes each admitted `@liteship/_spine` mirror type's bidirectional
+  // assignability against its runtime source via @liteship/audit's `buildSpineRelationFacts` (a
   // ts.Program probe over the spine + runtime surface), classified against the LiteShip-LOCAL
   // admission table injected HERE (the ADR-0012 boundary — the audit engine names no mirror),
   // and injects the observed facts; compose `spineRelationGate`. An admitted mirror whose
@@ -495,11 +518,11 @@ export async function runGauntletWithRepoIR(
 
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
-    // The SOUND AST skip detector — ALWAYS-ON on the `--ir` path (the host deps `@czap/audit`, the
+    // The SOUND AST skip detector — ALWAYS-ON on the `--ir` path (the host deps `@liteship/audit`, the
     // `ts.createSourceFile` parse is cheap). The no-skipped-test gate uses it via
     // `(context.skipDetector ?? detectSkips)`, gaining line-agnostic multi-line/ASI/inner-describe
     // detection + the structural F2 conditionality the token scanner cannot produce — the cure that
-    // ends the token-scanner whack-a-mole. The lean `czap check`/MCP path keeps the token fallback.
+    // ends the token-scanner whack-a-mole. The lean `liteship check`/MCP path keeps the token fallback.
     skipDetector: detectSkipsAST,
     earlyReturnDetector: detectEarlyReturnBeforeExpectAST,
     // The SOUND scanner `codeOnly` floor — same always-on `--ir` injection. Code-scanning gates
@@ -507,6 +530,7 @@ export async function runGauntletWithRepoIR(
     // a real parser tokenization (regex-vs-division, nested templates) over the char-machine fallback
     // — pinned equivalent by tests/unit/audit/code-ranges.test.ts.
     codeOnly: codeOnlyAST,
+    benchmarkSubjects,
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only
@@ -564,19 +588,18 @@ const MUTATION_EQUIVALENTS = 'benchmarks/mutation-equivalents.json';
  * just the survivor surfacing).
  */
 function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): MutationFacts {
-  const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
-  // Surface a vanished/demoted seam LOUDLY (stderr) rather than silently dropping it —
-  // a candidate the live map no longer rates L4, or whose bytes vanished, is drift the
-  // owner must see (never a quiet hole in the trust-spine coverage).
-  for (const f of skippedNotL4) {
-    process.stderr.write(`czap check --mutate: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+  const targetResult = l4SeamTargets(ir, repoRoot);
+  const censusErrors = targetCensusErrors(targetResult);
+  if (censusErrors.length > 0) {
+    throw InvariantViolationError(
+      'buildRepoMutationFacts',
+      `live L4 mutation target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
+    );
   }
-  for (const f of unreadable) {
-    process.stderr.write(`czap check --mutate: seam candidate "${f}" could not be read (skipped)\n`);
-  }
+  const { targets } = targetResult;
 
   // EXECUTION-based coverage (the barrel-problem fix): each barrel-importer of a broad
-  // core seam (~220 `@czap/core` importers) is probed with a scoped v8 coverage run
+  // core seam (~220 `@liteship/core` importers) is probed with a scoped v8 coverage run
   // and kept for the seam's function-body lines ONLY when it actually executes a
   // function of the seam — pruning the barrel set to the handful that exercise it, so
   // the broad seams (hlc / dag / content-address) become tractable. The probe results
@@ -595,6 +618,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   const mutantCache = makeFsMutantVerdictCache(repoRoot);
 
   const outcomes: MutationFacts['outcomes'][number][] = [];
+  const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   for (const target of targets) {
     // One runner per seam file — it backs up / mutates / restores exactly that file.
     const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
@@ -608,6 +632,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const o of fileFacts.outcomes) outcomes.push(o);
+    for (const row of fileFacts.operatorApplicability) operatorApplicability.push(row);
   }
   // Re-sort the merged outcomes deterministically (same total order buildMutationFacts
   // uses) so the facts are byte-stable regardless of the per-file iteration.
@@ -619,7 +644,8 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       a.operator.localeCompare(b.operator) ||
       a.mutatedText.localeCompare(b.mutatedText),
   );
-  return { outcomes: sorted, scoreBaseline };
+  operatorApplicability.sort((a, b) => a.file.localeCompare(b.file) || a.operator.localeCompare(b.operator));
+  return { outcomes: sorted, operatorApplicability, scoreBaseline };
 }
 
 /**
@@ -643,14 +669,15 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
  * deterministic over the seam bytes + the runner verdicts.
  */
 function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): McdcFacts {
-  const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
-  // Surface a vanished/demoted seam LOUDLY (stderr), never a quiet hole in the coverage.
-  for (const f of skippedNotL4) {
-    process.stderr.write(`czap check --mcdc: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+  const targetResult = l4SeamTargets(ir, repoRoot);
+  const censusErrors = targetCensusErrors(targetResult);
+  if (censusErrors.length > 0) {
+    throw InvariantViolationError(
+      'buildRepoMcdcFacts',
+      `live L4 MC/DC target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
+    );
   }
-  for (const f of unreadable) {
-    process.stderr.write(`czap check --mcdc: seam candidate "${f}" could not be read (skipped)\n`);
-  }
+  const { targets } = targetResult;
 
   // The SAME execution-filtered coverage map the mutation run uses (the barrel-problem
   // fix) — a pin's covering set is the deep-importers ∪ the executing barrel-importers.
@@ -663,6 +690,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
   const mutantCache = makeFsMutantVerdictCache(repoRoot);
 
   const conditions: McdcFacts['conditions'][number][] = [];
+  const targetCensus: McdcFacts['targetCensus'][number][] = [];
   for (const target of targets) {
     // One runner per seam file — it backs up / pins / restores exactly that file.
     const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
@@ -673,6 +701,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const c of fileFacts.conditions) conditions.push(c);
+    for (const row of fileFacts.targetCensus) targetCensus.push(row);
   }
   // Re-sort the merged conditions deterministically (the same total order buildMcdcFacts
   // uses) so the facts are byte-stable regardless of the per-file iteration.
@@ -680,7 +709,8 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
     (a, b) =>
       a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.condition.localeCompare(b.condition),
   );
-  return { conditions: sorted };
+  targetCensus.sort((a, b) => a.file.localeCompare(b.file));
+  return { conditions: sorted, targetCensus };
 }
 
 /**
@@ -737,11 +767,11 @@ function toAnalyzerPkg(p: WorkspacePackageIdentity): WorkspacePkg {
 /**
  * Compute the {@link SupplyChainFacts} the avionics `supplyChainGate` folds — the
  * HOST's heavy job (ADR-0012): read pnpm-lock.yaml + the workspace manifests, then
- * run the @czap/cli analyzer (lockfile policy + SBOM completeness + CI authority
+ * run the @liteship/cli analyzer (lockfile policy + SBOM completeness + CI authority
  * scan). The lockfile bytes are read once and passed as the live address-of source.
  *
  * NO ShipCapsule is located here: the PROVENANCE family validates a release
- * artifact against the live tree, and a working-tree `czap check` run has no minted
+ * artifact against the live tree, and a working-tree `liteship check` run has no minted
  * capsule. Provenance is therefore left unevidenced — the gate surfaces that as an
  * HONEST advisory (`provenance/not-evidenced`), never a silent green (the gate's
  * own under-coverage contract). The other three families (lockfile / SBOM / CI)
@@ -775,13 +805,13 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Force a full, uncached run (the `--no-cache` path — mirrors the idempotency
    * `force` flag). When `true`, NO verdict cache is wired: every gate's `run`
-   * executes and nothing is read from or written to `.czap/cache/gauntlet`.
+   * executes and nothing is read from or written to `.liteship/cache/gauntlet`.
    */
   readonly noCache?: boolean;
   /** Cache root override (defaults to `repoRoot`) — pinned in tests. */
   readonly cacheCwd?: string;
   /**
-   * Run the heavy symbol-evidenced LanguageService oracle (B3.3 — `czap check
+   * Run the heavy symbol-evidenced LanguageService oracle (B3.3 — `liteship check
    * --ir --symbols`). It changes the IR's facts (the symbol-orphan gate's input),
    * so the verdict cache is NAMESPACED by this mode (see {@link resolveVerdictCache}):
    * a symbols-on verdict can never be served to a symbols-off run, or vice versa.
@@ -789,7 +819,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withSymbolReferences?: boolean;
   /**
    * Compose the avionics-tier `supplyChainGate` (L4) onto the run and inject the
-   * host-computed {@link SupplyChainFacts} (`czap check --ir --supply-chain`). It
+   * host-computed {@link SupplyChainFacts} (`liteship check gates --ir --supply-chain`). It
    * changes BOTH which gates run AND the injected facts, so the verdict cache is
    * NAMESPACED by this mode (see {@link resolveVerdictCache}): a supply-chain
    * verdict can never be served to a non-supply-chain run, or vice versa — exactly
@@ -798,7 +828,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withSupplyChain?: boolean;
   /**
    * Compose the avionics-tier `mutationDivergenceGate` (L4) onto the run and inject
-   * the host-computed {@link MutationFacts} (`czap check --ir --mutate`). The host
+   * the host-computed {@link MutationFacts} (`liteship check gates --ir --mutate`). The host
    * generates the deterministic mutants over the live effective-L4 seams, runs the
    * per-mutant vitest runner, and folds the verdicts. It changes BOTH which gates run
    * AND the injected facts, so the verdict cache is NAMESPACED by this mode (see
@@ -809,7 +839,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withMutate?: boolean;
   /**
    * Compose the avionics-tier `mcdcCoverageGate` (L4) onto the run and inject the
-   * host-computed {@link McdcFacts} (`czap check --ir --mcdc`). The host decomposes each
+   * host-computed {@link McdcFacts} (`liteship check gates --ir --mcdc`). The host decomposes each
    * effective-L4 decision into its atomic conditions, mints the force-true/force-false
    * pin per condition, runs each pin via the per-mutant vitest runner, and folds the two
    * pins per condition (a condition is MC/DC-covered iff BOTH pins are killed). It changes
@@ -822,8 +852,8 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the avionics-tier `simulationDeterminismGate` (L4 — the determinism
    * spine) onto the run and inject the host-computed {@link SimulationFacts}
-   * (`czap check --ir --simulate`). The host drives the committed scenario corpus
-   * (real L4 trust-spine SUTs) through the `@czap/core/simulation` seeded world,
+   * (`liteship check gates --ir --simulate`). The host drives the committed scenario corpus
+   * (real L4 trust-spine SUTs) through the `@liteship/core/simulation` seeded world,
    * replaying each seed twice and folding the byte-exact-replay verdicts. It changes
    * BOTH which gates run AND the injected facts, so the verdict cache is NAMESPACED
    * by this mode (see {@link resolveVerdictCache}): a simulation-run verdict can never
@@ -835,8 +865,8 @@ export interface RepoIRGauntletCacheOptions {
   readonly withSimulate?: boolean;
   /**
    * Compose the `taintFlowGate` (the TAINT-ANALYSIS family, L4) onto the run and
-   * inject the host-computed {@link TaintFacts} (`czap check --ir --taint`). The host
-   * traces the source→sink dataflow via @czap/audit's GENERIC taint oracle, classified
+   * inject the host-computed {@link TaintFacts} (`liteship check gates --ir --taint`). The host
+   * traces the source→sink dataflow via @liteship/audit's GENERIC taint oracle, classified
    * by the LiteShip-LOCAL `LITESHIP_TAINT_REGISTRY` injected from the CLI host (the
    * ADR-0012 / D7b boundary). It changes BOTH which gates run AND the injected facts,
    * so the verdict cache is NAMESPACED by this mode (see {@link resolveVerdictCache}):
@@ -848,7 +878,7 @@ export interface RepoIRGauntletCacheOptions {
   readonly withTaint?: boolean;
   /**
    * Compose the `capabilityGateLinkGate` (codex round-8, #1b — the capability-link dataflow proof, L4)
-   * onto the run and inject the host-computed {@link CapabilityLinkFacts} (`czap check --ir
+   * onto the run and inject the host-computed {@link CapabilityLinkFacts} (`liteship check gates --ir
    * --capability-gate`). The host resolves each sanctioned skip's guard against the canonical
    * capability symbol table (the LiteShip-LOCAL module SET + ids injected — the audit oracle names no
    * capability) and proves it DERIVES FROM its declared capability's probe; an unrelated/mislabeled
@@ -860,7 +890,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the `proofPropagationGate` (the LOCAL-VS-GLOBAL correctness family — the
    * lax-functor, L4) onto the run and inject the host-computed {@link ProofFacts}
-   * (`czap check --ir --proof`). The host reads the proof signals (mutation score /
+   * (`liteship check gates --ir --proof`). The host reads the proof signals (mutation score /
    * coverage / property tests / enrolled invariants) and blends them into a per-module
    * scalar; the gate propagates it along the dep DAG (the `min`-fixpoint) and reports
    * each trust-spine module whose global proof drops below its floor via a weak
@@ -873,7 +903,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the `compositionCoverageGate` (the LOCAL-VS-GLOBAL correctness family —
    * "locally green, globally untested interaction", L4) onto the run and inject the
-   * host-computed {@link CompositionFacts} (`czap check --ir --composition`). The host
+   * host-computed {@link CompositionFacts} (`liteship check gates --ir --composition`). The host
    * derives the interaction edges from the IR call graph (both endpoints individually
    * tested) and classifies each integration-covered/uncovered (the sound
    * static-reference proxy); the gate reports each uncovered edge at its propagated
@@ -884,8 +914,8 @@ export interface RepoIRGauntletCacheOptions {
   readonly withComposition?: boolean;
   /**
    * Compose the `spineRelationGate` (Wave 8.5, the public constitution's STATIC-projection
-   * half, L4) onto the run and inject the host-computed {@link SpineRelationFacts} (`czap
-   * check --ir --spine-relation`). The host probes each admitted `@czap/_spine` mirror type's
+   * half, L4) onto the run and inject the host-computed {@link SpineRelationFacts} (`liteship
+   * check gates --ir --spine-relation`). The host probes each admitted `@liteship/_spine` mirror type's
    * bidirectional assignability against its runtime source (a ts.Program probe over the spine
    * + runtime surface, classified against the LiteShip-LOCAL {@link LITESHIP_SPINE_ADMISSIONS}
    * injected from the CLI host — the ADR-0012 boundary); a mirror whose observed relation no
@@ -899,7 +929,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Test/CI seam for the spine-relation probe ({@link SpineRelationBuildOptions}) — the
    * in-memory `overlay` that injects a DRIFTED spine (e.g. a Millis-brand loss) without
-   * touching disk, so an integration test can prove `czap check --ir --spine-relation` BLOCKS
+   * touching disk, so an integration test can prove `liteship check gates --ir --spine-relation` BLOCKS
    * on a planted drift. Only consulted when {@link withSpineRelation} is set.
    */
   readonly spineRelation?: SpineRelationBuildOptions;
@@ -909,7 +939,7 @@ export interface RepoIRGauntletCacheOptions {
    * COMMITTED ON THE BASE REF the change is reviewed against (read from git), NOT the
    * just-committed working-tree snapshot (so a same-commit code+snapshot weakening still
    * diffs as a weakening). These seams ({@link StandardsFactsOptions}) override the base
-   * ref resolution (default: `CZAP_STANDARDS_BASE_REF` → `GITHUB_BASE_REF` → `main`) and
+   * ref resolution (default: `LITESHIP_STANDARDS_BASE_REF` → `GITHUB_BASE_REF` → `main`) and
    * the `git show` reader — injected by CI (which knows the PR base) and by hermetic
    * tests (which inject a deterministic base snapshot). FAIL-CLOSED: an unresolvable base
    * THROWS rather than fall back to the working snapshot.

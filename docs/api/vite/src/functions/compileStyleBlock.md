@@ -23,7 +23,7 @@ style-to-CSS logic.
 
 ### style
 
-[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
+[`Style`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Style.md)
 
 ## Returns
 

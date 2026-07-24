@@ -6,7 +6,7 @@
 
 # Interface: ProgramTimelineEntry
 
-Defined in: [core/src/transition-program.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L95)
+Defined in: [core/src/motion/transition-program.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L95)
 
 One entry in a lowered program timeline: a transition mapped to its `[0,1]` window.
 
@@ -16,7 +16,7 @@ One entry in a lowered program timeline: a transition mapped to its `[0,1]` wind
 
 > `readonly` `optional` **branchGuard?**: [`BranchGuard`](BranchGuard.md)
 
-Defined in: [core/src/transition-program.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L102)
+Defined in: [core/src/motion/transition-program.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L102)
 
 Present iff this entry was selected from a `choice` — the audit receipt.
 
@@ -26,7 +26,7 @@ Present iff this entry was selected from a `choice` — the audit receipt.
 
 > `readonly` **transitionId**: `ContentAddress`
 
-Defined in: [core/src/transition-program.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L96)
+Defined in: [core/src/motion/transition-program.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L96)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [core/src/transition-program.ts:96](https://github.com/freebatteryfa
 
 > `readonly` **windowEnd**: `number`
 
-Defined in: [core/src/transition-program.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L100)
+Defined in: [core/src/motion/transition-program.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L100)
 
 Global normalized window end in `[0,1]`.
 
@@ -44,6 +44,6 @@ Global normalized window end in `[0,1]`.
 
 > `readonly` **windowStart**: `number`
 
-Defined in: [core/src/transition-program.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L98)
+Defined in: [core/src/motion/transition-program.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L98)
 
 Global normalized window start in `[0,1]`.

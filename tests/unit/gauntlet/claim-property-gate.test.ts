@@ -15,7 +15,7 @@
  * (4) the use-vs-mention precision anchors hold (backtick / quote / string-literal
  * mentions never fire) AND the hard-vs-advisory cut holds (name HARD, prose advisory,
  * free-floating prose dropped, ambiguous `canonical<Noun>` not hard-flagged); and
- * (5) THE HONEST PRODUCTION COUNT — run the gate EXACTLY as `check --ir` does
+ * (5) THE HONEST PRODUCTION COUNT — run the gate EXACTLY as `check gates --ir` does
  * (production scope + the engine's L3 level-scoping): ZERO HARD findings, with the
  * genuine ADVISORY work-list surfaced and pinned (not a masked 0).
  *
@@ -32,7 +32,7 @@ import {
   nodeContext,
   scopeContextByLevel,
   LITESHIP_ASSURANCE_MAP,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { claimPropertyGate, CLAIM_PROPERTY_RULE_ID } from '../../../packages/gauntlet/src/gates/claim-property.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -155,7 +155,7 @@ describe('THE CLAIM-VS-REALITY LAW — CONTENT-ADDRESS confirmer (a round-trip i
       memoryContext({
         'packages/widget/src/canon.ts': 'export function canonicalize(x: number): number { return x; }\n',
         'tests/unit/widget/canon.test.ts':
-          "import { it } from 'vitest';\nimport { addressedDigestOf } from '@czap/canonical';\nit('canonicalize round-trips: equal value, equal address', () => { void addressedDigestOf; });\n",
+          "import { it } from 'vitest';\nimport { addressedDigestOf } from '@liteship/canonical';\nit('canonicalize round-trips: equal value, equal address', () => { void addressedDigestOf; });\n",
       }),
     );
     expect(findings).toHaveLength(0);
@@ -257,11 +257,11 @@ describe('PRECISION — the hard-vs-advisory Rice cut (name/contradiction HARD, 
   });
 });
 
-describe('THE REAL REPO — the HONEST production count (test runs the gate EXACTLY as `check --ir` does)', () => {
+describe('THE REAL REPO — the HONEST production count (test runs the gate EXACTLY as `check gates --ir` does)', () => {
   // The production scope: DEFAULT_GAUNTLET_GLOBS — published source ONLY for the JUDGED
   // surface; the confirmer corpus (the test tree) is unioned into the UNSCOPED
   // `allFiles()` by nodeContext (CONFIRMER_CORPUS_GLOBS), never into the judged `files()`.
-  // The gate is then run through the SAME level-scoping the engine applies on `check --ir`
+  // The gate is then run through the SAME level-scoping the engine applies on `check gates --ir`
   // (`scopeContextByLevel` at the gate's L3, with the committed assurance map). This is NOT
   // a narrow re-glob that masks production — it IS the exact production composition.
   const GLOBS = ['packages/*/src/**/*.ts'];
@@ -302,7 +302,7 @@ describe('THE REAL REPO — the HONEST production count (test runs the gate EXAC
     const advisory = claimPropertyGate.run(productionScoped()).filter((f) => f.severity === 'advisory');
     // The LAW (anti-fragile — survives corpus growth): every advisory claim-finding is
     // genuinely NON-BLOCKING and self-describing (a real file:line + a title), so a host can
-    // surface the whole work-list while `check --ir` stays green on all of it. The blocking
+    // surface the whole work-list while `check gates --ir` stays green on all of it. The blocking
     // floor (ZERO HARD) is the load-bearing pin in the sibling test; here we never pin the
     // exact membership (it tracks the live corpus), only that nothing in the advisory list
     // can ever block and each item is a located, nameable calibration target.

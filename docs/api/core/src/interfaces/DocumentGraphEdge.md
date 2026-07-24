@@ -6,7 +6,7 @@
 
 # Interface: DocumentGraphEdge
 
-Defined in: [core/src/document-graph.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L158)
+Defined in: [core/src/graph/document-graph.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L158)
 
 A directed edge over node content addresses. This is `PlanEdge` lifted from
 opaque step-id strings to typed node `ContentAddress`es; `EdgeType` is reused
@@ -18,7 +18,7 @@ verbatim from `plan.ts` (both endpoints stay in the fnv1a identity law).
 
 > `readonly` **from**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L159)
+Defined in: [core/src/graph/document-graph.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L159)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/document-graph.ts:159](https://github.com/freebatteryfacto
 
 > `readonly` **to**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L160)
+Defined in: [core/src/graph/document-graph.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L160)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [core/src/document-graph.ts:160](https://github.com/freebatteryfacto
 
 > `readonly` **type**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [core/src/document-graph.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L161)
+Defined in: [core/src/graph/document-graph.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L161)

@@ -14,16 +14,9 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { World } from '@czap/core';
-import {
-  SVGSystem,
-  VideoSystem,
-  TransitionSystem,
-  Track,
-  compileScene,
-  SceneRuntime,
-} from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
+import { createWorld } from '@liteship/core';
+import { SVGSystem, VideoSystem, TransitionSystem, Track, compileScene, SceneRuntime } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
 
 interface SvgAttrsRead {
   readonly _tag: 'SvgAttrs';
@@ -35,7 +28,7 @@ interface SvgAttrsRead {
 
 describe('SVGSystem', () => {
   it('composes _svgAttrs from the _opacity VideoSystem already wrote (no recompute)', () => {
-    const { world } = World.make();
+    const world = createWorld();
     world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     // VideoSystem first (writes _opacity), then SVGSystem (reads it).
     world.addSystem(VideoSystem(30));
@@ -55,7 +48,7 @@ describe('SVGSystem', () => {
   });
 
   it('out-of-range opacity (0) flows into _svgAttrs unchanged', () => {
-    const { world } = World.make();
+    const world = createWorld();
     world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(120));
     world.addSystem(SVGSystem(120));
@@ -71,7 +64,7 @@ describe('SVGSystem', () => {
     // so a single SVGSystem pass reads both _opacity and _blend. blend>=0.5
     // → 'screen', else 'normal'.
     const blendModeAt = (frameIndex: number): string | undefined => {
-      const { world } = World.make();
+      const world = createWorld();
       world.spawn({
         VideoSource: {},
         FrameRange: { from: 0, to: 100 },
@@ -93,7 +86,7 @@ describe('SVGSystem', () => {
   });
 
   it('omits mixBlendMode when no transition (_blend) is present', () => {
-    const { world } = World.make();
+    const world = createWorld();
     world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
@@ -153,7 +146,7 @@ describe('SVGSystem', () => {
       },
     );
     try {
-      const { world } = World.make();
+      const world = createWorld();
       world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
       world.addSystem(VideoSystem(30));
       world.addSystem(SVGSystem(30));

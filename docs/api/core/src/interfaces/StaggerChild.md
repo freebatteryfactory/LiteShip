@@ -6,7 +6,7 @@
 
 # Interface: StaggerChild
 
-Defined in: [core/src/stagger.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L36)
+Defined in: [core/src/motion/stagger.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L36)
 
 One staggered child boundary.
 
@@ -16,7 +16,7 @@ One staggered child boundary.
 
 > `readonly` **from**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/stagger.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L38)
+Defined in: [core/src/motion/stagger.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L38)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/stagger.ts:38](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/stagger.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L37)
+Defined in: [core/src/motion/stagger.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L37)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/stagger.ts:37](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **to**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/stagger.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L39)
+Defined in: [core/src/motion/stagger.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L39)

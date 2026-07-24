@@ -7,13 +7,13 @@
  * carves named states through the existing source-agnostic carve-path.
  *
  * WHY a main-thread `AnalyserNode` (not the AudioWorklet in
- * `@czap/web` `processor-bootstrap.ts`): the AnalyserNode path needs no SAB and
+ * `@liteship/web` `processor-bootstrap.ts`): the AnalyserNode path needs no SAB and
  * no COOP/COEP cross-origin-isolation headers, so it is fully unblocked in any
  * Astro deploy. The worklet remains the alternative when SAB headers are
  * guaranteed.
  *
  * MIRROR NOTICE: {@link analyseFrame}'s RMS + spectral-flux DETECTION FUNCTION
- * is shared with the OFFLINE reference `detectOnsets` from `@czap/assets`
+ * is shared with the OFFLINE reference `detectOnsets` from `@liteship/assets`
  * (`assets/src/analysis/onsets.ts`): RMS = `sqrt(mean(x^2))` over the frame and
  * `flux = max(0, rms - prevRms)` are identical. The THRESHOLD differs by
  * necessity — the offline reference normalizes flux against the GLOBAL peak over

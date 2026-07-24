@@ -6,12 +6,12 @@ import { scanConsumerAppSource } from '../../../packages/cli/src/lib/consumer-ap
 
 describe('consumer-app audit (#117)', () => {
   test('flags raw Request passed to resolveInitialState', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'page.astro'),
       `---
-import { resolveInitialState } from '@czap/astro';
+import { resolveInitialState } from '@liteship/astro';
 const state = resolveInitialState(context.request);
 ---`,
     );
@@ -20,11 +20,11 @@ const state = resolveInitialState(context.request);
   });
 
   test('flags unguarded innerHTML even when createHtmlFragment exists elsewhere in the file', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'safe.ts'),
-      `import { createHtmlFragment } from '@czap/web';
+      `import { createHtmlFragment } from '@liteship/web';
 export function safe(el: HTMLElement) {
   el.innerHTML = createHtmlFragment('<p/>', { policy: 'sanitized-html' });
 }`,
@@ -42,11 +42,11 @@ export function safe(el: HTMLElement) {
   });
 
   test('outer safe createHtmlFragment does not suppress inner unguarded innerHTML', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'mixed.ts'),
-      `import { createHtmlFragment } from '@czap/web';
+      `import { createHtmlFragment } from '@liteship/web';
 export function outer(el: HTMLElement) {
   el.innerHTML = createHtmlFragment('<p/>', { policy: 'sanitized-html' });
 }
@@ -61,11 +61,11 @@ export function inner(el: HTMLElement) {
   });
 
   test('multiline guarded assignment is not false-positived', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'multiline-safe.ts'),
-      `import { createHtmlFragment } from '@czap/web';
+      `import { createHtmlFragment } from '@liteship/web';
 export function safe(el: HTMLElement, x: string) {
   el.innerHTML =
     createHtmlFragment(x);
@@ -85,12 +85,12 @@ export function safe(el: HTMLElement, x: string) {
   });
 
   test('CRLF line endings do not false-positive multiline guarded innerHTML', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-consumer-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'crlf-safe.ts'),
       [
-        "import { createHtmlFragment } from '@czap/web';",
+        "import { createHtmlFragment } from '@liteship/web';",
         'export function safe(el: HTMLElement, x: string) {',
         '  el.innerHTML =',
         '    createHtmlFragment(x);',

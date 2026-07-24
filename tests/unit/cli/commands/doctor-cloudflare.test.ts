@@ -1,5 +1,5 @@
 /**
- * Unit tests for `czap doctor --target cloudflare` focused host profile.
+ * Unit tests for `liteship doctor --target cloudflare` focused host profile.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
@@ -41,7 +41,7 @@ function writeCloudflareSandbox(base: string, extra?: { wrangler?: boolean; astr
         name: 'cf-test',
         compatibility_date: '2026-06-08',
         compatibility_flags: ['nodejs_compat'],
-        kv_namespaces: [{ binding: 'CZAP_BOUNDARY_CACHE', id: 'test-id', preview_id: 'preview-id' }],
+        kv_namespaces: [{ binding: 'LITESHIP_BOUNDARY_CACHE', id: 'test-id', preview_id: 'preview-id' }],
       }),
     );
   }
@@ -57,7 +57,7 @@ export default { output: 'server', adapter: cloudflare() };`,
 
 describe('doctor --target cloudflare', () => {
   it('records target in the receipt and runs cloudflare probes only', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-'));
     try {
       writeCloudflareSandbox(tmp);
       const spawnSpy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockImplementation(async (cmd, args) => {
@@ -90,7 +90,7 @@ describe('doctor --target cloudflare', () => {
   });
 
   it('warns when wrangler config is absent', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-nowrangler-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-nowrangler-'));
     try {
       writeCloudflareSandbox(tmp, { wrangler: false });
       vi.spyOn(spawnLib, 'spawnArgvCapture').mockImplementation(async (cmd, args) => {
@@ -109,7 +109,7 @@ describe('doctor --target cloudflare', () => {
   });
 
   it('a corrupt package.json reports unreadable, not a bogus missing-dependency fail', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-corrupt-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-corrupt-'));
     try {
       writeCloudflareSandbox(tmp);
       writeFileSync(join(tmp, 'package.json'), '{ this is not json');
@@ -128,7 +128,7 @@ describe('doctor --target cloudflare', () => {
   });
 
   it('a corrupt INSTALLED manifest reports unreadable, not "not resolved"', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-corrupt-installed-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-corrupt-installed-'));
     try {
       writeCloudflareSandbox(tmp);
       writeFileSync(join(tmp, 'node_modules', 'astro', 'package.json'), '<<not json>>');
@@ -143,7 +143,7 @@ describe('doctor --target cloudflare', () => {
   });
 
   it('a corrupt installed wrangler manifest (no CLI on PATH) reports unreadable', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-corrupt-wrangler-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-corrupt-wrangler-'));
     try {
       writeCloudflareSandbox(tmp);
       writeFileSync(join(tmp, 'node_modules', 'wrangler', 'package.json'), '!!!');

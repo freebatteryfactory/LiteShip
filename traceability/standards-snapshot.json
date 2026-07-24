@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:3c6d8faa",
+  "address": "fnv1a:92a71fa1",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -76,17 +76,67 @@
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
+      "glob": "packages/core/src/authoring/{boundary,ai-cast}.ts",
       "level": "L3"
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts",
+      "glob": "packages/core/src/authoring/{plan,assembly}.ts",
       "level": "L4"
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/{receipt,hlc,plan,dag,validated-output,assembly,brands}.ts",
+      "glob": "packages/core/src/clock/clock.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/clock/hlc.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/clock/rng.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/evidence/{receipt,validated-output}.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/graph/dag.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/media/{gen-frame,token-buffer}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/motion/timeline.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/motion/{blend,animation}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/reactive/{cell-kernel,cell,derived,store,signal,live-cell}.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/reactive/{zap,speculative}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/schema/brands.ts",
       "level": "L4"
     },
     {
@@ -200,43 +250,43 @@
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/cell-kernel.ts",
+      "name": "mutation-score::packages/core/src/motion/timeline.ts",
+      "value": 0.8333,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/core/src/reactive/cell-kernel.ts",
       "value": 0.75,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/cell.ts",
+      "name": "mutation-score::packages/core/src/reactive/cell.ts",
       "value": 0.8333,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/derived.ts",
+      "name": "mutation-score::packages/core/src/reactive/derived.ts",
       "value": 0.8889,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/live-cell.ts",
+      "name": "mutation-score::packages/core/src/reactive/live-cell.ts",
       "value": 1,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/signal.ts",
+      "name": "mutation-score::packages/core/src/reactive/signal.ts",
       "value": 0.8333,
       "direction": "higher-is-stronger"
     },
     {
       "_tag": "floor",
-      "name": "mutation-score::packages/core/src/store.ts",
-      "value": 0.8333,
-      "direction": "higher-is-stronger"
-    },
-    {
-      "_tag": "floor",
-      "name": "mutation-score::packages/core/src/timeline.ts",
+      "name": "mutation-score::packages/core/src/reactive/store.ts",
       "value": 0.8333,
       "direction": "higher-is-stronger"
     },
@@ -299,6 +349,51 @@
       "ruleId": "gauntlet/traceability",
       "set": "HOST_GATES",
       "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-negative-control",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-registry-complete",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-waiver-freshness",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/facade-export-budget",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1
@@ -368,6 +463,15 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/no-unregistered-todo",
+      "set": "LITESHIP_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/active-modeled-surface-reader",
       "set": "LITESHIP_IR_GATES",
       "level": "L2",
@@ -389,6 +493,15 @@
       "ruleId": "gauntlet/crdt-laws-pinned",
       "set": "LITESHIP_IR_GATES",
       "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/diagnostic-code-registered",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1
@@ -512,6 +625,24 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-ADAPTIVE-CSS-BYTE-EQUAL",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ADAPTIVE-LOWERING-PURE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ADAPTIVE-TRACE-EQUAL",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-ASSURANCE-PROPAGATION-DETERMINISTIC",
       "level": "L4",
       "proofKind": "proof"
@@ -524,8 +655,26 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-BRAND-RESIDUE-ZERO",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-CHECK-NEGATIVE-CONTROL",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-COMPOSITOR-ZERO-ALLOC",
       "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "level": "L4",
       "proofKind": "proof"
     },
     {
@@ -542,6 +691,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-DIAGNOSTIC-CODE-CLOSED",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-DST-NO-AMBIENT-ENTROPY",
       "level": "L4",
       "proofKind": "proof"
@@ -549,6 +704,12 @@
     {
       "_tag": "invariant",
       "id": "INV-DST-TRACE-CONTENT-ADDRESSED",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-FACADE-EXPORT-BUDGET",
       "level": "L4",
       "proofKind": "proof"
     },
@@ -626,6 +787,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-ROSTER-SINGLE-SOURCE",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-SHADER-CONTENT-INTEGRITY",
       "level": "L4",
       "proofKind": "proof"
@@ -644,6 +811,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-TAINT-SOURCE-SINK",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-TOKEN-BUFFER-ZERO-ALLOC",
       "level": "L3",
       "proofKind": "proof"
@@ -651,6 +824,12 @@
     {
       "_tag": "invariant",
       "id": "INV-TOOLCHAIN-DIGEST-INVALIDATES",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-TRANSITION-FACTS-DETERMINISTIC",
       "level": "L4",
       "proofKind": "proof"
     },
@@ -717,7 +896,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/smoke/intro-render.test.ts",
-      "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       "capability": "ffmpeg-absent"
     },
     {
@@ -759,7 +938,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/core/wasm-parity.test.ts",
-      "site": "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "site": "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
       "capability": "wasm-absent"
     },
     {
@@ -771,7 +950,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/core/wasm-shipping.test.ts",
-      "site": "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
+      "site": "it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm via the module graph', () => {",
       "capability": "wasm-dist-staged"
     },
     {
@@ -824,44 +1003,20 @@
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|60",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock/clock.ts|60",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|77",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock/clock.ts|77",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/rng.ts|39",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock/rng.ts|39",
       "ruleId": "gauntlet/no-nondeterminism",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|250",
-      "ruleId": "gauntlet/no-silent-catch",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/ship.ts|131",
-      "ruleId": "gauntlet/no-silent-catch",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|46",
-      "ruleId": "gauntlet/no-silent-catch",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/web/src/stream/resumption-pure.ts|29",
-      "ruleId": "gauntlet/no-silent-catch",
       "expiry": "2027-06-20"
     }
   ]

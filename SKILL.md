@@ -45,14 +45,17 @@ defers the cure is laundering — never offer "defer" as the recommended path. C
 when a newly-tightened contract exposes a flake, it **surfaced a real one** — sweep the
 whole affected surface locally, don't loosen the contract.
 
-### 4. Identity is a sha256 content-address, never a weak hash
+### 4. Definition labels and integrity witnesses are different laws
 
-Anything security- or cache-key-bearing keys on the canonical digest. `fnv1a` is fine
-for internal maps and dirty-tracking; it is a silent-stale / cache-poisoning vector the
-moment it becomes a wire validator or a cache key over attacker-influenced input. A
-content-address self-invalidates on payload change — that is a feature for cache keys and
-a bug for _stable_ names (marker names, logical keys derive from a stable key, not a
-content-address). Digests that gate a 304 must exclude mutable `meta`, or the 304 lies.
+`ContentAddress` is LiteShip's existing non-adversarial definition label: FNV-1a over
+canonical CBOR, used for local equality, memoization, drift detection, and compact
+provenance. It is deterministic, not cryptographic. `IntegrityDigest` (or the paired
+`AddressedDigest`) is mandatory when bytes cross a trust boundary: external artifacts,
+attacker-influenced caches, wire validation, security decisions, and release evidence.
+FNV alone must never authorize or validate hostile input. A content-derived label
+self-invalidates on payload change — that is a feature for definition caches and a bug
+for _stable_ names (marker names and logical keys derive from a stable key). Digests
+that gate a 304 must exclude mutable `meta`, or the 304 lies.
 
 ### 5. Clock substrate law
 
@@ -170,9 +173,9 @@ completeness obligation as high as it will go before it becomes a gauntlet fact:
 _unrepresentable_ (a node family you can't add to the union without its interpreter case;
 a signal typed `discrete | continuous` so a continuous value cannot type-pass into a
 replay path — which makes the old-brain "widen the SSE replay payload" fix _uncompilable_),
-then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchCzapEvent(name,
+then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchLiteshipEvent(name,
 detail)` over a source-derived event union, so a fabricated event name like
-`czap:stream-reconnecting` is a compile error, not a shipped bug), and only then
+`liteship:stream-reconnecting` is a compile error, not a shipped bug), and only then
 _unmergeable_ (#132 reachability, for the cross-module cases types can't see). **Generate**
 docs and wire-contracts from the typed source so drift is impossible by construction —
 never a prose mirror to police. Keep the types load-bearing and readable: a type-level

@@ -12,7 +12,7 @@ Morph rejection when preserve constraints are violated.
 
 ## Extended by
 
-- [`CzapMorphRejectedDetail`](CzapMorphRejectedDetail.md)
+- [`LiteshipMorphRejectedDetail`](LiteshipMorphRejectedDetail.md)
 
 ## Properties
 

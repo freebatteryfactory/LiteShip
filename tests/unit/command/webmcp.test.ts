@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { registerWebMcpTools, createBrowserCommandContext, browserSafeCommandNames } from '@czap/command/host-browser';
+import { registerWebMcpTools, createBrowserCommandContext, browserSafeCommandNames } from '@liteship/command/host-browser';
 
 describe('WebMCP projection', () => {
   it('browserSafeCommandNames lists capsule + glossary tools', () => {

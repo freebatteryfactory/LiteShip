@@ -19,7 +19,7 @@
  *    the WHY, on one wire string the editor renders).
  *  - `level` (L0..L4) → `Diagnostic.data.level` (the assurance level surfaced to
  *    the dev + round-tripped to the code-action layer).
- *  - `source` = the fixed `'czap-gauntlet'` provenance.
+ *  - `source` = the fixed `'liteship-gauntlet'` provenance.
  *
  * A finding with NO `location` cannot be a textDocument diagnostic (a Diagnostic
  * is always anchored to a document range). {@link projectFinding} returns `null`
@@ -39,7 +39,7 @@ import {
 } from './types.js';
 
 /** The fixed provenance every gauntlet diagnostic carries (§Diagnostic.source). */
-export const DIAGNOSTIC_SOURCE = 'czap-gauntlet' as const;
+export const DIAGNOSTIC_SOURCE = 'liteship-gauntlet' as const;
 
 /**
  * LSP has no "to end of line" position in a single number, so a whole-line range

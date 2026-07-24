@@ -21,7 +21,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
 
 // ---------- JSON-RPC 2.0 types (wire-shape) ----------
 
@@ -145,15 +145,15 @@ export const successResponse = _successResponse;
 // over the kernel AST) to sample inputs and strict-`decode`s `fc.anything()`
 // values against them, so we only need enough shape for it to filter the
 // property test.
-const JsonRpcInputSchema = S.string;
-const ParseOutcomeKindSchema = S.union(
-  S.literal('request'),
-  S.literal('notification'),
-  S.literal('batch'),
-  S.literal('parse-error'),
-  S.literal('invalid-request'),
+const JsonRpcInputSchema = schema.string;
+const ParseOutcomeKindSchema = schema.union(
+  schema.literal('request'),
+  schema.literal('notification'),
+  schema.literal('batch'),
+  schema.literal('parse-error'),
+  schema.literal('invalid-request'),
 );
-const ParseOutcomeSchema = S.struct({ kind: ParseOutcomeKindSchema });
+const ParseOutcomeSchema = schema.struct({ kind: ParseOutcomeKindSchema });
 
 /**
  * Capsule definition for the kernel — placed in the catalog under the

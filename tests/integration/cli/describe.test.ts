@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 
 const ASSEMBLY_KINDS = [
   'pureTransform', 'receiptedMutation', 'stateMachine',
@@ -27,7 +27,7 @@ function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; st
     });
 }
 
-describe('czap describe', () => {
+describe('liteship describe', () => {
   it('emits JSON schema with assemblyKinds + commands', async () => {
     const { exit, stdout } = await capture(() => run(['describe']));
     expect(exit).toBe(0);

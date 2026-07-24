@@ -8,7 +8,7 @@
 
 > **Millis**: (`value`) => `Millis`
 
-Defined in: [core/src/brands.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L60)
+Defined in: [core/src/schema/brands.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L60)
 
 Wrap a plain number as a Millis.
 

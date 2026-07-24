@@ -8,7 +8,7 @@
 
 > `const` **spineRelationGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/spine-relation.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/spine-relation.ts#L207)
+Defined in: [gauntlet/src/gates/spine-relation.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/spine-relation.ts#L211)
 
 The two-axis spine-relation gate — each admitted mirror type whose OBSERVED relation
 no longer satisfies its ADMITTED (frozen) relation becomes a self-explaining Finding

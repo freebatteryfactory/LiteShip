@@ -27,7 +27,7 @@ if (typeof globalThis.Element === 'undefined') {
 }
 
 import { describe, test, expect } from 'vitest';
-import { SemanticId, Hints, Morph, MorphOpaque } from '@czap/web';
+import { SemanticId, Hints, Morph, MorphOpaque } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // Minimal DOM Mocks
@@ -77,14 +77,14 @@ function mockElement(
 // ===========================================================================
 
 describe('SemanticId.ATTR', () => {
-  test('is the data-czap-id attribute name', () => {
-    expect(SemanticId.ATTR).toBe('data-czap-id');
+  test('is the data-liteship-id attribute name', () => {
+    expect(SemanticId.ATTR).toBe('data-liteship-id');
   });
 });
 
 describe('MorphOpaque', () => {
-  test('ATTR is the data-czap-morph-opaque marker', () => {
-    expect(MorphOpaque.ATTR).toBe('data-czap-morph-opaque');
+  test('ATTR is the data-liteship-morph-opaque marker', () => {
+    expect(MorphOpaque.ATTR).toBe('data-liteship-morph-opaque');
   });
 
   test('isOpaque recognizes marked elements only', () => {
@@ -109,7 +109,7 @@ describe('SemanticId.get and set', () => {
   });
 
   test('get returns the semantic ID when set via attribute', () => {
-    const el = mockElement({ attrs: { 'data-czap-id': 'hero' } });
+    const el = mockElement({ attrs: { 'data-liteship-id': 'hero' } });
     expect(SemanticId.get(el)).toBe('hero');
   });
 
@@ -126,14 +126,14 @@ describe('SemanticId.get and set', () => {
 
 describe('SemanticId.matches', () => {
   test('two elements with same semantic ID match', () => {
-    const a = mockElement({ attrs: { 'data-czap-id': 'nav' } });
-    const b = mockElement({ attrs: { 'data-czap-id': 'nav' } });
+    const a = mockElement({ attrs: { 'data-liteship-id': 'nav' } });
+    const b = mockElement({ attrs: { 'data-liteship-id': 'nav' } });
     expect(SemanticId.matches(a, b)).toBe(true);
   });
 
   test('two elements with different semantic IDs do not match', () => {
-    const a = mockElement({ attrs: { 'data-czap-id': 'nav' } });
-    const b = mockElement({ attrs: { 'data-czap-id': 'footer' } });
+    const a = mockElement({ attrs: { 'data-liteship-id': 'nav' } });
+    const b = mockElement({ attrs: { 'data-liteship-id': 'footer' } });
     expect(SemanticId.matches(a, b)).toBe(false);
   });
 
@@ -144,7 +144,7 @@ describe('SemanticId.matches', () => {
   });
 
   test('one with and one without semantic ID do not match', () => {
-    const a = mockElement({ attrs: { 'data-czap-id': 'hero' } });
+    const a = mockElement({ attrs: { 'data-liteship-id': 'hero' } });
     const b = mockElement();
     expect(SemanticId.matches(a, b)).toBe(false);
   });
@@ -192,8 +192,8 @@ describe('SemanticId.generate', () => {
 
 describe('SemanticId.matchNodes', () => {
   test('semantic ID match returns priority "semantic"', () => {
-    const a = mockElement({ attrs: { 'data-czap-id': 'hero' } });
-    const b = mockElement({ attrs: { 'data-czap-id': 'hero' } });
+    const a = mockElement({ attrs: { 'data-liteship-id': 'hero' } });
+    const b = mockElement({ attrs: { 'data-liteship-id': 'hero' } });
     const result = SemanticId.matchNodes(a, b);
     expect(result.matches).toBe(true);
     expect(result.priority).toBe('semantic');
@@ -201,8 +201,8 @@ describe('SemanticId.matchNodes', () => {
   });
 
   test('different semantic IDs -> no match', () => {
-    const a = mockElement({ attrs: { 'data-czap-id': 'hero' } });
-    const b = mockElement({ attrs: { 'data-czap-id': 'footer' } });
+    const a = mockElement({ attrs: { 'data-liteship-id': 'hero' } });
+    const b = mockElement({ attrs: { 'data-liteship-id': 'footer' } });
     const result = SemanticId.matchNodes(a, b);
     expect(result.matches).toBe(false);
     expect(result.priority).toBe('none');
@@ -264,9 +264,9 @@ describe('SemanticId.findBestMatch', () => {
   });
 
   test('prefers semantic match over structural', () => {
-    const target = mockElement({ tagName: 'div', attrs: { 'data-czap-id': 'hero' } });
+    const target = mockElement({ tagName: 'div', attrs: { 'data-liteship-id': 'hero' } });
     const structural = mockElement({ tagName: 'div' });
-    const semantic = mockElement({ tagName: 'div', attrs: { 'data-czap-id': 'hero' } });
+    const semantic = mockElement({ tagName: 'div', attrs: { 'data-liteship-id': 'hero' } });
     const result = SemanticId.findBestMatch(target, [structural, semantic]);
     expect(result).not.toBeNull();
     expect(result!.result.priority).toBe('semantic');
@@ -290,8 +290,8 @@ describe('SemanticId.findBestMatch', () => {
   });
 
   test('keeps the higher-priority best match when later candidates are lower priority', () => {
-    const target = mockElement({ tagName: 'div', attrs: { 'data-czap-id': 'hero' } });
-    const semantic = mockElement({ tagName: 'div', attrs: { 'data-czap-id': 'hero' } });
+    const target = mockElement({ tagName: 'div', attrs: { 'data-liteship-id': 'hero' } });
+    const semantic = mockElement({ tagName: 'div', attrs: { 'data-liteship-id': 'hero' } });
     const structural = mockElement({ tagName: 'div' });
     const result = SemanticId.findBestMatch(target, [semantic, structural]);
     expect(result?.element).toBe(semantic);
@@ -299,8 +299,8 @@ describe('SemanticId.findBestMatch', () => {
   });
 
   test('returns null when no candidates match', () => {
-    const target = mockElement({ tagName: 'div', attrs: { 'data-czap-id': 'hero' } });
-    const nonMatch = mockElement({ tagName: 'div', attrs: { 'data-czap-id': 'footer' } });
+    const target = mockElement({ tagName: 'div', attrs: { 'data-liteship-id': 'hero' } });
+    const nonMatch = mockElement({ tagName: 'div', attrs: { 'data-liteship-id': 'footer' } });
     const result = SemanticId.findBestMatch(target, [nonMatch]);
     expect(result).toBeNull();
   });

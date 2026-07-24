@@ -16,7 +16,7 @@
 
 import { lookup as dnsLookup } from 'node:dns/promises';
 import { Agent, type Dispatcher } from 'undici';
-import { ClientHints, CrossOriginIsolation } from '@czap/edge';
+import { ClientHints, CrossOriginIsolation } from '@liteship/edge';
 import type { DoctorCheck } from './types.js';
 
 const MAX_REDIRECT_HOPS = 5;
@@ -241,10 +241,10 @@ function policyToken(value: string): string {
 }
 
 /**
- * Advisory check that a deployed list-header CONTAINS every token czap requests.
+ * Advisory check that a deployed list-header CONTAINS every token liteship requests.
  * `ok` only when the full expected set is present; `warn` (never `fail`) when the
  * header is absent or missing any required token. The expected set is DERIVED from
- * the passed czap header value (e.g. `ClientHints.acceptCHHeader()`), never a
+ * the passed liteship header value (e.g. `ClientHints.acceptCHHeader()`), never a
  * hand-kept copy — so it tracks the framework automatically (Law 6).
  */
 function listHeaderCoverageCheck(args: {
@@ -281,7 +281,7 @@ const refusedCheck = (detail: string): readonly DoctorCheck[] => [
     label: 'Deployed site fetch',
     status: 'fail',
     detail,
-    hint: 'Pass a public HTTPS URL to `czap doctor --deployed <url>`',
+    hint: 'Pass a public HTTPS URL to `liteship doctor --deployed <url>`',
   },
 ];
 
@@ -361,7 +361,7 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
   // COOP/COEP must carry the ACTUAL isolating token, not merely be present:
   // `unsafe-none` sets the header but does NOT establish cross-origin isolation, so
   // `SharedArrayBuffer` (client:worker) stays unavailable. The accepted values are
-  // DERIVED from `@czap/edge`'s `CrossOriginIsolation` (the same source `@czap/astro`
+  // DERIVED from `@liteship/edge`'s `CrossOriginIsolation` (the same source `@liteship/astro`
   // emits from), never hand-listed here (Law 6). Advisory — `warn`, never `fail`.
   const isolationExpectations: ReadonlyArray<{
     readonly name: string;
@@ -392,13 +392,13 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
           : isolates
             ? value
             : `"${value}" does not establish cross-origin isolation — ${needs}`,
-      hint: 'Enable workers in czap integration or set COOP/COEP on your host middleware',
+      hint: 'Enable workers in liteship integration or set COOP/COEP on your host middleware',
     });
   }
 
-  // Accept-CH / Critical-CH / Vary must CONTAIN czap's requested Client-Hint set —
+  // Accept-CH / Critical-CH / Vary must CONTAIN liteship's requested Client-Hint set —
   // any single junk hint used to pass. The expected token sets are DERIVED from
-  // `@czap/edge`'s `ClientHints` (the source `@czap/astro`/`@czap/edge` request the
+  // `@liteship/edge`'s `ClientHints` (the source `@liteship/astro`/`@liteship/edge` request the
   // hints from), tokenized + compared case-insensitively (Law 6). Advisory.
   checks.push(
     listHeaderCoverageCheck({
@@ -418,7 +418,7 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
       expected: ClientHints.criticalCHHeader(),
       missingDetail: 'missing — Sec-CH-Viewport-Width may be absent before first render',
       unit: 'hint(s)',
-      hint: 'Use czapMiddleware or cloudflareMiddleware so Client Hints are requested',
+      hint: 'Use liteshipMiddleware or cloudflareMiddleware so Client Hints are requested',
     }),
   );
   checks.push(
@@ -429,7 +429,7 @@ export async function probeDeployedSite(url: string): Promise<readonly DoctorChe
       expected: ClientHints.varyCHHeader(),
       missingDetail: 'missing — CDN may serve wrong-tier HTML (#122)',
       unit: 'Client-Hint axis(es)',
-      hint: 'czap detect middleware emits Vary on Client Hint inputs',
+      hint: 'liteship detect middleware emits Vary on Client Hint inputs',
     }),
   );
 

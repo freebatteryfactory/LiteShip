@@ -16,8 +16,8 @@ Optional graph-mutation substrate for `refreshBase`/`adopt` during recovery.
 
 ### refreshBase?
 
-> `readonly` `optional` **refreshBase?**: () => `Promise`\<[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)\>
+> `readonly` `optional` **refreshBase?**: () => `Promise`\<[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)\>
 
 #### Returns
 
-`Promise`\<[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)\>
+`Promise`\<[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)\>

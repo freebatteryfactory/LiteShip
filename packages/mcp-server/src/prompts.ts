@@ -16,9 +16,9 @@
  *
  * @module
  */
-import { COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
-import type { CapsuleCommandDescriptor } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { COMMAND_CATALOG, mcpExposedDescriptors } from '@liteship/command';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 
 /** An MCP prompt argument descriptor. */
 export interface McpPromptArgument {
@@ -114,7 +114,7 @@ function useTool(args: Readonly<Record<string, unknown>>): GetPromptResult {
     throw ValidationError(
       'liteship.tool.use',
       cliOwned
-        ? `"${tool}" is not callable over MCP — it is CLI-owned. Run it as \`czap ${tool}\`; MCP-callable tools are listed by tools/list.`
+        ? `"${tool}" is not callable over MCP — it is CLI-owned. Run it as \`liteship ${tool}\`; MCP-callable tools are listed by tools/list.`
         : `"${tool}" is not callable over MCP and is not in the command catalog. MCP-callable tools are listed by tools/list.`,
     );
   }

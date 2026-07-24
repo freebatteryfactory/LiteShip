@@ -8,17 +8,18 @@
 
 > `const` **Zap**: `object`
 
-Defined in: [core/src/zap.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/zap.ts#L233)
+Defined in: [core/src/reactive/zap.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/zap.ts#L233)
 
 Zap — push-based event channel over [CellKernel.fanout](CellKernel.md#fanout). No-replay
 fan-out with `map`, `filter`, `merge`, `debounce`, and `throttle`
-combinators; every factory returns a `{ zap, lifetime }` handle.
+combinators; every factory returns the channel augmented with its own
+`dispose()` ([AsyncOwnedResource](../interfaces/AsyncOwnedResource.md)).
 
 ## Type Declaration
 
 ### debounce
 
-> **debounce**: \<`T`\>(`event`, `ms`) => `ZapHandle`\<`T`\> = `_debounce`
+> **debounce**: \<`T`\>(`event`, `ms`) => `OwnedZap`\<`T`\> = `_debounce`
 
 Debounces a Zap, only emitting after `ms` milliseconds of silence.
 
@@ -44,18 +45,18 @@ timer that fires after dispose does not publish.
 
 #### Returns
 
-`ZapHandle`\<`T`\>
+`OwnedZap`\<`T`\>
 
 #### Example
 
 ```ts
-const { zap: debounced } = Zap.debounce(input.zap, Millis(300));
+const debounced = Zap.debounce(input, Millis(300));
 // debounced.stream emits only after a 300ms pause in input
 ```
 
 ### filter
 
-> **filter**: \<`T`\>(`event`, `predicate`) => `ZapHandle`\<`T`\> = `_filter`
+> **filter**: \<`T`\>(`event`, `predicate`) => `OwnedZap`\<`T`\> = `_filter`
 
 Filters a Zap, only forwarding values that satisfy the predicate.
 
@@ -77,18 +78,18 @@ Filters a Zap, only forwarding values that satisfy the predicate.
 
 #### Returns
 
-`ZapHandle`\<`T`\>
+`OwnedZap`\<`T`\>
 
 #### Example
 
 ```ts
-const { zap: evens } = Zap.filter(nums.zap, (n) => n % 2 === 0);
+const evens = Zap.filter(nums, (n) => n % 2 === 0);
 // evens.stream only receives even numbers
 ```
 
 ### fromDOMEvent
 
-> **fromDOMEvent**: \<`K`\>(`element`, `event`) => `ZapHandle`\<`HTMLElementEventMap`\[`K`\]\> = `_fromDOMEvent`
+> **fromDOMEvent**: \<`K`\>(`element`, `event`) => `OwnedZap`\<`HTMLElementEventMap`\[`K`\]\> = `_fromDOMEvent`
 
 Creates a Zap from a DOM event; the listener is owned by the returned
 [Lifetime](Lifetime.md) and removed on dispose.
@@ -111,19 +112,19 @@ Creates a Zap from a DOM event; the listener is owned by the returned
 
 #### Returns
 
-`ZapHandle`\<`HTMLElementEventMap`\[`K`\]\>
+`OwnedZap`\<`HTMLElementEventMap`\[`K`\]\>
 
 #### Example
 
 ```ts
 const btn = document.getElementById('btn')!;
-const { zap, lifetime } = Zap.fromDOMEvent(btn, 'click');
-// zap.stream emits MouseEvents; await lifetime.dispose() removes the listener
+const clicks = Zap.fromDOMEvent(btn, 'click');
+// clicks.stream emits MouseEvents; await clicks.dispose() removes the listener
 ```
 
 ### make
 
-> **make**: \<`T`\>() => `ZapHandle`\<`T`\> = `_make`
+> **make**: \<`T`\>() => `OwnedZap`\<`T`\> = `_make`
 
 Creates a new push-based event channel backed by a no-replay fan-out.
 
@@ -135,19 +136,20 @@ Creates a new push-based event channel backed by a no-replay fan-out.
 
 #### Returns
 
-`ZapHandle`\<`T`\>
+`OwnedZap`\<`T`\>
 
 #### Example
 
 ```ts
-const { zap } = Zap.make<number>();
+const zap = Zap.make<number>();
 zap.stream.subscribe((n) => received.push(n));
 zap.emit(42); // subscribers receive 42
+await zap.dispose();
 ```
 
 ### map
 
-> **map**: \<`A`, `B`\>(`event`, `f`) => `ZapHandle`\<`B`\> = `_map`
+> **map**: \<`A`, `B`\>(`event`, `f`) => `OwnedZap`\<`B`\> = `_map`
 
 Transforms each value emitted by a Zap through a mapping function.
 
@@ -173,18 +175,18 @@ Transforms each value emitted by a Zap through a mapping function.
 
 #### Returns
 
-`ZapHandle`\<`B`\>
+`OwnedZap`\<`B`\>
 
 #### Example
 
 ```ts
-const { zap: strs } = Zap.map(nums.zap, (n) => `value: ${n}`);
+const strs = Zap.map(nums, (n) => `value: ${n}`);
 // strs.stream emits transformed strings
 ```
 
 ### merge
 
-> **merge**: \<`T`\>(`events`) => `ZapHandle`\<`T`\> = `_merge`
+> **merge**: \<`T`\>(`events`) => `OwnedZap`\<`T`\> = `_merge`
 
 Merges multiple Zaps of the same type into a single Zap.
 
@@ -202,18 +204,18 @@ readonly `ZapShape`\<`T`\>[]
 
 #### Returns
 
-`ZapHandle`\<`T`\>
+`OwnedZap`\<`T`\>
 
 #### Example
 
 ```ts
-const { zap: merged } = Zap.merge([a.zap, b.zap]);
+const merged = Zap.merge([a, b]);
 // merged.stream receives events from both a and b
 ```
 
 ### throttle
 
-> **throttle**: \<`T`\>(`event`, `ms`, `clock`) => `ZapHandle`\<`T`\> = `_throttle`
+> **throttle**: \<`T`\>(`event`, `ms`, `clock`) => `OwnedZap`\<`T`\> = `_throttle`
 
 Throttles a Zap, allowing at most one emission per `ms` milliseconds. The
 window is measured through the injected [Clock](../interfaces/Clock.md) (defaulting to
@@ -242,20 +244,22 @@ is replayable without an ambient time read.
 
 #### Returns
 
-`ZapHandle`\<`T`\>
+`OwnedZap`\<`T`\>
 
 #### Example
 
 ```ts
-const { zap: throttled } = Zap.throttle(scroll.zap, Millis(16));
+const throttled = Zap.throttle(scroll, Millis(16));
 // throttled.stream emits at most once every 16ms (~60fps)
 ```
 
 ## Example
 
 ```ts
-const { zap } = Zap.make<number>();
-const { zap: doubled } = Zap.map(zap, (n) => n * 2);
+const zap = Zap.make<number>();
+const doubled = Zap.map(zap, (n) => n * 2);
 doubled.stream.subscribe((n) => received.push(n));
 zap.emit(5); // doubled subscribers receive 10
+await doubled.dispose();
+await zap.dispose();
 ```

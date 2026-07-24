@@ -4,13 +4,13 @@
  * carries an `Envelope` component (compiled from a track's
  * `envelope: fade.in(Beat(1))` declaration), the in-range opacity is
  * multiplied by the envelope factor — so fades ramp 0→1 / 1→0 and
- * pulses overdrive past 1. Runs once per tick; in production wraps a
- * dense Opacity store for zero-alloc iteration.
+ * pulses overdrive past 1. Runs once per tick over the world's dense entity
+ * query and writes the resulting opacity back through the shared ECS seam.
  *
  * @module
  */
 
-import type { System, World } from '@czap/core';
+import type { System, World } from '@liteship/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
 
@@ -19,7 +19,7 @@ export function VideoSystem(frameIndex: number): System {
   return {
     name: 'VideoSystem',
     query: ['VideoSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         const range = e.components.get('FrameRange') as { from: number; to: number };
         const inRange = frameIndex >= range.from && frameIndex < range.to;

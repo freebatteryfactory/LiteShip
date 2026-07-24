@@ -31,7 +31,7 @@ import {
   type GateContext,
   type FuzzCorpusFacts,
   type DecoderFuzzFact,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import { scaledTimeout } from '../../vitest.shared.js';
 import {
   DECODER_SUTS,

@@ -8,7 +8,7 @@
 
 > `const` **Animation**: `object`
 
-Defined in: [core/src/animation.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts#L126)
+Defined in: [core/src/motion/animation.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts#L126)
 
 Animation — rAF-driven value interpolation exposed as an `AsyncIterable`.
 Pairs a duration and easing with either primitive lerping or the generic

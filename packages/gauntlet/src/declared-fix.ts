@@ -39,7 +39,7 @@
  * LEAN BY CONSTRUCTION (ADR-0012): like {@link StandardsIntegrityFacts}, this module
  * defines ONLY the lean DATA + the PURE verifier. It carries NO heavy dependency —
  * it never reads the filesystem, never content-addresses (the `contentAddressOf`
- * kernel lives in `@czap/core`; the HOST mints the receipts), and never reads a clock
+ * kernel lives in `@liteship/core`; the HOST mints the receipts), and never reads a clock
  * (the HOST injects `now` for the sign-off-expiry check). The host measures the
  * actual change + mints the receipts + supplies the before/after standards surfaces;
  * the verifier just decides.
@@ -50,8 +50,8 @@
  * @module
  */
 
-import type { StandardsElement, StandardsWaiver } from './standards-facts.js';
-import { diffStandardsSurface, applyStandardsWaivers } from './standards-facts.js';
+import type { StandardsElement, StandardsWaiver } from './facts/standards-facts.js';
+import { diffStandardsSurface, applyStandardsWaivers } from './facts/standards-facts.js';
 
 // ─────────────────────────────── the receipt ────────────────────────────────
 
@@ -121,7 +121,7 @@ export interface DeclaredFix {
  */
 export interface FixScope {
   /**
-   * The repo-relative file globs the fix may edit (e.g. `packages/core/src/fnv.ts`,
+   * The repo-relative file globs the fix may edit (e.g. `packages/core/src/evidence/fnv.ts`,
    * `packages/astro/src/**`). A `*` matches within a path segment; `**` matches across
    * segments (the same minimal glob shape the assurance map uses). An actually-changed
    * file matching NONE of these is scope creep.

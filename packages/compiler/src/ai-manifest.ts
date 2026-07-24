@@ -83,7 +83,7 @@ export interface AIParamSchema {
  * Cross-cutting invariant declared alongside the manifest.
  *
  * `condition` is opaque at the type level — hosts evaluate it in their own
- * constraint engine (e.g. a `Plan.Shape` predicate). `message` is what the
+ * constraint engine (e.g. a `Plan` predicate). `message` is what the
  * LLM sees when the constraint is reported as violated.
  */
 export interface AIConstraint {
@@ -223,7 +223,7 @@ function paramToJsonSchema(param: AIParamSchema): Record<string, unknown> {
  *
  * @example
  * ```ts
- * import { AIManifestCompiler } from '@czap/compiler';
+ * import { AIManifestCompiler } from '@liteship/compiler';
  *
  * const tools = AIManifestCompiler.generateToolDefinitions(manifest);
  * // tools[0] => { name: 'setTheme', description: '...', parameters: {...}, returns: {...} }
@@ -351,7 +351,7 @@ function generateJsonSchema(manifest: AIManifest): Record<string, unknown> {
  *
  * @example
  * ```ts
- * import { AIManifestCompiler } from '@czap/compiler';
+ * import { AIManifestCompiler } from '@liteship/compiler';
  *
  * const prompt = AIManifestCompiler.generateSystemPrompt(manifest);
  * // Use as the system prompt for an LLM conversation
@@ -476,7 +476,7 @@ function asPlainRecord(value: unknown): Record<string, unknown> {
  *
  * @example
  * ```ts
- * import { AIManifestCompiler } from '@czap/compiler';
+ * import { AIManifestCompiler } from '@liteship/compiler';
  *
  * const manifest = {
  *   actions: { setLayout: { params: { cols: { type: 'number', required: true, min: 1, max: 12, description: 'Column count' } }, effects: [], description: 'Set grid layout' } },
@@ -727,7 +727,7 @@ function validateAIOutput(
  *
  * @example
  * ```ts
- * import { AIManifestCompiler } from '@czap/compiler';
+ * import { AIManifestCompiler } from '@liteship/compiler';
  *
  * const manifest = {
  *   actions: {
@@ -765,7 +765,7 @@ function compile(input: AIManifestInput): AIManifestCompileResult {
  *
  * @example
  * ```ts
- * import { AIManifestCompiler } from '@czap/compiler';
+ * import { AIManifestCompiler } from '@liteship/compiler';
  *
  * const manifest = {
  *   dimensions: { theme: { states: ['light', 'dark'], current: 'light', exclusive: true, description: 'Color theme' } },

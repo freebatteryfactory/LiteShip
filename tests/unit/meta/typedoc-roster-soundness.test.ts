@@ -4,7 +4,7 @@
  * `docs:check` regenerates the API docs from `typedoc.json`'s `entryPoints` and diffs against the
  * committed `docs/api`. That makes it blind to OMISSION: a published package absent from the roster
  * has no generated page, so there is nothing to diff, so the gate stays green while the package is
- * undocumented (the exact hole that let new `@czap/gauntlet` exports "pass" docs:check — the package
+ * undocumented (the exact hole that let new `@liteship/gauntlet` exports "pass" docs:check — the package
  * was never in the roster). A gate that cannot see a gap is a gate giving false green.
  *
  * This guard makes the roster CHECKED-AGAINST-SOURCE: every non-private package in the workspace MUST
@@ -23,10 +23,23 @@ const ROOT = resolve(HERE, '..', '..', '..');
 /**
  * Documented exemptions from the API-docs roster — a VISIBLE allowlist, never a silent skip.
  * `create-liteship` is a project SCAFFOLDER (a `bin` + template generator), not a library with an
- * importable API surface, so it has no meaningful TypeDoc page. Any OTHER publishable package must be
- * in the roster. An exemption that stops being a real published package reds (second test below).
+ * importable API surface, so it has no meaningful TypeDoc page.
+ *
+ * `liteship` is the curated re-export FACADE (P13): every symbol on its root `.` entry and its
+ * eleven domain subpaths is a NAMED re-export of a definition that lives in — and is canonically
+ * documented under — a source package that IS in the roster (`@liteship/core`, `@liteship/quantizer`,
+ * `@liteship/compiler`, `@liteship/web`, `@liteship/astro`, `@liteship/vite`, `@liteship/error`,
+ * `@liteship/gauntlet`). It owns no definition site of its own (bar the `LITESHIP_PACKAGES` roster
+ * const), so a TypeDoc page would DUPLICATE those source-package pages AND emit unresolvable
+ * cross-facade `{@link}` warnings (a curated subset re-exports symbols whose comments link to
+ * sibling symbols the facade deliberately does not carry). TypeDoc documents definition sites; the
+ * facade's canonical docs are the source packages — the same reason no domain subpath facade
+ * (`@liteship/core/authoring`, `@liteship/web/lite`, …) is its own entry point.
+ *
+ * Any OTHER publishable package must be in the roster. An exemption that stops being a real
+ * published package reds (second test below).
  */
-const ROSTER_EXEMPT = new Set(['create-liteship']);
+const ROSTER_EXEMPT = new Set(['create-liteship', 'liteship']);
 
 function publishablePackages(): { name: string; dir: string }[] {
   const out: { name: string; dir: string }[] = [];

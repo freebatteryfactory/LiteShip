@@ -34,7 +34,7 @@ or a [CSSStateBody](../interfaces/CSSStateBody.md) whose nested rules each becom
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 #### Parameters
 
@@ -54,7 +54,7 @@ Per-state CSS inputs (flat property maps or structured bodies)
 
 `string`
 
-Optional CSS selector for bare properties (defaults to `.czap-boundary`)
+Optional CSS selector for bare properties (defaults to `.liteship-boundary`)
 
 #### Returns
 
@@ -65,10 +65,10 @@ A [CSSCompileResult](../interfaces/CSSCompileResult.md) with structured rules an
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { CSSCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { CSSCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });
@@ -113,7 +113,7 @@ A string of `@property` declarations, or empty string if none found
 #### Example
 
 ```ts
-import { CSSCompiler } from '@czap/compiler';
+import { CSSCompiler } from '@liteship/compiler';
 
 const states = {
   sm: { '--card-bg': '#ffffff', '--card-radius': '4px' },
@@ -147,7 +147,7 @@ A string of valid CSS text
 #### Example
 
 ```ts
-import { CSSCompiler } from '@czap/compiler';
+import { CSSCompiler } from '@liteship/compiler';
 
 const result = CSSCompiler.compile(boundary, states);
 const css = CSSCompiler.serialize(result);
@@ -159,10 +159,10 @@ document.head.appendChild(
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { CSSCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { CSSCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

@@ -1,5 +1,5 @@
 /**
- * `czap ship` — ADR-0011 publisher verb.
+ * `liteship ship` — ADR-0011 publisher verb.
  *
  * For each target package: validates git, packs the tarball, runs
  * `pnpm publish --dry-run`, addresses each input via ShipCapsule helpers,
@@ -17,10 +17,10 @@
  * @module
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { hostname } from 'node:os';
-import { HLC, ShipCapsule, wallClock, type AddressedDigest } from '@czap/core';
+import { HLC, ShipCapsule, wallClock, type AddressedDigest } from '@liteship/core';
 import {
   packageSlug,
   selectTargets,
@@ -29,7 +29,7 @@ import {
   deriveBuildEnv,
   type PackageJsonLite,
   type WorkspacePackage,
-} from '@czap/command';
+} from '@liteship/command';
 import {
   findWorkspaceSpecLeaks,
   lockfileAddress,
@@ -41,6 +41,7 @@ import { spawnArgv, spawnArgvCapture } from '../spawn-helpers.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipReceipt, ShipSkippedReceipt } from '../receipts.js';
 import { ShipEmit } from '../capsules/ship-emit.js';
+import { verifyReleaseArtifactBundle } from '../lib/release-artifact-bundle.js';
 
 interface ShipOptions {
   readonly cwd: string;
@@ -48,26 +49,33 @@ interface ShipOptions {
   readonly dryRun: boolean;
   readonly otp?: string;
   readonly provenance: boolean;
+  /** Prepacked, SHA-addressed fleet. When present ship must never repack. */
+  readonly artifactDir?: string;
+  /** Optional output directory for ShipCapsules minted over the prepacked fleet. */
+  readonly capsuleDir?: string;
   /** `--help`/`-h` was passed: print usage and exit WITHOUT shipping. */
   readonly help: boolean;
   /** Unrecognized `-`/`--` flags. A real ship is REFUSED if any are present. */
   readonly unknownFlags: readonly string[];
 }
 
-const SHIP_USAGE = `czap ship — publish workspace packages (ADR-0011 publisher verb).
+const SHIP_USAGE = `liteship ship — publish workspace packages (ADR-0011 publisher verb).
 
 Usage:
-  czap ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]
+  liteship ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]
+                [--artifact-dir <dir>] [--capsule-dir <dir>]
 
 Options:
   --filter <pkg>   Ship only the named package (path or name). Default: ALL.
   --dry-run        Pack + mint the capsule, but do NOT publish.
   --provenance     Publish with npm provenance (CI/OIDC only).
   --otp <code>     npm one-time password.
+  --artifact-dir   Verify and publish the already-packed release bundle in <dir>.
+  --capsule-dir    Write ShipCapsules to <dir> (default: package directory).
   -h, --help       Show this help and exit (no publish).
 
 With no --filter, ship publishes EVERY workspace package. Unrecognized flags are
-refused (fail-closed) so a typo like \`czap ship --hepl\` can never trigger a
+refused (fail-closed) so a typo like \`liteship ship --hepl\` can never trigger a
 publish.`;
 
 /**
@@ -129,7 +137,10 @@ const resolveGlob = (cwd: string, pattern: string): string[] => {
           out.push(`${parentRel}/${entry}`);
         }
       } catch {
-        /* unreadable entry — skip */
+        // An entry that cannot be statSync-d (permission / race) is not a publishable
+        // package — skip it and continue discovery. Conservative + non-corrupting: a
+        // genuinely unreadable directory entry is never a package we could ship.
+        continue;
       }
     }
     return out;
@@ -157,8 +168,13 @@ export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boo
   return args;
 }
 
+/** The dry-run must inspect the exact tarball that will be handed to npm. */
+export function buildNpmPublishDryRunArgv(tarballPath: string): string[] {
+  return ['publish', tarballPath, '--access', 'public', '--dry-run'];
+}
+
 /**
- * Topologically sort ship targets so each package publishes AFTER its in-batch `@czap/*`
+ * Topologically sort ship targets so each package publishes AFTER its in-batch `@liteship/*`
  * dependencies. `pnpm -r publish` did this implicitly (dependencies before dependents);
  * the per-tarball `npm publish` handoff must preserve it, or a no-filter ship could push
  * a dependent — notably the `liteship` umbrella — before a same-version dependency exists
@@ -233,7 +249,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   const opts = parseArgs(args, cwd);
 
   // FAIL-CLOSED before any side effect: `--help` prints usage and exits, and an
-  // unrecognized flag REFUSES to ship. Without this, `czap ship --help` (or any
+  // unrecognized flag REFUSES to ship. Without this, `liteship ship --help` (or any
   // typo'd flag) fell through to "no filter → publish EVERY package".
   if (opts.help) {
     process.stdout.write(`${SHIP_USAGE}\n`);
@@ -242,8 +258,9 @@ export async function ship(args: readonly string[]): Promise<number> {
   if (opts.unknownFlags.length > 0) {
     emitError(
       'ship',
+      'cli/invalid-argument',
       `unrecognized flag(s): ${opts.unknownFlags.join(', ')}`,
-      'Run `czap ship --help`. Ship refuses to run with unknown flags so a typo cannot trigger a publish.',
+      'Run `liteship ship --help`. Ship refuses to run with unknown flags so a typo cannot trigger a publish.',
     );
     return 1;
   }
@@ -251,27 +268,46 @@ export async function ship(args: readonly string[]): Promise<number> {
   // Git state — never blocks, only records.
   const headRes = await spawnArgvCapture('git', ['rev-parse', 'HEAD'], { cwd });
   if (headRes.exitCode !== 0) {
-    emitError('ship', `git rev-parse HEAD failed: ${headRes.stderr.trim()}`);
+    emitError('ship', 'cli/command-failed', `git rev-parse HEAD failed: ${headRes.stderr.trim()}`);
     return 1;
   }
   const sourceCommit = headRes.stdout.trim();
   const statusRes = await spawnArgvCapture('git', ['status', '--porcelain'], { cwd });
   if (statusRes.exitCode !== 0) {
-    emitError('ship', `git status --porcelain failed: ${statusRes.stderr.trim()}`);
+    emitError('ship', 'cli/command-failed', `git status --porcelain failed: ${statusRes.stderr.trim()}`);
     return 1;
   }
   const sourceDirty = statusRes.stdout.trim().length > 0;
 
+  let verifiedArtifacts: ReturnType<typeof verifyReleaseArtifactBundle> | undefined;
+  if (opts.artifactDir !== undefined) {
+    try {
+      verifiedArtifacts = verifyReleaseArtifactBundle(
+        opts.artifactDir,
+        sourceCommit,
+        process.env['LITESHIP_AFFECTED_PLAN_ID'],
+      );
+    } catch (error) {
+      emitError('ship', 'cli/integrity-failed', error instanceof Error ? error.message : String(error));
+      return 1;
+    }
+  }
+  if (opts.capsuleDir !== undefined) mkdirSync(opts.capsuleDir, { recursive: true });
+
   // Lockfile + workspace manifest (computed once; shared across packages).
   const lockfilePath = join(cwd, 'pnpm-lock.yaml');
   if (!existsSync(lockfilePath)) {
-    emitError('ship', `pnpm-lock.yaml not found at ${lockfilePath}`);
+    emitError('ship', 'cli/workspace-required', `pnpm-lock.yaml not found at ${lockfilePath}`);
     return 1;
   }
   const lockBytes = new Uint8Array(readFileSync(lockfilePath));
   const workspace = loadWorkspace(cwd);
   if (workspace.length === 0) {
-    emitError('ship', 'no workspace packages discovered (pnpm-workspace.yaml empty or missing)');
+    emitError(
+      'ship',
+      'cli/workspace-required',
+      'no workspace packages discovered (pnpm-workspace.yaml empty or missing)',
+    );
     return 1;
   }
   const workspaceInput = workspace.map((p) => ({
@@ -290,7 +326,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   try {
     buildEnv = deriveBuildEnv({ os: process.platform, arch: process.arch, nodeVersion: process.version, pmVersion });
   } catch (e) {
-    emitError('ship', e instanceof Error ? e.message : String(e));
+    emitError('ship', 'cli/config-invalid', e instanceof Error ? e.message : String(e));
     return 1;
   }
 
@@ -299,7 +335,11 @@ export async function ship(args: readonly string[]): Promise<number> {
   // invocation) — matters for a local no-filter ship of the whole workspace.
   const targets = topoSortByDependencies(selectTargets(workspace, opts.filter));
   if (targets.length === 0) {
-    emitError('ship', `no packages matched${opts.filter !== undefined ? ` --filter ${opts.filter}` : ''}`);
+    emitError(
+      'ship',
+      'cli/not-found',
+      `no packages matched${opts.filter !== undefined ? ` --filter ${opts.filter}` : ''}`,
+    );
     return 1;
   }
 
@@ -319,42 +359,51 @@ export async function ship(args: readonly string[]): Promise<number> {
     const name = pkg.packageJson.name;
     const version = pkg.packageJson.version;
     if (typeof name !== 'string' || typeof version !== 'string') {
-      emitError('ship', `${pkg.relativePath}: package.json missing name or version`);
+      emitError('ship', 'cli/config-invalid', `${pkg.relativePath}: package.json missing name or version`);
       return 1;
     }
 
-    // pnpm pack — writes the .tgz into the package dir and prints its path
-    // on stdout (last non-empty line). We don't trust the stdout filename
-    // alone; we recompute the canonical slug and resolve it relative to
-    // the package dir, then sanity-check existence.
-    const packRes = await spawnArgvCapture('pnpm', ['pack'], { cwd: pkg.absolutePath });
-    if (packRes.exitCode !== 0) {
-      emitError('ship', `pnpm pack failed in ${pkg.relativePath}: ${packRes.stderr.trim()}`);
-      return 1;
-    }
     const slug = packageSlug(name);
     const tarballName = `${slug}-${version}.tgz`;
-    const tarballPath = join(pkg.absolutePath, tarballName);
-    if (!existsSync(tarballPath)) {
-      // Fall back to whatever pnpm printed in case slug logic ever drifts.
-      const printed = lastNonEmptyLine(packRes.stdout);
-      const candidate = printed.startsWith('/') ? printed : join(pkg.absolutePath, printed);
-      if (printed.length > 0 && existsSync(candidate)) {
-        emitError(
-          'ship',
-          `tarball slug mismatch: expected ${tarballPath} but pnpm wrote ${candidate}. ` +
-            `Refusing to ship a mislabeled artifact.`,
-        );
-      } else {
-        emitError('ship', `pnpm pack did not produce ${tarballName} in ${pkg.relativePath}`);
+    let tarballPath: string;
+    if (verifiedArtifacts !== undefined) {
+      const prepacked = verifiedArtifacts.tarballByPackage.get(name);
+      if (prepacked === undefined) {
+        emitError('ship', 'cli/integrity-failed', `verified release bundle has no tarball for ${name}`);
+        return 1;
       }
-      return 1;
+      tarballPath = prepacked;
+    } else {
+      // Local/manual path: pack once here. Release automation always supplies
+      // --artifact-dir and therefore cannot enter this branch.
+      const packRes = await spawnArgvCapture('pnpm', ['pack'], { cwd: pkg.absolutePath });
+      if (packRes.exitCode !== 0) {
+        emitError('ship', 'cli/command-failed', `pnpm pack failed in ${pkg.relativePath}: ${packRes.stderr.trim()}`);
+        return 1;
+      }
+      tarballPath = join(pkg.absolutePath, tarballName);
+      if (!existsSync(tarballPath)) {
+        // Fall back to whatever pnpm printed in case slug logic ever drifts.
+        const printed = lastNonEmptyLine(packRes.stdout);
+        const candidate = printed.startsWith('/') ? printed : join(pkg.absolutePath, printed);
+        if (printed.length > 0 && existsSync(candidate)) {
+          emitError(
+            'ship',
+            'cli/integrity-failed',
+            `tarball slug mismatch: expected ${tarballPath} but pnpm wrote ${candidate}. ` +
+              `Refusing to ship a mislabeled artifact.`,
+          );
+        } else {
+          emitError('ship', 'cli/no-output', `pnpm pack did not produce ${tarballName} in ${pkg.relativePath}`);
+        }
+        return 1;
+      }
     }
     const tarballBytes = new Uint8Array(readFileSync(tarballPath));
 
     // Refuse to publish a tarball whose package.json still carries
     // workspace: specs — npm consumers cannot install them (the
-    // @czap/core@0.1.4 defect), and a ShipCapsule minted over one would
+    // @liteship/core@0.1.4 defect), and a ShipCapsule minted over one would
     // be evidence of a broken artifact. package:smoke gates this in CI;
     // this closes the manual/local ship path.
     let workspaceLeaks: readonly string[];
@@ -363,6 +412,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     } catch (e) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `could not read package/package.json from ${tarballPath}: ${e instanceof Error ? e.message : String(e)} — ` +
           `the tarball is malformed; re-pack with \`pnpm pack\` from the workspace root.`,
       );
@@ -371,9 +421,10 @@ export async function ship(args: readonly string[]): Promise<number> {
     if (workspaceLeaks.length > 0) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `${name} packed with unresolved workspace: specs (${workspaceLeaks.join('; ')}) — npm consumers cannot ` +
           `install these. This usually means the tarball was packed outside pnpm's workspace context. ` +
-          `Fix: re-pack via \`pnpm pack\` (or publish through \`czap ship\` from the workspace root) so pnpm ` +
+          `Fix: re-pack via \`pnpm pack\` (or publish through \`liteship ship\` from the workspace root) so pnpm ` +
           `rewrites workspace: to concrete versions, then ship again.`,
       );
       return 1;
@@ -385,18 +436,57 @@ export async function ship(args: readonly string[]): Promise<number> {
     } catch (e) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `tarballManifestAddress failed for ${pkg.relativePath}: ${e instanceof Error ? e.message : String(e)}`,
       );
       return 1;
     }
 
-    // pnpm publish --dry-run — notice block goes to stderr; the `+ name@ver`
+    const capsulePath = join(opts.capsuleDir ?? pkg.absolutePath, `${slug}-${version}.shipcapsule.cbor`);
+    if (verifiedArtifacts !== undefined && existsSync(capsulePath)) {
+      const decoded = ShipCapsule.decode(new Uint8Array(readFileSync(capsulePath)));
+      if (!decoded.ok) {
+        emitError('ship', 'cli/integrity-failed', `existing capsule ${capsulePath} is invalid: ${decoded.error}`);
+        return 1;
+      }
+      const capsule = decoded.value;
+      if (
+        capsule.package_name !== name ||
+        capsule.package_version !== version ||
+        capsule.source_commit !== sourceCommit ||
+        capsule.tarball_manifest_address.display_id !== tarballManifestAddr.display_id ||
+        capsule.tarball_manifest_address.integrity_digest !== tarballManifestAddr.integrity_digest
+      ) {
+        emitError(
+          'ship',
+          'cli/integrity-failed',
+          `existing capsule ${capsulePath} is not bound to ${name}@${version}, ${sourceCommit}, and the verified tarball`,
+        );
+        return 1;
+      }
+      const receipt: ShipReceipt = {
+        status: 'ok',
+        command: 'ship',
+        timestamp: new Date(wallClock.now()).toISOString(),
+        package_name: name,
+        package_version: version,
+        capsule_id: capsule.id,
+        capsule_path: capsulePath,
+        tarball_path: tarballPath,
+        generated_at: capsule.generated_at,
+        dry_run: opts.dryRun,
+      };
+      emit(receipt);
+      mintedNames.push(name);
+      mintedTarballs.push(tarballPath);
+      continue;
+    }
+
+    // npm publish <EXACT_TARBALL> --dry-run — notice block goes to stderr; the `+ name@ver`
     // line goes to stdout. Both are part of the observed dry-run; the
     // normalizer redacts repo-root + timestamps so two clean publishes
     // produce byte-identical canonical text.
-    const dryRes = await spawnArgvCapture('pnpm', ['publish', '--dry-run', '--no-git-checks'], {
-      cwd: pkg.absolutePath,
-    });
+    const dryRes = await spawnArgvCapture('npm', buildNpmPublishDryRunArgv(tarballPath), { cwd: cwd });
     if (dryRes.exitCode !== 0) {
       const failureText = `${dryRes.stderr}\n${dryRes.stdout}`;
       if (isAlreadyPublishedFailure(failureText)) {
@@ -418,7 +508,8 @@ export async function ship(args: readonly string[]): Promise<number> {
       }
       emitError(
         'ship',
-        `pnpm publish --dry-run failed in ${pkg.relativePath}: ${dryRes.stderr.trim() || dryRes.stdout.trim()}`,
+        'cli/command-failed',
+        `npm publish --dry-run failed for ${tarballPath}: ${dryRes.stderr.trim() || dryRes.stdout.trim()}`,
       );
       return 1;
     }
@@ -450,12 +541,12 @@ export async function ship(args: readonly string[]): Promise<number> {
     };
 
     const capsule = ShipCapsule.make(input);
-    const capsulePath = join(pkg.absolutePath, `${slug}-${version}.shipcapsule.cbor`);
     try {
       ShipEmit.run({ capsule, capsule_path: capsulePath });
     } catch (e) {
       emitError(
         'ship',
+        'cli/integrity-failed',
         `ship-emit capsule failed for ${pkg.relativePath}: ${e instanceof Error ? e.message : String(e)}`,
       );
       return 1;
@@ -486,7 +577,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       // a fully idempotent re-run succeeds with the skip receipts above.
       return 0;
     }
-    emitError('ship', 'no packages were minted; nothing to publish');
+    emitError('ship', 'cli/no-output', 'no packages were minted; nothing to publish');
     return 1;
   }
 
@@ -507,7 +598,11 @@ export async function ship(args: readonly string[]): Promise<number> {
     if (publishRes.exitCode !== 0) {
       const tail = publishRes.stderrTail?.trim() ?? '';
       if (isAlreadyPublishedFailure(tail)) continue;
-      emitError('ship', `npm publish exited ${publishRes.exitCode} for ${mintedNames[i]}${tail ? `: ${tail}` : ''}`);
+      emitError(
+        'ship',
+        'cli/command-failed',
+        `npm publish exited ${publishRes.exitCode} for ${mintedNames[i]}${tail ? `: ${tail}` : ''}`,
+      );
       return 2;
     }
   }
@@ -519,6 +614,8 @@ function parseArgs(args: readonly string[], cwd: string): ShipOptions {
   let otp: string | undefined;
   let dryRun = false;
   let provenance = false;
+  let artifactDir: string | undefined;
+  let capsuleDir: string | undefined;
   let help = false;
   const unknownFlags: string[] = [];
   for (let i = 0; i < args.length; i++) {
@@ -559,10 +656,29 @@ function parseArgs(args: readonly string[], cwd: string): ShipOptions {
       otp = a.slice('--otp='.length);
       continue;
     }
+    if (a === '--artifact-dir' || a === '--capsule-dir') {
+      const next = args[i + 1];
+      if (next === undefined || next.startsWith('-')) {
+        unknownFlags.push(`${a} (missing value)`);
+      } else {
+        if (a === '--artifact-dir') artifactDir = resolve(cwd, next);
+        else capsuleDir = resolve(cwd, next);
+        i++;
+      }
+      continue;
+    }
+    if (a.startsWith('--artifact-dir=')) {
+      artifactDir = resolve(cwd, a.slice('--artifact-dir='.length));
+      continue;
+    }
+    if (a.startsWith('--capsule-dir=')) {
+      capsuleDir = resolve(cwd, a.slice('--capsule-dir='.length));
+      continue;
+    }
     if (a.startsWith('-')) {
       // An unrecognized flag (e.g. `--help` typo, `--all`, `--yes`). Collect it
       // so ship() can REFUSE rather than silently fall through to "no filter →
-      // publish everything" — the footgun where `czap ship --help` shipped.
+      // publish everything" — the footgun where `liteship ship --help` shipped.
       unknownFlags.push(a);
       continue;
     }
@@ -571,5 +687,15 @@ function parseArgs(args: readonly string[], cwd: string): ShipOptions {
       filter = a;
     }
   }
-  return { filter, dryRun, otp, provenance, help, unknownFlags, cwd };
+  return {
+    filter,
+    dryRun,
+    otp,
+    provenance,
+    help,
+    unknownFlags,
+    cwd,
+    ...(artifactDir ? { artifactDir } : {}),
+    ...(capsuleDir ? { capsuleDir } : {}),
+  };
 }

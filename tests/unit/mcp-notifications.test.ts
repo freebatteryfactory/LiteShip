@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { dispatch } from '@czap/mcp-server';
+import { dispatch } from '@liteship/mcp-server';
 
 describe('MCP notification handling (§4.1)', () => {
   it('dispatch returns null for a tools/list notification (no id field)', async () => {

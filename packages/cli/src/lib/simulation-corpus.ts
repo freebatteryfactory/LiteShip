@@ -1,11 +1,11 @@
 /**
  * THE DST SCENARIO CORPUS — the committed, content-addressed set of deterministic
- * scenarios the host (`czap check --ir --simulate`) drives the REAL L4 TRUST-SPINE
+ * scenarios the host (`liteship check gates --ir --simulate`) drives the REAL L4 TRUST-SPINE
  * code through, certifying byte-exact replay (FoundationDB property).
  *
  * Each {@link SimScenario} here drives ONE production L4 system-under-test — the
  * "if this lies, downstream trusts bad reality" code — through the seeded
- * {@link makeWorld} substrate (`@czap/core/simulation`). A scenario is a pure
+ * {@link makeWorld} substrate (`@liteship/core/simulation`). A scenario is a pure
  * function of (seed, world): it reads time/randomness ONLY through the world's
  * injected clock/rng, exercises a real SUT, and folds the SUT's deterministic
  * outputs into an observable {@link SimTrace}. Because these SUTs are pure, two
@@ -25,8 +25,8 @@
  *  - BOUNDARY-EVALUATOR — `rawIndexF32` over generated thresholds + values: THE
  *    numeric semantics of boundary evaluation (the index sequence is the trace).
  *
- * LEAN BOUNDARY: the corpus lives in the CLI HOST (which deps `@czap/core`), NOT in
- * `@czap/gauntlet` (the lean engine imports no DST harness). The host runs the
+ * LEAN BOUNDARY: the corpus lives in the CLI HOST (which deps `@liteship/core`), NOT in
+ * `@liteship/gauntlet` (the lean engine imports no DST harness). The host runs the
  * corpus through `assertReplayDeterministic` and folds the verdicts into the flat
  * {@link SimulationFacts} the gate folds — exactly the ADR-0012 host-computes /
  * engine-folds pattern the `--supply-chain` and `--mutate` paths use.
@@ -46,15 +46,15 @@ import {
   type SignalNode,
   type DocumentGraph,
   type DocumentGraphNode,
-} from '@czap/core';
+} from '@liteship/core';
 import {
   assertReplayDeterministic,
   type SimScenario,
   type SimWorld,
   type SimStep,
   type SchedulerWorld,
-} from '@czap/core/simulation';
-import type { ScenarioReplayFact, SimulationFacts } from '@czap/gauntlet';
+} from '@liteship/core/simulation';
+import type { ScenarioReplayFact, SimulationFacts } from '@liteship/gauntlet';
 
 /**
  * One corpus entry: a scenario paired with the seeds the host replays it from.

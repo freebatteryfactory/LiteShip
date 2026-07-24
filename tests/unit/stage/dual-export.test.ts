@@ -8,7 +8,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC, Receipt } from '@czap/core';
+import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC, Receipt } from '@liteship/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -17,8 +17,8 @@ import type {
   EntityNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
-import { dualExport, exportAstroPage, exportVideo } from '@czap/stage';
+} from '@liteship/core';
+import { dualExport, exportAstroPage, exportVideo } from '@liteship/stage';
 
 const ts = HLC.increment(HLC.create('test'), 1);
 const meta: CellMeta = { created: ts, updated: ts, version: 1 };

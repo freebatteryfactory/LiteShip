@@ -1,21 +1,21 @@
-# @czap/detect
+# @liteship/detect
 
 Probes browser APIs — GPU, CPU cores, memory, motion and color preferences, viewport, network — and maps the results to the capability tiers the rest of LiteShip uses to gate output.
 
-> You usually don't install this directly — it arrives as a dependency of [@czap/astro](https://www.npmjs.com/package/@czap/astro), which runs detection for you in the client runtime. Install `@czap/astro` instead unless you need the capability probes standalone.
+> You usually don't install this directly — it arrives as a dependency of [@liteship/astro](https://www.npmjs.com/package/@liteship/astro), which runs detection for you in the client runtime. Install `@liteship/astro` instead unless you need the capability probes standalone.
 
 ## Install
 
 ```bash
-pnpm add @czap/astro # brings @czap/detect with it
+pnpm add @liteship/astro # brings @liteship/detect with it
 ```
 
-If you do install it directly: `pnpm add @czap/detect`.
+If you do install it directly: `pnpm add @liteship/detect`.
 
 ## 30 seconds
 
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const result = Detect.detect();
 console.log(result.tier);       // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
@@ -27,7 +27,7 @@ In a browser this logs the device's capability level, its motion tier (reduced-m
 
 ## Where it sits
 
-This package is host-adjacent — it touches browser APIs so nothing else has to. Its only `@czap` dependency is `@czap/core`, for the `CapLevel` and `MotionTier` types it maps detected hardware onto. What to *do* at each tier is decided elsewhere: `@czap/quantizer` gates outputs by motion tier, and `@czap/astro` applies detection during hydration. It also exports the capability-attribute vocabulary — `CAP_AXES` / `capAxisAttr` for the `tier`/`motion`/`design` axes — the single source `@czap/edge` and the client runtime project to `data-czap-*` attributes, so the emitted attribute name and the locals field name can't drift. See the
+This package is host-adjacent — it touches browser APIs so nothing else has to. Its only `@liteship` dependency is `@liteship/core`, for the `CapLevel` and `MotionTier` types it maps detected hardware onto. What to *do* at each tier is decided elsewhere: `@liteship/quantizer` gates outputs by motion tier, and `@liteship/astro` applies detection during hydration. It also exports the capability-attribute vocabulary — `CAP_AXES` / `capAxisAttr` for the `tier`/`motion`/`design` axes — the single source `@liteship/edge` and the client runtime project to `data-liteship-*` attributes, so the emitted attribute name and the locals field name can't drift. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
@@ -44,4 +44,4 @@ Detection never throws; outside a browser (SSR, Node tests) every probe falls ba
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

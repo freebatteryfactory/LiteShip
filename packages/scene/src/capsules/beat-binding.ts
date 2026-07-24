@@ -17,14 +17,14 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@czap/_spine';
+import { defineCapsule, schema } from '@liteship/core';
+import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@liteship/_spine';
 
 /**
  * Component shape for beat entities — what SyncSystem queries via
  * `world.query('Beat')`. Aliased to the canonical spine contract (CUT A5):
  * the scene/world timeline-space stage of the beat family. The raw
- * asset/sample-space sibling is `@czap/assets`' `BeatMarkerSet`; the official
+ * asset/sample-space sibling is `@liteship/assets`' `BeatMarkerSet`; the official
  * bridge between them is `resolveBeatProjectionToSceneBeats` (./beat-projection).
  */
 export type BeatComponent = _BeatComponent;
@@ -32,22 +32,22 @@ export type BeatComponent = _BeatComponent;
 /** Spawn descriptor returned by the binding — the runtime spawns these into the world. */
 export type BeatSpawn = _BeatSpawn;
 
-const BeatComponentSchema = S.struct({
-  _tag: S.literal('beat'),
-  timeMs: S.number,
-  strength: S.number,
-  anchorTrackId: S.optional(S.string),
+const BeatComponentSchema = schema.struct({
+  _tag: schema.literal('beat'),
+  timeMs: schema.number,
+  strength: schema.number,
+  anchorTrackId: schema.optional(schema.string),
 });
 
-const BindingInputSchema = S.struct({
+const BindingInputSchema = schema.struct({
   // The beat array as already resolved by BeatMarkerProjection (or
   // declared directly on a CompiledScene). This capsule is a pure
   // transform from BeatComponent[] into BeatSpawn[].
-  beats: S.array(BeatComponentSchema),
+  beats: schema.array(BeatComponentSchema),
 });
 
-const BindingOutputSchema = S.struct({
-  spawns: S.array(S.struct({ components: BeatComponentSchema })),
+const BindingOutputSchema = schema.struct({
+  spawns: schema.array(schema.struct({ components: BeatComponentSchema })),
 });
 
 /**
@@ -60,7 +60,7 @@ export const beatBindingCapsule = defineCapsule({
   name: 'scene.beat-binding',
   site: ['node', 'browser'],
   // `asset:beats` carries the raw asset-space `BeatMarkerSet` (bpm + sample
-  // indices) produced by `@czap/assets`; it is resolved to scene-space
+  // indices) produced by `@liteship/assets`; it is resolved to scene-space
   // BeatComponent[] via resolveBeatProjectionToSceneBeats before binding.
   capabilities: { reads: ['scene', 'asset:beats'], writes: ['ecs.world'] },
   input: BindingInputSchema,

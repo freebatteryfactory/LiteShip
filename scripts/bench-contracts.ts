@@ -28,19 +28,66 @@
  */
 
 import { resolve } from 'node:path';
-import { systemClock } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { systemClock } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
+import {
+  ACCEPTED_COMPLEXITY_CEILINGS,
+  MIN_COMPLEXITY_FIT_R2,
+} from '../packages/gauntlet/src/gates/performance-contracts.js';
 import { repoRoot } from '../vitest.shared.js';
 import { isDirectExecution, writeTextFile } from './audit/shared.js';
 import {
   type ComplexityMap,
   type ComplexityMapEntry,
   COMPLEXITY_MAP_ARTIFACT_PATH,
+  complexityRank,
   measureComplexityCurve,
   readDistributionRegistry,
 } from './bench/contracts.ts';
 import { COMPLEXITY_PROBES } from './bench/contract-probes.ts';
 import { verifyDeclaredDistributions } from './bench/contract-coverage.ts';
+
+/** One deterministic violation in a measured complexity map. */
+export interface MeasuredComplexityIssue {
+  readonly path: string;
+  readonly reason: 'missing' | 'unrecognized-class' | 'class-regression' | 'noisy-fit';
+  readonly detail: string;
+}
+
+/**
+ * Verify live measured complexity evidence against the independent gauntlet-owned
+ * ceilings. Pure and clock-free so planted regressions prove the producer has
+ * teeth without turning a timing benchmark into a unit-test dependency.
+ */
+export function verifyMeasuredComplexityMap(map: ComplexityMap): readonly MeasuredComplexityIssue[] {
+  const issues: MeasuredComplexityIssue[] = [];
+  const byPath = new Map(map.entries.map((entry) => [entry.path, entry] as const));
+  for (const [path, ceiling] of Object.entries(ACCEPTED_COMPLEXITY_CEILINGS)) {
+    const entry = byPath.get(path);
+    if (entry === undefined) {
+      issues.push({ path, reason: 'missing', detail: `${path} has no live complexity measurement` });
+      continue;
+    }
+    const measuredRank = complexityRank(entry.class);
+    if (measuredRank < 0) {
+      issues.push({ path, reason: 'unrecognized-class', detail: `${path} measured ${entry.class}` });
+    } else if (measuredRank > complexityRank(ceiling)) {
+      issues.push({
+        path,
+        reason: 'class-regression',
+        detail: `${path} measured ${entry.class}, above its ${ceiling} ceiling`,
+      });
+    }
+    if (entry.fittedR2 < MIN_COMPLEXITY_FIT_R2) {
+      issues.push({
+        path,
+        reason: 'noisy-fit',
+        detail: `${path} fit R² ${entry.fittedR2} is below ${MIN_COMPLEXITY_FIT_R2}`,
+      });
+    }
+  }
+  return issues;
+}
 
 /**
  * A cold-start vs hot-path budget verdict for one path. Asserted as a RATIO
@@ -195,6 +242,10 @@ function main(): void {
       `  ${entry.path.padEnd(22)} ${entry.class.padEnd(10)} (slope ${entry.fittedSlope.toFixed(3)}, R² ${entry.fittedR2.toFixed(3)})`,
     );
   }
+  const complexityIssues = verifyMeasuredComplexityMap(map);
+  for (const issue of complexityIssues) {
+    console.error(`[bench-contracts] COMPLEXITY ${issue.reason.toUpperCase()}: ${issue.detail}`);
+  }
 
   // 3. COLD-START budget (ratio, not absolute ns).
   const budget = measureColdStartBudget();
@@ -202,7 +253,7 @@ function main(): void {
     `\nCold-start budget: ${budget.path} cold ${budget.coldStartNs.toFixed(1)}ns / steady ${budget.steadyPerCallNs.toFixed(1)}ns = ${budget.ratio}x (ceiling ${budget.ratioCeiling}x) → ${budget.withinBudget ? 'OK' : 'FAIL'}`,
   );
 
-  if (coverage.issues.length > 0 || !hotPathBudgetOk || !budget.withinBudget) {
+  if (coverage.issues.length > 0 || complexityIssues.length > 0 || !hotPathBudgetOk || !budget.withinBudget) {
     console.error('\n[bench-contracts] CONTRACT VERIFICATION FAILED.');
     process.exitCode = 1;
     return;

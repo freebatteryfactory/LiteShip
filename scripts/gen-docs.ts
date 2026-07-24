@@ -16,6 +16,7 @@ import { resolve } from 'node:path';
 import { REPO_ROOT, renderPackagesBlock, renderExamplesBlock } from './lib/doc-registry.js';
 import { renderBenchBlock } from './lib/bench-snapshot.js';
 import { renderWireContractDoc } from '../packages/web/src/wire/render-contract-doc.js';
+import { renderCheckProfiles, renderCliCommandCatalog, renderMcpToolCatalog } from './lib/command-docs.js';
 
 interface Block {
   readonly name: string;
@@ -32,6 +33,9 @@ const BLOCKS: readonly Block[] = [
     file: 'packages/web/README.md',
     render: renderWireContractDoc,
   },
+  { name: 'CLI-COMMAND-CATALOG', file: 'packages/cli/README.md', render: renderCliCommandCatalog },
+  { name: 'CHECK-PROFILES', file: 'packages/cli/README.md', render: renderCheckProfiles },
+  { name: 'MCP-TOOL-CATALOG', file: 'packages/mcp-server/README.md', render: renderMcpToolCatalog },
 ];
 
 /** Replace the inner content of one delimited block; throws if the markers are absent. */

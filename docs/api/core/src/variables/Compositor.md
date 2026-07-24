@@ -8,7 +8,7 @@
 
 > `const` **Compositor**: `CompositorFactory`
 
-Defined in: [core/src/compositor.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L241)
+Defined in: [core/src/media/compositor.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L239)
 
 Compositor — the live merge point for every attached [Quantizer](../interfaces/Quantizer.md).
 
@@ -16,17 +16,17 @@ Compositor — the live merge point for every attached [Quantizer](../interfaces
 [RuntimeCoordinator](RuntimeCoordinator.md), paired with the [Lifetime](Lifetime.md) that owns its
 teardown. Adding quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA
 outputs all flow through the zero-allocation hot path backed by
-[CompositorStatePool](CompositorStatePool.md).
+[CompositorStatePool](../type-aliases/CompositorStatePool.md).
 
 ## Example
 
 ```ts
-import { Compositor } from '@czap/core';
+import { Compositor } from '@liteship/core';
 
-const { compositor, lifetime } = Compositor.create({ poolCapacity: 64, speculative: true });
+const compositor = Compositor.create({ poolCapacity: 64, speculative: true });
 compositor.add('viewport', viewportQuantizer);
 const state = compositor.compute();
 // state.discrete.viewport === 'tablet'
-// state.outputs.css['--czap-viewport'] === 'tablet'
-await lifetime.dispose();
+// state.outputs.css['--liteship-viewport'] === 'tablet'
+await compositor.dispose();
 ```

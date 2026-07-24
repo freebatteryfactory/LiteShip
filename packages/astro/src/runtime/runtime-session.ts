@@ -1,5 +1,5 @@
 /**
- * Generic runtime-session lifecycle used by every `@czap/astro` client
+ * Generic runtime-session lifecycle used by every `@liteship/astro` client
  * directive. Owns a microtask scheduler, a set of pending timers, and
  * a state machine (`idle` / `active` / `reconnecting` / `disposed`)
  * that every concrete session (stream, llm, gpu, ...) composes.

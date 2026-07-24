@@ -8,7 +8,7 @@
 
 > **QuantizerCrossings**\<`B`\> = `Pick`\<[`Fanout`](../namespaces/CellKernel/type-aliases/Fanout.md)\<[`BoundaryCrossing`](BoundaryCrossing.md)\<[`StateUnion`](StateUnion.md)\<`B`\> & `string`\>\>, `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [core/src/quantizer-types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L59)
+Defined in: [core/src/schema/quantizer-types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L61)
 
 Crossing subscription surface — the no-replay [CellKernel](../variables/CellKernel.md) fan-out side.
 `subscribe(sink)` registers a crossing listener and returns its disposer; a
@@ -19,4 +19,4 @@ late subscriber never sees a prior crossing. Replaces the former
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md) = [`Boundary`](Boundary.md)

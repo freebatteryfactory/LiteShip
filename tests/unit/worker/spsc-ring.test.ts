@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 describe('SPSCRing', () => {
   test('createPair returns buffer, producer, and consumer', () => {
@@ -122,7 +122,7 @@ describe('SPSCRing', () => {
     Object.defineProperty(globalThis, 'crossOriginIsolated', { value: false, configurable: true });
     try {
       expect(() => SPSCRing.createPair(4, 2)).toThrow(
-        'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
+        'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @liteship/astro sets these headers for you.',
       );
     } finally {
       if (had) {

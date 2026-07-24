@@ -1,10 +1,10 @@
 /**
- * Cloudflare Workers middleware glue for {@link @czap/astro} edge resolution.
+ * Cloudflare Workers middleware glue for {@link @liteship/astro} edge resolution.
  *
  * @module
  */
 
-import { Diagnostics, type ContentAddress } from '@czap/core';
+import { Diagnostics, type ContentAddress } from '@liteship/core';
 import type {
   BoundaryManifest,
   BoundaryManifestEntry,
@@ -14,20 +14,20 @@ import type {
   EdgeHostCacheTags,
   EdgeHostCacheConfig,
   TierKey,
-} from '@czap/edge';
-import { resolveAssetUrlByTier, resolveOutputsByTier } from '@czap/edge';
-import { czapMiddleware } from '@czap/astro';
-import { ValidationError } from '@czap/error';
+} from '@liteship/edge';
+import { resolveAssetUrlByTier, resolveOutputsByTier } from '@liteship/edge';
+import { liteshipMiddleware } from '@liteship/astro';
+import { ValidationError } from '@liteship/error';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
 import { loadWorkersEnvFromRuntime, resolveEnvSource } from './env-source.js';
 
 export interface CloudflareMiddlewareConfig {
-  /** KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`. */
+  /** KV namespace binding name in wrangler.jsonc. Defaults to `LITESHIP_BOUNDARY_CACHE`. */
   readonly binding?: string;
   /**
    * Build-derived boundary manifest -- import it from
-   * `virtual:czap/boundaries` or read the emitted
-   * `czap-boundary-manifest.json`. The middleware derives `boundaryId`
+   * `virtual:liteship/boundaries` or read the emitted
+   * `liteship-boundary-manifest.json`. The middleware derives `boundaryId`
    * and per-tier precompiled outputs from it, so nothing is hand-typed.
    */
   readonly manifest?: BoundaryManifest | BoundaryManifestFile;
@@ -40,7 +40,7 @@ export interface CloudflareMiddlewareConfig {
   readonly boundary?: string | readonly string[];
   /**
    * Escape hatch for custom hosts without a manifest: the boundary's
-   * content address. Must be a real minted id (`Boundary.make(...).id`,
+   * content address. Must be a real minted id (`defineBoundary(...).id`,
    * `fnv1a:xxxxxxxx`) -- the KV keyspace is content-addressed, so a
    * fabricated id breaks content-addressing (the cache could then serve a
    * different boundary's compiled CSS).
@@ -72,7 +72,7 @@ export interface CloudflareMiddlewareConfig {
   /**
    * Tags written with boundary cache entries when a compile fallback fills KV.
    * Pass the same values as Astro `routeRules.tags` so `cache.invalidate({ tags })`
-   * can purge CZAP boundary variants. A manifest config may use a boundary-name
+   * can purge LiteShip boundary variants. A manifest config may use a boundary-name
    * map; a resolver can branch on `context.boundaryName` / `context.boundaryId`.
    */
   readonly tags?: EdgeHostCacheTags | Readonly<Record<string, EdgeHostCacheTags>>;
@@ -95,9 +95,9 @@ export interface CloudflareMiddlewareConfig {
 function normalizeManifest(manifest: BoundaryManifest | BoundaryManifestFile): BoundaryManifest {
   // `_tag` discriminates the file envelope from the bare map; the cast is
   // contained here because a Record<string, BoundaryManifestEntry> cannot
-  // also carry the literal `_tag: 'CzapBoundaryManifest'` field.
+  // also carry the literal `_tag: 'LiteshipBoundaryManifest'` field.
   const candidate = manifest as Partial<BoundaryManifestFile>;
-  if (candidate._tag === 'CzapBoundaryManifest' && candidate.boundaries) {
+  if (candidate._tag === 'LiteshipBoundaryManifest' && candidate.boundaries) {
     return candidate.boundaries;
   }
   return manifest as BoundaryManifest;
@@ -148,7 +148,7 @@ function warnEmptyManifestOutputs(boundary: string, entry: BoundaryManifestEntry
   const hasServableCss = entry.outputs.some((output) => output.css.trim() !== '');
   if (hasServableCss) return;
   Diagnostics.warnOnce({
-    source: 'czap/cloudflare.middleware',
+    source: 'liteship/cloudflare.middleware',
     code: 'manifest-boundary-empty-outputs',
     message:
       `boundary "${boundary}" is in the manifest but has no servable CSS. ` +
@@ -177,7 +177,7 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
         'cloudflare.middleware',
         'cloudflareMiddleware received an empty boundary manifest, so there is no boundary to cache. ' +
           'Why: the build found no boundaries.ts / *.boundaries.ts exports in the project. ' +
-          'Fix: add `export const myBoundary = Boundary.make({ ... })` to a boundary module (plus a @quantize CSS block ' +
+          'Fix: add `export const myBoundary = defineBoundary({ ... })` to a boundary module (plus a @quantize CSS block ' +
           'for precompiled outputs), or fall back to the `boundaryId` + `compile` escape hatch.',
       );
     }
@@ -221,8 +221,8 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
 
   throw ValidationError(
     'cloudflare.middleware',
-    'cloudflareMiddleware needs either a build-derived `manifest` (import { boundaries } from "virtual:czap/boundaries") ' +
-      'or the hand-built escape hatch (`boundaryId` from Boundary.make plus a `compile` callback). ' +
+    'cloudflareMiddleware needs either a build-derived `manifest` (import { boundaries } from "virtual:liteship/boundaries") ' +
+      'or the hand-built escape hatch (`boundaryId` from defineBoundary plus a `compile` callback). ' +
       'Neither was provided completely. Fix: pass `manifest: boundaries` -- the build derives the id and outputs for you.',
   );
 }
@@ -231,7 +231,7 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
  * Astro middleware factory wired for Cloudflare Workers KV boundary caching.
  *
  * Boundary identities and precompiled outputs come from the
- * build-derived manifest (`virtual:czap/boundaries`), so no id is ever
+ * build-derived manifest (`virtual:liteship/boundaries`), so no id is ever
  * hand-typed. Every manifest boundary is served by default (each under
  * its own content-addressed cache key); pass `boundary` to narrow.
  * `boundaryId` + `compile` remain as an escape hatch for custom hosts.
@@ -239,21 +239,21 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
  * @example
  * ```ts
  * // src/middleware.ts
- * import { cloudflareMiddleware } from '@czap/cloudflare';
- * import { boundaries } from 'virtual:czap/boundaries';
+ * import { cloudflareMiddleware } from '@liteship/cloudflare';
+ * import { boundaries } from 'virtual:liteship/boundaries';
  *
  * export const onRequest = cloudflareMiddleware({
- *   binding: 'CZAP_BOUNDARY_CACHE',
+ *   binding: 'LITESHIP_BOUNDARY_CACHE',
  *   manifest: boundaries, // serves every boundary; `boundary: 'viewport'` narrows
  * });
  * ```
  */
-export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): ReturnType<typeof czapMiddleware> {
+export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): ReturnType<typeof liteshipMiddleware> {
   const envSource = resolveEnvSource(config);
-  const binding = config.binding ?? 'CZAP_BOUNDARY_CACHE';
+  const binding = config.binding ?? 'LITESHIP_BOUNDARY_CACHE';
   const kv = createCloudflareEdgeCache(envSource, { binding });
   const source = resolveCacheSource(config);
-  const inner = czapMiddleware({
+  const inner = liteshipMiddleware({
     edge: {
       cache: {
         kv,
@@ -272,8 +272,8 @@ export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): Return
 
   let envPrimed = false;
   const wrapped = async (
-    context: Parameters<ReturnType<typeof czapMiddleware>>[0],
-    next: Parameters<ReturnType<typeof czapMiddleware>>[1],
+    context: Parameters<ReturnType<typeof liteshipMiddleware>>[0],
+    next: Parameters<ReturnType<typeof liteshipMiddleware>>[1],
   ) => {
     if (!envPrimed) {
       await loadWorkersEnvFromRuntime();
@@ -281,5 +281,5 @@ export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): Return
     }
     return inner(context, next);
   };
-  return wrapped as ReturnType<typeof czapMiddleware>;
+  return wrapped as ReturnType<typeof liteshipMiddleware>;
 }

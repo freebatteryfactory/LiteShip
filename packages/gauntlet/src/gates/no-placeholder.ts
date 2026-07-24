@@ -108,7 +108,7 @@ function scan(context: GateContext): readonly Finding[] {
               steps: [
                 'Do the work the marker stands in for, then delete the marker (for a TODO bench: if the measured API now EXISTS, uncomment + wire the bench; if it does not, delete the dead commented-out body — never leave the TODO).',
                 'If the work is genuinely out of scope for this change, file it as a tracked issue and remove the in-source marker — the issue tracker, not the source, carries the debt.',
-                'If a path is genuinely unsupported, throw a tagged @czap/error UnsupportedError that names exactly what is unsupported and why — an honest, catchable failure, never a marker that ships green.',
+                'If a path is genuinely unsupported, throw a tagged @liteship/error UnsupportedError that names exactly what is unsupported and why — an honest, catchable failure, never a marker that ships green.',
               ],
             },
           }),

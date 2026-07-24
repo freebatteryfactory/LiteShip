@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { Token, TokenCategory } from '@czap/core';
+import type { Token, TokenCategory } from '@liteship/core';
 import { stringifyCSSValue, groupTokensByCategory } from './css-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -49,7 +49,7 @@ const CATEGORY_PREFIX: Record<TokenCategory, string> = {
  * Derive the Tailwind theme variable name from a token.
  * Uses the category prefix + token name, e.g. `--color-primary`.
  */
-function tailwindVarName(token: Token.Shape): string {
+function tailwindVarName(token: Token): string {
   const prefix = CATEGORY_PREFIX[token.category];
   return `${prefix}${token.name}`;
 }
@@ -61,7 +61,7 @@ function tailwindVarName(token: Token.Shape): string {
  * a base entry is also emitted; otherwise a single entry is produced from
  * the fallback.
  */
-function emitTokenDeclarations(token: Token.Shape): string[] {
+function emitTokenDeclarations(token: Token): string[] {
   const baseName = tailwindVarName(token);
   const lines: string[] = [];
 
@@ -88,12 +88,12 @@ function emitTokenDeclarations(token: Token.Shape): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a list of {@link Token.Shape} into a Tailwind v4 `@theme` block.
+ * Compile a list of {@link Token} into a Tailwind v4 `@theme` block.
  *
  * Tokens are grouped by category with a short comment separator so the
  * generated CSS remains human-readable alongside hand-authored Tailwind.
  */
-function compile(tokens: readonly Token.Shape[]): TokenTailwindResult {
+function compile(tokens: readonly Token[]): TokenTailwindResult {
   const lines: string[] = [];
 
   // Group by category for organized output
@@ -120,7 +120,7 @@ function compile(tokens: readonly Token.Shape[]): TokenTailwindResult {
 /**
  * Token Tailwind compiler namespace.
  *
- * Adapts a `@czap/core` token set to Tailwind v4's CSS-first theming
+ * Adapts a `@liteship/core` token set to Tailwind v4's CSS-first theming
  * pipeline by emitting a single `@theme { }` block with the category
  * prefixes Tailwind expects (`--color-`, `--spacing-`, `--font-`, …).
  */

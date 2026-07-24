@@ -1,0 +1,45 @@
+# types.ts purity (ADR-0045) — a `types.ts` is TYPE-SPACE ONLY: `interface`,
+# `type` aliases, and re-exported types. It must be fully ERASABLE — a type-only
+# import of it, or a bundler dropping `import type`, leaves nothing behind. A
+# value definition (function / class / const / let / var / enum) breaks
+# erasability and turns the "types" file into a hidden runtime module. Values
+# with a definition site belong in a domain module; the type that describes them
+# stays here.
+#
+# Flags the VALUE-declaration node kinds only —
+#   function_declaration / class_declaration / enum_declaration /
+#   lexical_declaration (const/let) / variable_declaration (var)
+# — and deliberately NOT interface_declaration / type_alias_declaration, which
+# are exactly what a types.ts is for.
+#
+# SCOPE — packages/core/src only, for now. No core file is named types.ts today,
+# so this GUARDS THE FUTURE: the first `packages/core/src/**/types.ts` that ships
+# a value fails `lint:structural`. (ast-grep globs let `*` cross `/`, so the
+# task's `packages/*/src/*/types.ts` glob would reach every types.ts below src
+# root — and two pre-existing files carry runtime values there today:
+#     packages/mcp-server/src/lsp/types.ts   (LSP protocol constant tables:
+#         DiagnosticSeverity / CodeActionKind / MessageType `as const`, command-id
+#         string constants — co-located with the `typeof`-derived types)
+#     packages/cli/src/commands/doctor/types.ts  (an inline version-parse helper)
+# so a repo-wide glob cannot ship green. Scoping to the fully-migrated `core`
+# package is the same core-first ratchet as no-utils-file. Ratchet plan: relocate
+# the two files' values into domain modules, then widen `packages/core` to
+# `packages/*` here.)
+#
+# Note: root-level `packages/*/src/types.ts` (audit, genui, web) sit at src root
+# and are a SEPARATE question from the subdirectory types barrel this rule guards.
+#
+# Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
+id: types-file-purity
+language: typescript
+severity: error
+message: "types.ts is type-space only and must be erasable (ADR-0045) — no function/class/const/let/var/enum. Move the value into a domain module and keep only its `interface` / `type` here."
+files:
+  - "**/packages/core/src/**/types.ts"
+rule:
+  any:
+    - kind: function_declaration
+    - kind: class_declaration
+    - kind: enum_declaration
+    - kind: lexical_declaration
+    - kind: variable_declaration

@@ -1,21 +1,46 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { bootstrapSlots, getSlotRegistry, rescanSlots } from '../../../packages/astro/src/runtime/slots.js';
 import { installSwapPipeline } from '../../../packages/astro/src/runtime/swap-pipeline.js';
+import { normalizeBoundaryState } from '../../../packages/astro/src/runtime/boundary.js';
+import {
+  initWorkerDirective as initWorkerDirectiveProduction,
+  initWorkerDirectiveWithDependencies,
+} from '../../../packages/astro/src/runtime/worker.js';
 import { createStubRegistry } from '../../helpers/define-property-stub.js';
 import { stubWorkerEnvironment } from '../../helpers/mock-worker.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
-import type * as RuntimeBoundary from '../../../packages/astro/src/runtime/boundary.js';
 
 const stubs = createStubRegistry();
 
+type WorkerRuntimeDependencies = Parameters<typeof initWorkerDirectiveWithDependencies>[2];
+
+const initWorkerDirective = (
+  load: Parameters<typeof initWorkerDirectiveProduction>[0],
+  element: Parameters<typeof initWorkerDirectiveProduction>[1],
+  dependencies?: WorkerRuntimeDependencies,
+): void => {
+  if (dependencies) {
+    initWorkerDirectiveWithDependencies(load, element, dependencies);
+    return;
+  }
+  initWorkerDirectiveProduction(load, element);
+};
+
+function workerRuntimeDependencies(
+  createWorkerHost: WorkerRuntimeDependencies['createWorkerHost'],
+  normalize: WorkerRuntimeDependencies['normalizeBoundaryState'] = normalizeBoundaryState,
+): WorkerRuntimeDependencies {
+  return { createWorkerHost, normalizeBoundaryState: normalize };
+}
+
 type RuntimeWindow = Window & {
-  __CZAP_SLOT_REGISTRY__?: unknown;
-  __CZAP_SLOT_BOOTSTRAPPED__?: boolean;
-  __CZAP_SWAP_PIPELINE__?: boolean;
-  __CZAP_SLOTS__?: unknown;
+  __LITESHIP_SLOT_REGISTRY__?: unknown;
+  __LITESHIP_SLOT_BOOTSTRAPPED__?: boolean;
+  __LITESHIP_SWAP_PIPELINE__?: boolean;
+  __LITESHIP_SLOTS__?: unknown;
 };
 
 function resetRuntimeWindow(): void {
@@ -24,10 +49,10 @@ function resetRuntimeWindow(): void {
   }
 
   const runtimeWindow = window as RuntimeWindow;
-  delete runtimeWindow.__CZAP_SLOT_REGISTRY__;
-  delete runtimeWindow.__CZAP_SLOT_BOOTSTRAPPED__;
-  delete runtimeWindow.__CZAP_SWAP_PIPELINE__;
-  delete runtimeWindow.__CZAP_SLOTS__;
+  delete runtimeWindow.__LITESHIP_SLOT_REGISTRY__;
+  delete runtimeWindow.__LITESHIP_SLOT_BOOTSTRAPPED__;
+  delete runtimeWindow.__LITESHIP_SWAP_PIPELINE__;
+  delete runtimeWindow.__LITESHIP_SLOTS__;
 }
 
 afterEach(() => {
@@ -42,7 +67,7 @@ afterEach(() => {
 
 describe('astro runtime slot edge branches', () => {
   test('defers slot scanning until DOMContentLoaded when the document is still loading', () => {
-    document.body.innerHTML = `<section data-czap-slot="/hero" data-czap-mode="replace"></section>`;
+    document.body.innerHTML = `<section data-liteship-slot="/hero" data-liteship-mode="replace"></section>`;
     const readyStateDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'readyState');
 
     Object.defineProperty(document, 'readyState', {
@@ -65,11 +90,11 @@ describe('astro runtime slot edge branches', () => {
   });
 
   test('falls back to the document root when rescanning from a non-Element parent', () => {
-    document.body.innerHTML = `<section id="slot" data-czap-slot="/hero" data-czap-mode="replace"></section>`;
+    document.body.innerHTML = `<section id="slot" data-liteship-slot="/hero" data-liteship-mode="replace"></section>`;
     const fragment = document.createDocumentFragment();
     const ignored = document.createElement('section');
-    ignored.setAttribute('data-czap-slot', '/ignored');
-    ignored.setAttribute('data-czap-mode', 'replace');
+    ignored.setAttribute('data-liteship-slot', '/ignored');
+    ignored.setAttribute('data-liteship-mode', 'replace');
     fragment.appendChild(ignored);
 
     const registry = rescanSlots(fragment);
@@ -83,18 +108,13 @@ describe('astro runtime slot edge branches', () => {
 
     expect(() => getSlotRegistry()).not.toThrow();
     expect(() => bootstrapSlots()).not.toThrow();
-    expect(() => installSwapPipeline(['satellite'])).not.toThrow();
+    expect(() => installSwapPipeline(['adaptive'])).not.toThrow();
     expect(() => rescanSlots(document.createDocumentFragment())).not.toThrow();
   });
 });
 
 describe('astro worker directive edge branches', () => {
   test('returns early without loading when no runtime boundary can be parsed', async () => {
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: { create: vi.fn() },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
 
@@ -106,20 +126,15 @@ describe('astro worker directive edge branches', () => {
   test('falls back to main-thread evaluation when WorkerHost initialization throws', async () => {
     stubWorkerEnvironment(stubs, vi);
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => {
-          throw new Error('boom');
-        }),
-      },
-    }));
+    const createHost = vi.fn(() => {
+      throw new Error('boom');
+    });
 
     await captureDiagnosticsAsync(async ({ events }) => {
-      const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
       const load = vi.fn(async () => undefined);
       const element = document.createElement('div');
       element.setAttribute(
-        'data-czap-boundary',
+        'data-liteship-boundary',
         JSON.stringify({
           id: 'hero',
           input: 'viewport.width',
@@ -132,15 +147,15 @@ describe('astro worker directive edge branches', () => {
         value: 820,
       });
 
-      initWorkerDirective(load, element);
+      initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
       expect(load).toHaveBeenCalledTimes(1);
-      expect(element.getAttribute('data-czap-state')).toBe('wide');
+      expect(element.getAttribute('data-liteship-state')).toBe('wide');
       expect(events).toContainEqual(
         expect.objectContaining({
           level: 'warn',
-          source: 'czap/astro.worker',
-          code: 'worker-host-fallback',
+          source: 'liteship/astro.worker',
+          code: 'astro/worker/worker-host-fallback',
           detail: 'boom',
         }),
       );
@@ -150,20 +165,15 @@ describe('astro worker directive edge branches', () => {
   test('surfaces non-Error worker initialization failures through diagnostics detail', async () => {
     stubWorkerEnvironment(stubs, vi);
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => {
-          throw 'worker boom';
-        }),
-      },
-    }));
+    const createHost = vi.fn(() => {
+      throw 'worker boom';
+    });
 
     await captureDiagnosticsAsync(async ({ events }) => {
-      const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
       const load = vi.fn(async () => undefined);
       const element = document.createElement('div');
       element.setAttribute(
-        'data-czap-boundary',
+        'data-liteship-boundary',
         JSON.stringify({
           id: 'hero',
           input: 'viewport.width',
@@ -176,15 +186,15 @@ describe('astro worker directive edge branches', () => {
         value: 820,
       });
 
-      initWorkerDirective(load, element);
+      initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
       expect(load).toHaveBeenCalledTimes(1);
-      expect(element.getAttribute('data-czap-state')).toBe('wide');
+      expect(element.getAttribute('data-liteship-state')).toBe('wide');
       expect(events).toContainEqual(
         expect.objectContaining({
           level: 'warn',
-          source: 'czap/astro.worker',
-          code: 'worker-host-fallback',
+          source: 'liteship/astro.worker',
+          code: 'astro/worker/worker-host-fallback',
           detail: 'worker boom',
         }),
       );
@@ -213,11 +223,10 @@ describe('astro worker directive edge branches', () => {
       value: false,
     });
 
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -233,7 +242,7 @@ describe('astro worker directive edge branches', () => {
     initWorkerDirective(load, element);
 
     expect(load).toHaveBeenCalledTimes(1);
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
     expect(observe).toHaveBeenCalledWith(document.documentElement);
 
     stubs.define(window, 'innerWidth', {
@@ -241,10 +250,10 @@ describe('astro worker directive edge branches', () => {
       value: 640,
     });
     resizeCallback?.([] as never, {} as never);
-    expect(element.getAttribute('data-czap-state')).toBe('compact');
+    expect(element.getAttribute('data-liteship-state')).toBe('compact');
 
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
-    element.dispatchEvent(new CustomEvent('czap:teardown'));
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
+    element.dispatchEvent(new CustomEvent('liteship:teardown'));
     expect(disconnect).toHaveBeenCalledTimes(2);
   });
 
@@ -266,11 +275,10 @@ describe('astro worker directive edge branches', () => {
       value: false,
     });
 
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'pointer',
         input: 'pointer.x',
@@ -283,7 +291,7 @@ describe('astro worker directive edge branches', () => {
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(observe).not.toHaveBeenCalled();
-    expect(element.getAttribute('data-czap-state')).toBeNull();
+    expect(element.getAttribute('data-liteship-state')).toBeNull();
   });
 
   test('binds worker readiness, resize observation, dispose, and reinit cleanup', async () => {
@@ -326,17 +334,10 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -349,11 +350,11 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
     let readyCount = 0;
-    element.addEventListener('czap:worker-ready', () => {
+    element.addEventListener('liteship:worker-ready', () => {
       readyCount += 1;
     });
 
-    initWorkerDirective(load, element);
+    initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(createHost).toHaveBeenCalledTimes(1);
@@ -363,17 +364,16 @@ describe('astro worker directive edge branches', () => {
     expect(observe).toHaveBeenCalledWith(document.documentElement);
 
     const readyListener = addEventListener.mock.calls.find(([type]) => type === 'message')?.[1] as
-      | ((event: MessageEvent<{ type?: string }>) => void)
-      | undefined;
+      ((event: MessageEvent<{ type?: string }>) => void) | undefined;
     readyListener?.({ data: { type: 'ready' } } as MessageEvent<{ type?: string }>);
     expect(readyCount).toBe(1);
 
-    element.dispatchEvent(new CustomEvent('czap:teardown'));
+    element.dispatchEvent(new CustomEvent('liteship:teardown'));
     expect(disconnect).toHaveBeenCalledTimes(1);
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(hostDispose).toHaveBeenCalledTimes(1);
 
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(createHost).toHaveBeenCalledTimes(2);
   });
 
@@ -427,17 +427,10 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -450,11 +443,11 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(load, element);
+    initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
     readyListener?.({ data: { type: 'ready' } } as MessageEvent<{ type?: string }>);
 
-    element.setAttribute('data-czap-boundary', '{broken');
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.setAttribute('data-liteship-boundary', '{broken');
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     expect(hostDispose).toHaveBeenCalledTimes(1);
     expect(unsubscribe).toHaveBeenCalledTimes(1);
@@ -462,7 +455,7 @@ describe('astro worker directive edge branches', () => {
 
     expect(() => onStateCallback?.({ discrete: { hero: 'wide' } })).not.toThrow();
     expect(() => resizeCallback?.([] as never, {} as never)).not.toThrow();
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
     expect(bootstrapResolvedState).toHaveBeenCalledTimes(1);
     expect(applyResolvedState).not.toHaveBeenCalled();
   });
@@ -487,10 +480,9 @@ describe('astro worker directive edge branches', () => {
       value: false,
     });
 
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -504,13 +496,13 @@ describe('astro worker directive edge branches', () => {
     });
 
     initWorkerDirective(async () => undefined, element);
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
 
-    element.setAttribute('data-czap-boundary', '{broken');
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.setAttribute('data-liteship-boundary', '{broken');
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     expect(() => resizeCallback?.([] as never, {} as never)).not.toThrow();
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
   });
 
   test('keeps the worker host idle when the runtime boundary disappears before a viewport update', async () => {
@@ -548,16 +540,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -570,12 +555,12 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(bootstrapResolvedState).toHaveBeenCalledTimes(1);
     expect(applyResolvedState).not.toHaveBeenCalled();
 
-    element.setAttribute('data-czap-boundary', '{broken');
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.setAttribute('data-liteship-boundary', '{broken');
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
     resizeCallback?.([] as never, {} as never);
 
     expect(bootstrapResolvedState).toHaveBeenCalledTimes(1);
@@ -617,17 +602,10 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const load = vi.fn(async () => undefined);
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'pointer',
         input: 'pointer.x',
@@ -636,7 +614,7 @@ describe('astro worker directive edge branches', () => {
       }),
     );
 
-    initWorkerDirective(load, element);
+    initWorkerDirective(load, element, workerRuntimeDependencies(createHost));
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(createHost).toHaveBeenCalledTimes(1);
@@ -649,15 +627,17 @@ describe('astro worker directive edge branches', () => {
   test('suppresses duplicate worker agreement when the mirrored generation matches host-applied detail', async () => {
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
     const createHost = vi.fn(() => ({
       compositor: {
@@ -692,16 +672,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -716,10 +689,12 @@ describe('astro worker directive edge branches', () => {
 
     const workerStates: unknown[] = [];
     const uniformStates: unknown[] = [];
-    element.addEventListener('czap:worker-state', ((event: CustomEvent) => workerStates.push(event.detail)) as EventListener);
-    element.addEventListener('czap:uniform-update', ((event: CustomEvent) => uniformStates.push(event.detail)) as EventListener);
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent) =>
+      workerStates.push(event.detail)) as EventListener);
+    element.addEventListener('liteship:uniform-update', ((event: CustomEvent) =>
+      uniformStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     expect(workerStates).toHaveLength(1);
     expect(uniformStates).toHaveLength(1);
@@ -736,7 +711,7 @@ describe('astro worker directive edge branches', () => {
 
     expect(workerStates).toHaveLength(1);
     expect(uniformStates).toHaveLength(1);
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
     expect(bootstrapResolvedState).toHaveBeenCalledWith([{ name: 'hero', state: 'wide', generation: 1 }]);
     expect(applyResolvedState).not.toHaveBeenCalled();
   });
@@ -744,17 +719,19 @@ describe('astro worker directive edge branches', () => {
   test('keeps pending agreement through unrelated ack entries and applies divergent mirrored payloads', async () => {
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      css?: Record<string, string | number>;
-      aria?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          css?: Record<string, string | number>;
+          aria?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
     let ackCallback:
       | ((ack: {
           readonly generation: number;
@@ -799,16 +776,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -822,12 +792,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'czap:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     ackCallback?.({
       generation: 1,
@@ -836,10 +804,10 @@ describe('astro worker directive edge branches', () => {
     });
     onStateCallback?.({
       discrete: { hero: 'wide' },
-      css: { '--czap-worker-shadow': '1' },
+      css: { '--liteship-worker-shadow': '1' },
       aria: { 'aria-live': 'polite' },
       outputs: {
-        css: { '--czap-worker-shadow': '1' },
+        css: { '--liteship-worker-shadow': '1' },
         glsl: {},
         aria: { 'aria-live': 'polite' },
       },
@@ -847,7 +815,7 @@ describe('astro worker directive edge branches', () => {
     });
 
     expect(workerStates).toHaveLength(2);
-    expect(element.style.getPropertyValue('--czap-worker-shadow')).toBe('1');
+    expect(element.style.getPropertyValue('--liteship-worker-shadow')).toBe('1');
     expect(element.getAttribute('aria-live')).toBe('polite');
   });
 
@@ -864,72 +832,48 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('../../../packages/astro/src/runtime/boundary.js', async () => {
-      const actual = await vi.importActual<typeof RuntimeBoundary>(
-        '../../../packages/astro/src/runtime/boundary.js',
-      );
-
-      return {
-        ...actual,
-        normalizeBoundaryState(state: {
-          readonly discrete?: Record<string, string>;
-          readonly css?: Record<string, string | number>;
-          readonly glsl?: Record<string, number>;
-          readonly aria?: Record<string, string>;
-          readonly outputs?: {
-            readonly css?: Record<string, string | number>;
-            readonly glsl?: Record<string, number>;
-            readonly aria?: Record<string, string>;
-          };
-        }) {
-          return {
-            discrete: {
-              hero: state.discrete?.hero ?? '',
-              mirror: state.discrete?.mirror ?? 'seed',
-            },
-            css: {},
-            glsl: {},
-            aria: {},
-          };
-        },
-      };
+    const normalizeSeededState: WorkerRuntimeDependencies['normalizeBoundaryState'] = (state) => ({
+      discrete: {
+        hero: state.discrete?.hero ?? '',
+        mirror: state.discrete?.mirror ?? 'seed',
+      },
+      css: {},
+      glsl: {},
+      wgsl: {},
+      aria: {},
     });
 
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn(() => vi.fn()),
-            worker: {
-              addEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn((callback) => {
-            onStateCallback = callback;
-            return vi.fn();
-          }),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn(() => vi.fn()),
+        worker: {
+          addEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn((callback) => {
+        onStateCallback = callback;
+        return vi.fn();
+      }),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -943,12 +887,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'czap:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost, normalizeSeededState));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -980,69 +922,45 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('../../../packages/astro/src/runtime/boundary.js', async () => {
-      const actual = await vi.importActual<typeof RuntimeBoundary>(
-        '../../../packages/astro/src/runtime/boundary.js',
-      );
-
-      return {
-        ...actual,
-        normalizeBoundaryState(state: {
-          readonly discrete?: Record<string, string>;
-          readonly css?: Record<string, string | number>;
-          readonly glsl?: Record<string, number>;
-          readonly aria?: Record<string, string>;
-          readonly outputs?: {
-            readonly css?: Record<string, string | number>;
-            readonly glsl?: Record<string, number>;
-            readonly aria?: Record<string, string>;
-          };
-        }) {
-          return {
-            discrete: { ...(state.discrete ?? {}) },
-            css: {},
-            glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
-            aria: {},
-          };
-        },
-      };
+    const normalizeSeededState: WorkerRuntimeDependencies['normalizeBoundaryState'] = (state) => ({
+      discrete: { ...(state.discrete ?? {}) },
+      css: {},
+      glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
+      wgsl: {},
+      aria: {},
     });
 
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn(() => vi.fn()),
-            worker: {
-              addEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn((callback) => {
-            onStateCallback = callback;
-            return vi.fn();
-          }),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn(() => vi.fn()),
+        worker: {
+          addEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn((callback) => {
+        onStateCallback = callback;
+        return vi.fn();
+      }),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1056,12 +974,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'czap:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost, normalizeSeededState));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1093,69 +1009,45 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('../../../packages/astro/src/runtime/boundary.js', async () => {
-      const actual = await vi.importActual<typeof RuntimeBoundary>(
-        '../../../packages/astro/src/runtime/boundary.js',
-      );
-
-      return {
-        ...actual,
-        normalizeBoundaryState(state: {
-          readonly discrete?: Record<string, string>;
-          readonly css?: Record<string, string | number>;
-          readonly glsl?: Record<string, number>;
-          readonly aria?: Record<string, string>;
-          readonly outputs?: {
-            readonly css?: Record<string, string | number>;
-            readonly glsl?: Record<string, number>;
-            readonly aria?: Record<string, string>;
-          };
-        }) {
-          return {
-            discrete: { ...(state.discrete ?? {}) },
-            css: {},
-            glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
-            aria: {},
-          };
-        },
-      };
+    const normalizeSeededState: WorkerRuntimeDependencies['normalizeBoundaryState'] = (state) => ({
+      discrete: { ...(state.discrete ?? {}) },
+      css: {},
+      glsl: state.outputs?.glsl ?? { u_seed: 1, u_value: 1 },
+      wgsl: {},
+      aria: {},
     });
 
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn(() => vi.fn()),
-            worker: {
-              addEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn((callback) => {
-            onStateCallback = callback;
-            return vi.fn();
-          }),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn(() => vi.fn()),
+        worker: {
+          addEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn((callback) => {
+        onStateCallback = callback;
+        return vi.fn();
+      }),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1169,12 +1061,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'czap:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost, normalizeSeededState));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1195,15 +1085,17 @@ describe('astro worker directive edge branches', () => {
 
   test('applies mirrored payloads when the seeded generation matches but normalized detail still differs', async () => {
     const bootstrapResolvedState = vi.fn();
-    let onStateCallback: ((state: {
-      discrete?: Record<string, string>;
-      outputs?: {
-        css?: Record<string, string | number>;
-        glsl?: Record<string, number>;
-        aria?: Record<string, string>;
-      };
-      resolvedStateGenerations?: Record<string, number>;
-    }) => void) | null = null;
+    let onStateCallback:
+      | ((state: {
+          discrete?: Record<string, string>;
+          outputs?: {
+            css?: Record<string, string | number>;
+            glsl?: Record<string, number>;
+            aria?: Record<string, string>;
+          };
+          resolvedStateGenerations?: Record<string, number>;
+        }) => void)
+      | null = null;
 
     const createHost = vi.fn(() => ({
       compositor: {
@@ -1238,16 +1130,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1261,12 +1146,10 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'czap:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
@@ -1308,32 +1191,26 @@ describe('astro worker directive edge branches', () => {
       },
     );
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: vi.fn(() => ({
-          compositor: {
-            addQuantizer: vi.fn(),
-            bootstrapResolvedState: vi.fn(),
-            applyResolvedState: vi.fn(),
-            onResolvedStateAck: vi.fn((callback) => {
-              ackCallbacks.push(callback);
-              return vi.fn();
-            }),
-            worker: {
-              addEventListener: vi.fn(),
-              removeEventListener: vi.fn(),
-            },
-          },
-          onState: vi.fn(() => vi.fn()),
-          dispose: vi.fn(),
-        })),
+    const createHost = vi.fn(() => ({
+      compositor: {
+        addQuantizer: vi.fn(),
+        bootstrapResolvedState: vi.fn(),
+        applyResolvedState: vi.fn(),
+        onResolvedStateAck: vi.fn((callback) => {
+          ackCallbacks.push(callback);
+          return vi.fn();
+        }),
+        worker: {
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        },
       },
+      onState: vi.fn(() => vi.fn()),
+      dispose: vi.fn(),
     }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1346,10 +1223,10 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(ackCallbacks).toHaveLength(1);
 
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(ackCallbacks).toHaveLength(2);
 
     expect(() =>
@@ -1359,7 +1236,7 @@ describe('astro worker directive edge branches', () => {
         additionalOutputsChanged: false,
       }),
     ).not.toThrow();
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
   });
 
   test('ignores undefined and unchanged worker updates before mirroring the next resolved state', async () => {
@@ -1399,16 +1276,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1422,7 +1292,7 @@ describe('astro worker directive edge branches', () => {
       writable: true,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     expect(bootstrapResolvedState).toHaveBeenCalledTimes(1);
     expect(applyResolvedState).not.toHaveBeenCalled();
@@ -1438,7 +1308,7 @@ describe('astro worker directive edge branches', () => {
     window.innerWidth = 640;
     resizeCallback?.([] as never, {} as never);
     expect(applyResolvedState).toHaveBeenCalledWith([{ name: 'hero', state: 'compact', generation: 2 }]);
-    expect(element.getAttribute('data-czap-state')).toBe('compact');
+    expect(element.getAttribute('data-liteship-state')).toBe('compact');
   });
 
   test('treats the first worker resize update as hysteresis-free when startup had no readable viewport value', async () => {
@@ -1478,16 +1348,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1502,16 +1365,16 @@ describe('astro worker directive edge branches', () => {
       writable: true,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
 
     expect(bootstrapResolvedState).not.toHaveBeenCalled();
-    expect(element.getAttribute('data-czap-state')).toBeNull();
+    expect(element.getAttribute('data-liteship-state')).toBeNull();
 
     window.innerWidth = 820;
     resizeCallback?.([] as never, {} as never);
 
     expect(applyResolvedState).toHaveBeenCalledWith([{ name: 'hero', state: 'wide', generation: 1 }]);
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
   });
 
   test('applies worker payloads without discrete state or generation when mirrored outputs still matter', async () => {
@@ -1564,16 +1427,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1587,17 +1443,15 @@ describe('astro worker directive edge branches', () => {
     });
 
     const workerStates: Array<Record<string, unknown>> = [];
-    element.addEventListener(
-      'czap:worker-state',
-      ((event: CustomEvent<Record<string, unknown>>) => workerStates.push(event.detail)) as EventListener,
-    );
+    element.addEventListener('liteship:worker-state', ((event: CustomEvent<Record<string, unknown>>) =>
+      workerStates.push(event.detail)) as EventListener);
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(workerStates).toHaveLength(1);
 
     onStateCallback?.({
       outputs: {
-        css: { '--czap-worker-shadow': '2' },
+        css: { '--liteship-worker-shadow': '2' },
         glsl: { u_hero: 2 },
         aria: { 'aria-busy': 'true' },
       },
@@ -1605,16 +1459,16 @@ describe('astro worker directive edge branches', () => {
 
     expect(workerStates).toHaveLength(2);
     expect(workerStates.at(-1)).toMatchObject({
-      css: { '--czap-worker-shadow': '2' },
+      css: { '--liteship-worker-shadow': '2' },
       glsl: { u_hero: 2 },
       aria: { 'aria-busy': 'true' },
     });
-    expect(element.style.getPropertyValue('--czap-worker-shadow')).toBe('2');
+    expect(element.style.getPropertyValue('--liteship-worker-shadow')).toBe('2');
     expect(element.getAttribute('aria-busy')).toBe('true');
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
   });
 
-  test('reinit falls back to an empty previous state when the current data-czap-state attribute is absent', async () => {
+  test('reinit falls back to an empty previous state when the current data-liteship-state attribute is absent', async () => {
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
 
@@ -1648,16 +1502,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1671,15 +1518,15 @@ describe('astro worker directive edge branches', () => {
       value: 820,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(bootstrapResolvedState).toHaveBeenNthCalledWith(1, [{ name: 'hero', state: 'wide', generation: 1 }]);
 
-    element.removeAttribute('data-czap-state');
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.removeAttribute('data-liteship-state');
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     expect(bootstrapResolvedState).toHaveBeenNthCalledWith(2, [{ name: 'hero', state: 'wide', generation: 1 }]);
     expect(applyResolvedState).not.toHaveBeenCalled();
-    expect(element.getAttribute('data-czap-state')).toBe('wide');
+    expect(element.getAttribute('data-liteship-state')).toBe('wide');
   });
 
   test('ignores stale worker resize callbacks after reinit swaps to a new host instance', async () => {
@@ -1723,16 +1570,9 @@ describe('astro worker directive edge branches', () => {
       value: true,
     });
 
-    vi.doMock('@czap/worker', () => ({
-      WorkerHost: {
-        create: createHost,
-      },
-    }));
-
-    const { initWorkerDirective } = await import('../../../packages/astro/src/runtime/worker.js');
     const element = document.createElement('div');
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1746,11 +1586,11 @@ describe('astro worker directive edge branches', () => {
       writable: true,
     });
 
-    initWorkerDirective(async () => undefined, element);
+    initWorkerDirective(async () => undefined, element, workerRuntimeDependencies(createHost));
     expect(resizeCallbacks).toHaveLength(1);
 
     element.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -1758,7 +1598,7 @@ describe('astro worker directive edge branches', () => {
         states: ['narrow', 'wide'],
       }),
     );
-    element.dispatchEvent(new CustomEvent('czap:reinit'));
+    element.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(resizeCallbacks).toHaveLength(2);
 
     window.innerWidth = 500;
@@ -1767,6 +1607,6 @@ describe('astro worker directive edge branches', () => {
 
     resizeCallbacks[1]?.([] as never, {} as never);
     expect(secondApplyResolvedState).toHaveBeenCalledWith([{ name: 'hero', state: 'narrow', generation: 2 }]);
-    expect(element.getAttribute('data-czap-state')).toBe('narrow');
+    expect(element.getAttribute('data-liteship-state')).toBe('narrow');
   });
 });

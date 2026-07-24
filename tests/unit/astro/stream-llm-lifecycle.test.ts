@@ -2,15 +2,15 @@
 
 /**
  * A3b gate — the `client:stream` + `client:llm` directives consume the hardened
- * SSE primitive (`@czap/web` `SSE.create`) SYNCHRONOUSLY: `client:stream` through
+ * SSE primitive (`@liteship/web` `SSE.create`) SYNCHRONOUSLY: `client:stream` through
  * its `onMessage`/`onStateChange` callbacks (keeping a `Scope` only for the
  * connection lifecycle, no drain fibers), `client:llm` through its own raw
  * `EventSource` + already-guarded decoder (no Effect runtime at all).
  *
  * These assertions pin the lifecycle contract:
- *   1. `czap:teardown` closes the connection synchronously — no morph / token
+ *   1. `liteship:teardown` closes the connection synchronously — no morph / token
  *      survives the teardown.
- *   2. `czap:reinit` (the Astro View-Transition swap pipeline) replaces the
+ *   2. `liteship:reinit` (the Astro View-Transition swap pipeline) replaces the
  *      connection: exactly ONE live `EventSource` after the swap (single-boot),
  *      and the new connection resumes from the last cursor.
  *   3. The heartbeat watchdog reconnects a silent stream (the latent primitive
@@ -26,8 +26,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
-import { Resumption } from '@czap/web';
+import { Diagnostics, SSE_BUFFER_SIZE } from '@liteship/core';
+import { Resumption } from '@liteship/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import llmDirective from '../../../packages/astro/src/client-directives/llm.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
@@ -61,12 +61,12 @@ function liveSourceCount(): number {
 }
 
 function patchFrame(id: string, version: number): string {
-  return JSON.stringify({ type: 'patch', data: `<div data-czap-id="${id}">v${version}</div>` });
+  return JSON.stringify({ type: 'patch', data: `<div data-liteship-id="${id}">v${version}</div>` });
 }
 
 function disposeTree(): void {
   document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-    element.dispatchEvent(new CustomEvent('czap:teardown'));
+    element.dispatchEvent(new CustomEvent('liteship:teardown'));
   });
 }
 
@@ -75,7 +75,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     _resetRuntimePolicyForTests();
     restoreES = MockEventSource.install();
   });
@@ -90,10 +90,10 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     vi.useRealTimers();
   });
 
-  test('czap:teardown closes the EventSource and no morph survives it', async () => {
-    const el = makeEl('div', { 'data-czap-stream-url': '/api/feed' });
+  test('liteship:teardown closes the EventSource and no morph survives it', async () => {
+    const el = makeEl('div', { 'data-liteship-stream-url': '/api/feed' });
     const morphs: string[] = [];
-    el.addEventListener('czap:stream-morph', () => morphs.push('m'));
+    el.addEventListener('liteship:stream-morph', () => morphs.push('m'));
 
     streamDirective(noop, {}, el);
     const source = latestSource();
@@ -105,7 +105,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     expect(morphs).toEqual(['m']);
     expect(el.innerHTML).toContain('live');
 
-    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    el.dispatchEvent(new CustomEvent('liteship:teardown'));
     await tick();
     expect(source.readyState).toBe(MockEventSource.CLOSED);
 
@@ -119,17 +119,17 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     expect(el.innerHTML).not.toContain('late');
   });
 
-  test('czap:reinit replaces the connection — exactly one live EventSource (VT-swap survival)', async () => {
+  test('liteship:reinit replaces the connection — exactly one live EventSource (VT-swap survival)', async () => {
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'doc-1',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'doc-1',
     });
 
     streamDirective(noop, {}, el);
     expect(MockEventSource.instances).toHaveLength(1);
     const first = latestSource();
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     await tick();
 
     expect(MockEventSource.instances).toHaveLength(2);
@@ -138,10 +138,10 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     expect(liveSourceCount()).toBe(1);
   });
 
-  test('czap:reinit reseeds the new connection with the last cursor (resumes the tail, not restart)', async () => {
+  test('liteship:reinit reseeds the new connection with the last cursor (resumes the tail, not restart)', async () => {
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'doc-1',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'doc-1',
     });
 
     streamDirective(noop, {}, el);
@@ -149,7 +149,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     // A message advances the cursor on the live connection.
     first.simulateMessage(patchFrame('hero', 0), 'evt-7');
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     await tick();
 
     const next = latestSource();
@@ -179,8 +179,8 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     });
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'doc-9',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'doc-9',
     });
     streamDirective(noop, {}, el);
     const first = latestSource();
@@ -209,7 +209,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     // Zero jitter so the backoff delay === initialDelay (1000ms).
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
-    const el = makeEl('div', { 'data-czap-stream-url': '/api/feed' });
+    const el = makeEl('div', { 'data-liteship-stream-url': '/api/feed' });
     streamDirective(noop, {}, el);
     expect(MockEventSource.instances).toHaveLength(1);
 
@@ -227,7 +227,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     const captured = Diagnostics.createBufferSink();
     Diagnostics.setSink(captured.sink);
 
-    const el = makeEl('div', { 'data-czap-stream-url': '/api/feed' });
+    const el = makeEl('div', { 'data-liteship-stream-url': '/api/feed' });
     streamDirective(noop, {}, el);
     const source = latestSource();
 
@@ -235,7 +235,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     // async Stream + bounded Queue — so each patch is handled in-turn and the
     // primitive's receive buffer is never engaged. A flood far past capacity
     // therefore never saturates, whether or not the patches share a
-    // `data-czap-id`. (Overflow is a primitive-only feature — see
+    // `data-liteship-id`. (Overflow is a primitive-only feature — see
     // `tests/property/sse-overflow.test.ts`; the directive's own rAF batching
     // owns render throttling.)
     for (let i = 0; i < SSE_BUFFER_SIZE * 2; i++) {
@@ -253,7 +253,7 @@ describe('A3b — client:llm synchronous frame processing', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     _resetRuntimePolicyForTests();
     restoreES = MockEventSource.install();
   });
@@ -273,9 +273,9 @@ describe('A3b — client:llm synchronous frame processing', () => {
     const captured = Diagnostics.createBufferSink();
     Diagnostics.setSink(captured.sink);
 
-    const el = makeEl('section', { 'data-czap-llm-url': '/api/chat' });
+    const el = makeEl('section', { 'data-liteship-llm-url': '/api/chat' });
     const backpressure: unknown[] = [];
-    el.addEventListener('czap:llm-backpressure', ((event: CustomEvent) =>
+    el.addEventListener('liteship:llm-backpressure', ((event: CustomEvent) =>
       backpressure.push(event.detail)) as EventListener);
 
     llmDirective(noop, {}, el);
@@ -301,11 +301,11 @@ describe('A3b — client:llm synchronous frame processing', () => {
     expect(el.textContent).toContain(`t${total - 1}`);
   });
 
-  test('czap:teardown closes the EventSource and stops draining tokens', async () => {
-    const el = makeEl('section', { 'data-czap-llm-url': '/api/chat', 'data-czap-llm-target': '.sink' });
+  test('liteship:teardown closes the EventSource and stops draining tokens', async () => {
+    const el = makeEl('section', { 'data-liteship-llm-url': '/api/chat', 'data-liteship-llm-target': '.sink' });
     el.innerHTML = '<div class="sink"></div>';
     const tokens: unknown[] = [];
-    el.addEventListener('czap:llm-token', ((event: CustomEvent) => tokens.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-token', ((event: CustomEvent) => tokens.push(event.detail)) as EventListener);
 
     llmDirective(noop, {}, el);
     const source = latestSource();
@@ -316,7 +316,7 @@ describe('A3b — client:llm synchronous frame processing', () => {
     await tick();
     expect(tokens).toHaveLength(1);
 
-    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    el.dispatchEvent(new CustomEvent('liteship:teardown'));
     await tick();
     expect(source.readyState).toBe(MockEventSource.CLOSED);
 
@@ -326,13 +326,13 @@ describe('A3b — client:llm synchronous frame processing', () => {
     expect(tokens).toHaveLength(1);
   });
 
-  test('czap:reinit reopens exactly one live llm connection', async () => {
-    const el = makeEl('section', { 'data-czap-llm-url': '/api/chat' });
+  test('liteship:reinit reopens exactly one live llm connection', async () => {
+    const el = makeEl('section', { 'data-liteship-llm-url': '/api/chat' });
     llmDirective(noop, {}, el);
     expect(MockEventSource.instances).toHaveLength(1);
     const first = latestSource();
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     await tick();
 
     expect(MockEventSource.instances).toHaveLength(2);

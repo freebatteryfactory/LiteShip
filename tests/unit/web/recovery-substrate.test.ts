@@ -5,7 +5,7 @@
  * (forged-hash / wrong-subject / malformed frames refused before buffering).
  */
 import { describe, expect, test } from 'vitest';
-import { StateName, transitionReceipt, type DiscreteStateTransition } from '@czap/core';
+import { StateName, transitionReceipt, type DiscreteStateTransition } from '@liteship/core';
 import {
   registerStreamRecoverySubstrate,
   getStreamRecoverySubstrate,
@@ -15,12 +15,12 @@ import type { StreamRecoverySubstrate } from '../../../packages/web/src/stream/r
 
 const substrate = (): StreamRecoverySubstrate => ({
   graphQueryUrl: '/api/graph',
-  mutationClient: { base: () => ({ id: 'czap:base' }) as never, adopt: () => {} },
+  mutationClient: { base: () => ({ id: 'liteship:base' }) as never, adopt: () => {} },
   cellStore: { register: () => {}, hydrateDiscrete: () => ({}) } as never,
 });
 
 const mkTransition = (
-  base = 'czap:base',
+  base = 'liteship:base',
   cell = 'layout',
   next = 'tablet',
   generation = 1,
@@ -32,12 +32,12 @@ const mkTransition = (
   generation,
   authority: 'graph',
   base: base as never,
-  resultId: 'czap:next' as never,
+  resultId: 'liteship:next' as never,
   kind: 'discrete',
 });
 
 /** Mint an ATTESTED { receipt, transition } frame (hash + subject self-consistent). */
-const validFrame = async (base = 'czap:base', cell = 'layout') => {
+const validFrame = async (base = 'liteship:base', cell = 'layout') => {
   const transition = mkTransition(base, cell);
   const receipt = await transitionReceipt(transition);
   return { receipt, transition };
@@ -108,10 +108,10 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
   test('HOSTILE: a wrong-subject frame (receipt for cellA, transition for cellB) is refused', async () => {
     const dispose = registerStreamRecoverySubstrate('art-subj', substrate());
     try {
-      const frame = await validFrame('czap:base', 'layout');
-      // Same self-consistent receipt (subject czap:base#layout), but paired with a
+      const frame = await validFrame('liteship:base', 'layout');
+      // Same self-consistent receipt (subject liteship:base#layout), but paired with a
       // transition naming a DIFFERENT cell → subject-law mismatch.
-      const wrong = { receipt: frame.receipt, transition: mkTransition('czap:base', 'other') };
+      const wrong = { receipt: frame.receipt, transition: mkTransition('liteship:base', 'other') };
       expect(await recordStreamPatchReceipt('art-subj', wrong)).toBe(false);
       expect(getStreamRecoverySubstrate('art-subj')!.patchReceiptEntries).toHaveLength(0);
     } finally {
@@ -122,13 +122,13 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
   test('HOSTILE: a payload-swapped frame (receipt for value X, transition with modified next/generation) is refused', async () => {
     const dispose = registerStreamRecoverySubstrate('art-payload', substrate());
     try {
-      // The receipt attests next:'tablet', generation:1 for subject czap:base#layout.
-      const frame = await validFrame('czap:base', 'layout');
+      // The receipt attests next:'tablet', generation:1 for subject liteship:base#layout.
+      const frame = await validFrame('liteship:base', 'layout');
       // SAME self-consistent receipt + SAME subject, but the paired transition carries a
       // DIFFERENT next-state value AND generation. The envelope hash and the subject law
       // still pass — only the payload-law binding (receipt.payload must attest THIS value)
       // catches it, so gap replay can never apply a value the receipt never signed.
-      const swapped = { receipt: frame.receipt, transition: mkTransition('czap:base', 'layout', 'desktop', 5) };
+      const swapped = { receipt: frame.receipt, transition: mkTransition('liteship:base', 'layout', 'desktop', 5) };
       expect(await recordStreamPatchReceipt('art-payload', swapped)).toBe(false);
       expect(getStreamRecoverySubstrate('art-payload')!.patchReceiptEntries).toHaveLength(0);
 
@@ -164,12 +164,12 @@ describe('recordStreamPatchReceipt — attested buffering', () => {
     const dispose = registerStreamRecoverySubstrate('art-bound', substrate());
     try {
       for (let i = 0; i < 300; i++) {
-        await recordStreamPatchReceipt('art-bound', await validFrame(`czap:base-${i}`));
+        await recordStreamPatchReceipt('art-bound', await validFrame(`liteship:base-${i}`));
       }
       const entries = getStreamRecoverySubstrate('art-bound')!.patchReceiptEntries;
       expect(entries).toHaveLength(256);
-      expect(entries[0]!.transition.base).toBe('czap:base-44');
-      expect(entries.at(-1)!.transition.base).toBe('czap:base-299');
+      expect(entries[0]!.transition.base).toBe('liteship:base-44');
+      expect(entries.at(-1)!.transition.base).toBe('liteship:base-299');
     } finally {
       dispose();
     }

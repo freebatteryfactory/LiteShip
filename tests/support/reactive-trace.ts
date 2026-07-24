@@ -12,21 +12,21 @@
  *
  * PURE + DETERMINISTIC by construction — no Effect, no clock, no I/O. A history
  * and an observation are plain frozen data (Axiom 1: meaning is data), so both
- * are CBOR-addressable via `@czap/canonical` ({@link traceDigest} /
+ * are CBOR-addressable via `@liteship/canonical` ({@link traceDigest} /
  * {@link observationDigest}). This is the S1.5.3 discipline made mechanical:
  * capture the history and its observation, never a live self-consistent
  * re-derivation.
  *
  * SCOPE NOTE — this file is the FORMAT only (types + builders + digest). It does
- * NOT run any primitive and imports NOTHING from `@czap/core`, so it cannot
+ * NOT run any primitive and imports NOTHING from `@liteship/core`, so it cannot
  * perturb reactive runtime behavior. The Wave 5.5 PRIME CONSTRAINT (zero runtime
  * semantic changes) holds by construction here.
  *
  * @module
  */
 
-import { CanonicalCbor, fnv1aBytes } from '@czap/canonical';
-import type { ContentAddress } from '@czap/canonical';
+import { CanonicalCbor, fnv1aBytes } from '@liteship/canonical';
+import type { ContentAddress } from '@liteship/canonical';
 
 // ---------------------------------------------------------------------------
 // Values
@@ -193,8 +193,8 @@ export interface CrossingObservation {
 }
 
 /**
- * The HLC byte-law fields — a STRUCTURAL mirror of `HLC.Shape` so this trace-type
- * module imports nothing from `@czap/core` (see the module header).
+ * The HLC byte-law fields — a STRUCTURAL mirror of `HLC` so this trace-type
+ * module imports nothing from `@liteship/core` (see the module header).
  */
 export interface HlcObservation {
   readonly wall_ms: number;

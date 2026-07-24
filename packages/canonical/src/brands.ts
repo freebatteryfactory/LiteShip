@@ -1,19 +1,19 @@
 /**
- * Local brand types for `@czap/canonical`.
+ * Local brand types for `@liteship/canonical`.
  *
- * Kept self-contained (no `@czap/_spine`) so the bytes kernel carries no
- * peer-dependency baggage. `@czap/core` re-anchors to spine types at its
+ * Kept self-contained (no `@liteship/_spine`) so the bytes kernel carries no
+ * peer-dependency baggage. `@liteship/core` re-anchors to spine types at its
  * export boundary (ADR-0012).
  *
  * The constructors are VALIDATING smart constructors (parse-don't-validate):
  * each throws `ValidationError` on input that does not match the brand's
- * real runtime shape, so a branded value is a proof of that shape. `@czap/error`
+ * real runtime shape, so a branded value is a proof of that shape. `@liteship/error`
  * is a zero-dep foundational package, so importing it here introduces no cycle.
  *
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 /** Content-addressed hash. Format: `fnv1a:XXXXXXXX` (8 hex digits). */
 export type ContentAddress = `fnv1a:${string}`;

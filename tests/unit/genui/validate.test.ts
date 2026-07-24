@@ -1,10 +1,10 @@
 /**
- * @czap/genui validation tests.
+ * @liteship/genui validation tests.
  */
 
 import { describe, expect, it } from 'vitest';
-import type { ComponentCatalog, GeneratedUINode } from '@czap/genui';
-import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, validateGeneratedUITree } from '@czap/genui';
+import type { ComponentCatalog, GeneratedUINode } from '@liteship/genui';
+import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, validateGeneratedUITree } from '@liteship/genui';
 import { isInteractionProp } from '../../../packages/genui/src/interaction.js';
 
 describe('validateGeneratedUITree', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cloudflareAdapterCapsule } from '@czap/cloudflare';
+import { cloudflareAdapterCapsule } from '@liteship/cloudflare';
 
 describe('cloudflareAdapterCapsule', () => {
   it('declares a siteAdapter for Cloudflare Workers KV boundary cache', () => {

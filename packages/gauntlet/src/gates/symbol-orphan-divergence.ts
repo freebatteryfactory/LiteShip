@@ -8,7 +8,7 @@
  *     it pulls). This is `file-proxy-only`: it matches NAMES, it does not RESOLVE
  *     symbols, so it credits a reference a colliding name produces and misses one a
  *     re-export / alias chain hides behind a barrel.
- *   • the `ts-language-service` oracle's `symbol-orphan` facts (in `@czap/audit`) —
+ *   • the `ts-language-service` oracle's `symbol-orphan` facts (in `@liteship/audit`) —
  *     resolved by a real `getReferencesAtPosition`. This is `symbol-evidenced`: it
  *     follows the symbol through re-exports and aliases and never credits a mere
  *     name collision. The strongest static evidence.
@@ -39,9 +39,9 @@
  *
  * It REQUIRES the injected IR (it folds the IR's facts + reads its `refs`), so it
  * runs only on the host path where the CLI builds + injects the IR via
- * `@czap/audit`'s LanguageService oracle; the lean MCP/command path does not run
+ * `@liteship/audit`'s LanguageService oracle; the lean MCP/command path does not run
  * it. The gauntlet stays lean: this gate is PURE — no `typescript` import. The
- * LanguageService lives in `@czap/audit`; this gate only folds the facts it emits.
+ * LanguageService lives in `@liteship/audit`; this gate only folds the facts it emits.
  *
  * @module
  */
@@ -63,7 +63,7 @@ import {
 /** The shared rule id this gate's findings trace to. */
 const RULE_ID = 'gauntlet/symbol-orphan-divergence';
 
-/** The symbol-evidenced oracle id (mirrors `@czap/audit`'s `LANGUAGE_SERVICE_ORACLE_ID`). */
+/** The symbol-evidenced oracle id (mirrors `@liteship/audit`'s `LANGUAGE_SERVICE_ORACLE_ID`). */
 const SYMBOL_ORACLE = 'ts-language-service';
 
 /** The property the symbol-evidenced oracle emits its orphan verdict under. */
@@ -74,7 +74,7 @@ const FILE_PROXY_CLASS: CoverageClass = 'file-proxy-only';
 
 /**
  * The structured payload of a `symbol-orphan` fact's `value` (mirrors
- * `@czap/audit`'s `OrphanValue`). The fact's `value` is `unknown`, so it MUST be
+ * `@liteship/audit`'s `OrphanValue`). The fact's `value` is `unknown`, so it MUST be
  * narrowed to this shape before use — {@link asOrphanValue} is that guard.
  */
 interface OrphanValue {
@@ -284,8 +284,8 @@ function redIR(): RepoIR {
   ]);
   return makeRepoIR({
     files: [
-      { id: DECL_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@czap/x' },
-      { id: CONSUMER_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@czap/x' },
+      { id: DECL_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@liteship/x' },
+      { id: CONSUMER_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@liteship/x' },
     ],
     symbols: [declSymbol('widget', 3)],
     refs,
@@ -310,8 +310,8 @@ function greenIR(): RepoIR {
   ]);
   return makeRepoIR({
     files: [
-      { id: DECL_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@czap/x' },
-      { id: CONSUMER_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@czap/x' },
+      { id: DECL_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@liteship/x' },
+      { id: CONSUMER_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@liteship/x' },
     ],
     symbols: [declSymbol('referenced', 1), declSymbol('lonely', 2)],
     refs,

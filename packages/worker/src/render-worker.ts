@@ -14,7 +14,7 @@
  * @module
  */
 
-import { Diagnostics, PROJECTION_KEYS_SOURCE, type VideoConfig, type VideoFrameOutput } from '@czap/core';
+import { Diagnostics, PROJECTION_KEYS_SOURCE, type VideoConfig, type VideoFrameOutput } from '@liteship/core';
 import type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } from './messages.js';
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
 
@@ -377,7 +377,7 @@ function _send(worker: WorkerLike, msg: ToWorkerMessage, transfer?: Transferable
 function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
   const blob = new Blob([RENDER_WORKER_SCRIPT], { type: 'application/javascript' });
   const url = URL.createObjectURL(blob);
-  const worker = new Worker(url, { type: 'classic', name: 'czap-renderer' });
+  const worker = new Worker(url, { type: 'classic', name: 'liteship-renderer' });
 
   URL.revokeObjectURL(url);
 
@@ -397,7 +397,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
         break;
       case 'error':
         Diagnostics.error({
-          source: 'czap/worker.render-worker',
+          source: 'liteship/worker.render-worker',
           code: 'worker-message-error',
           message: 'Render worker reported an error.',
           detail: { code: msg.code, message: msg.message, hint: msg.hint },
@@ -408,7 +408,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
 
   worker.addEventListener('error', (e: ErrorEvent) => {
     Diagnostics.error({
-      source: 'czap/worker.render-worker',
+      source: 'liteship/worker.render-worker',
       code: 'worker-unhandled-error',
       message: 'Render worker raised an unhandled error.',
       detail: e.message,
@@ -475,7 +475,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
  *
  * @example
  * ```ts
- * import { RenderWorker } from '@czap/worker';
+ * import { RenderWorker } from '@liteship/worker';
  *
  * // Pace frame emission at 30fps wall-clock (live preview); omit
  * // targetFps to free-run at maximum speed (offline encode).
@@ -503,7 +503,5 @@ export const RenderWorker = {
   create: _createRenderWorker,
 } as const;
 
-export declare namespace RenderWorker {
-  /** Public host-side surface returned by {@link RenderWorker.create}. */
-  export type Shape = RenderWorkerShape;
-}
+/** Public structural type for `RenderWorker`. */
+export type RenderWorker = RenderWorkerShape;

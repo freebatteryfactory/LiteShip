@@ -1,7 +1,7 @@
 /**
  * Standalone `@token` / `@theme` / `@style` / `@quantize` CSS transform.
  *
- * This is the 4-phase CSS walk lifted out of the Vite plugin's `transform`
+ * This is the staged CSS walk lifted out of the Vite plugin's `transform`
  * hook into a pure function over an explicit {@link TransformCssContext}, so
  * it is testable without the Vite plugin lifecycle: pass a `warn` sink, a
  * {@link PrimitiveResolutionCache}, the project root + dirs, and you exercise
@@ -17,15 +17,19 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
-import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
+import {
+  blankCssCommentsAndStrings,
+  braceDepthDelta,
+  cssPrologueEnd,
+  normalizeCssLineEndings,
+} from '@liteship/compiler/parse';
 import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
 import { parseThemeBlocks, compileThemeBlock } from './theme-transform.js';
 import { parseStyleBlocks, compileStyleBlock } from './style-transform.js';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import type { PrimitiveResolutionCache } from './primitive-resolution-cache.js';
 import type { BoundaryDefinitionMap } from './boundary-manifest.js';
 
@@ -66,9 +70,9 @@ export interface TransformCssContext {
 
 /** Supported authoring grammar per at-rule, quoted verbatim in parse-miss warnings. */
 const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
-  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a Token.make() export',
+  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a defineToken() export',
   '@quantize':
-    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a Boundary.make() export and each <stateName> is one of its states',
+    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a defineBoundary() export and each <stateName> is one of its states',
 };
 
 /**
@@ -136,8 +140,8 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
 // ---------------------------------------------------------------------------
 
 /**
- * Run the 4-phase CSS transform on a single sheet. Returns the rewritten CSS,
- * or `null` when nothing changed (no `@czap` at-rules, or every block was
+ * Run the staged CSS transform on a single sheet. Returns the rewritten CSS,
+ * or `null` when nothing changed (no `@liteship` at-rules, or every block was
  * left untransformed). Emits doctor-style warnings through `ctx.warn`, and
  * re-registers resolved convention files through `ctx.addWatchFile`.
  *
@@ -149,14 +153,14 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
 export async function transformCss(code: string, id: string, ctx: TransformCssContext): Promise<string | null> {
   const { cache, projectRoot, dirs, quantizeContainer } = ctx;
 
-  // Quick check -- skip files with no @czap at-rules
+  // Quick check -- skip files with no @liteship at-rules
   const hasToken = code.includes('@token');
   const hasTheme = code.includes('@theme');
   const hasStyle = code.includes('@style');
   const hasQuantize = code.includes('@quantize');
 
   // Boundary-shadowing diagnostic (#114): must run BEFORE the early return so a
-  // foreign app.css (no @czap at-rules) still gets checked against compiled
+  // foreign app.css (no @liteship at-rules) still gets checked against compiled
   // boundary output from other sheets in the same project.
   if (!hasQuantize && cache.lastCompiledBoundaryCss.size > 0) {
     const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
@@ -188,7 +192,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of tokenBlocks) {
       const cacheKey = `${block.tokenName}:${id}`;
-      let token: Token.Shape | null | undefined = cache.token.get(cacheKey);
+      let token: Token | null | undefined = cache.token.get(cacheKey);
 
       if (token === undefined) {
         const resolution = await resolvePrimitive('token', block.tokenName, id, projectRoot, dirs?.token);
@@ -218,7 +222,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of themeBlocks) {
       const cacheKey = `${block.themeName}:${id}`;
-      let theme: Theme.Shape | null | undefined = cache.theme.get(cacheKey);
+      let theme: Theme | null | undefined = cache.theme.get(cacheKey);
 
       if (theme === undefined) {
         const resolution = await resolvePrimitive('theme', block.themeName, id, projectRoot, dirs?.theme);
@@ -248,7 +252,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of styleBlocks) {
       const cacheKey = `${block.styleName}:${id}`;
-      let style: Style.Shape | null | undefined = cache.style.get(cacheKey);
+      let style: Style | null | undefined = cache.style.get(cacheKey);
 
       if (style === undefined) {
         const resolution = await resolvePrimitive('style', block.styleName, id, projectRoot, dirs?.style);
@@ -310,12 +314,12 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       if (ctx.boundaryDefinitions && !discovered) {
         throw ValidationError(
           'vite-plugin',
-          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with Boundary.make). ` +
+          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with defineBoundary). ` +
             `Source: ${id}:${block.line}. ` +
-            `Fix: export \`const ${block.boundaryName} = Boundary.make({ ... })\` from a boundary module in this project.`,
+            `Fix: export \`const ${block.boundaryName} = defineBoundary({ ... })\` from a boundary module in this project.`,
         );
       }
-      let boundary: Boundary.Shape | null | undefined = cache.boundary.get(cacheKey);
+      let boundary: Boundary | null | undefined = cache.boundary.get(cacheKey);
 
       if (boundary === undefined) {
         const resolution =

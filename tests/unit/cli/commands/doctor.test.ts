@@ -1,5 +1,5 @@
 /**
- * Unit tests for `czap doctor`. Probes don't mock the environment; they
+ * Unit tests for `liteship doctor`. Probes don't mock the environment; they
  * run against the live workspace. We assert structural invariants
  * (every check has a status + label) rather than specific verdicts so
  * the test stays stable across machines.
@@ -50,16 +50,16 @@ describe('doctor command', () => {
     const { stdout } = await captureCli(() => doctor({ pretty: false }));
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     const ids = new Set<string>(receipt.checks.map((c: { id: string }) => c.id));
-    // Repo has crates/czap-compute, so the probe should fire.
+    // Repo has crates/liteship-compute, so the probe should fire.
     expect(ids).toContain('wasm.toolchain');
   });
 
   it('omits wasm.toolchain in a workspace without crates/', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-nocrates-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-nocrates-'));
     try {
       mkdirSync(resolve(tmp, 'packages/core'), { recursive: true });
-      // name 'czap' keeps the maintainer profile (consumer profile has no wasm probe at all).
-      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+      // name 'liteship' keeps the maintainer profile (consumer profile has no wasm probe at all).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       const ids = new Set<string>(receipt.checks.map((c: { id: string }) => c.id));
@@ -70,11 +70,11 @@ describe('doctor command', () => {
   });
 
   it('git.config probe returns ok when running outside a git worktree', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-nogit-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-nogit-'));
     try {
       mkdirSync(resolve(tmp, 'packages/core'), { recursive: true });
-      // name 'czap' keeps the maintainer profile (the consumer profile has no git.config probe).
-      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+      // name 'liteship' keeps the maintainer profile (the consumer profile has no git.config probe).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       const gitCfg = receipt.checks.find((c: { id: string }) => c.id === 'git.config');
@@ -88,10 +88,10 @@ describe('doctor command', () => {
   it('--ci escalates caution to exit 1 while keeping the verdict honest', async () => {
     // Build a sandbox with node_modules satisfied but no dist/ — that's a
     // pure-warn workspace (caution verdict). Without --ci this exits 0.
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-caution-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-caution-'));
     try {
-      // name 'czap' keeps the maintainer profile (this fixture simulates the workspace).
-      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+      // name 'liteship' keeps the maintainer profile (this fixture simulates the workspace).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
       mkdirSync(resolve(tmp, 'packages/core/dist'), { recursive: true });
       mkdirSync(resolve(tmp, 'packages/cli/dist'), { recursive: true });
       mkdirSync(resolve(tmp, 'node_modules'), { recursive: true });
@@ -138,7 +138,7 @@ describe('doctor command', () => {
   });
 
   it('reports `blocked` and exit 1 when workspace is uninstalled in a sandbox', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-'));
     try {
       // Make a fake workspace with no node_modules / no packages dist.
       mkdirSync(resolve(tmp, 'packages/core'), { recursive: true });
@@ -160,13 +160,13 @@ describe('doctor command', () => {
   it('readCliVersion resolves the CLI package.json by module location, not cwd', () => {
     // Regression for PR #3 Codex P2: previously `readCliVersion()` only
     // looked at `<cwd>/packages/cli/package.json` and `<cwd>/package.json`,
-    // so `czap version` reported '0.0.0-unknown' whenever the user wasn't
-    // sitting in the repo root (e.g., a globally-installed czap run from
+    // so `liteship version` reported '0.0.0-unknown' whenever the user wasn't
+    // sitting in the repo root (e.g., a globally-installed liteship run from
     // an arbitrary project). The fix tries `import.meta.url`-relative
     // first, so this test asserts the version resolves correctly even
-    // when cwd has no @czap-shaped package.json on disk.
+    // when cwd has no @liteship-shaped package.json on disk.
     const origCwd = process.cwd();
-    const stranger = mkdtempSync(join(tmpdir(), 'czap-version-cwd-'));
+    const stranger = mkdtempSync(join(tmpdir(), 'liteship-version-cwd-'));
     try {
       process.chdir(stranger);
       const v = readCliVersion();
@@ -206,15 +206,15 @@ describe('doctor command', () => {
     }
   });
 
-  it('readCliVersion ignores a cwd whose package.json is not @czap/cli (module-relative wins)', () => {
+  it('readCliVersion ignores a cwd whose package.json is not @liteship/cli (module-relative wins)', () => {
     // After PR #3 Codex P2 fix, module-relative resolution finds the
-    // real @czap/cli package.json regardless of cwd. The cwd-relative
+    // real @liteship/cli package.json regardless of cwd. The cwd-relative
     // candidates are only consulted as a fallback. This test asserts
-    // that the module-relative resolution dominates: a non-@czap/cli
+    // that the module-relative resolution dominates: a non-@liteship/cli
     // package.json under cwd does NOT shadow the real version.
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-version-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-version-'));
     try {
-      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'not-czap', version: '9.9.9' }));
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'not-liteship', version: '9.9.9' }));
       const v = readCliVersion(tmp);
       // Real CLI version, NOT '9.9.9' (the imposter under cwd) or
       // '0.0.0-unknown' (the pre-fix bug behavior).
@@ -246,7 +246,7 @@ describe('doctor command', () => {
     // Tmpdir created under /tmp (Linux) / %TEMP% (Windows) — neither has
     // an ancestor pnpm-workspace.yaml on a clean CI runner. The walk-up
     // hits the filesystem root and returns `start` unchanged.
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-no-ws-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-no-ws-'));
     try {
       const root = findWorkspaceRoot(tmp);
       // realpathSync isn't applied; on macOS /tmp may be a symlink, so we
@@ -265,7 +265,7 @@ describe('doctor command', () => {
   });
 
   it('--preflight + --ci excludes *.built probes from the verdict', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-preflight-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-preflight-'));
     try {
       mkdirSync(resolve(tmp, 'packages', 'core'), { recursive: true });
       mkdirSync(resolve(tmp, 'packages', 'cli'), { recursive: true });
@@ -273,7 +273,7 @@ describe('doctor command', () => {
       writeFileSync(
         resolve(tmp, 'package.json'),
         JSON.stringify({
-          name: 'czap',
+          name: 'liteship-monorepo',
           version: '0.0.0',
           engines: { node: '>=20.0.0', pnpm: '>=9.0.0' },
         }),
@@ -318,21 +318,21 @@ describe('doctor command', () => {
   });
 
   it('doctor --fix outside the LiteShip workspace never spawns a build (Codex P1 — safety guard)', async () => {
-    // Regression for PR #3 r3254680246: previously `czap doctor --fix` run
+    // Regression for PR #3 r3254680246: previously `liteship doctor --fix` run
     // from an unrelated project would spawn `pnpm run build` against THAT
     // project's build script — high-impact arbitrary code execution for a
     // diagnostics command.
     //
-    // Defense is now two layers deep: (1) a non-czap cwd auto-selects the
+    // Defense is now two layers deep: (1) a non-liteship cwd auto-selects the
     // consumer probe profile, which has no fixable *.built checks, so there
     // is nothing for applyFixes to attempt; (2) applyFixes itself still
     // carries the isLiteShipWorkspace guard. The observable invariant this
     // test pins: NO subprocess runs, NO build fix is attempted.
     const spy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-imposter-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-fix-imposter-'));
     try {
       // Tmpdir poses as an unrelated project: has a package.json (so
-      // isLiteShipWorkspace can read it) with a non-czap name.
+      // isLiteShipWorkspace can read it) with a non-liteship name.
       writeFileSync(
         resolve(tmp, 'package.json'),
         JSON.stringify({
@@ -363,12 +363,12 @@ describe('doctor command', () => {
       stdout: '',
       stderr: '',
     });
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-fix-hooks-'));
     try {
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
       writeFileSync(
         resolve(tmp, 'package.json'),
-        JSON.stringify({ name: 'czap', version: '0.0.0' }),
+        JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }),
       );
       const { stdout } = await captureCli(() =>
         doctor({ pretty: false, fix: true, cwd: tmp }),
@@ -392,14 +392,14 @@ describe('doctor command', () => {
     // git.hooks fix branch ran `pnpm exec tsx scripts/link-pre-commit.ts`
     // unconditionally on warn, even outside LiteShip.
     //
-    // With the consumer auto-profile, a non-czap cwd never probes git.hooks
+    // With the consumer auto-profile, a non-liteship cwd never probes git.hooks
     // in the first place, so the fix branch has nothing to act on; the
     // isLiteShipWorkspace guard inside applyFixes stays as the second layer.
     // The pinned invariant: NO subprocess runs, NO git.hooks fix is attempted.
     const spy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-guard-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-fix-hooks-guard-'));
     try {
-      // Imposter project: has .git/hooks/ but package.json name is NOT 'czap'.
+      // Imposter project: has .git/hooks/ but package.json name is NOT 'liteship'.
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
       writeFileSync(
         resolve(tmp, 'package.json'),
@@ -425,7 +425,7 @@ describe('doctor command', () => {
   });
 
   it('auto-selects the consumer probe profile when cwd is not the LiteShip workspace', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-consumer-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-consumer-'));
     try {
       writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'some-consumer-app', version: '1.0.0' }));
       mkdirSync(resolve(tmp, 'node_modules'), { recursive: true });
@@ -445,12 +445,12 @@ describe('doctor command', () => {
 
   it('doctor --fix does NOT link hooks for an unresolved hooks dir (not fixable)', async () => {
     const spy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-badgit-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-fix-badgit-'));
     try {
       // Corrupt worktree pointer: git.hooks warns, but linking the pre-commit
       // hook is not the remediation — the fix branch must not fire.
-      // name 'czap' keeps the maintainer profile (consumer profile has no git.hooks probe).
-      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+      // name 'liteship' keeps the maintainer profile (consumer profile has no git.hooks probe).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
       writeFileSync(resolve(tmp, '.git'), 'garbage with no pointer\n');
       const { stdout } = await captureCli(() => doctor({ pretty: false, fix: true, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
@@ -465,12 +465,12 @@ describe('doctor command', () => {
   });
 
   it('a malformed .git pointer file reads as a warn, not "no .git" ok', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-badgit-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-badgit-'));
     try {
       // Worktree-style `.git` FILE without a gitdir: line — previously this
       // fell into the catch-all and misreported as "no .git (not a worktree)".
-      // name 'czap' keeps the maintainer profile (consumer profile has no git.hooks probe).
-      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+      // name 'liteship' keeps the maintainer profile (consumer profile has no git.hooks probe).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
       writeFileSync(resolve(tmp, '.git'), 'garbage with no pointer\n');
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
@@ -484,8 +484,8 @@ describe('doctor command', () => {
 });
 
 describe('doctor liteship.pnpm consumer probe', () => {
-  it('warns with the literal pnpm add remedy when liteship sits under pnpm strict layout without hoisted @czap/*', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-liteship-pnpm-'));
+  it('warns with the literal pnpm add remedy when liteship sits under pnpm strict layout without hoisted @liteship/*', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-liteship-pnpm-'));
     try {
       writeFileSync(
         resolve(tmp, 'package.json'),
@@ -497,21 +497,21 @@ describe('doctor liteship.pnpm consumer probe', () => {
       const check = receipt.checks.find((c: { id: string }) => c.id === 'liteship.pnpm');
       expect(check).toBeDefined();
       expect(check.status).toBe('warn');
-      expect(check.hint).toContain('pnpm add @czap/core @czap/astro');
+      expect(check.hint).toContain('pnpm add @liteship/core @liteship/astro');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
 
-  it('reports ok when the @czap scope is resolvable beside liteship', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-liteship-hoisted-'));
+  it('reports ok when the @liteship scope is resolvable beside liteship', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-liteship-hoisted-'));
     try {
       writeFileSync(
         resolve(tmp, 'package.json'),
         JSON.stringify({ name: 'consumer-app', dependencies: { liteship: '0.1.5' } }),
       );
       mkdirSync(resolve(tmp, 'node_modules/.pnpm'), { recursive: true });
-      mkdirSync(resolve(tmp, 'node_modules/@czap/core'), { recursive: true });
+      mkdirSync(resolve(tmp, 'node_modules/@liteship/core'), { recursive: true });
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       const check = receipt.checks.find((c: { id: string }) => c.id === 'liteship.pnpm');
@@ -522,7 +522,7 @@ describe('doctor liteship.pnpm consumer probe', () => {
   });
 
   it('skips the probe when liteship is not declared, or under hoisted (npm/yarn) layouts', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-liteship-skip-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-doctor-liteship-skip-'));
     try {
       // npm/yarn layout: liteship declared but no node_modules/.pnpm.
       writeFileSync(

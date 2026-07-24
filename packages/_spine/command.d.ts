@@ -1,11 +1,11 @@
 /**
- * @czap command spine — declaration-only contract for the shared command
- * registry (CUT A1). One canonical command language: `@czap/command` owns the
- * runtime (registry + dispatcher + handlers); `@czap/cli` and `@czap/mcp-server`
+ * @liteship command spine — declaration-only contract for the shared command
+ * registry (CUT A1). One canonical command language: `@liteship/command` owns the
+ * runtime (registry + dispatcher + handlers); `@liteship/cli` and `@liteship/mcp-server`
  * are projection adapters. These types carry no runtime behavior.
  */
 
-import type { ContentAddress } from './core.d.ts';
+import type { ContentAddress } from './core.js';
 
 /**
  * A volatile wall-clock timestamp (CUT B2): an ISO-8601 string stamped at the
@@ -44,8 +44,8 @@ export interface CommandAnnotations {
    */
   readonly mcpExposed?: boolean;
   /**
-   * Presentation phase used to group the command in the CLI help chart
-   * ("the chart: CLI verb table grouped by phase"). Identity, not chrome: the
+   * Presentation phase used to group the command in the CLI help list
+   * ("the command list grouped by phase"). Identity, not presentation: the
    * adapter maps a group key to a human label + order. Surfaces that don't group
    * (MCP, describe) ignore it.
    */
@@ -56,7 +56,7 @@ export interface CommandAnnotations {
  * What execution shape a command is — the central command law:
  *
  *   - `handler`: finite structured invocation → returns a `CapsuleCommandResult`
- *     via a `@czap/command` handler. The only kind eligible for MCP exposure.
+ *     via a `@liteship/command` handler. The only kind eligible for MCP exposure.
  *   - `cli-orchestration`: terminal UX, inherited stdio, long-running servers,
  *     destructive workflows, visible repairs, streaming receipts, or catalog
  *     projections. Registry-described for identity/discovery, but intentionally

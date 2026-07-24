@@ -3,14 +3,25 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Composable, ComposableWorld, Style, Token, World } from '@czap/core';
+import {
+  ComposableWorld,
+  defineBoundary,
+  defineToken,
+  defineStyle,
+  createWorld,
+  createComposable,
+} from '@liteship/core';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [768, 'tablet'], [1024, 'desktop']],
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1024, 'desktop'],
+  ],
 });
 
-const token = Token.make({
+const token = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['themeLevel'] as const,
@@ -21,7 +32,7 @@ const token = Token.make({
   fallback: '#00e5ff',
 });
 
-const style = Style.make({
+const style = defineStyle({
   boundary,
   base: {
     properties: {
@@ -51,7 +62,7 @@ type TestSchema = {
 
 describe('ComposableWorld component behavior', () => {
   test('spawn and query round-trip through a real scoped world', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     composableWorld.spawn({ boundary });
     composableWorld.spawn({ boundary, token });
@@ -63,7 +74,7 @@ describe('ComposableWorld component behavior', () => {
   });
 
   test('evaluate integrates Boundary and Style for the same entity', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entity = composableWorld.spawn({ boundary, style });
     const result = composableWorld.evaluate(entity, { 'viewport.width': 800 });
@@ -74,7 +85,7 @@ describe('ComposableWorld component behavior', () => {
   });
 
   test('evaluate falls back to 0 when boundary input key is missing from input record', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entity = composableWorld.spawn({ boundary, style });
     // Omit 'viewport.width' from input — triggers ?? 0 fallback at composable.ts:181
@@ -88,7 +99,7 @@ describe('ComposableWorld component behavior', () => {
   });
 
   test('evaluate integrates Token resolution with numeric axis inputs', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entity = composableWorld.spawn({ token });
     const result = {
@@ -101,10 +112,10 @@ describe('ComposableWorld component behavior', () => {
   });
 
   test('dense store lifecycle works for composable entities', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
     dense.create('metrics', 32);
-    const entity = Composable.make<TestSchema>({ boundary, token });
+    const entity = createComposable<TestSchema>({ boundary, token });
     dense.store(entity, 123);
     const result = dense.retrieve(entity);
 
@@ -112,8 +123,8 @@ describe('ComposableWorld component behavior', () => {
   });
 
   test('multiple composable worlds are isolated', () => {
-    const { world: worldA } = World.make();
-    const { world: worldB } = World.make();
+    const worldA = createWorld();
+    const worldB = createWorld();
     const composableWorldA = ComposableWorld.make<TestSchema>(worldA);
     const composableWorldB = ComposableWorld.make<TestSchema>(worldB);
 

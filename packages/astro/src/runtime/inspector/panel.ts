@@ -6,14 +6,14 @@
  * observer/listener is ENUMERABLE and can be explicitly disposed — `refreshPanels`
  * (here) and the mount's `dispose` (in `./mount.ts`) both DRAIN THE MAP, never the
  * live DOM, because a boundary removed from the page since the last refresh is gone
- * from `querySelectorAll('[data-czap-boundary]')` yet its handle still sits here.
+ * from `querySelectorAll('[data-liteship-boundary]')` yet its handle still sits here.
  *
  * @module
  */
 
 import { boundaryParseFailureMessage, parseBoundary, readSignalValue, type BoundaryStateDetail } from '../boundary.js';
-import { createHtmlFragment, dispatchCzapEvent } from '@czap/web';
-import { startRafLoop } from '@czap/core';
+import { createHtmlFragment, dispatchLiteshipEvent } from '@liteship/web';
+import { startRafLoop } from '@liteship/core';
 import {
   castValueRows,
   deriveActiveTargets,
@@ -69,7 +69,7 @@ export function drainPanelHandles(): void {
 }
 
 function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): PanelHandles {
-  const boundaryJson = element.getAttribute('data-czap-boundary') ?? '';
+  const boundaryJson = element.getAttribute('data-liteship-boundary') ?? '';
   const failure = boundaryParseFailureMessage(boundaryJson);
   const runtimeBoundary = failure ? null : parseBoundary(boundaryJson);
   const parseWarning = failure;
@@ -81,7 +81,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   head.className = 'boundary-head';
   const title = document.createElement('div');
   title.className = 'boundary-title';
-  title.textContent = runtimeBoundary?.name ?? element.getAttribute('data-czap-satellite') ?? 'boundary';
+  title.textContent = runtimeBoundary?.name ?? element.getAttribute('data-liteship-adaptive') ?? 'boundary';
   const badges = document.createElement('div');
   badges.className = 'badges';
 
@@ -90,7 +90,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
     inert.className = 'badge badge-inert';
     inert.textContent = 'INERT';
     inert.title =
-      'This element has data-czap-boundary but no data-czap-directive marker — the runtime will not evaluate it. Fix: spread satelliteAttrs({ boundary }) or add data-czap-directive="satellite".';
+      'This element has data-liteship-boundary but no runtime owner. Fix: spread adaptiveAttrs({ boundary }), add an adaptive/worker directive marker, or complete the SVG descendant contract (data-liteship-entity + data-liteship-svg beneath a marked SVG root).';
     badges.appendChild(inert);
   }
 
@@ -120,7 +120,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   stateLine.className = 'meta';
   assignInspectorHtml(
     stateLine,
-    `state: <span class="state-live" data-role="state">${escapeInspectorText(element.getAttribute('data-czap-state') ?? '—')}</span>`,
+    `state: <span class="state-live" data-role="state">${escapeInspectorText(element.getAttribute('data-liteship-state') ?? '—')}</span>`,
   );
   panel.appendChild(stateLine);
 
@@ -180,10 +180,10 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
           const rewritten = rewriteBoundaryThreshold(currentJson, index, next);
           if (!rewritten) return;
           currentJson = rewritten;
-          element.setAttribute('data-czap-boundary', rewritten);
+          element.setAttribute('data-liteship-boundary', rewritten);
           notch.style.left = `${(next / max) * 100}%`;
           notch.title = `${next}px → ${states[index] ?? ''}`;
-          dispatchCzapEvent(element, 'czap:reinit');
+          dispatchLiteshipEvent(element, 'liteship:reinit');
         };
         const up = (): void => {
           window.removeEventListener('pointermove', move);
@@ -212,11 +212,11 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   const copy = document.createElement('button');
   copy.type = 'button';
   copy.className = 'copy';
-  copy.textContent = 'Copy Boundary.make';
+  copy.textContent = 'Copy defineBoundary';
   copy.addEventListener('click', () => {
     // Read the LIVE attribute (post-drag) so the copied snippet reflects the
     // current threshold; fall back to the in-progress JSON when absent.
-    const snippet = formatBoundaryMakeSnippet(element.getAttribute('data-czap-boundary') ?? currentJson);
+    const snippet = formatBoundaryMakeSnippet(element.getAttribute('data-liteship-boundary') ?? currentJson);
     void navigator.clipboard.writeText(snippet);
   });
   actions.appendChild(copy);
@@ -266,7 +266,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
 
   // Latest emitted cast values for this boundary (subscribed below). The
   // active-casts panel reads this snapshot; it stays `null` until the first
-  // `czap:uniform-update` fires (e.g. the first state crossing).
+  // `liteship:uniform-update` fires (e.g. the first state crossing).
   let latestDetail: BoundaryStateDetail | null = null;
 
   const renderCastsAndEscalation = (): void => {
@@ -284,17 +284,17 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
     latestDetail = detail;
     renderCastsAndEscalation();
   };
-  element.addEventListener('czap:uniform-update', onUniformUpdate);
+  element.addEventListener('liteship:uniform-update', onUniformUpdate);
   // Re-derive when the element's cast attributes change (custom props / aria).
   const castObserver = new MutationObserver(renderCastsAndEscalation);
   castObserver.observe(element, { attributes: true });
 
   const stateObserver = new MutationObserver(() => {
     if (stateEl) {
-      stateEl.textContent = element.getAttribute('data-czap-state') ?? '—';
+      stateEl.textContent = element.getAttribute('data-liteship-state') ?? '—';
     }
   });
-  stateObserver.observe(element, { attributes: true, attributeFilter: ['data-czap-state'] });
+  stateObserver.observe(element, { attributes: true, attributeFilter: ['data-liteship-state'] });
 
   const stopRafLoop = startRafLoop(() => {
     refreshObserver();
@@ -308,7 +308,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
     dispose: () => {
       stateObserver.disconnect();
       castObserver.disconnect();
-      element.removeEventListener('czap:uniform-update', onUniformUpdate);
+      element.removeEventListener('liteship:uniform-update', onUniformUpdate);
       stopRafLoop();
       window.removeEventListener('resize', resizeHandler);
       window.removeEventListener('scroll', resizeHandler);
@@ -360,18 +360,18 @@ function renderEscalation(body: HTMLElement, active: readonly ActiveTarget[]): v
   const targets = active.map((a) => a.target);
   const view = escalationViewForTargets(targets, 'browser');
 
-  const rungLine = document.createElement('div');
-  rungLine.className = 'esc-line';
-  if (view.chosenRung) {
+  const tierLine = document.createElement('div');
+  tierLine.className = 'esc-line';
+  if (view.chosenTier) {
     assignInspectorHtml(
-      rungLine,
-      `rung: <span class="esc-rung">${escapeInspectorText(view.chosenRung)}</span> ` +
-        `<span class="cast-evidence">(requires ${escapeInspectorText(view.requiredRung)})</span>`,
+      tierLine,
+      `tier: <span class="esc-tier">${escapeInspectorText(view.chosenTier)}</span> ` +
+        `<span class="cast-evidence">(requires ${escapeInspectorText(view.requiredTier)})</span>`,
     );
   } else {
-    assignInspectorHtml(rungLine, `rung: <span class="esc-rung-err">unsatisfiable</span>`);
+    assignInspectorHtml(tierLine, `tier: <span class="esc-tier-err">unsatisfiable</span>`);
   }
-  body.appendChild(rungLine);
+  body.appendChild(tierLine);
 
   if (view.admittedTargets.length > 0) {
     const admitted = document.createElement('div');
@@ -391,7 +391,7 @@ function renderEscalation(body: HTMLElement, active: readonly ActiveTarget[]): v
   body.appendChild(disclaimer);
 }
 
-/** Re-scan the page and render one panel per `[data-czap-boundary]` element + the graph peek. */
+/** Re-scan the page and render one panel per `[data-liteship-boundary]` element + the graph peek. */
 export function refreshPanels(body: HTMLElement): void {
   for (const child of Array.from(body.children)) {
     child.remove();
@@ -399,11 +399,11 @@ export function refreshPanels(body: HTMLElement): void {
 
   drainPanelHandles();
 
-  const elements = document.querySelectorAll<HTMLElement>('[data-czap-boundary]');
+  const elements = document.querySelectorAll<HTMLElement>('[data-liteship-boundary]');
   if (elements.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent = 'No [data-czap-boundary] elements on this page.';
+    empty.textContent = 'No [data-liteship-boundary] elements on this page.';
     body.appendChild(empty);
     return;
   }

@@ -8,7 +8,7 @@
 
 > **sampleRuntimeEasing**(`easing`): `EasingFnShape`
 
-Defined in: [core/src/easing.ts:429](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L429)
+Defined in: [core/src/motion/easing.ts:429](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L429)
 
 Build the `(t) => value` sampler for a [RuntimeEasing](../interfaces/RuntimeEasing.md) descriptor.
 

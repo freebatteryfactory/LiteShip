@@ -1,7 +1,7 @@
 /**
  * THE RECURSIVE META-PROOF — "test the test that tests the tests".
  *
- * This file QUALIFIES the DST harness (`@czap/core/simulation`) to
+ * This file QUALIFIES the DST harness (`@liteship/core/simulation`) to
  * tool-qualification grade. A harness that claims to detect nondeterminism is
  * worthless unless it is PROVEN to (a) be deterministic itself, (b) actually
  * CATCH a real nondeterminism leak (not falsely pass), and (c) go RED the moment
@@ -54,8 +54,8 @@ import {
   type SchedulerWorld,
   type FaultTable,
   type SimTrace,
-} from '@czap/core/simulation';
-import { rawIndexF32 } from '@czap/core';
+} from '@liteship/core/simulation';
+import { rawIndexF32 } from '@liteship/core';
 import {
   simulationDeterminismGate,
   verifyGate,
@@ -63,7 +63,7 @@ import {
   type ScenarioReplayFact,
   type SimulationFacts,
   type GateContext,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ───────────────────────── shared real SUT scenarios ─────────────────────────
 

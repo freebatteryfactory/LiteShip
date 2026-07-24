@@ -8,8 +8,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { detectSkipsAST } from '@czap/audit';
-import { sanctionedSkipFor } from '@czap/gauntlet';
+import { detectSkipsAST } from '@liteship/audit';
+import { sanctionedSkipFor } from '@liteship/gauntlet';
 import {
   CI_PARALLEL_PREFLIGHT_LABELS,
   CI_PARALLEL_FINAL_LABELS,

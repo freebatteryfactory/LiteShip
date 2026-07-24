@@ -1,20 +1,20 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest';
-import { handleHMR } from '@czap/vite';
+import { handleHMR } from '@liteship/vite';
 
-describe('@czap/vite HMR handler', () => {
+describe('@liteship/vite HMR handler', () => {
   test('creates or updates a style tag for css payloads', () => {
     handleHMR({
-      type: 'czap:update',
+      type: 'liteship:update',
       boundary: 'hero',
       css: '.hero { color: red; }',
     });
 
-    const style = document.querySelector('style[data-czap-boundary="hero"]');
+    const style = document.querySelector('style[data-liteship-boundary="hero"]');
     expect(style?.textContent).toContain('color: red');
 
     handleHMR({
-      type: 'czap:update',
+      type: 'liteship:update',
       boundary: 'hero',
       css: '.hero { color: blue; }',
     });
@@ -31,24 +31,24 @@ describe('@czap/vite HMR handler', () => {
     };
 
     const boundary = document.createElement('div');
-    boundary.setAttribute('data-czap-boundary', 'hero');
+    boundary.setAttribute('data-liteship-boundary', 'hero');
     document.body.appendChild(boundary);
 
     const canvas = document.createElement('canvas') as HTMLCanvasElement & {
-      __czapProgram?: Record<string, unknown>;
+      __liteshipProgram?: Record<string, unknown>;
     };
-    canvas.setAttribute('data-czap-boundary', 'hero');
-    canvas.__czapProgram = {};
+    canvas.setAttribute('data-liteship-boundary', 'hero');
+    canvas.__liteshipProgram = {};
     vi.spyOn(canvas, 'getContext').mockImplementation((kind: string) => (kind === 'webgl2' ? null : (gl as never)));
     document.body.appendChild(canvas);
 
     const payloads: unknown[] = [];
-    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+    boundary.addEventListener('liteship:uniform-update', ((event: CustomEvent) => {
       payloads.push(event.detail);
     }) as EventListener);
 
     handleHMR({
-      type: 'czap:update',
+      type: 'liteship:update',
       boundary: 'hero',
       uniforms: { u_progress: 0.75 },
     });
@@ -59,18 +59,18 @@ describe('@czap/vite HMR handler', () => {
 
   test('scopes uniform broadcast to the target boundary only', () => {
     const hero = document.createElement('div');
-    hero.setAttribute('data-czap-boundary', 'hero');
+    hero.setAttribute('data-liteship-boundary', 'hero');
     const footer = document.createElement('div');
-    footer.setAttribute('data-czap-boundary', 'footer');
+    footer.setAttribute('data-liteship-boundary', 'footer');
     document.body.append(hero, footer);
 
     const heroPayloads: unknown[] = [];
     const footerPayloads: unknown[] = [];
-    hero.addEventListener('czap:uniform-update', ((event: CustomEvent) => heroPayloads.push(event.detail)) as EventListener);
-    footer.addEventListener('czap:uniform-update', ((event: CustomEvent) => footerPayloads.push(event.detail)) as EventListener);
+    hero.addEventListener('liteship:uniform-update', ((event: CustomEvent) => heroPayloads.push(event.detail)) as EventListener);
+    footer.addEventListener('liteship:uniform-update', ((event: CustomEvent) => footerPayloads.push(event.detail)) as EventListener);
 
     handleHMR({
-      type: 'czap:update',
+      type: 'liteship:update',
       boundary: 'hero',
       uniforms: { u_progress: 0.75 },
     });
@@ -81,16 +81,16 @@ describe('@czap/vite HMR handler', () => {
 
   test('uniform broadcast detail.glsl matches WebGL boundary listener contract', () => {
     const boundary = document.createElement('div');
-    boundary.setAttribute('data-czap-boundary', 'hero');
+    boundary.setAttribute('data-liteship-boundary', 'hero');
     document.body.appendChild(boundary);
 
     const listenerCalls: unknown[] = [];
-    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+    boundary.addEventListener('liteship:uniform-update', ((event: CustomEvent) => {
       listenerCalls.push(event.detail);
     }) as EventListener);
 
     handleHMR({
-      type: 'czap:update',
+      type: 'liteship:update',
       boundary: 'hero',
       uniforms: { u_progress: 0.42 },
     });
@@ -105,7 +105,7 @@ describe('@czap/vite HMR handler', () => {
 
     expect(() =>
       handleHMR({
-        type: 'czap:update',
+        type: 'liteship:update',
         boundary: 'hero',
         css: '.hero { color: green; }',
       }),
@@ -115,21 +115,21 @@ describe('@czap/vite HMR handler', () => {
     vi.stubGlobal('document', originalDocument);
 
     const boundary = document.createElement('div');
-    boundary.setAttribute('data-czap-boundary', 'hero');
+    boundary.setAttribute('data-liteship-boundary', 'hero');
     document.body.appendChild(boundary);
 
     const payloads: unknown[] = [];
-    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+    boundary.addEventListener('liteship:uniform-update', ((event: CustomEvent) => {
       payloads.push(event.detail);
     }) as EventListener);
 
     const noContextCanvas = document.createElement('canvas');
-    noContextCanvas.setAttribute('data-czap-boundary', 'hero');
+    noContextCanvas.setAttribute('data-liteship-boundary', 'hero');
     vi.spyOn(noContextCanvas, 'getContext').mockReturnValue(null);
     document.body.appendChild(noContextCanvas);
 
     const noProgramCanvas = document.createElement('canvas');
-    noProgramCanvas.setAttribute('data-czap-boundary', 'hero');
+    noProgramCanvas.setAttribute('data-liteship-boundary', 'hero');
     vi.spyOn(noProgramCanvas, 'getContext').mockReturnValue({
       getUniformLocation: vi.fn(),
       uniform1f: vi.fn(),
@@ -138,7 +138,7 @@ describe('@czap/vite HMR handler', () => {
 
     expect(() =>
       handleHMR({
-        type: 'czap:update',
+        type: 'liteship:update',
         boundary: 'hero',
         uniforms: { u_progress: 0.5 },
       }),
@@ -155,20 +155,20 @@ describe('@czap/vite HMR handler', () => {
     };
 
     const canvas = document.createElement('canvas') as HTMLCanvasElement & {
-      __czapProgram?: Record<string, unknown>;
+      __liteshipProgram?: Record<string, unknown>;
     };
-    canvas.setAttribute('data-czap-boundary', 'hero');
-    canvas.__czapProgram = {};
+    canvas.setAttribute('data-liteship-boundary', 'hero');
+    canvas.__liteshipProgram = {};
     vi.spyOn(canvas, 'getContext').mockReturnValue(gl as unknown as RenderingContext);
     document.body.appendChild(canvas);
 
     handleHMR({
-      type: 'czap:update',
+      type: 'liteship:update',
       boundary: 'hero',
       uniforms: { u_progress: 0.25 },
     });
 
-    expect(gl.getUniformLocation).toHaveBeenCalledWith(canvas.__czapProgram, 'u_progress');
+    expect(gl.getUniformLocation).toHaveBeenCalledWith(canvas.__liteshipProgram, 'u_progress');
     expect(uniform1f).not.toHaveBeenCalled();
   });
 });

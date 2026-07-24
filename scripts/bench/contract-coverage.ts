@@ -20,16 +20,18 @@
  * @module
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
+import { walkFiles } from '@liteship/core/fs-walk';
 // The ONE shared comment stripper (keeps string literals — a bench's registered
 // name is a string value that must survive; a commented-out registration must
 // vanish). Imported via the gauntlet SOURCE path (the same relative-source pattern
 // the directive-suite uses to reach package internals), so the script strips bench
 // source through the identical implementation the gate uses, never a copy.
-// @czap/gauntlet is not a root dep.
+// @liteship/gauntlet is not a root dep.
 import { commentsBlanked } from '../../packages/gauntlet/src/gates/code-only.ts';
+import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.ts';
+import type { BenchSubjectIssueKind } from '../../packages/gauntlet/src/gates/bench-subjects.ts';
 import { type BenchDistribution, extractRegisteredBenches } from './contracts.ts';
 
 /** The repo-relative directory holding the literal-registration bench files. */
@@ -43,15 +45,12 @@ export const BENCH_SOURCE_DIR = 'tests/bench';
  * `DIRECTIVE_BENCH_PAIRS` + bench-gate. `smoke.test.ts` is a test, not a bench.
  */
 export function isGovernedBenchFile(fileName: string): boolean {
-  return (
-    fileName.endsWith('.bench.ts') &&
-    fileName !== 'directive.bench.ts'
-  );
+  return fileName.endsWith('.bench.ts') && fileName !== 'directive.bench.ts';
 }
 
 /** A coverage issue — an undeclared bench or an orphan declaration. */
 export interface CoverageIssue {
-  readonly kind: 'undeclared' | 'orphan';
+  readonly kind: 'undeclared' | 'orphan' | BenchSubjectIssueKind;
   readonly detail: string;
   /** The bench file the issue concerns (repo-relative), when known. */
   readonly file?: string;
@@ -74,6 +73,7 @@ export interface CoverageResult {
 export function foldDeclaredDistributions(
   governedSources: ReadonlyMap<string, string>,
   declared: readonly BenchDistribution[],
+  executionSources: ReadonlyMap<string, string> = governedSources,
 ): CoverageResult {
   const declaredKeys = new Set(declared.map((d) => `${d.file}::${d.name}`));
   const discoveredKeys = new Set<string>();
@@ -108,6 +108,18 @@ export function foldDeclaredDistributions(
         file: d.file,
         detail: `declared distribution "${d.name}" in ${d.file} maps to NO registered bench — the bench was renamed or removed and the declaration silently drifted. The declaration is the comparability anchor; a stale one points at nothing. Remove it or fix the name.`,
       });
+      continue;
+    }
+    if (discoveredKeys.has(key)) {
+      const qualification = qualifyBenchDistribution(d, (path) => executionSources.get(path));
+      for (const issue of qualification.issues) {
+        issues.push({
+          kind: issue.kind,
+          name: d.name,
+          file: issue.file,
+          detail: issue.detail,
+        });
+      }
     }
   }
 
@@ -148,18 +160,23 @@ export function distributionFilesWithoutExecutionPath(
  * {@link codeOnly}, and run the pure fold. The gate uses {@link foldDeclaredDistributions}
  * directly over its GateContext (no filesystem touch).
  */
-export function verifyDeclaredDistributions(
-  root: string,
-  declared: readonly BenchDistribution[],
-): CoverageResult {
+export function verifyDeclaredDistributions(root: string, declared: readonly BenchDistribution[]): CoverageResult {
   const dir = resolve(root, BENCH_SOURCE_DIR);
   const governedSources = new Map<string, string>();
+  const executionSources = new Map<string, string>();
   for (const abs of walkFiles(dir, { suffixes: ['.bench.ts'] })) {
     const entry = basename(abs);
     if (!isGovernedBenchFile(entry)) continue;
     const relativePath = `${BENCH_SOURCE_DIR}/${entry}`;
     const text = readFileSync(abs, 'utf8');
-    governedSources.set(relativePath, commentsBlanked(text));
+    const stripped = commentsBlanked(text);
+    governedSources.set(relativePath, stripped);
+    executionSources.set(relativePath, stripped);
   }
-  return foldDeclaredDistributions(governedSources, declared);
+  for (const execution of declared.map((entry) => entry.execution)) {
+    if (execution?.kind !== 'collector' || executionSources.has(execution.file)) continue;
+    const absolute = resolve(root, execution.file);
+    if (existsSync(absolute)) executionSources.set(execution.file, commentsBlanked(readFileSync(absolute, 'utf8')));
+  }
+  return foldDeclaredDistributions(governedSources, declared, executionSources);
 }

@@ -1,5 +1,5 @@
 /**
- * HMR handler for `czap:update` messages.
+ * HMR handler for `liteship:update` messages.
  *
  * Performs surgical DOM updates when `@quantize` CSS or shader
  * uniforms change during development, avoiding full page reloads.
@@ -7,15 +7,15 @@
  * @module
  */
 
-import { dispatchCzapEvent } from '@czap/web';
+import { dispatchLiteshipEvent } from '@liteship/web';
 
 declare global {
   interface HTMLCanvasElement {
     /**
-     * czap runtime-attached WebGL program for HMR uniform updates.
+     * liteship runtime-attached WebGL program for HMR uniform updates.
      * Set by the shader directive when a program is linked.
      */
-    __czapProgram?: WebGLProgram;
+    __liteshipProgram?: WebGLProgram;
   }
 }
 
@@ -24,12 +24,12 @@ declare global {
 // ---------------------------------------------------------------------------
 
 /**
- * Shape of the HMR payload the czap Vite plugin ships over the Vite
+ * Shape of the HMR payload the liteship Vite plugin ships over the Vite
  * dev-server WebSocket. Handled by {@link handleHMR} on the client.
  */
 export interface HMRPayload {
-  /** Message discriminator. Always `'czap:update'`. */
-  readonly type: 'czap:update';
+  /** Message discriminator. Always `'liteship:update'`. */
+  readonly type: 'liteship:update';
   /** Boundary id whose compiled output changed. */
   readonly boundary: string;
   /** New compiled CSS (omitted when only uniforms changed). */
@@ -47,12 +47,12 @@ export interface HMRPayload {
  * Uses a data attribute for identification across HMR cycles.
  */
 function getOrCreateStyleElement(boundaryId: string): HTMLStyleElement {
-  const selector = `style[data-czap-boundary="${boundaryId}"]`;
+  const selector = `style[data-liteship-boundary="${boundaryId}"]`;
   const existing = document.querySelector(selector);
   if (existing instanceof HTMLStyleElement) return existing;
 
   const el = document.createElement('style');
-  el.setAttribute('data-czap-boundary', boundaryId);
+  el.setAttribute('data-liteship-boundary', boundaryId);
   document.head.appendChild(el);
   return el;
 }
@@ -70,27 +70,29 @@ function applyCSSUpdate(boundary: string, css: string): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Update shader uniform values on all canvases that have a czap-boundary
+ * Update shader uniform values on all canvases that have a liteship-boundary
  * attribute matching the boundary name.
  *
- * This works by dispatching a custom event that the czap runtime shader
+ * This works by dispatching a custom event that the liteship runtime shader
  * system listens for, passing the uniform map for in-place updates.
  */
 function applyUniformUpdate(boundary: string, uniforms: Record<string, number>): void {
-  const boundaryRoots = Array.from(document.querySelectorAll<HTMLElement>(`[data-czap-boundary="${boundary}"]`));
+  const boundaryRoots = Array.from(document.querySelectorAll<HTMLElement>(`[data-liteship-boundary="${boundary}"]`));
 
   for (const root of boundaryRoots) {
-    dispatchCzapEvent(root, 'czap:uniform-update', { glsl: uniforms });
+    dispatchLiteshipEvent(root, 'liteship:uniform-update', { glsl: uniforms });
   }
 
   // Direct update: find canvas elements with matching boundary data attribute
-  const canvases = Array.from(document.querySelectorAll<HTMLCanvasElement>(`canvas[data-czap-boundary="${boundary}"]`));
+  const canvases = Array.from(
+    document.querySelectorAll<HTMLCanvasElement>(`canvas[data-liteship-boundary="${boundary}"]`),
+  );
   for (const canvas of canvases) {
     const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
     if (!gl) continue;
 
     // Look up the program stored on the canvas element via a custom property
-    const program = canvas.__czapProgram;
+    const program = canvas.__liteshipProgram;
     if (!program) continue;
 
     for (const [name, value] of Object.entries(uniforms)) {
@@ -107,7 +109,7 @@ function applyUniformUpdate(boundary: string, uniforms: Record<string, number>):
 // ---------------------------------------------------------------------------
 
 /**
- * Handle a czap:update HMR payload.
+ * Handle a liteship:update HMR payload.
  * Dispatches to CSS replacement or shader uniform updates based on payload content.
  */
 export function handleHMR(payload: HMRPayload): void {

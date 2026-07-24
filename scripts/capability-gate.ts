@@ -5,11 +5,11 @@
  * INTEGRITY family. The `capabilityGateLinkGate` fold is exercised in unit tests with INJECTED facts
  * (`tests/unit/gauntlet/capability-gate-link.test.ts`) — that proves the fold; but a gate nothing runs
  * over the real repo is a hole. This script closes it: it builds the SAME {@link CapabilityLinkFacts}
- * the production `czap check --ir --capability-gate` path builds (the host oracle resolves each
+ * the production `liteship check gates --ir --capability-gate` path builds (the host oracle resolves each
  * sanctioned skip's guard against the canonical capability symbol table via a `ts.Program`/checker and
  * proves it DERIVES FROM its declared capability's probe) and reds on any skip whose guard does not.
  *
- * Why a standalone phase (not folded into `gauntlet:full`'s `czap check --ir`): the avionics IR gates
+ * Why a standalone phase (not folded into `gauntlet:full`'s `liteship check gates --ir`): the avionics IR gates
  * (taint/mutate/…) are opt-in and NOT CI-wired, but the capability-gate belongs to the sanctioned-skip
  * integrity family (`standards:gate` / `plumb:gate`) that IS CI-gating — so it runs HERE, next to them,
  * as its own ~ts.Program phase, without dragging the whole `--ir` avionics surface into CI.

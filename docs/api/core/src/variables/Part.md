@@ -8,13 +8,13 @@
 
 > `const` **Part**: `object` & `Record`\<`string`, `never`\>
 
-Defined in: [core/src/ecs.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L343)
+Defined in: [core/src/ecs.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L347)
 
 Part namespace — factories for ECS component stores.
 
 Currently exposes the dense `Float64Array`-backed store used for hot-path
 numeric state; sparse/object-valued parts are registered ad-hoc via
-[World](World.md).`addComponent`.
+[World](../type-aliases/World.md).`addComponent`.
 
 ## Type Declaration
 

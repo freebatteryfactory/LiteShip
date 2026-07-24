@@ -5,7 +5,7 @@
  * have its observers/listeners torn down, not stranded in the `panelHandles` map.
  *
  * The handles are drained by iterating the MAP, not the live DOM (a removed
- * boundary is gone from `querySelectorAll('[data-czap-boundary]')` yet its
+ * boundary is gone from `querySelectorAll('[data-liteship-boundary]')` yet its
  * MutationObserver + window listeners still hold a strong ref to the detached
  * element). This pins that: mount → remove a boundary → refresh → assert the
  * removed boundary's MutationObservers disconnected and its window listeners gone.
@@ -23,10 +23,10 @@ function makeShadowRoot(): ShadowRoot {
 function addBoundary(id: string): HTMLElement {
   const el = document.createElement('div');
   el.setAttribute(
-    'data-czap-boundary',
+    'data-liteship-boundary',
     JSON.stringify({ id, input: 'viewport.width', thresholds: [0, 600], states: ['s', 'l'] }),
   );
-  el.setAttribute('data-czap-directive', 'satellite');
+  el.setAttribute('data-liteship-directive', 'adaptive');
   document.body.appendChild(el);
   return el;
 }

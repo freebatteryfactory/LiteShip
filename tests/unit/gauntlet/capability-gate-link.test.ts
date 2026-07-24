@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/capability-gate
 /**
  * Capability-gate-link gate (codex round-8, #1b) — the self-proving fold over the host-supplied
  * {@link CapabilityLinkFacts}.
@@ -20,7 +21,7 @@ import {
   type GateContext,
   type CapabilityLinkFacts,
   type CapabilityLinkResult,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 function ctx(facts: CapabilityLinkFacts | undefined): GateContext {
   return facts === undefined ? memoryContext({}) : { ...memoryContext({}), capabilityLink: facts };

@@ -1,14 +1,14 @@
 /**
  * Theme CSS Compiler -- `ThemeDef` to `html[data-theme]` selector blocks + transitions.
  *
- * Emits per-variant CSS blocks overriding `--czap-*` custom properties,
+ * Emits per-variant CSS blocks overriding `--liteship-*` custom properties,
  * and optional transition declarations for animated theme switching.
  *
  * @module
  */
 
-import type { Theme } from '@czap/core';
-import { THEME_TRANSITION_DURATION_MS, THEME_TRANSITION_EASING } from '@czap/core';
+import type { Theme } from '@liteship/core';
+import { THEME_TRANSITION_DURATION_MS, THEME_TRANSITION_EASING } from '@liteship/core';
 import { stringifyCSSValue } from './css-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ export interface ThemeCSSResult {
  * Derive the CSS custom property name from a token name within a theme.
  */
 function fxProp(tokenName: string): string {
-  return `--czap-${tokenName}`;
+  return `--liteship-${tokenName}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -46,10 +46,10 @@ function fxProp(tokenName: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a {@link Theme.Shape} into per-variant selector blocks and optional
+ * Compile a {@link Theme} into per-variant selector blocks and optional
  * root transitions.
  */
-function compile(theme: Theme.Shape): ThemeCSSResult {
+function compile(theme: Theme): ThemeCSSResult {
   const selectorBlocks: string[] = [];
   const transitionProps = new Set<string>();
 
@@ -91,8 +91,8 @@ function compile(theme: Theme.Shape): ThemeCSSResult {
 /**
  * Theme CSS compiler namespace.
  *
- * Serializes a {@link Theme.Shape} into `html[data-theme="…"]` selector
- * overrides of `--czap-*` custom properties and, when theme metadata
+ * Serializes a {@link Theme} into `html[data-theme="…"]` selector
+ * overrides of `--liteship-*` custom properties and, when theme metadata
  * requests it, a `:root` transition block that animates all theme
  * property changes.
  */

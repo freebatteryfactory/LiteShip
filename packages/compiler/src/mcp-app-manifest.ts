@@ -3,21 +3,21 @@
  * single `McpAppManifest` artifact over the REAL MCP / MCP-Apps surfaces, fed in
  * as plain data. It is NOT a registry and NOT a second source of truth: every
  * tool comes from a passed-in command descriptor, every resource/prompt/UI entry
- * passes through verbatim. The canonical truth stays `@czap/command` +
- * `@czap/mcp-server`'s registries; this is a *view* over them.
+ * passes through verbatim. The canonical truth stays `@liteship/command` +
+ * `@liteship/mcp-server`'s registries; this is a *view* over them.
  *
- * Topology law: `@czap/compiler` MUST NOT import `@czap/mcp-server` (nor
- * `@czap/command`). The wire-shaped inputs are accepted as LOCAL STRUCTURAL types;
+ * Topology law: `@liteship/compiler` MUST NOT import `@liteship/mcp-server` (nor
+ * `@liteship/command`). The wire-shaped inputs are accepted as LOCAL STRUCTURAL types;
  * the only cross-package type used is `CapsuleCommandDescriptor` (already in
- * `@czap/core`). The server feeds its real registries in; the compiler never crawls.
+ * `@liteship/core`). The server feeds its real registries in; the compiler never crawls.
  *
  * Anti-drift core: {@link compileMcpAppManifest}'s tool projection is byte-identical
- * to `@czap/mcp-server`'s `listTools()` — the acceptance suite proves
+ * to `@liteship/mcp-server`'s `listTools()` — the acceptance suite proves
  * `manifest.tools` deep-equals `listTools()` for the same descriptors.
  *
  * @module
  */
-import type { CapsuleCommandDescriptor } from '@czap/core';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
 
 /** A D3 JSON resource as it appears on the wire (structural mirror of mcp-server's `McpResource`). */
 export interface ManifestResourceView {
@@ -108,7 +108,7 @@ export interface McpAppManifest {
 }
 
 /**
- * Project ONE command descriptor exactly as `@czap/mcp-server`'s `listTools()`
+ * Project ONE command descriptor exactly as `@liteship/mcp-server`'s `listTools()`
  * does (CUT D2 outputSchema + CUT D5 `_meta.ui.resourceUri`). Keeping this rule
  * identical to the server's is what makes the manifest a projection, not a fork.
  */

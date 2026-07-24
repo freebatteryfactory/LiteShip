@@ -16,7 +16,7 @@ const manifest = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), '
   peerDependenciesMeta?: Record<string, { optional?: boolean }>;
 };
 
-describe('@czap/_spine package hygiene', () => {
+describe('@liteship/_spine package hygiene', () => {
   test('declares astro/vite as optional peers and no effect peer (shed in Wave 8)', () => {
     expect(manifest.peerDependencies?.['astro']).toBeDefined();
     expect(manifest.peerDependencies?.['vite']).toBeDefined();
@@ -33,9 +33,9 @@ describe('@czap/_spine package hygiene', () => {
     expect(manifest.files).toContain('stub.js');
   });
 
-  test('the stub throws a teaching error naming import type and @czap/core', async () => {
+  test('the stub throws a teaching error naming import type and @liteship/core', async () => {
     await expect(import(/* @vite-ignore */ pathToFileURL(resolve(packageRoot, 'stub.js')).href)).rejects.toThrow(
-      /type-only.*import type.*@czap\/core/s,
+      /type-only.*import type.*@liteship\/core/s,
     );
   });
 });

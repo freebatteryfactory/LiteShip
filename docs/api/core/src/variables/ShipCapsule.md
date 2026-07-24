@@ -8,12 +8,12 @@
 
 > `const` **ShipCapsule**: `object`
 
-Defined in: [core/src/ship-capsule.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L216)
+Defined in: [core/src/authoring/ship-capsule.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L216)
 
 Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
 input (sync), `canonicalize` encodes it as canonical CBOR for transport /
 hashing, `decode` round-trips canonical bytes and returns a `Result`
-(`@czap/error`) that rejects non-canonical encodings AND unknown
+(`@liteship/error`) that rejects non-canonical encodings AND unknown
 `schema_version`s (`unsupported_version`, fail-closed), `computeId` mints the
 fnv1a label over the canonicalized payload (sync).
 

@@ -1,6 +1,6 @@
 {
-  "name": "@czap/compiler",
-  "version": "0.18.0",
+  "name": "@liteship/compiler",
+  "version": "0.19.0",
   "description": "Compile one LiteShip boundary definition into many outputs at once — CSS, GLSL, WGSL, ARIA, AI descriptions, and Tailwind — so every target stays in sync.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "css",
     "shaders",
@@ -29,6 +28,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./parse": {
+      "types": "./dist/parse/index.d.ts",
+      "import": "./dist/parse/index.js",
+      "development": "./src/parse/index.ts"
+    },
+    "./migrate": {
+      "types": "./dist/migrate/index.d.ts",
+      "import": "./dist/migrate/index.js",
+      "development": "./src/migrate/index.ts"
     }
   },
   "files": [
@@ -41,8 +50,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.13.0"

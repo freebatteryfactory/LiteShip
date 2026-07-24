@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { World } from '@czap/core';
+import { createWorld } from '@liteship/core';
 import {
   SVGSystem,
   VideoSystem,
@@ -31,12 +31,12 @@ import {
   SceneRuntime,
   collectSvgAttrs,
   applySvgAttrs,
-} from '@czap/scene';
-import type { SceneContract, SvgAttrs, SvgAttrsFrame } from '@czap/scene';
+} from '@liteship/scene';
+import type { SceneContract, SvgAttrs, SvgAttrsFrame } from '@liteship/scene';
 
 describe('collectSvgAttrs (pure egress core)', () => {
   it('collects persisted _svgAttrs into an entity-keyed frame after a tick', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const id = world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
@@ -57,7 +57,7 @@ describe('collectSvgAttrs (pure egress core)', () => {
   });
 
   it('is empty before any tick has composed _svgAttrs', () => {
-    const { world } = World.make();
+    const world = createWorld();
     world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
@@ -67,7 +67,7 @@ describe('collectSvgAttrs (pure egress core)', () => {
   });
 
   it('carries mixBlendMode through from a _blend TransitionSystem wrote', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const id = world.spawn({
       VideoSource: {},
       FrameRange: { from: 0, to: 100 },

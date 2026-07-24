@@ -25,7 +25,9 @@ import {
   CheckInvariantsPayloadSchema,
   CapsuleVerifyPayloadSchema,
   CheckPayloadSchema,
-} from '@czap/command';
+  ExplainPayloadSchema,
+  ContextPayloadSchema,
+} from '@liteship/command';
 import { dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
 
@@ -42,9 +44,9 @@ describe('D2 — outputSchema registry law', () => {
     }
   });
 
-  it('all 18 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
+  it('all 20 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
     const handlers = commandRegistry.list().filter((d) => d.executionKind === 'handler');
-    expect(handlers.length).toBe(18);
+    expect(handlers.length).toBe(20);
     expect(handlers.every((d) => d.outputSchema !== undefined)).toBe(true);
   });
 
@@ -64,9 +66,9 @@ describe('D2 — outputSchema registry law', () => {
 });
 
 describe('D2 — tools/list exposes outputSchema for the MCP tools', () => {
-  it('all 10 MCP tools include an object outputSchema', () => {
+  it('all 12 MCP tools include an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(12);
     for (const t of tools) {
       expect((t as { outputSchema?: { type?: string } }).outputSchema?.type, `${t.name} tools/list outputSchema`).toBe(
         'object',
@@ -80,7 +82,7 @@ describe('D2 — payload conformance + validator teeth', () => {
   // shape (see docs/superpowers/specs/2026-05-25-d2-output-schema-descriptor-law.md).
   const samples: Record<string, unknown> = {
     glossary: { term: 'boundary', entries: [{ term: 'boundary', category: 'core', definition: 'x' }] },
-    version: { czap: '0.1.3', node: '22.12.0', pnpm: '10.32.1' },
+    version: { liteship: '0.1.3', node: '22.12.0', pnpm: '10.32.1' },
     'capsule.inspect': { capsule: { name: 'core.x', kind: 'pureTransform' } },
     'capsule.list': { capsules: [{ name: 'core.x', kind: 'pureTransform' }], kind: null },
     'capsule.verify': { capsuleId: 'core.x' },
@@ -127,12 +129,12 @@ describe('D2 — payload conformance + validator teeth', () => {
       packagesPacked: 3,
       importsSmoked: 0,
       failedStep: 'pnpm install in consumer dir',
-      failure: '@czap/web missing from node_modules after install',
+      failure: '@liteship/web missing from node_modules after install',
     },
     plumb: {
       ok: false,
       skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }],
-      unclassified: ['@czap/mystery'],
+      unclassified: ['@liteship/mystery'],
       generatedPresent: true,
       generatedCorpusMessage: null,
     },
@@ -153,7 +155,7 @@ describe('D2 — payload conformance + validator teeth', () => {
       capsuleCount: 42,
       benches: { total: 41, real: 30, placeholder: ['core.x'] },
     },
-    check: {
+    'check.gates': {
       ok: false,
       blocked: true,
       findingCount: 1,
@@ -163,8 +165,42 @@ describe('D2 — payload conformance + validator teeth', () => {
           severity: 'error',
           level: 'L3',
           title: 'bare throw',
-          detail: 'throw a tagged @czap/error, not a bare value',
+          detail: 'throw a tagged @liteship/error, not a bare value',
           location: { file: 'packages/x/src/y.ts', line: 12 },
+        },
+      ],
+    },
+    explain: {
+      query: 'gauntlet/no-bare-throw',
+      kind: 'diagnostic',
+      diagnostic: {
+        code: 'gauntlet/no-bare-throw',
+        area: 'gauntlet',
+        title: 'Bare throw instead of a tagged @liteship/error variant',
+        explanation: 'a bare throw is an untyped failure path',
+        remediation: 'replace the bare throw with the best-fit @liteship/error variant',
+        emitter: {
+          kind: 'gate',
+          id: 'gauntlet/no-bare-throw',
+          negativeControl: null,
+          provenByCheck: null,
+          owner: null,
+          command: null,
+          authority: null,
+        },
+      },
+      symbol: null,
+    },
+    context: {
+      task: 'add-boundary',
+      title: 'Add or extend a boundary primitive',
+      summary: 'author it in @liteship/core, evaluate it in @liteship/quantizer',
+      pointers: [
+        {
+          kind: 'owner-file',
+          path: 'packages/core/src/authoring/boundary.ts',
+          note: 'the boundary primitive',
+          checkId: null,
         },
       ],
     },
@@ -205,7 +241,9 @@ describe('D2 — payload conformance + validator teeth', () => {
     'package-smoke': PackageSmokePayloadSchema,
     'check-invariants': CheckInvariantsPayloadSchema,
     'capsule-verify': CapsuleVerifyPayloadSchema,
-    check: CheckPayloadSchema,
+    'check.gates': CheckPayloadSchema,
+    explain: ExplainPayloadSchema,
+    context: ContextPayloadSchema,
   } as const;
 
   it('every handler outputSchema deep-equals its ONE exported payload constant (no proxy beside the type)', () => {

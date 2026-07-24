@@ -57,7 +57,7 @@ Number of entities spawned at build time (one per scene track).
 Defined in: [scene/src/runtime.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L133)
 
 Query entities carrying ALL named components, resolved through a Promise.
-Wraps the now-synchronous [WorldNS.Shape.query](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts) so the astro scene
+Wraps the now-synchronous [WorldNS.query](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts) so the astro scene
 bridge can `await` the result without importing Effect (gate 24's
 Promise-facade decision) — the same entity shape `world.query` returns.
 

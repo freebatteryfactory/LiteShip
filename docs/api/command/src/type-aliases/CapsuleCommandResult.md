@@ -8,7 +8,7 @@
 
 > **CapsuleCommandResult**\<`P`\> = `_CapsuleCommandResult`\<`P`\>
 
-Defined in: core/dist/command.d.ts:20
+Defined in: core/dist/authoring/command.d.ts:20
 
 Structured command outcome; CLI serializes `payload`, MCP returns it as structuredContent.
 

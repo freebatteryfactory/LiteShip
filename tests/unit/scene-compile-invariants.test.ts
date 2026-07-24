@@ -6,10 +6,10 @@
  * ValidationError, and ALL violations are reported in one error.
  */
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene } from '@czap/scene';
-import type { SceneContract, SceneInvariant } from '@czap/scene';
-import { hasTag } from '@czap/error';
-import type { ValidationError } from '@czap/error';
+import { Track, compileScene } from '@liteship/scene';
+import type { SceneContract, SceneInvariant } from '@liteship/scene';
+import { hasTag } from '@liteship/error';
+import type { ValidationError } from '@liteship/error';
 import { introContract } from '../../examples/scenes/intro.js';
 
 const hero = Track.videoId('hero');

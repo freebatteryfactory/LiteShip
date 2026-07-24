@@ -2,9 +2,9 @@
  * Head-inline GPU-probe script — GENERATED from the canonical classifier and
  * tier ladders so a hand-copy can never drift.
  *
- * The `@czap/astro` integration injects a GPU detection probe into the document
+ * The `@liteship/astro` integration injects a GPU detection probe into the document
  * `<head>` that must run BEFORE hydration — before any module graph exists — so
- * it cannot `import { classifyGPURenderer } from '@czap/detect'` at runtime. The
+ * it cannot `import { classifyGPURenderer } from '@liteship/detect'` at runtime. The
  * naive fix (re-type the classifier + ladders inline) is exactly what shipped a
  * real drift bug in the 0.2.3 "detect-ladder" release: the inline copy silently
  * diverged from canonical.
@@ -19,7 +19,7 @@
  * @module
  */
 
-import type { CapTier, MotionTier } from '@czap/core';
+import type { CapTier, MotionTier } from '@liteship/core';
 import { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
 import { DETECT_READY_EVENT } from './detect-ready.js';
 import type { GPUTier } from './detect.js';
@@ -120,15 +120,15 @@ function emitClassifierSource(): string {
 
 /**
  * Build the head-inline PROVISIONAL detect script — the render-blocking script
- * `@czap/astro` injects via `injectScript('head-inline', ...)` BEFORE hydration.
+ * `@liteship/astro` injects via `injectScript('head-inline', ...)` BEFORE hydration.
  *
- * It writes the cheap, non-GPU device attributes (`data-czap-touch`,
- * `data-czap-reduced-motion`, `data-czap-scheme`, the `--czap-*` custom props)
- * and a PROVISIONAL `data-czap-tier`, then the deferred {@link emitDetectUpgradeScript}
+ * It writes the cheap, non-GPU device attributes (`data-liteship-touch`,
+ * `data-liteship-reduced-motion`, `data-liteship-scheme`, the `--liteship-*` custom props)
+ * and a PROVISIONAL `data-liteship-tier`, then the deferred {@link emitDetectUpgradeScript}
  * refines that tier once a real WebGL GPU probe is available.
  *
  * The provisional tier is NOT a second hand-rolled ladder (the 0.2.3/0.3.0
- * drift bug-class: this script and the upgrade script both write `data-czap-tier`,
+ * drift bug-class: this script and the upgrade script both write `data-liteship-tier`,
  * so a divergent provisional ladder disagrees with canonical by construction).
  * Instead it calls the SAME canonical {@link headProbeCapTier}, emitted verbatim
  * via `.toString()`, over the inline primitives (`cores`, `memory`,
@@ -139,18 +139,18 @@ function emitClassifierSource(): string {
  * same function. One ladder, two callers — they cannot drift.
  *
  * A drift guard runs this emitted script across the full cores × memory ×
- * reduced-motion matrix and asserts the written `data-czap-tier` equals
+ * reduced-motion matrix and asserts the written `data-liteship-tier` equals
  * `headProbeCapTier({ ...inline primitives, gpu: GPU_TIER_DEFAULT, webgpu: false })`
  * — `expected` computed from the canonical source, never hardcoded.
  */
 export function emitProvisionalDetectScript(): string {
   return `
 (function(){
-  if (window.__CZAP_OFF__) return;
+  if (window.__LITESHIP_OFF__) return;
   function writeDetectState(next) {
     const safe = Object.freeze(Object.assign({}, next));
     try {
-      Object.defineProperty(window, '__CZAP_DETECT__', {
+      Object.defineProperty(window, '__LITESHIP_DETECT__', {
         value: safe,
         configurable: true,
         enumerable: false,
@@ -158,12 +158,12 @@ export function emitProvisionalDetectScript(): string {
       });
     } catch (_) {
       try {
-        window.__CZAP_DETECT__ = safe;
+        window.__LITESHIP_DETECT__ = safe;
       } catch (_) {}
     }
   }
 
-  // Cap-tier ladder — the canonical headProbeCapTier (@czap/detect), emitted
+  // Cap-tier ladder — the canonical headProbeCapTier (@liteship/detect), emitted
   // verbatim. The provisional and the deferred GPU-probe upgrade both call THIS
   // one function, so the provisional tier can never be a divergent hand-copy.
   const ${headProbeCapTier.name} = ${headProbeCapTier.toString()};
@@ -178,15 +178,15 @@ export function emitProvisionalDetectScript(): string {
     const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const dpr = window.devicePixelRatio || 1;
 
-    h.style.setProperty('--czap-vw', w + 'px');
-    h.style.setProperty('--czap-cores', String(cores));
-    h.style.setProperty('--czap-dpr', String(dpr));
-    h.setAttribute('data-czap-touch', String(touch));
-    // The reduced-motion PREFERENCE — distinct from data-czap-motion, which is the
+    h.style.setProperty('--liteship-vw', w + 'px');
+    h.style.setProperty('--liteship-cores', String(cores));
+    h.style.setProperty('--liteship-dpr', String(dpr));
+    h.setAttribute('data-liteship-touch', String(touch));
+    // The reduced-motion PREFERENCE — distinct from data-liteship-motion, which is the
     // motion capability TIER (animations/transitions/.../none) emitted by
     // EdgeTier.tierDataAttributes server-side and refined by the GPU-probe upgrade.
-    h.setAttribute('data-czap-reduced-motion', motion ? 'reduce' : 'no-preference');
-    h.setAttribute('data-czap-scheme', dark ? 'dark' : 'light');
+    h.setAttribute('data-liteship-reduced-motion', motion ? 'reduce' : 'no-preference');
+    h.setAttribute('data-liteship-scheme', dark ? 'dark' : 'light');
 
     // Provisional tier — NO GPU probe is available inline (it needs a WebGL
     // context, which the deferred upgrade script creates). Feed canonical
@@ -194,7 +194,7 @@ export function emitProvisionalDetectScript(): string {
     // (${GPU_TIER_DEFAULT} = integrated, the same default the runtime sweep uses when the
     // renderer probe is unavailable) so the provisional value IS canonical for a
     // GPU-unknown device. The upgrade script supplies the real GPU tier and
-    // re-runs the same function, replacing data-czap-tier.
+    // re-runs the same function, replacing data-liteship-tier.
     const capTier = ${headProbeCapTier.name}({
       gpu: ${GPU_TIER_DEFAULT},
       cores: cores,
@@ -202,8 +202,8 @@ export function emitProvisionalDetectScript(): string {
       webgpu: false,
       prefersReducedMotion: motion
     });
-    h.setAttribute('data-czap-tier', capTier);
-    h.setAttribute('data-czap-tier-provisional', 'true');
+    h.setAttribute('data-liteship-tier', capTier);
+    h.setAttribute('data-liteship-tier-provisional', 'true');
 
     writeDetectState({
       tier: capTier,
@@ -215,9 +215,9 @@ export function emitProvisionalDetectScript(): string {
 }
 
 /**
- * Build the head-inline GPU-probe IIFE — the script `@czap/astro` injects via
+ * Build the head-inline GPU-probe IIFE — the script `@liteship/astro` injects via
  * `injectScript('page', ...)`. EVERY classification rule in the returned string
- * is generated from canonical `@czap/detect`:
+ * is generated from canonical `@liteship/detect`:
  *
  *   - the renderer→tier classifier is folded from {@link GPU_TIER_PATTERNS};
  *   - the cap-level ladder is {@link headProbeCapTier}, emitted via `.toString()`;
@@ -232,11 +232,11 @@ export function emitProvisionalDetectScript(): string {
 export function emitDetectUpgradeScript(): string {
   return `
 (function(){
-  if (window.__CZAP_OFF__) return;
+  if (window.__LITESHIP_OFF__) return;
   function writeDetectState(next) {
     const safe = Object.freeze(Object.assign({}, next));
     try {
-      Object.defineProperty(window, '__CZAP_DETECT__', {
+      Object.defineProperty(window, '__LITESHIP_DETECT__', {
         value: safe,
         configurable: true,
         enumerable: false,
@@ -244,20 +244,20 @@ export function emitDetectUpgradeScript(): string {
       });
     } catch (_) {
       try {
-        window.__CZAP_DETECT__ = safe;
+        window.__LITESHIP_DETECT__ = safe;
       } catch (_) {}
     }
   }
 
   // Renderer → GPU tier — folded from the canonical GPU_TIER_PATTERNS datum
-  // (@czap/detect) in canonical precedence (0 → 3 → 2 → 1, default ${GPU_TIER_DEFAULT}).
+  // (@liteship/detect) in canonical precedence (0 → 3 → 2 → 1, default ${GPU_TIER_DEFAULT}).
 ${emitClassifierSource()}
 
-  // Cap-level ladder — the canonical headProbeCapTier (@czap/detect),
+  // Cap-level ladder — the canonical headProbeCapTier (@liteship/detect),
   // emitted verbatim. Edit the ladder there and this updates.
   const ${headProbeCapTier.name} = ${headProbeCapTier.toString()};
 
-  // Motion ladder — the canonical headProbeMotionTier (@czap/detect),
+  // Motion ladder — the canonical headProbeMotionTier (@liteship/detect),
   // emitted verbatim.
   const ${headProbeMotionTier.name} = ${headProbeMotionTier.toString()};
 
@@ -295,18 +295,18 @@ ${emitClassifierSource()}
       const capTier = ${headProbeCapTier.name}(caps);
       const motionTier = ${headProbeMotionTier.name}(caps);
 
-      h.setAttribute('data-czap-tier', capTier);
+      h.setAttribute('data-liteship-tier', capTier);
       // The motion capability TIER, in the same vocabulary EdgeTier emits
-      // server-side (data-czap-motion). The probe already computes it; write it
-      // so CSS keyed on [data-czap-motion="physics"/"none"] matches on
+      // server-side (data-liteship-motion). The probe already computes it; write it
+      // so CSS keyed on [data-liteship-motion="physics"/"none"] matches on
       // non-edge pages too (where EdgeTier never ran), and so the edge value is
-      // refined by the real GPU probe just like data-czap-tier is. The
-      // reduced-motion PREFERENCE lives separately on data-czap-reduced-motion.
-      h.setAttribute('data-czap-motion', motionTier);
+      // refined by the real GPU probe just like data-liteship-tier is. The
+      // reduced-motion PREFERENCE lives separately on data-liteship-reduced-motion.
+      h.setAttribute('data-liteship-motion', motionTier);
       // gpuTier (numeric) and webgpu (bool) are pure ENGINE state, not author
-      // CSS keys — they ride czap:detect-ready + __CZAP_DETECT__ only, never the
+      // CSS keys — they ride liteship:detect-ready + __LITESHIP_DETECT__ only, never the
       // DOM root (zero readers; keeps engine state off the DOM).
-      h.removeAttribute('data-czap-tier-provisional');
+      h.removeAttribute('data-liteship-tier-provisional');
 
       // Update a minimal runtime snapshot instead of exposing the full probe payload.
       writeDetectState({
@@ -316,8 +316,8 @@ ${emitClassifierSource()}
         motionTier: motionTier
       });
 
-      // Single consolidated "detect settled" signal. __CZAP_DETECT__ and the
-      // data-czap-* attributes are now final; consumers that need post-probe
+      // Single consolidated "detect settled" signal. __LITESHIP_DETECT__ and the
+      // data-liteship-* attributes are now final; consumers that need post-probe
       // values (gpuTier/webgpu) listen for this ONE event instead of polling or
       // racing setTimeout backstops. The detail carries the final payload so a
       // late listener can read it straight off the event.
@@ -327,7 +327,7 @@ ${emitClassifierSource()}
         }));
       } catch(_) {}
     } catch(e) {
-      try { document.documentElement.setAttribute('data-czap-tier-probe-error', 'true'); } catch(_) {}
+      try { document.documentElement.setAttribute('data-liteship-tier-probe-error', 'true'); } catch(_) {}
       // Still fire detect-ready (flagged) so listeners awaiting the probe never
       // hang on a thrown probe — the provisional tier stands.
       try {

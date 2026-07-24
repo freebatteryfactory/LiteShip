@@ -34,7 +34,7 @@ import {
 
 const tmps: string[] = [];
 function mkTmp(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-doctor-cf-'));
   tmps.push(dir);
   return dir;
 }
@@ -237,7 +237,7 @@ describe('doctor/probes-cloudflare — probeCloudflareConfig()', () => {
       JSON.stringify({
         compatibility_date: '2026-06-08',
         compatibility_flags: ['nodejs_compat'],
-        kv_namespaces: [{ binding: 'CZAP_BOUNDARY_CACHE' }],
+        kv_namespaces: [{ binding: 'LITESHIP_BOUNDARY_CACHE' }],
       }),
     );
     expect(probeCloudflareConfig(dir)).toMatchObject({ status: 'ok' });
@@ -259,11 +259,11 @@ describe('doctor/probes-cloudflare — probeCloudflareConfig()', () => {
     expect(r.detail).toContain('kv_namespaces');
   });
 
-  it('accepts the CZAP_BOUNDARY_CACHE alias for the kv binding', () => {
+  it('accepts the LITESHIP_BOUNDARY_CACHE alias for the kv binding', () => {
     const dir = mkTmp();
     writeFileSync(
       resolve(dir, 'wrangler.toml'),
-      'compatibility_date = "2026-06-08"\ncompatibility_flags = ["nodejs_compat"]\n# CZAP_BOUNDARY_CACHE\n',
+      'compatibility_date = "2026-06-08"\ncompatibility_flags = ["nodejs_compat"]\n# LITESHIP_BOUNDARY_CACHE\n',
     );
     expect(probeCloudflareConfig(dir)).toMatchObject({ status: 'ok' });
   });
@@ -331,20 +331,20 @@ describe('doctor/probes-cloudflare — probeLiteshipPnpm()', () => {
     expect(probeLiteshipPnpm(dir)).toBeNull();
   });
 
-  it('ok when the @czap scope is resolvable beside liteship', () => {
+  it('ok when the @liteship scope is resolvable beside liteship', () => {
     const dir = mkTmp();
     writePkg(dir, { dependencies: { liteship: '0.1.5' } });
     mkdirSync(resolve(dir, 'node_modules', '.pnpm'), { recursive: true });
-    mkdirSync(resolve(dir, 'node_modules', '@czap'), { recursive: true });
+    mkdirSync(resolve(dir, 'node_modules', '@liteship'), { recursive: true });
     expect(probeLiteshipPnpm(dir)).toMatchObject({ id: 'liteship.pnpm', status: 'ok' });
   });
 
-  it('warn (with the literal pnpm add remedy) under pnpm-strict without hoisted @czap/*', () => {
+  it('warn (with the literal pnpm add remedy) under pnpm-strict without hoisted @liteship/*', () => {
     const dir = mkTmp();
     writePkg(dir, { devDependencies: { liteship: '0.1.5' } });
     mkdirSync(resolve(dir, 'node_modules', '.pnpm'), { recursive: true });
     const r = probeLiteshipPnpm(dir);
     expect(r).toMatchObject({ status: 'warn' });
-    expect(r?.hint).toContain('pnpm add @czap/core @czap/astro');
+    expect(r?.hint).toContain('pnpm add @liteship/core @liteship/astro');
   });
 });

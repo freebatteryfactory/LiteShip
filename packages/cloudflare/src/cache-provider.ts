@@ -1,5 +1,5 @@
 /**
- * Astro 7 cache provider bridge for CZAP's Cloudflare KV boundary cache.
+ * Astro 7 cache provider bridge for LiteShip's Cloudflare KV boundary cache.
  *
  * The file is both the Astro config helper (`cloudflareCacheProvider()`) and
  * the runtime provider entrypoint, following Astro's cache provider contract.
@@ -7,8 +7,8 @@
  * @module
  */
 
-import { Diagnostics, type ContentAddress } from '@czap/core';
-import { createBoundaryCache } from '@czap/edge';
+import { Diagnostics, type ContentAddress } from '@liteship/core';
+import { createBoundaryCache } from '@liteship/edge';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
 import { loadWorkersEnvFromRuntime, resolveEnvSource } from './env-source.js';
 
@@ -39,9 +39,9 @@ export interface AstroCacheProvider {
 }
 
 export interface CloudflareCacheProviderOptions {
-  /** KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`. */
+  /** KV namespace binding name in wrangler.jsonc. Defaults to `LITESHIP_BOUNDARY_CACHE`. */
   readonly binding?: string;
-  /** KV key prefix shared with `cloudflareMiddleware({ prefix })`. Defaults to `czap`. */
+  /** KV key prefix shared with `cloudflareMiddleware({ prefix })`. Defaults to `liteship`. */
   readonly prefix?: string;
   /**
    * Optional exact route path → boundary id mapping for native path invalidation.
@@ -104,25 +104,25 @@ function cacheControlValue(options: AstroCacheHeaderOptions): string | null {
  * Astro config helper. Use in `astro.config.mjs`:
  *
  * ```ts
- * cache: { provider: cloudflareCacheProvider({ binding: 'CZAP_BOUNDARY_CACHE' }) }
+ * cache: { provider: cloudflareCacheProvider({ binding: 'LITESHIP_BOUNDARY_CACHE' }) }
  * ```
  */
 export function cloudflareCacheProvider(options: CloudflareCacheProviderOptions = {}): AstroCacheProviderConfig {
   return {
-    entrypoint: '@czap/cloudflare/cache-provider',
+    entrypoint: '@liteship/cloudflare/cache-provider',
     config: { ...options },
   };
 }
 
 /** Build the runtime provider object Astro loads from the configured entrypoint. */
 export function createCloudflareCacheProvider(options: RuntimeOptions = {}): AstroCacheProvider {
-  const binding = options.binding ?? 'CZAP_BOUNDARY_CACHE';
+  const binding = options.binding ?? 'LITESHIP_BOUNDARY_CACHE';
   const envSource = resolveEnvSource(options);
   const kv = createCloudflareEdgeCache(envSource, { binding });
   const boundaryCache = createBoundaryCache(kv, { prefix: options.prefix });
 
   return {
-    name: '@czap/cloudflare',
+    name: '@liteship/cloudflare',
     setHeaders(cacheOptions, request) {
       const headers = new Headers();
       const tags = new Set(cacheOptions.tags ?? []);
@@ -144,7 +144,7 @@ export function createCloudflareCacheProvider(options: RuntimeOptions = {}): Ast
       const boundaryIds = normalizeBoundaryIds(options.pathBoundaries?.[path]);
       if (boundaryIds.length === 0) {
         Diagnostics.warnOnce({
-          source: 'czap/cloudflare.cache-provider',
+          source: 'liteship/cloudflare.cache-provider',
           code: 'path-boundary-map-missing',
           message:
             `cache.invalidate({ path: "${path}" }) had no pathBoundaries entry. ` +

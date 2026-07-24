@@ -8,7 +8,7 @@
 
 > **compileTokenBlock**(`block`, `token`): `string`
 
-Defined in: [vite/src/token-transform.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-transform.ts#L86)
+Defined in: [vite/src/token-transform.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-transform.ts#L90)
 
 Compile a parsed [TokenBlock](../interfaces/TokenBlock.md) plus a resolved `TokenDef` into
 CSS custom property declarations. Delegates to the canonical
@@ -22,7 +22,7 @@ CSS custom property declarations. Delegates to the canonical
 
 ### token
 
-[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md)
+[`Token`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md)
 
 ## Returns
 

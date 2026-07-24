@@ -8,7 +8,7 @@
 
 Defined in: [worker/src/messages.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L391)
 
-The DOM Worker surface czap's hosts actually drive (postMessage with
+The DOM Worker surface liteship's hosts actually drive (postMessage with
 transfer, terminate, message listening). Named so the dependency is
 structural rather than ambient: test doubles (tests/helpers/mock-worker.ts)
 conform to THIS type, and drift between host usage and the double breaks

@@ -12,8 +12,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { COMMAND_CATALOG, GLOSSARY_ENTRIES, mcpExposedDescriptors, commandRegistry } from '@czap/command';
-import { fnv1a } from '@czap/core';
+import { COMMAND_CATALOG, GLOSSARY_ENTRIES, mcpExposedDescriptors, commandRegistry } from '@liteship/command';
+import { fnv1a } from '@liteship/core';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { listResources, readResource } from '../../../packages/mcp-server/src/resources.js';
 import { listUiResources } from '../../../packages/mcp-server/src/ui-resources.js';
@@ -45,14 +45,22 @@ describe('D3 capabilities — declared because implemented, minimal honest flags
 
   it('server/info resource and initialize share ONE capabilities source (cannot drift)', async () => {
     const init = await result<{ capabilities: unknown }>('initialize', { protocolVersion: '2025-11-25' });
-    const read = await result<{ contents: Array<{ text: string }> }>('resources/read', { uri: 'liteship://server/info' });
+    const read = await result<{ contents: Array<{ text: string }> }>('resources/read', {
+      uri: 'liteship://server/info',
+    });
     const info = JSON.parse(read.contents[0]!.text) as { capabilities: unknown };
     expect(info.capabilities).toEqual(init.capabilities);
   });
 
   it('honesty invariant: every declared capability has a working *_list method (not -32601)', async () => {
-    const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
-    const listMethod: Record<string, string> = { tools: 'tools/list', resources: 'resources/list', prompts: 'prompts/list' };
+    const caps = (
+      await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })
+    ).capabilities;
+    const listMethod: Record<string, string> = {
+      tools: 'tools/list',
+      resources: 'resources/list',
+      prompts: 'prompts/list',
+    };
     for (const cap of Object.keys(caps)) {
       if (cap === 'ui') continue; // D10: ui.callServerTool is a host-bridge flag, not a *_list surface.
       const method = listMethod[cap];
@@ -97,8 +105,10 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
 });
 
 describe('D3 resources/read — real projected JSON', () => {
-  it('liteship://registry/commands is the full COMMAND_CATALOG (24-descriptor superset of tools/list)', async () => {
-    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', { uri: 'liteship://registry/commands' });
+  it('liteship://registry/commands is the full COMMAND_CATALOG superset of tools/list', async () => {
+    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', {
+      uri: 'liteship://registry/commands',
+    });
     expect(r.contents[0]!.mimeType).toBe('application/json');
     expect(JSON.parse(r.contents[0]!.text)).toEqual(COMMAND_CATALOG);
   });
@@ -129,7 +139,7 @@ describe('D3 resources/read — real projected JSON', () => {
     expect(new Set(index.terms.map((t) => t.term))).toEqual(new Set(GLOSSARY_ENTRIES.map((e) => e.term)));
   });
 
-  it('each glossary term resource round-trips to its entry (including the @czap/* special-char term)', async () => {
+  it('each glossary term resource round-trips to its entry (including the @liteship/* special-char term)', async () => {
     for (const entry of GLOSSARY_ENTRIES) {
       const listed = listResources().find((x) => x.name === `glossary/${entry.term}`);
       expect(listed, `glossary term ${entry.term} must be a concrete listed resource`).toBeDefined();
@@ -150,7 +160,10 @@ describe('D3 resources/read — real projected JSON', () => {
 
 describe('D3 prompts/list — exactly the two registry-backed prompts', () => {
   it('returns liteship.command.inspect + liteship.tool.use, in stable order, with required args', async () => {
-    const r = await result<{ prompts: Array<{ name: string; arguments: Array<{ name: string; required: boolean }> }> }>('prompts/list', {});
+    const r = await result<{ prompts: Array<{ name: string; arguments: Array<{ name: string; required: boolean }> }> }>(
+      'prompts/list',
+      {},
+    );
     expect(r.prompts.map((p) => p.name)).toEqual(['liteship.command.inspect', 'liteship.tool.use']);
     for (const p of r.prompts) expect(p.arguments.some((a) => a.required)).toBe(true);
   });
@@ -163,7 +176,10 @@ describe('D3 prompts/list — exactly the two registry-backed prompts', () => {
 
 describe('D3 prompts/get — deterministic, registry-backed messages', () => {
   it('command.inspect explains a handler-backed command from its descriptor', async () => {
-    const r = await result<{ messages: Array<{ role: string; content: { type: string; text: string } }> }>('prompts/get', { name: 'liteship.command.inspect', arguments: { command: 'glossary' } });
+    const r = await result<{ messages: Array<{ role: string; content: { type: string; text: string } }> }>(
+      'prompts/get',
+      { name: 'liteship.command.inspect', arguments: { command: 'glossary' } },
+    );
     expect(r.messages[0]!.role).toBe('user');
     expect(r.messages[0]!.content.type).toBe('text');
     expect(r.messages[0]!.content.text).toContain('Command: glossary');
@@ -171,12 +187,18 @@ describe('D3 prompts/get — deterministic, registry-backed messages', () => {
   });
 
   it('command.inspect explains a CLI-owned command (executionKind reported honestly)', async () => {
-    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', { name: 'liteship.command.inspect', arguments: { command: 'gauntlet' } });
+    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', {
+      name: 'liteship.command.inspect',
+      arguments: { command: 'gauntlet' },
+    });
     expect(r.messages[0]!.content.text).toContain('cli-orchestration');
   });
 
   it('tool.use explains an MCP-exposed tool and references the D1/D2 envelope', async () => {
-    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', { name: 'liteship.tool.use', arguments: { tool: 'asset.analyze' } });
+    const r = await result<{ messages: Array<{ content: { text: string } }> }>('prompts/get', {
+      name: 'liteship.tool.use',
+      arguments: { tool: 'asset.analyze' },
+    });
     const text = r.messages[0]!.content.text;
     expect(text).toContain('asset.analyze');
     expect(text).toContain('structuredContent');
@@ -189,7 +211,9 @@ describe('D3 prompts/get — deterministic, registry-backed messages', () => {
 
   it('command.inspect missing required arg → -32602; unknown command → -32602', async () => {
     expect(await errCode('prompts/get', { name: 'liteship.command.inspect', arguments: {} })).toBe(-32602);
-    expect(await errCode('prompts/get', { name: 'liteship.command.inspect', arguments: { command: '__nope__' } })).toBe(-32602);
+    expect(await errCode('prompts/get', { name: 'liteship.command.inspect', arguments: { command: '__nope__' } })).toBe(
+      -32602,
+    );
   });
 
   it('unknown prompt name → -32602; missing name → -32602', async () => {
@@ -221,7 +245,11 @@ describe('D3 stability — projection drift tripwire', () => {
   it('the {resources, prompts} projection matches its pinned content address', () => {
     const address = fnv1a(JSON.stringify({ resources: listResources(), prompts: listPrompts() }));
     // 0.2.0 framework primitives: added liteship://registry/components JSON resource.
-    expect(address).toBe('fnv1a:97d412ae');
+    // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
+    // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off, moored,
+    // shake-down, quay) were dropped from GLOSSARY_ENTRIES — the JSON glossary resource embeds
+    // the catalog, so the {resources, prompts} projection digest shifted.
+    expect(address).toBe('fnv1a:31826c71');
   });
 });
 
@@ -236,23 +264,33 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
     expect(receipt.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
-  it('D2: tools/list still emits 10 tools each with an object outputSchema; 18 handlers total', () => {
+  it('D2: tools/list still emits 12 tools each with an object outputSchema; 20 handlers total', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(12);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
-    // 18 handlers: the `check` command (the PURE gauntlet gate fold,
-    // litelaunchGauntlet) joined the registry as a handler-backed, MCP-exposed
-    // command — so both the tools count (9 → 10) and the handler count grew by one.
-    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(18);
+    // 20 handlers: the `explain` (diagnostic-code / symbol lookup) and `context`
+    // (task-oriented pointer map) reference commands joined the registry as
+    // handler-backed, MCP-exposed commands — so both the tools count (10 → 12) and
+    // the handler count (18 → 20) grew by two.
+    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(20);
   });
 });
 
 describe('D3 namespace law — protocol surfaces stay product-owned', () => {
-  it('no maintainer identity (heyoub) and no czap:// scheme in the D3 protocol-surface source', () => {
-    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts', 'app-resources.ts', 'app-render.ts', 'manifest-resource.ts']) {
+  it('no maintainer identity (heyoub) and the liteship:// scheme in the D3 protocol-surface source', () => {
+    for (const file of [
+      'resources.ts',
+      'prompts.ts',
+      'capabilities.ts',
+      'dispatch.ts',
+      'ui-resources.ts',
+      'ui-render.ts',
+      'app-resources.ts',
+      'app-render.ts',
+      'manifest-resource.ts',
+    ]) {
       const src = readFileSync(resolve(SRC, file), 'utf8');
       expect(src, `${file} must not embed maintainer identity`).not.toContain('heyoub');
-      expect(src, `${file} must use the liteship:// scheme, not czap://`).not.toContain('czap://');
     }
   });
 });
@@ -270,12 +308,12 @@ describe('error contract — failures name the subject and the literal next step
     );
   });
 
-  it('tool.use on a CLI-owned command says to run it as `czap <name>`', () => {
+  it('tool.use on a CLI-owned command says to run it as `liteship <name>`', () => {
     // gauntlet is in the catalog but not MCP-exposed.
-    expect(() => getPrompt('liteship.tool.use', { tool: 'gauntlet' })).toThrow(/run it as `czap gauntlet`/i);
+    expect(() => getPrompt('liteship.tool.use', { tool: 'gauntlet' })).toThrow(/run it as `liteship gauntlet`/i);
   });
 
-  it('tool.use on a name outside the catalog says so (no bogus czap remedy)', () => {
+  it('tool.use on a name outside the catalog says so (no bogus liteship remedy)', () => {
     expect(() => getPrompt('liteship.tool.use', { tool: '__nope__' })).toThrow(
       /not in the command catalog.*tools\/list/,
     );

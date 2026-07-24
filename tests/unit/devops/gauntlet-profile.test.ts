@@ -1,7 +1,7 @@
 /**
  * CUT D8 — the canonical gauntlet phase profile is the ONE source of truth.
  *
- * Pins the 42-phase order to the executor's real run-order (no drift), proves the
+ * Pins the 47-phase order to the executor's real run-order (no drift), proves the
  * executor + CLI both DERIVE from this list (no hand-maintained copies left), and
  * preserves the coverage:browser watchdog options across the migration.
  *
@@ -25,15 +25,18 @@ import {
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
-/** The canonical 42 phases, transcribed verbatim from the executor's HEAD run-order. */
+/** The canonical 47 phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
-  { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
+  { label: 'environment-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
   { label: 'capsule:compile', command: 'pnpm run capsule:compile' },
   { label: 'typecheck', command: 'pnpm run typecheck' },
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
+  { label: 'docs:check:fast', command: 'pnpm run docs:check:fast' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
+  { label: 'assurance:gate', command: 'pnpm run assurance:gate' },
+  { label: 'test:constitution', command: 'pnpm run test:constitution' },
   { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
   { label: 'check:gates', command: 'pnpm run check:gates' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },
@@ -50,7 +53,8 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'test:redteam', command: 'pnpm run test:redteam' },
   { label: 'bench', command: 'pnpm run bench' },
   { label: 'bench:gate', command: 'pnpm run bench:gate' },
-  { label: 'bench:trend', command: 'BENCH_TREND_STRICT=1 pnpm run bench:trend' },
+  { label: 'bench:contracts', command: 'pnpm run bench:contracts' },
+  { label: 'bench:trend', command: 'pnpm run bench:trend -- --strict' },
   { label: 'bench:reality', command: 'pnpm run bench:reality' },
   { label: 'package:smoke', command: 'pnpm run package:smoke' },
   { label: 'coverage:wipe-subprocess', command: 'rimraf coverage/subprocess-raw' },
@@ -60,7 +64,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'coverage:merge', command: 'tsx scripts/merge-coverage.ts' },
   { label: 'report:runtime-seams', command: 'pnpm run report:runtime-seams' },
   { label: 'audit', command: 'pnpm run audit' },
-  { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
+  { label: 'report:adaptive-scan', command: 'pnpm run report:adaptive-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
   { label: 'standards:gate', command: 'pnpm run standards:gate' },
@@ -73,9 +77,9 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 43 phases', () => {
-    expect(gauntletPhases.length).toBe(43);
-    expect(gauntletPhaseLabels().length).toBe(43);
+  it('has exactly 47 phases', () => {
+    expect(gauntletPhases.length).toBe(47);
+    expect(gauntletPhaseLabels().length).toBe(47);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {
@@ -87,8 +91,8 @@ describe('D8 — canonical gauntlet phase profile', () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  it('rig-check is the entry phase', () => {
-    expect(gauntletPhases[0]!.label).toBe('rig-check');
+  it('environment-check is the entry phase', () => {
+    expect(gauntletPhases[0]!.label).toBe('environment-check');
   });
 
   it('preserves the coverage:browser watchdog options', () => {
@@ -134,7 +138,7 @@ describe('Tier 6 — ci-parallel profile partitioning', () => {
 
   it('ci-parallel-mid does not duplicate preflight, integration, or other dedicated lanes', () => {
     const mid = new Set(gauntletPhaseProfiles['ci-parallel-mid']);
-    expect(mid.has('rig-check'), 'rig-check runs only on serial truth-linux / setup').toBe(false);
+    expect(mid.has('environment-check'), 'environment-check runs only on serial truth-linux / setup').toBe(false);
     for (const labels of dedicatedProfiles) {
       for (const label of labels) {
         expect(mid.has(label), `mid must not re-run dedicated phase ${label}`).toBe(false);

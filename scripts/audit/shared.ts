@@ -1,7 +1,7 @@
 /**
  * Audit shared helpers — split (CUT D9b-1). The reusable ENGINE helpers
  * (package-manifest + source-record reading, finding counting/sorting, allowlist
- * partitioning) live in `@czap/audit` and are re-exported here so existing
+ * partitioning) live in `@liteship/audit` and are re-exported here so existing
  * `./shared.js` importers are unchanged. The repo-local `repoRoot` const, the
  * file-writing/`main()` utilities, and the HICP inventory walkers stay here.
  *
@@ -12,7 +12,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import fg from 'fast-glob';
-import { auditIgnoreGlobs, normalizeRepoPath } from '@czap/audit';
+import { auditIgnoreGlobs, normalizeRepoPath } from '@liteship/audit';
 import { matchesHicpInventory } from './policy.js';
 
 export {
@@ -29,8 +29,8 @@ export {
   readSourceFileRecords,
   walkAuditSourceFiles,
   readJsonFile,
-} from '@czap/audit';
-export type { PackageManifestInfo, SourceFileRecord } from '@czap/audit';
+} from '@liteship/audit';
+export type { PackageManifestInfo, SourceFileRecord } from '@liteship/audit';
 
 export interface InventoryFileRecord {
   readonly absolutePath: string;

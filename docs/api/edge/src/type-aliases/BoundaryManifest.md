@@ -12,5 +12,5 @@ Defined in: [edge/src/manifest.ts:218](https://github.com/freebatteryfactory/Lit
 
 Build-derived boundary manifest: boundary export name to
 [BoundaryManifestEntry](../interfaces/BoundaryManifestEntry.md). This is the value of the
-`virtual:czap/boundaries` virtual module and the `boundaries` field of
-the emitted `czap-boundary-manifest.json`.
+`virtual:liteship/boundaries` virtual module and the `boundaries` field of
+the emitted `liteship-boundary-manifest.json`.

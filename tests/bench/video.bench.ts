@@ -7,7 +7,7 @@ import { Bench } from 'tinybench';
 // (the compositor's preferred hot-path accessor) and `evaluate`; the reactive
 // CellKernel `state` lives on ReactiveQuantizer, which this fixture doesn't need.
 // Compositor.create/add/compute went synchronous in the core-seams wave.
-import { Scheduler, VideoRenderer, Compositor, Boundary, Millis } from '@czap/core';
+import { Scheduler, VideoRenderer, Compositor, Boundary, Millis, defineBoundary } from '@liteship/core';
 
 const bench = new Bench({ warmupIterations: 50 });
 
@@ -15,7 +15,7 @@ const bench = new Bench({ warmupIterations: 50 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -24,7 +24,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-function makeQuantizer(boundary: Boundary.Shape) {
+function makeQuantizer(boundary: Boundary) {
   let currentState = boundary.states[0] as string;
   return {
     boundary,
@@ -56,7 +56,7 @@ bench.add('FixedStepScheduler -- 1000 steps @ 60fps', () => {
 });
 
 bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
-  const compositor = Compositor.create().compositor;
+  const compositor = Compositor.create();
   const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
@@ -64,7 +64,7 @@ bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
 });
 
 bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
-  const compositor = Compositor.create().compositor;
+  const compositor = Compositor.create();
   const renderer = VideoRenderer.make({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
@@ -72,7 +72,7 @@ bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
 });
 
 const blendTreeCompositor = (() => {
-  const c = Compositor.create().compositor;
+  const c = Compositor.create();
   c.add('viewport', makeQuantizer(widthBoundary));
   c.add('layout', makeQuantizer(widthBoundary));
   c.add('theme', makeQuantizer(widthBoundary));
@@ -86,7 +86,7 @@ bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 cal
 });
 
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {
-  const c = Compositor.create().compositor;
+  const c = Compositor.create();
   for (let i = 0; i < 100; i++) {
     c.compute();
   }

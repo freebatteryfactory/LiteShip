@@ -10,8 +10,8 @@
  * when the origin itself is trusted.
  *
  * The hash is computed with the SAME `sha256` kernel the content-address layer
- * uses (`@czap/core`'s {@link AddressedDigest}, which routes through
- * `@czap/canonical`'s `@noble/hashes` sha256) — NO new crypto dependency. The
+ * uses (`@liteship/core`'s {@link AddressedDigest}, which routes through
+ * `@liteship/canonical`'s `@noble/hashes` sha256) — NO new crypto dependency. The
  * content is encoded as UTF-8 bytes deterministically (`TextEncoder`), so the same
  * shader text always hashes to the same digest: the property the comparison relies
  * on.
@@ -23,8 +23,8 @@
  *
  * @module
  */
-import { bytesToHex } from '@czap/canonical';
-import { AddressedDigest } from '@czap/core';
+import { bytesToHex } from '@liteship/canonical';
+import { AddressedDigest } from '@liteship/core';
 import { isFetchableRuntimeUrl } from './runtime-url.js';
 
 /**

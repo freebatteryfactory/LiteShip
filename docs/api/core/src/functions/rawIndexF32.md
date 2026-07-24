@@ -8,14 +8,14 @@
 
 > **rawIndexF32**(`thresholds`, `value`): `number`
 
-Defined in: [core/src/boundary-f32.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts#L43)
+Defined in: [core/src/wasm/boundary-f32.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/boundary-f32.ts#L43)
 
 The single f32-canonical state-index kernel.
 
 Returns the index of the state a `value` falls into: the largest `i` where
 `thresholds[i] <= value` (in f32), or `0` when the value is below every
 threshold. Thresholds are assumed strictly ascending (guaranteed by
-`Boundary.make`). Uses an unrolled fast path for small arrays (≤4) and binary
+`defineBoundary`). Uses an unrolled fast path for small arrays (≤4) and binary
 search beyond — both equivalent to a linear reverse-scan for sorted input, so
 `EVALUATE_THRESHOLDS_SOURCE` (the worker blob twin, a linear reverse-scan) and
 `fallbackKernels.batchBoundaryEval` agree with this on every input.

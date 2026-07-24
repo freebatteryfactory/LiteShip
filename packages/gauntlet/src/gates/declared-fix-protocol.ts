@@ -25,7 +25,7 @@
  * in-scope, sized, non-weakening, receipted fix is admitted clean.
  *
  * LEAN BY CONSTRUCTION (ADR-0012): the gate reads NO config off disk, content-addresses
- * NOTHING (the host minted the receipts via `@czap/core`'s kernel), and reads NO clock
+ * NOTHING (the host minted the receipts via `@liteship/core`'s kernel), and reads NO clock
  * (the host injected `now` into the verifier). It only FOLDS the decided verdict.
  * REPORT-not-DECIDE.
  *
@@ -103,7 +103,7 @@ function factsContext(facts: DeclaredFixFacts): GateContext {
  * fix the verifier admitted). The gate must fold this to ZERO findings.
  */
 const ADMITTED_FACTS: DeclaredFixFacts = {
-  intent: 'fix the fnv off-by-one in packages/core/src/fnv.ts',
+  intent: 'fix the fnv off-by-one in packages/core/src/evidence/fnv.ts',
   verdict: { _tag: 'admitted' },
 };
 
@@ -117,14 +117,14 @@ const ADMITTED_FACTS: DeclaredFixFacts = {
  * the test suite, where each class is exercised against real measured reality.
  */
 const REJECTED_FACTS: DeclaredFixFacts = {
-  intent: 'claimed: fix one typo in packages/core/src/fnv.ts',
+  intent: 'claimed: fix one typo in packages/core/src/evidence/fnv.ts',
   verdict: {
     _tag: 'rejected',
     reasons: [
       {
         class: 'scope-creep',
         detail:
-          'the fix touched "packages/gauntlet/src/gates/no-placeholder.ts", which is OUTSIDE its declared scope (globs: packages/core/src/fnv.ts).',
+          'the fix touched "packages/gauntlet/src/gates/no-placeholder.ts", which is OUTSIDE its declared scope (globs: packages/core/src/evidence/fnv.ts).',
       },
     ],
   },

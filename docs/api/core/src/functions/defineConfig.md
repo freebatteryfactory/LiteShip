@@ -6,18 +6,20 @@
 
 # Function: defineConfig()
 
-> **defineConfig**(`input`): [`Shape`](../namespaces/Config/interfaces/Shape.md)
+> **defineConfig**(`input`): [`Config`](../interfaces/Config.md)
 
-Defined in: [core/src/config.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L167)
+Defined in: [core/src/authoring/config.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L204)
 
-Thin alias for [Config.make](../variables/Config.md#make) — matches the `defineConfig(...)` ergonomics other tools use.
+Define a liteship [Config](../variables/Config.md) — the single project-configuration hub every
+adapter (Vite, Astro, test runners, edge runtime) projects from. Produces a
+frozen, FNV-1a content-addressed value from raw [ConfigInput](../interfaces/ConfigInput.md).
 
 ## Parameters
 
 ### input
 
-[`Input`](../namespaces/Config/interfaces/Input.md)
+[`ConfigInput`](../interfaces/ConfigInput.md)
 
 ## Returns
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)

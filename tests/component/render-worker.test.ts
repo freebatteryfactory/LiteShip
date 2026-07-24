@@ -6,8 +6,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
-import { RenderWorker } from '@czap/worker';
+import { Boundary, Diagnostics, defineBoundary } from '@liteship/core';
+import { RenderWorker } from '@liteship/worker';
 import { MockWorker } from '../helpers/mock-worker.js';
 
 // ---------------------------------------------------------------------------
@@ -154,14 +154,14 @@ describe('RenderWorker', () => {
       expect.arrayContaining([
         expect.objectContaining({
           level: 'error',
-          source: 'czap/worker.render-worker',
+          source: 'liteship/worker.render-worker',
           code: 'worker-message-error',
           message: 'Render worker reported an error.',
           detail: { message: 'render failed' },
         }),
         expect.objectContaining({
           level: 'error',
-          source: 'czap/worker.render-worker',
+          source: 'liteship/worker.render-worker',
           code: 'worker-unhandled-error',
           message: 'Render worker raised an unhandled error.',
           detail: 'boom',
@@ -204,7 +204,7 @@ describe('evaluateThresholds (render-worker inline logic)', () => {
   });
 
   test('agrees with Boundary.evaluate across a range of values', () => {
-    const bp = Boundary.make({
+    const bp = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'] as const,

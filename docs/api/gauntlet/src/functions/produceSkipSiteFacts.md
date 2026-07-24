@@ -8,7 +8,7 @@
 
 > **produceSkipSiteFacts**(`files`, `readFile`, `detect?`): [`SkipSiteFacts`](../interfaces/SkipSiteFacts.md)
 
-Defined in: [gauntlet/src/skip-site-facts.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L98)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L98)
 
 THE PRODUCER — fold a governed file list into a [SkipSiteFacts](../interfaces/SkipSiteFacts.md) pack. Does all
 acquisition (read + detect) and normalization (the registry lookup + the floor inputs),

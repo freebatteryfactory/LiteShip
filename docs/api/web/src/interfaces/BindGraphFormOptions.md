@@ -26,7 +26,7 @@ Defined in: [web/src/mutation/graph-form.ts:18](https://github.com/freebatteryfa
 
 Defined in: [web/src/mutation/graph-form.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L22)
 
-Optional imperative hook; the `czap:mutation` event fires regardless.
+Optional imperative hook; the `liteship:mutation` event fires regardless.
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Project the submitted form into patch ops. Host-owned domain logic (nodes must b
 
 ##### base
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 #### Returns
 

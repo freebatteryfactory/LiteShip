@@ -12,7 +12,7 @@ Outcome of an edge-side tier detection sweep.
 
 All three fields use the same branded tier types as the client runtime,
 so downstream boundary evaluation and output gating reuse the exact
-code paths from `@czap/detect`.
+code paths from `@liteship/detect`.
 
 ## Properties
 

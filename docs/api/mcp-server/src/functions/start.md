@@ -6,9 +6,9 @@
 
 # Function: start()
 
-> **start**(`opts?`): `Promise`\<`void`\>
+> **start**(`opts?`, `deps?`): `Promise`\<`void`\>
 
-Defined in: [mcp-server/src/start.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L24)
+Defined in: [mcp-server/src/start.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L51)
 
 Start the MCP server on the requested transport.
 
@@ -17,6 +17,10 @@ Start the MCP server on the requested transport.
 ### opts?
 
 [`StartOpts`](../interfaces/StartOpts.md) = `{}`
+
+### deps?
+
+`StartDeps` = `nodeStartDeps`
 
 ## Returns
 

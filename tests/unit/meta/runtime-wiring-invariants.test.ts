@@ -1,33 +1,40 @@
 import { describe, expect, test } from 'vitest';
+import { existsSync, realpathSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 
-import { integration } from '@czap/astro';
-import { bootstrapSlots, installSwapPipeline, loadWasmRuntime } from '@czap/astro/runtime';
-import { Compositor, RuntimeCoordinator } from '@czap/core';
-import { CompositorWorker } from '@czap/worker';
-import { createEdgeHostAdapter } from '@czap/edge';
+import { integration } from '@liteship/astro';
+import { bootstrapSlots, installSwapPipeline, loadWasmRuntime } from '@liteship/astro/runtime';
+import { Compositor, RuntimeCoordinator } from '@liteship/core';
+import { CompositorWorker } from '@liteship/worker';
+import { createEdgeHostAdapter } from '@liteship/edge';
+import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 describe('cross-package runtime wiring invariants', () => {
+  function expectOwnedAstroEntrypoint(entrypoint: string, name: 'worker' | 'wasm'): void {
+    expect(isAbsolute(entrypoint)).toBe(true);
+    expect(existsSync(entrypoint)).toBe(true);
+    const physical = realpathSync(entrypoint).replaceAll('\\', '/');
+    expect(physical).toMatch(new RegExp(`/packages/astro/(?:src|dist)/client-directives/${name}\\.(?:ts|js)$`));
+    expect(physical).not.toBe(`@liteship/astro/client-directives/${name}`);
+  }
+
   // ---------------------------------------------------------------------------
   // 1. Worker directive uses initWorkerDirective (not inline Blob URLs)
   //
-  // The Astro integration registers a worker client directive whose entrypoint
-  // is '@czap/astro/client-directives/worker'. That module delegates to
-  // initWorkerDirective from the runtime layer. We verify the integration
-  // wires the correct entrypoint by calling the hooks and inspecting the
-  // registered directives.
+  // The Astro integration registers a package-owned absolute worker entrypoint.
+  // This lets an isolated one-install consumer resolve the transitive Astro
+  // package without requiring it to be hoisted into the application root.
   // ---------------------------------------------------------------------------
-  test('worker directive is registered through the integration entrypoint', () => {
+  test('worker directive is registered through the integration entrypoint', async () => {
     const astroIntegration = integration({ workers: { enabled: true } });
-    expect(astroIntegration.name).toBe('@czap/astro');
+    expect(astroIntegration.name).toBe('@liteship/astro');
 
     const directives: Array<{ name: string; entrypoint: string }> = [];
 
-    const hooks = astroIntegration.hooks as Record<string, (...args: unknown[]) => void>;
-    const setup = hooks['astro:config:setup'];
-    expect(typeof setup).toBe('function');
+    expect(typeof astroIntegration.hooks['astro:config:setup']).toBe('function');
 
-    // Call the setup hook with a minimal stub to capture registered directives
-    setup({
+    // Run the async-capable setup hook against an empty project root and capture directives.
+    await runIsolatedAstroConfigSetup(astroIntegration, {
       updateConfig: () => {},
       addClientDirective: (directive: { name: string; entrypoint: string }) => {
         directives.push(directive);
@@ -38,7 +45,7 @@ describe('cross-package runtime wiring invariants', () => {
 
     const workerDirective = directives.find((d) => d.name === 'worker');
     expect(workerDirective).toBeDefined();
-    expect(workerDirective!.entrypoint).toBe('@czap/astro/client-directives/worker');
+    expectOwnedAstroEntrypoint(workerDirective!.entrypoint, 'worker');
   });
 
   // ---------------------------------------------------------------------------
@@ -47,7 +54,7 @@ describe('cross-package runtime wiring invariants', () => {
   // loadWasmRuntime is the shared runtime entry that delegates to
   // WASMDispatch.load rather than calling WebAssembly.instantiate directly.
   // ---------------------------------------------------------------------------
-  test('wasm directive uses loadWasmRuntime from the shared runtime layer', () => {
+  test('wasm directive uses loadWasmRuntime from the shared runtime layer', async () => {
     expect(loadWasmRuntime).toBeDefined();
     expect(typeof loadWasmRuntime).toBe('function');
 
@@ -55,8 +62,7 @@ describe('cross-package runtime wiring invariants', () => {
     const astroIntegration = integration({ wasm: { enabled: true } });
     const directives: Array<{ name: string; entrypoint: string }> = [];
 
-    const hooks = astroIntegration.hooks as Record<string, (...args: unknown[]) => void>;
-    hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(astroIntegration, {
       updateConfig: () => {},
       addClientDirective: (directive: { name: string; entrypoint: string }) => {
         directives.push(directive);
@@ -67,13 +73,13 @@ describe('cross-package runtime wiring invariants', () => {
 
     const wasmDirective = directives.find((d) => d.name === 'wasm');
     expect(wasmDirective).toBeDefined();
-    expect(wasmDirective!.entrypoint).toBe('@czap/astro/client-directives/wasm');
+    expectOwnedAstroEntrypoint(wasmDirective!.entrypoint, 'wasm');
   });
 
   // ---------------------------------------------------------------------------
   // 3. Astro integration bootstraps slots through the shared runtime layer
   //
-  // bootstrapSlots and installSwapPipeline are exported from @czap/astro/runtime
+  // bootstrapSlots and installSwapPipeline are exported from @liteship/astro/runtime
   // and are referenced in the integration's injected bootstrap script.
   // ---------------------------------------------------------------------------
   test('astro integration bootstraps slots through the shared runtime layer', () => {
@@ -87,7 +93,7 @@ describe('cross-package runtime wiring invariants', () => {
   // ---------------------------------------------------------------------------
   // 4. Compositor uses RuntimeCoordinator
   //
-  // Both are namespace objects exported from @czap/core with a .create factory.
+  // Both are namespace objects exported from @liteship/core with a .create factory.
   // ---------------------------------------------------------------------------
   test('compositor host path goes through the shared runtime coordinator', () => {
     expect(RuntimeCoordinator).toBeDefined();
@@ -113,7 +119,7 @@ describe('cross-package runtime wiring invariants', () => {
   // ---------------------------------------------------------------------------
   // 6. Astro middleware uses the edge host adapter
   //
-  // createEdgeHostAdapter is the factory from @czap/edge used by the
+  // createEdgeHostAdapter is the factory from @liteship/edge used by the
   // middleware to resolve tiers, compile themes, and manage boundary caches.
   // ---------------------------------------------------------------------------
   test('astro middleware uses the shared edge host adapter', () => {

@@ -14,4 +14,5 @@ instead of `console.*` so hosts can redirect or capture every diagnostic via [Di
 - [Event](type-aliases/Event.md)
 - [Level](type-aliases/Level.md)
 - [Payload](type-aliases/Payload.md)
+- [RegisteredPayload](type-aliases/RegisteredPayload.md)
 - [Sink](type-aliases/Sink.md)

@@ -15,14 +15,14 @@ import {
   DPU_BASE_ATTR,
   DPU_RESULT_ATTR,
   DPU_DIGEST_ATTR,
-} from '@czap/web';
-import { nodeLogicalKey, nodeFromParts } from '@czap/core';
-import type { ContentAddress } from '@czap/core';
+} from '@liteship/web';
+import { nodeLogicalKey, nodeFromParts } from '@liteship/core';
+import type { ContentAddress } from '@liteship/core';
 import { META } from '../../helpers/graph-fixtures.js';
 
-const baseId = 'czap:base' as ContentAddress;
-const nextId = 'czap:next' as ContentAddress;
-const staleId = 'czap:stale' as ContentAddress;
+const baseId = 'liteship:base' as ContentAddress;
+const nextId = 'liteship:next' as ContentAddress;
+const staleId = 'liteship:stale' as ContentAddress;
 
 function signalMarker(input: string): string {
   return nodeLogicalKey(
@@ -35,12 +35,12 @@ afterEach(() => {
 });
 
 describe('detectDpuCapability (#120)', () => {
-  it('always reports a rung — native when setHTML exists, otherwise floor-morph', () => {
+  it('always reports a tier — native when setHTML exists, otherwise floor-morph', () => {
     const cap = detectDpuCapability();
     if (cap.available) {
-      expect(cap.rung).toBe('native-sethtml');
+      expect(cap.tier).toBe('native-sethtml');
     } else {
-      expect(cap.rung).toBe('floor-morph');
+      expect(cap.tier).toBe('floor-morph');
     }
   });
 });
@@ -88,17 +88,17 @@ describe('watchAndPrepare apply floor (#120)', () => {
     document.body.appendChild(target);
     const marker = signalMarker('viewport.width');
     const handle = watchAndPrepare(marker, target);
-    expect(handle.capability.rung).toBe('floor-morph');
+    expect(handle.capability.tier).toBe('floor-morph');
     expect(target.getAttribute(DPU_MARKER_ATTR)).toBe(marker);
 
     const html = '<p data-test="slot">Patched</p>';
     const envelope = handle.stamp({ baseGraphId: baseId, resultGraphId: nextId, html });
-    const forcedFloor = { available: false as const, rung: 'floor-morph' as const };
+    const forcedFloor = { available: false as const, tier: 'floor-morph' as const };
     const result = applyVerifiablePatch(target, envelope, baseId, forcedFloor);
 
     expect(result._tag).toBe('applied');
     if (result._tag === 'applied') {
-      expect(result.rung).toBe('floor-morph');
+      expect(result.tier).toBe('floor-morph');
     }
     expect(target.querySelector('[data-test="slot"]')?.textContent).toBe('Patched');
     expect(target.getAttribute(DPU_BASE_ATTR)).toBe(baseId);
@@ -132,10 +132,10 @@ describe('watchAndPrepare apply floor (#120)', () => {
       resultGraphId: nextId,
       html: '<em>native</em>',
     });
-    const nativeCap = { available: true as const, rung: 'native-sethtml' as const };
+    const nativeCap = { available: true as const, tier: 'native-sethtml' as const };
     const result = applyVerifiablePatch(target, envelope, baseId, nativeCap);
     expect(result._tag).toBe('applied');
-    if (result._tag === 'applied') expect(result.rung).toBe('native-sethtml');
+    if (result._tag === 'applied') expect(result.tier).toBe('native-sethtml');
     expect(target.querySelector('em')?.textContent).toBe('native');
   });
 });
@@ -151,7 +151,7 @@ describe('sanitizedEmpty + applied-DOM digest (adversarial QA)', () => {
       resultGraphId: nextId,
       html: '<script>alert(1)</script>',
     });
-    const forcedFloor = { available: false as const, rung: 'floor-morph' as const };
+    const forcedFloor = { available: false as const, tier: 'floor-morph' as const };
     const result = applyVerifiablePatch(target, envelope, baseId, forcedFloor);
 
     expect(result._tag).toBe('sanitizedEmpty');
@@ -172,7 +172,7 @@ describe('sanitizedEmpty + applied-DOM digest (adversarial QA)', () => {
       resultGraphId: nextId,
       html,
     });
-    const forcedFloor = { available: false as const, rung: 'floor-morph' as const };
+    const forcedFloor = { available: false as const, tier: 'floor-morph' as const };
     const result = applyVerifiablePatch(target, envelope, baseId, forcedFloor);
 
     expect(result._tag).toBe('applied');
@@ -199,7 +199,7 @@ describe('marker dedup registry (adversarial QA)', () => {
       resultGraphId: nextId,
       html: '<p>wrong slot</p>',
     });
-    const result = applyVerifiablePatch(target, envelope, baseId, { available: false, rung: 'floor-morph' });
+    const result = applyVerifiablePatch(target, envelope, baseId, { available: false, tier: 'floor-morph' });
     expect(result._tag).toBe('refused');
     if (result._tag === 'refused') {
       expect(result.verification._tag).toBe('markerMismatch');

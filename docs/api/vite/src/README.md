@@ -6,14 +6,14 @@
 
 # vite/src
 
-`@czap/vite` — **LiteShip** Vite 8 plugin: turns `@token` / `@theme` /
+`@liteship/vite` — **LiteShip** Vite 8 plugin: turns `@token` / `@theme` /
 `@style` / `@quantize` at-rule blocks into native CSS and **rigs** HMR for
-`@czap/*` definitions.
+`@liteship/*` definitions.
 
 The plugin hooks into Vite's `resolveId`, `load`, `transform`, and
 `handleHotUpdate` phases:
 
-- `resolveId` + `load`: map `virtual:czap/*` specifiers to generated
+- `resolveId` + `load`: map `virtual:liteship/*` specifiers to generated
   modules (device capabilities, WASM URL, ...).
 - `transform`: rewrite `@token`, `@theme`, `@style`, and `@quantize`
   at-rule blocks into native CSS (custom properties,
@@ -33,10 +33,10 @@ per primitive kind via [PluginConfig.dirs](interfaces/PluginConfig.md#dirs).
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite';
-import { czap } from '@czap/vite';
+import { liteship } from '@liteship/vite';
 
 const config = defineConfig({
-  plugins: [czap({ dirs: { theme: 'src/themes' }, hmr: true })],
+  plugins: [liteship({ dirs: { theme: 'src/themes' }, hmr: true })],
 });
 ```
 
@@ -46,6 +46,7 @@ const config = defineConfig({
 - [CollectThemeManifestOptions](interfaces/CollectThemeManifestOptions.md)
 - [CollectTokenManifestOptions](interfaces/CollectTokenManifestOptions.md)
 - [HMRPayload](interfaces/HMRPayload.md)
+- [LoadedProjectConfig](interfaces/LoadedProjectConfig.md)
 - [PluginConfig](interfaces/PluginConfig.md)
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
 - [QuantizeAtRuleGroup](interfaces/QuantizeAtRuleGroup.md)
@@ -63,6 +64,7 @@ const config = defineConfig({
 
 - [PrimitiveKind](type-aliases/PrimitiveKind.md)
 - [PrimitiveShape](type-aliases/PrimitiveShape.md)
+- [ProjectConfigLoader](type-aliases/ProjectConfigLoader.md)
 - [ThemeManifest](type-aliases/ThemeManifest.md)
 - [ThemeManifestEntry](type-aliases/ThemeManifestEntry.md)
 - [TokenManifest](type-aliases/TokenManifest.md)
@@ -81,7 +83,9 @@ const config = defineConfig({
 - [compileTokenBlock](functions/compileTokenBlock.md)
 - [handleHMR](functions/handleHMR.md)
 - [isVirtualId](functions/isVirtualId.md)
+- [loadProjectConfig](functions/loadProjectConfig.md)
 - [loadVirtualModule](functions/loadVirtualModule.md)
+- [mergePluginConfig](functions/mergePluginConfig.md)
 - [parseQuantizeBlocks](functions/parseQuantizeBlocks.md)
 - [parseStyleBlocks](functions/parseStyleBlocks.md)
 - [parseThemeBlocks](functions/parseThemeBlocks.md)
@@ -97,6 +101,6 @@ const config = defineConfig({
 
 ## References
 
-### czap
+### liteship
 
 Renames and re-exports [plugin](functions/plugin.md)

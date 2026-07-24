@@ -6,7 +6,7 @@
 
 # Interface: BudgetDecl
 
-Defined in: [core/src/capsule.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L37)
+Defined in: [core/src/authoring/capsule.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L37)
 
 Performance + memory budgets a capsule promises to honor.
 
@@ -16,7 +16,7 @@ Performance + memory budgets a capsule promises to honor.
 
 > `readonly` `optional` **allocClass?**: `"zero"` \| `"bounded"` \| `"unbounded"`
 
-Defined in: [core/src/capsule.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L40)
+Defined in: [core/src/authoring/capsule.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L40)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/capsule.ts:40](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **memoryMb?**: `number`
 
-Defined in: [core/src/capsule.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L39)
+Defined in: [core/src/authoring/capsule.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L39)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/capsule.ts:39](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **p95Ms?**: `number`
 
-Defined in: [core/src/capsule.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L38)
+Defined in: [core/src/authoring/capsule.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L38)

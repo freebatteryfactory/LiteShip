@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 

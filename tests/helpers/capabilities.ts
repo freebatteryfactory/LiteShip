@@ -30,9 +30,9 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-/** Default capsule manifest location (mirrors `@czap/command/host` manifest-path — no import here). */
+/** Default capsule manifest location (mirrors `@liteship/command/host` manifest-path — no import here). */
 function capsuleManifestPath(cwd: string): string {
-  const raw = process.env.CZAP_CAPSULE_MANIFEST?.trim();
+  const raw = process.env.LITESHIP_CAPSULE_MANIFEST?.trim();
   if (!raw) return join(cwd, 'reports/capsule-manifest.json');
   return resolve(cwd, raw);
 }
@@ -41,9 +41,9 @@ function capsuleManifestPath(cwd: string): string {
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
 
 /** The cargo-built wasm kernel (the `build:wasm` output the parity suite needs). */
-const WASM_BUILD_ARTIFACT = join(REPO_ROOT, 'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm');
-/** The publish-STAGED wasm copy under `@czap/core/dist` (the module-graph resolver target). */
-const WASM_DIST_ARTIFACT = join(REPO_ROOT, 'packages/core/dist/czap-compute.wasm');
+const WASM_BUILD_ARTIFACT = join(REPO_ROOT, 'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm');
+/** The publish-STAGED wasm copy under `@liteship/core/dist` (the module-graph resolver target). */
+const WASM_DIST_ARTIFACT = join(REPO_ROOT, 'packages/core/dist/liteship-compute.wasm');
 /** The built Astro example's entry HTML (the e2e directive-boot fixture). */
 const ASTRO_EXAMPLE_INDEX = join(REPO_ROOT, 'tests/integration/astro/dist/index.html');
 /** The shipped intro-bed fixture used by audio/scene smoke tests. */
@@ -52,7 +52,7 @@ const INTRO_BED_FIXTURE = join(REPO_ROOT, 'examples/scenes/intro-bed.wav');
 function canCreateSymlink(): boolean {
   let dir: string | undefined;
   try {
-    dir = mkdtempSync(join(tmpdir(), 'czap-symlink-probe-'));
+    dir = mkdtempSync(join(tmpdir(), 'liteship-symlink-probe-'));
     const target = join(dir, 'target');
     const link = join(dir, 'link');
     mkdirSync(target);
@@ -68,7 +68,7 @@ function canCreateSymlink(): boolean {
 /** `wasm-absent` — the cargo-built wasm kernel is not present (run `build:wasm`); parity self-skips. */
 export const wasmAbsent = !existsSync(WASM_BUILD_ARTIFACT);
 
-/** `wasm-dist-staged` — the wasm is STAGED under `@czap/core/dist` (the resolver test runs only then). */
+/** `wasm-dist-staged` — the wasm is STAGED under `@liteship/core/dist` (the resolver test runs only then). */
 export const wasmDistStaged = existsSync(WASM_DIST_ARTIFACT);
 
 /** `astro-example-not-built` — the Astro example is not built (`index.html` absent); the e2e self-skips. */

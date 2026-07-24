@@ -3,10 +3,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@czap/core';
-import { dispatch, GLSLCompiler, WGSLCompiler, ARIACompiler, AIManifestCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { dispatch, GLSLCompiler, WGSLCompiler, ARIACompiler, AIManifestCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [
     [0, 'sm'],

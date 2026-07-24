@@ -18,7 +18,7 @@
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 
 /** A single resolved registry unit from the lockfile's `packages:` block. */
 export interface LockfilePackage {

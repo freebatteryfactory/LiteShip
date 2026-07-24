@@ -8,7 +8,7 @@
 
 > **dualExportNode**(`graph`, `encode`): `Promise`\<[`DualExportNodeResult`](../interfaces/DualExportNodeResult.md)\>
 
-Defined in: [stage/src/dual-export.ts:613](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L613)
+Defined in: [stage/src/dual-export.ts:614](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L614)
 
 THE JEWEL, HEADLESS. Run the full [dualExport](dualExport.md) proof in node/CI AND run a
 REAL byte-encode through the injected [FrameEncoder](../type-aliases/FrameEncoder.md) so a node caller gets
@@ -24,14 +24,14 @@ encoder receives — the page-digest == video-source-digest assertion holds
 headless, identical to the browser path.
 
 Stage's core imports no codec: `encode` is injected. In node, wire
-`ffmpegFrameEncoder()` from `@czap/stage/ffmpeg` (env-gate with
+`ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
 `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
 
 ## Parameters
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 ### encode
 
@@ -44,8 +44,8 @@ Stage's core imports no codec: `encode` is injected. In node, wire
 ## Example
 
 ```ts
-import { dualExportNode } from '@czap/stage';
-import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+import { dualExportNode } from '@liteship/stage';
+import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@liteship/stage/ffmpeg';
 
 if (ffmpegEncodeAvailable()) {
   const r = await dualExportNode(graph, ffmpegFrameEncoder());

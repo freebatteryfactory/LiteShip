@@ -2,11 +2,11 @@
  * AddressedDigest -- dual hash (fnv1a display_id + sha256 integrity_digest)
  * over the same canonical bytes (ADR-0011 §Decision item 2).
  *
- * Re-exported from `@czap/canonical` via `@czap/core`; sync API.
+ * Re-exported from `@liteship/canonical` via `@liteship/core`; sync API.
  */
 
 import { describe, it, expect } from 'vitest';
-import { AddressedDigest } from '@czap/core';
+import { AddressedDigest } from '@liteship/core';
 
 const FNV_RE = /^fnv1a:[0-9a-f]{8}$/;
 const SHA_RE = /^sha256:[0-9a-f]{64}$/;

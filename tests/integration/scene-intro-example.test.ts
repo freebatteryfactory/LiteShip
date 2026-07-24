@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SceneRuntime } from '@czap/scene';
+import { SceneRuntime } from '@liteship/scene';
 import { intro, introContract, compileIntro } from '../../examples/scenes/intro.js';
 
 describe('examples.intro scene capsule', () => {

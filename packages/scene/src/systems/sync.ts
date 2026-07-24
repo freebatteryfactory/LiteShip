@@ -29,8 +29,8 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import type { System, World } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
+import type { System, World } from '@liteship/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
 
@@ -56,7 +56,7 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
   return {
     name: 'SyncSystem',
     query: ['SyncAnchor'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       // Pull beat entities from the world. SyncSystem's contract is
       // "react to beats in the world" — when no world is supplied
       // (legacy callers, isolated unit tests) we degrade gracefully
@@ -64,7 +64,7 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
       // intensity reads as "my effects never pulse" with no signal.
       if (world === undefined) {
         Diagnostics.warnOnce({
-          source: 'czap/scene.sync-system',
+          source: 'liteship/scene.sync-system',
           code: 'worldless-degrade',
           message:
             'SyncSystem: no world supplied, so no Beat entities are visible — beat-synced effects will stay at intensity 0. If you built via SceneRuntime.build this is a bug; if you are calling SyncSystem directly, pass the world as the second execute argument.',

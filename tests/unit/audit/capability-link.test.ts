@@ -19,8 +19,8 @@ import { fileURLToPath } from 'node:url';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { detectSkipsAST, buildCapabilityLinkFacts, type CapabilitySkipSite } from '@czap/audit';
-import { SANCTIONED_SKIPS, normalizeSiteLine, SKIP_CAPABILITIES } from '@czap/gauntlet';
+import { detectSkipsAST, buildCapabilityLinkFacts, type CapabilitySkipSite } from '@liteship/audit';
+import { SANCTIONED_SKIPS, normalizeSiteLine, SKIP_CAPABILITIES } from '@liteship/gauntlet';
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 /** The canonical capability symbol-table modules — the SET the linker reads (per-runtime). */

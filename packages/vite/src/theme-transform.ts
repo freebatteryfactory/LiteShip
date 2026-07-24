@@ -8,10 +8,14 @@
  * @module
  */
 
-import type { Theme } from '@czap/core';
-import { ThemeCSSCompiler } from '@czap/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
-import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
+import type { Theme } from '@liteship/core';
+import { ThemeCSSCompiler } from '@liteship/compiler';
+import {
+  normalizeCssLineEndings,
+  blankCssCommentsAndStrings,
+  lineOfOffset,
+  parseFlatDeclarations,
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,7 +82,7 @@ export function parseThemeBlocks(css: string, sourceFile: string): readonly Them
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler ThemeCSSCompiler)
+// Compiler (delegates to @liteship/compiler ThemeCSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**
@@ -87,7 +91,7 @@ export function parseThemeBlocks(css: string, sourceFile: string): readonly Them
  * Delegates to the canonical `ThemeCSSCompiler` to avoid duplicating
  * theme-to-CSS logic.
  */
-export function compileThemeBlock(block: ThemeBlock, theme: Theme.Shape): string {
+export function compileThemeBlock(block: ThemeBlock, theme: Theme): string {
   const result = ThemeCSSCompiler.compile(theme);
   const parts: string[] = [];
 

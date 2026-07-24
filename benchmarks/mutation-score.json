@@ -1,11 +1,11 @@
 {
   "packages/canonical/src/addressed-digest.ts": 1,
   "packages/canonical/src/fnv.ts": 1,
-  "packages/core/src/cell-kernel.ts": 0.75,
-  "packages/core/src/cell.ts": 0.8333,
-  "packages/core/src/derived.ts": 0.8889,
-  "packages/core/src/live-cell.ts": 1,
-  "packages/core/src/signal.ts": 0.8333,
-  "packages/core/src/store.ts": 0.8333,
-  "packages/core/src/timeline.ts": 0.8333
+  "packages/core/src/reactive/cell-kernel.ts": 0.75,
+  "packages/core/src/reactive/cell.ts": 0.8333,
+  "packages/core/src/reactive/derived.ts": 0.8889,
+  "packages/core/src/reactive/live-cell.ts": 1,
+  "packages/core/src/reactive/signal.ts": 0.8333,
+  "packages/core/src/reactive/store.ts": 0.8333,
+  "packages/core/src/motion/timeline.ts": 0.8333
 }

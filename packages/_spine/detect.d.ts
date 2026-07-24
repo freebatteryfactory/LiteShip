@@ -1,11 +1,11 @@
 /**
- * @czap/detect type spine -- device capability detection + branded tiers.
+ * @liteship/detect type spine -- device capability detection + branded tiers.
  */
 
-import type { CapTier, CapSet, MotionTier } from './core.d.ts';
+import type { CapTier, CapSet, MotionTier } from './core.js';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
-// `@czap/_spine` consumers reading the detect surface still see it on this
+// `@liteship/_spine` consumers reading the detect surface still see it on this
 // sub-spine without an extra import.
 export type { MotionTier };
 

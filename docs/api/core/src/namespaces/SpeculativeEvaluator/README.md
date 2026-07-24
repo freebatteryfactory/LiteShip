@@ -13,7 +13,7 @@ using velocity estimation and hysteresis-based prefetch windows.
 ## Example
 
 ```ts
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   thresholds: [600],
   states: ['small', 'large'] as const,
 });
@@ -25,4 +25,3 @@ const { current, prefetched, confidence } = spec.evaluate(595, 1.5);
 ## Type Aliases
 
 - [Result](type-aliases/Result.md)
-- [Shape](type-aliases/Shape.md)

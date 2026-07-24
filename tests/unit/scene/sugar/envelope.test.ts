@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fade, pulse, Beat, resolveEnvelope, envelopeFactor } from '@czap/scene';
+import { fade, pulse, Beat, resolveEnvelope, envelopeFactor } from '@liteship/scene';
 
 describe('envelope helpers', () => {
   it('fade.in returns a linear-in curve over the given span', () => {

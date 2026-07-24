@@ -246,7 +246,7 @@ export const captureIME = (): IMEState | null => {
  * Generate a unique path selector for an element.
  *
  * Priority:
- * 1. data-czap-id attribute (semantic ID, stable across morphs)
+ * 1. data-liteship-id attribute (semantic ID, stable across morphs)
  * 2. id attribute (HTML id)
  * 3. Position-based path (nth-child selectors)
  */

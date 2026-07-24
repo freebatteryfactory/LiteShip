@@ -13,7 +13,6 @@
  *
  * @module
  */
-
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
 import {
@@ -23,7 +22,7 @@ import {
   litelaunchGauntletWithIR,
   makeRepoIR,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -41,7 +40,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
     }
   });
 
-  it('has exactly the seven regex gates', () => {
+  it('has exactly the seven regex gates plus the three check-governance meta-gates, the diagnostic-code registry guard, the facade-export-budget guard, and the obligations-ledger guard', () => {
     expect(ids(LITESHIP_GATES)).toEqual([
       'gauntlet/no-bare-throw',
       'gauntlet/no-ts-ignore',
@@ -50,6 +49,24 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       'gauntlet/no-skipped-test',
       'gauntlet/no-placeholder',
       'gauntlet/no-early-return-test',
+      // The three check-governance FactGates — they ride in the lean set but read ONLY the
+      // injected CheckGovernanceFacts (a host folds the registry/scripts/fs/waivers/ledger),
+      // so with no facts injected they fold an EMPTY verdict (the lean path is IR-free AND
+      // fact-free unaffected). Each self-proves via its red/green/mutation fixtures.
+      'gauntlet/check-registry-complete',
+      'gauntlet/check-negative-control',
+      'gauntlet/check-waiver-freshness',
+      // The DIAGNOSTIC-CODE REGISTRY guard — a lean source-scanner (no IR, no facts) proving
+      // every emitted gauntlet ruleId + check id is enrolled in @liteship/error's registry.
+      'gauntlet/diagnostic-code-registered',
+      // The FACADE-EXPORT-BUDGET guard (P13) — a lean fold over the built `liteship` root
+      // dist/index.d.ts + the reviewed export-budget.ts allowlist. Lean-only (its dist read
+      // is out-of-IR but the lean path is cache-free); folds empty on an unbuilt tree.
+      'gauntlet/facade-export-budget',
+      // The P17 OBLIGATIONS-LEDGER guard — a lean source-scanner reding a bare intent-debt
+      // directive (TODO / FIXME / HACK) in packages/*/src that cites no registered
+      // OBL-<AREA>-<slug> obligation. Strings-blanked (guardrail literals never trip it).
+      'gauntlet/no-unregistered-todo',
     ]);
   });
 });
@@ -79,7 +96,14 @@ function ir(): RepoIR {
     facts: [
       { file, line: 2, property: 'bare-throw', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' },
       // regex-only is-default-export → a divergence the gate must report.
-      { file, line: 9, property: 'is-default-export', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' },
+      {
+        file,
+        line: 9,
+        property: 'is-default-export',
+        value: true,
+        oracleId: 'invariant-regex',
+        coverageClass: 'text-only',
+      },
     ],
   });
 }

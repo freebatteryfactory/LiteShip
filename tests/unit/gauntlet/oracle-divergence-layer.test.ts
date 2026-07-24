@@ -30,7 +30,7 @@ import {
   type GateContext,
   type RepoIR,
   type Gate,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const PLACEHOLDER = 'placeholder:no-content-address';
 const FILE = 'packages/x/src/a.ts';
@@ -119,7 +119,7 @@ describe.each(CASES)('the parametric oracle-divergence gate for $property', (c) 
 
   it('is SILENT on a sanctioned POLICY EXCLUDE (AST present, regex silent, live marker says WHY)', () => {
     const ir = makeRepoIR({
-      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/x' }],
+      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/x' }],
       facts: [
         propFact(EXCLUDED_FILE, 3, c.property, 'ts-ast', 'file-proxy-only'),
         marker(EXCLUDED_FILE, c.markerProperty, c.ruleName),
@@ -142,11 +142,11 @@ describe.each(CASES)('the parametric oracle-divergence gate for $property', (c) 
   it('the exclude is read from the LIVE marker (head-probe LAW) — drop it and the same site fires', () => {
     const astFact = propFact(EXCLUDED_FILE, 3, c.property, 'ts-ast', 'file-proxy-only');
     const withMarker = makeRepoIR({
-      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/x' }],
+      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/x' }],
       facts: [astFact, marker(EXCLUDED_FILE, c.markerProperty, c.ruleName)],
     });
     const withoutMarker = makeRepoIR({
-      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/x' }],
+      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/x' }],
       facts: [astFact],
     });
     expect(c.gate.run(irContext(withMarker))).toEqual([]);
@@ -155,7 +155,7 @@ describe.each(CASES)('the parametric oracle-divergence gate for $property', (c) 
 
   it('a regex-PRESENT/AST-absent site on an excluded file IS still a divergence (the regex should not have fired)', () => {
     const ir = makeRepoIR({
-      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/x' }],
+      files: [{ id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/x' }],
       facts: [
         propFact(EXCLUDED_FILE, 9, c.property, 'invariant-regex', 'text-only'),
         marker(EXCLUDED_FILE, c.markerProperty, c.ruleName),

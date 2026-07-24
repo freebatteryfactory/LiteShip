@@ -1,8 +1,8 @@
-/** @czap/detect error contract */
+/** @liteship/detect error contract */
 import { describe, it, expect } from 'vitest';
-import { CAP_AXES } from '@czap/detect';
+import { CAP_AXES } from '@liteship/detect';
 
-describe('@czap/detect error contract', () => {
+describe('@liteship/detect error contract', () => {
   it('CAP_AXES is a closed vocabulary (detect tier errors reference these axes)', () => {
     expect(CAP_AXES).toEqual(['tier', 'motion', 'design']);
   });

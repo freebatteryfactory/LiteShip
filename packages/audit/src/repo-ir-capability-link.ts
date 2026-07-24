@@ -5,7 +5,7 @@
  * and the sanctioned skip files, and for each skip resolves its guard condition's symbols to prove the
  * guard reaches the capability it claims. It emits GENERIC {@link CapabilityLinkFacts} and stays
  * LiteShip-AGNOSTIC: the capability-module SET, the capability id set, and the sanctioned sites are
- * INJECTED ({@link CapabilityLinkOptions}) — `@czap/audit` names no LiteShip capability.
+ * INJECTED ({@link CapabilityLinkOptions}) — `@liteship/audit` names no LiteShip capability.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * THE LINKER MODEL (why this is sound, and self-assembling — no hand registry).
@@ -47,7 +47,7 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import type { CapabilityLinkFacts, CapabilityLinkResult } from '@czap/gauntlet';
+import type { CapabilityLinkFacts, CapabilityLinkResult } from '@liteship/gauntlet';
 import { guardExpressionsOf, constTruthiness } from './skip-detect-ast.js';
 import { createTypeDirectedProgram } from './ts-program.js';
 

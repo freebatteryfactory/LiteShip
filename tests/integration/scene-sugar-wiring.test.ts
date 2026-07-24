@@ -6,8 +6,8 @@
  * Envelope / Ease components every tick.
  */
 import { describe, it, expect } from 'vitest';
-import { Track, Beat, fade, compileScene, SceneRuntime, ease } from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
+import { Track, Beat, fade, compileScene, SceneRuntime, ease } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
 
 describe('scene sugar wiring (Beat + envelope + ease, end to end)', () => {
   const heroId = Track.videoId('hero');

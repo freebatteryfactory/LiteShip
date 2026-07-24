@@ -10,7 +10,7 @@
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, relative, sep, dirname } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
+import { walkFiles } from '@liteship/core/fs-walk';
 import { spawnArgv } from './lib/spawn.js';
 import { rewriteBreadcrumbDepth } from './lib/breadcrumb-depth.js';
 
@@ -47,7 +47,7 @@ function repairFlattenedBreadcrumbs(srcRoot: string): void {
   }
 }
 
-/** Relocate `@czap/<pkg>/<pkg>/src` merge artifacts to `<pkg>/src` (rewriting breadcrumb depth, #142). */
+/** Relocate `@liteship/<pkg>/<pkg>/src` merge artifacts to `<pkg>/src` (rewriting breadcrumb depth, #142). */
 function flattenMergedOutput(dir: string): void {
   for (const pkg of readdirSync(dir)) {
     const nested = join(dir, pkg, pkg, 'src');

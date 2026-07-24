@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { CommandRegistry, CommandDispatcher, commandRegistry, ok, failed, defineCommand } from '@czap/command';
-import type { RegisteredCommand } from '@czap/command';
-import type { GlossaryPayload } from '@czap/command';
-import { S } from '@czap/core';
+import { CommandRegistry, CommandDispatcher, commandRegistry, ok, failed, defineCommand } from '@liteship/command';
+import type { RegisteredCommand } from '@liteship/command';
+import type { GlossaryPayload } from '@liteship/command';
+import { schema } from '@liteship/core';
 
 function fakeCommand(name: string): RegisteredCommand {
   return {
@@ -20,7 +20,7 @@ function fakeCommand(name: string): RegisteredCommand {
   };
 }
 
-describe('@czap/command registry + dispatcher', () => {
+describe('@liteship/command registry + dispatcher', () => {
   it('registry.list() returns the descriptor for every registered command, sorted by name', () => {
     const registry = CommandRegistry.make([fakeCommand('b.cmd'), fakeCommand('a.cmd')]);
     expect(registry.list().map((d) => d.name)).toEqual(['a.cmd', 'b.cmd']);
@@ -68,7 +68,7 @@ describe('dispatcher error contract — failed payloads teach the next step', ()
     expect((far.payload as { didYouMean?: string }).didYouMean).toBeUndefined();
   });
 
-  it('a cli-orchestration command without a handler keeps the stable code and the `czap <name>` remedy', async () => {
+  it('a cli-orchestration command without a handler keeps the stable code and the `liteship <name>` remedy', async () => {
     const cliOwned: RegisteredCommand = {
       descriptor: {
         name: 'gauntlet',
@@ -85,7 +85,7 @@ describe('dispatcher error contract — failed payloads teach the next step', ()
     // hint carry the cli-owned vs pending-migration distinction.
     expect(payload.error).toBe('no_registry_handler');
     expect(payload.executionKind).toBe('cli-orchestration');
-    expect(payload.hint).toContain('czap gauntlet');
+    expect(payload.hint).toContain('liteship gauntlet');
   });
 });
 
@@ -138,7 +138,7 @@ describe('RegisteredCommand carries a declared argsSchema slot', () => {
         summary: 'declares an args schema',
         inputSchema: { type: 'object', properties: { scene: { type: 'string' } }, required: ['scene'] },
       },
-      argsSchema: S.struct({ scene: S.string }),
+      argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => ok('schema.cmd', { scene: invocation.args.scene }),
     });
     const registry = CommandRegistry.make([command]);

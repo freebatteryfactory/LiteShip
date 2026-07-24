@@ -1,9 +1,9 @@
 /**
- * asset verify (CLI adapter) — thin projection over `@czap/command`'s
+ * asset verify (CLI adapter) — thin projection over `@liteship/command`'s
  * asset.verify command, routed through {@link runCliCommand}. The manifest read,
  * the file-exists check, and the vitest runner are provided by the shared host
  * context (`createNodeCommandContext`); the decision (no test → ok/0; pass →
- * ok/1; fail → 2) lives in `@czap/command`.
+ * ok/1; fail → 2) lives in `@liteship/command`.
  *
  * The `asset.verify` payload type has not been extracted into `CommandMap` yet
  * (still `unknown`), so the projection reads it through a narrow structural cast;

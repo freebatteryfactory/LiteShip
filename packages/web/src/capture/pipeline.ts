@@ -10,8 +10,8 @@
  * @module
  */
 
-import type { VideoRenderer, FrameCapture, CaptureResult } from '@czap/core';
-import { HostCapabilityError } from '@czap/error';
+import type { VideoRenderer, FrameCapture, CaptureResult } from '@liteship/core';
+import { HostCapabilityError } from '@liteship/error';
 import { renderToCanvas, type Canvas2DTarget, type RenderFn } from './render.js';
 
 function createRenderCanvas(width: number, height: number): Canvas2DTarget {
@@ -56,7 +56,7 @@ async function toCaptureBitmap(canvas: Canvas2DTarget): Promise<ImageBitmap | Of
  * @returns The finalized CaptureResult with the encoded video blob
  */
 export async function captureVideo(
-  renderer: VideoRenderer.Shape,
+  renderer: VideoRenderer,
   capture: FrameCapture,
   renderFn?: RenderFn,
 ): Promise<CaptureResult> {

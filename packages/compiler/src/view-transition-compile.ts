@@ -21,10 +21,12 @@
  * There is deliberately no `@supports` gate and no `transition`/`animation-timeline`
  * fallback: a browser without View Transitions simply navigates/paints instantly and
  * the emitted CSS is inert. Because the surface is 100% CSS, it slots into the existing
- * `czap:reinit` lifecycle unchanged — there is nothing to attach, dispose, or re-read.
+ * `liteship:reinit` lifecycle unchanged — there is nothing to attach, dispose, or re-read.
  *
  * @module
  */
+
+import { escapeCssString } from './css-string.js';
 
 /** Input to {@link compileViewTransition}. */
 export interface ViewTransitionCompileInput {
@@ -32,8 +34,8 @@ export interface ViewTransitionCompileInput {
   readonly boundary: string;
   /**
    * The element selector the name is assigned to. Defaults to the boundary's data
-   * attribute selector (`[data-czap-boundary="<boundary>"]`) — the same hook
-   * `MotionCompiler` keys its `czap-motion-*` animations off.
+   * attribute selector (`[data-liteship-boundary="<boundary>"]`) — the same hook
+   * `MotionCompiler` keys its `liteship-motion-*` animations off.
    */
   readonly selector?: string;
   /** Cross-fade duration (ms) for the old/new pseudo-element animations. */
@@ -71,7 +73,7 @@ export interface ViewTransitionCompileResult {
 
 /**
  * Turn a boundary name into a valid CSS `<custom-ident>` for `view-transition-name`:
- * a stable `czap-vt-` prefix (guaranteeing an identifier that never starts with a
+ * a stable `liteship-vt-` prefix (guaranteeing an identifier that never starts with a
  * digit or `--`) followed by the boundary with any non `[A-Za-z0-9_-]` run collapsed
  * to a single hyphen and leading/trailing hyphens trimmed.
  */
@@ -80,25 +82,7 @@ function viewTransitionNameFor(boundary: string): string {
     .trim()
     .replace(/[^A-Za-z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `czap-vt-${slug.length > 0 ? slug : 'boundary'}`;
-}
-
-/**
- * Escape a value for interpolation inside a DOUBLE-QUOTED CSS string (here, the
- * default attribute-selector value). A raw `"` closes the string and can
- * terminate the rule, `\` starts an escape, and a raw newline/CR/FF is invalid
- * inside a CSS string — so backslash + quote are backslash-escaped and the line
- * terminators use the CSS hex-escape form (`\A `/`\D `/`\C `). Without this a
- * boundary like `hero"card` would emit `[data-czap-boundary="hero"card"]` and the
- * `view-transition-name` assignment would be silently dropped (CSS Syntax §4.3.5).
- */
-function escapeCssString(value: string): string {
-  return value.replace(/[\\"\n\r\f]/g, (ch) => {
-    if (ch === '\n') return '\\A ';
-    if (ch === '\r') return '\\D ';
-    if (ch === '\f') return '\\C ';
-    return `\\${ch}`;
-  });
+  return `liteship-vt-${slug.length > 0 ? slug : 'boundary'}`;
 }
 
 /**
@@ -107,7 +91,7 @@ function escapeCssString(value: string): string {
  */
 export function compileViewTransition(input: ViewTransitionCompileInput): ViewTransitionCompileResult {
   const { boundary, durationMs, easing, mpaNavigation, delayMs } = input;
-  const selector = input.selector ?? `[data-czap-boundary="${escapeCssString(boundary)}"]`;
+  const selector = input.selector ?? `[data-liteship-boundary="${escapeCssString(boundary)}"]`;
   const viewTransitionName = viewTransitionNameFor(boundary);
 
   const nameAssignment = [`${selector} {`, `  view-transition-name: ${viewTransitionName};`, `}`].join('\n');

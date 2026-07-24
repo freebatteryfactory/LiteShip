@@ -6,17 +6,17 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis, CellKernel } from '@czap/core';
-import type { ReactiveQuantizer, BoundaryCrossing } from '@czap/core';
-import { AnimatedQuantizer } from '@czap/quantizer';
-import type { TransitionMap } from '@czap/quantizer';
+import { Boundary, Millis, CellKernel, defineBoundary } from '@liteship/core';
+import type { ReactiveQuantizer, BoundaryCrossing } from '@liteship/core';
+import { AnimatedQuantizer } from '@liteship/quantizer';
+import type { TransitionMap } from '@liteship/quantizer';
 
 /**
  * Build a mock reactive Quantizer with controllable boundary crossings. `state`
  * is a replay-1 slot advanced by `evaluate`, `changes` a no-replay fan-out the
  * test drives via `pushCrossing`; `shutdown` closes it.
  */
-function makeMockQuantizer(boundary: Boundary.Shape, initialState: string) {
+function makeMockQuantizer(boundary: Boundary, initialState: string) {
   const changes = CellKernel.fanout<BoundaryCrossing<string>>();
   const stateCell = CellKernel.replay1<string>(initialState);
   return {
@@ -31,13 +31,13 @@ function makeMockQuantizer(boundary: Boundary.Shape, initialState: string) {
     },
     pushCrossing: (c: BoundaryCrossing<string>) => changes.publish(c),
     shutdown: () => changes.close(),
-  } satisfies ReactiveQuantizer<Boundary.Shape> & {
+  } satisfies ReactiveQuantizer<Boundary> & {
     pushCrossing: (c: BoundaryCrossing<string>) => void;
     shutdown: () => void;
   };
 }
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -57,7 +57,7 @@ describe('AnimatedQuantizer', () => {
       '*': { duration: Millis(300) },
     };
 
-    const { animated, lifetime } = AnimatedQuantizer.make(q, transitions);
+    const animated = AnimatedQuantizer.make(q, transitions);
 
     expect(animated.boundary).toBe(widthBoundary);
     expect(animated.transition).toBeDefined();
@@ -65,17 +65,17 @@ describe('AnimatedQuantizer', () => {
     expect(animated.evaluate).toBeDefined();
     expect(animated.state.read()).toBe('mobile');
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('evaluate delegates to underlying quantizer', async () => {
     const q = makeMockQuantizer(widthBoundary, 'mobile');
-    const { animated, lifetime } = AnimatedQuantizer.make(q, { '*': { duration: Millis(0) } });
+    const animated = AnimatedQuantizer.make(q, { '*': { duration: Millis(0) } });
 
     const result = animated.evaluate(800);
     expect(result).toBe('tablet');
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('transition resolver picks exact match over wildcard', async () => {
@@ -85,12 +85,12 @@ describe('AnimatedQuantizer', () => {
       'mobile->tablet': { duration: Millis(50) },
     };
 
-    const { animated, lifetime } = AnimatedQuantizer.make(q, transitions);
+    const animated = AnimatedQuantizer.make(q, transitions);
 
     const config = animated.transition.getTransition('mobile', 'tablet');
     expect(config.duration).toBe(50);
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('transition resolver falls back to wildcard', async () => {
@@ -99,12 +99,12 @@ describe('AnimatedQuantizer', () => {
       '*': { duration: Millis(500) },
     };
 
-    const { animated, lifetime } = AnimatedQuantizer.make(q, transitions);
+    const animated = AnimatedQuantizer.make(q, transitions);
 
     const config = animated.transition.getTransition('mobile', 'desktop');
     expect(config.duration).toBe(500);
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('transition resolver falls back to instant (duration 0) when no match', async () => {
@@ -113,37 +113,37 @@ describe('AnimatedQuantizer', () => {
       'mobile->tablet': { duration: Millis(100) },
     };
 
-    const { animated, lifetime } = AnimatedQuantizer.make(q, transitions);
+    const animated = AnimatedQuantizer.make(q, transitions);
 
     // No match for tablet->desktop, and no wildcard.
     const config = animated.transition.getTransition('tablet', 'desktop');
     expect(config.duration).toBe(0);
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('boundary is preserved from underlying quantizer', async () => {
     const q = makeMockQuantizer(widthBoundary, 'mobile');
-    const { animated, lifetime } = AnimatedQuantizer.make(q, {});
+    const animated = AnimatedQuantizer.make(q, {});
 
     expect(animated.boundary).toBe(widthBoundary);
     expect(animated.boundary.states).toEqual(['mobile', 'tablet', 'desktop']);
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('outputs parameter is optional', async () => {
     const q = makeMockQuantizer(widthBoundary, 'mobile');
-    const { animated, lifetime } = AnimatedQuantizer.make(q, { '*': { duration: Millis(100) } });
+    const animated = AnimatedQuantizer.make(q, { '*': { duration: Millis(100) } });
     // Should not throw.
     expect(animated).toBeDefined();
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('evaluate returns correct state for different values', async () => {
     const q = makeMockQuantizer(widthBoundary, 'mobile');
-    const { animated, lifetime } = AnimatedQuantizer.make(q, {});
+    const animated = AnimatedQuantizer.make(q, {});
 
     expect(animated.evaluate(0)).toBe('mobile');
     expect(animated.evaluate(500)).toBe('mobile');
@@ -152,6 +152,6 @@ describe('AnimatedQuantizer', () => {
     expect(animated.evaluate(1024)).toBe('desktop');
     expect(animated.evaluate(2000)).toBe('desktop');
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 });

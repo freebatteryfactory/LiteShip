@@ -3,10 +3,10 @@
  * deterministic CONDITION-mutation engine + the injected per-pin test runner into the
  * flat {@link McdcFacts} the lean `mcdcCoverageGate` consumes).
  *
- * `@czap/gauntlet` DEFINES the {@link McdcFacts} interface but carries no `typescript`
+ * `@liteship/gauntlet` DEFINES the {@link McdcFacts} interface but carries no `typescript`
  * dep and runs no test suite — it is the lean engine and MC/DC is an INJECTED capability
  * (the same ADR-0012 boundary as the IR / mutation facts). THIS module is the host half:
- * `@czap/audit` (which deps `typescript`) generates the deterministic condition-mutant
+ * `@liteship/audit` (which deps `typescript`) generates the deterministic condition-mutant
  * catalogue per file ({@link generateConditionMutants}), evaluates each FORCE-TRUE /
  * FORCE-FALSE pin against the INJECTED test runner ({@link evaluateMutant} — the SAME
  * verdict/cache path the classic mutation engine uses), and FOLDS the two pins per atomic
@@ -24,9 +24,9 @@
  * @module
  */
 import ts from 'typescript';
-import { InvariantViolationError } from '@czap/error';
-import { CanonicalCbor, addressedDigestOf } from '@czap/canonical';
-import type { McdcFacts, McdcConditionOutcome, McdcPinVerdict } from '@czap/gauntlet';
+import { InvariantViolationError } from '@liteship/error';
+import { CanonicalCbor, addressedDigestOf } from '@liteship/canonical';
+import type { McdcFacts, McdcConditionOutcome, McdcPinVerdict } from '@liteship/gauntlet';
 import { generateConditionMutants, type ConditionMutant, type ConditionForce } from './mcdc-engine.js';
 import {
   evaluateMutant,
@@ -120,11 +120,17 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
     forceTrue?: McdcPinVerdict;
     forceFalse?: McdcPinVerdict;
     conditionId: string;
+    coveringTests: readonly string[];
   }
   const byCondition = new Map<string, Partial>();
+  const targetCensus: McdcFacts['targetCensus'][number][] = [];
 
   for (const target of files) {
     const mutants = generateConditionMutants(parseTarget(target), { file: target.file });
+    targetCensus.push({
+      file: target.file,
+      applicableConditions: new Set(mutants.map(groupKey)).size,
+    });
     for (const mutant of mutants) {
       const verdict = evaluateMutant(mutant, {
         runner: options.runner,
@@ -144,6 +150,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
         decision: mutant.decision,
         condition: mutant.condition,
         conditionId: conditionId(mutant.file, mutant.line, mutant.column, mutant.condition),
+        coveringTests: [...options.coverage.covering(mutant.file, mutant.line)].sort((a, b) => a.localeCompare(b)),
       };
       assignPin(partial, mutant.force, tag);
       byCondition.set(key, partial);
@@ -167,6 +174,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
       condition: partial.condition,
       forceTrueVerdict: partial.forceTrue,
       forceFalseVerdict: partial.forceFalse,
+      coveringTests: partial.coveringTests,
     });
   }
 
@@ -175,7 +183,8 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
     (a, b) =>
       a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.condition.localeCompare(b.condition),
   );
-  return { conditions };
+  targetCensus.sort((a, b) => a.file.localeCompare(b.file));
+  return { conditions, targetCensus };
 }
 
 /** Assign one pin's verdict into the partial outcome by its force direction. */

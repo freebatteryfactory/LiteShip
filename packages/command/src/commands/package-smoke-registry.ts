@@ -2,10 +2,10 @@
  * The package-smoke roster (relocated from `scripts/package-smoke.ts`, CUT A5).
  * Pure data — no Node edge — so it can be projected by the meta-test
  * (`tests/unit/devops/package-smoke-roster.test.ts`) AND consumed by the CLI-only
- * smoke engine (`runPackageSmokeScan` in `@czap/cli`) without either reaching into
+ * smoke engine (`runPackageSmokeScan` in `@liteship/cli`) without either reaching into
  * a self-executing script.
  *
- * `PACKAGES` mirrors every publishable `@czap/*` scope under `packages/*` (see
+ * `PACKAGES` mirrors every publishable `@liteship/*` scope under `packages/*` (see
  * `pnpm-workspace.yaml`); `imports` is the set of module specifiers the
  * import-smoke resolves for that package. `PEER_INSTALLS` is the external peer
  * set the consumer fixture installs alongside the packed tarballs. The B6a guard
@@ -20,101 +20,41 @@
 export interface PackageSmokeSpec {
   readonly dir: string;
   readonly name: string;
+  readonly runtimeSurface: 'module' | 'types-only';
   readonly imports: readonly string[];
 }
 
-/**
- * Mirrors every publishable scope under `packages/*` (see `pnpm-workspace.yaml`).
- *
- * The MEMBERSHIP of this roster (the `name` set) is owned by
- * `scripts/gen-roster.ts` (`PUBLISHABLE_ROSTER` = the `@czap/*` fleet plus the
- * `create-liteship` / `liteship` umbrellas). This copy stays local — and keeps
- * its hand-authored `imports` / `dir` fields — because `@czap/command` sits below
- * the devops layer and cannot import the generator; parity with the canonical
- * roster is enforced by the `package-smoke-roster` drift-guard, which asserts
- * these names equal gen-roster's `PUBLISHABLE_ROSTER`.
- *
- * The `@czap/*` subset of these names (and their dependency ORDER) is likewise the
- * [DUP] province of `@czap/audit`'s `CZAP_PACKAGE_ROSTER`, the canonical owner. This
- * copy stays local by the SAME layering — `@czap/command` cannot depend on the
- * devops-layer `@czap/audit` — and its parity is held by the `package-smoke-roster`
- * drift-guard, not a shared import.
- */
-export const PACKAGES: readonly PackageSmokeSpec[] = [
-  // _spine is type-only (no runtime); packed and overridden so consumers
-  // can resolve `@czap/core`'s and `@czap/scene`'s declared dep on it
-  // during `pnpm install`. No runtime `import()` smoke needed.
-  { dir: 'packages/_spine', name: '@czap/_spine', imports: [] },
-  // @czap/error is the foundational zero-dep error algebra — every package's
-  // runtime dep; packed first so consumers resolve the declared workspace edge.
-  { dir: 'packages/error', name: '@czap/error', imports: ['@czap/error'] },
-  { dir: 'packages/gauntlet', name: '@czap/gauntlet', imports: ['@czap/gauntlet'] },
-  { dir: 'packages/canonical', name: '@czap/canonical', imports: ['@czap/canonical'] },
-  { dir: 'packages/genui', name: '@czap/genui', imports: ['@czap/genui'] },
-  { dir: 'packages/core', name: '@czap/core', imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'] },
-  { dir: 'packages/quantizer', name: '@czap/quantizer', imports: ['@czap/quantizer', '@czap/quantizer/testing'] },
-  { dir: 'packages/compiler', name: '@czap/compiler', imports: ['@czap/compiler'] },
-  { dir: 'packages/web', name: '@czap/web', imports: ['@czap/web', '@czap/web/lite'] },
-  { dir: 'packages/detect', name: '@czap/detect', imports: ['@czap/detect'] },
-  { dir: 'packages/edge', name: '@czap/edge', imports: ['@czap/edge'] },
-  {
-    dir: 'packages/cloudflare',
-    name: '@czap/cloudflare',
-    imports: ['@czap/cloudflare', '@czap/cloudflare/testing', '@czap/cloudflare/cache-provider'],
-  },
-  { dir: 'packages/worker', name: '@czap/worker', imports: ['@czap/worker'] },
-  { dir: 'packages/vite', name: '@czap/vite', imports: ['@czap/vite', '@czap/vite/html-transform'] },
-  {
-    dir: 'packages/astro',
-    name: '@czap/astro',
-    imports: [
-      '@czap/astro',
-      '@czap/astro/client-directives/satellite',
-      '@czap/astro/client-directives/stream',
-      '@czap/astro/client-directives/llm',
-      '@czap/astro/client-directives/worker',
-      '@czap/astro/client-directives/gpu',
-      '@czap/astro/client-directives/wasm',
-      '@czap/astro/middleware',
-      '@czap/astro/fetch-layer',
-      '@czap/astro/runtime',
-    ],
-  },
-  { dir: 'packages/remotion', name: '@czap/remotion', imports: ['@czap/remotion'] },
-  { dir: 'packages/scene', name: '@czap/scene', imports: ['@czap/scene', '@czap/scene/dev'] },
-  // The verb / orchestration layer (P4). `.` is the pure graph-walk core;
-  // `./ffmpeg` is the node-only headless byte-encode backend (child_process).
-  { dir: 'packages/stage', name: '@czap/stage', imports: ['@czap/stage', '@czap/stage/ffmpeg'] },
-  { dir: 'packages/assets', name: '@czap/assets', imports: ['@czap/assets'] },
-  { dir: 'packages/audit', name: '@czap/audit', imports: ['@czap/audit'] },
-  // Shared command registry (CUT A1) — the dispatch layer @czap/cli and
-  // @czap/mcp-server both consume. `./host` carries the Node-only manifest helpers.
-  { dir: 'packages/command', name: '@czap/command', imports: ['@czap/command', '@czap/command/host'] },
-  { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
-  { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
-  // The unscoped scaffolder — consumed via `npm create liteship` (bin), but
-  // its main entry exports the scaffold function; smoke verifies it resolves.
-  { dir: 'packages/create-liteship', name: 'create-liteship', imports: ['create-liteship'] },
-  // The unscoped umbrella — manifest-level deps on every @czap/* scope,
-  // zero source imports; smoke verifies its own entrypoint resolves.
-  { dir: 'packages/liteship', name: 'liteship', imports: ['liteship'] },
-];
+import { GENERATED_PACKAGE_SMOKE_SPECS } from './package-smoke-registry.generated.js';
 
-/** External peer set the consumer fixture installs alongside the packed `@czap/*` tarballs. */
+/** Generated from the one typed package catalog in `scripts/package-catalog.ts`. */
+export const PACKAGES: readonly PackageSmokeSpec[] = GENERATED_PACKAGE_SMOKE_SPECS;
+
+/** External peer set the consumer fixture installs alongside the packed `@liteship/*` tarballs. */
 export const PEER_INSTALLS: readonly string[] = [
-  'effect@4.0.0-beta.32',
   // vite must be >= 8.1.0: astro@7 depends on esbuild ^0.28, and vite@8.0.0
   // peered esbuild ^0.27.0 only (→ strict-peer install failure in the smoke
   // consumer). vite@8.1.0 widened the peer to `^0.27.0 || ^0.28.0`.
   'vite@8.1.0',
-  // Must satisfy @czap/astro's `astro >=7.0.0 <8` peer (a stale `astro@6.0.0`
-  // here failed the consumer install under strict-peer once we hard-cut to 7).
-  'astro@7.0.0',
+  // Must satisfy @liteship/astro's security floor (`astro >=7.1.0 <8`) as well
+  // as its major. A stale host pin makes the packed proof certify a consumer
+  // configuration the published facade deliberately refuses.
+  'astro@7.1.0',
+  // The packed declaration authority deliberately runs with skipLibCheck=false.
+  // Astro exposes this optional peer in its public declaration graph, so the
+  // proof fixture must provide the valid typed-host environment it claims to
+  // verify even though a runtime-only Astro install may omit Markdown support.
+  '@astrojs/markdown-remark@7.2.1',
   'react@19.2.0',
   'react-dom@19.2.0',
+  // React ships JavaScript; @liteship/remotion's public declarations name
+  // ReactElement/ReactNode and therefore require React's declaration peer.
+  '@types/react@19.2.2',
+  // Vite/Astro declarations expose Node host types. Keep this explicit rather
+  // than hiding their diagnostics with skipLibCheck.
+  '@types/node@22.19.15',
   'remotion@4.0.440',
   'fast-check@4.7.0',
-  // @czap/audit's runtime deps — the engine parses + globs the target repo.
+  // @liteship/audit's runtime deps — the engine parses + globs the target repo.
   'typescript@5.9.3',
   'fast-glob@3.3.3',
 ];

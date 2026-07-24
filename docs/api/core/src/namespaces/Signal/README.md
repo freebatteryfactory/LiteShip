@@ -6,19 +6,21 @@
 
 # Signal
 
-Signal namespace -- live data feeds from the browser environment.
+Signal namespace -- the alternate live-feed constructors.
 
-Create reactive signals from viewport, scroll, pointer, time, media query,
-audio, or custom sources. Each signal provides `.read()` and `.subscribe(sink)`
-backed by [CellKernel.replay1](../../variables/CellKernel.md#replay1), plus a [Lifetime](../../variables/Lifetime.md) for listener
-cleanup. Effect-free — consumers coordinate live state with no `effect` import.
+The primary environment-source constructor is the standalone [createSignal](../../functions/createSignal.md)
+(verb grammar, ADR-0046 — `create` allocates a runtime resource). This namespace
+carries the two SPECIALIZED constructors: `controllable` (a seekable/pausable
+time signal driven externally) and `audio` (an [AVBridge](../../variables/AVBridge.md)-backed sample/
+normalized feed). Each signal provides `.read()` and `.subscribe(sink)` backed by
+[CellKernel.replay1](../../variables/CellKernel.md#replay1), and IS its own disposable ([AsyncOwnedResource](../../interfaces/AsyncOwnedResource.md)).
 
 ## Example
 
 ```ts
-import { Signal } from '@czap/core';
+import { createSignal, Signal } from '@liteship/core';
 
-const viewport = Signal.make({ type: 'viewport', axis: 'width' });
+const viewport = createSignal({ type: 'viewport', axis: 'width' });
 const width = viewport.read();
 const ctrl = Signal.controllable();
 ctrl.seek(500);
@@ -28,4 +30,3 @@ ctrl.seek(500);
 
 - [Audio](type-aliases/Audio.md)
 - [Controllable](type-aliases/Controllable.md)
-- [Shape](type-aliases/Shape.md)

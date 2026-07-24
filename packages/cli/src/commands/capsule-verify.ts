@@ -1,17 +1,17 @@
 /**
  * capsule-verify (CLI adapter, script collapse) — thin projection over
- * `@czap/command`'s capsule-verify gate (the capsule-corpus freshness +
+ * `@liteship/command`'s capsule-verify gate (the capsule-corpus freshness +
  * bench-honesty + green-suite gate, migrated from `scripts/capsule-verify.ts`).
- * The pass/fail decision lives in `@czap/command`; the CLI is the ONLY adapter
+ * The pass/fail decision lives in `@liteship/command`; the CLI is the ONLY adapter
  * that wires the heavy `runCapsuleGate` capability: it reads the manifest,
  * existence-checks every generated artifact, classifies bench honesty
- * (via `@czap/core/harness`), suspects staleness by CONTENT-HASH provenance (the
+ * (via the always-available `@liteship/core/evidence` facade), suspects staleness by CONTENT-HASH provenance (the
  * recorded `sourceDigest`/`generatorVersion` vs the live source/generator digests
  * — deterministic, mtime-independent, replacing the former `sourceAge > testAge`
  * mtime heuristic), confirms suspects are NOT stale by regenerating into a temp
  * dir (spawning `capsule:compile`) and byte-comparing, and runs the whole
- * `tests/generated/` suite (spawning `vitest`). `@czap/command` and
- * `@czap/mcp-server` never see the subprocess engine. Exit 0 ok, 1 stale/failed.
+ * `tests/generated/` suite (spawning `vitest`). `@liteship/command` and
+ * `@liteship/mcp-server` never see the subprocess engine. Exit 0 ok, 1 stale/failed.
  *
  * @module
  */
@@ -19,18 +19,18 @@ import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
-import { classifyBenchSource, benchHonestyError } from '@czap/core/harness';
+import { classifyBenchSource, benchHonestyError } from '@liteship/core/evidence';
 import {
   capsuleVerifyGateCommand,
   type CapsuleVerifyPayload,
   type CapsuleGateSummary,
   type CapsuleBenchClassification,
-} from '@czap/command';
-import { sourceProvenanceDigest, generatorVersionDigest } from '@czap/command/host';
-import type { CommandContext } from '@czap/command';
+} from '@liteship/command';
+import { sourceProvenanceDigest, generatorVersionDigest } from '@liteship/command/host';
+import type { CommandContext } from '@liteship/command';
 import { emit, getCapsuleManifestPath, type WallClockTimestamp } from '../receipts.js';
 
-/** Receipt emitted by `czap capsule-verify`. */
+/** Receipt emitted by `liteship capsule-verify`. */
 export interface CapsuleVerifyReceipt extends CapsuleVerifyPayload {
   readonly command: 'capsule-verify';
   readonly timestamp: WallClockTimestamp;
@@ -64,6 +64,19 @@ interface CapsuleManifestShape {
 const NO_BENCHES: CapsuleBenchClassification = { total: 0, real: 0, placeholder: [] };
 
 /**
+ * Injectable content-hash provenance seam for the capsule gate. Each digest
+ * DEFAULTS (via the null-coalesce at its call site) to the real
+ * `@liteship/command/host` digest, so production `liteship capsule-verify` is
+ * byte-identical; tests pass scripted digests to drive the fresh/stale/generator-
+ * drift branches over a synthetic manifest without hashing real source. Unexported
+ * + off the public barrel, so the api-surface snapshot is unchanged.
+ */
+interface CapsuleProvenanceDeps {
+  readonly sourceProvenanceDigest?: typeof sourceProvenanceDigest;
+  readonly generatorVersionDigest?: typeof generatorVersionDigest;
+}
+
+/**
  * Confirm content-hash-suspect capsules by regeneration: compile into a temp
  * generated dir + temp manifest (the shared tests/generated is NEVER
  * written — parent vitest runs may be executing it, CUT T1), then
@@ -85,8 +98,8 @@ function confirmStaleByRegeneration(
   suspects: readonly ManifestEntry[],
   committedNames: ReadonlySet<string>,
 ): string[] {
-  const tmp = mkdtempSync(join(root, 'tests', '.czap-verify-fresh-'));
-  const tmpManifest = join(mkdtempSync(join(tmpdir(), 'czap-verify-manifest-')), 'capsule-manifest.json');
+  const tmp = mkdtempSync(join(root, 'tests', '.liteship-verify-fresh-'));
+  const tmpManifest = join(mkdtempSync(join(tmpdir(), 'liteship-verify-manifest-')), 'capsule-manifest.json');
   try {
     try {
       execSync('pnpm run capsule:compile', {
@@ -94,12 +107,12 @@ function confirmStaleByRegeneration(
         stdio: ['ignore', process.stderr, process.stderr],
         env: {
           ...process.env,
-          CZAP_CAPSULE_GENERATED_DIR: tmp,
-          CZAP_CAPSULE_MANIFEST: tmpManifest,
+          LITESHIP_CAPSULE_GENERATED_DIR: tmp,
+          LITESHIP_CAPSULE_MANIFEST: tmpManifest,
           // A test harness may have left manifest-only mode set (the iso
           // helpers leave their env for following spawns) — this compile
           // must WRITE the temp files or every comparison reads as missing.
-          CZAP_CAPSULE_MANIFEST_ONLY: '0',
+          LITESHIP_CAPSULE_MANIFEST_ONLY: '0',
         },
       });
     } catch {
@@ -155,7 +168,9 @@ function confirmStaleByRegeneration(
  * `process.exit`. Status: `ok` when fresh + honest + green; `stale` on a
  * missing/stale/dishonest artifact; `failed` when the generated suite ran red.
  */
-export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSummary> {
+export async function runCapsuleGateScan(root: string, deps: CapsuleProvenanceDeps = {}): Promise<CapsuleGateSummary> {
+  const srcDigest = deps.sourceProvenanceDigest ?? sourceProvenanceDigest;
+  const genDigest = deps.generatorVersionDigest ?? generatorVersionDigest;
   const errors: string[] = [];
   const manifestPath = getCapsuleManifestPath(root);
 
@@ -186,7 +201,7 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
   // the WHOLE corpus is suspect — even when every capsule source is byte-identical
   // (the toolchain-digest analogue). A manifest predating provenance (no recorded
   // generatorVersion) is treated as generator-stale so it can't pass un-reverified.
-  const liveGeneratorVersion = generatorVersionDigest(root);
+  const liveGeneratorVersion = genDigest(root);
   const generatorStale = manifest.generatorVersion !== liveGeneratorVersion;
 
   for (const cap of manifest.capsules) {
@@ -213,7 +228,7 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
       // the recorded one. A mismatch (or a missing recorded digest, or a
       // generator-version change) makes this capsule a suspect — confirmed below
       // by regeneration byte-compare (suspicion is fast; regeneration is proof).
-      const liveSourceDigest = sourceProvenanceDigest(root, cap.source);
+      const liveSourceDigest = srcDigest(root, cap.source);
       const recordedSourceDigest = cap.provenance?.sourceDigest;
       if (generatorStale || recordedSourceDigest !== liveSourceDigest) {
         digestSuspects.push(cap);
@@ -264,11 +279,14 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
   return { status: 'ok', errors: [], capsuleCount: manifest.capsules.length, benches };
 }
 
-/** Execute `czap capsule-verify` — gate the committed capsule corpus; emit a verdict. */
-export async function capsuleVerify(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+/** Execute `liteship capsule-verify` — gate the committed capsule corpus; emit a verdict. */
+export async function capsuleVerify(
+  opts: { cwd?: string; pretty?: boolean } = {},
+  deps: CapsuleProvenanceDeps = {},
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  const context: CommandContext = { cwd, runCapsuleGate: async () => runCapsuleGateScan(cwd) };
+  const context: CommandContext = { cwd, runCapsuleGate: async () => runCapsuleGateScan(cwd, deps) };
 
   const result = await capsuleVerifyGateCommand.handler({ name: 'capsule-verify', args: {} }, context);
   const payload = result.payload as CapsuleVerifyPayload;

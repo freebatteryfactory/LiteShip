@@ -6,7 +6,7 @@
 
 # Variable: DPU\_BASE\_ATTR
 
-> `const` **DPU\_BASE\_ATTR**: `"data-czap-dpu-base"` = `'data-czap-dpu-base'`
+> `const` **DPU\_BASE\_ATTR**: `"data-liteship-dpu-base"` = `'data-liteship-dpu-base'`
 
 Defined in: [web/src/dpu/watch-and-prepare.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L25)
 

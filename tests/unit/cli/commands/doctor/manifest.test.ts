@@ -32,7 +32,7 @@ import {
 
 const tmps: string[] = [];
 function mkTmp(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-doctor-manifest-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-doctor-manifest-'));
   tmps.push(dir);
   return dir;
 }

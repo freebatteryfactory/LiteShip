@@ -1,22 +1,30 @@
 /**
- * Q.from(boundary).outputs({...}) builder tests.
+ * defineQuantizer(boundary, { outputs }) / createQuantizer(config) tests.
  *
  * Covers: config creation, content-address identity, MotionTier gating,
- * force() escape hatch, springToLinearCSS auto-generation, MemoCache,
+ * the `force` option escape hatch, springToLinearCSS auto-generation, MemoCache,
  * LiveQuantizer reactive streams, BoundaryCrossing pub-sub.
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, fixedClock, manualClock, type Clock } from '@czap/core';
-import { Q, type OutputTarget, type MotionTier, type QuantizerConfig, type LiveQuantizer } from '@czap/quantizer';
-import { TIER_TARGETS, MemoCache } from '@czap/quantizer/testing';
+import type { Boundary } from '@liteship/core';
+import { fixedClock, manualClock, type Clock, defineBoundary } from '@liteship/core';
+import {
+  defineQuantizer,
+  createQuantizer,
+  type OutputTarget,
+  type MotionTier,
+  type QuantizerConfig,
+  type LiveQuantizer,
+} from '@liteship/quantizer';
+import { TIER_TARGETS, MemoCache } from '@liteship/quantizer/testing';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
 function viewport() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport-width',
     at: [
       [0, 'compact'],
@@ -26,10 +34,28 @@ function viewport() {
   });
 }
 
+function assertQuantizerSnapshotTypesAreReadonly(): void {
+  const config = defineQuantizer(viewport(), {
+    outputs: {
+      css: {
+        compact: { color: 'red' },
+        medium: { color: 'green' },
+        expanded: { color: 'blue' },
+      },
+    },
+    spring: { stiffness: 170, damping: 26 },
+  });
+  // @ts-expect-error Quantizer output snapshots are recursively immutable.
+  config.outputs.css!.compact.color = 'black';
+  // @ts-expect-error Quantizer spring snapshots are immutable.
+  config.spring!.stiffness = 999;
+}
+void assertQuantizerSnapshotTypesAreReadonly;
+
 // Counter to make outputs unique per call (avoids content-address cache collisions)
 let outputCounter = 0;
 
-function simpleOutputs<B extends Boundary.Shape>(_b: B) {
+function simpleOutputs<B extends Boundary>(_b: B) {
   const tag = `t${++outputCounter}`;
   return {
     css: {
@@ -54,14 +80,16 @@ function simpleOutputs<B extends Boundary.Shape>(_b: B) {
 // QuantizerConfig creation
 // ---------------------------------------------------------------------------
 
-describe('Q.from() config creation', () => {
+describe('defineQuantizer() config creation', () => {
   test('returns a QuantizerConfig with correct boundary', () => {
     const b = viewport();
-    const config = Q.from(b).outputs({
-      css: {
-        compact: { '--gap': '0.5rem' },
-        medium: { '--gap': '1rem' },
-        expanded: { '--gap': '2rem' },
+    const config = defineQuantizer(b, {
+      outputs: {
+        css: {
+          compact: { '--gap': '0.5rem' },
+          medium: { '--gap': '1rem' },
+          expanded: { '--gap': '2rem' },
+        },
       },
     });
     expect(config.boundary).toBe(b);
@@ -69,11 +97,13 @@ describe('Q.from() config creation', () => {
 
   test('config has content-addressed id', () => {
     const b = viewport();
-    const config = Q.from(b).outputs({
-      css: {
-        compact: { '--gap': '0.5rem' },
-        medium: { '--gap': '1rem' },
-        expanded: { '--gap': '2rem' },
+    const config = defineQuantizer(b, {
+      outputs: {
+        css: {
+          compact: { '--gap': '0.5rem' },
+          medium: { '--gap': '1rem' },
+          expanded: { '--gap': '2rem' },
+        },
       },
     });
     expect(config.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
@@ -88,38 +118,87 @@ describe('Q.from() config creation', () => {
         expanded: { '--gap': '2rem' },
       },
     };
-    const config1 = Q.from(b).outputs(outputs);
-    const config2 = Q.from(b).outputs(outputs);
+    const config1 = defineQuantizer(b, { outputs });
+    const config2 = defineQuantizer(b, { outputs });
     expect(config1.id).toBe(config2.id);
     expect(config1).toBe(config2);
   });
 
+  test('host-only boundary filters memoize per boundary object without poisoning portable twins', () => {
+    const makeBoundary = (deviceFilter?: (capabilities: Record<string, unknown>) => boolean) =>
+      defineBoundary({
+        input: 'device.filter-cache',
+        at: [[0, 'ready']] as const,
+        spec: {
+          experimentId: 'filter-cache',
+          ...(deviceFilter === undefined ? {} : { deviceFilter }),
+        },
+      });
+    const makeOutputs = (tag: string) => ({ css: { ready: { [`--${tag}`]: 'ready' } } });
+
+    const filteredFirst = makeBoundary(() => true);
+    const portableSecond = makeBoundary();
+    const firstOutputs = makeOutputs(`filtered-first-${++outputCounter}`);
+    const filteredConfig = defineQuantizer(filteredFirst, { outputs: firstOutputs });
+    const portableConfig = defineQuantizer(portableSecond, { outputs: firstOutputs });
+
+    expect(filteredConfig.id).toBe(portableConfig.id);
+    expect(filteredConfig).not.toBe(portableConfig);
+    expect(filteredConfig.boundary).toBe(filteredFirst);
+    expect(portableConfig.boundary).toBe(portableSecond);
+    expect(defineQuantizer(filteredFirst, { outputs: firstOutputs })).toBe(filteredConfig);
+
+    const portableFirst = makeBoundary();
+    const filteredSecond = makeBoundary(() => false);
+    const secondOutputs = makeOutputs(`portable-first-${++outputCounter}`);
+    const portableFirstConfig = defineQuantizer(portableFirst, { outputs: secondOutputs });
+    const filteredSecondConfig = defineQuantizer(filteredSecond, { outputs: secondOutputs });
+
+    expect(portableFirstConfig.id).toBe(filteredSecondConfig.id);
+    expect(portableFirstConfig).not.toBe(filteredSecondConfig);
+    expect(portableFirstConfig.boundary).toBe(portableFirst);
+    expect(filteredSecondConfig.boundary).toBe(filteredSecond);
+  });
+
   test('different outputs produce different content address', () => {
     const b = viewport();
-    const config1 = Q.from(b).outputs({
-      css: { compact: { '--gap': '0.5rem' }, medium: { '--gap': '1rem' }, expanded: { '--gap': '2rem' } },
+    const config1 = defineQuantizer(b, {
+      outputs: {
+        css: { compact: { '--gap': '0.5rem' }, medium: { '--gap': '1rem' }, expanded: { '--gap': '2rem' } },
+      },
     });
-    const config2 = Q.from(b).outputs({
-      css: { compact: { '--gap': '1rem' }, medium: { '--gap': '2rem' }, expanded: { '--gap': '3rem' } },
+    const config2 = defineQuantizer(b, {
+      outputs: {
+        css: { compact: { '--gap': '1rem' }, medium: { '--gap': '2rem' }, expanded: { '--gap': '3rem' } },
+      },
     });
     expect(config1.id).not.toBe(config2.id);
   });
 
-  test('config has create() method', () => {
+  test('createQuantizer materializes a live quantizer from the pure config', () => {
     const b = viewport();
-    const config = Q.from(b).outputs({
-      css: { compact: { '--gap': '0.5rem' }, medium: { '--gap': '1rem' }, expanded: { '--gap': '2rem' } },
+    const config = defineQuantizer(b, {
+      outputs: {
+        css: { compact: { '--gap': '0.5rem' }, medium: { '--gap': '1rem' }, expanded: { '--gap': '2rem' } },
+      },
     });
-    expect(typeof config.create).toBe('function');
+    // The config is a PURE definition — no `create` method hangs off it.
+    expect((config as { create?: unknown }).create).toBeUndefined();
+    const quantizer = createQuantizer(config);
+    expect(quantizer._tag).toBe('Quantizer');
+    expect(typeof quantizer.dispose).toBe('function');
   });
 
   test('config stores tier when provided', () => {
     const b = viewport();
-    const config = Q.from(b, { tier: 'transitions' }).outputs({
-      css: {
-        compact: { '--tier-test': '0.5rem' },
-        medium: { '--tier-test': '1rem' },
-        expanded: { '--tier-test': '2rem' },
+    const config = defineQuantizer(b, {
+      tier: 'transitions',
+      outputs: {
+        css: {
+          compact: { '--tier-test': '0.5rem' },
+          medium: { '--tier-test': '1rem' },
+          expanded: { '--tier-test': '2rem' },
+        },
       },
     });
     expect(config.tier).toBe('transitions');
@@ -127,14 +206,61 @@ describe('Q.from() config creation', () => {
 
   test('config stores spring when provided', () => {
     const b = viewport();
-    const config = Q.from(b, { spring: { stiffness: 170, damping: 26 } }).outputs({
-      css: {
-        compact: { '--spring-test': '0.5rem' },
-        medium: { '--spring-test': '1rem' },
-        expanded: { '--spring-test': '2rem' },
+    const config = defineQuantizer(b, {
+      spring: { stiffness: 170, damping: 26 },
+      outputs: {
+        css: {
+          compact: { '--spring-test': '0.5rem' },
+          medium: { '--spring-test': '1rem' },
+          expanded: { '--spring-test': '2rem' },
+        },
       },
     });
     expect(config.spring).toEqual({ stiffness: 170, damping: 26 });
+  });
+
+  test('snapshots and recursively freezes outputs and spring before cache identity/storage', () => {
+    const b = viewport();
+    const tag = `snapshot${++outputCounter}`;
+    const outputs = {
+      css: {
+        compact: { [`--${tag}`]: 'before' },
+        medium: { [`--${tag}`]: 'before' },
+        expanded: { [`--${tag}`]: 'before' },
+      },
+    };
+    const spring = { stiffness: 170, damping: 26, mass: 2 };
+    const config = defineQuantizer(b, { outputs, spring });
+    const id = config.id;
+
+    outputs.css.compact[`--${tag}`] = 'poisoned';
+    spring.stiffness = 999;
+
+    expect(config.id).toBe(id);
+    expect(config.outputs.css?.compact[`--${tag}`]).toBe('before');
+    expect(config.spring).toEqual({ stiffness: 170, damping: 26, mass: 2 });
+    expect(Object.isFrozen(config.outputs)).toBe(true);
+    expect(Object.isFrozen(config.outputs.css)).toBe(true);
+    expect(Object.isFrozen(config.outputs.css?.compact)).toBe(true);
+    expect(Object.isFrozen(config.spring)).toBe(true);
+    expect(() => ((config.outputs.css!.compact as Record<string, string | number>)[`--${tag}`] = 'poison')).toThrow();
+    expect(() => ((config.spring as { stiffness: number }).stiffness = 1)).toThrow();
+
+    const equivalent = defineQuantizer(b, {
+      outputs: {
+        css: {
+          compact: { [`--${tag}`]: 'before' },
+          medium: { [`--${tag}`]: 'before' },
+          expanded: { [`--${tag}`]: 'before' },
+        },
+      },
+      spring: { stiffness: 170, damping: 26, mass: 2 },
+    });
+    expect(equivalent).toBe(config);
+
+    const changed = defineQuantizer(b, { outputs, spring });
+    expect(changed.id).not.toBe(id);
+    expect(changed).not.toBe(config);
   });
 });
 
@@ -170,9 +296,9 @@ describe('MotionTier gating', () => {
 
   test('tier: none filters out css and glsl from outputs', async () => {
     const b = viewport();
-    const config = Q.from(b, { tier: 'none' }).outputs(simpleOutputs(b));
+    const config = defineQuantizer(b, { tier: 'none', outputs: simpleOutputs(b) });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     // Only aria should be present
@@ -183,9 +309,9 @@ describe('MotionTier gating', () => {
 
   test('tier: transitions includes css but not glsl', async () => {
     const b = viewport();
-    const config = Q.from(b, { tier: 'transitions' }).outputs(simpleOutputs(b));
+    const config = defineQuantizer(b, { tier: 'transitions', outputs: simpleOutputs(b) });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -195,9 +321,9 @@ describe('MotionTier gating', () => {
 
   test('tier: physics includes css + glsl + aria', async () => {
     const b = viewport();
-    const config = Q.from(b, { tier: 'physics' }).outputs(simpleOutputs(b));
+    const config = defineQuantizer(b, { tier: 'physics', outputs: simpleOutputs(b) });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -207,9 +333,9 @@ describe('MotionTier gating', () => {
 
   test('no tier = no filtering (all outputs present)', async () => {
     const b = viewport();
-    const config = Q.from(b).outputs(simpleOutputs(b));
+    const config = defineQuantizer(b, { outputs: simpleOutputs(b) });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -249,16 +375,16 @@ describe('config identity includes tier/spring/force', () => {
 
   test('same outputs at a lower tier do not poison a later physics-tier config', async () => {
     const b = viewport();
-    const transitions = Q.from(b, { tier: 'transitions' }).outputs(sharedOutputs);
-    const physics = Q.from(b, { tier: 'physics' }).outputs(sharedOutputs);
-    const ungated = Q.from(b).outputs(sharedOutputs);
+    const transitions = defineQuantizer(b, { tier: 'transitions', outputs: sharedOutputs });
+    const physics = defineQuantizer(b, { tier: 'physics', outputs: sharedOutputs });
+    const ungated = defineQuantizer(b, { outputs: sharedOutputs });
 
     expect(transitions.id).not.toBe(physics.id);
     expect(physics.id).not.toBe(ungated.id);
 
-    const lqTransitions = transitions.create().quantizer;
-    const lqPhysics = physics.create().quantizer;
-    const lqUngated = ungated.create().quantizer;
+    const lqTransitions = createQuantizer(transitions);
+    const lqPhysics = createQuantizer(physics);
+    const lqUngated = createQuantizer(ungated);
 
     expect(lqTransitions.currentOutputs.read().glsl).toBeUndefined();
     expect(lqPhysics.currentOutputs.read().glsl).toBeDefined();
@@ -274,30 +400,30 @@ describe('config identity includes tier/spring/force', () => {
 
   test('distinct springs with identical outputs produce distinct configs and easings', async () => {
     const b = viewport();
-    const stiff = Q.from(b, { spring: { stiffness: 400, damping: 10 } }).outputs(sharedOutputs);
-    const soft = Q.from(b, { spring: { stiffness: 80, damping: 30 } }).outputs(sharedOutputs);
+    const stiff = defineQuantizer(b, { spring: { stiffness: 400, damping: 10 }, outputs: sharedOutputs });
+    const soft = defineQuantizer(b, { spring: { stiffness: 80, damping: 30 }, outputs: sharedOutputs });
 
     expect(stiff.id).not.toBe(soft.id);
 
-    const lqStiff = stiff.create().quantizer;
-    const lqSoft = soft.create().quantizer;
+    const lqStiff = createQuantizer(stiff);
+    const lqSoft = createQuantizer(soft);
     const stiffCss = lqStiff.currentOutputs.read().css ?? {};
     const softCss = lqSoft.currentOutputs.read().css ?? {};
 
-    expect(stiffCss['--czap-easing']).toBeDefined();
-    expect(softCss['--czap-easing']).toBeDefined();
-    expect(stiffCss['--czap-easing']).not.toBe(softCss['--czap-easing']);
+    expect(stiffCss['--liteship-easing']).toBeDefined();
+    expect(softCss['--liteship-easing']).toBeDefined();
+    expect(stiffCss['--liteship-easing']).not.toBe(softCss['--liteship-easing']);
   });
 
-  test('force() targets are part of config identity', async () => {
+  test('force targets are part of config identity', async () => {
     const b = viewport();
-    const plain = Q.from(b, { tier: 'none' }).outputs(sharedOutputs);
-    const forced = Q.from(b, { tier: 'none' }).force('glsl').outputs(sharedOutputs);
+    const plain = defineQuantizer(b, { tier: 'none', outputs: sharedOutputs });
+    const forced = defineQuantizer(b, { tier: 'none', force: ['glsl'], outputs: sharedOutputs });
 
     expect(plain.id).not.toBe(forced.id);
 
-    const lqPlain = plain.create().quantizer;
-    const lqForced = forced.create().quantizer;
+    const lqPlain = createQuantizer(plain);
+    const lqForced = createQuantizer(forced);
 
     expect(lqPlain.currentOutputs.read().glsl).toBeUndefined();
     expect(lqForced.currentOutputs.read().glsl).toBeDefined();
@@ -305,16 +431,16 @@ describe('config identity includes tier/spring/force', () => {
 });
 
 // ---------------------------------------------------------------------------
-// force() escape hatch
+// force option escape hatch
 // ---------------------------------------------------------------------------
 
-describe('force() escape hatch', () => {
-  test('force() bypasses tier gating for specified targets', async () => {
+describe('force option escape hatch', () => {
+  test('force bypasses tier gating for specified targets', async () => {
     const b = viewport();
     // tier: none normally blocks everything except aria
-    const config = Q.from(b, { tier: 'none' }).force('css', 'glsl').outputs(simpleOutputs(b));
+    const config = defineQuantizer(b, { tier: 'none', force: ['css', 'glsl'], outputs: simpleOutputs(b) });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
@@ -322,11 +448,32 @@ describe('force() escape hatch', () => {
     expect(outputs.aria).toBeDefined(); // still allowed by tier
   });
 
-  test('force() returns the builder for chaining', () => {
+  test('force is recorded on the config as authored intent', () => {
     const b = viewport();
-    const builder = Q.from(b, { tier: 'none' });
-    const result = builder.force('css');
-    expect(result).toBe(builder);
+    const config = defineQuantizer(b, { tier: 'none', force: ['css'], outputs: simpleOutputs(b) });
+    expect(config.force).toEqual(['css']);
+  });
+
+  test('force is canonically snapshotted and frozen before identity/storage', () => {
+    const b = viewport();
+    const authored: OutputTarget[] = ['glsl', 'css', 'glsl'];
+    const config = defineQuantizer(b, { tier: 'none', force: authored, outputs: simpleOutputs(b) });
+    const id = config.id;
+
+    authored.push('wgsl');
+
+    expect(config.id).toBe(id);
+    expect(config.force).toEqual(['css', 'glsl']);
+    expect(Object.isFrozen(config.force)).toBe(true);
+    expect(Object.isFrozen(config)).toBe(true);
+    expect(() => (config.force as OutputTarget[]).push('wgsl')).toThrow();
+
+    const equivalent = defineQuantizer(b, {
+      tier: 'none',
+      force: ['css', 'glsl'],
+      outputs: config.outputs,
+    });
+    expect(equivalent).toBe(config);
   });
 });
 
@@ -335,43 +482,48 @@ describe('force() escape hatch', () => {
 // ---------------------------------------------------------------------------
 
 describe('springToLinearCSS auto-generation', () => {
-  test('injects --czap-easing when spring config + CSS outputs present', async () => {
+  test('injects --liteship-easing when spring config + CSS outputs present', async () => {
     const b = viewport();
     const tag = `spring${++outputCounter}`;
-    const config = Q.from(b, { spring: { stiffness: 170, damping: 26 } }).outputs({
-      css: {
-        compact: { [`--${tag}`]: '0.5rem' },
-        medium: { [`--${tag}`]: '1rem' },
-        expanded: { [`--${tag}`]: '2rem' },
+    const config = defineQuantizer(b, {
+      spring: { stiffness: 170, damping: 26 },
+      outputs: {
+        css: {
+          compact: { [`--${tag}`]: '0.5rem' },
+          medium: { [`--${tag}`]: '1rem' },
+          expanded: { [`--${tag}`]: '2rem' },
+        },
       },
     });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
-    expect(outputs.css!['--czap-easing']).toBeDefined();
-    expect(typeof outputs.css!['--czap-easing']).toBe('string');
+    expect(outputs.css!['--liteship-easing']).toBeDefined();
+    expect(typeof outputs.css!['--liteship-easing']).toBe('string');
     // Should be a linear() CSS function
-    expect(outputs.css!['--czap-easing']).toMatch(/^linear\(/);
+    expect(outputs.css!['--liteship-easing']).toMatch(/^linear\(/);
   });
 
-  test('no spring config = no --czap-easing injection', async () => {
+  test('no spring config = no --liteship-easing injection', async () => {
     const b = viewport();
     const tag = `nospring${++outputCounter}`;
-    const config = Q.from(b).outputs({
-      css: {
-        compact: { [`--${tag}`]: '0.5rem' },
-        medium: { [`--${tag}`]: '1rem' },
-        expanded: { [`--${tag}`]: '2rem' },
+    const config = defineQuantizer(b, {
+      outputs: {
+        css: {
+          compact: { [`--${tag}`]: '0.5rem' },
+          medium: { [`--${tag}`]: '1rem' },
+          expanded: { [`--${tag}`]: '2rem' },
+        },
       },
     });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.css).toBeDefined();
-    expect(outputs.css!['--czap-easing']).toBeUndefined();
+    expect(outputs.css!['--liteship-easing']).toBeUndefined();
   });
 
   test('spring CSS is cached (same spring config = same string)', async () => {
@@ -380,19 +532,21 @@ describe('springToLinearCSS auto-generation', () => {
     const t1 = `sc${++outputCounter}`;
     const t2 = `sc${++outputCounter}`;
 
-    const config1 = Q.from(b, { spring }).outputs({
-      css: { compact: { [`--${t1}`]: '1' }, medium: { [`--${t1}`]: '2' }, expanded: { [`--${t1}`]: '3' } },
+    const config1 = defineQuantizer(b, {
+      spring,
+      outputs: { css: { compact: { [`--${t1}`]: '1' }, medium: { [`--${t1}`]: '2' }, expanded: { [`--${t1}`]: '3' } } },
     });
-    const config2 = Q.from(b, { spring }).outputs({
-      css: { compact: { [`--${t2}`]: '1' }, medium: { [`--${t2}`]: '2' }, expanded: { [`--${t2}`]: '3' } },
+    const config2 = defineQuantizer(b, {
+      spring,
+      outputs: { css: { compact: { [`--${t2}`]: '1' }, medium: { [`--${t2}`]: '2' }, expanded: { [`--${t2}`]: '3' } } },
     });
 
-    const lq1 = config1.create().quantizer;
-    const lq2 = config2.create().quantizer;
+    const lq1 = createQuantizer(config1);
+    const lq2 = createQuantizer(config2);
     const o1 = lq1.currentOutputs.read();
     const o2 = lq2.currentOutputs.read();
 
-    expect(o1.css!['--czap-easing']).toBe(o2.css!['--czap-easing']);
+    expect(o1.css!['--liteship-easing']).toBe(o2.css!['--liteship-easing']);
   });
 });
 
@@ -445,9 +599,9 @@ describe('LiveQuantizer', () => {
   test('initial state is first boundary state', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const state = lq.state.read();
     expect(state).toBe('compact');
   });
@@ -455,9 +609,9 @@ describe('LiveQuantizer', () => {
   test('evaluate() returns current state for value in first range', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const result = lq.evaluate(500);
     expect(result).toBe('compact');
   });
@@ -465,9 +619,9 @@ describe('LiveQuantizer', () => {
   test('evaluate() transitions on boundary crossing', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
 
     expect(lq.evaluate(500)).toBe('compact');
     expect(lq.evaluate(800)).toBe('medium');
@@ -477,9 +631,9 @@ describe('LiveQuantizer', () => {
   test('evaluate() updates currentOutputs on crossing', async () => {
     const b = viewport();
     const { css, _key } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
 
     let outputs = lq.currentOutputs.read();
     expect(outputs.css![_key]).toBe('0.5rem');
@@ -496,9 +650,9 @@ describe('LiveQuantizer', () => {
   test('evaluate() does not emit crossing when state unchanged', async () => {
     const b = viewport();
     const { css, _key } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
 
     expect(lq.evaluate(100)).toBe('compact');
     expect(lq.evaluate(200)).toBe('compact');
@@ -511,18 +665,18 @@ describe('LiveQuantizer', () => {
   test('config reference is available on LiveQuantizer', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     expect(lq.config).toBe(config);
   });
 
   test('boundary reference is available on LiveQuantizer', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     expect(lq._tag).toBe('Quantizer');
     expect(lq.boundary).toBe(b);
   });
@@ -530,9 +684,9 @@ describe('LiveQuantizer', () => {
   test('stateSync tracks the latest boundary evaluation result', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     expect((lq as LiveQuantizer<typeof b> & { stateSync(): string }).stateSync()).toBe('compact');
     lq.evaluate(800);
     expect((lq as LiveQuantizer<typeof b> & { stateSync(): string }).stateSync()).toBe('medium');
@@ -540,18 +694,20 @@ describe('LiveQuantizer', () => {
 
   test('omits targets that do not define outputs for the current state', async () => {
     const b = viewport();
-    const config = Q.from(b).outputs({
-      css: {
-        compact: { '--gap': '4px' },
-        medium: { '--gap': '8px' },
-        expanded: { '--gap': '12px' },
-      },
-      glsl: {
-        expanded: { u_scale: 2 },
+    const config = defineQuantizer(b, {
+      outputs: {
+        css: {
+          compact: { '--gap': '4px' },
+          medium: { '--gap': '8px' },
+          expanded: { '--gap': '12px' },
+        },
+        glsl: {
+          expanded: { u_scale: 2 },
+        },
       },
     });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     expect(lq.currentOutputs.read()).toEqual({
       css: { '--gap': '4px' },
     });
@@ -566,9 +722,9 @@ describe('LiveQuantizer', () => {
   test('reuses cached outputs when returning to a previously resolved state', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const config = Q.from(b).outputs({ css });
+    const config = defineQuantizer(b, { outputs: { css } });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const initialOutputs = lq.currentOutputs.read();
 
     lq.evaluate(800);
@@ -580,18 +736,20 @@ describe('LiveQuantizer', () => {
     expect(compactOutputs).toBe(initialOutputs);
   });
 
-  test('rejects an unknown tier at builder time instead of failing open to all targets', () => {
+  test('rejects an unknown tier at definition time instead of failing open to all targets', () => {
     // Failing open would disable gating entirely (including ai/wgsl) for an
     // invalid tier from an untyped source — see quantizer-diagnostics.test.ts
     // for the full error-contract coverage.
     const b = viewport();
-    expect(() => Q.from(b, { tier: 'ghost' as MotionTier })).toThrow(/unknown MotionTier 'ghost'/);
+    expect(() => defineQuantizer(b, { outputs: {}, tier: 'ghost' as MotionTier })).toThrow(
+      /unknown MotionTier 'ghost'/,
+    );
   });
 
   test('changes subscriptions clean up cleanly when the lifetime disposes after a crossing', async () => {
     const b = viewport();
     const { css } = uniqueCss();
-    const { quantizer: lq, lifetime } = Q.from(b).outputs({ css }).create();
+    const lq = createQuantizer(defineQuantizer(b, { outputs: { css } }));
 
     // The crossing fan-out publishes synchronously on evaluate(); collect via the
     // kernel's subscribe (was `Stream.take(lq.changes, 1)` forked in a scope).
@@ -601,9 +759,9 @@ describe('LiveQuantizer', () => {
     });
     lq.evaluate(900); // compact -> medium crossing
     dispose();
-    // Disposing the lifetime closes the crossing kernel (completes subscribers,
+    // Disposing the quantizer closes the crossing kernel (completes subscribers,
     // makes publish inert) — the clean-up the old scope close covered.
-    await lifetime.dispose();
+    await lq.dispose();
 
     expect(events).toEqual([{ from: 'compact', to: 'medium' }]);
   });
@@ -617,17 +775,20 @@ describe('tier gating output correctness', () => {
   test('tier: none with all output types only produces aria', async () => {
     const b = viewport();
     const t = `none${++outputCounter}`;
-    const config = Q.from(b, { tier: 'none' }).outputs({
-      css: { compact: { [`--${t}`]: '0.5rem' }, medium: { [`--${t}`]: '1rem' }, expanded: { [`--${t}`]: '2rem' } },
-      glsl: { compact: { [`u_${t}`]: 0.5 }, medium: { [`u_${t}`]: 1.0 }, expanded: { [`u_${t}`]: 1.5 } },
-      aria: {
-        compact: { 'aria-label': `c-${t}` },
-        medium: { 'aria-label': `m-${t}` },
-        expanded: { 'aria-label': `e-${t}` },
+    const config = defineQuantizer(b, {
+      tier: 'none',
+      outputs: {
+        css: { compact: { [`--${t}`]: '0.5rem' }, medium: { [`--${t}`]: '1rem' }, expanded: { [`--${t}`]: '2rem' } },
+        glsl: { compact: { [`u_${t}`]: 0.5 }, medium: { [`u_${t}`]: 1.0 }, expanded: { [`u_${t}`]: 1.5 } },
+        aria: {
+          compact: { 'aria-label': `c-${t}` },
+          medium: { 'aria-label': `m-${t}` },
+          expanded: { 'aria-label': `e-${t}` },
+        },
       },
     });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     const outputs = lq.currentOutputs.read();
 
     expect(outputs.aria).toEqual({ 'aria-label': `c-${t}` });
@@ -638,17 +799,20 @@ describe('tier gating output correctness', () => {
   test('after crossing, tier gating still applies', async () => {
     const b = viewport();
     const t = `trans${++outputCounter}`;
-    const config = Q.from(b, { tier: 'transitions' }).outputs({
-      css: { compact: { [`--${t}`]: '0.5rem' }, medium: { [`--${t}`]: '1rem' }, expanded: { [`--${t}`]: '2rem' } },
-      glsl: { compact: { [`u_${t}`]: 0.5 }, medium: { [`u_${t}`]: 1.0 }, expanded: { [`u_${t}`]: 1.5 } },
-      aria: {
-        compact: { 'aria-label': `c-${t}` },
-        medium: { 'aria-label': `m-${t}` },
-        expanded: { 'aria-label': `e-${t}` },
+    const config = defineQuantizer(b, {
+      tier: 'transitions',
+      outputs: {
+        css: { compact: { [`--${t}`]: '0.5rem' }, medium: { [`--${t}`]: '1rem' }, expanded: { [`--${t}`]: '2rem' } },
+        glsl: { compact: { [`u_${t}`]: 0.5 }, medium: { [`u_${t}`]: 1.0 }, expanded: { [`u_${t}`]: 1.5 } },
+        aria: {
+          compact: { 'aria-label': `c-${t}` },
+          medium: { 'aria-label': `m-${t}` },
+          expanded: { 'aria-label': `e-${t}` },
+        },
       },
     });
 
-    const lq = config.create().quantizer;
+    const lq = createQuantizer(config);
     lq.evaluate(800);
     const outputs = lq.currentOutputs.read();
 
@@ -666,13 +830,13 @@ describe('tier gating output correctness', () => {
 
 describe('injected-HLC determinism (A-1)', () => {
   /** Drive `lq` to its first crossing and return the crossing's HLC timestamp. */
-  function firstCrossingHlc<B extends Boundary.Shape>(
+  function firstCrossingHlc<B extends Boundary>(
     b: B,
     clock: Clock,
     node?: string,
   ): { wall_ms: number; counter: number; node_id: string } {
     const { css } = uniqueCssForGuard();
-    const { quantizer: lq } = Q.from(b).outputs({ css }).create({ clock, node });
+    const lq = createQuantizer(defineQuantizer(b, { outputs: { css } }), { clock, node });
     let stamp: { wall_ms: number; counter: number; node_id: string } | undefined;
     const dispose = lq.changes.subscribe((crossing) => {
       // crossing.timestamp is the branded HLC — structurally { wall_ms, counter, node_id }.
@@ -711,14 +875,14 @@ describe('injected-HLC determinism (A-1)', () => {
     expect(a.counter).toBe(0);
   });
 
-  test("each create() owns its clock — one instance's evaluates never advance another's HLC", () => {
+  test("each createQuantizer owns its clock — one instance's evaluates never advance another's HLC", () => {
     const b = viewport();
     const clockA = manualClock(2_000);
     const clockB = manualClock(2_000);
     const { css } = uniqueCssForGuard();
-    const config = Q.from(b).outputs({ css });
-    const { quantizer: lqA } = config.create({ clock: clockA, node: 'A' });
-    const { quantizer: lqB } = config.create({ clock: clockB, node: 'B' });
+    const config = defineQuantizer(b, { outputs: { css } });
+    const lqA = createQuantizer(config, { clock: clockA, node: 'A' });
+    const lqB = createQuantizer(config, { clock: clockB, node: 'B' });
 
     let ca: { wall_ms: number; node_id: string } | undefined;
     let cb: { wall_ms: number; node_id: string } | undefined;
@@ -753,10 +917,10 @@ describe('injected-HLC determinism (A-1)', () => {
 // Teardown: close ALL channels even when a completion callback throws
 // ---------------------------------------------------------------------------
 
-describe('Q live handle — disposal closes every channel despite a throwing complete', () => {
+describe('createQuantizer live handle — disposal closes every channel despite a throwing complete', () => {
   test('a throwing state-complete does not strand the output/crossing channels open', async () => {
     const b = viewport();
-    const { quantizer, lifetime } = Q.from(b).outputs(simpleOutputs(b)).create();
+    const quantizer = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }));
 
     // A state subscriber whose `complete` throws during teardown. `CellKernel.close`
     // rethrows the first fault (the sink-error law), so the finalizer's `stateCell.close()`
@@ -774,7 +938,7 @@ describe('Q live handle — disposal closes every channel despite a throwing com
     // still publish into subscribers that were never completed. The fault folds into a
     // LifetimeDisposeError (aggregate-failure law), which we swallow here.
     try {
-      await lifetime.dispose();
+      await quantizer.dispose();
     } catch {
       /* expected: the folded fault still surfaces */
     }
@@ -790,10 +954,10 @@ describe('Q live handle — disposal closes every channel despite a throwing com
 // evaluate() publishes state + outputs + crossing as ONE consistent advance
 // ---------------------------------------------------------------------------
 
-describe('Q live handle — evaluate advances every channel despite a throwing subscriber', () => {
+describe('createQuantizer live handle — evaluate advances every channel despite a throwing subscriber', () => {
   test('a throwing state subscriber does not strand the outputs/crossing channels', () => {
     const b = viewport();
-    const { quantizer } = Q.from(b).outputs(simpleOutputs(b)).create();
+    const quantizer = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }));
 
     // A state subscriber that throws on the CROSSING delivery (its initial replay of
     // the current state does not cross, so the throw fires only on the evaluate below).
@@ -821,11 +985,11 @@ describe('Q live handle — evaluate advances every channel despite a throwing s
 describe('LiveQuantizer.evaluate — post-dispose inertness', () => {
   test('a post-dispose evaluate() freezes the discrete state (stateSync + state.read do not advance)', async () => {
     const b = viewport();
-    const { quantizer, lifetime } = Q.from(b)
-      .outputs(simpleOutputs(b))
-      .create({ clock: manualClock(1000) });
+    const quantizer = createQuantizer(defineQuantizer(b, { outputs: simpleOutputs(b) }), {
+      clock: manualClock(1000),
+    });
     expect(quantizer.evaluate(50)).toBe('compact'); // committed 'compact'
-    await lifetime.dispose();
+    await quantizer.dispose();
     // After dispose the state/outputs/crossing kernels are closed; evaluate must freeze
     // rather than advance previousState/HLC while the reactive channels stay put — else a
     // disposed-but-referenced quantizer reports a discrete state its own channel never emits.

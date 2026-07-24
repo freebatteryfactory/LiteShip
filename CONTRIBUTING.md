@@ -2,7 +2,7 @@
 
 Thanks for considering a contribution. LiteShip is pre-1.0 and intentionally greenfield (we'd rather break things now than later), so most of the guidance here is about keeping the gauntlet honest, not gatekeeping.
 
-Ontology for prose and docs: [GLOSSARY.md](./GLOSSARY.md). The git remote and directory name may still read `czap`; `@czap/*` on npm is the package line.
+Ontology for prose and docs: [GLOSSARY.md](./GLOSSARY.md). The git remote and directory name may still read `liteship`; `@liteship/*` on npm is the package line.
 
 ## How this project is governed
 
@@ -23,15 +23,15 @@ git clone https://github.com/freebatteryfactory/LiteShip.git
 cd LiteShip
 pnpm install
 
-# First-run shake-down: rig-check + build + test
-pnpm shakedown
+# First-run aggregate: environment check + build + test
+pnpm verify
 
 # Or step through it manually (one command per line — see Shell paste traps below):
 pnpm run doctor
 pnpm run build
 pnpm test
 
-# Full release-grade gate (~22min) — rig-check is enforced at entry
+# Full release-grade gate (~22min) — the environment check is enforced at entry
 pnpm run gauntlet:full
 ```
 
@@ -49,7 +49,7 @@ CI (`truth-linux` in `.github/workflows/ci.yml`) installs **ffmpeg with
 libx264** before `gauntlet:full`. Scene-render integration tests and the smoke
 render use the same encoder path as production — a bare `ffmpeg` binary without
 `libx264` (common on Fedora `ffmpeg-free`) will skip those tests via
-`czap doctor` / the shared render probe, not hang for minutes.
+`liteship doctor` / the shared render probe, not hang for minutes.
 
 | Dependency | Install |
 | --- | --- |
@@ -58,7 +58,7 @@ render use the same encoder path as production — a bare `ffmpeg` binary withou
 | Playwright browsers (e2e / coverage:browser) | `pnpm exec playwright install chromium chromium-headless-shell` |
 | Everything at once | Reopen in Dev Container (`.devcontainer/`) — post-create installs the full CI stack |
 
-Preflight: `pnpm run doctor` (or `czap doctor`) reports `ffmpeg (libx264)` and
+Preflight: `pnpm run doctor` (or `liteship doctor`) reports `ffmpeg (libx264)` and
 `Playwright` as `ok` or `warn` with the exact fix command, so missing system
 deps surface before `pnpm run gauntlet:full` (which runs `test:e2e`) rather than
 mid-run.
@@ -68,35 +68,36 @@ mid-run.
 Discoverable verbs at the workspace root:
 
 ```bash
-pnpm shakedown        # rig-check + build + test (first-run aggregate)
-pnpm run doctor       # preflight rig-check, emits JSON receipt + TTY summary
-pnpm dev              # vitest in watch mode (the inner loop)
-pnpm run clean        # dry-dock: wipe dist/, coverage/, reports/, .tsbuildinfo
+pnpm verify        # environment check + build + test (first-run aggregate)
+pnpm run doctor       # preflight environment check, emits JSON receipt + TTY summary
+pnpm dev              # launch the showcase example dev server
+pnpm test:watch       # vitest in watch mode (the inner loop)
+pnpm run clean        # wipe dist/, coverage/, reports/, .tsbuildinfo
 pnpm scripts          # categorized index of every dev script
-pnpm run glossary     # look up a LiteShip / CZAP term (e.g. `pnpm run glossary boundary`)
+pnpm run glossary     # look up a LiteShip term (e.g. `pnpm run glossary boundary`)
 pnpm fix              # prettier --write + eslint --fix
 ```
 
 The CLI mirrors the same surface once built:
 
 ```bash
-czap help             # usage
-czap doctor           # preflight rig-check
-czap version          # czap + Node + pnpm versions
-czap glossary cast    # ontology lookup
-czap describe         # AI-facing schema (also: --format=mcp)
+liteship help             # usage
+liteship doctor           # preflight environment check
+liteship version          # liteship + Node + pnpm versions
+liteship glossary cast    # ontology lookup
+liteship describe         # AI-facing schema (also: --format=mcp)
 ```
 
 `pnpm install` runs a postinstall banner with the same hints. Suppress it
-in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
+in CI with `CI=1` (already standard) or `LITESHIP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
 **0.9 tier / PR accept bar:** `pnpm run gauntlet:full -- --profile local-safe` runs build → capsule:compile → typecheck → lint → lint:structural → invariants → check:gates → audit:floor → full unit test → standards:gate → capability:gate (see `LOCAL_SAFE_LABELS` in `packages/cli/src/gauntlet-phases.ts`). Run `pnpm run docs:check` separately when API docs inputs change — TypeDoc is memory-hungry (SKILL.md).
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs the full 39-phase sequence (the canonical ordered list + count is `packages/cli/src/gauntlet-phases.ts`, pinned by `tests/unit/devops/gauntlet-profile.test.ts` — never hand-counted):
+`pnpm run gauntlet:full` is the contract: the full release-grade gate. It runs the complete ordered phase sequence (the canonical ordered list + count is `packages/cli/src/gauntlet-phases.ts`, pinned by `tests/unit/devops/gauntlet-profile.test.ts` — never hand-counted):
 
-- rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
+- the environment preflight (`doctor --preflight --ci` — env probes hard-fail before build)
 - build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor
 - the full vitest test surface (unit + component + property + integration)
 - Vite, Astro, Tailwind integration smokes
@@ -105,7 +106,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 - benchmarks + bench gate + rolling-median trend gate + bench reality
 - per-package publish smoke
 - node + browser coverage + cross-runtime merge with statementMap dedup
-- runtime-seams report, codebase audit, satellite scan
+- runtime-seams report, codebase audit, adaptive scan
 - feedback integrity verification (artifact fingerprint chain)
 - runtime gate, plumb gate (every published package classified runtime/tooling/deferred in `scripts/plumb-registry.ts` + no new unwired capsule — a built-not-plumbed primitive fails here), capsule verify
 - `flex:verify` 10/10 acceptance across 7 rating dimensions
@@ -120,8 +121,8 @@ when history exists.
 The gauntlet exits cleanly with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed. Not a stylistic gate; a correctness gate. PRs need to be green here before merge.
 
 **Slow machine?** Timing-sensitive phases (test timeouts, spawn deadlines)
-flake when sibling workloads load the box. Set `CZAP_TEST_TIMEOUT_SCALE=<n>`
-(e.g. `CZAP_TEST_TIMEOUT_SCALE=3 pnpm run gauntlet:full`) to multiply every
+flake when sibling workloads load the box. Set `LITESHIP_TEST_TIMEOUT_SCALE=<n>`
+(e.g. `LITESHIP_TEST_TIMEOUT_SCALE=3 pnpm run gauntlet:full`) to multiply every
 vitest budget without changing gate semantics — CI never sets it, so the
 cloud `truth-linux` job stays the arbiter. Explicit per-test timeouts must go
 through `scaledTimeout` (vitest.shared.ts); a raw literal silently *lowers*
@@ -134,7 +135,7 @@ For Windows users: PowerShell's `>` redirect writes UTF-16 LE; use
 `Out-File -Encoding utf8` or run `chcp 65001` first to keep gauntlet logs
 readable.
 
-**Rust kernels** (`crates/czap-compute`): the WASM/TS parity suite
+**Rust kernels** (`crates/liteship-compute`): the WASM/TS parity suite
 (`tests/unit/core/wasm-parity.test.ts`) self-skips when the wasm32 artifact
 is absent, so a Rust toolchain is NOT required locally. To run it:
 `rustup target add wasm32-unknown-unknown`, then
@@ -161,12 +162,18 @@ parity gate (`cargo test` + property suite against the fresh artifact).
   per Node ESM rules)
 - No default exports; named exports only
 - Branded types via a local nominal-brand helper — `brand<T, B extends symbol>()` over unique symbols, with validating smart constructors (see `packages/core/src/brands.ts`)
-- Namespace-object pattern for module facades:
+- Direct generic types for module facades (ADR-0046, superseding the retired `.Shape` namespace convention): a public instance type shares its value's name directly through declaration merging, so consumers annotate against the bare generic — `Cell<number>`, `Boundary<Input, State>`, `Lifetime` — never `Cell.Shape<number>`. Construction goes through the verb grammar (`defineBoundary`, `createCell`, …), not a namespace factory like `Boundary.make`. `sgrules/no-shape-namespace-type.yml` fails any `.Shape` type reference under `packages/*/src` or the spine.
 
   ```ts
-  export const Boundary = { make: _make, evaluate: _evaluate };
-  export declare namespace Boundary {
-    export type Shape = BoundaryShape;
+  // The instance type and its value share one name (declaration merging).
+  export interface Boundary<Input, State> {
+    /* … */
+  }
+  export function defineBoundary<Input, State>(spec: BoundarySpec<Input, State>): Boundary<Input, State>;
+
+  // A consumer annotates against the bare generic — no `.Shape` indirection.
+  function statesOf<S extends string>(b: Boundary<'viewport.width', S>): readonly S[] {
+    /* … */
   }
   ```
 
@@ -176,7 +183,7 @@ parity gate (`cargo test` + property suite against the fresh artifact).
 - vitest is the runner everywhere except `tests/e2e/` (Playwright) and
   `tests/browser/` (vitest browser-mode via Playwright)
 - Property-based tests via fast-check
-- Imports from sibling packages use `@czap/*` aliases (resolved via
+- Imports from sibling packages use `@liteship/*` aliases (resolved via
   `vitest.shared.ts` for tests, `Config.toTestAliases` for the runner)
 
 ## Testing lanes
@@ -210,11 +217,11 @@ When you fix a bug, the regression test goes in `tests/regression/`. Name the fi
 
 ```ts
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@czap/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
 describe('Boundary.evaluate threshold edge', () => {
   test('exact threshold value resolves to the upper state', () => {
-    const b = Boundary.make({
+    const b = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'mobile'], [768, 'tablet']] as const,
     });
@@ -240,7 +247,7 @@ test('evaluate never returns a state name outside the boundary definition', () =
       (rawThresholds, value) => {
         const sorted = rawThresholds.sort((a, b) => a - b);
         const pairs = sorted.map((t, i) => [t, `s${i}`] as const);
-        const b = Boundary.make({ input: 'x', at: pairs as never });
+        const b = defineBoundary({ input: 'x', at: pairs as never });
         const validStates = pairs.map(([, name]) => name);
         return validStates.includes(Boundary.evaluate(b, value) as (typeof validStates)[number]);
       },
@@ -259,10 +266,10 @@ fast-check runs 100 trials by default and shrinks failing inputs automatically. 
 
 ```ts
 import { describe, test, expect } from 'vitest';
-import { Boundary } from '@czap/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
 describe('regression: Boundary.evaluate exact-threshold resolution', () => {
-  const b = Boundary.make({
+  const b = defineBoundary({
     input: 'viewport.width',
     at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']] as const,
   });
@@ -285,7 +292,7 @@ The test now lives permanently in `tests/regression/` and runs on every `pnpm te
 
 ### Gauntlet integration
 
-Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after rig-check, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [STATUS.md](./STATUS.md) for the complete phase list.
+Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after the environment preflight, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [STATUS.md](./STATUS.md) for the complete phase list.
 
 ## Architecture changes
 

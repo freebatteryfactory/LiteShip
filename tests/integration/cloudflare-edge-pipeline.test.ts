@@ -4,7 +4,7 @@
  *
  * Drives the full derivation path the docs teach: a project's boundary
  * module + @quantize CSS are collected into the boundary manifest
- * (`collectBoundaryManifest`, the source of `virtual:czap/boundaries`),
+ * (`collectBoundaryManifest`, the source of `virtual:liteship/boundaries`),
  * the manifest configures `cloudflareMiddleware`, and a request resolves
  * precompiled outputs keyed by the boundary's minted content address --
  * no hand-typed ids, no compiler in the worker path.
@@ -14,15 +14,15 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary } from '@czap/core';
-import { collectBoundaryManifest } from '@czap/vite';
-import { cloudflareMiddleware } from '@czap/cloudflare';
-import { setWorkersEnvForTesting, resetWorkersEnvForTesting } from '@czap/cloudflare/testing';
+import { defineBoundary } from '@liteship/core';
+import { collectBoundaryManifest } from '@liteship/vite';
+import { cloudflareMiddleware } from '@liteship/cloudflare';
+import { setWorkersEnvForTesting, resetWorkersEnvForTesting } from '@liteship/cloudflare/testing';
 
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-cf-pipeline-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-cf-pipeline-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 /** Same definition the fixture module exports -- the identity oracle. */
-const referenceBoundary = Boundary.make({
+const referenceBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
@@ -87,11 +87,11 @@ describe('Cloudflare edge host pipeline integration', () => {
 
     const cacheStore = new Map<string, string>();
     const middleware = cloudflareMiddleware({
-      binding: 'CZAP_BOUNDARY_CACHE',
+      binding: 'LITESHIP_BOUNDARY_CACHE',
       manifest,
       boundary: 'viewport',
       env: () => ({
-        CZAP_BOUNDARY_CACHE: {
+        LITESHIP_BOUNDARY_CACHE: {
           async get(key: string) {
             return cacheStore.get(key) ?? null;
           },
@@ -114,8 +114,8 @@ describe('Cloudflare edge host pipeline integration', () => {
     };
 
     const response = await middleware(context, async () => {
-      const czap = context.locals.czap as Record<string, unknown>;
-      return new Response(JSON.stringify({ edge: (czap as { edge?: unknown }).edge }), { status: 200 });
+      const liteship = context.locals.liteship as Record<string, unknown>;
+      return new Response(JSON.stringify({ edge: (liteship as { edge?: unknown }).edge }), { status: 200 });
     });
 
     const body = JSON.parse(await response.text()) as {
@@ -132,7 +132,7 @@ describe('Cloudflare edge host pipeline integration', () => {
   test('compile escape hatch still wires KV through the env binding with a real minted id', async () => {
     const cacheStore = new Map<string, string>();
     setWorkersEnvForTesting({
-      CZAP_BOUNDARY_CACHE: {
+      LITESHIP_BOUNDARY_CACHE: {
         async get(key: string) {
           return cacheStore.get(key) ?? null;
         },
@@ -143,7 +143,7 @@ describe('Cloudflare edge host pipeline integration', () => {
     });
 
     const middleware = cloudflareMiddleware({
-      binding: 'CZAP_BOUNDARY_CACHE',
+      binding: 'LITESHIP_BOUNDARY_CACHE',
       boundaryId: referenceBoundary.id,
       compile: ({ tier }) => ({
         css: `[data-tier="${tier.designTier}"]{display:block;}`,
@@ -151,7 +151,7 @@ describe('Cloudflare edge host pipeline integration', () => {
         containerQueries: '',
       }),
       env: () => ({
-        CZAP_BOUNDARY_CACHE: {
+        LITESHIP_BOUNDARY_CACHE: {
           async get(key: string) {
             return cacheStore.get(key) ?? null;
           },
@@ -174,8 +174,8 @@ describe('Cloudflare edge host pipeline integration', () => {
     };
 
     const response = await middleware(context, async () => {
-      const czap = context.locals.czap as Record<string, unknown>;
-      return new Response(JSON.stringify({ edge: (czap as { edge?: unknown }).edge }), { status: 200 });
+      const liteship = context.locals.liteship as Record<string, unknown>;
+      return new Response(JSON.stringify({ edge: (liteship as { edge?: unknown }).edge }), { status: 200 });
     });
 
     const body = JSON.parse(await response.text()) as {

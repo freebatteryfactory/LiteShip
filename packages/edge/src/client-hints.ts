@@ -2,14 +2,14 @@
  * Client Hints header parsing for edge-side device capability detection.
  *
  * Converts HTTP Client Hints headers into the same `ExtendedDeviceCapabilities`
- * structure that `@czap/detect` uses, enabling reuse of the pure tier mapping
+ * structure that `@liteship/detect` uses, enabling reuse of the pure tier mapping
  * functions at the edge without browser APIs.
  *
  * @module
  */
 
-import type { ExtendedDeviceCapabilities, GPUTier } from '@czap/detect';
-import type { ResponsiveMediaCapabilities } from '@czap/core';
+import type { ExtendedDeviceCapabilities, GPUTier } from '@liteship/detect';
+import type { ResponsiveMediaCapabilities } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,7 +160,7 @@ const ALL_HINTS = [
 // here because SSR boundary resolution (`resolveInitialState`) reads it to pick the
 // initial state — with it omitted, a cold first paint fell back to a User-Agent estimate
 // that could disagree with the container-query CSS. Every entry MUST also be in
-// `ALL_HINTS` (the `Accept-CH` set), and `@czap/astro`'s `CLIENT_HINTS_HEADERS` derives
+// `ALL_HINTS` (the `Accept-CH` set), and `@liteship/astro`'s `CLIENT_HINTS_HEADERS` derives
 // from here (one source, no hand-mirrored list) — both pinned by
 // tests/unit/astro/critical-ch-drift.test.ts.
 const CRITICAL_HINTS = [
@@ -183,7 +183,7 @@ const CRITICAL_HINTS = [
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * const caps = ClientHints.parseClientHints({
  *   'sec-ch-device-memory': '8',
@@ -271,7 +271,7 @@ function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDevice
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * const response = new Response('OK', {
  *   headers: { 'Accept-CH': ClientHints.acceptCHHeader() },
@@ -290,7 +290,7 @@ function acceptCHHeader(): string {
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * const response = new Response('OK', {
  *   headers: {
@@ -349,14 +349,14 @@ function responsiveMediaVaryHeader(): string {
  * Client Hints namespace.
  *
  * Parses HTTP Client Hints headers into the same
- * {@link ExtendedDeviceCapabilities} structure used by `@czap/detect`,
+ * {@link ExtendedDeviceCapabilities} structure used by `@liteship/detect`,
  * enabling server-side / edge-side tier mapping without browser APIs.
  * Also generates the `Accept-CH` and `Critical-CH` response headers needed
  * to request hints from the browser.
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * // In an edge handler:
  * const caps = ClientHints.parseClientHints(request.headers);

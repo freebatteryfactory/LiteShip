@@ -32,7 +32,7 @@ const coverage: ReadonlyArray<{
 const gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }> = [
     {
       "site": "browser",
-      "reason": "no real-browser render lane exercises the adapter Provider + useCzapState hook — only jsdom (tests/unit/remotion/remotion.test.ts) covers the React-host surface, and jsdom is a simulated host. A real-browser lane (vitest browser-mode under tests/browser/ or a Playwright e2e rendering the Remotion <Provider>) is missing."
+      "reason": "no real-browser render lane exercises the adapter Provider + useLiteshipState hook — only jsdom (tests/unit/remotion/remotion.test.ts) covers the React-host surface, and jsdom is a simulated host. A real-browser lane (vitest browser-mode under tests/browser/ or a Playwright e2e rendering the Remotion <Provider>) is missing."
     }
   ];
 

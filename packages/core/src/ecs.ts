@@ -7,8 +7,9 @@
  * @module
  */
 
-import { Lifetime } from './lifetime.js';
-import type { SchemaPort } from './schema-port.js';
+import { Lifetime, attachLifetime } from './reactive/lifetime.js';
+import type { AsyncOwnedResource } from './reactive/lifetime.js';
+import type { SchemaPort } from './schema/schema-port.js';
 
 /** Nominal-typed identifier for an ECS entity — a branded string minted via the {@link EntityId} helper. */
 export type EntityId = string & { readonly _brand: 'EntityId' };
@@ -16,9 +17,9 @@ export type EntityId = string & { readonly _brand: 'EntityId' };
 /** Brand an arbitrary string as an `EntityId`. Sanctioned single-site cast. */
 export const EntityId = (value: string): EntityId => value as EntityId;
 
-import { fnv1aBytes } from './fnv.js';
-import { CanonicalCbor } from './cbor.js';
-import { ValidationError } from '@czap/error';
+import { fnv1aBytes } from './evidence/fnv.js';
+import { CanonicalCbor } from './schema/cbor.js';
+import { ValidationError } from '@liteship/error';
 
 interface EntityShape {
   readonly id: EntityId;
@@ -191,19 +192,22 @@ interface WorldShape {
 }
 
 /**
- * The pair returned by {@link World.make}: the live world instance plus the
- * {@link Lifetime} that owns its teardown. The ECS world registers zero
- * finalizers (its state is plain in-memory Maps that GC reclaims), so the
- * Lifetime is a formal disposal handle for consumers (e.g. the scene runtime)
- * that thread world lifecycle through one uniform release — not a carrier of
- * any actual finalizer.
+ * A live ECS world that owns its teardown directly ({@link AsyncOwnedResource}).
+ * The world registers zero finalizers (its state is plain in-memory Maps that GC
+ * reclaims), so `world.dispose()` is a formal, exactly-once release handle for
+ * consumers (e.g. the scene runtime) that thread world lifecycle uniformly — not
+ * a carrier of any actual finalizer. The owning {@link Lifetime} stays reachable
+ * as `world.lifetime` for advanced composition.
  */
-interface WorldHandle {
-  readonly world: WorldShape;
-  readonly lifetime: Lifetime.Shape;
-}
+type OwnedWorld = WorldShape & AsyncOwnedResource;
 
-function _makeWorld(): WorldHandle {
+/**
+ * Build a fresh ECS {@link World} — the entity/system container that ticks systems
+ * over entities. The world IS its own disposable ({@link AsyncOwnedResource}); the
+ * owning {@link Lifetime} stays reachable as `world.lifetime` for advanced
+ * composition (verb grammar, ADR-0046 — `create` allocates a runtime resource).
+ */
+export function createWorld(): OwnedWorld {
   const entities = new Map<EntityId, Map<string, unknown>>();
   const systems: AnySystemShape[] = [];
   const denseStores = new Map<string, DenseStoreShape>();
@@ -318,7 +322,7 @@ function _makeWorld(): WorldHandle {
     },
   };
 
-  return { world, lifetime: Lifetime.make() };
+  return attachLifetime(world, Lifetime.make());
 }
 
 function isDenseSystem(system: AnySystemShape): system is DenseSystemShape {
@@ -345,25 +349,19 @@ export const Part = {
   dense: _makeDensePart,
 } as { dense: (name: string, capacity: number) => DenseStoreShape } & Record<string, never>;
 
-/** World namespace — construct the ECS world that ticks systems over entities. */
-export const World = {
-  /** Build a fresh ECS {@link World.Shape} paired with its owning {@link Lifetime}. */
-  make: _makeWorld,
-};
+/** Public structural type for `Part`. */
+export type Part<T = unknown> = PartShape<T>;
 
 export declare namespace Part {
-  /** Structural shape of a typed component definition (`name` + schema). */
-  export type Shape<T = unknown> = PartShape<T>;
   /** Alias for the dense `Float64Array`-backed store. */
   export type Dense = DenseStoreShape;
 }
 
-export declare namespace World {
-  /** Structural shape of an ECS world: spawn/despawn, components, queries, systems, tick. */
-  export type Shape = WorldShape;
-  /** The `{ world, lifetime }` pair returned by {@link World.make}. */
-  export type Handle = WorldHandle;
-}
+/**
+ * Public structural type for `World` — the ECS world that ticks systems over
+ * entities. Construct one with the standalone {@link createWorld}.
+ */
+export type World = WorldShape;
 
 export type {
   EntityShape as Entity,

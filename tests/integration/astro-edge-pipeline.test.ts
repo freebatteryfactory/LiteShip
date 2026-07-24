@@ -1,20 +1,20 @@
 import { describe, expect, test } from 'vitest';
-import { Boundary } from '@czap/core';
-import { czapMiddleware } from '@czap/astro';
+import { defineBoundary } from '@liteship/core';
+import { liteshipMiddleware } from '@liteship/astro';
 
 describe('Astro edge host pipeline integration', () => {
   test('resolves hints, tier, theme, and cached outputs through the middleware host path', async () => {
     const cacheStore = new Map<string, string>();
     // Real minted address -- the KV keyspace is content-addressed (ADR-0003),
-    // so tests use Boundary.make ids rather than fabricated strings.
-    const boundary = Boundary.make({
+    // so tests use defineBoundary ids rather than fabricated strings.
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
         [768, 'wide'],
       ],
     });
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       edge: {
         theme: ({ tier }) => ({
           prefix: 'brand',
@@ -54,11 +54,11 @@ describe('Astro edge host pipeline integration', () => {
     };
 
     const response = await middleware(context, async () => {
-      const czap = context.locals.czap as Record<string, any>;
+      const liteship = context.locals.liteship as Record<string, any>;
       return new Response(
         JSON.stringify({
-          tiers: czap.tiers,
-          edge: czap.edge,
+          tiers: liteship.tiers,
+          edge: liteship.edge,
         }),
         { status: 200 },
       );

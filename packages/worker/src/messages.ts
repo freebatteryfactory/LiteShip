@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from '@czap/core';
+import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Worker configuration
@@ -382,7 +382,7 @@ export declare namespace Messages {
 }
 
 /**
- * The DOM Worker surface czap's hosts actually drive (postMessage with
+ * The DOM Worker surface liteship's hosts actually drive (postMessage with
  * transfer, terminate, message listening). Named so the dependency is
  * structural rather than ambient: test doubles (tests/helpers/mock-worker.ts)
  * conform to THIS type, and drift between host usage and the double breaks

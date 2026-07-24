@@ -22,7 +22,7 @@ import {
   runStructureAudit,
   runSurfaceAudit,
   type DevopsProfile,
-} from '@czap/audit';
+} from '@liteship/audit';
 import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
 
 const fixtures: string[] = [];
@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-errcontract-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-errcontract-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -99,7 +99,7 @@ describe('surface pass — host/virtual-module errors name the profile field and
       'packages/core/src/index.ts': 'export const coreThing = 1;\n',
     });
     const result = runSurfaceAudit(
-      acmeProfile(root, { surfacePolicy: { astroPackage: '@acme/astro', astroClientDirectives: ['satellite'] } }),
+      acmeProfile(root, { surfacePolicy: { astroPackage: '@acme/astro', astroClientDirectives: ['adaptive'] } }),
     );
     const finding = result.findings.find((f) => f.id === 'surface/astro-package-missing');
     expect(finding).toBeDefined();

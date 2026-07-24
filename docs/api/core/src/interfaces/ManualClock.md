@@ -6,7 +6,7 @@
 
 # Interface: ManualClock
 
-Defined in: [core/src/clock.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L89)
+Defined in: [core/src/clock/clock.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L89)
 
 A [Clock](Clock.md) whose time the caller advances explicitly — deterministic.
 
@@ -20,7 +20,7 @@ A [Clock](Clock.md) whose time the caller advances explicitly — deterministic.
 
 > `readonly` **advance**: (`byMs`) => `void`
 
-Defined in: [core/src/clock.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L91)
+Defined in: [core/src/clock/clock.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L91)
 
 Advance the clock by `byMs` milliseconds.
 
@@ -40,7 +40,7 @@ Advance the clock by `byMs` milliseconds.
 
 > `readonly` **now**: () => `number`
 
-Defined in: [core/src/clock.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L43)
+Defined in: [core/src/clock/clock.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L43)
 
 Current time in milliseconds.
 
@@ -58,7 +58,7 @@ Current time in milliseconds.
 
 > `readonly` **set**: (`ms`) => `void`
 
-Defined in: [core/src/clock.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L93)
+Defined in: [core/src/clock/clock.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L93)
 
 Set the clock to an absolute `ms`.
 

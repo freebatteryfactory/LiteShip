@@ -3,7 +3,7 @@
  * ledger, DO-178B-style) — parse `traceability/*.yaml`, scan the test corpus for
  * `// PROVES:` headers, run the deterministic lifecycle fold, content-address the
  * resolved ledger, and produce the flat {@link TraceabilityFacts} the lean
- * `@czap/gauntlet` `traceabilityBridgeGate` folds.
+ * `@liteship/gauntlet` `traceabilityBridgeGate` folds.
  *
  * This is the SAME host-injection pattern as `repo-ir-gauntlet.ts`'s `--supply-chain`
  * block (the host computes the heavy facts; the lean engine just folds): the YAML
@@ -23,7 +23,7 @@
  * The transition function is a pure fold over (the ledger + the discovered PROVES
  * headers + the waivers + the wall-clock date). The wall-clock date is INJECTED (the
  * TWO-CLOCK LAW: expiry is a CALENDAR comparison, never `systemClock`). The resolved
- * ledger is content-addressed (the ONE `contentAddressOf` kernel from `@czap/core`),
+ * ledger is content-addressed (the ONE `contentAddressOf` kernel from `@liteship/core`),
  * so DRIFT in the resolved trace is detectable. A malformed ledger FAILS LOUD (a
  * tagged error), never silently misparses.
  *
@@ -36,11 +36,11 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { contentAddressOf } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
-import { normalizeRepoPath } from '@czap/audit';
-import { ParseError, InvariantViolationError } from '@czap/error';
-import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@czap/gauntlet';
+import { contentAddressOf } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { normalizeRepoPath } from '@liteship/audit';
+import { ParseError, InvariantViolationError } from '@liteship/error';
+import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@liteship/gauntlet';
 
 /** Repo-relative location of the requirements register. */
 const INVARIANTS_PATH = 'traceability/invariants.yaml';
@@ -354,13 +354,13 @@ interface ProofClaim {
   readonly invariantIds: readonly string[];
 }
 
-/** Recursively collect `.test.ts` files under `root` (repo-relative). Deterministic (sorted). */
+/** Recursively collect unit/property and Playwright test files under `root`. Deterministic (sorted). */
 function collectTestFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
   if (!existsSync(abs)) return [];
-  // The shared `@czap/core/fs-walk` walker (skips `node_modules`/`dist`, keeps
-  // `.test.ts`); the explicit final sort preserves the original deterministic order.
-  return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.test.ts'] })
+  // The shared `@liteship/core/fs-walk` walker (skips `node_modules`/`dist`, keeps
+  // `.test.ts` / `.e2e.ts`); the explicit final sort preserves deterministic order.
+  return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.test.ts', '.e2e.ts'] })
     .map((full) => normalizeRepoPath(relative(repoRoot, full)))
     .sort();
 }
@@ -568,10 +568,226 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
 
   const divergences = detectDivergences(declared, traces, claims, corpusFiles, provesByFile);
 
-  // Content-address the RESOLVED ledger (the one @czap/core kernel) — the drift
+  // Content-address the RESOLVED ledger (the one @liteship/core kernel) — the drift
   // keystone. The address omits `now` so it stays stable across a same-day re-run;
   // it folds the invariants' resolved states + the divergences (the verdict surface).
   const ledgerAddress = contentAddressOf({ invariants, divergences });
 
   return { invariants, divergences, ledgerAddress };
+}
+
+// ═══════════════════════════ THE OBLIGATIONS LEDGER ═══════════════════════════
+//
+// The deferred-obligation taxonomy (P17, Program C). The SAME bidirectional-trace
+// shape as the invariant ledger above, but over `traceability/obligations.yaml` and
+// the `// OBLIGATION: OBL-*` markers in `packages/*/src`: a genuine, time-boxed
+// deferral is REGISTERED in the ledger and referenced in source by a marker; the
+// reconciler REQUIRES every marker to name a registered obligation (the head-probe
+// LAW again). A marker naming an UNREGISTERED obligation is a divergence. A registered
+// obligation with NO marker is FINE — it carries a `pointer` to its area (a devops
+// phase, a test-note over the skip-allowlist) instead of an in-source marker.
+//
+// This is ADDITIVE to the invariant trace above — it does NOT touch
+// {@link buildTraceabilityFacts} or the `traceabilityBridgeGate` bridge. The lean
+// enforcement teeth for the intent-debt side (a bare `TODO`/`FIXME`/`HACK` that was
+// never registered as an obligation) live in the `gauntlet/no-unregistered-todo` gate.
+
+/** Repo-relative location of the obligations ledger (the deferred-obligation taxonomy). */
+const OBLIGATIONS_PATH = 'traceability/obligations.yaml';
+
+/** The source roots the marker scan walks for `// OBLIGATION:` markers (repo-relative). */
+const OBLIGATION_SRC_ROOTS: readonly string[] = ['packages'];
+
+/** The published-source shape a marker may live in — `packages/<pkg>/src/**` `.ts`. */
+const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
+
+/** The closed taxonomy bucket every obligation declares. */
+const OBLIGATION_CLASSES: ReadonlySet<string> = new Set(['deferred-feature', 'debt', 'test-note']);
+
+/**
+ * The `// OBLIGATION:` marker regex — captures the comma-separated id list. ANCHORED to
+ * the START of the trimmed line (`^`), exactly like {@link PROVES_HEADER}: the line must
+ * BE a comment marker, never prose or a string literal that merely CONTAINS the token (a
+ * jsdoc line begins with `*`, a `const x = '// OBLIGATION: …'` string begins with `const`
+ * — neither trims to `^//`, so neither registers a phantom). Each captured token is
+ * additionally validated against {@link OBL_ID} so only real OBL-* ids count.
+ */
+const OBLIGATION_MARKER = /^\/\/\s*OBLIGATION:\s*(.+)/;
+
+/**
+ * The obligation-id shape: `OBL-` then uppercase letters/digits/hyphens. A captured token
+ * that does not match (a `OBL-*` doc wildcard, a prose word) is a stray fragment, NOT a
+ * real obligation reference — dropped, never minted as a divergence.
+ */
+const OBL_ID = /^OBL-[A-Z0-9-]+$/;
+
+/** One declared obligation as read from obligations.yaml. */
+export interface DeclaredObligation {
+  readonly id: string;
+  /** The taxonomy bucket: `deferred-feature` | `debt` | `test-note`. */
+  readonly class: string;
+  readonly owner: string;
+  /** ISO `yyyy-mm-dd` re-confirmation date (a clock on the deferral). */
+  readonly reviewBy: string;
+  /** The file OR area the obligation lives at. */
+  readonly pointer: string;
+  readonly note: string;
+}
+
+/** One discovered `// OBLIGATION:` marker from a source file. */
+export interface ObligationMarker {
+  readonly file: string;
+  /** The obligation ids the marker references (comma-separated in source), sorted + de-duped. */
+  readonly obligationIds: readonly string[];
+}
+
+/**
+ * A ledger⇔marker DIVERGENCE — a marker in source references an obligation the ledger
+ * never declared (`unregistered-obligation`). The reverse (a registered obligation with
+ * no marker) is NOT a divergence: it is a valid pointer-only obligation.
+ */
+export interface ObligationDivergence {
+  readonly kind: 'unregistered-obligation';
+  /** The obligation id the divergence concerns. */
+  readonly obligationId: string;
+  /** Human-readable WHY. */
+  readonly detail: string;
+  /** The source file the unregistered marker lives in. */
+  readonly subject: string;
+}
+
+/**
+ * The reconciled obligations ledger — every declared obligation, every discovered marker,
+ * and every ledger⇔marker divergence, with the content address of the resolved ledger.
+ */
+export interface ObligationLedger {
+  readonly obligations: readonly DeclaredObligation[];
+  readonly markers: readonly ObligationMarker[];
+  readonly divergences: readonly ObligationDivergence[];
+  readonly ledgerAddress: string;
+}
+
+/** Parse obligations.yaml into the declared taxonomy. Total + fail-loud. */
+function parseObligations(text: string): readonly DeclaredObligation[] {
+  const body = sectionUnder(significantLines(text), 'obligations', OBLIGATIONS_PATH);
+  const items = parseSequenceOfMappings(body, OBLIGATIONS_PATH);
+  const seen = new Set<string>();
+  const out: DeclaredObligation[] = [];
+  for (const item of items) {
+    const id = requireField(item, 'id', OBLIGATIONS_PATH);
+    if (!OBL_ID.test(id)) {
+      throw InvariantViolationError(
+        'obligations',
+        `obligation "${id}" in ${OBLIGATIONS_PATH} is not a valid OBL-<AREA>-<slug> id (uppercase letters/digits/hyphens after "OBL-")`,
+      );
+    }
+    if (seen.has(id)) {
+      throw InvariantViolationError(
+        'obligations',
+        `obligation ${id} is declared more than once in ${OBLIGATIONS_PATH} — a duplicate id breaks the ledger's identity`,
+      );
+    }
+    seen.add(id);
+    const cls = requireField(item, 'class', OBLIGATIONS_PATH);
+    if (!OBLIGATION_CLASSES.has(cls)) {
+      throw InvariantViolationError(
+        'obligations',
+        `obligation ${id} has class "${cls}", not one of the closed taxonomy [${[...OBLIGATION_CLASSES].join(', ')}]`,
+      );
+    }
+    out.push({
+      id,
+      class: cls,
+      owner: requireField(item, 'owner', OBLIGATIONS_PATH),
+      reviewBy: requireField(item, 'review-by', OBLIGATIONS_PATH),
+      pointer: requireField(item, 'pointer', OBLIGATIONS_PATH),
+      note: requireField(item, 'note', OBLIGATIONS_PATH),
+    });
+  }
+  return out;
+}
+
+/** Recursively collect the `packages/<pkg>/src/**` `.ts` files (repo-relative, sorted, deterministic). */
+function collectSourceFiles(repoRoot: string, root: string): readonly string[] {
+  const abs = join(repoRoot, root);
+  if (!existsSync(abs)) return [];
+  return walkFiles(abs, { skipDirs: ['node_modules', 'dist'], suffixes: ['.ts'] })
+    .map((full) => normalizeRepoPath(relative(repoRoot, full)))
+    .filter((rel) => PACKAGE_SRC.test(rel))
+    .sort();
+}
+
+/**
+ * Scan `packages/&#42;/src` for `// OBLIGATION:` markers. Mirrors {@link scanProofClaims}: a
+ * file may carry one-or-more markers naming one-or-more obligation ids (comma-separated).
+ * Deterministic — files sorted, ids trimmed + de-duped per file. The anchor (`^//` on the
+ * TRIMMED line) fires on a genuine comment marker at any indent, never on a mid-line token.
+ */
+function scanObligationMarkers(repoRoot: string): readonly ObligationMarker[] {
+  const markers: ObligationMarker[] = [];
+  for (const root of OBLIGATION_SRC_ROOTS) {
+    for (const file of collectSourceFiles(repoRoot, root)) {
+      const text = readFileSync(join(repoRoot, file), 'utf8');
+      const ids = new Set<string>();
+      for (const line of text.split(/\r?\n/)) {
+        const m = OBLIGATION_MARKER.exec(line.trim());
+        if (m === null) continue;
+        for (const part of (m[1] ?? '').split(',')) {
+          const id = part.trim();
+          if (OBL_ID.test(id)) ids.add(id);
+        }
+      }
+      if (ids.size > 0) markers.push({ file, obligationIds: [...ids].sort() });
+    }
+  }
+  return markers.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
+}
+
+/**
+ * Detect the ledger⇔marker DIVERGENCES: a marker in source referencing an obligation the
+ * ledger never declared (`unregistered-obligation`). The reverse — a registered obligation
+ * carried only by a pointer, with no marker — is intentionally NOT a divergence.
+ */
+function detectObligationDivergences(
+  declared: readonly DeclaredObligation[],
+  markers: readonly ObligationMarker[],
+): readonly ObligationDivergence[] {
+  const declaredIds = new Set(declared.map((d) => d.id));
+  const out: ObligationDivergence[] = [];
+  for (const marker of markers) {
+    for (const id of marker.obligationIds) {
+      if (!declaredIds.has(id)) {
+        out.push({
+          kind: 'unregistered-obligation',
+          obligationId: id,
+          detail: `the source file ${marker.file} carries \`// OBLIGATION: ${id}\` but ${id} is not declared in ${OBLIGATIONS_PATH} — every in-source obligation marker must name a registered obligation.`,
+          subject: marker.file,
+        });
+      }
+    }
+  }
+  return out.sort((a, b) => a.obligationId.localeCompare(b.obligationId) || a.subject.localeCompare(b.subject));
+}
+
+/**
+ * Build the reconciled {@link ObligationLedger} — parse obligations.yaml, scan
+ * `packages/&#42;/src` for `// OBLIGATION:` markers, reconcile the two halves, and
+ * content-address the resolved ledger. Pure given `repoRoot` (deterministic, sorted,
+ * content-addressed — no clock, unlike the invariant fold: an obligation's `review-by`
+ * is data the ledger CARRIES, not a verdict this reconciler decides). A missing or
+ * malformed ledger FAILS LOUD (a tagged error), never a silent empty parse.
+ */
+export function buildObligationLedger(repoRoot: string): ObligationLedger {
+  const obligationsPath = join(repoRoot, OBLIGATIONS_PATH);
+  if (!existsSync(obligationsPath)) {
+    throw InvariantViolationError(
+      'obligations',
+      `the obligations ledger is missing (${OBLIGATIONS_PATH}) — the deferred-obligation reconciliation cannot resolve without it.`,
+    );
+  }
+  const obligations = parseObligations(readFileSync(obligationsPath, 'utf8'));
+  const markers = scanObligationMarkers(repoRoot);
+  const divergences = detectObligationDivergences(obligations, markers);
+  const ledgerAddress = contentAddressOf({ obligations, markers, divergences });
+  return { obligations, markers, divergences, ledgerAddress };
 }

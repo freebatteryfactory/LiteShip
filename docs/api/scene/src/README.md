@@ -6,8 +6,8 @@
 
 # scene/src
 
-`@czap/scene` — **LiteShip** scene stack: typed timeline authoring over the
-ECS substrate in `@czap/core`.
+`@liteship/scene` — **LiteShip** scene stack: typed timeline authoring over the
+ECS substrate in `@liteship/core`.
 
 ## Namespaces
 

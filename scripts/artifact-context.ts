@@ -1,10 +1,10 @@
 import { randomUUID, createHash } from 'node:crypto';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import fg from 'fast-glob';
-// CUT B5b — slash normalization routes through the one @czap/audit home (aliased).
-import { normalizeRepoPath as normalizePath } from '@czap/audit';
+// CUT B5b — slash normalization routes through the one @liteship/audit home (aliased).
+import { normalizeRepoPath as normalizePath } from '@liteship/audit';
 import { repoRoot, nodeTestInclude } from '../vitest.shared.js';
 import { writeTextFile } from './audit/shared.js';
 import { DIRECTIVE_BENCH_PAIRS, DIRECTIVE_BENCH_TASKS } from './bench/directive-suite.js';

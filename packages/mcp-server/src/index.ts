@@ -1,4 +1,4 @@
-/** `@czap/mcp-server` — MCP bridge for **LiteShip**; forwards tools to the `czap` CLI + capsule factory. */
+/** `@liteship/mcp-server` — MCP bridge for **LiteShip**; forwards tools to the `liteship` CLI + capsule factory. */
 
 export { start } from './start.js';
 export type { StartOpts } from './start.js';
@@ -39,7 +39,7 @@ export {
   fileToUri,
   makeFrameReader,
   encodeFrame,
-  CZAP_CHECK_METHOD,
+  LITESHIP_CHECK_METHOD,
   LSP_SERVER_CAPABILITIES,
   DiagnosticSeverity,
   CodeActionKind,

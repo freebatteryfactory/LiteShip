@@ -1,6 +1,6 @@
 /**
  * The HOST-INJECTED LiteShip TAINT REGISTRY — the LiteShip-LOCAL source / sink /
- * sanitizer classification the CLI injects into `@czap/audit`'s GENERIC taint
+ * sanitizer classification the CLI injects into `@liteship/audit`'s GENERIC taint
  * oracle (the ADR-0012 / D7b boundary).
  *
  * The audit taint oracle (`buildRepoIRTaint`) traces dataflow but references NO
@@ -57,7 +57,7 @@
  *
  * @module
  */
-import type { TaintRegistry } from '@czap/audit';
+import type { TaintRegistry } from '@liteship/audit';
 
 /**
  * Callee NAMES whose RETURN value is an untrusted SOURCE in LiteShip. Matched
@@ -170,7 +170,7 @@ const LITESHIP_TAINT_NOTES: Readonly<Record<string, string>> = {
 
 /**
  * The LiteShip taint registry — the host-injected source/sink/sanitizer
- * classification handed to `@czap/audit`'s `buildRepoIRTaint`. Frozen sets for
+ * classification handed to `@liteship/audit`'s `buildRepoIRTaint`. Frozen sets for
  * O(1) classification + immutability (the registry is DATA, never mutated).
  */
 export const LITESHIP_TAINT_REGISTRY: TaintRegistry = {

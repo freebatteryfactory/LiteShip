@@ -29,8 +29,8 @@
  * @module
  */
 
-import { UnsupportedError } from '@czap/error';
-import type { CapsuleDef } from '../assembly.js';
+import { UnsupportedError } from '@liteship/error';
+import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';

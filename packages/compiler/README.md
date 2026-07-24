@@ -1,26 +1,26 @@
-# @czap/compiler
+# @liteship/compiler
 
 Compiles boundary definitions — named states over numeric thresholds — and per-state values into `@container` CSS rules, GLSL/WGSL shader uniforms, ARIA attributes, and AI manifests.
 
-> You usually don't install this directly — it arrives as a dependency of [@czap/vite](https://www.npmjs.com/package/@czap/vite), which compiles your authored CSS at build time. Install `@czap/vite` instead unless you want to call a compile target yourself, e.g. in your own build script.
+> You usually don't install this directly — it arrives as a dependency of [@liteship/vite](https://www.npmjs.com/package/@liteship/vite), which compiles your authored CSS at build time. Install `@liteship/vite` instead unless you want to call a compile target yourself, e.g. in your own build script.
 
 ## Install
 
 ```bash
 # inside a build integration (the usual path):
-pnpm add @czap/vite # brings @czap/compiler with it
+pnpm add @liteship/vite # brings @liteship/compiler with it
 
 # to run the example below directly (pnpm does not hoist transitives):
-pnpm add @czap/compiler @czap/core
+pnpm add @liteship/compiler @liteship/core
 ```
 
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@czap/core';
-import { CSSCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { CSSCompiler } from '@liteship/compiler';
 
-const width = Boundary.make({
+const width = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });
@@ -37,7 +37,7 @@ Prints two `@container` blocks: `(width < 768px)` styling `.card` at 14px, and `
 
 ## Where it sits
 
-This is a layered package of pure functions from definitions to text — no DOM, no file system, nothing thrown. Its only `@czap` dependency is `@czap/core`, the source of the boundary, token, style, and theme definitions it compiles. Live evaluation as values change at runtime lives in `@czap/quantizer`; writing compiled CSS into your bundle is `@czap/vite`'s job. See the
+This is a layered package of pure functions from definitions to text — no DOM, no file system, nothing thrown. Its only `@liteship` dependency is `@liteship/core`, the source of the boundary, token, style, and theme definitions it compiles. Live evaluation as values change at runtime lives in `@liteship/quantizer`; writing compiled CSS into your bundle is `@liteship/vite`'s job. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
@@ -54,4 +54,4 @@ State keys in the second argument are all optional, so a misspelled state name p
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

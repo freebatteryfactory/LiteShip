@@ -6,14 +6,9 @@
 
 # Interface: EvaluateResult\<S\>
 
-Defined in: [core/src/type-utils.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L32)
+Defined in: [core/src/authoring/types.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/types.ts#L14)
 
-Result of evaluating a single numeric value against a boundary (the rich face
-of `Boundary.evaluateResult`).
-
-`crossed` is true only when `previousState` was supplied and differs from the
-resolved state; consumers use it to emit transition events and route side
-effects. `index` is the position of `state` within the boundary's states tuple.
+Rich result of evaluating one numeric value against a boundary.
 
 ## Type Parameters
 
@@ -27,7 +22,7 @@ effects. `index` is the position of `state` within the boundary's states tuple.
 
 > `readonly` **crossed**: `boolean`
 
-Defined in: [core/src/type-utils.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L40)
+Defined in: [core/src/authoring/types.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/types.ts#L22)
 
 Whether evaluation produced a change from `previousState`.
 
@@ -37,7 +32,7 @@ Whether evaluation produced a change from `previousState`.
 
 > `readonly` **index**: `number`
 
-Defined in: [core/src/type-utils.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L36)
+Defined in: [core/src/authoring/types.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/types.ts#L18)
 
 Index of `state` within the boundary's states tuple.
 
@@ -47,7 +42,7 @@ Index of `state` within the boundary's states tuple.
 
 > `readonly` **state**: `S`
 
-Defined in: [core/src/type-utils.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L34)
+Defined in: [core/src/authoring/types.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/types.ts#L16)
 
 The resolved state literal.
 
@@ -57,6 +52,6 @@ The resolved state literal.
 
 > `readonly` **value**: `number`
 
-Defined in: [core/src/type-utils.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L38)
+Defined in: [core/src/authoring/types.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/types.ts#L20)
 
 The input value that was evaluated.

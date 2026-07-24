@@ -24,12 +24,19 @@ import {
 } from '../../../scripts/lib/doc-registry.js';
 import { renderBenchBlock } from '../../../scripts/lib/bench-snapshot.js';
 import { renderWireContractDoc } from '../../../packages/web/src/wire/render-contract-doc.js';
+import {
+  renderCheckProfiles,
+  renderCliCommandCatalog,
+  renderMcpToolCatalog,
+} from '../../../scripts/lib/command-docs.js';
 
 // Normalize CRLF so a Windows checkout (autocrlf) doesn't fail the block match
 // against the `\n`-joined render output.
 const README = readFileSync(resolve(REPO_ROOT, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
 const ARCHITECTURE = readFileSync(resolve(REPO_ROOT, 'ARCHITECTURE.md'), 'utf8').replace(/\r\n/g, '\n');
 const WEB_README = readFileSync(resolve(REPO_ROOT, 'packages/web/README.md'), 'utf8').replace(/\r\n/g, '\n');
+const CLI_README = readFileSync(resolve(REPO_ROOT, 'packages/cli/README.md'), 'utf8').replace(/\r\n/g, '\n');
+const MCP_README = readFileSync(resolve(REPO_ROOT, 'packages/mcp-server/README.md'), 'utf8').replace(/\r\n/g, '\n');
 
 /** Extract the inner content of a `<!-- BEGIN NAME ... --> ... <!-- END NAME -->` block. */
 function blockInner(name: string, source: string = README): string {
@@ -51,6 +58,15 @@ describe('doc-registry — generated blocks match their source of truth', () => 
   });
   it('the WIRE-CONTRACT block (in packages/web/README.md) matches a regenerate (run `pnpm run docs:gen`)', () => {
     expect(blockInner('WIRE-CONTRACT', WEB_README)).toBe(renderWireContractDoc());
+  });
+  it('projects the complete command catalog into the CLI README', () => {
+    expect(blockInner('CLI-COMMAND-CATALOG', CLI_README)).toBe(renderCliCommandCatalog());
+  });
+  it('projects check-profile claims and membership into the CLI README', () => {
+    expect(blockInner('CHECK-PROFILES', CLI_README)).toBe(renderCheckProfiles());
+  });
+  it('projects MCP tools from the catalog exposure annotation', () => {
+    expect(blockInner('MCP-TOOL-CATALOG', MCP_README)).toBe(renderMcpToolCatalog());
   });
 });
 
@@ -98,10 +114,10 @@ describe('doc-registry — PACKAGE-SURFACES.md covers every import surface', () 
   const surfaces = readFileSync(resolve(REPO_ROOT, 'PACKAGE-SURFACES.md'), 'utf8');
   const noSection = new Set<string>(NO_SURFACE_SECTION);
   const importSurfaces = loadPackageManifests().filter(
-    (p) => p.publishable && p.name.startsWith('@czap/') && !noSection.has(p.name),
+    (p) => p.publishable && p.name.startsWith('@liteship/') && !noSection.has(p.name),
   );
 
-  it('has a section for every @czap import-surface package (except documented type-only spines)', () => {
+  it('has a section for every @liteship import-surface package (except documented type-only spines)', () => {
     for (const pkg of importSurfaces) {
       expect(surfaces.includes(`## \`${pkg.name}\``), `PACKAGE-SURFACES.md is missing a section for ${pkg.name}`).toBe(
         true,
@@ -114,11 +130,11 @@ describe('doc-registry — example README version-pin advice tracks the release 
   // The 0.8.0 audit found the ladder saying `^0.7.0` while five child READMEs said
   // `^0.4.0` — every install instruction a copying user read was wrong, and they
   // disagreed with each other. Source of truth is the workspace version: any
-  // "pin `@czap/*` … at `^X.Y.Z`" sentence in an example README must carry the
+  // "pin `@liteship/*` … at `^X.Y.Z`" sentence in an example README must carry the
   // workspace major.minor.
   const workspace = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as { version: string };
   const [major, minor] = workspace.version.split('.');
-  const pinPattern = /pin `@czap\/\*`[^`]*`\^(\d+)\.(\d+)\.(\d+)`/g;
+  const pinPattern = /pin `@liteship\/\*`[^`]*`\^(\d+)\.(\d+)\.(\d+)`/g;
 
   it('every example README pin matches the workspace major.minor', () => {
     const readmes = [
@@ -135,7 +151,7 @@ describe('doc-registry — example README version-pin advice tracks the release 
         pinsSeen += 1;
         expect(
           `${m[1]}.${m[2]}`,
-          `${rel} advises pinning @czap/* at ^${m[1]}.${m[2]}.${m[3]}, but the workspace release line is ${workspace.version} — update the sentence`,
+          `${rel} advises pinning @liteship/* at ^${m[1]}.${m[2]}.${m[3]}, but the workspace release line is ${workspace.version} — update the sentence`,
         ).toBe(`${major}.${minor}`);
       }
     }

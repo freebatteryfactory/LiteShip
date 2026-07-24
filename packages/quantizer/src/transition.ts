@@ -5,8 +5,8 @@
  * @module
  */
 
-import type { Boundary, StateUnion, Quantizer, Easing, Millis } from '@czap/core';
-import { Millis as mkMillis } from '@czap/core';
+import type { Boundary, StateUnion, Quantizer, Easing, Millis } from '@liteship/core';
+import { Millis as mkMillis } from '@liteship/core';
 
 /**
  * Per-transition animation parameters.
@@ -16,7 +16,7 @@ import { Millis as mkMillis } from '@czap/core';
  *
  * Plain `number` literals are accepted alongside branded {@link Millis};
  * the resolver brands internally (the one sanctioned cast site lives in
- * `@czap/core` brands), so `{ duration: 300 }` needs no import.
+ * `@liteship/core` brands), so `{ duration: 300 }` needs no import.
  */
 export interface TransitionConfig {
   /** Animation duration in milliseconds (plain `number` or branded {@link Millis}). */
@@ -53,7 +53,7 @@ export type TransitionMap<S extends string = string> = {
  * Produced by {@link Transition.for}; consumed by {@link AnimatedQuantizer}
  * during animation loop setup.
  */
-export interface Transition<B extends Boundary.Shape> {
+export interface Transition<B extends Boundary> {
   /** The raw transition map used to create this resolver. */
   readonly config: TransitionMap<StateUnion<B> & string>;
   /** Resolve the transition config for a specific `from -> to` state pair. */
@@ -73,15 +73,15 @@ const DEFAULT_TRANSITION: TransitionConfig = {
  *   2. Wildcard: `"*"`
  *   3. Fallback: instant transition (duration: 0)
  */
-function createTransition<B extends Boundary.Shape>(
+function createTransition<B extends Boundary>(
   quantizer: Quantizer<B>,
   transitionConfig: TransitionMap<StateUnion<B> & string>,
 ): Transition<B>;
-function createTransition<B extends Boundary.Shape>(
+function createTransition<B extends Boundary>(
   boundary: B,
   transitionConfig: TransitionMap<StateUnion<B> & string>,
 ): Transition<B>;
-function createTransition<B extends Boundary.Shape>(
+function createTransition<B extends Boundary>(
   // The first argument only anchors the type parameter B; the resolver never
   // reads it, so a bare boundary works as well as a live quantizer.
   _source: Quantizer<B> | B,

@@ -5,12 +5,12 @@
  * access") is exercised in unit tests with a hermetic, INJECTED `gitShow`
  * (`tests/unit/cli/lib/repo-ir-gauntlet.test.ts`). That proves the FOLD logic — but
  * a correct gate that nothing runs over the real repo is still a hole. This script
- * closes it: it runs the SAME host extractor the production `czap check --ir` path
+ * closes it: it runs the SAME host extractor the production `liteship check gates --ir` path
  * runs ({@link buildStandardsIntegrityFacts}) over the LIVE repo, through the REAL
  * base-ref path:
  *
  *   resolveStandardsBaseRef(env)  →  the deterministic precedence
- *     CZAP_STANDARDS_BASE_REF → GITHUB_BASE_REF → main
+ *     LITESHIP_STANDARDS_BASE_REF → GITHUB_BASE_REF → main
  *   readBaseSnapshot(repo, base, defaultGitShow)  →  `git show <base>:…` (NO injection)
  *
  * so the diff is the LIVE standards surface against the PRIOR, INDEPENDENT baseline
@@ -27,7 +27,7 @@
  * A `signedWeakening` (a valid, in-date sign-off) is `advisory` and a stale
  * `unregeneratedStrengthen` is a `warning` — surfaced, never fatal. Reading the
  * facts directly keeps this script at the CLI's `standards-surface.js` boundary (it
- * needs no `@czap/gauntlet` symlink at the repo root) while gating on the EXACT
+ * needs no `@liteship/gauntlet` symlink at the repo root) while gating on the EXACT
  * partition the gate blocks on.
  *
  * FAIL-CLOSED, BUT BOOTSTRAP-AWARE (robust to CI's PR merge-checkout — `git show` only):
@@ -43,7 +43,7 @@
  * the snapshot (post-merge). This genesis-vs-config distinction needs ONLY `git show` (a
  * second read of a stable file), NOT the snapshot's introduction commit + an ancestry query
  * — which the PR merge-checkout frequently cannot resolve (the old fragility that
- * fail-closed at "origin/main"). CI fetches enough history and sets `CZAP_STANDARDS_BASE_REF`
+ * fail-closed at "origin/main"). CI fetches enough history and sets `LITESHIP_STANDARDS_BASE_REF`
  * to the review base (see ci.yml); a base that has the snapshot runs the normal diff, one
  * that resolves but predates it is inactive, one that does not resolve at all fails closed.
  *
@@ -159,7 +159,7 @@ export function main(root = repoRoot): void {
       `FAIL standards-integrity: ${outcome.unsignedWeakenings} unsigned weakening(s), ${outcome.forbiddenSignoffs} forbidden sign-off(s), ${outcome.expiredSignoffs} expired sign-off(s) vs the base ref "${outcome.baseRef}".`,
     );
     throw new Error(
-      `Standards-integrity gate failed — ${blocking} blocking standards-integrity finding(s). The raccoon-rule backstop refuses: the gauntlet's own rigor was eroded versus the base without a valid owner sign-off. Run \`czap check --ir\` for the per-finding detail.`,
+      `Standards-integrity gate failed — ${blocking} blocking standards-integrity finding(s). The raccoon-rule backstop refuses: the gauntlet's own rigor was eroded versus the base without a valid owner sign-off. Run \`liteship check gates --ir\` for the per-finding detail.`,
     );
   }
 

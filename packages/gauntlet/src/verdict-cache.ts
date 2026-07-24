@@ -56,7 +56,7 @@ import type { FileId, RepoIR } from './repo-ir.js';
 /**
  * The injected verdict store. The engine reads/writes RAW gate findings (the
  * pre-authority, pre-waiver output of `gate.run`) through this narrow seam; a
- * host backs it with the filesystem (`.czap/cache/gauntlet/<keyhash>.json`),
+ * host backs it with the filesystem (`.liteship/cache/gauntlet/<keyhash>.json`),
  * a test backs it with a `Map`. `read` returns `null` on a MISS (absent OR
  * unreadable OR malformed — every uncertain case falls through to a re-run,
  * never a stale serve).

@@ -11,16 +11,16 @@
 // Types
 // ---------------------------------------------------------------------------
 
-/** Named czap build environment. */
-export type CzapEnvironmentName = 'browser' | 'server' | 'shader';
+/** Named liteship build environment. */
+export type LiteshipEnvironmentName = 'browser' | 'server' | 'shader';
 
 /**
- * Subset of a Vite `Environment` config that czap touches: resolve
+ * Subset of a Vite `Environment` config that liteship touches: resolve
  * conditions plus `optimizeDeps` include/exclude lists. Returned by
  * {@link getEnvironmentConfig} and merged into the host Vite config
  * via {@link buildEnvironments}.
  */
-export interface CzapEnvironmentConfig {
+export interface LiteshipEnvironmentConfig {
   readonly resolve: {
     readonly conditions: string[];
     readonly extensions: string[];
@@ -35,40 +35,43 @@ export interface CzapEnvironmentConfig {
 // Environment Definitions
 // ---------------------------------------------------------------------------
 
-const BROWSER_ENV: CzapEnvironmentConfig = {
+const BROWSER_ENV: LiteshipEnvironmentConfig = {
   resolve: {
     conditions: ['browser', 'import', 'module', 'default'],
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.css'],
   },
   optimizeDeps: {
-    include: ['@czap/core', '@czap/detect'],
+    // Let Vite discover transitive LiteShip modules from their physical
+    // importers. Naming them here forces app-root resolution and breaks the
+    // one-install facade under pnpm's default isolated linker.
+    include: [],
     exclude: [],
   },
 } as const;
 
-const SERVER_ENV: CzapEnvironmentConfig = {
+const SERVER_ENV: LiteshipEnvironmentConfig = {
   resolve: {
     conditions: ['node', 'import', 'module', 'default'],
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
   optimizeDeps: {
     include: [],
-    exclude: ['@czap/core', '@czap/detect'],
+    exclude: ['@liteship/core', '@liteship/detect'],
   },
 } as const;
 
-const SHADER_ENV: CzapEnvironmentConfig = {
+const SHADER_ENV: LiteshipEnvironmentConfig = {
   resolve: {
     conditions: ['browser', 'import', 'module', 'default'],
     extensions: ['.ts', '.js', '.glsl', '.wgsl', '.vert', '.frag'],
   },
   optimizeDeps: {
-    include: ['@czap/core'],
-    exclude: ['@czap/detect'],
+    include: [],
+    exclude: ['@liteship/detect'],
   },
 } as const;
 
-const ENVIRONMENT_MAP: Record<CzapEnvironmentName, CzapEnvironmentConfig> = {
+const ENVIRONMENT_MAP: Record<LiteshipEnvironmentName, LiteshipEnvironmentConfig> = {
   browser: BROWSER_ENV,
   server: SERVER_ENV,
   shader: SHADER_ENV,
@@ -79,9 +82,9 @@ const ENVIRONMENT_MAP: Record<CzapEnvironmentName, CzapEnvironmentConfig> = {
 // ---------------------------------------------------------------------------
 
 /**
- * Get the Vite environment configuration for a specific czap target.
+ * Get the Vite environment configuration for a specific liteship target.
  */
-export function getEnvironmentConfig(name: CzapEnvironmentName): CzapEnvironmentConfig {
+export function getEnvironmentConfig(name: LiteshipEnvironmentName): LiteshipEnvironmentConfig {
   return ENVIRONMENT_MAP[name];
 }
 
@@ -89,8 +92,10 @@ export function getEnvironmentConfig(name: CzapEnvironmentName): CzapEnvironment
  * Build the Vite environments configuration object from a list of
  * requested environment names.
  */
-export function buildEnvironments(names: readonly CzapEnvironmentName[]): Record<string, CzapEnvironmentConfig> {
-  const result: Record<string, CzapEnvironmentConfig> = {};
+export function buildEnvironments(
+  names: readonly LiteshipEnvironmentName[],
+): Record<string, LiteshipEnvironmentConfig> {
+  const result: Record<string, LiteshipEnvironmentConfig> = {};
   for (const name of names) {
     result[name] = getEnvironmentConfig(name);
   }

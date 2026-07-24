@@ -10,14 +10,14 @@ Defined in: [quantizer/src/transition.ts:56](https://github.com/freebatteryfacto
 
 Resolver that maps a boundary crossing to its [TransitionConfig](TransitionConfig.md).
 
-Produced by [Transition.for](../variables/Transition.md#for); consumed by [AnimatedQuantizer](../namespaces/AnimatedQuantizer/README.md)
+Produced by [Transition.for](../variables/Transition.md#for); consumed by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md)
 during animation loop setup.
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 ## Properties
 

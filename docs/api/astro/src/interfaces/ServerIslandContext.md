@@ -30,7 +30,7 @@ Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`.
 
 Defined in: [astro/src/quantize.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
 
-Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px).
+Tier detected by `@liteship/edge` (default `'reactive'` → synthetic 960px).
 
 ***
 

@@ -13,7 +13,7 @@ import {
   makeCoverageMap,
   type McdcTargetFile,
   type MutantTestRunner,
-} from '@czap/audit';
+} from '@liteship/audit';
 
 const FILE = 'r.ts';
 const SRC = 'export function inRange(x: number, lo: number, hi: number): boolean { return x >= lo && x <= hi; }';
@@ -41,7 +41,9 @@ describe('buildMcdcFacts — folds two pins per condition into one outcome', () 
     for (const c of facts.conditions) {
       expect(c.forceTrueVerdict).toBe('killed');
       expect(c.forceFalseVerdict).toBe('killed');
+      expect(c.coveringTests).toEqual(['inRange.test']);
     }
+    expect(facts.targetCensus).toEqual([{ file: FILE, applicableConditions: 2 }]);
   });
 
   it('a weak mid-only suite → each condition has a SURVIVING force-TRUE pin (an MC/DC gap)', () => {
@@ -58,7 +60,18 @@ describe('buildMcdcFacts — folds two pins per condition into one outcome', () 
     for (const c of facts.conditions) {
       expect(c.forceTrueVerdict).toBe('no-coverage');
       expect(c.forceFalseVerdict).toBe('no-coverage');
+      expect(c.coveringTests).toEqual([]);
     }
+  });
+
+  it('records an admitted target with zero applicable conditions instead of silently omitting it', () => {
+    const file = 'constant.ts';
+    const facts = buildMcdcFacts([{ file, text: 'export const answer = 42;' }], {
+      runner: strongRunner,
+      coverage: makeCoverageMap([]),
+    });
+    expect(facts.conditions).toEqual([]);
+    expect(facts.targetCensus).toEqual([{ file, applicableConditions: 0 }]);
   });
 
   it('is deterministic — two runs produce byte-identical facts', () => {

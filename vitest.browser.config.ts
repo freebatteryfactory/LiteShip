@@ -6,7 +6,7 @@ import { startSceneDev, stopSceneDev } from './tests/browser/commands/scene-dev-
 const coverageEnabled = process.argv.includes('--coverage');
 const isCI = process.env.CI !== undefined && process.env.CI !== '';
 
-const browserInstances = (coverageEnabled ? 'chromium' : process.env.CZAP_VITEST_BROWSERS ?? 'chromium,firefox,webkit')
+const browserInstances = (coverageEnabled ? 'chromium' : process.env.LITESHIP_VITEST_BROWSERS ?? 'chromium,firefox,webkit')
   .split(',')
   .map((browser) => browser.trim())
   .filter((browser): browser is 'chromium' | 'firefox' | 'webkit' =>
@@ -65,7 +65,7 @@ export default defineConfig({
       reporter: [...coverageReporters],
       include: coverageInclude,
       // The browser v8 provider statically re-parses every *included* source
-      // for its uncovered-file report (even untouched ones). @czap/cloudflare
+      // for its uncovered-file report (even untouched ones). @liteship/cloudflare
       // is Workers/workerd-only — never loaded in a browser test — and its
       // edge middleware tripped Rolldown's parser (`import type {…}` →
       // "Expected `from`"), printing a warning and silently dropping the file.

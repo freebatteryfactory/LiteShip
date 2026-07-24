@@ -13,8 +13,8 @@
  *
  * @module
  */
-import { UnsupportedError } from '@czap/error';
-import type { CapsuleDef } from '../assembly.js';
+import { UnsupportedError } from '@liteship/error';
+import type { CapsuleDef } from '../authoring/assembly.js';
 
 /** Emitted file contents for a capsule harness (test + bench pair). */
 export interface HarnessOutput {
@@ -45,7 +45,7 @@ export interface HarnessContext {
   readonly arbitraryImport?: string;
   /**
    * Import specifier (with `.js` extension) for the canonical
-   * `contentAddressOf` primitive from `@czap/core`'s content-address kernel.
+   * `contentAddressOf` primitive from `@liteship/core`'s content-address kernel.
    * The `cachedProjection` harness uses it as the cache KEY function for the
    * content-addressed `cache-hit` / invalidation probes — never a hand-rolled
    * hash. Defaults to the repo-relative source path when the driver omits it.

@@ -5,9 +5,10 @@ name: Release (OIDC trusted publishing)
 #   git tag -a v0.2.0 -m "v0.2.0"
 #   git push origin v0.2.0
 #
-# auth: OIDC trusted publishing — no tokens anywhere. `czap ship` packs each
-# package with pnpm (which rewrites `workspace:*` to concrete versions) and then
-# hands the tarball to the **npm CLI** (`npm publish <tgz> --provenance`) for the
+# auth: OIDC trusted publishing — no tokens anywhere. Certification packs the
+# already-built fleet once with pnpm (which rewrites `workspace:*` to concrete
+# versions), then `liteship ship` verifies and hands those exact tarballs to the
+# **npm CLI** (`npm publish <tgz> --provenance`) for the
 # upload. npm >= 11.5.1 performs npm's OIDC trusted-publishing token exchange
 # natively in CI (id-token: write below); `pnpm publish` does NOT do the exchange
 # (pnpm#11513 / pnpm#9812) — that gap was the ENEEDAUTH at 0.4.0 and 0.6.0's first
@@ -16,7 +17,7 @@ name: Release (OIDC trusted publishing)
 # configured at https://www.npmjs.com/package/<name>/access (org+repo:
 # freebatteryfactory/LiteShip, workflow filename: release.yml — see RELEASING.md
 # §Trusted publishing). A package without one fails its publish loudly with an auth
-# error; fix the npm-side config and re-run — `czap ship` treats already-published
+# error; fix the npm-side config and re-run — `liteship ship` treats already-published
 # versions as idempotent success, so re-runs are safe. The NPM_TOKEN repo secret is
 # dead (its token was revoked) and is no longer read.
 
@@ -36,44 +37,156 @@ on:
           - 'true'
 
 permissions:
-  contents: write       # creating the GitHub Release + uploading capsule assets
-  id-token: write       # OIDC trusted publishing (pnpm exchanges this for the publish credential)
+  contents: write # creating the GitHub Release + uploading capsule assets
+  actions: read # delivery metrics and frozen-artifact admission
+  id-token: write # OIDC trusted publishing (pnpm exchanges this for the publish credential)
+  attestations: write # GitHub artifact attestations for the exact frozen tarballs
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false   # never cancel a release mid-flight
+  cancel-in-progress: false # never cancel a release mid-flight
 
 jobs:
+  full-authority:
+    name: Complete frozen-head authority
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      actions: read
+
   release-certified:
-    name: Release certification (publishability gate)
+    name: Frozen release build and certification
+    needs: full-authority
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # The full gauntlet (gauntlet:full — bench / coverage / e2e /
-    # timing-sensitive lanes) runs on every PR and on main via
-    # .github/workflows/ci.yml > truth-linux. By the time a v*.*.* tag
-    # is pushed, main has already cleared that bar. This job's job is
-    # the narrower question: are the tarballs publishable RIGHT NOW.
-    # Slim, stable, CI-deterministic.
+    # The reusable CI workflow above proves this exact tag across the complete
+    # Linux, browser, platform, Rust/WASM, mutation, MC/DC, and analysis tiers.
+    # This job owns only the narrower tag-time publishability question.
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Download the addressed authority plan
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
+      - name: Download the admitted delivery evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: delivery-evidence
+          path: .liteship/delivery-evidence
+      - name: Bind release evidence to the admitted source and plan
+        run: |
+          set -euo pipefail
+          EVIDENCE_ROOT=.liteship/delivery-evidence/reports
+          MANIFEST="$EVIDENCE_ROOT/delivery-evidence-manifest.json"
+          RECEIPT="$EVIDENCE_ROOT/delivery-admission-receipt.json"
+          CHAIN="$EVIDENCE_ROOT/delivery-receipt-chain.json"
+          PLAN=.liteship/affected-plan.json
+          test -f "$MANIFEST"
+          test -f "$RECEIPT"
+          test -f "$CHAIN"
+          PLAN_ID=$(jq -er .planId "$PLAN")
+          MANIFEST_ID=$(jq -er .manifestId "$MANIFEST")
+          CHAIN_DIGEST="sha256:$(sha256sum "$CHAIN" | cut -d ' ' -f 1)"
+          CHAIN_STAGES=$(jq -c '[.receipts[] | {kind, receiptId: .hash}]' "$CHAIN")
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            '(keys | sort) == ["headSha", "manifestId", "planId", "receipts", "schemaVersion"] and .schemaVersion == 1 and .headSha == $head and .planId == $plan and .manifestId == $manifest and (.receipts | length) == 6 and [.receipts[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$CHAIN" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            '.schemaVersion == 2 and .verdict == "accepted" and .headSha == $head and .plan.id == $plan and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref' \
+            "$MANIFEST" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            --arg chainDigest "$CHAIN_DIGEST" \
+            --argjson chainStages "$CHAIN_STAGES" \
+            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v2" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$RECEIPT" >/dev/null
+          echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"
       - run: pnpm run build
-      - run: pnpm run typecheck
-      - run: pnpm run lint
-      - run: pnpm test
+      - name: Verify the admitted receipt DAG independently
+        run: >-
+          pnpm exec tsx scripts/verify-release-delivery-evidence.ts
+          .liteship/affected-plan.json
+          .liteship/delivery-evidence/reports
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        with:
+          toolchain: 1.85.1
+          targets: wasm32-unknown-unknown
+      - run: pnpm run build:wasm
+      - name: Pack the immutable release fleet once
+        run: pnpm exec tsx scripts/build-release-artifacts.ts release-artifacts/tarballs
+      - name: Generate supply-chain inventory
+        run: |
+          node packages/liteship/bin/liteship.mjs sbom
+          mkdir -p release-artifacts/evidence
+          cp -R .liteship/delivery-evidence/reports/. release-artifacts/evidence/
+          cp reports/sbom.json release-artifacts/evidence/sbom.cdx.json
+          cp reports/vex.json release-artifacts/evidence/vex.cdx.json
+          cp .liteship/affected-plan.json release-artifacts/evidence/affected-plan.json
+      - name: Mint ShipCapsules over the immutable tarballs
+        run: |
+          mkdir -p release-artifacts/capsules
+          node packages/liteship/bin/liteship.mjs ship --dry-run \
+            --artifact-dir release-artifacts/tarballs \
+            --capsule-dir release-artifacts/capsules
+      - name: Run consumer journeys against the exact release tarballs
+        run: pnpm run test:journey
         env:
           CI: true
-      - run: pnpm run package:smoke
+          GITHUB_SHA: ${{ github.sha }}
+          LITESHIP_RELEASE_ARTIFACT_DIR: release-artifacts/tarballs
+      - name: Verify the exact release tarballs as an external consumer
+        run: |
+          node packages/liteship/bin/liteship.mjs package-smoke --hermetic \
+            --artifact-dir release-artifacts/tarballs
         env:
           CI: true
+          GITHUB_SHA: ${{ github.sha }}
+      - name: Upload frozen release build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: frozen-release-artifacts
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            release-artifacts/
+            packages/*/dist/
+      - name: Attest the complete frozen release and evidence bundle
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
+        with:
+          subject-path: |
+            release-artifacts/tarballs/*.tgz
+            release-artifacts/tarballs/release-artifacts.json
+            release-artifacts/evidence/**
+            release-artifacts/capsules/*.shipcapsule.cbor
 
   publish:
-    name: Publish 21 @czap/* packages + create-liteship + the liteship umbrella + attach ShipCapsules
+    name: Publish the fleet (roster from scripts/ci/publish-roster.json) + attach ShipCapsules
     needs: release-certified
     # MUST be a GitHub-hosted runner: npm OIDC trusted publishing rejects self-hosted
     # runners (the token's runner_environment claim) — docs.npmjs.com/trusted-publishers
@@ -83,11 +196,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          fetch-depth: 0     # czap ship reads git rev-parse HEAD + git status
+          fetch-depth: 0 # liteship ship reads git rev-parse HEAD + git status
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
 
       # No registry-url here: setup-node's registry-url writes an
       # `_authToken=${NODE_AUTH_TOKEN}` line into ~/.npmrc, and with no
@@ -96,13 +209,13 @@ jobs:
       # all — the npm CLI exchanges the runner's OIDC token at publish
       # time (registry defaults to registry.npmjs.org). Node >= 22.14 is a
       # trusted-publishing requirement; node-version 22 resolves to latest 22.x.
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: pnpm
 
       # npm's OIDC trusted publishing needs npm CLI >= 11.5.1, but Node 22 ships
-      # npm 10. Upgrade it globally so the `npm publish <tgz>` handoff in `czap ship`
+      # npm 10. Upgrade it globally so the `npm publish <tgz>` handoff in `liteship ship`
       # (packages/cli/src/commands/ship.ts) performs the OIDC token exchange. `pnpm
       # publish` does NOT do this (pnpm#11513) — hence the ENEEDAUTH at prior cuts.
       - name: Upgrade npm CLI for OIDC trusted publishing (>= 11.5.1)
@@ -123,21 +236,95 @@ jobs:
           echo "OIDC endpoint present; the npm CLI will exchange the token at publish time."
 
       - run: pnpm install --frozen-lockfile
-
-      - run: pnpm run build
-
-      # Build the czap-compute WASM kernel from Rust and stage it into
-      # @czap/core's dist BEFORE the ship loop packs the tarball — otherwise the
-      # published @czap/core carries no `.wasm` and an installed consumer's
-      # `czap({ wasm: { enabled: true } })` silently runs the TS fallback (the
-      # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
-      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
+      - name: Download the certified build (never rebuild or repack)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
-          # Pinning to a SHA strips the channel the action otherwise reads from the
-          # ref (`@stable`), so name it explicitly or the action errors.
-          toolchain: stable
-          targets: wasm32-unknown-unknown
-      - run: pnpm run build:wasm
+          name: frozen-release-artifacts
+          path: .
+      - name: Bind publish admission to the certified source and plan
+        run: |
+          set -euo pipefail
+          BUNDLE=release-artifacts/tarballs/release-artifacts.json
+          MANIFEST=release-artifacts/evidence/delivery-evidence-manifest.json
+          RECEIPT=release-artifacts/evidence/delivery-admission-receipt.json
+          CHAIN=release-artifacts/evidence/delivery-receipt-chain.json
+          test -f "$BUNDLE"
+          test -f "$MANIFEST"
+          test -f "$RECEIPT"
+          test -f "$CHAIN"
+          PLAN_ID=$(jq -er .planId "$BUNDLE")
+          MANIFEST_ID=$(jq -er .manifestId "$MANIFEST")
+          CHAIN_DIGEST="sha256:$(sha256sum "$CHAIN" | cut -d ' ' -f 1)"
+          CHAIN_STAGES=$(jq -c '[.receipts[] | {kind, receiptId: .hash}]' "$CHAIN")
+          test "$(jq -er .sourceCommit "$BUNDLE")" = "$GITHUB_SHA"
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            '(keys | sort) == ["headSha", "manifestId", "planId", "receipts", "schemaVersion"] and .schemaVersion == 1 and .headSha == $head and .planId == $plan and .manifestId == $manifest and (.receipts | length) == 6 and [.receipts[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$CHAIN" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            '.schemaVersion == 2 and .verdict == "accepted" and .headSha == $head and .plan.id == $plan and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref' \
+            "$MANIFEST" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            --arg chainDigest "$CHAIN_DIGEST" \
+            --argjson chainStages "$CHAIN_STAGES" \
+            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v2" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$RECEIPT" >/dev/null
+          echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"
+      - name: Re-verify the frozen delivery receipt DAG before publish
+        run: >-
+          pnpm exec tsx scripts/verify-release-delivery-evidence.ts
+          release-artifacts/evidence/affected-plan.json
+          release-artifacts/evidence
+      - name: Verify GitHub attestations before admission
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          required_subjects=(
+            release-artifacts/tarballs/release-artifacts.json
+            release-artifacts/evidence/delivery-evidence-manifest.json
+            release-artifacts/evidence/delivery-admission-receipt.json
+            release-artifacts/evidence/delivery-receipt-chain.json
+            release-artifacts/evidence/sbom.cdx.json
+            release-artifacts/evidence/vex.cdx.json
+          )
+          for required in "${required_subjects[@]}"; do
+            test -f "$required"
+          done
+          shopt -s nullglob
+          tarballs=(release-artifacts/tarballs/*.tgz)
+          capsules=(release-artifacts/capsules/*.shipcapsule.cbor)
+          shopt -u nullglob
+          test "${#tarballs[@]}" -gt 0
+          test "${#capsules[@]}" -gt 0
+          mapfile -d '' subjects < <(
+            find release-artifacts/tarballs release-artifacts/evidence release-artifacts/capsules \
+              -type f -print0 | sort -z
+          )
+          test "${#subjects[@]}" -gt 0
+          for subject in "${subjects[@]}"; do
+            gh attestation verify "$subject" \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-digest "$GITHUB_SHA"
+          done
 
       # ─── GitHub Release FIRST, then the ship loop ────────────────────
       # The Release is created BEFORE any package publishes so each
@@ -170,18 +357,26 @@ jobs:
               --notes-file "RELEASE_NOTES_v${{ steps.ver.outputs.version }}.md"
           fi
 
-      # ─── per-package ship loop ───────────────────────────────────────
-      # One `czap ship` per package: the explicit list keeps publish order
-      # reviewable in PR and guarantees `liteship` (whose deps must already
-      # exist on the registry at the new version) publishes LAST. ship
-      # itself treats already-published versions as idempotent success
-      # (ShipSkippedReceipt), so workflow re-runs after a mid-batch
-      # failure are safe with no grep fallback. --provenance links each
-      # published tarball to this workflow run via OIDC. Each package's
-      # capsule uploads IMMEDIATELY after its ship so no later failure can
-      # orphan it; a skipped package mints no capsule — its capsule is
+      # ─── roster gate + per-package ship loop ─────────────────────────
+      # The publish roster (count + package list, in publish order) is owned
+      # by scripts/gen-roster.ts and generated into scripts/ci/publish-roster.json.
+      # This step proves that JSON matches the workspace on disk (and that this
+      # job carries no hand-written package literals) BEFORE anything mints, so a
+      # drifted roster fails here rather than mid-batch.
+      - name: Verify publish roster is in sync (gen-roster gate)
+        run: pnpm exec tsx scripts/gen-roster.ts --check
+
+      # One `liteship ship` per package: the roster comes from
+      # scripts/ci/publish-roster.json (read with jq) in publish order, so the
+      # umbrella package (whose deps must already exist on the registry at the
+      # new version) publishes LAST. ship itself treats already-published
+      # versions as idempotent success (ShipSkippedReceipt), so workflow re-runs
+      # after a mid-batch failure are safe with no grep fallback. --provenance
+      # links each published tarball to this workflow run via OIDC. Each
+      # package's capsule uploads IMMEDIATELY after its ship so no later failure
+      # can orphan it; a skipped package mints no capsule — its capsule is
       # already attached by the run that published it.
-      - name: czap ship (per package, OIDC + provenance, attach-as-minted)
+      - name: liteship ship (per package, OIDC + provenance, attach-as-minted)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ATTACH: ${{ inputs.dry-run != 'true' && github.ref_type == 'tag' }}
@@ -194,34 +389,33 @@ jobs:
           fi
           UPLOADED_LIST=$(mktemp)
 
-          # Drift guard: the per-package loop below carries an explicit list
-          # so publish order is reviewable in PR. If a non-private package is
-          # added or removed in packages/, this assertion fails loud rather
-          # than silently skipping the new one. Update both the EXPECTED
-          # count and the loop list in the same commit.
-          #
-          # Membership + count owner: scripts/gen-roster.ts (PUBLISHABLE_ROSTER).
-          # YAML cannot import TS, so this list stays hand-maintained but is
-          # gen-roster-CHECKED, not regenerated: `pnpm tsx scripts/gen-roster.ts
-          # --check` and the release-roster drift-guard both assert this loop's
-          # membership and this count equal gen-roster's PUBLISHABLE_ROSTER. The
-          # loop ORDER stays hand-ordered here (topological, pinned by the
-          # release-roster test) rather than mirroring the generator's order.
-          EXPECTED_PUBLISHABLE=25
+          # Drift guard: the publish count + roster are owned by
+          # scripts/gen-roster.ts and generated into scripts/ci/publish-roster.json;
+          # the gen-roster --check step above already proved that JSON matches the
+          # workspace and that this job carries no hand-written package literals.
+          # Read the expected count from the JSON and re-derive the actual on-disk
+          # publishable count independently (release.yml's own predicate:
+          # `private != true`). If a package is added or removed in packages/
+          # without regenerating the roster, this assertion fails loud rather than
+          # silently skipping the new one — regenerate with
+          # `pnpm exec tsx scripts/gen-roster.ts --write`.
+          EXPECTED_PUBLISHABLE=$(jq -r '.expectedPublishable' scripts/ci/publish-roster.json)
           ACTUAL_PUBLISHABLE=$(find packages -maxdepth 2 -name package.json -print0 \
             | xargs -0 -I {} jq -r 'select(.private != true) | .name' {} \
             | wc -l)
           if [ "$ACTUAL_PUBLISHABLE" -ne "$EXPECTED_PUBLISHABLE" ]; then
-            echo "::error::Workspace has $ACTUAL_PUBLISHABLE publishable packages but release.yml's loop expects $EXPECTED_PUBLISHABLE. Update the EXPECTED count and the explicit pkg list together."
+            echo "::error::Workspace has $ACTUAL_PUBLISHABLE publishable packages but scripts/ci/publish-roster.json expects $EXPECTED_PUBLISHABLE. Regenerate with: pnpm exec tsx scripts/gen-roster.ts --write"
             exit 1
           fi
 
-          for pkg in @czap/_spine @czap/error @czap/canonical @czap/core @czap/assets @czap/compiler @czap/detect @czap/edge @czap/genui @czap/web @czap/vite @czap/scene @czap/worker @czap/astro @czap/gauntlet @czap/audit @czap/command @czap/cli @czap/cloudflare @czap/mcp-server @czap/quantizer @czap/remotion @czap/stage create-liteship liteship; do
+          for pkg in $(jq -r '.packages[]' scripts/ci/publish-roster.json); do
             echo "::group::$pkg"
-            node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
+            node packages/liteship/bin/liteship.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG \
+              --artifact-dir release-artifacts/tarballs \
+              --capsule-dir release-artifacts/capsules
             if [ "$ATTACH" = "true" ]; then
               shopt -s nullglob
-              capsules=(packages/*/*-"$VERSION".shipcapsule.cbor)
+              capsules=(release-artifacts/capsules/*-"$VERSION".shipcapsule.cbor)
               shopt -u nullglob
               for capsule in "${capsules[@]}"; do
                 if ! grep -qxF "$capsule" "$UPLOADED_LIST"; then
@@ -243,7 +437,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           shopt -s nullglob
-          capsules=(packages/*/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor)
+          capsules=(release-artifacts/capsules/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor)
           if [ ${#capsules[@]} -gt 0 ]; then
             gh release upload "${GITHUB_REF_NAME}" "${capsules[@]}" --clobber
           else

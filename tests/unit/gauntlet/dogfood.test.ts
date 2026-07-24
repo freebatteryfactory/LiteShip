@@ -3,7 +3,7 @@
  *
  * We point {@link noBareThrowGate} at the live `packages/&#42;/src` tree through
  * {@link nodeContext} and assert it finds ZERO bare throws. The Slice-A migration
- * made every failure path a tagged `@czap/error` variant — and this gate, run on
+ * made every failure path a tagged `@liteship/error` variant — and this gate, run on
  * the actual repo, is what proved it: dogfooding surfaced three bare throws the
  * migration's `throw new Error`-only sweep missed (`RangeError`/`TypeError` in
  * `canonical/cbor.ts` ×2 and `scene/beat-projection.ts`), which were then cured
@@ -20,7 +20,7 @@
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { noBareThrowGate, nodeContext } from '@czap/gauntlet';
+import { noBareThrowGate, nodeContext } from '@liteship/gauntlet';
 
 // Resolve the repo root from THIS file's location (tests/unit/gauntlet/…), so
 // the run is independent of the process cwd — deterministic by construction.
@@ -49,7 +49,7 @@ describe('dogfood — noBareThrowGate over the real packages/*/src tree', () => 
     // Honest failure message: list every finding so a NEW bare throw is
     // immediately visible (a real regression to migrate to a tagged variant).
     const message = [
-      `noBareThrowGate over ${GLOBS.join(', ')} found ${findings.length} bare throw(s) — each must become a tagged @czap/error variant:`,
+      `noBareThrowGate over ${GLOBS.join(', ')} found ${findings.length} bare throw(s) — each must become a tagged @liteship/error variant:`,
       ...seen.map((s) => `  + ${s}`),
     ].join('\n');
 

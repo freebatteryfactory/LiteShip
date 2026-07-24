@@ -30,7 +30,7 @@ const widest = Math.max(
 
 const on = colorEnabled(process.stdout);
 
-process.stdout.write(`${header('LiteShip', on)} — the deck plan (npm scripts)\n\n`);
+process.stdout.write(`${header('LiteShip', on)} — script catalog (npm scripts)\n\n`);
 
 for (const cat of CATEGORIES) {
   const present = cat.scripts.filter((s) => s in all);
@@ -58,5 +58,5 @@ if (other.length > 0) {
 }
 
 process.stdout.write(
-  `${color('dim', 'Tip:', on)} \`${color('cyan', 'czap help', on)}\` is the chart; \`${color('cyan', 'czap glossary', on)}\` is the ontology.\n`,
+  `${color('dim', 'Tip:', on)} \`${color('cyan', 'liteship help', on)}\` prints the command list; \`${color('cyan', 'liteship glossary', on)}\` explains the vocabulary.\n`,
 );

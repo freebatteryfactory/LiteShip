@@ -14,22 +14,67 @@
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { verifyGate, runGates, memoryContext, nodeContext } from '@czap/gauntlet';
 import {
-  perfClaimBenchGate,
-  PERF_CLAIM_BENCH_RULE_ID,
-} from '../../../packages/gauntlet/src/gates/perf-claim-bench.js';
+  verifyGate,
+  runGates,
+  memoryContext as baseMemoryContext,
+  nodeContext,
+  type GateContext,
+} from '@liteship/gauntlet';
+import {
+  parseQualifiedBenchDistribution,
+  type QualifiedBenchDistribution,
+} from '../../../packages/gauntlet/src/gates/bench-subjects.js';
+import { buildBenchmarkSubjectFacts } from '../../../packages/audit/src/benchmark-subject-facts.js';
+import { perfClaimBenchGate, PERF_CLAIM_BENCH_RULE_ID } from '../../../packages/gauntlet/src/gates/perf-claim-bench.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');
 
 /** A distributions.json whose declared bench name references the claiming module. */
 const COMPOSITOR_BENCH = JSON.stringify({
-  schemaVersion: 1,
+  schemaVersion: 2,
   distributions: [
-    { name: 'alloc -- compositor compute', file: 'tests/bench/allocation.bench.ts', inputSize: 1, shape: 'x', replicates: 1 },
+    {
+      name: 'alloc -- compositor compute',
+      file: 'tests/bench/allocation.bench.ts',
+      inputSize: 1,
+      shape: 'x',
+      replicates: 1,
+      subjects: [
+        {
+          role: 'sut',
+          origin: { kind: 'module', specifier: '@liteship/core' },
+          symbol: 'Compositor.compute',
+          binding: 'Compositor.compute',
+        },
+      ],
+    },
   ],
 });
+const COMPOSITOR_BENCH_SOURCE =
+  "import { Compositor } from '@liteship/core';\nbench.add('alloc -- compositor compute', () => Compositor.compute());\n";
+
+function withBenchmarkSubjects(context: GateContext): GateContext {
+  const text = context.readFile('benchmarks/distributions.json');
+  let distributions: QualifiedBenchDistribution[] = [];
+  if (text !== undefined) {
+    const parsed = JSON.parse(text) as { distributions?: unknown };
+    if (Array.isArray(parsed.distributions)) {
+      distributions = parsed.distributions
+        .map(parseQualifiedBenchDistribution)
+        .filter((value): value is QualifiedBenchDistribution => value !== null);
+    }
+  }
+  return {
+    ...context,
+    benchmarkSubjects: buildBenchmarkSubjectFacts(distributions, (path) => context.readFile(path)),
+  };
+}
+
+function memoryContext(files: Readonly<Record<string, string>>): GateContext {
+  return withBenchmarkSubjects(baseMemoryContext(files));
+}
 
 describe('perf-claim-without-bench gate — self-proof (the authority ratchet)', () => {
   it('self-proves: red caught, green clean, mutation killed, blocking-eligible', () => {
@@ -66,7 +111,8 @@ describe('THE CLAIM-VS-REALITY LAW — a perf claim with no bench is a finding',
 
   it('CATCHES a DOC claim — the CURE-2 "zero-allocation hot path" doc with no bench', () => {
     const ctx = memoryContext({
-      'packages/core/src/compositor.ts': '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
+      'packages/core/src/media/compositor.ts':
+        '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
     });
     const findings = perfClaimBenchGate.run(ctx);
     expect(findings.length).toBeGreaterThanOrEqual(1);
@@ -75,18 +121,49 @@ describe('THE CLAIM-VS-REALITY LAW — a perf claim with no bench is a finding',
 
   it('STAYS CLEAN when the same doc claim IS measured by a declared bench naming the module', () => {
     const ctx = memoryContext({
-      'packages/core/src/compositor.ts': '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
+      'packages/core/src/media/compositor.ts':
+        '/**\n * Zero-allocation hot path backed by a pool.\n */\nexport const x = 1;\n',
       'benchmarks/distributions.json': COMPOSITOR_BENCH,
+      'tests/bench/allocation.bench.ts': COMPOSITOR_BENCH_SOURCE,
     });
     expect(perfClaimBenchGate.run(ctx)).toHaveLength(0);
   });
 
-  it('STAYS CLEAN when a bench REGISTRATION (tests/bench/*.bench.ts) names the claim symbol', () => {
+  it('does NOT accept a name-only bench registration as measurement evidence', () => {
     const ctx = memoryContext({
       'packages/widget/src/lookup.ts': 'export function fastPath(): number { return 1; }\n',
       'tests/bench/widget.bench.ts': "const bench = {add(_n){}}; bench.add('fastPath -- single call');\n",
     });
-    expect(perfClaimBenchGate.run(ctx)).toHaveLength(0);
+    expect(perfClaimBenchGate.run(ctx)).toHaveLength(1);
+  });
+
+  it('does NOT let an inline baseline discharge a product performance claim', () => {
+    const ctx = memoryContext({
+      'packages/widget/src/lookup.ts': 'export function fastPath(): number { return 1; }\n',
+      'benchmarks/distributions.json': JSON.stringify({
+        schemaVersion: 2,
+        distributions: [
+          {
+            name: 'fastPath -- inline baseline',
+            file: 'tests/bench/widget.bench.ts',
+            inputSize: 1,
+            shape: 'single-call',
+            replicates: 1,
+            subjects: [
+              {
+                role: 'baseline',
+                origin: { kind: 'file', path: 'tests/bench/widget.bench.ts' },
+                symbol: 'inlineFastPath',
+                binding: 'inlineFastPath',
+              },
+            ],
+          },
+        ],
+      }),
+      'tests/bench/widget.bench.ts':
+        "function inlineFastPath(){ return 1; }\nbench.add('fastPath -- inline baseline', () => inlineFastPath());\n",
+    });
+    expect(perfClaimBenchGate.run(ctx)).toHaveLength(1);
   });
 });
 
@@ -123,11 +200,14 @@ describe('PRECISION — mention-form keywords never fire (no dirty green floor)'
 
 describe('THE REAL REPO IS GREEN — every perf claim in packages/*/src is benched', () => {
   it('finds ZERO unbenched perf claims across the real published source tree', () => {
-    const ctx = nodeContext(REPO_ROOT, [
-      'packages/*/src/**/*.ts',
-      'benchmarks/distributions.json',
-      'tests/bench/**/*.bench.ts',
-    ]);
+    const ctx = withBenchmarkSubjects(
+      nodeContext(REPO_ROOT, [
+        'packages/*/src/**/*.ts',
+        'benchmarks/distributions.json',
+        'tests/bench/**/*.bench.ts',
+        'scripts/alloc-gate.ts',
+      ]),
+    );
     // Sanity: the glob matched real source (a zero-file context would be a hollow pass).
     expect(ctx.files().length).toBeGreaterThan(0);
 
@@ -144,7 +224,16 @@ describe('THE REAL REPO IS GREEN — every perf claim in packages/*/src is bench
   it('is a DETERMINISTIC fold — same repo state, same findings twice', () => {
     const run = (): readonly string[] =>
       perfClaimBenchGate
-        .run(nodeContext(REPO_ROOT, ['packages/*/src/**/*.ts', 'benchmarks/distributions.json', 'tests/bench/**/*.bench.ts']))
+        .run(
+          withBenchmarkSubjects(
+            nodeContext(REPO_ROOT, [
+              'packages/*/src/**/*.ts',
+              'benchmarks/distributions.json',
+              'tests/bench/**/*.bench.ts',
+              'scripts/alloc-gate.ts',
+            ]),
+          ),
+        )
         .map((f) => `${f.location?.file}:${f.location?.line}`);
     expect(run()).toEqual(run());
   });

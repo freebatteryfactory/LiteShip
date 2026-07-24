@@ -10,7 +10,7 @@
  *     the SAME `ValidatedProposal` envelope as the GraphPatch target — same
  *     `_tag`/`target`/`subject`/`token` shape, same un-bypassable apply seam
  *     (`unwrapValidated`/`assertTokenBinds`). A core capsule cannot import
- *     `@czap/genui` (purity == no producer; no renderer edge), so the injected
+ *     `@liteship/genui` (purity == no producer; no renderer edge), so the injected
  *     validator law is pinned HERE.
  *  2. castContext DETERMINISM + cross-target sensitivity over a generated domain.
  *  3. The `__proto__`/`constructor` adversarial vectors (lesson #12/#26): an
@@ -34,16 +34,16 @@ import {
   unwrapValidated,
   proposalSubject,
   proposalReceiptSubject,
-} from '@czap/core';
+} from '@liteship/core';
 import type {
   SignalNode,
   DocumentGraphNode,
   DocumentGraph as DocumentGraphType,
   CellMeta,
   GeneratedUIValidator,
-} from '@czap/core';
-import { validateGeneratedUITree, defineComponentCatalog } from '@czap/genui';
-import type { GeneratedUINode } from '@czap/genui';
+} from '@liteship/core';
+import { validateGeneratedUITree, defineComponentCatalog } from '@liteship/genui';
+import type { GeneratedUINode } from '@liteship/genui';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 'ai-cast-prop' },

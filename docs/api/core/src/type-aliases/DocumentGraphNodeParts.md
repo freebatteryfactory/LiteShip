@@ -8,7 +8,7 @@
 
 > **DocumentGraphNodeParts**\<`N`\> = `Omit`\<`N`, `"id"`\> & `object`
 
-Defined in: [core/src/document-graph-address.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L71)
+Defined in: [core/src/graph/document-graph-address.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph-address.ts#L71)
 
 Authoring parts for a [DocumentGraphNode](DocumentGraphNode.md) before addressing — `id` is ignored.
 

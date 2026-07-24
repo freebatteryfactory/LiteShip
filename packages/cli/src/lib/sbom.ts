@@ -6,7 +6,7 @@
  * FORMAT: CycloneDX 1.5 JSON (the simpler, widely-tooled choice over SPDX —
  * documented here). Every component is a `pkg:` PURL with its resolved version
  * and, for external registry units, the lockfile's integrity hash mapped onto a
- * CycloneDX `hashes` entry. Internal `@czap/*` workspace packages are emitted as
+ * CycloneDX `hashes` entry. Internal `@liteship/*` workspace packages are emitted as
  * `application` components (no registry integrity — they ARE the build), every
  * external lockfile unit as a `library` component.
  *
@@ -20,7 +20,8 @@
  * @module
  */
 
-import { AddressedDigest, CanonicalCbor } from '@czap/core';
+import { AddressedDigest, CanonicalCbor } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import type { ParsedLockfile } from './lockfile.js';
 
 /** A single CycloneDX component (a package in the bill of materials). */
@@ -39,6 +40,26 @@ export interface Sbom {
   readonly bomFormat: 'CycloneDX';
   readonly specVersion: '1.5';
   readonly components: readonly SbomComponent[];
+}
+
+/** One explicit CycloneDX VEX assessment. Empty means "no assessment supplied", never "no vulnerabilities exist". */
+export interface VexAssessment {
+  readonly id: string;
+  readonly affects: readonly { readonly ref: string }[];
+  readonly analysis: {
+    readonly state:
+      'resolved' | 'resolved_with_pedigree' | 'exploitable' | 'in_triage' | 'false_positive' | 'not_affected';
+    readonly justification?: string;
+    readonly detail?: string;
+  };
+}
+
+/** Deterministic CycloneDX VEX projection over the same component identities as the SBOM. */
+export interface Vex {
+  readonly bomFormat: 'CycloneDX';
+  readonly specVersion: '1.5';
+  readonly components: readonly SbomComponent[];
+  readonly vulnerabilities: readonly VexAssessment[];
 }
 
 /** An internal workspace package the SBOM marks as `application`. */
@@ -117,6 +138,29 @@ function sortKeys(value: unknown): unknown {
 /** Serialize an SBOM to deterministic, key-sorted, newline-terminated JSON. */
 export function serializeSbom(sbom: Sbom): string {
   return `${JSON.stringify(sortKeys(sbom), null, 2)}\n`;
+}
+
+/** Build a VEX document without inventing vulnerability conclusions. */
+export function generateVex(sbom: Sbom, assessments: readonly VexAssessment[] = []): Vex {
+  const componentRefs = new Set(sbom.components.map((component) => component.purl));
+  for (const assessment of assessments) {
+    if (assessment.affects.length === 0 || assessment.affects.some((target) => !componentRefs.has(target.ref))) {
+      throw ValidationError('generateVex', `VEX assessment ${assessment.id} references an absent SBOM component`);
+    }
+  }
+  const vulnerabilities = [...assessments].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return { bomFormat: 'CycloneDX', specVersion: '1.5', components: sbom.components, vulnerabilities };
+}
+
+/** Serialize VEX with the same deterministic key-order law as the SBOM. */
+export function serializeVex(vex: Vex): string {
+  return `${JSON.stringify(sortKeys(vex), null, 2)}\n`;
+}
+
+/** Cryptographic-pair display label over deterministic VEX bytes. */
+export function vexAddress(vex: Vex): string {
+  const canonical = CanonicalCbor.encode(sortKeys(vex) as Parameters<typeof CanonicalCbor.encode>[0]);
+  return AddressedDigest.of(canonical).display_id;
 }
 
 /**

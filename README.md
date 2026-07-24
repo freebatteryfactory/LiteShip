@@ -1,34 +1,32 @@
 # LiteShip
 
 [![CI](https://github.com/freebatteryfactory/LiteShip/actions/workflows/ci.yml/badge.svg)](https://github.com/freebatteryfactory/LiteShip/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@czap/core.svg)](https://www.npmjs.com/package/@czap/core)
+[![npm](https://img.shields.io/npm/v/@liteship/core.svg)](https://www.npmjs.com/package/@liteship/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**LiteShip is constraint-based adaptive rendering** — a multimedia-native UI compiler/runtime (not a component library). It quantizes continuous signals (viewport, scroll, motion preference, GPU tier, network) into named discrete states (*boundaries*), then **casts** one sealed definition to CSS, GPU shaders, ARIA, TypeScript, AI manifests, and video surfaces at once. Outputs are content-addressed so projections cannot silently drift ([ADR-0003](./docs/adr/0003-content-addressing.md)).
+**LiteShip is constraint-based adaptive rendering** — a multimedia-native UI compiler/runtime, not a component library. Define adaptive behavior once, apply its attributes and compiled plan to host markup, and inspect exactly why a state won. The same lowered definition remains available to CSS, GPU, ARIA, TypeScript, AI, and video projections, so the approachable front door does not create a second semantic system.
 
 Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. But the world feeds it continuous signals — viewport width slides as the user drags, network latency wobbles, the dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. LiteShip turns those continuous signals into a small set of named states, and projects each state to whatever surface the host runs.
 
-*LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.* The nautical vocabulary the deeper docs use (rig, signal, bearing, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
+*LiteShip — distributed as `@liteship/*` packages on npm, installed through the one `liteship` facade.* The naming and prose register the deeper docs use (signal, boundary, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
 
-**Compared to hand-rolled responsive CSS or a component library:** LiteShip owns the *adaptive state machine* and proves projections from one content-addressed definition — you do not re-sync breakpoints across CSS, GPU, and ARIA by hand. **Compared to general UI frameworks:** it is not a widget zoo; the host owns markup, LiteShip owns quantization and multi-surface cast.
+**Compared to hand-rolled responsive CSS or a component library:** LiteShip owns the adaptive state machine and proves projections from one content-addressed definition — you do not re-sync breakpoints across CSS, GPU, and ARIA by hand. **Compared to general UI frameworks:** it is not a widget zoo; the host owns markup, LiteShip owns adaptive intent and its projections.
 
-This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
+This is a real pre-1.0 framework being hardened on dogfooded sites and a CRM UI.
 
-**pnpm:** `pnpm add @czap/core` (definitions) or `pnpm create liteship` (starter). Package docs: [`packages/core/README.md`](./packages/core/README.md) · onboarding: [GETTING-STARTED.md](./GETTING-STARTED.md).
+**pnpm:** `pnpm add liteship` (the one-dependency facade) or `pnpm create liteship` (starter). Package docs: [`packages/core/README.md`](./packages/core/README.md) · onboarding: [GETTING-STARTED.md](./GETTING-STARTED.md).
 
 ## The shape
 
 <!-- BEGIN DIAGRAM (canonical mental model — keep byte-identical across README / GLOSSARY / AUTHORING-MODEL; pinned by tests/unit/meta/diagram-drift.test.ts) -->
 
 ```text
-signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
+defineAdaptive(...) ─▶ attrs() + plan() ─▶ explain(value)
 ```
 
-- **signal** — a continuous input from the world (viewport, scroll, audio…)
-- **boundary** — quantizes it into a few named states
-- **graph** — seals boundaries, tokens, and styles into one content-addressed truth
-- **cast** — projects (verb) that truth to CSS, GPU, ARIA, AI, TypeScript, and video
-- **patch** — the only way to change the truth: a validated mutation
+- **define** — describe the input, named states, and outputs once
+- **apply** — spread `attrs()` onto host markup and use the CSS from `plan()`
+- **inspect** — call `explain(value)` to see the selected state, thresholds, provenance, and identity
 
 <!-- END DIAGRAM -->
 
@@ -48,7 +46,7 @@ signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
 
 ## Examples
 
-The [`examples/`](./examples) directory has a runnable app per surface. They're workspace members — they consume `@czap/*` via `workspace:*`, so they run from a clone of this repo: `pnpm install` at the root, then `cd examples/<name> && pnpm dev` (each example carries its own `dev` script).
+The [`examples/`](./examples) directory has a runnable app per surface. They're workspace members — they consume `@liteship/*` via `workspace:*`, so they run from a clone of this repo: `pnpm install` at the root, then `cd examples/<name> && pnpm dev` (each example carries its own `dev` script).
 
 <!-- BEGIN EXAMPLES (generated by scripts/gen-docs.ts from examples/*/package.json + scripts/lib/doc-registry.ts — run `pnpm run docs:gen`) -->
 | Example | What it shows |
@@ -65,62 +63,64 @@ The [`examples/`](./examples) directory has a runnable app per surface. They're 
 
 `examples/scenes/` is a shared fixture directory (test assets like `intro-bed.wav`), not a runnable workspace.
 
-For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins published `@czap/*` ranges, so it installs anywhere from npm. In `astro dev`, open the boundary inspector from the Astro dev-toolbar (the czap toolbar icon).
+For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins the published `liteship` facade, so it installs anywhere from npm. In `astro dev`, open the boundary inspector from the Astro dev-toolbar (the liteship toolbar icon).
 
 ## Quick start
 
-Two concepts get you to a working page: `Boundary.make` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
+The paved road has three moves: **define**, **apply**, **inspect**. In an Astro project:
 
 ```bash
-pnpm add @czap/core @czap/astro
+pnpm add liteship
 ```
 
-That's the whole install for the snippets below — `@czap/core` and `@czap/astro` carry **no third-party runtime peer dependencies** to pin (LiteShip runs on its own native substrate; the `effect` peer was shed in v0.18). Further packages arrive when you first import them.
+`liteship` is the one-dependency facade over the whole stack: the authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro` — one package to install, one import path to learn. The API is synchronous (`.read()` / `.subscribe()` / plain function calls) and carries **no third-party runtime peer dependencies** to pin: LiteShip runs on its own native substrate (the `effect` peer was shed in v0.18). `pnpm create liteship` scaffolds a starter already wired this way.
 
-Prefer the whole stack in a single version-locked dependency? `npm install liteship` — the umbrella that pins **every** `@czap/*` package to one matched version. It's heavier (it pulls the tooling scopes too — CLI, audit, gauntlet), so most apps want just the two above; reach for it when you'd rather lock the fleet together than add packages as you import them.
-
-Define a boundary — a mapping from a continuous signal to named states:
+Define the adaptive behavior in one root import:
 
 ```ts
-// src/boundaries.ts
-import { Boundary } from '@czap/core';
+// src/adaptive.ts
+import { defineAdaptive } from 'liteship';
 
-export const viewport = Boundary.make({
-  input: 'viewport.width',
-  at: [
-    [0, 'mobile'],
-    [768, 'tablet'],
-    [1280, 'desktop'],
-  ],
-  hysteresis: 20, // optional — default 0 (no dead-zone)
+export const layout = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
+  },
+  style: {
+    base: { properties: { display: 'grid', gap: '1rem' } },
+    states: {
+      tablet: { properties: { 'grid-template-columns': 'repeat(2, 1fr)' } },
+      desktop: { properties: { 'grid-template-columns': 'repeat(3, 1fr)' } },
+    },
+  },
 });
 ```
 
-Register the integration and spread the boundary onto any element:
+Register the Astro integration once (the scaffold already does this), then apply and inspect the definition:
 
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration } from '@czap/astro';
+import { integration } from 'liteship/astro';
 
 export default defineConfig({ integrations: [integration()] });
 ```
 
 ```astro
 ---
-import { satelliteAttrs } from '@czap/astro';
-import { viewport } from '../boundaries.js';
+import { layout } from '../adaptive.js';
+
+const plan = layout.plan();
+const preview = layout.explain(940);
 ---
 
-<div {...satelliteAttrs({ boundary: viewport })}>
-  Resize the window: this element's data-czap-state flips
-  mobile → tablet → desktop, and your CSS keys off it.
-</div>
+<main {...layout.attrs()}>
+  At 940px the selected state is {preview.boundary.state}.
+</main>
+<style is:inline set:html={plan.css}></style>
 ```
 
-Resize the window and watch `data-czap-state` change in devtools. `hysteresis` is optional (default `0`, no dead-zone): a value of `20` is a half-width dead-zone — cross a threshold and you stay across until the signal moves past the next half-tick, so no flicker at 768.0001px when the user is dragging the window edge.
-
-That's layer 1. Tokens, styles, themes, and casting a boundary to compiled CSS / GLSL / ARIA live one layer up: the full walkthrough (install, first boundary, cast to CSS, hydrate through Astro) is [GETTING-STARTED.md](./GETTING-STARTED.md), and the shape of day-to-day authoring (what you actually type, what comes out, how the rest of the pipeline reads it) is [AUTHORING-MODEL.md](./AUTHORING-MODEL.md), which opens with a one-paragraph "what it feels like to author" before the reference.
+Resize the window and watch `data-liteship-state` change. `attrs()` carries the runtime definition, `plan()` returns the compiled CSS and matching attributes, and `explain()` reports why a state won. The lower-level `defineBoundary`, `defineStyle`, compiler, and `adaptiveAttrs` APIs remain available as explicit escape hatches; [GETTING-STARTED.md](./GETTING-STARTED.md) introduces them only after this route works.
 
 ## What you can stop hand-rolling
 
@@ -134,17 +134,17 @@ The pattern LiteShip absorbs is the one most projects re-implement, in pieces, b
 
 Hand-rolled, those drift the moment one of them falls behind. Authored as a single boundary, they emit from one definition every time. The boundary is content-addressed (FNV-1a + canonical CBOR per [ADR-0003](./docs/adr/0003-content-addressing.md)); change the definition, every output recomputes against the same hash.
 
-This is not a replacement for media queries (use them where they're enough), CSS custom properties (use them where you control the keyspace), or design-token systems (LiteShip *is* one, and also the projection layer above them). It's the rig that ties them together so they stay in agreement.
+This is not a replacement for media queries (use them where they're enough), CSS custom properties (use them where you control the keyspace), or design-token systems (LiteShip *is* one, and also the projection layer above them). It's the layer that ties them together so they stay in agreement.
 
 ## Frameworks and stacks
 
-LiteShip's primary host integration is Astro 7 (`@czap/astro`). The core authoring layer (`@czap/core`, `@czap/quantizer`, `@czap/compiler`) is framework-portable: it produces CSS strings, GLSL preambles, ARIA records, and TypeScript unions from boundary definitions, and any framework can spread those onto its own elements. `@czap/vite` plugs the same `@token` / `@theme` / `@style` / `@quantize` CSS transforms into any Vite-based stack (React, Solid, Svelte, Vue, vanilla). The Astro-specific surfaces (the `Satellite` component, `client:satellite` directive, `czapMiddleware`) are additive — you don't need them to use the authoring + casting layer.
+LiteShip's primary host integration is Astro 7 (`@liteship/astro`). The core authoring layer (`@liteship/core`, `@liteship/quantizer`, `@liteship/compiler`) is framework-portable: it produces CSS strings, GLSL preambles, ARIA records, and TypeScript unions from boundary definitions, and any framework can spread those onto its own elements. `@liteship/vite` plugs the same `@token` / `@theme` / `@style` / `@quantize` CSS transforms into any Vite-based stack (React, Solid, Svelte, Vue, vanilla). The Astro-specific surfaces (the `Adaptive` component, `client:adaptive` directive, `liteshipMiddleware`) are additive — you don't need them to use the authoring + casting layer.
 
 Mobile and PWA: viewport, motion-preference, GPU tier, and network-condition signals all flow through the same boundary primitive. The framework is presentation-focused and doesn't ship offline-first / service-worker / manifest tooling; pair LiteShip with whatever PWA stack your host already uses.
 
 ## Migration posture
 
-LiteShip is greenfield-first. There is no migration guide for porting an existing React + Tailwind + CSS Modules site, and no automated import path for existing design-token JSON. The right adoption shape is per-surface: pick one section, author it the LiteShip way (signal → boundary → states → styles → compiled output), let media queries and CSS custom properties keep working everywhere else. The framework's "this is not a replacement for media queries" clause means co-existence is the supported model: LiteShip emits `data-czap-state`-keyed selectors that stack alongside existing rules; conflicts resolve via normal CSS specificity. `TokenTailwindCompiler` produces Tailwind v4 token files from LiteShip definitions (one direction); ingesting an existing Tailwind config back into LiteShip is not currently tooled.
+LiteShip can adopt one surface at a time; existing CSS keeps working beside it. The `liteship/migrate` subpath lowers supported media queries, container queries, W3C DTCG 2025.10 tokens, Tailwind `@theme` blocks, and CSS custom properties into ordinary LiteShip definitions. Each adapter returns diagnostics for unsupported or lossy input rather than silently widening it. Migration is an explicit conversion step, not a compatibility runtime: inspect the result, resolve every diagnostic, then own the emitted LiteShip definitions.
 
 ## Support matrix
 
@@ -156,14 +156,14 @@ LiteShip is greenfield-first. There is no migration guide for porting an existin
 | Vite / Astro | 8 / 7 | same — no known gap |
 | Browsers | Chromium + Firefox + WebKit | same — no known gap |
 
-**Peer dependency on Effect is currently `>=4.0.0-beta.0`.** Effect 4 is still in beta upstream (the `latest` dist-tag points at Effect 3.x). LiteShip's published packages declare a broad beta range so consumers can pick the beta they want to vendor; the workspace dev-pins `4.0.0-beta.32` as the tested baseline. When Effect 4.0 stable ships, LiteShip will tighten the peer range to `^4.0.0` in a minor release with a documented upgrade path. If your procurement process doesn't accept beta runtime dependencies, this is the load-bearing item to evaluate before adopting LiteShip in production.
+**Zero third-party runtime peer dependencies.** `@liteship/core` and `@liteship/astro` — and every other published package — declare no third-party runtime peer dependency. The authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions using only the platform and each package's own workspace siblings, and its API surface is synchronous (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`, ADR-0042 / ADR-0043), so there is no beta runtime dependency to clear through procurement before adopting LiteShip in production.
 
 **Windows + Linux are tier-1.** Every push and pull request runs the full `gauntlet:full` on Linux (`truth-linux`) and a broad smoke sweep on Windows (`windows-smoke`) via `.github/workflows/ci.yml`. Both jobs are required for merge. Automated regression catches OS-specific drift before it lands. WebCodecs capture and related browser-specific paths are Chromium-first.
 
 **macOS is tier-2: best-effort with a real CI signal.** A `macos-smoke` job runs on every push and pull request via `.github/workflows/ci.yml` (build, typecheck, lint, invariants, test, test:vite/astro/tailwind, test:redteam, package:smoke). The job is `continue-on-error: true` — a macOS regression won't block merge to main, but it surfaces in the PR check list as a real yellow signal, not as silence. Known areas where macOS may differ from the gated paths:
 
 - **Playwright browser-dep install** — the smoke job runs the test suites that don't depend on Playwright browsers; full `test:e2e` and `coverage:browser` lanes stay Linux-only because Playwright dep install on macOS is a separate path.
-- **Vite filesystem watchers** — chokidar takes different code paths on APFS (FSEvents) vs ext4 / NTFS. HMR watch behavior under `@czap/vite` may differ.
+- **Vite filesystem watchers** — chokidar takes different code paths on APFS (FSEvents) vs ext4 / NTFS. HMR watch behavior under `@liteship/vite` may differ.
 - **Bench-gate distributions on Apple Silicon** — worker startup is faster than the Linux baseline some bench pairs are calibrated against. Hard gates should still pass; the numeric distributions will look different.
 
 Promotion path: macOS moves to tier-1 (drop `continue-on-error`, add to `ci-summary` needs) in two milestones:
@@ -181,7 +181,7 @@ Both milestones are signal-gated, not promise-gated. Contributors are welcome to
 - [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): definition shapes, naming, and composition rules
 - [ARCHITECTURE.md](./ARCHITECTURE.md): package and system architecture, the IR, the AI cast
 - [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md): which package to import for which job
-- [GLOSSARY.md](./GLOSSARY.md): LiteShip / CZAP / `@czap/*` naming and prose register
+- [GLOSSARY.md](./GLOSSARY.md): LiteShip / `@liteship/*` naming and prose register
 - [CONTRIBUTING.md](./CONTRIBUTING.md) · [SECURITY.md](./SECURITY.md) · [RELEASING.md](./RELEASING.md): dev environment, security posture, release process
 
 Hosting, the Astro mental/runtime models, the ADRs, generated API reference, and the changelog are all routed from [DOCS.md](./DOCS.md).
@@ -194,7 +194,7 @@ Trust is set explicitly, not by permission default.
 - Artifact IDs are validated as single path segments. No smuggled traversal.
 - LLM rendering defaults to text-safe; HTML flows route through the shared trust pipeline (`text` / `sanitized-html` / explicit `trusted-html`).
 - The runtime carries no `eval` and no `new Function`. Untrusted text never becomes executable JavaScript at runtime. (WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; see `packages/core/src/wasm-fallback.ts` for the no-WASM path.)
-- The Astro integration publishes a frozen `__CZAP_RUNTIME_POLICY__` snapshot for runtime endpoint and HTML trust decisions.
+- The Astro integration publishes a frozen `__LITESHIP_RUNTIME_POLICY__` snapshot for runtime endpoint and HTML trust decisions.
 
 Full posture and trust-boundary detail in [SECURITY.md](./SECURITY.md) and [STATUS.md](./STATUS.md).
 
@@ -208,7 +208,7 @@ LiteShip is intentionally not, in the current wave:
 - a backend / router stack
 - a stateful edge AI runtime substrate
 
-Pre-1.0 break policy is aggressive on purpose. If an API or internal contract is going to be painful later, the preference is to break it now while the hull is still in greenfield fit-out.
+Pre-1.0 break policy is aggressive on purpose. If an API or internal contract is going to be painful later, the preference is to break it now while the framework is still in greenfield fit-out.
 
 ## Working in this repo
 
@@ -217,33 +217,33 @@ ffmpeg (libx264) + Playwright stack CI uses on `ubuntu-latest`.
 
 ```bash
 pnpm install
-pnpm shakedown            # first-run aggregate: doctor → install → build → test
+pnpm verify            # first-run aggregate: doctor → install → build → test
 # ...or step through it yourself:
-pnpm run doctor           # preflight rig-check (Node, pnpm, build, hooks)
+pnpm run doctor           # preflight environment check (Node, pnpm, build, hooks)
 pnpm run build
 pnpm run typecheck
 pnpm test                 # unit + component + property + integration (~75s)
 pnpm run gauntlet:full    # full release-grade gate (~22min)
 ```
 
-Dev-loop ergonomics: `pnpm dev` (vitest watch), `pnpm run clean` (dry-dock), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `czap doctor`, `czap help`, `czap version`, `czap glossary cast`.
+Dev-loop ergonomics: `pnpm dev` (showcase example dev server), `pnpm test:watch` (vitest watch), `pnpm run clean` (wipe build/test artifacts), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `liteship doctor`, `liteship help`, `liteship version`, `liteship glossary cast`.
 
-Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:satellite-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
+Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:adaptive-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-nine phases (see `STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
+`pnpm run gauntlet:full` is the full release-grade gate. It runs the complete ordered phase sequence (see `STATUS.md` for the list), starting with an enforced environment preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed.
 
-## Latest gauntlet benchmark snapshot
+## Last generated gauntlet benchmark snapshot
 
 <!-- BEGIN BENCH (generated by scripts/gen-docs.ts from benchmarks/readme-snapshot.json — refresh via scripts/refresh-bench-snapshot.ts against a CI artifact, then `pnpm run docs:gen`) -->
 Pulled from the `truth-artifacts-linux` artifact of [CI run 28506238242](https://github.com/freebatteryfactory/LiteShip/actions/runs/28506238242) (commit `7d45793`) on 2026-07-01 (linux x64, Node 22). Refresh with `pnpm exec tsx scripts/refresh-bench-snapshot.ts` against a newer artifact, then `pnpm run docs:gen`.
 
 - `pnpm run gauntlet:full` passed end-to-end in 15m42s under CI conditions.
 - `bench:gate` passed: 7 hard gates, 0 failed, 5 replicates.
-- `package:smoke` passed for every publishable `@czap/*` scope.
+- `package:smoke` passed for every publishable `@liteship/*` scope.
 
 | Hard-gated pair | Median directive | Median baseline | Median overhead | Threshold |
 | --- | ---: | ---: | ---: | ---: |
-| `satellite` hot path | 2,699ns | 2,612ns | 3.33% | 15% |
+| `adaptive` hot path | 2,699ns | 2,612ns | 3.33% | 15% |
 | `stream` parse + patch | 776,063ns | 788,187ns | -1.54% | 15% |
 | `llm` text chunk parse | 823,421ns | 775,031ns | 6.20% | 15% |
 | `worker` fallback eval | 2,982ns | 2,832ns | 5.33% | 15% |
@@ -256,7 +256,7 @@ Diagnostic watch, not a release gate: `llm-runtime-steady` runs above its relati
 
 ## Operational telemetry
 
-For run-by-run truth (current test counts, coverage totals, benchmark posture, watch items, artifact policy) read [STATUS.md](./STATUS.md). Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are the live source of truth when they're fresh and `pnpm run feedback:verify` passes.
+For run-by-run truth, use artifacts produced by the authorities on one frozen source head. [STATUS.md](./STATUS.md) names those authorities and deliberately does not claim that an older artifact proves the current branch. Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are evidence only when their source SHA matches and the corresponding authority completed.
 
 [`ARCHITECTURE.md`](./ARCHITECTURE.md), the ADRs, and the package surface docs explain shape and intent. They are not run-by-run ledgers.
 

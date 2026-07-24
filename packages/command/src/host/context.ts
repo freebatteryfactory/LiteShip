@@ -2,7 +2,7 @@
  * createNodeCommandContext — the ONE shared host CommandContext factory. Both
  * the CLI and MCP adapters build their injected I/O from this, so a command
  * runs identically whichever protocol skin invoked it. This is the Node host
- * execution surface; the pure `@czap/command` main entry never imports it.
+ * execution surface; the pure `@liteship/command` main entry never imports it.
  *
  * It provides every host capability the finite handlers need EXCEPT the ones
  * that are genuinely adapter-specific (e.g. the CLI's own `hostVersion`, or
@@ -14,9 +14,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { Compositor, VideoRenderer, wallClock, type Millis } from '@czap/core';
-import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
-import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@czap/gauntlet';
+import { Compositor, VideoRenderer, wallClock, type Millis } from '@liteship/core';
+import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@liteship/assets';
+import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@liteship/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
@@ -38,16 +38,16 @@ const DEFAULT_HEIGHT = 720;
 /**
  * Build the shared Node host context. Pass the adapter's `cwd` so EVERY path
  * capability resolves against it (manifest, cache, file reads, asset/scene
- * loading, CZAP_CAPSULE_MANIFEST) — not just manifest + cache.
+ * loading, LITESHIP_CAPSULE_MANIFEST) — not just manifest + cache.
  *
  * `skipDetector` and `earlyReturnDetector` are OPTIONAL host-built SOUND AST detectors
- * (`@czap/audit`'s `detectSkipsAST` / `detectEarlyReturnBeforeExpectAST`). They are
- * injected by the ADAPTER, not imported here: `@czap/command` must NOT depend on
- * `@czap/audit` (it would drag the TS compiler into `@czap/mcp-server`). So the CLI
- * adapter — which already deps `@czap/audit` — passes them, and the in-process
- * `runGauntlet` (`czap check`) gains parser-backed skip and early-return detection. The
+ * (`@liteship/audit`'s `detectSkipsAST` / `detectEarlyReturnBeforeExpectAST`). They are
+ * injected by the ADAPTER, not imported here: `@liteship/command` must NOT depend on
+ * `@liteship/audit` (it would drag the TS compiler into `@liteship/mcp-server`). So the CLI
+ * adapter — which already deps `@liteship/audit` — passes them, and the in-process
+ * `runGauntlet` (`liteship check`) gains parser-backed skip and early-return detection. The
  * MCP adapter omits them → the lean token fallback (the documented degradation, exactly
- * like `runCheckInvariants`, which is likewise CLI-only because it needs `@czap/audit`).
+ * like `runCheckInvariants`, which is likewise CLI-only because it needs `@liteship/audit`).
  */
 export function createNodeCommandContext(
   opts: {
@@ -59,7 +59,7 @@ export function createNodeCommandContext(
      * CLI adapter builds its context purely as `createNodeCommandContext({ …overrides })`
      * instead of hand-writing an inline `CommandContext` literal. Every provided
      * key wins over the default of the same name; keys absent here keep the shared
-     * host implementation. This is how the CLI injects the heavy `@czap/audit`-backed
+     * host implementation. This is how the CLI injects the heavy `@liteship/audit`-backed
      * gates (`runAuditFloor`, `runPackageSmoke`, `runCapsuleGate`, `runCheckInvariants`)
      * and the vitest runner (`runVitest`) that are NOT provisioned in the shared
      * factory — over MCP those stay absent and the handlers degrade structurally.
@@ -118,10 +118,10 @@ export function createNodeCommandContext(
     runGauntlet: async (globs) =>
       litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector, opts.earlyReturnDetector),
     // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the
-    // invariant scan needs `@czap/audit`'s `normalizeRepoPath` (the one B5b
-    // slash-normalize home), and `@czap/command` must not import `@czap/audit`
-    // (it would drag the heavy TS-compiler/glob engine into `@czap/mcp-server`).
-    // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@czap/cli`
+    // invariant scan needs `@liteship/audit`'s `normalizeRepoPath` (the one B5b
+    // slash-normalize home), and `@liteship/command` must not import `@liteship/audit`
+    // (it would drag the heavy TS-compiler/glob engine into `@liteship/mcp-server`).
+    // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@liteship/cli`
     // injects `runCheckInvariants`, and over MCP it degrades to capabilityUnavailable.
     loadAssetBytes,
     runAudioProjection: async (bytes, projection, assetId) => {
@@ -148,15 +148,15 @@ export function createNodeCommandContext(
     },
     renderScene: async ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) => {
       // Compositor.create is sync-first (Wave 2): it returns the live instance
-      // plus the Lifetime that owns its teardown. The render collapses to a
-      // plain await; the scope's sole finalizer (closing the reactive `changes`
-      // kernel) runs on the way out, preserving the old `Effect.scoped` cleanup.
-      const { compositor, lifetime } = Compositor.create();
+      // that owns its own teardown. The render collapses to a plain await; the
+      // compositor's sole finalizer (closing the reactive `changes` kernel) runs
+      // on the way out, preserving the old `Effect.scoped` cleanup.
+      const compositor = Compositor.create();
       try {
         const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
         return await renderWithFfmpeg(renderer.frames(), { output, width, height, fps });
       } finally {
-        await lifetime.dispose();
+        await compositor.dispose();
       }
     },
     cache: {

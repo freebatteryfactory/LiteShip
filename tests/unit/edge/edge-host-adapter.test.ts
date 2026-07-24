@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary } from '@czap/core';
-import { createEdgeHostAdapter, ClientHints, enumerateTierKeys } from '@czap/edge';
+import { defineBoundary } from '@liteship/core';
+import { createEdgeHostAdapter, ClientHints, enumerateTierKeys } from '@liteship/edge';
 import * as ThemeCompiler from '../../../packages/edge/src/theme-compiler.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 
@@ -17,7 +17,7 @@ function makeHeaders(overrides: Record<string, string> = {}): Headers {
 }
 
 /** Real minted address -- the KV keyspace is content-addressed (ADR-0003). */
-const testBoundary = Boundary.make({
+const testBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
@@ -54,7 +54,7 @@ describe('createEdgeHostAdapter', () => {
 
     expect(result.capabilities.viewportWidth).toBe(1280);
     expect(result.tier.capTier).toBeDefined();
-    expect(result.htmlAttributes).toContain('data-czap-tier=');
+    expect(result.htmlAttributes).toContain('data-liteship-tier=');
     expect(result.responseHeaders.acceptCH).toContain('Sec-CH-Viewport-Width');
     expect(result.cacheStatus).toBe('disabled');
   });
@@ -184,7 +184,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('serves precompiled manifest outputs without touching KV', async () => {
     const { kv, store } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -192,9 +192,9 @@ describe('createEdgeHostAdapter', () => {
       ],
     });
     const outputs = {
-      css: '@container viewport-width (width >= 768px) {.czap-boundary {--gap: 24px;}}',
+      css: '@container viewport-width (width >= 768px) {.liteship-boundary {--gap: 24px;}}',
       propertyRegistrations: '',
-      containerQueries: '@container viewport-width (width >= 768px) {.czap-boundary {--gap: 24px;}}',
+      containerQueries: '@container viewport-width (width >= 768px) {.liteship-boundary {--gap: 24px;}}',
     };
     const precompiled = Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs]));
     const getSpy = vi.spyOn(kv, 'get');
@@ -218,7 +218,7 @@ describe('createEdgeHostAdapter', () => {
     const { kv } = makeKV();
     const outputs = { css: '.asset{}', propertyRegistrations: '', containerQueries: '' };
     const precompiled = Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs]));
-    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_czap/${key}.css`]));
+    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_liteship/${key}.css`]));
     const adapter = createEdgeHostAdapter({
       cache: {
         kv,
@@ -230,13 +230,13 @@ describe('createEdgeHostAdapter', () => {
 
     const result = await adapter.resolve(makeHeaders());
 
-    expect(result.assetUrl).toBe('/_czap/animations:enhanced.css');
+    expect(result.assetUrl).toBe('/_liteship/animations:enhanced.css');
     expect(result.compiledOutputs).toEqual(outputs);
   });
 
   test('falls back to compile (and KV write-back) when the manifest does not cover the tier', async () => {
     const { kv, store } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -268,7 +268,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('compile fallback writes configured invalidation tags into the KV index', async () => {
     const { kv, store } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -287,7 +287,7 @@ describe('createEdgeHostAdapter', () => {
     await adapter.resolve(makeHeaders());
 
     const dataKey = [...store.keys()].find((key) => key.includes(boundary.id))!;
-    const tagKeys = JSON.parse(store.get('czap:tag:products') ?? '[]') as string[];
+    const tagKeys = JSON.parse(store.get('liteship:tag:products') ?? '[]') as string[];
     expect(tagKeys).toEqual([dataKey]);
   });
 
@@ -309,15 +309,15 @@ describe('createEdgeHostAdapter', () => {
     await adapter.resolve(makeHeaders());
 
     const dataKey = [...store.keys()].find((key) => key.includes(testBoundary.id))!;
-    const routeTagKeys = JSON.parse(store.get('czap:tag:route:hero') ?? '[]') as string[];
-    const boundaryTagKeys = JSON.parse(store.get(`czap:tag:${testBoundary.id}`) ?? '[]') as string[];
+    const routeTagKeys = JSON.parse(store.get('liteship:tag:route:hero') ?? '[]') as string[];
+    const boundaryTagKeys = JSON.parse(store.get(`liteship:tag:${testBoundary.id}`) ?? '[]') as string[];
     expect(routeTagKeys).toEqual([dataKey]);
     expect(boundaryTagKeys).toEqual([dataKey]);
   });
 
   test('manifest tier gap without a compile fallback warns once and yields no outputs', async () => {
     const { kv } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -345,7 +345,7 @@ describe('createEdgeHostAdapter', () => {
 
   test('cache config with neither precompiled nor compile fails fast with a teaching error', () => {
     const { kv } = makeKV();
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -363,14 +363,14 @@ describe('createEdgeHostAdapter', () => {
 
 describe('createEdgeHostAdapter (multi-boundary)', () => {
   /** Distinct content -> distinct content addresses (ADR-0003). */
-  const heroBoundary = Boundary.make({
+  const heroBoundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
       [768, 'wide'],
     ],
   });
-  const sidebarBoundary = Boundary.make({
+  const sidebarBoundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'collapsed'],
@@ -442,7 +442,7 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
   });
 
   test('two names sharing one ContentAddress cache separately -- same definition, different CSS (Codex P1)', async () => {
-    // The id comes from Boundary.make's content address; two NAMES can
+    // The id comes from defineBoundary's content address; two NAMES can
     // reference the same definition while their @quantize CSS differs.
     // id+tier-only keys would let hero's compile result serve sidebar.
     const { kv, store } = makeKV();
@@ -493,7 +493,7 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
 
   test('a sole boundaries entry still populates the top-level compiledOutputs', async () => {
     const { kv } = makeKV();
-    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_czap/hero/${key}.css`]));
+    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_liteship/hero/${key}.css`]));
     const adapter = createEdgeHostAdapter({
       cache: {
         kv,
@@ -504,9 +504,9 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
     const result = await adapter.resolve(makeHeaders());
 
     expect(result.compiledOutputs?.css).toBe('.hero{}');
-    expect(result.assetUrl).toBe('/_czap/hero/animations:enhanced.css');
+    expect(result.assetUrl).toBe('/_liteship/hero/animations:enhanced.css');
     expect(result.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
-    expect(result.boundaries?.hero?.assetUrl).toBe('/_czap/hero/animations:enhanced.css');
+    expect(result.boundaries?.hero?.assetUrl).toBe('/_liteship/hero/animations:enhanced.css');
   });
 
   test('top-level cacheStatus aggregates worst case across boundaries', async () => {

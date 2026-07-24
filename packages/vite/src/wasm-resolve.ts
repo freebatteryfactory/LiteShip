@@ -1,17 +1,17 @@
 /**
- * WASM binary resolution -- locates the czap-compute .wasm file.
+ * WASM binary resolution -- locates the liteship-compute .wasm file.
  *
  * Searches for the compiled WASM binary in conventional locations:
  * 1. Configured path (if provided)
- * 2. crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
+ * 2. crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm
  *    (monorepo dev — a fresh `pnpm run build:wasm` output)
- * 3. The artifact shipped inside `@czap/core`, located through the module graph
+ * 3. The artifact shipped inside `@liteship/core`, located through the module graph
  *    (the default for an installed consumer, who has no Rust crate to build).
  *    See {@link resolvePackagedWasm}. This is the branch that makes
- *    `czap({ wasm: { enabled: true } })` "just work" off a plain npm install
+ *    `liteship({ wasm: { enabled: true } })` "just work" off a plain npm install
  *    (0.2.1: before this, an installed consumer had nothing to resolve and
  *    silently ran the TS fallback).
- * 4. public/czap-compute.wasm (host pre-copied — explicit override of last resort)
+ * 4. public/liteship-compute.wasm (host pre-copied — explicit override of last resort)
  *
  * @module
  */
@@ -33,16 +33,27 @@ export interface WASMResolution {
 
 /**
  * Render the conventional WASM search locations for diagnostics.
+ *
+ * `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
+ * to the real {@link resolvePackagedWasm}; injectable so a test simulating a
+ * consumer with no shipped binary can force that source absent (a synthetic temp
+ * root cannot model the module-graph resolution the real resolver performs).
  */
-export function formatWasmSearchPaths(projectRoot: string, configPath?: string): string {
+export function formatWasmSearchPaths(
+  projectRoot: string,
+  configPath?: string,
+  resolvePackaged: () => string | null = resolvePackagedWasm,
+): string {
   const paths: string[] = [];
   if (configPath) {
     const resolved = path.isAbsolute(configPath) ? configPath : path.join(projectRoot, configPath);
     paths.push(resolved);
   }
-  paths.push(path.join(projectRoot, 'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm'));
-  paths.push(resolvePackagedWasm() ?? '@czap/core/dist/czap-compute.wasm (resolved via @czap/vite)');
-  paths.push(path.join(projectRoot, 'public/czap-compute.wasm'));
+  paths.push(
+    path.join(projectRoot, 'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm'),
+  );
+  paths.push(resolvePackaged() ?? '@liteship/core/dist/liteship-compute.wasm (resolved via @liteship/vite)');
+  paths.push(path.join(projectRoot, 'public/liteship-compute.wasm'));
   return paths
     .map((candidate) => {
       if (!path.isAbsolute(candidate)) return candidate;
@@ -53,13 +64,22 @@ export function formatWasmSearchPaths(projectRoot: string, configPath?: string):
 }
 
 /**
- * Resolve the czap-compute WASM binary path.
+ * Resolve the liteship-compute WASM binary path.
+ *
+ * `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
+ * to the real {@link resolvePackagedWasm}; injectable so a test simulating a
+ * consumer with no shipped binary can force the `'package'` source absent and
+ * drive the config/crate/public ordering deterministically off a temp root.
  */
-export function resolveWASM(projectRoot: string, configPath?: string): WASMResolution | null {
+export function resolveWASM(
+  projectRoot: string,
+  configPath?: string,
+  resolvePackaged: () => string | null = resolvePackagedWasm,
+): WASMResolution | null {
   // 1. Configured path
   if (configPath) {
     const resolved = path.isAbsolute(configPath) ? configPath : path.join(projectRoot, configPath);
-    if (fileExists(resolved, 'czap/vite.wasm-resolve')) {
+    if (fileExists(resolved, 'liteship/vite.wasm-resolve')) {
       return { filePath: resolved, source: 'config' };
     }
   }
@@ -67,22 +87,22 @@ export function resolveWASM(projectRoot: string, configPath?: string): WASMResol
   // 2. Rust crate build output (monorepo dev: a fresh `build:wasm`)
   const crateOutput = path.join(
     projectRoot,
-    'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm',
+    'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm',
   );
-  if (fileExists(crateOutput, 'czap/vite.wasm-resolve')) {
+  if (fileExists(crateOutput, 'liteship/vite.wasm-resolve')) {
     return { filePath: crateOutput, source: 'crate' };
   }
 
-  // 3. The artifact shipped inside @czap/core — the installed-consumer default,
+  // 3. The artifact shipped inside @liteship/core — the installed-consumer default,
   //    resolved through the module graph (pnpm-nesting-safe).
-  const packaged = resolvePackagedWasm();
+  const packaged = resolvePackaged();
   if (packaged !== null) {
     return { filePath: packaged, source: 'package' };
   }
 
   // 4. Public directory (pre-copied — explicit last-resort override)
-  const publicPath = path.join(projectRoot, 'public/czap-compute.wasm');
-  if (fileExists(publicPath, 'czap/vite.wasm-resolve')) {
+  const publicPath = path.join(projectRoot, 'public/liteship-compute.wasm');
+  if (fileExists(publicPath, 'liteship/vite.wasm-resolve')) {
     return { filePath: publicPath, source: 'public' };
   }
 

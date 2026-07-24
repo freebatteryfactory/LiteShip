@@ -52,7 +52,7 @@ These are no longer roadmap aspirations; they are current repo reality:
 - text-safe default LLM rendering
 - shared HTML trust pipeline for stream and LLM rendering
 - morph sanitization for dangerous HTML classes
-- boundary-state lockdown to `--czap-*`, `aria-*`, and `role`
+- boundary-state lockdown to `--liteship-*`, `aria-*`, and `role`
 - package tarball smoke for publishable packages
 - Linux truth CI plus Windows truth-preserving and browser-matrix lanes
 - production middleware parity for worker-isolation headers
@@ -81,7 +81,7 @@ Remaining advisory pressure is info-level strike-board pockets:
 - shadow-test helpers (`tests/helpers/mock-*.ts`, `tests/support/`) with no
   production imports
 - assertion-free `tests/generated/*` files
-- `crates/czap-compute` traceability evidence
+- `crates/liteship-compute` traceability evidence
 
 Success condition:
 - info-level pressure trends down without hiding real diagnostics
@@ -102,7 +102,7 @@ Success condition:
 
 Code side landed 2026-06-10: the release workflow IS the OIDC pivot
 (renamed `Release (OIDC trusted publishing)`; token steps deleted;
-`czap ship --provenance` per package), ship emits `ShipSkippedReceipt`
+`liteship ship --provenance` per package), ship emits `ShipSkippedReceipt`
 for already-published versions so workflow re-runs need no shell
 fallback, and the deprecated `attachViewportObserver` alias is removed
 (superseded by `attachSignalObserver` in 0.1.5).
@@ -123,7 +123,7 @@ Both are resolved in 0.8.0:
 - **Resolved in 0.8.0 — Example `06-mutation-roundtrip` store contract** — show the compare-and-swap `expected` argument
   inline in the store snippet (review nit). Pure doc-comment polish; no behavior change.
 - **Resolved in 0.8.0 — `spine-conformance` guard is non-comprehensive** — it pins only an explicit SUBSET of
-  `@czap/_spine` types, which is why the `CapSet.levels` Set→array drift slipped past it (a review bot
+  `@liteship/_spine` types, which is why the `CapSet.levels` Set→array drift slipped past it (a review bot
   caught it, the gate did not). Make it cover every exported spine type, or auto-derive the
   bidirectional contract, so no future spine drift can hide behind a green gate.
 
@@ -163,17 +163,17 @@ validation and three parked items, recorded here so they are not lost:
   second call site in the vite boundary manifest
   (`packages/vite/src/boundary-manifest.ts:495`).
 - **Upstream candidate — `htmlAttributesMap` dropped one hop from home:**
-  `@czap/edge` builds the spreadable map expressly for the Astro spread — its
+  `@liteship/edge` builds the spreadable map expressly for the Astro spread — its
   own docstring says `<html {...htmlAttributesMap}>`
-  (`packages/edge/src/host-adapter.ts:213`) — but `czapMiddleware` copies six
-  fields off the edge resolution into `locals.czap.edge` and drops exactly that
+  (`packages/edge/src/host-adapter.ts:213`) — but `liteshipMiddleware` copies six
+  fields off the edge resolution into `locals.liteship.edge` and drops exactly that
   one (`packages/astro/src/middleware.ts:140-147`); only the pre-joined
   `htmlAttributes` string survives, which cannot be spread. SSR shells rebuild
-  the map by hand from `tiers` with hand-prefixed `data-czap-`, reintroducing
+  the map by hand from `tiers` with hand-prefixed `data-liteship-`, reintroducing
   the silent-axis-miss the map exists to prevent. One-field plumb:
-  `CzapLocals['edge']` + the middleware copy + api-surface snapshot.
+  `LiteshipLocals['edge']` + the middleware copy + api-surface snapshot.
 - **Rest of the consumer's upstream backlog, re-baselined against source:** a
-  `computeShaderIntegrity` producer is a real thin gap (`@czap/web` ships
+  `computeShaderIntegrity` producer is a real thin gap (`@liteship/web` ships
   parse / verify / classify / decide but no source→`sha256-…` producer; the
   digest kernel already lives inside `verifyShaderIntegrity`); a
   Boundary→DocumentGraph node helper is real and corroborated in-repo — our own
@@ -186,7 +186,7 @@ validation and three parked items, recorded here so they are not lost:
   from fields; a tier-aware
   reveal/stagger primitive and a Save-Data/DPR responsive-image primitive are
   net-new surface whose ingredients exist (Client Hints already parse
-  `Save-Data`; tiers ride `locals.czap`) but which sit on the
+  `Save-Data`; tiers ride `locals.liteship`) but which sit on the
   primitive-vs-UI-kit thesis line — owner design fork, not intake nods.
 - **Correction to the 0.6.0 findings batch (finding #6, COEP):** the original
   "COEP is not overridable" framing is inverted (memory flagged it, source
@@ -205,19 +205,19 @@ validation and three parked items, recorded here so they are not lost:
 Second batch (2026-07-05, production site live on 0.8.0 — scroll-choreography
 work; every claim below re-verified against source before recording):
 
-- **Validation — the satellite/SSR resolution chain works as designed:** the
+- **Validation — the adaptive/SSR resolution chain works as designed:** the
   site fixed a mobile hero-fade bug by keying its tuck animation off the
-  boundary's `data-czap-state` attribute and switching SSR to the
+  boundary's `data-liteship-state` attribute and switching SSR to the
   request-aware `resolveInitialState` (UA + Client Hints + edge tier) — regime
   detection and server-side state resolution doing their designed jobs in
   production. Also a live confirmation of the parked height-axis trap:
   height-axis viewport boundaries impose `:root` size containment
   (`packages/vite/src/css-quantize.ts:515-525`) that clamps page wrappers, so
   the site's card-deck pinning had to route around `viewport.height` entirely.
-- **Upstream candidate — `CzapLocals.tiers` erases the tier unions:**
+- **Upstream candidate — `LiteshipLocals.tiers` erases the tier unions:**
   `packages/astro/src/middleware.ts:39` types tiers as
   `Readonly<Record<CapAxis, string>>`, discarding `CapTier`
-  (`packages/core/src/caps.ts:13`), `MotionTier` (re-exported from `@czap/core`),
+  (`packages/core/src/caps.ts:13`), `MotionTier` (re-exported from `@liteship/core`),
   and `DesignTier` (`packages/detect/src/tiers.ts:71`) — consumers switch on
   tier values with zero exhaustiveness or typo protection. A `Record` cannot
   express per-axis value types; the fix is the keyed struct
@@ -252,7 +252,7 @@ Third batch (2026-07-05, same production site — agent-tooling + doctor gaps;
 premises re-verified, one corrected):
 
 - **Docs-MCP — highest value, pattern proven downstream:** the consumer lost
-  time assuming `@czap/mcp-server` was a docs server (it exposes the czap
+  time assuming `@liteship/mcp-server` was a docs server (it exposes the liteship
   COMMAND catalog — its README says so in line one, but the package name
   invites the misread; one "what this is not" line is cheap insurance), then
   hand-built a stateless Streamable-HTTP docs MCP (list/search/get_doc +
@@ -260,7 +260,7 @@ premises re-verified, one corrected):
   source: NO first-party docs-bundle generator exists (`docs:gen` fills
   README registry blocks only; the command catalog has no docs verb) — so
   the upstream shape is two parts, not one: a docs-bundle emitter plus a
-  bundle→`/mcp` endpoint helper, making every czap docs site agent-callable
+  bundle→`/mcp` endpoint helper, making every liteship docs site agent-callable
   for free. The consumer's working reference impl is the design input.
 - **Boundary-shadowing diagnostic — the consumer's crown bug, still
   unfiled (tracker checked: only #104/#105 exist):** a hand-authored
@@ -271,12 +271,12 @@ premises re-verified, one corrected):
   diagnostic — "non-boundary rule shadows boundary `<id>` output at equal
   specificity" — closing a whole class of silent failure.
 - **Workers module-scope Date probe:** module-scope `new Date()`/`Date.now()`
-  in Workers reads frozen/epoch time (the 1970 bug, hit live on a czap
+  in Workers reads frozen/epoch time (the 1970 bug, hit live on a liteship
   site). The engine-side clock law exists (doctor's own timestamp is
   wallClock-injected, `packages/cli/src/commands/doctor/doctor.ts:67`) but
   no consumer-facing doctor/audit probe flags top-level ambient time reads
   in Workers-targeted code.
-- **`czap doctor --deployed <url>` — doctor names this gap itself:**
+- **`liteship doctor --deployed <url>` — doctor names this gap itself:**
   `packages/cli/src/commands/doctor/probes-cloudflare.ts:295-298` emits the
   'CSP / isolation' probe as `advisory — doctor cannot read deployed
   response headers` with only a static hint (worker-src/connect-src +
@@ -315,7 +315,7 @@ proxy passthrough is workerd-verified but needs one deployed-worker test.
   `refreshBase` becomes near-free polling (today the read side is a
   hand-rolled unconditional full-graph GET, `examples/06-mutation-roundtrip`).
   Plus a retrying read sender (spec-idempotent; the POST submit correctly
-  never retries) and a loud QUERY→POST-with-`X-Czap-Query` fallback ladder.
+  never retries) and a loud QUERY→POST-with-`X-Liteship-Query` fallback ladder.
 - **Validator law (all four shards independently):** the wire validator and
   any body-derived cache key MUST be the sha256 `integrity_digest` /
   canonical-body digest — never 32-bit fnv1a (silent-stale-304 and
@@ -344,7 +344,7 @@ means every rung must feature-detect with today's path as the permanent floor.
   lifted to the DOM layer. Nothing in the Turbo/htmx/LiveView class has it.
 - **Adopt-under candidates:** native Sanitizer as a wrapped backend beneath
   html-trust (intersection of both, differential drift guard — never
-  subsume); a `data-czap-sink` stream-to-element primitive composing with
+  subsume); a `data-liteship-sink` stream-to-element primitive composing with
   morph-opaque (fallback path is the tested default, useful in every browser
   today); `streamHTML()` as an LLM htmlPolicy rung (also cures the O(n²)
   full-string re-parse per frame); split-resolve (sync shell + per-boundary
@@ -371,7 +371,7 @@ the class); `insertAdjacentHTML`/`document.write` are in no taint registry
 is awaited on the request path (`waitUntil` it); CDN caching emits no `Vary`
 on any client hint while HTML is tier-varying (latent wrong-tier serving);
 `ResumptionConfig.timeout` is write-only dead config (no AbortSignal, no
-retry, on already-idempotent recovery GETs); `czap:request-snapshot` is
+retry, on already-idempotent recovery GETs); `liteship:request-snapshot` is
 dispatched with no shipping-runtime listener (only a component test subscribes —
 dead dispatch); no audit surface ever reads
 consumer app code (the `*Unsafe` sinks are exactly what consumers will copy).
@@ -382,9 +382,9 @@ A four-agent cross-reference of this roadmap **and** persistent memory against a
 external LiteShip audit, plus a whole-doc staleness sweep (every root doc read
 cover-to-cover, not grepped). Every claim below was verified against current
 source. Corrections were folded into the Epic-6/7 bullets in place — COEP finding
-#6 (inverted framing fixed), the `CzapLocals.tiers` union anchors, the
+#6 (inverted framing fixed), the `LiteshipLocals.tiers` union anchors, the
 node-builder framing (the fixture *does* use `sealNode`; the gap is a from-parts
-builder), the `czap:request-snapshot` listener wording, and the resolved
+builder), the `liteship:request-snapshot` listener wording, and the resolved
 `resolveInitialState` doc snippet. New items are recorded here.
 
 Guiding rule for this whole section (per owner directive): where a doc "overclaims,"
@@ -408,11 +408,11 @@ plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
   docs-bundle generator exists — `scripts/gen-docs.ts` fills README registry
   blocks only. Shape: `docs:bundle` emitter → `docsMcpRoute(bundle)`.
 - **Consumer-audit doctor mode.** Concretize the "no audit surface reads
-  consumer app code" free defect: a scoped, read-only `czap doctor`/
+  consumer app code" free defect: a scoped, read-only `liteship doctor`/
   `audit --consumer-app` mode that scans consumer *source* for known LiteShip
   integration smells — unsafe HTML sinks, raw-`Request` `resolveInitialState`,
   missing `Vary`, boundary shadowing, module-scope Worker `Date`, hand-built
-  `data-czap-*`, direct graph mutation. Seed: the taint registry
+  `data-liteship-*`, direct graph mutation. Seed: the taint registry
   (`packages/cli/src/lib/taint-policy.ts`); today the corpus is framework
   packages only (`packages/gauntlet/src/node-context.ts`), never arbitrary
   consumer app code.
@@ -422,7 +422,7 @@ plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
 - **Route the dev inspector through the trust pipeline.** SECURITY.md asserts
   "no third unguarded `innerHTML` path." The dev-only boundary inspector
   (`packages/astro/src/runtime/inspector/panel.ts` — four raw `el.innerHTML = …`
-  writes, one interpolating a `data-czap-state` attribute; registered `astro dev`
+  writes, one interpolating a `data-liteship-state` attribute; registered `astro dev`
   only, `integration.ts`) is a third path. Route those writes through
   `createHtmlFragment`/`assignInnerHTML` so the claim is literally true
   everywhere. Small (4 sites), dev-only, low-risk — the point is the claim stays
@@ -493,7 +493,7 @@ plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
 
 **External-dep note.** The QUERY `mod[method]` dispatch claim (Astro dispatches
 `export const QUERY` with no verb allowlist) is not re-verifiable in-repo (no
-`astro` in the tree, only `@czap/astro`); it stays recorded as empirically
+`astro` in the tree, only `@liteship/astro`); it stays recorded as empirically
 verified end-to-end. The read-leg factory it implies
 (`graphQueryRoute`/`handleGraphQuery`) is confirmed **absent** — correct, it is a
 proposal — and would mirror the existing `graphMutationRoute`
@@ -549,7 +549,7 @@ fine-grained reactive runtime (do not build SolidJS)**, (6) one reveal end to en
 proof. Done = that reveal compiles from graph and runs, gauntlet-gated. Then expand.
 
 **Guardrails (Laws):** continuous-write-never-patches; sugar is data over canonical
-intent, no behavior authority (precedent: `@czap/scene` already ships
+intent, no behavior authority (precedent: `@liteship/scene` already ships
 `fade`/`pulse`/`ease`/`syncTo` sugar over primitives); native CSS first + typed
 runtime floor forever; **GSAP barred as a first-party dep** (its license restricts
 Webflow-competitive no-code animation builders — exactly this product), Motion
@@ -563,7 +563,7 @@ cannot ship silent shader lies.
 lost):** `DocumentGraph` is already the creative-document/design-file format
 (content-addressed, `GraphPatch` = undo/redo/collab/AI-edit substrate); `Component`
 is a Webflow-symbol-shaped primitive (binds boundary/styles/slots), not a React
-component; `@czap/stage` is the export dock (one graph → page + video, proven to
+component; `@liteship/stage` is the export dock (one graph → page + video, proven to
 share a source digest); `assets` beat/onset/waveform + `scene` beat-binding = an
 audio-reactive path (flagship demo candidate: audio-reactive adaptive landing page
 → web + video from one graph); `cap-ladder` is a capability-aware-design product
@@ -590,8 +590,8 @@ blocking Finding — a `TransitionNode` with `routing`/`durationMs` that no inte
 reads is dead data in a live type. First red fixture is the current repo state.
 Mechanical certainties block; heuristics advise. Tracked as **#132** (the acceptance
 gate for #130 — "done" = this gate green). Obligations derive from the `NodeFamily`
-union + a status tag, never a hand-maintained string mirror. `@czap/audit` produces
-the field-reader facts; `@czap/gauntlet` decides over them (no `typescript` dep in
+union + a status tag, never a hand-maintained string mirror. `@liteship/audit` produces
+the field-reader facts; `@liteship/gauntlet` decides over them (no `typescript` dep in
 gauntlet); ast-grep is a fast smoke detector, not the authority.
 
 **New-brain re-frame of the upstream ledger (2026-07-06).** A dogfood consumer
@@ -606,16 +606,16 @@ replayable graph events; continuous transients (`scroll.progress`/`pointer`/`aud
 `time`) are correctly ephemeral and must NOT replay. So:
 - **#133 (signal gap-replay):** do NOT widen the SSE `{ patches }` payload to carry
   signals — that manufactures a divergent second substrate AND blindly replays
-  ephemeral transients. Interim: wire the dead `czap:request-snapshot` to
+  ephemeral transients. Interim: wire the dead `liteship:request-snapshot` to
   `refreshBase`/`adopt` + snapshot re-sync for missed discrete crossings. Full: signals
   as `StateCell`s, patch/receipt-chain replay via #119. The consumer's app-side "WO-8"
   is the workaround until this is native.
-- **#134 (wire-contract):** the `czap:*`/`data-czap-*` contract has zero docs coverage
+- **#134 (wire-contract):** the `liteship:*`/`data-liteship-*` contract has zero docs coverage
   → GENERATE it from a source registry + drift guard (ADR-0028/0018 pattern), never a
   hand-written page (SKILL §16). Same issue folds gap-3: fix the stale "back-compat"
   docstring — ADR-0028 already decided plain-element `client:*` is first-class.
 - **Old-brain corrections applied:** #122's "…or remove it" options for
-  `ResumptionConfig.timeout` and `czap:request-snapshot` were struck (both are
+  `ResumptionConfig.timeout` and `liteship:request-snapshot` were struck (both are
   unfinished features, not dead code — complete-don't-nerf); #119 reframed from a
   "polling perf nicety" to the collab-sync/gap-replay substrate.
 - **Motion-epic-shaped (build per #130, not standalone):** #112 (node builder, a
@@ -642,7 +642,7 @@ follow-up issue. Four issues are
 - **#118 SSR receipt:** `StateCell.StateResolutionReceipt` is a runtime **proto** only; the
   astro SSR-source receipt in `quantize.ts` (name-the-source-that-drove-initial-state) is
   untouched.
-- **#122 hardening sweep:** only the dead-`czap:request-snapshot` orphan was cured (wired in
+- **#122 hardening sweep:** only the dead-`liteship:request-snapshot` orphan was cured (wired in
   #133); `waitUntil` / `timeout→AbortSignal` / `Vary` / boundary-css remain.
 Next motion primitive (scoped OUT of slice 1, so not a miss): **multi-step `EdgeType`
 sequencing** — `interpretTransition` currently treats `seq`/`par`/`choice_then` as a 2-step
@@ -668,7 +668,7 @@ coverage/load-aware `scaledTimeout` test policy, consumer-mode dist-truth
 verification (`export-target-missing`), and a real-browser e2e of the built
 Astro example.
 
-**Epic #4 — `@czap/cli` coverage back to package defaults (closed 2026-05-17).**
+**Epic #4 — `@liteship/cli` coverage back to package defaults (closed 2026-05-17).**
 The v0.1.0 ShipCapsule slice landed with sub-85% coverage on
 `capsules/ship-emit.ts` (44%), `commands/ship-verify.ts` (82%), and
 `ship-manifest.ts` (75%), and the per-package override at
@@ -725,7 +725,7 @@ Spec `2026-04-23-capsule-factory-video-stack-design.md` shipped with 5 atomic ph
 
 ## Product-Adjacent Future Epics
 
-These are real future LiteShip / CZAP directions, but they are not promises for the current hardening wave.
+These are real future LiteShip directions, but they are not promises for the current hardening wave.
 
 ### Component-local data loading
 

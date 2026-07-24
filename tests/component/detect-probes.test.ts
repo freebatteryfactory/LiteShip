@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { detect, detectGPUTier, watchCapabilities, resetDetectionCaches } from '@czap/detect';
+import { detect, detectGPUTier, watchCapabilities, resetDetectionCaches } from '@liteship/detect';
 import {
   mockNavigator,
   mockMatchMedia,

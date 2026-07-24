@@ -7,13 +7,13 @@
  * escapes the static type at runtime fails as a typed `InvariantViolationError`.
  */
 
-import type { Boundary, Config } from '@czap/core';
+import type { Boundary, Config } from '@liteship/core';
 import type { CSSCompileResult, CSSStateInput } from './css.js';
 import type { GLSLCompileResult } from './glsl.js';
 import type { WGSLCompileResult, WGSLUniformValue } from './wgsl.js';
 import type { ARIACompileResult } from './aria.js';
 import type { AIManifestCompileResult, AIManifestInput } from './ai-manifest.js';
-import { assertNever } from '@czap/error';
+import { assertNever } from '@liteship/error';
 import { CSSCompiler } from './css.js';
 import { GLSLCompiler } from './glsl.js';
 import { WGSLCompiler } from './wgsl.js';
@@ -55,14 +55,14 @@ export interface ARIAStates {
 // Config compiler output
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Result of the `ConfigCompiler` arm — pretty-printed JSON of a `czap.config`. */
+/** Result of the `ConfigCompiler` arm — pretty-printed JSON of a `liteship.config`. */
 export interface ConfigTemplateResult {
   /** Pretty-printed JSON string (2-space indent). */
   readonly json: string;
 }
 
 const ConfigTemplateCompiler = {
-  compile(config: Config.Shape): ConfigTemplateResult {
+  compile(config: Config): ConfigTemplateResult {
     return { json: JSON.stringify(config, null, 2) };
   },
 };
@@ -80,27 +80,27 @@ const ConfigTemplateCompiler = {
  *
  * Arms:
  * - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
- *                      Bare properties target `selector` (default `.czap-boundary`).
+ *                      Bare properties target `selector` (default `.liteship-boundary`).
  * - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
  * - `WGSLCompiler`   — boundary + per-state scalar/vector uniforms → WGSL bindings.
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
  * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
- * - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.
+ * - `ConfigCompiler` — a `Config` → pretty-printed JSON template.
  * - `MotionCompiler`  — a `CssMotionPlan` → `@property` / `@keyframes` / transitions.
  */
 export type CompilerDef =
   | {
       readonly _tag: 'CSSCompiler';
-      readonly boundary: Boundary.Shape;
+      readonly boundary: Boundary;
       readonly states: CSSStates;
-      /** CSS selector for bare properties; defaults to `.czap-boundary`. */
+      /** CSS selector for bare properties; defaults to `.liteship-boundary`. */
       readonly selector?: string;
     }
-  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary.Shape; readonly states: GLSLStates }
-  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary.Shape; readonly states: WGSLStates }
-  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary.Shape; readonly states: ARIAStates }
+  | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary; readonly states: GLSLStates }
+  | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary; readonly states: WGSLStates }
+  | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary; readonly states: ARIAStates }
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
-  | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape }
+  | { readonly _tag: 'ConfigCompiler'; readonly config: Config }
   | { readonly _tag: 'MotionCompiler'; readonly input: MotionCompileInput };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,10 +136,10 @@ export type CompileResult =
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { dispatch } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { dispatch } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });
@@ -167,7 +167,7 @@ export function dispatch(def: CompilerDef): CompileResult {
     case 'ARIACompiler':
       return {
         target: 'aria',
-        // Boundary.make guarantees a non-empty states tuple, so states[0] is the canonical initial state.
+        // defineBoundary guarantees a non-empty states tuple, so states[0] is the canonical initial state.
         result: ARIACompiler.compile(
           def.boundary,
           def.states.states,

@@ -12,10 +12,10 @@
  * finding — a placeholder dressed as a gate, or a mislabel. REPORT-not-DECIDE.
  *
  * LEAN BY CONSTRUCTION (ADR-0012 / D7b): the gate builds NO `ts.Program`, walks NO checker, and names
- * NO LiteShip capability. The HOST (`@czap/audit`'s capability-link oracle, fed the canonical
- * capability-module SET + the sanctioned sites the `@czap/cli` host injects) does the linking and
+ * NO LiteShip capability. The HOST (`@liteship/audit`'s capability-link oracle, fed the canonical
+ * capability-module SET + the sanctioned sites the `@liteship/cli` host injects) does the linking and
  * injects the flat facts via {@link GateContext.capabilityLink}; this gate only folds. It REQUIRES the
- * facts (capability-link is opt-in: `czap check --ir --capability-gate`) — when absent it is simply not
+ * facts (capability-link is opt-in: `liteship check gates --ir --capability-gate`) — when absent it is simply not
  * in the set, so there is no Program-over-tests cost on a default run.
  *
  * LEVEL: L4 — a sanctioned skip is a deliberate hole in the test suite; proving it is a genuine
@@ -31,7 +31,7 @@ import { defineGate, requireCapabilityLink, type GateContext, type Gate } from '
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { CapabilityLinkFacts, CapabilityLinkResult } from '../capability-link-facts.js';
+import type { CapabilityLinkFacts, CapabilityLinkResult } from '../facts/capability-link-facts.js';
 
 /** The gate id — namespaces every {@link Finding} it emits (traceability). */
 const RULE_NS = 'gauntlet/capability-gate-link';
@@ -55,7 +55,7 @@ function unlinkedFinding(r: CapabilityLinkResult): Finding {
       description: 'Make the skip guard derive from its declared capability probe.',
       steps: [
         `Confirm the skip at ${r.file}:${r.line} is genuinely gated on \`${r.declaredCapability}\` (not a dev-convenience or unrelated condition).`,
-        `Reference the canonical capability export for \`${r.declaredCapability}\` in the guard (single-source it in the capability symbol table), then re-run \`czap check --ir --capability-gate\` so the linker re-proves it — fix the guard, never waive.`,
+        `Reference the canonical capability export for \`${r.declaredCapability}\` in the guard (single-source it in the capability symbol table), then re-run \`liteship check gates --ir --capability-gate\` so the linker re-proves it — fix the guard, never waive.`,
       ],
     },
   });

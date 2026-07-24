@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { WorkerHost } from '@czap/worker';
+import { WorkerHost } from '@liteship/worker';
 import { MockWorker } from '../helpers/mock-worker.js';
 import { mockCanvas } from '../helpers/mock-dom.js';
 

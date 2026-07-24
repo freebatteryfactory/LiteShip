@@ -8,6 +8,6 @@
 
 > **Phase** = [`RuntimePhase`](../../../type-aliases/RuntimePhase.md)
 
-Defined in: [core/src/runtime-coordinator.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/runtime-coordinator.ts#L231)
+Defined in: [core/src/reactive/runtime-coordinator.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L232)
 
 Alias for `RuntimePhase`.

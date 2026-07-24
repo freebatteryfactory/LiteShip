@@ -6,7 +6,7 @@
 
 # compiler/src
 
-`@czap/compiler` — **CZAP** projection targets: turns boundary definitions
+`@liteship/compiler` — **LiteShip** projection targets: turns boundary definitions
 and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 
 ## Interfaces

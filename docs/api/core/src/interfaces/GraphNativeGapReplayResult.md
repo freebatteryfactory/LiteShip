@@ -6,7 +6,7 @@
 
 # Interface: GraphNativeGapReplayResult
 
-Defined in: [core/src/graph-query-gap-replay.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L55)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L59)
 
 Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
@@ -16,7 +16,7 @@ Result of [runGraphNativeGapReplay](../functions/runGraphNativeGapReplay.md).
 
 > `readonly` **query**: [`GraphQueryResponse`](../type-aliases/GraphQueryResponse.md)
 
-Defined in: [core/src/graph-query-gap-replay.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L56)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L60)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/graph-query-gap-replay.ts:56](https://github.com/freebatte
 
 > `readonly` **replayedCells**: readonly [`ReplayableRecoveryCell`](../type-aliases/ReplayableRecoveryCell.md)[]
 
-Defined in: [core/src/graph-query-gap-replay.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L57)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L61)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/graph-query-gap-replay.ts:57](https://github.com/freebatte
 
 > `readonly` **transitions**: readonly [`DiscreteStateTransition`](DiscreteStateTransition.md)[]
 
-Defined in: [core/src/graph-query-gap-replay.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query-gap-replay.ts#L58)
+Defined in: [core/src/graph/graph-query-gap-replay.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L62)

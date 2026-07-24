@@ -26,12 +26,12 @@
  * @module
  */
 
-import { UnsupportedError } from '@czap/error';
-import type { CapsuleDef } from '../assembly.js';
+import { UnsupportedError } from '@liteship/error';
+import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
-const DEFAULT_CONTENT_ADDRESS_IMPORT = '../../packages/core/src/content-address.js';
+const DEFAULT_CONTENT_ADDRESS_IMPORT = '../../packages/core/src/evidence/content-address.js';
 
 /** Escape backtick + dollar-brace for a template-literal interpolation site. */
 function escapeBacktick(s: string): string {
@@ -44,7 +44,7 @@ function fixtureBench(cap: CapsuleDef<'cachedProjection', unknown, unknown, unkn
 import { bench } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { IoError, ValidationError } from '@czap/error';
+import { IoError, ValidationError } from '@liteship/error';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 
 const cap = ${ctx.bindingName};
@@ -147,7 +147,7 @@ export function generateCachedProjection(
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { contentAddressOf } from '${contentAddressImport}';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 
@@ -175,7 +175,7 @@ describe('${cap.name}', () => {
 
   // Content-addressed cache model: a cachedProjection's cache is keyed on the
   // CONTENT ADDRESS of its source bytes (contentAddressOf — the canonical
-  // @czap/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
+  // @liteship/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
   // derived output. We drive a Map<ContentAddress, Out> through the REAL derive
   // to prove the two cache laws over real fixture bytes — not a hand-rolled
   // hash, not a vacuous placeholder.

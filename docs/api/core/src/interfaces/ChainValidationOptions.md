@@ -6,7 +6,7 @@
 
 # Interface: ChainValidationOptions
 
-Defined in: [core/src/receipt.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L65)
+Defined in: [core/src/evidence/receipt.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts#L65)
 
 Options that let a chain be validated as a COMPACTED TAIL instead of a full
 history (see `DAG.checkpoint`). Optional everywhere — omitting them is the
@@ -17,7 +17,7 @@ back-compat genesis-rooted check.
   prefix.
 - `checkpoint`: the genesis-shaped checkpoint attestation that authorizes
   `base`. When supplied it is integrity-checked (hash + genesis shape +
-  `subject.id === "czap/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
+  `subject.id === "liteship/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
 - `verifyCheckpoint`: an OPTIONAL provenance verifier for the checkpoint — the
   injectable capability that closes the one gap the structural checks cannot.
 
@@ -27,7 +27,7 @@ back-compat genesis-rooted check.
 
 > `readonly` `optional` **base?**: `string`
 
-Defined in: [core/src/receipt.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L66)
+Defined in: [core/src/evidence/receipt.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts#L66)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [core/src/receipt.ts:66](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **checkpoint?**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [core/src/receipt.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L67)
+Defined in: [core/src/evidence/receipt.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts#L67)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [core/src/receipt.ts:67](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **verifyCheckpoint?**: (`checkpoint`) => `Promise`\<`boolean`\>
 
-Defined in: [core/src/receipt.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L88)
+Defined in: [core/src/evidence/receipt.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts#L88)
 
 Provenance verifier for the checkpoint attestation (injected capability).
 

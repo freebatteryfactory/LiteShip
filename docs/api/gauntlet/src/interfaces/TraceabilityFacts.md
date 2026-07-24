@@ -6,7 +6,7 @@
 
 # Interface: TraceabilityFacts
 
-Defined in: [gauntlet/src/traceability-facts.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L127)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L127)
 
 The host-supplied traceability evidence over one run — every declared invariant's
 resolved state, every detected ledger⇔header divergence, and the content address
@@ -22,7 +22,7 @@ corpus scan, no cost. When PRESENT, the gate folds it into Findings.
 
 > `readonly` **divergences**: readonly [`TraceabilityDivergence`](TraceabilityDivergence.md)[]
 
-Defined in: [gauntlet/src/traceability-facts.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L131)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L131)
 
 Every ledger⇔header divergence (sorted) — the bidirectional-trace check.
 
@@ -32,7 +32,7 @@ Every ledger⇔header divergence (sorted) — the bidirectional-trace check.
 
 > `readonly` **invariants**: readonly [`ResolvedInvariant`](ResolvedInvariant.md)[]
 
-Defined in: [gauntlet/src/traceability-facts.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L129)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L129)
 
 Every declared invariant + its resolved lifecycle state (sorted by id).
 
@@ -42,7 +42,7 @@ Every declared invariant + its resolved lifecycle state (sorted by id).
 
 > `readonly` **ledgerAddress**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L137)
+Defined in: [gauntlet/src/facts/traceability-facts.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/traceability-facts.ts#L137)
 
 The content address (fnv1a over the canonical resolved ledger) the host minted —
 the drift keystone. Two runs over the same ledger+corpus+date produce the same

@@ -8,10 +8,10 @@
  *    and is escalation-gated: `wgsl` is admitted only at the `gpu` rung, so a
  *    policy that affords only the `animated` rung drops `wgsl` (and `glsl`),
  *    while an absent policy is pass-through.
- * 2. **Boundary payload → `detail.wgsl`** — `satelliteAttrs` folds authored
+ * 2. **Boundary payload → `detail.wgsl`** — `adaptiveAttrs` folds authored
  *    per-state `@wgsl` binding values onto the boundary payload (`stateWgsl`);
  *    `parseBoundary` reads them back; `applyBoundaryState` resolves
- *    `stateWgsl[currentState]` into the `czap:uniform-update` event's
+ *    `stateWgsl[currentState]` into the `liteship:uniform-update` event's
  *    `detail.wgsl` so the WGSL `client:gpu` runtime rebinds the live uniform
  *    buffer on every crossing (NOT frozen at the SSR'd initial state).
  *
@@ -22,16 +22,16 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@czap/core';
-import { satelliteAttrs } from '@czap/astro';
+import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE, defineBoundary } from '@liteship/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@liteship/core';
+import { adaptiveAttrs } from '@liteship/astro';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
 
 // ---------------------------------------------------------------------------
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -40,7 +40,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-function makeQuantizer(boundary: Boundary.Shape, initialState?: string) {
+function makeQuantizer(boundary: Boundary, initialState?: string) {
   let currentState = initialState ?? (boundary.states[0] as string);
   return {
     boundary,
@@ -114,7 +114,7 @@ describe('wgslKey — bare snake_case, no u_ prefix (matches the WGSL compiler t
 
 describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu rung', () => {
   test('pass-through (no policy): outputs.wgsl carries the live state index under the fixed state_index field', async () => {
-    const compositor = Compositor.create({ runtimeSite: 'browser' }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser' });
     compositor.add('blurRadius', makeQuantizer(widthBoundary, 'tablet'));
     const state = compositor.compute();
 
@@ -127,14 +127,14 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
 
   test('gpu-rung policy admits wgsl (the heaviest target)', async () => {
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['browser'] });
-    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p });
     compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
     const state = compositor.compute();
 
     // desktop = state index 2; gpu rung admits css/glsl/wgsl/aria.
     expect(state.outputs.wgsl['state_index']).toBe(2);
     expect(state.outputs.glsl['u_layout']).toBe(2);
-    expect(state.outputs.css['--czap-layout']).toBe('desktop');
+    expect(state.outputs.css['--liteship-layout']).toBe('desktop');
   });
 
   test('animated-rung policy drops wgsl but keeps glsl (wgsl is strictly above glsl)', async () => {
@@ -146,20 +146,20 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
       sites: ['browser'],
       budgets: { p95Ms: 12 },
     });
-    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p });
     compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
     const state = compositor.compute();
 
     // wgsl dropped; glsl + css survive.
     expect(state.outputs.wgsl['layout']).toBeUndefined();
     expect(state.outputs.glsl['u_layout']).toBe(0);
-    expect(state.outputs.css['--czap-layout']).toBe('mobile');
+    expect(state.outputs.css['--liteship-layout']).toBe('mobile');
   });
 
   test('unsatisfiable policy ({error} branch) denies wgsl along with every target', async () => {
-    // Policy admits only 'node'; compositor runs at 'browser' → chooseRung errors → deny-all.
+    // Policy admits only 'node'; compositor runs at 'browser' → chooseTier errors → deny-all.
     const p = policy({ requires: 'gpu', grants: grantUpTo('gpu'), sites: ['node'] });
-    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p }).compositor;
+    const compositor = Compositor.create({ runtimeSite: 'browser', getPolicy: () => p });
     compositor.add('layout', makeQuantizer(widthBoundary, 'desktop'));
     const state = compositor.compute();
 
@@ -180,29 +180,29 @@ const authoredWgsl = {
 } as const;
 
 describe('authored @wgsl: serialize → parse → apply (live uniform binding)', () => {
-  test('satelliteAttrs folds stateWgsl onto the boundary payload', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
-    const payload = JSON.parse(attrs['data-czap-boundary']!) as { stateWgsl?: unknown };
+  test('adaptiveAttrs folds stateWgsl onto the boundary payload', () => {
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
+    const payload = JSON.parse(attrs['data-liteship-boundary']!) as { stateWgsl?: unknown };
     expect(payload.stateWgsl).toEqual(authoredWgsl);
   });
 
   test('parseBoundary reads stateWgsl back into the RuntimeBoundary', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
-    const runtime = parseBoundary(attrs['data-czap-boundary']!);
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
+    const runtime = parseBoundary(attrs['data-liteship-boundary']!);
     expect(runtime?.stateWgsl).toEqual(authoredWgsl);
   });
 
   test('applyBoundaryState resolves stateWgsl[currentState] into detail.wgsl on every crossing', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
-    const runtime = parseBoundary(attrs['data-czap-boundary']!)!;
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authoredWgsl });
+    const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     const seen: Array<Record<string, number>> = [];
-    el.addEventListener('czap:uniform-update', (e) => {
+    el.addEventListener('liteship:uniform-update', (e) => {
       seen.push((e as CustomEvent<{ wgsl: Record<string, number> }>).detail.wgsl);
     });
 
-    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'mobile' } }, 'czap:state');
-    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'desktop' } }, 'czap:state');
+    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'mobile' } }, 'liteship:state');
+    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'desktop' } }, 'liteship:state');
 
     expect(seen[0]).toEqual({ blur_radius: 2.0 });
     expect(seen[1]).toEqual({ blur_radius: 0.0 });
@@ -214,15 +214,15 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
       tablet: { uv: [0.75, 1] },
       desktop: { uv: [1.25, 1.5] },
     } as const;
-    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authored });
-    const runtime = parseBoundary(attrs['data-czap-boundary']!)!;
+    const attrs = adaptiveAttrs({ boundary: widthBoundary, wgsl: authored });
+    const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     const seen: unknown[] = [];
-    el.addEventListener('czap:uniform-update', (e) => {
+    el.addEventListener('liteship:uniform-update', (e) => {
       seen.push((e as CustomEvent<{ wgsl: Record<string, unknown> }>).detail.wgsl.uv);
     });
 
-    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'tablet' } }, 'czap:state');
+    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'tablet' } }, 'liteship:state');
 
     expect(seen).toEqual([authored.tablet.uv]);
   });
@@ -231,10 +231,10 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
     // The other half: a live compositor `outputs.wgsl` map (state index) reaches
     // the event detail unchanged, so a runtime with no authored values still
     // gets the per-quantizer numeric channel.
-    const runtime = parseBoundary(satelliteAttrs({ boundary: widthBoundary })['data-czap-boundary']!)!;
+    const runtime = parseBoundary(adaptiveAttrs({ boundary: widthBoundary })['data-liteship-boundary']!)!;
     const el = document.createElement('div');
     let seen: Record<string, number> | undefined;
-    el.addEventListener('czap:uniform-update', (e) => {
+    el.addEventListener('liteship:uniform-update', (e) => {
       seen = (e as CustomEvent<{ wgsl: Record<string, number> }>).detail.wgsl;
     });
 
@@ -242,24 +242,24 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
       el,
       runtime,
       { discrete: { [runtime.name]: 'tablet' }, outputs: { wgsl: { blur_radius: 1 } } },
-      'czap:state',
+      'liteship:state',
     );
     expect(seen).toEqual({ blur_radius: 1 });
   });
 
   test('a boundary with no authored @wgsl is unaffected (no stateWgsl, empty detail.wgsl)', () => {
-    const attrs = satelliteAttrs({ boundary: widthBoundary });
-    const payload = JSON.parse(attrs['data-czap-boundary']!) as { stateWgsl?: unknown };
+    const attrs = adaptiveAttrs({ boundary: widthBoundary });
+    const payload = JSON.parse(attrs['data-liteship-boundary']!) as { stateWgsl?: unknown };
     expect(payload.stateWgsl).toBeUndefined();
-    const runtime = parseBoundary(attrs['data-czap-boundary']!)!;
+    const runtime = parseBoundary(attrs['data-liteship-boundary']!)!;
     expect(runtime.stateWgsl).toBeUndefined();
 
     const el = document.createElement('div');
     let seen: Record<string, number> | undefined;
-    el.addEventListener('czap:uniform-update', (e) => {
+    el.addEventListener('liteship:uniform-update', (e) => {
       seen = (e as CustomEvent<{ wgsl: Record<string, number> }>).detail.wgsl;
     });
-    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'mobile' } }, 'czap:state');
+    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'mobile' } }, 'liteship:state');
     expect(seen).toEqual({});
   });
 });

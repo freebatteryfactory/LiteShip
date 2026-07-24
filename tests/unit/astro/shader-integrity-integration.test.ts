@@ -6,13 +6,13 @@
  *
  * This is the defense-in-depth cure proven end-to-end at the runtime, not just at
  * the verifier unit. THE LAWS:
- *   • a fetched GLSL shader whose bytes MATCH the author-pinned `data-czap-shader-
+ *   • a fetched GLSL shader whose bytes MATCH the author-pinned `data-liteship-shader-
  *     integrity` hash COMPILES — `gl.shaderSource` receives the verified source;
  *   • a fetched GLSL shader whose bytes do NOT match the pin is REFUSED — a
- *     `shader-integrity-mismatch` security diagnostic fires and `gl.shaderSource`
+ *     `astro/gpu/shader-integrity-mismatch` security diagnostic fires and `gl.shaderSource`
  *     is NEVER called with the fetched body (the tampered shader never reaches GL);
  *   • an EXTERNAL fetch with NO pin is REFUSED (secure-by-default) — a
- *     `shader-integrity-absent` diagnostic fires, no compile;
+ *     `astro/gpu/shader-integrity-absent` diagnostic fires, no compile;
  *   • the WGSL path mirrors it: a tampered fetched WGSL shader is REFUSED before
  *     `device.createShaderModule`.
  *
@@ -24,7 +24,7 @@
  */
 // PROVES: INV-SHADER-CONTENT-INTEGRITY
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AddressedDigest, Diagnostics } from '@czap/core';
+import { AddressedDigest, Diagnostics } from '@liteship/core';
 import { initGPUDirective } from '../../../packages/astro/src/runtime/gpu.js';
 import { initWGSLRuntime } from '../../../packages/astro/src/runtime/wgpu.js';
 import { createStubRegistry } from '../../helpers/define-property-stub.js';
@@ -114,7 +114,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
   beforeEach(() => {
     Diagnostics.reset();
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 11) as never);
     vi.stubGlobal('cancelAnimationFrame', vi.fn() as never);
   });
@@ -125,7 +125,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     vi.restoreAllMocks();
     Diagnostics.reset();
     document.body.innerHTML = '';
-    document.documentElement.removeAttribute('data-czap-tier');
+    document.documentElement.removeAttribute('data-liteship-tier');
   });
 
   function mountCanvas(gl: ReturnType<typeof makeGlStub>): HTMLCanvasElement {
@@ -133,7 +133,7 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
       kind === 'webgl2' ? (gl as never) : null,
     );
     const canvas = document.createElement('canvas');
-    canvas.setAttribute('data-czap-shader-type', 'glsl');
+    canvas.setAttribute('data-liteship-shader-type', 'glsl');
     document.body.appendChild(canvas);
     stubs.define(canvas, 'clientWidth', { configurable: true, value: 300 });
     stubs.define(canvas, 'clientHeight', { configurable: true, value: 150 });
@@ -148,8 +148,8 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', '/shaders/wave.glsl');
-    canvas.setAttribute('data-czap-shader-integrity', sriOf(FETCHED_GLSL));
+    canvas.setAttribute('data-liteship-shader-src', '/shaders/wave.glsl');
+    canvas.setAttribute('data-liteship-shader-integrity', sriOf(FETCHED_GLSL));
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
@@ -175,22 +175,22 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', '/shaders/wave.glsl');
+    canvas.setAttribute('data-liteship-shader-src', '/shaders/wave.glsl');
     // Pin the ORIGINAL — the fetched tampered body will not match.
-    canvas.setAttribute('data-czap-shader-integrity', sriOf(FETCHED_GLSL));
+    canvas.setAttribute('data-liteship-shader-integrity', sriOf(FETCHED_GLSL));
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
     // REFUSED: a security diagnostic fired and the tampered body NEVER reached GL.
-    const mismatch = events.find((e) => e.code === 'shader-integrity-mismatch');
+    const mismatch = events.find((e) => e.code === 'astro/gpu/shader-integrity-mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch!.level).toBe('error');
     expect(shaderSources.some((s) => s.includes('vec4(v_uv, 0.0, 1.0)'))).toBe(false);
   });
 
   test('a PATH-RELATIVE shader URL is FETCHED + verified, NOT literal-compiled (P2a regression)', async () => {
-    // SECURITY REGRESSION (P2a): a path-relative `data-czap-shader-src`
+    // SECURITY REGRESSION (P2a): a path-relative `data-liteship-shader-src`
     // (`shaders/wave.glsl`) is a FETCHABLE same-origin URL. Before the fix the
     // integrity classifier returned false for it, so gpu.ts compiled the URL TOKEN
     // as inline shader SOURCE TEXT — never fetched, never verified. Now it is
@@ -201,8 +201,8 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', 'shaders/wave.glsl');
-    canvas.setAttribute('data-czap-shader-integrity', sriOf(FETCHED_GLSL));
+    canvas.setAttribute('data-liteship-shader-src', 'shaders/wave.glsl');
+    canvas.setAttribute('data-liteship-shader-integrity', sriOf(FETCHED_GLSL));
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
@@ -228,8 +228,8 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', 'shader file.glsl');
-    canvas.setAttribute('data-czap-shader-integrity', sriOf(FETCHED_GLSL));
+    canvas.setAttribute('data-liteship-shader-src', 'shader file.glsl');
+    canvas.setAttribute('data-liteship-shader-integrity', sriOf(FETCHED_GLSL));
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
@@ -255,13 +255,13 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', 'shader file.glsl');
-    // No data-czap-shader-integrity attribute.
+    canvas.setAttribute('data-liteship-shader-src', 'shader file.glsl');
+    // No data-liteship-shader-integrity attribute.
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
-    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/gpu/shader-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
     // The unverified space-path shader never reached GL as source, literal or fetched.
@@ -282,13 +282,13 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', 'shaders/wave.glsl');
-    // No data-czap-shader-integrity attribute.
+    canvas.setAttribute('data-liteship-shader-src', 'shaders/wave.glsl');
+    // No data-liteship-shader-integrity attribute.
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
-    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/gpu/shader-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
     // The unverified path-relative shader never reached GL as source, literal or fetched.
@@ -307,13 +307,13 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     const shaderSources: string[] = [];
     const gl = makeGlStub(shaderSources);
     const canvas = mountCanvas(gl);
-    canvas.setAttribute('data-czap-shader-src', '/shaders/wave.glsl');
-    // No data-czap-shader-integrity attribute.
+    canvas.setAttribute('data-liteship-shader-src', '/shaders/wave.glsl');
+    // No data-liteship-shader-integrity attribute.
 
     initGPUDirective(async () => {}, canvas, { force: true });
     await flush();
 
-    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/gpu/shader-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
     // The unverified external shader never reached GL.
@@ -393,7 +393,7 @@ describe('WGSL shader content integrity — refuse-on-mismatch before createShad
     expect(env.device.createShaderModule).not.toHaveBeenCalled();
     expect(moduleCodes).toHaveLength(0);
     expect(dispose).toBeNull();
-    const mismatch = events.find((e) => e.code === 'wgsl-integrity-mismatch');
+    const mismatch = events.find((e) => e.code === 'astro/wgpu/wgsl-integrity-mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch!.level).toBe('error');
   });
@@ -447,7 +447,7 @@ describe('WGSL shader content integrity — refuse-on-mismatch before createShad
     expect(env.device.createShaderModule).not.toHaveBeenCalled();
     expect(moduleCodes).toHaveLength(0);
     expect(dispose).toBeNull();
-    const absent = events.find((e) => e.code === 'wgsl-integrity-absent');
+    const absent = events.find((e) => e.code === 'astro/wgpu/wgsl-integrity-absent');
     expect(absent).toBeDefined();
     expect(absent!.level).toBe('error');
   });

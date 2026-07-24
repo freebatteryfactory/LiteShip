@@ -8,8 +8,8 @@
  * @module
  */
 
-import { normalizeRepoPath, scanModuleScopeDateReads } from '@czap/audit';
-import { walkFiles } from '@czap/core/fs-walk';
+import { normalizeRepoPath, scanModuleScopeDateReads } from '@liteship/audit';
+import { walkFiles } from '@liteship/core/fs-walk';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { readWranglerConfig } from './manifest.js';
@@ -53,7 +53,7 @@ function parseWranglerMain(cwd: string): string {
 
 /**
  * Collect source files under `root` (relative to `cwd`), via the shared
- * `@czap/core/fs-walk` walker. It skips `node_modules`/`dist` by name; the
+ * `@liteship/core/fs-walk` walker. It skips `node_modules`/`dist` by name; the
  * original also pruned any dot-prefixed directory (e.g. `.astro`, `.git`), which
  * `skipDirs` can't express, so a file under a dot-dir segment is dropped here.
  */
@@ -69,7 +69,7 @@ function collectSourceFiles(cwd: string, root: string): string[] {
 
 /**
  * Does `source` read the wall clock at MODULE LOAD? Delegates to the ONE shared AST scanner
- * (`@czap/audit`'s {@link scanModuleScopeDateReads}) — the same definition the consumer-app audit
+ * (`@liteship/audit`'s {@link scanModuleScopeDateReads}) — the same definition the consumer-app audit
  * uses (Law 6). `rel` only selects the parse mode (`.tsx`/`.jsx` → JSX). A file that reads the clock
  * only inside deferred (per-call) bodies is correctly NOT a hit.
  */

@@ -10,9 +10,9 @@
  * @module
  */
 
-import type { CompositeState, VideoConfig, Millis } from '@czap/core';
-import { Millis as mkMillis } from '@czap/core';
-import { HostCapabilityError } from '@czap/error';
+import type { CompositeState, VideoConfig, Millis } from '@liteship/core';
+import { Millis as mkMillis } from '@liteship/core';
+import { HostCapabilityError } from '@liteship/error';
 import type { WorkerConfig } from './messages.js';
 import { CompositorWorker, type CompositorWorkerStartupTelemetry } from './compositor-worker.js';
 import { RenderWorker } from './render-worker.js';
@@ -71,10 +71,10 @@ export interface WorkerHostRenderConfig {
  */
 export interface WorkerHostShape {
   /** The compositor worker instance. */
-  readonly compositor: CompositorWorker.Shape;
+  readonly compositor: CompositorWorker;
 
   /** The render worker instance, or null if no canvas has been attached. */
-  readonly renderer: RenderWorker.Shape | null;
+  readonly renderer: RenderWorker | null;
 
   /**
    * Attach an HTMLCanvasElement for off-thread rendering.
@@ -117,7 +117,7 @@ function _createWorkerHost(
   startupTelemetry?: CompositorWorkerStartupTelemetry,
 ): WorkerHostShape {
   const compositor = CompositorWorker.create(config, startupTelemetry);
-  let renderer: RenderWorker.Shape | null = null;
+  let renderer: RenderWorker | null = null;
   // Dimensions of the most recently attached canvas, captured BEFORE
   // transferControlToOffscreen (the detached element zeroes out) so
   // startRender can default width/height.
@@ -129,11 +129,11 @@ function _createWorkerHost(
   const stateUnsubscribers: Array<() => void> = [];
 
   const host: WorkerHostShape = {
-    get compositor(): CompositorWorker.Shape {
+    get compositor(): CompositorWorker {
       return compositor;
     },
 
-    get renderer(): RenderWorker.Shape | null {
+    get renderer(): RenderWorker | null {
       return renderer;
     },
 
@@ -211,8 +211,8 @@ function _createWorkerHost(
 
 /**
  * `WorkerHost` -- main-thread lifecycle wrapper that owns a
- * {@link CompositorWorker.Shape} and (optionally) a
- * {@link RenderWorker.Shape}, exposing a single unified surface for DOM
+ * {@link CompositorWorker} and (optionally) a
+ * {@link RenderWorker}, exposing a single unified surface for DOM
  * integration.
  *
  * Typical flow:
@@ -227,7 +227,7 @@ function _createWorkerHost(
  *
  * @example
  * ```ts
- * import { WorkerHost } from '@czap/worker';
+ * import { WorkerHost } from '@liteship/worker';
  *
  * const host = WorkerHost.create({ poolCapacity: 64 });
  * host.attachCanvas(canvas);
@@ -248,9 +248,10 @@ export const WorkerHost = {
   create: _createWorkerHost,
 } as const;
 
+/** Public structural type for `WorkerHost`. */
+export type WorkerHost = WorkerHostShape;
+
 export declare namespace WorkerHost {
-  /** Public host surface returned by {@link WorkerHost.create}. */
-  export type Shape = WorkerHostShape;
   /** Telemetry sink forwarded to the inner compositor worker. */
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;
 }

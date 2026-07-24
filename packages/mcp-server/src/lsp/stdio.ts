@@ -51,7 +51,7 @@ export async function runLspStdio(
     // A SINGLE serial processing chain: every payload (across every chunk) is
     // appended to `queue`, so lifecycle state threads deterministically AND the
     // `end` handler can await the tail before resolving — no race where `end`
-    // fires while a `czap/check` fold + its publishDiagnostics writes are still
+    // fires while a `liteship/check` fold + its publishDiagnostics writes are still
     // in flight (the bug a fast in-memory Readable surfaces: it emits all data
     // then `end` on the same tick).
     let queue: Promise<void> = Promise.resolve();

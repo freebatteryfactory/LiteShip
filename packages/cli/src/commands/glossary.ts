@@ -1,12 +1,12 @@
 /**
- * glossary (CLI adapter) — thin projection over `@czap/command`'s glossary
- * command. The catalog + lookup are the single source in `@czap/command`; this
+ * glossary (CLI adapter) — thin projection over `@liteship/command`'s glossary
+ * command. The catalog + lookup are the single source in `@liteship/command`; this
  * adapter renders the JSON receipt to stdout and a pretty summary to stderr.
  *
  * @module
  */
 
-import { glossaryCommand, GLOSSARY_ENTRIES, type GlossaryEntry, type GlossaryPayload } from '@czap/command';
+import { glossaryCommand, GLOSSARY_ENTRIES, type GlossaryEntry, type GlossaryPayload } from '@liteship/command';
 import { color, colorEnabled } from '../lib/ansi.js';
 import { emit, emitError } from '../receipts.js';
 
@@ -30,7 +30,7 @@ export async function glossary(term: string | null, opts: { pretty?: boolean } =
   const payload = result.payload as GlossaryPayload;
 
   if (result.status === 'failed') {
-    emitError('glossary', `no entry for: ${term ?? '<missing>'}`);
+    emitError('glossary', 'cli/not-found', `no entry for: ${term ?? '<missing>'}`);
     process.stderr.write(
       `Try one of: ${GLOSSARY_ENTRIES.map((e) => e.term)
         .slice(0, 8)

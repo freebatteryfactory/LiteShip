@@ -18,8 +18,8 @@ import { DOCTOR_PROBE_TIMEOUT_MS, type DoctorCheck, parseMajor } from './types.j
 
 /**
  * Consumer-context probe — the `liteship` umbrella under pnpm's strict
- * `node_modules` does not hoist the transitive `@czap/*` packages it installs,
- * so `import '@czap/core'` dies with Node's raw ERR_MODULE_NOT_FOUND before
+ * `node_modules` does not hoist the transitive `@liteship/*` packages it installs,
+ * so `import '@liteship/core'` dies with Node's raw ERR_MODULE_NOT_FOUND before
  * LiteShip can say anything. Returns null (probe skipped) when the host
  * package.json does not declare `liteship`, or when the layout is not
  * pnpm-strict (npm/yarn hoisted layouts expose the transitives).
@@ -31,20 +31,20 @@ export function probeLiteshipPnpm(cwd: string): DoctorCheck | null {
   const devDeps = manifest.value['devDependencies'] as Record<string, string> | undefined;
   if (!(deps?.['liteship'] ?? devDeps?.['liteship'])) return null;
   if (!existsSync(resolve(cwd, 'node_modules/.pnpm'))) return null;
-  if (existsSync(resolve(cwd, 'node_modules/@czap'))) {
+  if (existsSync(resolve(cwd, 'node_modules/@liteship'))) {
     return {
       id: 'liteship.pnpm',
       label: 'liteship (pnpm)',
       status: 'ok',
-      detail: '@czap/* packages resolvable beside liteship',
+      detail: '@liteship/* packages resolvable beside liteship',
     };
   }
   return {
     id: 'liteship.pnpm',
     label: 'liteship (pnpm)',
     status: 'warn',
-    detail: 'liteship is installed under pnpm, which does not expose its transitive @czap/* packages to imports',
-    hint: 'Declare what you import: pnpm add @czap/core @czap/astro (or hoist the scope with public-hoist-pattern[]=@czap/* in .npmrc)',
+    detail: 'liteship is installed under pnpm, which does not expose its transitive @liteship/* packages to imports',
+    hint: 'Declare what you import: pnpm add @liteship/core @liteship/astro (or hoist the scope with public-hoist-pattern[]=@liteship/* in .npmrc)',
   };
 }
 
@@ -225,7 +225,7 @@ export function probeCloudflareConfig(cwd: string): DoctorCheck {
   const issues: string[] = [];
   if (!/compatibility_date/i.test(raw)) issues.push('compatibility_date');
   if (!/nodejs_compat/i.test(raw)) issues.push('nodejs_compat');
-  if (!/kv_namespaces/i.test(raw) && !/CZAP_BOUNDARY_CACHE/i.test(raw)) {
+  if (!/kv_namespaces/i.test(raw) && !/LITESHIP_BOUNDARY_CACHE/i.test(raw)) {
     issues.push('kv_namespaces binding for boundary cache');
   }
   if (issues.length > 0) {
@@ -234,7 +234,7 @@ export function probeCloudflareConfig(cwd: string): DoctorCheck {
       label: 'Wrangler config',
       status: 'warn',
       detail: `present but missing: ${issues.join(', ')}`,
-      hint: 'Declare CZAP_BOUNDARY_CACHE in kv_namespaces when using @czap/edge boundary cache',
+      hint: 'Declare LITESHIP_BOUNDARY_CACHE in kv_namespaces when using @liteship/edge boundary cache',
     };
   }
   return {

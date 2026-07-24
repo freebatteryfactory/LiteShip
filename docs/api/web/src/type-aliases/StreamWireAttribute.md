@@ -10,4 +10,4 @@
 
 Defined in: [web/src/wire/stream-attributes.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/stream-attributes.ts#L29)
 
-Canonical `data-czap-*` attribute names for the stream directive.
+Canonical `data-liteship-*` attribute names for the stream directive.

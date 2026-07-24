@@ -1,5 +1,5 @@
 /**
- * @czap/assets error contract — registry misses, decoder failures, and RIFF
+ * @liteship/assets error contract — registry misses, decoder failures, and RIFF
  * walker diagnostics name the subject and the literal next step.
  *
  * @module
@@ -17,7 +17,7 @@ import {
   WaveformProjection,
   WavMetadataProjection,
   defaultDecodeP95MsFor,
-} from '@czap/assets';
+} from '@liteship/assets';
 
 const introBed = defineAsset({
   id: 'intro-bed',

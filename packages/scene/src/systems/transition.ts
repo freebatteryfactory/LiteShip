@@ -10,7 +10,7 @@
  * @module
  */
 
-import { clamp01, type System, type World } from '@czap/core';
+import { clamp01, type System, type World } from '@liteship/core';
 import type { EaseTag } from '../sugar/ease.js';
 import { easeFnFor } from '../sugar/ease.js';
 
@@ -19,7 +19,7 @@ export function TransitionSystem(frameIndex: number): System {
   return {
     name: 'TransitionSystem',
     query: ['TransitionKind', 'FrameRange', 'Between'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         const range = e.components.get('FrameRange') as { from: number; to: number };
         const span = Math.max(1, range.to - range.from);

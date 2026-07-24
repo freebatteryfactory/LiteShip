@@ -8,42 +8,27 @@
 
 > `const` **Config**: `object`
 
-Defined in: [core/src/config.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/config.ts#L51)
+Defined in: [core/src/authoring/config.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L54)
 
-Config namespace — the single hub that every czap adapter (Vite, Astro, test
-runners, edge runtime) projects from. [Config.make](#make) produces a frozen,
-FNV-1a content-addressed [Config.Shape](../namespaces/Config/interfaces/Shape.md); every projection function
-(`toViteConfig`, `toAstroConfig`, `toTestAliases`) is pure.
+Config namespace — the single hub that every liteship adapter (Vite, Astro, test
+runners, edge runtime) projects from. Construction lives in the standalone
+[defineConfig](../functions/defineConfig.md), which produces a frozen, FNV-1a content-addressed
+Config; every projection function here (`toViteConfig`, `toAstroConfig`,
+`toTestAliases`) is pure.
 
 ## Type Declaration
-
-### make()
-
-> **make**(`input`): [`Shape`](../namespaces/Config/interfaces/Shape.md)
-
-Build a frozen, content-addressed [Config.Shape](../namespaces/Config/interfaces/Shape.md) from raw input.
-
-#### Parameters
-
-##### input
-
-[`Input`](../namespaces/Config/interfaces/Input.md)
-
-#### Returns
-
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
 
 ### toAstroConfig()
 
 > **toAstroConfig**(`cfg`): [`CoreAstroConfig`](../interfaces/CoreAstroConfig.md)
 
-Project the Astro-integration slice of a config for `@czap/astro`.
+Project the Astro-integration slice of a config for `@liteship/astro`.
 
 #### Parameters
 
 ##### cfg
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 #### Returns
 
@@ -53,13 +38,13 @@ Project the Astro-integration slice of a config for `@czap/astro`.
 
 > **toTestAliases**(`cfg`, `repoRoot`): `Record`\<`string`, `string`\>
 
-Materialize the `@czap/*` → source-path alias map used by the vitest runner.
+Materialize the `@liteship/*` → source-path alias map used by the vitest runner.
 
 #### Parameters
 
 ##### cfg
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 ##### repoRoot
 
@@ -73,13 +58,13 @@ Materialize the `@czap/*` → source-path alias map used by the vitest runner.
 
 > **toViteConfig**(`cfg`): [`CorePluginConfig`](../interfaces/CorePluginConfig.md)
 
-Project the Vite-plugin slice of a config for `@czap/vite`.
+Project the Vite-plugin slice of a config for `@liteship/vite`.
 
 #### Parameters
 
 ##### cfg
 
-[`Shape`](../namespaces/Config/interfaces/Shape.md)
+[`Config`](../interfaces/Config.md)
 
 #### Returns
 

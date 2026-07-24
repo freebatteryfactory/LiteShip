@@ -27,9 +27,9 @@
  * @module
  */
 
-import { contentAddressOf } from '@czap/core';
-import { CanonicalCbor } from '@czap/canonical';
-import type { ContentAddress } from '@czap/core';
+import { contentAddressOf } from '@liteship/core';
+import { CanonicalCbor } from '@liteship/canonical';
+import type { ContentAddress } from '@liteship/core';
 
 /**
  * One corpus seed: an input bound to the decoder SUT it targets (by id), with a

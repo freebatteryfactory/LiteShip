@@ -33,12 +33,20 @@ describe('red-team runtime regressions', () => {
 
   test('rejects cross-origin runtime URLs by default', () => {
     captureDiagnostics(({ events }) => {
-      expect(allowSameOriginRuntimeUrl('https://attacker.example/stream', 'test', 'cross-origin')).toBeNull();
-      expect(allowSameOriginRuntimeUrl('/stream', 'test', 'same-origin')).toBe('/stream');
+      expect(
+        allowSameOriginRuntimeUrl(
+          'https://attacker.example/stream',
+          'test',
+          'astro/url-policy/cross-origin-url-rejected',
+        ),
+      ).toBeNull();
+      expect(allowSameOriginRuntimeUrl('/stream', 'test', 'astro/url-policy/cross-origin-url-rejected')).toBe(
+        '/stream',
+      );
       expect(events).toEqual([
         expect.objectContaining({
           source: 'test',
-          code: 'cross-origin',
+          code: 'astro/url-policy/cross-origin-url-rejected',
         }),
       ]);
     });
@@ -154,7 +162,7 @@ describe('red-team runtime regressions', () => {
     applyBoundaryState(element, boundary!, {
       discrete: { hero: 'compact' },
       outputs: {
-        css: { '--czap-gap': 12, color: 'red' },
+        css: { '--liteship-gap': 12, color: 'red' },
         glsl: {},
         aria: { 'aria-hidden': 'true', onclick: 'alert(1)' },
       },
@@ -162,7 +170,7 @@ describe('red-team runtime regressions', () => {
       aria: { style: 'display:none', role: 'status' },
     });
 
-    expect(element.style.getPropertyValue('--czap-gap')).toBe('12');
+    expect(element.style.getPropertyValue('--liteship-gap')).toBe('12');
     expect(element.style.getPropertyValue('color')).toBe('');
     expect(element.style.getPropertyValue('background-image')).toBe('');
     expect(element.getAttribute('aria-hidden')).toBe('true');

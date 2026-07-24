@@ -6,7 +6,7 @@ dist/
 .env
 .env.*
 .idea/
-crates/czap-compute/target/
+crates/liteship-compute/target/
 
 # Generated release notes — extracted from CHANGELOG at release time, never committed
 RELEASE_NOTES_v*.md
@@ -41,7 +41,7 @@ benchmarks/*
 !benchmarks/distributions.json
 !benchmarks/complexity-map.json
 # …and the mutation-score baseline (the avionics mutation-as-divergence ratchet
-# floor — `czap check --ir --mutate`'s committed per-file kill-score; the
+# floor — `liteship check gates --ir --mutate`'s committed per-file kill-score; the
 # mutationDivergenceGate folds it to flag a regression). A committed contract, not
 # a regenerated artifact — tracked so the ratchet can only ever rise.
 !benchmarks/mutation-score.json
@@ -59,6 +59,7 @@ benchmarks/*
 # it). A committed contract so the front-page numbers ship with the repo, not a
 # regenerated run artifact.
 !benchmarks/readme-snapshot.json
+!benchmarks/one-install-cost-baseline.json
 reports/
 .vitest-attachments/
 lint-report.json
@@ -72,8 +73,8 @@ examples/scenes/*.mp4
 *.tgz
 *.shipcapsule.cbor
 
-# czap capsule factory scratch (generated MCP manifests, content-addressed cache)
-.czap/
+# liteship capsule factory scratch (generated MCP manifests, content-addressed cache)
+.liteship/
 
 # Local Claude tooling state (per-machine working notes — NEVER in the repo)
 .claude/
@@ -110,7 +111,7 @@ scripts/**/*.d.ts.map
 
 # Scratch scripts from sibling projects (borrow this repo's Playwright install)
 .fbf-*.mjs
-tests/.czap-verify-fresh-*/
+tests/.liteship-verify-fresh-*/
 
 # Experimental sharded TypeDoc workspace (#136) — never commit
 .typedoc-shards/

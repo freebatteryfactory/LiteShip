@@ -8,7 +8,7 @@
 
 > **IntegrityDigest**: (`value`) => `IntegrityDigest`
 
-Defined in: [core/src/brands.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L48)
+Defined in: [core/src/schema/brands.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L48)
 
 Wrap a plain string as an IntegrityDigest.
 

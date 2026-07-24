@@ -6,7 +6,7 @@
 
 # Function: capAxisAttr()
 
-> **capAxisAttr**(`axis`): `"data-czap-tier"` \| `"data-czap-motion"` \| `"data-czap-design"`
+> **capAxisAttr**(`axis`): `"data-liteship-tier"` \| `"data-liteship-motion"` \| `"data-liteship-design"`
 
 Defined in: [detect/src/cap-axes.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L33)
 
@@ -22,4 +22,4 @@ locals field cannot be constructed.
 
 ## Returns
 
-`"data-czap-tier"` \| `"data-czap-motion"` \| `"data-czap-design"`
+`"data-liteship-tier"` \| `"data-liteship-motion"` \| `"data-liteship-design"`

@@ -30,7 +30,7 @@ helper function string.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 #### Parameters
 
@@ -55,10 +55,10 @@ A [GLSLCompileResult](../interfaces/GLSLCompileResult.md) with defines, uniforms
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { GLSLCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { GLSLCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'mobile'], [768, 'desktop']],
 });
@@ -98,7 +98,7 @@ A GLSL preamble string
 #### Example
 
 ```ts
-import { GLSLCompiler } from '@czap/compiler';
+import { GLSLCompiler } from '@liteship/compiler';
 
 const result = GLSLCompiler.compile(boundary, states);
 const glsl = GLSLCompiler.serialize(result);
@@ -109,10 +109,10 @@ const shaderSource = glsl + '\n' + mainShaderCode;
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { GLSLCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { GLSLCompiler } from '@liteship/compiler';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [[0, 'sm'], [768, 'lg']],
 });

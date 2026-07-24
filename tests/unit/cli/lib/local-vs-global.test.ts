@@ -17,8 +17,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
-import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '@czap/gauntlet';
+import { hasTag } from '@liteship/error';
+import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '@liteship/gauntlet';
 import {
   buildProofFacts,
   buildCompositionFacts,
@@ -35,15 +35,15 @@ let repoRoot: string;
 function fixtureIR(): RepoIR {
   return makeRepoIR({
     files: [
-      { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-      { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     imports: [{ fromFile: A, specifier: './b.js', kind: 'relative', targetFile: B }],
   });
 }
 
 beforeAll(() => {
-  repoRoot = mkdtempSync(join(tmpdir(), 'czap-lvg-'));
+  repoRoot = mkdtempSync(join(tmpdir(), 'liteship-lvg-'));
   mkdirSync(join(repoRoot, 'benchmarks'), { recursive: true });
   mkdirSync(join(repoRoot, 'coverage'), { recursive: true });
   mkdirSync(join(repoRoot, 'traceability'), { recursive: true });
@@ -205,7 +205,7 @@ describe('buildProofFacts — the ABSENT-artifact + unmeasured-module arms (the 
   beforeAll(() => {
     // A repo with NO mutation baseline, NO coverage report, NO invariants ledger, and
     // NO test corpus — every signal is UNMEASURED → every module's localProof is 0.
-    bare = mkdtempSync(join(tmpdir(), 'czap-lvg-bare-'));
+    bare = mkdtempSync(join(tmpdir(), 'liteship-lvg-bare-'));
     mkdirSync(join(bare, 'tests/unit'), { recursive: true });
   });
   afterAll(() => {
@@ -241,7 +241,7 @@ describe('buildProofFacts — the ABSENT-artifact + unmeasured-module arms (the 
 describe('buildProofFacts — a malformed mutation baseline is a LOUD, tagged throw (never a silent zero)', () => {
   let bad: string;
   beforeAll(() => {
-    bad = mkdtempSync(join(tmpdir(), 'czap-lvg-bad-'));
+    bad = mkdtempSync(join(tmpdir(), 'liteship-lvg-bad-'));
     mkdirSync(join(bad, 'benchmarks'), { recursive: true });
   });
   afterAll(() => {
@@ -277,7 +277,7 @@ describe('buildProofFacts — a malformed mutation baseline is a LOUD, tagged th
 describe('readCoverageFractions arms — a vacuous file + a coverage entry outside the repo prefix', () => {
   let cov: string;
   beforeAll(() => {
-    cov = mkdtempSync(join(tmpdir(), 'czap-lvg-cov-'));
+    cov = mkdtempSync(join(tmpdir(), 'liteship-lvg-cov-'));
     mkdirSync(join(cov, 'coverage'), { recursive: true });
     mkdirSync(join(cov, 'tests/unit'), { recursive: true });
     // A: zero-statement file (empty `s`) → vacuously covered = 1. B: an ABSOLUTE path
@@ -306,7 +306,7 @@ describe('readCoverageFractions arms — a vacuous file + a coverage entry outsi
   });
 
   it('a coverage report that parses to a NON-OBJECT (e.g. a JSON number) yields no coverage at all', () => {
-    const num = mkdtempSync(join(tmpdir(), 'czap-lvg-covnum-'));
+    const num = mkdtempSync(join(tmpdir(), 'liteship-lvg-covnum-'));
     mkdirSync(join(num, 'coverage'), { recursive: true });
     mkdirSync(join(num, 'tests/unit'), { recursive: true });
     writeFileSync(join(num, 'coverage/coverage-final.json'), '123');
@@ -319,7 +319,7 @@ describe('readCoverageFractions arms — a vacuous file + a coverage entry outsi
 describe('buildCompositionFacts — the edge-classification arms (external / self / untested / dedup)', () => {
   let comp: string;
   beforeAll(() => {
-    comp = mkdtempSync(join(tmpdir(), 'czap-lvg-comp-'));
+    comp = mkdtempSync(join(tmpdir(), 'liteship-lvg-comp-'));
     mkdirSync(join(comp, 'tests/unit'), { recursive: true });
     // BOTH endpoints individually tested (each deep-imported by SOME test), but no
     // single test touches both → the A→B edge is the UNCOVERED finding.
@@ -334,9 +334,9 @@ describe('buildCompositionFacts — the edge-classification arms (external / sel
     const C = 'packages/core/src/c.ts'; // an IR file with NO test → untested endpoint.
     const ir = makeRepoIR({
       files: [
-        { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-        { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-        { id: C, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+        { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+        { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+        { id: C, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
       ],
       imports: [
         // An EXTERNAL import (no targetFile) — skipped.
@@ -365,9 +365,9 @@ describe('buildCompositionFacts — the edge-classification arms (external / sel
     const D = 'packages/core/src/d.ts';
     writeFileSync(join(comp, 'tests/unit/d.test.ts'), `import { d } from '${D.replace(/\.ts$/, '.js')}';\nd();\n`);
     const files = [
-      { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' as const },
-      { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' as const },
-      { id: D, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' as const },
+      { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' as const },
+      { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' as const },
+      { id: D, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' as const },
     ];
     // Declare the two edges in REVERSE sort order; the builder must sort them.
     const ir = makeRepoIR({

@@ -4,7 +4,7 @@
  * The default `liteshipDevopsProfile` references the existing policy consts, so
  * threading it through the structure audit reproduces current behavior exactly.
  * A synthetic `@acme/` profile fed to the SAME engine proves the audit is no
- * longer hardcoded to `@czap/` — the decoupling is real, not cosmetic.
+ * longer hardcoded to `@liteship/` — the decoupling is real, not cosmetic.
  *
  * @module
  */
@@ -16,8 +16,8 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { repoRoot } from '../../../scripts/audit/shared.js';
 import { packageTopology, surfacePolicy, dynamicImportExemptions } from '../../../scripts/audit/policy.js';
-import { liteshipDevopsProfile } from '@czap/audit';
-import type { DevopsProfile } from '@czap/audit';
+import { liteshipDevopsProfile } from '@liteship/audit';
+import type { DevopsProfile } from '@liteship/audit';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -26,7 +26,7 @@ afterEach(() => {
 
 /** Write a temp repo of `{ 'packages/<x>/...': contents }` and return its root. */
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-d7-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-d7-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -53,11 +53,11 @@ const PKG = (name: string, deps: Record<string, string> = {}): string =>
   JSON.stringify({ name, version: '0.0.0', dependencies: deps, exports: { '.': { development: './src/index.ts' } } });
 
 describe('D7 — the default profile references the existing policy consts (single source)', () => {
-  it('liteshipDevopsProfile aggregates the policy consts verbatim + owns the @czap/ prefix', () => {
+  it('liteshipDevopsProfile aggregates the policy consts verbatim + owns the @liteship/ prefix', () => {
     expect(liteshipDevopsProfile.packageTopology).toEqual(packageTopology);
     expect(liteshipDevopsProfile.dynamicImportExemptions).toEqual(dynamicImportExemptions);
     expect(liteshipDevopsProfile.surfacePolicy).toEqual(surfacePolicy);
-    expect(liteshipDevopsProfile.internalPackagePrefix).toBe('@czap/');
+    expect(liteshipDevopsProfile.internalPackagePrefix).toBe('@liteship/');
     expect(liteshipDevopsProfile.repoRoot).toBe(repoRoot);
   });
 });
@@ -77,7 +77,7 @@ describe('D7 — default profile reproduces current audit behavior (no drift)', 
 });
 
 describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)', () => {
-  it('treats @acme/* as an INTERNAL package edge — not external (the @czap/ hardcode is gone)', () => {
+  it('treats @acme/* as an INTERNAL package edge — not external (the @liteship/ hardcode is gone)', () => {
     const root = makeFixture({
       'packages/core/package.json': PKG('@acme/core'),
       'packages/core/src/index.ts': 'export const coreThing = 1;\n',
@@ -99,7 +99,7 @@ describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)'
     expect(result.findings.some((f) => f.rule === 'package-topology')).toBe(false);
   });
 
-  it('a layering-VIOLATING @acme import IS flagged — the profile, not the @czap hardcode, decides', () => {
+  it('a layering-VIOLATING @acme import IS flagged — the profile, not the @liteship hardcode, decides', () => {
     const root = makeFixture({
       'packages/core/package.json': PKG('@acme/core', { '@acme/app': 'workspace:*' }),
       'packages/core/src/index.ts': "import { appThing } from '@acme/app';\nexport const coreThing = appThing;\n",
@@ -121,7 +121,7 @@ describe('D7 — default profile self-consistency', () => {
   });
   it('every dynamic-import exemption is "<pkg> -> <pkg>" with both sides internally-prefixed', () => {
     for (const edge of liteshipDevopsProfile.dynamicImportExemptions) {
-      expect(edge).toMatch(/^@czap\/\S+ -> @czap\/\S+$/);
+      expect(edge).toMatch(/^@liteship\/\S+ -> @liteship\/\S+$/);
     }
   });
 });

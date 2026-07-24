@@ -13,8 +13,8 @@ import {
   capsuleVerifyCommand,
   sceneRenderCommand,
   assetAnalyzeCommand,
-} from '@czap/command';
-import type { RegisteredCommand } from '@czap/command';
+} from '@liteship/command';
+import type { RegisteredCommand } from '@liteship/command';
 
 const probeCommand: RegisteredCommand = {
   descriptor: {

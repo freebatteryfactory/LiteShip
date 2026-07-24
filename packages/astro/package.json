@@ -1,7 +1,7 @@
 {
-  "name": "@czap/astro",
-  "version": "0.18.0",
-  "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and resolve device tiers on the server for first paint.",
+  "name": "@liteship/astro",
+  "version": "0.19.0",
+  "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and resolve device tiers on the server for first paint.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "astro",
     "integration",
@@ -29,10 +28,10 @@
       "import": "./dist/index.js",
       "development": "./src/index.ts"
     },
-    "./client-directives/satellite": {
-      "types": "./dist/client-directives/satellite.d.ts",
-      "import": "./dist/client-directives/satellite.js",
-      "development": "./src/client-directives/satellite.ts"
+    "./client-directives/adaptive": {
+      "types": "./dist/client-directives/adaptive.d.ts",
+      "import": "./dist/client-directives/adaptive.js",
+      "development": "./src/client-directives/adaptive.ts"
     },
     "./client-directives/stream": {
       "types": "./dist/client-directives/stream.d.ts",
@@ -99,8 +98,8 @@
       "import": "./dist/runtime/inspector-toolbar-app.js",
       "development": "./src/runtime/inspector-toolbar-app.ts"
     },
-    "./Satellite": "./src/Satellite.astro",
-    "./Satellite.astro": "./src/Satellite.astro"
+    "./Adaptive": "./src/Adaptive.astro",
+    "./Adaptive.astro": "./src/Adaptive.astro"
   },
   "files": [
     "dist",
@@ -112,22 +111,22 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/vite": "workspace:*",
-    "@czap/detect": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/genui": "workspace:*",
-    "@czap/scene": "workspace:*",
-    "@czap/web": "workspace:*",
-    "@czap/worker": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/vite": "workspace:*",
+    "@liteship/detect": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/genui": "workspace:*",
+    "@liteship/scene": "workspace:*",
+    "@liteship/web": "workspace:*",
+    "@liteship/worker": "workspace:*"
   },
   "peerDependencies": {
-    "astro": ">=7.0.0 <8"
+    "astro": ">=7.1.0 <8"
   },
   "devDependencies": {
-    "astro": "^7.0.0"
+    "astro": "^7.1.0"
   },
   "engines": {
     "node": ">=22.13.0"

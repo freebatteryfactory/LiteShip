@@ -8,7 +8,7 @@
 
 > **asDeclaration**\<`T`\>(`schema`): [`DeclarationSchema`](../interfaces/DeclarationSchema.md)\<`T`\>
 
-Defined in: [core/src/schema-port.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L51)
+Defined in: [core/src/schema/schema-port.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L51)
 
 Brand a schema value as a [DeclarationSchema](../interfaces/DeclarationSchema.md). The `unique symbol` tag
 is PHANTOM — it has no runtime slot — so this is a pure type-level assertion:

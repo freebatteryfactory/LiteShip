@@ -1,8 +1,8 @@
 /**
- * scene compile (CLI adapter) — thin projection over `@czap/command`'s
+ * scene compile (CLI adapter) — thin projection over `@liteship/command`'s
  * scene.compile command. Injects the file-exists check, the dynamic scene
  * import, and the compile-fn execution (incl. Effect); the capsule/contract
- * discovery + receipt shaping live in `@czap/command`.
+ * discovery + receipt shaping live in `@liteship/command`.
  *
  * @module
  */
@@ -10,8 +10,8 @@
 import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
-import { sceneCompileCommand } from '@czap/command';
-import type { CommandContext } from '@czap/command';
+import { sceneCompileCommand } from '@liteship/command';
+import type { CommandContext } from '@liteship/command';
 import { emit, emitError } from '../receipts.js';
 import type { SceneCompileReceipt } from '../receipts.js';
 
@@ -38,7 +38,7 @@ export async function sceneCompile(scenePath: string): Promise<number> {
     compileContext(),
   );
   if (result.status === 'failed') {
-    emitError('scene.compile', (result.payload as { error: string }).error);
+    emitError('scene.compile', 'cli/command-failed', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
   const payload = result.payload as { sceneId: string; trackCount: number; durationMs: number };

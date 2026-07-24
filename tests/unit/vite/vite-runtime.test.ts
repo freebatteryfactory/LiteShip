@@ -1,14 +1,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-// The packaged-wasm source resolves @czap/core through the module graph (always
-// present in the workspace under vitest); force it absent so the temp-root
-// "no binary" / public-fixture scenarios are deterministic.
-vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
-
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { Boundary, Diagnostics, Style, Theme, Token } from '@czap/core';
+import { Diagnostics, defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
 import { compileQuantizeBlock, parseQuantizeBlocks } from '../../../packages/vite/src/css-quantize.js';
 import * as CSSQuantizeModule from '../../../packages/vite/src/css-quantize.js';
 import { buildEnvironments, getEnvironmentConfig } from '../../../packages/vite/src/environments.js';
@@ -21,10 +16,17 @@ import { resolvePrimitive } from '../../../packages/vite/src/primitive-resolve.j
 import * as PrimitiveResolveModule from '../../../packages/vite/src/primitive-resolve.js';
 import { isVirtualId, loadVirtualModule, resolveVirtualId } from '../../../packages/vite/src/virtual-modules.js';
 
+// The packaged-`@liteship/core` binary resolves through the module graph (always
+// present under vitest), which a synthetic temp root cannot model. `plugin`'s
+// second parameter is that resolver's injection seam; passing this stub forces the
+// `'package'` WASM source absent so the temp-root "no binary" / public-fixture
+// scenarios are deterministic — no module mocking.
+const noPackagedWasm = (): string | null => null;
+
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-vite-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-vite-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -41,11 +43,11 @@ afterEach(() => {
   }
 });
 
-describe('@czap/vite environments', () => {
+describe('@liteship/vite environments', () => {
   test('returns the expected browser environment config', () => {
     const config = getEnvironmentConfig('browser');
     expect(config.resolve.conditions).toContain('browser');
-    expect(config.optimizeDeps.include).toContain('@czap/core');
+    expect(config.optimizeDeps.include).toEqual([]);
   });
 
   test('builds a keyed environment map', () => {
@@ -55,30 +57,30 @@ describe('@czap/vite environments', () => {
   });
 });
 
-describe('@czap/vite resolvers', () => {
+describe('@liteship/vite resolvers', () => {
   test('fall back from wrong-tag same-directory modules to wildcard and project-root matches', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: { accent: { light: '#ffffff' } },
       meta: { light: { label: 'Light', mode: 'light' } },
     });
-    const style = Style.make({
-      base: { properties: { color: 'var(--czap-accent)' } },
+    const style = defineStyle({
+      base: { properties: { color: 'var(--liteship-accent)' } },
       states: { compact: { properties: { display: 'block' } } },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -118,8 +120,8 @@ describe('@czap/vite resolvers', () => {
     expect(await resolvePrimitive('theme', 'missingTheme', fromFile, root)).toBeNull();
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: 'czap/vite.token-resolve', code: 'import-failed' }),
-        expect.objectContaining({ source: 'czap/vite.theme-resolve', code: 'import-failed' }),
+        expect.objectContaining({ source: 'liteship/vite.token-resolve', code: 'import-failed' }),
+        expect.objectContaining({ source: 'liteship/vite.theme-resolve', code: 'import-failed' }),
       ]),
     );
   });
@@ -129,7 +131,7 @@ describe('@czap/vite resolvers', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -147,15 +149,15 @@ describe('@czap/vite resolvers', () => {
     expect(resolved?.source).toBe(join(root, 'good.boundaries.ts'));
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: 'czap/vite.boundary-resolve', code: 'import-failed' }),
+        expect.objectContaining({ source: 'liteship/vite.boundary-resolve', code: 'import-failed' }),
       ]),
     );
   });
 });
 
-describe('@czap/vite quantize parser', () => {
+describe('@liteship/vite quantize parser', () => {
   test('parses multiline declarations, ignores invalid declarations, and compiles to container queries', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -171,7 +173,7 @@ describe('@czap/vite quantize parser', () => {
       blue
     );
     broken declaration
-    color: var(--czap-accent, {});
+    color: var(--liteship-accent, {});
   }
   desktop {
     content: "ok";
@@ -312,37 +314,37 @@ describe('@czap/vite quantize parser', () => {
   });
 });
 
-describe('@czap/vite virtual modules', () => {
+describe('@liteship/vite virtual modules', () => {
   test('resolves known virtual ids', () => {
-    expect(resolveVirtualId('virtual:czap/tokens')).toBe('\0virtual:czap/tokens');
-    expect(resolveVirtualId('virtual:czap/hmr-client')).toBe('\0virtual:czap/hmr-client');
-    expect(resolveVirtualId('virtual:czap/unknown')).toBeUndefined();
+    expect(resolveVirtualId('virtual:liteship/tokens')).toBe('\0virtual:liteship/tokens');
+    expect(resolveVirtualId('virtual:liteship/hmr-client')).toBe('\0virtual:liteship/hmr-client');
+    expect(resolveVirtualId('virtual:liteship/unknown')).toBeUndefined();
   });
 
   test('identifies resolved virtual ids', () => {
-    expect(isVirtualId('\0virtual:czap/themes')).toBe(true);
-    expect(isVirtualId('virtual:czap/themes')).toBe(false);
+    expect(isVirtualId('\0virtual:liteship/themes')).toBe(true);
+    expect(isVirtualId('virtual:liteship/themes')).toBe(false);
   });
 
   test('loads stub source for supported modules', () => {
-    expect(loadVirtualModule('\0virtual:czap/tokens')).toContain('export const tokens');
-    expect(loadVirtualModule('\0virtual:czap/tokens.css')).toContain(':root');
-    expect(loadVirtualModule('\0virtual:czap/boundaries')).toContain('export const boundaries');
-    expect(loadVirtualModule('\0virtual:czap/themes')).toContain('export const themes');
-    expect(loadVirtualModule('\0virtual:czap/hmr-client')).toContain('import.meta.hot');
-    expect(loadVirtualModule('\0virtual:czap/wasm-url')).toContain('export const wasmUrl = null');
-    expect(loadVirtualModule('\0virtual:czap/config')).toContain('export const config = null');
-    expect(loadVirtualModule('\0virtual:czap/missing')).toBeUndefined();
-    expect(loadVirtualModule('virtual:czap/tokens')).toBeUndefined();
+    expect(loadVirtualModule('\0virtual:liteship/tokens')).toContain('export const tokens');
+    expect(loadVirtualModule('\0virtual:liteship/tokens.css')).toContain(':root');
+    expect(loadVirtualModule('\0virtual:liteship/boundaries')).toContain('export const boundaries');
+    expect(loadVirtualModule('\0virtual:liteship/themes')).toContain('export const themes');
+    expect(loadVirtualModule('\0virtual:liteship/hmr-client')).toContain('import.meta.hot');
+    expect(loadVirtualModule('\0virtual:liteship/wasm-url')).toContain('export const wasmUrl = null');
+    expect(loadVirtualModule('\0virtual:liteship/config')).toContain('export const config = null');
+    expect(loadVirtualModule('\0virtual:liteship/missing')).toBeUndefined();
+    expect(loadVirtualModule('virtual:liteship/tokens')).toBeUndefined();
   });
 });
 
-describe('@czap/vite plugin', () => {
+describe('@liteship/vite plugin', () => {
   test('injects the HMR client by default', () => {
     const vitePlugin = plugin();
     const tags = vitePlugin.transformIndexHtml?.();
     expect(tags).toHaveLength(1);
-    expect(tags?.[0]?.children).toContain('virtual:czap/hmr-client');
+    expect(tags?.[0]?.children).toContain('virtual:liteship/hmr-client');
   });
 
   test('skips HMR client injection when disabled', () => {
@@ -350,30 +352,30 @@ describe('@czap/vite plugin', () => {
     expect(vitePlugin.transformIndexHtml?.()).toEqual([]);
   });
 
-  test('derives browser environment by default and honors explicit overrides', () => {
+  test('derives browser environment by default and honors explicit overrides', async () => {
     const defaultPlugin = plugin();
-    const defaultResult = defaultPlugin.config?.() as { environments: Record<string, unknown> };
+    const defaultResult = (await defaultPlugin.config?.()) as { environments: Record<string, unknown> };
     expect(Object.keys(defaultResult.environments)).toEqual(['browser']);
 
     const emptyPlugin = plugin({ environments: [] });
-    expect(emptyPlugin.config?.()).toEqual({});
+    expect(await emptyPlugin.config?.()).toEqual({});
 
     const envPlugin = plugin({ environments: ['browser', 'server'] });
-    const result = envPlugin.config?.() as { environments: Record<string, unknown> };
+    const result = (await envPlugin.config?.()) as { environments: Record<string, unknown> };
     expect(Object.keys(result.environments)).toEqual(['browser', 'server']);
   });
 
   test('resolves and loads virtual modules through the plugin hooks', async () => {
     // wasm: false makes the wasm-url assertion below deterministic — bare plugin() now
     // AUTO-DETECTS a built crate (wave-3 DX), so `wasmUrl` would be a real path on a
-    // machine where czap-compute is built and null elsewhere. This test pins the hook
+    // machine where liteship-compute is built and null elsewhere. This test pins the hook
     // wiring + the explicit-off case; the live-URL case is covered by the next test.
-    const vitePlugin = plugin({ wasm: false });
-    const resolved = vitePlugin.resolveId?.('virtual:czap/tokens');
-    const wasmResolved = vitePlugin.resolveId?.('virtual:czap/wasm-url');
+    const vitePlugin = plugin({ wasm: false }, noPackagedWasm);
+    const resolved = vitePlugin.resolveId?.('virtual:liteship/tokens');
+    const wasmResolved = vitePlugin.resolveId?.('virtual:liteship/wasm-url');
 
-    expect(resolved).toBe('\0virtual:czap/tokens');
-    expect(wasmResolved).toBe('\0virtual:czap/wasm-url');
+    expect(resolved).toBe('\0virtual:liteship/tokens');
+    expect(wasmResolved).toBe('\0virtual:liteship/wasm-url');
     const tokensLoad = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
       undefined as never,
       resolved!,
@@ -387,57 +389,57 @@ describe('@czap/vite plugin', () => {
     const root = makeTempDir();
     const publicDir = join(root, 'public');
     mkdirSync(publicDir, { recursive: true });
-    writeFileSync(join(publicDir, 'czap-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
+    writeFileSync(join(publicDir, 'liteship-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const vitePlugin = plugin({ wasm: { enabled: true } });
+    const vitePlugin = plugin({ wasm: { enabled: true } }, noPackagedWasm);
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
-    const wasmModule = vitePlugin.load?.('\0virtual:czap/wasm-url');
+    const wasmModule = vitePlugin.load?.('\0virtual:liteship/wasm-url');
 
-    expect(wasmModule).toContain('/czap-compute.wasm');
+    expect(wasmModule).toContain('/liteship-compute.wasm');
   });
 
   test('warns when wasm is enabled without a resolvable binary and emits rollup urls for build output', () => {
     const missingRoot = makeTempDir();
-    const missingPlugin = plugin({ wasm: { enabled: true } });
+    const missingPlugin = plugin({ wasm: { enabled: true } }, noPackagedWasm);
     const warn = vi.fn();
     missingPlugin.configResolved?.({ root: missingRoot, command: 'serve' } as never);
     missingPlugin.buildStart?.call({ warn, emitFile: vi.fn() } as never);
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('WASM support was enabled, but no czap-compute binary could be resolved.'),
+      expect.stringContaining('WASM support was enabled, but no liteship-compute binary could be resolved.'),
     );
     expect(warn.mock.calls[0]?.[0]).toContain('Searched:');
-    expect(warn.mock.calls[0]?.[0]).toContain('public/czap-compute.wasm');
-    expect(missingPlugin.load?.('\0virtual:czap/wasm-url')).toContain('export const wasmUrl = null');
+    expect(warn.mock.calls[0]?.[0]).toContain('public/liteship-compute.wasm');
+    expect(missingPlugin.load?.('\0virtual:liteship/wasm-url')).toContain('export const wasmUrl = null');
 
     const buildRoot = makeTempDir();
     const distDir = join(buildRoot, 'dist');
     mkdirSync(distDir, { recursive: true });
-    const buildWasmPath = join(distDir, 'czap-compute.wasm');
+    const buildWasmPath = join(distDir, 'liteship-compute.wasm');
     writeFileSync(buildWasmPath, Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const buildPlugin = plugin({ wasm: { enabled: true, path: buildWasmPath } });
+    const buildPlugin = plugin({ wasm: { enabled: true, path: buildWasmPath } }, noPackagedWasm);
     const emitFile = vi.fn(() => 'asset-123');
     buildPlugin.configResolved?.({ root: buildRoot, command: 'build' } as never);
     buildPlugin.buildStart?.call({ warn: vi.fn(), emitFile } as never);
 
     expect(emitFile).toHaveBeenCalled();
-    expect(buildPlugin.load?.('\0virtual:czap/wasm-url')).toContain('ROLLUP_FILE_URL_asset-123');
+    expect(buildPlugin.load?.('\0virtual:liteship/wasm-url')).toContain('ROLLUP_FILE_URL_asset-123');
   });
 
   test('does not emit wasm assets during serve-mode startup when a binary is resolvable', () => {
     const root = makeTempDir();
     const publicDir = join(root, 'public');
     mkdirSync(publicDir, { recursive: true });
-    writeFileSync(join(publicDir, 'czap-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
+    writeFileSync(join(publicDir, 'liteship-compute.wasm'), Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const vitePlugin = plugin({ wasm: { enabled: true } });
+    const vitePlugin = plugin({ wasm: { enabled: true } }, noPackagedWasm);
     const emitFile = vi.fn();
 
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
     vitePlugin.buildStart?.call({ warn: vi.fn(), emitFile } as never);
 
     expect(emitFile).not.toHaveBeenCalled();
-    expect(vitePlugin.load?.('\0virtual:czap/wasm-url')).toContain('/czap-compute.wasm');
+    expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain('/liteship-compute.wasm');
   });
 
   test('buildStart is a no-op when wasm support is disabled', () => {
@@ -455,12 +457,12 @@ describe('@czap/vite plugin', () => {
     const root = makeTempDir();
     const distDir = join(root, 'dist');
     mkdirSync(distDir, { recursive: true });
-    const wasmPath = join(distDir, 'czap-compute.wasm');
+    const wasmPath = join(distDir, 'liteship-compute.wasm');
     writeFileSync(wasmPath, Buffer.from([0x00, 0x61, 0x73, 0x6d]));
 
-    const vitePlugin = plugin({ wasm: { enabled: true, path: wasmPath } });
+    const vitePlugin = plugin({ wasm: { enabled: true, path: wasmPath } }, noPackagedWasm);
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
-    expect(vitePlugin.load?.('\0virtual:czap/wasm-url')).toContain(wasmPath.replace(/\\/g, '/'));
+    expect(vitePlugin.load?.('\0virtual:liteship/wasm-url')).toContain(wasmPath.replace(/\\/g, '/'));
 
     const moduleGraph = {
       idToModuleMap: new Map([['src/app.ts', { id: 'src/app.ts' }]]),
@@ -477,24 +479,24 @@ describe('@czap/vite plugin', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: { accent: { light: '#ffffff' } },
       meta: { light: { label: 'Light', mode: 'light' } },
     });
-    const style = Style.make({
-      base: { properties: { color: 'var(--czap-accent)' } },
+    const style = defineStyle({
+      base: { properties: { color: 'var(--liteship-accent)' } },
       states: { compact: { properties: { display: 'block' } } },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -554,7 +556,7 @@ describe('@czap/vite plugin', () => {
     const cssFile = join(root, 'src', 'broken-quantize.css');
     mkdirSync(join(root, 'src'), { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'compact']] as const,
     });
@@ -585,7 +587,7 @@ describe('@czap/vite plugin', () => {
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
 
     const css = `:root {
-  @token primary: var(--czap-primary);
+  @token primary: var(--liteship-primary);
 }
 
 @quantize {
@@ -643,7 +645,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -680,7 +682,7 @@ describe('@czap/vite plugin', () => {
     ).toBe(true);
   });
 
-  test('skips non-css ids and css files without czap at-rules', async () => {
+  test('skips non-css ids and css files without liteship at-rules', async () => {
     const vitePlugin = plugin();
 
     expect(await vitePlugin.transform?.call({ warn() {} } as never, '.app { color: red; }', 'src/app.ts')).toBeNull();
@@ -700,21 +702,21 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
         [768, 'desktop'],
       ] as const,
     });
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff', dark: '#000000' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light', 'dark'] as const,
       tokens: {
@@ -725,11 +727,11 @@ describe('@czap/vite plugin', () => {
         dark: { label: 'Dark', mode: 'dark' },
       },
     });
-    const style = Style.make({
+    const style = defineStyle({
       boundary,
       base: {
         properties: {
-          color: 'var(--czap-accent)',
+          color: 'var(--liteship-accent)',
         },
       },
       states: {
@@ -785,7 +787,7 @@ describe('@czap/vite plugin', () => {
 
     expect(warnings).toEqual([]);
     expect(transformed).not.toBeNull();
-    expect(transformed?.code).toContain('--czap-accent');
+    expect(transformed?.code).toContain('--liteship-accent');
     expect(transformed?.code).toContain('html[data-theme="light"]');
     expect(transformed?.code).toContain('.card[data-state="mobile"]');
     expect(transformed?.code).toContain('@container');
@@ -800,14 +802,14 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const widthBoundary = Boundary.make({
+    const widthBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
         [768, 'wide'],
       ] as const,
     });
-    const bareBoundary = Boundary.make({
+    const bareBoundary = defineBoundary({
       input: 'viewport',
       at: [
         [0, 'short'],
@@ -876,7 +878,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
@@ -927,7 +929,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
@@ -972,7 +974,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
@@ -1022,7 +1024,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -1058,7 +1060,7 @@ describe('@czap/vite plugin', () => {
     const output = transformed!.code;
     // The decoy declaration survives verbatim; the real block compiled.
     expect(output).toContain('.decoy::before { content: "@token accent {"; }');
-    expect(output).toContain('--czap-accent');
+    expect(output).toContain('--liteship-accent');
     expect(output).not.toContain('\n@token accent {');
   });
 
@@ -1090,21 +1092,21 @@ describe('@czap/vite plugin', () => {
     const cssFile = join(root, 'src', 'unmatched.css');
     mkdirSync(join(root, 'src'), { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: { accent: { light: '#ffffff' } },
       meta: { light: { label: 'Light', mode: 'light' } },
     });
-    const style = Style.make({
-      base: { properties: { color: 'var(--czap-accent)' } },
+    const style = defineStyle({
+      base: { properties: { color: 'var(--liteship-accent)' } },
       states: { compact: { properties: { display: 'block' } } },
     });
 
@@ -1119,7 +1121,7 @@ describe('@czap/vite plugin', () => {
       { themeName: 'brand', line: 2, declarations: {} },
     ]);
     vi.spyOn(StyleTransformModule, 'parseStyleBlocks').mockReturnValue([{ styleName: 'card', line: 3, states: {} }]);
-    vi.spyOn(TokenTransformModule, 'compileTokenBlock').mockReturnValue(':root { --czap-accent: #ffffff; }');
+    vi.spyOn(TokenTransformModule, 'compileTokenBlock').mockReturnValue(':root { --liteship-accent: #ffffff; }');
     vi.spyOn(ThemeTransformModule, 'compileThemeBlock').mockReturnValue('html[data-theme="light"] {}');
     vi.spyOn(StyleTransformModule, 'compileStyleBlock').mockReturnValue('.card[data-state="compact"] {}');
 
@@ -1144,24 +1146,24 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const tokenExtra = Token.make({
+    const tokenExtra = defineToken({
       name: 'accentx',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ff00ff' },
       fallback: '#ff00ff',
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: {
-          color: 'var(--czap-accent)',
+          color: 'var(--liteship-accent)',
         },
       },
       states: {
@@ -1210,8 +1212,8 @@ describe('@czap/vite plugin', () => {
     );
 
     expect(warnings).toEqual([]);
-    expect(transformed?.code).toContain('--czap-accent');
-    expect(transformed?.code).toContain('--czap-accentx');
+    expect(transformed?.code).toContain('--liteship-accent');
+    expect(transformed?.code).toContain('--liteship-accentx');
     expect(transformed?.code).toContain('.card[data-state="compact"]');
     expect(transformed?.code).not.toContain('@token accentx');
     expect(transformed?.code).not.toContain('@token accent {');
@@ -1223,7 +1225,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const style = Style.make({
+    const style = defineStyle({
       base: { properties: { color: 'black' } },
       states: { compact: { properties: { background: 'black' } } },
     });
@@ -1249,10 +1251,10 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: {
-          color: 'var(--czap-accent)',
+          color: 'var(--liteship-accent)',
         },
       },
       states: {
@@ -1263,7 +1265,7 @@ describe('@czap/vite plugin', () => {
         },
       },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'compact']] as const,
     });
@@ -1279,7 +1281,7 @@ describe('@czap/vite plugin', () => {
       '@style card { compact { background-image: url("data:text/plain,escaped\\\\\\"quote\\\\\\""); } }',
       join(cssDir, 'escaped-url.css'),
     );
-    expect(transformed?.code).toContain('.czap-card');
+    expect(transformed?.code).toContain('.liteship-card');
 
     vi.spyOn(CSSQuantizeModule, 'parseQuantizeBlocks').mockReturnValue([
       {
@@ -1394,7 +1396,7 @@ describe('@czap/vite plugin', () => {
         ].join('\n\n'),
         cssFile,
       ),
-    ).rejects.toThrow('boundary "missingBoundary" referenced in @quantize not found (declare it with Boundary.make)');
+    ).rejects.toThrow('boundary "missingBoundary" referenced in @quantize not found (declare it with defineBoundary)');
 
     expect(warnings).toEqual([
       expect.stringContaining('Could not resolve theme "missingTheme"'),
@@ -1408,7 +1410,7 @@ describe('@czap/vite plugin', () => {
     const boundaryDir = join(srcDir, 'lib');
     mkdirSync(boundaryDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -1448,21 +1450,21 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
         [768, 'desktop'],
       ] as const,
     });
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: {
@@ -1472,10 +1474,10 @@ describe('@czap/vite plugin', () => {
         light: { label: 'Light', mode: 'light' },
       },
     });
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: {
-          color: 'var(--czap-accent)',
+          color: 'var(--liteship-accent)',
         },
       },
       states: {
@@ -1536,7 +1538,7 @@ describe('@czap/vite plugin', () => {
     );
 
     expect(warnings).toEqual([]);
-    expect(transformed?.code).toContain('--czap-accent');
+    expect(transformed?.code).toContain('--liteship-accent');
     expect(transformed?.code).toContain('html[data-theme="light"]');
     expect(transformed?.code).toContain('.card[data-state="compact"]');
     expect(transformed?.code).toContain('@container');
@@ -1551,14 +1553,14 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light'] as const,
       tokens: {
@@ -1590,7 +1592,7 @@ describe('@czap/vite plugin', () => {
 
     const transformed = await vitePlugin.transform?.call({ warn() {} } as never, css, cssFile);
 
-    expect(transformed?.code).toContain('--czap-accent');
+    expect(transformed?.code).toContain('--liteship-accent');
     expect(transformed?.code).toContain('html[data-theme="light"]');
     expect(transformed?.code).not.toContain('@token accent {');
     expect(transformed?.code).not.toContain('@theme brand {');
@@ -1669,22 +1671,22 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
         [768, 'desktop'],
       ] as const,
     });
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff' },
       fallback: '#ffffff',
     });
-    const style = Style.make({
-      base: { properties: { color: 'var(--czap-accent)' } },
+    const style = defineStyle({
+      base: { properties: { color: 'var(--liteship-accent)' } },
       states: {
         compact: {
           properties: {
@@ -1724,7 +1726,7 @@ describe('@czap/vite plugin', () => {
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
     const transformed = await vitePlugin.transform?.call({ warn() {} } as never, css, join(cssDir, 'batch.css'));
 
-    expect(transformed?.code).toContain('--czap-accent');
+    expect(transformed?.code).toContain('--liteship-accent');
     expect(transformed?.code).toContain('.card[data-state="compact"]');
     expect(transformed?.code).toContain('@container');
     expect(transformed?.code).toContain('@token accent-long');
@@ -1736,7 +1738,7 @@ describe('@czap/vite plugin', () => {
     const cssDir = join(root, 'src');
     mkdirSync(cssDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -1759,7 +1761,7 @@ describe('@czap/vite plugin', () => {
       join(cssDir, 'escaped-block.css'),
     );
 
-    expect(transformed?.code).toContain('--czap-accent');
+    expect(transformed?.code).toContain('--liteship-accent');
     expect(transformed?.code).not.toContain('@token accent {');
   });
 

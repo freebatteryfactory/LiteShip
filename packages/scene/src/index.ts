@@ -1,6 +1,6 @@
 /**
- * `@czap/scene` — **LiteShip** scene stack: typed timeline authoring over the
- * ECS substrate in `@czap/core`.
+ * `@liteship/scene` — **LiteShip** scene stack: typed timeline authoring over the
+ * ECS substrate in `@liteship/core`.
  *
  * @module
  */
@@ -66,7 +66,7 @@ export type { SceneSubscenePartial } from './include.js';
 export { inheritContext } from './context.js';
 export type { SceneContext } from './context.js';
 
-// `startDevServer` lives at `@czap/scene/dev` sub-path — it imports
+// `startDevServer` lives at `@liteship/scene/dev` sub-path — it imports
 // `node:os`, `node:crypto`, and Vite's server. Keeping it off the main
 // entry prevents bundlers targeting browsers / Workers / Deno from hitting
 // a hard import error at parse time on code paths they never call.

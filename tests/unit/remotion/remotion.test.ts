@@ -2,8 +2,8 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Compositor, Diagnostics, VideoRenderer } from '@czap/core';
-import type { CompositeState, VideoFrameOutput } from '@czap/core';
+import { Compositor, Diagnostics, VideoRenderer } from '@liteship/core';
+import type { CompositeState, VideoFrameOutput } from '@liteship/core';
 import { Internals } from 'remotion';
 import {
   Provider,
@@ -13,8 +13,8 @@ import {
   rendererFromRemotionConfig,
   stateAtFrame,
   useCompositeState,
-  useCzapState,
-} from '@czap/remotion';
+  useLiteshipState,
+} from '@liteship/remotion';
 
 function withRemotionFrame(frame: number, child: React.ReactElement): React.ReactElement {
   (window as Window & { remotion_initialFrame?: number }).remotion_initialFrame = frame;
@@ -34,34 +34,34 @@ function makeFrames(count: number): VideoFrameOutput[] {
       discrete: { index: String(i) },
       blend: {},
       outputs: {
-        css: { '--czap-index': i },
+        css: { '--liteship-index': i },
         glsl: { u_index: i },
-        aria: { 'data-czap-index': String(i) },
+        aria: { 'data-liteship-index': String(i) },
       },
     },
   }));
 }
 
-describe('@czap/remotion cssVarsFromState', () => {
+describe('@liteship/remotion cssVarsFromState', () => {
   test('converts css outputs to string values', () => {
     const state: CompositeState = {
       discrete: {},
       blend: {},
       outputs: {
-        css: { '--czap-size': 16, '--czap-theme': 'dark' },
+        css: { '--liteship-size': 16, '--liteship-theme': 'dark' },
         glsl: {},
         aria: {},
       },
     };
 
     expect(cssVarsFromState(state)).toEqual({
-      '--czap-size': '16',
-      '--czap-theme': 'dark',
+      '--liteship-size': '16',
+      '--liteship-theme': 'dark',
     });
   });
 });
 
-describe('@czap/remotion stateAtFrame', () => {
+describe('@liteship/remotion stateAtFrame', () => {
   test('clamps frame lookups to the available range', () => {
     const frames = makeFrames(3);
     expect(stateAtFrame(frames, -1).discrete['index']).toBe('0');
@@ -78,7 +78,7 @@ describe('@czap/remotion stateAtFrame', () => {
   });
 });
 
-describe('@czap/remotion hooks', () => {
+describe('@liteship/remotion hooks', () => {
   test('useCompositeState reads the mocked current frame', () => {
     const frames = makeFrames(4);
     let observed: CompositeState | null = null;
@@ -92,12 +92,12 @@ describe('@czap/remotion hooks', () => {
     expect(observed?.discrete['index']).toBe('2');
   });
 
-  test('useCzapState reads frames from Provider context', () => {
+  test('useLiteshipState reads frames from Provider context', () => {
     const frames = makeFrames(3);
     let observed: CompositeState | null = null;
 
     function Probe(): React.JSX.Element {
-      observed = useCzapState();
+      observed = useLiteshipState();
       return React.createElement('div');
     }
 
@@ -105,11 +105,11 @@ describe('@czap/remotion hooks', () => {
     expect(observed?.discrete['index']).toBe('1');
   });
 
-  test('useCzapState falls back to the empty state when no frames exist', () => {
+  test('useLiteshipState falls back to the empty state when no frames exist', () => {
     let observed: CompositeState | null = null;
 
     function Probe(): React.JSX.Element {
-      observed = useCzapState();
+      observed = useLiteshipState();
       return React.createElement('div');
     }
 
@@ -122,9 +122,9 @@ describe('@czap/remotion hooks', () => {
   });
 });
 
-describe('@czap/remotion precomputeFrames', () => {
+describe('@liteship/remotion precomputeFrames', () => {
   test('collects frames from a renderer', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: 500 }, compositor);
 
     const frames = await precomputeFrames(renderer);
@@ -134,16 +134,16 @@ describe('@czap/remotion precomputeFrames', () => {
   });
 
   test('returns an empty array for zero-duration renders', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = VideoRenderer.make({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
 
     await expect(precomputeFrames(renderer)).resolves.toEqual([]);
   });
 });
 
-describe('@czap/remotion rendererFromRemotionConfig', () => {
+describe('@liteship/remotion rendererFromRemotionConfig', () => {
   test('derives VideoConfig from Remotion timing so frame counts cannot drift', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const renderer = rendererFromRemotionConfig(
       { fps: 30, width: 640, height: 480, durationInFrames: 90 },
       compositor,
@@ -160,7 +160,7 @@ describe('@czap/remotion rendererFromRemotionConfig', () => {
   test('frame counts round-trip exactly at non-representable rates (Codex P2, PR #34)', () => {
     // (frames / fps) * 1000 is not exactly representable for these pairs —
     // an unguarded ceil round trip adds a phantom frame (1000 @ 30 -> 1001).
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     for (const [durationInFrames, fps] of [
       [1000, 30],
       [900, 29.97],
@@ -172,7 +172,7 @@ describe('@czap/remotion rendererFromRemotionConfig', () => {
   });
 
   test('accepts the full useVideoConfig shape (extra fields ignored)', () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const remotionConfig = { fps: 24, width: 1920, height: 1080, durationInFrames: 48, id: 'main' };
     const renderer = rendererFromRemotionConfig(remotionConfig, compositor);
 
@@ -181,7 +181,7 @@ describe('@czap/remotion rendererFromRemotionConfig', () => {
   });
 });
 
-describe('@czap/remotion degraded-path diagnostics', () => {
+describe('@liteship/remotion degraded-path diagnostics', () => {
   let buffer: ReturnType<typeof Diagnostics.createBufferSink>;
 
   beforeEach(() => {
@@ -200,7 +200,7 @@ describe('@czap/remotion degraded-path diagnostics', () => {
 
     const events = buffer.events.filter((e) => e.code === 'no-frames');
     expect(events).toHaveLength(1);
-    expect(events[0]?.source).toBe('czap/remotion');
+    expect(events[0]?.source).toBe('liteship/remotion');
     expect(events[0]?.message).toContain('precomputeFrames');
     expect(events[0]?.message).toContain('calculateMetadata');
   });
@@ -227,11 +227,11 @@ describe('@czap/remotion degraded-path diagnostics', () => {
     expect(buffer.events).toHaveLength(0);
   });
 
-  test('useCzapState warns once naming the missing Provider', () => {
+  test('useLiteshipState warns once naming the missing Provider', () => {
     let observed: CompositeState | null = null;
 
     function Probe(): React.JSX.Element {
-      observed = useCzapState();
+      observed = useLiteshipState();
       return React.createElement('div');
     }
 
@@ -244,7 +244,7 @@ describe('@czap/remotion degraded-path diagnostics', () => {
     });
     const events = buffer.events.filter((e) => e.code === 'no-provider-frames');
     expect(events).toHaveLength(1);
-    expect(events[0]?.source).toBe('czap/remotion');
+    expect(events[0]?.source).toBe('liteship/remotion');
     expect(events[0]?.message).toContain('<Provider frames={frames}>');
     expect(events[0]?.message).toContain('precomputeFrames');
   });

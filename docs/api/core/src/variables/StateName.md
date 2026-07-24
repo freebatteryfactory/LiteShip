@@ -8,11 +8,11 @@
 
 > **StateName**: \<`S`\>(`value`) => [`StateName`](../type-aliases/StateName.md)\<`S`\>
 
-Defined in: [core/src/brands.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L36)
+Defined in: [core/src/schema/brands.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L36)
 
 Wrap a plain string as a StateName.
 
-A state name is serialized into the `data-czap` state token and used as a
+A state name is serialized into the `data-liteship` state token and used as a
 CSS/selector-addressable label, so it must be a non-empty token with no
 whitespace (e.g. `mobile`, `sm`, `desktop`).
 

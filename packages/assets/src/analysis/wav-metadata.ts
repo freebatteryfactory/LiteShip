@@ -16,8 +16,8 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { CapsuleDef } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
+import type { CapsuleDef } from '@liteship/core';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { walkRiff } from '../decoders/riff.js';
 
@@ -65,10 +65,10 @@ export function extractWavMetadata(bytes: ArrayBuffer): WavMetadata {
   return meta;
 }
 
-const WavMetadataSchema = S.struct({
-  title: S.optional(S.string),
-  artist: S.optional(S.string),
-  bpm: S.optional(S.number),
+const WavMetadataSchema = schema.struct({
+  title: schema.optional(schema.string),
+  artist: schema.optional(schema.string),
+  bpm: schema.optional(schema.number),
 });
 
 /**

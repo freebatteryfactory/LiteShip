@@ -1,15 +1,15 @@
 /**
  * completion — emit shell completion scripts for bash / zsh / fish.
- * Source the output in your shell rc to get tab-completion for `czap`
+ * Source the output in your shell rc to get tab-completion for `liteship`
  * verbs and their subcommands.
  *
  * Usage:
- *   czap completion bash >> ~/.bashrc
- *   czap completion zsh  >> ~/.zshrc
- *   czap completion fish > ~/.config/fish/completions/czap.fish
+ *   liteship completion bash >> ~/.bashrc
+ *   liteship completion zsh  >> ~/.zshrc
+ *   liteship completion fish > ~/.config/fish/completions/liteship.fish
  *
  * The verb + subcommand lists are PROJECTED from the one canonical command
- * catalog in `@czap/command` — there is no hand-maintained table to drift from
+ * catalog in `@liteship/command` — there is no hand-maintained table to drift from
  * dispatch.ts anymore. Top-level verbs are the distinct first segments of the
  * catalog's dotted command names; subcommands are the remaining segments; the
  * shell argument values come from the `completion` descriptor's input schema.
@@ -17,7 +17,7 @@
  * @module
  */
 
-import { COMMAND_CATALOG, commandRegistry } from '@czap/command';
+import { COMMAND_CATALOG, commandRegistry } from '@liteship/command';
 import { emitError } from '../receipts.js';
 
 /** Distinct top-level verbs, projected from the catalog's command names. */
@@ -61,8 +61,8 @@ function bashScript(): string {
   const assetSubs = (SUBCOMMANDS.asset ?? []).join(' ');
   const capsuleSubs = (SUBCOMMANDS.capsule ?? []).join(' ');
   const shellSubs = (SUBCOMMANDS.completion ?? []).join(' ');
-  return `# czap bash completion
-_czap_completion() {
+  return `# liteship bash completion
+_liteship_completion() {
   local cur prev
   cur="\${COMP_WORDS[COMP_CWORD]}"
   prev="\${COMP_WORDS[COMP_CWORD-1]}"
@@ -77,7 +77,7 @@ _czap_completion() {
     completion) COMPREPLY=( \$(compgen -W "${shellSubs}" -- "\$cur") );;
   esac
 }
-complete -F _czap_completion czap
+complete -F _liteship_completion liteship
 `;
 }
 
@@ -87,12 +87,12 @@ function zshScript(): string {
   const assetSubs = (SUBCOMMANDS.asset ?? []).join(' ');
   const capsuleSubs = (SUBCOMMANDS.capsule ?? []).join(' ');
   const shellSubs = (SUBCOMMANDS.completion ?? []).join(' ');
-  return `# czap zsh completion
-_czap() {
+  return `# liteship zsh completion
+_liteship() {
   local -a verbs
   verbs=(${verbs})
   if (( CURRENT == 2 )); then
-    _describe -t commands 'czap verb' verbs
+    _describe -t commands 'liteship verb' verbs
     return
   fi
   case "\${words[2]}" in
@@ -102,18 +102,18 @@ _czap() {
     completion) _values 'shell' ${shellSubs} ;;
   esac
 }
-compdef _czap czap
+compdef _liteship liteship
 `;
 }
 
 function fishScript(): string {
-  const lines: string[] = ['# czap fish completion'];
+  const lines: string[] = ['# liteship fish completion'];
   for (const v of TOP_LEVEL_VERBS) {
-    lines.push(`complete -c czap -f -n '__fish_use_subcommand' -a '${v}'`);
+    lines.push(`complete -c liteship -f -n '__fish_use_subcommand' -a '${v}'`);
   }
   for (const [verb, subs] of Object.entries(SUBCOMMANDS)) {
     for (const s of subs) {
-      lines.push(`complete -c czap -f -n '__fish_seen_subcommand_from ${verb}' -a '${s}'`);
+      lines.push(`complete -c liteship -f -n '__fish_seen_subcommand_from ${verb}' -a '${s}'`);
     }
   }
   return lines.join('\n') + '\n';
@@ -122,7 +122,7 @@ function fishScript(): string {
 /** Execute the completion command. Returns a process exit code. */
 export function completion(shell: string | undefined): number {
   if (!isShell(shell)) {
-    emitError('completion', `expected shell: bash | zsh | fish (got: ${shell ?? '<missing>'})`);
+    emitError('completion', 'cli/invalid-argument', `expected shell: bash | zsh | fish (got: ${shell ?? '<missing>'})`);
     return 1;
   }
   if (shell === 'bash') process.stdout.write(bashScript());

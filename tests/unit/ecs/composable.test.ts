@@ -6,10 +6,20 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Composable, ComposableWorld, Part, S, Style, Token, World } from '@czap/core';
-import { hasTag } from '@czap/error';
+import {
+  ComposableWorld,
+  Part,
+  defineBoundary,
+  defineToken,
+  defineStyle,
+  schema,
+  createWorld,
+  Composable,
+  createComposable,
+} from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -18,7 +28,7 @@ const boundary = Boundary.make({
   ],
 });
 
-const token = Token.make({
+const token = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['themeLevel'] as const,
@@ -35,7 +45,7 @@ type TestSchema = {
   style?: typeof style;
 };
 
-const style = Style.make({
+const style = defineStyle({
   boundary,
   base: {
     properties: {
@@ -59,12 +69,12 @@ const style = Style.make({
 
 const scorePart = {
   name: 'score',
-  schema: S.number,
+  schema: schema.number,
 };
 
 describe('ECS Composable Infrastructure', () => {
   test('World.make returns a world with the required methods', () => {
-    const { world } = World.make();
+    const world = createWorld();
 
     expect(world.spawn).toBeTypeOf('function');
     expect(world.despawn).toBeTypeOf('function');
@@ -77,7 +87,7 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('World.spawn returns unique EntityIds with a content fingerprint suffix', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const id1 = world.spawn({ type: 'enemy' });
     const id2 = world.spawn({ type: 'enemy' });
 
@@ -89,7 +99,7 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('World query, addComponent, removeComponent, and despawn all behave correctly', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const entityId = world.spawn({ tag: 'player' });
     const missingId = 'entity-999:fnv1a:deadbeef' as never;
 
@@ -117,7 +127,7 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('regular systems execute during tick with matched query results', () => {
-    const { world } = World.make();
+    const world = createWorld();
     world.spawn({ position: { x: 1, y: 2 } });
     world.spawn({ position: { x: 3, y: 4 } });
 
@@ -141,7 +151,7 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('a system that calls addSystem() during execute registers for the NEXT tick, not the current one', () => {
-    const { world } = World.make();
+    const world = createWorld();
     world.spawn({ position: { x: 1, y: 2 } });
 
     const runs: string[] = [];
@@ -179,7 +189,7 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('dense systems execute only when all queried stores are registered', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const posX = Part.dense('posX', 8);
     const posY = Part.dense('posY', 8);
     const id = world.spawn();
@@ -281,9 +291,9 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('Composable.make is deterministic and Composable.compose/merge use last-write-wins semantics', () => {
-    const entityA = Composable.make<TestSchema>({ boundary, token });
-    const entityACopy = Composable.make<TestSchema>({ boundary, token });
-    const entityB = Composable.make<TestSchema>({ token, style });
+    const entityA = createComposable<TestSchema>({ boundary, token });
+    const entityACopy = createComposable<TestSchema>({ boundary, token });
+    const entityB = createComposable<TestSchema>({ token, style });
     const composed = Composable.compose(entityA, entityB);
     const merged = Composable.merge(entityA, entityB);
 
@@ -297,7 +307,7 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('ComposableWorld spawn, query, and evaluate integrate Boundary, Token, and Style', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make(world);
     const entity = composableWorld.spawn({ boundary, token, style });
     const queried = composableWorld.query('boundary', 'token');
@@ -317,9 +327,9 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('ComposableWorld evaluate handles empty input and entities with no known components', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const composableWorld = ComposableWorld.make(world);
-    const entity = Composable.make({ misc: 'value' });
+    const entity = createComposable({ misc: 'value' });
     composableWorld.spawnWith(entity);
     const result = composableWorld.evaluate(entity, {});
 
@@ -327,9 +337,9 @@ describe('ECS Composable Infrastructure', () => {
   });
 
   test('ComposableWorld.dense create/store/retrieve works and auto-spawns tracked entities', () => {
-    const { world } = World.make();
+    const world = createWorld();
     const dense = ComposableWorld.dense(world);
-    const entity = Composable.make({ boundary });
+    const entity = createComposable({ boundary });
 
     const beforeCreate = dense.retrieve(entity);
     const store = dense.create('metrics', 16);
@@ -346,9 +356,9 @@ describe('ECS Composable Infrastructure', () => {
 
   test('ComposableWorld.dense store throws if create was not called first', () => {
     expect(() => {
-      const { world } = World.make();
+      const world = createWorld();
       const dense = ComposableWorld.dense(world);
-      const entity = Composable.make({ boundary });
+      const entity = createComposable({ boundary });
       dense.store(entity, 1);
     }).toThrow(
       'ComposableWorld.store: no dense store exists — call world.create(name, capacity) before world.store(entity, value).',

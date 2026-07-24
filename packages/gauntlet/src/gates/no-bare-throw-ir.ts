@@ -14,7 +14,7 @@
  * MORE precise.
  *
  * It REQUIRES the injected IR (it folds facts, it does not scan text), so it runs
- * only on the host path where the CLI builds + injects the IR via `@czap/audit`'s
+ * only on the host path where the CLI builds + injects the IR via `@liteship/audit`'s
  * `ts.Program`; the lean MCP/command path (no IR) does not run it. Same
  * `ruleId`/severity/level as the regex gate.
  *
@@ -45,16 +45,16 @@ function fold(context: GateContext): readonly Finding[] {
         ruleId: RULE_ID,
         severity: 'error',
         level: 'L1',
-        title: 'Bare throw instead of a tagged @czap/error variant',
-        detail: `${fact.file}:${fact.line ?? 0} throws a bare Error. Every failure path must be a tagged @czap/error variant so it carries a _tag, structured fields, and a catchable identity. (AST-precise: the throw statement itself, never a comment/string occurrence.)`,
+        title: 'Bare throw instead of a tagged @liteship/error variant',
+        detail: `${fact.file}:${fact.line ?? 0} throws a bare Error. Every failure path must be a tagged @liteship/error variant so it carries a _tag, structured fields, and a catchable identity. (AST-precise: the throw statement itself, never a comment/string occurrence.)`,
         location: { file: fact.file, ...(fact.line !== undefined ? { line: fact.line } : {}) },
         coverageClass: fact.coverageClass,
         remediation: {
           kind: 'instruction',
-          description: 'Replace the bare throw with the best-fit @czap/error variant.',
+          description: 'Replace the bare throw with the best-fit @liteship/error variant.',
           steps: [
             'Pick the variant by semantics: caller-bad-input → ValidationError; external bytes → ParseError; io → IoError; impossible state → InvariantViolationError; missing capability → HostCapabilityError; not found → NotFoundError; unsupported case → UnsupportedError; hash/sig/chain → IntegrityError.',
-            'Import it from @czap/error and throw the factory result (carry the message into the variant detail).',
+            'Import it from @liteship/error and throw the factory result (carry the message into the variant detail).',
           ],
         },
       }),

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractWavMetadata, WavMetadataProjection, defineAsset, AssetRegistry } from '@czap/assets';
+import { extractWavMetadata, WavMetadataProjection, defineAsset, AssetRegistry } from '@liteship/assets';
 
 const registry = AssetRegistry.make([
   defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' }),

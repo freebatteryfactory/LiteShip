@@ -1,13 +1,13 @@
-import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent, systemClock } from '@czap/core';
+import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent, systemClock } from '@liteship/core';
 import {
   parseShaderIntegrity,
   verifyShaderIntegrity,
   isExternalShaderSource,
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
-  dispatchCzapEvent,
-} from '@czap/web';
-import { onDetectReady } from '@czap/detect';
+  dispatchLiteshipEvent,
+} from '@liteship/web';
+import { onDetectReady } from '@liteship/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
@@ -34,8 +34,8 @@ void main() {
 const FULLSCREEN_QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
 /**
- * Read the compiler's emitted shader preamble off the satellite's
- * `data-czap-boundary` payload. `<Satellite>`/`satelliteAttrs` ride
+ * Read the compiler's emitted shader preamble off the adaptive's
+ * `data-liteship-boundary` payload. `<Adaptive>`/`adaptiveAttrs` ride
  * `glslDeclarations`/`wgslDeclarations` (joined from the build manifest by
  * content address) so the runtime never hand-types the uniform vocabulary.
  * Returns `''` when absent or the payload doesn't parse — the directive then
@@ -51,12 +51,12 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
     // Malformed payload: surface it (init-time) instead of laundering the parse
     // error into a silent ''. The directive then keeps its built-in fallback
     // shader (no preamble) — a deliberate degradation, not a swallowed failure.
-    Diagnostics.warnOnce({
-      source: 'czap/astro.gpu',
-      code: 'shader-declarations-parse-failed',
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.gpu',
+      code: 'astro/gpu/shader-declarations-parse-failed',
       message:
         `Failed to parse boundary JSON while reading ${key} (${String(err)}). ` +
-        `Keeping the built-in fallback shader. Fix: re-serialize with satelliteAttrs({ boundary }) from @czap/astro.`,
+        `Keeping the built-in fallback shader. Fix: re-serialize with adaptiveAttrs({ boundary }) from @liteship/astro.`,
     });
     return '';
   }
@@ -73,9 +73,9 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
  */
 function warnIfHostUnsized(host: HTMLElement): void {
   if (host.clientWidth !== 0 && host.clientHeight !== 0) return;
-  Diagnostics.warnOnce({
-    source: 'czap/astro.gpu',
-    code: 'canvas-default-size',
+  Diagnostics.warnOnceRegistered({
+    source: 'liteship/astro.gpu',
+    code: 'astro/gpu/canvas-default-size',
     message:
       `client:gpu host had no layout at boot (clientWidth/clientHeight = 0); the canvas falls back to ` +
       `${CANVAS_FALLBACK_WIDTH}x${CANVAS_FALLBACK_HEIGHT} (the HTML default), so the shader renders at a tiny ` +
@@ -137,7 +137,10 @@ export function prependGlslDeclarations(source: string, declarations: string): s
 
 function elementGpuLabel(element: HTMLElement): string {
   return (
-    element.id || element.getAttribute('data-czap-id') || element.getAttribute('data-czap-satellite') || 'gpu-element'
+    element.id ||
+    element.getAttribute('data-liteship-id') ||
+    element.getAttribute('data-liteship-adaptive') ||
+    'gpu-element'
   );
 }
 
@@ -152,9 +155,9 @@ function compileShader(
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    Diagnostics.warn({
-      source: 'czap/astro.gpu',
-      code: 'shader-compile-failed',
+    Diagnostics.warnRegistered({
+      source: 'liteship/astro.gpu',
+      code: 'astro/gpu/shader-compile-failed',
       message: `Shader compilation failed for element "${elementLabel}".`,
       detail: gl.getShaderInfoLog(shader),
     });
@@ -181,9 +184,9 @@ function createProgram(
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    Diagnostics.warn({
-      source: 'czap/astro.gpu',
-      code: 'program-link-failed',
+    Diagnostics.warnRegistered({
+      source: 'liteship/astro.gpu',
+      code: 'astro/gpu/program-link-failed',
       message: 'Shader program linking failed.',
       detail: gl.getProgramInfoLog(program),
     });
@@ -196,19 +199,19 @@ function createProgram(
 
 /**
  * Entry point used by the `client:gpu` directive to wire a
- * satellite element to a WebGL shader.
+ * adaptive element to a WebGL shader.
  *
- * Reads `data-czap-shader-type` / `data-czap-shader-src` off the
+ * Reads `data-liteship-shader-type` / `data-liteship-shader-src` off the
  * element, fetches and compiles the program, then subscribes to
- * `czap:uniform-update` events so each boundary transition updates the
+ * `liteship:uniform-update` events so each boundary transition updates the
  * shader uniforms.
  *
  * @param load - Dynamic-import factory the directive passes in (kept
  *   async so the expensive GPU module is code-split).
- * @param el - Satellite element carrying the shader attributes.
+ * @param el - Adaptive element carrying the shader attributes.
  * @param opts - Directive value. `{ force: true }` (or a
- *   `data-czap-gpu-force` attribute) boots the shader even when the resolved
- *   perf-tier is below the GPU rung — the escape hatch for headless/CI
+ *   `data-liteship-gpu-force` attribute) boots the shader even when the resolved
+ *   perf-tier is below the GPU tier — the escape hatch for headless/CI
  *   (SwiftShader reports gpuTier 0 yet WebGL2 works) and real low-tier-but-
  *   capable devices. It only bypasses the *heuristic* gate; the actual
  *   `getContext('webgl2')` / WebGPU probe still guards real capability and
@@ -216,25 +219,25 @@ function createProgram(
  */
 export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, opts?: Record<string, unknown>): void {
   const elementLabel = elementGpuLabel(el);
-  const shaderType = el.getAttribute('data-czap-shader-type') ?? 'glsl';
+  const shaderType = el.getAttribute('data-liteship-shader-type') ?? 'glsl';
   // The compiler's emitted shader preamble rides the boundary payload
   // (`glslDeclarations` / `wgslDeclarations`). Reading it here lets both the
   // GLSL and WGSL paths prepend the compiler's OWN uniform vocabulary to the
   // shader source before compile — so the names the runtime binds (gpu.ts:~372
   // via canonical `glslIdent`) and the names the compiler emits stay one source.
   const shaderDeclarations = readShaderDeclarations(
-    el.getAttribute('data-czap-boundary'),
+    el.getAttribute('data-liteship-boundary'),
     shaderType === 'wgsl' ? 'wgslDeclarations' : 'glslDeclarations',
   );
   const shaderSrc = allowRuntimeEndpointUrl(
-    el.getAttribute('data-czap-shader-src'),
+    el.getAttribute('data-liteship-shader-src'),
     'gpu-shader',
-    'czap/astro.gpu',
+    'liteship/astro.gpu',
     {
-      crossOriginRejected: 'shader-cross-origin-url-rejected',
-      malformedUrl: 'shader-malformed-url-rejected',
-      originNotAllowed: 'shader-origin-not-allowed',
-      endpointKindNotPermitted: 'shader-endpoint-kind-not-permitted',
+      crossOriginRejected: 'astro/gpu/shader-cross-origin-url-rejected',
+      malformedUrl: 'astro/gpu/shader-malformed-url-rejected',
+      originNotAllowed: 'astro/gpu/shader-origin-not-allowed',
+      endpointKindNotPermitted: 'astro/gpu/shader-endpoint-kind-not-permitted',
     },
     readRuntimeEndpointPolicy(),
   );
@@ -244,40 +247,40 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   // server (or a poisoned CDN cache) cannot slip a tampered shader past the URL
   // guard into the GPU. `null` = no pin (the secure-by-default policy refuses an
   // external fetch with no pin; an inline shader needs none).
-  const shaderIntegrity = parseShaderIntegrity(el.getAttribute('data-czap-shader-integrity'));
+  const shaderIntegrity = parseShaderIntegrity(el.getAttribute('data-liteship-shader-integrity'));
 
-  // Force escape hatch: `client:gpu={{ force: true }}` or a `data-czap-gpu-force`
+  // Force escape hatch: `client:gpu={{ force: true }}` or a `data-liteship-gpu-force`
   // attr bypasses the perf-tier gate so headless/CI (SwiftShader → gpuTier 0,
   // WebGL2 fine) and low-tier-but-capable devices can still boot. Capability is
   // re-checked downstream by the real getContext/WebGPU probe, which falls back
   // to CSS if the context is truly absent — so forcing is safe, never a crash.
-  const forced = opts?.['force'] === true || el.hasAttribute('data-czap-gpu-force');
+  const forced = opts?.['force'] === true || el.hasAttribute('data-liteship-gpu-force');
 
   // The GPU probe runs ASYNC, so the directive's first activation sees only the
   // conservative provisional tier — a genuinely capable device starts at
   // 'styled'/'static' and would never boot. So when the tier doesn't admit (and
-  // not forced), defer and re-check when the probe settles (`czap:detect-ready`):
+  // not forced), defer and re-check when the probe settles (`liteship:detect-ready`):
   // a GPU upgrade boots the shader THEN, no force needed. Headless/CI stays at
   // tier 0 → the force hatch. The re-run is forced (the tier now admits) with a
   // no-op load so hydration — done once here — never repeats; the bail created no
   // canvas, so the re-run appends exactly one.
   const tierAdmitsGpu = (): boolean => {
-    const tier = document.documentElement.getAttribute('data-czap-tier') ?? 'reactive';
+    const tier = document.documentElement.getAttribute('data-liteship-tier') ?? 'reactive';
     return tier !== 'static' && tier !== 'styled';
   };
   if (!forced && !tierAdmitsGpu()) {
     load();
     // Re-boot once the async probe settles a GPU-admitting tier. `onDetectReady`
-    // (owned by @czap/detect) wraps the event-name + the dual-dispatch invariant:
+    // (owned by @liteship/detect) wraps the event-name + the dual-dispatch invariant:
     // detect-ready fires on BOTH the success AND error paths, so the one-shot
     // subscription self-removes — no leak even if it lands after a swap. The
     // el.isConnected guard is the safety net: a detached host (replaced by a VT
     // swap, torn down) never re-inits into orphan GPU resources. We deliberately
-    // do NOT drop this on czap:reinit — slots.ts fires reinit on LIVE re-init too
+    // do NOT drop this on liteship:reinit — slots.ts fires reinit on LIVE re-init too
     // (still-connected roots), and the bail path returns before the main
-    // czap:reinit teardown registration, so removing here would strand a persisted
+    // liteship:reinit teardown registration, so removing here would strand a persisted
     // host that upgrades right after a swap. Surviving the reinit is correct:
-    // tierAdmitsGpu re-reads the fresh data-czap-tier.
+    // tierAdmitsGpu re-reads the fresh data-liteship-tier.
     onDetectReady(() => {
       if (!el.isConnected) return;
       // A forced boot may have started the shader while this retry was armed; the
@@ -310,7 +313,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     warnIfHostUnsized(el);
 
     // F-3: arm the reinit teardown SYNCHRONOUSLY, before the first await, through
-    // a mutable Disposer cell. `initWGSLRuntime` is async, so a `czap:reinit` that
+    // a mutable Disposer cell. `initWGSLRuntime` is async, so a `liteship:reinit` that
     // lands DURING its await would otherwise find no listener and strand the WGSL
     // runtime allocated right after. The listener invokes whatever the cell holds
     // — a no-op until the runtime exists — AND flips a `disposed` flag so a reinit
@@ -319,24 +322,24 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     let wgslDisposer: () => void = () => {};
     let wgslDisposed = false;
     const onWgslReinit = (): void => {
-      el.removeEventListener('czap:reinit', onWgslReinit);
+      el.removeEventListener('liteship:reinit', onWgslReinit);
       wgslDisposed = true;
       wgslDisposer();
     };
-    el.addEventListener('czap:reinit', onWgslReinit);
+    el.addEventListener('liteship:reinit', onWgslReinit);
 
     void (async () => {
-      // Pass `el` (the satellite) so the runtime subscribes to its
-      // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
+      // Pass `el` (the adaptive) so the runtime subscribes to its
+      // `liteship:uniform-update` and binds `detail.wgsl` into the uniform buffer
       // live on every crossing.
       const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations, shaderIntegrity);
       if (!dispose) {
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');
         if (gl) {
-          Diagnostics.warnOnce({
-            source: 'czap/astro.gpu',
-            code: 'wgsl-fallback-webgl2',
+          Diagnostics.warnOnceRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/gpu/wgsl-fallback-webgl2',
             message: 'WebGPU unavailable; WGSL directive fell back to WebGL2 default shader.',
           });
         }
@@ -345,7 +348,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         // runtime that just resolved is orphaned, so tear it down immediately.
         dispose();
       } else {
-        dispatchCzapEvent(el, 'czap:gpu-ready');
+        dispatchLiteshipEvent(el, 'liteship:gpu-ready');
         wgslDisposer = dispose;
       }
     })();
@@ -368,9 +371,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
 
   const gl = canvas.getContext('webgl2');
   if (!gl) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.gpu',
-      code: 'webgl2-unavailable',
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.gpu',
+      code: 'astro/gpu/webgl2-unavailable',
       message: 'WebGL2 is unavailable; falling back to CSS rendering.',
     });
     load();
@@ -381,7 +384,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
 
   // F-3: arm the reinit teardown SYNCHRONOUSLY, before `initShader` runs any
   // await (the shader `fetch`). The teardown used to be registered at the END of
-  // initShader, so a `czap:reinit` landing DURING the fetch found no listener and
+  // initShader, so a `liteship:reinit` landing DURING the fetch found no listener and
   // orphaned the GL program + render loop created right after. The cell holds a
   // no-op until the program exists; the listener invokes whatever it currently
   // holds and flips `disposed` so a reinit that fired mid-fetch makes the resolved
@@ -390,11 +393,11 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   let glDisposer: () => void = () => {};
   let glDisposed = false;
   const onGlReinit = (): void => {
-    el.removeEventListener('czap:reinit', onGlReinit);
+    el.removeEventListener('liteship:reinit', onGlReinit);
     glDisposed = true;
     glDisposer();
   };
-  el.addEventListener('czap:reinit', onGlReinit);
+  el.addEventListener('liteship:reinit', onGlReinit);
 
   async function initShader(): Promise<void> {
     let fragSource: string;
@@ -404,9 +407,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       try {
         const response = await fetch(shaderSrc);
         if (!response.ok) {
-          Diagnostics.warn({
-            source: 'czap/astro.gpu',
-            code: 'shader-fetch-failed',
+          Diagnostics.warnRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/gpu/shader-fetch-failed',
             message: 'Failed to fetch shader source.',
             detail: response.statusText,
           });
@@ -414,9 +417,9 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         }
         fetchedSource = await response.text();
       } catch (err) {
-        Diagnostics.warn({
-          source: 'czap/astro.gpu',
-          code: 'shader-fetch-threw',
+        Diagnostics.warnRegistered({
+          source: 'liteship/astro.gpu',
+          code: 'astro/gpu/shader-fetch-threw',
           message: 'Fetching shader source threw an error.',
           cause: err,
         });
@@ -439,22 +442,22 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       // provably passed the integrity sanitizer.
       if (!decideShaderIntegrity(verification, DEFAULT_SHADER_INTEGRITY_MODE).proceed) {
         if (verification._tag === 'mismatch') {
-          Diagnostics.error({
-            source: 'czap/astro.gpu',
-            code: 'shader-integrity-mismatch',
+          Diagnostics.errorRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/gpu/shader-integrity-mismatch',
             message:
               `Shader content integrity check FAILED for "${shaderSrc}" — the fetched bytes do not match the ` +
               `author-pinned hash (a tampered or compromised shader). Refusing to compile. ` +
               `expected sha256 ${verification.expectedHex}, got ${verification.actualHex}.`,
           });
         } else {
-          Diagnostics.error({
-            source: 'czap/astro.gpu',
-            code: 'shader-integrity-absent',
+          Diagnostics.errorRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/gpu/shader-integrity-absent',
             message:
               `External shader "${shaderSrc}" was fetched with NO integrity hash. An unverified external ` +
               `shader cannot be loaded (secure-by-default). Refusing to compile. ` +
-              `Fix: add a data-czap-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
+              `Fix: add a data-liteship-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
           });
         }
         return;
@@ -560,13 +563,13 @@ void main() {
     }
 
     const onElementUniformUpdate = (event: Event): void => {
-      /* v8 ignore next — `czap:uniform-update` is always dispatched via `new CustomEvent(...)`;
+      /* v8 ignore next — `liteship:uniform-update` is always dispatched via `new CustomEvent(...)`;
          the guard narrows the generic `Event` parameter for TypeScript's typed `.detail` access. */
       if (!(event instanceof CustomEvent)) return;
       const detail = event.detail;
       if (!detail) return;
 
-      const boundaryJson = el.getAttribute('data-czap-boundary');
+      const boundaryJson = el.getAttribute('data-liteship-boundary');
       if (boundaryJson && detail.discrete) {
         try {
           const boundary = JSON.parse(boundaryJson);
@@ -593,22 +596,22 @@ void main() {
             }
           }
         } catch {
-          Diagnostics.warnOnce({
-            source: 'czap/astro.gpu',
-            code: 'uniform-update-parse-failed',
+          Diagnostics.warnOnceRegistered({
+            source: 'liteship/astro.gpu',
+            code: 'astro/gpu/uniform-update-parse-failed',
             message:
               `Failed to parse boundary JSON during uniform update (${boundaryJson.slice(0, 120)}). ` +
-              `Fix: re-serialize the boundary with satelliteAttrs({ boundary }) from @czap/astro.`,
+              `Fix: re-serialize the boundary with adaptiveAttrs({ boundary }) from @liteship/astro.`,
           });
         }
       }
 
       if (detail.css) {
         for (const [key, value] of Object.entries(detail.css)) {
-          if (!key.startsWith('--czap-')) continue;
+          if (!key.startsWith('--liteship-')) continue;
           // Canonical GLSL identifier (matches the compiler's uniform declarations
-          // via the shared @czap/core glslIdent — not a partial --czap-→u_ replace).
-          const uniformName = glslIdent(key.slice('--czap-'.length));
+          // via the shared @liteship/core glslIdent — not a partial --liteship-→u_ replace).
+          const uniformName = glslIdent(key.slice('--liteship-'.length));
           const loc = uniforms.get(uniformName);
           if (loc && typeof value === 'string') {
             const num = parseFloat(value);
@@ -633,7 +636,7 @@ void main() {
     };
 
     const onDocumentUniformUpdate = (event: Event): void => {
-      /* v8 ignore next — `czap:uniform-update` is always dispatched via `new CustomEvent(...)`;
+      /* v8 ignore next — `liteship:uniform-update` is always dispatched via `new CustomEvent(...)`;
          the guard narrows the generic `Event` parameter for TypeScript's typed `.detail` access. */
       if (!(event instanceof CustomEvent)) return;
       const detail = event.detail;
@@ -658,8 +661,8 @@ void main() {
 
     const teardown = (): void => {
       cancelAnimationFrame(animFrame);
-      el.removeEventListener('czap:uniform-update', onElementUniformUpdate);
-      document.removeEventListener('czap:uniform-update', onDocumentUniformUpdate);
+      el.removeEventListener('liteship:uniform-update', onElementUniformUpdate);
+      document.removeEventListener('liteship:uniform-update', onDocumentUniformUpdate);
       webgl.deleteProgram(program);
     };
 
@@ -671,10 +674,10 @@ void main() {
       return;
     }
 
-    el.addEventListener('czap:uniform-update', onElementUniformUpdate);
-    document.addEventListener('czap:uniform-update', onDocumentUniformUpdate);
+    el.addEventListener('liteship:uniform-update', onElementUniformUpdate);
+    document.addEventListener('liteship:uniform-update', onDocumentUniformUpdate);
 
-    dispatchCzapEvent(el, 'czap:gpu-ready');
+    dispatchLiteshipEvent(el, 'liteship:gpu-ready');
     render();
 
     glDisposer = teardown;
@@ -692,7 +695,7 @@ export const gpuDirective = (load: () => Promise<unknown>, opts: Record<string, 
   // passed directly (the plain-div boot scanner / unit tests). `{ force: true }`
   // boots the shader even in low/headless tiers (see the initGPUDirective force hatch).
   const value = (opts?.['value'] ?? opts) as Record<string, unknown> | undefined;
-  const forced = value?.['force'] === true || el.hasAttribute('data-czap-gpu-force');
+  const forced = value?.['force'] === true || el.hasAttribute('data-liteship-gpu-force');
   // A forced boot must win even when a prior scanner pass already marked the host bound
   // at a provisional (static/styled) tier, where the shader only deferred to
   // detect-ready. Clear that bind so the force hatch re-enters the boot instead of

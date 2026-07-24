@@ -14,13 +14,13 @@ Convert `CompositeState.outputs.css` into a flat CSS custom property map.
 
 The returned record is suitable for use directly as a React `style` prop
 or a Remotion `style` prop -- every key is a CSS variable name (e.g.
-`--czap-color-fg`) and every value is coerced to a string.
+`--liteship-color-fg`) and every value is coerced to a string.
 
 ## Parameters
 
 ### state
 
-[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 A composite state produced by a `VideoRenderer` frame.
 

@@ -46,7 +46,7 @@ import {
   type SkipMatch,
   type SkipConditionality,
   type SkipDetector,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── scaffolding ──────────────────────────────────────────────────────────────
 
@@ -148,7 +148,7 @@ function factCacheCtx(testBody: string): GateContext {
 
 // The SANCTIONED green site (must match the allowlist byte-for-byte) + its file.
 const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
-const SANCTIONED_LINE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});\n";
+const SANCTIONED_LINE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n";
 
 /** The adversarial corpus the shadow-diff runs both gates over — every hazard class. */
 const SHADOW_CORPORA: Record<string, Record<string, string>> = {

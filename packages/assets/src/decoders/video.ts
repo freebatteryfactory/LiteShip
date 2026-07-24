@@ -1,6 +1,6 @@
 /**
  * Video decoder — delegates to ffprobe for container + codec metadata.
- * Falls back to a header sniff if ffprobe is unavailable. czap does
+ * Falls back to a header sniff if ffprobe is unavailable. liteship does
  * not decode video frames in this layer; the render pipeline uses an
  * ffmpeg subprocess for actual decode.
  *
@@ -14,7 +14,7 @@
  * @module
  */
 
-import { IoError, ValidationError } from '@czap/error';
+import { IoError, ValidationError } from '@liteship/error';
 
 /** Decoded video container + codec metadata. */
 export interface DecodedVideo {
@@ -41,7 +41,7 @@ export async function videoDecoder(bytes: ArrayBuffer, sourcePath?: string): Pro
     import('node:os'),
     import('node:path'),
   ]);
-  const dir = mkdtempSync(join(tmpdir(), 'czap-video-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-video-'));
   const file = join(dir, 'input.bin');
   try {
     try {

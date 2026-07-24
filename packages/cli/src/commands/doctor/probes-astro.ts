@@ -3,8 +3,8 @@
  *
  * Astro 7 ships a background dev server (`astro dev --background`) and a
  * `/_astro/status` liveness endpoint. This probe folds that endpoint into
- * `czap doctor` so an agent (or CI) can verify a running dev server through the
- * same evidence loop as every other environment check — `czap doctor --target
+ * `liteship doctor` so an agent (or CI) can verify a running dev server through the
+ * same evidence loop as every other environment check — `liteship doctor --target
  * astro`.
  *
  * A refused connection is a `warn`, not a `fail`: "no dev server running" is the
@@ -16,7 +16,7 @@
 import { DOCTOR_PROBE_TIMEOUT_MS, type DoctorCheck } from './types.js';
 
 /** Default base URL of the Astro dev server (its conventional port), overridable via env. */
-const DEFAULT_ASTRO_DEV_URL = process.env['CZAP_ASTRO_DEV_URL'] ?? 'http://127.0.0.1:4321';
+const DEFAULT_ASTRO_DEV_URL = process.env['LITESHIP_ASTRO_DEV_URL'] ?? 'http://127.0.0.1:4321';
 
 const PROBE_ID = 'astro.dev-status';
 const PROBE_LABEL = 'Astro dev server';

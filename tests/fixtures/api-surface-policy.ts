@@ -5,12 +5,14 @@
  * This is DATA, not a published surface (ADR-0012): the audit/migration engines
  * are reusable, but WHICH packages LiteShip considers public + the bump rule it
  * enforces are repo-local CONTRACTS, threaded in as a value — never baked into a
- * shipped `@czap/*` package. A downstream project that vendors the snapshot gate
+ * shipped `@liteship/*` package. A downstream project that vendors the snapshot gate
  * supplies its OWN `ApiSurfacePolicy`; it does not inherit LiteShip's package
  * list or its pre-1.0 cut.
  *
  * @module
  */
+
+import { GENERATED_API_SURFACE_PACKAGES } from './api-surface-packages.generated.js';
 
 /** The semver-class a single surface change falls into. */
 export type ChangeClass = 'added' | 'removed' | 'signature-changed';
@@ -30,7 +32,7 @@ export type RequiredBump = 'none' | 'patch' | 'minor' | 'major';
  */
 export interface ApiSurfacePolicy {
   /**
-   * The published `@czap/*` (and bare-named) main barrels LiteShip locks against
+   * The published `@liteship/*` (and bare-named) main barrels LiteShip locks against
    * silent drift. Each entry is an npm package name importable at its `.` entry.
    * Kept as DATA so adding/removing a public package is a deliberate edit here,
    * reviewed alongside the snapshot it changes.
@@ -52,41 +54,18 @@ export const isBreakingClass = (changeClass: ChangeClass): boolean =>
   changeClass === 'removed' || changeClass === 'signature-changed';
 
 /**
- * The LiteShip 0.x policy: every published `@czap/*` main barrel is locked; a
+ * The LiteShip 0.x policy: every published `@liteship/*` main barrel is locked; a
  * breaking change demands at least a MINOR bump (pre-1.0 semantics), an added
  * export at least a minor (a new public surface is a feature, not a patch).
  *
  * The package list is the published, non-private workspace set (the same set the
  * monorepo build orders), MINUS the two pseudo-public roots whose surface is a
  * curated re-export, not a primary barrel:
- *  - `@czap/_spine` ships `.d.ts` only (no runtime barrel to enumerate);
+ *  - `@liteship/_spine` ships `.d.ts` only (no runtime barrel to enumerate);
  *  - `liteship` / `create-liteship` are aggregator/scaffold entry points, not
  *    primitive surfaces — their drift is caught by their own integration tests.
  */
 export const LITESHIP_API_SURFACE_POLICY: ApiSurfacePolicy = {
-  publicPackages: [
-    '@czap/error',
-    '@czap/gauntlet',
-    '@czap/canonical',
-    '@czap/genui',
-    '@czap/core',
-    '@czap/quantizer',
-    '@czap/compiler',
-    '@czap/web',
-    '@czap/detect',
-    '@czap/edge',
-    '@czap/worker',
-    '@czap/vite',
-    '@czap/astro',
-    '@czap/stage',
-    '@czap/cloudflare',
-    '@czap/remotion',
-    '@czap/scene',
-    '@czap/assets',
-    '@czap/audit',
-    '@czap/command',
-    '@czap/cli',
-    '@czap/mcp-server',
-  ],
+  publicPackages: GENERATED_API_SURFACE_PACKAGES,
   requiredBumpFor: (changeClass) => (isBreakingClass(changeClass) ? 'minor' : 'minor'),
 };

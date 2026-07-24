@@ -1,39 +1,72 @@
 # liteship
 
-One dependency that installs every publishable `@czap/*` package at the same version — the front door to LiteShip. The mental model is one sentence: a continuous signal crosses boundaries into named states, and named states project into outputs (CSS, ARIA, shaders).
+The curated public facade for LiteShip: one dependency and one import path over the whole `@liteship/*` adaptive rendering stack. You author with a small set of verbs from the `liteship` root and reach deeper surfaces through domain subpaths — the twenty-plus `@liteship/*` packages remain the machinery underneath, installed for you at one matched version.
 
-> Install this directly when you're starting a project and want the whole stack version-locked. If you only need one slice, install that slice instead — `@czap/astro` alone pulls the core rendering stack for the Astro path.
+The mental model is one sentence: you declare an **input's named states** and **each state's outputs**, and LiteShip keeps every output (CSS, ARIA, shaders, video) in sync from that one definition.
 
 ## Install
 
 ```bash
-npm install liteship   # or yarn add liteship
+npm install liteship   # or: pnpm add liteship
 ```
 
-**pnpm users:** pnpm's strict `node_modules` does not hoist transitive dependencies, and `liteship` re-exports nothing, so `import '@czap/core'` will not resolve through it. Add the `@czap/*` packages you import as explicit dependencies (`pnpm add @czap/core @czap/astro`), or hoist the scope with `public-hoist-pattern[]=@czap/*` in `.npmrc`. npm and yarn's hoisted layouts work as-is.
+Starting a new app? `npm create liteship` (also `pnpm create liteship`) scaffolds a minimal Astro starter wired to this package.
 
 ## 30 seconds
 
 ```ts
-import { Boundary } from '@czap/core'; // installed for you by liteship
+import { defineAdaptive } from 'liteship';
 
-const viewport = Boundary.make({
-  input: 'viewport.width',
-  at: [
-    [0, 'mobile'],
-    [768, 'tablet'],
-    [1280, 'desktop'],
-  ],
+const layout = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [
+      [0, 'mobile'],
+      [768, 'desktop'],
+    ],
+  },
+  style: {
+    base: { properties: { padding: '1rem' } },
+    states: { desktop: { properties: { padding: '2rem' } } },
+  },
 });
-
-console.log(Boundary.evaluate(viewport, 800)); // 'tablet'
 ```
 
-Logs `tablet` — the named state for a 768–1279px viewport width. That signal-to-state step is the foundation; everything else (compiled CSS, host integrations, motion) projects from it.
+Apply its attributes and compiled plan in host markup, then inspect the same definition when needed:
 
-## Where it sits
+```astro
+---
+const plan = layout.plan();
+const preview = layout.explain(940);
+---
 
-The umbrella sits above everything: it depends on all twenty publishable `@czap/*` packages, pinned at exactly its own version, and deliberately re-exports none of them — the host integrations (`@czap/astro`, `@czap/vite`, `@czap/cloudflare`) carry host-specific peer expectations, and a barrel importing all of them would force every consumer to satisfy all of them at once. You import from the individual scopes exactly as the docs show; this package just makes sure they're installed. Its only export is `LITESHIP_PACKAGES`, the list of what it installs. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+<main {...layout.attrs()}>At 940px: {preview.boundary.state}</main>
+<style is:inline set:html={plan.css}></style>
+```
+
+## The surface
+
+The root `liteship` entry is a curated, budget-enforced immutable authoring and diagnostic-inspection surface. Stateful allocation, motion, tiers, receipts, testing, and fleet metadata ride governed expert subpaths:
+
+| Subpath             | What it re-exports                                            |
+| ------------------- | ------------------------------------------------------------- |
+| `liteship/schema`   | the effect-free schema kernel                                 |
+| `liteship/reactive` | signals, cells, lifetimes, the scheduler                      |
+| `liteship/motion`   | timelines, transitions, easing                                |
+| `liteship/graph`    | the DocumentGraph IR + mutation/query channels                |
+| `liteship/media`    | the compositor + responsive media                             |
+| `liteship/evidence` | receipts, tiers, diagnostics, the validated-apply envelope    |
+| `liteship/compiler` | the CSS / GLSL / WGSL / ARIA / AI projection targets          |
+| `liteship/runtime`  | the `@liteship/web` DOM client runtime                        |
+| `liteship/astro`    | LiteShip on Astro (integration, `adaptiveAttrs`, routes)      |
+| `liteship/vite`     | the Vite plugin + `@token` / `@style` / `@quantize` compilers |
+| `liteship/testing`  | the test-only registry reset + harness generators             |
+| `liteship/migrate`  | source migration adapters with refusal diagnostics            |
+| `liteship/genui`    | trusted generated-UI catalogs, validation, and rendering      |
+
+Importing the root `.` never evaluates a host integration: `liteship/astro` and `liteship/vite` live behind their own subpaths (with `astro` / `vite` as optional peers), so a host-free or vite-only app pays no astro cost. The full rationale is [ADR-0048](../../docs/adr/0048-facade-export-budget.md).
+
+`LITESHIP_PACKAGES` remains available from `liteship/testing` for audit and release tooling; it is not production-root ontology.
 
 ## Docs
 
@@ -44,4 +77,4 @@ The umbrella sits above everything: it depends on all twenty publishable `@czap/
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

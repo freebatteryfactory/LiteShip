@@ -1,5 +1,5 @@
 /**
- * ffmpeg render capability probe — shared by the render backend, `czap doctor`,
+ * ffmpeg render capability probe — shared by the render backend, `liteship doctor`,
  * and ffmpeg-gated integration tests. CI installs Ubuntu `ffmpeg` (includes
  * libx264); Fedora often ships `ffmpeg-free` without it.
  *
@@ -70,11 +70,14 @@ export function probeFfmpegRender(): FfmpegRenderProbe {
 
 function readOsRelease(): string {
   if (!existsSync('/etc/os-release')) return '';
-  let contents = '';
+  let contents: string;
   try {
     contents = readFileSync('/etc/os-release', 'utf8');
   } catch {
-    // /etc/os-release unreadable (permissions, non-Linux) — fall back to generic hint.
+    // /etc/os-release unreadable (permissions, non-Linux) — record the empty-string
+    // "unknown distro" fallback so the caller emits the generic install hint.
+    // Non-corrupting: an absent os-release is never a real fault to surface.
+    contents = '';
   }
   return contents;
 }

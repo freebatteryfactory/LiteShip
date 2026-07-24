@@ -1,7 +1,7 @@
 /**
  * API Health Canary -- programmatic verification of all public APIs.
  *
- * This test is the czap equivalent of free-batteries' ANTI-ALMOST-CORRECTNESS
+ * This test is the liteship equivalent of free-batteries' ANTI-ALMOST-CORRECTNESS
  * PROTOCOL. It catches hallucinated, renamed, or removed APIs before they
  * reach production.
  *
@@ -9,12 +9,12 @@
  * If an AI model generates code referencing a non-existent API, THIS test
  * would have caught the discrepancy.
  *
- * The registry below is the ground truth for what @czap/core exports.
+ * The registry below is the ground truth for what @liteship/core exports.
  * Update it when you intentionally add/remove/rename APIs.
  */
 
 import { describe, test, expect } from 'vitest';
-import * as Core from '@czap/core';
+import * as Core from '@liteship/core';
 
 // ── Ground-truth API registry ───────────────────────────────────────
 // Every namespace object and its expected methods/values.
@@ -22,15 +22,20 @@ import * as Core from '@czap/core';
 
 const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // ── Rendering primitives ──────────────────────────────────────────
-  Boundary: { methods: ['make', 'evaluate', 'evaluateWithHysteresis'] },
+  // Construction moved to the standalone `defineBoundary` (verb grammar, ADR-0046);
+  // the `Boundary` namespace object now carries only the pure evaluation faces.
+  Boundary: { methods: ['evaluate', 'evaluateWithHysteresis'] },
   BoundarySpec: { methods: ['isActive'] },
   BoundaryAttribute: { methods: ['isAllowedKey'] },
-  Token: { methods: ['make', 'tap', 'cssVar'] },
-  TokenBuffer: { methods: ['make'] },
-  Style: { methods: ['make', 'tap', 'mergeLayers'] },
-  Theme: { methods: ['make', 'tap'] },
-  Component: { methods: ['make'] },
-  Signal: { methods: ['make', 'controllable', 'audio'] },
+  Token: { methods: ['tap', 'cssVar'] },
+  // `TokenBuffer` is now type-only; construction is the standalone `createTokenBuffer`
+  // (verb grammar, ADR-0051 — the reactive-substrate sweep).
+  Style: { methods: ['tap', 'mergeLayers'] },
+  Theme: { methods: ['tap'] },
+  // `Component` is now type-only; construction is the standalone `createComponent` (ADR-0051).
+  // `Signal` construction moved to the standalone `createSignal` (ADR-0051); the namespace
+  // object keeps its specialized `controllable` / `audio` constructors.
+  Signal: { methods: ['controllable', 'audio'] },
   Easing: {
     methods: [
       'linear',
@@ -53,18 +58,18 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
     ],
   },
   Animation: { methods: ['run', 'interpolate'] },
-  Timeline: { methods: ['from'] },
+  // `Timeline` is now type-only; construction is the standalone `createTimeline`.
 
   // ── Compositor / ECS / scheduling ─────────────────────────────────
   Compositor: { methods: ['create'] },
-  CompositorStatePool: { methods: ['make'] },
-  BlendTree: { methods: ['make'] },
-  DirtyFlags: { methods: ['make'] },
-  FrameBudget: { methods: ['make'] },
+  // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` / `World` are now
+  // type-only; construction is the standalone `createCompositorStatePool` / `createBlendTree`
+  // / `createDirtyFlags` / `createFrameBudget` / `createWorld` (verb grammar, ADR-0051).
   Scheduler: { methods: ['raf', 'noop', 'fixedStep', 'audioSync'] },
   Part: { methods: ['dense'] },
-  World: { methods: ['make'] },
-  Composable: { methods: ['make', 'compose', 'merge'] },
+  // `Composable` construction moved to the standalone `createComposable` (ADR-0051); the
+  // namespace object keeps its `compose` / `merge` combinators.
+  Composable: { methods: ['compose', 'merge'] },
   ComposableWorld: { methods: ['make', 'dense'] },
 
   // `Op` (the Effect.Effect wrapper facade) was DELETED this wave — a pure
@@ -72,20 +77,23 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // core barrel alongside this removal.
 
   // ── Reactive primitives ───────────────────────────────────────────
-  Cell: { methods: ['make'] },
-  Derived: { methods: ['make', 'combine'] },
+  // `Cell` / `Store` are now type-only; construction is the standalone
+  // `createCell` / `createStore`. `Derived` construction is the standalone
+  // `computed`; the namespace object keeps `combine`.
+  Derived: { methods: ['combine'] },
   Zap: { methods: ['make', 'fromDOMEvent', 'merge', 'map', 'filter', 'debounce', 'throttle'] },
   // `Wire` (the fluent Effect-Stream wrapper) was DELETED this wave — 100%
   // transport, zero runtime consumers (the web/astro `wire` is the unrelated
-  // czap:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
-  Store: { methods: ['make'] },
-  LiveCell: { methods: ['make', 'makeBoundary'] },
+  // liteship:* event registry). `isWire` + the Wire arm of `Primitive` left with it.
+  // `LiveCell` is now type-only; construction is the standalone `createLiveCell` /
+  // `createLiveCellBoundary` (verb grammar, ADR-0051 — the reactive-substrate sweep).
 
   // ── Schema kernel + disposal/reactive substrate (Wave 0 foundations) ──
-  // The effect-free schema substrate: `S.*` constructors over a frozen plain-data
-  // AST. `S`'s FUNCTION members are the constructors; its OBJECT members
-  // (`any`/`boolean`/`number`/`string`/`unknown`) are pre-built inert schema nodes.
-  S: {
+  // The effect-free schema substrate: `schema.*` constructors over a frozen
+  // plain-data AST. `schema`'s FUNCTION members are the constructors; its OBJECT
+  // members (`any`/`boolean`/`number`/`string`/`unknown`) are pre-built inert
+  // schema nodes.
+  schema: {
     methods: ['array', 'brand', 'bytes', 'hole', 'literal', 'optional', 'record', 'struct', 'tuple', 'union'],
     values: ['any', 'boolean', 'number', 'string', 'unknown'],
   },
@@ -164,7 +172,9 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Diagnostics: {
     methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
   },
-  Config: { methods: ['make', 'toViteConfig', 'toAstroConfig', 'toTestAliases'] },
+  // Construction moved to the standalone `defineConfig`; the `Config` namespace
+  // object now carries only the projection functions.
+  Config: { methods: ['toViteConfig', 'toAstroConfig', 'toTestAliases'] },
 
   // ── Generative UI / video ─────────────────────────────────────────
   GenFrame: { methods: ['make', 'resolveGap'] },
@@ -210,7 +220,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
     ],
   },
 
-  // Harness lives at `@czap/core/harness` sub-path — intentionally NOT in
+  // Harness lives at `@liteship/core/harness` sub-path — intentionally NOT in
   // the main entry to keep fast-check + code-gen surface out of every
   // consumer's bundle. Verified separately below.
 };
@@ -244,15 +254,53 @@ const STANDALONE_FUNCTIONS = [
   // The Effect-AST `schemaToJsonSchema` deriver was DELETED this wave. The single
   // JSON-Schema deriver is now the kernel `toJsonSchema` (registered below), which
   // walks the effect-free kernel AST and holds byte-parity with the retired deriver
-  // (the `tests/fixtures/json-schema-parity/` cage). @czap/command carries the
+  // (the `tests/fixtures/json-schema-parity/` cage). @liteship/command carries the
   // as-const JSON-Schema constants directly — no runtime derivation at the barrel.
   // `isValidationError` removed from the main entry — core migrated to the
-  // `@czap/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
-  // `@czap/error` (no per-package guard re-export, no compat shim).
+  // `@liteship/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
+  // `@liteship/error` (no per-package guard re-export, no compat shim).
   'defineConfig',
+  // Verb-grammar construction functions (ADR-0046): the standalone `define*` /
+  // `create*` / `computed` factories that replaced the namespace `.make` / `.from`
+  // members on Boundary/Token/Theme/Style/Cell/Derived/Store/Timeline.
+  'defineBoundary',
+  'defineToken',
+  'defineTheme',
+  'defineStyle',
+  // Core owns the explicit-dependency kernel; `liteship` composes and exports
+  // the fully wired defineAdaptive paved road.
+  'lowerAdaptive',
+  'createCell',
+  'computed',
+  'createStore',
+  'createTimeline',
+  // Verb-grammar sweep 2 (ADR-0051): the reactive-substrate factories collapsed onto
+  // standalone `create*` functions (the old `.make` / `.makeBoundary` namespace spellings
+  // died). Plus `createLifetime` (the Lifetime factory as a curated verb), `inspectReceipt`
+  // (the `inspect`-verb debug facade over the Receipt namespace), and the `tierTargets`
+  // escalation reader wired through to the barrel.
+  'createSignal',
+  'createWorld',
+  'createBlendTree',
+  'createTokenBuffer',
+  'createComponent',
+  'createComposable',
+  'createDirtyFlags',
+  'createFrameBudget',
+  'createCompositorStatePool',
+  'createLiveCell',
+  'createLiveCellBoundary',
+  'createLifetime',
+  'inspectReceipt',
+  'tierTargets',
+  // The ownership-contract wiring (P7 lifetime-pair collapse): folds a Lifetime's
+  // single lifecycle directly onto a resource as `dispose()` + `[Symbol.asyncDispose]`,
+  // so every public factory returns the value augmented with disposal instead of a
+  // `{ value, lifetime }` pair. See packages/core/src/reactive/lifetime.ts.
+  'attachLifetime',
   'tupleMap',
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
-  // consolidation). Public so @czap/worker's host startup path delegates to it.
+  // consolidation). Public so @liteship/worker's host startup path delegates to it.
   'rawIndexF32',
   // Projection vocabulary (Phase-1 Layer 1): per-quantizer output key naming +
   // the canonical GLSL identifier, shared by compositor/worker/astro-gpu/compiler.
@@ -272,7 +320,7 @@ const STANDALONE_FUNCTIONS = [
   // node/graph seal/validate/linearize surface.
   'contentAddressOf',
   // The canonical-CBOR byte serializer behind `contentAddressOf` — surfaced so the
-  // capsule generator-provenance digests (@czap/command) hash the SAME canonical
+  // capsule generator-provenance digests (@liteship/command) hash the SAME canonical
   // bytes the content-address kernel does (one canonicalization, no fork).
   'canonicalAddressBytes',
   'sealNode',
@@ -314,16 +362,16 @@ const STANDALONE_FUNCTIONS = [
   // ParseError instead of silently misparsing it into a v1 shape.
   'decodeDocumentGraph',
   // DocumentGraph node well-formedness — the ONE trust gate shared by the AI
-  // proposal validator and the @czap/astro runtime graph loader (0.4.0 item B).
+  // proposal validator and the @liteship/astro runtime graph loader (0.4.0 item B).
   'isWellFormedNode',
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
-  // CapTier rung a policy admits on a runtime site.
-  'chooseRung',
+  // CapTier quality tier a policy admits on a runtime site.
+  'chooseTier',
   // Capability-admissibility ladder projector (cap-axes rename): projects the
-  // single index-keyed `LADDER_TARGETS` ladder onto a vocabulary's rung order.
-  // The core escalation `RUNG_TARGETS` (CapTier) and the quantizer's
+  // single index-keyed `QUALITY_TIER_TARGETS` scale onto a vocabulary's tier order.
+  // The core escalation `TIER_TARGET_SETS` (CapTier) and the quantizer's
   // `TIER_TARGETS` (MotionTier) both derive from it, so the two cannot drift.
-  'projectLadder',
+  'projectQualityTiers',
   // AI cast validated-output envelope (the shared discipline for GraphPatch AND
   // genui GeneratedUITree proposals). `mintValidated` (the sole token mint site)
   // is intentionally NOT exported, so the envelope stays un-forgeable. These are
@@ -338,11 +386,11 @@ const STANDALONE_FUNCTIONS = [
   'proposalReceiptSubject',
   'defineCapsule',
   'getCapsuleCatalog',
-  // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
+  // `resetCapsuleCatalog` lives at `@liteship/core/testing` sub-path — see below.
   // ShipCapsule release-input addressing helpers (tarballManifestAddress,
   // lockfileAddress, workspaceManifestAddress, normalizedDryRunAddress,
-  // normalizeDryRunOutput) live in @czap/cli per ADR-0011 — they import
-  // node:zlib and must stay out of the browser-bundleable @czap/core.
+  // normalizeDryRunOutput) live in @liteship/cli per ADR-0011 — they import
+  // node:zlib and must stay out of the browser-bundleable @liteship/core.
   // The determinism substrate (0.4.0) — the FUNCTION half: deterministic clock/rng
   // factories. `fixedClock`/`manualClock` build injectable test clocks; `seededRng`
   // a replayable RNG. (The singleton boundaries systemClock/wallClock/systemRng are
@@ -414,9 +462,9 @@ const STANDALONE_FUNCTIONS = [
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
-// Empty: core migrated to the `@czap/error` algebra. `CzapValidationError`
+// Empty: core migrated to the `@liteship/error` algebra. `LiteshipValidationError`
 // (the old ad-hoc class) was deleted — validation failures are now the tagged
-// `ValidationError` value from `@czap/error`, never re-exported from core.
+// `ValidationError` value from `@liteship/error`, never re-exported from core.
 const ERROR_CLASSES: string[] = [];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
@@ -439,9 +487,9 @@ const STANDALONE_OBJECTS = [
   // →re-encode holds under the content-addressed multiset law.
   'graphPatchIdentityCapsule',
   // Escalation chooser capsule: the FIRST policyGate instance (ADR-0008). Locks
-  // chooseRung's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
+  // chooseTier's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
   // a standing policyGate contract — the canonical permission/authz check.
-  'escalationChooseRungCapsule',
+  'escalationChooseTierCapsule',
   // DocumentGraph addressing capsule: locks addressDocumentGraph's determinism /
   // fnv1a format / order-independence (CUT B1 code-unit guard).
   'documentGraphAddressCapsule',
@@ -490,11 +538,11 @@ const DEFAULT_CONSTANTS = [
   'EVALUATE_THRESHOLDS_SOURCE',
   // Worker-blob twin of projectionKeys as an inlinable JS source string (Phase-1).
   'PROJECTION_KEYS_SOURCE',
-  // The single index-keyed capability-admissibility ladder + its rung count, the
-  // shared source `RUNG_TARGETS` (CapTier) and `TIER_TARGETS` (MotionTier) both
-  // project from via `projectLadder` (cap-axes rename).
-  'LADDER_TARGETS',
-  'LADDER_RUNGS',
+  // The single index-keyed capability-admissibility quality-tier scale + its tier count, the
+  // shared source `TIER_TARGET_SETS` (CapTier) and `TIER_TARGETS` (MotionTier) both
+  // project from via `projectQualityTiers` (cap-axes rename).
+  'QUALITY_TIER_TARGETS',
+  'QUALITY_TIER_COUNT',
   // The ONE spring config the CSS `linear()` path and the JS floor default to (#126, Law 4).
   'DEFAULT_MOTION_SPRING',
 ];
@@ -591,12 +639,12 @@ describe('API health canary', () => {
     }
 
     // Footgun gate: the old ad-hoc error classes were deleted when core moved
-    // to the `@czap/error` algebra. They must NOT reappear on the surface —
-    // validation/guard helpers now live in `@czap/error` (`ValidationError`,
+    // to the `@liteship/error` algebra. They must NOT reappear on the surface —
+    // validation/guard helpers now live in `@liteship/error` (`ValidationError`,
     // `hasTag(e, 'ValidationError')`), never re-exported here.
     test('the deleted ad-hoc error classes are NOT on the main entry', () => {
       const core = Core as Record<string, unknown>;
-      expect(core.CzapValidationError).toBeUndefined();
+      expect(core.LiteshipValidationError).toBeUndefined();
       expect(core.isValidationError).toBeUndefined();
     });
   });
@@ -627,13 +675,13 @@ describe('API health canary', () => {
   });
 
   describe('sub-path exports', () => {
-    test('@czap/core/testing exposes resetCapsuleCatalog', async () => {
-      const Testing = await import('@czap/core/testing');
+    test('@liteship/core/testing exposes resetCapsuleCatalog', async () => {
+      const Testing = await import('@liteship/core/testing');
       expect(typeof Testing.resetCapsuleCatalog).toBe('function');
     });
 
-    test('@czap/core/harness exposes the harness generators', async () => {
-      const Harness = await import('@czap/core/harness');
+    test('@liteship/core/harness exposes the harness generators', async () => {
+      const Harness = await import('@liteship/core/harness');
       const expected = [
         'generatePureTransform',
         'generateReceiptedMutation',

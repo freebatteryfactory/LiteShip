@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { SlotAddressing } from '@czap/web';
-import type { SlotPath } from '@czap/web';
+import { SlotAddressing } from '@liteship/web';
+import type { SlotPath } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -94,11 +94,11 @@ describe('SlotAddressing.parse', () => {
 
 describe('SlotAddressing.toSelector', () => {
   test('generates a data-attribute CSS selector', () => {
-    expect(SlotAddressing.toSelector(sp('/app/sidebar'))).toBe('[data-czap-slot="/app/sidebar"]');
+    expect(SlotAddressing.toSelector(sp('/app/sidebar'))).toBe('[data-liteship-slot="/app/sidebar"]');
   });
 
   test('root path selector', () => {
-    expect(SlotAddressing.toSelector(sp('/'))).toBe('[data-czap-slot="/"]');
+    expect(SlotAddressing.toSelector(sp('/'))).toBe('[data-liteship-slot="/"]');
   });
 });
 

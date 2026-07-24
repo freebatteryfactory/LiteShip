@@ -1,6 +1,6 @@
 {
-  "name": "@czap/gauntlet",
-  "version": "0.18.0",
+  "name": "@liteship/gauntlet",
+  "version": "0.19.0",
   "description": "The rigor engine behind LiteShip's release gates: define quality gates that report findings and earn blocking power only by proving themselves against their own fixtures.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "quality-gate",
     "fitness-function",
@@ -40,7 +39,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/error": "workspace:*",
+    "@liteship/error": "workspace:*",
     "fast-glob": "^3.3.3"
   },
   "engines": {

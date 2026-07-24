@@ -8,6 +8,6 @@
 
 > **FixedStep** = `FixedStepShape`
 
-Defined in: [core/src/scheduler.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L158)
+Defined in: [core/src/reactive/scheduler.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L159)
 
 Fixed-step scheduler with manual `step()` advancement.

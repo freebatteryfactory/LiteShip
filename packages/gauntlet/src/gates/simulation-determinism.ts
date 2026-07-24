@@ -4,7 +4,7 @@
  *
  * Determinism is the trust spine: the whole assurance case rests on "the same
  * input yields the same artifact run-to-run". The DST harness
- * (`@czap/core/simulation`) PROVES that for a scenario by replaying it twice from
+ * (`@liteship/core/simulation`) PROVES that for a scenario by replaying it twice from
  * one seed and content-addressing the two byte-exact traces. If the two digests
  * DIVERGE, the system-under-test read real time / real randomness OUTSIDE the
  * world's injected substrate (or has an ordering bug) — a cardinal determinism
@@ -33,7 +33,7 @@ import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { ScenarioReplayFact, SimulationFacts } from '../simulation-facts.js';
+import type { ScenarioReplayFact, SimulationFacts } from '../facts/simulation-facts.js';
 
 const RULE_NS = 'gauntlet/simulation-determinism';
 
@@ -58,15 +58,15 @@ function divergenceFinding(run: ScenarioReplayFact): Finding {
       `(${run.firstDigest} ≠ ${run.secondDigest}), diverging ${at}. ${why}. ` +
       `This means the system-under-test read real time / real randomness OUTSIDE the world's injected clock/rng substrate, ` +
       `or has an ordering bug — determinism (the trust spine) is broken. The engine picks no winner; reproduce it with ` +
-      `replay(${run.seed}, "${run.scenarioId}") through @czap/core/simulation.`,
+      `replay(${run.seed}, "${run.scenarioId}") through @liteship/core/simulation.`,
     location: { file: run.scenarioId },
     remediation: {
       kind: 'instruction',
       description: 'Restore deterministic replay — the same seed must yield a byte-identical trace.',
       steps: [
-        `Reproduce: run \`replay(${run.seed}, "${run.scenarioId}")\` twice via @czap/core/simulation; the trace digests must match.`,
+        `Reproduce: run \`replay(${run.seed}, "${run.scenarioId}")\` twice via @liteship/core/simulation; the trace digests must match.`,
         `Find the leak: at trace point ${where === null ? '(length/shape divergence)' : `\`${where}\``}, the SUT read an ambient source — replace every raw wall-clock read (Date-dot-now / argless new-Date) with the world's clock (world.clock / world.wallClock) and every raw random read (Math-dot-random) with the world's rng (world.rng).`,
-        `Re-run the corpus through the host (\`czap check --ir --simulate\`); the divergence must clear — it is a real nondeterminism bug, never waivable.`,
+        `Re-run the corpus through the host (\`liteship check gates --ir --simulate\`); the divergence must clear — it is a real nondeterminism bug, never waivable.`,
       ],
     },
   });
@@ -81,13 +81,13 @@ function notEvidencedFinding(): Finding {
     title: 'Simulation determinism not evidenced',
     detail:
       'No simulation (DST) facts were injected on the GateContext, so the gate cannot attest replay-determinism. ' +
-      'This is honest under-coverage (advisory), never a silent pass — a host (the CLI `czap check --ir --simulate` path) ' +
-      'must run the scenario corpus through the @czap/core/simulation harness and inject the verdicts via context.simulation.',
+      'This is honest under-coverage (advisory), never a silent pass — a host (the CLI `liteship check gates --ir --simulate` path) ' +
+      'must run the scenario corpus through the @liteship/core/simulation harness and inject the verdicts via context.simulation.',
     remediation: {
       kind: 'instruction',
       description: 'Supply the DST facts so the avionics gate can attest replay-determinism.',
       steps: [
-        'Run the scenario corpus through @czap/core/simulation (replay each seed twice, content-address the traces).',
+        'Run the scenario corpus through @liteship/core/simulation (replay each seed twice, content-address the traces).',
         'Inject the resulting SimulationFacts via the GateContext (context.simulation.runs).',
       ],
     },

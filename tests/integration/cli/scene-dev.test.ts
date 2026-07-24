@@ -17,7 +17,7 @@ import { coverageInstrumentation } from '../../helpers/capabilities.js';
 const underCoverage = coverageInstrumentation;
 const conditionalIt = underCoverage ? it.skip : it;
 
-describe('czap scene dev', () => {
+describe('liteship scene dev', () => {
   conditionalIt('boots a Vite server and prints a receipt with a local URL', async () => {
     await withSpawned(
       'pnpm',

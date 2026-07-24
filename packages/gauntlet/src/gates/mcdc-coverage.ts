@@ -6,7 +6,7 @@
  *
  * THE BIG IDEA, restated as a gate. MC/DC requires each ATOMIC boolean CONDITION in a
  * decision to be shown to INDEPENDENTLY affect the decision's outcome. The
- * condition-mutation realization (see `@czap/audit`'s `mcdc-engine.ts`): for each atomic
+ * condition-mutation realization (see `@liteship/audit`'s `mcdc-engine.ts`): for each atomic
  * condition the host mints two pins — force the condition TRUE, and separately FALSE —
  * and runs the covering tests on each. A condition's independent effect is OBSERVED iff
  * BOTH pins are KILLED ({@link isMcdcCovered}); a SURVIVING or NO-COVERAGE pin is an
@@ -34,7 +34,7 @@
  * hardcoded level beside the file.
  *
  * It {@link requireMcdc} (and reads the IR for level propagation), so it runs ONLY on the
- * opt-in host path (`czap check --ir --mcdc` — the CLI generates the condition-mutants +
+ * opt-in host path (`liteship check gates --ir --mcdc` — the CLI generates the condition-mutants +
  * runs the per-pin suites + injects the facts); the lean MCP/command path does not run
  * it. Composition over inheritance: a `_tag`-free fold over the folded outcomes +
  * standalone functions, no class.
@@ -50,7 +50,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import { isMcdcCovered, type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict } from '../mcdc-facts.js';
+import { isMcdcCovered, type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict } from '../facts/mcdc-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/mcdc-coverage';
@@ -155,7 +155,7 @@ function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel):
         noCoverage
           ? `This decision has NO covering test — write one that exercises it (the worst signal: nothing observes the branch).`
           : `Add a test pair that holds the other conditions fixed and flips ONLY \`${outcome.condition}\`, asserting the decision's outcome flips with it (so pinning it to ${gaps} would make a test fail).`,
-        `Re-run \`czap check --ir --mcdc\`: both the force-true and force-false pins of \`${outcome.condition}\` must be killed for the condition to be MC/DC-covered.`,
+        `Re-run \`liteship check gates --ir --mcdc\`: both the force-true and force-false pins of \`${outcome.condition}\` must be killed for the condition to be MC/DC-covered.`,
       ],
     },
   });
@@ -193,12 +193,12 @@ function mcdcContext(ir: RepoIR, mcdc: McdcFacts): GateContext {
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 
 /** A literal IR carrying just the L4 fixture file (no imports → glob levels stand). */
 function fixtureIR(): RepoIR {
   return makeRepoIR({
-    files: [{ id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' }],
+    files: [{ id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' }],
   });
 }
 
@@ -213,6 +213,7 @@ function coveredCondition(): McdcConditionOutcome {
     condition: 'a',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'killed',
+    coveringTests: ['tests/fixture.test.ts'],
   };
 }
 
@@ -227,6 +228,7 @@ function uncoveredCondition(): McdcConditionOutcome {
     condition: 'x <= hi',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'survived',
+    coveringTests: ['tests/fixture.test.ts'],
   };
 }
 
@@ -244,11 +246,17 @@ function uncoveredCondition(): McdcConditionOutcome {
 const FIXTURES = {
   red: {
     name: 'MC/DC facts with an UNCOVERED L4 condition (a surviving pin — the unobserved effect the gate must flag)',
-    context: mcdcContext(fixtureIR(), { conditions: [uncoveredCondition()] }),
+    context: mcdcContext(fixtureIR(), {
+      conditions: [uncoveredCondition()],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1 }],
+    }),
   },
   green: {
     name: 'MC/DC facts with only a fully-COVERED L4 condition (both pins killed — full MC/DC, clean)',
-    context: mcdcContext(fixtureIR(), { conditions: [coveredCondition()] }),
+    context: mcdcContext(fixtureIR(), {
+      conditions: [coveredCondition()],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1 }],
+    }),
   },
   mutation: {
     describe:

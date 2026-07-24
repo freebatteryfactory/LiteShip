@@ -22,27 +22,27 @@
  * @module
  */
 
-import { defineCapsule, Boundary, Diagnostics, BoundaryAttribute, S } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { defineCapsule, Diagnostics, BoundaryAttribute, defineBoundary, schema } from '@liteship/core';
+import type { Infer, Boundary } from '@liteship/core';
 import { ARIACompiler } from '../aria.js';
 import type { ARIACompileResult } from '../aria.js';
 
 /** A single authored attribute entry (key + value), the seed unit for a state map. */
-const AttrEntry = S.struct({
-  key: S.string,
-  value: S.string,
+const AttrEntry = schema.struct({
+  key: schema.string,
+  value: schema.string,
 });
 
 /** Seed material the schema-arbitrary CAN produce. `run` normalizes it. */
-const ARIACompileSeed = S.struct({
+const ARIACompileSeed = schema.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: S.array(S.string),
+  states: schema.array(schema.string),
   /**
    * Per-state authored attribute entries `entries[stateIdx]`. Keys are free
    * strings, so the domain spans both valid (`aria-*`/`role`) and invalid keys —
    * exercising both the survival and the drop branches of the validator.
    */
-  entries: S.array(S.array(AttrEntry)),
+  entries: schema.array(schema.array(AttrEntry)),
 });
 
 type ARIACompileSeedValue = Infer<typeof ARIACompileSeed>;
@@ -60,17 +60,17 @@ interface ARIACompileOutput {
 }
 
 /** Build a valid Boundary from a recorded (deduped) state-name list. */
-function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
+function makeBoundary(stateNames: readonly string[]): Boundary {
   const at = stateNames.map((name, i) => [i, name] as const);
-  return Boundary.make({
+  return defineBoundary({
     input: 'seed.signal',
     at: at as unknown as readonly [readonly [number, string]],
-  }) as unknown as Boundary.Shape;
+  }) as unknown as Boundary;
 }
 
 /** Normalize a seed into a real Boundary + per-state attribute maps + currentState. */
 function buildInputs(seed: ARIACompileSeedValue): {
-  boundary: Boundary.Shape;
+  boundary: Boundary;
   authored: StateAttrs;
   stateNames: string[];
   currentState: string;
@@ -106,7 +106,7 @@ function buildInputs(seed: ARIACompileSeedValue): {
  * buffer (suppressing console noise from dropped-key warnings), then restore the
  * default sink. Pure from the caller's view.
  */
-function compileQuietly(boundary: Boundary.Shape, authored: StateAttrs, currentState: string): ARIACompileResult {
+function compileQuietly(boundary: Boundary, authored: StateAttrs, currentState: string): ARIACompileResult {
   const { sink } = Diagnostics.createBufferSink();
   // Restore the PREVIOUSLY-active sink (not the default) so a host that installed
   // a custom sink keeps capturing diagnostics after this capsule runs — the
@@ -129,7 +129,7 @@ export const ariaCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.aria-compile',
   input: ARIACompileSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

@@ -6,24 +6,24 @@
  * @module
  */
 
-import { CZAP_EVENT_DOCS, CZAP_EVENT_NAMES } from './czap-events.js';
+import { LITESHIP_EVENT_DOCS, LITESHIP_EVENT_NAMES } from './liteship-events.js';
 import { STREAM_WIRE_ATTRIBUTE_DOCS, STREAM_WIRE_ATTRIBUTES } from './stream-attributes.js';
 
 /** Markdown tables for the generated wire-contract block. */
 export function renderWireContractDoc(): string {
-  const eventRows = CZAP_EVENT_NAMES.map((name) => `| \`${name}\` | ${CZAP_EVENT_DOCS[name]} |`);
+  const eventRows = LITESHIP_EVENT_NAMES.map((name) => `| \`${name}\` | ${LITESHIP_EVENT_DOCS[name]} |`);
   const attrRows = STREAM_WIRE_ATTRIBUTES.map((attr) => `| \`${attr}\` | ${STREAM_WIRE_ATTRIBUTE_DOCS[attr]} |`);
 
   return [
-    '### `czap:*` CustomEvents',
+    '### `liteship:*` CustomEvents',
     '',
-    'Single source: `packages/web/src/wire/czap-events.ts`. Dispatch through `dispatchCzapEvent`; subscribe through `onCzap`.',
+    'Single source: `packages/web/src/wire/liteship-events.ts`. Dispatch through `dispatchLiteshipEvent`; subscribe through `onLiteship`.',
     '',
     '| Event | Role |',
     '| --- | --- |',
     ...eventRows,
     '',
-    '### Stream `data-czap-*` attributes',
+    '### Stream `data-liteship-*` attributes',
     '',
     'Single source: `packages/web/src/wire/stream-attributes.ts`. Read through `streamWireAttr(key)`.',
     '',

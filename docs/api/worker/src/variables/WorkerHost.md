@@ -11,8 +11,8 @@
 Defined in: [worker/src/host.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/host.ts#L242)
 
 `WorkerHost` -- main-thread lifecycle wrapper that owns a
-[CompositorWorker.Shape](../namespaces/CompositorWorker/type-aliases/Shape.md) and (optionally) a
-[RenderWorker.Shape](../namespaces/RenderWorker/type-aliases/Shape.md), exposing a single unified surface for DOM
+[CompositorWorker](CompositorWorker.md) and (optionally) a
+[RenderWorker](RenderWorker.md), exposing a single unified surface for DOM
 integration.
 
 Typical flow:
@@ -52,7 +52,7 @@ render worker is created lazily on the first
 ## Example
 
 ```ts
-import { WorkerHost } from '@czap/worker';
+import { WorkerHost } from '@liteship/worker';
 
 const host = WorkerHost.create({ poolCapacity: 64 });
 host.attachCanvas(canvas);

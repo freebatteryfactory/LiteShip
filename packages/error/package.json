@@ -1,6 +1,6 @@
 {
-  "name": "@czap/error",
-  "version": "0.18.0",
+  "name": "@liteship/error",
+  "version": "0.19.0",
   "description": "The one error algebra for LiteShip: build tagged error values that work as thrown Errors and as errors-as-values (a Result err-arm), and compose your own variants on top with zero dependencies.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "error-handling",
     "tagged-union",

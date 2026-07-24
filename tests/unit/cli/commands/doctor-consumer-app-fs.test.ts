@@ -43,7 +43,7 @@ const { doctor } = await import('../../../../packages/cli/src/commands/doctor.js
 
 describe('doctor --target consumer-app fs errors (#117)', () => {
   test('read failure yields structured emitError + exit 1, not an uncaught rejection', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-doctor-consumer-fs-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-doctor-consumer-fs-'));
     const src = join(dir, 'src');
     mkdirSync(src, { recursive: true });
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'consumer-app', version: '1.0.0' }));

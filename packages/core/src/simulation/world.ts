@@ -3,7 +3,7 @@
  *
  * A {@link SimWorld} is a DATA record (composition, no class) that fixes every
  * source of nondeterminism behind the SAME injectable shapes the runtime already
- * threads — {@link Clock} and {@link Rng} from `@czap/core`'s determinism
+ * threads — {@link Clock} and {@link Rng} from `@liteship/core`'s determinism
  * substrate. A real system-under-test (a quantizer, a boundary evaluator, a
  * graph-patch sequence, a worker message flow) runs UNCHANGED against the world:
  * it reads time through `world.clock` / `world.wallClock` and randomness through
@@ -30,8 +30,9 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
-import { manualClock, seededRng, type Clock, type ManualClock, type Rng } from '../index.js';
+import { ValidationError } from '@liteship/error';
+import { manualClock, type Clock, type ManualClock } from '../clock/clock.js';
+import { seededRng, type Rng } from '../clock/rng.js';
 import type { FaultTable } from './fault.js';
 import { realLoopScheduler, type Scheduler, type SchedulerWorld } from './scheduler.js';
 

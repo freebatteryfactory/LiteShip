@@ -41,8 +41,8 @@ import {
   type StandardsElement,
   type StandardsWaiver,
   type DeclaredFixFacts,
-} from '@czap/gauntlet';
-import { contentAddressOf } from '@czap/core';
+} from '@liteship/gauntlet';
+import { contentAddressOf } from '@liteship/core';
 
 /** A fixed reference date — the sign-off-expiry classification is stable regardless of `now`. */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
@@ -64,7 +64,7 @@ const BEFORE_ELEMENTS: readonly StandardsElement[] = [
 
 const ALWAYS_BLOCKING = new Set(['gauntlet/no-placeholder']);
 
-/** The host-minted content address of a standards surface (via the ONE @czap/core kernel). */
+/** The host-minted content address of a standards surface (via the ONE @liteship/core kernel). */
 function addressOf(elements: readonly StandardsElement[]): string {
   return String(contentAddressOf(elements));
 }

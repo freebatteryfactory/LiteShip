@@ -1,6 +1,6 @@
 // PROVES: INV-COMPOSITOR-ZERO-ALLOC
 /**
- * The MEASURED proof that `@czap/core`'s Compositor per-frame compose hot path is
+ * The MEASURED proof that `@liteship/core`'s Compositor per-frame compose hot path is
  * GENUINELY zero-allocation — zero RETAINED *and* zero TRANSIENT — the claim the
  * module + factory docs make ("zero-allocation hot path backed by
  * CompositorStatePool"), held to a real allocation measurement in BOTH senses.
@@ -31,8 +31,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
-import { Boundary, Compositor } from '@czap/core';
-import type { CompositorQuantizer, Quantizer, ReactiveQuantizer } from '@czap/core';
+import { Compositor, defineBoundary } from '@liteship/core';
+import type { CompositorQuantizer, Quantizer, ReactiveQuantizer } from '@liteship/core';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { RELATIVE_MAX_RATIO, RELATIVE_SUBSCRIBER_MAX_RATIO } from '../../scripts/alloc-gate.js';
@@ -80,7 +80,7 @@ function parseRelative(
 // This file is listed in tsconfig.tests.json's include, so the `@ts-expect-error`
 // below is LOAD-BEARING: it is only verified because THIS project typechecks it.
 describe('Compositor.add — CompositorQuantizer accepted-type contract (compile-time)', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -101,7 +101,7 @@ describe('Compositor.add — CompositorQuantizer accepted-type contract (compile
     // type prevents — so the assertion lives in a closure that is only typechecked, not
     // run. If the `@ts-expect-error` stops biting, the tightening regressed to the cast.
     const _rejectsBaseOnly = (
-      compositor: ReturnType<typeof Compositor.create>['compositor'],
+      compositor: ReturnType<typeof Compositor.create>,
       baseOnly: Quantizer<B>,
     ): void => {
       // @ts-expect-error — Quantizer<B> carries no required stateSync and no reactive state.
@@ -111,7 +111,7 @@ describe('Compositor.add — CompositorQuantizer accepted-type contract (compile
   });
 
   it('ACCEPTS a synchronous (required-stateSync) quantizer — no cast needed', () => {
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     const sync: CompositorQuantizer<B> = {
       _tag: 'Quantizer',
       boundary,
@@ -179,7 +179,7 @@ describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-A
     // `SubscriptionRef.set` (the ≈ 22 B/op TRANSIENT floor) reintroduces the very
     // allocation this invariant eliminated — caught here before the gate even runs.
     const here = dirname(fileURLToPath(import.meta.url));
-    const source = readFileSync(resolve(here, '../../packages/core/src/compositor.ts'), 'utf8');
+    const source = readFileSync(resolve(here, '../../packages/core/src/media/compositor.ts'), 'utf8');
     // Strip line + block comments so the explanatory prose (which names the replaced
     // `SubscriptionRef.set` to document WHY) is not mistaken for a usage. We assert on
     // the CODE only.

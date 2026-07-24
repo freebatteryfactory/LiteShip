@@ -33,6 +33,11 @@ describe('quoteWindowsArg', () => {
 });
 
 describe('spawnArgv', () => {
+  it('launches an absolute native executable path containing spaces', async () => {
+    const result = await spawnArgv(process.execPath, ['-e', 'process.exit(0)']);
+    expect(result.exitCode).toBe(0);
+  });
+
   it('returns exitCode 0 for a successful echo via node -e', async () => {
     const result = await spawnArgv('node', ['-e', 'process.exit(0)']);
     expect(result.exitCode).toBe(0);

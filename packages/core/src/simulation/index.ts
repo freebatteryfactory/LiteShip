@@ -1,5 +1,5 @@
 /**
- * `@czap/core/simulation` — the DETERMINISTIC SIMULATION TESTING (DST) harness, a
+ * `@liteship/core/simulation` — the DETERMINISTIC SIMULATION TESTING (DST) harness, a
  * FoundationDB-style seeded world + scheduler seam over the determinism substrate.
  *
  * A seeded {@link SimWorld} fixes time ({@link Clock}) and randomness ({@link Rng})
@@ -15,12 +15,19 @@
  * so the scenario API does not change when it is swapped in.
  *
  * The DST GATE (a replay-divergence is a self-explaining Finding) lives in
- * `@czap/gauntlet` and folds host-injected SIM facts — the lean-engine pattern.
+ * `@liteship/gauntlet` and folds host-injected SIM facts — the lean-engine pattern.
  *
  * @module
  */
 
-export { type Scheduler, type SchedulerWorld, type SimStep, type StepOutcome, realLoopScheduler } from './scheduler.js';
+export {
+  type Scheduler,
+  type SchedulerWorld,
+  type SimStep,
+  type StepOutcome,
+  realLoopScheduler,
+  seededInterleavingScheduler,
+} from './scheduler.js';
 
 export { type Fault, type FaultKind, type FaultTable, type FaultDecision, consultFault } from './fault.js';
 

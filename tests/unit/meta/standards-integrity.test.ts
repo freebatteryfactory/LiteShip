@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/standards-gate
 /**
  * The AGENT-SAFETY META-GAUNTLET (the "raccoon rule"), phase A — the standards
  * backstop's BITE proofs + the committed-snapshot drift gate.
@@ -7,7 +8,7 @@
  *
  *  1. DRIFT — the committed `traceability/standards-snapshot.json` matches the LIVE
  *     standards surface (every change is reviewed; an accidental weakening cannot
- *     pass silently). Regenerate intentionally with `CZAP_UPDATE_STANDARDS_SNAPSHOT=1`.
+ *     pass silently). Regenerate intentionally with `LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1`.
  *  2. REAL-REPO GREEN — the live standards have NOT been weakened: zero unsigned
  *     weakenings, and the `standardsIntegrityGate` does not block.
  *  3. BITE — a simulated weakening of EACH class (a removed gate, a removed red
@@ -45,7 +46,7 @@ import {
   type StandardsElement,
   type StandardsWaiver,
   type SiteConditionalityResolver,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import {
   readLiveStandardsSurface,
   readCommittedSnapshot,
@@ -103,18 +104,18 @@ function simulate(
 
 describe('standards-snapshot drift gate', () => {
   test(
-    'the committed snapshot matches the live standards surface (regenerate with CZAP_UPDATE_STANDARDS_SNAPSHOT=1)',
+    'the committed snapshot matches the live standards surface (regenerate with LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1)',
     { timeout: scaledTimeout(30_000) },
     () => {
       const live = readLiveStandardsSurface(REPO_ROOT, NOW);
       const serialized = serializeStandardsSurface(live);
-      if (process.env.CZAP_UPDATE_STANDARDS_SNAPSHOT === '1') {
+      if (process.env.LITESHIP_UPDATE_STANDARDS_SNAPSHOT === '1') {
         writeCommittedSnapshot(REPO_ROOT, live);
       } else {
         const committed = serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
         expect(
           serialized === committed,
-          'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
+          'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
         ).toBe(true);
       }
     },
@@ -393,7 +394,7 @@ describe('BITE — a STRENGTHEN never blocks', () => {
 
 // ───────────────────────── the base-ref resolution (deterministic) ────────────
 describe('the base ref is resolved deterministically (CI override → PR base → main)', () => {
-  test('CZAP_STANDARDS_BASE_REF wins (the explicit override has highest authority)', () => {
+  test('LITESHIP_STANDARDS_BASE_REF wins (the explicit override has highest authority)', () => {
     expect(
       resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: 'origin/release-1.2', GITHUB_BASE_REF: 'develop' }),
     ).toBe('origin/release-1.2');
@@ -459,7 +460,7 @@ describe('the base snapshot read is FAIL-CLOSED (refuse, never fall back to the 
     // (Without the explicit gitIntroCommit override, the REAL repo WOULD resolve the birth
     // commit and run ACTIVE — proven in the next test.)
     const resolvableBaseNoSnapshot: GitShowReader = (_root, _ref, path) =>
-      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
     const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
       gitShow: resolvableBaseNoSnapshot,
       gitIntroCommit: () => undefined,
@@ -620,7 +621,7 @@ describe('DRILL SERGEANT — the same-commit code+snapshot bypass is CLOSED', ()
 
 // ──────────────── THE MULTI-COMMIT PUSH GAP — HEAD~1 misses earlier weakenings ──
 //
-// THE FINDING (codex round-4): the push path set CZAP_STANDARDS_BASE_REF=HEAD~1, which
+// THE FINDING (codex round-4): the push path set LITESHIP_STANDARDS_BASE_REF=HEAD~1, which
 // only diffs the LAST commit of a push. When a branch is pushed with N commits, a
 // weakening introduced in an EARLIER commit is ALREADY PRESENT at HEAD~1 — so the diff
 // live-vs-HEAD~1 sees no change and the weakening sails through. The base for a push must
@@ -646,7 +647,7 @@ describe('MULTI-COMMIT PUSH GAP — the push base must be github.event.before, n
 
   /** Initialize a temp repo with a deterministic, in-repo git identity (no ambient env). */
   async function initRepo(branch: string): Promise<string> {
-    const repo = mkdtempSync(join(tmpdir(), 'czap-mc-'));
+    const repo = mkdtempSync(join(tmpdir(), 'liteship-mc-'));
     mkdirSync(join(repo, 'traceability'), { recursive: true });
     await git(repo, ['init', '-q', '-b', branch]);
     await git(repo, ['config', 'user.name', 't']);
@@ -769,9 +770,9 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
     const legit = [
       "describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
       'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;',
-      "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       "it.skip('ffmpeg+libx264 render (skipped — codec not on PATH)', () => {",
-      "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
     ];
     for (const s of legit) expect(siteCarriesPlaceholderMarker(s)).toBe(false);
     // The whole-word floor: a banned token EMBEDDED in an identifier never false-trips.
@@ -882,7 +883,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     // Capability-named titles on UNCONDITIONAL skips — the title references the capability domain.
     expect(
       siteConsistentWithCapability(
-        "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+        "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
         'ffmpeg-absent',
       ),
     ).toBe(true);
@@ -894,7 +895,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     ).toBe(true);
     expect(
       siteConsistentWithCapability(
-        "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm', () => {",
+        "it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm', () => {",
         'wasm-dist-staged',
       ),
     ).toBe(true);
@@ -933,7 +934,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     expect(
       sanctionedSkipFor(
         'tests/smoke/intro-render.test.ts',
-        "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+        "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       )?.capability,
     ).toBe('ffmpeg-absent');
     // Even a real sanctioned FILE cannot launder a marker-free placeholder at a DIFFERENT site —
@@ -986,7 +987,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
 
 // ───────────── FINDING 3 — the BIRTH BASELINE (genesis resolves to the intro commit) ─────
 //
-// THE ATTACK (codex round-5): CI sets CZAP_STANDARDS_BASE_REF=origin/main; origin/main
+// THE ATTACK (codex round-5): CI sets LITESHIP_STANDARDS_BASE_REF=origin/main; origin/main
 // predates the snapshot (born on the branch), so the OLD bootstrap path went INACTIVE and
 // the script passed WITHOUT diffing — a window where a branch-local weakening was unguarded.
 // THE FIX: when the base resolves but lacks the snapshot, diff vs the snapshot's BIRTH
@@ -1001,7 +1002,7 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
         return ref === introCommit ? birthBytes : undefined;
       }
       // The known-stable probe reads at the base (the base resolves).
-      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"liteship"}';
       return undefined;
     };
   }
@@ -1067,7 +1068,7 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
     // this never fires; the birth baseline applies.
     const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
       env: { [STANDARDS_BASE_REF_ENV]: 'origin/main' },
-      gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined),
+      gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined),
       gitIntroCommit: () => undefined,
     });
     expect(result._tag).toBe('inactive');
@@ -1093,7 +1094,7 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
     expect(() =>
       buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
         env: { [STANDARDS_BASE_REF_ENV]: 'origin/main' },
-        gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined),
+        gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined),
         gitIntroCommit: () => 'd'.repeat(40),
       }),
     ).toThrow();

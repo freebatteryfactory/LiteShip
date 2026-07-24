@@ -1,5 +1,7 @@
+/// <reference lib="esnext.disposable" />
+
 /**
- * @czap/core type spine -- the contract all implementations satisfy.
+ * @liteship/core type spine -- the contract all implementations satisfy.
  *
  * Three sections:
  *   1. NEW types (brands, boundary, signals, animation, game engine patterns)
@@ -8,7 +10,7 @@
  *
  * Effect-free (Wave 8): every surface this spine mirrors is LiteShip-native —
  * the reactive family (Cell/Derived/Store) over CellKernel.replay1, and Codec
- * over the sync `@czap/error` `Result`. Nothing here imports `effect`; the
+ * over the sync `@liteship/error` `Result`. Nothing here imports `effect`; the
  * prose below records what each surface REPLACED, not a live dependency.
  */
 
@@ -20,7 +22,7 @@
  * The runtime motion tier — derived from device capability + user preference
  * (notably `prefers-reduced-motion`) and used to gate animation / output
  * targets. Canonical declaration; `_spine/detect.d.ts` and `_spine/quantizer.d.ts`
- * re-anchor from here, and `packages/core/src/ui-quality.ts` re-exports it.
+ * re-anchor from here, and `packages/core/src/evidence/ui-quality.ts` re-exports it.
  *
  * Order is from lowest capability to highest. `none` is forced by
  * `prefers-reduced-motion: reduce` regardless of GPU tier; `compute` unlocks
@@ -54,10 +56,10 @@ export type StateName<S extends string = string> = S & { readonly [StateNameBran
  *
  * APEX of THREE intentional homes (ADR-0012) — do NOT merge them. This spine
  * type is the strictest: a symbol-brand, so a raw `fnv1a:...` string cannot be
- * typed as ContentAddress without a validating constructor. `@czap/core` and
- * `@czap/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
- * with validating constructors; `@czap/canonical` is intentionally zero-dep
- * (only `@czap/error`) and uses a `` `fnv1a:${string}` `` template-literal brand
+ * typed as ContentAddress without a validating constructor. `@liteship/core` and
+ * `@liteship/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
+ * with validating constructors; `@liteship/canonical` is intentionally zero-dep
+ * (only `@liteship/error`) and uses a `` `fnv1a:${string}` `` template-literal brand
  * instead. Merging the homes would either break canonical's zero-dep property or
  * weaken this symbol-brand to a template literal. The three are parity-guarded at
  * runtime by tests/unit/core/brand-validators.test.ts ("ContentAddress three-home
@@ -109,11 +111,11 @@ export declare function brand<T, B extends symbol>(value: T): T & { readonly [K 
 /** Flatten branded intersections for clean IDE hints */
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
-/** Extract literal union of state names from a Boundary.Shape */
-export type StateUnion<B extends Boundary.Shape> = B['states'][number];
+/** Extract literal union of state names from a Boundary */
+export type StateUnion<B extends Boundary> = B['states'][number];
 
 /** Generate valid output shapes per state */
-export type OutputsFor<B extends Boundary.Shape, T> = {
+export type OutputsFor<B extends Boundary, T> = {
   readonly [S in StateUnion<B>]: T;
 };
 
@@ -134,24 +136,60 @@ export type BoundaryCrossing<S extends string = string> = {
  * shed seams. Owns a LIFO finalizer stack disposed exactly once; `signal` projects
  * cancellation, and `dispose()` settles once every async finalizer settles.
  */
+export interface Lifetime {
+  readonly _tag: 'Lifetime';
+  /** True once `dispose()` has been initiated (flips synchronously). */
+  readonly disposed: boolean;
+  /** An `AbortSignal` that aborts synchronously when `dispose()` begins. */
+  readonly signal: AbortSignal;
+  /** Register a finalizer (LIFO); returns an unregister handle. Runs now if already disposed. */
+  readonly add: (finalizer: () => void | Promise<void>) => () => void;
+  /** Run every finalizer once in LIFO order; the returned promise settles once async finalizers settle. */
+  readonly dispose: () => Promise<void>;
+}
+
 export declare namespace Lifetime {
-  /** Live disposal handle — the owner of an ordered finalizer stack. */
-  export interface Shape {
-    readonly _tag: 'Lifetime';
-    /** True once `dispose()` has been initiated (flips synchronously). */
-    readonly disposed: boolean;
-    /** An `AbortSignal` that aborts synchronously when `dispose()` begins. */
-    readonly signal: AbortSignal;
-    /** Register a finalizer (LIFO); returns an unregister handle. Runs now if already disposed. */
-    readonly add: (finalizer: () => void | Promise<void>) => () => void;
-    /** Run every finalizer once in LIFO order; the returned promise settles once async finalizers settle. */
-    readonly dispose: () => Promise<void>;
-  }
   /** A registered teardown function; the sync arm runs synchronously inside `dispose()`. */
   export type Finalizer = () => void | Promise<void>;
   /** Build a fresh, undisposed Lifetime. */
-  export function make(): Shape;
+  export function make(): Lifetime;
 }
+
+/** Standalone verb-grammar constructor for a {@link Lifetime} (ADR-0046/0051). */
+export declare function createLifetime(): Lifetime;
+
+/**
+ * A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
+ * {@link Lifetime}'s finalizers and returns `void`; `[Symbol.dispose]` makes it
+ * usable with a `using` declaration. `lifetime` stays reachable for advanced
+ * composition. Prefer {@link AsyncOwnedResource} (Lifetime.dispose is async).
+ */
+export interface OwnedResource {
+  readonly lifetime: Lifetime;
+  dispose(): void;
+  [Symbol.dispose](): void;
+}
+
+/**
+ * A resource that owns its teardown ASYNCHRONOUSLY — the default, since
+ * {@link Lifetime}.`dispose` is async. `dispose()` delegates to the owning
+ * Lifetime; `[Symbol.asyncDispose]` makes it usable with `await using`. The value
+ * IS the disposable — there is no `{ value, lifetime }` pair to destructure —
+ * with the owning `lifetime` still reachable for advanced composition.
+ */
+export interface AsyncOwnedResource {
+  readonly lifetime: Lifetime;
+  dispose(): Promise<void>;
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ * Wire a {@link Lifetime}'s single lifecycle directly onto `target`, collapsing
+ * the former `{ value, lifetime }` pair-return into ONE owned resource. Adds
+ * `dispose()` + `[Symbol.asyncDispose]()` (both delegate to `lifetime.dispose()`)
+ * and keeps the handle reachable as `target.lifetime`.
+ */
+export declare function attachLifetime<T extends object>(target: T, lifetime: Lifetime): T & AsyncOwnedResource;
 
 /**
  * CellKernel — the shared replay-current / fan-out reactive substrate extracted
@@ -213,41 +251,32 @@ export interface BoundarySpec {
   readonly experimentId?: string;
 }
 
+export interface Boundary<
+  I extends string = string,
+  S extends readonly [string, ...string[]] = readonly [string, ...string[]],
+> {
+  readonly _tag: 'BoundaryDef';
+  readonly _version: 1;
+  readonly id: ContentAddress;
+  readonly input: SignalInput<I>;
+  readonly thresholds: readonly ThresholdValue[];
+  readonly states: S;
+  readonly hysteresis?: number;
+  readonly spec?: BoundarySpec;
+}
+
+/** Define a content-addressed {@link Boundary} from an ascending threshold table. */
+export declare function defineBoundary<I extends string, const S extends readonly [string, ...string[]]>(config: {
+  readonly input: I;
+  readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
+  readonly hysteresis?: number;
+  readonly spec?: BoundarySpec;
+}): Boundary<I, S>;
+
 export declare namespace Boundary {
-  /**
-   * The core primitive. Source of truth for quantization boundaries.
-   *
-   * `S` is a non-empty state tuple (`readonly [string, ...string[]]`) — a
-   * boundary always names at least one state. `_version` pins the structural
-   * schema generation; `spec` is the optional activation filter.
-   */
-  export interface Shape<
-    I extends string = string,
-    S extends readonly [string, ...string[]] = readonly [string, ...string[]],
-  > {
-    readonly _tag: 'BoundaryDef';
-    readonly _version: 1;
-    readonly id: ContentAddress;
-    readonly input: SignalInput<I>;
-    readonly thresholds: readonly ThresholdValue[];
-    readonly states: S;
-    readonly hysteresis?: number;
-    readonly spec?: BoundarySpec;
-  }
+  export function evaluate<B extends Boundary>(boundary: B, value: number): StateUnion<B>;
 
-  /** Alias for {@link BoundarySpec}. */
-  export type Spec = BoundarySpec;
-
-  export function make<I extends string, const S extends readonly [string, ...string[]]>(config: {
-    readonly input: I;
-    readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
-    readonly hysteresis?: number;
-    readonly spec?: BoundarySpec;
-  }): Shape<I, S>;
-
-  export function evaluate<B extends Shape>(boundary: B, value: number): StateUnion<B>;
-
-  export function evaluateWithHysteresis<B extends Shape>(
+  export function evaluateWithHysteresis<B extends Boundary>(
     boundary: B,
     value: number,
     previousState: StateUnion<B>,
@@ -263,7 +292,7 @@ export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'med
 /**
  * Discriminant payloads default to the common case when omitted:
  * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
- * scroll `axis: 'y'`, audio `mode: 'sample'`. `Signal.make` normalizes the
+ * scroll `axis: 'y'`, audio `mode: 'sample'`. `createSignal` normalizes the
  * source, so the returned signal's `source` always carries explicit values.
  *
  * Audio modes: `sample`/`normalized` are offline/scrub reads; `amplitude`
@@ -284,7 +313,7 @@ export interface Signal<T> {
   readonly source: SignalSource;
   read(): T;
   subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
 export interface ControllableSignal<T> extends Signal<T> {
@@ -294,13 +323,18 @@ export interface ControllableSignal<T> extends Signal<T> {
 }
 
 export declare namespace Signal {
-  /** Structural shape of a passive signal (`Signal.Shape<T>` in `@czap/core`). */
-  export type Shape<T> = Signal<T>;
   /** Structural shape of a seekable, pausable signal (forwarded by video/remotion). */
   export type Controllable<T> = ControllableSignal<T>;
-  export function make(source: SignalSource): Signal<number>;
-  export function controllable(): ControllableSignal<number>;
+  /** Seekable/pausable time signal (verb grammar — a specialized constructor kept on the namespace). */
+  export function controllable(): ControllableSignal<number> & AsyncOwnedResource;
 }
+
+/**
+ * Standalone verb-grammar constructor for a browser-environment {@link Signal}
+ * (ADR-0046/0051 — `create` allocates a runtime resource). The signal IS its own
+ * disposable ({@link AsyncOwnedResource}); the owning `lifetime` stays reachable.
+ */
+export declare function createSignal(source: SignalSource): Signal<number> & AsyncOwnedResource;
 
 /**
  * The sanctioned bidirectional bridge between {@link SignalSource} (the typed
@@ -358,11 +392,7 @@ export declare namespace Animation {
     readonly timestamp: number;
   }
 
-  export function run(config: {
-    duration: Millis;
-    easing?: Easing.Fn;
-    scheduler?: Scheduler.Shape;
-  }): AsyncIterable<Frame>;
+  export function run(config: { duration: Millis; easing?: Easing.Fn; scheduler?: Scheduler }): AsyncIterable<Frame>;
 
   export function interpolate<T extends Record<string, number>>(from: T, to: T, eased: number): T;
 }
@@ -372,26 +402,25 @@ export declare namespace Animation {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free, Wave 6) */
-export declare namespace Timeline {
-  export interface Shape<B extends Boundary.Shape = Boundary.Shape> {
-    readonly boundary: B;
-    state(): StateUnion<B>;
-    progress(): number;
-    elapsed(): Millis;
-    subscribe(subscriber: CellKernel.Subscriber<StateUnion<B>>): CellKernel.Disposer;
-    play(): void;
-    pause(): void;
-    reverse(): void;
-    seek(ms: Millis): void;
-    scrub(progress: number): void;
-    readonly lifetime: Lifetime.Shape;
-  }
-
-  export function from<B extends Boundary.Shape>(
-    boundary: B,
-    config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler.Shape },
-  ): Shape<B>;
+export interface Timeline<B extends Boundary = Boundary> {
+  readonly boundary: B;
+  state(): StateUnion<B>;
+  progress(): number;
+  elapsed(): Millis;
+  subscribe(subscriber: CellKernel.Subscriber<StateUnion<B>>): CellKernel.Disposer;
+  play(): void;
+  pause(): void;
+  reverse(): void;
+  seek(ms: Millis): void;
+  scrub(progress: number): void;
+  readonly lifetime: Lifetime;
 }
+
+/** Create a scheduler-driven {@link Timeline} over a {@link Boundary}. */
+export declare function createTimeline<B extends Boundary>(
+  boundary: B,
+  config?: { duration?: Millis; loop?: boolean; scheduler?: Scheduler },
+): Timeline<B>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 7. COMPOSITOR
@@ -408,27 +437,22 @@ export interface CompositeState {
   };
 }
 
+export interface Compositor {
+  add<B extends Boundary>(name: string, quantizer: Quantizer<B>): void;
+  remove(name: string): void;
+  compute(): CompositeState;
+  /**
+   * Replay-1 subscription surface of the compositor's extracted {@link CellKernel}:
+   * `subscribe` replays the current live state on attach and returns a disposer;
+   * `read` returns the current state. `publish`/`close` are intentionally excluded —
+   * the compositor is the sole writer and its {@link Lifetime} closes the kernel.
+   */
+  readonly changes: Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
+}
+
 export declare namespace Compositor {
-  export interface Shape {
-    add<B extends Boundary.Shape>(name: string, quantizer: Quantizer<B>): void;
-    remove(name: string): void;
-    compute(): CompositeState;
-    /**
-     * Replay-1 subscription surface of the compositor's extracted {@link CellKernel}:
-     * `subscribe` replays the current live state on attach and returns a disposer;
-     * `read` returns the current state. `publish`/`close` are intentionally excluded —
-     * the compositor is the sole writer and its {@link Lifetime} closes the kernel.
-     */
-    readonly changes: Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
-  }
-
-  /** The `{ compositor, lifetime }` pair returned by {@link Compositor.create}. */
-  export interface Handle {
-    readonly compositor: Shape;
-    readonly lifetime: Lifetime.Shape;
-  }
-
-  export function create(): Handle;
+  /** Build a compositor that owns its own teardown via `dispose()`. */
+  export function create(): Compositor & AsyncOwnedResource;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -449,14 +473,11 @@ export interface BlendTree<T extends Record<string, number>> {
   readonly changes: Pick<CellKernel.Fanout<T>, 'subscribe' | 'closed' | 'size'>;
 }
 
-export declare namespace BlendTree {
-  /** The `{ tree, lifetime }` pair {@link BlendTree.make} returns. */
-  export interface Handle<T extends Record<string, number>> {
-    readonly tree: BlendTree<T>;
-    readonly lifetime: Lifetime.Shape;
-  }
-  export function make<T extends Record<string, number>>(): Handle<T>;
-}
+/**
+ * Build a blend tree that owns its own teardown via `dispose()` — the standalone
+ * verb-grammar constructor (ADR-0046/0051).
+ */
+export declare function createBlendTree<T extends Record<string, number>>(): BlendTree<T> & AsyncOwnedResource;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 9. FRAME BUDGET
@@ -469,12 +490,14 @@ export interface FrameBudget {
   canRun(priority: Priority): boolean;
   scheduleSync<A>(priority: Priority, task: () => A): A | null;
   readonly fpsSync: number;
-  readonly lifetime: Lifetime.Shape;
+  readonly lifetime: Lifetime;
 }
 
-export declare namespace FrameBudget {
-  export function make(config?: { targetFps?: number }): FrameBudget;
-}
+/**
+ * Build a rAF frame-budget tracker — the standalone verb-grammar constructor
+ * (ADR-0046/0051). The budget IS its own disposable ({@link AsyncOwnedResource}).
+ */
+export declare function createFrameBudget(config?: { targetFps?: number }): FrameBudget & AsyncOwnedResource;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 10. DIRTY TRACKING
@@ -489,9 +512,8 @@ export interface DirtyFlags<K extends string = string> {
   readonly mask: number;
 }
 
-export declare namespace DirtyFlags {
-  export function make<K extends string>(keys: readonly K[]): DirtyFlags<K>;
-}
+/** Build a bitmask dirty tracker — the standalone verb-grammar constructor (ADR-0046/0051). */
+export declare function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFlags<K>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 11. PROTOCOL TYPES (from typesp)
@@ -536,12 +558,9 @@ export interface Entity {
   readonly components: ReadonlyMap<string, unknown>;
 }
 
-export declare namespace Part {
-  /** ECS component shape */
-  export interface Shape<T = unknown> {
-    readonly name: string;
-    readonly schema: SchemaPort<T>;
-  }
+export interface Part<T = unknown> {
+  readonly name: string;
+  readonly schema: SchemaPort<T>;
 }
 
 export interface System {
@@ -554,7 +573,7 @@ export interface System {
 export interface World {
   spawn(components?: Record<string, unknown>): EntityId;
   despawn(id: EntityId): void;
-  addComponent<T>(id: EntityId, component: Part.Shape<T>, value: T): void;
+  addComponent<T>(id: EntityId, component: Part<T>, value: T): void;
   /** Schema-free component write — used by systems to persist computed output values. */
   setComponent(id: EntityId, name: string, value: unknown): void;
   removeComponent(id: EntityId, name: string): void;
@@ -563,18 +582,13 @@ export interface World {
   tick(): void;
 }
 
-export declare namespace World {
-  /**
-   * The `{ world, lifetime }` pair returned by {@link World.make}. The ECS world
-   * registers zero finalizers (plain in-memory Maps), so the {@link Lifetime} is a
-   * formal disposal handle threaded by consumers, not a carrier of real finalizers.
-   */
-  export interface Handle {
-    readonly world: World;
-    readonly lifetime: Lifetime.Shape;
-  }
-  export function make(): Handle;
-}
+/**
+ * Build an ECS world that owns its own teardown via `dispose()` — the standalone
+ * verb-grammar constructor (ADR-0046/0051). The world registers zero finalizers
+ * (plain in-memory Maps), so `dispose()` is a formal, exactly-once release handle
+ * threaded by consumers, not a carrier of real finalizers.
+ */
+export declare function createWorld(): World & AsyncOwnedResource;
 
 /**
  * Dense packed component storage for hot ECS paths.
@@ -608,42 +622,47 @@ export declare function addDenseStore<T>(world: World, store: DenseStore<T>): vo
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Reactive state container over CellKernel.replay1 (Effect-free, Wave 6) */
-export declare namespace Cell {
-  export interface Shape<T> {
-    readonly _tag: 'Cell';
-    read(): T;
-    set(value: T): void;
-    update(f: (current: T) => T): void;
-    subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
-    readonly lifetime: Lifetime.Shape;
-  }
-
-  export function make<T>(initial: T): Shape<T>;
+export interface Cell<T> {
+  readonly _tag: 'Cell';
+  read(): T;
+  set(value: T): void;
+  update(f: (current: T) => T): void;
+  subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+  readonly lifetime: Lifetime;
 }
 
+/** Create a mutable reactive {@link Cell} with an initial value. The cell owns its own teardown via `dispose()`. */
+export declare function createCell<T>(initial: T): Cell<T> & AsyncOwnedResource;
+
 /** Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6) */
+export interface Derived<T> {
+  readonly _tag: 'Derived';
+  read(): T;
+  subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
+  readonly lifetime: Lifetime;
+}
+
+/** Compute a {@link Derived} value from a factory and the sources that recompute it. Owns its own teardown via `dispose()`. */
+export declare function computed<T>(
+  compute: () => T,
+  sources?: ReadonlyArray<Derived.Trigger>,
+): Derived<T> & AsyncOwnedResource;
+
 export declare namespace Derived {
-  export interface Shape<T> {
-    readonly _tag: 'Derived';
-    read(): T;
-    subscribe(subscriber: CellKernel.Subscriber<T>): CellKernel.Disposer;
-    readonly lifetime: Lifetime.Shape;
-  }
   /** The readable + subscribable source `combine` recomputes from. */
   export type Source<T> = Pick<CellKernel.Replay<T>, 'read' | 'subscribe'>;
-  /** A recompute trigger for `make` — the subscribe half of a source. */
+  /** A recompute trigger for `computed` — the subscribe half of a source. */
   export type Trigger = Pick<CellKernel.Replay<unknown>, 'subscribe'>;
 
-  export function make<T>(compute: () => T, sources?: ReadonlyArray<Trigger>): Shape<T>;
   export function combine<T extends readonly unknown[], U>(
     sources: { readonly [K in keyof T]: Source<T[K]> },
     combiner: (...args: T) => U,
-  ): Shape<U>;
+  ): Derived<U> & AsyncOwnedResource;
 }
 
 /**
  * A monotonic-ish millisecond time source — the injectable shape runtime time is
- * read through (mirrors `@czap/core`'s `clock.ts` export). `now()` returns
+ * read through (mirrors `@liteship/core`'s `clock.ts` export). `now()` returns
  * milliseconds, a relative duration source (deltas), never a stable identity
  * input to a hashed artifact. Threaded through {@link Zap.throttle} so the
  * throttle window is measured deterministically under an injected clock, defaulting
@@ -655,59 +674,57 @@ export interface Clock {
 }
 
 /** Push-based event channel over a no-replay {@link CellKernel} fan-out */
+export interface Zap<T> {
+  readonly _tag: 'Zap';
+  /** The no-replay subscribe surface — `subscribe(sink)` returns a disposer. */
+  readonly stream: Pick<CellKernel.Fanout<T>, 'subscribe' | 'closed' | 'size'>;
+  /** Fan `value` out to every current subscriber, synchronously. Inert after close. */
+  emit(value: T): void;
+}
+
 export declare namespace Zap {
-  export interface Shape<T> {
-    readonly _tag: 'Zap';
-    /** The no-replay subscribe surface — `subscribe(sink)` returns a disposer. */
-    readonly stream: Pick<CellKernel.Fanout<T>, 'subscribe' | 'closed' | 'size'>;
-    /** Fan `value` out to every current subscriber, synchronously. Inert after close. */
-    emit(value: T): void;
-  }
-
-  /** The `{ zap, lifetime }` pair every `Zap.*` factory returns. */
-  export interface Handle<T> {
-    readonly zap: Shape<T>;
-    readonly lifetime: Lifetime.Shape;
-  }
-
-  export function make<T>(): Handle<T>;
+  // Every `Zap.*` factory returns the channel augmented with its own `dispose()`
+  // ({@link AsyncOwnedResource}) — the zap IS the disposable, no pair to destructure.
+  export function make<T>(): Zap<T> & AsyncOwnedResource;
   export function fromDOMEvent<K extends keyof HTMLElementEventMap>(
     element: HTMLElement,
     event: K,
-  ): Handle<HTMLElementEventMap[K]>;
-  export function merge<T>(events: ReadonlyArray<Shape<T>>): Handle<T>;
-  export function map<A, B>(event: Shape<A>, f: (a: A) => B): Handle<B>;
-  export function filter<T>(event: Shape<T>, predicate: (value: T) => boolean): Handle<T>;
-  export function debounce<T>(event: Shape<T>, ms: Millis): Handle<T>;
-  export function throttle<T>(event: Shape<T>, ms: Millis, clock?: Clock): Handle<T>;
+  ): Zap<HTMLElementEventMap[K]> & AsyncOwnedResource;
+  export function merge<T>(events: ReadonlyArray<Zap<T>>): Zap<T> & AsyncOwnedResource;
+  export function map<A, B>(event: Zap<A>, f: (a: A) => B): Zap<B> & AsyncOwnedResource;
+  export function filter<T>(event: Zap<T>, predicate: (value: T) => boolean): Zap<T> & AsyncOwnedResource;
+  export function debounce<T>(event: Zap<T>, ms: Millis): Zap<T> & AsyncOwnedResource;
+  export function throttle<T>(event: Zap<T>, ms: Millis, clock?: Clock): Zap<T> & AsyncOwnedResource;
 }
 
 /** TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6) */
-export declare namespace Store {
-  export interface Shape<S, Msg> {
-    readonly _tag: 'Store';
-    read(): S;
-    subscribe(subscriber: CellKernel.Subscriber<S>): CellKernel.Disposer;
-    dispatch(msg: Msg): void;
-    readonly lifetime: Lifetime.Shape;
-  }
-
-  export function make<S, Msg>(initial: S, reducer: (state: S, msg: Msg) => S): Shape<S, Msg>;
+export interface Store<S, Msg> {
+  readonly _tag: 'Store';
+  read(): S;
+  subscribe(subscriber: CellKernel.Subscriber<S>): CellKernel.Disposer;
+  dispatch(msg: Msg): void;
+  readonly lifetime: Lifetime;
 }
 
+/** Create a TEA-style reducer {@link Store} from an initial state and a pure reducer. Owns its own teardown via `dispose()`. */
+export declare function createStore<S, Msg>(
+  initial: S,
+  reducer: (state: S, msg: Msg) => S,
+): Store<S, Msg> & AsyncOwnedResource;
+
 /** Discriminated union of all primitives */
-export type Primitive<T> = Cell.Shape<T> | Derived.Shape<T> | Zap.Shape<T>;
+export type Primitive<T> = Cell<T> | Derived<T> | Zap<T>;
 
 /** Type guards */
-export declare function isCell<T>(p: Primitive<T>): p is Cell.Shape<T>;
-export declare function isDerived<T>(p: Primitive<T>): p is Derived.Shape<T>;
-export declare function isZap<T>(p: Primitive<T>): p is Zap.Shape<T>;
+export declare function isCell<T>(p: Primitive<T>): p is Cell<T>;
+export declare function isDerived<T>(p: Primitive<T>): p is Derived<T>;
+export declare function isZap<T>(p: Primitive<T>): p is Zap<T>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 14. QUANTIZER (forward declaration -- full types in quantizer.d.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface Quantizer<B extends Boundary.Shape = Boundary.Shape> {
+export interface Quantizer<B extends Boundary = Boundary> {
   readonly _tag: 'Quantizer';
   readonly boundary: B;
   /** Synchronous state accessor for hot paths (avoids reactive read overhead). */
@@ -720,7 +737,7 @@ export interface Quantizer<B extends Boundary.Shape = Boundary.Shape> {
  * returns the current discrete state; a subscriber is replayed the current value
  * on attach.
  */
-export type QuantizerState<B extends Boundary.Shape = Boundary.Shape> = Pick<
+export type QuantizerState<B extends Boundary = Boundary> = Pick<
   CellKernel.Replay<StateUnion<B>>,
   'read' | 'subscribe' | 'closed' | 'size'
 >;
@@ -730,17 +747,17 @@ export type QuantizerState<B extends Boundary.Shape = Boundary.Shape> = Pick<
  * `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`): a late subscriber
  * never sees a prior crossing.
  */
-export type QuantizerCrossings<B extends Boundary.Shape = Boundary.Shape> = Pick<
+export type QuantizerCrossings<B extends Boundary = Boundary> = Pick<
   CellKernel.Fanout<BoundaryCrossing<StateUnion<B> & string>>,
   'subscribe' | 'closed' | 'size'
 >;
 
 /**
  * Reactive quantizer — the {@link Quantizer} base plus its reactive substrate on
- * the extracted {@link CellKernel}. This is the shape `@czap/quantizer`'s live
+ * the extracted {@link CellKernel}. This is the shape `@liteship/quantizer`'s live
  * evaluator produces; a purely-synchronous quantizer omits this extension.
  */
-export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> extends Quantizer<B> {
+export interface ReactiveQuantizer<B extends Boundary = Boundary> extends Quantizer<B> {
   readonly state: QuantizerState<B>;
   readonly changes: QuantizerCrossings<B>;
 }
@@ -756,7 +773,7 @@ export interface ReactiveQuantizer<B extends Boundary.Shape = Boundary.Shape> ex
 // mutation (version + HLC + fnv1a id + boundary state) BEFORE the value fans out,
 // so there is no observable interleave window.
 
-export interface LiveCell<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_tag'> {
+export interface LiveCell<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
   readonly _tag: 'LiveCell';
   envelope(): CellEnvelope<K, T>;
   readonly crossings: Pick<CellKernel.Fanout<BoundaryCrossing<string>>, 'subscribe'>;
@@ -764,13 +781,15 @@ export interface LiveCell<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_t
   publishCrossing(crossing: BoundaryCrossing<string>): void;
 }
 
-export declare namespace LiveCell {
-  export function make<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T>;
-  export function makeBoundary<I extends string, S extends readonly [string, ...string[]]>(
-    boundary: Boundary.Shape<I, S>,
-    initial: number,
-  ): LiveCell<'boundary', number>;
-}
+/**
+ * Standalone verb-grammar constructors for a {@link LiveCell} (ADR-0046/0051). Each
+ * live cell IS its own disposable ({@link AsyncOwnedResource}).
+ */
+export declare function createLiveCell<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T> & AsyncOwnedResource;
+export declare function createLiveCellBoundary<I extends string, S extends readonly [string, ...string[]]>(
+  boundary: Boundary<I, S>,
+  initial: number,
+): LiveCell<'boundary', number> & AsyncOwnedResource;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 16. CAPABILITY LATTICE (re-parameterized from @kit: pure<read<...<system -> static<styled<...<gpu)
@@ -800,14 +819,14 @@ export declare const Cap: {
 // § 17. TYPED REF (content addressing)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export declare namespace TypedRef {
-  export interface Shape {
-    readonly schema_hash: string;
-    readonly content_hash: string;
-  }
+export interface TypedRef {
+  readonly schema_hash: string;
+  readonly content_hash: string;
+}
 
-  export function create(schemaHash: string, payload: unknown): Promise<Shape>;
-  export function equals(a: Shape, b: Shape): boolean;
+export declare namespace TypedRef {
+  export function create(schemaHash: string, payload: unknown): Promise<TypedRef>;
+  export function equals(a: TypedRef, b: TypedRef): boolean;
   export function canonicalize(value: unknown): Uint8Array;
   export function hash(data: string | Uint8Array): Promise<string>;
 }
@@ -875,7 +894,7 @@ export interface ReceiptEnvelope {
   readonly kind: string;
   readonly timestamp: HLC;
   readonly subject: ReceiptSubject;
-  readonly payload: TypedRef.Shape;
+  readonly payload: TypedRef;
   readonly hash: string;
   readonly previous: string | readonly string[];
   readonly signature?: string;
@@ -906,12 +925,12 @@ export declare const Receipt: {
   createEnvelope(
     kind: string,
     subject: ReceiptSubject,
-    payload: TypedRef.Shape,
+    payload: TypedRef,
     timestamp: HLC,
     previousHash: string | readonly string[],
   ): Promise<ReceiptEnvelope>;
   buildChain(
-    entries: ReadonlyArray<{ kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC }>,
+    entries: ReadonlyArray<{ kind: string; subject: ReceiptSubject; payload: TypedRef; timestamp: HLC }>,
   ): Promise<ReceiptEnvelope[]>;
   /**
    * Ergonomic everyday chain check: resolves only to `true`; every
@@ -933,7 +952,7 @@ export declare const Receipt: {
   tail(chain: ReadonlyArray<ReceiptEnvelope>): ReceiptEnvelope | undefined;
   append(
     chain: ReadonlyArray<ReceiptEnvelope>,
-    entry: { kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC },
+    entry: { kind: string; subject: ReceiptSubject; payload: TypedRef; timestamp: HLC },
     previousHashes?: readonly string[],
   ): Promise<ReceiptEnvelope[]>;
   findByHash(chain: ReadonlyArray<ReceiptEnvelope>, hash: string): ReceiptEnvelope | undefined;
@@ -1075,19 +1094,27 @@ export type SchemaPort<A, I = A> = {
   readonly Encoded: I;
 };
 
+export interface Codec<A, I = A> {
+  readonly schema: SchemaPort<A, I>;
+  /** Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8). */
+  encode(value: A): Codec.Result<I, Codec.ParseError>;
+  /** Validate untrusted input into the typed value. Sync `Result` — never an Effect (Wave 8). */
+  decode(input: unknown): Codec.Result<A, Codec.ParseError>;
+}
+
 export declare namespace Codec {
   /**
-   * The sync tagged result a codec method returns — structurally `@czap/error`'s
+   * The sync tagged result a codec method returns — structurally `@liteship/error`'s
    * `Result<A, E>` (a success arm carrying `A`, or a failure arm carrying `E`,
    * discriminated by the boolean `ok`). Named structurally here rather than
-   * imported so the spine stays install-only with zero `@czap` runtime deps
+   * imported so the spine stays install-only with zero `@liteship` runtime deps
    * (ADR-0010); parity with the runtime `Result` is pinned bidirectionally in
    * tests/unit/spine-conformance.test.ts.
    */
   export type Result<A, E> = { readonly ok: true; readonly value: A } | { readonly ok: false; readonly error: E };
 
   /**
-   * The encode/decode failure — structurally `@czap/error`'s `ParseError`
+   * The encode/decode failure — structurally `@liteship/error`'s `ParseError`
    * variant (a `TaggedError<'ParseError'>` carrying `source`/`detail` and the
    * optional machine fields `code`/`offset`). Parity pinned in the same test.
    */
@@ -1100,36 +1127,28 @@ export declare namespace Codec {
     readonly offset?: number;
   }
 
-  export interface Shape<A, I = A> {
-    readonly schema: SchemaPort<A, I>;
-    /** Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8). */
-    encode(value: A): Result<I, ParseError>;
-    /** Validate untrusted input into the typed value. Sync `Result` — never an Effect (Wave 8). */
-    decode(input: unknown): Result<A, ParseError>;
-  }
-
-  /** Wrap an identity kernel schema (`SchemaPort<A, A>`) in the {@link Shape} facade. */
-  export function make<A>(schema: SchemaPort<A, A>): Shape<A, A>;
+  /** Wrap an identity kernel schema (`SchemaPort<A, A>`) in the {@link Codec} facade. */
+  export function make<A>(schema: SchemaPort<A, A>): Codec<A, A>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 24. FRAME SCHEDULER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export declare namespace Scheduler {
-  export interface Shape {
-    readonly _tag: 'FrameScheduler';
-    schedule(callback: (now: number) => void): number;
-    cancel(id: number): void;
-  }
+export interface Scheduler {
+  readonly _tag: 'FrameScheduler';
+  schedule(callback: (now: number) => void): number;
+  cancel(id: number): void;
+}
 
-  export interface FixedStep extends Shape {
+export declare namespace Scheduler {
+  export interface FixedStep extends Scheduler {
     step(): void;
     readonly frame: number;
   }
 
-  export function raf(): Shape;
-  export function noop(): Shape;
+  export function raf(): Scheduler;
+  export function noop(): Scheduler;
   export function fixedStep(fps: number): FixedStep;
 }
 
@@ -1159,7 +1178,7 @@ export interface VideoRenderer {
 }
 
 export declare namespace VideoRenderer {
-  export function make(config: VideoConfig, compositor: Compositor.Shape): VideoRenderer;
+  export function make(config: VideoConfig, compositor: Compositor): VideoRenderer;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

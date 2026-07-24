@@ -10,8 +10,8 @@ For the security architecture this checklist enforces, see [SECURITY.md](./SECUR
 | --- | --- | --- |
 | Node | `>= 22` | Built-in `crypto.subtle`, modern stream primitives, `import.meta.dirname` |
 | pnpm | `>= 10` | Workspace protocol behavior, `pnpm-workspace.yaml` settings discipline |
-| Vite | `8.x` | The `@czap/vite` plugin targets Vite 8's plugin API |
-| Astro | `7.x` | The `@czap/astro` integration targets Astro 7's middleware + bootstrap surface |
+| Vite | `8.x` | The `@liteship/vite` plugin targets Vite 8's plugin API |
+| Astro | `7.x` | The `@liteship/astro` integration targets Astro 7's middleware + bootstrap surface |
 
 ## Required CSP directives
 
@@ -21,7 +21,7 @@ connect-src 'self' https://<your-SSE-or-LLM-endpoints>
 script-src  'self' 'nonce-<per-request>'        # nonce threaded by your host
 ```
 
-If you enforce Trusted Types: also add `require-trusted-types-for 'script'`. The runtime auto-creates a `czap` policy on first use; pre-install only if you want stricter behavior than the upstream sanitizer (see Failure 3 below).
+If you enforce Trusted Types: also add `require-trusted-types-for 'script'`. The runtime auto-creates a `liteship` policy on first use; pre-install only if you want stricter behavior than the upstream sanitizer (see Failure 3 below).
 
 ## Five hour-one failures (and how to fix them)
 
@@ -45,23 +45,23 @@ If you enforce Trusted Types: also add `require-trusted-types-for 'script'`. The
 
 Note that the hostname blocklist rejects literal private-IP strings (`127.0.0.1`, `10.x.x.x`, etc.) but does **not** rewrite hostnames that resolve to private IPs. For DNS-rebinding defense, restrict outbound DNS at the network layer.
 
-**Graph-native stream recovery** (a `client:stream` element with `data-czap-stream-graph`) reconnects by QUERYing that graph endpoint (the read leg) in addition to the SSE feed, and by re-applying attested `{ type: 'receipt', … }` transition frames the feed emits on discrete crossings. Both legs are same-origin by default; a cross-origin graph endpoint needs the same two-place agreement (CSP `connect-src` + the runtime URL allowlist). No extra CSP is needed for the receipt frames — they arrive on the already-allowed SSE connection.
+**Graph-native stream recovery** (a `client:stream` element with `data-liteship-stream-graph`) reconnects by QUERYing that graph endpoint (the read leg) in addition to the SSE feed, and by re-applying attested `{ type: 'receipt', … }` transition frames the feed emits on discrete crossings. Both legs are same-origin by default; a cross-origin graph endpoint needs the same two-place agreement (CSP `connect-src` + the runtime URL allowlist). No extra CSP is needed for the receipt frames — they arrive on the already-allowed SSE connection.
 
 ### 3. `innerHTML` throws under Trusted Types
 
 **Symptom:** `TypeError: Failed to set the 'innerHTML' property on 'Element': This document requires 'TrustedHTML' assignment` thrown during LLM HTML render or DOM morph.
 
-**Cause:** Host installed `require-trusted-types-for 'script'` but no `czap` policy exists yet.
+**Cause:** Host installed `require-trusted-types-for 'script'` but no `liteship` policy exists yet.
 
 **Fix:** Two options:
 
-- **Default (recommended):** Do nothing. The runtime detects `window.trustedTypes` and auto-creates a passthrough `czap` policy on first use. The sanitizer (`sanitized-html` mode) has already run upstream of the policy callback — the policy is the Trusted Types attestation, not a second sanitizer.
+- **Default (recommended):** Do nothing. The runtime detects `window.trustedTypes` and auto-creates a passthrough `liteship` policy on first use. The sanitizer (`sanitized-html` mode) has already run upstream of the policy callback — the policy is the Trusted Types attestation, not a second sanitizer.
 
 - **Host-installed stricter policy:** If you want defense-in-depth, install before any LiteShip code runs:
 
   ```ts
   if (window.trustedTypes && window.trustedTypes.createPolicy) {
-    window.trustedTypes.createPolicy('czap', {
+    window.trustedTypes.createPolicy('liteship', {
       createHTML: (input) => {
         // Input has already been sanitized upstream. Add second-pass checks
         // here only if you've audited what the sanitizer leaves through.
@@ -77,7 +77,7 @@ Note that the hostname blocklist rejects literal private-IP strings (`127.0.0.1`
 
 **Symptom:** After HMR reload or test reset, the runtime policy isn't picked up.
 
-**Cause:** The runtime policy lives in two places: a module-private store (canonical) and a frozen `window.__CZAP_RUNTIME_POLICY__` (cross-bundle broadcast, locked at first publish). HMR re-bootstraps the module-private store; the window broadcast stays frozen.
+**Cause:** The runtime policy lives in two places: a module-private store (canonical) and a frozen `window.__LITESHIP_RUNTIME_POLICY__` (cross-bundle broadcast, locked at first publish). HMR re-bootstraps the module-private store; the window broadcast stays frozen.
 
 **Fix:** This is intentional. Reads check the module-private store first. If you're seeing stale state in a test, the test harness needs to call the runtime-policy reset path, not just clear the window broadcast. See `packages/astro/src/runtime/policy.ts`.
 
@@ -91,7 +91,7 @@ Note that the hostname blocklist rejects literal private-IP strings (`127.0.0.1`
 
 ## Cloudflare Workers
 
-LiteShip runs on Cloudflare Workers via Astro 7 + `@astrojs/cloudflare` v14+. The `@czap/cloudflare` package wires Workers KV to `@czap/edge` boundary caching through `@czap/astro` middleware.
+LiteShip runs on Cloudflare Workers via Astro 7 + `@astrojs/cloudflare` v14+. The `@liteship/cloudflare` package wires Workers KV to `@liteship/edge` boundary caching through `@liteship/astro` middleware.
 
 ### Minimum versions (Cloudflare-specific)
 
@@ -102,9 +102,9 @@ On top of Node `>= 22` and pnpm `>= 10` from the table above:
 | Astro | `7.x` | Required by `@astrojs/cloudflare` v14 peer |
 | `@astrojs/cloudflare` | `14+` | workerd in `astro dev` via `@cloudflare/vite-plugin` |
 | Wrangler | `4.x` | Deploy + local KV preview |
-| `@czap/cloudflare` | workspace / npm | siteAdapter + middleware glue |
+| `@liteship/cloudflare` | workspace / npm | siteAdapter + middleware glue |
 
-**Vite note:** LiteShip's `@czap/vite` plugin targets Vite 8. Astro 7 bundles Vite 8 internally (Rolldown-backed), so `@czap/vite` and Astro now share the Vite 8 major — the Cloudflare adapter owns the workerd dev server.
+**Vite note:** LiteShip's `@liteship/vite` plugin targets Vite 8. Astro 7 bundles Vite 8 internally (Rolldown-backed), so `@liteship/vite` and Astro now share the Vite 8 major — the Cloudflare adapter owns the workerd dev server.
 
 ### Quick start
 
@@ -117,14 +117,14 @@ cd examples/cloudflare-astro
 pnpm run dev
 ```
 
-If a Cloudflare `run_worker_first` config is present, exclude Vite dev-infrastructure prefixes (`/@vite/*`, `/@id/*`, `/@fs/*`, `/src/*`, `/node_modules/*`) in addition to LiteShip boundary assets (`/_czap/*`). Otherwise `astro dev` routes those module URLs into the worker and they 404 under workerd. The example `wrangler.jsonc` is the reference pattern, and `pnpm run test:cloudflare-dev` guards it.
+If a Cloudflare `run_worker_first` config is present, exclude Vite dev-infrastructure prefixes (`/@vite/*`, `/@id/*`, `/@fs/*`, `/src/*`, `/node_modules/*`) in addition to LiteShip boundary assets (`/_liteship/*`). Otherwise `astro dev` routes those module URLs into the worker and they 404 under workerd. The example `wrangler.jsonc` is the reference pattern, and `pnpm run test:cloudflare-dev` guards it.
 
 ### astro.config.mjs
 
 ```javascript
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
-import { integration } from '@czap/astro';
+import { integration } from '@liteship/astro';
 
 export default defineConfig({
   output: 'server',
@@ -145,7 +145,7 @@ Declare KV for boundary caching and Node.js compatibility:
   "compatibility_flags": ["nodejs_compat"],
   "kv_namespaces": [
     {
-      "binding": "CZAP_BOUNDARY_CACHE",
+      "binding": "LITESHIP_BOUNDARY_CACHE",
       "id": "<your-kv-namespace-id>",
       "preview_id": "<your-preview-kv-namespace-id>"
     }
@@ -157,15 +157,15 @@ Astro 7 may also emit `dist/server/wrangler.json` on build; keep your source `wr
 
 ### Middleware (KV wiring)
 
-The boundary cache config is **derived at build time**. The `@czap/vite` plugin scans your boundary modules (`boundaries.ts` / `*.boundaries.ts`) and `@quantize` CSS blocks, then serves the result as the `virtual:czap/boundaries` manifest: each entry carries the boundary's minted content address (`Boundary.make`'s `id`, `fnv1a:xxxxxxxx`) plus precompiled outputs for every (motion x design) tier. Hand the manifest to the middleware — never hand-type a boundary id:
+The boundary cache config is **derived at build time**. The `@liteship/vite` plugin scans your boundary modules (`boundaries.ts` / `*.boundaries.ts`) and `@quantize` CSS blocks, then serves the result as the `virtual:liteship/boundaries` manifest: each entry carries the boundary's minted content address (`defineBoundary`'s `id`, `fnv1a:xxxxxxxx`) plus precompiled outputs for every (motion x design) tier. Hand the manifest to the middleware — never hand-type a boundary id:
 
 ```typescript
 // src/middleware.ts
-import { cloudflareMiddleware } from '@czap/cloudflare';
-import { boundaries } from 'virtual:czap/boundaries';
+import { cloudflareMiddleware } from '@liteship/cloudflare';
+import { boundaries } from 'virtual:liteship/boundaries';
 
 export const onRequest = cloudflareMiddleware({
-  binding: 'CZAP_BOUNDARY_CACHE',
+  binding: 'LITESHIP_BOUNDARY_CACHE',
   manifest: boundaries,
   boundary: 'viewport', // optional when the manifest has exactly one boundary
   tags: ['products'],   // match Astro routeRules.tags when using cache.invalidate()
@@ -175,30 +175,30 @@ export const onRequest = cloudflareMiddleware({
 For editor types on the virtual module, add to `src/env.d.ts`:
 
 ```typescript
-/// <reference types="@czap/vite/virtual" />
+/// <reference types="@liteship/vite/virtual" />
 ```
 
-The build also emits `czap-boundary-manifest.json` into the output directory (via the `@czap/astro` integration's `astro:build:done` hook) for hosts that read the manifest from disk instead of importing the virtual module.
+The build also emits `liteship-boundary-manifest.json` into the output directory (via the `@liteship/astro` integration's `astro:build:done` hook) for hosts that read the manifest from disk instead of importing the virtual module.
 
-**Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`Boundary.make(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
+**Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`defineBoundary(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
 
 Bindings are read from the `cloudflare:workers` `env` at request time.
 
 ### Astro 7 fetch layer
 
-Astro 7 hosts can put CZAP before Astro's own request handlers with `src/fetch.ts`:
+Astro 7 hosts can put LiteShip before Astro's own request handlers with `src/fetch.ts`:
 
 ```typescript
 import { FetchState, astro } from 'astro/fetch';
-import { czapFetchLayer } from '@czap/astro/fetch-layer';
-import { resolveOutputsByTier } from '@czap/edge';
-import { boundaries } from 'virtual:czap/boundaries';
+import { liteshipFetchLayer } from '@liteship/astro/fetch-layer';
+import { resolveOutputsByTier } from '@liteship/edge';
+import { boundaries } from 'virtual:liteship/boundaries';
 import { env } from 'cloudflare:workers';
 
-const layer = czapFetchLayer({
+const layer = liteshipFetchLayer({
   edge: {
     cache: {
-      kv: env.CZAP_BOUNDARY_CACHE,
+      kv: env.LITESHIP_BOUNDARY_CACHE,
       boundaries: {
         viewport: {
           boundaryId: boundaries.viewport.id,
@@ -215,24 +215,24 @@ export default {
 };
 ```
 
-The layer and `czapMiddleware()` share the same edge resolver; do not build a second KV key or cache lookup in `src/fetch.ts`.
+The layer and `liteshipMiddleware()` share the same edge resolver; do not build a second KV key or cache lookup in `src/fetch.ts`.
 
 ### Astro cache provider
 
-Use `@czap/cloudflare/cache-provider` when Astro route-cache invalidation should purge CZAP boundary CSS too:
+Use `@liteship/cloudflare/cache-provider` when Astro route-cache invalidation should purge LiteShip boundary CSS too:
 
 ```typescript
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { cloudflareCacheProvider } from '@czap/cloudflare/cache-provider';
+import { cloudflareCacheProvider } from '@liteship/cloudflare/cache-provider';
 
 export default defineConfig({
   cache: {
     provider: cloudflareCacheProvider({
-      binding: 'CZAP_BOUNDARY_CACHE',
+      binding: 'LITESHIP_BOUNDARY_CACHE',
       prefix: 'my-deploy',
       // Optional exact route path -> boundary id map for native path invalidation.
-      pathBoundaries: { '/products': '<Boundary.make(...).id>' },
+      pathBoundaries: { '/products': '<defineBoundary(...).id>' },
     }),
   },
   routeRules: {
@@ -241,12 +241,12 @@ export default defineConfig({
 });
 ```
 
-For tag invalidation, use the same tag names in `routeRules.tags` and `cloudflareMiddleware({ tags })` / `czapFetchLayer({ edge: { cache: { tags } } })`. A compile fallback writes those tags into the boundary KV index, and `cache.invalidate({ tags: 'products' })` purges every tier/theme variant under that tag. For path invalidation, the provider also purges Astro's path tag (`astro-path:/products`) and, when `pathBoundaries` is supplied, actively lists/deletes every KV variant for that boundary id.
+For tag invalidation, use the same tag names in `routeRules.tags` and `cloudflareMiddleware({ tags })` / `liteshipFetchLayer({ edge: { cache: { tags } } })`. A compile fallback writes those tags into the boundary KV index, and `cache.invalidate({ tags: 'products' })` purges every tier/theme variant under that tag. For path invalidation, the provider also purges Astro's path tag (`astro-path:/products`) and, when `pathBoundaries` is supplied, actively lists/deletes every KV variant for that boundary id.
 
 ### Preflight
 
 ```bash
-czap doctor --target cloudflare --ci
+liteship doctor --target cloudflare --ci
 ```
 
 Run from your app directory. Checks Astro 7, `@astrojs/cloudflare` v14+, Wrangler, wrangler config, and output mode.
@@ -258,19 +258,19 @@ pnpm run build
 pnpm exec wrangler deploy
 ```
 
-Create the KV namespace first: `pnpm exec wrangler kv namespace create CZAP_BOUNDARY_CACHE`
+Create the KV namespace first: `pnpm exec wrangler kv namespace create LITESHIP_BOUNDARY_CACHE`
 
 ### CSP and isolation (Cloudflare)
 
-Same browser CSP as [Required CSP directives](#required-csp-directives) above. If you enable `workers: { enabled: true }` (the `client:worker` directive) in `@czap/astro`, it emits COOP/COEP (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`) automatically on dynamic responses — and you emit the same pair from your CDN for a static build. Note these apply **site-wide** (not per-route), so they can block CORP-less cross-origin images/fonts/iframes across the whole origin; use `workers: { coep: 'credentialless' }` if that bites. See [SECURITY.md](./SECURITY.md) §Cloudflare Workers.
+Same browser CSP as [Required CSP directives](#required-csp-directives) above. If you enable `workers: { enabled: true }` (the `client:worker` directive) in `@liteship/astro`, it emits COOP/COEP (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`) automatically on dynamic responses — and you emit the same pair from your CDN for a static build. Note these apply **site-wide** (not per-route), so they can block CORP-less cross-origin images/fonts/iframes across the whole origin; use `workers: { coep: 'credentialless' }` if that bites. See [SECURITY.md](./SECURITY.md) §Cloudflare Workers.
 
 ### KV trust boundary
 
-Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`Boundary.make`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `ttl` and `prefix` are configurable on `cloudflareMiddleware`; `prefix` doubles as a per-deploy content version, which a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover must bump. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
+Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`defineBoundary`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `ttl` and `prefix` are configurable on `cloudflareMiddleware`; `prefix` doubles as a per-deploy content version, which a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover must bump. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
 
 ## Responsive media under Save-Data (Astro + Cloudflare)
 
-Author an image once as a `ResponsiveMedia.intent` and project it through the host: `Astro.locals.czap.responsiveMedia(intent)` derives Save-Data / DPR caps from THIS request's Client Hints and returns a `<picture>` / `<img>` / `<link rel="preload">` projection. Every artifact — `src`, `srcset`, each `<source>`, the preload `imagesrcset`, the CSS `image-set()`, and the content-addressed cache-key digest — derives from ONE law (`selectCandidates` in `@czap/core`), so under `Save-Data` the whole set is capped to the light asset and a high-DPR Save-Data client can never re-fetch the heavy hero (the preload leak that drove the LCP is closed). `cloudflareMiddleware` wraps `czapMiddleware`, so the Workers edge gets the identical projector.
+Author an image once as a `ResponsiveMedia.intent` and project it through the host: `Astro.locals.liteship.responsiveMedia(intent)` derives Save-Data / DPR caps from THIS request's Client Hints and returns a `<picture>` / `<img>` / `<link rel="preload">` projection. Every artifact — `src`, `srcset`, each `<source>`, the preload `imagesrcset`, the CSS `image-set()`, and the content-addressed cache-key digest — derives from ONE law (`selectCandidates` in `@liteship/core`), so under `Save-Data` the whole set is capped to the light asset and a high-DPR Save-Data client can never re-fetch the heavy hero (the preload leak that drove the LCP is closed). `cloudflareMiddleware` wraps `liteshipMiddleware`, so the Workers edge gets the identical projector.
 
 The middleware merges the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) into the response — unioned with any existing `Vary` (`Cookie`, `Accept-Encoding`), never clobbered — so a CDN keys the light and normal representations apart and cannot serve one for the other. For a route handler that has raw request headers, `projectResponsiveMediaForRequest(intent, request.headers)` and `applyResponsiveMediaVary(response.headers)` are the standalone helpers. Runnable routes: `examples/showcase` `/responsive-media` (Astro) and `examples/cloudflare-astro` `/` (Cloudflare Workers).
 

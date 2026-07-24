@@ -8,6 +8,6 @@
 
 > **AbsentRead** = `` `${FactChannel}${typeof ABSENT_SUFFIX}` ``
 
-Defined in: [gauntlet/src/evidence-recorder.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L104)
+Defined in: [gauntlet/src/evidence-recorder.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L105)
 
 The recorded read marker for an ABSENT fact-channel access.

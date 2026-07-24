@@ -8,14 +8,14 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
-import { WGSLCompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { WGSLCompiler } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -24,7 +24,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-const simpleBoundary = Boundary.make({
+const simpleBoundary = defineBoundary({
   input: 'brightness',
   at: [
     [0, 'dark'],
@@ -60,7 +60,7 @@ describe('WGSLCompiler.compile', () => {
     // The compiler must expose per-state binding values, not just the merged
     // last-state default, so a crossing resolves stateBindings[currentState] — the
     // WGSL analog of GLSL's stateUniforms, carried end-to-end by manifest +
-    // kv-cache + Satellite + applyBoundaryState. Before this the manifest dropped
+    // kv-cache + Adaptive + applyBoundaryState. Before this the manifest dropped
     // per-state, so authored @wgsl field values couldn't update on crossings.
     const result = WGSLCompiler.compile(simpleBoundary, {
       dark: { blur: 1 },

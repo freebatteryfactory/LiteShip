@@ -1,0 +1,35 @@
+# Facade law (ADR-0045), wildcard clause — a facade re-exports by NAME, never
+# with a star. `export * from './x.js'` (and its `export * as ns from` cousin)
+# splatter every symbol a module happens to expose onto the barrel: the public
+# surface then drifts silently whenever the re-exported module grows a new
+# export, name collisions are resolved invisibly, and `export type` vs value
+# intent is lost. The facade must enumerate what it publishes so the surface is
+# auditable and diff-visible.
+#
+# Same file set as facade-only-reexports: the domain-directory facades
+# (packages/*/src/*/index.ts) and the core root facade
+# (packages/core/src/index.ts).
+#
+# Matched STRUCTURALLY: an `export_statement` whose source text begins with
+# `export *`. ast-grep cannot parse `export * from $M` as a pattern (the bare `*`
+# is ambiguous), so the star is caught by a regex anchored on the node text —
+# which fires only on a real wildcard export_statement, never on `export {...}`,
+# `export type {...}`, prose, or a `*` inside a comment/string.
+#
+# Passes clean on the current tree: no in-scope facade uses a wildcard re-export.
+#
+# Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
+id: no-wildcard-facade-export
+language: typescript
+severity: error
+message: 'Wildcard facade re-export `export * from ...` is forbidden (ADR-0045) — enumerate the surface with explicit `export {...} from` / `export type {...} from` so the public API is diff-visible and cannot drift silently.'
+files:
+  - '**/packages/*/src/*/index.ts'
+  - '**/packages/core/src/index.ts'
+  # The `liteship` curated facade — the root index.ts + every governed expert
+  # subpath. No wildcard clause is exempted: a wildcard must be forbidden on
+  # every liteship src file, including the role-contract data module.
+  - '**/packages/liteship/src/*.ts'
+rule:
+  kind: export_statement
+  regex: "^export\\s+\\*"

@@ -5,8 +5,8 @@
  * Implements replay/snapshot fallback when events are missed.
  */
 
-import { Millis, S, decode, wallClock, type Clock } from '@czap/core';
-import { IoError, ParseError, ValidationError } from '@czap/error';
+import { Millis, decode, wallClock, type Clock, schema } from '@liteship/core';
+import { IoError, ParseError, ValidationError } from '@liteship/error';
 import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
 import { resolveRuntimeUrl } from '../security/runtime-url.js';
@@ -25,23 +25,23 @@ export const canResume = _canResume;
 // and dependency-light.
 
 /** The persisted sessionStorage shape — all four fields required and typed. */
-const ResumptionStateSchema = S.struct({
-  lastEventId: S.string,
-  lastSequence: S.number,
-  artifactId: S.string,
-  timestamp: S.number,
+const ResumptionStateSchema = schema.struct({
+  lastEventId: schema.string,
+  lastSequence: schema.number,
+  artifactId: schema.string,
+  timestamp: schema.number,
 });
 
 /** Snapshot response: `html`/`lastEventId` strings plus an opaque `signals` payload. */
-const SnapshotPayloadSchema = S.struct({
-  html: S.string,
-  signals: S.unknown,
-  lastEventId: S.string,
+const SnapshotPayloadSchema = schema.struct({
+  html: schema.string,
+  signals: schema.unknown,
+  lastEventId: schema.string,
 });
 
 /** Replay response: a `patches` array of opaque JSON-patch entries. */
-const ReplayPayloadSchema = S.struct({
-  patches: S.array(S.unknown),
+const ReplayPayloadSchema = schema.struct({
+  patches: schema.array(schema.unknown),
 });
 
 /**
@@ -66,22 +66,22 @@ const isReplayPayload = (v: unknown): v is { patches: readonly unknown[] } => de
  */
 export const defaultResumptionConfig: ResumptionConfig = {
   maxGapSize: 50,
-  snapshotUrl: '/czap/snapshot',
-  replayUrl: '/czap/replay',
+  snapshotUrl: '/liteship/snapshot',
+  replayUrl: '/liteship/replay',
   timeout: Millis(10000),
 };
 
 /**
  * Storage key for resumption state.
  */
-const storageKey = (artifactId: string): string => `czap:resumption:${artifactId}`;
+const storageKey = (artifactId: string): string => `liteship:resumption:${artifactId}`;
 
 /**
  * Save resumption state to sessionStorage.
  *
  * @example
  * ```ts
- * import { Resumption } from '@czap/web';
+ * import { Resumption } from '@liteship/web';
  *
  * Resumption.saveState({
  *   artifactId: 'article-123',
@@ -108,7 +108,7 @@ export const saveState = (state: ResumptionStateInput, clock: Clock = wallClock)
  *
  * @example
  * ```ts
- * import { Resumption } from '@czap/web';
+ * import { Resumption } from '@liteship/web';
  *
  * const state = Resumption.loadState('article-123');
  * if (state) {
@@ -154,7 +154,7 @@ export const loadState = (artifactId: string): ResumptionState | null => {
  *
  * @example
  * ```ts
- * import { Resumption } from '@czap/web';
+ * import { Resumption } from '@liteship/web';
  *
  * Resumption.clearState('article-123');
  * ```
@@ -174,7 +174,7 @@ export const clearState = (artifactId: string): void => {
  *
  * @example
  * ```ts
- * import { Resumption } from '@czap/web';
+ * import { Resumption } from '@liteship/web';
  *
  * const response = await Resumption.resume('article-123', 'evt-50', { maxGapSize: 100 });
  * // response.type => 'replay' | 'snapshot'
@@ -398,7 +398,7 @@ const requestReplay = async (
  *
  * @example
  * ```ts
- * import { Resumption } from '@czap/web';
+ * import { Resumption } from '@liteship/web';
  *
  * // Save state on each SSE message (timestamp defaults to systemClock.now())
  * Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99 });

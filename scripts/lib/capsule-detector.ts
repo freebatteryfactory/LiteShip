@@ -13,11 +13,11 @@
 import ts from 'typescript';
 import { resolve } from 'node:path';
 // CUT B5b — one slash-normalize home. Slice B — the type-directed `ts.Program`
-// config (WORKSPACE_ALIASES + CompilerOptions) is now sourced from @czap/audit
+// config (WORKSPACE_ALIASES + CompilerOptions) is now sourced from @liteship/audit
 // so there is ONE config shared by the capsule detector and the repo-IR builder,
 // never a divergent fork. WORKSPACE_ALIASES is re-exported below so the existing
 // drift test (tests/unit/capsule-detector.test.ts) keeps pinning it.
-import { normalizeRepoPath, WORKSPACE_ALIASES, createTypeDirectedProgram } from '@czap/audit';
+import { normalizeRepoPath, WORKSPACE_ALIASES, createTypeDirectedProgram } from '@liteship/audit';
 
 export { WORKSPACE_ALIASES };
 
@@ -119,7 +119,7 @@ const CAPSULE_TYPE_NAMES = new Set(['CapsuleContract', 'CapsuleDef']);
 /**
  * Build a TypeScript program covering enough of the repo to resolve
  * capsule contract return types across factory wrappers. Delegates to the
- * shared `@czap/audit` config (the ONE type-directed program substrate).
+ * shared `@liteship/audit` config (the ONE type-directed program substrate).
  */
 function createProgram(files: readonly string[]): ts.Program {
   return createTypeDirectedProgram(files, process.cwd());

@@ -67,8 +67,8 @@ proven you need to skip physical state handling.
 Morph with physical state capture and restore — the default entry point.
 
 Captures focus/scroll/selection before the morph (gated on config flags),
-validates preserve hints afterwards (dispatching `czap:morph-rejected` and
-`czap:request-snapshot` on violation), and restores physical state. When no
+validates preserve hints afterwards (dispatching `liteship:morph-rejected` and
+`liteship:request-snapshot` on violation), and restores physical state. When no
 flags or hints apply it degrades to a plain [morph](#morph).
 
 #### Parameters

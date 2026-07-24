@@ -43,12 +43,12 @@
  *
  * Pure + deterministic: no clock, no randomness, no filesystem; the same IR +
  * `localProofOf` always yields an identical map. Carries NO `typescript` dep — pure
- * math over the already-built {@link RepoIR}, keeping `@czap/gauntlet` lean.
+ * math over the already-built {@link RepoIR}, keeping `@liteship/gauntlet` lean.
  *
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 import type { RepoIR, FileId } from './repo-ir.js';
 
 /**

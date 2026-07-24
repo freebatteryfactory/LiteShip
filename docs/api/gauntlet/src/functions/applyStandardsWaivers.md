@@ -8,7 +8,7 @@
 
 > **applyStandardsWaivers**(`changes`, `signoffs`, `now`, `alwaysBlockingRuleIds`, `siteConditionality?`): `Omit`\<[`StandardsIntegrityFacts`](../interfaces/StandardsIntegrityFacts.md), `"committedAddress"` \| `"liveAddress"`\>
 
-Defined in: [gauntlet/src/standards-facts.ts:771](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L771)
+Defined in: [gauntlet/src/facts/standards-facts.ts:771](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L771)
 
 Partition the classified changes against the committed owner sign-offs as of
 `now` (the INJECTED wall-clock date — the two-clock law, never `Date.now()`), and

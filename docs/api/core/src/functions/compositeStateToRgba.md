@@ -8,15 +8,15 @@
 
 > **compositeStateToRgba**(`state`, `width`, `height`): `Uint8Array`
 
-Defined in: [core/src/video.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L82)
+Defined in: [core/src/media/video.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L82)
 
 Paint one [CompositeState](../interfaces/CompositeState.md) into a solid `width*height*4` RGBA buffer
 whose color is a DETERMINISTIC function of the frame's discrete state + css
 outputs.
 
 This is the SINGLE source of truth for "frame state → pixels" shared by BOTH
-headless byte-encoders — the `@czap/command` ffmpeg render backend that the
-shipping `scene render` CLI drives, and the `@czap/stage` ffmpeg `FrameEncoder`.
+headless byte-encoders — the `@liteship/command` ffmpeg render backend that the
+shipping `scene render` CLI drives, and the `@liteship/stage` ffmpeg `FrameEncoder`.
 Neither owns its own painter, so
 the same `CompositeState` always yields byte-identical pixels regardless of
 which path encoded it. It is HONEST, not a black stub: distinct frames (the

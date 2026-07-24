@@ -6,14 +6,9 @@
 
 # Interface: EvaluateResult\<S\>
 
-Defined in: core/dist/type-utils.d.ts:29
+Defined in: core/dist/authoring/types.d.ts:10
 
-Result of evaluating a single numeric value against a boundary (the rich face
-of `Boundary.evaluateResult`).
-
-`crossed` is true only when `previousState` was supplied and differs from the
-resolved state; consumers use it to emit transition events and route side
-effects. `index` is the position of `state` within the boundary's states tuple.
+Rich result of evaluating one numeric value against a boundary.
 
 ## Type Parameters
 
@@ -27,7 +22,7 @@ effects. `index` is the position of `state` within the boundary's states tuple.
 
 > `readonly` **crossed**: `boolean`
 
-Defined in: core/dist/type-utils.d.ts:37
+Defined in: core/dist/authoring/types.d.ts:18
 
 Whether evaluation produced a change from `previousState`.
 
@@ -37,7 +32,7 @@ Whether evaluation produced a change from `previousState`.
 
 > `readonly` **index**: `number`
 
-Defined in: core/dist/type-utils.d.ts:33
+Defined in: core/dist/authoring/types.d.ts:14
 
 Index of `state` within the boundary's states tuple.
 
@@ -47,7 +42,7 @@ Index of `state` within the boundary's states tuple.
 
 > `readonly` **state**: `S`
 
-Defined in: core/dist/type-utils.d.ts:31
+Defined in: core/dist/authoring/types.d.ts:12
 
 The resolved state literal.
 
@@ -57,6 +52,6 @@ The resolved state literal.
 
 > `readonly` **value**: `number`
 
-Defined in: core/dist/type-utils.d.ts:35
+Defined in: core/dist/authoring/types.d.ts:16
 
 The input value that was evaluated.

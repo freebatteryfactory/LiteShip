@@ -77,7 +77,7 @@ export interface RunGatesOptions {
    * ALONGSIDE {@link toolchainDigest}, each gate's RAW `gate.run` output is cached
    * against the content digest of its covered files; an unchanged digest serves
    * the cached raw findings and SKIPS the expensive `gate.run`. Omit it (the lean
-   * `czap check` / MCP path, or any caller that wants a full run) and the engine
+   * `liteship check` / MCP path, or any caller that wants a full run) and the engine
    * behaves EXACTLY as before — a full run, no caching. The cache NEVER changes a
    * verdict; it only avoids recomputing a provably-identical one. See
    * {@link GateVerdictCache} for the soundness model.
@@ -167,6 +167,7 @@ export function scopeContextByLevel(
     // to the char-machine — making the injection inert on the production `litelaunchGauntlet*` path
     // (codex review, PR #60; the same scoping drop the capabilityLink pass-through fixed).
     ...(context.codeOnly !== undefined ? { codeOnly: context.codeOnly } : {}),
+    ...(context.benchmarkSubjects !== undefined ? { benchmarkSubjects: context.benchmarkSubjects } : {}),
     // Pass the injected IR through unchanged — scoping narrows `files()`, not the
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
     // the key entirely when no IR was injected, so the shape stays minimal.
@@ -287,6 +288,13 @@ export function scopeContextByLevel(
     // pass-throughs above fix.
     ...(context.skipSites !== undefined ? { skipSites: context.skipSites } : {}),
     ...(context.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: context.activeSurfaceFacts } : {}),
+    // Likewise the injected check-governance FactPack (the three meta-gates): it describes
+    // the root-script partition / negative-controls / waiver freshness (repo-wide facts, not
+    // per-src-file), so file-scoping never narrows it — it passes through unchanged. Omit the
+    // key when absent. WITHOUT this pass-through a level-scoped meta-gate would fold an empty
+    // verdict even though a host injected the facts — the same scoped-context drop the
+    // pass-throughs above fix.
+    ...(context.checkGovernance !== undefined ? { checkGovernance: context.checkGovernance } : {}),
   };
 }
 

@@ -1,3 +1,4 @@
+// PROVES: INV-DIAGNOSTIC-CODE-CLOSED
 /**
  * Dogfood — the built-in hygiene gates, run on the REAL repo.
  *
@@ -13,16 +14,17 @@
  *    ALWAYS_BLOCKING_RULES): a skip or a placeholder directive can NEVER be waived,
  *    so a zero floor is the only acceptable state.
  *
- *  LAW-PINNED gates (`no-nondeterminism`, `no-silent-catch`) — these carry a real,
- *    actively-cured L1/L2 backlog (command-surface receipt timestamps; best-effort
- *    catches) that OTHER slices are paying down. Pinning the brittle raw line list
- *    would flap on every unrelated cure, so instead we pin the LAW: the
- *    LEVEL-SCOPED set (computed through the engine with the assurance map), which is
- *    what actually decides blocking authority. After the clock/rng substrate cure
- *    the L3 no-nondeterminism set is EXACTLY the three declared entropy boundaries
- *    (`systemClock` monotonic / `wallClock` epoch / `systemRng`, each waived), and
- *    the L3 no-silent-catch set is EXACTLY the four declared-benign catches (each
- *    waived). That collapse is the proof the cure landed.
+ *  LAW-PINNED gate (`no-nondeterminism`) — this carries a real, actively-cured
+ *    L1/L2 backlog (command-surface receipt timestamps) that OTHER slices are paying
+ *    down. Pinning the brittle raw line list would flap on every unrelated cure, so
+ *    instead we pin the LAW: the LEVEL-SCOPED set (computed through the engine with
+ *    the assurance map), which is what actually decides blocking authority. After the
+ *    clock/rng substrate cure the L3 no-nondeterminism set is EXACTLY the three
+ *    declared entropy boundaries (`systemClock` monotonic / `wallClock` epoch /
+ *    `systemRng`, each waived). That collapse is the proof the cure landed. The
+ *    `no-silent-catch` L3-scoped set has since reached the ZERO floor too — its four
+ *    former declared-benign catches were CURED (given explicit, non-swallowing
+ *    fallback bodies) and their waivers retired, so nothing is waived there any more.
  *
  * A dedicated `it` also guards the gate-extension: the no-nondeterminism gate must
  * detect ambient `performance.now()` (the monotonic-clock read), not just Date.now.
@@ -43,7 +45,7 @@ import {
   LITESHIP_ASSURANCE_MAP,
   memoryContext,
   type Gate,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // Resolve the repo root from THIS file's location (tests/unit/gauntlet/…), so
 // the run is independent of the process cwd — deterministic by construction.
@@ -98,7 +100,7 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
 /**
  * The TRUE L3 nondeterminism backlog — the raw unscoped set NARROWED through the
  * assurance map to only L3+ files. After the determinism cure this collapses to
- * exactly the THREE declared entropy boundaries of the @czap/core clock/rng
+ * exactly the THREE declared entropy boundaries of the @liteship/core clock/rng
  * substrate: the `systemClock` monotonic read (performance.now, with the flagged
  * Date.now fallback) + the `wallClock` epoch read + the `systemRng` Math.random.
  * Every other runtime read now threads an injected clock/rng defaulting to these,
@@ -112,9 +114,9 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
  * substrate boundaries is the proof the cure landed: undifferentiated red is gone.
  */
 const EXPECTED_NONDETERMINISM_L3: readonly string[] = [
-  'packages/core/src/clock.ts:60', // systemClock — monotonic boundary (performance.now / Date.now fallback)
-  'packages/core/src/clock.ts:77', // wallClock — epoch boundary
-  'packages/core/src/rng.ts:39', // systemRng — randomness boundary
+  'packages/core/src/clock/clock.ts:60', // systemClock — monotonic boundary (performance.now / Date.now fallback)
+  'packages/core/src/clock/clock.ts:77', // wallClock — epoch boundary
+  'packages/core/src/clock/rng.ts:39', // systemRng — randomness boundary
 ];
 
 describe('dogfood — the hygiene gates over the real packages/*/src tree', () => {
@@ -161,7 +163,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     // assurance map so the gate (L3) sees only L3+ files; the L1/L2 command-surface
     // receipt timestamps drop out. After the determinism cure the L3 set collapses
     // to exactly the THREE declared entropy boundaries — every other deterministic
-    // read threads the @czap/core clock/rng substrate. This is what decides the
+    // read threads the @liteship/core clock/rng substrate. This is what decides the
     // gate's blocking authority, so it is the set worth pinning. The raw/unscoped
     // count is deliberately NOT pinned here: it is an L1/L2 backlog other slices
     // are actively curing, and pinning it would flap on every unrelated cure.
@@ -180,7 +182,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
 
     // The raw/unscoped run over the REAL repo no longer EXCEEDS the L3 set — and
     // that is a WIN, not a regression: the B3.4 determinism cure routed every
-    // L1/L2 receipt timestamp through the @czap/core wallClock boundary, so the
+    // L1/L2 receipt timestamp through the @liteship/core wallClock boundary, so the
     // whole tree's nondeterminism reads are now exactly the three substrate
     // boundaries. raw == scoped is the cured, cleaner state (the L1/L2 backlog this
     // used to filter is gone). Scoping never ADDS, so the floor invariant holds:
@@ -223,28 +225,27 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     expect(noNondeterminismGate.run(perfGreen)).toEqual([]);
   });
 
-  it('no-silent-catch: the L3-scoped backlog is EXACTLY the four declared-benign catches (all waived)', () => {
-    // The LAW: under level-scoping the L2 silent-catch gate sees only L2+ files, so
-    // the L1 best-effort catches (spawn/server-info/vite) drop out, leaving exactly
-    // the four L3-scoped catches — each of which has a committed waiver in
-    // waivers.ts. Computed through the engine (source of truth), not a hardcoded
-    // raw list that drifts as L1 catches are cured elsewhere.
-    //
-    // The WGSL shader-fetch catch (formerly the fifth entry, wgpu.ts) DROPPED OFF
-    // when the shader content-integrity feature landed: that catch is now
-    // DISCRIMINATED (it binds the network error and emits its own
-    // `wgsl-fetch-fallback-builtin` warnOnce before keeping the built-in shader),
-    // so the gate no longer flags it and its waiver was removed. The backlog is
-    // exactly the four genuinely-benign best-effort catches.
+  it('no-silent-catch: the L3-scoped backlog is now EMPTY (every benign catch was CURED, not waived)', () => {
+    // The LAW: under level-scoping the L2 silent-catch gate sees only L2+ files.
+    // Formerly this backlog held four declared-benign best-effort catches (each with
+    // a committed waiver in waivers.ts); those catches have since been DISCRIMINATED
+    // — given explicit, non-swallowing fallback bodies (an explicit `return`/`continue`
+    // of the conservative value the site already meant), the same cure the WGSL
+    // shader-fetch catch (wgpu.ts) got when it started binding the network error and
+    // emitting its own `wgsl-fetch-fallback-builtin` warnOnce. With the catches cured,
+    // their waivers were retired, so the L3-scoped backlog is now the honest ZERO
+    // floor. Computed through the engine (source of truth), never a hardcoded list.
     const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
+    expect(ctx.files().length).toBeGreaterThan(0);
     const result = runGates([noSilentCatchGate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
     const outcome = result.outcomes.find((o) => o.gateId === 'gauntlet/no-silent-catch');
+    expect(outcome, 'the no-silent-catch gate must have an outcome').toBeDefined();
     const scopedSeen = (outcome?.findings ?? []).map((f) => locOf(f.location?.file, f.location?.line)).sort();
-    expect(scopedSeen).toEqual([
-      'packages/cli/src/commands/doctor/probes-workspace.ts:250',
-      'packages/cli/src/commands/ship.ts:131',
-      'packages/cli/src/commands/version.ts:46',
-      'packages/web/src/stream/resumption-pure.ts:29',
-    ]);
+    const message = [
+      `no-silent-catch L3-scoped found ${scopedSeen.length} finding(s); the floor is ZERO (every benign catch is cured, not waived).`,
+      'A NEW L3 silent catch is a regression — cure it with an explicit non-swallowing body:',
+      ...scopedSeen.map((s) => `  + ${s}`),
+    ].join('\n');
+    expect(scopedSeen, message).toEqual([]);
   });
 });

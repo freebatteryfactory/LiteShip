@@ -92,7 +92,7 @@ function scan(context: GateContext): readonly Finding[] {
   // The SOUND AST detector when the host injected it (line-agnostic, every multi-line/ASI/
   // inner-describe spelling, AND the structural `conditional` F2 discriminant); the
   // dependency-free token detector as the lean fallback. The lean engine never reaches for
-  // `typescript` — the host (CLI, which deps `@czap/audit`) provides `detectSkipsAST`.
+  // `typescript` — the host (CLI, which deps `@liteship/audit`) provides `detectSkipsAST`.
   const detect = context.skipDetector ?? detectSkips;
   const findings: Finding[] = [];
   for (const file of governedFiles(context)) {
@@ -215,7 +215,7 @@ export const noSkippedTestGate: Gate = defineGate({
         // exact sanctioned SITE (byte-for-byte the enumerated `site` line) — it is the
         // audited, visible capability gate, so it is ALLOWED. Per-site sanctioning: a
         // DIFFERENT skip in this same file would NOT pass (see the class-guard test).
-        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});\n",
+        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n",
         // A REAL test plus a docstring + string that MENTION it.skip descriptively — the
         // codeOnly strip blanks both so neither trips the gate (no false positive).
         'tests/unit/widget/good.test.ts':

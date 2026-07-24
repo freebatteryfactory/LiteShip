@@ -34,7 +34,9 @@ import {
   distributionFilesWithoutExecutionPath,
 } from '../../../scripts/bench/contract-coverage.ts';
 import { ACCEPTED_COMPLEXITY_CEILINGS } from '../../../packages/gauntlet/src/gates/performance-contracts.ts';
+import { verifyMeasuredComplexityMap } from '../../../scripts/bench-contracts.ts';
 import { commentsBlanked } from '../../../packages/gauntlet/src/gates/code-only.ts';
+import { qualifyBenchDistribution } from '../../../packages/audit/src/benchmark-subject-facts.ts';
 import { repoRoot } from '../../../vitest.shared.ts';
 
 describe('extractRegisteredBenches — the bench-name fold', () => {
@@ -80,22 +82,23 @@ describe('fitComplexityClass — the log-log slope fit (a CLASS verdict, not an 
 
   it('rejects a degenerate input (fewer than two distinct sizes) — fails LOUD', () => {
     expect(() => fitComplexityClass([{ size: 10, latencyNs: 5 }])).toThrow(/fitComplexityClass/);
-    expect(() => fitComplexityClass([{ size: 10, latencyNs: 5 }, { size: 10, latencyNs: 6 }])).toThrow();
+    expect(() =>
+      fitComplexityClass([
+        { size: 10, latencyNs: 5 },
+        { size: 10, latencyNs: 6 },
+      ]),
+    ).toThrow();
   });
 
   it('PROPERTY: a pure power-law curve k·n^e classifies by its exponent e (load-robust)', () => {
     fc.assert(
-      fc.property(
-        fc.double({ min: 1, max: 500, noNaN: true }),
-        fc.constantFrom(0, 1, 2),
-        (k, e) => {
-          const fit = fitComplexityClass(curve(k, e, sizes));
-          const expected = e === 0 ? 'O(1)' : e === 1 ? 'O(n)' : 'O(n^2)';
-          // The fit recovers the exponent the curve was generated from — the slope
-          // is a ratio (scale-free), so the coefficient k never changes the class.
-          return fit.class === expected;
-        },
-      ),
+      fc.property(fc.double({ min: 1, max: 500, noNaN: true }), fc.constantFrom(0, 1, 2), (k, e) => {
+        const fit = fitComplexityClass(curve(k, e, sizes));
+        const expected = e === 0 ? 'O(1)' : e === 1 ? 'O(n)' : 'O(n^2)';
+        // The fit recovers the exponent the curve was generated from — the slope
+        // is a ratio (scale-free), so the coefficient k never changes the class.
+        return fit.class === expected;
+      }),
       { numRuns: 200 },
     );
   });
@@ -126,24 +129,169 @@ describe('classifySlope — wide bands keep the verdict load-robust', () => {
   });
 });
 
+describe('live complexity producer self-proof', () => {
+  const entry = (path: string, klass: (typeof COMPLEXITY_CLASSES)[number], fittedR2 = 0.99) => ({
+    path,
+    describe: path,
+    shape: 'fixture',
+    sizes: [8, 16],
+    class: klass,
+    fittedSlope: klass === 'O(n^2)' ? 2 : 1,
+    fittedR2,
+  });
+
+  it('accepts complete, trustworthy measurements at their ceilings', () => {
+    expect(
+      verifyMeasuredComplexityMap({
+        schemaVersion: 1,
+        entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, klass]) => entry(path, klass)),
+      }),
+    ).toEqual([]);
+  });
+
+  it('reds on missing, noisy, and complexity-regressed live evidence', () => {
+    const paths = Object.keys(ACCEPTED_COMPLEXITY_CEILINGS);
+    expect(
+      verifyMeasuredComplexityMap({
+        schemaVersion: 1,
+        entries: [entry(paths[0]!, 'O(n^2)', 0.1)],
+      }).map((issue) => issue.reason),
+    ).toEqual(['class-regression', 'noisy-fit', 'missing']);
+  });
+});
+
 describe('foldDeclaredDistributions — the headline-law cross-check', () => {
   it('reports no issues when declarations and registrations match exactly', () => {
-    const sources = new Map([['tests/bench/x.bench.ts', "bench.add('a', () => {});\n"]]);
+    const sources = new Map([
+      ['tests/bench/x.bench.ts', "import { fastPath } from '@liteship/x';\nbench.add('a', () => fastPath());\n"],
+    ]);
     const result = foldDeclaredDistributions(sources, [
-      { name: 'a', file: 'tests/bench/x.bench.ts', inputSize: 1, shape: 'single-call', replicates: 1 },
+      {
+        name: 'a',
+        file: 'tests/bench/x.bench.ts',
+        inputSize: 1,
+        shape: 'single-call',
+        replicates: 1,
+        subjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/x' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
     ]);
     expect(result.issues).toHaveLength(0);
     expect(result.discoveredBenchCount).toBe(1);
   });
 
   it('reports UNDECLARED and ORPHAN in their respective directions', () => {
-    const sources = new Map([['tests/bench/x.bench.ts', "bench.add('a', () => {});\nbench.add('b', () => {});\n"]]);
+    const sources = new Map([
+      [
+        'tests/bench/x.bench.ts',
+        "import { fastPath } from '@liteship/x';\nbench.add('a', () => fastPath());\nbench.add('b', () => {});\n",
+      ],
+    ]);
     const result = foldDeclaredDistributions(sources, [
-      { name: 'a', file: 'tests/bench/x.bench.ts', inputSize: 1, shape: 's', replicates: 1 },
-      { name: 'gone', file: 'tests/bench/x.bench.ts', inputSize: 1, shape: 's', replicates: 1 },
+      {
+        name: 'a',
+        file: 'tests/bench/x.bench.ts',
+        inputSize: 1,
+        shape: 's',
+        replicates: 1,
+        subjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/x' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
+      {
+        name: 'gone',
+        file: 'tests/bench/x.bench.ts',
+        inputSize: 1,
+        shape: 's',
+        replicates: 1,
+        subjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/x' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
     ]);
     expect(result.issues.filter((i) => i.kind === 'undeclared').map((i) => i.name)).toEqual(['b']);
     expect(result.issues.filter((i) => i.kind === 'orphan').map((i) => i.name)).toEqual(['gone']);
+  });
+});
+
+describe('benchmark subject qualification — measured implementation, not names', () => {
+  const distribution = {
+    name: 'fastPath -- wrapper',
+    file: 'tests/bench/x.bench.ts',
+    inputSize: 1,
+    shape: 'single-call',
+    replicates: 1,
+    subjects: [
+      {
+        role: 'sut' as const,
+        origin: { kind: 'module' as const, specifier: '@liteship/x' },
+        symbol: 'fastPath',
+        binding: 'fastPath',
+      },
+    ],
+  };
+
+  it('follows a bounded same-file wrapper to the imported SUT', () => {
+    const source =
+      "import { fastPath } from '@liteship/x';\nfunction runFast(){ return fastPath(); }\nbench.add('fastPath -- wrapper', () => runFast());\n";
+    expect(qualifyBenchDistribution(distribution, () => source)).toMatchObject({
+      issues: [],
+      qualifyingSutSubjects: [{ symbol: 'fastPath' }],
+    });
+  });
+
+  it('traces a destructured product returned by an imported factory to its module owner', () => {
+    const factoryDistribution = {
+      ...distribution,
+      name: 'pair -- push and pop',
+      subjects: [
+        {
+          role: 'sut' as const,
+          origin: { kind: 'module' as const, specifier: '@liteship/x' },
+          symbol: 'Factory.createPair().producer.push',
+          binding: 'producer.push',
+        },
+        {
+          role: 'sut' as const,
+          origin: { kind: 'module' as const, specifier: '@liteship/x' },
+          symbol: 'Factory.createPair().consumer.pop',
+          binding: 'consumer.pop',
+        },
+      ],
+    };
+    const source =
+      "import { Factory } from '@liteship/x';\nconst { producer, consumer } = Factory.createPair();\nbench.add('pair -- push and pop', () => { producer.push(1); consumer.pop(); });\n";
+    expect(qualifyBenchDistribution(factoryDistribution, () => source)).toMatchObject({
+      issues: [],
+      qualifyingSutSubjects: [
+        { symbol: 'Factory.createPair().producer.push' },
+        { symbol: 'Factory.createPair().consumer.pop' },
+      ],
+    });
+  });
+
+  it('rejects a comment/reference mention when the callback invokes no SUT', () => {
+    const source =
+      "import { fastPath } from '@liteship/x';\nbench.add('fastPath -- wrapper', () => { void fastPath; /* fastPath() */ });\n";
+    expect(qualifyBenchDistribution(distribution, () => source).issues.map((issue) => issue.kind)).toContain(
+      'uninvoked-subject',
+    );
   });
 });
 
@@ -162,10 +310,7 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
   it('benchmarks/distributions.json — every declared file is executed by pnpm bench or generated benches', () => {
     const registry = readDistributionRegistry(repoRoot);
     expect(registry).not.toBeNull();
-    const uncovered = distributionFilesWithoutExecutionPath(
-      registry!.distributions,
-      benchScriptTargets(repoRoot),
-    );
+    const uncovered = distributionFilesWithoutExecutionPath(registry!.distributions, benchScriptTargets(repoRoot));
     expect(uncovered, `distribution files without bench execution path: ${uncovered.join(', ')}`).toEqual([]);
   });
 

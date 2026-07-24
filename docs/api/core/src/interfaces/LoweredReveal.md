@@ -6,7 +6,7 @@
 
 # Interface: LoweredReveal
 
-Defined in: [core/src/reveal.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L77)
+Defined in: [core/src/motion/reveal.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L77)
 
 Graph bundle produced by [lowerRevealIntent](../functions/lowerRevealIntent.md).
 
@@ -16,7 +16,7 @@ Graph bundle produced by [lowerRevealIntent](../functions/lowerRevealIntent.md).
 
 > `readonly` **componentId**: `ContentAddress`
 
-Defined in: [core/src/reveal.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L81)
+Defined in: [core/src/motion/reveal.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L81)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/reveal.ts:81](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **entityId**: `ContentAddress`
 
-Defined in: [core/src/reveal.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L82)
+Defined in: [core/src/motion/reveal.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L82)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/reveal.ts:82](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **graph**: [`DocumentGraph`](DocumentGraph.md)
 
-Defined in: [core/src/reveal.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L78)
+Defined in: [core/src/motion/reveal.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L78)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/reveal.ts:78](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **intent**: [`RevealIntent`](RevealIntent.md)
 
-Defined in: [core/src/reveal.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L79)
+Defined in: [core/src/motion/reveal.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L79)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/reveal.ts:79](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **policyId**: `ContentAddress`
 
-Defined in: [core/src/reveal.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L83)
+Defined in: [core/src/motion/reveal.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L83)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [core/src/reveal.ts:83](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **projectionId**: `ContentAddress`
 
-Defined in: [core/src/reveal.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L84)
+Defined in: [core/src/motion/reveal.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L84)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [core/src/reveal.ts:84](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **transitionId**: `ContentAddress`
 
-Defined in: [core/src/reveal.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L80)
+Defined in: [core/src/motion/reveal.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L80)

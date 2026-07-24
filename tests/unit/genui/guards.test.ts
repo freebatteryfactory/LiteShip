@@ -1,5 +1,5 @@
 /**
- * @czap/genui guards — isPlainObject structural predicate (parse/validate owner).
+ * @liteship/genui guards — isPlainObject structural predicate (parse/validate owner).
  *
  * @module
  */

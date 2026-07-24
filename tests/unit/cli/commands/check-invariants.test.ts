@@ -1,5 +1,5 @@
 /**
- * `czap check-invariants` adapter — the CLI-only fast-lane invariant gate.
+ * `liteship check-invariants` adapter — the CLI-only fast-lane invariant gate.
  *
  * Two layers, both the adapter's own in-process logic (the line-ending parsing
  * fns are tested separately in tests/unit/meta/invariant-script.test.ts — this
@@ -11,7 +11,7 @@
  *     `.d.ts` skips; the exclude prefix; the missing-scoped-dir → empty branch)
  *     and `expectedLineEnding`'s precedence / binary / no-match branches.
  *
- *  2. The ADAPTER projection: with the heavy `@czap/audit`-backed scan mocked, the
+ *  2. The ADAPTER projection: with the heavy `@liteship/audit`-backed scan mocked, the
  *     receipt shape, the exit-code mapping, and BOTH pretty-print branches (the
  *     grouped invariant work-list + the line-ending policy section).
  */
@@ -19,15 +19,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { INVARIANTS } from '@liteship/command';
 import { captureCli } from '../../../integration/cli/capture.js';
 
-const { runCheckInvariantsScanMock } = vi.hoisted(() => ({ runCheckInvariantsScanMock: vi.fn() }));
-// The adapter calls runCheckInvariantsScan(cwd) THROUGH the injected context; we
-// mock the host's spawn capability so the real scan never spawns `git ls-files`.
-vi.mock('@czap/command/host', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return { ...orig, spawnArgvCapture: runCheckInvariantsScanMock };
-});
+// The adapter folds the scan through its injected `spawn` seam (a defaulted param
+// on `checkInvariants` → `runCheckInvariantsScan` → `findLineEndingViolations`), so
+// the `git ls-files --eol` probe is scripted straight into the adapter — NO
+// @liteship/command/host module mock — and the real scan never spawns `git`.
+const spawnMock = vi.fn();
 
 import {
   checkInvariants,
@@ -43,7 +42,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('findViolations — banned-pattern scan (real fixture tree)', () => {
   let root: string;
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'czap-invariants-'));
+    root = mkdtempSync(join(tmpdir(), 'liteship-invariants-'));
   });
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
@@ -91,6 +90,16 @@ describe('findViolations — banned-pattern scan (real fixture tree)', () => {
     };
     expect(findViolations(inv, root)).toEqual([]);
   });
+
+  it('treats generated CLI fragments as packaged data, while their authored owners remain independently guarded', () => {
+    write(
+      'packages/cli/fragments/template/default/config.ts',
+      'const dep = require("x");\nmodule.exports = dep;\nvar legacy = dep;\nexport default legacy;\n',
+    );
+    for (const invariant of INVARIANTS) {
+      expect(findViolations(invariant, root), invariant.name).toEqual([]);
+    }
+  });
 });
 
 // ── expectedLineEnding precedence + binary + no-match ────────────────────────
@@ -114,12 +123,12 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap check-invariants — adapter projection (scan via injected capability)', () => {
+describe('liteship check-invariants — adapter projection (scan via injected capability)', () => {
   let root: string;
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'czap-inv-adapter-'));
+    root = mkdtempSync(join(tmpdir(), 'liteship-inv-adapter-'));
     // A clean `git ls-files --eol` probe → no line-ending violations by default.
-    runCheckInvariantsScanMock.mockReset().mockResolvedValue({ exitCode: 0, stdout: '' });
+    spawnMock.mockReset().mockResolvedValue({ exitCode: 0, stdout: '' });
   });
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
@@ -132,7 +141,9 @@ describe('czap check-invariants — adapter projection (scan via injected capabi
   it('a clean fixture root passes the gate (exit 0, ok receipt, no work-list)', async () => {
     write('.gitattributes', '* text=auto eol=lf\n');
     write('packages/x/src/ok.ts', 'export const ok = 1;\n');
-    const { exit, stdout, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: true }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({ command: 'check-invariants', status: 'ok', ok: true });
@@ -145,7 +156,9 @@ describe('czap check-invariants — adapter projection (scan via injected capabi
     write('.gitattributes', '* text=auto eol=lf\n');
     // `require(` trips the NO_REQUIRE invariant over the `packages` dir.
     write('packages/x/src/bad.ts', 'const dep = require("x");\n');
-    const { exit, stdout, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: true }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('failed');
@@ -160,11 +173,13 @@ describe('czap check-invariants — adapter projection (scan via injected capabi
     write('.gitattributes', '* text=auto eol=lf\n');
     write('packages/x/src/ok.ts', 'export const ok = 1;\n');
     // `git ls-files --eol` reports a CRLF-in-index file under an eol=lf policy.
-    runCheckInvariantsScanMock.mockResolvedValue({
+    spawnMock.mockResolvedValue({
       exitCode: 0,
       stdout: 'i/crlf  w/crlf  attr/text=auto \tpackages/x/src/ok.ts\n',
     });
-    const { exit, stdout, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: true }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('failed');
@@ -175,7 +190,9 @@ describe('czap check-invariants — adapter projection (scan via injected capabi
   it('stays SILENT on stderr when pretty is off (failed receipt still exits 1)', async () => {
     write('.gitattributes', '* text=auto eol=lf\n');
     write('packages/x/src/bad.ts', 'const dep = require("x");\n');
-    const { exit, stderr } = await captureCli(() => checkInvariants({ cwd: root, pretty: false }));
+    const { exit, stderr } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: false }, { spawn: spawnMock }),
+    );
     expect(exit).toBe(1);
     expect(stderr).toBe('');
   });

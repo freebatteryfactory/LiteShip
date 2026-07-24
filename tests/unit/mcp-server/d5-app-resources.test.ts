@@ -9,8 +9,8 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { COMMAND_CATALOG } from '@czap/command';
-import { fnv1a } from '@czap/core';
+import { COMMAND_CATALOG } from '@liteship/command';
+import { fnv1a } from '@liteship/core';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { listUiResources, readUiResource } from '../../../packages/mcp-server/src/ui-resources.js';
 import { listAppResources, readAppResource } from '../../../packages/mcp-server/src/app-resources.js';
@@ -39,7 +39,10 @@ describe('D5 — D4 static surface stays frozen', () => {
       'ui://liteship/glossary',
     ]);
     const pin = fnv1a(
-      JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
+      JSON.stringify({
+        list: listUiResources(),
+        bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text),
+      }),
     );
     // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
@@ -54,7 +57,7 @@ describe('D5 — D4 static surface stays frozen', () => {
     // CUT A5: `package-smoke` (the release pack/install smoke, migrated from scripts/)
     // joined COMMAND_CATALOG → the registry/commands UI body changed, re-pinning it.
     // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
-    // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
+    // @liteship/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
     // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
     // Re-pinned again when the capsule-verify handler command (CLI-only) joined
     // the registry, growing the commands UI projection by one entry.
@@ -65,7 +68,28 @@ describe('D5 — D4 static surface stays frozen', () => {
     // COMMAND_CATALOG — the registry/commands UI body grew by one entry.
     // Re-pinned again when Astro 7 background-dev commands (`astro.dev`,
     // `astro.status`, `astro.stop`) joined COMMAND_CATALOG.
-    expect(pin).toBe('fnv1a:d57167cb');
+    // Re-pinned again when the glossary shake-down/first-run entries were
+    // reworded for the `pnpm verify` rename (shakedown script retired).
+    // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
+    // Re-pinned again when the standard dev-experience verbs (`dev`, `build`, `info`,
+    // `add`) joined COMMAND_CATALOG as CLI-owned commands — the registry/commands UI
+    // body grew by four entries.
+    // P10 nautical CLI-string sweep: the `doctor` descriptor summary was de-nauticalized
+    // ("Preflight rig-check:" -> "Preflight environment check:"); the registry/commands UI
+    // body embeds command summaries, so its digest shifted. (The castoff -> setup group
+    // rename is NOT rendered into the UI body and does not affect this pin.)
+    // Re-pinned again when the `explain` (diagnostic-code / symbol lookup) and `context`
+    // (task-oriented pointer map) reference commands joined COMMAND_CATALOG as
+    // handler-backed, MCP-exposed commands — the registry/commands UI body grew by two.
+    // De-nauticalization sweep: the `gauntlet` glossary entry was reworded to drop the
+    // stale spelled-out phase count ("Thirty-five phases…") and the `rig-check` literal.
+    // renderGlossary embeds each entry's definition, so the glossary UI body shifted.
+    // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off,
+    // moored, shake-down, quay) were dropped from GLOSSARY_ENTRIES — the catalog now keeps
+    // only terms still used in CLI source — so the glossary UI body digest shifted again.
+    // P11 check contract completion: profile execution owns `check`; the pure fold is
+    // the distinct handler/MCP command `check.gates`, changing the commands projection.
+    expect(pin).toBe('fnv1a:b780fc3e');
   });
 });
 
@@ -128,7 +152,16 @@ describe('D5 — the app resource is genuinely interactive + safe', () => {
 
   it('the app body uses ONLY the bridge — no network/eval/inline-handlers/remote sinks', () => {
     const html = readAppResource(APP_URI).contents[0]!.text;
-    for (const banned of ['fetch(', 'XMLHttpRequest', 'eval(', 'new Function', 'http://', 'https://', 'src="', 'href="']) {
+    for (const banned of [
+      'fetch(',
+      'XMLHttpRequest',
+      'eval(',
+      'new Function',
+      'http://',
+      'https://',
+      'src="',
+      'href="',
+    ]) {
       expect(html, `app body must not contain '${banned}'`).not.toContain(banned);
     }
     expect(/\son[a-z]+\s*=/i.test(html), 'app body must have no inline event-handler attributes').toBe(false);
@@ -154,7 +187,9 @@ describe('D5 — server honesty (no faked push channel)', () => {
   });
 
   it('D10 declares ui.callServerTool capability honestly', async () => {
-    const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
+    const caps = (
+      await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })
+    ).capabilities;
     expect(caps).toEqual({
       tools: { listChanged: false },
       resources: { listChanged: false },
@@ -173,9 +208,9 @@ describe('D5 — D1/D2 non-regression', () => {
     expect(r._meta?.['liteship/result']).toBeDefined();
   });
 
-  it('D2: tools/list still emits 10 tools each with an object outputSchema', () => {
+  it('D2: tools/list still emits 12 tools each with an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(12);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
   });
 });

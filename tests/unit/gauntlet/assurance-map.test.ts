@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@czap/gauntlet';
+import { levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@liteship/gauntlet';
 
 describe('matchesGlob — the small dialect (** / * / {a,b})', () => {
   it('* matches within a single segment only (not across a slash)', () => {
@@ -53,28 +53,28 @@ describe('levelOf — first matching rule wins, default L1', () => {
     // L4 — the trust spine: identity/integrity + the grader's own judgment core
     ['packages/canonical/src/whatever.ts', 'L4'],
     ['packages/canonical/src/deep/nested.ts', 'L4'],
-    ['packages/core/src/receipt.ts', 'L4'],
-    ['packages/core/src/hlc.ts', 'L4'],
-    ['packages/core/src/brands.ts', 'L4'],
+    ['packages/core/src/evidence/receipt.ts', 'L4'],
+    ['packages/core/src/clock/hlc.ts', 'L4'],
+    ['packages/core/src/schema/brands.ts', 'L4'],
     ['packages/assets/src/brands.ts', 'L4'], // identity brand (AssetRefId)
     ['packages/genui/src/brands.ts', 'L4'], // identity brand (ContentAddress kernel)
     // L4 — the reactive kernels (Wave 6, S5.5.1 activation): the CellKernel value
     // spine (replay/emission/ordering). `signal` moved L3→L4 here.
-    ['packages/core/src/cell-kernel.ts', 'L4'],
-    ['packages/core/src/cell.ts', 'L4'],
-    ['packages/core/src/derived.ts', 'L4'],
-    ['packages/core/src/store.ts', 'L4'],
-    ['packages/core/src/signal.ts', 'L4'],
-    ['packages/core/src/timeline.ts', 'L4'],
-    ['packages/core/src/live-cell.ts', 'L4'],
+    ['packages/core/src/reactive/cell-kernel.ts', 'L4'],
+    ['packages/core/src/reactive/cell.ts', 'L4'],
+    ['packages/core/src/reactive/derived.ts', 'L4'],
+    ['packages/core/src/reactive/store.ts', 'L4'],
+    ['packages/core/src/reactive/signal.ts', 'L4'],
+    ['packages/core/src/motion/timeline.ts', 'L4'],
+    ['packages/core/src/reactive/live-cell.ts', 'L4'],
     // L3 — the deterministic runtime / projection / cache paths
-    ['packages/core/src/zap.ts', 'L3'],
-    ['packages/core/src/gen-frame.ts', 'L3'],
-    ['packages/core/src/token-buffer.ts', 'L3'],
-    ['packages/core/src/boundary.ts', 'L3'],
-    ['packages/core/src/clock.ts', 'L3'], // the determinism substrate, visible to the gate
-    ['packages/core/src/rng.ts', 'L3'],
-    ['packages/core/src/ai-cast.ts', 'L3'], // moved L4→L3: deterministic proposer, not a trusted-artifact emitter
+    ['packages/core/src/reactive/zap.ts', 'L3'],
+    ['packages/core/src/media/gen-frame.ts', 'L3'],
+    ['packages/core/src/media/token-buffer.ts', 'L3'],
+    ['packages/core/src/authoring/boundary.ts', 'L3'],
+    ['packages/core/src/clock/clock.ts', 'L3'], // the determinism substrate, visible to the gate
+    ['packages/core/src/clock/rng.ts', 'L3'],
+    ['packages/core/src/authoring/ai-cast.ts', 'L3'], // moved L4→L3: deterministic proposer, not a trusted-artifact emitter
     ['packages/quantizer/src/quantizer.ts', 'L3'],
     ['packages/web/src/capture/probe.ts', 'L3'],
     ['packages/web/src/stream/sse-pure.ts', 'L3'],
@@ -92,10 +92,10 @@ describe('levelOf — first matching rule wins, default L1', () => {
     // L0/L1 — COSMETIC tooling only, where ambient nondeterminism is legit
     ['packages/mcp-server/src/server-info.ts', 'L1'], // version helper
     ['packages/cli/src/lib/ansi.ts', 'L1'], // formatting
-    ['scripts/report-satellite-scan.ts', 'L1'], // a report
+    ['scripts/report-adaptive-scan.ts', 'L1'], // a report
     ['scripts/anything.mjs', 'L1'],
     // default
-    ['packages/core/src/diagnostics.ts', 'L1'],
+    ['packages/core/src/evidence/diagnostics.ts', 'L1'],
     ['packages/some-new-pkg/src/lib.ts', 'L1'],
   ];
 

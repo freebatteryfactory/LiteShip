@@ -3,10 +3,10 @@
  * that folds the deterministic mutation engine + the injected test runner into the
  * flat {@link MutationFacts} the lean `mutationDivergenceGate` consumes).
  *
- * `@czap/gauntlet` DEFINES the {@link MutationFacts} interface but carries no
+ * `@liteship/gauntlet` DEFINES the {@link MutationFacts} interface but carries no
  * `typescript` dep and runs no test suite — it is the lean engine and mutation is an
  * INJECTED capability (the same ADR-0012 boundary as the IR / supply-chain). THIS
- * module is the host half: `@czap/audit` (which deps `typescript`) generates the
+ * module is the host half: `@liteship/audit` (which deps `typescript`) generates the
  * deterministic mutant catalogue per file ({@link generateMutants}), evaluates each
  * mutant against the INJECTED test runner ({@link evaluateMutant}), and folds the
  * verdicts into the flat facts. The CLI integrator wires the production vitest runner
@@ -22,8 +22,9 @@
  * @module
  */
 import ts from 'typescript';
-import type { MutationFacts, MutantOutcome } from '@czap/gauntlet';
-import { generateMutants, type GenerateMutantsOptions } from './mutation-engine.js';
+import type { MutationFacts, MutantOutcome } from '@liteship/gauntlet';
+import { CanonicalCbor, addressedDigestOf } from '@liteship/canonical';
+import { generateMutants, MUTATION_OPERATORS, type GenerateMutantsOptions } from './mutation-engine.js';
 import {
   evaluateMutant,
   type CoverageMap,
@@ -79,11 +80,20 @@ function parseTarget(target: MutationTargetFile): ts.SourceFile {
  */
 export function buildMutationFacts(files: readonly MutationTargetFile[], options: MutationBuildOptions): MutationFacts {
   const outcomes: MutantOutcome[] = [];
+  const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   for (const target of files) {
     const genOptions: GenerateMutantsOptions =
       options.budget !== undefined ? { file: target.file, budget: options.budget } : { file: target.file };
     const mutants = generateMutants(parseTarget(target), genOptions);
+    for (const operator of MUTATION_OPERATORS) {
+      operatorApplicability.push({
+        file: target.file,
+        operator,
+        applicableMutants: mutants.filter((mutant) => mutant.operator === operator).length,
+      });
+    }
     for (const mutant of mutants) {
+      const coveringTests = [...options.coverage.covering(mutant.file, mutant.line)].sort((a, b) => a.localeCompare(b));
       const verdict = evaluateMutant(mutant, {
         runner: options.runner,
         coverage: options.coverage,
@@ -101,6 +111,22 @@ export function buildMutationFacts(files: readonly MutationTargetFile[], options
         operator: mutant.operator,
         originalText: mutant.originalText,
         mutatedText: mutant.mutatedText,
+        coveringTests,
+        equivalentJustification: verdict._tag === 'equivalent' ? verdict.justification : null,
+        equivalentJustificationDigest:
+          verdict._tag === 'equivalent'
+            ? addressedDigestOf(
+                CanonicalCbor.encode({
+                  kind: 'equivalent-mutant-justification',
+                  mutantId: mutant.id,
+                  justification: verdict.justification,
+                }),
+                'blake3',
+              ).integrity_digest
+            : null,
+        // This engine executes every emitted mutant independently. It performs no
+        // mutation-subsumption optimization, so the honest recorded status is none.
+        subsumedBy: [],
       });
     }
   }
@@ -113,5 +139,6 @@ export function buildMutationFacts(files: readonly MutationTargetFile[], options
       a.operator.localeCompare(b.operator) ||
       a.mutatedText.localeCompare(b.mutatedText),
   );
-  return { outcomes, scoreBaseline: options.scoreBaseline ?? {} };
+  operatorApplicability.sort((a, b) => a.file.localeCompare(b.file) || a.operator.localeCompare(b.operator));
+  return { outcomes, operatorApplicability, scoreBaseline: options.scoreBaseline ?? {} };
 }

@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_IR\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L99)
+Defined in: [gauntlet/src/runner.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L138)
 
 The HOST gate set — what the CLI runs WHEN it has built + injected the repo-IR
 (Slice B, B1, step 3). It is [LITESHIP\_GATES](LITESHIP_GATES.md) with the regex
@@ -25,5 +25,5 @@ a reusable LAYER, not a one-off.
 
 These IR-fold gates [requireIR](../functions/requireIR.md), so they CANNOT run on the lean
 MCP/command path (no IR) — they appear ONLY here, the IR-present composition. The
-lean [LITESHIP\_GATES](LITESHIP_GATES.md) default is unchanged: `czap check` / MCP still runs
+lean [LITESHIP\_GATES](LITESHIP_GATES.md) default is unchanged: `liteship check gates` / MCP still runs
 the seven regex gates IR-free.

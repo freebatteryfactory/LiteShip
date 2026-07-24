@@ -1,7 +1,7 @@
 /**
  * Semantic ID Matching
  *
- * Nodes with the same data-czap-id are considered the "same" node
+ * Nodes with the same data-liteship-id are considered the "same" node
  * across morphs, preserving DOM identity and associated state.
  */
 
@@ -10,7 +10,7 @@ import type { MatchPriority, MatchResult } from '../types.js';
 /**
  * The attribute name for semantic IDs.
  */
-export const ATTR = 'data-czap-id';
+export const ATTR = 'data-liteship-id';
 
 /**
  * Get the semantic ID of an element.

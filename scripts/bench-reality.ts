@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import { build } from 'vite';
 import { chromium } from 'playwright';
 import { repoRoot } from '../vitest.shared.js';

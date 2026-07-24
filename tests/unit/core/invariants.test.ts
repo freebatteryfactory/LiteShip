@@ -17,16 +17,19 @@ import {
   ContentAddress,
   Easing,
   Animation,
-  DirtyFlags,
   SpeculativeEvaluator,
-  TokenBuffer,
   Millis,
   Compositor,
-} from '@czap/core';
-import { hasTag } from '@czap/error';
+  defineBoundary,
+  createDirtyFlags,
+  type TokenBuffer,
+  createTokenBuffer,
+  type DirtyFlags,
+} from '@liteship/core';
+import { hasTag } from '@liteship/error';
 
 // --- Quantizer imports ---
-import { evaluate } from '@czap/quantizer';
+import { evaluate } from '@liteship/quantizer';
 
 // ---------------------------------------------------------------------------
 // Arbitraries -- shared test data generators
@@ -44,7 +47,7 @@ const arbStateNames = (count: number) => {
   return fc.constant(names.slice(0, count));
 };
 
-/** Generate a valid Boundary.Shape with 2-6 states */
+/** Generate a valid Boundary with 2-6 states */
 const arbBoundaryDef = fc.integer({ min: 2, max: 6 }).chain((stateCount) =>
   arbThresholds(stateCount, stateCount).chain((thresholds) =>
     arbStateNames(stateCount).chain((states) =>
@@ -57,14 +60,10 @@ const arbBoundaryDef = fc.integer({ min: 2, max: 6 }).chain((stateCount) =>
   ),
 );
 
-/** Build a real Boundary.Shape from generated params */
-function makeBoundary(params: {
-  thresholds: number[];
-  states: string[];
-  hysteresis: number | undefined;
-}): Boundary.Shape {
+/** Build a real Boundary from generated params */
+function makeBoundary(params: { thresholds: number[]; states: string[]; hysteresis: number | undefined }): Boundary {
   const at = params.thresholds.map((t, i) => [t, params.states[i]!] as const);
-  return Boundary.make({
+  return defineBoundary({
     input: 'test.signal',
     at: at as any,
     ...(params.hysteresis !== undefined ? { hysteresis: params.hysteresis } : {}),
@@ -207,7 +206,7 @@ describe('Invariant 2: evaluateWithHysteresis ≡ quantizer.evaluate (with hyste
 // ===========================================================================
 
 describe('Invariant 3: ContentAddress determinism', () => {
-  test('Boundary.make with same config produces same id', () => {
+  test('defineBoundary with same config produces same id', () => {
     fc.assert(
       fc.property(arbBoundaryDef, (params) => {
         const b1 = makeBoundary(params);
@@ -393,7 +392,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 31 }), (count) => {
         const keys = Array.from({ length: count }, (_, i) => `k${i}`);
-        const flags = DirtyFlags.make(keys);
+        const flags = createDirtyFlags(keys);
 
         // Mark all, check all
         for (const key of keys) {
@@ -416,7 +415,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
 
   test('each key has a unique bitmask (no collisions)', () => {
     const keys = Array.from({ length: 31 }, (_, i) => `k${i}`);
-    const flags = DirtyFlags.make(keys);
+    const flags = createDirtyFlags(keys);
 
     for (let i = 0; i < 31; i++) {
       flags.clearAll();
@@ -431,7 +430,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
   test('throws on > 31 keys', () => {
     const keys = Array.from({ length: 32 }, (_, i) => `k${i}`);
     try {
-      DirtyFlags.make(keys);
+      createDirtyFlags(keys);
       expect.unreachable('expected DirtyFlags.make to throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
@@ -476,7 +475,7 @@ describe('Invariant 7: evaluate.crossed accuracy', () => {
 describe('Invariant 8: Hysteresis prevents jitter', () => {
   test('oscillating value within dead zone does not cause state transitions', () => {
     // Create a boundary with known threshold and hysteresis
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'test.width',
       at: [
         [0, 'small'],
@@ -505,7 +504,7 @@ describe('Invariant 8: Hysteresis prevents jitter', () => {
   });
 
   test('value clearly past dead zone triggers transition', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'test.width',
       at: [
         [0, 'small'],
@@ -623,7 +622,7 @@ describe('Invariant 12: TokenBuffer conserves tokens', () => {
   test('push N tokens then drain N returns all tokens in order', () => {
     fc.assert(
       fc.property(fc.array(fc.string(), { minLength: 1, maxLength: 100 }), (tokens) => {
-        const buf = TokenBuffer.make<string>({ capacity: 256 });
+        const buf = createTokenBuffer<string>({ capacity: 256 });
         for (const t of tokens) buf.push(t);
         const drained = buf.drain(tokens.length);
         expect(drained).toEqual(tokens);
@@ -635,7 +634,7 @@ describe('Invariant 12: TokenBuffer conserves tokens', () => {
   test('occupancy is consistent: push increases, drain decreases', () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 50 }), (count) => {
-        const buf = TokenBuffer.make<number>({ capacity: 256 });
+        const buf = createTokenBuffer<number>({ capacity: 256 });
         for (let i = 0; i < count; i++) buf.push(i);
         const afterPush = buf.occupancy;
         expect(afterPush).toBeGreaterThan(0);
@@ -661,7 +660,7 @@ describe('Invariant 13: DirtyFlags mark/getDirty round-trip', () => {
 
     fc.assert(
       fc.property(fc.subarray(allKeys, { minLength: 0 }), (markedKeys) => {
-        const flags = DirtyFlags.make(allKeys);
+        const flags = createDirtyFlags(allKeys);
         for (const k of markedKeys) flags.mark(k);
 
         const dirty = flags.getDirty();
@@ -763,16 +762,16 @@ describe('Invariant 14: production source is Effect-free', () => {
 // ===========================================================================
 // INVARIANT 15: Compositor lifecycle contract
 //
-// Compositor.create() returns a { compositor, lifetime } handle synchronously.
-// compute() is a synchronous pure fold over the current quantizer set and may be
-// invoked any number of times; the Lifetime owns teardown of the reactive
+// Compositor.create() returns a compositor that owns its own teardown (dispose())
+// synchronously. compute() is a synchronous pure fold over the current quantizer
+// set and may be invoked any number of times; dispose() tears down the reactive
 // `changes` kernel. This documents that compute() yields a valid CompositeState
 // and stays stable across repeated calls.
 // ===========================================================================
 
 describe('Invariant 15: Compositor lifecycle', () => {
   test('compute() succeeds on a freshly created compositor', () => {
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     const result = compositor.compute();
     expect(result).toBeDefined();
     expect(result.discrete).toBeDefined();
@@ -783,7 +782,7 @@ describe('Invariant 15: Compositor lifecycle', () => {
 
   test('a compositor keeps working across multiple compute calls', () => {
     // Multiple sequential computes must all succeed and return stable shapes.
-    const { compositor } = Compositor.create();
+    const compositor = Compositor.create();
     const r1 = compositor.compute();
     const r2 = compositor.compute();
     const r3 = compositor.compute();

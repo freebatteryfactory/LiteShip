@@ -6,7 +6,7 @@
 
 # error/src
 
-`@czap/error` — the one LiteShip error algebra.
+`@liteship/error` — the one LiteShip error algebra.
 
 A composable, zero-dependency tagged-error coproduct. Errors are tagged DATA
 values (no class hierarchy): differentiated by a `_tag` field, assembled by
@@ -25,7 +25,7 @@ any tag-keyed error channel a downstream project already runs — e.g. Effect's
 Wave 8; this stays a compatibility property, never a dependency.)
 
 Each variant name is BOTH the type and the constructor (declaration merging),
-mirroring the `@czap/core` brand idiom: `ValidationError` is a type in type
+mirroring the `@liteship/core` brand idiom: `ValidationError` is a type in type
 position and a factory in value position.
 
 Extensible + global: a downstream project imports this package, composes its
@@ -34,6 +34,7 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Interfaces
 
+- [DiagnosticEntry](interfaces/DiagnosticEntry.md)
 - [Err](interfaces/Err.md)
 - [HostCapabilityError](interfaces/HostCapabilityError.md)
 - [IntegrityError](interfaces/IntegrityError.md)
@@ -48,6 +49,9 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Type Aliases
 
+- [DiagnosticArea](type-aliases/DiagnosticArea.md)
+- [DiagnosticCode](type-aliases/DiagnosticCode.md)
+- [DiagnosticCodeFor](type-aliases/DiagnosticCodeFor.md)
 - [LiteShipError](type-aliases/LiteShipError.md)
 - [LiteShipErrorTag](type-aliases/LiteShipErrorTag.md)
 - [Result](type-aliases/Result.md)
@@ -55,6 +59,8 @@ helper unchanged — zero rebuild, zero fork.
 
 ## Variables
 
+- [DIAGNOSTIC\_AREAS](variables/DIAGNOSTIC_AREAS.md)
+- [DIAGNOSTIC\_REGISTRY](variables/DIAGNOSTIC_REGISTRY.md)
 - [HostCapabilityError](variables/HostCapabilityError.md)
 - [IntegrityError](variables/IntegrityError.md)
 - [InvariantViolationError](variables/InvariantViolationError.md)
@@ -69,6 +75,7 @@ helper unchanged — zero rebuild, zero fork.
 
 - [assertNever](functions/assertNever.md)
 - [err](functions/err.md)
+- [explainDiagnostic](functions/explainDiagnostic.md)
 - [getTag](functions/getTag.md)
 - [hasTag](functions/hasTag.md)
 - [isErr](functions/isErr.md)

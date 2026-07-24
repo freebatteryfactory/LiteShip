@@ -26,10 +26,10 @@ afterEach(() => {
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';
   const orig = process.stdout.write.bind(process.stdout);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const result = await fn();
     return { result, stdout };
@@ -41,10 +41,10 @@ async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdo
 async function captureStderr<T>(fn: () => Promise<T>): Promise<{ result: T; stderr: string }> {
   let stderr = '';
   const orig = process.stderr.write.bind(process.stderr);
-  (process.stderr as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const result = await fn();
     return { result, stderr };
@@ -66,7 +66,7 @@ describe('gauntlet command (unit)', () => {
     expect(receipt.phases.length).toBeGreaterThan(10);
     expect(receipt.phases).toContain('build');
     expect(receipt.phases).toContain('flex:verify');
-    expect(receipt.phases[0]).toBe('rig-check');
+    expect(receipt.phases[0]).toBe('environment-check');
   });
 
   it('dry-run phases are exactly the canonical projection (CUT D8 — no private CLI copy)', async () => {
@@ -81,6 +81,7 @@ describe('gauntlet command (unit)', () => {
     const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
     expect(receipt.status).toBe('failed');
     expect(receipt.command).toBe('gauntlet');
+    expect(receipt.code).toBe('cli/invalid-argument');
     expect(receipt.error).toBe('unexpected_argv');
     expect(receipt.argv).toEqual(['foo']);
   });
@@ -96,7 +97,7 @@ describe('gauntlet command (unit)', () => {
   });
 
   it('refuses the live run outside the LiteShip workspace without spawning anything', async () => {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-gauntlet-guard-'));
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-gauntlet-guard-'));
     try {
       writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'stranger-project', version: '0.0.0' }));
       const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
@@ -104,6 +105,7 @@ describe('gauntlet command (unit)', () => {
       expect(spawnSyncMock).not.toHaveBeenCalled();
       const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
       expect(receipt.status).toBe('failed');
+      expect(receipt.code).toBe('cli/workspace-required');
       expect(receipt.error).toMatch(/LiteShip-workspace verb/);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
@@ -125,25 +127,26 @@ describe('gauntlet command (unit)', () => {
     expect(typeof receipt.elapsedMs).toBe('number');
   });
 
-  // Czap-named tmp workspace: passes the isLiteShipWorkspace guard while
+  // Liteship-named tmp workspace: passes the isLiteShipWorkspace guard while
   // keeping the phase-timings artifact state under test control (the repo
   // root may carry a real benchmarks/ artifact from an earlier run).
-  function makeCzapTmp(): string {
-    const tmp = mkdtempSync(join(tmpdir(), 'czap-gauntlet-ws-'));
-    writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+  function makeLiteshipTmp(): string {
+    const tmp = mkdtempSync(join(tmpdir(), 'liteship-gauntlet-ws-'));
+    writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0' }));
     return tmp;
   }
 
   it('live run failure propagates the gauntlet exit status (no artifact: bare status)', async () => {
     spawnSyncMock.mockReturnValue({ status: 7 });
-    const tmp = makeCzapTmp();
+    const tmp = makeLiteshipTmp();
     try {
       const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
       expect(result).toBe(7);
       const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
       expect(receipt.status).toBe('failed');
+      expect(receipt.code).toBe('cli/command-failed');
       expect(receipt.error).toBe('gauntlet exited with status 7');
-      expect(receipt.hint).toBe('List phases: czap gauntlet --dry-run');
+      expect(receipt.hint).toBe('List phases: liteship gauntlet --dry-run');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -151,7 +154,7 @@ describe('gauntlet command (unit)', () => {
 
   it('live run failure names the failing phase from the executor artifact', async () => {
     spawnSyncMock.mockReturnValue({ status: 1 });
-    const tmp = makeCzapTmp();
+    const tmp = makeLiteshipTmp();
     try {
       mkdirSync(join(tmp, 'benchmarks'), { recursive: true });
       writeFileSync(
@@ -162,7 +165,7 @@ describe('gauntlet command (unit)', () => {
       expect(result).toBe(1);
       const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
       expect(receipt.error).toBe('gauntlet failed in phase flex:verify (exit 1)');
-      expect(receipt.hint).toBe('List phases: czap gauntlet --dry-run');
+      expect(receipt.hint).toBe('List phases: liteship gauntlet --dry-run');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -170,7 +173,7 @@ describe('gauntlet command (unit)', () => {
 
   it('a stale PASSING artifact does not pollute the failure message', async () => {
     spawnSyncMock.mockReturnValue({ status: 2 });
-    const tmp = makeCzapTmp();
+    const tmp = makeLiteshipTmp();
     try {
       mkdirSync(join(tmp, 'benchmarks'), { recursive: true });
       writeFileSync(
@@ -188,7 +191,7 @@ describe('gauntlet command (unit)', () => {
 
   it('live run killed by a signal (status null) reports signal and exits 1', async () => {
     spawnSyncMock.mockReturnValue({ status: null });
-    const tmp = makeCzapTmp();
+    const tmp = makeLiteshipTmp();
     try {
       const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
       expect(result).toBe(1);

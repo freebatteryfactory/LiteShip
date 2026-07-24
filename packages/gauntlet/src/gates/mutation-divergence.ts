@@ -41,7 +41,7 @@
  * the file.
  *
  * It {@link requireMutation} (and reads the IR for level propagation), so it runs
- * ONLY on the opt-in host path (`czap check --ir --mutate` — the CLI generates +
+ * ONLY on the opt-in host path (`liteship check gates --ir --mutate` — the CLI generates +
  * runs + injects the facts); the lean MCP/command path does not run it. Composition
  * over inheritance: a `_tag` fold + standalone functions, no class.
  *
@@ -56,7 +56,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import type { MutationFacts, MutantOutcome } from '../mutation-facts.js';
+import type { MutationFacts, MutantOutcome } from '../facts/mutation-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/mutation-divergence';
@@ -244,7 +244,7 @@ function mutationContext(ir: RepoIR, mutation: MutationFacts): GateContext {
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 /** A fixtures-only ordinary (L1) file id. */
 const L1_FILE = 'packages/x/src/a.ts';
 
@@ -252,7 +252,7 @@ const L1_FILE = 'packages/x/src/a.ts';
 function fixtureIR(): RepoIR {
   return makeRepoIR({
     files: [
-      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
       { id: L1_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: null },
     ],
   });
@@ -269,6 +269,10 @@ function killedOutcome(): MutantOutcome {
     operator: 'equality',
     originalText: '===',
     mutatedText: '!==',
+    coveringTests: ['tests/fixture.test.ts'],
+    equivalentJustification: null,
+    equivalentJustificationDigest: null,
+    subsumedBy: [],
   };
 }
 
@@ -283,6 +287,10 @@ function survivedL4Outcome(): MutantOutcome {
     operator: 'conditional-boundary',
     originalText: '>=',
     mutatedText: '>',
+    coveringTests: ['tests/fixture.test.ts'],
+    equivalentJustification: null,
+    equivalentJustificationDigest: null,
+    subsumedBy: [],
   };
 }
 
@@ -302,6 +310,7 @@ const FIXTURES = {
     name: 'mutation facts with a SURVIVED L4 mutant (untested behaviour the gate must flag)',
     context: mutationContext(fixtureIR(), {
       outcomes: [survivedL4Outcome()],
+      operatorApplicability: [{ file: L4_FILE, operator: 'conditional-boundary', applicableMutants: 1 }],
       scoreBaseline: {},
     }),
   },
@@ -309,6 +318,7 @@ const FIXTURES = {
     name: 'mutation facts with only a KILLED L4 mutant at its committed score baseline (adequate, no regression)',
     context: mutationContext(fixtureIR(), {
       outcomes: [killedOutcome()],
+      operatorApplicability: [{ file: L4_FILE, operator: 'equality', applicableMutants: 1 }],
       // The file's measured score is 1.0 (1 killed / 1 total); the baseline is 1.0,
       // so there is no ratchet drop. A clean green.
       scoreBaseline: { [L4_FILE]: 1.0 },

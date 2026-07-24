@@ -1,10 +1,10 @@
 /**
- * @czap/astro type spine -- Astro 7 integration + <Quantize> component.
+ * @liteship/astro type spine -- Astro 7 integration + <Quantize> component.
  */
 
-import type { Boundary, Quantizer, CapTier } from './core.d.ts';
-import type { EdgeHostAdapterConfig, EdgeHostResolution } from './edge.d.ts';
-import type { PluginConfig } from './vite.d.ts';
+import type { Boundary, Quantizer, CapTier } from './core.js';
+import type { EdgeHostAdapterConfig, EdgeHostResolution } from './edge.js';
+import type { PluginConfig } from './vite.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. INTEGRATION
@@ -30,13 +30,13 @@ export interface IntegrationConfig {
 }
 
 export declare function integration(config?: IntegrationConfig): import('astro').AstroIntegration;
-export declare function czap(config?: IntegrationConfig): import('astro').AstroIntegration;
+export declare function liteship(config?: IntegrationConfig): import('astro').AstroIntegration;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. QUANTIZE COMPONENT PROPS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
+export interface QuantizeProps<B extends Boundary = Boundary> {
   readonly boundary: B;
   readonly quantizer?: Quantizer<B>;
   readonly initialState?: string;
@@ -54,10 +54,7 @@ export interface ServerIslandContext {
   readonly detectedCapTier?: CapTier;
 }
 
-export declare function resolveInitialState<B extends Boundary.Shape>(
-  boundary: B,
-  context?: ServerIslandContext,
-): string;
+export declare function resolveInitialState<B extends Boundary>(boundary: B, context?: ServerIslandContext): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 4. MIDDLEWARE / FETCH LAYER / DIAGNOSTICS
@@ -65,13 +62,13 @@ export declare function resolveInitialState<B extends Boundary.Shape>(
 
 export type CrossOriginEmbedderPolicy = 'require-corp' | 'credentialless';
 
-export interface CzapMiddlewareConfig {
+export interface LiteshipMiddlewareConfig {
   readonly edge?: EdgeHostAdapterConfig;
   readonly detect?: boolean;
   readonly workers?: { readonly enabled?: boolean; readonly coep?: CrossOriginEmbedderPolicy };
 }
 
-export interface CzapLocals {
+export interface LiteshipLocals {
   readonly tiers: Readonly<{
     readonly tier: import('./core.d.ts').CapTier;
     readonly motion: import('./core.d.ts').MotionTier;
@@ -89,17 +86,17 @@ export interface CzapLocals {
   };
 }
 
-export declare function czapMiddleware(config?: CzapMiddlewareConfig): unknown;
+export declare function liteshipMiddleware(config?: LiteshipMiddlewareConfig): unknown;
 
 export type FetchLayerNext = (request: Request) => Response | Promise<Response>;
-export type CzapFetchLayer = (request: Request, next: FetchLayerNext) => Promise<Response>;
+export type LiteshipFetchLayer = (request: Request, next: FetchLayerNext) => Promise<Response>;
 
-export interface CzapFetchLayerConfig extends CzapMiddlewareConfig {
+export interface LiteshipFetchLayerConfig extends LiteshipMiddlewareConfig {
   readonly serveFromEdge?: (request: Request, resolution: EdgeHostResolution) => boolean;
   readonly render?: (resolution: EdgeHostResolution) => Response;
 }
 
-export declare function czapFetchLayer(config?: CzapFetchLayerConfig): CzapFetchLayer;
+export declare function liteshipFetchLayer(config?: LiteshipFetchLayerConfig): LiteshipFetchLayer;
 export declare function serializeBoundaryCss(resolution: EdgeHostResolution): string;
 
 export interface AstroLoggerLike {

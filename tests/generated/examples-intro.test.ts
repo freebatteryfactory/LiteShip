@@ -1,6 +1,6 @@
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
-import { contentAddressOf } from '../../packages/core/src/content-address.js';
+import { contentAddressOf } from '../../packages/core/src/evidence/content-address.js';
 import { compileIntro } from '../../examples/scenes/intro.js';
 import { SceneRuntime } from '../../packages/scene/src/runtime.js';
 import { scaledTimeout } from '../../vitest.shared.js';

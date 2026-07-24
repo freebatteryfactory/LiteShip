@@ -6,7 +6,7 @@
 
 # Interface: AuditAllowlistEntry
 
-Defined in: [audit/src/policy.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L15)
+Defined in: [audit/src/policy.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L16)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/policy.ts:15](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **filePrefix?**: `string`
 
-Defined in: [audit/src/policy.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L27)
+Defined in: [audit/src/policy.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L28)
 
 ***
 
@@ -22,14 +22,14 @@ Defined in: [audit/src/policy.ts:27](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **package?**: `string`
 
-Defined in: [audit/src/policy.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L26)
+Defined in: [audit/src/policy.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L27)
 
 npm package name owning the allowlisted file. When set, `filePrefix` is
-PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
+PACKAGE-RELATIVE (e.g. `src/client-directives/adaptive.ts`) and matching
 resolves the finding's file through the profile's discovered package
 roots — so the same entry suppresses in the monorepo
 (`packages/astro/...`) and in a consumer install
-(`node_modules/.pnpm/.../@czap/astro/...`). Without it, `filePrefix` is
+(`node_modules/.pnpm/.../@liteship/astro/...`). Without it, `filePrefix` is
 matched against the repo-root-relative finding path verbatim.
 
 ***
@@ -38,7 +38,7 @@ matched against the repo-root-relative finding path verbatim.
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/policy.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L29)
+Defined in: [audit/src/policy.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L30)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/policy.ts:29](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **rule**: `string`
 
-Defined in: [audit/src/policy.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L16)
+Defined in: [audit/src/policy.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L17)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [audit/src/policy.ts:16](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **summaryIncludes?**: `string`
 
-Defined in: [audit/src/policy.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L28)
+Defined in: [audit/src/policy.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L29)

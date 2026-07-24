@@ -33,8 +33,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { encode as cborgEncode } from 'cborg';
-import { CanonicalCbor } from '@czap/core';
-import { bytesToHex } from '@czap/canonical';
+import { CanonicalCbor } from '@liteship/core';
+import { bytesToHex } from '@liteship/canonical';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');
@@ -63,7 +63,7 @@ function packageSources(): string[] {
 
 describe('typed-ref — the receipt byte law is cborg-backed (intentional)', () => {
   it('TypedRef.canonicalize encodes via cborg', () => {
-    const src = read('packages/core/src/typed-ref.ts');
+    const src = read('packages/core/src/evidence/typed-ref.ts');
     expect(src).toMatch(/import\s*\{\s*encode\s*\}\s*from\s*'cborg'/);
     expect(src).toMatch(/canonicalize\s*=\s*\(value:\s*unknown\):\s*Uint8Array\s*=>\s*encode\(value\)/);
   });
@@ -71,7 +71,7 @@ describe('typed-ref — the receipt byte law is cborg-backed (intentional)', () 
   it('canonicalize feeds SHA-256 (the only hashing primitive in typed-ref)', () => {
     // The only hashing primitive here is SHA-256; there is no fnv1a *call* in this
     // module (the repo-wide cage below proves no fnv1a minter consumes canonicalize).
-    const src = read('packages/core/src/typed-ref.ts');
+    const src = read('packages/core/src/evidence/typed-ref.ts');
     expect(src).toMatch(/crypto\.subtle\.digest\(\s*'SHA-256'/);
     expect(src).toMatch(/return\s*`sha256:/);
     expect(src).not.toMatch(/fnv1a(Bytes)?\(/); // no fnv1a hashing call — sha256 only
@@ -79,7 +79,7 @@ describe('typed-ref — the receipt byte law is cborg-backed (intentional)', () 
 });
 
 describe('typed-ref — the docs NAME the receipt byte law (no more lying comments)', () => {
-  const src = read('packages/core/src/typed-ref.ts');
+  const src = read('packages/core/src/evidence/typed-ref.ts');
 
   it('drops the false "→ FNV-1a hash" claim (this module produces sha256)', () => {
     expect(src).not.toMatch(/FNV-1a hash/);
@@ -115,7 +115,7 @@ describe('typed-ref — no fnv1a identity path feeds through TypedRef.canonicali
   it('LiveCell mints its envelope id via the fnv1a IDENTITY law, never the sha256 receipt path', () => {
     // CUT live-cell — LiveCell is content-addressing, not a receipt. It must mint
     // through CanonicalCbor → fnv1a and never import the typed-ref receipt hashers.
-    const src = read('packages/core/src/live-cell.ts');
+    const src = read('packages/core/src/reactive/live-cell.ts');
     expect(src).toMatch(/fnv1aBytes\(\s*CanonicalCbor\.encode/);
     // No IMPORT of the typed-ref receipt hashers (the bare token appears in prose).
     expect(src, 'live-cell must not import the sha256 receipt hashers').not.toMatch(/from\s*['"]\.\/typed-ref/);
@@ -124,9 +124,9 @@ describe('typed-ref — no fnv1a identity path feeds through TypedRef.canonicali
   it('the B1 identity files do not reference TypedRef.canonicalize at all', () => {
     const B1_IDENTITY_FILES = [
       'packages/quantizer/src/quantizer.ts',
-      'packages/core/src/composable.ts',
+      'packages/core/src/authoring/composable.ts',
       'packages/core/src/ecs.ts',
-      'packages/core/src/config.ts',
+      'packages/core/src/authoring/config.ts',
     ];
     for (const rel of B1_IDENTITY_FILES) {
       expect(read(rel), `${rel} must not reference TypedRef.canonicalize`).not.toMatch(/TypedRef(Module)?\.canonicalize/);

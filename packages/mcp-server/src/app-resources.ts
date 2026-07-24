@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { NotFoundError } from '@czap/error';
+import { NotFoundError } from '@liteship/error';
 import { renderCapsuleInspectWidget } from './app-render.js';
 import type { McpUiResource, McpUiResourceContents, McpUiResourceMeta } from './ui-resources.js';
 

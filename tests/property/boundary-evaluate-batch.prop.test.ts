@@ -5,7 +5,7 @@
  *
  * `evaluateBatch` routes through `WASMDispatch.kernels().batchBoundaryEval`,
  * which is `fallbackKernels` (the `rawIndexF32` loop) by default and the Rust
- * `czap-compute` kernel after `WASMDispatch.load`. The 0.2.1 escape hatch only
+ * `liteship-compute` kernel after `WASMDispatch.load`. The 0.2.1 escape hatch only
  * ships honestly if "accelerated" never means "different": this proves
  * output-identity on both branches, including the f32 edge vectors where an
  * f64-vs-f32 split would surface. The fallback half runs everywhere; the
@@ -17,15 +17,15 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fc from 'fast-check';
-import { Boundary, rawIndexF32, WASMDispatch, WASM_BATCH_MAX } from '@czap/core';
+import { Boundary, rawIndexF32, WASMDispatch, WASM_BATCH_MAX, defineBoundary } from '@liteship/core';
 import { wasmAbsent } from '../helpers/capabilities.js';
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
-  return Boundary.make({ input: 'viewport.width', at: at as never });
+  return defineBoundary({ input: 'viewport.width', at: at as never });
 }
 
-/** Strictly-ascending, deduped thresholds (the Boundary.make contract). */
+/** Strictly-ascending, deduped thresholds (the defineBoundary contract). */
 const ascendingThresholds = fc
   .array(fc.double({ min: -1e6, max: 1e6, noNaN: true }), { minLength: 1, maxLength: 12 })
   .map((xs) => [...new Set(xs)].sort((a, b) => a - b));
@@ -85,7 +85,7 @@ describe('the WASM batch cap matches the crate', () => {
     // Drift guard: the chunk width MUST equal the crate's static buffer cap, or
     // chunking silently mis-sizes and the >cap entries diverge again.
     const rust = readFileSync(
-      resolve(import.meta.dirname, '..', '..', 'crates/czap-compute/src/boundary.rs'),
+      resolve(import.meta.dirname, '..', '..', 'crates/liteship-compute/src/boundary.rs'),
       'utf8',
     );
     const match = rust.match(/const\s+MAX_VALUES:\s*usize\s*=\s*(\d+)/);
@@ -99,7 +99,7 @@ const WASM_PATH = resolve(
   import.meta.dirname,
   '..',
   '..',
-  'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm',
+  'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm',
 );
 // Single-sourced in the canonical capability symbol table (same artifact path) so the
 // capability-gate linker can prove this guard derives from the `wasm-absent` probe.

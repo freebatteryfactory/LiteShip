@@ -1,10 +1,10 @@
 /**
- * @czap/vite type spine -- Vite 8 plugin for @token, @theme, @style, @quantize processing + HMR.
+ * @liteship/vite type spine -- Vite 8 plugin for @token, @theme, @style, @quantize processing + HMR.
  */
 
-import type { Boundary } from './core.d.ts';
-import type { Token, Theme, Style } from './design.d.ts';
-import type { BoundaryManifest, CompiledOutputs } from './edge.d.ts';
+import type { Boundary } from './core.js';
+import type { Token, Theme, Style } from './design.js';
+import type { BoundaryManifest, CompiledOutputs } from './edge.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. PRIMITIVE KIND
@@ -13,12 +13,12 @@ import type { BoundaryManifest, CompiledOutputs } from './edge.d.ts';
 export type PrimitiveKind = 'boundary' | 'token' | 'theme' | 'style';
 
 export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
-  ? Boundary.Shape
+  ? Boundary
   : K extends 'token'
-    ? Token.Shape
+    ? Token
     : K extends 'theme'
-      ? Theme.Shape
-      : Style.Shape;
+      ? Theme
+      : Style;
 
 export interface PrimitiveResolution<K extends PrimitiveKind> {
   readonly primitive: PrimitiveShape<K>;
@@ -79,7 +79,7 @@ export interface QuantizeSheetContext {
 
 export declare function compileQuantizeBlock(
   block: QuantizeBlock,
-  boundary: Boundary.Shape,
+  boundary: Boundary,
   sheet?: QuantizeSheetContext,
 ): string;
 
@@ -98,7 +98,7 @@ export interface TokenBlock {
 
 export declare function parseTokenBlocks(css: string, sourceFile: string): readonly TokenBlock[];
 
-export declare function compileTokenBlock(block: TokenBlock, token: Token.Shape): string;
+export declare function compileTokenBlock(block: TokenBlock, token: Token): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 5. @theme CSS TRANSFORM
@@ -113,7 +113,7 @@ export interface ThemeBlock {
 
 export declare function parseThemeBlocks(css: string, sourceFile: string): readonly ThemeBlock[];
 
-export declare function compileThemeBlock(block: ThemeBlock, theme: Theme.Shape): string;
+export declare function compileThemeBlock(block: ThemeBlock, theme: Theme): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 6. @style CSS TRANSFORM
@@ -128,7 +128,7 @@ export interface StyleBlock {
 
 export declare function parseStyleBlocks(css: string, sourceFile: string): readonly StyleBlock[];
 
-export declare function compileStyleBlock(block: StyleBlock, style: Style.Shape): string;
+export declare function compileStyleBlock(block: StyleBlock, style: Style): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 7. PRIMITIVE RESOLUTION (generic)
@@ -160,12 +160,12 @@ export declare function primitiveSearchPatterns(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type VirtualModuleId =
-  | 'virtual:czap/tokens'
-  | 'virtual:czap/tokens.css'
-  | 'virtual:czap/boundaries'
-  | 'virtual:czap/themes'
-  | 'virtual:czap/wasm-url'
-  | 'virtual:czap/config';
+  | 'virtual:liteship/tokens'
+  | 'virtual:liteship/tokens.css'
+  | 'virtual:liteship/boundaries'
+  | 'virtual:liteship/themes'
+  | 'virtual:liteship/wasm-url'
+  | 'virtual:liteship/config';
 
 export type BoundaryAssetUrlMap = Readonly<Record<string, Readonly<Record<number, string>>>>;
 
@@ -198,7 +198,7 @@ export declare function serializeBoundaryOutput(output: CompiledOutputs): string
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface HMRPayload {
-  readonly type: 'czap:update';
+  readonly type: 'liteship:update';
   readonly boundary: string;
   readonly css?: string;
   readonly uniforms?: Record<string, number>;

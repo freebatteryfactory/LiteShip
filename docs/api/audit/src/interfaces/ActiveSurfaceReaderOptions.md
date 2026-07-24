@@ -19,7 +19,7 @@ Injected inputs for [buildActiveSurfaceFacts](../functions/buildActiveSurfaceFac
 Defined in: [audit/src/active-surface-reader.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L72)
 
 Load-bearing field names for the active `export` surface — injected by the
-HOST from the real `@czap/core` type (`keyof ExportNode`).
+HOST from the real `@liteship/core` type (`keyof ExportNode`).
 
 ***
 
@@ -53,5 +53,5 @@ Absolute repo root; every relative path resolves against it.
 Defined in: [audit/src/active-surface-reader.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L67)
 
 Load-bearing field names for the active `transition` surface — injected by the
-HOST from the real `@czap/core` type (`keyof TransitionNode`), never derived
+HOST from the real `@liteship/core` type (`keyof TransitionNode`), never derived
 inside audit (audit-leaf-purity / D9b).

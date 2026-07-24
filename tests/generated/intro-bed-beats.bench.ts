@@ -2,7 +2,7 @@
 import { bench } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { IoError, ValidationError } from '@czap/error';
+import { IoError, ValidationError } from '@liteship/error';
 import { introBedBeats } from '../../examples/scenes/assets.js';
 
 const cap = introBedBeats;

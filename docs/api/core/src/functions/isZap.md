@@ -6,11 +6,11 @@
 
 # Function: isZap()
 
-> **isZap**\<`T`\>(`p`): `p is Shape<T>`
+> **isZap**\<`T`\>(`p`): `p is Zap<T>`
 
-Defined in: [core/src/index.ts:620](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L620)
+Defined in: [core/src/reactive/primitive.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/primitive.ts#L24)
 
-Narrow a [Primitive](../type-aliases/Primitive.md) to a [Zap](../namespaces/Zap/README.md).
+Narrow a [Primitive](../type-aliases/Primitive.md) to a [Zap](../variables/Zap.md).
 
 ## Type Parameters
 
@@ -26,4 +26,4 @@ Narrow a [Primitive](../type-aliases/Primitive.md) to a [Zap](../namespaces/Zap/
 
 ## Returns
 
-`p is Shape<T>`
+`p is Zap<T>`

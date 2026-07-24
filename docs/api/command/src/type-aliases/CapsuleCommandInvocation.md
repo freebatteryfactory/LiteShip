@@ -8,6 +8,6 @@
 
 > **CapsuleCommandInvocation** = `_CapsuleCommandInvocation`
 
-Defined in: core/dist/command.d.ts:18
+Defined in: core/dist/authoring/command.d.ts:18
 
 Transport-neutral request: a command name + already-parsed args.

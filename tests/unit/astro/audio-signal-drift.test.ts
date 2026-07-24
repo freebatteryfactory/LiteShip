@@ -1,6 +1,6 @@
 /**
- * Drift guard: the LIVE audio producer's DSP (`@czap/astro` audio-signal.ts) is
- * a MIRROR of the OFFLINE reference `detectOnsets` (`@czap/assets` onsets.ts).
+ * Drift guard: the LIVE audio producer's DSP (`@liteship/astro` audio-signal.ts) is
+ * a MIRROR of the OFFLINE reference `detectOnsets` (`@liteship/assets` onsets.ts).
  *
  * LAW (no new unpinned mirror): the runtime RMS + spectral-flux DETECTION
  * FUNCTION must stay equivalent to the reference; the THRESHOLD is the causal
@@ -20,7 +20,7 @@
  *     causal detector is a superset-faithful real-time analog of the offline one).
  */
 import { describe, test, expect } from 'vitest';
-import { detectOnsets } from '@czap/assets';
+import { detectOnsets } from '@liteship/assets';
 import {
   analyseFrame,
   FLUX_BEAT_MULT,

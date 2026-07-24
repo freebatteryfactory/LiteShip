@@ -16,7 +16,7 @@ Compile a lowered scroll-timeline graph into native CSS + a runtime write plan.
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
 ### transitionId
 

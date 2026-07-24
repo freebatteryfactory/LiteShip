@@ -6,7 +6,7 @@
 
 # Interface: BoundarySpec
 
-Defined in: [core/src/boundary.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L405)
+Defined in: [core/src/authoring/boundary.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L392)
 
 BoundarySpec: optional filter that gates whether a boundary is active.
 Enables A/B testing, time-bounded experiments, and device targeting
@@ -14,7 +14,7 @@ without external wrapping logic.
 
 Wired into the Astro runtime `evaluateBoundary` path (host-side gating before
 state transitions). JSON-serializable fields
-(`timeRange`, `experimentId`) round-trip through `data-czap-boundary`;
+(`timeRange`, `experimentId`) round-trip through `data-liteship-boundary`;
 `deviceFilter` is host-only (functions cannot cross the wire).
 
 ## Properties
@@ -23,7 +23,7 @@ state transitions). JSON-serializable fields
 
 > `readonly` `optional` **deviceFilter?**: (`capabilities`) => `boolean`
 
-Defined in: [core/src/boundary.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L407)
+Defined in: [core/src/authoring/boundary.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L394)
 
 Only evaluate this boundary when the device filter returns true.
 
@@ -43,7 +43,7 @@ Only evaluate this boundary when the device filter returns true.
 
 > `readonly` `optional` **experimentId?**: `string`
 
-Defined in: [core/src/boundary.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L411)
+Defined in: [core/src/authoring/boundary.ts:398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L398)
 
 Only evaluate this boundary for participants in this experiment.
 
@@ -53,7 +53,7 @@ Only evaluate this boundary for participants in this experiment.
 
 > `readonly` `optional` **timeRange?**: `object`
 
-Defined in: [core/src/boundary.ts:409](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary.ts#L409)
+Defined in: [core/src/authoring/boundary.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L396)
 
 Only evaluate this boundary within this time range (epoch ms).
 

@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, systemClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { systemClock, type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -19,7 +19,7 @@ const SceneArgsSchema = {
 } as const satisfies CommandJsonSchema;
 
 /** Kernel argsSchema for the `<verb> <scene.ts>` verbs — decodes `scene` to a string. */
-const SceneVerbArgs = S.struct({ scene: S.string });
+const SceneVerbArgs = schema.struct({ scene: schema.string });
 
 /** scene.verify output — the scene id + count of generated tests run. */
 const SceneVerifyPayloadSchema = {
@@ -52,6 +52,34 @@ const SceneRenderPayloadSchema = {
   },
   required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
 } as const satisfies CommandJsonSchema;
+
+/** Structured payload returned by `scene.verify` — the scene id + count of generated tests run. */
+export type SceneVerifyPayload = {
+  readonly sceneId: string;
+  readonly generatedTests: number;
+};
+
+/** Structured payload returned by `scene.compile` — the scene id, track count, and elapsed compile duration. */
+export type SceneCompilePayload = {
+  readonly sceneId: string;
+  readonly trackCount: number;
+  readonly durationMs: number;
+};
+
+/**
+ * Structured payload returned by `scene.render` — mirrors SceneRenderPayloadSchema:
+ * the rendered scene id, output path, frame count, and elapsed render duration,
+ * plus the optional `fps`/`cached` echoes (pre-fps replayed receipts lack `fps`;
+ * `cached` rides the live/replay split).
+ */
+export type SceneRenderPayload = {
+  readonly sceneId: string;
+  readonly output: string;
+  readonly frameCount: number;
+  readonly elapsedMs: number;
+  readonly fps?: number;
+  readonly cached?: boolean;
+};
 
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
@@ -92,7 +120,7 @@ function missingSceneExports(scenePath: string, cap: unknown, contract: unknown)
   ]
     .filter((m): m is string => m !== null)
     .join(' or ');
-  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition`;
+  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: liteship glossary sceneComposition`;
 }
 
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
@@ -115,7 +143,7 @@ export const sceneVerifyCommand = defineCommand({
     if (!cap) {
       return fail(
         'scene.verify',
-        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (czap glossary capsule)`,
+        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (liteship glossary capsule)`,
         1,
       );
     }
@@ -198,7 +226,11 @@ export const sceneRenderCommand = defineCommand({
     outputSchema: SceneRenderPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
-  argsSchema: S.struct({ scene: S.string, output: S.optional(S.string), force: S.optional(S.boolean) }),
+  argsSchema: schema.struct({
+    scene: schema.string,
+    output: schema.optional(schema.string),
+    force: schema.optional(schema.boolean),
+  }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = invocation.args.scene;
     // Omitted output derives <sceneBasename>.mp4 beside the scene file here

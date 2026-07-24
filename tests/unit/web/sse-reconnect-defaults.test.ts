@@ -4,7 +4,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 
 describe('SSE.create reconnect partial override', () => {

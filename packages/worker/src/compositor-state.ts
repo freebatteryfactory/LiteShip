@@ -16,8 +16,8 @@
  * @module
  */
 
-import type { RuntimeCoordinator, ContentAddress } from '@czap/core';
-import { StateName as mkStateName } from '@czap/core';
+import type { RuntimeCoordinator, ContentAddress } from '@liteship/core';
+import { StateName as mkStateName } from '@liteship/core';
 import type { WorkerUpdate, BootstrapQuantizerRegistration, ResolvedStateEntry } from './messages.js';
 import { makeResolvedStateEnvelope } from './messages.js';
 import type {
@@ -73,7 +73,7 @@ interface PreparedRegistration {
 export interface CompositorWorkerRuntimeState {
   // — Worker handles (stable for the lifetime of the state) —
   readonly worker: Worker;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   readonly capacity: number;
   readonly startupTelemetry: CompositorWorkerStartupTelemetry | undefined;
 
@@ -107,7 +107,7 @@ export interface CompositorWorkerRuntimeState {
  */
 export function createCompositorWorkerState(params: {
   readonly worker: Worker;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   readonly capacity: number;
   readonly bootstrapSnapshot: readonly BootstrapQuantizerRegistration[];
   readonly startupTelemetry: CompositorWorkerStartupTelemetry | undefined;
@@ -315,7 +315,7 @@ function sendResolvedStateMessage(
 // ---------------------------------------------------------------------------
 
 /**
- * Register a quantizer, either from a `Boundary.make` result (single-arg)
+ * Register a quantizer, either from a `defineBoundary` result (single-arg)
  * or under an explicit name with a branded boundary (two-arg).
  */
 export function addQuantizer(

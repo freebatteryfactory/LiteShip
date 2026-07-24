@@ -21,7 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import fg from 'fast-glob';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
 import {
   ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
   LLM_STEADY_DIRECTIVE_P99_MAX_NS,
@@ -60,31 +60,30 @@ const sh = (cmd: string): { ok: boolean; out: string } => {
 // block in eslint.config.js.
 const SANCTIONED_CAST_FILES = new Set([
   // Brand factories
-  'packages/core/src/brands.ts',
+  'packages/core/src/schema/brands.ts',
   'packages/core/src/ecs.ts',
   'packages/web/src/types.ts',
 
   // Tuple + generic-preservation helpers
-  'packages/core/src/tuple.ts',
-  'packages/core/src/cell.ts',
-  'packages/core/src/boundary.ts',
-  'packages/core/src/composable.ts',
-  'packages/core/src/blend.ts',
-  'packages/core/src/interpolate.ts',
-  'packages/core/src/op.ts',
+  'packages/core/src/authoring/tuple-map.ts',
+  'packages/core/src/reactive/cell.ts',
+  'packages/core/src/authoring/boundary.ts',
+  'packages/core/src/authoring/composable.ts',
+  'packages/core/src/motion/blend.ts',
+  'packages/core/src/motion/interpolate.ts',
 
   // Compositor / quantizer state bridges
-  'packages/core/src/compositor.ts',
-  'packages/core/src/compositor-pool.ts',
+  'packages/core/src/media/compositor.ts',
+  'packages/core/src/media/compositor-pool.ts',
   'packages/quantizer/src/quantizer.ts',
   'packages/quantizer/src/evaluate.ts',
 
   // FFI / hash primitives
-  'packages/core/src/typed-ref.ts',
-  'packages/core/src/wasm-dispatch.ts',
+  'packages/core/src/evidence/typed-ref.ts',
+  'packages/core/src/wasm/wasm-dispatch.ts',
 
   // Environment / runtime introspection helpers
-  'packages/core/src/diagnostics.ts',
+  'packages/core/src/evidence/diagnostics.ts',
   'packages/worker/src/compositor-startup.ts',
   'packages/detect/src/detect.ts',
   'packages/detect/src/tiers.ts',
@@ -252,14 +251,14 @@ const checks: Check[] = [
       // - worker-runtime-startup-shared: transport overhead includes non-shared
       //   seams (state-delivery:message-receipt) that vary per-replicate by
       //   design; see ADR-0002 worker transport cost floor.
-      // - satellite: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
+      // - adaptive: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
       //   Node+Windows) produces 15-30% replicate-spread swings on each of two
       //   independent 2μs measurements (directive vs manual). Verified across
       //   3 consecutive gauntlet runs on unchanged code: spreads of 5.5%,
       //   49.7%, 25.7% with median always under the 15% hard-gate threshold
       //   (8.9%, 14.4%, 10.4%). The hard gate is the actual regression signal.
       // - worker: 3μs hot-path measurement of normalized worker fallback evaluation
-      //   vs canonical Boundary.evaluate. Same shape as satellite — sub-5μs
+      //   vs canonical Boundary.evaluate. Same shape as adaptive — sub-5μs
       //   measurement on Windows produces the occasional one-replicate outlier
       //   (e.g. 4/5 reps within ±6%, one rep at 18%) that crosses the
       //   threshold-based bucket detector even though the median overhead is
@@ -339,7 +338,7 @@ const checks: Check[] = [
       // benign source-fingerprint drift from intermediate phases — which is
       // exactly the noise the previous "fingerprint-drift(non-blocking)"
       // label was papering over. Trust the gauntlet's prior pass instead.
-      if (process.env.CZAP_GAUNTLET === '1') {
+      if (process.env.LITESHIP_GAUNTLET === '1') {
         return {
           pass: docsCheck.ok,
           detail: `feedback-verify=trusted-from-gauntlet-phase docs-check=${docsCheck.ok}`,
@@ -433,7 +432,7 @@ const checks: Check[] = [
         //   cachedProjection  — defineAsset / BeatMarkerProjection / WavMetadataProjection
         //   sceneComposition  — examples.intro, scene.beat-binding
         //   siteAdapter       — Remotion + Cloudflare host adapters
-        //   policyGate        — core.escalation.choose-rung (the permission/authz check)
+        //   policyGate        — core.escalation.choose-tier (the permission/authz check)
         const requiredArms = allArms;
         const missing = requiredArms.filter((a) => !kinds.has(a));
         if (missing.length > 0) {

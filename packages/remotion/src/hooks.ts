@@ -4,8 +4,8 @@
  * @module
  */
 
-import type { CompositeState, VideoFrameOutput } from '@czap/core';
-import { Diagnostics } from '@czap/core';
+import type { CompositeState, VideoFrameOutput } from '@liteship/core';
+import { Diagnostics } from '@liteship/core';
 import { useCurrentFrame } from 'remotion';
 
 // ---------------------------------------------------------------------------
@@ -17,7 +17,7 @@ import { useCurrentFrame } from 'remotion';
  *
  * The returned record is suitable for use directly as a React `style` prop
  * or a Remotion `style` prop -- every key is a CSS variable name (e.g.
- * `--czap-color-fg`) and every value is coerced to a string.
+ * `--liteship-color-fg`) and every value is coerced to a string.
  *
  * @param state - A composite state produced by a `VideoRenderer` frame.
  * @returns A flat `{ [cssVar]: string }` map.
@@ -63,7 +63,7 @@ export function cssVarsFromState(state: CompositeState): Record<string, string> 
 export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex: number): CompositeState {
   if (frames.length === 0) {
     Diagnostics.warnOnce({
-      source: 'czap/remotion',
+      source: 'liteship/remotion',
       code: 'no-frames',
       message:
         'stateAtFrame received 0 frames — did precomputeFrames run? Await it before render (e.g. in calculateMetadata) and pass its result through unmodified.',
@@ -74,7 +74,7 @@ export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex
     // Dedup key stays frame-independent — this fires on every frame past the
     // end during a render; the offending index travels in `detail`.
     Diagnostics.warnOnce({
-      source: 'czap/remotion',
+      source: 'liteship/remotion',
       code: 'frame-overflow',
       message: `stateAtFrame: Remotion asked for a frame past the ${frames.length} precomputed frames — the video will freeze on the last state. Probable cause: VideoConfig fps/durationMs does not match this composition's durationInFrames. Fix: durationMs = Millis(durationInFrames / fps * 1000), or build the renderer with rendererFromRemotionConfig().`,
       detail: { frameIndex, frameCount: frames.length },
@@ -95,7 +95,7 @@ export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex
  *
  * This is the explicit prop-threading half of a deliberate pair: pass the
  * `frames` array directly — pure, no provider required. Its sibling,
- * `Provider` + `useCzapState()` in `composition.js`, resolves the same
+ * `Provider` + `useLiteshipState()` in `composition.js`, resolves the same
  * state via implicit context lookup for deep component trees. Both clamp
  * to the valid frame range and fall back to a structurally-empty
  * `CompositeState`.
@@ -103,11 +103,11 @@ export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex
  * @param frames - Precomputed frames (see {@link precomputeFrames}).
  * @returns State for the current Remotion frame.
  *
- * @see useCzapState for the context-lookup form (no prop threading).
+ * @see useLiteshipState for the context-lookup form (no prop threading).
  *
  * @example
  * ```tsx
- * import { cssVarsFromState, useCompositeState } from '@czap/remotion';
+ * import { cssVarsFromState, useCompositeState } from '@liteship/remotion';
  *
  * function MyComposition({ frames }: { frames: VideoFrameOutput[] }) {
  *   const state = useCompositeState(frames);

@@ -16,7 +16,7 @@
  * @module
  */
 
-import type { AVBridge } from '@czap/core';
+import type { AVBridge } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,7 +34,7 @@ export interface AudioProcessor {
   /** The underlying `AudioWorkletNode`. Connect into the graph directly. */
   readonly node: AudioWorkletNode;
   /** Shared AV bridge advanced 128 samples per worklet render quantum. */
-  readonly bridge: AVBridge.Shape;
+  readonly bridge: AVBridge;
   /** Begin advancing the bridge's sample counter. */
   start(): void;
   /** Pause advancement without tearing down the node. */
@@ -44,5 +44,5 @@ export interface AudioProcessor {
 }
 
 // Re-export the factory from the bootstrap module so callers keep using
-// `import { createAudioProcessor } from '@czap/web'`.
+// `import { createAudioProcessor } from '@liteship/web'`.
 export { createAudioProcessor } from './processor-bootstrap.js';

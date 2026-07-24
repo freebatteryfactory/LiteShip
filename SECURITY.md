@@ -41,8 +41,8 @@ Trust is set explicitly, not by permission default:
 - **Artifact ID validation.** IDs are validated as single path segments (`packages/web/src/stream/sse-pure.ts`, `buildUrl`), preventing path-traversal attempts via runtime URL construction.
 - **HTML trust pipeline.** Stream and LLM HTML flows route through a shared trust gate (`packages/web/src/security/html-trust.ts`) with three modes: `text` (default, no HTML), `sanitized-html` (strips a tag-name blocklist — `script`, `style`, `iframe`, `object`, `embed`, `svg`, `math`, `base`, `meta`, `link`, `noscript`, `form` — plus event-handler attributes, `srcdoc` / `style`, and `javascript:` / `data:text/html` / `data:text/javascript` / `data:application/x-javascript` schemes on url-sink attributes (`href`, `src`, `xlink:href`, `action`, `formaction`, `ping`, `background`, `cite`, `data`, `poster`)), and explicit `trusted-html` (caller asserts via an opt-in flag, otherwise downgrades to `sanitized-html`). The DOM morph routes through this same pipeline at `packages/web/src/morph/diff-pure.ts:31` (`createHtmlFragment(html, { policy: 'sanitized-html' })`); there is no third unguarded `innerHTML` path in the shipped runtime. Parsing happens via `<template>.innerHTML` (a non-live, fragment-parser context), which removes the classic mXSS re-serialization vector for the `createHtmlFragment` path; `resolveHtmlString` does re-serialize and so retains a narrower mXSS surface around elements whose serialization differs from their parse (rare; `<noscript>` is now blocklisted). The sanitizer is bespoke (not DOMPurify) and is exercised by `tests/regression/red-team-runtime.test.ts` (regression cases including `<script>`, `<iframe>`, `<embed>`, `<object>`, `<svg>`, `<math>`, `<style>`, `<base>`, `<meta>`, `<link>`, `<form>`, `<noscript>`, `formaction`/`action`/`ping` `javascript:` schemes, and `data:`-variant URI schemes on url-sink attributes); for high-assurance deployments, an independent audit before relying on it as the sole defense is recommended.
 - **Theme/CSS sanitization.** Theme compilation (`compileTheme` in `packages/edge/src/theme-compiler.ts`) rejects unsafe prefixes (e.g. attempts to escape custom-property scoping) and CSS-breaking token values.
-- **Boundary state surface.** Boundary state application (`packages/astro/src/runtime/boundary.ts`) filters CSS keys to `--czap-*` and DOM attributes to `role` / `aria-*`. Arbitrary attribute injection is rejected at the application layer.
-- **Bootstrap snapshot hardening.** The `__CZAP_DETECT__` snapshot is non-enumerable, frozen, and intentionally minimal. Astro integration installs the runtime policy in two places: (1) a module-private store inside `packages/astro/src/runtime/policy.ts` is the canonical source of truth — a closure no external script can reach via `Object.defineProperty`; (2) a frozen `window.__CZAP_RUNTIME_POLICY__` cross-bundle broadcast is published once per realm with `configurable: false` + `writable: false`, so an attacker who later runs script on the page cannot redefine the global. HMR re-bootstraps and test harnesses update the module-private store; the window broadcast stays locked at first publish. Reads (`readRuntimePolicy`) check the module-private store first and fall back to the broadcast only for consumers loaded as a separate bundle.
+- **Boundary state surface.** Boundary state application (`packages/astro/src/runtime/boundary.ts`) filters CSS keys to `--liteship-*` and DOM attributes to `role` / `aria-*`. Arbitrary attribute injection is rejected at the application layer.
+- **Bootstrap snapshot hardening.** The `__LITESHIP_DETECT__` snapshot is non-enumerable, frozen, and intentionally minimal. Astro integration installs the runtime policy in two places: (1) a module-private store inside `packages/astro/src/runtime/policy.ts` is the canonical source of truth — a closure no external script can reach via `Object.defineProperty`; (2) a frozen `window.__LITESHIP_RUNTIME_POLICY__` cross-bundle broadcast is published once per realm with `configurable: false` + `writable: false`, so an attacker who later runs script on the page cannot redefine the global. HMR re-bootstraps and test harnesses update the module-private store; the window broadcast stays locked at first publish. Reads (`readRuntimePolicy`) check the module-private store first and fall back to the broadcast only for consumers loaded as a separate bundle.
 - **No eval, no new Function.** Untrusted text never becomes executable JavaScript at runtime. Verified by grep across `packages/*/src/`; the discipline is enforced by code review, not by an ESLint rule today (a `no-eval` / `no-new-func` rule is on the roadmap). WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; the no-WASM fallback (`packages/core/src/wasm-fallback.ts`) keeps the same kernels available in pure TypeScript.
 
 ## CSP and Trusted Types
@@ -57,16 +57,16 @@ Runtime code is compatible with strict CSP policies in the sense that LiteShip i
 
 ### Trusted Types
 
-LiteShip builds HTML through one helper — `createHtmlFragment` in `packages/web/src/security/html-trust.ts` — used by both the DOM morph and the LLM session HTML sink (`packages/astro/src/runtime/llm-session.ts`, which builds the sanitized fragment and `replaceChildren`s it into the target rather than assigning `innerHTML` directly). The helper's only `innerHTML` write lands on a detached `<template>` inside `createHtmlFragment` (`assignInnerHTML`), after the shared trust pipeline (`text` / `sanitized-html` / explicit `trusted-html`) has run. Under Trusted Types enforcement that write is attested by the `czap` policy described below, so it does not throw.
+LiteShip builds HTML through one helper — `createHtmlFragment` in `packages/web/src/security/html-trust.ts` — used by both the DOM morph and the LLM session HTML sink (`packages/astro/src/runtime/llm-session.ts`, which builds the sanitized fragment and `replaceChildren`s it into the target rather than assigning `innerHTML` directly). The helper's only `innerHTML` write lands on a detached `<template>` inside `createHtmlFragment` (`assignInnerHTML`), after the shared trust pipeline (`text` / `sanitized-html` / explicit `trusted-html`) has run. Under Trusted Types enforcement that write is attested by the `liteship` policy described below, so it does not throw.
 
-As of this version, **the runtime itself routes `innerHTML` writes through a `czap` Trusted Types policy when `window.trustedTypes` is available** (`packages/web/src/security/html-trust.ts`). If the host has not pre-installed a `czap` policy, the runtime creates a passthrough one on first use — sanitization still runs upstream of the policy callback, so the policy is the Trusted Types attestation, not a second sanitizer.
+As of this version, **the runtime itself routes `innerHTML` writes through a `liteship` Trusted Types policy when `window.trustedTypes` is available** (`packages/web/src/security/html-trust.ts`). If the host has not pre-installed a `liteship` policy, the runtime creates a passthrough one on first use — sanitization still runs upstream of the policy callback, so the policy is the Trusted Types attestation, not a second sanitizer.
 
 A host can pre-install a stricter policy if it wants additional belt-and-suspenders behavior:
 
 ```ts
 // In your application bootstrap, before any LiteShip runtime code runs:
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
-  window.trustedTypes.createPolicy('czap', {
+  window.trustedTypes.createPolicy('liteship', {
     // Input has already been sanitized by the LiteShip trust pipeline at this
     // point (sanitized-html mode); add additional checks here only if you
     // want defense-in-depth on top of the upstream sanitizer.
@@ -75,22 +75,22 @@ if (window.trustedTypes && window.trustedTypes.createPolicy) {
 }
 ```
 
-Important caveat: under the `'trusted-html'` policy (caller opted in via `allowTrustedHtml: true`), the sanitizer is skipped — the host's policy callback receives raw caller-asserted markup. If your host installs a passthrough `czap` policy and a downstream caller opts into `'trusted-html'`, you have effectively zero filtering. Either keep callers off `'trusted-html'`, or have your host policy callback do a second sanitize pass for that path.
+Important caveat: under the `'trusted-html'` policy (caller opted in via `allowTrustedHtml: true`), the sanitizer is skipped — the host's policy callback receives raw caller-asserted markup. If your host installs a passthrough `liteship` policy and a downstream caller opts into `'trusted-html'`, you have effectively zero filtering. Either keep callers off `'trusted-html'`, or have your host policy callback do a second sanitize pass for that path.
 
 If the host enforces Trusted Types via the `require-trusted-types-for 'script'` CSP directive, the runtime's policy lookup picks up the host policy automatically. No bootstrap step required for the `sanitized-html` and `text` paths.
 
 ### Defaults summary
 
 - LiteShip itself: no `eval`, no `new Function`. Verified across `packages/*/src/` (no production runtime path uses them). The discipline is enforced by code review, not by an ESLint rule today; a follow-up to add `no-eval` and `no-new-func` ESLint rules is on the roadmap.
-- LiteShip itself: when `window.trustedTypes` is available, the runtime looks up (or creates a passthrough) `czap` policy automatically. Hosts with stricter requirements pre-install their own.
+- LiteShip itself: when `window.trustedTypes` is available, the runtime looks up (or creates a passthrough) `liteship` policy automatically. Hosts with stricter requirements pre-install their own.
 - LiteShip itself: no auto-set CSP. The host owns the policy.
 
 ## Cloudflare Workers (workerd)
 
-When hosting on Cloudflare Workers via `@czap/cloudflare`:
+When hosting on Cloudflare Workers via `@liteship/cloudflare`:
 
 - **CSP:** Same browser CSP requirements as above apply to HTML responses served from the Worker. `worker-src 'self' blob:` remains required for `client:worker` off-thread paths in the browser.
-- **Cross-origin isolation (workers only):** `SharedArrayBuffer` and the full off-thread worker paths require `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp`. With `workers: { enabled: true }`, `@czap/astro` emits this pair automatically on dynamic HTML responses (dev server, SSR middleware, and the edge fetch layer — see `packages/astro/src/headers.ts`); for a fully static build you emit the same pair from your CDN / `_headers`. Two consequences to plan for: (1) the pair applies **site-wide, not per-route** — the `exclude` option scopes injected client *scripts*, not the isolation headers — so cross-origin-isolating for a worker on one page isolates the whole origin and can block CORP-less cross-origin `<img>`/fonts/iframes/third-party scripts; (2) set `workers: { coep: 'credentialless' }` to keep isolation while loading such subresources un-credentialed instead of blocking them. With workers off (the default) no COOP/COEP is emitted and cross-origin assets are untouched. Per-route COEP scoping is not yet available (the header is document-level).
+- **Cross-origin isolation (workers only):** `SharedArrayBuffer` and the full off-thread worker paths require `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp`. With `workers: { enabled: true }`, `@liteship/astro` emits this pair automatically on dynamic HTML responses (dev server, SSR middleware, and the edge fetch layer — see `packages/astro/src/headers.ts`); for a fully static build you emit the same pair from your CDN / `_headers`. Two consequences to plan for: (1) the pair applies **site-wide, not per-route** — the `exclude` option scopes injected client *scripts*, not the isolation headers — so cross-origin-isolating for a worker on one page isolates the whole origin and can block CORP-less cross-origin `<img>`/fonts/iframes/third-party scripts; (2) set `workers: { coep: 'credentialless' }` to keep isolation while loading such subresources un-credentialed instead of blocking them. With workers off (the default) no COOP/COEP is emitted and cross-origin assets are untouched. Per-route COEP scoping is not yet available (the header is document-level).
 - **KV trust boundary:** Workers KV is a host-controlled cache for boundary compile outputs, not a secrets store. Bindings are declared in `wrangler.jsonc` and accessed via `cloudflare:workers` `env`. See [HOSTING.md](HOSTING.md#cloudflare-workers).
 
 ## Red-team regression suite
@@ -101,7 +101,7 @@ The repo includes a dedicated red-team regression lane:
 pnpm run test:redteam
 ```
 
-It runs as the red-team gate in `pnpm run gauntlet:full` (the canonical phase sequence lives in `packages/cli/src/gauntlet-phases.ts`; `czap gauntlet --dry-run` projects the live order) and on every PR through `.github/workflows/ci.yml`. New security-relevant findings should be encoded as a regression test there to prevent re-introduction.
+It runs as the red-team gate in `pnpm run gauntlet:full` (the canonical phase sequence lives in `packages/cli/src/gauntlet-phases.ts`; `liteship gauntlet --dry-run` projects the live order) and on every PR through `.github/workflows/ci.yml`. New security-relevant findings should be encoded as a regression test there to prevent re-introduction.
 
 ## Disclosure timeline
 
@@ -122,7 +122,7 @@ For findings we determine are not vulnerabilities (e.g. expected behavior, out-o
 
 In scope:
 
-- All packages under `@czap/*`
+- All packages under `@liteship/*`
 - The Vite plugin, Astro integration, and edge host adapters
 - The capsule factory and content-addressing primitives
 - The runtime trust gate and HTML sanitization paths

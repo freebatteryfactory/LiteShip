@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AVBridge } from '@czap/core';
-import { Detect } from '@czap/detect';
+import { AVBridge } from '@liteship/core';
+import { Detect } from '@liteship/detect';
 import { createAudioProcessor } from '../../packages/web/src/audio/processor.js';
 import { captureVideo } from '../../packages/web/src/capture/pipeline.js';
 import { renderToCanvas } from '../../packages/web/src/capture/render.js';
@@ -24,8 +24,8 @@ describe('browser web runtime coverage', () => {
     const registry = SlotRegistry.create();
     const root = document.createElement('section');
     root.innerHTML = `
-      <div data-czap-slot="/hero"></div>
-      <div data-czap-slot="/hero/sidebar" data-mode="replace"></div>
+      <div data-liteship-slot="/hero"></div>
+      <div data-liteship-slot="/hero/sidebar" data-mode="replace"></div>
     `;
     document.body.appendChild(root);
 
@@ -33,13 +33,13 @@ describe('browser web runtime coverage', () => {
 
     expect(registry.has('/hero' as never)).toBe(true);
     expect(registry.findByPrefix('/hero' as never)).toHaveLength(2);
-    expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-czap-slot="/hero"]'));
-    expect(SlotRegistry.getPath(root.querySelector('[data-czap-slot="/hero"]')!)).toBe('/hero');
+    expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-liteship-slot="/hero"]'));
+    expect(SlotRegistry.getPath(root.querySelector('[data-liteship-slot="/hero"]')!)).toBe('/hero');
 
     const dispose = SlotRegistry.observe(registry, document.body);
 
     const added = document.createElement('div');
-    added.setAttribute('data-czap-slot', '/hero/footer');
+    added.setAttribute('data-liteship-slot', '/hero/footer');
     document.body.appendChild(added);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -172,12 +172,12 @@ describe('browser web runtime coverage', () => {
         yield {
           frame: 0,
           timestamp: 0,
-          state: { discrete: {}, blend: {}, outputs: { css: { '--czap-bg': 'black' }, glsl: {}, aria: {} } },
+          state: { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, aria: {} } },
         };
         yield {
           frame: 1,
           timestamp: 33,
-          state: { discrete: {}, blend: {}, outputs: { css: { '--czap-bg': 'white' }, glsl: {}, aria: {} } },
+          state: { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'white' }, glsl: {}, aria: {} } },
         };
       },
     };
@@ -192,7 +192,7 @@ describe('browser web runtime coverage', () => {
             return canvas;
           })();
     renderToCanvas(
-      { discrete: {}, blend: {}, outputs: { css: { '--czap-bg': 'black' }, glsl: {}, aria: {} } },
+      { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, aria: {} } },
       offscreen,
       renderFn,
     );
@@ -208,8 +208,8 @@ describe('browser web runtime coverage', () => {
   test('preserves semantic identity across reordered morphs and remapped ids', async () => {
     const root = document.createElement('section');
     root.innerHTML = `
-      <button data-czap-id="alpha" id="alpha">Alpha</button>
-      <button data-czap-id="beta" id="beta">Beta</button>
+      <button data-liteship-id="alpha" id="alpha">Alpha</button>
+      <button data-liteship-id="beta" id="beta">Beta</button>
     `;
     document.body.appendChild(root);
 
@@ -218,8 +218,8 @@ describe('browser web runtime coverage', () => {
     const result = Morph.morphWithState(
       root,
       `
-          <button data-czap-id="beta-renamed" id="beta">Beta updated</button>
-          <button data-czap-id="alpha" id="alpha">Alpha updated</button>
+          <button data-liteship-id="beta-renamed" id="beta">Beta updated</button>
+          <button data-liteship-id="alpha" id="alpha">Alpha updated</button>
         `,
       { morphStyle: 'innerHTML' },
       {
@@ -229,7 +229,7 @@ describe('browser web runtime coverage', () => {
 
     expect(result.type).toBe('success');
     expect(root.firstElementChild).toBe(beta);
-    expect(beta?.getAttribute('data-czap-id')).toBe('beta-renamed');
+    expect(beta?.getAttribute('data-liteship-id')).toBe('beta-renamed');
     expect(beta?.textContent).toBe('Beta updated');
   });
 
@@ -359,8 +359,8 @@ describe('browser web runtime coverage', () => {
     const root = document.createElement('section');
     root.innerHTML = `
       <article id="shell">
-        <div data-czap-slot="/hero">
-          <button data-czap-id="hero-action">First</button>
+        <div data-liteship-slot="/hero">
+          <button data-liteship-id="hero-action">First</button>
         </div>
       </article>
     `;
@@ -371,8 +371,8 @@ describe('browser web runtime coverage', () => {
       root.querySelector('#shell') as HTMLElement,
       `
           <article id="shell">
-            <div data-czap-slot="/hero">
-              <button data-czap-id="hero-action">Second</button>
+            <div data-liteship-slot="/hero">
+              <button data-liteship-id="hero-action">Second</button>
             </div>
           </article>
         `,
@@ -382,6 +382,6 @@ describe('browser web runtime coverage', () => {
     expect(result.type).toBe('success');
     SlotRegistry.scanDOM(registry, document.body);
     expect(SlotRegistry.findElement('/hero' as never)?.textContent).toContain('Second');
-    expect(document.querySelector('[data-czap-id="hero-action"]')?.textContent).toBe('Second');
+    expect(document.querySelector('[data-liteship-id="hero-action"]')?.textContent).toBe('Second');
   });
 });

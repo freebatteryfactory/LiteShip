@@ -8,7 +8,7 @@
 // PROVES: INV-CONTENT-ADDRESS-DETERMINISTIC
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
+import { defineBoundary } from '@liteship/core';
 
 describe('Content address properties', () => {
   test('same boundary config → same content address', () => {
@@ -19,8 +19,8 @@ describe('Content address properties', () => {
           const sorted = rawThresholds.sort((a, b) => a - b);
           const pairs = sorted.map((t, i) => [t, `state${i}`] as const);
 
-          const b1 = Boundary.make({ input: 'x', at: pairs as any });
-          const b2 = Boundary.make({ input: 'x', at: pairs as any });
+          const b1 = defineBoundary({ input: 'x', at: pairs as any });
+          const b2 = defineBoundary({ input: 'x', at: pairs as any });
 
           return b1.id === b2.id;
         },
@@ -36,8 +36,8 @@ describe('Content address properties', () => {
           const sorted = rawThresholds.sort((a, b) => a - b);
           const pairs = sorted.map((t, i) => [t, `state${i}`] as const);
 
-          const b1 = Boundary.make({ input: 'width', at: pairs as any });
-          const b2 = Boundary.make({ input: 'height', at: pairs as any });
+          const b1 = defineBoundary({ input: 'width', at: pairs as any });
+          const b2 = defineBoundary({ input: 'height', at: pairs as any });
 
           return b1.id !== b2.id;
         },
@@ -52,7 +52,7 @@ describe('Content address properties', () => {
         (rawThresholds) => {
           const sorted = rawThresholds.sort((a, b) => a - b);
           const pairs = sorted.map((t, i) => [t, `s${i}`] as const);
-          const boundary = Boundary.make({ input: 'x', at: pairs as any });
+          const boundary = defineBoundary({ input: 'x', at: pairs as any });
           return /^fnv1a:[0-9a-f]{8}$/.test(boundary.id);
         },
       ),
@@ -68,8 +68,8 @@ describe('Content address properties', () => {
           const sorted = rawThresholds.sort((a, b) => a - b);
           const pairs = sorted.map((t, i) => [t, `s${i}`] as const);
 
-          const b1 = Boundary.make({ input: 'x', at: pairs as any });
-          const b2 = Boundary.make({ input: 'x', at: pairs as any, hysteresis });
+          const b1 = defineBoundary({ input: 'x', at: pairs as any });
+          const b2 = defineBoundary({ input: 'x', at: pairs as any, hysteresis });
 
           return b1.id !== b2.id;
         },

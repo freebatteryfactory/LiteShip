@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { defineCapsule, schema } from '@liteship/core';
+import { resetCapsuleCatalog } from '@liteship/core/testing';
+import * as Harness from '@liteship/core/harness';
 
 /**
  * Lane-aware sceneComposition harness contract (LAWS, not implementation
@@ -25,8 +25,8 @@ describe('generateSceneComposition (lane-aware)', () => {
     defineCapsule({
       _kind: 'sceneComposition',
       name,
-      input: S.unknown,
-      output: S.unknown,
+      input: schema.unknown,
+      output: schema.unknown,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets,

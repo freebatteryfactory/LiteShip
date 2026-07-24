@@ -25,8 +25,8 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import type { RuntimeCoordinator } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
+import type { RuntimeCoordinator } from '@liteship/core';
 import type { FromWorkerMessage, WorkerConfig } from './messages.js';
 
 // Re-export types from compositor-types
@@ -38,7 +38,7 @@ import type {
   CompositorWorkerShape,
   QuantizerBoundarySource,
 } from './compositor-types.js';
-import type { ContentAddress } from '@czap/core';
+import type { ContentAddress } from '@liteship/core';
 
 import { currentTimeNs, claimCompositorLease, parkOrDisposeCompositorLease, _send } from './compositor-startup.js';
 import {
@@ -77,7 +77,7 @@ function _createCompositorWorker(
 
   const handleError = (e: ErrorEvent): void => {
     Diagnostics.error({
-      source: 'czap/worker.compositor-worker',
+      source: 'liteship/worker.compositor-worker',
       code: 'worker-unhandled-error',
       // The worker is minted from a Blob URL, so a strict CSP blocking
       // worker-src blob: is the dominant real-world cause of this event.
@@ -100,7 +100,7 @@ function _createCompositorWorker(
       return worker;
     },
 
-    get runtime(): RuntimeCoordinator.Shape {
+    get runtime(): RuntimeCoordinator {
       return runtime;
     },
 
@@ -182,13 +182,13 @@ function _createCompositorWorker(
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { CompositorWorker } from '@czap/worker';
+ * import { defineBoundary } from '@liteship/core';
+ * import { CompositorWorker } from '@liteship/worker';
  *
  * const compositor = CompositorWorker.create({ poolCapacity: 64 });
- * // Boundary.make computes the content-addressed id; the quantizer
+ * // defineBoundary computes the content-addressed id; the quantizer
  * // name defaults to the boundary's input name ('brightness').
- * const brightness = Boundary.make({
+ * const brightness = defineBoundary({
  *   input: 'brightness',
  *   // at[i] is [lower bound, state]: 'dim' from 0, 'bright' from 0.5.
  *   at: [[0, 'dim'], [0.5, 'bright']],
@@ -213,9 +213,10 @@ export const CompositorWorker = {
   create: _createCompositorWorker,
 } as const;
 
+/** Public structural type for `CompositorWorker`. */
+export type CompositorWorker = CompositorWorkerShape;
+
 export declare namespace CompositorWorker {
-  /** Public host-side surface returned by {@link CompositorWorker.create}. */
-  export type Shape = CompositorWorkerShape;
   /** Named startup stage reported to telemetry sinks. */
   export type StartupStage = CompositorWorkerStartupStage;
   /** Telemetry sink accepted by {@link CompositorWorker.create}. */

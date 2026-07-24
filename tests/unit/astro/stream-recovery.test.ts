@@ -4,8 +4,8 @@
  * #133 — stream directive integrates graph-native recovery on reconnect + request-snapshot.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import * as core from '@czap/core';
-import { Resumption, getStreamRecoverySubstrate, registerStreamRecoverySubstrate } from '@czap/web';
+import * as core from '@liteship/core';
+import { Resumption, getStreamRecoverySubstrate, registerStreamRecoverySubstrate } from '@liteship/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
@@ -29,7 +29,7 @@ describe('stream directive graph-native recovery (#133)', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     _resetRuntimePolicyForTests();
     restoreES = MockEventSource.install();
     vi.stubGlobal('location', { origin: 'http://localhost:3000' });
@@ -52,7 +52,7 @@ describe('stream directive graph-native recovery (#133)', () => {
 
   afterEach(() => {
     document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-      element.dispatchEvent(new CustomEvent('czap:teardown'));
+      element.dispatchEvent(new CustomEvent('liteship:teardown'));
     });
     restoreES();
     document.body.innerHTML = '';
@@ -88,12 +88,12 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
 
     const signals: unknown[] = [];
-    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, el);
 
@@ -119,7 +119,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.useRealTimers();
   });
 
-  test('czap:request-snapshot listener recovers via full snapshot re-sync', async () => {
+  test('liteship:request-snapshot listener recovers via full snapshot re-sync', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -133,17 +133,17 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
 
     const signals: unknown[] = [];
-    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, el);
 
     el.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'preserve-missing' },
         bubbles: true,
       }),
@@ -174,17 +174,17 @@ describe('stream directive graph-native recovery (#133)', () => {
     );
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
 
     const signals: unknown[] = [];
-    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, el);
 
     el.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'test' },
         bubbles: true,
       }),
@@ -195,7 +195,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     });
   });
 
-  test('snapshot without signals field surfaces czap:stream-error and keeps stale discrete state', async () => {
+  test('snapshot without signals field surfaces liteship:stream-error and keeps stale discrete state', async () => {
     vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
       Promise.resolve({
         type: 'snapshot',
@@ -206,20 +206,20 @@ describe('stream directive graph-native recovery (#133)', () => {
     );
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
     el.innerHTML = '<main>stale</main>';
 
     const signals: unknown[] = [];
     const errors: Array<{ reason: string; message?: string }> = [];
-    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
-    el.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, el);
 
     el.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'test' },
         bubbles: true,
       }),
@@ -237,11 +237,11 @@ describe('stream directive graph-native recovery (#133)', () => {
     expect(el.innerHTML).toContain('stale');
   });
 
-  test('registered substrate routes czap:request-snapshot through gap-replay in PRODUCTION wiring (#133-full)', async () => {
+  test('registered substrate routes liteship:request-snapshot through gap-replay in PRODUCTION wiring (#133-full)', async () => {
     // The directive — not test-only glue — must look up the host-registered
     // substrate, feed SSE receipt frames into its live buffer, and prefer
     // runGraphNativeGapReplay over the snapshot floor.
-    const localBase = { id: 'czap:base' } as never;
+    const localBase = { id: 'liteship:base' } as never;
     const adopt = vi.fn();
     const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
       query: { status: 'ok', graph: localBase, etag: 'sha256:ok' },
@@ -268,8 +268,8 @@ describe('stream directive graph-native recovery (#133)', () => {
 
     try {
       const el = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
       el.innerHTML = '<main>stale-rejected</main>';
       streamDirective(noop, {}, el);
@@ -287,7 +287,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         next: 'expanded',
         generation: 1,
         authority: 'quantizer' as const,
-        base: 'czap:base',
+        base: 'liteship:base',
         kind: 'discrete' as const,
       };
       const receipt = await core.transitionReceipt(transition);
@@ -302,7 +302,7 @@ describe('stream directive graph-native recovery (#133)', () => {
       });
 
       el.dispatchEvent(
-        new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
+        new CustomEvent('liteship:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
       );
 
       await vi.waitFor(() => {
@@ -334,7 +334,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     // when recovery fires. Without draining, gap replay reads an EMPTY buffer and
     // misses the just-received crossing. This test triggers recovery in the SAME tick
     // as the receipt frame — no wait for the buffer — and asserts the entry made it.
-    const localBase = { id: 'czap:base' } as never;
+    const localBase = { id: 'liteship:base' } as never;
     const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
       query: { status: 'ok', graph: localBase, etag: 'sha256:ok' },
       replayedCells: [],
@@ -352,7 +352,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     });
 
     try {
-      const el = makeEl('div', { 'data-czap-stream-url': '/api/feed', 'data-czap-stream-artifact': 'hero' });
+      const el = makeEl('div', { 'data-liteship-stream-url': '/api/feed', 'data-liteship-stream-artifact': 'hero' });
       streamDirective(noop, {}, el);
 
       const transition = {
@@ -362,7 +362,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         next: 'expanded',
         generation: 1,
         authority: 'quantizer' as const,
-        base: 'czap:base',
+        base: 'liteship:base',
         kind: 'discrete' as const,
       };
       const receipt = await core.transitionReceipt(transition);
@@ -374,7 +374,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         'evt-43',
       );
       el.dispatchEvent(
-        new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
+        new CustomEvent('liteship:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
       );
 
       await vi.waitFor(() => {
@@ -406,10 +406,10 @@ describe('stream directive graph-native recovery (#133)', () => {
     expect(g0.id).not.toBe(g1.id);
 
     // Two fetch legs: the graph QUERY read (ok + sha256 etag) drives gap-replay; the
-    // default /czap/snapshot/<id> endpoint converges the rejected-morph DOM (F-REC-3).
+    // default /liteship/snapshot/<id> endpoint converges the rejected-morph DOM (F-REC-3).
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
-      if (url.includes('/czap/snapshot')) {
+      if (url.includes('/liteship/snapshot')) {
         return new Response(
           JSON.stringify({ html: '<main>dom-converged</main>', signals: { state: 'expanded' }, lastEventId: 'evt-99' }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -432,11 +432,11 @@ describe('stream directive graph-native recovery (#133)', () => {
     const { receipt, transition } = await core.mintTransition(previous, next, { base: g0.id, resultId: g1.id });
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/graph-feed',
-      'data-czap-stream-artifact': ARTIFACT,
-      'data-czap-stream-graph': '/api/graph',
-      'data-czap-stream-graph-base': JSON.stringify(g0),
-      'data-czap-stream-cells': JSON.stringify([{ name: 'workspace', states: ['collapsed', 'expanded'] }]),
+      'data-liteship-stream-url': '/api/graph-feed',
+      'data-liteship-stream-artifact': ARTIFACT,
+      'data-liteship-stream-graph': '/api/graph',
+      'data-liteship-stream-graph-base': JSON.stringify(g0),
+      'data-liteship-stream-cells': JSON.stringify([{ name: 'workspace', states: ['collapsed', 'expanded'] }]),
     });
 
     el.innerHTML = '<main>stale-rejected</main>';
@@ -445,7 +445,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     // The gap-replayed crossing must be REFLECTED back to the host, not only written to the
     // private recovery store — capture the discrete signals it dispatches (Codex P2).
     const signals: unknown[] = [];
-    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
 
     // The directive registered a substrate from the attributes (not test glue),
     // with its OWN store carrying the inlined 'workspace' registration at genesis.
@@ -463,7 +463,7 @@ describe('stream directive graph-native recovery (#133)', () => {
 
     // Recover: request-snapshot drives graph-native gap replay through the wiring.
     el.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
+      new CustomEvent('liteship:request-snapshot', { detail: { reason: 'preserve-missing' }, bubbles: true }),
     );
 
     // The CELL converged — state AND generation — through the production path.
@@ -486,7 +486,7 @@ describe('stream directive graph-native recovery (#133)', () => {
 
     // Disposal: teardown removes the registration — no leak. A re-register (which
     // THROWS if the slot were still held) proves the slot is free again.
-    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    el.dispatchEvent(new CustomEvent('liteship:teardown'));
     expect(getStreamRecoverySubstrate(ARTIFACT)).toBeUndefined();
     const redispose = registerStreamRecoverySubstrate(ARTIFACT, {
       graphQueryUrl: '/api/graph',
@@ -520,13 +520,13 @@ describe('stream directive graph-native recovery (#133)', () => {
     );
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
     el.innerHTML = '<p>stale</p>';
 
     const errors: Array<{ reason: string; message?: string }> = [];
-    el.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, el);
 
@@ -577,13 +577,13 @@ describe('stream directive graph-native recovery (#133)', () => {
     vi.spyOn(Resumption, 'fetchSnapshot').mockRejectedValue(new Error('snapshot endpoint unreachable'));
 
     const el = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-artifact': 'hero',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-artifact': 'hero',
     });
     el.innerHTML = '<p>stale</p>';
 
     const errors: Array<{ reason: string; message?: string }> = [];
-    el.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, el);
 
@@ -634,7 +634,7 @@ describe('stream directive graph-native recovery (#133)', () => {
       next: 'expanded',
       generation: 1,
       authority: 'quantizer' as const,
-      base: 'czap:base',
+      base: 'liteship:base',
       kind: 'discrete' as const,
     };
     const receipt = await core.transitionReceipt(transition);
@@ -651,7 +651,7 @@ describe('stream directive graph-native recovery (#133)', () => {
     // domStale snapshot to converge the DOM). Mock both so the test asserts recovery was DRIVEN
     // and fed the crossing, without needing live QUERY / snapshot endpoints.
     const gapReplay = vi.spyOn(core, 'runGraphNativeGapReplay').mockResolvedValue({
-      query: { status: 'ok', graph: { id: 'czap:base' }, etag: 'sha256:ok' },
+      query: { status: 'ok', graph: { id: 'liteship:base' }, etag: 'sha256:ok' },
       replayedCells: [],
       discretePayloads: [],
     } as never);
@@ -661,17 +661,17 @@ describe('stream directive graph-native recovery (#133)', () => {
 
     const dispose = registerStreamRecoverySubstrate('hero', {
       graphQueryUrl: '/api/graph',
-      mutationClient: { base: () => ({ id: 'czap:base' }) as never, adopt: vi.fn() },
+      mutationClient: { base: () => ({ id: 'liteship:base' }) as never, adopt: vi.fn() },
       cellStore: { get: () => undefined, register: () => {}, applyDiscrete: () => {} } as never,
     });
 
     try {
       const el = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
       const recoveries: Array<Record<string, unknown>> = [];
-      el.addEventListener('czap:request-snapshot', ((e: CustomEvent) => recoveries.push(e.detail)) as EventListener);
+      el.addEventListener('liteship:request-snapshot', ((e: CustomEvent) => recoveries.push(e.detail)) as EventListener);
       streamDirective(noop, {}, el);
 
       const firstSource = MockEventSource.instances[0]!;

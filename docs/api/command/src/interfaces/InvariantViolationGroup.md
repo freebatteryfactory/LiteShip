@@ -6,7 +6,7 @@
 
 # Interface: InvariantViolationGroup
 
-Defined in: [command/src/registry.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L399)
+Defined in: [command/src/registry.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L442)
 
 Every violation of one named invariant rule, with its human teaching `message`.
 
@@ -16,7 +16,7 @@ Every violation of one named invariant rule, with its human teaching `message`.
 
 > `readonly` **message**: `string`
 
-Defined in: [command/src/registry.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L401)
+Defined in: [command/src/registry.ts:444](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L444)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [command/src/registry.ts:401](https://github.com/freebatteryfactory/
 
 > `readonly` **name**: `string`
 
-Defined in: [command/src/registry.ts:400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L400)
+Defined in: [command/src/registry.ts:443](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L443)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [command/src/registry.ts:400](https://github.com/freebatteryfactory/
 
 > `readonly` **violations**: readonly [`InvariantViolation`](InvariantViolation.md)[]
 
-Defined in: [command/src/registry.ts:402](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L402)
+Defined in: [command/src/registry.ts:445](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L445)

@@ -1,13 +1,13 @@
 /**
  * Harness template for the `siteAdapter` assembly arm — LANE-AWARE.
  *
- * A `siteAdapter` capsule converts between native host objects and czap
+ * A `siteAdapter` capsule converts between native host objects and liteship
  * representations and declares the host `site`s it runs under. Its two
  * canonical checks live in different lanes, and BOTH are real (the owner's
  * decision — lane-aware, real everywhere):
  *
  *  - **round-trip equality → UNIT lane** (`.test.ts`, `pnpm test`). The adapter's
- *    `native -> czap -> native` transform is pure: czap's canonical serialization
+ *    `native -> liteship -> native` transform is pure: liteship's canonical serialization
  *    (`CanonicalCbor.encode` → `decode`) is the round trip, and structure is
  *    preserved iff the canonical {@link contentAddressOf} of the decoded value
  *    equals the original's. Inputs are sampled from the adapter's own schema via
@@ -32,10 +32,10 @@
  * @module
  */
 
-import type { CapsuleDef } from '../assembly.js';
+import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessLane } from './scene-composition.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
-import { benchNotApplicableMarker } from './bench-marker.js';
+import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
 
 /** Inputs presampled from the round-trip arbitrary at module load. */
 const BENCH_SAMPLE_COUNT = 64;
@@ -71,7 +71,7 @@ export const SITE_ADAPTER_CHECKS = [
   {
     id: 'round-trip-equality',
     lane: 'unit' as const,
-    title: 'round-trip equality: native -> czap -> native preserves structure',
+    title: 'round-trip equality: native -> liteship -> native preserves structure',
   },
   {
     id: 'host-capability-matrix',
@@ -136,8 +136,8 @@ import { contentAddressOf } from '${driver.contentAddressImport}';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('${name}', () => {
-  // UNIT LANE — pure round-trip equality. The adapter's native <-> czap boundary
-  // is its '${driver.roundTripSchema}' schema; czap's canonical serialization is the
+  // UNIT LANE — pure round-trip equality. The adapter's native <-> liteship boundary
+  // is its '${driver.roundTripSchema}' schema; liteship's canonical serialization is the
   // round trip. capsule:compile resolved this schema as arbitrary-derivable, so we
   // sample it via the canonical schemaToArbitrary walker (never a hand-built
   // fixture), encode -> decode through CanonicalCbor, and assert structure is
@@ -146,7 +146,7 @@ describe('${name}', () => {
   const cap = ${bindingName} as { ${driver.roundTripSchema}: unknown };
   const arb = schemaToArbitrary(cap.${driver.roundTripSchema} as never) as fc.Arbitrary<unknown>;
 
-  it('round-trip equality: native -> czap -> native preserves structure', () => {
+  it('round-trip equality: native -> liteship -> native preserves structure', () => {
     fc.assert(
       fc.property(arb, (native) => {
         const back = decode(CanonicalCbor.encode(native));
@@ -289,7 +289,7 @@ describe('${name} (integration: host capability matrix — declared-integration)
 // ---------------------------------------------------------------------------
 
 function emitBenchFile(name: string, bindingName: string, bindingImport: string, driver: SiteAdapterDriver): string {
-  // REAL bench: time the pure native -> czap -> native round trip — the SAME
+  // REAL bench: time the pure native -> liteship -> native round trip — the SAME
   // canonical serialization the UNIT round-trip test asserts structure-preserving.
   // The native fixtures are presampled ONCE at module load from the adapter's
   // round-trip schema (fixed seed → reproducible), so the timed loop measures the
@@ -307,7 +307,7 @@ const arb = schemaToArbitrary(cap.${driver.roundTripSchema} as never) as fc.Arbi
 const natives = fc.sample(arb, { numRuns: ${BENCH_SAMPLE_COUNT}, seed: 0x5eed });
 let i = 0;
 
-bench(\`${escapeSingle(name)} — native -> czap -> native round trip\`, () => {
+bench(\`${escapeSingle(name)} — native -> liteship -> native round trip\`, () => {
   const native = natives[i++ % natives.length];
   decode(CanonicalCbor.encode(native));
 }, { time: 500 });

@@ -1,6 +1,6 @@
 {
-  "name": "@czap/canonical",
-  "version": "0.18.0",
+  "name": "@liteship/canonical",
+  "version": "0.19.0",
   "description": "The content-addressing kernel for LiteShip: canonical CBOR encoding and stable digests so the same definition always hashes to the same address.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "content-addressing",
     "cbor",
@@ -40,7 +39,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/error": "workspace:*",
+    "@liteship/error": "workspace:*",
     "@noble/hashes": "^1.8.0"
   },
   "engines": {

@@ -1,29 +1,29 @@
 /**
- * check (the tasks-vs-gates weld) — the PURE gauntlet engine fold as a finite,
- * structured command. `czap check` runs `litelaunchGauntlet` IN-PROCESS (no
+ * check.gates (the tasks-vs-gates weld) — the PURE gauntlet engine fold as a finite,
+ * structured command. `liteship check gates` runs `litelaunchGauntlet` IN-PROCESS (no
  * subprocess, no terminal streaming): it binds the built-in LiteShip gates, the
  * committed assurance map, and the committed waivers, runs the authority ratchet,
  * and returns the {@link Finding}[] work-list plus the single blocking verdict.
  *
  * This is deliberately NOT the existing `gauntlet` command — that one is CLI-owned
- * terminal orchestration that spawns the 28-phase `gauntlet:full` run. `check` is
+ * terminal orchestration that spawns the full `gauntlet:full` run. `check.gates` is
  * the fixture-qualified gate FOLD: pure, fast, and `mcpExposed` because its
  * Finding[] is exactly the structured work-list a human (CLI) or an agent (MCP)
  * should be able to read and act on without a human in the loop.
  *
- * The engine (`@czap/gauntlet`'s `node:fs` glob + the gate set) is INJECTED via
- * `context.runGauntlet`, never run here, so `@czap/command` stays free of the
+ * The engine (`@liteship/gauntlet`'s `node:fs` glob + the gate set) is INJECTED via
+ * `context.runGauntlet`, never run here, so `@liteship/command` stays free of the
  * filesystem walk and the waiver-expiry clock. The adapter owns the wall-clock
  * `now` (waiver expiry is a calendar comparison — NEVER a monotonic reading).
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
-import type { Finding } from '@czap/gauntlet';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
+import type { Finding } from '@liteship/gauntlet';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 
 /**
- * The descriptor `outputSchema` for `check` — the WELD-2 Finding-carrying shape,
+ * The descriptor `outputSchema` for `check.gates` — the WELD-2 Finding-carrying shape,
  * hand-written JSON-Schema and byte-parity-pinned against the parity fixture. The
  * `findings` ARE plain JSON-serializable {@link Finding} data (ruleId, severity,
  * level, title, detail, location?, remediation?), so they ride the
@@ -31,7 +31,7 @@ import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapabilit
  * `structuredContent` and the CLI receipt with no separate adapter. `blocked`
  * mirrors the engine's single blocking verdict; `ok` is its negation.
  *
- * The modelled `findings` element faithfully mirrors `@czap/gauntlet`'s `Finding`
+ * The modelled `findings` element faithfully mirrors `@liteship/gauntlet`'s `Finding`
  * EXCEPT its `remediation?` — a heterogeneous non-literal union
  * (`{kind:'patch',…} | {kind:'instruction',…}`) the structural dialect cannot
  * represent soundly (no `oneOf`). `CheckPayload` below keeps the canonical
@@ -74,8 +74,8 @@ export const CheckPayloadSchema = {
 } as const satisfies CommandJsonSchema;
 
 /**
- * Structured payload returned by `check`. Mirrors `CheckPayloadSchema` for every
- * field EXCEPT `findings`, which keeps the canonical `@czap/gauntlet` `Finding`
+ * Structured payload returned by `check.gates`. Mirrors `CheckPayloadSchema` for every
+ * field EXCEPT `findings`, which keeps the canonical `@liteship/gauntlet` `Finding`
  * type (so `remediation` — undescribable in the outputSchema's dialect — stays in
  * the type and is never narrowed away from a consumer). The type is a faithful
  * superset on exactly that one field.
@@ -87,10 +87,10 @@ export type CheckPayload = {
   readonly findings: readonly Finding[];
 };
 
-/** `check` — run the pure gauntlet gate fold in-process; emit the Finding[] work-list + verdict. */
-export const checkCommand = defineCommand({
+/** `check.gates` — run the pure gate fold; the CLI projects it as `liteship check gates`. */
+export const checkGatesCommand = defineCommand({
   descriptor: {
-    name: 'check',
+    name: 'check.gates',
     summary:
       'Run the pure gauntlet gate fold in-process (litelaunchGauntlet) and return structured findings + a blocking verdict.',
     requires: ['runGauntlet'] satisfies readonly CommandCapability[],
@@ -101,12 +101,12 @@ export const checkCommand = defineCommand({
       properties: { globs: { type: 'array', items: { type: 'string' } } },
     } as const satisfies CommandJsonSchema,
     outputSchema: CheckPayloadSchema,
-    annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
+    annotations: { readOnly: true, mcpExposed: true, group: 'setup' },
   },
-  argsSchema: S.struct({ globs: S.optional(S.array(S.string)) }),
+  argsSchema: schema.struct({ globs: schema.optional(schema.array(schema.string)) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
-    if (!context.runGauntlet) return capabilityUnavailable('check', ['runGauntlet']);
+    if (!context.runGauntlet) return capabilityUnavailable('check.gates', ['runGauntlet']);
 
     // The dispatcher decodes `globs` against the argsSchema; this residual guard
     // keeps a DIRECT handler call robust to a malformed value (any non-string-array
@@ -125,6 +125,6 @@ export const checkCommand = defineCommand({
       findingCount: findings.length,
       findings,
     } satisfies CheckPayload;
-    return result.blocked ? failed('check', payload, 1) : ok('check', payload);
+    return result.blocked ? failed('check.gates', payload, 1) : ok('check.gates', payload);
   },
 });

@@ -1,7 +1,7 @@
 {
   "name": "liteship",
-  "version": "0.18.0",
-  "description": "The LiteShip umbrella package: one dependency that installs the whole `@czap/*` adaptive rendering stack — you still import from the individual scopes.",
+  "version": "0.19.0",
+  "description": "The curated public facade and executable owner for LiteShip: one dependency, one command, and one import path over the whole `@liteship/*` adaptive rendering stack.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -13,7 +13,6 @@
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
     "liteship",
-    "czap",
     "adaptive-rendering",
     "framework",
     "meta-package",
@@ -21,18 +20,88 @@
   ],
   "type": "module",
   "sideEffects": false,
+  "bin": {
+    "liteship": "./bin/liteship.mjs"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "//exports-facade": "CURATED FACADE: the `.` root is a BUDGETED authoring and inspection surface (enforced by the gauntlet/facade-export-budget gate against src/export-budget.ts); the thirteen governed expert SUBPATHS each resolve to a `src/<name>.ts` facade of EXPLICIT curated named re-exports (facade law — no `export *`, guarded by the sgrules facade globs). Importing `.` evaluates NO host integration; `./astro` and `./vite` live behind their own subpaths whose module graphs are independent, so a vite-only app never evaluates @liteship/astro. `./migrate` re-exports the @liteship/compiler/migrate adapters and `./genui` directly re-exports @liteship/genui without wrappers.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js",
+      "development": "./src/schema.ts"
+    },
+    "./reactive": {
+      "types": "./dist/reactive.d.ts",
+      "import": "./dist/reactive.js",
+      "development": "./src/reactive.ts"
+    },
+    "./motion": {
+      "types": "./dist/motion.d.ts",
+      "import": "./dist/motion.js",
+      "development": "./src/motion.ts"
+    },
+    "./graph": {
+      "types": "./dist/graph.d.ts",
+      "import": "./dist/graph.js",
+      "development": "./src/graph.ts"
+    },
+    "./media": {
+      "types": "./dist/media.d.ts",
+      "import": "./dist/media.js",
+      "development": "./src/media.ts"
+    },
+    "./evidence": {
+      "types": "./dist/evidence.d.ts",
+      "import": "./dist/evidence.js",
+      "development": "./src/evidence.ts"
+    },
+    "./compiler": {
+      "types": "./dist/compiler.d.ts",
+      "import": "./dist/compiler.js",
+      "development": "./src/compiler.ts"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js",
+      "development": "./src/runtime.ts"
+    },
+    "./astro": {
+      "types": "./dist/astro.d.ts",
+      "import": "./dist/astro.js",
+      "development": "./src/astro.ts"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.js",
+      "development": "./src/vite.ts"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js",
+      "development": "./src/testing.ts"
+    },
+    "./migrate": {
+      "types": "./dist/migrate.d.ts",
+      "import": "./dist/migrate.js",
+      "development": "./src/migrate.ts"
+    },
+    "./genui": {
+      "types": "./dist/genui.d.ts",
+      "import": "./dist/genui.js",
+      "development": "./src/genui.ts"
     }
   },
   "files": [
     "dist",
     "src",
+    "bin",
     "LICENSE"
   ],
   "scripts": {
@@ -40,29 +109,42 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/_spine": "workspace:*",
-    "@czap/assets": "workspace:*",
-    "@czap/astro": "workspace:*",
-    "@czap/audit": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/cli": "workspace:*",
-    "@czap/cloudflare": "workspace:*",
-    "@czap/command": "workspace:*",
-    "@czap/compiler": "workspace:*",
-    "@czap/core": "workspace:*",
-    "@czap/detect": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/gauntlet": "workspace:*",
-    "@czap/genui": "workspace:*",
-    "@czap/mcp-server": "workspace:*",
-    "@czap/quantizer": "workspace:*",
-    "@czap/remotion": "workspace:*",
-    "@czap/scene": "workspace:*",
-    "@czap/stage": "workspace:*",
-    "@czap/vite": "workspace:*",
-    "@czap/web": "workspace:*",
-    "@czap/worker": "workspace:*"
+    "@liteship/_spine": "workspace:*",
+    "@liteship/assets": "workspace:*",
+    "@liteship/astro": "workspace:*",
+    "@liteship/audit": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/cli": "workspace:*",
+    "@liteship/cloudflare": "workspace:*",
+    "@liteship/command": "workspace:*",
+    "@liteship/compiler": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/detect": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/gauntlet": "workspace:*",
+    "@liteship/genui": "workspace:*",
+    "@liteship/mcp-server": "workspace:*",
+    "@liteship/quantizer": "workspace:*",
+    "@liteship/remotion": "workspace:*",
+    "@liteship/scene": "workspace:*",
+    "@liteship/stage": "workspace:*",
+    "@liteship/vite": "workspace:*",
+    "@liteship/web": "workspace:*",
+    "@liteship/worker": "workspace:*"
+  },
+  "//peer-optional": "OPTIONAL host peers (P13): `liteship/astro` re-exports @liteship/astro (astro peer) and `liteship/vite` re-exports @liteship/vite (vite peer). Declaring astro + vite as OPTIONAL peers here flows their version validation to a consumer that actually imports those subpaths, without emitting an unmet-peer warning for a vite-only (or host-free) app that never touches them. The root `.` entry evaluates neither.",
+  "peerDependencies": {
+    "astro": ">=7.1.0 <8",
+    "vite": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.13.0"

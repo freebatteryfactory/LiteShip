@@ -5,9 +5,9 @@
 import { describe, test, expect } from 'vitest';
 import { graphQueryRoute } from '../../../packages/astro/src/graph-query-route.js';
 import { graphQueryEtag } from '../../../packages/core/src/index.js';
-import type { DocumentGraph, GraphStore } from '@czap/core';
+import type { DocumentGraph, GraphStore } from '@liteship/core';
 import { sealNode, sealGraph } from '../../../packages/core/src/index.js';
-import type { CellMeta, DocumentGraphEdge, DocumentGraphNode, SignalNode } from '@czap/core';
+import type { CellMeta, DocumentGraphEdge, DocumentGraphNode, SignalNode } from '@liteship/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -94,12 +94,12 @@ describe('graphQueryRoute — read-only store, conditional etag', () => {
     expect(body.errors!.join(' ')).toContain('fnv1a');
   });
 
-  test('POST with X-Czap-Query fallback is accepted', async () => {
+  test('POST with X-Liteship-Query fallback is accepted', async () => {
     const base = graph([node('scroll.y')]);
     const res = await graphQueryRoute(readOnlyStore(base))(
       new Request('http://host/api/graph', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'X-Czap-Query': '1' },
+        headers: { 'content-type': 'application/json', 'X-Liteship-Query': '1' },
         body: '{}',
       }),
     );

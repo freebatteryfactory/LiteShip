@@ -1,9 +1,9 @@
 /**
- * CUT A5 — beat contract family lives in `@czap/_spine`.
+ * CUT A5 — beat contract family lives in `@liteship/_spine`.
  *
  * The beat-projection pipeline spans two packages in two unit spaces:
- *   - `@czap/assets` PRODUCES the raw `BeatMarkerSet` (sample-index space);
- *   - `@czap/scene` CONSUMES `BeatComponent`/`BeatSpawn` (millisecond space).
+ *   - `@liteship/assets` PRODUCES the raw `BeatMarkerSet` (sample-index space);
+ *   - `@liteship/scene` CONSUMES `BeatComponent`/`BeatSpawn` (millisecond space).
  *
  * Those are two pipeline STAGES, not duplicate names for one shape — so the
  * spine homes a *family*, and each package aliases its public name to the
@@ -23,11 +23,11 @@ import type {
   BeatComponent as SpineBeatComponent,
   BeatSpawn as SpineBeatSpawn,
   BeatProjectionResolutionInput,
-} from '@czap/_spine';
-import type { BeatMarkerSet as AssetsBeatMarkerSet } from '@czap/assets';
-import type { BeatComponent as SceneBeatComponent, BeatSpawn as SceneBeatSpawn, SceneBeat } from '@czap/scene';
+} from '@liteship/_spine';
+import type { BeatMarkerSet as AssetsBeatMarkerSet } from '@liteship/assets';
+import type { BeatComponent as SceneBeatComponent, BeatSpawn as SceneBeatSpawn, SceneBeat } from '@liteship/scene';
 
-describe('A5 — beat contract family is homed in @czap/_spine', () => {
+describe('A5 — beat contract family is homed in @liteship/_spine', () => {
   it('the spine declares the raw asset-space projection (BeatMarkerSet)', () => {
     const projection: SpineBeatMarkerSet = { bpm: 120, beats: [0, 24_000, 48_000] };
     expect(projection.bpm).toBe(120);

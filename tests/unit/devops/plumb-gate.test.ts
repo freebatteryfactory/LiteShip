@@ -1,8 +1,8 @@
 /**
- * Meta-test for the plumb-completeness gate — now the `czap plumb` command
+ * Meta-test for the plumb-completeness gate — now the `liteship plumb` command
  * (migrated out of `scripts/plumb-gate.ts`). The scan engine is `runPlumbScan`
- * from `@czap/command/host`; the `PACKAGE_PLUMB` ledger is re-exported from
- * `@czap/command`.
+ * from `@liteship/command/host`; the `PACKAGE_PLUMB` ledger is re-exported from
+ * `@liteship/command`.
  *
  * HARD RULE (no exceptions): a placeholder is BLOCKING. The gate fails on ANY
  * `it.skip`/`test.skip` in `tests/generated/` (an unwired capsule binding shipping
@@ -17,8 +17,8 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { runPlumbScan } from '@czap/command/host';
-import { PACKAGE_PLUMB } from '@czap/command';
+import { runPlumbScan } from '@liteship/command/host';
+import { PACKAGE_PLUMB } from '@liteship/command';
 
 /** Alias preserving the meta-test's call sites: the gate runs over a repo root. */
 const runPlumbGate = runPlumbScan;
@@ -28,7 +28,7 @@ function fixtureRoot(opts: {
   generated?: Record<string, string>;
   packages?: Record<string, { name?: string; private?: boolean } | null>;
 }): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-plumb-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-plumb-'));
   mkdirSync(join(root, 'tests', 'generated'), { recursive: true });
   for (const [name, src] of Object.entries(opts.generated ?? {})) {
     writeFileSync(join(root, 'tests', 'generated', name), src, 'utf8');
@@ -158,7 +158,7 @@ describe('plumb gate — mechanism', () => {
   });
 
   it('FAILS when the generated corpus is missing or empty', () => {
-    const missingRoot = mkdtempSync(join(tmpdir(), 'czap-plumb-missing-'));
+    const missingRoot = mkdtempSync(join(tmpdir(), 'liteship-plumb-missing-'));
     mkdirSync(join(missingRoot, 'packages'), { recursive: true });
     const missing = runPlumbGate(missingRoot);
     expect(missing.generatedPresent).toBe(false);
@@ -172,11 +172,11 @@ describe('plumb gate — mechanism', () => {
   });
 
   it('CATCHES an inner-describe skip via the INJECTED AST detector (a multi-line shape the token scanner misses)', async () => {
-    // The CLI host injects `@czap/audit`'s SOUND `detectSkipsAST` as the second arg of
-    // `runPlumbScan` (the boundary LAW: `@czap/command` stays lean, the host owns the AST). An
+    // The CLI host injects `@liteship/audit`'s SOUND `detectSkipsAST` as the second arg of
+    // `runPlumbScan` (the boundary LAW: `@liteship/command` stays lean, the host owns the AST). An
     // inner-describe + multi-line `.each` skip — the kind the token char/scanner could not parse —
     // is caught when the AST detector is injected. Proves the injection path end-to-end.
-    const { detectSkipsAST } = await import('@czap/audit');
+    const { detectSkipsAST } = await import('@liteship/audit');
     const root = fixtureRoot({
       generated: {
         'inner.test.ts': `describe('outer', () => {\n  it.each([\n    1,\n    2,\n  ]).skip('multiline inner skip', () => {});\n});\n`,
@@ -190,14 +190,14 @@ describe('plumb gate — mechanism', () => {
   });
 
   it('FAILS on a published package missing a PACKAGE_PLUMB classification', () => {
-    const root = fixtureRoot({ packages: { mystery: { name: '@czap/mystery-unclassified' } } });
+    const root = fixtureRoot({ packages: { mystery: { name: '@liteship/mystery-unclassified' } } });
     const r = runPlumbGate(root);
-    expect(r.unclassified).toContain('@czap/mystery-unclassified');
+    expect(r.unclassified).toContain('@liteship/mystery-unclassified');
     expect(r.ok).toBe(false);
   });
 
   it('ignores a private package (no classification required)', () => {
-    const root = fixtureRoot({ packages: { priv: { name: '@czap/priv', private: true } } });
+    const root = fixtureRoot({ packages: { priv: { name: '@liteship/priv', private: true } } });
     expect(runPlumbGate(root).unclassified).toEqual([]);
   });
 });
@@ -213,7 +213,7 @@ describe('plumb registry hygiene', () => {
   });
 
   it('scene is plumbed live and stage is a complete build tool as of 0.4.0', () => {
-    expect(PACKAGE_PLUMB['@czap/scene']?.status).toBe('runtime');
-    expect(PACKAGE_PLUMB['@czap/stage']?.status).toBe('tooling');
+    expect(PACKAGE_PLUMB['@liteship/scene']?.status).toBe('runtime');
+    expect(PACKAGE_PLUMB['@liteship/stage']?.status).toBe('tooling');
   });
 });

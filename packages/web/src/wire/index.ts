@@ -1,17 +1,17 @@
 /**
- * Wire-contract registry — typed `czap:*` events and stream `data-czap-*` attributes.
+ * Wire-contract registry — typed `liteship:*` events and stream `data-liteship-*` attributes.
  *
  * @module
  */
 
 export type {
-  CzapEventDetailMap,
-  CzapEventName,
-  CzapMorphRejectedDetail,
-  CzapStreamErrorDetail,
-  CzapUniformUpdateDetail,
-} from './czap-events.js';
-export { CZAP_EVENT_DOCS, CZAP_EVENT_NAMES } from './czap-events.js';
+  LiteshipEventDetailMap,
+  LiteshipEventName,
+  LiteshipMorphRejectedDetail,
+  LiteshipStreamErrorDetail,
+  LiteshipUniformUpdateDetail,
+} from './liteship-events.js';
+export { LITESHIP_EVENT_DOCS, LITESHIP_EVENT_NAMES } from './liteship-events.js';
 export type { StreamWireAttrKey, StreamWireAttribute } from './stream-attributes.js';
 export {
   STREAM_WIRE_ATTRIBUTE_DOCS,
@@ -19,6 +19,6 @@ export {
   STREAM_WIRE_ATTR_KEYS,
   streamWireAttr,
 } from './stream-attributes.js';
-export type { CzapEventDisposer } from './dispatch.js';
-export { dispatchCzapEvent, onCzap } from './dispatch.js';
+export type { LiteshipEventDisposer } from './dispatch.js';
+export { dispatchLiteshipEvent, onLiteship } from './dispatch.js';
 export { renderWireContractDoc } from './render-contract-doc.js';

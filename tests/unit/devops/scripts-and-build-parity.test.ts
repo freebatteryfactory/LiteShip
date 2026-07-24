@@ -44,7 +44,7 @@ describe('build-list parity — root tsconfig references cover every publishable
   // references, so coverage is asserted there, not by parsing the script.
   // Build-topology exclusion: the type-only `_spine` carries a publishConfig but
   // does not compile, so it is not a `tsc --build` project.
-  const NO_BUILD = new Set(['@czap/_spine']);
+  const NO_BUILD = new Set(['@liteship/_spine']);
 
   const dirToName = new Map(packageManifests().map((m) => [m.dir, m.name] as const));
   const publishableDirs = publishablePackageDirs().filter((dir) => !NO_BUILD.has(dirToName.get(dir) ?? ''));
@@ -69,5 +69,11 @@ describe('build-list parity — root tsconfig references cover every publishable
 describe('release:notes — version is not hardcoded', () => {
   it('the release:notes script derives the version (no `--version X.Y.Z` literal)', () => {
     expect(rootPkg.scripts['release:notes'] ?? '').not.toMatch(/--version\s+\d/);
+  });
+});
+
+describe('workspace dev shortcut', () => {
+  it('selects the documented showcase explicitly instead of consumer-host detection at the repo root', () => {
+    expect(rootPkg.scripts.dev).toBe('node packages/liteship/bin/liteship.mjs dev --example showcase');
   });
 });

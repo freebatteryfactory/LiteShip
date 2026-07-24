@@ -1,8 +1,8 @@
 /**
- * Astro 7 `AstroIntegration` for czap.
+ * Astro 7 `AstroIntegration` for liteship.
  *
- * Registers the `@czap/vite` plugin, injects the detect/boot scripts,
- * registers every client directive (`client:satellite`,
+ * Registers the `@liteship/vite` plugin, injects the detect/boot scripts,
+ * registers every client directive (`client:adaptive`,
  * `client:stream`, `client:llm`, `client:worker`, `client:gpu`,
  * `client:wasm`, `client:motion`) that the host opts into, and (in `astro dev`) registers
  * the boundary inspector as a dev-toolbar app.
@@ -14,14 +14,22 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
-import type { BoundaryManifestFile } from '@czap/edge';
-import { collectBoundaryManifest, plugin, primitiveSearchPatterns } from '@czap/vite';
-import type { PluginConfig, PrimitiveKind } from '@czap/vite';
+import type { BoundaryManifestFile } from '@liteship/edge';
+import { InvariantViolationError } from '@liteship/error';
+import {
+  collectBoundaryManifest,
+  loadProjectConfig,
+  mergePluginConfig,
+  plugin,
+  primitiveSearchPatterns,
+} from '@liteship/vite';
+import type { PluginConfig, PrimitiveKind } from '@liteship/vite';
+import type { LoadedProjectConfig, ProjectConfigLoader } from '@liteship/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { DETECT_INLINE_SCRIPT } from './detect-provisional.js';
-import { getCzapHeaderEntries, mergeVaryHeader } from './headers.js';
+import { getLiteshipHeaderEntries, mergeVaryHeader } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
-import type { RuntimeEndpointPolicy } from '@czap/web';
+import type { RuntimeEndpointPolicy } from '@liteship/web';
 import type { DirectiveName } from './runtime/directive-boot.js';
 import { publishIntegrationToggles, resolveIntegrationToggles } from './integration-toggles.js';
 import { installDiagnosticsBridge } from './diagnostics-bridge.js';
@@ -30,6 +38,46 @@ import {
   type RuntimeHtmlPolicy,
   type RuntimeSecurityPolicy,
 } from './runtime/policy.js';
+
+/**
+ * Resolve an Astro runtime entrypoint from this package's own module location.
+ * A consumer that installs only `liteship` must not need the Astro package publicly
+ * hoisted into its application root for Astro/esbuild to find these modules.
+ */
+function ownedEntrypoint(relativePath: string): string {
+  const builtPath = fileURLToPath(new URL(relativePath, import.meta.url));
+  if (existsSync(builtPath)) return builtPath;
+  const sourcePath = builtPath.endsWith('.js') ? `${builtPath.slice(0, -3)}.ts` : builtPath;
+  if (existsSync(sourcePath)) return sourcePath;
+  throw InvariantViolationError(
+    'astro-owned-entrypoint',
+    `@liteship/astro owns no runtime entrypoint at ${relativePath}`,
+  );
+}
+
+/**
+ * Resolve host-only entrypoints only while Astro runs integration setup.
+ *
+ * The package root also exposes runtime helpers used by Cloudflare SSR. Keeping
+ * filesystem probes at module evaluation made importing those helpers inside a
+ * workerd request evaluate a build-host invariant where no filesystem exists.
+ */
+function ownedEntrypoints() {
+  return Object.freeze({
+    adaptive: ownedEntrypoint('./client-directives/adaptive.js'),
+    graph: ownedEntrypoint('./client-directives/graph.js'),
+    stream: ownedEntrypoint('./client-directives/stream.js'),
+    llm: ownedEntrypoint('./client-directives/llm.js'),
+    worker: ownedEntrypoint('./client-directives/worker.js'),
+    gpu: ownedEntrypoint('./client-directives/gpu.js'),
+    wasm: ownedEntrypoint('./client-directives/wasm.js'),
+    motion: ownedEntrypoint('./client-directives/motion.js'),
+    svg: ownedEntrypoint('./client-directives/svg.js'),
+    middleware: ownedEntrypoint('./middleware-entry.js'),
+    inspector: ownedEntrypoint('./runtime/inspector-toolbar-app.js'),
+    runtime: ownedEntrypoint('./runtime/index.js'),
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,19 +90,21 @@ import {
  * opt-in).
  */
 export interface IntegrationConfig {
-  /** Overrides passed through to `@czap/vite`'s plugin. */
+  /** Overrides passed through to `@liteship/vite`'s plugin. */
   readonly vite?: PluginConfig;
+  /** Enable the adaptive client directive (default true). Root project config supplies the same field. */
+  readonly adaptive?: boolean;
   /**
-   * Route globs on which czap's costly runtime scripts (detect, the GPU probe,
-   * wasm, the dev inspector) should NOT run. For embedding czap alongside another
-   * Astro sub-app (e.g. a Starlight `/docs/**` section) that never consumes czap,
+   * Route globs on which liteship's costly runtime scripts (detect, the GPU probe,
+   * wasm, the dev inspector) should NOT run. For embedding liteship alongside another
+   * Astro sub-app (e.g. a Starlight `/docs/**` section) that never consumes liteship,
    * so those pages don't pay for a pointless GPU probe or attr writes. Astro's
    * `injectScript` is global (no build-time route filter), so this is a runtime
    * guard: a tiny inline script matches `location.pathname` and short-circuits
    * the rest (re-evaluating on View-Transition swaps). The directive bootstrap
-   * stays wired — it's a no-op without czap markers, and keeps View Transitions
+   * stays wired — it's a no-op without liteship markers, and keeps View Transitions
    * working across the boundary. Supports exact paths and a trailing `**` (e.g.
-   * `'/docs/**'` matches `/docs` and everything under it). Default `[]` (czap
+   * `'/docs/**'` matches `/docs` and everything under it). Default `[]` (liteship
    * runs everywhere).
    */
   readonly exclude?: readonly string[];
@@ -63,7 +113,7 @@ export interface IntegrationConfig {
   /**
    * @deprecated No-op. Server Islands is stable in Astro (since v5); there is
    * no experimental flag to toggle on Astro 7. Using `server:defer` with a
-   * configured adapter is all that's needed — czap does nothing here. This
+   * configured adapter is all that's needed — liteship does nothing here. This
    * option is retained only so existing configs keep type-checking; it will
    * be removed in a future major.
    */
@@ -85,7 +135,7 @@ export interface IntegrationConfig {
   readonly llm?: { readonly enabled?: boolean };
   /**
    * Continuous-motion runtime (`client:motion`). Opt-in (default off): registers
-   * the JS motion FLOOR that scrubs `data-czap-motion-program` when native
+   * the JS motion FLOOR that scrubs `data-liteship-motion-program` when native
    * `animation-timeline` is unavailable. The native CSS path (`MotionCompiler`)
    * needs no runtime and is unaffected.
    */
@@ -99,9 +149,9 @@ export interface IntegrationConfig {
   /**
    * Opt in (`true`) to auto-register a zero-config capability-detection
    * middleware, so a consumer needs no `src/middleware.ts` for the common case;
-   * it populates `Astro.locals.czap` from Client Hints. The edge boundary cache
+   * it populates `Astro.locals.liteship` from Client Hints. The edge boundary cache
    * (whose `theme`/`compile` carry functions) always needs a consumer
-   * `src/middleware.ts` calling `czapMiddleware({ edge })`; when both are present
+   * `src/middleware.ts` calling `liteshipMiddleware({ edge })`; when both are present
    * this auto entry runs first (`order: 'pre'`) and the consumer middleware
    * refines the same locals. Default off (wire middleware yourself).
    */
@@ -118,10 +168,10 @@ export interface IntegrationConfig {
 // ---------------------------------------------------------------------------
 
 /**
- * Build the head-inline guard that disables czap's runtime scripts on excluded
+ * Build the head-inline guard that disables liteship's runtime scripts on excluded
  * routes. Injected FIRST (before the detect inline script and ahead of every
- * `page` module), so `window.__CZAP_OFF__` is set before anything reads it. Each
- * czap script early-returns when the flag is set; when no routes are excluded
+ * `page` module), so `window.__LITESHIP_OFF__` is set before anything reads it. Each
+ * liteship script early-returns when the flag is set; when no routes are excluded
  * the guard is not injected at all and the flag stays undefined (falsy), so the
  * scripts run as before. Matching: exact pathname, or a trailing `**` glob
  * (`/docs/**` matches `/docs` and `/docs/...`). Patterns are JSON-embedded.
@@ -145,8 +195,8 @@ function scopeGuardScript(exclude: readonly string[]): string {
       }
       // Always assign (not just when matched) so the flag is never sticky: a
       // same-document navigation (Astro View Transitions) from an excluded path
-      // to an included one must re-enable czap.
-      window.__CZAP_OFF__ = off;
+      // to an included one must re-enable liteship.
+      window.__LITESHIP_OFF__ = off;
     } catch(e) {}
   }
   evaluate();
@@ -160,9 +210,9 @@ function scopeGuardScript(exclude: readonly string[]): string {
 // ---------------------------------------------------------------------------
 //
 // The provisional head-inline detect script (`DETECT_INLINE_SCRIPT`) is
-// GENERATED from canonical `@czap/detect` in `./detect-provisional.js` — it
+// GENERATED from canonical `@liteship/detect` in `./detect-provisional.js` — it
 // emits the same `headProbeCapTier` cap-tier ladder the deferred GPU-probe
-// upgrade uses, so the provisional `data-czap-tier` can never be a divergent
+// upgrade uses, so the provisional `data-liteship-tier` can never be a divergent
 // hand-copy (the 0.2.3/0.3.0 detect-ladder drift bug-class). The hand-rolled
 // inline ladder that used to live here was the last surviving copy; it is gone.
 
@@ -171,14 +221,14 @@ function serializeInlineRuntimePolicy(policy: RuntimeSecurityPolicy): string {
 }
 
 function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: readonly DirectiveName[]): string {
-  // NOT gated on __CZAP_OFF__: the directive bootstrap is idempotent and a cheap
-  // no-op on a page with no czap markers (an excluded Starlight route), and its
+  // NOT gated on __LITESHIP_OFF__: the directive bootstrap is idempotent and a cheap
+  // no-op on a page with no liteship markers (an excluded Starlight route), and its
   // astro:after-swap scan listener MUST stay wired so a View Transition from an
   // excluded landing to an included route still binds directives. The real
   // exclusion savings (the GPU probe, detect, wasm, inspector) are guarded at
   // their own scripts; this machinery is invisible where nothing uses it.
   return `
-import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapPipeline } from '@czap/astro/runtime';
+import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapPipeline } from '@liteship/astro/runtime';
 
 configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
 bootstrapSlots();
@@ -190,21 +240,21 @@ installSwapPipeline(${JSON.stringify(directives)});
 }
 
 // When wasm is enabled, advertise the resolved URL AND eagerly load the kernel
-// at the document level. configureWasmRuntime only sets data-czap-wasm-url —
+// at the document level. configureWasmRuntime only sets data-liteship-wasm-url —
 // the actual load lives in loadWasmRuntime, which otherwise fires only via a
 // per-element `client:wasm` directive. Without this auto-load, enabling wasm in
-// config silently no-ops (URL set, kernel never loaded, czap:wasm-ready never
+// config silently no-ops (URL set, kernel never loaded, liteship:wasm-ready never
 // fires) unless the page happens to carry a wasm directive element — a dogfood
 // sharp edge. `boot` also runs on `astro:after-swap` (registered unconditionally)
 // so a View Transition from an excluded landing to an included route still loads
 // the kernel — page-module scripts don't re-execute on swap. WASMDispatch.load is
 // idempotent after completion, so the repeat is free.
 const WASM_RUNTIME_SCRIPT = `
-import { wasmUrl } from 'virtual:czap/wasm-url';
-import { configureWasmRuntime, loadWasmRuntime } from '@czap/astro/runtime';
+import { wasmUrl } from 'virtual:liteship/wasm-url';
+import { configureWasmRuntime, loadWasmRuntime } from '@liteship/astro/runtime';
 
 function boot() {
-  if (window.__CZAP_OFF__ || !wasmUrl) return;
+  if (window.__LITESHIP_OFF__ || !wasmUrl) return;
   configureWasmRuntime(wasmUrl);
   void loadWasmRuntime(document.documentElement);
 }
@@ -212,14 +262,14 @@ boot();
 document.addEventListener('astro:after-swap', boot);
 `.trim();
 
-const CZAP_ASSET_HEADERS = ['/_czap/*', '  Cache-Control: public, max-age=31536000, immutable'].join('\n');
+const LITESHIP_ASSET_HEADERS = ['/_liteship/*', '  Cache-Control: public, max-age=31536000, immutable'].join('\n');
 
-function ensureCzapAssetHeaders(outDir: string): boolean {
+function ensureLiteshipAssetHeaders(outDir: string): boolean {
   const headersPath = path.join(outDir, '_headers');
   const current = existsSync(headersPath) ? readFileSync(headersPath, 'utf8') : '';
-  if (current.includes('/_czap/*')) return false;
+  if (current.includes('/_liteship/*')) return false;
   const prefix = current.length === 0 || current.endsWith('\n') ? current : `${current}\n`;
-  writeFileSync(headersPath, `${prefix}${CZAP_ASSET_HEADERS}\n`);
+  writeFileSync(headersPath, `${prefix}${LITESHIP_ASSET_HEADERS}\n`);
   return true;
 }
 
@@ -236,7 +286,7 @@ const INSPECTOR_TOOLBAR_ICON =
 // ---------------------------------------------------------------------------
 
 /**
- * Build the czap `AstroIntegration`.
+ * Build the liteship `AstroIntegration`.
  *
  * Plug the returned object into `astro.config.mjs`'s `integrations`
  * array. The integration wires Astro's `astro:config:setup`,
@@ -246,46 +296,74 @@ const INSPECTOR_TOOLBAR_ICON =
  * @example
  * ```ts
  * // astro.config.mjs
- * import { integration as czap } from '@czap/astro';
+ * import { integration as liteship } from '@liteship/astro';
  *
  * const config = defineConfig({
- *   integrations: [czap({ detect: true, workers: { enabled: true } })],
+ *   integrations: [liteship({ detect: true, workers: { enabled: true } })],
  * });
  * ```
  */
 export function integration(config?: IntegrationConfig): AstroIntegration {
-  const runtimeToggles = resolveIntegrationToggles(config);
-  publishIntegrationToggles(runtimeToggles);
-  const detectEnabled = runtimeToggles.detectEnabled;
-  const workersEnabled = runtimeToggles.workersEnabled;
-  const coep = runtimeToggles.coep;
-  const gpuEnabled = config?.gpu?.enabled !== false;
-  const streamEnabled = config?.stream?.enabled !== false;
-  const llmEnabled = config?.llm?.enabled !== false;
-  const motionEnabled = config?.motion?.enabled === true;
-  const wasmEnabled = config?.wasm?.enabled === true;
-  const inspectorEnabled = config?.inspector !== false;
-  const excludeRoutes = (config?.exclude ?? []).filter((route): route is string => typeof route === 'string');
-  const runtimePolicy = normalizeRuntimeSecurityPolicy({
-    endpointPolicy: config?.security?.endpointPolicy,
-    htmlPolicy: config?.security?.htmlPolicy,
-  });
-  // Mirrors the addClientDirective registrations below exactly; the boot
-  // scanner activates the same set on plain elements / .astro output.
-  const enabledDirectives: readonly DirectiveName[] = [
-    'satellite',
-    // `graph` is the DocumentGraph-loader counterpart of `satellite`: an
-    // always-on runtime primitive (no escalation tier / config gate), so it
-    // activates wherever a `data-czap-graph` payload is present.
-    'graph',
-    ...(streamEnabled ? (['stream'] as const) : []),
-    ...(llmEnabled ? (['llm'] as const) : []),
-    ...(workersEnabled ? (['worker'] as const) : []),
-    ...(gpuEnabled ? (['gpu'] as const) : []),
-    ...(wasmEnabled ? (['wasm'] as const) : []),
-    ...(motionEnabled ? (['motion'] as const) : []),
-    'svg',
-  ];
+  let effectiveConfig = config;
+  let detectEnabled = true;
+  let workersEnabled = false;
+  let coep: CrossOriginEmbedderPolicy | undefined;
+  let adaptiveEnabled = true;
+  let gpuEnabled = true;
+  let streamEnabled = true;
+  let llmEnabled = true;
+  let motionEnabled = false;
+  let wasmEnabled = false;
+  let inspectorEnabled = true;
+  let excludeRoutes: readonly string[] = [];
+  let runtimePolicy = normalizeRuntimeSecurityPolicy({});
+  let enabledDirectives: readonly DirectiveName[] = [];
+
+  const applyConfig = (next: IntegrationConfig | undefined): void => {
+    effectiveConfig = next;
+    const runtimeToggles = resolveIntegrationToggles(next);
+    publishIntegrationToggles(runtimeToggles);
+    detectEnabled = runtimeToggles.detectEnabled;
+    workersEnabled = runtimeToggles.workersEnabled;
+    coep = runtimeToggles.coep;
+    adaptiveEnabled = next?.adaptive !== false;
+    gpuEnabled = next?.gpu?.enabled !== false;
+    streamEnabled = next?.stream?.enabled !== false;
+    llmEnabled = next?.llm?.enabled !== false;
+    motionEnabled = next?.motion?.enabled === true;
+    wasmEnabled = next?.wasm?.enabled === true;
+    inspectorEnabled = next?.inspector !== false;
+    excludeRoutes = (next?.exclude ?? []).filter((route): route is string => typeof route === 'string');
+    runtimePolicy = normalizeRuntimeSecurityPolicy({
+      endpointPolicy: next?.security?.endpointPolicy,
+      htmlPolicy: next?.security?.htmlPolicy,
+    });
+    // Mirrors the addClientDirective registrations below exactly.
+    enabledDirectives = [
+      ...(adaptiveEnabled ? (['adaptive'] as const) : []),
+      'graph',
+      ...(streamEnabled ? (['stream'] as const) : []),
+      ...(llmEnabled ? (['llm'] as const) : []),
+      ...(workersEnabled ? (['worker'] as const) : []),
+      ...(gpuEnabled ? (['gpu'] as const) : []),
+      ...(wasmEnabled ? (['wasm'] as const) : []),
+      ...(motionEnabled ? (['motion'] as const) : []),
+      'svg',
+    ];
+  };
+  applyConfig(config);
+
+  // Astro and its nested Vite plugin evaluate the authored config through one
+  // memoized Vite loader. Both projections consume the same loaded value.
+  let projectConfigLoad: ReturnType<ProjectConfigLoader> | undefined;
+  const projectConfigLoader: ProjectConfigLoader = (env, file, root) => {
+    projectConfigLoad ??= (async () => {
+      const viteModule = 'vite';
+      const { loadConfigFromFile } = await import(viteModule);
+      return loadConfigFromFile(env, file, root);
+    })();
+    return projectConfigLoad;
+  };
 
   let projectRoot: string | null = null;
   let restoreDiagnostics: (() => void) | null = null;
@@ -296,7 +374,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   };
 
   return {
-    name: '@czap/astro',
+    name: '@liteship/astro',
 
     hooks: {
       'astro:config:setup': ({
@@ -311,176 +389,215 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         config: astroConfig,
       }) => {
         type AstroViteConfig = Parameters<typeof updateConfig>[0]['vite'];
-        logger.info('Setting up @czap integration');
+        logger.info('Setting up @liteship integration');
 
-        // Watch the convention primitive source files so definition edits restart
-        // the dev server and re-collect the manifest (Astro battery: addWatchFile).
-        // Guarded: real Astro always provides these, but keep it null-safe.
-        if (typeof addWatchFile === 'function' && astroConfig?.root && astroConfig.srcDir) {
-          watchConventionPrimitives(
-            addWatchFile,
-            fileURLToPath(astroConfig.root),
-            fileURLToPath(astroConfig.srcDir),
-            config?.vite?.dirs,
-          );
-        }
-
-        // Route @czap/* runtime diagnostics through Astro's logger so they carry
-        // the czap label and flow into `astro dev --json` structured output —
-        // one log stream the host (and CI / agents) already parse.
-        restoreDiagnosticsBridge();
-        restoreDiagnostics = installDiagnosticsBridge(logger);
-
-        // Astro may carry a different Vite type graph than @czap/vite. The plugin
-        // runtime contract is still compatible, so the host integration owns the
-        // version bridge here instead of leaking duplicate plugin shapes downstream.
-        const astroViteConfig = {
-          plugins: [
-            plugin({
-              ...(config?.vite ?? {}),
-              ...(wasmEnabled ? { wasm: { enabled: true, path: config?.wasm?.path } } : {}),
-            }),
-          ],
-        } as AstroViteConfig;
-
-        updateConfig({
-          vite: astroViteConfig,
-        });
-
-        // Register client directives
-        addClientDirective({
-          name: 'satellite',
-          entrypoint: '@czap/astro/client-directives/satellite',
-        });
-        logger.info('Registered satellite client directive');
-
-        // `graph` — the DocumentGraph-loader primitive, always-on like satellite.
-        addClientDirective({
-          name: 'graph',
-          entrypoint: '@czap/astro/client-directives/graph',
-        });
-        logger.info('Registered graph client directive');
-
-        if (streamEnabled) {
-          addClientDirective({
-            name: 'stream',
-            entrypoint: '@czap/astro/client-directives/stream',
+        const root = astroConfig?.root ? fileURLToPath(astroConfig.root) : process.cwd();
+        const configure = (project: LoadedProjectConfig | null): void => {
+          const entrypoints = ownedEntrypoints();
+          const mergedVite = mergePluginConfig(project?.vite, config?.vite);
+          applyConfig({
+            ...(project?.astro.adaptive !== undefined ? { adaptive: project.astro.adaptive } : {}),
+            ...(project?.astro.edgeRuntime !== undefined ? { middleware: project.astro.edgeRuntime } : {}),
+            ...(config ?? {}),
+            ...(Object.keys(mergedVite).length > 0 ? { vite: mergedVite } : {}),
           });
-          logger.info('Registered stream client directive');
-        }
 
-        if (llmEnabled) {
-          addClientDirective({
-            name: 'llm',
-            entrypoint: '@czap/astro/client-directives/llm',
-          });
-          logger.info('Registered llm client directive');
-        }
-
-        if (workersEnabled) {
-          addClientDirective({
-            name: 'worker',
-            entrypoint: '@czap/astro/client-directives/worker',
-          });
-          logger.info('Registered worker client directive');
-        }
-
-        if (gpuEnabled) {
-          addClientDirective({
-            name: 'gpu',
-            entrypoint: '@czap/astro/client-directives/gpu',
-          });
-          logger.info('Registered gpu client directive');
-        }
-
-        if (wasmEnabled) {
-          addClientDirective({
-            name: 'wasm',
-            entrypoint: '@czap/astro/client-directives/wasm',
-          });
-          logger.info('Registered wasm client directive');
-        }
-
-        if (motionEnabled) {
-          addClientDirective({
-            name: 'motion',
-            entrypoint: '@czap/astro/client-directives/motion',
-          });
-          logger.info('Registered motion client directive');
-        }
-
-        // SVG last-mile: always-on (parity with satellite) — a pure DOM
-        // applicator with no capability gate, so the SVG cast arm reaches the
-        // live DOM wherever a `[data-czap-entity]` SVG element is authored.
-        addClientDirective({
-          name: 'svg',
-          entrypoint: '@czap/astro/client-directives/svg',
-        });
-        logger.info('Registered svg client directive');
-
-        // Route scope guard FIRST (head-inline, ahead of every other czap
-        // script) so `__CZAP_OFF__` is set before anything reads it. Only when
-        // routes are excluded — otherwise no guard, no flag, scripts run as before.
-        if (excludeRoutes.length > 0) {
-          injectScript('head-inline', scopeGuardScript(excludeRoutes));
-          logger.info(`Injected route scope guard (excluded: ${excludeRoutes.join(', ')})`);
-        }
-
-        // Inject detect script for client-side capability detection
-        if (detectEnabled) {
-          injectScript('head-inline', DETECT_INLINE_SCRIPT);
-          logger.info('Injected detect script');
-
-          // Inject GPU probe upgrade (deferred, non-blocking)
-          if (gpuEnabled) {
-            injectScript('page', DETECT_UPGRADE_SCRIPT);
-            logger.info('Injected GPU probe upgrade');
+          // Watch the convention primitive source files so definition edits restart
+          // the dev server and re-collect the manifest (Astro battery: addWatchFile).
+          // Guarded: real Astro always provides these, but keep it null-safe.
+          if (typeof addWatchFile === 'function' && astroConfig?.root && astroConfig.srcDir) {
+            watchConventionPrimitives(
+              addWatchFile,
+              fileURLToPath(astroConfig.root),
+              fileURLToPath(astroConfig.srcDir),
+              effectiveConfig?.vite?.dirs,
+            );
           }
-        }
 
-        injectScript('page', runtimeBootstrapScript(runtimePolicy, enabledDirectives));
+          // Route @liteship/* runtime diagnostics through Astro's logger so they carry
+          // the liteship label and flow into `astro dev --json` structured output —
+          // one log stream the host (and CI / agents) already parse.
+          restoreDiagnosticsBridge();
+          restoreDiagnostics = installDiagnosticsBridge(logger);
 
-        if (wasmEnabled) {
-          injectScript('page', WASM_RUNTIME_SCRIPT);
-          logger.info('Injected wasm runtime bootstrap');
-        }
+          // Astro may carry a different Vite type graph than @liteship/vite. The plugin
+          // runtime contract is still compatible, so the host integration owns the
+          // version bridge here instead of leaking duplicate plugin shapes downstream.
+          const astroViteConfig = {
+            plugins: [
+              plugin(
+                {
+                  ...(effectiveConfig?.vite ?? {}),
+                  ...(wasmEnabled ? { wasm: { enabled: true, path: effectiveConfig?.wasm?.path } } : {}),
+                },
+                undefined,
+                projectConfigLoader,
+              ),
+            ],
+            // Astro compiles injected page scripts from a virtual app-root module.
+            // Under pnpm's default isolation that module cannot resolve this
+            // integration's transitive package name. Bind the stable authored
+            // specifier to the physical entrypoint owned by this package instead
+            // of requiring a consumer-visible hoist.
+            resolve: {
+              alias: {
+                '@liteship/astro/runtime': entrypoints.runtime,
+              },
+            },
+          } as AstroViteConfig;
 
-        // Zero-config detection: auto-wire the detection-only middleware so a
-        // consumer needs no src/middleware.ts for the common case. It inherits
-        // the integration's detect/workers toggles (published-toggles channel)
-        // and populates Astro.locals.czap. Edge/theme config carries functions
-        // that can't ride a static integration option, so the edge cache still
-        // needs a consumer middleware — it runs after this 'pre' one and refines
-        // the same locals. Opt in with `middleware: true` (default off).
-        if (config?.middleware === true) {
-          addMiddleware({ order: 'pre', entrypoint: '@czap/astro/middleware-entry' });
-          logger.info('Auto-wired capability-detection middleware');
-        }
-
-        // Register the boundary inspector as a dev-toolbar app (dev only).
-        // Astro mounts the entrypoint in the main page realm and toggles it
-        // from a toolbar icon — no injected page script, no custom hotkey.
-        if (command === 'dev' && inspectorEnabled) {
-          addDevToolbarApp({
-            id: 'czap-inspector',
-            name: 'czap boundaries',
-            icon: INSPECTOR_TOOLBAR_ICON,
-            // Resolved through @czap/astro's package exports so the `development`
-            // condition maps to the TS source in `astro dev` and to `dist` in a
-            // built integration — never a bare `.js` path that misses in dev.
-            entrypoint: '@czap/astro/runtime/inspector-toolbar-app',
+          updateConfig({
+            vite: astroViteConfig,
           });
-          logger.info('Registered dev boundary inspector toolbar app');
+
+          // Register client directives
+          if (adaptiveEnabled) {
+            addClientDirective({
+              name: 'adaptive',
+              entrypoint: entrypoints.adaptive,
+            });
+            logger.info('Registered adaptive client directive');
+          }
+
+          // `graph` — the DocumentGraph-loader primitive, always-on like adaptive.
+          addClientDirective({
+            name: 'graph',
+            entrypoint: entrypoints.graph,
+          });
+          logger.info('Registered graph client directive');
+
+          if (streamEnabled) {
+            addClientDirective({
+              name: 'stream',
+              entrypoint: entrypoints.stream,
+            });
+            logger.info('Registered stream client directive');
+          }
+
+          if (llmEnabled) {
+            addClientDirective({
+              name: 'llm',
+              entrypoint: entrypoints.llm,
+            });
+            logger.info('Registered llm client directive');
+          }
+
+          if (workersEnabled) {
+            addClientDirective({
+              name: 'worker',
+              entrypoint: entrypoints.worker,
+            });
+            logger.info('Registered worker client directive');
+          }
+
+          if (gpuEnabled) {
+            addClientDirective({
+              name: 'gpu',
+              entrypoint: entrypoints.gpu,
+            });
+            logger.info('Registered gpu client directive');
+          }
+
+          if (wasmEnabled) {
+            addClientDirective({
+              name: 'wasm',
+              entrypoint: entrypoints.wasm,
+            });
+            logger.info('Registered wasm client directive');
+          }
+
+          if (motionEnabled) {
+            addClientDirective({
+              name: 'motion',
+              entrypoint: entrypoints.motion,
+            });
+            logger.info('Registered motion client directive');
+          }
+
+          // SVG last-mile: always-on (parity with adaptive) — a pure DOM
+          // applicator with no capability gate, so the SVG cast arm reaches the
+          // live DOM wherever a `[data-liteship-entity]` SVG element is authored.
+          addClientDirective({
+            name: 'svg',
+            entrypoint: entrypoints.svg,
+          });
+          logger.info('Registered svg client directive');
+
+          // Route scope guard FIRST (head-inline, ahead of every other liteship
+          // script) so `__LITESHIP_OFF__` is set before anything reads it. Only when
+          // routes are excluded — otherwise no guard, no flag, scripts run as before.
+          if (excludeRoutes.length > 0) {
+            injectScript('head-inline', scopeGuardScript(excludeRoutes));
+            logger.info(`Injected route scope guard (excluded: ${excludeRoutes.join(', ')})`);
+          }
+
+          // Inject detect script for client-side capability detection
+          if (detectEnabled) {
+            injectScript('head-inline', DETECT_INLINE_SCRIPT);
+            logger.info('Injected detect script');
+
+            // Inject GPU probe upgrade (deferred, non-blocking)
+            if (gpuEnabled) {
+              injectScript('page', DETECT_UPGRADE_SCRIPT);
+              logger.info('Injected GPU probe upgrade');
+            }
+          }
+
+          injectScript('page', runtimeBootstrapScript(runtimePolicy, enabledDirectives));
+
+          if (wasmEnabled) {
+            injectScript('page', WASM_RUNTIME_SCRIPT);
+            logger.info('Injected wasm runtime bootstrap');
+          }
+
+          // Zero-config detection: auto-wire the detection-only middleware so a
+          // consumer needs no src/middleware.ts for the common case. It inherits
+          // the integration's detect/workers toggles (published-toggles channel)
+          // and populates Astro.locals.liteship. Edge/theme config carries functions
+          // that can't ride a static integration option, so the edge cache still
+          // needs a consumer middleware — it runs after this 'pre' one and refines
+          // the same locals. Opt in with `middleware: true` (default off).
+          if (effectiveConfig?.middleware === true) {
+            addMiddleware({ order: 'pre', entrypoint: entrypoints.middleware });
+            logger.info('Auto-wired capability-detection middleware');
+          }
+
+          // Register the boundary inspector as a dev-toolbar app (dev only).
+          // Astro mounts the entrypoint in the main page realm and toggles it
+          // from a toolbar icon — no injected page script, no custom hotkey.
+          if (command === 'dev' && inspectorEnabled) {
+            addDevToolbarApp({
+              id: 'liteship-inspector',
+              name: 'liteship boundaries',
+              icon: INSPECTOR_TOOLBAR_ICON,
+              // Resolve from this module's physical owner. A transitive installation
+              // therefore never depends on the consumer hoisting @liteship/astro.
+              entrypoint: entrypoints.inspector,
+            });
+            logger.info('Registered dev boundary inspector toolbar app');
+          }
+        };
+
+        // Keep convention-only and explicit-only Astro integrations synchronous.
+        // A present authored project hub is the sole path that needs Vite's async loader.
+        if (!existsSync(path.resolve(root, 'liteship.config.ts'))) {
+          configure(null);
+          return;
         }
+        return loadProjectConfig(
+          root,
+          { command: command === 'dev' ? 'serve' : 'build', mode: command === 'dev' ? 'development' : 'production' },
+          projectConfigLoader,
+        ).then(configure);
       },
 
       'astro:config:done': ({ config: astroConfig, logger }) => {
         projectRoot = fileURLToPath(astroConfig.root);
-        logger.info(`@czap configured for ${astroConfig.output} output`);
+        logger.info(`@liteship configured for ${astroConfig.output} output`);
       },
 
       'astro:server:setup': ({ server, logger }) => {
-        logger.info('@czap dev server middleware active');
+        logger.info('@liteship dev server middleware active');
 
         if (detectEnabled || workersEnabled) {
           server.middlewares.use(
@@ -492,7 +609,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
               },
               next: () => void,
             ) => {
-              for (const [header, value] of getCzapHeaderEntries({
+              for (const [header, value] of getLiteshipHeaderEntries({
                 detectEnabled,
                 workersEnabled,
                 ...(coep ? { coep } : {}),
@@ -522,37 +639,39 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
       'astro:build:done': async ({ dir, logger }) => {
         try {
-          if (config?.vite?.emitBoundaryAssets === true) {
+          if (effectiveConfig?.vite?.emitBoundaryAssets === true) {
             if (dir) {
               const outDir = fileURLToPath(dir);
-              if (ensureCzapAssetHeaders(outDir)) {
-                logger.info(`Added immutable Cache-Control headers for /_czap/* in ${path.join(outDir, '_headers')}`);
+              if (ensureLiteshipAssetHeaders(outDir)) {
+                logger.info(
+                  `Added immutable Cache-Control headers for /_liteship/* in ${path.join(outDir, '_headers')}`,
+                );
               }
             }
-            logger.info('@czap/vite emitted the boundary manifest with static asset URLs');
+            logger.info('@liteship/vite emitted the boundary manifest with static asset URLs');
             return;
           }
 
           // Emit the build-derived boundary manifest for hosts that read it
-          // from disk instead of importing `virtual:czap/boundaries` (e.g. a
+          // from disk instead of importing `virtual:liteship/boundaries` (e.g. a
           // worker entry assembled outside this Vite build).
           if (projectRoot && dir) {
             const boundaries = await collectBoundaryManifest(projectRoot, {
-              boundaryDir: config?.vite?.dirs?.boundary,
-              container: config?.vite?.quantize?.container,
+              boundaryDir: effectiveConfig?.vite?.dirs?.boundary,
+              container: effectiveConfig?.vite?.quantize?.container,
             });
             if (Object.keys(boundaries).length > 0) {
               const manifestFile: BoundaryManifestFile = {
-                _tag: 'CzapBoundaryManifest',
+                _tag: 'LiteshipBoundaryManifest',
                 _version: 2,
                 boundaries,
               };
-              const outPath = path.join(fileURLToPath(dir), 'czap-boundary-manifest.json');
+              const outPath = path.join(fileURLToPath(dir), 'liteship-boundary-manifest.json');
               writeFileSync(outPath, JSON.stringify(manifestFile, null, 2));
               logger.info(`Emitted boundary manifest (${Object.keys(boundaries).length} boundaries) to ${outPath}`);
             }
           }
-          logger.info('@czap build integration complete');
+          logger.info('@liteship build integration complete');
         } finally {
           restoreDiagnosticsBridge();
         }

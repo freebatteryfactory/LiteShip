@@ -8,10 +8,10 @@
 
 > **litelaunchGauntletWithIR**(`repoRoot`, `now`, `ir`, `globs?`, `cacheOpts?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/runner.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L442)
+Defined in: [gauntlet/src/runner.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L485)
 
 The HOST gauntlet run (Slice B, B1, step 3) — the IR-INJECTED composition the
-CLI calls once it has built the repo-IR via `@czap/audit`. Binds
+CLI calls once it has built the repo-IR via `@liteship/audit`. Binds
 [LITESHIP\_IR\_GATES](../variables/LITESHIP_IR_GATES.md) (the lean set with no-bare-throw re-expressed as an IR
 fold + the oracle-divergence gate) and threads the REQUIRED `ir` onto every
 gate's context, with the same committed assurance map + waivers + injected

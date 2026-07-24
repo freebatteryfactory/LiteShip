@@ -1,34 +1,47 @@
 /**
- * plumb (CLI adapter) — thin projection over `@czap/command`'s plumb command
+ * plumb (CLI adapter) — thin projection over `@liteship/command`'s plumb command
  * (the plumb-completeness gate, migrated from `scripts/plumb-gate.ts`). The
- * pass/fail decision lives in `@czap/command`; this adapter provides the
+ * pass/fail decision lives in `@liteship/command`; this adapter provides the
  * `runPlumb` capability via the shared host scan (`runPlumbScan` over `cwd`),
  * emits the structured receipt, and prints the work-list to stderr when the gate
  * fails. Exit 0 ok, 1 gate failed.
  *
  * @module
  */
-import { plumbCommand, type PlumbPayload } from '@czap/command';
-import type { CommandContext } from '@czap/command';
-import { runPlumbScan } from '@czap/command/host';
-import { detectSkipsAST } from '@czap/audit';
+import { plumbCommand, type PlumbPayload } from '@liteship/command';
+import type { CommandContext } from '@liteship/command';
+import { runPlumbScan } from '@liteship/command/host';
+import { detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
-/** Receipt emitted by `czap plumb`. */
+/** Receipt emitted by `liteship plumb`. */
 export interface PlumbReceipt extends PlumbPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'plumb';
   readonly timestamp: WallClockTimestamp;
 }
 
-/** Execute `czap plumb` — scan tests/generated/ + the published-package set; emit a verdict. */
-export async function plumb(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+/**
+ * Injectable scan seam for {@link plumb}. `runPlumbScan` DEFAULTS (via the
+ * null-coalesce at its call site) to the real `@liteship/command/host` scan, so
+ * production `liteship plumb` is byte-identical; tests pass a scripted scan to pin
+ * the CLI adapter's receipt + work-list projection without walking a real
+ * `tests/generated/` tree. Unexported + off the public barrel, so the api-surface
+ * snapshot is unchanged.
+ */
+interface PlumbDeps {
+  readonly runPlumbScan?: typeof runPlumbScan;
+}
+
+/** Execute `liteship plumb` — scan tests/generated/ + the published-package set; emit a verdict. */
+export async function plumb(opts: { cwd?: string; pretty?: boolean } = {}, deps: PlumbDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  // Inject the SOUND AST skip detector (the CLI host deps `@czap/audit`) so a generated multi-line /
+  // Inject the SOUND AST skip detector (the CLI host deps `@liteship/audit`) so a generated multi-line /
   // ASI / inner-describe skip the token scanner would miss is caught in the plumb scan too. The lean
-  // `@czap/command/host` keeps the dependency-free token `detectSkips` as its fallback.
-  const context: CommandContext = { cwd, runPlumb: async () => runPlumbScan(cwd, detectSkipsAST) };
+  // `@liteship/command/host` keeps the dependency-free token `detectSkips` as its fallback.
+  const scan = deps.runPlumbScan ?? runPlumbScan;
+  const context: CommandContext = { cwd, runPlumb: async () => scan(cwd, detectSkipsAST) };
 
   const result = await plumbCommand.handler({ name: 'plumb', args: {} }, context);
   const payload = result.payload as PlumbPayload;

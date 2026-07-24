@@ -1,16 +1,16 @@
 /**
- * Spine-reanchored brand constructors for `@czap/genui`.
+ * Spine-reanchored brand constructors for `@liteship/genui`.
  *
  * The {@link ContentAddress} constructor VALIDATES (parse-don't-validate): it
  * throws `ValidationError` on input that is not the canonical `fnv1a:` +
- * 8-lowercase-hex shape, so a branded value proves its shape. `@czap/error` is
+ * 8-lowercase-hex shape, so a branded value proves its shape. `@liteship/error` is
  * zero-dep and foundational, so this import introduces no cycle.
  *
  * @module
  */
 
-import type { ContentAddress as _ContentAddress } from '@czap/_spine';
-import { ValidationError } from '@czap/error';
+import type { ContentAddress as _ContentAddress } from '@liteship/_spine';
+import { ValidationError } from '@liteship/error';
 
 export type ContentAddress = _ContentAddress;
 

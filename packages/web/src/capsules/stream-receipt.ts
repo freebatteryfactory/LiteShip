@@ -7,19 +7,24 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
 
-const StreamMessageSchema = S.struct({
-  kind: S.union(S.literal('patch'), S.literal('batch'), S.literal('signal'), S.literal('snapshot')),
-  payload: S.unknown,
+const StreamMessageSchema = schema.struct({
+  kind: schema.union(
+    schema.literal('patch'),
+    schema.literal('batch'),
+    schema.literal('signal'),
+    schema.literal('snapshot'),
+  ),
+  payload: schema.unknown,
 });
 
-const ReceiptResultSchema = S.struct({
-  status: S.union(S.literal('applied'), S.literal('skipped'), S.literal('failed')),
-  receipt: S.struct({
-    messageId: S.string,
-    appliedAt: S.number,
-    morphPath: S.optional(S.string),
+const ReceiptResultSchema = schema.struct({
+  status: schema.union(schema.literal('applied'), schema.literal('skipped'), schema.literal('failed')),
+  receipt: schema.struct({
+    messageId: schema.string,
+    appliedAt: schema.number,
+    morphPath: schema.optional(schema.string),
   }),
 });
 

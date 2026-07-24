@@ -66,10 +66,10 @@ function scan(context: GateContext): readonly Finding[] {
           remediation: {
             kind: 'instruction',
             description:
-              'Do something with the caught error — rethrow, log with context, or convert it to a tagged @czap/error variant.',
+              'Do something with the caught error — rethrow, log with context, or convert it to a tagged @liteship/error variant.',
             steps: [
               'If the error is recoverable, handle it explicitly and comment WHY swallowing is correct (rare).',
-              'If it is a real fault, rethrow it (optionally wrapped in a tagged @czap/error variant that adds context).',
+              'If it is a real fault, rethrow it (optionally wrapped in a tagged @liteship/error variant that adds context).',
               'At minimum, log the error so the failure leaves a trace; never let it disappear silently.',
             ],
           },

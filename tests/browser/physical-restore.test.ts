@@ -228,13 +228,13 @@ describe('browser physical state capture and restore', () => {
     expect(document.activeElement).toBe(priorActive);
   });
 
-  test('elementToPath uses data-czap-id when present', () => {
+  test('elementToPath uses data-liteship-id when present', () => {
     const el = document.createElement('div');
-    el.setAttribute('data-czap-id', 'my-semantic-id');
+    el.setAttribute('data-liteship-id', 'my-semantic-id');
     root.appendChild(el);
 
     const path = elementToPath(el);
-    expect(path).toContain('data-czap-id="my-semantic-id"');
+    expect(path).toContain('data-liteship-id="my-semantic-id"');
   });
 
   test('elementToPath builds nth-child path for elements without id', () => {

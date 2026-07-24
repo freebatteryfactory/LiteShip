@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:469](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L469)
+Defined in: [quantizer/src/animated-quantizer.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L477)
 
 Animated quantizer namespace.
 
@@ -22,13 +22,13 @@ the current interpolated output record.
 
 ### make
 
-> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => [`AnimatedQuantizerHandle`](../interfaces/AnimatedQuantizerHandle.md)\<`B`\> = `makeAnimatedQuantizer`
+> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => [`OwnedAnimatedQuantizer`](../type-aliases/OwnedAnimatedQuantizer.md)\<`B`\> = `makeAnimatedQuantizer`
 
 Wrap a quantizer with transition-aware output interpolation.
 
 Create an animated quantizer that interpolates outputs during transitions.
 
-Wraps an existing [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts) and applies easing/duration-based
+Wraps an existing [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts) and applies easing/duration-based
 interpolation between old and new output values when a boundary crossing
 occurs. Publishes an `interpolated` fan-out of frames with progress and lerped
 numeric outputs — at ~60fps by default, or on the cadence of an injected
@@ -37,21 +37,21 @@ numeric outputs — at ~60fps by default, or on the cadence of an injected
 The wrapped quantizer's crossings are observed eagerly (one shared
 subscription): each crossing interrupts the prior animation via a per-crossing
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) — aborting breaks the `for await` over
-[Animation.run](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts), whose `finally` cancels the pending scheduler tick — and
-starts a fresh animation. Dispose the returned [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts) to detach the
+[Animation.run](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts), whose `finally` cancels the pending scheduler tick — and
+starts a fresh animation. Dispose the returned [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) to detach the
 crossing subscription, abort the in-flight animation, and close the fan-out.
 
 #### Type Parameters
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 #### Parameters
 
 ##### quantizer
 
-[`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts)\<`B`\>
+[`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts)\<`B`\>
 
 The reactive quantizer to wrap
 
@@ -73,7 +73,7 @@ Per-state numeric output maps for interpolation; omitted,
 ##### options?
 
 Optional injection bag. `options.scheduler` supplies a
-                     `Scheduler.Shape` frame clock (e.g. `Scheduler.raf()`
+                     `Scheduler` frame clock (e.g. `Scheduler.raf()`
                      to align frames to the display, or `Scheduler.fixedStep(fps)`
                      for deterministic rendering/tests). Omitted, the animation
                      drives its own internal ~60fps loop via a fixed 16ms sleep
@@ -85,43 +85,43 @@ Optional injection bag. `options.scheduler` supplies a
 
 #### Returns
 
-[`AnimatedQuantizerHandle`](../interfaces/AnimatedQuantizerHandle.md)\<`B`\>
+[`OwnedAnimatedQuantizer`](../type-aliases/OwnedAnimatedQuantizer.md)\<`B`\>
 
-An [AnimatedQuantizerHandle](../interfaces/AnimatedQuantizerHandle.md) — the instance plus its [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts)
+An [OwnedAnimatedQuantizer](../type-aliases/OwnedAnimatedQuantizer.md) — the instance that owns its own teardown via `dispose()`
 
 #### Example
 
 ```ts
-import { Boundary, Millis } from '@czap/core';
-import { Q, AnimatedQuantizer } from '@czap/quantizer';
+import { defineBoundary, Millis } from '@liteship/core';
+import { defineQuantizer, createQuantizer, AnimatedQuantizer } from '@liteship/quantizer';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'scroll',
   at: [[0, 'top'], [500, 'bottom']],
 });
-const config = Q.from(boundary).outputs({
-  css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } },
+const config = defineQuantizer(boundary, {
+  outputs: { css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } } },
 });
-const { quantizer: live } = config.create();
+const live = createQuantizer(config);
 // outputs omitted: derived from the LiveQuantizer's css output tables
-const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
-const dispose = animated.interpolated.subscribe((frame) => { ... });
+const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
+const unsubscribe = animated.interpolated.subscribe((frame) => { ... });
 live.evaluate(600); // triggers interpolation
 ```
 
 ## Example
 
 ```ts
-import { Boundary, Millis } from '@czap/core';
-import { Q, AnimatedQuantizer } from '@czap/quantizer';
+import { defineBoundary, Millis } from '@liteship/core';
+import { defineQuantizer, createQuantizer, AnimatedQuantizer } from '@liteship/quantizer';
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'scroll',
   at: [[0, 'top'], [500, 'bottom']],
 });
-const config = Q.from(boundary).outputs({});
-const { quantizer: live } = config.create();
-const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
+const config = defineQuantizer(boundary, { outputs: {} });
+const live = createQuantizer(config);
+const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
 animated.transition; // TransitionResolver
-await lifetime.dispose();
+await animated.dispose();
 ```

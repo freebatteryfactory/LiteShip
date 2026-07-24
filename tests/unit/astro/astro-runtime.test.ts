@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics, GenFrame, HLC, Receipt, TokenBuffer, TypedRef, WASMDispatch } from '@czap/core';
-import type { UIFrame } from '@czap/core';
+import { Diagnostics, GenFrame, HLC, Receipt, TypedRef, WASMDispatch, fixedClock } from '@liteship/core';
+import * as LiteshipCore from '@liteship/core';
+import type { UIFrame } from '@liteship/core';
 import {
   bootstrapSlots,
   configureWasmRuntime,
@@ -36,20 +37,20 @@ import { readRuntimeGlobal, writeRuntimeGlobal } from '../../../packages/astro/s
 import { parseLLMChunk } from '../../../packages/astro/src/runtime/llm.js';
 
 type RuntimeWindow = Window & {
-  __CZAP_SLOT_REGISTRY__?: unknown;
-  __CZAP_SLOT_BOOTSTRAPPED__?: boolean;
-  __CZAP_DIRECTIVE_BOOTSTRAPPED__?: boolean;
-  __CZAP_SWAP_PIPELINE__?: boolean;
-  __CZAP_SLOTS__?: unknown;
+  __LITESHIP_SLOT_REGISTRY__?: unknown;
+  __LITESHIP_SLOT_BOOTSTRAPPED__?: boolean;
+  __LITESHIP_DIRECTIVE_BOOTSTRAPPED__?: boolean;
+  __LITESHIP_SWAP_PIPELINE__?: boolean;
+  __LITESHIP_SLOTS__?: unknown;
 };
 
 function resetRuntimeWindow(): void {
   const runtimeWindow = window as RuntimeWindow;
-  delete runtimeWindow.__CZAP_SLOT_REGISTRY__;
-  delete runtimeWindow.__CZAP_SLOT_BOOTSTRAPPED__;
-  delete runtimeWindow.__CZAP_DIRECTIVE_BOOTSTRAPPED__;
-  delete runtimeWindow.__CZAP_SWAP_PIPELINE__;
-  delete runtimeWindow.__CZAP_SLOTS__;
+  delete runtimeWindow.__LITESHIP_SLOT_REGISTRY__;
+  delete runtimeWindow.__LITESHIP_SLOT_BOOTSTRAPPED__;
+  delete runtimeWindow.__LITESHIP_DIRECTIVE_BOOTSTRAPPED__;
+  delete runtimeWindow.__LITESHIP_SWAP_PIPELINE__;
+  delete runtimeWindow.__LITESHIP_SLOTS__;
 }
 
 async function makeEnvelope(step: number, previous: string | readonly string[]) {
@@ -78,8 +79,8 @@ function makeFrame(receiptId: string, tokens: readonly string[], bufferPosition:
 afterEach(() => {
   document.body.innerHTML = '';
   resetRuntimeWindow();
-  delete (window as Window & { __CZAP_WASM__?: unknown }).__CZAP_WASM__;
-  document.documentElement.removeAttribute('data-czap-wasm-url');
+  delete (window as Window & { __LITESHIP_WASM__?: unknown }).__LITESHIP_WASM__;
+  document.documentElement.removeAttribute('data-liteship-wasm-url');
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -87,27 +88,29 @@ afterEach(() => {
 describe('astro shared runtime adapters', () => {
   test('bootstraps slots into the shared registry and reinitializes directives after swaps', () => {
     document.body.innerHTML = `
-      <section data-czap-slot="/hero" data-czap-mode="replace"></section>
-      <div id="widget" data-czap-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
+      <section data-liteship-slot="/hero" data-liteship-mode="replace"></section>
+      <div id="widget" data-liteship-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
     `;
 
     const registry = bootstrapSlots();
     document.dispatchEvent(new Event('DOMContentLoaded'));
 
     expect(registry.get('/hero' as never)?.mode).toBe('replace');
-    expect(getSlotRegistry().get('/hero' as never)?.element).toBe(document.querySelector('[data-czap-slot="/hero"]'));
+    expect(getSlotRegistry().get('/hero' as never)?.element).toBe(
+      document.querySelector('[data-liteship-slot="/hero"]'),
+    );
 
     let reinitCount = 0;
-    document.getElementById('widget')?.addEventListener('czap:reinit', () => {
+    document.getElementById('widget')?.addEventListener('liteship:reinit', () => {
       reinitCount += 1;
     });
 
     // The single ordered swap pipeline: rescan slots → boot directives → reinit.
-    installSwapPipeline(['satellite']);
+    installSwapPipeline(['adaptive']);
 
     const nextSlot = document.createElement('section');
-    nextSlot.setAttribute('data-czap-slot', '/next');
-    nextSlot.setAttribute('data-czap-mode', 'partial');
+    nextSlot.setAttribute('data-liteship-slot', '/next');
+    nextSlot.setAttribute('data-liteship-mode', 'partial');
     document.body.appendChild(nextSlot);
 
     document.dispatchEvent(new Event('astro:after-swap'));
@@ -118,31 +121,31 @@ describe('astro shared runtime adapters', () => {
 
   test('rescans slots through the document root and installs the swap pipeline only once', () => {
     document.body.innerHTML = `
-      <section data-czap-slot="/hero" data-czap-mode="replace"></section>
-      <div id="widget" data-czap-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
+      <section data-liteship-slot="/hero" data-liteship-mode="replace"></section>
+      <div id="widget" data-liteship-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
     `;
 
     const registry = rescanSlots(document);
     const runtimeWindow = window as RuntimeWindow;
     expect(registry.get('/hero' as never)?.mode).toBe('replace');
-    expect(runtimeWindow.__CZAP_SLOTS__).toMatchObject({
+    expect(runtimeWindow.__LITESHIP_SLOTS__).toMatchObject({
       entries: {
         '/hero': { path: '/hero', mode: 'replace' },
       },
     });
-    expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__CZAP_SLOTS__')).toBe(false);
+    expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__LITESHIP_SLOTS__')).toBe(false);
 
     const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
-    installSwapPipeline(['satellite']);
-    installSwapPipeline(['satellite']);
+    installSwapPipeline(['adaptive']);
+    installSwapPipeline(['adaptive']);
 
     expect(addEventListenerSpy.mock.calls.filter(([type]) => type === 'astro:after-swap')).toHaveLength(1);
-    expect(runtimeWindow.__CZAP_SWAP_PIPELINE__).toBe(true);
-    expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__CZAP_SWAP_PIPELINE__')).toBe(false);
+    expect(runtimeWindow.__LITESHIP_SWAP_PIPELINE__).toBe(true);
+    expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__LITESHIP_SWAP_PIPELINE__')).toBe(false);
   });
 
   test('bootstrapSlots is idempotent and keeps a single shared registry instance', () => {
-    document.body.innerHTML = `<section data-czap-slot="/hero" data-czap-mode="replace"></section>`;
+    document.body.innerHTML = `<section data-liteship-slot="/hero" data-liteship-mode="replace"></section>`;
 
     const first = bootstrapSlots();
     const second = bootstrapSlots();
@@ -150,16 +153,16 @@ describe('astro shared runtime adapters', () => {
 
     expect(first).toBe(second);
     expect(first).toBe(getSlotRegistry());
-    expect((window as RuntimeWindow).__CZAP_SLOT_BOOTSTRAPPED__).toBe(true);
-    expect(Object.prototype.propertyIsEnumerable.call(window, '__CZAP_SLOT_REGISTRY__')).toBe(false);
-    expect(Object.prototype.propertyIsEnumerable.call(window, '__CZAP_SLOT_BOOTSTRAPPED__')).toBe(false);
+    expect((window as RuntimeWindow).__LITESHIP_SLOT_BOOTSTRAPPED__).toBe(true);
+    expect(Object.prototype.propertyIsEnumerable.call(window, '__LITESHIP_SLOT_REGISTRY__')).toBe(false);
+    expect(Object.prototype.propertyIsEnumerable.call(window, '__LITESHIP_SLOT_BOOTSTRAPPED__')).toBe(false);
     expect(first.get('/hero' as never)?.mode).toBe('replace');
   });
 
   test('getSlotRegistry replaces an existing window global that does not match the registry shape', () => {
     // Pre-seed with an object missing register/entries/get to force isSlotRegistryShape
     // to reject it and fall through to writing a fresh registry.
-    writeRuntimeGlobal('__CZAP_SLOT_REGISTRY__', { bogus: true } as never);
+    writeRuntimeGlobal('__LITESHIP_SLOT_REGISTRY__', { bogus: true } as never);
     const registry = getSlotRegistry();
     expect(typeof registry.register).toBe('function');
     expect(typeof registry.entries).toBe('function');
@@ -169,10 +172,10 @@ describe('astro shared runtime adapters', () => {
     const isNumber = (v: unknown): v is number => typeof v === 'number';
     const isString = (v: unknown): v is string => typeof v === 'string';
 
-    writeRuntimeGlobal('__CZAP_TEST__', 42);
-    expect(readRuntimeGlobal('__CZAP_TEST__', isNumber)).toBe(42);
+    writeRuntimeGlobal('__LITESHIP_TEST__', 42);
+    expect(readRuntimeGlobal('__LITESHIP_TEST__', isNumber)).toBe(42);
 
-    const fixedDescriptor = Object.getOwnPropertyDescriptor(window, '__CZAP_TEST__');
+    const fixedDescriptor = Object.getOwnPropertyDescriptor(window, '__LITESHIP_TEST__');
     expect(fixedDescriptor).toMatchObject({
       configurable: true,
       enumerable: false,
@@ -180,33 +183,33 @@ describe('astro shared runtime adapters', () => {
       value: 42,
     });
 
-    writeRuntimeGlobal('__CZAP_MUTABLE__', 1, { writable: true });
-    const mutableDescriptor = Object.getOwnPropertyDescriptor(window, '__CZAP_MUTABLE__');
+    writeRuntimeGlobal('__LITESHIP_MUTABLE__', 1, { writable: true });
+    const mutableDescriptor = Object.getOwnPropertyDescriptor(window, '__LITESHIP_MUTABLE__');
     expect(mutableDescriptor?.writable).toBe(true);
-    (window as Window & { __CZAP_MUTABLE__?: number }).__CZAP_MUTABLE__ = 2;
-    expect(readRuntimeGlobal('__CZAP_MUTABLE__', isNumber)).toBe(2);
+    (window as Window & { __LITESHIP_MUTABLE__?: number }).__LITESHIP_MUTABLE__ = 2;
+    expect(readRuntimeGlobal('__LITESHIP_MUTABLE__', isNumber)).toBe(2);
 
     const originalWindow = window;
     vi.stubGlobal('window', undefined as never);
-    expect(writeRuntimeGlobal('__CZAP_OFFLINE__', 'value')).toBe('value');
-    expect(readRuntimeGlobal('__CZAP_OFFLINE__', isString)).toBeUndefined();
+    expect(writeRuntimeGlobal('__LITESHIP_OFFLINE__', 'value')).toBe('value');
+    expect(readRuntimeGlobal('__LITESHIP_OFFLINE__', isString)).toBeUndefined();
     vi.stubGlobal('window', originalWindow as never);
   });
 
   test('rescans slots invalidate stale paths and preserve retargeted slot addresses', () => {
-    document.body.innerHTML = `<section id="slot" data-czap-slot="/hero" data-czap-mode="replace"></section>`;
+    document.body.innerHTML = `<section id="slot" data-liteship-slot="/hero" data-liteship-mode="replace"></section>`;
 
     const first = rescanSlots(document);
     expect(first.get('/hero' as never)?.element).toBe(document.getElementById('slot'));
 
     const slot = document.getElementById('slot')!;
-    slot.setAttribute('data-czap-slot', '/hero/next');
+    slot.setAttribute('data-liteship-slot', '/hero/next');
     rescanSlots(document);
 
     const runtimeWindow = window as RuntimeWindow;
     expect(first.get('/hero' as never)).toBeUndefined();
     expect(first.get('/hero/next' as never)?.element).toBe(slot);
-    expect(runtimeWindow.__CZAP_SLOTS__).toMatchObject({
+    expect(runtimeWindow.__LITESHIP_SLOTS__).toMatchObject({
       entries: {
         '/hero/next': { path: '/hero/next', mode: 'replace' },
       },
@@ -215,15 +218,15 @@ describe('astro shared runtime adapters', () => {
 
   test('reinitializeDirectives dispatches across stream, llm, wasm, and boundary surfaces', () => {
     document.body.innerHTML = `
-      <div id="boundary" data-czap-boundary="{}"></div>
-      <div id="stream" data-czap-stream-url="/stream"></div>
-      <div id="llm" data-czap-llm-url="/llm"></div>
-      <div id="wasm" data-czap-wasm="true"></div>
+      <div id="boundary" data-liteship-boundary="{}"></div>
+      <div id="stream" data-liteship-stream-url="/stream"></div>
+      <div id="llm" data-liteship-llm-url="/llm"></div>
+      <div id="wasm" data-liteship-wasm="true"></div>
     `;
 
     const counts = new Map<string, number>();
     for (const id of ['boundary', 'stream', 'llm', 'wasm'] as const) {
-      document.getElementById(id)?.addEventListener('czap:reinit', () => {
+      document.getElementById(id)?.addEventListener('liteship:reinit', () => {
         counts.set(id, (counts.get(id) ?? 0) + 1);
       });
     }
@@ -307,8 +310,8 @@ describe('astro shared runtime adapters', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.receipt-chain',
-        code: 'receipt-signature-unverified',
+        source: 'liteship/astro.receipt-chain',
+        code: 'astro/receipt-chain/receipt-signature-unverified',
       }),
     );
   });
@@ -348,60 +351,60 @@ describe('astro shared runtime adapters', () => {
 
   test('configures and resolves shared wasm URLs through the runtime adapter', () => {
     const inherited = document.createElement('div');
-    inherited.setAttribute('data-czap-wasm', 'true');
+    inherited.setAttribute('data-liteship-wasm', 'true');
     document.body.appendChild(inherited);
 
     const pinned = document.createElement('div');
-    pinned.setAttribute('data-czap-wasm', 'true');
-    pinned.setAttribute('data-czap-wasm-url', '/custom.wasm');
+    pinned.setAttribute('data-liteship-wasm', 'true');
+    pinned.setAttribute('data-liteship-wasm-url', '/custom.wasm');
     document.body.appendChild(pinned);
 
     configureWasmRuntime('/runtime.wasm');
 
-    expect(document.documentElement.getAttribute('data-czap-wasm-url')).toBe('/runtime.wasm');
-    expect(inherited.getAttribute('data-czap-wasm-url')).toBe('/runtime.wasm');
+    expect(document.documentElement.getAttribute('data-liteship-wasm-url')).toBe('/runtime.wasm');
+    expect(inherited.getAttribute('data-liteship-wasm-url')).toBe('/runtime.wasm');
     expect(resolveWasmUrl(inherited)).toBe('/runtime.wasm');
     expect(resolveWasmUrl(pinned)).toBe('/custom.wasm');
 
     configureWasmRuntime(null);
 
-    expect(document.documentElement.hasAttribute('data-czap-wasm-url')).toBe(false);
+    expect(document.documentElement.hasAttribute('data-liteship-wasm-url')).toBe(false);
   });
 
   test('loads wasm kernels through WASMDispatch and dispatches readiness events', async () => {
     const element = document.createElement('div');
-    element.setAttribute('data-czap-wasm', 'true');
+    element.setAttribute('data-liteship-wasm', 'true');
     document.body.appendChild(element);
     configureWasmRuntime('/runtime.wasm');
 
     const kernels = WASMDispatch.kernels();
     const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(kernels);
     let detail: { url: string } | null = null;
-    document.addEventListener('czap:wasm-ready', ((event: CustomEvent<{ url: string }>) => {
+    document.addEventListener('liteship:wasm-ready', ((event: CustomEvent<{ url: string }>) => {
       detail = event.detail;
     }) as EventListener);
 
     await loadWasmRuntime(element);
 
     expect(loadSpy).toHaveBeenCalledWith('/runtime.wasm');
-    expect((window as Window & { __CZAP_WASM__?: unknown }).__CZAP_WASM__).toBe(kernels);
-    expect(Object.prototype.propertyIsEnumerable.call(window, '__CZAP_WASM__')).toBe(false);
+    expect((window as Window & { __LITESHIP_WASM__?: unknown }).__LITESHIP_WASM__).toBe(kernels);
+    expect(Object.prototype.propertyIsEnumerable.call(window, '__LITESHIP_WASM__')).toBe(false);
     expect(detail).toEqual({ url: '/runtime.wasm' });
   });
 
   test('auto-loads at the document level with NO wasm directive element (the enable-in-config path)', async () => {
-    // The dogfood sharp edge: czap({ wasm: { enabled: true } }) advertised the
+    // The dogfood sharp edge: liteship({ wasm: { enabled: true } }) advertised the
     // root URL but never loaded, because the load only ran via a per-element
     // `client:wasm` directive. The injected bootstrap now calls
     // loadWasmRuntime(document.documentElement) — this proves it loads off the
-    // ROOT url with no [data-czap-wasm] element anywhere on the page.
-    expect(document.querySelectorAll('[data-czap-wasm]').length).toBe(0);
+    // ROOT url with no [data-liteship-wasm] element anywhere on the page.
+    expect(document.querySelectorAll('[data-liteship-wasm]').length).toBe(0);
     configureWasmRuntime('/runtime.wasm');
 
     const kernels = WASMDispatch.kernels();
     const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(kernels);
     let detail: { url: string } | null = null;
-    document.addEventListener('czap:wasm-ready', ((event: CustomEvent<{ url: string }>) => {
+    document.addEventListener('liteship:wasm-ready', ((event: CustomEvent<{ url: string }>) => {
       detail = event.detail;
     }) as EventListener);
 
@@ -419,11 +422,11 @@ describe('astro shared runtime adapters', () => {
     await loadWasmRuntime(element);
     expect(loadSpy).not.toHaveBeenCalled();
 
-    element.setAttribute('data-czap-wasm-url', '/broken.wasm');
+    element.setAttribute('data-liteship-wasm-url', '/broken.wasm');
     loadSpy.mockRejectedValueOnce(new Error('bad module'));
 
     let detail: { url: string; reason: string } | null = null;
-    document.addEventListener('czap:wasm-error', ((event: CustomEvent<{ url: string; reason: string }>) => {
+    document.addEventListener('liteship:wasm-error', ((event: CustomEvent<{ url: string; reason: string }>) => {
       detail = event.detail;
     }) as EventListener);
 
@@ -434,13 +437,13 @@ describe('astro shared runtime adapters', () => {
 
   test('falls back to a generic wasm error reason when loading rejects with a non-Error value', async () => {
     const element = document.createElement('div');
-    element.setAttribute('data-czap-wasm-url', '/broken.wasm');
+    element.setAttribute('data-liteship-wasm-url', '/broken.wasm');
     document.body.appendChild(element);
 
     vi.spyOn(WASMDispatch, 'load').mockRejectedValueOnce('boom');
 
     let detail: { url: string; reason: string } | null = null;
-    document.addEventListener('czap:wasm-error', ((event: CustomEvent<{ url: string; reason: string }>) => {
+    document.addEventListener('liteship:wasm-error', ((event: CustomEvent<{ url: string; reason: string }>) => {
       detail = event.detail;
     }) as EventListener);
 
@@ -490,7 +493,7 @@ describe('astro shared runtime adapters', () => {
       aria: Record<string, string>;
     } | null = null;
 
-    element.addEventListener('czap:shared-boundary', ((event: CustomEvent<typeof detail>) => {
+    element.addEventListener('liteship:shared-boundary', ((event: CustomEvent<typeof detail>) => {
       detail = event.detail;
     }) as EventListener);
 
@@ -500,25 +503,25 @@ describe('astro shared runtime adapters', () => {
       {
         discrete: { hero: 'tablet' },
         outputs: {
-          css: { '--czap-gap': 24 },
+          css: { '--liteship-gap': 24 },
           glsl: { u_time: 0.5 },
           aria: { 'aria-busy': 'true' },
         },
         css: { color: 'red' },
         aria: { onclick: 'alert(1)', role: 'status' },
       },
-      'czap:shared-boundary',
+      'liteship:shared-boundary',
     );
 
-    expect(element.getAttribute('data-czap-state')).toBe('tablet');
-    expect(element.style.getPropertyValue('--czap-gap')).toBe('24');
+    expect(element.getAttribute('data-liteship-state')).toBe('tablet');
+    expect(element.style.getPropertyValue('--liteship-gap')).toBe('24');
     expect(element.style.getPropertyValue('color')).toBe('');
     expect(element.getAttribute('aria-busy')).toBe('true');
     expect(element.getAttribute('role')).toBe('status');
     expect(element.getAttribute('onclick')).toBeNull();
     expect(detail).toEqual({
       discrete: { hero: 'tablet' },
-      css: { '--czap-gap': 24 },
+      css: { '--liteship-gap': 24 },
       glsl: { u_time: 0.5 },
       wgsl: {},
       aria: { 'aria-busy': 'true', role: 'status' },
@@ -542,7 +545,7 @@ describe('astro shared runtime adapters', () => {
 
     const element = document.createElement('div');
     let detail: unknown = null;
-    element.addEventListener('czap:empty-boundary', ((event: CustomEvent) => {
+    element.addEventListener('liteship:empty-boundary', ((event: CustomEvent) => {
       detail = event.detail;
     }) as EventListener);
 
@@ -553,10 +556,10 @@ describe('astro shared runtime adapters', () => {
         css: { color: 'red' },
         aria: { onclick: 'boom' },
       },
-      'czap:empty-boundary',
+      'liteship:empty-boundary',
     );
 
-    expect(element.hasAttribute('data-czap-state')).toBe(false);
+    expect(element.hasAttribute('data-liteship-state')).toBe(false);
     expect(detail).toEqual({
       discrete: {},
       css: {},
@@ -652,7 +655,7 @@ describe('astro shared runtime adapters', () => {
     addSpy.mockRestore();
   });
 
-  test('applyBoundaryState skips redundant data-czap-state writes while preserving event detail', () => {
+  test('applyBoundaryState skips redundant data-liteship-state writes while preserving event detail', () => {
     const parsed = parseBoundary(
       JSON.stringify({
         id: 'hero',
@@ -662,11 +665,11 @@ describe('astro shared runtime adapters', () => {
       }),
     );
     const element = document.createElement('div');
-    element.setAttribute('data-czap-state', 'compact');
+    element.setAttribute('data-liteship-state', 'compact');
     const setAttributeSpy = vi.spyOn(element, 'setAttribute');
     const detailEvents: unknown[] = [];
 
-    element.addEventListener('czap:shared-boundary', ((event: CustomEvent) => {
+    element.addEventListener('liteship:shared-boundary', ((event: CustomEvent) => {
       detailEvents.push(event.detail);
     }) as EventListener);
 
@@ -676,25 +679,25 @@ describe('astro shared runtime adapters', () => {
       {
         discrete: { hero: 'compact' },
         outputs: {
-          css: { '--czap-gap': 12 },
+          css: { '--liteship-gap': 12 },
           aria: { role: 'status' },
           glsl: {},
         },
       },
-      'czap:shared-boundary',
+      'liteship:shared-boundary',
     );
 
-    expect(setAttributeSpy.mock.calls.filter(([name]) => name === 'data-czap-state')).toHaveLength(0);
+    expect(setAttributeSpy.mock.calls.filter(([name]) => name === 'data-liteship-state')).toHaveLength(0);
     expect(detailEvents).toEqual([
       {
         discrete: { hero: 'compact' },
-        css: { '--czap-gap': 12 },
+        css: { '--liteship-gap': 12 },
         glsl: {},
         wgsl: {},
         aria: { role: 'status' },
       },
     ]);
-    expect(element.getAttribute('data-czap-state')).toBe('compact');
+    expect(element.getAttribute('data-liteship-state')).toBe('compact');
     expect(element.getAttribute('role')).toBe('status');
   });
 
@@ -718,6 +721,39 @@ describe('astro shared runtime adapters', () => {
         }),
       ),
     ).toBeNull();
+
+    for (const spec of [
+      { timeRange: { from: 'soon' } },
+      { timeRange: { until: null } },
+      { timeRange: { from: 1, foreign: true } },
+      { experimentId: 42 },
+      { experimentId: 'known', deviceFilter: true },
+    ]) {
+      expect(
+        parseBoundary(JSON.stringify({ input: 'viewport.width', thresholds: [0], states: ['compact'], spec })),
+      ).toBeNull();
+    }
+  });
+
+  test('time and experiment activation specs round-trip and fail closed when inactive', () => {
+    const serialized = JSON.stringify({
+      id: 'gated',
+      input: 'viewport.width',
+      thresholds: [0, 768],
+      states: ['compact', 'wide'],
+      spec: { timeRange: { from: 100, until: 200 }, experimentId: 'checkout-v2' },
+    });
+    const parsed = parseBoundary(serialized);
+    expect(parsed?.boundary.spec).toEqual({
+      timeRange: { from: 100, until: 200 },
+      experimentId: 'checkout-v2',
+    });
+
+    document.documentElement.removeAttribute('data-liteship-experiments');
+    expect(evaluateBoundary(parsed!, 900, 'compact', fixedClock(150))).toBe('compact');
+    document.documentElement.setAttribute('data-liteship-experiments', 'checkout-v2');
+    expect(evaluateBoundary(parsed!, 900, 'compact', fixedClock(50))).toBe('compact');
+    expect(evaluateBoundary(parsed!, 900, 'compact', fixedClock(150))).toBe('wide');
   });
 
   test('shared llm parser shim normalizes text, tool deltas, and invalid chunks through the runtime parser', () => {
@@ -840,7 +876,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const toolEnds: unknown[] = [];
-    host.addEventListener('czap:llm-tool-end', ((event: CustomEvent) => toolEnds.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) =>
+      toolEnds.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -852,13 +889,13 @@ describe('astro shared runtime adapters', () => {
     expect(session.ingest({ type: 'tool-call-delta', partial: true, content: '{"dangling":' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-start', partial: false, toolName: 'search' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-delta', partial: true, content: '{"query":' })).toBe('continue');
-    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '"czap"}' })).toBe('continue');
+    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '"liteship"}' })).toBe('continue');
     expect(session.ingest({ type: 'text', partial: false, content: 'Hello runtime' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-end', partial: false })).toBe('continue');
     expect(session.ingest({ type: 'done', partial: false })).toBe('done');
 
     expect(target.innerHTML).toBe('Hello runtime');
-    expect(toolEnds).toEqual([{ name: 'search', args: { query: 'czap' } }]);
+    expect(toolEnds).toEqual([{ name: 'search', args: { query: 'liteship' } }]);
     expect(session.replayGap().type).toBe('re-request');
     expect(session.state).toBe('idle');
 
@@ -910,14 +947,16 @@ describe('astro shared runtime adapters', () => {
     expect(session.ingest({ type: 'text', partial: false, content: 'Hello ' })).toBe('continue');
     expect(session.ingest({ type: 'text', partial: false, content: 'world' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-start', partial: false, toolName: 'search' })).toBe('continue');
-    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"czap"}' })).toBe('continue');
+    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"liteship"}' })).toBe(
+      'continue',
+    );
     expect(session.ingest({ type: 'tool-call-end', partial: false, toolName: 'search' })).toBe('continue');
     expect(session.ingest({ type: 'done', partial: false })).toBe('done');
 
     expect(tokenEvents.at(0)).toEqual({ text: 'Hello ', accumulated: 'Hello ' });
     expect(tokenEvents.at(-1)).toEqual({ text: 'world', accumulated: 'Hello world' });
     expect(toolStarts).toEqual([{ name: 'search' }]);
-    expect(toolEnds).toEqual([{ name: 'search', args: { query: 'czap' } }]);
+    expect(toolEnds).toEqual([{ name: 'search', args: { query: 'liteship' } }]);
     expect(doneEvents).toEqual([{ accumulated: 'Hello world' }]);
   });
 
@@ -947,10 +986,12 @@ describe('astro shared runtime adapters', () => {
     const schedulerResets: number[] = [];
     const tokenBufferResets: number[] = [];
 
-    const originalTokenBufferMake = TokenBuffer.make;
+    const originalTokenBufferMake = LiteshipCore.createTokenBuffer;
     const originalGenFrameMake = GenFrame.make;
 
-    vi.spyOn(TokenBuffer, 'make').mockImplementation(((...args: Parameters<typeof TokenBuffer.make>) => {
+    vi.spyOn(LiteshipCore, 'createTokenBuffer').mockImplementation(((
+      ...args: Parameters<typeof LiteshipCore.createTokenBuffer>
+    ) => {
       tokenBufferCreates.push(tokenBufferCreates.length);
       const buffer = originalTokenBufferMake(...args);
       const originalReset = buffer.reset.bind(buffer);
@@ -959,7 +1000,7 @@ describe('astro shared runtime adapters', () => {
         originalReset();
       };
       return buffer;
-    }) as typeof TokenBuffer.make);
+    }) as typeof LiteshipCore.createTokenBuffer);
     vi.spyOn(GenFrame, 'make').mockImplementation(((...args: Parameters<typeof GenFrame.make>) => {
       schedulerCreates.push(schedulerCreates.length);
       const scheduler = originalGenFrameMake(...args);
@@ -1065,7 +1106,9 @@ describe('astro shared runtime adapters', () => {
 
     expect(session.ingest({ type: 'text', partial: false, content: 'Hello' })).toBe('continue');
     expect(session.ingest({ type: 'tool-call-start', partial: false, toolName: 'search' })).toBe('continue');
-    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"czap"}' })).toBe('continue');
+    expect(session.ingest({ type: 'tool-call-delta', partial: false, content: '{"query":"liteship"}' })).toBe(
+      'continue',
+    );
     expect(session.ingest({ type: 'tool-call-end', partial: false, toolName: 'search' })).toBe('continue');
     expect(session.ingest({ type: 'done', partial: false })).toBe('done');
 
@@ -1073,8 +1116,8 @@ describe('astro shared runtime adapters', () => {
     expect(tokenDetails).toEqual([{ text: 'Hello', accumulated: 'Hello' }]);
     expect(toolStartValues).toEqual(['search']);
     expect(toolStartDetails).toEqual([{ name: 'search' }]);
-    expect(toolEndValues).toEqual([{ name: 'search', args: { query: 'czap' } }]);
-    expect(toolEndDetails).toEqual([{ name: 'search', args: { query: 'czap' } }]);
+    expect(toolEndValues).toEqual([{ name: 'search', args: { query: 'liteship' } }]);
+    expect(toolEndDetails).toEqual([{ name: 'search', args: { query: 'liteship' } }]);
     expect(doneValues).toEqual(['Hello']);
     expect(doneDetails).toEqual([{ accumulated: 'Hello' }]);
     expect(callbackOrder).toEqual([
@@ -1191,7 +1234,7 @@ describe('astro shared runtime adapters', () => {
     expect(host.renderText('text', 'text', 'append')).toBe(true);
     expect(host.renderFrame(makeFrame('empty-frame', [], 1), '', 'append')).toBe(false);
     expect(() => host.emitToolStart('search')).not.toThrow();
-    expect(() => host.emitToolEnd('search', { query: 'czap' })).not.toThrow();
+    expect(() => host.emitToolEnd('search', { query: 'liteship' })).not.toThrow();
     expect(() => host.emitDone('done')).not.toThrow();
   });
 
@@ -1214,13 +1257,13 @@ describe('astro shared runtime adapters', () => {
 
     host.emitToken('hello', 'hello');
     host.emitToolStart('search');
-    host.emitToolEnd('search', { query: 'czap' });
+    host.emitToolEnd('search', { query: 'liteship' });
     host.emitDone('hello');
 
     expect(events).toEqual([
       'token:hello:hello',
       'tool-start:search',
-      'tool-end:search:{"query":"czap"}',
+      'tool-end:search:{"query":"liteship"}',
       'done:hello',
     ]);
   });
@@ -1240,10 +1283,10 @@ describe('astro shared runtime adapters', () => {
     });
 
     host.emitToolStart('search');
-    host.emitToolEnd('search', { query: 'czap' });
+    host.emitToolEnd('search', { query: 'liteship' });
     host.emitDone('hello');
 
-    expect(events).toEqual(['tool-start:search', 'tool-end:search:{"query":"czap"}', 'done:hello']);
+    expect(events).toEqual(['tool-start:search', 'tool-end:search:{"query":"liteship"}', 'done:hello']);
   });
 
   test('llm support host keeps token value handlers on the direct path when other non-token callbacks are present', () => {
@@ -1270,7 +1313,7 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+    host.addEventListener('liteship:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
       tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
@@ -1302,7 +1345,7 @@ describe('astro shared runtime adapters', () => {
     host.appendChild(target);
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSession({
@@ -1334,7 +1377,7 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+    host.addEventListener('liteship:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
       tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
@@ -1365,7 +1408,7 @@ describe('astro shared runtime adapters', () => {
     host.appendChild(target);
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
     const session = createLLMSession({
       element: host,
@@ -1397,7 +1440,7 @@ describe('astro shared runtime adapters', () => {
     host.append(firstTarget, secondTarget);
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSession({
@@ -1445,7 +1488,7 @@ describe('astro shared runtime adapters', () => {
       emitDone: () => undefined,
     };
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSessionWithHost(
@@ -1504,7 +1547,7 @@ describe('astro shared runtime adapters', () => {
     secondHost.appendChild(secondTarget);
     document.body.appendChild(secondHost);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const firstSession = createLLMSession({
@@ -1547,7 +1590,7 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const doneEvents: Array<{ accumulated: string }> = [];
-    host.addEventListener('czap:llm-done', ((event: CustomEvent<{ accumulated: string }>) =>
+    host.addEventListener('liteship:llm-done', ((event: CustomEvent<{ accumulated: string }>) =>
       doneEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
@@ -1570,7 +1613,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const doneEvents: unknown[] = [];
-    host.addEventListener('czap:llm-done', ((event: CustomEvent) => doneEvents.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:llm-done', ((event: CustomEvent) =>
+      doneEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1590,7 +1634,7 @@ describe('astro shared runtime adapters', () => {
     const host = document.createElement('section');
     document.body.appendChild(host);
 
-    const tokenBufferSpy = vi.spyOn(TokenBuffer, 'make');
+    const tokenBufferSpy = vi.spyOn(LiteshipCore, 'createTokenBuffer');
     const frameSpy = vi.spyOn(GenFrame, 'make');
 
     const session = createLLMSession({
@@ -1685,7 +1729,7 @@ describe('astro shared runtime adapters', () => {
 
     let tier: 'none' | 'animations' = 'animations';
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+    host.addEventListener('liteship:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
       tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
@@ -1725,7 +1769,7 @@ describe('astro shared runtime adapters', () => {
 
     let tier: 'none' | 'animations' = 'animations';
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+    host.addEventListener('liteship:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
       tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
@@ -1753,9 +1797,9 @@ describe('astro shared runtime adapters', () => {
 
     const toolStarts: string[] = [];
     const toolEnds: Array<{ name: string; args: unknown }> = [];
-    host.addEventListener('czap:llm-tool-start', ((event: CustomEvent<{ name: string }>) =>
+    host.addEventListener('liteship:llm-tool-start', ((event: CustomEvent<{ name: string }>) =>
       toolStarts.push(event.detail.name)) as EventListener);
-    host.addEventListener('czap:llm-tool-end', ((event: CustomEvent<{ name: string; args: unknown }>) =>
+    host.addEventListener('liteship:llm-tool-end', ((event: CustomEvent<{ name: string; args: unknown }>) =>
       toolEnds.push(event.detail)) as EventListener);
 
     const session = createLLMSession({

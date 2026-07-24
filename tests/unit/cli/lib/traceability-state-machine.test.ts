@@ -19,13 +19,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isTaggedError } from '@czap/error';
+import { isTaggedError } from '@liteship/error';
 import { buildTraceabilityFacts } from '../../../../packages/cli/src/lib/traceability.js';
 
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-trace-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-trace-'));
   mkdirSync(join(root, 'traceability'), { recursive: true });
   mkdirSync(join(root, 'tests', 'property'), { recursive: true });
 });
@@ -56,6 +56,21 @@ describe('traceability state machine — the lifecycle fold', () => {
     writeTest('tests/property/a.test.ts', 'INV-A');
     const facts = buildTraceabilityFacts(root, DATE);
     expect(facts.invariants).toHaveLength(1);
+    expect(facts.invariants[0]!.state._tag).toBe('proven');
+    expect(facts.divergences).toHaveLength(0);
+  });
+
+  it('enrolls a Playwright .e2e.ts proof instead of treating it as absent corpus', () => {
+    writeInvariants(
+      `invariants:\n  - id: INV-BROWSER\n    law: "browser law"\n    level: L4\n    category: assurance\n`,
+    );
+    writeLedger(
+      `traces:\n  - id: INV-BROWSER\n    tests:\n      - "tests/e2e/browser.e2e.ts::proves the browser law"\n`,
+    );
+    mkdirSync(join(root, 'tests', 'e2e'), { recursive: true });
+    writeTest('tests/e2e/browser.e2e.ts', 'INV-BROWSER');
+
+    const facts = buildTraceabilityFacts(root, DATE);
     expect(facts.invariants[0]!.state._tag).toBe('proven');
     expect(facts.divergences).toHaveLength(0);
   });

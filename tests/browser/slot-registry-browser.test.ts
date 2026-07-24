@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { SlotRegistry } from '../../packages/web/src/slot/registry.js';
 import { captureDiagnostics } from '../helpers/diagnostics.js';
 
@@ -16,11 +16,11 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     Diagnostics.reset();
   });
 
-  test('scanDOM discovers all data-czap-slot elements in a subtree', () => {
+  test('scanDOM discovers all data-liteship-slot elements in a subtree', () => {
     root.innerHTML = `
-      <div data-czap-slot="/header"></div>
-      <div data-czap-slot="/content">
-        <div data-czap-slot="/content/sidebar"></div>
+      <div data-liteship-slot="/header"></div>
+      <div data-liteship-slot="/content">
+        <div data-liteship-slot="/content/sidebar"></div>
       </div>
     `;
 
@@ -34,9 +34,9 @@ describe('browser SlotRegistry with real MutationObserver', () => {
 
   test('scanDOM ignores elements with invalid slot paths', () => {
     root.innerHTML = `
-      <div data-czap-slot="/valid"></div>
-      <div data-czap-slot="no-leading-slash"></div>
-      <div data-czap-slot="/has spaces"></div>
+      <div data-liteship-slot="/valid"></div>
+      <div data-liteship-slot="no-leading-slash"></div>
+      <div data-liteship-slot="/has spaces"></div>
     `;
 
     captureDiagnostics(({ events }) => {
@@ -49,23 +49,23 @@ describe('browser SlotRegistry with real MutationObserver', () => {
       expect(events).toEqual([
         expect.objectContaining({
           level: 'warn',
-          source: 'czap/web.SlotRegistry',
+          source: 'liteship/web.SlotRegistry',
           code: 'invalid-slot-path',
         }),
         expect.objectContaining({
           level: 'warn',
-          source: 'czap/web.SlotRegistry',
+          source: 'liteship/web.SlotRegistry',
           code: 'invalid-slot-path',
         }),
       ]);
     });
   });
 
-  test('scanDOM reads data-mode and data-czap-mode attributes', () => {
+  test('scanDOM reads data-mode and data-liteship-mode attributes', () => {
     root.innerHTML = `
-      <div data-czap-slot="/a" data-mode="replace"></div>
-      <div data-czap-slot="/b" data-czap-mode="full"></div>
-      <div data-czap-slot="/c"></div>
+      <div data-liteship-slot="/a" data-mode="replace"></div>
+      <div data-liteship-slot="/b" data-liteship-mode="full"></div>
+      <div data-liteship-slot="/c"></div>
     `;
 
     const registry = SlotRegistry.create();
@@ -76,14 +76,14 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     expect(registry.get('/c' as never)?.mode).toBe('partial');
   });
 
-  test('register dispatches czap:slot-mounted event on the element', () => {
+  test('register dispatches liteship:slot-mounted event on the element', () => {
     const registry = SlotRegistry.create();
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/test');
+    el.setAttribute('data-liteship-slot', '/test');
     root.appendChild(el);
 
     const events: unknown[] = [];
-    el.addEventListener('czap:slot-mounted', ((e: CustomEvent) => events.push(e.detail)) as EventListener);
+    el.addEventListener('liteship:slot-mounted', ((e: CustomEvent) => events.push(e.detail)) as EventListener);
 
     registry.register({
       path: '/test' as never,
@@ -95,13 +95,13 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     expect(events).toEqual([{ path: '/test', mode: 'partial' }]);
   });
 
-  test('unregister dispatches czap:slot-unmounted event on document', () => {
+  test('unregister dispatches liteship:slot-unmounted event on document', () => {
     const registry = SlotRegistry.create();
     const el = document.createElement('div');
     root.appendChild(el);
 
     const events: unknown[] = [];
-    document.addEventListener('czap:slot-unmounted', ((e: CustomEvent) => events.push(e.detail)) as EventListener);
+    document.addEventListener('liteship:slot-unmounted', ((e: CustomEvent) => events.push(e.detail)) as EventListener);
 
     registry.register({
       path: '/removable' as never,
@@ -120,10 +120,10 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     SlotRegistry.scanDOM(registry, root);
 
     root.innerHTML = `
-      <div data-czap-slot="/nav"></div>
-      <div data-czap-slot="/nav/links"></div>
-      <div data-czap-slot="/nav/logo"></div>
-      <div data-czap-slot="/footer"></div>
+      <div data-liteship-slot="/nav"></div>
+      <div data-liteship-slot="/nav/links"></div>
+      <div data-liteship-slot="/nav/logo"></div>
+      <div data-liteship-slot="/footer"></div>
     `;
     SlotRegistry.scanDOM(registry, root);
 
@@ -136,8 +136,8 @@ describe('browser SlotRegistry with real MutationObserver', () => {
 
   test('entries returns a snapshot of all registered slots', () => {
     root.innerHTML = `
-      <div data-czap-slot="/a"></div>
-      <div data-czap-slot="/b"></div>
+      <div data-liteship-slot="/a"></div>
+      <div data-liteship-slot="/b"></div>
     `;
 
     const registry = SlotRegistry.create();
@@ -151,7 +151,7 @@ describe('browser SlotRegistry with real MutationObserver', () => {
 
   test('findElement locates a real DOM element by slot path', () => {
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/find-me');
+    el.setAttribute('data-liteship-slot', '/find-me');
     el.id = 'target-el';
     document.body.appendChild(el);
 
@@ -167,7 +167,7 @@ describe('browser SlotRegistry with real MutationObserver', () => {
 
   test('getPath extracts the slot path from a DOM element', () => {
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/hero');
+    el.setAttribute('data-liteship-slot', '/hero');
 
     expect(SlotRegistry.getPath(el)).toBe('/hero');
   });
@@ -177,7 +177,7 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     expect(SlotRegistry.getPath(noSlot)).toBeNull();
 
     const badSlot = document.createElement('div');
-    badSlot.setAttribute('data-czap-slot', 'invalid');
+    badSlot.setAttribute('data-liteship-slot', 'invalid');
     expect(SlotRegistry.getPath(badSlot)).toBeNull();
   });
 
@@ -187,7 +187,7 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     const dispose = SlotRegistry.observe(registry, root);
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/dynamic');
+    el.setAttribute('data-liteship-slot', '/dynamic');
     root.appendChild(el);
 
     // MutationObserver fires asynchronously; wait for microtask
@@ -203,7 +203,7 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     const dispose = SlotRegistry.observe(registry, root);
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/transient');
+    el.setAttribute('data-liteship-slot', '/transient');
     root.appendChild(el);
     await new Promise<void>((r) => setTimeout(r, 0));
     expect(registry.has('/transient' as never)).toBe(true);
@@ -222,8 +222,8 @@ describe('browser SlotRegistry with real MutationObserver', () => {
 
     const wrapper = document.createElement('div');
     wrapper.innerHTML = `
-            <div data-czap-slot="/nested/a"></div>
-            <div data-czap-slot="/nested/b"></div>
+            <div data-liteship-slot="/nested/a"></div>
+            <div data-liteship-slot="/nested/b"></div>
           `;
     root.appendChild(wrapper);
 
@@ -234,18 +234,18 @@ describe('browser SlotRegistry with real MutationObserver', () => {
     dispose();
   });
 
-  test('observe handles attribute changes on data-czap-slot', async () => {
+  test('observe handles attribute changes on data-liteship-slot', async () => {
     const registry = SlotRegistry.create();
 
     const dispose = SlotRegistry.observe(registry, root);
 
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/original');
+    el.setAttribute('data-liteship-slot', '/original');
     root.appendChild(el);
     await new Promise<void>((r) => setTimeout(r, 0));
     expect(registry.has('/original' as never)).toBe(true);
 
-    el.setAttribute('data-czap-slot', '/renamed');
+    el.setAttribute('data-liteship-slot', '/renamed');
     await new Promise<void>((r) => setTimeout(r, 0));
     expect(registry.has('/original' as never)).toBe(false);
     expect(registry.has('/renamed' as never)).toBe(true);
@@ -261,7 +261,7 @@ describe('browser SlotRegistry with real MutationObserver', () => {
 
     // After disposal, adding elements should NOT auto-register
     const el = document.createElement('div');
-    el.setAttribute('data-czap-slot', '/after-scope');
+    el.setAttribute('data-liteship-slot', '/after-scope');
     root.appendChild(el);
 
     await new Promise<void>((r) => setTimeout(r, 10));

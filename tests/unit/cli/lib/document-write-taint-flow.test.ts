@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { buildRepoIRTaint } from '../../../../packages/audit/src/repo-ir-taint.js';
-import { resolveDevopsProfile } from '@czap/audit';
+import { resolveDevopsProfile } from '@liteship/audit';
 import { LITESHIP_TAINT_REGISTRY } from '../../../../packages/cli/src/lib/taint-policy.js';
 
 const fixtures: string[] = [];
@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-doc-write-taint-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-doc-write-taint-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

@@ -6,7 +6,7 @@
 
 # Interface: ReceiptDAG
 
-Defined in: [core/src/dag.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L26)
+Defined in: [core/src/graph/dag.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L26)
 
 Immutable snapshot of the receipt DAG: the set of known nodes, the current
 head(s), and the genesis anchor if any.
@@ -17,7 +17,7 @@ head(s), and the genesis anchor if any.
 
 > `readonly` **genesis**: `string` \| `null`
 
-Defined in: [core/src/dag.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L29)
+Defined in: [core/src/graph/dag.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L29)
 
 ***
 
@@ -25,7 +25,7 @@ Defined in: [core/src/dag.ts:29](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **heads**: readonly `string`[]
 
-Defined in: [core/src/dag.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L28)
+Defined in: [core/src/graph/dag.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L28)
 
 ***
 
@@ -33,4 +33,4 @@ Defined in: [core/src/dag.ts:28](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **nodes**: `ReadonlyMap`\<`string`, [`DAGNode`](DAGNode.md)\>
 
-Defined in: [core/src/dag.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L27)
+Defined in: [core/src/graph/dag.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/dag.ts#L27)

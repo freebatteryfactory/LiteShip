@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 import { resolve } from 'path';
 
 const ROOT = resolve(import.meta.dirname, '../..');
-const browserName = (process.env['CZAP_PLAYWRIGHT_BROWSER'] ?? 'chromium') as 'chromium' | 'firefox' | 'webkit';
+const browserName = (process.env['LITESHIP_PLAYWRIGHT_BROWSER'] ?? 'chromium') as 'chromium' | 'firefox' | 'webkit';
 
 export default defineConfig({
   testDir: '.',

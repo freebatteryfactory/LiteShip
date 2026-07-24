@@ -5,7 +5,7 @@
  * over the shared defaults), dispatches the invocation against the canonical
  * registry, and owns the two projection arms:
  *
- *   - a structured FAILURE becomes an `emitError(name, message, hint?)` to
+ *   - a structured FAILURE becomes a stable `cli/command-failed` error to
  *     stderr and returns the result's `exitCode` (default 1);
  *   - a SUCCESS is handed to the caller's `projectOk`, which renders the command's
  *     stdout receipt and returns an exit code (default 0 when it returns void).
@@ -18,9 +18,9 @@
  *
  * @module
  */
-import type { CapsuleCommandResult, CommandMap } from '@czap/command';
-import { CommandDispatcher, commandRegistry } from '@czap/command';
-import { createNodeCommandContext } from '@czap/command/host';
+import type { CapsuleCommandResult, CommandMap } from '@liteship/command';
+import { CommandDispatcher, commandRegistry } from '@liteship/command';
+import { createNodeCommandContext } from '@liteship/command/host';
 import { emitError } from '../receipts.js';
 
 /** The single dispatcher over the canonical registry (the CLI's projection edge). */
@@ -63,7 +63,7 @@ export function projectCliResult<N extends string>(
     const payload = result.payload as CommandFailurePayload;
     const message = typeof payload.error === 'string' ? payload.error : `${name} failed`;
     const hint = typeof payload.hint === 'string' ? payload.hint : undefined;
-    emitError(name, message, hint);
+    emitError(name, 'cli/command-failed', message, hint);
     return result.exitCode ?? 1;
   }
   // `payload` is structurally optional on the result type (only some commands set
@@ -72,7 +72,7 @@ export function projectCliResult<N extends string>(
   // receives the command's typed, present payload with no cast.
   const { payload } = result;
   if (payload === undefined) {
-    emitError(name, `${name} returned no payload`);
+    emitError(name, 'cli/no-output', `${name} returned no payload`);
     return 1;
   }
   const code = projectOk(payload, result);

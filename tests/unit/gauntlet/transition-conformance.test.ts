@@ -32,8 +32,8 @@ import {
   type GateContext,
   type TransitionFacts,
   type TransitionCase,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
 /** A case builder — a valid TransitionCase with per-test overrides. */
 function transitionCase(over: Partial<TransitionCase> & Pick<TransitionCase, 'status'>): TransitionCase {

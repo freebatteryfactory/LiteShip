@@ -1,22 +1,20 @@
 /**
  * The L4-SEAM TARGETING + the SOUND covering-tests map proof (Slice C, the avionics
- * tier — the host half of `czap check --ir --mutate`). Both computations under test are
+ * tier — the host half of `liteship check gates --ir --mutate`). Both computations under test are
  * PURE + DETERMINISTIC over the repo bytes (no clock, no rng, no network), so this proof
  * pins the LAWS, never implementation churn, with an in-memory IR + a throwaway repo dir.
  *
- * THE TARGETING LAW ({@link l4SeamTargets}) — a candidate is mutated ONLY when the LIVE
- * propagated assurance level rates it effective-L4, NEVER a hardcoded assumption. A
- * candidate the propagation does NOT rate L4 is DROPPED + surfaced (`skippedNotL4`); a
- * candidate whose bytes vanished is surfaced (`unreadable`). Both visible, never a quiet
- * drop. This proves the "the map is the source of truth" invariant on both arms:
- *   - a base-L4 candidate (canonical/*, core/hlc) is targeted;
- *   - a base-low candidate (content-address, graph-patch) is SKIPPED when nothing L4
- *     imports it, and PULLED IN when an L4 file imports it (the propagation fixpoint).
+ * THE TARGETING LAW ({@link l4SeamTargets}) — every mutation-analyzable package source the LIVE
+ * propagated assurance level rates effective-L4 is targeted, with no second curated
+ * list. A file outside that census is excluded; a lower-level dependency becomes
+ * eligible the instant an L4 importer lifts it through the propagation fixpoint. A
+ * vanished eligible file is surfaced as unreadable and makes the target census fail.
+ * An omitted, duplicate, or foreign materialized target is likewise a census error.
  *
  * THE COVERAGE LAW ({@link partitionSeamCandidates} + {@link buildSeamCoverageMap}) — the
  * covering set OVER-APPROXIMATES (a missed covering test is a false survivor, the worst
  * error): a test covers a seam iff it DEEP-imports the seam's `src/F.js` path (precise,
- * always kept) OR imports the seam package's BARREL (`@czap/P`, the sound broad closure).
+ * always kept) OR imports the seam package's BARREL (`@liteship/P`, the sound broad closure).
  * The partition is a pure function of the seam ids + the on-disk test bytes; the barrel
  * `_tag` mode covers every line; the resulting per-site covering list (and its digest,
  * the verdict-cache key half) is BYTE-STABLE — the determinism the content-addressed
@@ -29,25 +27,27 @@ import * as fc from 'fast-check';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '@czap/gauntlet';
-import { makeCoverageMap, type MutationTargetFile } from '@czap/audit';
+import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '@liteship/gauntlet';
+import { makeCoverageMap, type MutationTargetFile } from '@liteship/audit';
 import {
+  eligibleL4SeamFiles,
   l4SeamTargets,
+  targetCensusErrors,
   partitionSeamCandidates,
   buildSeamCoverageMap,
 } from '../../../../packages/cli/src/lib/mutation-targets.js';
 
 /** Repo-relative seam ids the targeting LAW is exercised against. */
-const HLC = 'packages/core/src/hlc.ts'; // base L4 (the {receipt,hlc,...} glob)
-const DAG = 'packages/core/src/dag.ts'; // base L4
+const HLC = 'packages/core/src/clock/hlc.ts'; // base L4 (the clock/hlc glob)
+const DAG = 'packages/core/src/graph/dag.ts'; // base L4 (the graph/dag glob)
 const CANON_FNV = 'packages/canonical/src/fnv.ts'; // base L4 (canonical/**)
-const CONTENT_ADDR = 'packages/core/src/content-address.ts'; // base LOW — L4 only by propagation
-const GRAPH_PATCH = 'packages/core/src/graph-patch.ts'; // base LOW — L4 only by propagation
+const CONTENT_ADDR = 'packages/core/src/evidence/content-address.ts'; // base LOW — L4 only by propagation
+const GRAPH_PATCH = 'packages/core/src/graph/graph-patch.ts'; // base LOW — L4 only by propagation
 
 /** A FileNode for the in-memory IR — the placeholder digest a fixture always uses. */
 function fileNode(id: string): { readonly id: string; readonly contentDigest: string; readonly packageName: string } {
   const m = /^packages\/([^/]+)\/src\//.exec(id);
-  return { id, contentDigest: PLACEHOLDER_DIGEST, packageName: m === null ? '@czap/x' : `@czap/${m[1]}` };
+  return { id, contentDigest: PLACEHOLDER_DIGEST, packageName: m === null ? '@liteship/x' : `@liteship/${m[1]}` };
 }
 
 /**
@@ -69,7 +69,7 @@ function buildIR(files: readonly string[], edges: readonly (readonly [string, st
 
 /** Write the seam source files into a throwaway repo so their bytes can be read. */
 function makeRepoWithSources(sources: ReadonlyMap<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-mut-targets-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-mut-targets-'));
   for (const [rel, text] of sources) {
     const abs = join(root, rel);
     mkdirSync(join(abs, '..'), { recursive: true });
@@ -80,7 +80,7 @@ function makeRepoWithSources(sources: ReadonlyMap<string, string>): string {
 
 /** Write a set of test files into a throwaway repo (under the scanned roots). */
 function makeRepoWithTests(tests: ReadonlyMap<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-mut-targets-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-mut-targets-'));
   for (const [rel, text] of tests) {
     const abs = join(root, rel);
     mkdirSync(join(abs, '..'), { recursive: true });
@@ -89,7 +89,7 @@ function makeRepoWithTests(tests: ReadonlyMap<string, string>): string {
   return root;
 }
 
-describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the source of truth)', () => {
+describe('l4SeamTargets — complete LIVE-propagation target census', () => {
   it('targets a base-L4 candidate present on disk, paired with its exact bytes', () => {
     const hlcText = 'export const hlc = () => 0;\n';
     const fnvText = 'export const fnv = () => 1;\n';
@@ -109,15 +109,14 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
       // The bytes are the EXACT on-disk source (a byte-faithful read, not a re-encode).
       expect(result.targets.find((t) => t.file === HLC)?.text).toBe(hlcText);
       expect(result.targets.find((t) => t.file === CANON_FNV)?.text).toBe(fnvText);
-      expect(result.skippedNotL4).not.toContain(HLC);
+      expect(result.expectedFiles).toEqual([CANON_FNV, HLC]);
+      expect(targetCensusErrors(result)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it('SKIPS a base-low candidate when nothing L4 imports it (surfaced via skippedNotL4, never silently mutated)', () => {
-    // content-address.ts / graph-patch.ts are NOT in the L4 glob; with no L4 importer the
-    // live propagation leaves them below L4 → the LAW drops them, recorded for the caller.
+  it('excludes a non-L4 source because the live assurance fixpoint, not a curated list, owns eligibility', () => {
     const root = makeRepoWithSources(
       new Map([
         [CONTENT_ADDR, 'export const ca = 1;\n'],
@@ -127,11 +126,10 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
     try {
       const ir = buildIR([CONTENT_ADDR, GRAPH_PATCH]);
       const result = l4SeamTargets(ir, root);
-      expect(result.targets.map((t) => t.file)).not.toContain(CONTENT_ADDR);
-      expect(result.targets.map((t) => t.file)).not.toContain(GRAPH_PATCH);
-      // The drop is VISIBLE — surfaced on skippedNotL4, never hidden.
-      expect(result.skippedNotL4).toContain(CONTENT_ADDR);
-      expect(result.skippedNotL4).toContain(GRAPH_PATCH);
+      expect(eligibleL4SeamFiles(ir)).toEqual([]);
+      expect(result.expectedFiles).toEqual([]);
+      expect(result.targets).toEqual([]);
+      expect(targetCensusErrors(result)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -151,7 +149,8 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
       const result = l4SeamTargets(ir, root);
       // The level was COMPUTED from the live IR, not assumed — content-address is now L4.
       expect(result.targets.map((t) => t.file)).toContain(CONTENT_ADDR);
-      expect(result.skippedNotL4).not.toContain(CONTENT_ADDR);
+      expect(result.expectedFiles).toEqual([HLC, CONTENT_ADDR]);
+      expect(targetCensusErrors(result)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -164,14 +163,41 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
       const ir = buildIR([HLC, CANON_FNV]);
       const result = l4SeamTargets(ir, root);
       expect(result.unreadable).toContain(HLC);
-      // It was NOT skipped (it IS L4) and NOT silently dropped from targets.
-      expect(result.skippedNotL4).not.toContain(HLC);
+      // It is still in the expected census, so admission fails rather than shrinking.
+      expect(result.expectedFiles).toContain(HLC);
       expect(result.targets.map((t) => t.file)).not.toContain(HLC);
       // The readable L4 candidate is still targeted — one vanished seam doesn't sink the run.
       expect(result.targets.map((t) => t.file)).toContain(CANON_FNV);
+      expect(targetCensusErrors(result)).toContain(`eligible L4 target omitted: ${HLC}`);
+      expect(targetCensusErrors(result)).toContain(`eligible L4 target unreadable: ${HLC}`);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it('reds when one eligible target is omitted from an otherwise plausible materialized census', () => {
+    const result = {
+      expectedFiles: [CANON_FNV, HLC],
+      targets: [{ file: CANON_FNV, text: 'export const fnv = 1;\n' }],
+      unreadable: [],
+    };
+    expect(targetCensusErrors(result)).toEqual([`eligible L4 target omitted: ${HLC}`]);
+  });
+
+  it('reds foreign and duplicate targets instead of accepting target-count coincidence', () => {
+    const result = {
+      expectedFiles: [HLC],
+      targets: [
+        { file: HLC, text: 'export const hlc = 1;\n' },
+        { file: HLC, text: 'export const hlc = 1;\n' },
+        { file: GRAPH_PATCH, text: 'export const graphPatch = 1;\n' },
+      ],
+      unreadable: [],
+    };
+    expect(targetCensusErrors(result)).toEqual([
+      `duplicate mutation target: ${HLC}`,
+      `foreign non-L4 target admitted: ${GRAPH_PATCH}`,
+    ]);
   });
 
   it('is DETERMINISTIC + sorted — the same IR + repo yields an identical, file-id-ordered target list', () => {
@@ -202,7 +228,7 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
 
   it('classifies a DEEP importer (references the src/F.js path) as a precise deep importer, never a barrel one', () => {
     const root = makeRepoWithTests(
-      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`]]),
+      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`]]),
     );
     try {
       const [seam] = partitionSeamCandidates(root, [SEAM]);
@@ -213,19 +239,19 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
     }
   });
 
-  it('classifies a BARREL importer (@czap/core, both quote styles + a /sub path) as a probed candidate', () => {
+  it('classifies a BARREL importer (@liteship/core, both quote styles + a /sub path) as a probed candidate', () => {
     const root = makeRepoWithTests(
       new Map([
-        ['tests/unit/core/single.test.ts', `import { hlc } from '@czap/core';`],
-        ['tests/unit/core/double.test.ts', `import { hlc } from "@czap/core";`],
-        ['tests/unit/core/sub.test.ts', `import { x } from '@czap/core/sub';`],
-        ['tests/unit/core/unrelated.test.ts', `import { z } from '@czap/web';`],
+        ['tests/unit/core/single.test.ts', `import { hlc } from '@liteship/core';`],
+        ['tests/unit/core/double.test.ts', `import { hlc } from "@liteship/core";`],
+        ['tests/unit/core/sub.test.ts', `import { x } from '@liteship/core/sub';`],
+        ['tests/unit/core/unrelated.test.ts', `import { z } from '@liteship/web';`],
       ]),
     );
     try {
       const [seam] = partitionSeamCandidates(root, [SEAM]);
       expect(seam?.deepImporters).toEqual([]);
-      // All three @czap/core importers are barrel candidates; the @czap/web one is not.
+      // All three @liteship/core importers are barrel candidates; the @liteship/web one is not.
       expect(seam?.barrelImporters.map((b) => b.id)).toEqual([
         'tests/unit/core/double.test.ts',
         'tests/unit/core/single.test.ts',
@@ -243,7 +269,7 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
       new Map([
         [
           'tests/unit/core/both.test.ts',
-          `import { hlc } from '../../../packages/core/src/hlc.js';\nimport { z } from '@czap/core';`,
+          `import { hlc } from '../../../packages/core/src/clock/hlc.js';\nimport { z } from '@liteship/core';`,
         ],
       ]),
     );
@@ -260,13 +286,13 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
     const noBarrelSeam: MutationTargetFile = { file: 'scripts/tool.ts', text: 'export const t = 1;\n' };
     const root = makeRepoWithTests(
       new Map([
-        ['tests/unit/core/barrelish.test.ts', `import { x } from '@czap/core';`],
+        ['tests/unit/core/barrelish.test.ts', `import { x } from '@liteship/core';`],
         ['tests/unit/core/deep.test.ts', `import { t } from '../../../scripts/tool.js';`],
       ]),
     );
     try {
       const [seam] = partitionSeamCandidates(root, [noBarrelSeam]);
-      // No `@czap/<pkg>` barrel for a scripts/ seam → barrel arm is empty; only the deep
+      // No `@liteship/<pkg>` barrel for a scripts/ seam → barrel arm is empty; only the deep
       // importer matches its src path.
       expect(seam?.barrelImporters).toEqual([]);
       expect(seam?.deepImporters).toEqual(['tests/unit/core/deep.test.ts']);
@@ -276,7 +302,7 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
   });
 
   it('a repo missing every test root is valid — an empty corpus, not a throw (ENOENT is skipped)', () => {
-    const root = mkdtempSync(join(tmpdir(), 'czap-mut-targets-empty-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-mut-targets-empty-'));
     try {
       const [seam] = partitionSeamCandidates(root, [SEAM]);
       expect(seam?.deepImporters).toEqual([]);
@@ -288,29 +314,26 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
 
   it('PROPERTY — the partition is a pure function of the corpus: shuffling the on-disk write order never changes the (sorted) result', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(fc.integer({ min: 0, max: 50 }), { minLength: 1, maxLength: 8 }),
-        (idxs) => {
-          const entries: [string, string][] = idxs.map((i) => [
-            `tests/unit/core/t${i}.test.ts`,
-            `import { hlc } from '@czap/core';`,
-          ]);
-          const buildFrom = (order: [string, string][]): readonly string[] => {
-            const root = makeRepoWithTests(new Map(order));
-            try {
-              const [seam] = partitionSeamCandidates(root, [SEAM]);
-              return seam?.barrelImporters.map((b) => b.id) ?? [];
-            } finally {
-              rmSync(root, { recursive: true, force: true });
-            }
-          };
-          const forward = buildFrom(entries);
-          const reversed = buildFrom([...entries].reverse());
-          // Same corpus, reversed write order → identical sorted barrel set (determinism).
-          expect(reversed).toEqual(forward);
-          expect(forward).toEqual([...forward].sort((a, b) => a.localeCompare(b)));
-        },
-      ),
+      fc.property(fc.uniqueArray(fc.integer({ min: 0, max: 50 }), { minLength: 1, maxLength: 8 }), (idxs) => {
+        const entries: [string, string][] = idxs.map((i) => [
+          `tests/unit/core/t${i}.test.ts`,
+          `import { hlc } from '@liteship/core';`,
+        ]);
+        const buildFrom = (order: [string, string][]): readonly string[] => {
+          const root = makeRepoWithTests(new Map(order));
+          try {
+            const [seam] = partitionSeamCandidates(root, [SEAM]);
+            return seam?.barrelImporters.map((b) => b.id) ?? [];
+          } finally {
+            rmSync(root, { recursive: true, force: true });
+          }
+        };
+        const forward = buildFrom(entries);
+        const reversed = buildFrom([...entries].reverse());
+        // Same corpus, reversed write order → identical sorted barrel set (determinism).
+        expect(reversed).toEqual(forward);
+        expect(forward).toEqual([...forward].sort((a, b) => a.localeCompare(b)));
+      }),
       { numRuns: 25 },
     );
   });
@@ -324,8 +347,8 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
   it('barrel mode (the default) maps EVERY line to the full deep ∪ barrel closure (sound, broad)', () => {
     const root = makeRepoWithTests(
       new Map([
-        ['tests/unit/core/barrel.test.ts', `import { x } from '@czap/core';`],
-        ['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`],
+        ['tests/unit/core/barrel.test.ts', `import { x } from '@liteship/core';`],
+        ['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`],
       ]),
     );
     try {
@@ -338,10 +361,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
           'tests/unit/core/deep.test.ts',
         ]);
       }
-      expect(coveringBySeam.get(HLC)).toEqual([
-        'tests/unit/core/barrel.test.ts',
-        'tests/unit/core/deep.test.ts',
-      ]);
+      expect(coveringBySeam.get(HLC)).toEqual(['tests/unit/core/barrel.test.ts', 'tests/unit/core/deep.test.ts']);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -349,7 +369,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
 
   it('a seam with only a deep importer maps every line to that one test; no barrel candidates', () => {
     const root = makeRepoWithTests(
-      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`]]),
+      new Map([['tests/unit/core/deep.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`]]),
     );
     try {
       const { coverage, coveringBySeam } = buildSeamCoverageMap(root, [SEAM], { _tag: 'barrel' });
@@ -364,7 +384,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
 
   it('an UNCOVERED seam (no deep, no barrel importer) maps to the empty set on every line', () => {
     const root = makeRepoWithTests(
-      new Map([['tests/unit/web/unrelated.test.ts', `import { z } from '@czap/web';`]]),
+      new Map([['tests/unit/web/unrelated.test.ts', `import { z } from '@liteship/web';`]]),
     );
     try {
       const { coverage, coveringBySeam } = buildSeamCoverageMap(root, [SEAM]);
@@ -379,8 +399,8 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
 
   it('is DETERMINISTIC — the same inputs build a byte-identical covering set (the verdict-cache key LAW)', () => {
     const tests = new Map([
-      ['tests/unit/core/a.test.ts', `import { x } from '@czap/core';`],
-      ['tests/unit/core/b.test.ts', `import { hlc } from '../../../packages/core/src/hlc.js';`],
+      ['tests/unit/core/a.test.ts', `import { x } from '@liteship/core';`],
+      ['tests/unit/core/b.test.ts', `import { hlc } from '../../../packages/core/src/clock/hlc.js';`],
     ]);
     const run = (): readonly string[][] => {
       const root = makeRepoWithTests(new Map(tests));

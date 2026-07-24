@@ -7,8 +7,8 @@
  */
 
 import fc from 'fast-check';
-import { Boundary, Token, Theme, Style } from '@czap/core';
-import type { PrimitiveKind } from '@czap/core';
+import { defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
+import type { PrimitiveKind , Boundary, Token, Theme, Style} from '@liteship/core';
 
 export const PRIMITIVE_KINDS = ['boundary', 'token', 'theme', 'style'] as const satisfies PrimitiveKind[];
 
@@ -16,18 +16,20 @@ export const PRIMITIVE_KINDS = ['boundary', 'token', 'theme', 'style'] as const 
 // Shared arbitraries
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const arbPrimitiveKind: fc.Arbitrary<PrimitiveKind> =
-  fc.constantFrom(...PRIMITIVE_KINDS);
+export const arbPrimitiveKind: fc.Arbitrary<PrimitiveKind> = fc.constantFrom(...PRIMITIVE_KINDS);
 
-export const arbBoundaryShape: fc.Arbitrary<Boundary.Shape> = fc.constant(
-  Boundary.make({
+export const arbBoundaryShape: fc.Arbitrary<Boundary> = fc.constant(
+  defineBoundary({
     input: 'viewport.width',
-    at: [[0, 'small'], [768, 'large']] as const,
+    at: [
+      [0, 'small'],
+      [768, 'large'],
+    ] as const,
   }),
 );
 
-export const arbTokenShape: fc.Arbitrary<Token.Shape> = fc.constant(
-  Token.make({
+export const arbTokenShape: fc.Arbitrary<Token> = fc.constant(
+  defineToken({
     name: 'spacing',
     category: 'spacing',
     axes: ['base'] as const,
@@ -36,29 +38,29 @@ export const arbTokenShape: fc.Arbitrary<Token.Shape> = fc.constant(
   }),
 );
 
-export const arbThemeShape: fc.Arbitrary<Theme.Shape> = fc.constant(
-  Theme.make({
+export const arbThemeShape: fc.Arbitrary<Theme> = fc.constant(
+  defineTheme({
     name: 'default',
     variants: ['light'] as const,
     tokens: {},
   }),
 );
 
-export const arbStyleShape: fc.Arbitrary<Style.Shape> = fc.constant(
-  Style.make({
-    boundary: Boundary.make({ input: 'viewport.width', at: [[0, 'sm']] as const }),
+export const arbStyleShape: fc.Arbitrary<Style> = fc.constant(
+  defineStyle({
+    boundary: defineBoundary({ input: 'viewport.width', at: [[0, 'sm']] as const }),
     base: { properties: {} },
   }),
 );
 
 export const arbConfigInput = fc.record({
   boundaries: fc.dictionary(
-    fc.string({ minLength: 1, maxLength: 20 }).filter(s => /^[a-z]/.test(s)),
+    fc.string({ minLength: 1, maxLength: 20 }).filter((s) => /^[a-z]/.test(s)),
     arbBoundaryShape,
   ),
-  tokens:   fc.constant({}),
-  themes:   fc.constant({}),
-  styles:   fc.constant({}),
+  tokens: fc.constant({}),
+  themes: fc.constant({}),
+  styles: fc.constant({}),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,10 +74,10 @@ export const arbConfigInput = fc.record({
 export function resolverSuite(kind: PrimitiveKind) {
   const plural = `${kind}s`;
   return {
-    sameDir:         `resolves ${kind} from same-dir ${plural}.ts`,
-    wildcard:        `resolves ${kind} from same-dir *.${plural}.ts`,
-    rootFallback:    `resolves ${kind} from project root ${plural}.ts`,
+    sameDir: `resolves ${kind} from same-dir ${plural}.ts`,
+    wildcard: `resolves ${kind} from same-dir *.${plural}.ts`,
+    rootFallback: `resolves ${kind} from project root ${plural}.ts`,
     userDirOverride: `resolves ${kind} from config.dirs.${kind} override`,
-    notFound:        `returns null when no ${kind} file exists`,
+    notFound: `returns null when no ${kind} file exists`,
   };
 }

@@ -12,8 +12,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as fc from 'fast-check';
-import { COMMAND_CATALOG, GLOSSARY_ENTRIES, commandRegistry } from '@czap/command';
-import { fnv1a } from '@czap/core';
+import { COMMAND_CATALOG, GLOSSARY_ENTRIES, commandRegistry } from '@liteship/command';
+import { fnv1a } from '@liteship/core';
 import { dispatch } from '../../../packages/mcp-server/src/dispatch.js';
 import { listUiResources, readUiResource } from '../../../packages/mcp-server/src/ui-resources.js';
 import { renderCommandCatalog, renderGlossary } from '../../../packages/mcp-server/src/ui-render.js';
@@ -48,7 +48,9 @@ describe('D4 — UI resources in resources/list', () => {
 
   it('listUiResources() agrees with the ui:// slice of resources/list', async () => {
     const r = await result<{ resources: Array<{ uri: string }> }>('resources/list', {});
-    expect(r.resources.filter((x) => x.uri.startsWith('ui://') && !x.uri.startsWith('ui://liteship/app/'))).toEqual(listUiResources());
+    expect(r.resources.filter((x) => x.uri.startsWith('ui://') && !x.uri.startsWith('ui://liteship/app/'))).toEqual(
+      listUiResources(),
+    );
   });
 
   it('cardinality is pinned: exactly three static UI resources', () => {
@@ -75,13 +77,16 @@ describe('D4 — UI resource metadata (CSP on the resource, never the tool)', ()
 
 describe('D4 — resources/read returns static markup embedding real data', () => {
   it('the command-catalog UI is text/html;profile=mcp-app and is a byte-identical projection', async () => {
-    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', { uri: CMD_URI });
+    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', {
+      uri: CMD_URI,
+    });
     expect(r.contents[0]!.mimeType).toBe(UI_MIME);
     expect(r.contents[0]!.text).toBe(renderCommandCatalog(COMMAND_CATALOG));
   });
 
   it('the command-catalog UI embeds real command names + summaries', async () => {
-    const html = (await result<{ contents: Array<{ text: string }> }>('resources/read', { uri: CMD_URI })).contents[0]!.text;
+    const html = (await result<{ contents: Array<{ text: string }> }>('resources/read', { uri: CMD_URI })).contents[0]!
+      .text;
     for (const d of COMMAND_CATALOG) {
       expect(html, `catalog UI missing ${d.name}`).toContain(d.name);
     }
@@ -89,7 +94,9 @@ describe('D4 — resources/read returns static markup embedding real data', () =
   });
 
   it('the glossary UI is a byte-identical projection embedding terms + definitions', async () => {
-    const r = await result<{ contents: Array<{ mimeType: string; text: string }> }>('resources/read', { uri: GLOSSARY_URI });
+    const r = await result<{ contents: Array<{ mimeType: string; text: string }> }>('resources/read', {
+      uri: GLOSSARY_URI,
+    });
     expect(r.contents[0]!.mimeType).toBe(UI_MIME);
     expect(r.contents[0]!.text).toBe(renderGlossary(GLOSSARY_ENTRIES));
     const entry = GLOSSARY_ENTRIES.find((e) => e.term === 'boundary')!;
@@ -100,7 +107,9 @@ describe('D4 — resources/read returns static markup embedding real data', () =
   });
 
   it('read contents carry the CSP meta alongside the markup', async () => {
-    const r = await result<{ contents: Array<{ _meta: { ui: { csp: unknown } } }> }>('resources/read', { uri: CMD_URI });
+    const r = await result<{ contents: Array<{ _meta: { ui: { csp: unknown } } }> }>('resources/read', {
+      uri: CMD_URI,
+    });
     expect(r.contents[0]!._meta.ui.csp).toBeDefined();
   });
 
@@ -111,8 +120,17 @@ describe('D4 — resources/read returns static markup embedding real data', () =
 
 describe('D4 — static-only guarantee (the D4/D5 line)', () => {
   const FORBIDDEN = [
-    '<script', 'postMessage', 'window.openai', 'window.parent', 'MessageChannel',
-    'tools/call', 'callTool', 'javascript:', 'href="http', 'src="http', 'srcdoc',
+    '<script',
+    'postMessage',
+    'window.openai',
+    'window.parent',
+    'MessageChannel',
+    'tools/call',
+    'callTool',
+    'javascript:',
+    'href="http',
+    'src="http',
+    'srcdoc',
   ];
 
   it('every UI resource body is static — no script, no bridge hooks, no inline handlers, no remote network', () => {
@@ -169,7 +187,7 @@ describe('D4 — projection drift pin', () => {
     // CUT A5: `package-smoke` (migrated from scripts/package-smoke.ts) joined
     // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
     // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
-    // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
+    // @liteship/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
     // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
     // Re-pinned again when the capsule-verify handler command (CLI-only) joined
     // the registry, growing the commands UI projection by one entry.
@@ -180,6 +198,27 @@ describe('D4 — projection drift pin', () => {
     // COMMAND_CATALOG — the registry/commands UI body grew by one entry.
     // Re-pinned again when Astro 7 background-dev commands (`astro.dev`,
     // `astro.status`, `astro.stop`) joined COMMAND_CATALOG.
-    expect(address).toBe('fnv1a:d57167cb');
+    // Re-pinned again when the glossary shake-down/first-run entries were
+    // reworded for the `pnpm verify` rename (shakedown script retired).
+    // Re-pinned for the LiteShip brand consolidation (engine-name glossary entry removed; catalog content changed).
+    // Re-pinned again when the standard dev-experience verbs (`dev`, `build`, `info`,
+    // `add`) joined COMMAND_CATALOG as CLI-owned commands — the registry/commands UI
+    // body grew by four entries.
+    // P10 nautical CLI-string sweep: the `doctor` descriptor summary was de-nauticalized
+    // ("Preflight rig-check:" -> "Preflight environment check:"); the registry/commands UI
+    // body embeds command summaries, so its digest shifted. (The castoff -> setup group
+    // rename is NOT rendered into the UI body and does not affect this pin.)
+    // Re-pinned again when the `explain` and `context` reference commands joined
+    // COMMAND_CATALOG as handler-backed, MCP-exposed commands — the registry/commands
+    // UI body grew by two entries.
+    // De-nauticalization sweep: the `gauntlet` glossary entry was reworded to drop the
+    // stale spelled-out phase count ("Thirty-five phases…") and the `rig-check` literal.
+    // renderGlossary embeds each entry's definition, so the glossary UI body shifted.
+    // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off,
+    // moored, shake-down, quay) were dropped from GLOSSARY_ENTRIES — the catalog now keeps
+    // only terms still used in CLI source — so the glossary UI body digest shifted again.
+    // P11 check contract completion: profile execution owns `check`; the pure fold is
+    // the distinct handler/MCP command `check.gates`, changing the commands projection.
+    expect(address).toBe('fnv1a:b780fc3e');
   });
 });

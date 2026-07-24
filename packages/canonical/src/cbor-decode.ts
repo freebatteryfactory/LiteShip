@@ -30,7 +30,7 @@
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 import { compareBytes } from './compare-bytes.js';
 
 /**
@@ -258,7 +258,7 @@ function decodeItem(r: Reader): unknown {
  * out-of-order map keys, trailing bytes) raises a typed `ParseError`
  * (source `'cbor'`, `code` = the reason discriminant).
  *
- * @throws A `@czap/error` `ParseError` (`source` `'cbor'`).
+ * @throws A `@liteship/error` `ParseError` (`source` `'cbor'`).
  */
 export function decode(bytes: Uint8Array): unknown {
   if (!(bytes instanceof Uint8Array)) {

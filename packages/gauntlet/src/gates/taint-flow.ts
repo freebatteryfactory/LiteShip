@@ -16,10 +16,10 @@
  *
  * LEAN BY CONSTRUCTION (ADR-0012 / D7b): the gate builds NO `ts.Program`, walks NO
  * checker, and references NO LiteShip-specific source/sink name. The HOST
- * (`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL registry the
- * `@czap/cli` host injects) traces the flows and injects them via
+ * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL registry the
+ * `@liteship/cli` host injects) traces the flows and injects them via
  * {@link GateContext.taint}; this gate only folds. The gate REQUIRES the facts
- * (taint is opt-in: `czap check --ir --taint`) — when absent it is simply not in
+ * (taint is opt-in: `liteship check gates --ir --taint`) — when absent it is simply not in
  * the set, so there is no whole-corpus trace cost and no noise on a default run.
  *
  * LEVEL: the gate's base level is L4 (the trust-spine seams — shader compile,
@@ -38,7 +38,7 @@ import { defineGate, requireTaint, type GateContext, type Gate } from '../gate.j
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { TaintFacts, TaintFlow } from '../taint-facts.js';
+import type { TaintFacts, TaintFlow } from '../facts/taint-facts.js';
 
 /** The gate id — namespaces every {@link Finding} it emits (traceability). */
 const RULE_NS = 'gauntlet/taint-flow';

@@ -1,25 +1,25 @@
 /**
- * @czap/stage package smoke test.
+ * @liteship/stage package smoke test.
  *
  * Pins the public export surface of the visual-compiler package: the three
  * top-level casters (`dualExport`, `exportVideo`, `exportVideoEncoded`) and the
- * `@czap/stage/ffmpeg` subpath's headless encoder seam (`ffmpegFrameEncoder`,
+ * `@liteship/stage/ffmpeg` subpath's headless encoder seam (`ffmpegFrameEncoder`,
  * `ffmpegEncodeAvailable`, `probeFfmpegEncode`). A smoke test, so it only asserts
  * the exports EXIST and are callable shapes — no real render/encode is driven.
  */
 
 import { describe, test, expect } from 'vitest';
-import { dualExport, exportVideo, exportVideoEncoded } from '@czap/stage';
-import { ffmpegFrameEncoder, ffmpegEncodeAvailable, probeFfmpegEncode } from '@czap/stage/ffmpeg';
+import { dualExport, exportVideo, exportVideoEncoded } from '@liteship/stage';
+import { ffmpegFrameEncoder, ffmpegEncodeAvailable, probeFfmpegEncode } from '@liteship/stage/ffmpeg';
 
-describe('@czap/stage smoke', () => {
+describe('@liteship/stage smoke', () => {
   test('top-level casters are exported as callable functions', () => {
     expect(typeof dualExport).toBe('function');
     expect(typeof exportVideo).toBe('function');
     expect(typeof exportVideoEncoded).toBe('function');
   });
 
-  test('@czap/stage/ffmpeg exposes the headless encoder seam', () => {
+  test('@liteship/stage/ffmpeg exposes the headless encoder seam', () => {
     expect(typeof ffmpegFrameEncoder).toBe('function');
     expect(typeof ffmpegEncodeAvailable).toBe('function');
     expect(typeof probeFfmpegEncode).toBe('function');

@@ -4,7 +4,7 @@
  *
  * The native-CSS path (`MotionCompiler`) owns motion wherever `animation-timeline`
  * is supported. This directive is the permanent FLOOR for everywhere it is not: it
- * reads an SSR-inlined, already-lowered motion program off `data-czap-motion-program`
+ * reads an SSR-inlined, already-lowered motion program off `data-liteship-motion-program`
  * and, when native is unavailable, scrubs the same signal→progress the CSS would,
  * writing typed leaf values through {@link writeContinuousMap} every frame. That
  * writer samples the program's OWN easing descriptor (`RuntimeWritePlan.easing`) —
@@ -12,16 +12,16 @@
  * native CSS read ONE identical kernel (Law 4).
  *
  * The split the runtime enforces (Law 15/16):
- *   - CONTINUOUS — the eased tween. A LEAF write every frame (`--czap-*` custom
- *     properties + a `czap:uniform-update`) and a continuous StateCell write. NEVER
+ *   - CONTINUOUS — the eased tween. A LEAF write every frame (`--liteship-*` custom
+ *     properties + a `liteship:uniform-update`) and a continuous StateCell write. NEVER
  *     a graph patch (patching per frame would re-seal the graph 60×/s).
- *   - DISCRETE — the state CROSSING at the threshold. `data-czap-state` flips and a
- *     `czap:graph-state` fires through the exact seam `scene-bridge.applyDiscreteState`
+ *   - DISCRETE — the state CROSSING at the threshold. `data-liteship-state` flips and a
+ *     `liteship:graph-state` fires through the exact seam `scene-bridge.applyDiscreteState`
  *     uses. Sparse — only on a real crossing.
  *
  * Lifecycle mirrors the other host drivers: reduced-motion + `settle` policy skips
- * the loop and pins the final endpoint once; `czap:reinit` disposes BEFORE
- * re-reading (never double-holds); `czap:teardown` stops the driver and frees the
+ * the loop and pins the final endpoint once; `liteship:reinit` disposes BEFORE
+ * re-reading (never double-holds); `liteship:teardown` stops the driver and frees the
  * store. SSR-safe: with no `window`/rAF the loop never starts.
  *
  * @module
@@ -36,18 +36,18 @@ import {
   type RevealIntent,
   type RuntimeWritePlan,
   type StateCellStoreShape,
-} from '@czap/core';
-import { dispatchCzapEvent } from '@czap/web';
+} from '@liteship/core';
+import { dispatchLiteshipEvent } from '@liteship/web';
 import { writeContinuousMap } from './write-continuous-map.js';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
 import { bootDirectiveEntry } from './directive-bound.js';
 
 /**
  * The opt-in attribute carrying the SSR-inlined lowered motion program (JSON).
- * Presence GATES the directive — like `client:graph`'s `data-czap-graph`, it is
+ * Presence GATES the directive — like `client:graph`'s `data-liteship-graph`, it is
  * read directly off the host, not through a wire registry.
  */
-export const MOTION_PROGRAM_ATTR = 'data-czap-motion-program';
+export const MOTION_PROGRAM_ATTR = 'data-liteship-motion-program';
 
 /** The default discrete crossing point on RAW (un-eased) progress. */
 const DEFAULT_THRESHOLD = 0.5;
@@ -57,7 +57,7 @@ const DISCRETE_CELL = 'motion';
 const CONTINUOUS_CELL = 'motion.progress';
 
 /** The canonical discrete-crossing event, shared with the scene bridge. */
-const GRAPH_STATE_EVENT = 'czap:graph-state';
+const GRAPH_STATE_EVENT = 'liteship:graph-state';
 
 /**
  * The SSR-inlined, already-lowered motion program the directive drives. The
@@ -205,9 +205,9 @@ export function parseMotionProgram(raw: string): SerializedMotionProgram | null 
   try {
     parsed = JSON.parse(raw);
   } catch (cause) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.motion',
-      code: 'motion-program-malformed',
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.motion',
+      code: 'astro/motion/motion-program-malformed',
       message: `${MOTION_PROGRAM_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize with JSON.stringify(a lowered motion program).`,
       cause,
     });
@@ -223,9 +223,9 @@ export function parseMotionProgram(raw: string): SerializedMotionProgram | null 
     typeof program.intent !== 'object' ||
     !Array.isArray(program.signals)
   ) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.motion',
-      code: 'motion-program-shape-invalid',
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.motion',
+      code: 'astro/motion/motion-program-shape-invalid',
       message: `${MOTION_PROGRAM_ATTR} is missing required fields ({ intent, runtime, signals }) — the client:motion floor stays inert; native CSS still applies.`,
     });
     return null;
@@ -249,24 +249,24 @@ export function nativeTimelineSupported(): boolean {
  * Whether native timeline CSS ACTUALLY drives THIS element — the only condition under
  * which the JS floor may stay idle. A global {@link nativeTimelineSupported} check is
  * NOT enough: a program surface (e.g. a `Reveal.chain`) that inlines
- * `data-czap-motion-program` but emits no `MotionCompiler` CSS would otherwise be
+ * `data-liteship-motion-program` but emits no `MotionCompiler` CSS would otherwise be
  * stranded at first paint on a capable browser — floor skipped, no CSS to scrub it.
- * `MotionCompiler` binds its single `czap-motion-<target>-<from>-<to>` `@keyframes` (see its
+ * `MotionCompiler` binds its single `liteship-motion-<target>-<from>-<to>` `@keyframes` (see its
  * `keyframeName`) to a scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)`
  * block — but ONLY for a plan eligible to own a native timeline. A composed program whose
  * overlapping windows disagree on easing (`par` of differently-eased children, #148) is
  * `nativeTimeline: { eligible: false }`, so the compiler emits NO ownership block and no
  * `animation-name` binding — this scan then correctly returns false and the floor keeps
  * ownership (ADR-0041). `getComputedStyle().animationName` may still be a comma-separated list
- * (a single reveal can bind `czap-motion-*` ALONGSIDE an author `translate`/`opacity`
- * animation), hence the `.split(',').some(...)` scan: ANY `czap-motion-*` name in it means
+ * (a single reveal can bind `liteship-motion-*` ALONGSIDE an author `translate`/`opacity`
+ * animation), hence the `.split(',').some(...)` scan: ANY `liteship-motion-*` name in it means
  * native CSS is BOTH supported here AND emitted for this element. Absent it, the floor runs
  * (Law 1).
  */
 function nativeTimelineOwnsElement(element: HTMLElement): boolean {
   if (!nativeTimelineSupported() || typeof getComputedStyle !== 'function') return false;
   const animationName = getComputedStyle(element).animationName;
-  return animationName !== '' && animationName.split(',').some((name) => name.trim().startsWith('czap-motion-'));
+  return animationName !== '' && animationName.split(',').some((name) => name.trim().startsWith('liteship-motion-'));
 }
 
 /** Whether the user asked for reduced motion (SSR-safe; false off-DOM / without matchMedia). */
@@ -291,7 +291,7 @@ function startDriver(program: SerializedMotionProgram, onTick: (progress: number
   const signal = program.signals[0];
 
   if (signal !== undefined) {
-    warnIfSignalUnserved(signal, { source: 'czap/astro.motion', what: 'motion signal clock' });
+    warnIfSignalUnserved(signal, { source: 'liteship/astro.motion', what: 'motion signal clock' });
     const emit = (): void => {
       const value = readSignalValue(signal);
       if (value === undefined) return;
@@ -332,8 +332,8 @@ function startDriver(program: SerializedMotionProgram, onTick: (progress: number
  * program off {@link MOTION_PROGRAM_ATTR}, constructs a private
  * {@link StateCellStore} (one discrete pose cell + one continuous progress cell —
  * the FIRST production caller of `writeContinuous`), and runs the JS floor when
- * native timelines are unavailable. Honors `czap:reinit` (dispose-then-re-read)
- * and `czap:teardown` (stop + free the store).
+ * native timelines are unavailable. Honors `liteship:reinit` (dispose-then-re-read)
+ * and `liteship:teardown` (stop + free the store).
  */
 export function initMotionDirective(load: () => Promise<unknown>, element: HTMLElement): void {
   let driver: MotionDriver | null = null;
@@ -342,10 +342,10 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
   const applyDiscrete = (stateName: string): void => {
     if (!store) return;
     store.applyDiscrete(DISCRETE_CELL, stateName);
-    if (element.getAttribute('data-czap-state') !== stateName) {
-      element.setAttribute('data-czap-state', stateName);
+    if (element.getAttribute('data-liteship-state') !== stateName) {
+      element.setAttribute('data-liteship-state', stateName);
     }
-    dispatchCzapEvent(element, GRAPH_STATE_EVENT, { discrete: { [stateName]: stateName }, state: stateName });
+    dispatchLiteshipEvent(element, GRAPH_STATE_EVENT, { discrete: { [stateName]: stateName }, state: stateName });
   };
 
   const teardownDriver = (): void => {
@@ -367,9 +367,9 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
 
     const raw = element.getAttribute(MOTION_PROGRAM_ATTR);
     if (raw === null) {
-      Diagnostics.warnOnce({
-        source: 'czap/astro.motion',
-        code: 'motion-program-missing',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.motion',
+        code: 'astro/motion/motion-program-missing',
         message: `A client:motion host carries no ${MOTION_PROGRAM_ATTR} — nothing to drive; the directive no-ops. Inline the lowered program (JSON.stringify) on the element.`,
       });
       return;
@@ -400,7 +400,7 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
 
     // Native scroll/view timeline CSS actually drives THIS element ⇒ CSS owns the
     // CONTINUOUS scrub, so the per-frame leaf writes stay idle. But CSS keyframes cannot
-    // flip the discrete `data-czap-state` or dispatch `czap:graph-state`, so the DISCRETE
+    // flip the discrete `data-liteship-state` or dispatch `liteship:graph-state`, so the DISCRETE
     // threshold crossing runs REGARDLESS — a lightweight observer — or the semantic state
     // would stall at the initial pose while the visual scrubs past (F-MOT). A capability
     // check alone is not enough here: a program surface with no emitted MotionCompiler CSS
@@ -427,8 +427,8 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
     });
   };
 
-  element.addEventListener('czap:reinit', setup);
-  element.addEventListener('czap:teardown', teardownDriver);
+  element.addEventListener('liteship:reinit', setup);
+  element.addEventListener('liteship:teardown', teardownDriver);
 
   setup();
   load();

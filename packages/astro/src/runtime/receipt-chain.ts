@@ -1,5 +1,5 @@
-import { DAG, Diagnostics } from '@czap/core';
-import type { Receipt, UIFrame } from '@czap/core';
+import { DAG, Diagnostics } from '@liteship/core';
+import type { Receipt, UIFrame } from '@liteship/core';
 
 type ReceiptEnvelope = Receipt.Envelope;
 type ReceiptTrustMode = 'advisory-unverified';
@@ -56,9 +56,9 @@ export function createReceiptChain(): ReceiptChainShape {
 
     ingestEnvelope(envelope) {
       if (envelope.signature) {
-        Diagnostics.warnOnce({
-          source: 'czap/astro.receipt-chain',
-          code: 'receipt-signature-unverified',
+        Diagnostics.warnOnceRegistered({
+          source: 'liteship/astro.receipt-chain',
+          code: 'astro/receipt-chain/receipt-signature-unverified',
           message:
             'Receipt signatures are present but runtime ingestion treats them as advisory metadata until verification is configured.',
         });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { UIFrame } from '@czap/core';
+import type { UIFrame } from '@liteship/core';
 import {
   createLLMRenderPipeline,
   type LLMRenderHost,
@@ -113,7 +113,7 @@ describe('llm render pipeline', () => {
 
     session.beginReconnect();
     session.ingest({ type: 'text', partial: false, content: 'hello ' });
-    session.ingest({ type: 'tool-call-delta', partial: true, toolName: 'search', content: '{"q":"czap"}' });
+    session.ingest({ type: 'tool-call-delta', partial: true, toolName: 'search', content: '{"q":"liteship"}' });
 
     expect(emittedTokens).toEqual([{ text: 'hello ', accumulated: 'hello ' }]);
   });

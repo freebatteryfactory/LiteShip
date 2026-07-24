@@ -1,8 +1,8 @@
 /**
- * Astro integration tests -- satellite attributes, initial state resolution,
+ * Astro integration tests -- adaptive attributes, initial state resolution,
  * and integration hook configuration.
  *
- * Tests the @czap/astro public API: satelliteAttrs, resolveInitialState,
+ * Tests the @liteship/astro public API: adaptiveAttrs, resolveInitialState,
  * resolveInitialStateFallback, and integration factory configuration.
  */
 
@@ -11,19 +11,28 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, resolveInitialStateWithReceipt, integration } from '@czap/astro';
-import type { SatelliteProps } from '@czap/astro';
-import { Boundary, Diagnostics } from '@czap/core';
+import {
+  adaptiveAttrs,
+  resolveInitialStateFallback,
+  resolveInitialState,
+  resolveInitialStateWithReceipt,
+  integration,
+} from '@liteship/astro';
+import type { AdaptiveProps } from '@liteship/astro';
+import { Diagnostics, defineBoundary } from '@liteship/core';
+import { serializeBoundaryAttrValue } from '@liteship/core/authoring';
+import { defineAdaptive } from '../../../packages/liteship/src/index.js';
+import { runIsolatedAstroConfigSetup } from '../../helpers/astro-config-setup.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Build a minimal Boundary.Shape for test fixtures.
+ * Build a minimal Boundary for test fixtures.
  */
 function makeBoundary(input: string, pairs: readonly (readonly [number, string])[], hysteresis?: number) {
-  return Boundary.make({
+  return defineBoundary({
     input,
     at: pairs as readonly (readonly [number, string])[] & { readonly [K: number]: readonly [number, string] },
     ...(hysteresis !== undefined ? { hysteresis } : {}),
@@ -31,8 +40,8 @@ function makeBoundary(input: string, pairs: readonly (readonly [number, string])
 }
 
 /**
- * Build a minimal Component.Shape-like object for satellite attribute tests.
- * We avoid importing Component.make since it requires Style.Shape which adds
+ * Build a minimal Component-like object for adaptive attribute tests.
+ * We avoid importing Component.make since it requires Style which adds
  * unnecessary complexity for attribute generation tests.
  */
 function makeComponentStub(name: string) {
@@ -40,61 +49,61 @@ function makeComponentStub(name: string) {
 }
 
 // ---------------------------------------------------------------------------
-// satelliteAttrs -- data-czap-* attribute generation
+// adaptiveAttrs -- data-liteship-* attribute generation
 // ---------------------------------------------------------------------------
 
-describe('satelliteAttrs', () => {
-  test('generates base czap-satellite class with no props', () => {
-    const attrs = satelliteAttrs({});
+describe('adaptiveAttrs', () => {
+  test('generates base liteship-adaptive class with no props', () => {
+    const attrs = adaptiveAttrs({});
 
-    expect(attrs['class']).toBe('czap-satellite');
+    expect(attrs['class']).toBe('liteship-adaptive');
   });
 
-  test('merges custom class with czap-satellite', () => {
-    const attrs = satelliteAttrs({ class: 'my-widget' });
+  test('merges custom class with liteship-adaptive', () => {
+    const attrs = adaptiveAttrs({ class: 'my-widget' });
 
-    expect(attrs['class']).toBe('czap-satellite my-widget');
+    expect(attrs['class']).toBe('liteship-adaptive my-widget');
   });
 
-  test('sets data-czap-satellite from component name', () => {
-    const attrs = satelliteAttrs({
-      component: makeComponentStub('HeroCard') as SatelliteProps['component'],
+  test('sets data-liteship-adaptive from component name', () => {
+    const attrs = adaptiveAttrs({
+      component: makeComponentStub('HeroCard') as AdaptiveProps['component'],
     });
 
-    expect(attrs['data-czap-satellite']).toBe('HeroCard');
+    expect(attrs['data-liteship-adaptive']).toBe('HeroCard');
   });
 
-  test('sets data-czap-boundary as serialized JSON from boundary shape', () => {
+  test('sets data-liteship-boundary as serialized JSON from boundary shape', () => {
     const boundary = makeBoundary('viewport', [
       [0, 'compact'],
       [768, 'wide'],
     ]);
 
-    const attrs = satelliteAttrs({ boundary });
+    const attrs = adaptiveAttrs({ boundary });
 
-    expect(attrs['data-czap-boundary']).toBeDefined();
-    const parsed = JSON.parse(attrs['data-czap-boundary']!);
+    expect(attrs['data-liteship-boundary']).toBeDefined();
+    const parsed = JSON.parse(attrs['data-liteship-boundary']!);
     expect(parsed.id).toBe(boundary.id);
     expect(parsed.input).toBe(boundary.input);
     expect(parsed.thresholds).toEqual(boundary.thresholds);
     expect(parsed.states).toEqual(boundary.states);
   });
 
-  test('emits the data-czap-directive marker when a boundary is present', () => {
+  test('emits the data-liteship-directive marker when a boundary is present', () => {
     const boundary = makeBoundary('viewport', [
       [0, 'compact'],
       [768, 'wide'],
     ]);
 
-    expect(satelliteAttrs({ boundary })['data-czap-directive']).toBe('satellite');
-    expect(satelliteAttrs({ boundary, directive: 'worker' })['data-czap-directive']).toBe('worker');
+    expect(adaptiveAttrs({ boundary })['data-liteship-directive']).toBe('adaptive');
+    expect(adaptiveAttrs({ boundary, directive: 'worker' })['data-liteship-directive']).toBe('worker');
     // CSS-only shells opt out of any client runtime.
-    expect(satelliteAttrs({ boundary, directive: false })['data-czap-directive']).toBeUndefined();
+    expect(adaptiveAttrs({ boundary, directive: false })['data-liteship-directive']).toBeUndefined();
     // No boundary -> nothing for a directive to evaluate -> no marker.
-    expect(satelliteAttrs({})['data-czap-directive']).toBeUndefined();
+    expect(adaptiveAttrs({})['data-liteship-directive']).toBeUndefined();
   });
 
-  test('serializes hysteresis in data-czap-boundary when present', () => {
+  test('serializes hysteresis in data-liteship-boundary when present', () => {
     const boundary = makeBoundary(
       'viewport',
       [
@@ -104,34 +113,61 @@ describe('satelliteAttrs', () => {
       50,
     );
 
-    const attrs = satelliteAttrs({ boundary });
+    const attrs = adaptiveAttrs({ boundary });
 
-    const parsed = JSON.parse(attrs['data-czap-boundary']!);
+    const parsed = JSON.parse(attrs['data-liteship-boundary']!);
     expect(parsed.hysteresis).toBe(50);
   });
 
-  test('sets data-czap-state from initialState', () => {
-    const attrs = satelliteAttrs({ initialState: 'compact' });
+  test('serializes the safe activation spec byte-identically to core attrs', () => {
+    const adaptive = defineAdaptive({
+      boundary: {
+        input: 'viewport.width',
+        at: [
+          [0, 'compact'],
+          [768, 'wide'],
+        ],
+        spec: {
+          timeRange: { from: 100, until: 200 },
+          experimentId: 'checkout-v2',
+          deviceFilter: () => false,
+        },
+      },
+      style: { base: { properties: { display: 'block' } } },
+    });
 
-    expect(attrs['data-czap-state']).toBe('compact');
+    const serialized = adaptiveAttrs({ boundary: adaptive.boundary })['data-liteship-boundary']!;
+    expect(serialized).toBe(adaptive.attrs()['data-liteship-boundary']);
+    expect(serialized).toBe(serializeBoundaryAttrValue(adaptive.boundary));
+    expect(JSON.parse(serialized).spec).toEqual({
+      timeRange: { from: 100, until: 200 },
+      experimentId: 'checkout-v2',
+    });
+    expect(serialized).not.toContain('deviceFilter');
   });
 
-  test('omits data-czap-satellite when no component provided', () => {
-    const attrs = satelliteAttrs({});
+  test('sets data-liteship-state from initialState', () => {
+    const attrs = adaptiveAttrs({ initialState: 'compact' });
 
-    expect(attrs['data-czap-satellite']).toBeUndefined();
+    expect(attrs['data-liteship-state']).toBe('compact');
   });
 
-  test('omits data-czap-boundary when no boundary provided', () => {
-    const attrs = satelliteAttrs({});
+  test('omits data-liteship-adaptive when no component provided', () => {
+    const attrs = adaptiveAttrs({});
 
-    expect(attrs['data-czap-boundary']).toBeUndefined();
+    expect(attrs['data-liteship-adaptive']).toBeUndefined();
   });
 
-  test('omits data-czap-state when no initialState provided', () => {
-    const attrs = satelliteAttrs({});
+  test('omits data-liteship-boundary when no boundary provided', () => {
+    const attrs = adaptiveAttrs({});
 
-    expect(attrs['data-czap-state']).toBeUndefined();
+    expect(attrs['data-liteship-boundary']).toBeUndefined();
+  });
+
+  test('omits data-liteship-state when no initialState provided', () => {
+    const attrs = adaptiveAttrs({});
+
+    expect(attrs['data-liteship-state']).toBeUndefined();
   });
 
   test('combines all props into a complete attribute set', () => {
@@ -140,17 +176,17 @@ describe('satelliteAttrs', () => {
       [768, 'desktop'],
     ]);
 
-    const attrs = satelliteAttrs({
+    const attrs = adaptiveAttrs({
       boundary,
-      component: makeComponentStub('DashGrid') as SatelliteProps['component'],
+      component: makeComponentStub('DashGrid') as AdaptiveProps['component'],
       class: 'main-grid',
       initialState: 'mobile',
     });
 
-    expect(attrs['class']).toBe('czap-satellite main-grid');
-    expect(attrs['data-czap-satellite']).toBe('DashGrid');
-    expect(attrs['data-czap-state']).toBe('mobile');
-    expect(attrs['data-czap-boundary']).toBeDefined();
+    expect(attrs['class']).toBe('liteship-adaptive main-grid');
+    expect(attrs['data-liteship-adaptive']).toBe('DashGrid');
+    expect(attrs['data-liteship-state']).toBe('mobile');
+    expect(attrs['data-liteship-boundary']).toBeDefined();
   });
 });
 
@@ -194,7 +230,7 @@ describe('resolveInitialState', () => {
       Diagnostics.clearOnce();
       const fakeRequest = { headers: { get: () => null } } as unknown as Request;
       resolveInitialState(boundary, fakeRequest as never);
-      expect(events.some((e) => e.code === 'resolve-initial-state-raw-request')).toBe(true);
+      expect(events.some((e) => e.code === 'astro/quantize/resolve-initial-state-raw-request')).toBe(true);
     } finally {
       Diagnostics.setSink(prev);
       Diagnostics.clearOnce();
@@ -354,9 +390,9 @@ describe('resolveInitialState', () => {
       states: [],
       thresholds: [],
     };
-    expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedCapTier: 'gpu' })).toBe(
-      '',
-    );
+    expect(
+      resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedCapTier: 'gpu' }),
+    ).toBe('');
   });
 });
 
@@ -419,7 +455,7 @@ describe('integration', () => {
   test('returns an AstroIntegration with correct name', () => {
     const integ = integration();
 
-    expect(integ.name).toBe('@czap/astro');
+    expect(integ.name).toBe('@liteship/astro');
   });
 
   test('exposes required Astro lifecycle hooks', () => {
@@ -435,7 +471,7 @@ describe('integration', () => {
   test('accepts empty config', () => {
     const integ = integration({});
 
-    expect(integ.name).toBe('@czap/astro');
+    expect(integ.name).toBe('@liteship/astro');
     expect(integ.hooks['astro:config:setup']).toBeInstanceOf(Function);
   });
 
@@ -453,7 +489,7 @@ describe('integration', () => {
       },
     });
 
-    expect(integ.name).toBe('@czap/astro');
+    expect(integ.name).toBe('@liteship/astro');
     expect(integ.hooks['astro:config:setup']).toBeInstanceOf(Function);
   });
 
@@ -476,14 +512,14 @@ describe('integration', () => {
     expect(integ).toBeDefined();
   });
 
-  test('config:setup registers directives, scripts, and plugin config', () => {
+  test('config:setup registers directives, scripts, and plugin config', async () => {
     const integ = integration();
     const directives: Array<{ name: string; entrypoint: string }> = [];
     const scripts: Array<{ stage: string; content: string }> = [];
     const updates: unknown[] = [];
     const logs: string[] = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: (config: unknown) => {
         updates.push(config);
       },
@@ -498,27 +534,38 @@ describe('integration', () => {
           logs.push(message);
         },
       },
-    } as never);
+    });
 
-    expect(directives.map((directive) => directive.name)).toEqual([
-      'satellite',
-      'graph',
-      'stream',
-      'llm',
-      'gpu',
-      'svg',
-    ]);
+    expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'stream', 'llm', 'gpu', 'svg']);
+    for (const directive of directives) {
+      expect(existsSync(directive.entrypoint)).toBe(true);
+      expect(directive.entrypoint.replaceAll('\\', '/')).toMatch(
+        new RegExp(`/packages/astro/(?:src|dist)/client-directives/${directive.name}\\.(?:ts|js)$`),
+      );
+    }
     expect(updates[0]).toMatchObject({
       vite: {
-        plugins: [expect.objectContaining({ name: '@czap/vite' })],
+        plugins: [expect.objectContaining({ name: '@liteship/vite' })],
+        resolve: {
+          alias: {
+            '@liteship/astro/runtime': expect.any(String),
+          },
+        },
       },
     });
+    const runtimeEntrypoint = (updates[0] as { vite: { resolve: { alias: Record<string, string> } } }).vite.resolve
+      .alias['@liteship/astro/runtime'];
+    expect(runtimeEntrypoint).toBeDefined();
+    expect(existsSync(runtimeEntrypoint!)).toBe(true);
+    expect(runtimeEntrypoint!.replaceAll('\\', '/')).toMatch(
+      /\/packages\/astro\/(?:src|dist)\/runtime\/index\.(?:ts|js)$/u,
+    );
     const detectScript = scripts.find(
-      (script) => script.stage === 'head-inline' && script.content.includes('__CZAP_DETECT__'),
+      (script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__'),
     );
     const gpuUpgradeScript = scripts.find(
       (script) =>
-        script.stage === 'page' && script.content.includes('gpuTier') && script.content.includes('__CZAP_DETECT__'),
+        script.stage === 'page' && script.content.includes('gpuTier') && script.content.includes('__LITESHIP_DETECT__'),
     );
 
     expect(detectScript).toBeDefined();
@@ -526,10 +573,10 @@ describe('integration', () => {
     expect(detectScript?.content).toContain('writable: false');
     expect(detectScript?.content).toContain('provisional: true');
     // Collision guard: the head script writes the reduced-motion PREFERENCE to
-    // data-czap-reduced-motion, never data-czap-motion — which is the motion
+    // data-liteship-reduced-motion, never data-liteship-motion — which is the motion
     // capability TIER (EdgeTier.tierDataAttributes). The two must not share an attr.
-    expect(detectScript?.content).toContain('data-czap-reduced-motion');
-    expect(detectScript?.content).not.toContain("setAttribute('data-czap-motion'");
+    expect(detectScript?.content).toContain('data-liteship-reduced-motion');
+    expect(detectScript?.content).not.toContain("setAttribute('data-liteship-motion'");
     // The runtime SNAPSHOT (writeDetectState payload) stays minimal — just the
     // provisional tier + flag, never the full probe payload. The cap-tier ladder
     // is now DERIVED from canonical headProbeCapTier, so its body legitimately
@@ -541,8 +588,11 @@ describe('integration', () => {
     expect(detectScript?.content).not.toContain('new Function');
     expect(gpuUpgradeScript?.content).toContain('Object.freeze');
     expect(gpuUpgradeScript?.content).toContain('writable: false');
-    expect(gpuUpgradeScript?.content).not.toContain('window.__CZAP_DETECT__ || {}');
+    expect(gpuUpgradeScript?.content).not.toContain('window.__LITESHIP_DETECT__ || {}');
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('bootstrapSlots'))).toBe(true);
+    expect(
+      scripts.some((script) => script.stage === 'page' && script.content.includes("from '@liteship/astro/runtime'")),
+    ).toBe(true);
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('installSwapPipeline'))).toBe(
       true,
     );
@@ -550,31 +600,37 @@ describe('integration', () => {
     expect(logs).toContain('Injected GPU probe upgrade');
   });
 
-  test('diagnostics bridge restores on Astro server teardown', () => {
+  test('diagnostics bridge restores on Astro server teardown', async () => {
     Diagnostics.reset();
     const integ = integration();
     const warns: string[] = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
-      logger: { info() {}, warn(message: string) { warns.push(message); }, error() {} },
-    } as never);
+      logger: {
+        info() {},
+        warn(message: string) {
+          warns.push(message);
+        },
+        error() {},
+      },
+    });
 
-    Diagnostics.warn({ source: 'czap/test', code: 'before', message: 'before teardown' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'before', message: 'before teardown' });
     integ.hooks['astro:server:done']?.({ logger: { info() {}, warn() {}, error() {} } } as never);
-    Diagnostics.warn({ source: 'czap/test', code: 'after', message: 'after teardown' });
+    Diagnostics.warn({ source: 'liteship/test', code: 'after', message: 'after teardown' });
 
     expect(warns).toHaveLength(1);
     expect(warns[0]).toContain('before teardown');
     Diagnostics.reset();
   });
 
-  test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', () => {
+  test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', async () => {
     const optedIn = integration({ middleware: true });
     const wired: Array<{ order: string; entrypoint: string }> = [];
-    optedIn.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(optedIn, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
@@ -582,12 +638,17 @@ describe('integration', () => {
         wired.push(m);
       },
       logger: { info() {} },
-    } as never);
-    expect(wired).toContainEqual({ order: 'pre', entrypoint: '@czap/astro/middleware-entry' });
+    });
+    expect(wired).toHaveLength(1);
+    expect(wired[0]?.order).toBe('pre');
+    expect(existsSync(wired[0]!.entrypoint)).toBe(true);
+    expect(wired[0]?.entrypoint.replaceAll('\\', '/')).toMatch(
+      /\/packages\/astro\/(?:src|dist)\/middleware-entry\.(?:ts|js)$/,
+    );
 
     // Default (no opt-in): nothing auto-wired.
     let calledByDefault = false;
-    integration().hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integration(), {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: () => undefined,
@@ -595,16 +656,16 @@ describe('integration', () => {
         calledByDefault = true;
       },
       logger: { info() {} },
-    } as never);
+    });
     expect(calledByDefault).toBe(false);
   });
 
-  test('config:setup registers the inspector toolbar app only in dev command', () => {
+  test('config:setup registers the inspector toolbar app only in dev command', async () => {
     const integ = integration();
     const devApps: Array<{ id: string; entrypoint: string }> = [];
     const buildApps: Array<{ id: string; entrypoint: string }> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       addDevToolbarApp: (app: { id: string; entrypoint: string }) => {
@@ -613,9 +674,9 @@ describe('integration', () => {
       injectScript: () => undefined,
       logger: { info() {} },
       command: 'dev',
-    } as never);
+    });
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       addDevToolbarApp: (app: { id: string; entrypoint: string }) => {
@@ -624,19 +685,22 @@ describe('integration', () => {
       injectScript: () => undefined,
       logger: { info() {} },
       command: 'build',
-    } as never);
+    });
 
-    const inspector = devApps.find((app) => app.id === 'czap-inspector');
+    const inspector = devApps.find((app) => app.id === 'liteship-inspector');
     expect(inspector).toBeDefined();
-    expect(inspector?.entrypoint).toBe('@czap/astro/runtime/inspector-toolbar-app');
-    expect(buildApps.some((app) => app.id === 'czap-inspector')).toBe(false);
+    expect(existsSync(inspector!.entrypoint)).toBe(true);
+    expect(inspector?.entrypoint.replaceAll('\\', '/')).toMatch(
+      /\/packages\/astro\/(?:src|dist)\/runtime\/inspector-toolbar-app\.(?:ts|js)$/,
+    );
+    expect(buildApps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
-  test('config:setup skips the inspector toolbar app when inspector: false', () => {
+  test('config:setup skips the inspector toolbar app when inspector: false', async () => {
     const integ = integration({ inspector: false });
     const apps: Array<{ id: string }> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       addDevToolbarApp: (app: { id: string }) => {
@@ -645,12 +709,12 @@ describe('integration', () => {
       injectScript: () => undefined,
       logger: { info() {} },
       command: 'dev',
-    } as never);
+    });
 
-    expect(apps.some((app) => app.id === 'czap-inspector')).toBe(false);
+    expect(apps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
-  test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', () => {
+  test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', async () => {
     const integ = integration({
       detect: false,
       // Server Islands is stable in Astro (since v5); there is no experimental
@@ -667,7 +731,7 @@ describe('integration', () => {
     const scripts: string[] = [];
     const updates: Array<Record<string, unknown>> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: (config: Record<string, unknown>) => {
         updates.push(config);
       },
@@ -678,46 +742,40 @@ describe('integration', () => {
         scripts.push(content);
       },
       logger: { info() {} },
-    } as never);
+    });
 
-    expect(directives.map((directive) => directive.name)).toEqual([
-      'satellite',
-      'graph',
-      'worker',
-      'wasm',
-      'svg',
-    ]);
+    expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'worker', 'wasm', 'svg']);
     // serverIslands must NOT produce any experimental config bridge anymore.
     expect(updates.some((config) => 'experimental' in config)).toBe(false);
-    expect(scripts.some((script) => script.includes('__CZAP_DETECT__'))).toBe(false);
+    expect(scripts.some((script) => script.includes('__LITESHIP_DETECT__'))).toBe(false);
     // The wasm bootstrap advertises the URL AND eagerly auto-loads at the
     // document level — without this, enabling wasm in config silently no-ops
     // unless the page carries a per-element `client:wasm` directive.
-    const wasmBootstrap = scripts.find((script) => script.includes('virtual:czap/wasm-url'));
+    const wasmBootstrap = scripts.find((script) => script.includes('virtual:liteship/wasm-url'));
     expect(wasmBootstrap).toBeDefined();
     expect(wasmBootstrap).toContain('configureWasmRuntime(wasmUrl)');
     expect(wasmBootstrap).toContain('loadWasmRuntime(document.documentElement)');
   });
 
-  test('config:setup still injects detect without the gpu probe upgrade when gpu is disabled', () => {
+  test('config:setup still injects detect without the gpu probe upgrade when gpu is disabled', async () => {
     const integ = integration({
       detect: true,
       gpu: { enabled: false },
     });
     const scripts: Array<{ stage: string; content: string }> = [];
 
-    integ.hooks['astro:config:setup']({
+    await runIsolatedAstroConfigSetup(integ, {
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
       injectScript: (stage: string, content: string) => {
         scripts.push({ stage, content });
       },
       logger: { info() {} },
-    } as never);
+    });
 
-    expect(scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__CZAP_DETECT__'))).toBe(
-      true,
-    );
+    expect(
+      scripts.some((script) => script.stage === 'head-inline' && script.content.includes('__LITESHIP_DETECT__')),
+    ).toBe(true);
     expect(scripts.some((script) => script.content.includes('navigator.gpu'))).toBe(false);
   });
 
@@ -765,13 +823,13 @@ describe('integration', () => {
 
     expect(nextCalled).toBe(true);
     expect(headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
-    // Derived from @czap/edge's single critical-hint source (exact equality pinned by
+    // Derived from @liteship/edge's single critical-hint source (exact equality pinned by
     // critical-ch-drift.test.ts); here we just assert the dev middleware, like production,
     // marks viewport-width critical.
     expect(headers.get('Critical-CH')).toContain('Sec-CH-Viewport-Width');
     expect(headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
     expect(headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
-    expect(logs).toContain('@czap dev server middleware active');
+    expect(logs).toContain('@liteship dev server middleware active');
   });
 
   test('server:setup skips middleware when detect is disabled', () => {
@@ -831,7 +889,7 @@ describe('integration', () => {
   test('config:done and build:done log the final integration status', async () => {
     const integ = integration();
     const logs: string[] = [];
-    const root = mkdtempSync(join(tmpdir(), 'czap-astro-int-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-astro-int-'));
     try {
       integ.hooks['astro:config:done']({
         config: { output: 'server', root: pathToFileURL(root) },
@@ -854,18 +912,18 @@ describe('integration', () => {
       rmSync(root, { recursive: true, force: true });
     }
 
-    expect(logs).toContain('@czap configured for server output');
-    expect(logs).toContain('@czap build integration complete');
+    expect(logs).toContain('@liteship configured for server output');
+    expect(logs).toContain('@liteship build integration complete');
   });
 
-  test('build:done emits czap-boundary-manifest.json with derived ids when the project defines boundaries', async () => {
+  test('build:done emits liteship-boundary-manifest.json with derived ids when the project defines boundaries', async () => {
     const integ = integration();
-    const root = mkdtempSync(join(tmpdir(), 'czap-astro-manifest-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-astro-manifest-'));
     const outDir = join(root, 'dist');
     mkdirSync(join(root, 'src'), { recursive: true });
     mkdirSync(outDir, { recursive: true });
 
-    const reference = Boundary.make({
+    const reference = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -910,7 +968,7 @@ export const viewport = {
         logger: silentLogger,
       } as never);
 
-      const manifestPath = join(outDir, 'czap-boundary-manifest.json');
+      const manifestPath = join(outDir, 'liteship-boundary-manifest.json');
       // v2 envelope: entries pool distinct outputs; cells hold pool indices.
       const file = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
         _tag: string;
@@ -918,7 +976,7 @@ export const viewport = {
         boundaries: Record<string, { id: string; outputs: { css: string }[]; outputsByTier: Record<string, number> }>;
       };
 
-      expect(file._tag).toBe('CzapBoundaryManifest');
+      expect(file._tag).toBe('LiteshipBoundaryManifest');
       expect(file._version).toBe(2);
       expect(file.boundaries['viewport']!.id).toBe(reference.id);
       const entry = file.boundaries['viewport']!;
@@ -930,7 +988,7 @@ export const viewport = {
 
   test('build:done emits no manifest file for a project without boundaries', async () => {
     const integ = integration();
-    const root = mkdtempSync(join(tmpdir(), 'czap-astro-empty-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-astro-empty-'));
     const outDir = join(root, 'dist');
     mkdirSync(outDir, { recursive: true });
 
@@ -945,14 +1003,14 @@ export const viewport = {
         logger: silentLogger,
       } as never);
 
-      expect(existsSync(join(outDir, 'czap-boundary-manifest.json'))).toBe(false);
+      expect(existsSync(join(outDir, 'liteship-boundary-manifest.json'))).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  test('config:setup watches the convention primitive files (addWatchFile battery)', () => {
-    const root = mkdtempSync(join(tmpdir(), 'czap-watch-'));
+  test('config:setup watches the convention primitive files (addWatchFile battery)', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-watch-'));
     const src = join(root, 'src');
     mkdirSync(src, { recursive: true });
     try {
@@ -961,14 +1019,16 @@ export const viewport = {
       writeFileSync(join(src, 'tokens.ts'), 'export const c = 1;\n');
 
       const watched: string[] = [];
-      integration().hooks['astro:config:setup']({
-        updateConfig: () => undefined,
-        addClientDirective: () => undefined,
-        injectScript: () => undefined,
-        addWatchFile: (file: string) => watched.push(file),
-        logger: { info() {} },
-        config: { root: pathToFileURL(root), srcDir: pathToFileURL(src) },
-      } as never);
+      await Promise.resolve(
+        integration().hooks['astro:config:setup']({
+          updateConfig: () => undefined,
+          addClientDirective: () => undefined,
+          injectScript: () => undefined,
+          addWatchFile: (file: string) => watched.push(file),
+          logger: { info() {} },
+          config: { root: pathToFileURL(root), srcDir: pathToFileURL(src) },
+        } as never),
+      );
 
       // The barrel, a per-name convention file, and a different kind's barrel
       // are all watched (resolver convention, not hardcoded names).

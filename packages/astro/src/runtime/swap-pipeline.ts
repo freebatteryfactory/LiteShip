@@ -1,15 +1,15 @@
 /**
  * The ONE ordered `astro:after-swap` pipeline.
  *
- * Astro View Transitions don't re-execute page scripts on a swap, so czap re-runs
+ * Astro View Transitions don't re-execute page scripts on a swap, so liteship re-runs
  * its post-swap work from a single listener. That work has a LOAD-BEARING order:
  *
  *   1. {@link rescanSlots} — rebuild the slot registry from the freshly swapped DOM
  *      FIRST, so any directive that reads a slot sees the new registry.
  *   2. {@link scanAndBootDirectives} — activate directive markers on the new server
- *      HTML (fresh nodes never carry `data-czap-directive-bound`, so only they boot).
- *   3. {@link reinitializeDirectives} — dispatch `czap:reinit` on persisted directive
- *      roots so they re-read fresh `data-czap-*` attributes without remounting.
+ *      HTML (fresh nodes never carry `data-liteship-directive-bound`, so only they boot).
+ *   3. {@link reinitializeDirectives} — dispatch `liteship:reinit` on persisted directive
+ *      roots so they re-read fresh `data-liteship-*` attributes without remounting.
  *
  * That order used to live implicitly in the REGISTRATION ORDER of three separate
  * `astro:after-swap` listeners (`bootstrapSlots`, `bootstrapDirectives`,
@@ -55,15 +55,15 @@ export function runSwapPipeline(enabled: readonly DirectiveName[]): void {
 
 /**
  * Install the single `astro:after-swap` listener that runs {@link runSwapPipeline}.
- * Idempotent across repeated module loads via `window.__CZAP_SWAP_PIPELINE__`, so
+ * Idempotent across repeated module loads via `window.__LITESHIP_SWAP_PIPELINE__`, so
  * HMR / a re-imported boot script never stacks duplicate listeners.
  */
 export function installSwapPipeline(enabled: readonly DirectiveName[]): void {
-  if (typeof window === 'undefined' || readRuntimeGlobal('__CZAP_SWAP_PIPELINE__', isBoolean)) {
+  if (typeof window === 'undefined' || readRuntimeGlobal('__LITESHIP_SWAP_PIPELINE__', isBoolean)) {
     return;
   }
 
-  writeRuntimeGlobal('__CZAP_SWAP_PIPELINE__', true);
+  writeRuntimeGlobal('__LITESHIP_SWAP_PIPELINE__', true);
   document.addEventListener('astro:after-swap', () => {
     runSwapPipeline(enabled);
   });

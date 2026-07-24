@@ -6,7 +6,7 @@
 
 # Interface: DualExportResult
 
-Defined in: [stage/src/dual-export.ts:467](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L467)
+Defined in: [stage/src/dual-export.ts:468](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L468)
 
 The provable result of casting one graph to two carriers from one source.
 
@@ -18,9 +18,9 @@ The provable result of casting one graph to two carriers from one source.
 
 ### astro
 
-> `readonly` **astro**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **astro**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:471](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L471)
+Defined in: [stage/src/dual-export.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L472)
 
 The static-page carrier (`carrier: 'astro-page'`).
 
@@ -30,7 +30,7 @@ The static-page carrier (`carrier: 'astro-page'`).
 
 > `readonly` **astroReceipt**: `ReceiptEnvelope`
 
-Defined in: [stage/src/dual-export.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L475)
+Defined in: [stage/src/dual-export.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L476)
 
 Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
@@ -40,7 +40,7 @@ Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
 > `readonly` **receipt**: `ReceiptEnvelope`
 
-Defined in: [stage/src/dual-export.ts:482](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L482)
+Defined in: [stage/src/dual-export.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L483)
 
 The single assertable head: a parent MERGE envelope whose
 `previous = [astroReceipt.hash, videoReceipt.hash]` and whose payload pins
@@ -52,7 +52,7 @@ The single assertable head: a parent MERGE envelope whose
 
 > `readonly` **sharedSourceDigest**: `AddressedDigest`
 
-Defined in: [stage/src/dual-export.ts:469](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L469)
+Defined in: [stage/src/dual-export.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L470)
 
 The ONE source digest both casts derive from — `=== graph.digest`.
 
@@ -60,9 +60,9 @@ The ONE source digest both casts derive from — `=== graph.digest`.
 
 ### video
 
-> `readonly` **video**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **video**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L473)
+Defined in: [stage/src/dual-export.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L474)
 
 The video carrier (`carrier: 'video'`).
 
@@ -72,4 +72,4 @@ The video carrier (`carrier: 'video'`).
 
 > `readonly` **videoReceipt**: `ReceiptEnvelope`
 
-Defined in: [stage/src/dual-export.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L476)
+Defined in: [stage/src/dual-export.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L477)

@@ -8,7 +8,7 @@
 
 > `const` **Diagnostics**: `object`
 
-Defined in: [core/src/diagnostics.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L182)
+Defined in: [core/src/evidence/diagnostics.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L201)
 
 Diagnostics facade — runtime boundaries call [Diagnostics.warn](#warn) / [Diagnostics.error](#error)
 instead of `console.*` so hosts can redirect or capture every diagnostic via [Diagnostics.setSink](#setsink).
@@ -54,6 +54,22 @@ Emit an `error`-level [DiagnosticEvent](../interfaces/DiagnosticEvent.md) to the
 ##### payload
 
 [`DiagnosticPayload`](../interfaces/DiagnosticPayload.md)
+
+#### Returns
+
+[`DiagnosticEvent`](../interfaces/DiagnosticEvent.md)
+
+### errorRegistered
+
+> **errorRegistered**: (`payload`) => [`DiagnosticEvent`](../interfaces/DiagnosticEvent.md)
+
+Emit an error whose stable code must be enrolled in DIAGNOSTIC_REGISTRY.
+
+#### Parameters
+
+##### payload
+
+`RegisteredDiagnosticPayload`
 
 #### Returns
 
@@ -154,3 +170,35 @@ Emit a `warn`-level [DiagnosticEvent](../interfaces/DiagnosticEvent.md) to the c
 #### Returns
 
 [`DiagnosticEvent`](../interfaces/DiagnosticEvent.md) \| `null`
+
+### warnOnceRegistered
+
+> **warnOnceRegistered**: (`payload`) => [`DiagnosticEvent`](../interfaces/DiagnosticEvent.md) \| `null`
+
+Deduplicated registered warning.
+
+#### Parameters
+
+##### payload
+
+`RegisteredDiagnosticPayload`
+
+#### Returns
+
+[`DiagnosticEvent`](../interfaces/DiagnosticEvent.md) \| `null`
+
+### warnRegistered
+
+> **warnRegistered**: (`payload`) => [`DiagnosticEvent`](../interfaces/DiagnosticEvent.md)
+
+Emit a warning whose stable code must be enrolled in DIAGNOSTIC_REGISTRY.
+
+#### Parameters
+
+##### payload
+
+`RegisteredDiagnosticPayload`
+
+#### Returns
+
+[`DiagnosticEvent`](../interfaces/DiagnosticEvent.md)

@@ -3,7 +3,7 @@
  * `@starting-style`.
  *
  * Emits component-scoped CSS using modern CSS features:
- * - `@layer czap.components` for cascade ordering
+ * - `@layer liteship.components` for cascade ordering
  * - `@scope` for DOM subtree containment
  * - `@starting-style` for entry animations
  * - `@container` queries via {@link CSSCompiler} delegation for boundary states
@@ -11,8 +11,9 @@
  * @module
  */
 
-import type { Style, StyleLayer, ShadowLayer } from '@czap/core';
+import type { Style, StyleLayer, ShadowLayer } from '@liteship/core';
 import { CSSCompiler } from './css.js';
+import { escapeCssString } from './css-string.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,14 +24,14 @@ import { CSSCompiler } from './css.js';
  *
  * Three complementary serializations: `scoped` is the raw `@scope`-wrapped
  * rule block, `layers` is the same content re-wrapped in
- * `@layer czap.components { … }` with any boundary `@container` rules
+ * `@layer liteship.components { … }` with any boundary `@container` rules
  * appended, and `startingStyle` is an `@starting-style` block derived from
  * the base layer for entry animations.
  */
 export interface StyleCSSResult {
   /** `@scope`-wrapped rule block (or plain rules when no component name). */
   readonly scoped: string;
-  /** `@layer czap.components { … }` block including container queries. */
+  /** `@layer liteship.components { … }` block including container queries. */
   readonly layers: string;
   /** `@starting-style { … }` block for entry animations (may be empty). */
   readonly startingStyle: string;
@@ -89,9 +90,9 @@ function emitStyleLayerBlock(layer: StyleLayer, selector: string, indent: string
 }
 
 /**
- * Build the transition shorthand from Style.Shape.transition config.
+ * Build the transition shorthand from Style.transition config.
  */
-function buildTransition(style: Style.Shape): Record<string, string> {
+function buildTransition(style: Style): Record<string, string> {
   if (!style.transition) return {};
   const { duration, easing = 'ease', properties } = style.transition;
   const propList = properties && properties.length > 0 ? properties.join(', ') : 'all';
@@ -116,7 +117,7 @@ function emitStartingStyle(layer: StyleLayer, selector: string): string {
 /**
  * Emit `@container` rules for boundary states by delegating to {@link CSSCompiler}.
  */
-function emitBoundaryStates(style: Style.Shape, selector: string): string {
+function emitBoundaryStates(style: Style, selector: string): string {
   if (!style.boundary || !style.states) return '';
 
   const stateMap: Record<string, Record<string, string>> = {};
@@ -141,16 +142,16 @@ function emitBoundaryStates(style: Style.Shape, selector: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a {@link Style.Shape} into layered, scoped CSS.
+ * Compile a {@link Style} into layered, scoped CSS.
  *
  * When `componentName` is supplied the output is wrapped in an `@scope`
- * block targeting `.czap-<name>` and bounded at `[data-czap-slot]`
+ * block targeting `.liteship-<name>` and bounded at `[data-liteship-slot]`
  * children. Boundary states are compiled into nested `@container` rules
  * via the core {@link CSSCompiler}.
  */
-function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
-  const selector = componentName ? `.czap-${componentName}` : ':where(.czap-styled)';
-  const scopeEnd = componentName ? ' to ([data-czap-slot])' : '';
+function compile(style: Style, componentName?: string): StyleCSSResult {
+  const selector = componentName ? `.liteship-${componentName}` : ':where(.liteship-styled)';
+  const scopeEnd = componentName ? ' to ([data-liteship-slot])' : '';
 
   // Scoped rules (base layer + pseudo-selectors)
   const scopedLines: string[] = [];
@@ -182,7 +183,9 @@ function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
     layerContent.push(containerRules);
   }
 
-  const layers = [`@layer czap.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join('\n');
+  const layers = [`@layer liteship.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join(
+    '\n',
+  );
 
   // @starting-style
   const startingStyle = emitStartingStyle(style.base, selector);
@@ -191,14 +194,63 @@ function compile(style: Style.Shape, componentName?: string): StyleCSSResult {
 }
 
 /**
+ * Compile a {@link Style} for the high-level Adaptive runtime contract.
+ *
+ * Unlike {@link compile}, which intentionally projects boundary states to
+ * native `@container` rules for low-level compiler consumers, this projection
+ * follows the `data-liteship-state` attribute written by the Adaptive runtime.
+ * The style content address scopes every selector, so independently authored
+ * Adaptives with the same state names cannot style each other.
+ *
+ * The returned string is self-contained: it includes the component layer and
+ * the matching entry `@starting-style` block when one is authored.
+ */
+function compileAdaptive(style: Style): string {
+  const selector = `:where(.liteship-styled)[data-liteship-style="${escapeCssString(style.id)}"]`;
+  const layerContent: string[] = [];
+  const transitionProps = buildTransition(style);
+  const baseWithTransition: StyleLayer = {
+    ...style.base,
+    properties: { ...style.base.properties, ...transitionProps },
+  };
+
+  layerContent.push(...emitStyleLayerBlock(baseWithTransition, selector, ''));
+
+  for (const [state, stateLayer] of Object.entries(style.states ?? {})) {
+    if (stateLayer === undefined) continue;
+    const stateSelector = `${selector}[data-liteship-state="${escapeCssString(state)}"]`;
+    // Style.tap/Style.mergeLayers define box-shadow as an atomic, ordered list:
+    // base layers first, then state layers. Normal properties and pseudos can
+    // inherit through the cascade, but a state `box-shadow` declaration replaces
+    // the whole CSS property, so materialize the merged list here.
+    const effectiveStateLayer: StyleLayer =
+      stateLayer.boxShadow && stateLayer.boxShadow.length > 0
+        ? {
+            ...stateLayer,
+            boxShadow: [...(style.base.boxShadow ?? []), ...stateLayer.boxShadow],
+          }
+        : stateLayer;
+    layerContent.push(...emitStyleLayerBlock(effectiveStateLayer, stateSelector, ''));
+  }
+
+  const layers = [`@layer liteship.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join(
+    '\n',
+  );
+  const startingStyle = emitStartingStyle(style.base, selector);
+  return [layers, startingStyle].filter((part) => part.length > 0).join('\n\n');
+}
+
+/**
  * Style CSS compiler namespace.
  *
- * Compiles a {@link Style.Shape} into cascade-layered, scoped CSS using
+ * Compiles a {@link Style} into cascade-layered, scoped CSS using
  * `@layer`, `@scope`, `@starting-style`, and `@container` — the modern CSS
- * features that let czap deliver component isolation and state-driven
+ * features that let liteship deliver component isolation and state-driven
  * restyling without runtime class toggling.
  */
 export const StyleCSSCompiler = {
   /** Compile a style definition into scoped, layered CSS. */
   compile,
+  /** Compile a self-contained Adaptive projection driven by `data-liteship-state`. */
+  compileAdaptive,
 } as const;

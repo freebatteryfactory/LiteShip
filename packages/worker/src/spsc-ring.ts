@@ -43,7 +43,7 @@
  * @module
  */
 
-import { HostCapabilityError, InvariantViolationError, ValidationError } from '@czap/error';
+import { HostCapabilityError, InvariantViolationError, ValidationError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -271,7 +271,7 @@ function _makeRing(
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * const { buffer, producer, consumer } = SPSCRing.createPair(64, 4);
  * // producer.push(new Float64Array([1, 2, 3, 4])); // true
@@ -305,7 +305,7 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
   ) {
     throw HostCapabilityError(
       'SharedArrayBuffer',
-      'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
+      'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @liteship/astro sets these headers for you.',
     );
   }
   const buffer = _createBuffer(slotCount, slotSize);
@@ -322,7 +322,7 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * // Inside a Worker's message handler:
  * self.onmessage = (e) => {
@@ -348,7 +348,7 @@ function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: 
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * // On the main thread after receiving buffer from Worker:
  * const consumer = SPSCRing.attachConsumer(sharedBuffer);
@@ -383,7 +383,7 @@ function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: 
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * // Main thread: create pair and send buffer to Worker
  * const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);
@@ -407,7 +407,5 @@ export const SPSCRing = {
   attachConsumer: _attachConsumer,
 } as const;
 
-export declare namespace SPSCRing {
-  /** Producer- or consumer-facing view of a SPSC ring buffer. */
-  export type Shape = SPSCRingBufferShape;
-}
+/** Public structural type for `SPSCRing`. */
+export type SPSCRing = SPSCRingBufferShape;

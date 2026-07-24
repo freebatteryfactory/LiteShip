@@ -21,13 +21,13 @@ files matched by `globs`.
 - `repoRoot` is returned verbatim.
 
 The optional `ir` is the INJECTED repo-IR capability (Slice B): a host (the
-CLI, via `@czap/audit`'s `ts.Program`) builds it and threads it through so an
+CLI, via `@liteship/audit`'s `ts.Program`) builds it and threads it through so an
 IR-fold gate can read `context.ir`. The gauntlet stays lean — it RECEIVES the
 IR, never builds one. When omitted, `ir` is absent and regex gates run
 unchanged (back-compat).
 
 The optional `supplyChain` is the INJECTED supply-chain facts capability
-(Slice C, the avionics tier): a host (the CLI's `@czap/cli` analyzer) parses
+(Slice C, the avionics tier): a host (the CLI's `@liteship/cli` analyzer) parses
 the lockfile, builds the SBOM, decodes the ShipCapsule, and scans the
 workflows, then threads the decided [SupplyChainFacts](../interfaces/SupplyChainFacts.md) through so the
 `supplyChainGate` can fold them. Same lean-engine pattern as `ir` — the
@@ -47,7 +47,7 @@ readonly `string`[]
 
 Repo-relative glob patterns selecting the gate's file scope.
 The optional `mutation` is the INJECTED mutation-facts capability (Slice C, the
-avionics tier — mutation-as-divergence): a host (`@czap/audit`'s mutation engine +
+avionics tier — mutation-as-divergence): a host (`@liteship/audit`'s mutation engine +
 the CLI's per-mutant vitest runner) generates the mutants, evaluates each, and
 folds the verdicts into [MutationFacts](../interfaces/MutationFacts.md), then threads them through so the
 `mutationDivergenceGate` can fold them. Same lean-engine pattern as `ir` /
@@ -56,8 +56,8 @@ absent (the default `--ir` run, where mutation is opt-in via `--mutate`).
 
 The optional `simulation` is the INJECTED DST (deterministic-simulation) facts
 capability (the avionics tier — the determinism spine): a host (the CLI's
-`czap check --ir --simulate` path) drives the scenario corpus through the
-`@czap/core/simulation` harness (replaying each seed twice, content-addressing the
+`liteship check gates --ir --simulate` path) drives the scenario corpus through the
+`@liteship/core/simulation` harness (replaying each seed twice, content-addressing the
 two byte-exact traces) and folds the verdicts into [SimulationFacts](../interfaces/SimulationFacts.md), then
 threads them through so the `simulationDeterminismGate` can fold them. Same
 lean-engine pattern as `ir` / `supplyChain` / `mutation` — the gauntlet RECEIVES

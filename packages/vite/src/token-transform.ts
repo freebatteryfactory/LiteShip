@@ -8,10 +8,14 @@
  * @module
  */
 
-import type { Token } from '@czap/core';
-import { TokenCSSCompiler } from '@czap/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
-import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
+import type { Token } from '@liteship/core';
+import { TokenCSSCompiler } from '@liteship/compiler';
+import {
+  normalizeCssLineEndings,
+  blankCssCommentsAndStrings,
+  lineOfOffset,
+  parseFlatDeclarations,
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,7 +79,7 @@ export function parseTokenBlocks(css: string, sourceFile: string): readonly Toke
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler TokenCSSCompiler)
+// Compiler (delegates to @liteship/compiler TokenCSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**
@@ -83,7 +87,7 @@ export function parseTokenBlocks(css: string, sourceFile: string): readonly Toke
  * CSS custom property declarations. Delegates to the canonical
  * `TokenCSSCompiler` to avoid duplicating token-to-CSS logic.
  */
-export function compileTokenBlock(block: TokenBlock, token: Token.Shape): string {
+export function compileTokenBlock(block: TokenBlock, token: Token): string {
   const result = TokenCSSCompiler.compile(token);
   const parts: string[] = [];
 

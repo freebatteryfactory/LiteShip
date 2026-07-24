@@ -8,7 +8,7 @@
 
 > **ThresholdValue**: (`value`) => `ThresholdValue`
 
-Defined in: [core/src/brands.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L33)
+Defined in: [core/src/schema/brands.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L33)
 
 Wrap a plain number as a ThresholdValue.
 

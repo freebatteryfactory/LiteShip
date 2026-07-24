@@ -12,8 +12,8 @@
  * automatic. A drift-guard test (tests/unit/meta/spawn-coverage-inheritance.test.ts)
  * fails CI if any future commit adds an env override.
  *
- * Lives in `@czap/command/host` (CUT A1 capstone-1) — the canonical home for
- * Node host execution shared by the CLI and MCP adapters. `@czap/cli`'s
+ * Lives in `@liteship/command/host` (CUT A1 capstone-1) — the canonical home for
+ * Node host execution shared by the CLI and MCP adapters. `@liteship/cli`'s
  * `lib/spawn.ts` / `spawn-helpers.ts` and `scripts/lib/spawn.ts` are thin
  * re-exports so existing import paths keep working; this is the one impl the
  * spawn drift-guard tests pin.
@@ -22,7 +22,7 @@
  */
 
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 
 /**
  * Discriminate a "the process is already gone" kill failure (the designed
@@ -88,7 +88,7 @@ export interface SpawnCaptureOpts {
   readonly captureBytes?: number;
   /**
    * If set, kill the child after this many ms and resolve with `timedOut: true`
-   * (never rejects on timeout). For bounding short external probes (e.g. `czap
+   * (never rejects on timeout). For bounding short external probes (e.g. `liteship
    * doctor`'s `pnpm --version`) so a slow/wedged tool can't hang the caller.
    * Omitted → existing behavior (resolve only on the child's `close`).
    */
@@ -151,12 +151,25 @@ export function quoteWindowsArg(arg: string): string {
  * enable shell interpretation but still finds .cmd / .bat shims on Windows.
  * On POSIX this is identity.
  */
-function resolveLauncher(command: string, args: readonly string[]): { command: string; args: readonly string[] } {
+interface Launcher {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly windowsVerbatimArguments: boolean;
+}
+
+function resolveLauncher(command: string, args: readonly string[]): Launcher {
   if (process.platform !== 'win32') {
-    return { command, args };
+    return { command, args, windowsVerbatimArguments: false };
+  }
+  // Native executables do not need cmd.exe for resolution. Launching them
+  // directly also preserves absolute paths containing spaces (for example
+  // `C:\Program Files\nodejs\node.exe`), which cmd's `/s /c` quote stripping
+  // otherwise truncates to `C:\Program`.
+  if (/\.(?:exe|com)$/i.test(command)) {
+    return { command, args, windowsVerbatimArguments: false };
   }
   const commandLine = [command, ...args].map(quoteWindowsArg).join(' ');
-  return { command: 'cmd.exe', args: ['/d', '/s', '/c', commandLine] };
+  return { command: 'cmd.exe', args: ['/d', '/s', '/c', commandLine], windowsVerbatimArguments: true };
 }
 
 /**
@@ -176,7 +189,7 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
       cwd: opts.cwd,
       // On Windows the cmd.exe launcher needs verbatim args so Node doesn't
       // re-escape the command tail and break exit-code propagation.
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       // CRITICAL: do not set `env` — children must inherit NODE_V8_COVERAGE.
     });
     const stderrChunks: Buffer[] = [];
@@ -199,7 +212,7 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
  * stdout must NOT pollute our own stdout. Child stdout is piped to our
  * stderr; child stderr inherits to our stderr; child stdin is closed.
  *
- * Use this for commands like `czap doctor --fix` whose stdout contract is
+ * Use this for commands like `liteship doctor --fix` whose stdout contract is
  * JSON-only (the doctor receipt is written to stdout AFTER the fixes run,
  * and would otherwise be preceded by the build's tsc output line by line).
  *
@@ -217,7 +230,7 @@ export function spawnArgvVisible(
       stdio: ['ignore', 'pipe', 'inherit'],
       shell: false,
       cwd: opts.cwd,
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
     });
     proc.stdout?.pipe(process.stderr, { end: false });
     proc.on('error', rejectPromise);
@@ -246,7 +259,7 @@ export function spawnArgvCapture(
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       cwd: opts.cwd,
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       // CRITICAL: do not set `env` — children must inherit NODE_V8_COVERAGE.
     });
     const stdoutChunks: Buffer[] = [];
@@ -358,7 +371,7 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
     shell: false,
     detached: process.platform !== 'win32',
     // On Windows the cmd.exe launcher needs verbatim args; see spawnArgv.
-    windowsVerbatimArguments: process.platform === 'win32',
+    windowsVerbatimArguments: launcher.windowsVerbatimArguments,
     // CRITICAL: do not set `env` — see comment in spawnArgv.
   });
   const stderrChunks: Buffer[] = [];

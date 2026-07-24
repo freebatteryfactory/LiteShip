@@ -8,7 +8,7 @@
 
 > **MutantVerdictTag** = `"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"`
 
-Defined in: [gauntlet/src/mutation-facts.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L66)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L66)
 
 The verdict an evaluated mutant earned — a `_tag` discriminant (composition).
  - `killed` — a covering test failed on the mutation (adequate coverage).

@@ -12,10 +12,10 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as fc from 'fast-check';
-import { CanonicalCbor } from '@czap/core';
-import { decode } from '@czap/canonical';
-import { classifyBenchSource, schemaToArbitrary } from '@czap/core/harness';
-import { getCapsuleManifestPath } from '@czap/command/host';
+import { CanonicalCbor } from '@liteship/core';
+import { decode } from '@liteship/canonical';
+import { classifyBenchSource, schemaToArbitrary } from '@liteship/core/harness';
+import { getCapsuleManifestPath } from '@liteship/command/host';
 import { repoRoot, scaledTimeout } from '../../../vitest.shared.ts';
 import { capsuleManifestAbsent } from '../../helpers/capabilities.js';
 

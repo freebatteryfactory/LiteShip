@@ -1,5 +1,5 @@
 /**
- * Re-anchor spine genui types for `@czap/genui` runtime.
+ * Re-anchor spine genui types for `@liteship/genui` runtime.
  *
  * @module
  */
@@ -10,7 +10,7 @@ import type {
   ComponentPropDef as _ComponentPropDef,
   GeneratedUINode as _GeneratedUINode,
   GeneratedUIValidationError as _GeneratedUIValidationError,
-} from '@czap/_spine';
+} from '@liteship/_spine';
 
 export type GeneratedUINode = _GeneratedUINode;
 export type ComponentPropDef = _ComponentPropDef;

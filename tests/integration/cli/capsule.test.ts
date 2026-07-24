@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 import { captureCli } from './capture.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
 
-describe('czap capsule *', () => {
+describe('liteship capsule *', () => {
   // capsule:compile spins up a ts.Program for type-directed detection.
   // 90s tolerates cold tsx startup + program creation under shared CI load
   // AND v8-coverage instrumentation overhead during coverage:node:tracked
@@ -14,7 +14,7 @@ describe('czap capsule *', () => {
   // generated tests but this never rewrites the shared tests/generated/ dir.
   let iso: IsolatedCapsules;
   beforeAll(async () => {
-    iso = await compileManifestOnly('czap-capsule');
+    iso = await compileManifestOnly('liteship-capsule');
   }, scaledTimeout(90_000));
   afterAll(() => iso?.restore());
 

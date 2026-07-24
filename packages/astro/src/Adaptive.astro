@@ -1,0 +1,100 @@
+---
+/**
+ * Adaptive -- the canonical adaptive shell for an Astro page.
+ *
+ * Wraps a `<div>` with `data-liteship-*` attributes derived from a Boundary
+ * (and optionally a Component or initial state). The integration's
+ * injected directive boot scanner reads `data-liteship-directive` and
+ * activates the boundary evaluator on the client — no `client:*`
+ * attribute needed (Astro never fires those on `.astro` components).
+ * CSS transitions handle visual changes; the directive's only runtime
+ * job is to evaluate live signals and update `data-liteship-state`.
+ *
+ * @example
+ * ```astro
+ * ---
+ * import Adaptive from '@liteship/astro/Adaptive';
+ * import { heroLayout } from '../boundaries.js';
+ * ---
+ *
+ * <Adaptive boundary={heroLayout}>
+ *   <section class="hero">...</section>
+ * </Adaptive>
+ * ```
+ *
+ * Composition note: this component is a thin shell over `adaptiveAttrs()`
+ * (`packages/astro/src/Adaptive.ts`). When you need to attach adaptive
+ * attributes to an element other than a `<div>` (e.g. a `<section>` or
+ * `<main>`), import `adaptiveAttrs` directly and spread it onto your
+ * element of choice.
+ */
+
+import { adaptiveAttrs, type AdaptiveProps } from './Adaptive.js';
+import type { WgslUniformValue } from './runtime/boundary.js';
+
+export interface Props extends AdaptiveProps {}
+
+// Have-cake join: authored `@aria` lives in CSS and is compiled into the build
+// manifest keyed by the boundary's content address. The adaptive shares that
+// address, so we resolve the boundary's authored ARIA here — zero extra
+// authoring. Guarded: outside the integration (no virtual module), or when the
+// caller already passed `aria`, this is a no-op and `adaptiveAttrs` still works.
+let resolvedAria = Astro.props.aria;
+// Authored `@glsl`/`@wgsl` per-state values ride the same content-addressed join
+// as `@aria` — the manifest's `outputs[].glsl.stateUniforms` /
+// `outputs[].wgsl.stateBindings` keyed by boundary id.
+let resolvedGlsl = Astro.props.glsl;
+let resolvedWgsl = Astro.props.wgsl;
+// The compiler's emitted shader preamble (`outputs[].glsl.declarations` /
+// `outputs[].wgsl.declarations`) rides the SAME content-addressed join, so the
+// GPU runtime prepends the compiler's own uniform vocabulary — never a
+// hand-typed mirror beside it.
+let resolvedGlslDeclarations = Astro.props.glslDeclarations;
+let resolvedWgslDeclarations = Astro.props.wgslDeclarations;
+if (
+  (!resolvedAria ||
+    !resolvedGlsl ||
+    !resolvedWgsl ||
+    !resolvedGlslDeclarations ||
+    !resolvedWgslDeclarations) &&
+  Astro.props.boundary
+) {
+  try {
+    const { boundaries } = (await import('virtual:liteship/boundaries')) as {
+      boundaries: Record<
+        string,
+        {
+          id: string;
+          outputs: ReadonlyArray<{
+            aria?: Record<string, Record<string, string>>;
+            glsl?: { stateUniforms?: Record<string, Record<string, number>>; declarations?: string };
+            wgsl?: { stateBindings?: Record<string, Record<string, WgslUniformValue>>; declarations?: string };
+          }>;
+        }
+      >;
+    };
+    const entry = Object.values(boundaries).find((e) => e.id === Astro.props.boundary!.id);
+    resolvedAria ??= entry?.outputs.find((o) => o.aria)?.aria;
+    resolvedGlsl ??= entry?.outputs.find((o) => o.glsl?.stateUniforms)?.glsl?.stateUniforms;
+    resolvedWgsl ??= entry?.outputs.find((o) => o.wgsl?.stateBindings)?.wgsl?.stateBindings;
+    resolvedGlslDeclarations ??= entry?.outputs.find((o) => o.glsl?.declarations)?.glsl?.declarations;
+    resolvedWgslDeclarations ??= entry?.outputs.find((o) => o.wgsl?.declarations)?.wgsl?.declarations;
+  } catch {
+    // virtual:liteship/boundaries unavailable (e.g. rendered outside the liteship
+    // integration) — authored ARIA/GLSL can still be supplied via the props.
+  }
+}
+
+const attrs = adaptiveAttrs({
+  ...Astro.props,
+  ...(resolvedAria ? { aria: resolvedAria } : {}),
+  ...(resolvedGlsl ? { glsl: resolvedGlsl } : {}),
+  ...(resolvedWgsl ? { wgsl: resolvedWgsl } : {}),
+  ...(resolvedGlslDeclarations ? { glslDeclarations: resolvedGlslDeclarations } : {}),
+  ...(resolvedWgslDeclarations ? { wgslDeclarations: resolvedWgslDeclarations } : {}),
+});
+---
+
+<div {...attrs}>
+  <slot />
+</div>

@@ -11,7 +11,7 @@ import { repoRoot } from '../../../vitest.shared.ts';
  * Drift guard for the corrected directive-overhead hot-path pairs.
  *
  * The bench's DIRECTIVE closure must measure the SAME call production runs.
- * Production `client:satellite` (satellite.ts:39) and the worker steady-state
+ * Production `client:adaptive` (adaptive.ts:39) and the worker steady-state
  * update (worker.ts:253) both evaluate WITH `previousState`, taking the
  * hysteresis branch. A prior framing measured `evaluateBoundary(boundary,
  * value)` with NO previousState — the lightest path production never takes —
@@ -33,7 +33,7 @@ describe('directive bench production-pin drift guard', () => {
       expect(pair.runtimeClass).toBe('hot-path');
     }
     // The two pairs the prior investigation proved were phantoms.
-    expect(DIRECTIVE_PRODUCTION_PINS.map((pin) => pin.label)).toEqual(['satellite', 'worker']);
+    expect(DIRECTIVE_PRODUCTION_PINS.map((pin) => pin.label)).toEqual(['adaptive', 'worker']);
   });
 
   for (const pin of DIRECTIVE_PRODUCTION_PINS) {

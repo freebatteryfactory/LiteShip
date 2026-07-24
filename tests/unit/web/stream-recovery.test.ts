@@ -4,15 +4,15 @@
  * #133 — graph-native recovery wiring: request-snapshot listener + replay supplement.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import * as core from '@czap/core';
+import * as core from '@liteship/core';
 import {
   applyDiscreteSnapshotSignals,
   adoptRefreshedGraphBase,
   bindRequestSnapshotRecovery,
   runGraphNativeRecovery,
   supplementReplayIfSignalsDropped,
-} from '@czap/web';
-import { Resumption } from '@czap/web';
+} from '@liteship/web';
+import { Resumption } from '@liteship/web';
 import { graph, node } from '../../helpers/graph-fixtures.js';
 
 describe('web stream recovery (#133)', () => {
@@ -63,7 +63,7 @@ describe('web stream recovery (#133)', () => {
     expect(adopt).toHaveBeenCalledWith(fresh);
   });
 
-  test('bindRequestSnapshotRecovery wires a real listener for czap:request-snapshot', async () => {
+  test('bindRequestSnapshotRecovery wires a real listener for liteship:request-snapshot', async () => {
     const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockResolvedValue({
       type: 'snapshot',
       html: '<main>fresh</main>',
@@ -86,7 +86,7 @@ describe('web stream recovery (#133)', () => {
     });
 
     host.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'preserve-missing' },
         bubbles: true,
       }),
@@ -125,13 +125,13 @@ describe('web stream recovery (#133)', () => {
     });
 
     host.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'preserve-missing' },
         bubbles: true,
       }),
     );
     host.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'preserve-missing' },
         bubbles: true,
       }),
@@ -150,12 +150,12 @@ describe('web stream recovery (#133)', () => {
     dispose();
   });
 
-  test('bindRequestSnapshotRecovery dispatches czap:stream-error when recovery fails', async () => {
+  test('bindRequestSnapshotRecovery dispatches liteship:stream-error when recovery fails', async () => {
     vi.spyOn(Resumption, 'fetchSnapshot').mockRejectedValue({ _tag: 'NetworkError', message: 'offline' });
 
     const host = document.createElement('div');
     const errors: Array<{ reason: string; message?: string }> = [];
-    host.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     const dispose = bindRequestSnapshotRecovery(host, {
       artifactId: 'doc-1',
@@ -166,7 +166,7 @@ describe('web stream recovery (#133)', () => {
     });
 
     host.dispatchEvent(
-      new CustomEvent('czap:request-snapshot', {
+      new CustomEvent('liteship:request-snapshot', {
         detail: { reason: 'preserve-missing' },
         bubbles: true,
       }),

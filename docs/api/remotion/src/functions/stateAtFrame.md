@@ -6,7 +6,7 @@
 
 # Function: stateAtFrame()
 
-> **stateAtFrame**(`frames`, `frameIndex`): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+> **stateAtFrame**(`frames`, `frameIndex`): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 Defined in: [remotion/src/hooks.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/hooks.ts#L63)
 
@@ -36,7 +36,7 @@ Zero-based frame index (typically from Remotion's
 
 ## Returns
 
-[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
 
 The state at the clamped frame.
 

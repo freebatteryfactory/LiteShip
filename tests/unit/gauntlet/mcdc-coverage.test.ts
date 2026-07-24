@@ -31,26 +31,38 @@ import {
   type RepoIR,
   type McdcFacts,
   type McdcConditionOutcome,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
-const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
+const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
 const HELPER = 'packages/x/src/helper.ts'; // a helper imported by the L4 file
 
-function condition(over: Partial<McdcConditionOutcome> & Pick<McdcConditionOutcome, 'file' | 'forceTrueVerdict' | 'forceFalseVerdict'>): McdcConditionOutcome {
+function condition(
+  over: Partial<McdcConditionOutcome> & Pick<McdcConditionOutcome, 'file' | 'forceTrueVerdict' | 'forceFalseVerdict'>,
+): McdcConditionOutcome {
   return {
     conditionId: 'blake3:test',
     line: 10,
     column: 7,
     decision: 'a && b',
     condition: 'a',
+    coveringTests: ['tests/fixture.test.ts'],
     ...over,
   };
 }
 
-function ctx(ir: RepoIR, mcdc: McdcFacts): GateContext {
-  return { ...memoryContext({}), ir, mcdc };
+type TestMcdcFacts = Omit<McdcFacts, 'targetCensus'> & Partial<Pick<McdcFacts, 'targetCensus'>>;
+
+function ctx(ir: RepoIR, mcdc: TestMcdcFacts): GateContext {
+  return {
+    ...memoryContext({}),
+    ir,
+    mcdc: {
+      ...mcdc,
+      targetCensus: mcdc.targetCensus ?? mcdc.conditions.map((item) => ({ file: item.file, applicableConditions: 1 })),
+    },
+  };
 }
 
 function simpleIR(files: readonly string[]): RepoIR {
@@ -71,17 +83,27 @@ describe('mcdcCoverageGate — self-proof (the authority ratchet)', () => {
 
 describe('isMcdcCovered — the ONE coverage rule (both pins killed)', () => {
   it('covered iff BOTH pins killed; any survived/no-coverage pin is a gap', () => {
-    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'killed' }))).toBe(true);
-    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'survived' }))).toBe(false);
-    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'survived', forceFalseVerdict: 'killed' }))).toBe(false);
-    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'no-coverage', forceFalseVerdict: 'no-coverage' }))).toBe(false);
+    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'killed' }))).toBe(
+      true,
+    );
+    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'survived' }))).toBe(
+      false,
+    );
+    expect(isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'survived', forceFalseVerdict: 'killed' }))).toBe(
+      false,
+    );
+    expect(
+      isMcdcCovered(condition({ file: L4_FILE, forceTrueVerdict: 'no-coverage', forceFalseVerdict: 'no-coverage' })),
+    ).toBe(false);
   });
 });
 
 describe('mcdcCoverageGate — floor calibration by level', () => {
   it('an L4 uncovered condition is severity error (BLOCKS — DO-178B Level A full MC/DC)', () => {
     const findings = mcdcCoverageGate.run(
-      ctx(simpleIR([L4_FILE]), { conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'survived' })] }),
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'survived' })],
+      }),
     );
     expect(findings).toHaveLength(1);
     expect(findings[0]!.severity).toBe('error');
@@ -94,7 +116,9 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
 
   it('an L1 uncovered condition is advisory debt (calibrating, never blocks)', () => {
     const findings = mcdcCoverageGate.run(
-      ctx(simpleIR([L1_FILE]), { conditions: [condition({ file: L1_FILE, forceTrueVerdict: 'survived', forceFalseVerdict: 'killed' })] }),
+      ctx(simpleIR([L1_FILE]), {
+        conditions: [condition({ file: L1_FILE, forceTrueVerdict: 'survived', forceFalseVerdict: 'killed' })],
+      }),
     );
     expect(findings).toHaveLength(1);
     expect(findings[0]!.severity).toBe('advisory');
@@ -104,20 +128,26 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
   it('a fully-NO-COVERAGE condition is ONE step louder than a partial gap at the same level', () => {
     // L1 partial gap = advisory; L1 fully-no-coverage = warning (one step louder).
     const noCov = mcdcCoverageGate.run(
-      ctx(simpleIR([L1_FILE]), { conditions: [condition({ file: L1_FILE, forceTrueVerdict: 'no-coverage', forceFalseVerdict: 'no-coverage' })] }),
+      ctx(simpleIR([L1_FILE]), {
+        conditions: [condition({ file: L1_FILE, forceTrueVerdict: 'no-coverage', forceFalseVerdict: 'no-coverage' })],
+      }),
     );
     expect(noCov[0]!.severity).toBe('warning');
     expect(noCov[0]!.detail).toContain('NO covering test');
     // L4 fully-no-coverage = error (already at the ceiling; louder clamps at error).
     const l4NoCov = mcdcCoverageGate.run(
-      ctx(simpleIR([L4_FILE]), { conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'no-coverage', forceFalseVerdict: 'no-coverage' })] }),
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'no-coverage', forceFalseVerdict: 'no-coverage' })],
+      }),
     );
     expect(l4NoCov[0]!.severity).toBe('error');
   });
 
   it('a fully-COVERED condition (both pins killed) produces no finding', () => {
     const findings = mcdcCoverageGate.run(
-      ctx(simpleIR([L4_FILE]), { conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'killed' })] }),
+      ctx(simpleIR([L4_FILE]), {
+        conditions: [condition({ file: L4_FILE, forceTrueVerdict: 'killed', forceFalseVerdict: 'killed' })],
+      }),
     );
     expect(findings).toHaveLength(0);
   });
@@ -137,7 +167,7 @@ describe('mcdcCoverageGate — THE LAW: the level is PROPAGATED from the live IR
   it('a helper IMPORTED by an L4 file inherits L4 (not its L1 glob level)', () => {
     const ir = makeRepoIR({
       files: [
-        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+        { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
         { id: HELPER, contentDigest: PLACEHOLDER_DIGEST, packageName: null },
       ],
       imports: [{ fromFile: L4_FILE, specifier: './helper.js', kind: 'relative', targetFile: HELPER }],
@@ -165,7 +195,7 @@ describe('mcdcCoverageGate — the guards fail LOUD', () => {
   });
 
   it('requireIR throws a tagged error when no IR was injected', () => {
-    const noIR: GateContext = { ...memoryContext({}), mcdc: { conditions: [] } };
+    const noIR: GateContext = { ...memoryContext({}), mcdc: { conditions: [], targetCensus: [] } };
     expect.assertions(1);
     try {
       mcdcCoverageGate.run(noIR);

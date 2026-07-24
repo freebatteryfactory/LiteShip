@@ -3,12 +3,12 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Millis } from '@czap/core';
-import { evaluate, Transition } from '@czap/quantizer';
+import { Millis, defineBoundary } from '@liteship/core';
+import { evaluate, Transition } from '@liteship/quantizer';
 
 describe('quantizer smoke', () => {
   test('evaluate() returns result with state', () => {
-    const b = Boundary.make({
+    const b = defineBoundary({
       input: 'x',
       at: [
         [0, 'a'],
@@ -22,7 +22,7 @@ describe('quantizer smoke', () => {
   });
 
   test('Transition.for creates resolver', () => {
-    const b = Boundary.make({
+    const b = defineBoundary({
       input: 'x',
       at: [
         [0, 'a'],

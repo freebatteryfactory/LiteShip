@@ -6,20 +6,21 @@
 
 # Interface: QuantizerConfig\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L214)
+Defined in: [quantizer/src/quantizer.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L249)
 
-Immutable, content-addressed quantizer definition.
+Immutable, content-addressed quantizer definition (authored intent).
 
-The `id` is an FNV-1a hash over the boundary id and outputs, so two
-configs with identical definitions share the same address and are
-deduplicated by the internal memo cache. `create()` materializes a
-fresh [LiveQuantizer](LiveQuantizer.md) paired with its owning [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts).
+The `id` is an FNV-1a hash over the boundary id, outputs, tier, spring, and
+forced targets, so two configs with identical definitions share the same
+address and are deduplicated by the internal memo cache. This is a PURE data
+definition — pass it to [createQuantizer](../functions/createQuantizer.md) to materialize a fresh
+[LiveQuantizer](LiveQuantizer.md) that owns its own teardown via `dispose()`.
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 ### O
 
@@ -31,9 +32,19 @@ fresh [LiveQuantizer](LiveQuantizer.md) paired with its owning [Lifetime](https:
 
 > `readonly` **boundary**: `B`
 
-Defined in: [quantizer/src/quantizer.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L216)
+Defined in: [quantizer/src/quantizer.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L251)
 
 Boundary this config quantizes against.
+
+***
+
+### force?
+
+> `readonly` `optional` **force?**: readonly [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)[]
+
+Defined in: [quantizer/src/quantizer.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L261)
+
+Targets force-enabled past their tier gate; part of the content address.
 
 ***
 
@@ -41,17 +52,17 @@ Boundary this config quantizes against.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [quantizer/src/quantizer.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L220)
+Defined in: [quantizer/src/quantizer.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L255)
 
-Content-addressed identity (FNV-1a of boundary id + outputs).
+Content-addressed identity (FNV-1a of boundary id + outputs + tier + spring + force).
 
 ***
 
 ### outputs
 
-> `readonly` **outputs**: `O`
+> `readonly` **outputs**: `DeepReadonly`\<`O`\>
 
-Defined in: [quantizer/src/quantizer.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L218)
+Defined in: [quantizer/src/quantizer.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L253)
 
 Per-target output tables keyed by state.
 
@@ -59,11 +70,29 @@ Per-target output tables keyed by state.
 
 ### spring?
 
-> `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
+> `readonly` `optional` **spring?**: `object`
 
-Defined in: [quantizer/src/quantizer.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L224)
+Defined in: [quantizer/src/quantizer.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L259)
 
 Spring config driving CSS easing injection.
+
+#### damping
+
+> `readonly` **damping**: `number`
+
+Damping coefficient; higher = less oscillation.
+
+#### mass?
+
+> `readonly` `optional` **mass?**: `number`
+
+Mass of the animated body; defaults to `1`.
+
+#### stiffness
+
+> `readonly` **stiffness**: `number`
+
+Spring constant (force per unit displacement); higher = snappier.
 
 ***
 
@@ -71,33 +100,6 @@ Spring config driving CSS easing injection.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L222)
+Defined in: [quantizer/src/quantizer.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L257)
 
-Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFromOptions.md#tier) for the tier → targets table.
-
-## Methods
-
-### create()
-
-> **create**(`runtime?`): [`LiveQuantizerHandle`](LiveQuantizerHandle.md)\<`B`, `O`\>
-
-Defined in: [quantizer/src/quantizer.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L235)
-
-Instantiate a reactive [LiveQuantizer](LiveQuantizer.md), paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts)
-that owns its teardown — disposing it closes the state / outputs / crossings
-kernels (completing every subscriber and making publish inert).
-
-Pass a [QuantizerRuntime](QuantizerRuntime.md) to inject the wall-clock boundary that
-advances this instance's monotonic crossing HLC; omit it to default to
-`@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
-the cached config's identity.
-
-#### Parameters
-
-##### runtime?
-
-[`QuantizerRuntime`](QuantizerRuntime.md)
-
-#### Returns
-
-[`LiveQuantizerHandle`](LiveQuantizerHandle.md)\<`B`, `O`\>
+Motion tier gating active targets; see [DefineQuantizerOptions.tier](DefineQuantizerOptions.md#tier) for the tier → targets table.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { listTools, dispatchToolCall } from '@czap/mcp-server';
+import { listTools, dispatchToolCall } from '@liteship/mcp-server';
 
 describe('MCP stdio transport', () => {
   it('responds to tools/list with a non-empty tools array', () => {

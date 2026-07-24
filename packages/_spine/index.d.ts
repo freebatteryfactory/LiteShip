@@ -1,20 +1,20 @@
 /**
- * @czap type spine index -- re-exports all package spines.
+ * @liteship type spine index -- re-exports all package spines.
  */
 
-export * from './core.d.ts';
-export * from './design.d.ts';
-export * from './quantizer.d.ts';
-export * from './compiler.d.ts';
-export * from './web.d.ts';
-export * from './detect.d.ts';
-export * from './vite.d.ts';
-export * from './astro.d.ts';
-export * from './edge.d.ts';
-export * from './worker.d.ts';
-export * from './remotion.d.ts';
-export * from './config.d.ts';
-export * from './scene.d.ts';
-export * from './beats.d.ts';
-export * from './command.d.ts';
-export * from './genui.d.ts';
+export * from './core.js';
+export * from './design.js';
+export * from './quantizer.js';
+export * from './compiler.js';
+export * from './web.js';
+export * from './detect.js';
+export * from './vite.js';
+export * from './astro.js';
+export * from './edge.js';
+export * from './worker.js';
+export * from './remotion.js';
+export * from './config.js';
+export * from './scene.js';
+export * from './beats.js';
+export * from './command.js';
+export * from './genui.js';

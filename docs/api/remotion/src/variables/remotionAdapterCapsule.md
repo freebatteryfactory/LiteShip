@@ -10,5 +10,5 @@
 
 Defined in: [remotion/src/capsules/remotion-adapter.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/capsules/remotion-adapter.ts#L24)
 
-Declared capsule for `@czap/remotion`. Registered in the module-level
+Declared capsule for `@liteship/remotion`. Registered in the module-level
 catalog at import time; walked by the factory compiler.

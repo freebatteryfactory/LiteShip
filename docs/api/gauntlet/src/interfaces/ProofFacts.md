@@ -6,7 +6,7 @@
 
 # Interface: ProofFacts
 
-Defined in: [gauntlet/src/proof-facts.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/proof-facts.ts#L45)
+Defined in: [gauntlet/src/facts/proof-facts.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/proof-facts.ts#L45)
 
 The proof evidence the host supplies — one [ModuleProof](ModuleProof.md) per IR file the
 host could measure. The host blends the proof signals (mutation score, coverage,
@@ -24,6 +24,6 @@ under-coverage, never a silent green) — see [proofPropagationGate](../variable
 
 > `readonly` `optional` **modules?**: readonly [`ModuleProof`](ModuleProof.md)[]
 
-Defined in: [gauntlet/src/proof-facts.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/proof-facts.ts#L47)
+Defined in: [gauntlet/src/facts/proof-facts.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/proof-facts.ts#L47)
 
 Every module the host measured a local proof scalar for.

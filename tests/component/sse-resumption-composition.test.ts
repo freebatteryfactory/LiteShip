@@ -18,9 +18,9 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SSE, Resumption } from '@czap/web';
-import type { ResumptionState, SSEConfig } from '@czap/web';
-import { Millis } from '@czap/core';
+import { SSE, Resumption } from '@liteship/web';
+import type { ResumptionState, SSEConfig } from '@liteship/web';
+import { Millis } from '@liteship/core';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
 // ---------------------------------------------------------------------------
@@ -217,7 +217,7 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     // The replay request asked for exactly the persisted->current range, with
     // the artifactId appended as a path segment (see SSEConfig docs).
     const replayUrl = new URL(String(fetchMock.mock.calls[0]![0]));
-    expect(replayUrl.pathname).toBe(`/czap/replay/${ARTIFACT_ID}`);
+    expect(replayUrl.pathname).toBe(`/liteship/replay/${ARTIFACT_ID}`);
     expect(replayUrl.searchParams.get('from')).toBe('evt-42');
     expect(replayUrl.searchParams.get('to')).toBe('evt-45');
     client.close();
@@ -240,6 +240,6 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     }
 
     const snapshotUrl = new URL(String(fetchMock.mock.calls[0]![0]));
-    expect(snapshotUrl.pathname).toBe(`/czap/snapshot/${ARTIFACT_ID}`);
+    expect(snapshotUrl.pathname).toBe(`/liteship/snapshot/${ARTIFACT_ID}`);
   });
 });

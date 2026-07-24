@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 3,
+  "catalogFingerprint": "sha256:512793039695046b329caee5b00d719bece1cb496b4e05cb54fa9c747d8fde10",
+  "uniqueRatioMilli": 1212,
+  "packages": [
+    {
+      "sourceLoc": 2423,
+      "authoredEvidenceLoc": 1236,
+      "ratioMilli": 510,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 470,
+      "authoredEvidenceLoc": 3581,
+      "ratioMilli": 7619,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 428,
+      "authoredEvidenceLoc": 2266,
+      "ratioMilli": 5294,
+      "missingEvidence": [
+        "component|integration|browser|e2e",
+        "simulation|chaos",
+        "mcdc",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 15738,
+      "authoredEvidenceLoc": 35334,
+      "ratioMilli": 2245,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 429,
+      "authoredEvidenceLoc": 827,
+      "ratioMilli": 1927,
+      "missingEvidence": [
+        "simulation|chaos",
+        "mutation",
+        "mcdc",
+        "fuzz",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 573,
+      "authoredEvidenceLoc": 1682,
+      "ratioMilli": 2935,
+      "missingEvidence": [
+        "simulation|chaos"
+      ]
+    },
+    {
+      "sourceLoc": 5059,
+      "authoredEvidenceLoc": 5530,
+      "ratioMilli": 1093,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 4397,
+      "authoredEvidenceLoc": 7354,
+      "ratioMilli": 1672,
+      "missingEvidence": [
+        "simulation|chaos",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 840,
+      "authoredEvidenceLoc": 1719,
+      "ratioMilli": 2046,
+      "missingEvidence": [
+        "property"
+      ]
+    },
+    {
+      "sourceLoc": 1072,
+      "authoredEvidenceLoc": 1382,
+      "ratioMilli": 1289,
+      "missingEvidence": [
+        "property"
+      ]
+    },
+    {
+      "sourceLoc": 2591,
+      "authoredEvidenceLoc": 5261,
+      "ratioMilli": 2030,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 2130,
+      "authoredEvidenceLoc": 1177,
+      "ratioMilli": 552,
+      "missingEvidence": [
+        "simulation|chaos"
+      ]
+    },
+    {
+      "sourceLoc": 150,
+      "authoredEvidenceLoc": 234,
+      "ratioMilli": 1560,
+      "missingEvidence": [
+        "property",
+        "component|integration|browser|e2e",
+        "simulation|chaos",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 1226,
+      "authoredEvidenceLoc": 2613,
+      "ratioMilli": 2131,
+      "missingEvidence": [
+        "property"
+      ]
+    },
+    {
+      "sourceLoc": 7914,
+      "authoredEvidenceLoc": 14474,
+      "ratioMilli": 1828,
+      "missingEvidence": [
+        "property",
+        "simulation|chaos"
+      ]
+    },
+    {
+      "sourceLoc": 514,
+      "authoredEvidenceLoc": 1078,
+      "ratioMilli": 2097,
+      "missingEvidence": [
+        "property"
+      ]
+    },
+    {
+      "sourceLoc": 486,
+      "authoredEvidenceLoc": 632,
+      "ratioMilli": 1300,
+      "missingEvidence": [
+        "property",
+        "component|integration|browser|e2e",
+        "simulation|chaos",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 769,
+      "authoredEvidenceLoc": 1236,
+      "ratioMilli": 1607,
+      "missingEvidence": [
+        "property",
+        "simulation|chaos",
+        "mutation",
+        "mcdc",
+        "fuzz",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 9663,
+      "authoredEvidenceLoc": 6810,
+      "ratioMilli": 704,
+      "missingEvidence": [
+        "component|integration|browser|e2e",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 5910,
+      "authoredEvidenceLoc": 3213,
+      "ratioMilli": 543,
+      "missingEvidence": [
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 4461,
+      "authoredEvidenceLoc": 4215,
+      "ratioMilli": 944,
+      "missingEvidence": [
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 12454,
+      "authoredEvidenceLoc": 13456,
+      "ratioMilli": 1080,
+      "missingEvidence": [
+        "property",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 1729,
+      "authoredEvidenceLoc": 2545,
+      "ratioMilli": 1471,
+      "missingEvidence": [
+        "property",
+        "simulation|chaos",
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 181,
+      "authoredEvidenceLoc": 205,
+      "ratioMilli": 1132,
+      "missingEvidence": [
+        "property"
+      ]
+    },
+    {
+      "sourceLoc": 351,
+      "authoredEvidenceLoc": 548,
+      "ratioMilli": 1561,
+      "missingEvidence": []
+    }
+  ]
+}

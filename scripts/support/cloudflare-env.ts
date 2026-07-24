@@ -8,7 +8,7 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /** Writable XDG config root so workerd/wrangler never touch ~/.config in CI sandboxes. */
-export const WRANGLER_CONFIG_HOME = resolve(import.meta.dirname, '..', '..', '.czap', 'wrangler-test');
+export const WRANGLER_CONFIG_HOME = resolve(import.meta.dirname, '..', '..', '.liteship', 'wrangler-test');
 
 /**
  * Build the child env: XDG isolation + stable (uncolored) output. Callers merge their

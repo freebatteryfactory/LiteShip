@@ -6,7 +6,7 @@
 
 # Interface: InterpolatedFrame\<B\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L25)
+Defined in: [quantizer/src/animated-quantizer.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L34)
 
 An interpolated animation frame emitted during a crossing.
 
@@ -14,7 +14,7 @@ An interpolated animation frame emitted during a crossing.
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 ## Properties
 
@@ -22,7 +22,7 @@ An interpolated animation frame emitted during a crossing.
 
 > `readonly` **outputs**: `Record`\<`string`, `number` \| `string`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L31)
+Defined in: [quantizer/src/animated-quantizer.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L40)
 
 Interpolated output record for the current frame.
 
@@ -32,7 +32,7 @@ Interpolated output record for the current frame.
 
 > `readonly` **progress**: `number`
 
-Defined in: [quantizer/src/animated-quantizer.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L29)
+Defined in: [quantizer/src/animated-quantizer.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L38)
 
 Progress in `[0, 1]`, where `1` means the animation has landed.
 
@@ -42,6 +42,6 @@ Progress in `[0, 1]`, where `1` means the animation has landed.
 
 > `readonly` **state**: `StateUnion`\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L27)
+Defined in: [quantizer/src/animated-quantizer.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L36)
 
 Target state of the in-flight transition.

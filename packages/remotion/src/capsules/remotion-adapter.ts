@@ -1,31 +1,31 @@
 /**
- * Capsule declaration treating `@czap/remotion` as the first siteAdapter
- * instance. Bridges Remotion's React composition surface to czap's
+ * Capsule declaration treating `@liteship/remotion` as the first siteAdapter
+ * instance. Bridges Remotion's React composition surface to liteship's
  * VideoFrameOutput stream. License obligations stay with the downstream
- * user who consumes Remotion — czap provides the adapter shell only.
+ * user who consumes Remotion — liteship provides the adapter shell only.
  *
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
 
-const VideoRendererShapeSchema = S.unknown;
-const VideoFrameOutputSchema = S.struct({
-  frame: S.number,
-  timestamp: S.number,
-  progress: S.number,
-  state: S.unknown,
+const VideoRendererShapeSchema = schema.unknown;
+const VideoFrameOutputSchema = schema.struct({
+  frame: schema.number,
+  timestamp: schema.number,
+  progress: schema.number,
+  state: schema.unknown,
 });
 
 /**
- * Declared capsule for `@czap/remotion`. Registered in the module-level
+ * Declared capsule for `@liteship/remotion`. Registered in the module-level
  * catalog at import time; walked by the factory compiler.
  */
 export const remotionAdapterCapsule = defineCapsule({
   _kind: 'siteAdapter',
   name: 'remotion.video-frame-output',
   input: VideoRendererShapeSchema,
-  output: S.array(VideoFrameOutputSchema),
+  output: schema.array(VideoFrameOutputSchema),
   capabilities: { reads: [], writes: [] },
   invariants: [
     {

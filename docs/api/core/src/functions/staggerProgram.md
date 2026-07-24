@@ -8,7 +8,7 @@
 
 > **staggerProgram**(`lowered`): [`TransitionProgram`](../type-aliases/TransitionProgram.md)
 
-Defined in: [core/src/stagger.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L282)
+Defined in: [core/src/motion/stagger.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L282)
 
 Compose a [LoweredStagger](../interfaces/LoweredStagger.md)'s children into a `par` [TransitionProgram](../type-aliases/TransitionProgram.md)
 (#141). Each staggered child becomes a `step` carrying its compile-time

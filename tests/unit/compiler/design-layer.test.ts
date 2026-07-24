@@ -9,8 +9,20 @@ import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 
 // --- Core design primitives ---
-import { Token, Style, Theme, Component, Boundary, TokenRef, Easing, Millis } from '@czap/core';
-import type { StyleLayer } from '@czap/core';
+import {
+  Token,
+  Style,
+  Theme,
+  TokenRef,
+  Easing,
+  Millis,
+  defineBoundary,
+  defineToken,
+  defineTheme,
+  defineStyle,
+  createComponent,
+} from '@liteship/core';
+import type { StyleLayer } from '@liteship/core';
 
 // --- Compilers ---
 import {
@@ -21,17 +33,17 @@ import {
   StyleCSSCompiler,
   ComponentCSSCompiler,
   generatePropertyRegistrations,
-} from '@czap/compiler';
+} from '@liteship/compiler';
 
 // --- Detect ---
-import { designTierFromCapabilities, motionTierFromCapabilities } from '@czap/detect';
-import type { ExtendedDeviceCapabilities } from '@czap/detect';
+import { designTierFromCapabilities, motionTierFromCapabilities } from '@liteship/detect';
+import type { ExtendedDeviceCapabilities } from '@liteship/detect';
 
 // ===========================================================================
 // FIXTURES
 // ===========================================================================
 
-const viewport = Boundary.make({
+const viewport = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -40,7 +52,7 @@ const viewport = Boundary.make({
   ] as const,
 });
 
-const primaryToken = Token.make({
+const primaryToken = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['theme'] as const,
@@ -48,7 +60,7 @@ const primaryToken = Token.make({
   fallback: 'oklch(0.5 0.1 260)',
 });
 
-const spacingToken = Token.make({
+const spacingToken = defineToken({
   name: 'gap',
   category: 'spacing',
   axes: ['density'] as const,
@@ -56,7 +68,7 @@ const spacingToken = Token.make({
   fallback: '16px',
 });
 
-const fbfTheme = Theme.make({
+const fbfTheme = defineTheme({
   name: 'fbf',
   variants: ['dark', 'light'] as const,
   tokens: {
@@ -69,10 +81,10 @@ const fbfTheme = Theme.make({
   },
 });
 
-const cardStyle = Style.make({
+const cardStyle = defineStyle({
   boundary: viewport,
   base: {
-    properties: { padding: '16px', 'border-radius': '8px', background: 'var(--czap-surface)' },
+    properties: { padding: '16px', 'border-radius': '8px', background: 'var(--liteship-surface)' },
     boxShadow: [{ x: 0, y: 2, blur: 8, spread: 0, color: 'rgba(0,0,0,0.1)' }],
   },
   states: {
@@ -82,7 +94,7 @@ const cardStyle = Style.make({
   transition: { duration: Millis(200), easing: 'ease-out', properties: ['padding', 'font-size'] },
 });
 
-const cardComponent = Component.make({
+const cardComponent = createComponent({
   name: 'card',
   boundary: viewport,
   styles: cardStyle,
@@ -104,11 +116,11 @@ describe('Token', () => {
     expect(primaryToken.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
     expect(primaryToken.name).toBe('primary');
     expect(primaryToken.category).toBe('color');
-    expect(primaryToken.cssProperty).toBe('--czap-primary');
+    expect(primaryToken.cssProperty).toBe('--liteship-primary');
   });
 
   test('same inputs -> same content address (deterministic)', () => {
-    const token2 = Token.make({
+    const token2 = defineToken({
       name: 'primary',
       category: 'color',
       axes: ['theme'] as const,
@@ -119,7 +131,7 @@ describe('Token', () => {
   });
 
   test('different inputs -> different content address', () => {
-    const otherToken = Token.make({
+    const otherToken = defineToken({
       name: 'secondary',
       category: 'color',
       axes: ['theme'] as const,
@@ -130,7 +142,7 @@ describe('Token', () => {
   });
 
   test('different fallback -> different content address', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'primary',
       category: 'color',
       axes: ['theme'] as const,
@@ -150,11 +162,11 @@ describe('Token', () => {
   });
 
   test('Token.cssVar() returns CSS var reference', () => {
-    expect(Token.cssVar(primaryToken)).toBe('var(--czap-primary)');
+    expect(Token.cssVar(primaryToken)).toBe('var(--liteship-primary)');
   });
 
   test('resolves multi-axis token with compound keys', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'spacing',
       category: 'spacing',
       axes: ['density', 'breakpoint'] as const,
@@ -181,7 +193,7 @@ describe('Token', () => {
   });
 
   test('resolves a multi-axis token when one axis is intentionally omitted', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'layout-gap',
       category: 'spacing',
       axes: ['density', 'breakpoint'] as const,
@@ -197,7 +209,7 @@ describe('Token', () => {
 
   test('make() throws on empty name', () => {
     expect(() =>
-      Token.make({
+      defineToken({
         name: '' as 'x',
         category: 'color',
         axes: ['theme'] as const,
@@ -209,7 +221,7 @@ describe('Token', () => {
 
   test('make() throws on duplicate axis names', () => {
     expect(() =>
-      Token.make({
+      defineToken({
         name: 'dup',
         category: 'color',
         axes: ['theme', 'theme'] as unknown as readonly ['theme', 'theme'],
@@ -239,7 +251,7 @@ describe('Style', () => {
 
   test('make() throws on invalid state name', () => {
     expect(() =>
-      Style.make({
+      defineStyle({
         boundary: viewport,
         base: { properties: {} },
         states: { nonexistent: { properties: { color: 'red' } } } as any,
@@ -317,7 +329,7 @@ describe('Style', () => {
   });
 
   test('Style.tap() falls back to base without state maps and preserves mixed box-shadow serialization', () => {
-    const shadowStyle = Style.make({
+    const shadowStyle = defineStyle({
       base: {
         properties: { color: 'red' },
         boxShadow: [{ x: 1, y: 2, blur: 3, color: '#111111' }],
@@ -347,7 +359,7 @@ describe('Style', () => {
   });
 
   test('Style.tap() flattens pseudo selectors and serializes inset shadows with spread overrides', () => {
-    const style = Style.make({
+    const style = defineStyle({
       base: {
         properties: { color: 'red' },
         pseudo: { ':hover': { color: 'blue' } },
@@ -386,7 +398,7 @@ describe('Theme', () => {
   });
 
   test('different meta -> different content address', () => {
-    const withoutMeta = Theme.make({
+    const withoutMeta = defineTheme({
       name: 'fbf',
       variants: ['dark', 'light'] as const,
       tokens: {
@@ -399,7 +411,7 @@ describe('Theme', () => {
 
   test('make() throws on missing variant value', () => {
     expect(() =>
-      Theme.make({
+      defineTheme({
         name: 'broken',
         variants: ['a', 'b'] as const,
         tokens: { foo: { a: 'yes' } as any },
@@ -433,7 +445,7 @@ describe('Component', () => {
   });
 
   test('ComponentDef id is deterministic across identical authored definitions', () => {
-    const comp2 = Component.make({
+    const comp2 = createComponent({
       name: 'card',
       boundary: viewport,
       styles: cardStyle,
@@ -447,7 +459,7 @@ describe('Component', () => {
   });
 
   test('ComponentDef id changes when slot config changes', () => {
-    const comp = Component.make({
+    const comp = createComponent({
       name: 'card',
       boundary: viewport,
       styles: cardStyle,
@@ -458,7 +470,7 @@ describe('Component', () => {
   });
 
   test('ComponentDef id changes when default slot changes', () => {
-    const comp = Component.make({
+    const comp = createComponent({
       name: 'card',
       boundary: viewport,
       styles: cardStyle,
@@ -479,10 +491,10 @@ describe('Component', () => {
 describe('TokenCSSCompiler', () => {
   test('compile() emits @property and :root', () => {
     const result = TokenCSSCompiler.compile(primaryToken);
-    expect(result.customProperties).toContain('@property --czap-primary');
+    expect(result.customProperties).toContain('@property --liteship-primary');
     expect(result.customProperties).toContain(':root');
     expect(result.customProperties).toContain('oklch(0.5 0.1 260)');
-    expect(result.properties).toContain('--czap-primary');
+    expect(result.properties).toContain('--liteship-primary');
   });
 
   test('compile() with theme emits html[data-theme] selectors', () => {
@@ -499,7 +511,7 @@ describe('TokenCSSCompiler', () => {
 
   test('compile() uses explicit cssProperty names and skips @property registration for non-typed fallbacks', () => {
     const token = {
-      ...Token.make({
+      ...defineToken({
         name: 'fluid-gap',
         category: 'spacing',
         axes: ['density'] as const,
@@ -517,7 +529,7 @@ describe('TokenCSSCompiler', () => {
 
   test('compile() defensively falls back to the generated property name when cssProperty is nullish at runtime', () => {
     const token = {
-      ...Token.make({
+      ...defineToken({
         name: 'runtime-gap',
         category: 'spacing',
         axes: ['density'] as const,
@@ -528,12 +540,12 @@ describe('TokenCSSCompiler', () => {
     };
 
     const result = TokenCSSCompiler.compile(token);
-    expect(result.properties).toEqual(['--czap-runtime-gap']);
-    expect(result.customProperties).toContain('--czap-runtime-gap: 8px;');
+    expect(result.properties).toEqual(['--liteship-runtime-gap']);
+    expect(result.customProperties).toContain('--liteship-runtime-gap: 8px;');
   });
 
   test('compile() infers percentage syntax and leaves themed overrides empty when the theme has no matching token', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'alpha',
       category: 'effect',
       axes: ['theme'] as const,
@@ -547,7 +559,7 @@ describe('TokenCSSCompiler', () => {
   });
 
   test('compile() stringifies numeric fallback values', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'weight',
       category: 'typography',
       axes: ['density'] as const,
@@ -556,11 +568,11 @@ describe('TokenCSSCompiler', () => {
     });
 
     const result = TokenCSSCompiler.compile(token);
-    expect(result.customProperties).toContain('--czap-weight: 400');
+    expect(result.customProperties).toContain('--liteship-weight: 400');
   });
 
   test('compile() stringifies non-string non-number fallback values', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'flag',
       category: 'effect',
       axes: ['mode'] as const,
@@ -569,12 +581,12 @@ describe('TokenCSSCompiler', () => {
     });
 
     const result = TokenCSSCompiler.compile(token);
-    expect(result.customProperties).toContain('--czap-flag: true');
+    expect(result.customProperties).toContain('--liteship-flag: true');
     expect(result.customProperties).not.toContain('@property');
   });
 
   test('compile() infers <number> syntax for unit-less numeric fallbacks', () => {
-    const token = Token.make({
+    const token = defineToken({
       name: 'ratio',
       category: 'effect',
       axes: ['mode'] as const,
@@ -593,9 +605,9 @@ describe('TokenCSSCompiler', () => {
       tokens: {
         primary: { a: '#f00' } as Record<'a' | 'b', string | undefined>,
       },
-    } as Theme.Shape;
+    } as Theme;
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'primary',
       category: 'color',
       axes: ['theme'] as const,
@@ -622,7 +634,7 @@ describe('TokenTailwindCompiler', () => {
   });
 
   test('compile() stringifies non-string fallback values and skips undefined axis entries', () => {
-    const flagToken = Token.make({
+    const flagToken = defineToken({
       name: 'flag',
       category: 'effect',
       axes: ['mode'] as const,
@@ -670,14 +682,14 @@ describe('ThemeCSSCompiler', () => {
     const result = ThemeCSSCompiler.compile(fbfTheme);
     expect(result.transitions).not.toBe('');
     expect(result.transitions).toContain('transition-property');
-    expect(result.transitions).toContain('--czap-primary');
-    expect(result.transitions).toContain('--czap-surface');
+    expect(result.transitions).toContain('--liteship-primary');
+    expect(result.transitions).toContain('--liteship-surface');
     expect(result.transitions).toContain('transition-duration: 200ms');
     expect(result.transitions).toContain('transition-timing-function: ease-in-out');
   });
 
   test('compile() emits empty transitions when theme lacks meta', () => {
-    const noMetaTheme = Theme.make({
+    const noMetaTheme = defineTheme({
       name: 'plain',
       variants: ['a', 'b'] as const,
       tokens: { fg: { a: 'black', b: 'white' } },
@@ -694,14 +706,73 @@ describe('ThemeCSSCompiler', () => {
 describe('StyleCSSCompiler', () => {
   test('compile() emits @layer and @scope', () => {
     const result = StyleCSSCompiler.compile(cardStyle, 'card');
-    expect(result.layers).toContain('@layer czap.components');
+    expect(result.layers).toContain('@layer liteship.components');
     expect(result.scoped).toContain('@scope');
-    expect(result.scoped).toContain('.czap-card');
+    expect(result.scoped).toContain('.liteship-card');
   });
 
   test('compile() emits @starting-style', () => {
     const result = StyleCSSCompiler.compile(cardStyle, 'card');
     expect(result.startingStyle).toContain('@starting-style');
+  });
+
+  test('compileAdaptive() scopes every runtime-state layer to the style identity', () => {
+    const css = StyleCSSCompiler.compileAdaptive(cardStyle);
+    const scope = `:where(.liteship-styled)[data-liteship-style="${cardStyle.id}"]`;
+
+    expect(css).toContain(`${scope} {`);
+    expect(css).toContain(`${scope}[data-liteship-state="mobile"] {`);
+    expect(css).toContain(`${scope}[data-liteship-state="desktop"] {`);
+    expect(css).toContain('box-shadow: 0px 2px 8px 0px rgba(0,0,0,0.1);');
+    expect(css).toContain('transition: padding, font-size 200ms ease-out;');
+    expect(css).toContain('@starting-style');
+    expect(css).not.toContain('@container');
+  });
+
+  test('compileAdaptive() escapes state labels inside attribute selectors', () => {
+    const boundary = defineBoundary({
+      input: 'custom.state',
+      at: [
+        [0, 'plain'],
+        [1, 'quoted"state'],
+      ] as const,
+    });
+    const style = defineStyle({
+      boundary,
+      base: { properties: { color: 'black' } },
+      states: { 'quoted"state': { properties: { color: 'red' } } },
+    });
+
+    expect(StyleCSSCompiler.compileAdaptive(style)).toContain('[data-liteship-state="quoted\\"state"]');
+  });
+
+  test('compileAdaptive() preserves Style.tap box-shadow composition for state layers', () => {
+    const boundary = defineBoundary({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [800, 'wide'],
+      ] as const,
+    });
+    const style = defineStyle({
+      boundary,
+      base: {
+        properties: {},
+        boxShadow: [{ x: 0, y: 1, blur: 2, color: '#111111' }],
+      },
+      states: {
+        wide: {
+          properties: {},
+          boxShadow: [{ x: 0, y: 4, blur: 8, spread: 1, color: '#222222' }],
+        },
+      },
+    });
+
+    const resolved = Style.tap(style, 'wide');
+    const css = StyleCSSCompiler.compileAdaptive(style);
+
+    expect(resolved['box-shadow']).toBe('0px 1px 2px #111111, 0px 4px 8px 1px #222222');
+    expect(css).toContain('box-shadow: 0px 1px 2px #111111, 0px 4px 8px 1px #222222;');
   });
 });
 
@@ -710,10 +781,10 @@ describe('StyleCSSCompiler', () => {
 // ===========================================================================
 
 describe('ComponentCSSCompiler', () => {
-  test('compile() emits satellite container and slot styling', () => {
+  test('compile() emits adaptive container and slot styling', () => {
     const result = ComponentCSSCompiler.compile(cardComponent);
-    expect(result.layers).toContain('@layer czap.components');
-    expect(result.scoped).toContain('data-czap-slot');
+    expect(result.layers).toContain('@layer liteship.components');
+    expect(result.scoped).toContain('data-liteship-slot');
   });
 });
 
@@ -724,12 +795,12 @@ describe('ComponentCSSCompiler', () => {
 describe('generatePropertyRegistrations', () => {
   test('emits @property for custom property values', () => {
     const result = generatePropertyRegistrations({
-      mobile: { '--czap-primary': '#00e5ff', '--czap-gap': '8px' },
-      desktop: { '--czap-primary': '#ffffff', '--czap-gap': '16px' },
+      mobile: { '--liteship-primary': '#00e5ff', '--liteship-gap': '8px' },
+      desktop: { '--liteship-primary': '#ffffff', '--liteship-gap': '16px' },
     });
-    expect(result).toContain('@property --czap-primary');
+    expect(result).toContain('@property --liteship-primary');
     expect(result).toContain('syntax: "<color>"');
-    expect(result).toContain('@property --czap-gap');
+    expect(result).toContain('@property --liteship-gap');
     expect(result).toContain('syntax: "<length>"');
   });
 
@@ -741,10 +812,7 @@ describe('generatePropertyRegistrations', () => {
   });
 
   test('accepts per-property initial-value overrides (#104)', () => {
-    const result = generatePropertyRegistrations(
-      { idle: { '--mood-orb': '0.5' } },
-      { '--mood-orb': '1' },
-    );
+    const result = generatePropertyRegistrations({ idle: { '--mood-orb': '0.5' } }, { '--mood-orb': '1' });
     expect(result).toContain('initial-value: 1');
     expect(result).not.toMatch(/initial-value:\s*0\b/);
   });
@@ -874,21 +942,21 @@ describe('Spring CSS Helpers', () => {
 // ===========================================================================
 
 describe('Property-based: Token determinism', () => {
-  test('Token.make is deterministic across calls (single axis)', () => {
+  test('defineToken is deterministic across calls (single axis)', () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 20 }).filter((s) => /^[a-z]/.test(s)),
         fc.constantFrom('color', 'spacing', 'typography', 'shadow', 'radius', 'animation', 'effect' as const),
         (name, category) => {
-          const t1 = Token.make({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
-          const t2 = Token.make({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
+          const t1 = defineToken({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
+          const t2 = defineToken({ name, category, axes: ['a'] as const, values: { x: '1' }, fallback: '0' });
           return t1.id === t2.id;
         },
       ),
     );
   });
 
-  test('Token.make is deterministic with multi-axis compound keys', () => {
+  test('defineToken is deterministic with multi-axis compound keys', () => {
     // Arbitrary that generates 1-3 axes and matching compound key values
     const axisArb = fc.uniqueArray(fc.constantFrom('theme', 'density', 'breakpoint', 'contrast', 'motion'), {
       minLength: 1,
@@ -914,8 +982,8 @@ describe('Property-based: Token determinism', () => {
             values,
             fallback: 'fb',
           };
-          const t1 = Token.make(config);
-          const t2 = Token.make(config);
+          const t1 = defineToken(config);
+          const t2 = defineToken(config);
           return t1.id === t2.id;
         },
       ),
@@ -928,7 +996,7 @@ describe('Property-based: Token determinism', () => {
         fc.constantFrom('color', 'spacing', 'typography' as const),
         fc.constantFrom('theme', 'density'),
         fc.constantFrom('breakpoint', 'contrast'),
-        // ':' is the reserved compound-key separator — Token.make rejects
+        // ':' is the reserved compound-key separator — defineToken rejects
         // values keys whose segment count diverges from the axis count.
         fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s) && !s.includes(':')),
         fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s) && !s.includes(':')),
@@ -937,7 +1005,7 @@ describe('Property-based: Token determinism', () => {
           const sorted = [...axes].sort();
           // Build key in sorted order
           const key = sorted.map((a) => (a === axis1 ? val1 : val2)).join(':');
-          const token = Token.make({
+          const token = defineToken({
             name: 'test',
             category,
             axes,
@@ -972,7 +1040,7 @@ describe('Property-based: Theme resolution completeness', () => {
           for (const name of uniqueNames) {
             tokens[name] = { [variant]: `val-${name}` };
           }
-          const theme = Theme.make({
+          const theme = defineTheme({
             name: 'test',
             variants: [variant] as const,
             tokens: tokens as any,
@@ -1005,7 +1073,7 @@ describe('Property-based: Theme resolution completeness', () => {
             }
             tokens[name] = variantMap;
           }
-          const theme = Theme.make({
+          const theme = defineTheme({
             name: 'multi',
             variants: variants as unknown as readonly [string, ...string[]],
             tokens: tokens as any,

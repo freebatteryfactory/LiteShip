@@ -1,6 +1,6 @@
 /**
  * Content-addressed idempotency — hash command + inputs + environment
- * fingerprint, look up `.czap/cache/<hash>.json`, return cached receipt
+ * fingerprint, look up `.liteship/cache/<hash>.json`, return cached receipt
  * if present unless `force` is true.
  *
  * @module
@@ -8,8 +8,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { sha256Hex } from '@czap/canonical';
-import { CanonicalCbor } from '@czap/core';
+import { sha256Hex } from '@liteship/canonical';
+import { CanonicalCbor } from '@liteship/core';
 
 /** Context supplied to the idempotency helpers. */
 export interface IdempotencyCtx {
@@ -58,7 +58,7 @@ export function hashInputs(ctx: IdempotencyCtx): string {
 
 /** Path where the cached receipt lives (relative to `cwd`, or process cwd). */
 export function cachePath(hash: string, cwd: string = process.cwd()): string {
-  return join(cwd, '.czap', 'cache', `${hash}.json`);
+  return join(cwd, '.liteship', 'cache', `${hash}.json`);
 }
 
 /** Return a cached receipt for this invocation, or null if absent / forced. */

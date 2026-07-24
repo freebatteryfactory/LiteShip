@@ -1,9 +1,10 @@
 /**
- * `czap audit-floor` adapter — the CLI-only projection of the warning-floor gate.
+ * `liteship audit-floor` adapter — the CLI-only projection of the warning-floor gate.
  *
- * The CLI is the ONLY adapter that wires the heavy `@czap/audit` three-pass engine
+ * The CLI is the ONLY adapter that wires the heavy `@liteship/audit` three-pass engine
  * (`runStructureAudit` / `runIntegrityAudit` / `runSurfaceAudit`) into the
- * `runAuditFloor` capability; those three are mocked so these assertions pin the
+ * `runAuditFloor` capability; those three are INJECTED as scripted spies (the
+ * audit-floor deps seam, defaulting to the real passes) so these assertions pin the
  * ADAPTER's in-process logic — `runAuditFloorScan`'s warning filter + sort, the
  * diff against the (empty, post-0.1.5) `AUDIT_WARNING_FLOOR`, the receipt
  * projection, the exit-code mapping, and the drift-report pretty-print (added /
@@ -16,22 +17,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { captureCli } from '../../../integration/cli/capture.js';
 
-const { structureMock, integrityMock, surfaceMock } = vi.hoisted(() => ({
-  structureMock: vi.fn(),
-  integrityMock: vi.fn(),
-  surfaceMock: vi.fn(),
-}));
-vi.mock('@czap/audit', async (importOriginal) => {
-  const orig = await importOriginal<Record<string, unknown>>();
-  return {
-    ...orig,
-    runStructureAudit: structureMock,
-    runIntegrityAudit: integrityMock,
-    runSurfaceAudit: surfaceMock,
-  };
-});
+// The three passes are scripted spies injected through the audit-floor deps seam —
+// NOT a @liteship/audit module mock — so the heavy repo-wide engine never runs.
+const structureMock = vi.fn();
+const integrityMock = vi.fn();
+const surfaceMock = vi.fn();
 
 import { auditFloor, collectWarningInventory } from '../../../../packages/cli/src/commands/audit-floor.js';
+
+/** The three-pass engine deps the adapter is driven over. */
+const deps = { runStructureAudit: structureMock, runIntegrityAudit: integrityMock, runSurfaceAudit: surfaceMock };
 
 type Sev = 'warning' | 'error' | 'advisory';
 function finding(rule: string, severity: Sev, file?: string) {
@@ -52,9 +47,9 @@ function lastReceipt(stdout: string): Record<string, unknown> {
   return JSON.parse(stdout.trim().split('\n').pop()!) as Record<string, unknown>;
 }
 
-describe('czap audit-floor — clean inventory matches the empty floor (exit 0)', () => {
+describe('liteship audit-floor — clean inventory matches the empty floor (exit 0)', () => {
   it('passes with zero warnings/errors and writes no drift report', async () => {
-    const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }, deps));
     expect(exit).toBe(0);
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({
@@ -70,10 +65,10 @@ describe('czap audit-floor — clean inventory matches the empty floor (exit 0)'
   });
 });
 
-describe('czap audit-floor — a new warning is drift against the zero floor (exit 1)', () => {
+describe('liteship audit-floor — a new warning is drift against the zero floor (exit 1)', () => {
   it('reports the ADDED key in the receipt delta and the pretty drift report', async () => {
     structureMock.mockReturnValue(pass([finding('no-foo', 'warning', 'packages/x/src/a.ts')]));
-    const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }));
+    const { exit, stdout, stderr } = await captureCli(() => auditFloor({ pretty: true }, deps));
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['status']).toBe('failed');
@@ -86,7 +81,7 @@ describe('czap audit-floor — a new warning is drift against the zero floor (ex
   it('sorts the inventory + falls back to `unknown` for a warning with no location', async () => {
     integrityMock.mockReturnValue(pass([finding('z-rule', 'warning', 'packages/z.ts')]));
     surfaceMock.mockReturnValue(pass([finding('a-rule', 'warning', undefined)]));
-    const { stdout } = await captureCli(() => auditFloor({ pretty: false }));
+    const { stdout } = await captureCli(() => auditFloor({ pretty: false }, deps));
     const receipt = lastReceipt(stdout);
     // Sorted: 'a-rule@unknown' < 'z-rule@packages/z.ts'.
     expect(receipt['inventory']).toEqual(['a-rule@unknown', 'z-rule@packages/z.ts']);
@@ -94,7 +89,7 @@ describe('czap audit-floor — a new warning is drift against the zero floor (ex
 
   it('any error-severity finding fails the gate even with a clean warning inventory', async () => {
     surfaceMock.mockReturnValue(pass([finding('hard-fault', 'error', 'packages/y.ts')]));
-    const { exit, stdout } = await captureCli(() => auditFloor({ pretty: false }));
+    const { exit, stdout } = await captureCli(() => auditFloor({ pretty: false }, deps));
     expect(exit).toBe(1);
     const receipt = lastReceipt(stdout);
     expect(receipt['errorCount']).toBe(1);
@@ -103,7 +98,7 @@ describe('czap audit-floor — a new warning is drift against the zero floor (ex
 
   it('stays SILENT on stderr when pretty is off (receipt still exits 1)', async () => {
     structureMock.mockReturnValue(pass([finding('no-foo', 'warning', 'packages/x.ts')]));
-    const { exit, stderr } = await captureCli(() => auditFloor({ pretty: false }));
+    const { exit, stderr } = await captureCli(() => auditFloor({ pretty: false }, deps));
     expect(exit).toBe(1);
     expect(stderr).toBe('');
   });
@@ -114,6 +109,6 @@ describe('collectWarningInventory — the exported warning projection', () => {
     structureMock.mockReturnValue(pass([finding('w2', 'warning', 'b.ts'), finding('e1', 'error', 'b.ts')]));
     integrityMock.mockReturnValue(pass([finding('w1', 'warning', 'a.ts')]));
     surfaceMock.mockReturnValue(pass([finding('adv', 'advisory', 'c.ts')]));
-    expect(collectWarningInventory()).toEqual(['w1@a.ts', 'w2@b.ts']);
+    expect(collectWarningInventory(deps)).toEqual(['w1@a.ts', 'w2@b.ts']);
   });
 });

@@ -15,7 +15,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Theme, Token } from '@czap/core';
+import { defineBoundary, defineToken, defineTheme } from '@liteship/core';
 import { transformCss, type TransformCssContext } from '../../../packages/vite/src/transform-css.js';
 import {
   createPrimitiveResolutionCache,
@@ -26,7 +26,7 @@ import * as PrimitiveResolveModule from '../../../packages/vite/src/primitive-re
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'czap-transform-css-'));
+  const dir = mkdtempSync(join(tmpdir(), 'liteship-transform-css-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -71,7 +71,7 @@ afterEach(() => {
 });
 
 describe('transformCss (standalone, no plugin lifecycle)', () => {
-  test('returns null for css with no @czap at-rules without touching the resolver', async () => {
+  test('returns null for css with no @liteship at-rules without touching the resolver', async () => {
     const resolveSpy = vi.spyOn(PrimitiveResolveModule, 'resolvePrimitive');
     const { ctx } = makeCtx(makeTempDir());
 
@@ -84,20 +84,20 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
       values: { light: '#ffffff', dark: '#000000' },
       fallback: '#ffffff',
     });
-    const theme = Theme.make({
+    const theme = defineTheme({
       name: 'brand',
       variants: ['light', 'dark'] as const,
       tokens: { accent: { light: '#ffffff', dark: '#000000' } },
       meta: { light: { label: 'Light', mode: 'light' }, dark: { label: 'Dark', mode: 'dark' } },
     });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'mobile'],
@@ -123,7 +123,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
 
     expect(warnings).toEqual([]);
     expect(out).not.toBeNull();
-    expect(out).toContain('--czap-accent');
+    expect(out).toContain('--liteship-accent');
     expect(out).toContain('html[data-theme="light"]');
     expect(out).toContain('@container');
     // Each resolved convention file was registered for watching.
@@ -137,7 +137,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -159,7 +159,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
 
   test('warns with file:line + grammar when a @token dialect parses to zero blocks', async () => {
     const { ctx, warnings } = makeCtx(makeTempDir());
-    const css = ':root {\n  @token primary: var(--czap-primary);\n}\n';
+    const css = ':root {\n  @token primary: var(--liteship-primary);\n}\n';
 
     const out = await transformCss(css, 'dialects.css', ctx);
 
@@ -183,14 +183,14 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const widthBoundary = Boundary.make({
+    const widthBoundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'narrow'],
         [768, 'wide'],
       ] as const,
     });
-    const bareBoundary = Boundary.make({
+    const bareBoundary = defineBoundary({
       input: 'viewport',
       at: [
         [0, 'short'],
@@ -227,7 +227,7 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const srcDir = join(root, 'src');
     mkdirSync(srcDir, { recursive: true });
 
-    const token = Token.make({
+    const token = defineToken({
       name: 'accent',
       category: 'color',
       axes: ['theme'] as const,
@@ -240,6 +240,6 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     const { ctx } = makeCtx(root, { addWatchFile: undefined });
     const out = await transformCss('@token accent { margin: 0; }', join(srcDir, 'app.css'), ctx);
 
-    expect(out).toContain('--czap-accent');
+    expect(out).toContain('--liteship-accent');
   });
 });

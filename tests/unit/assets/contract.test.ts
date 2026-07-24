@@ -11,8 +11,8 @@ import {
   imageDecoder,
   type DecodedAudio,
   type DecodedVideo,
-} from '@czap/assets';
-import type { Site } from '@czap/core';
+} from '@liteship/assets';
+import type { Site } from '@liteship/core';
 
 /** Minimal mono PCM16 WAV (2 silent samples at 48 kHz) for decoder routing checks. */
 function minimalWav(): ArrayBuffer {

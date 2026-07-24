@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { packageSlug, selectTargets, observedLifecycleScripts, deriveBuildEnv, readPackageManagerVersion } from '@czap/command';
-import type { WorkspacePackage } from '@czap/command';
+import { packageSlug, selectTargets, observedLifecycleScripts, deriveBuildEnv, readPackageManagerVersion } from '@liteship/command';
+import type { WorkspacePackage } from '@liteship/command';
 
 function pkg(relativePath: string, name: string, isPrivate = false): WorkspacePackage {
   return {
@@ -11,21 +11,21 @@ function pkg(relativePath: string, name: string, isPrivate = false): WorkspacePa
   };
 }
 
-describe('@czap/command ship planning (pure)', () => {
+describe('@liteship/command ship planning (pure)', () => {
   it('packageSlug maps @scope/name → scope-name and leaves plain names', () => {
-    expect(packageSlug('@czap/_spine')).toBe('czap-_spine');
-    expect(packageSlug('czap')).toBe('czap');
+    expect(packageSlug('@liteship/_spine')).toBe('liteship-_spine');
+    expect(packageSlug('liteship')).toBe('liteship');
   });
 
   it('selectTargets without filter excludes private packages', () => {
-    const ws = [pkg('packages/core', '@czap/core'), pkg('packages/secret', '@czap/secret', true)];
-    expect(selectTargets(ws, undefined).map((p) => p.packageJson.name)).toEqual(['@czap/core']);
+    const ws = [pkg('packages/core', '@liteship/core'), pkg('packages/secret', '@liteship/secret', true)];
+    expect(selectTargets(ws, undefined).map((p) => p.packageJson.name)).toEqual(['@liteship/core']);
   });
 
   it('selectTargets matches by relative path or package name', () => {
-    const ws = [pkg('packages/core', '@czap/core'), pkg('packages/cli', '@czap/cli')];
+    const ws = [pkg('packages/core', '@liteship/core'), pkg('packages/cli', '@liteship/cli')];
     expect(selectTargets(ws, './packages/core/').map((p) => p.relativePath)).toEqual(['packages/core']);
-    expect(selectTargets(ws, '@czap/cli').map((p) => p.relativePath)).toEqual(['packages/cli']);
+    expect(selectTargets(ws, '@liteship/cli').map((p) => p.relativePath)).toEqual(['packages/cli']);
   });
 
   it('observedLifecycleScripts reports only present lifecycle scripts', () => {

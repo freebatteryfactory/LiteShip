@@ -10,7 +10,7 @@
  * @module
  */
 
-import type { System, World } from '@czap/core';
+import type { System, World } from '@liteship/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
 
@@ -20,7 +20,7 @@ export function AudioSystem(frameIndex: number, fps: number, sampleRate: number)
   return {
     name: 'AudioSystem',
     query: ['AudioSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         const range = e.components.get('FrameRange') as { from: number; to: number };
         const inRange = frameIndex >= range.from && frameIndex < range.to;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { rmSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -11,7 +11,7 @@ describe('content-addressed idempotency', () => {
   const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;
 
   beforeEach(() => {
-    rmSync('.czap/cache', { recursive: true, force: true });
+    rmSync('.liteship/cache', { recursive: true, force: true });
     if (existsSync(out)) unlinkSync(out);
     mkdirSync(dirname(out), { recursive: true });
   });

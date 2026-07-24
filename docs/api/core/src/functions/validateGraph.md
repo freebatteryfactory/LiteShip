@@ -8,7 +8,7 @@
 
 > **validateGraph**(`graph`): \{ `ok`: `true`; \} \| \{ `errors`: readonly `PlanValidationError`[]; `ok`: `false`; \}
 
-Defined in: [core/src/document-graph-address.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L132)
+Defined in: [core/src/graph/document-graph-address.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph-address.ts#L132)
 
 Validate structural integrity: no cycles, every edge endpoint references an existing node. Reuses `Plan.validate`.
 

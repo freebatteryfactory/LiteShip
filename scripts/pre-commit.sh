@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Pre-commit hook for czap.
+# Pre-commit hook for liteship.
 # Auto-installed via `prepare` script in package.json on `pnpm install`.
 # Manual install: ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
 #
@@ -26,8 +26,8 @@ pnpm run format:check
 pnpm exec tsx packages/cli/src/bin.ts check-invariants
 
 if git diff --cached --name-only --diff-filter=ACMRD | grep -Eq '^(packages/[^/]+/src/.*\.ts|packages/_spine/.*\.d\.ts|packages/_spine/typedoc-entry\.ts|typedoc\.json|docs/api/)'; then
-  echo "[pre-commit] API docs inputs changed; checking committed docs/api..."
-  pnpm run docs:check
+  echo "[pre-commit] API docs inputs changed; checking the cheap committed input fingerprint..."
+  pnpm run docs:check:fast
 fi
 
 echo "[pre-commit] All checks passed."

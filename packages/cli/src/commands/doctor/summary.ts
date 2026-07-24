@@ -16,9 +16,9 @@ export function aggregate(checks: readonly DoctorCheck[]): DoctorVerdict {
 }
 
 const VERDICT_SENTENCE: Record<DoctorVerdict, string> = {
-  ready: 'Hull check: ready to sail.',
-  caution: 'Hull check: caution — non-blocking warnings, but you can cast off.',
-  blocked: 'Hull check: blocked — fix the failures before sailing.',
+  ready: 'Environment check: ready — you can proceed.',
+  caution: 'Environment check: caution — non-blocking warnings, but you can proceed.',
+  blocked: 'Environment check: blocked — fix the failures before proceeding.',
 };
 
 const VERDICT_COLOR: Record<DoctorVerdict, 'green' | 'yellow' | 'red'> = {
@@ -34,7 +34,7 @@ export function prettySummary(
 ): string {
   const on = colorEnabled();
   const lines: string[] = [];
-  lines.push(header('czap doctor — preflight rig check', on));
+  lines.push(header('liteship doctor — preflight environment check', on));
   lines.push('');
   const widest = Math.max(...checks.map((c) => c.label.length));
   for (const c of checks) {

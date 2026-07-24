@@ -6,11 +6,11 @@
 
 # Interface: AnimatedQuantizerShape\<B\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L43)
+Defined in: [quantizer/src/animated-quantizer.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L52)
 
 Quantizer augmented with transition-aware output interpolation.
 
-The `interpolated` no-replay [CellKernel](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) fan-out publishes a frame on
+The `interpolated` no-replay [CellKernel](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) fan-out publishes a frame on
 each animation tick containing the target state, normalized progress (0-1),
 and the current lerped output record. Non-numeric values snap at the 50% mark.
 Subscribe via `interpolated.subscribe(sink)`; a late subscriber never sees a
@@ -18,13 +18,13 @@ frame published before it attached.
 
 ## Extends
 
-- [`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts)\<`B`\>
+- [`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts)\<`B`\>
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
 
 ## Properties
 
@@ -32,7 +32,7 @@ frame published before it attached.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: core/dist/quantizer-types.d.ts:33
+Defined in: core/dist/schema/quantizer-types.d.ts:35
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: core/dist/quantizer-types.d.ts:33
 
 > `readonly` **boundary**: `B`
 
-Defined in: core/dist/quantizer-types.d.ts:34
+Defined in: core/dist/schema/quantizer-types.d.ts:36
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: core/dist/quantizer-types.d.ts:34
 
 > `readonly` **changes**: [`QuantizerCrossings`](../../../core/src/type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:63
+Defined in: core/dist/schema/quantizer-types.d.ts:65
 
 No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`).
 
@@ -70,7 +70,7 @@ No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<
 
 > `readonly` **interpolated**: `Pick`\<`CellKernel.Fanout`\<[`InterpolatedFrame`](InterpolatedFrame.md)\<`B`\>\>, `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L47)
+Defined in: [quantizer/src/animated-quantizer.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L56)
 
 No-replay subscription of interpolated animation frames during crossings.
 
@@ -80,7 +80,7 @@ No-replay subscription of interpolated animation frames during crossings.
 
 > `readonly` **state**: `QuantizerState`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:61
+Defined in: core/dist/schema/quantizer-types.d.ts:63
 
 Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
@@ -94,7 +94,7 @@ Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 > `readonly` `optional` **stateSync?**: () => `StateUnion`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:36
+Defined in: core/dist/schema/quantizer-types.d.ts:38
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -112,7 +112,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > `readonly` **transition**: [`Transition`](Transition.md)\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L45)
+Defined in: [quantizer/src/animated-quantizer.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L54)
 
 Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig.md).
 
@@ -122,7 +122,7 @@ Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig
 
 > **evaluate**(`value`): `StateUnion`\<`B`\>
 
-Defined in: core/dist/quantizer-types.d.ts:37
+Defined in: core/dist/schema/quantizer-types.d.ts:39
 
 #### Parameters
 

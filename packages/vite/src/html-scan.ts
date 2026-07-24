@@ -1,5 +1,5 @@
 /**
- * Character-level HTML scanning helpers for the `data-czap` macro transform.
+ * Character-level HTML scanning helpers for the `data-liteship` macro transform.
  *
  * Mirrors the offset-preserving blanking idiom from {@link blankCssCommentsAndStrings}
  * in `css-scan.ts`: comments and code-sample contents are blanked to spaces while

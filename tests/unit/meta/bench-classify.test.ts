@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyBenchSource, benchHonestyError } from '@czap/core/harness';
+import { classifyBenchSource, benchHonestyError } from '@liteship/core/harness';
 
 // Pins the real-vs-placeholder semantics the capsule:verify receipt is built
 // on. The integration test derives its expected receipt from this classifier,

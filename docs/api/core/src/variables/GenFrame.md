@@ -8,7 +8,7 @@
 
 > `const` **GenFrame**: `object`
 
-Defined in: [core/src/gen-frame.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L234)
+Defined in: [core/src/media/gen-frame.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L234)
 
 Generative-UI frame scheduler namespace.
 
@@ -22,7 +22,7 @@ chain or transport resumption.
 
 > **make**: (`config`) => `GenFrameSchedulerShape` = `_make`
 
-Create a new fixed-step scheduler bound to a [TokenBuffer](TokenBuffer.md) and quality-tier probe.
+Create a new fixed-step scheduler bound to a [TokenBuffer](../type-aliases/TokenBuffer.md) and quality-tier probe.
 
 #### Parameters
 

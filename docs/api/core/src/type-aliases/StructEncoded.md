@@ -10,7 +10,7 @@
 
 Defined in: [core/src/schema/infer.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/infer.ts#L51)
 
-The encoded object type of `S.struct(fields)` — the [StructType](StructType.md) shape over `Encoded`.
+The encoded object type of `schema.struct(fields)` — the [StructType](StructType.md) shape over `Encoded`.
 
 ## Type Parameters
 

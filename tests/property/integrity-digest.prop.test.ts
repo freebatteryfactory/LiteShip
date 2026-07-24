@@ -6,7 +6,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { AddressedDigest } from '@czap/core';
+import { AddressedDigest } from '@liteship/core';
 
 const SHA_RE = /^sha256:[0-9a-f]{64}$/;
 const FNV_RE = /^fnv1a:[0-9a-f]{8}$/;

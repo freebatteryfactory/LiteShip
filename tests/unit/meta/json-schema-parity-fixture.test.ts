@@ -1,6 +1,6 @@
 /**
  * JSON-Schema parity fixture — the byte-parity cage over the CURRENT Effect-AST
- * deriver (packages/core/src/json-schema-from-schema.ts) captured BEFORE any
+ * deriver (packages/core/src/schema/to-json-schema.ts) captured BEFORE any
  * schema producer changes.
  *
  * Three laws:
@@ -30,18 +30,18 @@ describe('json-schema parity fixture', () => {
     expect(buildParityFixtureContent()).toBe(buildParityFixtureContent());
   });
 
-  it('covers every handler-backed descriptor slot (18 handlers → inputSchema + outputSchema)', () => {
+  it('covers every handler-backed descriptor slot (20 handlers → inputSchema + outputSchema)', () => {
     const keys = Object.keys(buildParityMap());
-    expect(keys.filter((k) => k.endsWith('#inputSchema')).length).toBe(18);
-    expect(keys.filter((k) => k.endsWith('#outputSchema')).length).toBe(18);
-    expect(keys.length).toBe(36);
+    expect(keys.filter((k) => k.endsWith('#inputSchema')).length).toBe(20);
+    expect(keys.filter((k) => k.endsWith('#outputSchema')).length).toBe(20);
+    expect(keys.length).toBe(40);
   });
 
   it('every captured value is the stableSerialize canonical form (key-sorted object, "type" after "properties")', () => {
     const map = buildParityMap();
     const version = map['version#outputSchema'];
     expect(version).toBe(
-      '{"properties":{"czap":{"type":"string"},"node":{"type":"string"},"pnpm":{"type":["string","null"]}},"required":["czap","node","pnpm"],"type":"object"}',
+      '{"properties":{"liteship":{"type":"string"},"node":{"type":"string"},"pnpm":{"type":["string","null"]}},"required":["liteship","node","pnpm"],"type":"object"}',
     );
   });
 

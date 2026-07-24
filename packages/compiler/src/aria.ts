@@ -8,8 +8,8 @@
  * @module
  */
 
-import { Diagnostics, BoundaryAttribute } from '@czap/core';
-import type { Boundary, StateUnion } from '@czap/core';
+import { Diagnostics, BoundaryAttribute } from '@liteship/core';
+import type { Boundary, StateUnion } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,7 +37,7 @@ export interface ARIACompileResult<S extends string = string> {
 /**
  * Filter and validate ARIA attributes, keeping only valid ones — the allowed
  * keys are governed by the shared {@link BoundaryAttribute.isAllowedKey} policy
- * in `@czap/core` (any `aria-*` attribute or the exact `role`). Warns via
+ * in `@liteship/core` (any `aria-*` attribute or the exact `role`). Warns via
  * Diagnostics when invalid keys are dropped, naming the state they came from.
  */
 function validateAttributes(attrs: Record<string, string>, stateName: string): Record<string, string> {
@@ -46,9 +46,9 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
     if (BoundaryAttribute.isAllowedKey(key)) {
       result[key] = value;
     } else {
-      Diagnostics.warn({
-        source: 'czap/compiler.aria',
-        code: 'invalid-aria-key',
+      Diagnostics.warnRegistered({
+        source: 'liteship/compiler.aria',
+        code: 'compiler/aria/invalid-aria-key',
         message: `Attribute "${key}" in state "${stateName}" is not a valid ARIA key and was dropped. Use an aria-* attribute or "role" — e.g. 'aria-expanded': 'false'.`,
       });
     }
@@ -70,10 +70,10 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { ARIACompiler } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { ARIACompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'collapsed'], [768, 'expanded']],
  * });
@@ -90,7 +90,7 @@ function validateAttributes(attrs: Record<string, string>, stateName: string): R
  * @param currentState - The currently active state
  * @returns An {@link ARIACompileResult} with validated state attributes
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { [S in StateUnion<B> & string]: Record<string, string> },
   currentState: StateUnion<B>,
@@ -106,13 +106,13 @@ function compile<B extends Boundary.Shape>(
     stateAttributes[stateName] = raw ? validateAttributes(raw, stateName) : {};
   }
 
-  // StateUnion<B> already extends string via Boundary.Shape's non-empty-tuple S constraint.
+  // StateUnion<B> already extends string via Boundary's non-empty-tuple S constraint.
   // Via dispatch, currentState is plain string — a typo would silently emit no ARIA at all.
   const current = stateAttributes[currentState];
   if (current === undefined) {
-    Diagnostics.warn({
-      source: 'czap/compiler.aria',
-      code: 'unknown-current-state',
+    Diagnostics.warnRegistered({
+      source: 'liteship/compiler.aria',
+      code: 'compiler/aria/unknown-current-state',
       message: `currentState "${String(currentState)}" is not one of [${stateNames.join(', ')}]; emitting no attributes. Pass one of the boundary's state names.`,
     });
   }
@@ -131,10 +131,10 @@ function compile<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { ARIACompiler } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { ARIACompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

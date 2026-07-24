@@ -9,7 +9,7 @@
  */
 
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
-import { PROJECTION_KEYS_SOURCE } from '@czap/core';
+import { PROJECTION_KEYS_SOURCE } from '@liteship/core';
 
 /**
  * JavaScript source of the inline compositor worker.

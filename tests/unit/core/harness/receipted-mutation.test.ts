@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { defineCapsule, schema } from '@liteship/core';
+import { resetCapsuleCatalog } from '@liteship/core/testing';
+import * as Harness from '@liteship/core/harness';
 
 describe('generateReceiptedMutation', () => {
   beforeEach(() => resetCapsuleCatalog());
@@ -14,8 +14,8 @@ describe('generateReceiptedMutation', () => {
   const base = {
     _kind: 'receiptedMutation' as const,
     name: 'demo.issueReceipt',
-    input: S.struct({ token: S.string }),
-    output: S.struct({ status: S.string }),
+    input: schema.struct({ token: schema.string }),
+    output: schema.struct({ status: schema.string }),
     capabilities: { reads: [], writes: ['ledger.entries'] },
     invariants: [],
     budgets: { p95Ms: 5 },

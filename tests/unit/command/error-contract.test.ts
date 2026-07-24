@@ -21,7 +21,7 @@ import {
   assetVerifyCommand,
   sceneVerifyCommand,
   sceneRenderCommand,
-} from '@czap/command';
+} from '@liteship/command';
 import { renderWithFfmpeg } from '../../../packages/command/src/host/ffmpeg.js';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 
@@ -38,7 +38,7 @@ describe('dispatcher unknown_command teaches the nearest match', () => {
     const payload = result.payload as { error: string; name: string; didYouMean?: string; hint: string };
     expect(payload.error).toBe('unknown_command');
     expect(payload.didYouMean).toBe('capsule.list');
-    expect(payload.hint).toContain('czap help');
+    expect(payload.hint).toContain('liteship help');
   });
 
   it('a far-off name omits didYouMean but keeps the hint', async () => {
@@ -46,7 +46,7 @@ describe('dispatcher unknown_command teaches the nearest match', () => {
     const payload = result.payload as { error: string; didYouMean?: string; hint: string };
     expect(payload.error).toBe('unknown_command');
     expect(payload.didYouMean).toBeUndefined();
-    expect(payload.hint).toContain('czap help');
+    expect(payload.hint).toContain('liteship help');
   });
 });
 
@@ -56,7 +56,7 @@ describe('dispatcher no_registry_handler names the CLI as the way to run it', ()
     const payload = result.payload as { error: string; executionKind?: string; hint: string };
     expect(payload.error).toBe('no_registry_handler');
     expect(payload.executionKind).toBe('cli-orchestration');
-    expect(payload.hint).toContain('czap gauntlet');
+    expect(payload.hint).toContain('liteship gauntlet');
   });
 });
 
@@ -86,7 +86,7 @@ describe('ONE capsule-manifest wording across capsule/asset/scene', () => {
     const messages = [inspect, list, verify, analyze, assetVerify, sceneVerify].map((r) => errorOf(r.payload));
     expect(new Set(messages).size).toBe(1);
     expect(messages[0]).toContain('looked at /repo/reports/capsule-manifest.json');
-    expect(messages[0]).toContain('CZAP_CAPSULE_MANIFEST');
+    expect(messages[0]).toContain('LITESHIP_CAPSULE_MANIFEST');
     expect(messages[0]).toContain('pnpm run capsule:compile');
     for (const r of [inspect, list, verify, analyze, assetVerify, sceneVerify]) expect(r.exitCode).toBe(1);
   });
@@ -110,7 +110,7 @@ describe('scene failure messages carry the subject + the literal next step', () 
     );
     const message = errorOf(result.payload);
     expect(message).toContain('no sceneComposition capsule exported from examples/intro.ts');
-    expect(message).toContain('czap glossary capsule');
+    expect(message).toContain('liteship glossary capsule');
   });
 
   it('scene.render without --output derives the path instead of demanding the flag', async () => {
@@ -169,7 +169,7 @@ describe('ffmpeg EPIPE failure re-runs the probe for a platform diagnosis', () =
       }),
     };
     const rejection = await renderWithFfmpeg(exploding, {
-      output: join(tmpdir(), 'czap-error-contract-never-written.mp4'),
+      output: join(tmpdir(), 'liteship-error-contract-never-written.mp4'),
       width: 64,
       height: 64,
       fps: 10,

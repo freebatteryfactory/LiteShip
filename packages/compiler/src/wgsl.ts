@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { Boundary, StateUnion } from '@czap/core';
+import type { Boundary, StateUnion } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -146,10 +146,10 @@ function toStructName(input: string): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { WGSLCompiler } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { WGSLCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'viewport',
  *   at: [[0, 'mobile'], [768, 'desktop']],
  * });
@@ -166,7 +166,7 @@ function toStructName(input: string): string {
  * @param states   - Per-state scalar/vector value maps
  * @returns A {@link WGSLCompileResult} with structs, bindings, and declarations
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { [S in StateUnion<B> & string]: Record<string, WGSLUniformValue> },
 ): WGSLCompileResult {
@@ -233,7 +233,7 @@ function compile<B extends Boundary.Shape>(
   );
 
   const declarations = [
-    '// === czap WGSL Boundary State ===',
+    '// === liteship WGSL Boundary State ===',
     '',
     ...stateConsts,
     `const STATE_COUNT: u32 = ${stateNames.length}u;`,
@@ -251,7 +251,7 @@ function compile<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { WGSLCompiler } from '@czap/compiler';
+ * import { WGSLCompiler } from '@liteship/compiler';
  *
  * const result = WGSLCompiler.compile(boundary, states);
  * const wgsl = WGSLCompiler.serialize(result);
@@ -274,10 +274,10 @@ function serialize(result: WGSLCompileResult): string {
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { WGSLCompiler } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { WGSLCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'viewport',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

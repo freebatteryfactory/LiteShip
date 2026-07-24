@@ -8,7 +8,7 @@
 
 > **nodeFromParts**\<`N`\>(`parts`): `N`
 
-Defined in: [core/src/document-graph-address.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L80)
+Defined in: [core/src/graph/document-graph-address.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph-address.ts#L80)
 
 Build a sealed [DocumentGraphNode](../type-aliases/DocumentGraphNode.md) from authoring parts — mints `id` via
 `addressNode` / [sealNode](sealNode.md). Graph-level `digest` is minted by

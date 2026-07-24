@@ -6,7 +6,7 @@
 
 # Interface: NodePatchOp
 
-Defined in: [core/src/graph-patch.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L42)
+Defined in: [core/src/graph/graph-patch.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L42)
 
 A node-level mutation: add/remove/update a single addressed [DocumentGraphNode](../type-aliases/DocumentGraphNode.md).
 
@@ -16,7 +16,7 @@ A node-level mutation: add/remove/update a single addressed [DocumentGraphNode](
 
 > `readonly` **family**: [`NodeFamily`](../type-aliases/NodeFamily.md)
 
-Defined in: [core/src/graph-patch.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L44)
+Defined in: [core/src/graph/graph-patch.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L44)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/graph-patch.ts:44](https://github.com/freebatteryfactory/L
 
 > `readonly` **node**: [`DocumentGraphNode`](../type-aliases/DocumentGraphNode.md)
 
-Defined in: [core/src/graph-patch.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L45)
+Defined in: [core/src/graph/graph-patch.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L45)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/graph-patch.ts:45](https://github.com/freebatteryfactory/L
 
 > `readonly` **op**: `"add"` \| `"remove"` \| `"update"`
 
-Defined in: [core/src/graph-patch.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L43)
+Defined in: [core/src/graph/graph-patch.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L43)

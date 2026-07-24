@@ -6,7 +6,7 @@
 
 # Interface: RevealChainStep
 
-Defined in: [core/src/reveal.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L332)
+Defined in: [core/src/motion/reveal.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L332)
 
 One authored step in a [RevealChainInput](RevealChainInput.md): a pose→pose tween on the target.
 
@@ -16,7 +16,7 @@ One authored step in a [RevealChainInput](RevealChainInput.md): a pose→pose tw
 
 > `readonly` `optional` **delayMs?**: `number`
 
-Defined in: [core/src/reveal.ts:337](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L337)
+Defined in: [core/src/motion/reveal.ts:337](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L337)
 
 Dead time before this step within the sequence (rides the seq offset).
 
@@ -26,7 +26,7 @@ Dead time before this step within the sequence (rides the seq offset).
 
 > `readonly` **from**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/reveal.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L333)
+Defined in: [core/src/motion/reveal.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L333)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [core/src/reveal.ts:333](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **to**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/reveal.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L334)
+Defined in: [core/src/motion/reveal.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L334)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [core/src/reveal.ts:334](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: [core/src/reveal.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L335)
+Defined in: [core/src/motion/reveal.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L335)

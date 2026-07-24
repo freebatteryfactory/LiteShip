@@ -8,7 +8,7 @@
 
 > **ok**\<`P`\>(`command`, `payload`): [`CapsuleCommandResult`](../type-aliases/CapsuleCommandResult.md)\<`P`\>
 
-Defined in: [command/src/registry.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L442)
+Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L512)
 
 Stamp a SUCCESS envelope: `status: 'ok'` + the volatile wall-clock timestamp +
 the typed payload, no `exitCode` (ok maps to 0 at the adapter). The command

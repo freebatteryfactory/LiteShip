@@ -1,10 +1,10 @@
 /**
  * MCP tool dispatch — routes tools/call through the ONE shared command
- * registry/dispatcher (`@czap/command`) and returns the structured
+ * registry/dispatcher (`@liteship/command`) and returns the structured
  * `CapsuleCommandResult.payload` as `structuredContent`. No CLI argv, no
  * stdout capture, no `process.stdout.write` monkey-patch: MCP and CLI are
- * sibling skins over the same dispatcher, and `@czap/mcp-server` never imports
- * `@czap/cli`.
+ * sibling skins over the same dispatcher, and `@liteship/mcp-server` never imports
+ * `@liteship/cli`.
  *
  * Entry point `dispatch` accepts a typed JSON-RPC `Request | Notification`
  * (post-`JsonRpcServer.parse` classification) and produces a
@@ -17,10 +17,10 @@
  * @module
  */
 
-import { CommandDispatcher, commandRegistry, mcpExposedDescriptors } from '@czap/command';
-import { fnv1a } from '@czap/core';
-import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@czap/core';
-import { createNodeCommandContext } from '@czap/command/host';
+import { CommandDispatcher, commandRegistry, mcpExposedDescriptors } from '@liteship/command';
+import { fnv1a } from '@liteship/core';
+import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@liteship/core';
+import { createNodeCommandContext } from '@liteship/command/host';
 import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources, readResource } from './resources.js';
@@ -28,8 +28,8 @@ import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
 import { listManifestResources, readManifestResource } from './manifest-resource.js';
 import { listPrompts, getPrompt } from './prompts.js';
-import type { LiteShipError } from '@czap/error';
-import { ValidationError, isTaggedError, matchTagOr } from '@czap/error';
+import type { LiteShipError } from '@liteship/error';
+import { ValidationError, isTaggedError, matchTagOr } from '@liteship/error';
 import { RESOURCE_NOT_FOUND } from './errors.js';
 import {
   type JsonRpcId,
@@ -363,9 +363,9 @@ export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult
 
 /**
  * MCP tool catalog — projected from the ONE canonical command catalog in
- * @czap/command (the mcpExposed subset). No hand-maintained parallel table:
+ * @liteship/command (the mcpExposed subset). No hand-maintained parallel table:
  * this is the same descriptor source the CLI's `describe`/`completion`/`help`
- * project, so MCP `tools/list` and `czap describe --format=mcp` agree by
+ * project, so MCP `tools/list` and `liteship describe --format=mcp` agree by
  * construction.
  */
 export function listTools(): ReadonlyArray<{

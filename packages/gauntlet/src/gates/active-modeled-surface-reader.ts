@@ -16,7 +16,7 @@
 import { defineFactGate, type FactBundle, type FactGate, type Gate, type GateContext } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type { ActiveSurfaceEntry, ActiveSurfaceFacts, ActiveSurfacePromotion } from '../active-surface-facts.js';
+import type { ActiveSurfaceEntry, ActiveSurfaceFacts, ActiveSurfacePromotion } from '../facts/active-surface-facts.js';
 
 /** The gate id — namespaces every {@link Finding} it emits. */
 const RULE_ID = 'gauntlet/active-modeled-surface-reader';
@@ -33,7 +33,7 @@ function unreadFieldsFinding(entry: ActiveSurfaceEntry): Finding {
     level: 'L2',
     title: `Active surface '${entry.family}' has unread fields: ${unread}`,
     detail: `The '${entry.family}' node family is ACTIVE (live in the document graph) but ${entry.unreadFields.length} load-bearing field(s) — ${unread} — have NO read in the enrolled reader path(s) (${readers}). Fields read: ${read}. Required: ${entry.requiredFields.join(', ')}. This is field-level orphan detection (#132): a declaration without its consumer. Severity ${severity} (${entry.promotion}) — blocking when the interpreter lands (#130).`,
-    location: { file: entry.readerFiles[0] ?? 'packages/core/src/document-graph.ts', line: 1 },
+    location: { file: entry.readerFiles[0] ?? 'packages/core/src/graph/document-graph.ts', line: 1 },
     coverageClass: 'symbol-evidenced',
     remediation: {
       kind: 'instruction',

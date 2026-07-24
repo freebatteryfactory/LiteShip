@@ -23,9 +23,9 @@
  * @module
  */
 
-import type { System, World as WorldNS, Entity } from '@czap/core';
-import { defineCapsule, World, S } from '@czap/core';
-import { InvariantViolationError } from '@czap/error';
+import type { System, World as WorldNS, Entity } from '@liteship/core';
+import { defineCapsule, createWorld, schema } from '@liteship/core';
+import { InvariantViolationError } from '@liteship/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './capsules/beat-binding.js';
 import { VideoSystem } from './systems/video.js';
@@ -44,13 +44,13 @@ const CANONICAL_SYSTEM_COUNT = 7;
 // Capsule declaration
 // ---------------------------------------------------------------------------
 
-const SceneRuntimeInputSchema = S.struct({
-  scene: S.unknown,
+const SceneRuntimeInputSchema = schema.struct({
+  scene: schema.unknown,
 });
 
-const SceneRuntimeOutputSchema = S.struct({
-  systemsRegistered: S.number,
-  entitySpawnCount: S.number,
+const SceneRuntimeOutputSchema = schema.struct({
+  systemsRegistered: schema.number,
+  entitySpawnCount: schema.number,
 });
 
 /**
@@ -123,10 +123,10 @@ export interface SceneRuntimeOptions {
 /** Live runtime handle returned by {@link SceneRuntime.build}. */
 export interface SceneRuntimeHandle {
   /** The underlying ECS world — exposed for query-based assertions. */
-  readonly world: WorldNS.Shape;
+  readonly world: WorldNS;
   /**
    * Query entities carrying ALL named components, resolved through a Promise.
-   * Wraps the now-synchronous {@link WorldNS.Shape.query} so the astro scene
+   * Wraps the now-synchronous {@link WorldNS.query} so the astro scene
    * bridge can `await` the result without importing Effect (gate 24's
    * Promise-facade decision) — the same entity shape `world.query` returns.
    */
@@ -166,7 +166,7 @@ export interface SceneRuntimeHandle {
 /**
  * Build a live SceneRuntime handle from a {@link CompiledScene}.
  *
- * Holds the world's {@link WorldNS.Handle} lifetime so the caller
+ * Holds the world (which owns its own teardown) so the caller
  * controls when finalizers run. Systems are registered in the
  * canonical topological order — this matches ADR-0009's
  * ECS-as-scene-substrate discipline.
@@ -193,9 +193,9 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   // advance each tick.
   const ctx = { frameIndex: 0, timeMs: 0 };
 
-  // Build the world paired with the Lifetime that owns its teardown —
-  // the long-lived owner of the world (and any future resources).
-  const { world, lifetime } = World.make();
+  // Build the world — the long-lived owner of its own teardown (and any
+  // future resources threaded through `world.lifetime`).
+  const world = createWorld();
 
   // Spawn one entity per compiled track.
   let entitySpawnCount = 0;
@@ -270,7 +270,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     release: async () => {
       if (released) return;
       released = true;
-      await lifetime.dispose();
+      await world.dispose();
     },
   };
 

@@ -6,7 +6,7 @@
  *
  * @module
  */
-import { closestMatch, decode, type CapsuleCommandInvocation, type CapsuleCommandResult } from '@czap/core';
+import { closestMatch, decode, type CapsuleCommandInvocation, type CapsuleCommandResult } from '@liteship/core';
 import {
   capabilityUnavailable,
   failed,
@@ -32,7 +32,7 @@ interface CommandDispatcherShape {
 }
 
 /** Nearest registered command name, when plausibly a typo (distance ≤ 3). */
-function nearestCommand(name: string, registry: CommandRegistry.Shape): string | undefined {
+function nearestCommand(name: string, registry: CommandRegistry): string | undefined {
   return closestMatch(
     name,
     registry.list().map((descriptor) => descriptor.name),
@@ -40,7 +40,7 @@ function nearestCommand(name: string, registry: CommandRegistry.Shape): string |
   );
 }
 
-function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
+function make(registry: CommandRegistry): CommandDispatcherShape {
   async function dispatch(
     invocation: CapsuleCommandInvocation,
     context: CommandContext,
@@ -55,13 +55,13 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
         name: invocation.name,
         ...(didYouMean !== undefined ? { didYouMean } : {}),
         // One dispatcher serves both hosts: name the catalog entry point
-        // for each (CLI verb chart, MCP tool list).
-        hint: 'run `czap help` for the verb chart; over MCP, tools/list (or liteship://registry/commands) shows the catalog',
+        // for each (CLI command list, MCP tool list).
+        hint: 'run `liteship help` for the command list; over MCP, tools/list (or liteship://registry/commands) shows the catalog',
       });
     }
     if (!command.handler) {
       // Declared in the catalog but handler-less: cli-orchestration commands
-      // run only via the czap CLI by design; anything else is pending
+      // run only via the liteship CLI by design; anything else is pending
       // migration. Fail structurally either way (error code is stable).
       const cliOwned = command.descriptor.executionKind === 'cli-orchestration';
       return failed(invocation.name, {
@@ -69,8 +69,8 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
         name: invocation.name,
         ...(command.descriptor.executionKind !== undefined ? { executionKind: command.descriptor.executionKind } : {}),
         hint: cliOwned
-          ? `\`${invocation.name}\` runs only via the czap CLI (terminal orchestration) — type \`czap ${invocation.name}\``
-          : `\`${invocation.name}\` is declared in the catalog but its handler has not been migrated — run it via the czap CLI`,
+          ? `\`${invocation.name}\` runs only via the liteship CLI (terminal orchestration) — type \`liteship ${invocation.name}\``
+          : `\`${invocation.name}\` is declared in the catalog but its handler has not been migrated — run it via the liteship CLI`,
       });
     }
     // Declared capability requirements (descriptor `requires`) are enforced
@@ -99,7 +99,7 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
             code: issue.code,
             message: issue.message,
           })),
-          hint: `\`${invocation.name}\` rejected its arguments — check the named paths against the command's inputSchema (\`czap describe\` or MCP tools/list)`,
+          hint: `\`${invocation.name}\` rejected its arguments — check the named paths against the command's inputSchema (\`liteship describe\` or MCP tools/list)`,
         });
       }
       args = decoded.value;
@@ -114,6 +114,4 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
 }
 
 export const CommandDispatcher = { make };
-export declare namespace CommandDispatcher {
-  export type Shape = CommandDispatcherShape;
-}
+export type CommandDispatcher = CommandDispatcherShape;

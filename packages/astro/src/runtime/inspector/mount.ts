@@ -4,7 +4,7 @@
  * The Astro dev-toolbar app passes its `init(canvas)` ShadowRoot; a jsdom test
  * passes a host's own `attachShadow` root. We render `<style>` + the panel
  * structure into `root` and return a handle whose `refresh()` re-scans
- * `[data-czap-boundary]` elements and whose `dispose()` drains every wired
+ * `[data-liteship-boundary]` elements and whose `dispose()` drains every wired
  * observer/listener — by iterating the {@link panelHandles} MAP, never the live
  * DOM (a boundary removed before dispose is gone from the query yet still leaks).
  *
@@ -28,7 +28,7 @@ export interface InspectorHandle {
  * The Astro dev-toolbar app passes its `init(canvas)` ShadowRoot; the
  * jsdom browser test passes a host's own `attachShadow` root. We render
  * `<style>` + the panel structure into `root` and return a handle whose
- * `refresh()` re-scans `[data-czap-boundary]` elements. No global host
+ * `refresh()` re-scans `[data-liteship-boundary]` elements. No global host
  * element is created and no custom element is registered — the render
  * target IS the realm boundary, supplied by Astro's toolbar.
  *
@@ -45,7 +45,7 @@ export function mountInspectorPanel(root: ShadowRoot | DocumentFragment | HTMLEl
   const header = document.createElement('div');
   header.className = 'header';
   const title = document.createElement('h2');
-  title.textContent = 'czap boundaries';
+  title.textContent = 'liteship boundaries';
   header.appendChild(title);
 
   const body = document.createElement('div');
@@ -69,7 +69,7 @@ export function mountInspectorPanel(root: ShadowRoot | DocumentFragment | HTMLEl
         child.remove();
       }
       // Iterate the handle map itself, not the live DOM: a boundary removed
-      // before dispose is gone from `querySelectorAll('[data-czap-boundary]')`
+      // before dispose is gone from `querySelectorAll('[data-liteship-boundary]')`
       // but its handle (observers/listeners) still sits in `panelHandles` and
       // would leak across remounts. The map is the source of truth for what was
       // wired; drain it fully.

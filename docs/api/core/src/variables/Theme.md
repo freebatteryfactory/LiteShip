@@ -6,34 +6,53 @@
 
 # Variable: Theme
 
-> `const` **Theme**: `ThemeFactory` & `object`
+> `const` **Theme**: `object`
 
-Defined in: [core/src/theme.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/theme.ts#L99)
+Defined in: [core/src/authoring/theme.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L142)
 
-Theme namespace -- theme primitive for constraint-based adaptive rendering.
-
-Map token names to variant-keyed values, enabling coherent multi-variant
-token resolution (e.g. light/dark themes). Content-addressed via FNV-1a.
+Theme — the resolution namespace for a Theme definition. Construction
+lives in the standalone [defineTheme](../functions/defineTheme.md); this object carries
+[Theme.tap](#tap) (resolve all tokens for a given variant).
 
 ## Type Declaration
 
 ### tap
 
-> **tap**: *typeof* `_tap`
+> **tap**: \<`V`\>(`theme`, `variant`) => `Record`\<`string`, `unknown`\> = `_tap`
 
-## Example
+Resolve all tokens for a given variant, returning a map of token name to value.
+
+Iterates the theme's token map and extracts each token's value for the
+specified variant.
+
+#### Type Parameters
+
+##### V
+
+`V` *extends* readonly `string`[]
+
+#### Parameters
+
+##### theme
+
+`ThemeDef`\<`V`\>
+
+##### variant
+
+`V`\[`number`\]
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+#### Example
 
 ```ts
-import { Theme } from '@czap/core';
-
-const theme = Theme.make({
+const theme = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'],
-  tokens: {
-    bg: { light: '#fff', dark: '#111' },
-    fg: { light: '#000', dark: '#eee' },
-  },
+  tokens: { bg: { light: '#fff', dark: '#111' }, fg: { light: '#000', dark: '#eee' } },
 });
-const lightTokens = Theme.tap(theme, 'light');
-// lightTokens === { bg: '#fff', fg: '#000' }
+const darkTokens = Theme.tap(theme, 'dark');
+// darkTokens === { bg: '#111', fg: '#eee' }
 ```

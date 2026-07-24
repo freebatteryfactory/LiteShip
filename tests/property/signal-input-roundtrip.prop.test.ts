@@ -1,6 +1,6 @@
 /**
  * Drift guard (property-based) for the sanctioned SignalSource <-> SignalInput
- * bridge in `@czap/core` (`signal-input.ts`).
+ * bridge in `@liteship/core` (`signal-input.ts`).
  *
  * LAW: `inputToSource(sourceToInput(s))` equals `s` after normalization of its
  * omitted discriminants, for every recognized `SignalSource`. The vocabulary
@@ -13,7 +13,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { sourceToInput, inputToSource, type SignalSource } from '@czap/core';
+import { sourceToInput, inputToSource, type SignalSource } from '@liteship/core';
 
 /** Normalize a source the way `Signal.make`/the bridge do (fill omitted defaults). */
 function normalize(s: SignalSource): SignalSource {

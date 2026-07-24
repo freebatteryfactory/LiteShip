@@ -4,10 +4,40 @@
  *
  * @module
  */
-import type { CapsuleCommandDescriptor, CapsuleCommandResult, Clock, ContentAddress, Schema } from '@czap/core';
-import { wallClock } from '@czap/core';
-import type { GauntletResult } from '@czap/gauntlet';
-import { ValidationError } from '@czap/error';
+import type { CapsuleCommandDescriptor, CapsuleCommandResult, Clock, ContentAddress, Schema } from '@liteship/core';
+import { wallClock } from '@liteship/core';
+import type { GauntletResult } from '@liteship/gauntlet';
+import { ValidationError } from '@liteship/error';
+
+/**
+ * The owning-package resolution for one exported symbol — what the injected
+ * {@link CommandContext.resolveApiSymbol} capability returns, and what the
+ * `explain` command projects into its `symbol` arm. `package` is the owning
+ * publishable scope (a `PACKAGE_METADATA_CATALOG` key); `subpath` is a real
+ * non-null package export through which the symbol is consumer-importable;
+ * `file` is the repo-relative source file the symbol is declared in (or the
+ * published declaration file in an installed package);
+ * `summary` is the first paragraph of that declaration's leading TSDoc. Declared
+ * here so the contract lives in `@liteship/command` without an import of the
+ * CLI-side api-index that produces it (the CLI injects it; over MCP the capability
+ * is absent and a symbol lookup degrades to `unresolved`).
+ */
+export interface ApiSymbolResolution {
+  /** The exported symbol name that was resolved. */
+  readonly symbol: string;
+  /** The owning publishable scope (a `PACKAGE_METADATA_CATALOG` key). */
+  readonly package: string;
+  /** The public import subpath the symbol is reachable from (`.` for the main barrel). */
+  readonly subpath: string;
+  /** Repo-relative source file the symbol is declared in. */
+  readonly file: string;
+  /** The declaration kind (`function` / `const` / `class` / `interface` / `type` / `enum`). */
+  readonly kind: string;
+  /** The first paragraph of the declaration's leading TSDoc (empty when it carries none). */
+  readonly summary: string;
+  /** The owning package's answer-first `description` from `PACKAGE_METADATA_CATALOG`. */
+  readonly packageDescription: string;
+}
 
 /**
  * Injected I/O surface for command handlers. Handlers receive their Node-coupled
@@ -19,7 +49,7 @@ export interface CommandContext {
   readonly cwd?: string;
   /**
    * MONOTONIC clock for measuring command DURATIONS (e.g. compile `durationMs`).
-   * Defaults to `@czap/core`'s `systemClock` (`performance.now`) at the call site.
+   * Defaults to `@liteship/core`'s `systemClock` (`performance.now`) at the call site.
    * Injected so a deterministic replay/test can thread a `manualClock`. This is a
    * DURATION boundary — never feed its reading into a `new Date()` / ISO stamp /
    * HLC (those are TIMESTAMPS and use the wall clock).
@@ -27,7 +57,7 @@ export interface CommandContext {
   readonly clock?: Clock;
   /**
    * Capture a subprocess's stdout + exit code. Adapters back this with their
-   * own spawn helper (e.g. @czap/cli's `spawnArgvCapture`); handlers stay free
+   * own spawn helper (e.g. @liteship/cli's `spawnArgvCapture`); handlers stay free
    * of `node:child_process`. Absent in pure/test contexts — handlers must
    * degrade gracefully (treat as "not available").
    */
@@ -36,13 +66,13 @@ export interface CommandContext {
     args: readonly string[],
   ) => Promise<{ readonly exitCode: number; readonly stdout: string }>;
   /**
-   * The host adapter's own czap version (its package version). Supplied by the
+   * The host adapter's own liteship version (its package version). Supplied by the
    * adapter because the version is a fact about the host, not this package.
    */
   readonly hostVersion?: () => string;
   /**
    * Raw capsule-manifest JSON text, or null when absent. The adapter resolves
-   * the path (honoring CZAP_CAPSULE_MANIFEST) and reads it; the handler parses.
+   * the path (honoring LITESHIP_CAPSULE_MANIFEST) and reads it; the handler parses.
    * Keeps path/env policy on the adapter side.
    */
   readonly manifestSource?: () => string | null;
@@ -62,10 +92,10 @@ export interface CommandContext {
   ) => Promise<{ readonly exitCode: number; readonly stderrTail: string }>;
   /**
    * Run the profile-driven audit engine (structure/integrity/surface) and return
-   * a structured summary. Adapter-backed by `@czap/audit`, which is INJECTED here
-   * (not imported) so `@czap/command` — and therefore `@czap/mcp-server` — never
+   * a structured summary. Adapter-backed by `@liteship/audit`, which is INJECTED here
+   * (not imported) so `@liteship/command` — and therefore `@liteship/mcp-server` — never
    * takes a build edge on the TypeScript-compiler/fast-glob audit engine. Only
-   * `@czap/cli` provides it; `audit` is not MCP-exposed, so the capability is
+   * `@liteship/cli` provides it; `audit` is not MCP-exposed, so the capability is
    * absent in the MCP context and the handler degrades to a structured failure.
    */
   readonly runAudit?: (input: {
@@ -78,24 +108,24 @@ export interface CommandContext {
    * three-pass audit engine, collect the `rule@file` warning inventory, and diff
    * it against the pinned `AUDIT_WARNING_FLOOR`. Drift (added/removed warnings or
    * ANY error) fails the gate. Returns a structured verdict — no process.exit, no
-   * stdout. Like {@link runAudit}, it is backed by the heavy `@czap/audit` engine,
-   * so it is NOT provisioned in the shared host factory: only `@czap/cli` injects
+   * stdout. Like {@link runAudit}, it is backed by the heavy `@liteship/audit` engine,
+   * so it is NOT provisioned in the shared host factory: only `@liteship/cli` injects
    * it. `audit-floor` is therefore not MCP-exposed — over MCP the capability is
    * absent and the handler degrades to a structured failure (capabilityUnavailable).
    */
   readonly runAuditFloor?: () => Promise<AuditFloorSummary>;
   /**
    * Run the package-smoke release gate over the repo at `cwd`: `pnpm pack` every
-   * publishable `@czap/*` scope, install the tarballs into an isolated consumer
+   * publishable `@liteship/*` scope, install the tarballs into an isolated consumer
    * fixture, assert no `workspace:` protocol leaked into the packed manifests, and
-   * import-smoke every declared module specifier (plus the `czap` binstub).
+   * import-smoke every declared module specifier (plus the `liteship` binstub).
    * Returns a structured pass/fail verdict — no process.exit, no stdout. Unlike
    * the `node:fs` scan gates (`runPlumb` / `runCheckInvariants`, host-provisioned
    * and MCP-exposed), this gate is a terminal-streaming SUBPROCESS orchestrator —
    * it spawns `pnpm pack` per package, `pnpm install`, `tar`, and `node` (minutes
    * of runtime, mutating a scratch tree under `os.tmpdir()`), in the same category
    * as `gauntlet`/`ship`. So like `runAuditFloor` it is NOT provisioned in the
-   * shared host factory: only `@czap/cli` injects it, and the command is NOT
+   * shared host factory: only `@liteship/cli` injects it, and the command is NOT
    * MCP-exposed — over MCP it degrades to a structured `capabilityUnavailable`.
    */
   readonly runPackageSmoke?: () => Promise<PackageSmokeSummary>;
@@ -109,7 +139,7 @@ export interface CommandContext {
    * (and unlike the pure `node:fs` scans `runPlumb` / `runCheckInvariants`), the
    * freshness confirmation spawns `capsule:compile` and the final pass spawns
    * `vitest` — a terminal-streaming SUBPROCESS orchestrator. So it is NOT
-   * provisioned in the shared host factory: only `@czap/cli` injects it, and the
+   * provisioned in the shared host factory: only `@liteship/cli` injects it, and the
    * command is NOT MCP-exposed — over MCP it degrades to a structured
    * `capabilityUnavailable`.
    */
@@ -120,7 +150,7 @@ export interface CommandContext {
    * coverage) and check every published package carries a `PACKAGE_PLUMB`
    * classification. Returns a structured verdict — no process.exit, no stdout.
    * Backed by `node:fs` directory scanning, so unlike `runAudit` (the heavy
-   * `@czap/audit` engine) it is provisioned in the shared host factory
+   * `@liteship/audit` engine) it is provisioned in the shared host factory
    * (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
    * the MCP host — an agent can call `plumb` over MCP and read the work-list.
    */
@@ -131,7 +161,7 @@ export interface CommandContext {
    * default export / hand-parsed signal axis) and check every committed text file
    * matches the `.gitattributes` eol policy. Returns a structured verdict — no
    * process.exit, no stdout. Backed by `node:fs` + a `git ls-files --eol` probe,
-   * so like `runPlumb` (and unlike the heavy `@czap/audit` `runAudit` engine) it is
+   * so like `runPlumb` (and unlike the heavy `@liteship/audit` `runAudit` engine) it is
    * provisioned in the shared host factory (`createNodeCommandContext`) and is
    * therefore available to BOTH the CLI and the MCP host — an agent can call
    * `check-invariants` over MCP and read the grouped violation list.
@@ -143,13 +173,13 @@ export interface CommandContext {
    * LiteShip gates, the committed assurance map, and the committed waivers, runs
    * the authority ratchet, and returns the structured {@link GauntletResult}
    * (findings + per-gate outcomes + a single blocking verdict). This is the
-   * tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
-   * FOLD, whereas the CLI-owned `gauntlet` command spawns the 28-phase
-   * `gauntlet:full` orchestrator. Backed by `@czap/gauntlet`'s `node:fs` glob,
-   * so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@czap/audit`
+   * tasks-vs-gates distinction made real: `check.gates` is the fixture-qualified gate
+   * FOLD, whereas the CLI-owned `gauntlet` command spawns the full
+   * `gauntlet:full` orchestrator. Backed by `@liteship/gauntlet`'s `node:fs` glob,
+   * so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@liteship/audit`
    * engine — it is provisioned in the shared host factory
    * (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
-   * the MCP host: an agent can call `check` over MCP and read the Finding[] work-list.
+   * the MCP host: an agent can call `check.gates` over MCP and read the Finding[] work-list.
    *
    * `globs` scopes the file set (defaults to every package's source). The
    * adapter owns the waiver-expiry `now` — a WALL-CLOCK epoch Date, never a
@@ -165,7 +195,7 @@ export interface CommandContext {
   readonly loadAssetBytes?: (assetId: string, source?: string) => ArrayBuffer | null;
   /**
    * Run an audio projection over decoded bytes and return the marker count.
-   * Adapter-backed by @czap/assets — injected (not imported) so @czap/command
+   * Adapter-backed by @liteship/assets — injected (not imported) so @liteship/command
    * does not yet take a domain-package build edge. (Heavy-tier decision: whether
    * command should depend on assets/scene directly, or keep injecting.)
    *
@@ -180,7 +210,7 @@ export interface CommandContext {
   ) => Promise<number>;
   /**
    * Dynamically load a user scene module (the adapter owns the dynamic import,
-   * keeping @czap/command free of it — relevant to the A1-T3 dynamic-import
+   * keeping @liteship/command free of it — relevant to the A1-T3 dynamic-import
    * audit). Null when the module can't be loaded.
    */
   readonly loadSceneModule?: (scenePath: string) => Promise<Record<string, unknown> | null>;
@@ -189,13 +219,13 @@ export interface CommandContext {
   /**
    * Execute a loaded scene module's compile function (the adapter runs it,
    * including any Effect). Keeps the `effect` runtime + arbitrary-user-code
-   * execution out of @czap/command. Throws on compile failure.
+   * execution out of @liteship/command. Throws on compile failure.
    */
   readonly runSceneCompile?: (sceneModule: Record<string, unknown>) => Promise<void>;
   /**
    * Render a scene to the output path via the host's compositor + ffmpeg
    * pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
-   * + ffmpeg spawn); keeps the render backend out of @czap/command.
+   * + ffmpeg spawn); keeps the render backend out of @liteship/command.
    */
   readonly renderScene?: (params: {
     readonly fps: number;
@@ -220,6 +250,19 @@ export interface CommandContext {
       }
     | { readonly ok: false; readonly error: string }
   >;
+  /**
+   * Resolve an exported symbol → its owning package + source file + one-paragraph
+   * TSDoc summary — the CLI-side api-index the `explain` command uses for its
+   * SYMBOL arm. Adapter-backed by `@liteship/cli`'s `buildApiSymbolResolver`
+   * (a source scan over `packages/*​/src`, cross-referenced against
+   * `PACKAGE_METADATA_CATALOG`), INJECTED here so `@liteship/command` — and
+   * therefore `@liteship/mcp-server` — never takes a build edge on the CLI's
+   * repo-scanning index. Only `@liteship/cli` provides it; over MCP the capability
+   * is absent and `explain <symbol>` degrades to an `unresolved` result (the
+   * DIAGNOSTIC-CODE arm is data-only and works everywhere). Returns `null` when the
+   * symbol is declared in no scanned package source.
+   */
+  readonly resolveApiSymbol?: (symbol: string) => ApiSymbolResolution | null;
   /** Recompute a tarball's manifest address (adapter runs the Effect). */
   readonly recomputeTarballAddress?: (
     bytes: Uint8Array,
@@ -230,8 +273,8 @@ export interface CommandContext {
 }
 
 /**
- * One audit finding — a structural mirror of `@czap/audit`'s `AuditFinding`,
- * declared here so the contract lives in `@czap/command` without an import of
+ * One audit finding — a structural mirror of `@liteship/audit`'s `AuditFinding`,
+ * declared here so the contract lives in `@liteship/command` without an import of
  * the engine.
  */
 export interface AuditEngineFinding {
@@ -247,8 +290,8 @@ export interface AuditEngineFinding {
 
 /**
  * Structured summary returned by the injected {@link CommandContext.runAudit}
- * capability — a structural mirror of `@czap/audit`'s pass result, declared here
- * so the contract lives in `@czap/command` without an import of the engine.
+ * capability — a structural mirror of `@liteship/audit`'s pass result, declared here
+ * so the contract lives in `@liteship/command` without an import of the engine.
  */
 export interface AuditEngineSummary {
   readonly errorCount: number;
@@ -272,7 +315,7 @@ export interface AuditEngineSummary {
  * capability — the artifact-independent three-pass warning floor, diffed against
  * the pinned `AUDIT_WARNING_FLOOR`. `ok` ⟺ no warning drift (no added/removed
  * inventory keys) AND no errors. Declared here so the `audit-floor` command's
- * contract lives in `@czap/command` without an import of the heavy engine.
+ * contract lives in `@liteship/command` without an import of the heavy engine.
  */
 export interface AuditFloorSummary {
   readonly ok: boolean;
@@ -292,14 +335,14 @@ export interface AuditFloorSummary {
  * Structured verdict returned by the injected {@link CommandContext.runPackageSmoke}
  * capability — the release-grade pack/install/import smoke. `ok` ⟺ every package
  * packed, installed, carried no `workspace:` leak, and every declared module
- * specifier (plus the `czap` binstub) resolved. `failedStep` + `failure` carry the
+ * specifier (plus the `liteship` binstub) resolved. `failedStep` + `failure` carry the
  * bracketed step label and message of the first failure (so a CI log identifies it
  * without artifact download). Declared here so the `package-smoke` command's
- * contract lives in `@czap/command` without an import of the heavy CLI engine.
+ * contract lives in `@liteship/command` without an import of the heavy CLI engine.
  */
 export interface PackageSmokeSummary {
   readonly ok: boolean;
-  /** Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`. */
+  /** Number of `@liteship/*` (+ unscoped) scopes packed via `pnpm pack`. */
   readonly packagesPacked: number;
   /** Number of module specifiers the import-smoke resolved (0 when it never ran). */
   readonly importsSmoked: number;
@@ -312,7 +355,7 @@ export interface PackageSmokeSummary {
 /**
  * Bench-honesty classification across a capsule corpus — a structural mirror of
  * the gate engine's result, declared here so the `capsule-verify` command's
- * contract lives in `@czap/command` without a host import. `real` counts genuine
+ * contract lives in `@liteship/command` without a host import. `real` counts genuine
  * measurements AND typed not-applicable benches (a premise-guard body); every
  * name in `placeholder` is a comment-only bench measuring nothing (the bench
  * analogue of `it.skip` — green but covering nothing).
@@ -334,7 +377,7 @@ export interface CapsuleBenchClassification {
  * the whole generated suite passes; `stale` means a missing/stale/dishonest
  * artifact (run `capsule:compile`); `failed` means the generated tests ran red.
  * `errors` is the human work-list (empty on success). Declared here so the
- * `capsule-verify` command's contract lives in `@czap/command` without a host import.
+ * `capsule-verify` command's contract lives in `@liteship/command` without a host import.
  */
 export interface CapsuleGateSummary {
   readonly status: 'ok' | 'stale' | 'failed';
@@ -349,13 +392,13 @@ export interface CapsuleGateSummary {
 /**
  * One skipped generated test — a placeholder standing in for unwired work. A
  * structural mirror of the host scan's result item, declared here so the
- * `plumb` command's contract lives in `@czap/command` without a host import.
+ * `plumb` command's contract lives in `@liteship/command` without a host import.
  */
 export interface PlumbSkip {
   readonly file: string;
   /**
    * The detected skip TOKEN as it appears in source — the SAME alias-aware detector the
-   * `no-skipped-test` gate uses (`@czap/gauntlet`'s `detectSkips`). Covers every form a
+   * `no-skipped-test` gate uses (`@liteship/gauntlet`'s `detectSkips`). Covers every form a
    * generated test can carry: the plain call (`it.skip` / `test.skip` / `describe.skip` /
    * `bench.skip` / `it.todo` / `xit`), the runtime-conditional (`it.skipIf` / `it.runIf`),
    * and the bare alias reference (`it.skip` behind a `COND ? it : it.skip` ternary). A
@@ -386,7 +429,7 @@ export interface PlumbGateSummary {
 /**
  * One banned-pattern hit: a repo-relative `file`, 1-based `line`, and the trimmed
  * source `content`. A structural mirror of the host scan's result item, declared
- * here so the `check-invariants` command's contract lives in `@czap/command`
+ * here so the `check-invariants` command's contract lives in `@liteship/command`
  * without a host import.
  */
 export interface InvariantViolation {
@@ -433,6 +476,33 @@ export interface CommandCache {
 export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
 
 /**
+ * The receipt-timestamp clock — a MODULE-BOUNDARY injection point (the two-clock
+ * law), not a per-call `context.clock`: every `ok`/`failed` envelope reads the
+ * SAME source, so the receipt shape lives in one place. Defaults to {@link
+ * wallClock} (real epoch ms), so production stamps are byte-identical to a bare
+ * `new Date(wallClock.now())`. A determinism test installs a `fixedClock` through
+ * {@link _setReceiptClock} to make the full receipt reproducible run-to-run, then
+ * {@link _resetReceiptClock} restores the default — the injection the two-clock law
+ * buys, without an internal-module mock.
+ */
+let receiptClock: Clock = wallClock;
+
+/**
+ * Install the receipt-timestamp clock (testing seam). Underscore-prefixed and NOT
+ * re-exported from the package barrel, so it stays off the public api surface;
+ * a test imports it from `registry.js` directly. Pair every call with {@link
+ * _resetReceiptClock} so the fixed clock never leaks past the test.
+ */
+export function _setReceiptClock(clock: Clock): void {
+  receiptClock = clock;
+}
+
+/** Restore the default {@link wallClock} receipt-timestamp source (testing seam). */
+export function _resetReceiptClock(): void {
+  receiptClock = wallClock;
+}
+
+/**
  * Stamp a SUCCESS envelope: `status: 'ok'` + the volatile wall-clock timestamp +
  * the typed payload, no `exitCode` (ok maps to 0 at the adapter). The command
  * name is threaded ONCE here instead of repeated on every return path in a
@@ -443,7 +513,7 @@ export function ok<P>(command: string, payload: P): CapsuleCommandResult<P> {
   return {
     status: 'ok',
     command,
-    timestamp: new Date(wallClock.now()).toISOString(),
+    timestamp: new Date(receiptClock.now()).toISOString(),
     payload,
   };
 }
@@ -459,7 +529,7 @@ export function failed<P>(command: string, payload: P, exitCode = 1): CapsuleCom
   return {
     status: 'failed',
     command,
-    timestamp: new Date(wallClock.now()).toISOString(),
+    timestamp: new Date(receiptClock.now()).toISOString(),
     exitCode,
     payload,
   };
@@ -478,7 +548,7 @@ export function capabilityUnavailable(command: string, missing: readonly Command
     {
       error: 'capability_unavailable',
       missing,
-      hint: 'build the context with createNodeCommandContext() from @czap/command/host, or inject the missing capabilities into your CommandContext',
+      hint: 'build the context with createNodeCommandContext() from @liteship/command/host, or inject the missing capabilities into your CommandContext',
     },
     2,
   );
@@ -591,6 +661,4 @@ function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
 }
 
 export const CommandRegistry = { make };
-export declare namespace CommandRegistry {
-  export type Shape = CommandRegistryShape;
-}
+export type CommandRegistry = CommandRegistryShape;

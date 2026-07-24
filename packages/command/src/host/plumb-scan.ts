@@ -3,25 +3,25 @@
  * `node:fs` directory walk over a repo root — no process.exit, no stdout — that
  * backs the `runPlumb` capability in {@link createNodeCommandContext}. Kept as a
  * host module (alongside spawn / vitest-runner / ffmpeg) so the pure
- * `@czap/command` registry never takes an fs edge, and so the scan is unit
+ * `@liteship/command` registry never takes an fs edge, and so the scan is unit
  * testable in isolation.
  *
  * @module
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
-import { ParseError } from '@czap/error';
-import { detectSkips, type SkipMatch } from '@czap/gauntlet';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { ParseError } from '@liteship/error';
+import { detectSkips, type SkipMatch } from '@liteship/gauntlet';
 import { PACKAGE_PLUMB } from '../commands/plumb-registry.js';
 import type { PlumbGateSummary, PlumbSkip } from '../registry.js';
 
 /**
  * The skip detector the scan folds — a `(source) => SkipMatch[]`. INJECTED by the caller so the
- * SOUND AST detector (`@czap/audit`'s `detectSkipsAST`, line-agnostic + the structural
- * conditionality) can be used WITHOUT `@czap/command` gaining a `typescript`/`@czap/audit` edge
+ * SOUND AST detector (`@liteship/audit`'s `detectSkipsAST`, line-agnostic + the structural
+ * conditionality) can be used WITHOUT `@liteship/command` gaining a `typescript`/`@liteship/audit` edge
  * (the boundary LAW: the lean token `detectSkips` is the FALLBACK; the CLI host — which deps
- * `@czap/audit` — injects the AST detector). Defaults to the dependency-free token `detectSkips`.
+ * `@liteship/audit` — injects the AST detector). Defaults to the dependency-free token `detectSkips`.
  */
 export type PlumbSkipDetector = (source: string) => readonly SkipMatch[];
 
@@ -29,7 +29,7 @@ export type PlumbSkipDetector = (source: string) => readonly SkipMatch[];
 // used for the work-list line (escape-aware; tolerates a leading ternary condition).
 const FIRST_STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/;
 const MISSING_GENERATED_CORPUS_MESSAGE =
-  'tests/generated/ has no generated test corpus; run `pnpm run capsule:compile` before `czap plumb`.';
+  'tests/generated/ has no generated test corpus; run `pnpm run capsule:compile` before `liteship plumb`.';
 
 /**
  * THE GENERATED HANDOFF, detector-UNIFIED. `tests/generated/` is the plumb-gate's
@@ -38,7 +38,7 @@ const MISSING_GENERATED_CORPUS_MESSAGE =
  * regex. The first cut here matched only the literal `.skip(` CALL, so a generated
  * `it.runIf(...)` / `it.skipIf(...)` / `it.todo(...)` / `xit(...)` / the `COND ? it :
  * it.skip` alias would slip through BOTH this scan AND the gate (the exact handoff gap the
- * second review found). Now it folds `@czap/gauntlet`'s `detectSkips` (call / conditional /
+ * second review found). Now it folds `@liteship/gauntlet`'s `detectSkips` (call / conditional /
  * alias forms over `codeOnly`-stripped text, so a prose mention is never flagged) — ONE
  * owner, the FULL detector. A generated test must NEVER skip in ANY form.
  */
@@ -51,7 +51,7 @@ function collectGeneratedSkips(root: string, detect: PlumbSkipDetector): { skips
   // and any nested lane dir (e.g. `integration/`). The lane-aware harness routes a
   // check into the lane that fits — so a placeholder skip hiding in a non-unit lane
   // would be the EXACT blindness this gate exists to kill. No lane is exempt. The
-  // recursive `.test.ts`/`.bench.ts` walk is `@czap/core/fs-walk`'s `walkFiles`
+  // recursive `.test.ts`/`.bench.ts` walk is `@liteship/core/fs-walk`'s `walkFiles`
   // (deterministic, cycle-safe); its absolute paths slice back to the `tests/generated/`
   // relative id the work-list line reports.
   for (const abs of walkFiles(dir, { suffixes: ['.test.ts', '.bench.ts'] })) {
@@ -79,11 +79,10 @@ function collectGeneratedSkips(root: string, detect: PlumbSkipDetector): { skips
 }
 
 /**
- * Every publishable `@czap/*` name, read DYNAMICALLY from the `packages/*` manifests on
- * disk. The canonical roster of these names is `@czap/audit`'s `CZAP_PACKAGE_ROSTER`
- * (the [DUP] owner); this copy stays a live filesystem re-scan by LAYERING — `@czap/command`
- * sits below the devops layer and cannot depend on `@czap/audit` — with drift held by the
- * release/roster guards rather than a shared import.
+ * Every publishable `@liteship/*` name, read dynamically from manifests as the
+ * independent physical-packaging oracle. Authored classification lives in
+ * `scripts/package-catalog.ts` and reaches command through generated
+ * `PACKAGE_PLUMB`; this scan intentionally stays independent so drift is loud.
  */
 function publishedPackages(root: string): string[] {
   const names: string[] = [];
@@ -115,7 +114,7 @@ function publishedPackages(root: string): string[] {
  * `tests/generated/`, AND every published package classified in `PACKAGE_PLUMB`.
  *
  * The optional `skipDetector` (a `(source) => SkipMatch[]`) is the INJECTED SOUND AST detector
- * (`@czap/audit`'s `detectSkipsAST`); the CLI host passes it so a generated multi-line / ASI /
+ * (`@liteship/audit`'s `detectSkipsAST`); the CLI host passes it so a generated multi-line / ASI /
  * inner-describe skip the token scanner would miss is caught here too — `(skipDetector ??
  * detectSkips)`. Omitted (a lean caller) ⇒ the dependency-free token `detectSkips` fallback runs.
  */

@@ -23,7 +23,7 @@
  * @module
  */
 
-import { UnsupportedError, ValidationError } from '@czap/error';
+import { UnsupportedError, ValidationError } from '@liteship/error';
 import { compareBytes } from './compare-bytes.js';
 
 const MAJOR_UNSIGNED = 0 << 5;

@@ -6,7 +6,7 @@
 
 # Interface: Clock
 
-Defined in: [core/src/clock.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L41)
+Defined in: [core/src/clock/clock.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L41)
 
 A monotonic-ish millisecond time source — the one shape time is read through.
 
@@ -25,7 +25,7 @@ source (deltas), never as a stable identity input to a hashed artifact.
 
 > `readonly` **now**: () => `number`
 
-Defined in: [core/src/clock.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L43)
+Defined in: [core/src/clock/clock.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L43)
 
 Current time in milliseconds.
 

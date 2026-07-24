@@ -40,6 +40,148 @@ The failure message of the first failure, or null on success.
 
 > `readonly` **type**: readonly \[`"string"`, `"null"`\]
 
+#### properties.hermetic
+
+> `readonly` **hermetic**: `object`
+
+The three release-hermeticity sub-results — present ONLY under `--hermetic`
+(absent on a plain package-smoke run, so the default receipt is unchanged).
+`hermetic-build` (offline reinstall), `packed-consumer-closure`, and the
+per-file-hash semantic verdict are blocking. The byte-identical artifact
+verdict remains advisory because archive-envelope drift is not semantic drift.
+
+#### properties.hermetic.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.hermetic.properties.doubleBuildRepro
+
+> `readonly` **doubleBuildRepro**: `object`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties.artifactRepro
+
+> `readonly` **artifactRepro**: `object`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties.artifactRepro.type
+
+> `readonly` **type**: `"boolean"` = `'boolean'`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties.reportPath
+
+> `readonly` **reportPath**: `object`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties.reportPath.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties.semanticRepro
+
+> `readonly` **semanticRepro**: `object`
+
+#### properties.hermetic.properties.doubleBuildRepro.properties.semanticRepro.type
+
+> `readonly` **type**: `"boolean"` = `'boolean'`
+
+#### properties.hermetic.properties.doubleBuildRepro.required
+
+> `readonly` **required**: readonly \[`"semanticRepro"`, `"artifactRepro"`, `"reportPath"`\]
+
+#### properties.hermetic.properties.doubleBuildRepro.type
+
+> `readonly` **type**: `"object"` = `'object'`
+
+#### properties.hermetic.properties.hermeticBuild
+
+> `readonly` **hermeticBuild**: `object`
+
+#### properties.hermetic.properties.hermeticBuild.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.hermetic.properties.hermeticBuild.properties.ok
+
+> `readonly` **ok**: `object`
+
+#### properties.hermetic.properties.hermeticBuild.properties.ok.type
+
+> `readonly` **type**: `"boolean"` = `'boolean'`
+
+#### properties.hermetic.properties.hermeticBuild.properties.reason
+
+> `readonly` **reason**: `object`
+
+#### properties.hermetic.properties.hermeticBuild.properties.reason.type
+
+> `readonly` **type**: readonly \[`"string"`, `"null"`\]
+
+#### properties.hermetic.properties.hermeticBuild.properties.skipped
+
+> `readonly` **skipped**: `object`
+
+#### properties.hermetic.properties.hermeticBuild.properties.skipped.type
+
+> `readonly` **type**: `"boolean"` = `'boolean'`
+
+#### properties.hermetic.properties.hermeticBuild.required
+
+> `readonly` **required**: readonly \[`"ok"`, `"skipped"`, `"reason"`\]
+
+#### properties.hermetic.properties.hermeticBuild.type
+
+> `readonly` **type**: `"object"` = `'object'`
+
+#### properties.hermetic.properties.packedConsumerClosure
+
+> `readonly` **packedConsumerClosure**: `object`
+
+#### properties.hermetic.properties.packedConsumerClosure.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.hermetic.properties.packedConsumerClosure.properties.failure
+
+> `readonly` **failure**: `object`
+
+#### properties.hermetic.properties.packedConsumerClosure.properties.failure.type
+
+> `readonly` **type**: readonly \[`"string"`, `"null"`\]
+
+#### properties.hermetic.properties.packedConsumerClosure.properties.ok
+
+> `readonly` **ok**: `object`
+
+#### properties.hermetic.properties.packedConsumerClosure.properties.ok.type
+
+> `readonly` **type**: `"boolean"` = `'boolean'`
+
+#### properties.hermetic.properties.packedConsumerClosure.properties.subpathCount
+
+> `readonly` **subpathCount**: `object`
+
+#### properties.hermetic.properties.packedConsumerClosure.properties.subpathCount.type
+
+> `readonly` **type**: `"number"` = `'number'`
+
+#### properties.hermetic.properties.packedConsumerClosure.required
+
+> `readonly` **required**: readonly \[`"ok"`, `"subpathCount"`, `"failure"`\]
+
+#### properties.hermetic.properties.packedConsumerClosure.type
+
+> `readonly` **type**: `"object"` = `'object'`
+
+#### properties.hermetic.required
+
+> `readonly` **required**: readonly \[`"hermeticBuild"`, `"packedConsumerClosure"`, `"doubleBuildRepro"`\]
+
+#### properties.hermetic.type
+
+> `readonly` **type**: readonly \[`"object"`, `"null"`\]
+
 #### properties.importsSmoked
 
 > `readonly` **importsSmoked**: `object`
@@ -62,7 +204,7 @@ Number of module specifiers the import-smoke resolved (0 when it never ran).
 
 > `readonly` **packagesPacked**: `object`
 
-Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`.
+Number of `@liteship/*` (+ unscoped) scopes packed via `pnpm pack`.
 
 #### properties.packagesPacked.type
 

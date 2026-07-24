@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { ClientHints, compileTheme } from '@czap/edge';
+import { ClientHints, compileTheme } from '@liteship/edge';
 
 describe('edge smoke', () => {
   test('ClientHints.parseClientHints handles empty headers', () => {

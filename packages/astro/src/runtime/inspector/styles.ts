@@ -120,8 +120,8 @@ details.section[open] > summary::before { content: '▾ '; }
 .cast-rows .row { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cast-none { color: #9aa0a6; font-size: 11px; }
 .esc-line { margin: 3px 0; }
-.esc-rung { color: #34a853; font-weight: 600; }
-.esc-rung-err { color: #f28b82; font-weight: 600; }
+.esc-tier { color: #34a853; font-weight: 600; }
+.esc-tier-err { color: #f28b82; font-weight: 600; }
 .esc-reason { color: #9aa0a6; font-size: 10px; margin-top: 2px; }
 .graph-node { font-size: 11px; margin: 2px 0; }
 .graph-fam { display: inline-block; min-width: 78px; color: #fdd663; }

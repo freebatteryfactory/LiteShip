@@ -8,7 +8,7 @@
 
 > `const` **documentGraphAddressCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"pureTransform"`, \{ `edges`: readonly readonly \[`number`, `number`\][]; `inputs`: readonly `string`[]; \}, `unknown`, `unknown`\>
 
-Defined in: [core/src/capsules/document-graph-address.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsules/document-graph-address.ts#L153)
+Defined in: [core/src/authoring/capsules/document-graph-address.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/document-graph-address.ts#L153)
 
 Declared capsule for the DocumentGraph addressing kernel. Registered in the
 module-level catalog at import time; walked by the factory compiler. The

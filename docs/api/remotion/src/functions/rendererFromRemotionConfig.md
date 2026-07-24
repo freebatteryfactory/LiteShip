@@ -31,7 +31,7 @@ Remotion's video config (`useVideoConfig()` /
 
 `CompositorShape`
 
-The `Compositor` driving the czap state pipeline.
+The `Compositor` driving the liteship state pipeline.
 
 ### signal?
 
@@ -43,7 +43,7 @@ Optional controllable time signal, seeked per frame.
 
 `VideoRendererShape`
 
-A `VideoRenderer.Shape` ready for [precomputeFrames](precomputeFrames.md).
+A `VideoRenderer` ready for [precomputeFrames](precomputeFrames.md).
 
 ## Example
 

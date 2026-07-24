@@ -2,10 +2,10 @@
  * Manifest-absent teaching errors — the failure must name the path that was
  * looked at (when the adapter exposes it via CommandContext.manifestPath)
  * and give both ways out: the repo-internal pnpm script AND the
- * CZAP_CAPSULE_MANIFEST override an npm consumer can actually use.
+ * LITESHIP_CAPSULE_MANIFEST override an npm consumer can actually use.
  */
 import { describe, it, expect } from 'vitest';
-import { assetAnalyzeCommand, assetVerifyCommand, sceneVerifyCommand } from '@czap/command';
+import { assetAnalyzeCommand, assetVerifyCommand, sceneVerifyCommand } from '@liteship/command';
 
 const errorOf = (r: { payload?: unknown }): string => (r.payload as { error: string }).error;
 
@@ -20,7 +20,7 @@ describe('manifest-missing errors teach the looked-at path + both remedies', () 
     const error = errorOf(r);
     expect(error).toContain('capsule manifest missing (looked at /repo/reports/capsule-manifest.json)');
     expect(error).toContain('pnpm run capsule:compile');
-    expect(error).toContain('CZAP_CAPSULE_MANIFEST');
+    expect(error).toContain('LITESHIP_CAPSULE_MANIFEST');
   });
 
   it('asset.verify carries the same contract', async () => {
@@ -29,7 +29,7 @@ describe('manifest-missing errors teach the looked-at path + both remedies', () 
       { manifestSource: () => null, manifestPath: () => '/repo/reports/capsule-manifest.json' },
     );
     expect(errorOf(r)).toContain('capsule manifest missing (looked at /repo/reports/capsule-manifest.json)');
-    expect(errorOf(r)).toContain('CZAP_CAPSULE_MANIFEST');
+    expect(errorOf(r)).toContain('LITESHIP_CAPSULE_MANIFEST');
   });
 
   it('scene.verify carries the same contract', async () => {
@@ -43,7 +43,7 @@ describe('manifest-missing errors teach the looked-at path + both remedies', () 
       },
     );
     expect(errorOf(r)).toContain('capsule manifest missing (looked at /repo/reports/capsule-manifest.json)');
-    expect(errorOf(r)).toContain('CZAP_CAPSULE_MANIFEST');
+    expect(errorOf(r)).toContain('LITESHIP_CAPSULE_MANIFEST');
   });
 
   it('degrades to path-less wording in pure contexts (no manifestPath capability)', async () => {
@@ -54,6 +54,6 @@ describe('manifest-missing errors teach the looked-at path + both remedies', () 
     const error = errorOf(r);
     expect(error).toContain('capsule manifest missing.');
     expect(error).not.toContain('looked at');
-    expect(error).toContain('CZAP_CAPSULE_MANIFEST');
+    expect(error).toContain('LITESHIP_CAPSULE_MANIFEST');
   });
 });

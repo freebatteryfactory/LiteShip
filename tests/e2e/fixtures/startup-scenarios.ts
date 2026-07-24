@@ -1,6 +1,6 @@
-import { RuntimeCoordinator, type CompositeState } from '@czap/core';
-import { LLMChunkNormalization, type LLMChunk } from '@czap/web';
-import type { WorkerHost } from '@czap/worker';
+import { RuntimeCoordinator, type CompositeState } from '@liteship/core';
+import { LLMChunkNormalization, type LLMChunk } from '@liteship/web';
+import type { WorkerHost } from '@liteship/worker';
 import { parseLLMChunk } from '../../../packages/astro/src/runtime/llm.ts';
 
 export type WorkerStartupStage =
@@ -41,7 +41,7 @@ export interface WorkerStartupStageDurationsMs {
   readonly 'quantizer-bootstrap': number;
   readonly 'request-compute': number;
   readonly 'state-delivery': number;
-  readonly 'dispose': number;
+  readonly dispose: number;
 }
 
 export interface WorkerStartupDiagnosticDurationsMs {
@@ -207,12 +207,14 @@ function buildWorkerStartupCompositeState(name: string, state: string): Composit
   return {
     discrete: { [name]: state },
     blend: {
-      [name]: Object.fromEntries(WORKER_STARTUP_QUANTIZER.states.map((candidate) => [candidate, candidate === state ? 1 : 0])),
+      [name]: Object.fromEntries(
+        WORKER_STARTUP_QUANTIZER.states.map((candidate) => [candidate, candidate === state ? 1 : 0]),
+      ),
     },
     outputs: {
-      css: { [`--czap-${name}`]: state },
+      css: { [`--liteship-${name}`]: state },
       glsl: { [`u_${name}`]: WORKER_STARTUP_QUANTIZER.states.indexOf(state) },
-      aria: { [`data-czap-${name}`]: state },
+      aria: { [`data-liteship-${name}`]: state },
     },
   };
 }
@@ -222,7 +224,7 @@ export function currentTimeNs(): number {
 }
 
 export async function runWorkerStartupScenario(
-  createHost: (startupTelemetry?: WorkerStartupScenarioTelemetry) => WorkerHost.Shape,
+  createHost: (startupTelemetry?: WorkerStartupScenarioTelemetry) => WorkerHost,
   options?: {
     readonly startupTelemetry?: WorkerStartupScenarioTelemetry;
     readonly now?: () => number;
@@ -314,12 +316,10 @@ export async function runWorkerStartupScenario(
   };
 }
 
-export async function runWorkerStartupParityScenario(
-  options?: {
-    readonly now?: () => number;
-    readonly nowNs?: () => number;
-  },
-): Promise<WorkerStartupScenarioResult> {
+export async function runWorkerStartupParityScenario(options?: {
+  readonly now?: () => number;
+  readonly nowNs?: () => number;
+}): Promise<WorkerStartupScenarioResult> {
   const now = options?.now ?? (() => performance.now());
   const nowNs = options?.nowNs ?? currentTimeNs;
   const stageDurations: WorkerStartupStageDurationsMs = {
@@ -370,13 +370,17 @@ export async function runWorkerStartupParityScenario(
   const queueTurnStartNs = nowNs();
   await Promise.resolve();
   const queueTurnEndNs = nowNs();
-  diagnosticDurations['state-delivery:callback-queue-turn'] = Number(((queueTurnEndNs - queueTurnStartNs) / 1e6).toFixed(4));
+  diagnosticDurations['state-delivery:callback-queue-turn'] = Number(
+    ((queueTurnEndNs - queueTurnStartNs) / 1e6).toFixed(4),
+  );
   const callbackStartNs = nowNs();
   for (const listener of listeners) {
     listener(compositeState);
   }
   const callbackEndNs = nowNs();
-  diagnosticDurations['state-delivery:host-callback-delivery'] = Number(((callbackEndNs - callbackStartNs) / 1e6).toFixed(4));
+  diagnosticDurations['state-delivery:host-callback-delivery'] = Number(
+    ((callbackEndNs - callbackStartNs) / 1e6).toFixed(4),
+  );
 
   const deliveredAt = await delivered;
   const totalStartupMs = deliveredAt - totalStart;
@@ -471,10 +475,7 @@ function meanMs(values: readonly number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function sharedStageMeanNs(
-  scenarios: readonly WorkerStartupScenarioResult[],
-  stage: WorkerStartupStage,
-): number {
+function sharedStageMeanNs(scenarios: readonly WorkerStartupScenarioResult[], stage: WorkerStartupStage): number {
   return Number((meanMs(scenarios.map((scenario) => scenario.stages[stage])) * 1e6).toFixed(2));
 }
 
@@ -509,7 +510,9 @@ export function buildWorkerStartupSplitMetrics(
   const paritySharedMeanNs = Number((paritySharedStageTotalNs + (packetFinalizeRow?.parityMeanNs ?? 0)).toFixed(2));
   const sharedResidualMeanNs = Number((supportSharedMeanNs - paritySharedMeanNs).toFixed(2));
   const sharedOverheadPct =
-    paritySharedMeanNs > 0 ? Number((((supportSharedMeanNs - paritySharedMeanNs) / paritySharedMeanNs) * 100).toFixed(2)) : null;
+    paritySharedMeanNs > 0
+      ? Number((((supportSharedMeanNs - paritySharedMeanNs) / paritySharedMeanNs) * 100).toFixed(2))
+      : null;
 
   const seamComponents = audit.rows
     .filter((row) => SEAM_COMPONENT_STAGE_SET.has(row.stage))
@@ -524,9 +527,12 @@ export function buildWorkerStartupSplitMetrics(
   );
   const seamDerivedPct =
     paritySharedMeanNs > 0 ? Number(((seamAbsoluteMeanNs / paritySharedMeanNs) * 100).toFixed(2)) : null;
-  const dominantSeamComponent = [...seamComponents].sort((left, right) => right.residualMeanNs - left.residualMeanNs)[0] ?? null;
-  const messageReceiptResidualNs = seamComponents.find((component) => component.stage === 'state-delivery:message-receipt')?.residualMeanNs ?? 0;
-  const dispatchSendResidualNs = seamComponents.find((component) => component.stage === 'request-compute:dispatch-send')?.residualMeanNs ?? 0;
+  const dominantSeamComponent =
+    [...seamComponents].sort((left, right) => right.residualMeanNs - left.residualMeanNs)[0] ?? null;
+  const messageReceiptResidualNs =
+    seamComponents.find((component) => component.stage === 'state-delivery:message-receipt')?.residualMeanNs ?? 0;
+  const dispatchSendResidualNs =
+    seamComponents.find((component) => component.stage === 'request-compute:dispatch-send')?.residualMeanNs ?? 0;
   const sharedResidualComponentNs = seamComponents
     .filter((component) => component.kind === 'shared-residual')
     .reduce((sum, component) => sum + component.residualMeanNs, 0);

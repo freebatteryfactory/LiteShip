@@ -8,7 +8,7 @@
 
 > **decodeDocumentGraph**(`value`): [`DocumentGraph`](../interfaces/DocumentGraph.md)
 
-Defined in: [core/src/document-graph-address.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L169)
+Defined in: [core/src/graph/document-graph-address.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph-address.ts#L169)
 
 VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED DocumentGraph value (a graph
 lowered from persisted JSON / a wire payload). `sealGraph` only re-mints ids; it

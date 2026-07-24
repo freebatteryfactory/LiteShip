@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { HLC, type WallClockTimestamp } from '@czap/core';
+import { HLC, type WallClockTimestamp } from '@liteship/core';
 import { dispatchToolCall } from '../../../packages/mcp-server/src/dispatch.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -61,7 +61,7 @@ describe('B2 — classification guard: result types name their clock', () => {
   });
 
   it('the causal ReceiptEnvelope timestamp stays an HLC (not retyped to a string)', () => {
-    const src = readFileSync(resolve(REPO, 'packages/core/src/receipt.ts'), 'utf8');
+    const src = readFileSync(resolve(REPO, 'packages/core/src/evidence/receipt.ts'), 'utf8');
     expect(src).toMatch(/readonly timestamp:\s*HLC/);
   });
 

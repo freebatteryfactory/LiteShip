@@ -36,10 +36,10 @@
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
-import type { CapsuleDef } from '../assembly.js';
+import { InvariantViolationError } from '@liteship/error';
+import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
-import { benchNotApplicableMarker } from './bench-marker.js';
+import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
 
 /**
  * The lanes a generated check can run in. `unit` checks land in the `.test.ts`

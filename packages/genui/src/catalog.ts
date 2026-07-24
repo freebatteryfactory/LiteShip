@@ -4,7 +4,7 @@
  * @module
  */
 
-import { CanonicalCbor, fnv1aBytes } from '@czap/canonical';
+import { CanonicalCbor, fnv1aBytes } from '@liteship/canonical';
 import { ContentAddress } from './brands.js';
 import type { ComponentCatalog, ComponentDef } from './types.js';
 

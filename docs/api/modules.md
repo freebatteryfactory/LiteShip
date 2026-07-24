@@ -6,7 +6,7 @@
 
 ## Modules
 
-- [@czap/\_spine](@czap/_spine/README.md)
+- [@liteship/\_spine](@liteship/_spine/README.md)
 - [assets/src](assets/src/README.md)
 - [astro/src](astro/src/README.md)
 - [audit/src](audit/src/README.md)
@@ -21,7 +21,6 @@
 - [error/src](error/src/README.md)
 - [gauntlet/src](gauntlet/src/README.md)
 - [genui/src](genui/src/README.md)
-- [liteship/src](liteship/src/README.md)
 - [mcp-server/src](mcp-server/src/README.md)
 - [quantizer/src](quantizer/src/README.md)
 - [remotion/src](remotion/src/README.md)

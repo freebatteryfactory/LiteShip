@@ -8,7 +8,7 @@
 
 > **seededRng**(`seed`): [`Rng`](../interfaces/Rng.md)
 
-Defined in: [core/src/rng.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/rng.ts#L49)
+Defined in: [core/src/clock/rng.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/rng.ts#L49)
 
 A seeded, deterministic RNG (mulberry32) — for tests and replayable runs.
 

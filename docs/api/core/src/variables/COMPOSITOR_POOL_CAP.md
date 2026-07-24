@@ -8,6 +8,6 @@
 
 > `const` **COMPOSITOR\_POOL\_CAP**: `8` = `8`
 
-Defined in: [core/src/defaults.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/defaults.ts#L29)
+Defined in: [core/src/authoring/defaults.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/defaults.ts#L29)
 
 Default compositor state pool capacity. Used by: compositor.ts, compositor-pool.ts

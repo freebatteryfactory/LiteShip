@@ -6,7 +6,7 @@
 
 # Interface: UIFrame
 
-Defined in: [core/src/gen-frame.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L41)
+Defined in: [core/src/media/gen-frame.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L41)
 
 A single frame emitted by the [GenFrame](../variables/GenFrame.md) scheduler — the unit of work
 the DOM runtime consumes. Carries the drained tokens, its classification,
@@ -19,7 +19,7 @@ disconnect-resilient replay.
 
 > `readonly` **bufferPosition**: `number`
 
-Defined in: [core/src/gen-frame.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L48)
+Defined in: [core/src/media/gen-frame.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L48)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [core/src/gen-frame.ts:48](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **morphStrategy**: [`MorphStrategy`](../type-aliases/MorphStrategy.md)
 
-Defined in: [core/src/gen-frame.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L45)
+Defined in: [core/src/media/gen-frame.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L45)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [core/src/gen-frame.ts:45](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **qualityTier**: [`UIQualityTier`](../type-aliases/UIQualityTier.md)
 
-Defined in: [core/src/gen-frame.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L44)
+Defined in: [core/src/media/gen-frame.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L44)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [core/src/gen-frame.ts:44](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **receiptId**: `ContentAddress`
 
-Defined in: [core/src/gen-frame.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L47)
+Defined in: [core/src/media/gen-frame.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L47)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [core/src/gen-frame.ts:47](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [core/src/gen-frame.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L46)
+Defined in: [core/src/media/gen-frame.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L46)
 
 ***
 
@@ -59,7 +59,7 @@ Defined in: [core/src/gen-frame.ts:46](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **tokens**: readonly `string`[]
 
-Defined in: [core/src/gen-frame.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L43)
+Defined in: [core/src/media/gen-frame.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L43)
 
 ***
 
@@ -67,4 +67,4 @@ Defined in: [core/src/gen-frame.ts:43](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **type**: [`FrameType`](../type-aliases/FrameType.md)
 
-Defined in: [core/src/gen-frame.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L42)
+Defined in: [core/src/media/gen-frame.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L42)

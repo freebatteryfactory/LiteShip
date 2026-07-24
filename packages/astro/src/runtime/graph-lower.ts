@@ -6,7 +6,7 @@
  * mints signal→component→projection nodes for display, this module READS an
  * authored graph and reconstitutes each boundary as a {@link RuntimeBoundary}
  * the EXISTING `boundary.ts` runtime can evaluate and apply — no new evaluation
- * machinery, just a re-projection of the IR onto the seam the satellite
+ * machinery, just a re-projection of the IR onto the seam the adaptive
  * directive already drives.
  *
  * Pure and SSR-safe: `lowerGraph` reads only the graph value (no DOM, no
@@ -17,7 +17,7 @@
  * THE MAPPING (per the keystone IR):
  *   - a {@link ComponentNode} (name + thresholds + states) is a boundary;
  *   - its SIGNAL comes from the incoming edge from a {@link SignalNode}
- *     (`Boundary.make(signal.input, zip(thresholds, states))`);
+ *     (`defineBoundary(signal.input, zip(thresholds, states))`);
  *   - its CHANNELS are the {@link ProjectionNode}s it feeds (component→projection
  *     edges) whose `target` is one of css / aria / glsl / wgsl;
  *   - its per-state BINDINGS come from the {@link PoseNode}s of the entity that
@@ -31,8 +31,8 @@
  * @module
  */
 
+import type { Boundary } from '@liteship/core';
 import {
-  Boundary,
   BoundaryAttribute,
   linearizeGraph,
   type ComponentNode,
@@ -43,7 +43,8 @@ import {
   type PoseNode,
   type ProjectionNode,
   type SignalNode,
-} from '@czap/core';
+  defineBoundary,
+} from '@liteship/core';
 import type { RuntimeBoundary } from './boundary.js';
 
 /** The cast targets a lowered boundary drives on the live runtime (the IR's projection vocabulary, minus the offline ones). */
@@ -62,11 +63,11 @@ export interface LoweredBinding {
   readonly boundary: RuntimeBoundary;
   readonly targets: readonly LoweredTarget[];
   /**
-   * Authored per-state CSS custom properties (`--czap-*` keys), keyed by state.
+   * Authored per-state CSS custom properties (`--liteship-*` keys), keyed by state.
    * The CSS analog of the boundary's `glslStateUniforms`/`stateWgsl`: `RuntimeBoundary`
    * has no per-state CSS slot (CSS rides `applyBoundaryState`'s `state.css`, not a
    * boundary field), so the runtime threads this into the apply call directly.
-   * Absent when no pose carries a `--czap-*` binding.
+   * Absent when no pose carries a `--liteship-*` binding.
    */
   readonly stateCss?: Readonly<Record<string, Readonly<Record<string, string | number>>>>;
 }
@@ -84,14 +85,14 @@ function isGlslUniformKey(key: string): boolean {
  * channel maps the {@link RuntimeBoundary} carries. A pose's bindings are a flat
  * `Record<key, value>`; the key vocabulary decides the channel:
  *
- *   - `--czap-*` (CSS custom property)          → `stateCss`
+ *   - `--liteship-*` (CSS custom property)          → `stateCss`
  *   - `role` / `aria-*` (string values)         → `stateAttributes`
  *   - `u_*` (number values)                     → `glslStateUniforms`
  *   - every other number value                  → `stateWgsl` (bare field names)
  *
  * `applyBoundaryState` then composes the live state's slice of each map onto the
  * element on every crossing — exactly the path the build-manifest-joined
- * satellite uses, so a graph-lowered boundary and an authored one apply
+ * adaptive uses, so a graph-lowered boundary and an authored one apply
  * identically.
  */
 function poseBindingsToChannels(poses: readonly PoseNode[]): {
@@ -227,19 +228,19 @@ export function lowerGraph(graph: DocumentGraph): readonly LoweredBinding[] {
     }
     if (targets.length === 0) continue; // no live channel to cast onto — skip.
 
-    // Build the Boundary.Shape by zipping thresholds↔states (the parseBoundary recipe).
+    // Build the Boundary by zipping thresholds↔states (the parseBoundary recipe).
     const first = [thresholds[0] as number, String(states[0])] as const;
     const rest = states.slice(1).map((state, i) => [thresholds[i + 1] as number, String(state)] as const);
     const at = [first, ...rest] as const;
-    // `Boundary.make` THROWS on non-strictly-ascending thresholds / duplicate
+    // `defineBoundary` THROWS on non-strictly-ascending thresholds / duplicate
     // state names — both pass the node schema + graph validation, so an UNTRUSTED
     // graph can reach here with either. Lowering must stay TOTAL (the loader's
     // contract is to return cleanly, never throw mid-hydration), so a component
     // that can't form a boundary is SKIPPED — the result simply carries fewer
     // bindings, exactly like a component with no signal or no thresholds.
-    let shape: Boundary.Shape;
+    let shape: Boundary;
     try {
-      shape = Boundary.make({ input: signal.input, at });
+      shape = defineBoundary({ input: signal.input, at });
     } catch {
       continue;
     }

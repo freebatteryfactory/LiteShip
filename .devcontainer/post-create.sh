@@ -2,9 +2,6 @@
 # Mirrors CI truth-linux system deps: Node 22, pnpm 10.32.1, ffmpeg (libx264), Playwright chromium.
 set -euo pipefail
 
-sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ffmpeg
-
 corepack enable
 corepack prepare pnpm@10.32.1 --activate
 

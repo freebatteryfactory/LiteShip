@@ -4,7 +4,7 @@
  * resolution, so no server process is ever spawned.
  */
 import { describe, it, expect } from 'vitest';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { parseHttpBind } from '../../../packages/mcp-server/src/http-server.js';
 
 describe('parseHttpBind — accepted bind shapes', () => {
@@ -45,7 +45,7 @@ describe('parseHttpBind — invalid binds throw a teaching error before the serv
   });
 
   it('throws a tagged ValidationError (the algebra value), not a bare Error', () => {
-    // Defect-1 guard: invalidBind must construct a `@czap/error` tagged variant
+    // Defect-1 guard: invalidBind must construct a `@liteship/error` tagged variant
     // so the failure narrows via `hasTag` and carries structured fields — never
     // a laundered `new Error(...)`.
     let thrown: unknown;

@@ -21,11 +21,11 @@ output-schema-law payload-conformance test, not by a shared Effect Schema.
 
 > `readonly` **properties**: `object`
 
-#### properties.czap
+#### properties.liteship
 
-> `readonly` **czap**: `object`
+> `readonly` **liteship**: `object`
 
-#### properties.czap.type
+#### properties.liteship.type
 
 > `readonly` **type**: `"string"` = `'string'`
 
@@ -47,7 +47,7 @@ output-schema-law payload-conformance test, not by a shared Effect Schema.
 
 ### required
 
-> `readonly` **required**: readonly \[`"czap"`, `"node"`, `"pnpm"`\]
+> `readonly` **required**: readonly \[`"liteship"`, `"node"`, `"pnpm"`\]
 
 ### type
 

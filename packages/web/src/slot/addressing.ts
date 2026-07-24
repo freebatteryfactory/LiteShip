@@ -4,7 +4,7 @@
  * Slots are forward-slash prefixed paths that address DOM regions.
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { SlotPath } from '../types.js';
 export { SlotPath } from '../types.js';
 
@@ -62,7 +62,7 @@ export const isValid = (path: string): path is SlotPath => {
  * Convert a SlotPath to a CSS selector.
  */
 export const toSelector = (path: SlotPath): string => {
-  return `[data-czap-slot="${path}"]`;
+  return `[data-liteship-slot="${path}"]`;
 };
 
 /**

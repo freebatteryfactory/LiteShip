@@ -1,6 +1,6 @@
 /**
  * DevopsProfile loader (CUT D9b-2) — resolves a `--profile <path>` into a
- * `@czap/audit` DevopsProfile for `czap audit`. Explicit path ONLY: no walk-up,
+ * `@liteship/audit` DevopsProfile for `liteship audit`. Explicit path ONLY: no walk-up,
  * no auto-discovery, no implicit external default.
  *
  *   • no path        → the LiteShip default profile rooted at cwd
@@ -14,8 +14,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { consumerDevopsProfile, liteshipDevopsProfile, withRepoRoot, type DevopsProfile } from '@czap/audit';
-import { NotFoundError, ParseError, ValidationError } from '@czap/error';
+import { consumerDevopsProfile, liteshipDevopsProfile, withRepoRoot, type DevopsProfile } from '@liteship/audit';
+import { NotFoundError, ParseError, ValidationError } from '@liteship/error';
 
 export interface LoadedProfile {
   readonly profile: DevopsProfile;
@@ -94,12 +94,12 @@ async function profileFromModule(modPath: string, cwd: string): Promise<DevopsPr
  * Resolve a profile from an explicit path (or the LiteShip default rooted at cwd).
  * Throws a clear Error on an unknown extension, a missing file, or an invalid shape.
  *
- * `consumer: true` (czap audit --consumer) builds the profile by discovering
+ * `consumer: true` (liteship audit --consumer) builds the profile by discovering
  * the installed packages under cwd's node_modules — still explicit, no walk-up
  * magic. With `--profile`, that profile is the discovery BASE (its
  * `packageTopology` names which packages to find, its `surfacePolicy` drives the
  * surface pass), so a downstream can audit THEIR OWN topology; without it, the
- * base is LiteShip's `@czap/*`.
+ * base is LiteShip's `@liteship/*`.
  */
 export async function loadProfile(
   profilePath: string | undefined,
@@ -111,7 +111,7 @@ export async function loadProfile(
     // audits them. With `--profile`, that profile is the discovery BASE — its
     // `packageTopology` names which packages to discover and its `surfacePolicy`
     // drives the surface pass — so a downstream can audit THEIR OWN topology, not
-    // just LiteShip's `@czap/*`. Without `--profile`, the base is LiteShip's own.
+    // just LiteShip's `@liteship/*`. Without `--profile`, the base is LiteShip's own.
     const base = profilePath ? await loadProfileFromPath(profilePath, cwd) : undefined;
     return {
       profile: base ? consumerDevopsProfile(cwd, base) : consumerDevopsProfile(cwd),

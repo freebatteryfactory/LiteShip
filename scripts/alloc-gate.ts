@@ -1,6 +1,6 @@
 /**
  * The ALLOCATION GATE — the committed, MEASURED proof that the two
- * "zero-allocation hot path" claims (`@czap/core` compositor compose + token-buffer
+ * "zero-allocation hot path" claims (`@liteship/core` compositor compose + token-buffer
  * push/drainInto) are GENUINELY TRUE, not aspirational prose.
  *
  * THE MEASUREMENT (the only honest one for a GC'd runtime): per-op LIVE heap
@@ -45,10 +45,10 @@
  * @module
  */
 
-import { Boundary, CellKernel, Compositor, TokenBuffer } from '@czap/core';
-import type { CompositeState } from '@czap/core';
-import type { CompositorQuantizer } from '@czap/core';
-import { InvariantViolationError } from '@czap/error';
+import { CellKernel, Compositor, defineBoundary, createTokenBuffer } from '@liteship/core';
+import type { CompositeState } from '@liteship/core';
+import type { CompositorQuantizer } from '@liteship/core';
+import { InvariantViolationError } from '@liteship/error';
 
 /** The forced-GC handle `--expose-gc` installs. Absent ⇒ the gate cannot measure. */
 function forceGc(): void {
@@ -364,7 +364,7 @@ export const TRANSIENT_BUDGET_BYTES_PER_OP = 2;
  */
 export const TRANSIENT_SUBSCRIBER_BUDGET_BYTES_PER_OP = 16;
 
-const ALLOC_BOUNDARY = Boundary.make({
+const ALLOC_BOUNDARY = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -400,7 +400,7 @@ function fixedQuantizer(state: AllocState): CompositorQuantizer<typeof ALLOC_BOU
 
 /** Build the token-buffer push/drainInto op closure — the zero-alloc hot path. */
 function tokenBufferOp(): () => void {
-  const tb = TokenBuffer.make<number>({ capacity: 256 });
+  const tb = createTokenBuffer<number>({ capacity: 256 });
   // Caller-owned scratch sink — reused across drains (the zero-alloc contract).
   const sink: number[] = new Array<number>(64);
   let n = 0;
@@ -414,7 +414,7 @@ function tokenBufferOp(): () => void {
 /** Build the compositor compose op closure — the per-frame zero-alloc hot path. */
 function compositorOp(): () => void {
   // Compositor.create/add/compute are synchronous as of the core-seams wave.
-  const { compositor } = Compositor.create({ poolCapacity: 8 });
+  const compositor = Compositor.create({ poolCapacity: 8 });
   const names = ['viewport', 'theme', 'density'] as const;
   const states = ['mobile', 'tablet', 'desktop'] as const;
   for (let i = 0; i < names.length; i++) {

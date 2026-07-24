@@ -1,9 +1,9 @@
 /**
- * @czap/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
+ * @liteship/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
  */
 
-import type { CapTier, ContentAddress } from './core.d.ts';
-import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabilities } from './detect.d.ts';
+import type { CapTier, ContentAddress } from './core.js';
+import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabilities } from './detect.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CLIENT HINTS
@@ -83,22 +83,22 @@ export interface CompiledGLSLOutput {
   readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
-type WGSLUniformVector =
+type EdgeWGSLUniformVector =
   readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
 
-type WGSLUniformValue = number | WGSLUniformVector;
+type EdgeWGSLUniformValue = number | EdgeWGSLUniformVector;
 
 export interface CompiledWGSLOutput {
   readonly declarations: string;
-  readonly bindingValues: Readonly<Record<string, WGSLUniformValue>>;
-  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
+  readonly bindingValues: Readonly<Record<string, EdgeWGSLUniformValue>>;
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, EdgeWGSLUniformValue>>>>;
 }
 
 export interface BoundaryCache {
   /**
    * `qualifier` joins the key when two NAMES share one boundary
    * `ContentAddress` but carry different compiled CSS (the same
-   * `Boundary.make` definition referenced by two `@quantize` blocks) —
+   * `defineBoundary` definition referenced by two `@quantize` blocks) —
    * without it, the first name's compile result would serve every name.
    * `themeFp` likewise segregates outputs compiled under different resolved
    * themes (a per-request theme is a real input to the cached CSS).
@@ -121,7 +121,10 @@ export interface BoundaryCache {
   invalidateByTag(tag: string): Promise<number>;
 }
 
-export declare function createBoundaryCache(kv: KVNamespace, options?: { ttl?: number; prefix?: string }): BoundaryCache;
+export declare function createBoundaryCache(
+  kv: KVNamespace,
+  options?: { ttl?: number; prefix?: string },
+): BoundaryCache;
 
 export declare const KVCache: {
   createBoundaryCache(kv: KVNamespace, options?: { ttl?: number; prefix?: string }): BoundaryCache;
@@ -162,7 +165,7 @@ export declare function resolveAssetUrlByTier(
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
 
 export interface BoundaryManifestFile {
-  readonly _tag: 'CzapBoundaryManifest';
+  readonly _tag: 'LiteshipBoundaryManifest';
   readonly _version: 2;
   readonly boundaries: BoundaryManifest;
 }
@@ -237,9 +240,7 @@ export interface EdgeHostBoundaryResolution {
 }
 
 export interface EdgeHostAdapterConfig {
-  readonly theme?:
-    | ThemeCompileConfig
-    | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
+  readonly theme?: ThemeCompileConfig | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
   readonly cache?: EdgeHostCacheConfig;
 }
 
@@ -249,7 +250,7 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly assetUrl?: string;
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   readonly htmlAttributes: string;
-  /** Spreadable map form of {@link htmlAttributes}, keyed by `data-czap-<axis>` (auto-includes every `CAP_AXES` axis). */
+  /** Spreadable map form of {@link htmlAttributes}, keyed by `data-liteship-<axis>` (auto-includes every `CAP_AXES` axis). */
   readonly htmlAttributesMap: Readonly<Record<string, string>>;
   readonly responseHeaders: {
     readonly acceptCH: string;

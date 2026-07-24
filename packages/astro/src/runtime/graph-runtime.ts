@@ -5,7 +5,7 @@
  * This is a runtime PRIMITIVE (a loader), NOT an editor. The producer that
  * SERIALIZES a {@link DocumentGraph} is downstream / out of scope; this module
  * only consumes one and drives the boundary runtime that
- * `client:satellite` already uses.
+ * `client:adaptive` already uses.
  *
  * THE FLOW ({@link loadGraphRuntime}):
  *   parse JSON (if a string)
@@ -44,7 +44,7 @@ import {
   type DocumentGraph,
   type DocumentGraphNode,
   type DocumentGraphEdge,
-} from '@czap/core';
+} from '@liteship/core';
 import {
   applyBoundaryState,
   evaluateBoundary,
@@ -55,8 +55,8 @@ import {
 } from './boundary.js';
 import { lowerGraph, type LoweredBinding } from './graph-lower.js';
 
-/** Default custom-event name the seeded/recomputed state dispatches on (mirrors the satellite directive). */
-const DEFAULT_EVENT_NAME: BoundaryStateEventName = 'czap:graph-state';
+/** Default custom-event name the seeded/recomputed state dispatches on (mirrors the adaptive directive). */
+const DEFAULT_EVENT_NAME: BoundaryStateEventName = 'liteship:graph-state';
 const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -76,7 +76,7 @@ function isDocumentGraphEdge(value: unknown): value is DocumentGraphEdge {
 /**
  * Host callback mapping an entity's content address to its live DOM element. The
  * loader owns NO element-discovery policy (an entity → element mapping is a host
- * concern: a `data-czap-entity` attribute, a registry, a ref map…), so the host
+ * concern: a `data-liteship-entity` attribute, a registry, a ref map…), so the host
  * injects this. Returning `null`/`undefined` SKIPS that binding (no element yet).
  */
 export type EntityElementResolver = (entityId: ContentAddress) => HTMLElement | null | undefined;
@@ -170,7 +170,7 @@ function applyEntityState(
 
 /** Seed (or re-seed) a binding's initial state from the live signal value and apply it to the element. */
 function seedBinding(active: ActiveBinding, eventName: BoundaryStateEventName): void {
-  warnIfSignalUnserved(active.binding.boundary.input, { source: 'czap/astro.graph', what: 'boundary signal' });
+  warnIfSignalUnserved(active.binding.boundary.input, { source: 'liteship/astro.graph', what: 'boundary signal' });
   const value = readSignalValue(active.binding.boundary.input);
   if (value === undefined) return;
   const state = evaluateBoundary(active.binding.boundary, value);
@@ -198,7 +198,7 @@ function castBinding(
 ): ActiveBinding | null {
   const element = resolve(binding.entityId);
   if (!element) return null;
-  const initialState = element.getAttribute('data-czap-state') ?? '';
+  const initialState = element.getAttribute('data-liteship-state') ?? '';
   const active: ActiveBinding = { binding, element, state: initialState, cleanup: null };
   seedBinding(active, eventName);
   observeBinding(active, eventName);
@@ -291,7 +291,7 @@ function bindingGroupsEqual(a: readonly LoweredBinding[], b: readonly LoweredBin
 function bindingsEqual(a: LoweredBinding, b: LoweredBinding): boolean {
   // The boundary's identity is its serialized shape + the per-state channel maps;
   // JSON over the comparable parts is a faithful, allocation-cheap structural key
-  // (the Boundary.Shape is a plain value; the channel maps are plain records).
+  // (the Boundary is a plain value; the channel maps are plain records).
   const key = (binding: LoweredBinding): string =>
     JSON.stringify({
       input: binding.boundary.input,
@@ -354,9 +354,9 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
     try {
       raw = JSON.parse(serialized);
     } catch (err) {
-      Diagnostics.warnOnce({
-        source: 'czap/astro.graph',
-        code: 'graph-parse-failed',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.graph',
+        code: 'astro/graph-runtime/graph-parse-failed',
         message:
           `Failed to parse the serialized DocumentGraph as JSON (${String(err)}). ` +
           `The graph runtime stays inert. Fix: pass a valid serialized DocumentGraph.`,
@@ -410,9 +410,9 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
       resealed.push(sealedNode);
     }
   } catch (err) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.graph',
-      code: 'graph-reseal-failed',
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.graph',
+      code: 'astro/graph-runtime/graph-reseal-failed',
       message:
         `Failed to re-seal a DocumentGraph node (${String(err)}). The graph runtime stays inert. ` +
         `Fix: ensure each node payload is well-formed before serializing.`,
@@ -449,9 +449,9 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
   try {
     return sealGraph(resealedGraph);
   } catch (err) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.graph',
-      code: 'graph-seal-failed',
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.graph',
+      code: 'astro/graph-runtime/graph-seal-failed',
       message:
         `Failed to seal the DocumentGraph (${String(err)}). The graph runtime stays inert. ` +
         `Fix: ensure the graph's nodes/edges are well-formed before serializing.`,
@@ -466,8 +466,8 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
  * so a fixed meta does not affect identity — it only satisfies the envelope.
  */
 const ZERO_META = {
-  created: { wall_ms: 0, counter: 0, node_id: 'czap-graph-runtime' },
-  updated: { wall_ms: 0, counter: 0, node_id: 'czap-graph-runtime' },
+  created: { wall_ms: 0, counter: 0, node_id: 'liteship-graph-runtime' },
+  updated: { wall_ms: 0, counter: 0, node_id: 'liteship-graph-runtime' },
   version: 0,
 } as const;
 
@@ -493,7 +493,7 @@ export interface GraphRuntimeInternals {
 }
 
 /** Module-private key under which a handle stashes its {@link GraphRuntimeInternals}. */
-const RUNTIME_INTERNALS = Symbol('czap.graphRuntimeInternals');
+const RUNTIME_INTERNALS = Symbol('liteship.graphRuntimeInternals');
 
 /** A handle carrying its private internals (the shape `loadGraphRuntime` actually returns). */
 interface InternalGraphRuntimeHandle extends GraphRuntimeHandle {
@@ -504,7 +504,7 @@ interface InternalGraphRuntimeHandle extends GraphRuntimeHandle {
  * Read a handle's private {@link GraphRuntimeInternals}, or `null` for a foreign
  * object that is not a {@link loadGraphRuntime} handle. The symbol key is
  * module-private, so this accessor is the ONLY way an in-package seam reaches the
- * live cast state + graph-advance hook (it never leaves `@czap/astro`).
+ * live cast state + graph-advance hook (it never leaves `@liteship/astro`).
  */
 export function graphRuntimeInternals(handle: GraphRuntimeHandle): GraphRuntimeInternals | null {
   return (handle as Partial<InternalGraphRuntimeHandle>)[RUNTIME_INTERNALS] ?? null;

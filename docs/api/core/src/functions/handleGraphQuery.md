@@ -8,7 +8,7 @@
 
 > **handleGraphQuery**(`request`, `store`): `Promise`\<[`GraphQueryResponse`](../type-aliases/GraphQueryResponse.md)\>
 
-Defined in: [core/src/graph-query.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L156)
+Defined in: [core/src/graph/graph-query.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query.ts#L156)
 
 Process one graph read against the host store. Pure of transport: load → verify →
 conditional etag compare. NEVER throws — failures map to the response shape.

@@ -13,7 +13,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
-import { probeFfmpegRender } from '@czap/command/host';
+import { probeFfmpegRender } from '@liteship/command/host';
 import { spawnArgvCapture } from '../../lib/spawn.js';
 import { findWorkspaceRoot } from './manifest.js';
 import {
@@ -49,8 +49,19 @@ export function probeNode(minima: EngineMinima): DoctorCheck {
   return { id: 'node.version', label: 'Node.js', status: 'ok', detail: version };
 }
 
-export async function probePnpm(minima: EngineMinima): Promise<DoctorCheck> {
-  const r = await spawnArgvCapture('pnpm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+/**
+ * The subprocess-capture capability the spawn-bearing probes shell out through.
+ * Injectable (defaulting to the real {@link spawnArgvCapture}) so tests script the
+ * boundary deterministically — no PATH, git, cargo, or pnpm touched — while
+ * production call sites stay byte-identical.
+ */
+export type SpawnArgvCapture = typeof spawnArgvCapture;
+
+export async function probePnpm(
+  minima: EngineMinima,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<DoctorCheck> {
+  const r = await spawn('pnpm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
   if (r?.timedOut) {
     return {
       id: 'pnpm.version',
@@ -85,7 +96,7 @@ export async function probePnpm(minima: EngineMinima): Promise<DoctorCheck> {
       label: 'pnpm',
       status: 'fail',
       detail: `${version} (need >= ${minima.pnpm})`,
-      hint: 'Re-rig pnpm: corepack prepare pnpm@latest --activate',
+      hint: 'Reinstall pnpm: corepack prepare pnpm@latest --activate',
     };
   }
   return { id: 'pnpm.version', label: 'pnpm', status: 'ok', detail: version };
@@ -99,7 +110,7 @@ export function probeWorkspaceInstalled(cwd: string): DoctorCheck {
       label: 'workspace install',
       status: 'fail',
       detail: 'node_modules missing or stale',
-      hint: 'Cast off: pnpm install',
+      hint: 'Set up: pnpm install',
     };
   }
   return { id: 'workspace.installed', label: 'workspace install', status: 'ok', detail: 'node_modules present' };
@@ -129,7 +140,7 @@ export function probeConsumerInstalled(cwd: string): DoctorCheck {
     label: 'workspace install',
     status: 'fail',
     detail: 'node_modules missing or stale',
-    hint: 'Cast off: pnpm install',
+    hint: 'Set up: pnpm install',
   };
 }
 
@@ -140,12 +151,12 @@ export function probeBuilt(cwd: string, pkg: string, label: string): DoctorCheck
       id: `${pkg}.built`,
       label,
       status: 'warn',
-      detail: 'dist/ not laid',
-      hint: 'Lay the keel with: pnpm run build',
+      detail: 'dist/ not built',
+      hint: 'Build with: pnpm run build',
       fixable: true,
     };
   }
-  return { id: `${pkg}.built`, label, status: 'ok', detail: 'dist/ laid' };
+  return { id: `${pkg}.built`, label, status: 'ok', detail: 'dist/ built' };
 }
 
 /**
@@ -201,25 +212,25 @@ export function probeGitHooks(cwd: string): DoctorCheck {
       id: 'git.hooks',
       label: 'git hooks',
       status: 'warn',
-      detail: 'pre-commit hook not rigged',
-      hint: 'Rig it: pnpm exec tsx scripts/link-pre-commit.ts',
+      detail: 'pre-commit hook not installed',
+      hint: 'Install it: pnpm exec tsx scripts/link-pre-commit.ts',
       fixable: true,
     };
   }
-  return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit rigged' };
+  return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit installed' };
 }
 
-export function probeFfmpegRenderCheck(): DoctorCheck {
-  const probe = probeFfmpegRender();
-  if (probe.ok) {
-    return { id: 'ffmpeg.libx264', label: 'ffmpeg (libx264)', status: 'ok', detail: probe.detail };
+export function probeFfmpegRenderCheck(probe: typeof probeFfmpegRender = probeFfmpegRender): DoctorCheck {
+  const result = probe();
+  if (result.ok) {
+    return { id: 'ffmpeg.libx264', label: 'ffmpeg (libx264)', status: 'ok', detail: result.detail };
   }
   return {
     id: 'ffmpeg.libx264',
     label: 'ffmpeg (libx264)',
     status: 'warn',
-    detail: probe.detail,
-    hint: probe.hint,
+    detail: result.detail,
+    hint: result.hint,
   };
 }
 
@@ -244,11 +255,14 @@ function playwrightBrowsersDir(): string | null {
 function hasChromiumBuild(): boolean {
   const dir = playwrightBrowsersDir();
   if (!dir || !existsSync(dir)) return false;
-  let found = false;
+  let found: boolean;
   try {
     found = readdirSync(dir).some((entry) => entry.startsWith('chromium'));
   } catch {
-    /* unreadable cache dir — treat as no chromium */
+    // An unreadable browsers-cache dir reads as "no chromium installed" — record the
+    // conservative, non-corrupting fallback the doctor already surfaces to the user
+    // (a false "missing" prompts a reinstall, never hides a real break).
+    found = false;
   }
   return found;
 }
@@ -264,7 +278,7 @@ export function probePlaywright(cwd: string): DoctorCheck {
       label: 'Playwright',
       status: 'warn',
       detail: '@playwright/test not in node_modules (e2e tests will not run)',
-      hint: 'Stow the browsers: pnpm install && pnpm exec playwright install chromium',
+      hint: 'Install the browsers: pnpm install && pnpm exec playwright install chromium',
     };
   }
   if (!hasChromiumBuild()) {
@@ -273,24 +287,20 @@ export function probePlaywright(cwd: string): DoctorCheck {
       label: 'Playwright',
       status: 'warn',
       detail: 'package present but no chromium browser binary downloaded (e2e/browser tests will not run)',
-      hint: 'Stow the browsers: pnpm exec playwright install chromium chromium-headless-shell',
+      hint: 'Install the browsers: pnpm exec playwright install chromium chromium-headless-shell',
     };
   }
   return { id: 'playwright.installed', label: 'Playwright', status: 'ok', detail: 'package + chromium present' };
 }
 
-export async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
+export async function probeGitConfig(cwd: string, spawn: SpawnArgvCapture = spawnArgvCapture): Promise<DoctorCheck> {
   const gitDir = resolve(cwd, '.git');
   if (!existsSync(gitDir)) {
     return { id: 'git.config', label: 'git config', status: 'ok', detail: 'no .git (not a worktree)' };
   }
   const [email, name] = await Promise.all([
-    spawnArgvCapture('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
-      () => null,
-    ),
-    spawnArgvCapture('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
-      () => null,
-    ),
+    spawn('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
+    spawn('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
   ]);
   if (email?.timedOut || name?.timedOut) {
     return {
@@ -321,10 +331,13 @@ export async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
  * `crates/` directory. On Rust-free clones returns null so the probe is
  * skipped entirely (no false-positive warnings on docs-only branches).
  */
-export async function probeWasmToolchain(cwd: string): Promise<DoctorCheck | null> {
+export async function probeWasmToolchain(
+  cwd: string,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<DoctorCheck | null> {
   const cratesDir = resolve(cwd, 'crates');
   if (!existsSync(cratesDir)) return null;
-  const r = await spawnArgvCapture('cargo', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+  const r = await spawn('cargo', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
   if (r?.timedOut) {
     return {
       id: 'wasm.toolchain',
@@ -340,7 +353,7 @@ export async function probeWasmToolchain(cwd: string): Promise<DoctorCheck | nul
       label: 'WASM toolchain',
       status: 'warn',
       detail: 'cargo not on PATH (crates/ present; WASM build will not run)',
-      hint: 'Stow Rust: https://rustup.rs',
+      hint: 'Install Rust: https://rustup.rs',
     };
   }
   return { id: 'wasm.toolchain', label: 'WASM toolchain', status: 'ok', detail: r.stdout.trim() };

@@ -21,7 +21,7 @@ Defined in: [edge/src/kv-cache.ts:140](https://github.com/freebatteryfactory/Lit
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
-`Boundary.make` definition referenced by two `@quantize` blocks) —
+`defineBoundary` definition referenced by two `@quantize` blocks) —
 without it, the first name's compile result would serve every name.
 `themeFp` likewise segregates outputs compiled under different resolved
 themes (a per-request theme is a real input to the cached CSS).

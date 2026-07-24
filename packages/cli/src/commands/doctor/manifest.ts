@@ -17,7 +17,7 @@ import { type EngineMinima, type Readout, parseEngineMajor, unreadable } from '.
 
 /**
  * Walk up from `start` until a workspace marker is found. Probes need
- * the workspace root, not the caller's cwd — running `czap doctor` from
+ * the workspace root, not the caller's cwd — running `liteship doctor` from
  * `packages/core` should still check the repo's `node_modules/.modules.yaml`,
  * its `packages/cli/dist/`, and its `.git/hooks/`, not a phantom
  * `packages/core/packages/cli/dist/` that never exists.

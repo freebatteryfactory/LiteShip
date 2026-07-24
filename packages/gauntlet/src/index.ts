@@ -1,5 +1,5 @@
 /**
- * `@czap/gauntlet` — the self-proving, extendable rigor engine.
+ * `@liteship/gauntlet` — the self-proving, extendable rigor engine.
  *
  * The foundations (Slice A): the {@link Finding} vocabulary humans and agents
  * share, {@link AssuranceLevel} (the hazard model that aims rigor), the
@@ -107,23 +107,23 @@ export {
   produceSkipSiteFacts,
   produceSkipSiteFactsFromContext,
   decideSkipSite,
-} from './skip-site-facts.js';
+} from './facts/skip-site-facts.js';
 
 // The FactGate form of the always-blocking no-skipped-test rule (same ruleId, same findings
 // as the closure noSkippedTestGate) — proven equivalent over the adversarial corpus by the
 // shadow-diff before any promotion to the production gate set.
 export { noSkippedTestFactGate, decideSkips } from './gates/no-skipped-test-fact.js';
 
-export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './mutation-facts.js';
+export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './facts/mutation-facts.js';
 
 // The BISIMULATION fact family (Wave 5.5, the transition cage) — the DYNAMIC-SUBJECT
 // half of the conformance backbone. Flat, no-heavy-dep facts (parallel to MutationFacts):
 // each case's model/impl observation digests + a status verdict (equivalent|divergent|
 // unevidenced). The heavy capture (unfolding op histories over both transports) lives in
-// @czap/audit's buildTransitionFacts + the Foundation harnesses; the lean gate folds.
-export { type TransitionFacts, type TransitionCase, type TransitionStatus } from './transition-facts.js';
+// @liteship/audit's buildTransitionFacts + the Foundation harnesses; the lean gate folds.
+export { type TransitionFacts, type TransitionCase, type TransitionStatus } from './facts/transition-facts.js';
 // The Wave-8.5 two-axis spine-relation facts + pure classifiers. INTERFACE + logic
-// only (no `typescript` dep); @czap/audit's buildSpineRelationFacts probes them, the
+// only (no `typescript` dep); @liteship/audit's buildSpineRelationFacts probes them, the
 // lean gate folds them.
 export {
   type SpineRelationFacts,
@@ -132,21 +132,21 @@ export {
   type SurfaceRelation,
   classifyStructuralRelation,
   relationSatisfied,
-} from './spine-relation-facts.js';
+} from './facts/spine-relation-facts.js';
 
 // The LOCAL-VS-GLOBAL correctness family — proof-strength facts + the lax-functor
 // `min`-fold over the dep DAG (the dual of assurance propagation), and the
 // composition-coverage facts (untested interaction edges).
-export { type ProofFacts, type ModuleProof, type ProofSignals, UNMEASURED_PROOF } from './proof-facts.js';
+export { type ProofFacts, type ModuleProof, type ProofSignals, UNMEASURED_PROOF } from './facts/proof-facts.js';
 export { propagateProofStrength, weakestLinkPath } from './proof-propagation.js';
 export {
   type CompositionFacts,
   type InteractionEdge,
   type CoverageEvidence,
   COVERAGE_EVIDENCE_STRENGTH,
-} from './composition-facts.js';
+} from './facts/composition-facts.js';
 
-export { type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict, isMcdcCovered } from './mcdc-facts.js';
+export { type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict, isMcdcCovered } from './facts/mcdc-facts.js';
 
 export {
   type SupplyChainFacts,
@@ -155,16 +155,16 @@ export {
   type SbomFacts,
   type ProvenanceFacts,
   type CiAuthorityFacts,
-} from './supply-chain-facts.js';
+} from './facts/supply-chain-facts.js';
 
-export { type SimulationFacts, type ScenarioReplayFact, type ReplayDivergence } from './simulation-facts.js';
+export { type SimulationFacts, type ScenarioReplayFact, type ReplayDivergence } from './facts/simulation-facts.js';
 
 export {
   type FuzzCorpusFacts,
   type DecoderFuzzFact,
   type DecodeViolation,
   type DecodeViolationClass,
-} from './fuzz-facts.js';
+} from './facts/fuzz-facts.js';
 
 export {
   type TaintFacts,
@@ -172,9 +172,9 @@ export {
   type TaintEndpoint,
   type SanitizerSite,
   type TaintPathStep,
-} from './taint-facts.js';
+} from './facts/taint-facts.js';
 
-export { type CapabilityLinkFacts, type CapabilityLinkResult } from './capability-link-facts.js';
+export { type CapabilityLinkFacts, type CapabilityLinkResult } from './facts/capability-link-facts.js';
 
 export {
   type TraceabilityFacts,
@@ -185,7 +185,7 @@ export {
   type InvariantWaived,
   type InvariantExpired,
   type TraceabilityDivergence,
-} from './traceability-facts.js';
+} from './facts/traceability-facts.js';
 
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
 
@@ -259,14 +259,14 @@ export {
   diffStandardsSurface,
   applyStandardsWaivers,
   type SiteConditionalityResolver,
-} from './standards-facts.js';
+} from './facts/standards-facts.js';
 
 // The AGENT-SAFETY META-GAUNTLET (the "raccoon rule") phases B+C — the DECLARED-FIX
 // PROTOCOL: the lean DeclaredFix record (intent + scope + size-cap + before/after
 // receipts) + the PURE `verifyDeclaredFix` admission verifier (scope ⊆ declared, size
 // ≤ cap, no unsigned weakening REUSING phase A, receipt-consistency). The SAME verifier
 // runs at the runtime apply moment (phase B) and as the commit gate (phase C) — one
-// engine. The HOST measures the actual change + mints the receipts via `@czap/core`'s
+// engine. The HOST measures the actual change + mints the receipts via `@liteship/core`'s
 // `contentAddressOf`, then folds the verdict into the DeclaredFixFacts the
 // `declaredFixProtocolGate` reports.
 export {
@@ -305,6 +305,7 @@ export { noNondeterminismGate } from './gates/no-nondeterminism.js';
 export { noSilentCatchGate } from './gates/no-silent-catch.js';
 export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
+export { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
 export { noEarlyReturnTestGate } from './gates/no-early-return-test.js';
 export { detectEarlyReturnBeforeExpect, type EarlyReturnMatch } from './gates/early-return-detect.js';
 
@@ -350,8 +351,30 @@ export {
   type ActiveSurfaceFacts,
   type ActiveSurfaceEntry,
   type ActiveSurfacePromotion,
-} from './active-surface-facts.js';
+} from './facts/active-surface-facts.js';
+
+// The three check-governance META-GATES + their decision kernels + the FactPack shape.
+// FactGates over the injected CheckGovernanceFacts (a host folds @liteship/command's
+// CHECK_REGISTRY / SCRIPT_EXEMPTIONS / package.json / fs / LITESHIP_WAIVERS / the ledger);
+// they ride in LITESHIP_GATES and fold empty when the facts are absent (lean production).
+export { checkRegistryCompleteGate, decideCheckRegistryComplete } from './gates/check-registry-complete.js';
+export { checkNegativeControlGate, decideCheckNegativeControl } from './gates/check-negative-control.js';
+export { checkWaiverFreshnessGate, decideCheckWaiverFreshness } from './gates/check-waiver-freshness.js';
+export {
+  type CheckGovernanceFacts,
+  type CheckPartitionFacts,
+  type RegisteredCheckFact,
+  type NegativeControlFact,
+  type WaiverFreshnessFact,
+} from './facts/check-governance-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
+
+// The DIAGNOSTIC-CODE REGISTRY guard — statically scans packages/gauntlet/src for every
+// emitted `gauntlet/…` ruleId and the check registry for every `check/<slug>` id, and reds
+// on any not enrolled in @liteship/error's DIAGNOSTIC_REGISTRY. A lean source-fold (no IR,
+// no facts); it rides BOTH LITESHIP_GATES and LITESHIP_IR_GATES.
+export { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
+export { facadeExportBudgetGate } from './gates/facade-export-budget.js';
 
 // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
 // fold over the committed `benchmarks/` artifacts (declared-distribution registry +
@@ -401,7 +424,7 @@ export {
 
 // The avionics-tier supply-chain gate (Slice C). It folds the host-supplied
 // SupplyChainFacts (lockfile policy / SBOM / provenance / CI authority) — the
-// heavy analysis lives in the @czap/cli host. Exported but DELIBERATELY NOT in
+// heavy analysis lives in the @liteship/cli host. Exported but DELIBERATELY NOT in
 // LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected host path
 // only. See the integrator note in the Slice-C report (a ~3-line wiring like B3.3).
 export { supplyChainGate } from './gates/supply-chain.js';
@@ -411,9 +434,9 @@ export { supplyChainGate } from './gates/supply-chain.js';
 // the committed score baseline): a SURVIVED/NO-COVERAGE mutant becomes a Finding at
 // the file's PROPAGATED assurance level, the kill-floor by level deciding blocking,
 // and a per-file score drop is a ratchet regression. The heavy AST mutation + the
-// per-mutant vitest runs live in @czap/audit + the @czap/cli host. Exported but
+// per-mutant vitest runs live in @liteship/audit + the @liteship/cli host. Exported but
 // DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: mutation is OPT-IN
-// (`czap check --ir --mutate`) — running a suite per mutant is too heavy for a
+// (`liteship check gates --ir --mutate`) — running a suite per mutant is too heavy for a
 // default run. The integrator composes it on like supplyChainGate (a ~3-line
 // wiring). See the SURVIVOR_SEVERITY_BY_LEVEL / KILL_FLOOR_BY_LEVEL redlinable data.
 export {
@@ -428,12 +451,12 @@ export {
 // replayable Finding at the family's assurance level (severity by level deciding
 // blocking), an UNEVIDENCED case a coverage gap floored by the committed ratchet. The
 // capture (unfolding op histories over the reference model + the native transport) lives in
-// @czap/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner
+// @liteship/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner
 // (tests/support/reactive-conformance.ts). Exported but DELIBERATELY NOT in LITESHIP_GATES /
 // LITESHIP_IR_GATES: the model + native-transport oracle are LiteShip-specific product
 // machinery in the test tree, so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
 // `transition:gate` phase (scripts/transition-conformance-gate.ts, run every PR), NOT the
-// shipped `czap check` CLI. See the DIVERGENCE_SEVERITY_BY_LEVEL / TRANSITION_FAMILY_LEVEL
+// shipped `liteship check` CLI. See the DIVERGENCE_SEVERITY_BY_LEVEL / TRANSITION_FAMILY_LEVEL
 // redlinable data.
 export {
   transitionConformanceGate,
@@ -441,10 +464,10 @@ export {
   TRANSITION_FAMILY_LEVEL,
 } from './gates/transition-conformance.js';
 // The Wave-8.5 two-axis spine-relation gate. Exported but DELIBERATELY NOT in
-// LITESHIP_GATES / LITESHIP_IR_GATES: it is OPT-IN (`czap check --ir --spine-relation`)
+// LITESHIP_GATES / LITESHIP_IR_GATES: it is OPT-IN (`liteship check gates --ir --spine-relation`)
 // — a ts.Program probe over the spine + runtime surface is too heavy for a default
 // run. The integrator composes it on like transitionConformanceGate (a ~3-line
-// wiring); @czap/audit's buildSpineRelationFacts builds the injected facts.
+// wiring); @liteship/audit's buildSpineRelationFacts builds the injected facts.
 export { spineRelationGate } from './gates/spine-relation.js';
 
 // The avionics-tier MC/DC-coverage gate (DO-178B Level A's Modified Condition/Decision
@@ -453,9 +476,9 @@ export { spineRelationGate } from './gates/spine-relation.js';
 // two pins' verdicts folded): a condition whose independent effect is NOT observed (a
 // surviving force-true/force-false pin) becomes a Finding at the file's PROPAGATED
 // assurance level, the MC/DC floor by level deciding blocking (L4 requires FULL MC/DC).
-// The heavy condition-mutant AST work + the per-pin vitest runs live in @czap/audit + the
-// @czap/cli host. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
-// MC/DC is OPT-IN (`czap check --ir --mcdc`) — running a suite per pin (two per condition)
+// The heavy condition-mutant AST work + the per-pin vitest runs live in @liteship/audit + the
+// @liteship/cli host. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
+// MC/DC is OPT-IN (`liteship check gates --ir --mcdc`) — running a suite per pin (two per condition)
 // is too heavy for a default run. The integrator composes it on like mutationDivergenceGate
 // (a ~3-line wiring). See the MCDC_SEVERITY_BY_LEVEL / MCDC_FLOOR_BY_LEVEL redlinable data.
 export { mcdcCoverageGate, MCDC_SEVERITY_BY_LEVEL, MCDC_FLOOR_BY_LEVEL } from './gates/mcdc-coverage.js';
@@ -464,8 +487,8 @@ export { mcdcCoverageGate, MCDC_SEVERITY_BY_LEVEL, MCDC_FLOOR_BY_LEVEL } from '.
 // host-supplied SimulationFacts — a replay-divergence (two replays of one seed
 // produce different byte-exact trace digests) is a self-explaining L4 Finding
 // carrying the seed. The heavy work (minting a seeded world, running the scenario
-// corpus, replaying, content-addressing traces) lives in @czap/core/simulation,
-// driven by the @czap/cli host (`czap check --ir --simulate`). Exported but
+// corpus, replaying, content-addressing traces) lives in @liteship/core/simulation,
+// driven by the @liteship/cli host (`liteship check gates --ir --simulate`). Exported but
 // DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the
 // facts-injected, opt-in `--simulate` host path only (a ~3-line wiring like
 // supplyChainGate — the integrator composes it on, the gate ships qualified).
@@ -478,7 +501,7 @@ export { simulationDeterminismGate } from './gates/simulation-determinism.js';
 // carrying the REPRODUCER (a corpus seed id or a `generated@seed=0x…` source). The
 // heavy work (hammering every decoder with the committed `tests/fixtures/fuzz-corpus`
 // seeds + a fixed, seeded count of `fast-check` generated inputs, classifying each
-// outcome) lives in the `tests/fuzz` decode fuzzer, driven by the @czap/cli host.
+// outcome) lives in the `tests/fuzz` decode fuzzer, driven by the @liteship/cli host.
 // Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the
 // facts-injected host path only (a ~3-line wiring like supplyChainGate — the
 // integrator composes it on, the gate ships qualified).
@@ -490,11 +513,11 @@ export { fuzzCorpusGate } from './gates/fuzz-corpus.js';
 // shader-compile / innerHTML / graph-apply / fetch sink with NO sanitizer on the
 // path) is a self-explaining Finding at the sink's (propagated) level; a sanitized
 // flow is the guarded-seam green (no finding). The heavy work (the whole-corpus
-// `ts.Program` + type-checker dataflow trace) lives in @czap/audit's taint oracle,
-// classified by the LiteShip-LOCAL source/sink/sanitizer registry the @czap/cli
+// `ts.Program` + type-checker dataflow trace) lives in @liteship/audit's taint oracle,
+// classified by the LiteShip-LOCAL source/sink/sanitizer registry the @liteship/cli
 // host injects (the audit engine references NO LiteShip policy — ADR-0012/D7b).
 // Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: taint is
-// OPT-IN (`czap check --ir --taint`) — a whole-corpus trace is too heavy for a
+// OPT-IN (`liteship check gates --ir --taint`) — a whole-corpus trace is too heavy for a
 // default run. The integrator composes it on like supplyChainGate (a ~3-line
 // wiring).
 export { taintFlowGate } from './gates/taint-flow.js';
@@ -505,7 +528,7 @@ export { capabilityGateLinkGate } from './gates/capability-gate-link.js';
 // a ledger⇔header DIVERGENCE becomes a self-explaining Finding at the invariant's
 // level. The heavy work (parsing traceability/*.yaml, scanning the corpus for
 // `// PROVES:` headers, running the lifecycle state machine against an injected
-// wall-clock date, content-addressing the resolved ledger) lives in the @czap/cli
+// wall-clock date, content-addressing the resolved ledger) lives in the @liteship/cli
 // host (`packages/cli/src/lib/traceability.ts`). Exported but DELIBERATELY NOT in
 // LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected host path only.
 // The CLI composes it ALWAYS-ON on the `--ir` path (the committed ledger is cheap to
@@ -542,8 +565,8 @@ export { declaredFixProtocolGate } from './gates/declared-fix-protocol.js';
 // (L4/L3) module whose EFFECTIVE/global proof drops below its level floor BECAUSE of a
 // weak dependency is a self-explaining Finding naming the weak-link path. The heavy work
 // (reading the proof signals — mutation score / coverage / property tests / enrolled
-// invariants — and blending the per-module scalar) lives in the @czap/cli host (`czap
-// check --ir --proof`). Exported but DELIBERATELY NOT in LITESHIP_GATES /
+// invariants — and blending the per-module scalar) lives in the @liteship/cli host (`liteship
+// check gates --ir --proof`). Exported but DELIBERATELY NOT in LITESHIP_GATES /
 // LITESHIP_IR_GATES: it runs on the facts-injected, opt-in `--proof` host path only (a
 // ~3-line wiring like supplyChainGate — push the gate + inject ProofFacts). When the
 // facts are absent it advisories "not-evidenced" rather than passing silent. See the
@@ -563,7 +586,7 @@ export {
 // self-explaining Finding at the edge's propagated level, honestly stating which
 // evidence class decided it (a structural over-approximation of integration coverage).
 // The heavy work (deriving the call-graph edges + the individually-tested set + the
-// integration-coverage probe) lives in the @czap/cli host (`czap check --ir
+// integration-coverage probe) lives in the @liteship/cli host (`liteship check gates --ir
 // --composition`). Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
 // it runs on the facts-injected, opt-in `--composition` host path only (a ~3-line wiring
 // like supplyChainGate). When the facts are absent it advisories "not-evidenced". See the

@@ -11,7 +11,7 @@
  * @module
  */
 
-import { clamp01, type System, type World } from '@czap/core';
+import { clamp01, type System, type World } from '@liteship/core';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
 
@@ -20,7 +20,7 @@ export function EffectSystem(frameIndex: number): System {
   return {
     name: 'EffectSystem',
     query: ['EffectKind', 'FrameRange'],
-    execute: (entities, world?: World.Shape) => {
+    execute: (entities, world?: World) => {
       for (const e of entities) {
         const range = e.components.get('FrameRange') as { from: number; to: number };
         const inRange = frameIndex >= range.from && frameIndex < range.to;

@@ -12,5 +12,5 @@ Defined in: [assets/src/analysis/beat-markers.ts:23](https://github.com/freebatt
 
 Detected beat markers + overall BPM estimate — the raw asset/sample-space
 projection carried by the `asset:beats` capability. Aliased to the canonical
-spine contract (CUT A5) so the shape lives in exactly one place; `@czap/scene`
+spine contract (CUT A5) so the shape lives in exactly one place; `@liteship/scene`
 consumes the same family via BeatMarkerSet's sibling `BeatComponent`.

@@ -26,10 +26,10 @@ describe('gauntlet ordering', () => {
     expect(packageJson.scripts['flex:verify']).toBe('pnpm exec tsx scripts/flex-verify.ts');
   });
 
-  test('flake, reality, and satellite scan lanes are available as root scripts', () => {
+  test('flake, reality, and adaptive scan lanes are available as root scripts', () => {
     expect(packageJson.scripts['test:flake']).toBe('pnpm exec tsx scripts/test-flake.ts');
     expect(packageJson.scripts['bench:reality']).toBe('pnpm run build && tsx scripts/bench-reality.ts');
-    expect(packageJson.scripts['report:satellite-scan']).toBe('pnpm exec tsx scripts/report-satellite-scan.ts');
+    expect(packageJson.scripts['report:adaptive-scan']).toBe('pnpm exec tsx scripts/report-adaptive-scan.ts');
   });
 
   // ── The raccoon-rule backstop must actually RUN in CI over the real repo ──────
@@ -64,7 +64,7 @@ describe('gauntlet ordering', () => {
     // The truth-linux lane (the one that runs gauntlet:full) must fetch full history so
     // `git show <base>:traceability/standards-snapshot.json` resolves (else fail-closed).
     expect(ci).toContain('fetch-depth: 0');
-    // It must set CZAP_STANDARDS_BASE_REF deterministically — the PR base for a
+    // It must set LITESHIP_STANDARDS_BASE_REF deterministically — the PR base for a
     // pull_request; `github.event.before` (the SHA the ref pointed at BEFORE the push) for
     // a push, so the diff covers the ENTIRE pushed range and an earlier-commit weakening in
     // a multi-commit push cannot sail through (the HEAD~1 form only caught the LAST commit).
@@ -72,12 +72,12 @@ describe('gauntlet ordering', () => {
     // (never spliced as `${{ github.base_ref }}` inside `run:`) — the template-injection-safe
     // form; pin both halves so the safe indirection can't silently regress to interpolation.
     expect(ci).toContain('BASE_REF: ${{ github.base_ref }}');
-    expect(ci).toContain('CZAP_STANDARDS_BASE_REF=origin/$BASE_REF');
+    expect(ci).toContain('LITESHIP_STANDARDS_BASE_REF=origin/$BASE_REF');
     expect(ci).toContain('PUSH_BEFORE: ${{ github.event.before }}');
-    expect(ci).toContain('CZAP_STANDARDS_BASE_REF=$BASE');
+    expect(ci).toContain('LITESHIP_STANDARDS_BASE_REF=$BASE');
     // The legacy HEAD~1 push base (which MISSED earlier-commit weakenings in a multi-commit
     // push) must be GONE — a regression guard so it cannot creep back.
-    expect(ci).not.toContain('CZAP_STANDARDS_BASE_REF=HEAD~1');
+    expect(ci).not.toContain('LITESHIP_STANDARDS_BASE_REF=HEAD~1');
     // The brand-new-branch bootstrap must be handled fail-closed: the all-zeros sentinel is
     // detected and falls back to the merge-base with main (else the zero-SHA fails closed).
     expect(ci).toContain('0000000000000000000000000000000000000000');

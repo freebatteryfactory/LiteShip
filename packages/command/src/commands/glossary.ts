@@ -5,7 +5,7 @@
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { defineCommand, failed, ok } from '../registry.js';
 
 /** One ontology term. Mirrors a row in GLOSSARY.md. */
@@ -54,28 +54,26 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'LiteShip',
     category: 'naming',
     definition:
-      'Product and distribution layer. Use this name in READMEs, social posts, and anywhere a reader adopts the framework.',
-    seeAlso: ['CZAP', '@czap/*'],
+      'The one brand: product, distribution, engine, and architecture. Use this name in READMEs, social posts, ADRs, and anywhere a reader adopts the framework.',
+    seeAlso: ['@liteship/*'],
   },
   {
-    term: 'CZAP',
-    category: 'naming',
-    definition:
-      'Engine name (Content-Zoned Adaptive Projection, "see-zap"). Use this in architecture docs, ADRs, and when describing how projection and zones work.',
-    seeAlso: ['LiteShip', 'cast'],
-  },
-  {
-    term: '@czap/*',
+    term: '@liteship/*',
     category: 'naming',
     definition: 'npm namespace. Used in install lines, imports, and package lists. Never renamed in prose.',
-    seeAlso: ['LiteShip', 'CZAP'],
+    seeAlso: ['LiteShip'],
   },
   {
     term: 'boundary',
     category: 'primitive',
-    definition:
-      'Where a continuous signal partitions into named bearings. Verb register: rig, tension, set. Avoid "wire" for boundaries in prose.',
-    seeAlso: ['bearing', 'rig', 'signal'],
+    definition: 'A definition that partitions one continuous input into a small set of named states.',
+    seeAlso: ['state', 'signal'],
+  },
+  {
+    term: 'state',
+    category: 'primitive',
+    definition: 'A named discrete result selected by evaluating a boundary at one input value.',
+    seeAlso: ['boundary', 'style'],
   },
   {
     term: 'token',
@@ -86,13 +84,13 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
   {
     term: 'style',
     category: 'primitive',
-    definition: "A named-state output: what casts or projects when a boundary's bearing changes.",
+    definition: 'Base and named-state properties owned by one boundary.',
     seeAlso: ['boundary', 'cast', 'theme'],
   },
   {
     term: 'theme',
     category: 'primitive',
-    definition: 'Coordinated variants: how materials re-trim when the presentation mode shifts.',
+    definition: 'Coordinated token-space variants for one presentation mode.',
     seeAlso: ['token', 'style'],
   },
   {
@@ -103,41 +101,21 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     seeAlso: ['surface', 'compile path'],
   },
   {
-    term: 'rig',
-    category: 'translator-note',
-    definition:
-      'Both verb ("rig a boundary") and noun ("the rig is in between"). The system that ties continuous signals to named bearings.',
-    seeAlso: ['boundary'],
-  },
-  {
     term: 'surface',
     category: 'translator-note',
     definition: 'Noun — a runtime target the compiler emits to (CSS surface, ARIA surface). Not the verb sense.',
     seeAlso: ['cast', 'compile path'],
   },
   {
-    term: 'bearing',
-    category: 'translator-note',
-    definition: 'Noun — a named discrete state a boundary partitions to (one of mobile/tablet/desktop, etc.).',
-    seeAlso: ['boundary'],
-  },
-  {
-    term: 'trim',
-    category: 'translator-note',
-    definition: 'Runtime-cost language. "Kept the working deck trim" = "kept the runtime cost low".',
-    seeAlso: ['hot path'],
-  },
-  {
     term: 'hot path',
     category: 'primitive',
     definition:
-      'Working deck / working line. Per-tick code that allocates nothing on the steady-state. See ADR-0002 for the pool / dirty-flag / dense-ECS discipline.',
-    seeAlso: ['trim'],
+      'Per-tick runtime code whose steady state avoids allocation. See ADR-0002 for the pool, dirty-flag, and dense-ECS discipline.',
   },
   {
     term: 'compile path',
     category: 'primitive',
-    definition: 'Cast to CSS, project to GLSL / WGSL / ARIA / AI. Prefer a register verb to "compile" in casual prose.',
+    definition: 'Projection of authored intent to CSS, GLSL, WGSL, ARIA, AI, or another target artifact.',
     seeAlso: ['cast', 'surface'],
   },
   {
@@ -158,80 +136,7 @@ export const GLOSSARY_ENTRIES: readonly GlossaryEntry[] = [
     term: 'gauntlet',
     category: 'primitive',
     definition:
-      'The full release-grade test gate (`pnpm run gauntlet:full`). Thirty-five phases starting with `rig-check`, ending in `flex:verify PASSED — project is 10/10`.',
-  },
-  {
-    term: 'shake-down',
-    category: 'translator-note',
-    definition:
-      'The first-run aggregate (`pnpm shakedown`). Run on a new hull before sailing — install, build, smoke test.',
-  },
-  {
-    term: 'dry-dock',
-    category: 'translator-note',
-    definition:
-      'Clean state. `pnpm clean` wipes dist/, coverage/, reports/, .tsbuildinfo so the next build starts from a known empty deck.',
-  },
-  {
-    term: 'hull',
-    category: 'translator-note',
-    definition:
-      'The built `dist/` artifact of a package. "Hull not yet laid" = no dist/ on disk; "Hull check" = the rolled-up status emitted by `czap doctor`.',
-    seeAlso: ['keel', 'shake-down'],
-  },
-  {
-    term: 'keel',
-    category: 'translator-note',
-    definition:
-      '`tsc --build` output. "Lay the keel" = run `pnpm run build`. The first thing you put down before anything else floats.',
-    seeAlso: ['hull'],
-  },
-  {
-    term: 'cast off',
-    category: 'translator-note',
-    definition:
-      'Begin the run: leave the dock. Used for first actions after install ("Cast off with: pnpm shakedown") and for non-blocking states ("you can cast off") in `czap doctor`.',
-    seeAlso: ['moored'],
-  },
-  {
-    term: 'moored',
-    category: 'translator-note',
-    definition:
-      'Installed but not yet underway. The state immediately after `pnpm install` — node_modules present, but build/test not run. Postinstall says "LiteShip — moored."',
-    seeAlso: ['cast off', 'shake-down'],
-  },
-  {
-    term: 'deck plan',
-    category: 'translator-note',
-    definition:
-      'The npm-scripts catalogue (`pnpm scripts`). Lists every script grouped by purpose. The chart for inner-loop operations.',
-    seeAlso: ['chart'],
-  },
-  {
-    term: 'chart',
-    category: 'translator-note',
-    definition: 'The verb table (`czap help`). The map of CLI bearings — what verb does what, grouped by phase.',
-    seeAlso: ['deck plan'],
-  },
-  {
-    term: 'quay',
-    category: 'translator-note',
-    definition:
-      'The release surface. Where a package ties up before being shipped to npm. "Tied up at the quay" = the package is packed and the capsule is written, awaiting `npm publish`. Used in `czap help` "Ship out (quay-side, release)" and in the release-flow hint.',
-    seeAlso: ['gauntlet'],
-  },
-  {
-    term: 'rig (verb)',
-    category: 'translator-note',
-    definition:
-      'Install or wire a piece of infrastructure into place. "Rig the pre-commit hook" = link `.git/hooks/pre-commit`. Distinct from the noun "rig" (the boundary system).',
-    seeAlso: ['rig'],
-  },
-  {
-    term: 'stow',
-    category: 'translator-note',
-    definition:
-      'Pack a downloaded artifact into its expected location. "Stow the browsers" = `pnpm exec playwright install`. "Stow Rust" = install via rustup.',
+      'The full release-grade test gate (`pnpm run gauntlet:full`). Runs the ordered phase sequence from the initial environment check through to `flex:verify PASSED — project is 10/10`.',
   },
 ] as const;
 
@@ -250,15 +155,15 @@ export function matchGlossaryEntries(query: string | null): readonly GlossaryEnt
 export const glossaryCommand = defineCommand({
   descriptor: {
     name: 'glossary',
-    summary: 'Look up a term in the LiteShip prose register (maritime + product naming).',
+    summary: 'Look up a term in the LiteShip technical and product vocabulary.',
     inputSchema: {
       type: 'object',
       properties: { term: { type: 'string' } },
     } as const satisfies CommandJsonSchema,
     outputSchema: GlossaryPayloadSchema,
-    annotations: { readOnly: true, group: 'castoff' },
+    annotations: { readOnly: true, group: 'setup' },
   },
-  argsSchema: S.struct({ term: S.optional(S.string) }),
+  argsSchema: schema.struct({ term: schema.optional(schema.string) }),
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {
     // `term` arrives already decoded (string | undefined) from the argsSchema.
     const raw = invocation.args.term;

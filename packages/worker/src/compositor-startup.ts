@@ -9,7 +9,7 @@
  * @module
  */
 
-import { RuntimeCoordinator, StateName, rawIndexF32, systemClock } from '@czap/core';
+import { RuntimeCoordinator, StateName, rawIndexF32, systemClock } from '@liteship/core';
 import type { ToWorkerMessage, BootstrapQuantizerRegistration, ResolvedStateEntry } from './messages.js';
 import type {
   CompositorWorkerStartupTelemetry,
@@ -57,7 +57,7 @@ let standbyCompositorLease: StandbyCompositorLease | null = null;
 /**
  * Return the current high-resolution wall-clock time in nanoseconds.
  *
- * Reads through `@czap/core`'s `systemClock` -- the single audited entropy
+ * Reads through `@liteship/core`'s `systemClock` -- the single audited entropy
  * boundary -- which itself prefers `performance.now()` and falls back to
  * `Date.now()` where the performance timeline is absent. This is an
  * inherently-live observability read (it only feeds telemetry stage deltas,
@@ -126,7 +126,7 @@ export function notifyResolvedStateSettled(
  * as-is or must be reset before replay.
  */
 export function runtimeMatchesStartupSeed(
-  runtime: RuntimeCoordinator.Shape,
+  runtime: RuntimeCoordinator,
   runtimeSeed: readonly RuntimeSeedEntry[],
 ): boolean {
   const registeredNames = runtime.registeredNames();
@@ -219,13 +219,13 @@ function getCompositorWorkerUrl(): string {
 
 function createRawCompositorWorker(): Worker {
   const url = getCompositorWorkerUrl();
-  return new Worker(url, { type: 'classic', name: 'czap-compositor' });
+  return new Worker(url, { type: 'classic', name: 'liteship-compositor' });
 }
 
-function createRuntimeCoordinator(capacity: number): RuntimeCoordinator.Shape {
+function createRuntimeCoordinator(capacity: number): RuntimeCoordinator {
   return RuntimeCoordinator.create({
     capacity,
-    name: 'czap-worker-runtime',
+    name: 'liteship-worker-runtime',
   });
 }
 
@@ -250,7 +250,7 @@ export function claimCompositorLease(
   startupTelemetry?: CompositorWorkerStartupTelemetry,
 ): {
   readonly worker: Worker;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   readonly bootstrapSnapshot: readonly BootstrapQuantizerRegistration[];
 } {
   if (
@@ -297,7 +297,7 @@ export function claimCompositorLease(
  */
 export function parkOrDisposeCompositorLease(lease: {
   readonly worker: Worker;
-  readonly runtime: RuntimeCoordinator.Shape;
+  readonly runtime: RuntimeCoordinator;
   readonly capacity: number;
   readonly bootstrapSnapshot: readonly BootstrapQuantizerRegistration[];
 }): void {

@@ -21,7 +21,7 @@ if (!existsSync(resolve(repoRoot, '.git')) || !existsSync(source)) {
  *
  * Uses node:child_process directly — this script runs from the `prepare`
  * lifecycle hook before `pnpm run build`, so it must not import
- * scripts/lib/spawn (which re-exports @czap/cli → @czap/command dist).
+ * scripts/lib/spawn (which re-exports @liteship/cli → @liteship/command dist).
  */
 function resolveGitHooksDir(): string {
   const r = spawnSync('git', ['rev-parse', '--git-path', 'hooks'], {

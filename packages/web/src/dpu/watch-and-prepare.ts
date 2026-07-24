@@ -2,7 +2,7 @@
  * DPU watch-and-prepare — stamped verifiable HTML patches with feature detection
  * and a permanent floor path (#120).
  *
- * Marker names ride the stable `nodeLogicalKey` from `@czap/core` (never node
+ * Marker names ride the stable `nodeLogicalKey` from `@liteship/core` (never node
  * ContentAddresses, which self-invalidate on payload change). Each fragment is stamped
  * with base/result graph ids plus a sha256 {@link AddressedDigest} so `staleBase`
  * lifts to the DOM layer — the same CAS discipline as a GraphPatch, transport-agnostic.
@@ -13,33 +13,33 @@
  *
  * @module
  */
-import type { AddressedDigest, ContentAddress, DocumentGraph } from '@czap/core';
-import { AddressedDigest as AddressedDigestNS } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import type { AddressedDigest, ContentAddress, DocumentGraph } from '@liteship/core';
+import { AddressedDigest as AddressedDigestNS } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { morphPure } from '../morph/diff-pure.js';
 import { createHtmlFragment } from '../security/html-trust.js';
 
 /** DOM attribute carrying the stable DPU marker name (a logicalKey, not a content address). */
-export const DPU_MARKER_ATTR = 'data-czap-dpu-marker';
+export const DPU_MARKER_ATTR = 'data-liteship-dpu-marker';
 /** DOM attribute stamped with the base graph id the patch was prepared against. */
-export const DPU_BASE_ATTR = 'data-czap-dpu-base';
+export const DPU_BASE_ATTR = 'data-liteship-dpu-base';
 /** DOM attribute stamped with the result graph id after a successful apply. */
-export const DPU_RESULT_ATTR = 'data-czap-dpu-result';
+export const DPU_RESULT_ATTR = 'data-liteship-dpu-result';
 /**
  * DOM attribute stamped with the sha256 integrity digest of the APPLIED DOM
  * serialization (`target.innerHTML` after sanitize + apply) — NOT the envelope's
  * pre-sanitization input bytes. The envelope digest verifies transport integrity
  * before apply; this attribute attests what is actually rendered.
  */
-export const DPU_DIGEST_ATTR = 'data-czap-dpu-digest';
+export const DPU_DIGEST_ATTR = 'data-liteship-dpu-digest';
 
-/** Which rung applied or will apply a verifiable patch. */
-export type DpuRung = 'native-sethtml' | 'floor-morph';
+/** Which tier applied or will apply a verifiable patch. */
+export type DpuTier = 'native-sethtml' | 'floor-morph';
 
 /** Feature-detected DPU capability — floor-morph is always available. */
 export type DpuCapability =
-  | { readonly available: true; readonly rung: 'native-sethtml' }
-  | { readonly available: false; readonly rung: 'floor-morph' };
+  | { readonly available: true; readonly tier: 'native-sethtml' }
+  | { readonly available: false; readonly tier: 'floor-morph' };
 
 /**
  * Stamped verifiable-patch envelope — marker + CAS base/result ids + sha256 digest
@@ -71,7 +71,7 @@ export type VerifiablePatchVerification =
 export type ApplyVerifiablePatchResult =
   | {
       readonly _tag: 'applied';
-      readonly rung: DpuRung;
+      readonly tier: DpuTier;
       readonly envelope: VerifiablePatchEnvelope;
       /** sha256 digest of `target.innerHTML` after apply — what the DOM attribute attests. */
       readonly appliedDigest: AddressedDigest;
@@ -104,10 +104,10 @@ export function detectDpuCapability(): DpuCapability {
   if (typeof Element !== 'undefined') {
     const probe = typeof document !== 'undefined' ? document.createElement('div') : null;
     if (probe && typeof (probe as ElementWithSetHtml).setHTML === 'function') {
-      return { available: true, rung: 'native-sethtml' };
+      return { available: true, tier: 'native-sethtml' };
     }
   }
-  return { available: false, rung: 'floor-morph' };
+  return { available: false, tier: 'floor-morph' };
 }
 
 /** Mint the sha256 digest for an HTML fragment (UTF-8 bytes, content-address kernel). */
@@ -197,17 +197,17 @@ export function applyVerifiablePatch(
     return { _tag: 'sanitizedEmpty', envelope };
   }
 
-  const rung: DpuRung = capability.available ? 'native-sethtml' : 'floor-morph';
+  const tier: DpuTier = capability.available ? 'native-sethtml' : 'floor-morph';
   if (capability.available) {
     applyNative(target, envelope.html);
   } else {
     applyFloor(target, envelope.html);
   }
-  // Attest the RENDERED serialization: both rungs sanitize before insertion, so
+  // Attest the RENDERED serialization: both tiers sanitize before insertion, so
   // the envelope's input bytes are not what the DOM shows.
   const appliedDigest = digestHtmlFragment(target.innerHTML);
   stampTarget(target, envelope, appliedDigest);
-  return { _tag: 'applied', rung, envelope, appliedDigest };
+  return { _tag: 'applied', tier, envelope, appliedDigest };
 }
 
 /** Host mutation client surface for adopt-under after a successful DPU apply (#120). */
@@ -268,7 +268,7 @@ const markerRegistry = new Map<string, Element>();
 
 /**
  * Watch a DOM slot under `marker` and prepare stamped verifiable patches against it.
- * The target is annotated with `data-czap-dpu-marker` immediately; successful applies
+ * The target is annotated with `data-liteship-dpu-marker` immediately; successful applies
  * also stamp base/result ids and the applied-DOM digest on the element.
  *
  * Throws when `marker` is already watched on a DIFFERENT connected element —

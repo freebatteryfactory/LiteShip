@@ -6,14 +6,14 @@
 
 # web/src
 
-`@czap/web` — DOM runtime for **LiteShip**: stitches **CZAP** projections
+`@liteship/web` — DOM runtime for **LiteShip**: stitches **LiteShip** projections
 (CSS, streamed HTML, LLM chunks, workers) into a live browser document.
 
 It ships:
 
 - [Morph](variables/Morph.md): idiomorph-style DOM diffing that preserves focus,
   scroll, and form state across re-renders.
-- [SlotRegistry](namespaces/SlotRegistry/README.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
+- [SlotRegistry](type-aliases/SlotRegistry.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
   for server-rendered slots in streaming HTML.
 - [SSE](variables/SSE.md) / [Resumption](variables/Resumption.md): an Effect-scoped Server-Sent
   Events client with reconnect and cross-tab resumption.
@@ -26,21 +26,19 @@ It ships:
 ## Namespaces
 
 - [LLMAdapter](namespaces/LLMAdapter/README.md)
-- [SlotRegistry](namespaces/SlotRegistry/README.md)
-- [WebCodecsCapture](namespaces/WebCodecsCapture/README.md)
 
 ## Interfaces
 
 - [AudioProcessor](interfaces/AudioProcessor.md)
 - [BackpressureHint](interfaces/BackpressureHint.md)
 - [BindGraphFormOptions](interfaces/BindGraphFormOptions.md)
-- [CzapEventDetailMap](interfaces/CzapEventDetailMap.md)
-- [CzapMorphRejectedDetail](interfaces/CzapMorphRejectedDetail.md)
-- [CzapStreamErrorDetail](interfaces/CzapStreamErrorDetail.md)
-- [CzapUniformUpdateDetail](interfaces/CzapUniformUpdateDetail.md)
 - [DpuAdoptClient](interfaces/DpuAdoptClient.md)
 - [FocusState](interfaces/FocusState.md)
 - [IMEState](interfaces/IMEState.md)
+- [LiteshipEventDetailMap](interfaces/LiteshipEventDetailMap.md)
+- [LiteshipMorphRejectedDetail](interfaces/LiteshipMorphRejectedDetail.md)
+- [LiteshipStreamErrorDetail](interfaces/LiteshipStreamErrorDetail.md)
+- [LiteshipUniformUpdateDetail](interfaces/LiteshipUniformUpdateDetail.md)
 - [LLMAdapterShape](interfaces/LLMAdapterShape.md)
 - [LLMChunk](interfaces/LLMChunk.md)
 - [LLMStreamConfig](interfaces/LLMStreamConfig.md)
@@ -76,14 +74,15 @@ It ships:
 - [ApplyVerifiablePatchAdoptResult](type-aliases/ApplyVerifiablePatchAdoptResult.md)
 - [ApplyVerifiablePatchResult](type-aliases/ApplyVerifiablePatchResult.md)
 - [ChunkParser](type-aliases/ChunkParser.md)
-- [CzapEventDisposer](type-aliases/CzapEventDisposer.md)
-- [CzapEventName](type-aliases/CzapEventName.md)
 - [DpuCapability](type-aliases/DpuCapability.md)
-- [DpuRung](type-aliases/DpuRung.md)
+- [DpuTier](type-aliases/DpuTier.md)
 - [HtmlPolicy](type-aliases/HtmlPolicy.md)
 - [IntegrityDecision](type-aliases/IntegrityDecision.md)
 - [IntegrityResult](type-aliases/IntegrityResult.md)
 - [IslandMode](type-aliases/IslandMode.md)
+- [LiteshipEventDisposer](type-aliases/LiteshipEventDisposer.md)
+- [LiteshipEventName](type-aliases/LiteshipEventName.md)
+- [LLMAdapter](type-aliases/LLMAdapter.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
@@ -96,6 +95,7 @@ It ships:
 - [ShaderIntegrityMode](type-aliases/ShaderIntegrityMode.md)
 - [SlotPath](type-aliases/SlotPath.md)
 - [SlotPath](type-aliases/SlotPath-1.md)
+- [SlotRegistry](type-aliases/SlotRegistry.md)
 - [SSEMessage](type-aliases/SSEMessage.md)
 - [SSEState](type-aliases/SSEState.md)
 - [StreamRecoveryMutationClient](type-aliases/StreamRecoveryMutationClient.md)
@@ -103,17 +103,18 @@ It ships:
 - [StreamWireAttrKey](type-aliases/StreamWireAttrKey.md)
 - [ToolCallAccumulator](type-aliases/ToolCallAccumulator.md)
 - [VerifiablePatchVerification](type-aliases/VerifiablePatchVerification.md)
+- [WebCodecsCapture](type-aliases/WebCodecsCapture.md)
 
 ## Variables
 
-- [CZAP\_EVENT\_DOCS](variables/CZAP_EVENT_DOCS.md)
-- [CZAP\_EVENT\_NAMES](variables/CZAP_EVENT_NAMES.md)
 - [DEFAULT\_SHADER\_INTEGRITY\_MODE](variables/DEFAULT_SHADER_INTEGRITY_MODE.md)
 - [DPU\_BASE\_ATTR](variables/DPU_BASE_ATTR.md)
 - [DPU\_DIGEST\_ATTR](variables/DPU_DIGEST_ATTR.md)
 - [DPU\_MARKER\_ATTR](variables/DPU_MARKER_ATTR.md)
 - [DPU\_RESULT\_ATTR](variables/DPU_RESULT_ATTR.md)
 - [Hints](variables/Hints.md)
+- [LITESHIP\_EVENT\_DOCS](variables/LITESHIP_EVENT_DOCS.md)
+- [LITESHIP\_EVENT\_NAMES](variables/LITESHIP_EVENT_NAMES.md)
 - [LLMAdapter](variables/LLMAdapter.md)
 - [LLMChunkNormalization](variables/LLMChunkNormalization.md)
 - [Morph](variables/Morph.md)
@@ -146,14 +147,14 @@ It ships:
 - [decideShaderIntegrity](functions/decideShaderIntegrity.md)
 - [detectDpuCapability](functions/detectDpuCapability.md)
 - [digestHtmlFragment](functions/digestHtmlFragment.md)
-- [dispatchCzapEvent](functions/dispatchCzapEvent.md)
+- [dispatchLiteshipEvent](functions/dispatchLiteshipEvent.md)
 - [escapeHtml](functions/escapeHtml.md)
 - [fetchSnapshot](functions/fetchSnapshot.md)
 - [getStreamRecoverySubstrate](functions/getStreamRecoverySubstrate.md)
 - [isExternalShaderSource](functions/isExternalShaderSource.md)
 - [isFetchableRuntimeUrl](functions/isFetchableRuntimeUrl.md)
 - [isPrivateOrReservedIP](functions/isPrivateOrReservedIP.md)
-- [onCzap](functions/onCzap.md)
+- [onLiteship](functions/onLiteship.md)
 - [parseShaderIntegrity](functions/parseShaderIntegrity.md)
 - [recordStreamPatchReceipt](functions/recordStreamPatchReceipt.md)
 - [registerStreamRecoverySubstrate](functions/registerStreamRecoverySubstrate.md)

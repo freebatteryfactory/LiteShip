@@ -12,7 +12,7 @@ A precondition, argument, or factory-input check failed — the value was
 structurally fine but semantically rejected (out of range, empty, mutually
 exclusive options, call-order violation).
 
-Migration target for: `CzapValidationError`, `InvalidParamsError`, and the
+Migration target for: `LiteshipValidationError`, `InvalidParamsError`, and the
 argument/config validation throws across `cli`, `core`, `cloudflare`.
 
 ## Extends
@@ -65,4 +65,4 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 Defined in: [error/src/variants.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L32)
 
-The unit that rejected the input, e.g. `'Boundary.make'`.
+The unit that rejected the input, e.g. `'defineBoundary'`.
