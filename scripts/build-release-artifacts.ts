@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildReleaseArtifactBundle } from '../packages/cli/src/lib/release-artifact-bundle.js';
-import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
+import { admitReleasePlanBinding } from './lib/release-plan-admission.js';
 import { spawnArgvCapture } from './lib/spawn.js';
 
 async function commandOutput(command: string, argv: readonly string[], cwd: string): Promise<string> {
@@ -18,13 +18,17 @@ const root = process.cwd();
 const outputArg = process.argv[2] ?? 'release-artifacts/tarballs';
 const planArg = process.argv[3] ?? '.liteship/affected-plan.json';
 const sourceCommit = await commandOutput('git', ['rev-parse', 'HEAD'], root);
-const plan = parseAffectedTestPlan(JSON.parse(readFileSync(resolve(root, planArg), 'utf8')) as unknown);
+const binding = admitReleasePlanBinding({
+  plan: JSON.parse(readFileSync(resolve(root, planArg), 'utf8')) as unknown,
+  gitHead: sourceCommit,
+  admittedPlanId: process.env['LITESHIP_AFFECTED_PLAN_ID'],
+});
 const pnpm = await commandOutput('pnpm', ['--version'], root);
 const manifest = await buildReleaseArtifactBundle({
   root,
   outputDir: resolve(root, outputArg),
-  sourceCommit,
-  planId: plan.planId,
+  sourceCommit: binding.sourceCommit,
+  planId: binding.planId,
   builder: {
     workflow: process.env['GITHUB_WORKFLOW'] ?? 'local',
     runId: process.env['GITHUB_RUN_ID'] ?? 'local',
