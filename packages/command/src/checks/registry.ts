@@ -227,6 +227,23 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     remediation: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
   },
   {
+    id: 'check/assurance-density',
+    title: 'Per-package assurance density ratchet',
+    claim:
+      'Authored test and benchmark evidence per source LOC never decreases for any package while progressing toward 10:1.',
+    owner: 'scripts/assurance-inventory.ts',
+    command: 'pnpm run assurance:gate',
+    inputs: [PACKAGE_TS_GLOB, TESTS_GLOB, 'scripts/lib/assurance-inventory.ts', 'scripts/assurance-ratchet.json'],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 30_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/assurance-inventory.test.ts',
+    remediation:
+      'add robust authored evidence for the package, or review the ratio baseline only after proving an equivalent source reduction.',
+  },
+  {
     id: 'check/gates',
     title: 'Gauntlet gate fold (check:gates)',
     claim: 'The in-process gauntlet gate fold (self-proving gates) emits no blocking finding.',

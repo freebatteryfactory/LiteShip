@@ -92,6 +92,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
       'report:runtime-seams',
       'report:adaptive-scan',
       'report:semantic-convergence',
+      'assurance:gate',
       'feedback:verify',
       'runtime:gate',
       'standards:gate',

@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "packages": {
+    "@liteship/_spine": {
+      "sourceLoc": 3420,
+      "authoredEvidenceLoc": 2614,
+      "ratioMilli": 764
+    },
+    "@liteship/error": {
+      "sourceLoc": 1829,
+      "authoredEvidenceLoc": 15556,
+      "ratioMilli": 8505
+    },
+    "@liteship/canonical": {
+      "sourceLoc": 609,
+      "authoredEvidenceLoc": 5958,
+      "ratioMilli": 9783
+    },
+    "@liteship/core": {
+      "sourceLoc": 26834,
+      "authoredEvidenceLoc": 91083,
+      "ratioMilli": 3394
+    },
+    "@liteship/genui": {
+      "sourceLoc": 610,
+      "authoredEvidenceLoc": 2800,
+      "ratioMilli": 4590
+    },
+    "@liteship/quantizer": {
+      "sourceLoc": 1344,
+      "authoredEvidenceLoc": 4879,
+      "ratioMilli": 3630
+    },
+    "@liteship/compiler": {
+      "sourceLoc": 8331,
+      "authoredEvidenceLoc": 11998,
+      "ratioMilli": 1440
+    },
+    "@liteship/web": {
+      "sourceLoc": 6924,
+      "authoredEvidenceLoc": 17458,
+      "ratioMilli": 2521
+    },
+    "@liteship/detect": {
+      "sourceLoc": 1294,
+      "authoredEvidenceLoc": 3446,
+      "ratioMilli": 2663
+    },
+    "@liteship/edge": {
+      "sourceLoc": 2180,
+      "authoredEvidenceLoc": 4089,
+      "ratioMilli": 1875
+    },
+    "@liteship/vite": {
+      "sourceLoc": 4364,
+      "authoredEvidenceLoc": 7966,
+      "ratioMilli": 1825
+    },
+    "@liteship/worker": {
+      "sourceLoc": 3700,
+      "authoredEvidenceLoc": 6424,
+      "ratioMilli": 1736
+    },
+    "@liteship/remotion": {
+      "sourceLoc": 407,
+      "authoredEvidenceLoc": 1369,
+      "ratioMilli": 3363
+    },
+    "@liteship/scene": {
+      "sourceLoc": 2188,
+      "authoredEvidenceLoc": 4600,
+      "ratioMilli": 2102
+    },
+    "@liteship/astro": {
+      "sourceLoc": 11961,
+      "authoredEvidenceLoc": 20393,
+      "ratioMilli": 1704
+    },
+    "@liteship/cloudflare": {
+      "sourceLoc": 741,
+      "authoredEvidenceLoc": 1323,
+      "ratioMilli": 1785
+    },
+    "@liteship/stage": {
+      "sourceLoc": 921,
+      "authoredEvidenceLoc": 927,
+      "ratioMilli": 1006
+    },
+    "@liteship/assets": {
+      "sourceLoc": 1126,
+      "authoredEvidenceLoc": 3112,
+      "ratioMilli": 2763
+    },
+    "@liteship/gauntlet": {
+      "sourceLoc": 18597,
+      "authoredEvidenceLoc": 17019,
+      "ratioMilli": 915
+    },
+    "@liteship/audit": {
+      "sourceLoc": 9239,
+      "authoredEvidenceLoc": 9823,
+      "ratioMilli": 1063
+    },
+    "@liteship/command": {
+      "sourceLoc": 6709,
+      "authoredEvidenceLoc": 9440,
+      "ratioMilli": 1407
+    },
+    "@liteship/cli": {
+      "sourceLoc": 18080,
+      "authoredEvidenceLoc": 18163,
+      "ratioMilli": 1004
+    },
+    "@liteship/mcp-server": {
+      "sourceLoc": 2845,
+      "authoredEvidenceLoc": 5343,
+      "ratioMilli": 1878
+    },
+    "create-liteship": {
+      "sourceLoc": 257,
+      "authoredEvidenceLoc": 582,
+      "ratioMilli": 2264
+    },
+    "liteship": {
+      "sourceLoc": 953,
+      "authoredEvidenceLoc": 1967,
+      "ratioMilli": 2064
+    }
+  }
+}
