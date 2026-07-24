@@ -8,7 +8,7 @@
 
 > **defineStyle**\<`B`\>(`config`): `StyleDef`\<`B`\>
 
-Defined in: [core/src/authoring/style.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L222)
+Defined in: [core/src/authoring/style.ts:223](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L223)
 
 Define an adaptive style — binds a base style layer to optional boundary
 states with per-state overrides and CSS transitions.

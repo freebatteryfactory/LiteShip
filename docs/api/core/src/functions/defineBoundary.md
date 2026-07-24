@@ -8,7 +8,7 @@
 
 > **defineBoundary**\<`I`, `S`\>(`config`): `BoundaryDef`\<`I`, `S`\>
 
-Defined in: [core/src/authoring/boundary.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L290)
+Defined in: [core/src/authoring/boundary.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L291)
 
 Define a boundary — the core primitive of constraint-based adaptive rendering.
 

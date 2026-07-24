@@ -8,7 +8,7 @@
 
 > `const` **Style**: `object`
 
-Defined in: [core/src/authoring/style.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L267)
+Defined in: [core/src/authoring/style.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L281)
 
 Style — the resolution namespace for a Style definition. Construction
 lives in the standalone [defineStyle](../functions/defineStyle.md); this object carries

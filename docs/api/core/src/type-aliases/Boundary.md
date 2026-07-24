@@ -8,7 +8,7 @@
 
 > **Boundary**\<`I`, `S`\> = `BoundaryDef`\<`I`, `S`\>
 
-Defined in: [core/src/authoring/boundary.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L372)
+Defined in: [core/src/authoring/boundary.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L374)
 
 Public structural type for `Boundary`.
 
