@@ -44,7 +44,22 @@ import {
   tarballFileUrl,
 } from '../lib/package-smoke-helpers.js';
 import { checkPackedMetadata } from '../lib/package-metadata-catalog.js';
-import { measureOneInstallCostReport } from '../lib/one-install-cost-evidence.js';
+import {
+  buildColdImportGraph,
+  COLD_IMPORT_PROBE_SOURCE,
+  measureOneInstallCostReport,
+  type ColdImportGraph,
+  type FacadeDependencyReason,
+} from '../lib/one-install-cost-evidence.js';
+import { PACKAGE_METADATA_CATALOG } from '../lib/package-metadata-catalog.js';
+import {
+  buildOneInstallCostBaseline,
+  ONE_INSTALL_COST_BASELINE_PATH,
+  ONE_INSTALL_COST_REPORT_PATH,
+  ONE_INSTALL_COST_UPDATE_ENV,
+  oneInstallCostFindings,
+  parseOneInstallCostBaseline,
+} from '../lib/one-install-cost-gate.js';
 import { verifyReleaseArtifactBundle } from '../lib/release-artifact-bundle.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
@@ -88,6 +103,46 @@ function run(command: string, args: readonly string[], cwd: string): string {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
   }).trim();
+}
+
+function measureFacadeColdImports(consumerDir: string): readonly ColdImportGraph[] {
+  const specifiers = PACKAGES.find((entry) => entry.name === 'liteship')?.imports;
+  if (specifiers === undefined || specifiers.length === 0) {
+    throw IntegrityError('package-smoke', 'the facade package has no generated public import census');
+  }
+  const probePath = join(consumerDir, '.liteship-cold-import-probe.mjs');
+  writeFileSync(probePath, COLD_IMPORT_PROBE_SOURCE, 'utf8');
+  return specifiers.map((specifier) => {
+    const raw = execFileSync(process.execPath, [probePath, specifier], {
+      cwd: consumerDir,
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'inherit'],
+      timeout: 30_000,
+    });
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed) || parsed.some((entry) => typeof entry !== 'string')) {
+      throw IntegrityError('package-smoke', `cold-import probe emitted invalid paths for ${specifier}`);
+    }
+    return buildColdImportGraph({
+      specifier,
+      nodeModulesRoot: join(consumerDir, 'node_modules'),
+      scriptPaths: parsed as string[],
+    });
+  });
+}
+
+function facadeDependencyReasons(tarballByPackage: ReadonlyMap<string, string>): readonly FacadeDependencyReason[] {
+  const facadeTarball = tarballByPackage.get('liteship');
+  if (facadeTarball === undefined) throw IntegrityError('package-smoke', 'packed fleet contains no liteship facade');
+  const dependencies = Object.keys(readPackedManifest(facadeTarball).dependencies ?? {}).sort();
+  return dependencies.map((packageName) => {
+    const metadata = PACKAGE_METADATA_CATALOG[packageName];
+    if (metadata === undefined) {
+      throw IntegrityError('package-smoke', `facade dependency ${packageName} has no package-catalog reason`);
+    }
+    return { package: packageName, reason: metadata.description };
+  });
 }
 
 /** Read `package/package.json` from a `pnpm pack` tarball (layout-stable on every OS). */
@@ -758,6 +813,7 @@ export async function runPackageSmokeScan(
     }
 
     step('record one-install fleet cost evidence from the existing pack/install');
+    const coldImports = measureFacadeColdImports(consumerDir);
     const costReport = measureOneInstallCostReport({
       generatedAt,
       environment: {
@@ -765,17 +821,47 @@ export async function runPackageSmokeScan(
         architecture: process.arch,
         nodeVersion: process.version,
         packageManager: 'pnpm',
+        packageManagerVersion: run('pnpm', ['--version'], root),
       },
       fleetPackages: PACKAGES.map((pkg) => pkg.name),
       tarballs: tarballByPackage,
       consumerDir,
+      facadeDependencies: facadeDependencyReasons(tarballByPackage),
+      coldImports,
     });
-    const costReportRelative = 'benchmarks/one-install-cost-report.json';
+    const costReportRelative = ONE_INSTALL_COST_REPORT_PATH;
+    const costBaselineRelative = ONE_INSTALL_COST_BASELINE_PATH;
     await mkdir(join(root, 'benchmarks'), { recursive: true });
     await writeFile(join(root, costReportRelative), `${JSON.stringify(costReport, null, 2)}\n`);
+    if (process.env[ONE_INSTALL_COST_UPDATE_ENV] === '1') {
+      const baseline = buildOneInstallCostBaseline(costReport);
+      await writeFile(join(root, costBaselineRelative), `${JSON.stringify(baseline, null, 2)}\n`);
+      stepOk(`one-install cost baseline updated at ${baseline.baselineId} -> ${costBaselineRelative}`);
+    } else {
+      if (!existsSync(join(root, costBaselineRelative))) {
+        throw IntegrityError(
+          'package-smoke',
+          `one-install cost baseline is missing: ${costBaselineRelative} (regenerate explicitly with ${ONE_INSTALL_COST_UPDATE_ENV}=1)`,
+        );
+      }
+      const baseline = parseOneInstallCostBaseline(
+        JSON.parse(readFileSync(join(root, costBaselineRelative), 'utf8')) as unknown,
+      );
+      const findings = oneInstallCostFindings(costReport, baseline);
+      if (findings.length > 0) {
+        throw IntegrityError(
+          'package-smoke',
+          `one-install cost exceeded the addressed baseline:\n${findings
+            .map((finding) => `  - ${finding.code} [${finding.subject}]: ${finding.detail}`)
+            .join('\n')}`,
+        );
+      }
+      stepOk(`one-install cost admitted by baseline ${baseline.baselineId}`);
+    }
     stepOk(
       `one-install cost recorded (${costReport.observation.compressedTarballs.totalBytes} compressed bytes; ` +
-        `${costReport.observation.installed.uniqueRegularFileBytes} installed unique-file bytes; no threshold) -> ` +
+        `${costReport.observation.compressedTarballs.totalUnpackedBytes} unpacked bytes; ` +
+        `${costReport.observation.installed.uniqueRegularFileBytes} installed unique-file bytes) -> ` +
         costReportRelative,
     );
 

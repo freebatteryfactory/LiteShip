@@ -59,6 +59,7 @@ benchmarks/*
 # it). A committed contract so the front-page numbers ship with the repo, not a
 # regenerated run artifact.
 !benchmarks/readme-snapshot.json
+!benchmarks/one-install-cost-baseline.json
 reports/
 .vitest-attachments/
 lint-report.json

@@ -12,6 +12,7 @@ const ENVIRONMENT: CostEvidenceEnvironment = {
   architecture: 'fixture-arch',
   nodeVersion: 'fixture-node',
   packageManager: 'pnpm',
+  packageManagerVersion: '10.14.0',
 };
 const INSTALLED: InstalledCostObservation = {
   uniqueRegularFileBytes: 10_000,
@@ -24,16 +25,27 @@ const INSTALLED: InstalledCostObservation = {
   externalDependencyCount: 3,
   externalPackageInstanceCount: 5,
   externalDependencies: ['typescript', 'astro', 'react'],
+  externalVersions: [
+    { package: 'astro', versions: ['7.1.0'], instances: 1 },
+    { package: 'react', versions: ['19.2.0'], instances: 2 },
+    { package: 'typescript', versions: ['5.9.3'], instances: 2 },
+  ],
+  duplicateExternalVersions: [],
 };
 
-function tarballs(): { package: string; bytes: number }[] {
-  return NAMES.map((packageName, index) => ({ package: packageName, bytes: 1_000 + index }));
+function tarballs() {
+  return NAMES.map((packageName, index) => ({
+    package: packageName,
+    compressedBytes: 1_000 + index,
+    unpackedBytes: 2_000 + index,
+    fileCount: 10 + index,
+  }));
 }
 
 function build(
   overrides: {
     fleetPackages?: readonly string[];
-    tarballs?: readonly { readonly package: string; readonly bytes: number }[];
+    tarballs?: ReturnType<typeof tarballs>;
     installed?: InstalledCostObservation;
   } = {},
 ) {
@@ -43,6 +55,16 @@ function build(
     fleetPackages: overrides.fleetPackages ?? NAMES,
     tarballs: overrides.tarballs ?? tarballs(),
     installed: overrides.installed ?? INSTALLED,
+    facadeDependencies: [{ package: NAMES[0]!, reason: 'Provides the first qualified facade capability.' }],
+    coldImports: [
+      {
+        specifier: 'liteship',
+        moduleCount: 1,
+        packageCount: 1,
+        packages: [`${NAMES[0]}@0.19.0`],
+        modules: [{ package: NAMES[0]!, version: '0.19.0', path: 'dist/index.js' }],
+      },
+    ],
   });
 }
 
@@ -125,7 +147,9 @@ describe('one-install cost evidence properties', () => {
         fc.integer({ min: 0, max: NAMES.length - 1 }),
         fc.constantFrom(0, -1, -100, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1),
         (index, bytes) => {
-          const bogus = tarballs().map((entry, entryIndex) => (entryIndex === index ? { ...entry, bytes } : entry));
+          const bogus = tarballs().map((entry, entryIndex) =>
+            entryIndex === index ? { ...entry, compressedBytes: bytes } : entry,
+          );
           expect(() => build({ tarballs: bogus })).toThrow(/positive safe integer byte count/u);
         },
       ),
@@ -164,7 +188,7 @@ describe('one-install cost evidence properties', () => {
   });
 
   it('refuses a total compressed size that overflows safe integer accounting', () => {
-    const huge = tarballs().map((entry) => ({ ...entry, bytes: Number.MAX_SAFE_INTEGER }));
+    const huge = tarballs().map((entry) => ({ ...entry, compressedBytes: Number.MAX_SAFE_INTEGER }));
     expect(() => build({ tarballs: huge })).toThrow(/compressed tarball total/u);
   });
 });
