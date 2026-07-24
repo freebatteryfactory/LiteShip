@@ -1254,6 +1254,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'A migration adapter met an at-rule or nested condition (e.g. `@supports`, a compound/non-range media condition, deep nesting) that has no boundary representation, so it was skipped.',
     'Rewrite the source using a supported range condition, or handle the unsupported at-rule outside migration.',
   ),
+  'migrate/unsupported-selector': migrate(
+    'Selector scope cannot be preserved by token migration',
+    'A CSS custom-property rule uses a selector outside the supported `:root` / `html[data-theme]` subset. Lowering it to a Token or Theme would widen the declaration to global scope, so the adapter refused the stylesheet.',
+    'Move the declaration to `:root` or a supported `data-theme` selector, or keep the scoped custom property outside LiteShip token migration.',
+  ),
   'migrate/lossy-token-conversion': migrate(
     'Token value could not be represented losslessly',
     'A token value (an alias/reference, a `calc()` expression, or a composite value) could not be lowered to a `defineToken` value without loss, so the adapter emitted its best-effort approximation.',

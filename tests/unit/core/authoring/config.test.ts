@@ -120,6 +120,43 @@ describe('defineConfig()', () => {
     expect(equivalent.id).toBe(id);
   });
 
+  test('preserves host-only boundary filters without making callback identity part of Config identity', () => {
+    const firstFilter = (capabilities: Record<string, unknown>) => capabilities['webgpu'] === true;
+    const secondFilter = (capabilities: Record<string, unknown>) => capabilities['webgpu'] === true;
+    const firstBoundary = defineBoundary({
+      input: 'device.width',
+      at: [
+        [0, 'off'],
+        [800, 'on'],
+      ] as const,
+      spec: { experimentId: 'gpu-layout', deviceFilter: firstFilter },
+    });
+    const secondBoundary = defineBoundary({
+      input: 'device.width',
+      at: [
+        [0, 'off'],
+        [800, 'on'],
+      ] as const,
+      spec: { experimentId: 'gpu-layout', deviceFilter: secondFilter },
+    });
+
+    const sourceRegistry = { gated: firstBoundary };
+    const first = defineConfig({ boundaries: sourceRegistry });
+    const second = defineConfig({ boundaries: { gated: secondBoundary } });
+
+    sourceRegistry.gated = boundary;
+    (firstBoundary.thresholds as number[])[1] = 1200;
+
+    expect(first.id).toBe(second.id);
+    expect(first.boundaries['gated']).not.toBe(firstBoundary);
+    expect(first.boundaries['gated']?.thresholds).toEqual([0, 800]);
+    expect(first.boundaries['gated']?.spec?.deviceFilter).toBe(firstFilter);
+    expect(first.boundaries['gated']?.spec?.deviceFilter?.({ webgpu: true })).toBe(true);
+    expect(Object.isFrozen(first.boundaries)).toBe(true);
+    expect(Object.isFrozen(first.boundaries['gated'])).toBe(true);
+    expect(Object.isFrozen(first.boundaries['gated']?.spec)).toBe(true);
+  });
+
   test('defineConfig() is an alias for defineConfig()', () => {
     const input = { boundaries: { viewport: boundary } };
     const cfg1 = defineConfig(input);

@@ -219,7 +219,18 @@ function compileAdaptive(style: Style): string {
   for (const [state, stateLayer] of Object.entries(style.states ?? {})) {
     if (stateLayer === undefined) continue;
     const stateSelector = `${selector}[data-liteship-state="${escapeCssString(state)}"]`;
-    layerContent.push(...emitStyleLayerBlock(stateLayer, stateSelector, ''));
+    // Style.tap/Style.mergeLayers define box-shadow as an atomic, ordered list:
+    // base layers first, then state layers. Normal properties and pseudos can
+    // inherit through the cascade, but a state `box-shadow` declaration replaces
+    // the whole CSS property, so materialize the merged list here.
+    const effectiveStateLayer: StyleLayer =
+      stateLayer.boxShadow && stateLayer.boxShadow.length > 0
+        ? {
+            ...stateLayer,
+            boxShadow: [...(style.base.boxShadow ?? []), ...stateLayer.boxShadow],
+          }
+        : stateLayer;
+    layerContent.push(...emitStyleLayerBlock(effectiveStateLayer, stateSelector, ''));
   }
 
   const layers = [`@layer liteship.components {`, ...layerContent.map((line) => (line ? `  ${line}` : '')), `}`].join(

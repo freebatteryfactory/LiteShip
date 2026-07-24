@@ -54,6 +54,35 @@ describe('fromTailwindTheme — clean lossless case', () => {
     const cats = result.tokens.map((t) => `${t.category}:${t.name}`).sort();
     expect(cats).toEqual(['radius:lg', 'shadow:sm']);
   });
+
+  it('diagnoses a malformed marker without letting it steal a later valid block', () => {
+    const result = fromTailwindTheme(`
+      @theme;
+
+      @theme {
+        --color-accent: red;
+      }
+    `);
+
+    expect(result.tokens).toHaveLength(1);
+    expect(result.tokens[0]?.name).toBe('accent');
+    expect(result.tokens[0]?.fallback).toBe('red');
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error', path: ['@theme'] }),
+    );
+  });
+
+  it.each(['@theme inline { --color-accent: red; }', '@theme { --color-accent: red;'])(
+    'refuses a structurally malformed @theme block: %s',
+    (css) => {
+      const result = fromTailwindTheme(css);
+      expect(result.tokens).toEqual([]);
+      expect(result.boundaries).toEqual([]);
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error' }),
+      );
+    },
+  );
 });
 
 describe('fromTailwindTheme — token decomposition branches', () => {

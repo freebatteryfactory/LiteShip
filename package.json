@@ -101,7 +101,7 @@
     "verify": "pnpm exec tsx scripts/verify.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "doctor": "pnpm exec tsx scripts/doctor.ts",
-    "dev": "node packages/liteship/bin/liteship.mjs dev",
+    "dev": "node packages/liteship/bin/liteship.mjs dev --example showcase",
     "clean": "pnpm exec tsx scripts/clean.ts",
     "scripts": "pnpm exec tsx scripts/scripts-index.ts",
     "glossary": "pnpm exec tsx scripts/glossary.ts",

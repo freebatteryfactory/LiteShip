@@ -1,7 +1,7 @@
 /**
  * `migrate/diagnostics` — the in-domain source of the pinned `migrate/*` diagnostic
  * code strings and the {@link makeMigrationDiagnostic} builder every adapter uses to
- * emit a {@link MigrationDiagnostic}. The eight codes here are the SINGLE in-domain
+ * emit a {@link MigrationDiagnostic}. The nine codes here are the SINGLE in-domain
  * mirror of the entries enrolled in the `@liteship/error` DIAGNOSTIC_REGISTRY —
  * adapters draw codes ONLY from {@link MIGRATE_CODES} (adding a new code means also
  * enrolling it in the registry).
@@ -13,7 +13,7 @@ import type { DiagnosticCodeFor } from '@liteship/error';
 import type { MigrationDiagnostic } from './types.js';
 
 /**
- * The eight pinned `migrate/*` diagnostic codes, frozen. Each is a typed
+ * The nine pinned `migrate/*` diagnostic codes, frozen. Each is a typed
  * {@link DiagnosticCode} literal and is enrolled (verbatim) in the
  * `@liteship/error` DIAGNOSTIC_REGISTRY under the `migrate` area.
  */
@@ -26,6 +26,8 @@ export const MIGRATE_CODES = Object.freeze({
   ambiguousBreakpoint: 'migrate/ambiguous-breakpoint',
   /** An at-rule / nested condition is not representable as a boundary. */
   unsupportedAtRule: 'migrate/unsupported-at-rule',
+  /** A selector scopes declarations more narrowly than Token/Theme can preserve. */
+  unsupportedSelector: 'migrate/unsupported-selector',
   /** A token value (alias/ref/calc) could not be represented losslessly. */
   lossyTokenConversion: 'migrate/lossy-token-conversion',
   /** A value's CSS syntax could not be classified into a `TokenCategory`. */

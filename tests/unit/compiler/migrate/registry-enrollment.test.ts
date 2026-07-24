@@ -26,6 +26,7 @@ const EMITTED_CODES: readonly string[] = [
   'migrate/non-ascending-thresholds',
   'migrate/ambiguous-breakpoint',
   'migrate/unsupported-at-rule',
+  'migrate/unsupported-selector',
   'migrate/malformed-input',
   'migrate/unknown-token-category',
   'migrate/lossy-token-conversion',

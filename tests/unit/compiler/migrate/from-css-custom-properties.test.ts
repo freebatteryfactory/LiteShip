@@ -441,6 +441,31 @@ describe('fromCSSCustomProperties — degenerate inputs', () => {
     expect(result).toEqual({ boundaries: [], tokens: [], themes: [], diagnostics: [] });
   });
 
+  it('refuses scoped custom-property declarations instead of silently widening or dropping them', () => {
+    const result = fromCSSCustomProperties(`.card { --accent: red; }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedSelector,
+        severity: 'error',
+        path: ['.card'],
+      }),
+    ]);
+  });
+
+  it('does not mistake comment/string lookalikes in an unsupported selector for scoped declarations', () => {
+    const result = fromCSSCustomProperties(`
+      .card {
+        /* --comment-token: red; */
+        content: "--string-token: blue";
+        color: green;
+      }
+    `);
+    expect(result).toEqual({ boundaries: [], tokens: [], themes: [], diagnostics: [] });
+  });
+
   it.each([
     ['layer', '@layer tokens { :root { --accent: red; } }'],
     ['supports', '@supports (color: oklch(0 0 0)) { :root { --accent: oklch(.7 .2 20); } }'],

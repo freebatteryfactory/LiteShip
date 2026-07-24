@@ -8,7 +8,7 @@
 
 > `const` **StyleCSSCompiler**: `object`
 
-Defined in: [compiler/src/style-css.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/style-css.ts#L240)
+Defined in: [compiler/src/style-css.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/style-css.ts#L251)
 
 Style CSS compiler namespace.
 

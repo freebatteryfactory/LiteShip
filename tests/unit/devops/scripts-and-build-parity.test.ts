@@ -71,3 +71,9 @@ describe('release:notes — version is not hardcoded', () => {
     expect(rootPkg.scripts['release:notes'] ?? '').not.toMatch(/--version\s+\d/);
   });
 });
+
+describe('workspace dev shortcut', () => {
+  it('selects the documented showcase explicitly instead of consumer-host detection at the repo root', () => {
+    expect(rootPkg.scripts.dev).toBe('node packages/liteship/bin/liteship.mjs dev --example showcase');
+  });
+});

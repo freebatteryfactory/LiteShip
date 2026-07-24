@@ -85,7 +85,7 @@ export interface FromTailwindThemeOptions extends FromMediaQueriesOptions {
 // ---------------------------------------------------------------------------
 
 /** Index of the `}` closing the block whose `{` is at `openIdx` (on the blanked copy). */
-function matchBrace(blanked: string, openIdx: number): number {
+function matchBrace(blanked: string, openIdx: number): number | null {
   let depth = 0;
   for (let i = openIdx; i < blanked.length; i++) {
     const ch = blanked[i];
@@ -95,7 +95,12 @@ function matchBrace(blanked: string, openIdx: number): number {
       if (depth === 0) return i;
     }
   }
-  return blanked.length;
+  return null;
+}
+
+interface CollectedThemeDeclarations {
+  readonly declarations: Record<string, string>;
+  readonly diagnostics: readonly MigrationDiagnostic[];
 }
 
 /**
@@ -105,10 +110,12 @@ function matchBrace(blanked: string, openIdx: number): number {
  * no rule braces, the whole string is treated as a bare declaration body — so a
  * caller may pass just the block's inner declarations.
  */
-function collectThemeDeclarations(css: string): Record<string, string> {
+function collectThemeDeclarations(css: string): CollectedThemeDeclarations {
   const blanked = blankCssCommentsAndStrings(css);
   const decls: Record<string, string> = {};
+  const diagnostics: MigrationDiagnostic[] = [];
   let found = false;
+  let sawThemeMarker = false;
   let from = 0;
 
   while (from < blanked.length) {
@@ -120,19 +127,43 @@ function collectThemeDeclarations(css: string): Record<string, string> {
       from = at + 6;
       continue;
     }
-    const brace = blanked.indexOf('{', at);
-    if (brace === -1) break;
+    sawThemeMarker = true;
+    let brace = at + 6;
+    while (/\s/.test(blanked[brace] ?? '')) brace++;
+    if (blanked[brace] !== '{') {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          'Malformed @theme at-rule: the next structural token after @theme must be "{"; this marker was refused.',
+          { path: ['@theme'], severity: 'error' },
+        ),
+      );
+      const terminator = blanked.indexOf(';', brace);
+      const nextTheme = blanked.indexOf('@theme', brace);
+      from = terminator !== -1 && (nextTheme === -1 || terminator < nextTheme) ? terminator + 1 : at + 6;
+      continue;
+    }
+    const close = matchBrace(blanked, brace);
+    if (close === null) {
+      diagnostics.push(
+        makeMigrationDiagnostic(MIGRATE_CODES.malformedInput, 'Malformed @theme at-rule: the block is not closed.', {
+          path: ['@theme'],
+          severity: 'error',
+        }),
+      );
+      break;
+    }
     found = true;
     const { props } = parseFlatDeclarations(css, brace + 1);
     for (const [k, v] of Object.entries(props)) decls[k] = v;
-    from = matchBrace(blanked, brace) + 1;
+    from = close + 1;
   }
 
-  if (!found && !blanked.includes('{')) {
+  if (!found && !sawThemeMarker && !blanked.includes('{')) {
     const { props } = parseFlatDeclarations(css, 0);
     for (const [k, v] of Object.entries(props)) decls[k] = v;
   }
-  return decls;
+  return { declarations: decls, diagnostics };
 }
 
 /**
@@ -185,7 +216,9 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
   const boundaries: Boundary[] = [];
   const themes: readonly Theme[] = [];
 
-  const decls = collectThemeDeclarations(css);
+  const collected = collectThemeDeclarations(css);
+  diagnostics.push(...collected.diagnostics);
+  const decls = collected.declarations;
 
   // Ordered screen entries: --breakpoint-* first (source order), then the
   // options.screens map merged on top (override in place / append).

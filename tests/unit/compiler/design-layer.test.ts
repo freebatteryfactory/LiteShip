@@ -745,6 +745,35 @@ describe('StyleCSSCompiler', () => {
 
     expect(StyleCSSCompiler.compileAdaptive(style)).toContain('[data-liteship-state="quoted\\"state"]');
   });
+
+  test('compileAdaptive() preserves Style.tap box-shadow composition for state layers', () => {
+    const boundary = defineBoundary({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [800, 'wide'],
+      ] as const,
+    });
+    const style = defineStyle({
+      boundary,
+      base: {
+        properties: {},
+        boxShadow: [{ x: 0, y: 1, blur: 2, color: '#111111' }],
+      },
+      states: {
+        wide: {
+          properties: {},
+          boxShadow: [{ x: 0, y: 4, blur: 8, spread: 1, color: '#222222' }],
+        },
+      },
+    });
+
+    const resolved = Style.tap(style, 'wide');
+    const css = StyleCSSCompiler.compileAdaptive(style);
+
+    expect(resolved['box-shadow']).toBe('0px 1px 2px #111111, 0px 4px 8px 1px #222222');
+    expect(css).toContain('box-shadow: 0px 1px 2px #111111, 0px 4px 8px 1px #222222;');
+  });
 });
 
 // ===========================================================================

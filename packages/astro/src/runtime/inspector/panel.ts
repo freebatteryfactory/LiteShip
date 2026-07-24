@@ -90,7 +90,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
     inert.className = 'badge badge-inert';
     inert.textContent = 'INERT';
     inert.title =
-      'This element has data-liteship-boundary but no data-liteship-directive marker — the runtime will not evaluate it. Fix: spread adaptiveAttrs({ boundary }) or add data-liteship-directive="adaptive".';
+      'This element has data-liteship-boundary but no runtime owner. Fix: spread adaptiveAttrs({ boundary }), add an adaptive/worker directive marker, or complete the SVG descendant contract (data-liteship-entity + data-liteship-svg beneath a marked SVG root).';
     badges.appendChild(inert);
   }
 

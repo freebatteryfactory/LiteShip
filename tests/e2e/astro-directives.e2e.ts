@@ -32,7 +32,11 @@ test.describe('astro directive boot (built example)', () => {
     const columnCount = async (selector: '#adaptive-alpha' | '#adaptive-beta'): Promise<number> =>
       page.locator(selector).evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
     const owner = async (selector: '#adaptive-alpha' | '#adaptive-beta'): Promise<string> =>
-      page.locator(selector).evaluate((element) => getComputedStyle(element).getPropertyValue('--adaptive-owner').trim());
+      page
+        .locator(selector)
+        .evaluate((element) => getComputedStyle(element).getPropertyValue('--adaptive-owner').trim());
+    const shadow = async (selector: '#adaptive-alpha' | '#adaptive-beta'): Promise<string> =>
+      page.locator(selector).evaluate((element) => getComputedStyle(element).boxShadow);
 
     await expect(alpha).toHaveAttribute('data-liteship-state', 'full');
     await expect(beta).toHaveAttribute('data-liteship-state', 'full');
@@ -40,6 +44,9 @@ test.describe('astro directive boot (built example)', () => {
     expect(await columnCount('#adaptive-beta')).toBe(1);
     expect(await owner('#adaptive-alpha')).toBe('alpha');
     expect(await owner('#adaptive-beta')).toBe('beta');
+    expect(await shadow('#adaptive-alpha')).toMatch(
+      /^rgb\(255, 0, 0\) 0px 1px 2px(?: 0px)?, rgb\(0, 0, 255\) 0px 4px 8px(?: 0px)?$/,
+    );
 
     await page.setViewportSize({ width: 900, height: 800 });
     await expect(alpha).toHaveAttribute('data-liteship-state', 'medium');

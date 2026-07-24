@@ -76,7 +76,7 @@ describe('Astro directive boot scanner', () => {
     const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
     const implicitEntries = Object.entries(DIRECTIVE_ATTRIBUTE_REGISTRY).flatMap(([name, entries]) =>
       entries
-        .filter((entry) => entry.implicitBoot)
+        .filter((entry) => entry.scope === 'root' && entry.implicitBoot)
         .map((entry) => ({ name: name as RegistryDirectiveName, attribute: entry.attribute })),
     );
 
@@ -167,6 +167,37 @@ describe('Astro directive boot scanner', () => {
     );
     expect(warnings).toHaveLength(1);
     expect(warnings[0]?.detail).toEqual({ attribute: 'data-liteship-boundary' });
+  });
+
+  test('recognizes a complete SVG descendant boundary as owned by its marked SVG root', async () => {
+    const { Diagnostics } = await import('@liteship/core');
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.clearOnce();
+    Diagnostics.setSink(sink);
+    const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('data-liteship-directive', 'svg');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('data-liteship-entity', 'hero');
+    rect.setAttribute('data-liteship-svg', JSON.stringify({ compact: { opacity: '0.5' } }));
+    rect.setAttribute('data-liteship-boundary', '{}');
+    svg.appendChild(rect);
+    document.body.appendChild(svg);
+
+    await scanAndBootDirectives([]);
+
+    expect(events.some((event) => event.code === 'astro/directive-boot/directive-attribute-requires-marker')).toBe(
+      false,
+    );
+
+    rect.removeAttribute('data-liteship-svg');
+    Diagnostics.clearOnce();
+    events.length = 0;
+    await scanAndBootDirectives([]);
+    expect(
+      events.filter((event) => event.code === 'astro/directive-boot/directive-attribute-requires-marker'),
+    ).toHaveLength(1);
   });
 
   test('bootDirectiveEntry initializes once; a second call for the same directive is a no-op', async () => {

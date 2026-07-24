@@ -8,7 +8,7 @@
 
 > **explainDiagnostic**(`code`): [`DiagnosticEntry`](../interfaces/DiagnosticEntry.md) \| `undefined`
 
-Defined in: [error/src/codes.ts:1291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1291)
+Defined in: [error/src/codes.ts:1296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1296)
 
 Look up a diagnostic code's [DiagnosticEntry](../interfaces/DiagnosticEntry.md), or `undefined` when the code
 is not enrolled. Accepts any string (the gauntlet's static scan passes raw

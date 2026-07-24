@@ -1,10 +1,16 @@
+// @vitest-environment jsdom
+
 /**
  * Dev inspector pure helpers — threshold rewrite and defineBoundary snippets.
  */
 
 import { describe, expect, test } from 'vitest';
 import { boundaryParseFailureMessage } from '../../../packages/astro/src/runtime/boundary.js';
-import { formatBoundaryMakeSnippet, rewriteBoundaryThreshold } from '../../../packages/astro/src/runtime/inspector.js';
+import {
+  formatBoundaryMakeSnippet,
+  isDirectiveActive,
+  rewriteBoundaryThreshold,
+} from '../../../packages/astro/src/runtime/inspector.js';
 
 const boundaryJson = JSON.stringify({
   id: 'hero',
@@ -47,5 +53,22 @@ describe('formatBoundaryMakeSnippet', () => {
 describe('boundaryParseFailureMessage (inspector honesty)', () => {
   test('matches the runtime diagnostic for invalid JSON', () => {
     expect(boundaryParseFailureMessage('{bad')).toContain('not valid JSON');
+  });
+});
+
+describe('isDirectiveActive (descendant ownership)', () => {
+  test('recognizes only fully qualified SVG descendants beneath a marked SVG root', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('data-liteship-directive', 'svg');
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('data-liteship-entity', 'hero');
+    rect.setAttribute('data-liteship-svg', JSON.stringify({ compact: { opacity: '0.5' } }));
+    rect.setAttribute('data-liteship-boundary', boundaryJson);
+    svg.appendChild(rect);
+    document.body.appendChild(svg);
+
+    expect(isDirectiveActive(rect)).toBe(true);
+    rect.removeAttribute('data-liteship-svg');
+    expect(isDirectiveActive(rect)).toBe(false);
   });
 });

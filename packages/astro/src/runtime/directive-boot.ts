@@ -23,7 +23,12 @@
  */
 
 import { Diagnostics } from '@liteship/core';
-import { DIRECTIVE_ATTRIBUTE_REGISTRY, DIRECTIVE_MARKER_ATTRIBUTE, implicitDirectiveSelectors } from './slots.js';
+import {
+  DIRECTIVE_ATTRIBUTE_REGISTRY,
+  DIRECTIVE_MARKER_ATTRIBUTE,
+  implicitDirectiveSelectors,
+  isClaimedDirectiveDescendant,
+} from './slots.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 import { boundNames, unmarkBound } from './directive-bound.js';
 import type { DirectiveName, DirectiveEntry } from './directive-bound.js';
@@ -135,17 +140,19 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
   const explicitAttributes = new Set(
     Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
       .flat()
-      .filter((entry) => !entry.implicitBoot)
+      .filter((entry) => entry.scope === 'root' && !entry.implicitBoot)
       .map((entry) => entry.attribute),
   );
 
   for (const attribute of explicitAttributes) {
     for (const element of collectElements(root, `[${attribute}]`)) {
-      // Suppress ONLY when an explicit directive marker is present. An implicit peer
-      // attribute (e.g. `data-liteship-shader-src` for gpu) does NOT consume the boundary
-      // payload -- only adaptive/worker evaluate it -- so a bare boundary sitting next
-      // to a gpu shader still needs its marker warning, not silence.
+      // Suppress when an explicit marker owns this element or when the registry proves
+      // it is a complete descendant-owned payload (SVG). An unrelated implicit peer
+      // attribute (e.g. `data-liteship-shader-src`) does not consume the boundary.
       if (hasDirectiveMarker(element)) {
+        continue;
+      }
+      if (isClaimedDirectiveDescendant(element, attribute)) {
         continue;
       }
       Diagnostics.warnOnceRegistered({
@@ -153,7 +160,8 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
         code: 'astro/directive-boot/directive-attribute-requires-marker',
         message:
           `Found ${attribute} without a liteship directive marker, so the runtime will not infer which directive to boot. ` +
-          `Fix: spread adaptiveAttrs({ boundary }) / <Adaptive>, or add data-liteship-directive="adaptive" or "worker".`,
+          `Fix: spread adaptiveAttrs({ boundary }) / <Adaptive>, add data-liteship-directive="adaptive" or "worker", ` +
+          `or, for SVG state, place the boundary on a data-liteship-entity + data-liteship-svg child inside a marked SVG root.`,
         detail: { attribute },
       });
     }

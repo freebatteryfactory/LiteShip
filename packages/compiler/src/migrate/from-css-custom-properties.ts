@@ -287,6 +287,23 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     return { boundaries, tokens, themes, diagnostics };
   }
 
+  const scopedDefinition = topLevelRules.find(
+    (rule) =>
+      !rule.selector.startsWith('@') &&
+      supportedSelectorsOf(rule.selector).length === 0 &&
+      containsCustomPropertyDeclaration(blanked, rule),
+  );
+  if (scopedDefinition !== undefined) {
+    diagnostics.push(
+      makeMigrationDiagnostic(
+        MIGRATE_CODES.unsupportedSelector,
+        `Selector "${scopedDefinition.selector}" scopes custom-property definitions more narrowly than Token/Theme can preserve; the stylesheet was refused.`,
+        { path: [scopedDefinition.selector], severity: 'error' },
+      ),
+    );
+    return { boundaries, tokens, themes, diagnostics };
+  }
+
   // -------------------------------------------------------------------------
   // Read every recognized rule into cascade candidates. A :root declaration
   // applies to the root element in every named theme; a named selector applies
@@ -314,7 +331,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
 
   for (const [sourceOrder, rule] of topLevelRules.entries()) {
     const selectors = supportedSelectorsOf(rule.selector);
-    if (selectors.length === 0) continue; // selector we do not migrate
+    if (selectors.length === 0) continue; // no custom-property declaration (preflight refused scoped definitions)
     for (const { variant } of selectors) recordVariant(variant);
     const { props } = parseFlatDeclarationValues(css, rule.bodyStart);
     for (const [prop, declaration] of Object.entries(props)) {

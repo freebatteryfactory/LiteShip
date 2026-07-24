@@ -8,6 +8,6 @@
 
 > **DiagnosticCode** = keyof *typeof* [`DIAGNOSTIC_REGISTRY`](../variables/DIAGNOSTIC_REGISTRY.md)
 
-Defined in: [error/src/codes.ts:1280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1280)
+Defined in: [error/src/codes.ts:1285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1285)
 
 The exact closed union of enrolled stable diagnostic identities.

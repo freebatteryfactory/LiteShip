@@ -28,7 +28,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { defineBoundary, defineStyle, Boundary, fixedClock } from '@liteship/core';
+import { defineBoundary, defineStyle, Boundary, Style, fixedClock } from '@liteship/core';
 import { buildTrace, traceDigest, type StepOutcome } from '@liteship/core/simulation';
 import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 import { StyleCSSCompiler, CSSCompiler } from '@liteship/compiler';
@@ -45,6 +45,14 @@ const SEED = 0xada9741e;
 const cssProp = fc.constantFrom('font-size', 'color', 'margin', 'padding');
 const cssValue = fc.constantFrom('14px', '16px', '18px', '8px', 'red', 'black', 'blue');
 const propsArb = fc.dictionary(cssProp, cssValue, { minKeys: 1, maxKeys: 4 });
+const shadowArb = fc.record({
+  x: fc.integer({ min: -20, max: 20 }),
+  y: fc.integer({ min: -20, max: 20 }),
+  blur: fc.integer({ min: 0, max: 40 }),
+  spread: fc.option(fc.integer({ min: -10, max: 20 }), { nil: undefined }),
+  color: fc.constantFrom('#111111', '#336699', 'rgba(0,0,0,0.5)'),
+  inset: fc.boolean(),
+});
 
 interface GeneratedSpec {
   readonly boundary: {
@@ -224,6 +232,34 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
     );
   });
 
+  it('INV-ADAPTIVE-CSS-BYTE-EQUAL: state box-shadow output matches Style.tap atomic composition', () => {
+    fc.assert(
+      fc.property(
+        fc.array(shadowArb, { minLength: 1, maxLength: 3 }),
+        fc.array(shadowArb, { minLength: 1, maxLength: 3 }),
+        (baseShadows, stateShadows) => {
+          const boundary = defineBoundary({
+            input: 'viewport.width',
+            at: [
+              [0, 'compact'],
+              [800, 'wide'],
+            ] as const,
+          });
+          const style = defineStyle({
+            boundary,
+            base: { properties: {}, boxShadow: baseShadows },
+            states: { wide: { properties: {}, boxShadow: stateShadows } },
+          });
+          const expected = Style.tap(style, 'wide')['box-shadow'];
+
+          expect(expected).toBeDefined();
+          expect(StyleCSSCompiler.compileAdaptive(style)).toContain(`box-shadow: ${expected};`);
+        },
+      ),
+      { numRuns: 100, seed: SEED },
+    );
+  });
+
   it('INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep', () => {
     fc.assert(
       fc.property(specArb, (g) => {
@@ -255,10 +291,7 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
 
         if (a.quantizer !== undefined && g.quantize !== undefined) {
           const hq = defineQuantizer(hb, g.quantize as Parameters<typeof defineQuantizer>[1]);
-          const adaptiveTrace = runtimeReceiptTrace(
-            a.quantizer as Parameters<typeof createQuantizer>[0],
-            widths,
-          );
+          const adaptiveTrace = runtimeReceiptTrace(a.quantizer as Parameters<typeof createQuantizer>[0], widths);
           const handTrace = runtimeReceiptTrace(hq as Parameters<typeof createQuantizer>[0], widths);
           expect(adaptiveTrace).toEqual(handTrace);
         }

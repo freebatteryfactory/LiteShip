@@ -139,16 +139,56 @@ export interface ConfigInput {
   readonly astro?: Partial<AstroConfig>;
 }
 
+type ConfigDefinition = Boundary | Token | Theme | Style;
+
+/**
+ * Copy and freeze one registry while preserving each definition's semantic
+ * shape. Definitions are aggregate members, so Config identity addresses their
+ * existing ids rather than re-encoding their implementation fields.
+ */
+function snapshotDefinitionRegistry<T extends ConfigDefinition>(
+  registry: Readonly<Record<string, T>>,
+  snapshotMember: (member: T) => DeepReadonly<T>,
+): DeepReadonly<Record<string, T>> {
+  return Object.freeze(
+    Object.fromEntries(Object.entries(registry).map(([name, member]) => [name, snapshotMember(member)])),
+  ) as DeepReadonly<Record<string, T>>;
+}
+
+/**
+ * Boundary specs have one deliberately host-only field: `deviceFilter`. Keep
+ * that callback attached while snapshotting every portable field around it.
+ * The callback is not canonical data and is already excluded from Boundary id.
+ */
+function snapshotBoundary(boundary: Boundary): DeepReadonly<Boundary> {
+  const { spec, ...portableBoundary } = boundary;
+  const snappedBoundary = snapshotDefinitionValue(portableBoundary);
+  if (spec === undefined) return snappedBoundary as DeepReadonly<Boundary>;
+
+  const { deviceFilter, ...portableSpec } = spec;
+  const snappedSpec = Object.freeze({
+    ...snapshotDefinitionValue(portableSpec),
+    ...(deviceFilter !== undefined ? { deviceFilter } : {}),
+  });
+  return Object.freeze({ ...snappedBoundary, spec: snappedSpec }) as DeepReadonly<Boundary>;
+}
+
+function definitionIds<T extends ConfigDefinition>(
+  registry: Readonly<Record<string, T>>,
+): Record<string, ContentAddress> {
+  return Object.fromEntries(Object.entries(registry).map(([name, member]) => [name, member.id]));
+}
+
 /**
  * Define a liteship {@link Config} — the single project-configuration hub every
  * adapter (Vite, Astro, test runners, edge runtime) projects from. Produces a
  * frozen, FNV-1a content-addressed value from raw {@link ConfigInput}.
  */
 export function defineConfig(input: ConfigInput): Config {
-  const boundaries = snapshotDefinitionValue(input.boundaries ?? {});
-  const tokens = snapshotDefinitionValue(input.tokens ?? {});
-  const themes = snapshotDefinitionValue(input.themes ?? {});
-  const styles = snapshotDefinitionValue(input.styles ?? {});
+  const boundaries = snapshotDefinitionRegistry(input.boundaries ?? {}, snapshotBoundary);
+  const tokens = snapshotDefinitionRegistry(input.tokens ?? {}, snapshotDefinitionValue);
+  const themes = snapshotDefinitionRegistry(input.themes ?? {}, snapshotDefinitionValue);
+  const styles = snapshotDefinitionRegistry(input.styles ?? {}, snapshotDefinitionValue);
   const vite = input.vite === undefined ? undefined : snapshotDefinitionValue(input.vite);
   const astro = input.astro === undefined ? undefined : snapshotDefinitionValue(input.astro);
   // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
@@ -158,10 +198,10 @@ export function defineConfig(input: ConfigInput): Config {
   // dependent. CanonicalCbor sorts keys recursively, so no manual sort is needed.
   const id = fnv1aBytes(
     CanonicalCbor.encode({
-      boundaries,
-      tokens,
-      themes,
-      styles,
+      boundaries: definitionIds(boundaries),
+      tokens: definitionIds(tokens),
+      themes: definitionIds(themes),
+      styles: definitionIds(styles),
       vite,
       astro,
     }),

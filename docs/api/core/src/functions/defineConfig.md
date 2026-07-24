@@ -8,7 +8,7 @@
 
 > **defineConfig**(`input`): [`Config`](../interfaces/Config.md)
 
-Defined in: [core/src/authoring/config.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L147)
+Defined in: [core/src/authoring/config.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L187)
 
 Define a liteship [Config](../variables/Config.md) — the single project-configuration hub every
 adapter (Vite, Astro, test runners, edge runtime) projects from. Produces a

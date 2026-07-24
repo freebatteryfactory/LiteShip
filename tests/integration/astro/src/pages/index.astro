@@ -21,10 +21,14 @@ const alpha = defineAdaptive({
         'grid-template-columns': '1fr',
         '--adaptive-owner': 'alpha',
       },
+      boxShadow: [{ x: 0, y: 1, blur: 2, color: 'red' }],
     },
     states: {
       medium: { properties: { 'grid-template-columns': 'repeat(2, 1fr)' } },
-      full: { properties: { 'grid-template-columns': 'repeat(3, 1fr)' } },
+      full: {
+        properties: { 'grid-template-columns': 'repeat(3, 1fr)' },
+        boxShadow: [{ x: 0, y: 4, blur: 8, color: 'blue' }],
+      },
     },
   },
 });
