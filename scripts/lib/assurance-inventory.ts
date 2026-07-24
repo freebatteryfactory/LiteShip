@@ -154,6 +154,10 @@ function packageMatchers(name: string, dir: string): readonly RegExp[] {
   return [
     new RegExp(`(?:from\\s*|import\\s*\\(|require\\s*\\()\\s*['\"]${escapedName}(?:[/\"'])`, 'u'),
     new RegExp(`(?:^|[\"'\\s(])${packageDir.replaceAll('/', '[/\\\\]')}(?:[/\\\\])`, 'u'),
+    new RegExp(
+      `(?:from\\s*|import\\s*\\(|require\\s*\\()\\s*['\"][^'\"]*${packageDir.replaceAll('/', '[/\\\\]')}(?:[/\\\\])`,
+      'u',
+    ),
   ];
 }
 

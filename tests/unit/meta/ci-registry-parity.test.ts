@@ -282,3 +282,60 @@ describe('(c) projected lane commands equal the recorded baseline (byte-identica
     }
   });
 });
+
+// ── (d) event tiers are explicit and fail closed ────────────────────────────
+
+describe('(d) CI event tiers execute the intended authority', () => {
+  it('plans pull-request impact from the canonical affected-test planner', () => {
+    const plan = JOB_BLOCKS.get('plan')!;
+    expect(plan).toContain('affected: ${{ steps.affected.outputs.plan }}');
+    expect(plan).toContain("if: github.event_name == 'pull_request'");
+    expect(plan).toContain('pnpm exec tsx scripts/test-affected.ts --print-plan');
+  });
+
+  it('runs quick plus affected Linux and Windows authority on pull requests', () => {
+    const linux = JOB_BLOCKS.get('pr-affected')!;
+    const windows = JOB_BLOCKS.get('pr-windows-affected')!;
+    expect(linux).toContain("if: github.event_name == 'pull_request'");
+    expect(linux).toContain('pnpm run check -- --profile quick --no-cache');
+    expect(linux).toContain('pnpm run test:affected');
+    expect(windows).toContain("if: github.event_name == 'pull_request'");
+    expect(windows).toContain('pnpm run test:affected');
+    expect(linux).toContain('LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}');
+    expect(windows).toContain('LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}');
+  });
+
+  it('runs browser authority on a pull request only when the impact plan requires it', () => {
+    const browser = JOB_BLOCKS.get('pr-browser-affected')!;
+    expect(browser).toContain(
+      "if: github.event_name == 'pull_request' && fromJSON(needs.plan.outputs.affected).browserRequired",
+    );
+    expect(browser).toContain('LITESHIP_VITEST_BROWSERS: chromium');
+  });
+
+  it('keeps full parallel authority on pushes and serial authority on nightly/manual runs', () => {
+    expect(JOB_BLOCKS.get('truth-linux-parallel-setup')).toContain("if: github.event_name == 'push'");
+    const serial = JOB_BLOCKS.get('truth-linux')!;
+    expect(serial).toContain("github.event_name == 'schedule'");
+    expect(serial).toContain("github.event_name == 'workflow_dispatch'");
+  });
+
+  it('the final fold waits for both PR and exhaustive tier owners', () => {
+    const summary = JOB_BLOCKS.get('ci-summary')!;
+    for (const owner of [
+      'pr-affected',
+      'pr-browser-affected',
+      'pr-windows-affected',
+      'truth-linux',
+      'truth-linux-parallel',
+      'browser-e2e',
+      'windows-smoke',
+      'rust-wasm-parity',
+    ]) {
+      expect(summary).toContain(`- ${owner}`);
+    }
+    expect(summary).toContain('test "$SERIAL" = "success"');
+    expect(summary).toContain('test "$PR_AFFECTED" = "success"');
+    expect(summary).toContain('test "$PARALLEL" = "success"');
+  });
+});

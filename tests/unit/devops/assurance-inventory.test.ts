@@ -50,6 +50,19 @@ describe('assurance inventory', () => {
     expect(core.evidenceFiles).toEqual(['tests/unit/core/value.test.ts']);
   });
 
+  it('attributes a relative package-source import to the same canonical owner', () => {
+    const root = fixture();
+    mkdirSync(join(root, 'tests', 'unit', 'meta'), { recursive: true });
+    writeFileSync(
+      join(root, 'tests', 'unit', 'meta', 'projection.test.ts'),
+      "import { value } from '../../../packages/core/src/index.js';\nexpect(value).toBe(1);\n",
+    );
+
+    const core = buildAssuranceInventory(root).packages.find((entry) => entry.name === '@liteship/core')!;
+    expect(core.authoredEvidenceLoc).toBe(4);
+    expect(core.evidenceFiles).toEqual(['tests/unit/core/value.test.ts', 'tests/unit/meta/projection.test.ts']);
+  });
+
   it('detects a planted density regression and ignores a strengthening', () => {
     const inventory = buildAssuranceInventory(fixture());
     const baseline = baselineFromInventory(inventory);

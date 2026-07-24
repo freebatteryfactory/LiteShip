@@ -49,9 +49,11 @@ jobs:
     timeout-minutes: 10
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      affected: ${{ steps.affected.outputs.plan }}
     steps:
       - uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -67,8 +69,82 @@ jobs:
             pnpm exec tsx scripts/ci-plan.ts
             echo "PLAN_EOF"
           } >> "$GITHUB_OUTPUT"
+      - id: affected
+        name: Emit the conservative affected-test plan
+        if: github.event_name == 'pull_request'
+        env:
+          LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
+        run: echo "plan=$(pnpm exec tsx scripts/test-affected.ts --print-plan)" >> "$GITHUB_OUTPUT"
 
-  # Serial full gauntlet — nightly / manual only after Phase B cutover (parallel lane is merge gate).
+  # Pull-request authority: cheap registry checks plus the canonical package-DAG
+  # affected closure. Global authority changes fail broad to the full Node suite.
+  pr-affected:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: plan
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check -- --profile quick --no-cache
+      - run: pnpm run test:affected
+        env:
+          CI: true
+          LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
+
+  pr-browser-affected:
+    if: github.event_name == 'pull_request' && fromJSON(needs.plan.outputs.affected).browserRequired
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: plan
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
+      - run: pnpm exec vitest run --config vitest.browser.config.ts
+        env:
+          CI: true
+          LITESHIP_VITEST_BROWSERS: chromium
+
+  pr-windows-affected:
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    needs: plan
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:affected
+        env:
+          CI: true
+          LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
+
+  # Serial full gauntlet — nightly/manual exhaustive authority. Pull requests use
+  # the conservative affected closure; pushes use the full parallel projection.
   truth-linux:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -166,6 +242,7 @@ jobs:
   # Build once, fan out: vitest shards N=4, isolated bench, quarantined capsule:verify.
   # Bench is NEVER sharded.
   truth-linux-parallel-setup:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs:
@@ -630,6 +707,7 @@ jobs:
       - run: echo "Parallel truth-linux lane passed."
 
   browser-e2e:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -677,6 +755,7 @@ jobs:
   # property suite running against that fresh artifact — the "build truth"
   # doctrine applied to the compute kernels (nothing prebuilt is trusted).
   rust-wasm-parity:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -732,6 +811,7 @@ jobs:
           CI: true
 
   windows-smoke:
+    if: github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -776,6 +856,7 @@ jobs:
   # add to ci-summary needs) requires the smoke passing reliably for
   # a full release cycle on a fresh `macos-latest` image.
   macos-smoke:
+    if: github.event_name != 'pull_request'
     runs-on: macos-latest
     timeout-minutes: 60
     continue-on-error: true
@@ -816,6 +897,7 @@ jobs:
   # Milestone-2: Playwright browser lane on macOS — proves green for a cycle
   # before promotion to tier-1 (drop continue-on-error + add to ci-summary).
   macos-browser:
+    if: github.event_name != 'pull_request'
     runs-on: macos-latest
     timeout-minutes: 90
     continue-on-error: true
@@ -836,13 +918,48 @@ jobs:
       - run: pnpm run coverage:browser
 
   ci-summary:
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
       - format
+      - pr-affected
+      - pr-browser-affected
+      - pr-windows-affected
+      - truth-linux
       - truth-linux-parallel
       - browser-e2e
       - windows-smoke
       - rust-wasm-parity
     steps:
-      - run: echo "CI truth lanes passed (parallel merge gate; serial nightly-only)."
+      - name: Fold the event-appropriate authority tier
+        env:
+          EVENT: ${{ github.event_name }}
+          FORMAT: ${{ needs.format.result }}
+          PR_AFFECTED: ${{ needs.pr-affected.result }}
+          PR_BROWSER: ${{ needs.pr-browser-affected.result }}
+          PR_WINDOWS: ${{ needs.pr-windows-affected.result }}
+          SERIAL: ${{ needs.truth-linux.result }}
+          PARALLEL: ${{ needs.truth-linux-parallel.result }}
+          BROWSER: ${{ needs.browser-e2e.result }}
+          WINDOWS: ${{ needs.windows-smoke.result }}
+          RUST_WASM: ${{ needs.rust-wasm-parity.result }}
+        run: |
+          set -euo pipefail
+          test "$FORMAT" = "success"
+          if [ "$EVENT" = "pull_request" ]; then
+            test "$PR_AFFECTED" = "success"
+            test "$PR_WINDOWS" = "success"
+            test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
+            echo "CI pull-request authority passed (quick + affected Linux/Windows + affected browser)."
+          else
+            if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
+              test "$SERIAL" = "success"
+            else
+              test "$PARALLEL" = "success"
+            fi
+            test "$BROWSER" = "success"
+            test "$WINDOWS" = "success"
+            test "$RUST_WASM" = "success"
+            echo "CI exhaustive authority passed."
+          fi
