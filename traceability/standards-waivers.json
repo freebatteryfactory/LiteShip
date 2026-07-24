@@ -1,74 +1,11 @@
 {
-  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root, symlink-unprivileged, fixture-absent, capsule-manifest-absent) plus the clock.ts no-nondeterminism 60/77 line-relocations. The former no-silent-catch benign-catch sign-offs (version.ts/ship.ts/doctor-probes-workspace.ts) were retired when those catches were CURED (given explicit, non-swallowing fallback bodies) and their waivers removed from LITESHIP_WAIVERS — a cure, not a renewed suppression. Derived from the live-vs-birth diff, not hand-guessed.",
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the exact live element being weakened, the weakening class it authorizes, the owner, a justification, and an expiry. Expired, stale, cured, unmatched, placeholder-bearing, and always-blocking weakenings are not retained as governed exceptions. Entries are reconciled against the live standards diff; obsolete approvals are removed rather than preserved as historical sediment.",
   "signoffs": [
-    {
-      "elementKey": "skip-allowlist::tests/browser/spsc-ring-browser.test.ts::describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (SharedArrayBuffer / cross-origin isolation (COOP/COEP)). describe.skipIf(!canUseSAB) — the real-SharedArrayBuffer SPSCRing test BODY runs when cross-origin isolation is present and skips only when absent (the in-process ring is covered elsewhere); a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/e2e/astro-directives.e2e.ts::test.skip(!built, 'astro example not built — run: pnpm exec tsx tests/integration/astro/test.ts');",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (the built Astro example dist). test.skip(!built, …) — the browser e2e BODY runs when the built Astro example dist is present; the gauntlet runs the integration build before the e2e lane, so CI always exercises it. A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/integration/cli/idempotency.test.ts::const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). FFMPEG_RENDER_CAPABLE ? it : it.skip — the render-idempotency BODY runs when ffmpeg+libx264 is on PATH and skips only when absent (the host context unit covers the encode path). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/integration/cli/scene-dev.test.ts::const conditionalIt = underCoverage ? it.skip : it;",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (absence of v8 coverage instrumentation). underCoverage ? it.skip : it — the spawned tsx→vite-server BODY runs except under v8 coverage (a coverage-vs-vite STATUS_ACCESS_VIOLATION on Windows); the in-process server.test.ts covers the same startDevServer() path under coverage. A runtime instrumentation gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/integration/cli/scene-render.test.ts::const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). FFMPEG_RENDER_CAPABLE ? it : it.skip — the scene-render CLI BODY renders an mp4 through ffmpeg+libx264 when the codec is present and skips only when absent. A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/property/boundary-evaluate-batch.prop.test.ts::describe.skipIf(!wasmPresent)('Boundary.evaluateBatch agrees with scalar evaluate (Rust kernel loaded)', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (the loaded Rust WASM kernel). describe.skipIf(!wasmPresent) — the Boundary.evaluateBatch parity property BODY runs when the Rust kernel is loaded and skips only when absent (the scalar evaluate path is covered without it). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
     {
       "elementKey": "skip-allowlist::tests/smoke/intro-render.test.ts::it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
       "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the end-to-end intro-scene smoke render BODY runs through ffmpeg+libx264 when present; absent the codec the doctor-probe skips (see `liteship doctor`). The title names the capability (render probe failed), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/command/error-contract.test.ts::it.runIf(FFMPEG_RENDER_CAPABLE)('a stream failure mentioning stdin/EPIPE surfaces the probe verdict', async () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). it.runIf(FFMPEG_RENDER_CAPABLE) — the stream-failure probe (EPIPE/stdin) BODY runs only when ffmpeg+libx264 is capable. A runtime capability gate (runIf on the real render backend), not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/command/ffmpeg-render-backend.test.ts::test.skip('ffmpeg+libx264 render (skipped — codec not on PATH)', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the real ffmpeg+libx264 render backend BODY runs when the codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/command/host-context.test.ts::it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene encodes frames through ffmpeg when libx264 is available', async () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). it.runIf(FFMPEG_RENDER_CAPABLE) — renderScene-through-ffmpeg BODY runs only when libx264 is available. A runtime capability gate (runIf on the real backend), not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
       "expiry": "2027-06-20"
     },
     {
@@ -79,108 +16,10 @@
       "expiry": "2027-06-20"
     },
     {
-      "elementKey": "skip-allowlist::tests/unit/core/wasm-parity.test.ts::describe.skipIf(wasmPresent)('WASM/TS kernel parity (artifact absent — fallbackKernels is what ships here)', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (the wasm artifact being ABSENT). describe.skipIf(wasmPresent) — the INVERSE parity arm BODY runs when the wasm artifact is ABSENT (the fallback is what ships there). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
       "elementKey": "skip-allowlist::tests/unit/core/wasm-shipping.test.ts::it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm via the module graph', () => {",
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
       "justification": "Sanctioned capability-gated skip (the staged @liteship/core dist wasm artifact). it.skipIf(!staged) — the module-graph resolution of @liteship/core dist/liteship-compute.wasm BODY runs only when the built artifact is staged (a publish-shape probe). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/stage/dual-export-node.test.ts::test.skip('headless dual-export end to end (skipped — codec not on PATH)', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the headless dual-export end-to-end BODY runs when the ffmpeg+libx264 codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/stage/ffmpeg-encoder.test.ts::test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the real ffmpeg+libx264 encode BODY runs when the codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/browser/render-worker-browser.test.ts::describe.skipIf(offscreenCanvasAbsent)('OffscreenCanvas-dependent flows', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted silent early-return to describe.skipIf. OffscreenCanvas-dependent browser worker tests BODY runs when OffscreenCanvas is defined; skips only when absent (a runtime capability gate, not a placeholder). Replaces a lying early-return pass.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/browser/webcodecs-capture.test.ts::describe.skipIf(webcodecsAbsent)('WebCodecsCapture — browser lane', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — capability-gated skip for WebCodecs browser lane. describe.skipIf(webcodecsAbsent) — the VideoEncoder/VideoFrame BODY runs when WebCodecs is available; skips only when absent (a runtime capability gate linked to the canonical webcodecsAbsent probe, not a placeholder).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/astro/wgpu-runtime.test.ts::it.skipIf(gpuAbsent)(",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted silent early-return to it.skipIf. WebGPU runtime tests BODY runs when navigator.gpu is present; skips only when absent (a runtime capability gate, not a placeholder). Replaces a lying early-return pass.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/cli/lib/gauntlet-verdict-cache.test.ts::it.skipIf(eaccesUntestableAsRoot)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted silent early-return to it.skipIf. EACCES permission test BODY runs only when chmod 000 is testable (non-root); skips on root where EACCES cannot be provoked (a runtime capability gate, not a placeholder).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/cli/lib/gauntlet-verdict-cache.test.ts::it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted silent early-return to it.skipIf. Mutation-cache EACCES test BODY runs only when chmod 000 is testable (non-root); skips on root where EACCES cannot be provoked (a runtime capability gate, not a placeholder).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/devops/audit-consumer-mode.test.ts::it.skipIf(symlinkUnprivileged)('resolves the pnpm virtual-store layout via realpath re-seeding', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted silent symlink-privilege return to it.skipIf. The pnpm virtual-store realpath BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; npm-shaped consumer discovery still covers the non-symlink path.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/meta/generated-bench-execution.test.ts::describe.skipIf(capsuleManifestAbsent)(",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — honest smoke-lane skip for the generated-bench corpus proof. The BODY runs when capsule:compile has produced the manifest; lanes without that manifest skip the catalog-derived proof instead of throwing or silently fabricating sources.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/riff-walker.test.ts::it.skipIf(fixtureAbsent)('decodes the shipped intro-bed.wav fixture cleanly', () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted fixture-absent early return to it.skipIf. The real RIFF fixture BODY runs when intro-bed.wav is present; synthetic RIFF coverage still runs when the optional asset is absent.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/vite/boundary-manifest.test.ts::test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted circular-directory symlink early return to test.skipIf. The traversal BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; ordinary boundary scanning remains covered.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/vite/boundary-manifest.test.ts::test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted external-definition symlink early return to test.skipIf. The symlinked boundary definition BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; boundaryDir override coverage remains the non-symlink proof.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "skip-allowlist::tests/unit/vite/token-manifest.test.ts::test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives entries', async () => {",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Tier 0.2 — converted token-manifest circular-directory symlink early return to test.skipIf. The traversal BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; ordinary token manifest coverage remains active.",
       "expiry": "2027-06-20"
     },
     {
@@ -216,69 +55,6 @@
       "weakening": "assurance-level-lowered",
       "owner": "heyoub",
       "justification": "Glob-membership RESTRUCTURE, not a rigor loss: the former L3 group {boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts was SPLIT — signal.ts moved into the new reactive-core group {cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts at L4 (a PROMOTION L3→L4; see assurance-map.ts: 'signal moves L4 from its former L3 … a CellKernel-backed value channel, not a bespoke source') plus a new mutation-score floor, and the remaining paths stay L3 under the renamed glob {boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts (surfaced as the paired ADD strengthen). The waiver key embeds the exact glob string, so editing group membership surfaces as remove(old glob)+add(new glob) — no path lost its rigor band; net rigor INCREASED. Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "assurance::packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
-      "weakening": "assurance-level-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation, not a rigor reduction: every member of this removed flat L3 glob remains L3 under the live domain-owned globs authoring/{boundary,ai-cast}.ts, reactive/{zap,speculative}.ts, media/{gen-frame,token-buffer}.ts, motion/{blend,animation}.ts, clock/clock.ts, and clock/rng.ts. The element key embeds the old flat path, so the relocation appears mechanically as one removal plus paired live strengthen additions. No source file lost assurance coverage.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "assurance::packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts",
-      "weakening": "assurance-level-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation, not a rigor reduction: cell-kernel, cell, derived, store, signal, and live-cell remain L4 under packages/core/src/reactive/{cell-kernel,cell,derived,store,signal,live-cell}.ts, while timeline remains L4 under packages/core/src/motion/timeline.ts. The element key embeds the old flat paths, so the domain split appears as a removal plus paired live strengthen additions. No reactive kernel lost assurance coverage.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/cell-kernel.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.75 is preserved exactly as 0.75 at packages/core/src/reactive/cell-kernel.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/cell.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/reactive/cell.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/derived.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8889 is preserved exactly as 0.8889 at packages/core/src/reactive/derived.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/live-cell.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 1 is preserved exactly as 1 at packages/core/src/reactive/live-cell.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/signal.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/reactive/signal.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/store.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/reactive/store.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
-      "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "floor::mutation-score::packages/core/src/timeline.ts",
-      "weakening": "floor-lowered",
-      "owner": "heyoub",
-      "justification": "Pure P4 path relocation: the removed flat-path mutation floor 0.8333 is preserved exactly as 0.8333 at packages/core/src/motion/timeline.ts. The standards key includes the file path, so moving the same implementation appears as a removed floor paired with an equal live strengthen. Mutation rigor is unchanged.",
       "expiry": "2027-06-20"
     }
   ]
