@@ -116,6 +116,23 @@ function factContext(facts: CheckGovernanceFacts): GateContext {
 
 const FACTS = buildGovernanceFacts(NOW);
 
+const EXACT_CONTROL_RELATIONS = [
+  ['check/gates', 'tests/unit/cli/lib/repo-ir-gauntlet.test.ts'],
+  ['check/standards-gate', 'tests/unit/meta/standards-integrity.test.ts'],
+  ['check/capability-gate', 'tests/unit/gauntlet/capability-gate-link.test.ts'],
+  ['check/spine-relation-gate', 'tests/unit/audit/spine-relation.test.ts'],
+  ['check/transition-gate', 'tests/unit/gauntlet/transition-conformance-gate.test.ts'],
+] as const;
+
+function exactControlRelationErrors(relations: readonly (readonly [string, string])[]): readonly string[] {
+  return relations.flatMap(([id, path]) => {
+    const check = CHECK_REGISTRY.find((entry) => entry.id === id);
+    if (check?.negativeControl !== path) return [`${id}→${check?.negativeControl ?? '(missing)'}, expected ${path}`];
+    const source = readFileSync(resolve(REPO, path), 'utf8');
+    return source.includes(`// PROVES-CHECK: ${id}`) ? [] : [`${id} is not claimed by ${path}`];
+  });
+}
+
 describe('the check-registry PARTITION is total + disjoint against the root scripts', () => {
   const scripts = FACTS.partition.scripts;
   const registeredScripts = new Set(FACTS.partition.registered.map((entry) => entry.script));
@@ -255,6 +272,21 @@ describe('negative controls are total over the blocking checks', () => {
   it('every currently declared blocking check carries a control without a hand-authored count mirror', () => {
     expect(blocking.length).toBeGreaterThan(0);
     expect(blocking.every((check) => check.negativeControl.length > 0)).toBe(true);
+  });
+
+  it('pins authority-specific checks to the exact existing tests that falsify them', () => {
+    expect(exactControlRelationErrors(EXACT_CONTROL_RELATIONS)).toEqual([]);
+  });
+
+  it('rejects an unrelated but existing test path as a decorative negative control', () => {
+    const decorative = EXACT_CONTROL_RELATIONS.map(([id, path]) =>
+      id === 'check/standards-gate'
+        ? ([id, 'tests/unit/gauntlet/gates-dogfood.test.ts'] as const)
+        : ([id, path] as const),
+    );
+    expect(exactControlRelationErrors(decorative)).toEqual([
+      'check/standards-gate→tests/unit/meta/standards-integrity.test.ts, expected tests/unit/gauntlet/gates-dogfood.test.ts',
+    ]);
   });
 });
 

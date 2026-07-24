@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/spine-relation-gate
 /**
  * The two-axis spine-relation gate — acceptance (Wave 8.5, issue #156). This is the
  * NO-AUTHORITY-GAP proof: the gate must reproduce every frozen spine-conformance pin's

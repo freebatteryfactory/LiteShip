@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/transition-gate
 /**
  * The transition-conformance GATE RUNNER proof — the repo-local host
  * (`scripts/transition-conformance-gate.ts`) folds the SHARED pinned corpus

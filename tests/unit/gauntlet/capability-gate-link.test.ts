@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/capability-gate
 /**
  * Capability-gate-link gate (codex round-8, #1b) — the self-proving fold over the host-supplied
  * {@link CapabilityLinkFacts}.

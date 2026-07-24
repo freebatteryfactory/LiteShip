@@ -270,7 +270,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 180_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
+    negativeControl: 'tests/unit/cli/lib/repo-ir-gauntlet.test.ts',
     remediation: 'resolve the blocking gate findings, or file a signed waiver.',
   },
   {
@@ -342,7 +342,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 180_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
+    negativeControl: 'tests/unit/meta/standards-integrity.test.ts',
     remediation: 'sign the standards change, or restore the weakened rigor.',
   },
   {
@@ -357,7 +357,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
+    negativeControl: 'tests/unit/gauntlet/capability-gate-link.test.ts',
     remediation: 'link the skip guard to its capability probe, or remove the mislabeled skip.',
   },
   {
@@ -372,7 +372,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
+    negativeControl: 'tests/unit/audit/spine-relation.test.ts',
     remediation: 'reconcile the mirror type with its runtime source, or re-admit the new relation.',
   },
   {
@@ -387,7 +387,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/gauntlet/gates-dogfood.test.ts',
+    negativeControl: 'tests/unit/gauntlet/transition-conformance-gate.test.ts',
     remediation: 'restore bisimulation with the declared reactive model (fix the transport or the model).',
   },
   {

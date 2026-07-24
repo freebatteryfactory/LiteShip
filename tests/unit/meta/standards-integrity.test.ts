@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/standards-gate
 /**
  * The AGENT-SAFETY META-GAUNTLET (the "raccoon rule"), phase A — the standards
  * backstop's BITE proofs + the committed-snapshot drift gate.

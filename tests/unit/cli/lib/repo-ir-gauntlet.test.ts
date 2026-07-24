@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/gates
 /**
  * The HOST injection path (`packages/cli/src/lib/repo-ir-gauntlet.ts`, Slice B/C) —
  * the CLI-only wiring that builds the repo-IR via `@liteship/audit`, host-injects the
