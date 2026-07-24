@@ -77,6 +77,44 @@ export type CheckCache = 'content-addressed' | 'none';
  */
 export type CheckAuthority = 'blocking' | 'advisory';
 
+/** The exact evidence artifact family currently produced by every canonical check. */
+export type CheckEvidenceKind = 'check-report';
+
+/** A condition the independent delivery verifier must establish for evidence admission. */
+export type CheckEvidenceCondition =
+  | 'head-sha-match'
+  | 'plan-id-match'
+  | 'platform-match'
+  | 'producer-match'
+  | 'command-match'
+  | 'verdict-pass'
+  | 'digest-match';
+
+/** Independent verifier protocol understood by delivery-evidence admission. */
+export type CheckEvidenceVerifier = 'delivery-evidence/check-report-v1';
+
+/**
+ * One exact evidence obligation owned by a canonical check record.
+ *
+ * This is a requirement, not a claim that the artifact already exists. The
+ * delivery collector must satisfy every field before it can admit a completed
+ * check.
+ */
+export interface CheckEvidenceRequirement {
+  /** Stable evidence identity, unique across the complete check registry. */
+  readonly id: string;
+  /** Artifact family used by the delivery manifest. */
+  readonly kind: CheckEvidenceKind;
+  /** Repository-relative artifact path the producer must emit. */
+  readonly path: string;
+  /** Exact check id responsible for producing this evidence. */
+  readonly producer: string;
+  /** Facts the independent verifier must establish before admitting the artifact. */
+  readonly requiredConditions: readonly [CheckEvidenceCondition, ...CheckEvidenceCondition[]];
+  /** Stable verifier protocol identifier. */
+  readonly verifier: CheckEvidenceVerifier;
+}
+
 /** Structured execution owned by the CLI host rather than an opaque shell line. */
 export interface CliCheckExecution {
   readonly kind: 'cli-command';
@@ -115,6 +153,8 @@ interface CheckDefinitionBase {
   readonly cache: CheckCache;
   /** The authority this check holds over the aggregate verdict (see {@link CheckAuthority}). */
   readonly authority: CheckAuthority;
+  /** Non-empty evidence obligations required before this check can support delivery admission. */
+  readonly evidenceRequirements: readonly [CheckEvidenceRequirement, ...CheckEvidenceRequirement[]];
   /** The one-line remediation printed when this check reds — the fix, one copy away. */
   readonly remediation: string;
 }

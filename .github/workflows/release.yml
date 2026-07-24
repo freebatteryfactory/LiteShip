@@ -77,9 +77,62 @@ jobs:
         with:
           name: affected-plan
           path: .liteship
-      - name: Bind release evidence to the plan
-        run: echo "LITESHIP_AFFECTED_PLAN_ID=$(jq -r .planId .liteship/affected-plan.json)" >> "$GITHUB_ENV"
+      - name: Download the admitted delivery evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: delivery-evidence
+          path: .liteship/delivery-evidence
+      - name: Bind release evidence to the admitted source and plan
+        run: |
+          set -euo pipefail
+          EVIDENCE_ROOT=.liteship/delivery-evidence/reports
+          MANIFEST="$EVIDENCE_ROOT/delivery-evidence-manifest.json"
+          RECEIPT="$EVIDENCE_ROOT/delivery-admission-receipt.json"
+          CHAIN="$EVIDENCE_ROOT/delivery-receipt-chain.json"
+          PLAN=.liteship/affected-plan.json
+          test -f "$MANIFEST"
+          test -f "$RECEIPT"
+          test -f "$CHAIN"
+          PLAN_ID=$(jq -er .planId "$PLAN")
+          MANIFEST_ID=$(jq -er .manifestId "$MANIFEST")
+          CHAIN_DIGEST="sha256:$(sha256sum "$CHAIN" | cut -d ' ' -f 1)"
+          CHAIN_STAGES=$(jq -c '[.receipts[] | {kind, receiptId: .hash}]' "$CHAIN")
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            '(keys | sort) == ["headSha", "manifestId", "planId", "receipts", "schemaVersion"] and .schemaVersion == 1 and .headSha == $head and .planId == $plan and .manifestId == $manifest and (.receipts | length) == 6 and [.receipts[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$CHAIN" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            '.schemaVersion == 2 and .verdict == "accepted" and .headSha == $head and .plan.id == $plan and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref' \
+            "$MANIFEST" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            --arg chainDigest "$CHAIN_DIGEST" \
+            --argjson chainStages "$CHAIN_STAGES" \
+            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v2" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$RECEIPT" >/dev/null
+          echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"
       - run: pnpm run build
+      - name: Verify the admitted receipt DAG independently
+        run: >-
+          pnpm exec tsx scripts/verify-release-delivery-evidence.ts
+          .liteship/affected-plan.json
+          .liteship/delivery-evidence/reports
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
         with:
           toolchain: 1.85.1
@@ -91,6 +144,7 @@ jobs:
         run: |
           node packages/liteship/bin/liteship.mjs sbom
           mkdir -p release-artifacts/evidence
+          cp -R .liteship/delivery-evidence/reports/. release-artifacts/evidence/
           cp reports/sbom.json release-artifacts/evidence/sbom.cdx.json
           cp reports/vex.json release-artifacts/evidence/vex.cdx.json
           cp .liteship/affected-plan.json release-artifacts/evidence/affected-plan.json
@@ -122,10 +176,14 @@ jobs:
           path: |
             release-artifacts/
             packages/*/dist/
-      - name: Attest exact release tarballs
+      - name: Attest the complete frozen release and evidence bundle
         uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
         with:
-          subject-path: release-artifacts/tarballs/*.tgz
+          subject-path: |
+            release-artifacts/tarballs/*.tgz
+            release-artifacts/tarballs/release-artifacts.json
+            release-artifacts/evidence/**
+            release-artifacts/capsules/*.shipcapsule.cbor
 
   publish:
     name: Publish the fleet (roster from scripts/ci/publish-roster.json) + attach ShipCapsules
@@ -183,15 +241,89 @@ jobs:
         with:
           name: frozen-release-artifacts
           path: .
-      - name: Bind publish admission to the certified plan
-        run: echo "LITESHIP_AFFECTED_PLAN_ID=$(jq -r .planId release-artifacts/tarballs/release-artifacts.json)" >> "$GITHUB_ENV"
+      - name: Bind publish admission to the certified source and plan
+        run: |
+          set -euo pipefail
+          BUNDLE=release-artifacts/tarballs/release-artifacts.json
+          MANIFEST=release-artifacts/evidence/delivery-evidence-manifest.json
+          RECEIPT=release-artifacts/evidence/delivery-admission-receipt.json
+          CHAIN=release-artifacts/evidence/delivery-receipt-chain.json
+          test -f "$BUNDLE"
+          test -f "$MANIFEST"
+          test -f "$RECEIPT"
+          test -f "$CHAIN"
+          PLAN_ID=$(jq -er .planId "$BUNDLE")
+          MANIFEST_ID=$(jq -er .manifestId "$MANIFEST")
+          CHAIN_DIGEST="sha256:$(sha256sum "$CHAIN" | cut -d ' ' -f 1)"
+          CHAIN_STAGES=$(jq -c '[.receipts[] | {kind, receiptId: .hash}]' "$CHAIN")
+          test "$(jq -er .sourceCommit "$BUNDLE")" = "$GITHUB_SHA"
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            '(keys | sort) == ["headSha", "manifestId", "planId", "receipts", "schemaVersion"] and .schemaVersion == 1 and .headSha == $head and .planId == $plan and .manifestId == $manifest and (.receipts | length) == 6 and [.receipts[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$CHAIN" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            '.schemaVersion == 2 and .verdict == "accepted" and .headSha == $head and .plan.id == $plan and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref' \
+            "$MANIFEST" >/dev/null
+          jq -e \
+            --arg head "$GITHUB_SHA" \
+            --arg plan "$PLAN_ID" \
+            --arg manifest "$MANIFEST_ID" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg workflow "$GITHUB_WORKFLOW" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --arg ref "$GITHUB_REF" \
+            --arg chainDigest "$CHAIN_DIGEST" \
+            --argjson chainStages "$CHAIN_STAGES" \
+            '.schemaVersion == 1 and .verdict == "accepted" and .verifier == "delivery-evidence/standalone-v2" and .headSha == $head and .planId == $plan and .manifestId == $manifest and .github.repository == $repository and .github.workflow == $workflow and .github.runId == $runId and .github.runAttempt == $runAttempt and .github.ref == $ref and .receiptChain.path == "reports/delivery-receipt-chain.json" and .receiptChain.digest == $chainDigest and .receiptChain.stages == $chainStages and [.receiptChain.stages[].kind] == ["delivery-intent", "delivery-plan", "delivery-verification", "delivery-artifact", "delivery-policy", "delivery-release"]' \
+            "$RECEIPT" >/dev/null
+          echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"
+      - name: Re-verify the frozen delivery receipt DAG before publish
+        run: >-
+          pnpm exec tsx scripts/verify-release-delivery-evidence.ts
+          release-artifacts/evidence/affected-plan.json
+          release-artifacts/evidence
       - name: Verify GitHub attestations before admission
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          for tarball in release-artifacts/tarballs/*.tgz; do
-            gh attestation verify "$tarball" --repo "$GITHUB_REPOSITORY"
+          required_subjects=(
+            release-artifacts/tarballs/release-artifacts.json
+            release-artifacts/evidence/delivery-evidence-manifest.json
+            release-artifacts/evidence/delivery-admission-receipt.json
+            release-artifacts/evidence/delivery-receipt-chain.json
+            release-artifacts/evidence/sbom.cdx.json
+            release-artifacts/evidence/vex.cdx.json
+          )
+          for required in "${required_subjects[@]}"; do
+            test -f "$required"
+          done
+          shopt -s nullglob
+          tarballs=(release-artifacts/tarballs/*.tgz)
+          capsules=(release-artifacts/capsules/*.shipcapsule.cbor)
+          shopt -u nullglob
+          test "${#tarballs[@]}" -gt 0
+          test "${#capsules[@]}" -gt 0
+          mapfile -d '' subjects < <(
+            find release-artifacts/tarballs release-artifacts/evidence release-artifacts/capsules \
+              -type f -print0 | sort -z
+          )
+          test "${#subjects[@]}" -gt 0
+          for subject in "${subjects[@]}"; do
+            gh attestation verify "$subject" \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-digest "$GITHUB_SHA"
           done
 
       # ─── GitHub Release FIRST, then the ship loop ────────────────────

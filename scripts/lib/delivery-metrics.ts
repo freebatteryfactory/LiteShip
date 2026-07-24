@@ -98,6 +98,186 @@ function stable(value: unknown): string {
     .join(',')}}`;
 }
 
+function exactRecord(value: unknown, keys: readonly string[], label: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new TypeError(`${label} must be an object`);
+  }
+  const record = value as Record<string, unknown>;
+  if (JSON.stringify(Object.keys(record).sort()) !== JSON.stringify([...keys].sort())) {
+    throw new TypeError(`${label} keys are invalid`);
+  }
+  return record;
+}
+
+function finiteNonNegative(value: unknown, label: string, integer = false): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || (integer && !Number.isInteger(value))) {
+    throw new TypeError(`${label} must be a finite non-negative${integer ? ' integer' : ''}`);
+  }
+  return value;
+}
+
+function nullableRate(value: unknown, label: string): number | null {
+  if (value === null) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new TypeError(`${label} must be null or a finite rate from 0 to 1`);
+  }
+  return value;
+}
+
+function sha256OrNull(value: unknown, label: string): `sha256:${string}` | null {
+  if (value === null) return null;
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/u.test(value)) {
+    throw new TypeError(`${label} must be null or a SHA-256 integrity digest`);
+  }
+  return value as `sha256:${string}`;
+}
+
+const DELIVERY_METRICS_KEYS = [
+  'schemaVersion',
+  'metricsId',
+  'planId',
+  'headSha',
+  'risk',
+  'confidence',
+  'evidenceSources',
+  'selectionWidth',
+  'timings',
+  'cacheHitRate',
+  'rerunRate',
+  'flakeRate',
+  'evidenceCompleteness',
+  'costPerVerifiedPathMinutes',
+  'curePackets',
+  'slos',
+  'verdict',
+] as const;
+
+/** Parse the complete addressed metrics record. Unknown, missing, and malformed evidence fail closed. */
+export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
+  const record = exactRecord(value, DELIVERY_METRICS_KEYS, 'delivery metrics');
+  if (record['schemaVersion'] !== 2) throw new TypeError('delivery metrics schemaVersion must be 2');
+  const metricsId = sha256OrNull(record['metricsId'], 'delivery metrics metricsId');
+  if (metricsId === null) throw new TypeError('delivery metrics metricsId is required');
+  const planId = sha256OrNull(record['planId'], 'delivery metrics planId');
+  if (planId === null) throw new TypeError('delivery metrics planId is required');
+  if (typeof record['headSha'] !== 'string' || !/^[0-9a-f]{40}$/u.test(record['headSha'])) {
+    throw new TypeError('delivery metrics headSha is invalid');
+  }
+  if (!['low', 'moderate', 'high', 'critical'].includes(String(record['risk']))) {
+    throw new TypeError('delivery metrics risk is invalid');
+  }
+  if (record['confidence'] !== 'high' && record['confidence'] !== 'low') {
+    throw new TypeError('delivery metrics confidence is invalid');
+  }
+
+  const evidenceSources = exactRecord(
+    record['evidenceSources'],
+    ['selectorCalibrationId', 'flakeEvidenceId'],
+    'delivery metrics evidenceSources',
+  );
+  const selectorCalibrationId = sha256OrNull(
+    evidenceSources['selectorCalibrationId'],
+    'delivery metrics selectorCalibrationId',
+  );
+  const flakeEvidenceId = sha256OrNull(evidenceSources['flakeEvidenceId'], 'delivery metrics flakeEvidenceId');
+
+  const selectionWidth = exactRecord(
+    record['selectionWidth'],
+    ['changedPaths', 'packages', 'nodeTests', 'platforms'],
+    'delivery metrics selectionWidth',
+  );
+  const parsedSelectionWidth = {
+    changedPaths: finiteNonNegative(selectionWidth['changedPaths'], 'delivery metrics changedPaths', true),
+    packages: finiteNonNegative(selectionWidth['packages'], 'delivery metrics packages', true),
+    nodeTests: finiteNonNegative(selectionWidth['nodeTests'], 'delivery metrics nodeTests', true),
+    platforms: finiteNonNegative(selectionWidth['platforms'], 'delivery metrics platforms', true),
+  };
+
+  const timings = exactRecord(
+    record['timings'],
+    ['queueMs', 'feedbackLatencyMs', 'buildMs', 'testMs', 'totalComputeMs'],
+    'delivery metrics timings',
+  );
+  const parsedTimings: DeliveryTimingInput = {
+    queueMs: finiteNonNegative(timings['queueMs'], 'delivery metrics queueMs'),
+    feedbackLatencyMs: finiteNonNegative(timings['feedbackLatencyMs'], 'delivery metrics feedbackLatencyMs'),
+    buildMs: finiteNonNegative(timings['buildMs'], 'delivery metrics buildMs'),
+    testMs: finiteNonNegative(timings['testMs'], 'delivery metrics testMs'),
+    totalComputeMs: finiteNonNegative(timings['totalComputeMs'], 'delivery metrics totalComputeMs'),
+  };
+
+  const curePackets = exactRecord(record['curePackets'], ['emitted', 'resolved'], 'delivery metrics curePackets');
+  const parsedCurePackets = {
+    emitted: finiteNonNegative(curePackets['emitted'], 'delivery metrics emitted cure packets', true),
+    resolved: finiteNonNegative(curePackets['resolved'], 'delivery metrics resolved cure packets', true),
+  };
+  if (parsedCurePackets.resolved > parsedCurePackets.emitted) {
+    throw new TypeError('delivery metrics resolved cure packets exceed emitted packets');
+  }
+
+  const slos = exactRecord(
+    record['slos'],
+    [
+      'zeroFalseGreen',
+      'evidenceComplete',
+      'feedbackBounded',
+      'flakesBounded',
+      'artifactIdentity',
+      'selectorWithinBudget',
+    ],
+    'delivery metrics slos',
+  );
+  const slo = (key: keyof DeliveryMetrics['slos']): DeliverySloResult => {
+    const result = slos[key];
+    if (result !== 'pass' && result !== 'fail' && result !== 'unknown') {
+      throw new TypeError(`delivery metrics SLO ${key} is invalid`);
+    }
+    return result;
+  };
+  const parsedSlos = {
+    zeroFalseGreen: slo('zeroFalseGreen'),
+    evidenceComplete: slo('evidenceComplete'),
+    feedbackBounded: slo('feedbackBounded'),
+    flakesBounded: slo('flakesBounded'),
+    artifactIdentity: slo('artifactIdentity'),
+    selectorWithinBudget: slo('selectorWithinBudget'),
+  };
+  const sloResults = Object.values(parsedSlos);
+  const expectedVerdict = sloResults.includes('fail')
+    ? 'outside-slo'
+    : sloResults.includes('unknown')
+      ? 'insufficient-evidence'
+      : 'within-slo';
+  if (record['verdict'] !== expectedVerdict) throw new TypeError('delivery metrics verdict does not match SLOs');
+
+  const parsed: DeliveryMetrics = {
+    schemaVersion: 2,
+    metricsId,
+    planId: planId as DeliveryMetrics['planId'],
+    headSha: record['headSha'],
+    risk: record['risk'] as DeliveryMetrics['risk'],
+    confidence: record['confidence'],
+    evidenceSources: { selectorCalibrationId, flakeEvidenceId },
+    selectionWidth: parsedSelectionWidth,
+    timings: parsedTimings,
+    cacheHitRate: nullableRate(record['cacheHitRate'], 'delivery metrics cacheHitRate'),
+    rerunRate: nullableRate(record['rerunRate'], 'delivery metrics rerunRate') ?? 0,
+    flakeRate: nullableRate(record['flakeRate'], 'delivery metrics flakeRate'),
+    evidenceCompleteness: nullableRate(record['evidenceCompleteness'], 'delivery metrics evidenceCompleteness'),
+    costPerVerifiedPathMinutes: finiteNonNegative(
+      record['costPerVerifiedPathMinutes'],
+      'delivery metrics costPerVerifiedPathMinutes',
+    ),
+    curePackets: parsedCurePackets,
+    slos: parsedSlos,
+    verdict: expectedVerdict,
+  };
+  const { metricsId: _metricsId, ...unsigned } = parsed;
+  const expectedId = `sha256:${createHash('sha256').update(stable(unsigned)).digest('hex')}`;
+  if (metricsId !== expectedId) throw new TypeError('delivery metrics semantic identity is invalid');
+  return Object.freeze(parsed);
+}
+
 /** Fold measurements without reading ambient clocks, CI state, or mutable files. */
 export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetrics {
   const numeric = [
@@ -220,6 +400,31 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
     slos,
     verdict,
   };
+  return {
+    ...unsigned,
+    metricsId: `sha256:${createHash('sha256').update(stable(unsigned)).digest('hex')}`,
+  };
+}
+
+/**
+ * Stage only artifact identity for the final standalone admission fold. The
+ * standalone verifier remains the authority that proves every referenced raw
+ * byte before an admission receipt can be minted.
+ */
+export function admitVerifiedArtifactIdentity(metrics: DeliveryMetrics): DeliveryMetrics {
+  const parsed = parseDeliveryMetrics(metrics);
+  const { metricsId: _metricsId, ...currentUnsigned } = parsed;
+  if (parsed.slos.artifactIdentity !== 'unknown') {
+    throw new TypeError('artifact identity must be unknown before standalone admission');
+  }
+  const slos = { ...parsed.slos, artifactIdentity: 'pass' as const };
+  const results = Object.values(slos);
+  const verdict = results.includes('fail')
+    ? ('outside-slo' as const)
+    : results.includes('unknown')
+      ? ('insufficient-evidence' as const)
+      : ('within-slo' as const);
+  const unsigned = { ...currentUnsigned, slos, verdict };
   return {
     ...unsigned,
     metricsId: `sha256:${createHash('sha256').update(stable(unsigned)).digest('hex')}`,

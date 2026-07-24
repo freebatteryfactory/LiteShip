@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
-import { buildDeliveryMetrics } from '../../../scripts/lib/delivery-metrics.js';
+import {
+  admitVerifiedArtifactIdentity,
+  buildDeliveryMetrics,
+  parseDeliveryMetrics,
+} from '../../../scripts/lib/delivery-metrics.js';
 import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 
@@ -126,6 +130,30 @@ describe('delivery metrics and SLO fold', () => {
     expect(() => buildDeliveryMetrics({ ...base(), presentEvidence: 11 })).toThrow(/exceeds required/);
     expect(() => buildDeliveryMetrics({ ...base(), flakeEvidenceId: 'sha256:wrong' as never })).toThrow(
       /flakeEvidenceId/u,
+    );
+  });
+
+  it('re-addresses artifact identity only after standalone admission', () => {
+    const candidate = buildDeliveryMetrics({ ...base(), artifactMismatches: null });
+    const admitted = admitVerifiedArtifactIdentity(candidate);
+    expect(admitted.metricsId).not.toBe(candidate.metricsId);
+    expect(admitted.slos.artifactIdentity).toBe('pass');
+    expect(admitted.slos.zeroFalseGreen).toBe(candidate.slos.zeroFalseGreen);
+    expect(() => admitVerifiedArtifactIdentity(admitted)).toThrow(/must be unknown/u);
+    expect(() => admitVerifiedArtifactIdentity({ ...candidate, headSha: 'c'.repeat(40) })).toThrow(/identity/u);
+  });
+
+  it('strictly parses every nested metrics field and recomputes its identity', () => {
+    const metrics = buildDeliveryMetrics(base());
+    expect(parseDeliveryMetrics(JSON.parse(JSON.stringify(metrics)) as unknown)).toEqual(metrics);
+    expect(() => parseDeliveryMetrics({ ...metrics, timings: { ...metrics.timings, buildMs: -1 } })).toThrow(
+      /buildMs/u,
+    );
+    expect(() =>
+      parseDeliveryMetrics({ ...metrics, selectionWidth: { ...metrics.selectionWidth, foreign: 1 } }),
+    ).toThrow(/selectionWidth keys/u);
+    expect(() => parseDeliveryMetrics({ ...metrics, slos: { ...metrics.slos, artifactIdentity: 'unknown' } })).toThrow(
+      /verdict|identity/u,
     );
   });
 });

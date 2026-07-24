@@ -270,7 +270,7 @@ jobs:
   # Build once, fan out: vitest shards N=4, isolated bench, quarantined capsule:verify.
   # Bench is NEVER sharded.
   truth-linux-parallel-setup:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_call'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs:
@@ -1056,6 +1056,7 @@ jobs:
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc
+      - evidence-admission
     steps:
       - name: Fold the event-appropriate authority tier
         env:
@@ -1072,9 +1073,11 @@ jobs:
           EXHAUSTIVE_ANALYSIS: ${{ needs.exhaustive-analysis.result }}
           EXHAUSTIVE_MUTATION: ${{ needs.exhaustive-mutation.result }}
           EXHAUSTIVE_MCDC: ${{ needs.exhaustive-mcdc.result }}
+          EVIDENCE_ADMISSION: ${{ needs.evidence-admission.result }}
           REF: ${{ github.ref }}
         run: |
           set -euo pipefail
+          test "$EVIDENCE_ADMISSION" = "success"
           test "$FORMAT" = "success"
           if [ "$EVENT" = "pull_request" ]; then
             test "$PR_AFFECTED" = "success"
@@ -1098,13 +1101,24 @@ jobs:
             echo "CI exhaustive authority passed."
           fi
 
-  delivery-metrics:
+  delivery-evidence-collect:
     if: always() && needs.plan.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs:
       - plan
-      - ci-summary
+      - format
+      - pr-affected
+      - pr-browser-affected
+      - pr-windows-affected
+      - truth-linux
+      - truth-linux-parallel
+      - browser-e2e
+      - windows-smoke
+      - rust-wasm-parity
+      - exhaustive-analysis
+      - exhaustive-mutation
+      - exhaustive-mcdc
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1136,7 +1150,65 @@ jobs:
           reports/flake-evidence.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: delivery-metrics
-          path: reports/delivery-metrics.json
+          name: delivery-evidence-candidates
+          path: |
+            reports/change-intent.json
+            reports/ci-authority.json
+            reports/governed-exceptions.json
+            reports/check-reports.json
+            reports/checks
+            reports/delivery-metrics.json
+          if-no-files-found: error
+          retention-days: 30
+
+  evidence-admission:
+    if: always() && needs.plan.result == 'success' && needs.delivery-evidence-collect.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - plan
+      - delivery-evidence-collect
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: delivery-evidence-candidates
+          path: .
+      - name: Build runtime dependencies for receipt-DAG validation
+        run: pnpm run build
+      - name: Independently admit exact delivery evidence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          pnpm exec tsx scripts/admit-delivery-evidence.ts
+          .liteship/affected-plan.json
+          .
+          reports/delivery-evidence-manifest.json
+          reports/delivery-admission-receipt.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: delivery-evidence
+          path: |
+            reports/change-intent.json
+            reports/ci-authority.json
+            reports/governed-exceptions.json
+            reports/check-reports.json
+            reports/checks
+            reports/delivery-metrics.json
+            reports/delivery-evidence-manifest.json
+            reports/delivery-receipt-chain.json
+            reports/delivery-admission-receipt.json
           if-no-files-found: error
           retention-days: 30

@@ -350,15 +350,17 @@ describe('(d) CI event tiers execute the intended authority', () => {
   });
 
   it('keeps full parallel authority on pushes and serial authority on nightly/manual runs', () => {
-    expect(JOB_BLOCKS.get('truth-linux-parallel-setup')).toContain("if: github.event_name == 'push'");
+    const parallel = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
+    expect(parallel).toContain("github.event_name == 'push'");
+    expect(parallel).toContain("github.event_name == 'workflow_call'");
     const serial = JOB_BLOCKS.get('truth-linux')!;
     expect(serial).toContain("github.event_name == 'schedule'");
     expect(serial).toContain("github.event_name == 'workflow_dispatch'");
   });
 
-  it('carries addressed flake and selector evidence into delivery metrics', () => {
+  it('carries addressed flake and selector evidence into delivery evidence', () => {
     const integration = JOB_BLOCKS.get('truth-linux-parallel-integration')!;
-    const metrics = JOB_BLOCKS.get('delivery-metrics')!;
+    const metrics = JOB_BLOCKS.get('delivery-evidence-collect')!;
     expect(integration).toContain('name: flake-evidence');
     expect(integration).toContain('reports/flake-evidence.json');
     expect(metrics).toContain('name: affected-plan');
@@ -381,6 +383,7 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'exhaustive-analysis',
       'exhaustive-mutation',
       'exhaustive-mcdc',
+      'evidence-admission',
     ]) {
       expect(summary).toContain(`- ${owner}`);
     }
@@ -390,6 +393,34 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(summary).toContain('test "$EXHAUSTIVE_ANALYSIS" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_MUTATION" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_MCDC" = "success"');
+    expect(summary).toContain('test "$EVIDENCE_ADMISSION" = "success"');
+  });
+
+  it('admits evidence after authorities and before ci-summary', () => {
+    const collect = JOB_BLOCKS.get('delivery-evidence-collect')!;
+    const admission = JOB_BLOCKS.get('evidence-admission')!;
+    const summary = JOB_BLOCKS.get('ci-summary')!;
+    for (const owner of [
+      'format',
+      'pr-affected',
+      'pr-browser-affected',
+      'pr-windows-affected',
+      'truth-linux',
+      'truth-linux-parallel',
+      'browser-e2e',
+      'windows-smoke',
+      'rust-wasm-parity',
+      'exhaustive-analysis',
+      'exhaustive-mutation',
+      'exhaustive-mcdc',
+    ]) {
+      expect(collect).toContain(`- ${owner}`);
+    }
+    expect(collect).not.toContain('- ci-summary');
+    expect(admission).toContain('- delivery-evidence-collect');
+    expect(admission).toContain('scripts/admit-delivery-evidence.ts');
+    expect(admission).toContain('name: delivery-evidence');
+    expect(summary).toContain('- evidence-admission');
   });
 
   it('isolates the exhaustive IR, mutation, and MC/DC campaigns from pull requests', () => {

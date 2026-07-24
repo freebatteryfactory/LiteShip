@@ -15,6 +15,7 @@
  */
 
 import type { CheckDefinition, CheckProfile, CheckPlatform } from './definition.js';
+import { deriveCheckEvidenceRequirements } from './evidence-requirements.js';
 
 /** Package TypeScript source — the covered bytes of every source-reading check. */
 const SRC_GLOB = 'packages/*/src/**/*.ts';
@@ -62,10 +63,20 @@ type RepositoryCheckRow = RepositoryCheckRowBase &
 /** Add the explicit repository context and close any former control hole. */
 function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   if (row.authority === 'blocking') {
-    return { ...row, contexts: ['repository'], authority: 'blocking' };
+    return {
+      ...row,
+      contexts: ['repository'],
+      authority: 'blocking',
+      evidenceRequirements: deriveCheckEvidenceRequirements(row.id),
+    };
   }
   const { negativeControl: _unused, ...advisory } = row;
-  return { ...advisory, contexts: ['repository'], authority: 'advisory' };
+  return {
+    ...advisory,
+    contexts: ['repository'],
+    authority: 'advisory',
+    evidenceRequirements: deriveCheckEvidenceRequirements(row.id),
+  };
 }
 
 /**
@@ -831,6 +842,7 @@ const APP_BUILD_CHECK: CheckDefinition = {
   timeoutMs: 300_000,
   cache: 'none',
   authority: 'blocking',
+  evidenceRequirements: deriveCheckEvidenceRequirements('check/app-build'),
   negativeControl: 'tests/unit/cli/commands/build.test.ts',
   remediation: 'fix the LiteShip config or host build failure reported by `liteship build`.',
 };
