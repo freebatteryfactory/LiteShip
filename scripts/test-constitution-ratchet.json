@@ -1,0 +1,412 @@
+{
+  "schemaVersion": 1,
+  "files": {
+    "tests/component/detect-probes.test.ts": {
+      "real-timer": 1
+    },
+    "tests/component/reactive-no-effect-containment.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/component/render-worker.test.ts": {
+      "ambient-clock": 1
+    },
+    "tests/component/zap-debounce-throttle.test.ts": {
+      "real-timer": 1
+    },
+    "tests/component/zap-events.test.ts": {
+      "real-timer": 1
+    },
+    "tests/property/boundary-evaluate-batch.prop.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/property/compositor-zero-alloc.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/property/crdt-laws-gate.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/property/receipt.prop.test.ts": {
+      "ambient-clock": 1
+    },
+    "tests/property/schema-strictness.prop.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/regression/capsule-manifest-isolation.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/support/repo-truths.ts": {
+      "source-byte-oracle": 6
+    },
+    "tests/unit/_spine/runtime-stub.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/assets/contract.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/astro/astro-directives.test.ts": {
+      "real-timer": 8
+    },
+    "tests/unit/astro/astro-integration.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/astro/motion-runtime.test.ts": {
+      "ambient-clock": 1
+    },
+    "tests/unit/astro/project-config-composition.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/astro/scene-stage.test.ts": {
+      "real-timer": 2
+    },
+    "tests/unit/astro/shader-integrity-integration.test.ts": {
+      "real-timer": 1
+    },
+    "tests/unit/astro/stream-llm-lifecycle.test.ts": {
+      "real-timer": 1
+    },
+    "tests/unit/audit/b5-normalize-repo-path.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/audit/capability-link.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/audit/mcdc-engine-meta-proof.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/audit/mutation-engine-meta-proof.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/audit/realrepo-skip-proof.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/audit/spine-relation.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/audit/type-export-surface.test.ts": {
+      "source-byte-oracle": 5
+    },
+    "tests/unit/cli/commands/add-pack.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/cli/commands/add.test.ts": {
+      "source-byte-oracle": 5
+    },
+    "tests/unit/cli/commands/check-report.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/cli/commands/completion.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/cli/commands/describe.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/cli/commands/package-metadata.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/cli/commands/scene-dev.test.ts": {
+      "real-timer": 1
+    },
+    "tests/unit/cli/glossary-lint.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/cli/idempotency.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/cli/lib/mutation-runner-parse.test.ts": {
+      "source-byte-oracle": 10
+    },
+    "tests/unit/cli/lib/mutation-runner.test.ts": {
+      "source-byte-oracle": 10
+    },
+    "tests/unit/cli/lib/repo-ir-gauntlet.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/cli/lib/standards-surface.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/cli/supply-chain.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/command/ffmpeg-render-backend.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/compiler/compiler-branch-coverage.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/compiler/mcp-app-manifest.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/core/authoring/ai-cast.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/core/canonical-identity.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/core/graph/graph-query-gap-replay.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/core/invariants.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/core/media/frame-budget.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/core/motion/reveal.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/core/reactive-capture.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/core/reactive/live-cell.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/core/reactive/signal.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/core/receipt-byte-law.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/core/simulation-determinism-substrate.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/core/simulation-dst-meta-proof.test.ts": {
+      "ambient-clock": 1
+    },
+    "tests/unit/core/timestamp-semantics.test.ts": {
+      "ambient-clock": 1,
+      "source-byte-oracle": 2
+    },
+    "tests/unit/core/wasm-parity.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/core/wasm-shipping.test.ts": {
+      "source-byte-oracle": 7
+    },
+    "tests/unit/create-liteship/scaffold.test.ts": {
+      "source-byte-oracle": 10
+    },
+    "tests/unit/detect/detect-runtime.test.ts": {
+      "real-timer": 4
+    },
+    "tests/unit/devops/agent-context-projection.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/astro-version-sync.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/audit-command.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/devops/audit-consumer-mode.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/audit-defaults.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/audit-package.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/audit-profile-seam.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/devops/check-registry.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/cli-fragment-projection.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/declared-dependency-closure.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/doc-register-drift.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/doc-registry.test.ts": {
+      "source-byte-oracle": 8
+    },
+    "tests/unit/devops/docs-effect-residue.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/gate-canaries.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/gauntlet-ci-invocation.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/gauntlet-profile.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/generated-time-classification.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/package-catalog.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/parallel-ci-artifacts.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/pre-commit-hook.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/devops/profile-boundary.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/devops/release-pack-residue.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/devops/release-roster.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/gauntlet/extensibility-proof.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/gauntlet/no-skipped-test-scope.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/journey/package-author-manifest.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/lib/spawn.test.ts": {
+      "real-timer": 2,
+      "source-byte-oracle": 1
+    },
+    "tests/unit/liteship/facade-subpaths.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/liteship/liteship-packages-roster.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/liteship/one-install-cli.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/mcp-server/d1-lifecycle-envelope.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/mcp-server/d3-resources-prompts.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/a1-seam-integrity.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/meta/adaptive-scan.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/meta/api-surface.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/meta/bench-production-pin.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/brand-residue.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/c8-ignore-budget.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/cell-dom-boundary.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/ci-registry-parity.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/meta/codebase-audit.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/meta/coverage-config.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/meta/cut9-gate-gap-regression.test.ts": {
+      "source-byte-oracle": 8
+    },
+    "tests/unit/meta/devcontainer-pins.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/diagram-drift.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/doc-links.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/error-contract-obligation.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/feedback-integrity.test.ts": {
+      "source-byte-oracle": 5
+    },
+    "tests/unit/meta/float-determinism.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/meta/front-door.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/meta/gauntlet-order.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/meta/generated-bench-execution.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/meta/json-schema-parity-fixture.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/phase-count-drift.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/meta/release-roster-projection.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/meta/source-grammar-rules.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/meta/spawn-timeout.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/meta/test-timeout-policy.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/meta/typedoc-roster-soundness.test.ts": {
+      "source-byte-oracle": 2
+    },
+    "tests/unit/meta/validated-output-subpath-leak.test.ts": {
+      "source-byte-oracle": 4
+    },
+    "tests/unit/quantizer/animated-quantizer.test.ts": {
+      "real-timer": 1
+    },
+    "tests/unit/quantizer/output-cache-key.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/riff-walker.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/ship-emit-branches.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/ship-manifest.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/ship-verify-verdicts.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/vite/boundary-manifest.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/vite/project-config.test.ts": {
+      "source-byte-oracle": 1
+    },
+    "tests/unit/vite/token-manifest.test.ts": {
+      "ambient-clock": 2
+    },
+    "tests/unit/vite/vite-resolve.test.ts": {
+      "ambient-clock": 1
+    },
+    "tests/unit/web/web-runtime-primitives.test.ts": {
+      "real-timer": 1
+    },
+    "tests/unit/web/wire-contract-registry.test.ts": {
+      "source-byte-oracle": 3
+    },
+    "tests/unit/worker/error-message-contract.test.ts": {
+      "source-byte-oracle": 1
+    }
+  }
+}

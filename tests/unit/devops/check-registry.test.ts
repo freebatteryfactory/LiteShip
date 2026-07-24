@@ -143,6 +143,30 @@ describe('the check-registry PARTITION is total + disjoint against the root scri
 });
 
 describe('the check-governance meta-gates are GREEN over the real repo', () => {
+  it.each([
+    {
+      id: 'check/assurance-density',
+      command: 'pnpm run assurance:gate',
+      control: 'tests/unit/devops/assurance-inventory.test.ts',
+    },
+    {
+      id: 'check/test-constitution',
+      command: 'pnpm run test:constitution',
+      control: 'tests/unit/devops/test-constitution.test.ts',
+    },
+  ])('$id is a cheap, blocking, cross-platform authority with a direct planted red', ({ id, command, control }) => {
+    const check = CHECK_REGISTRY.find((entry) => entry.id === id);
+    expect(check).toMatchObject({
+      command,
+      authority: 'blocking',
+      cache: 'content-addressed',
+      profiles: ['quick', 'full', 'release'],
+      platforms: ['linux', 'darwin', 'win32'],
+      negativeControl: control,
+    });
+    expect(existsSync(resolve(REPO, control))).toBe(true);
+  });
+
   it('check-registry-complete finds nothing (the partition holds)', () => {
     expect(checkRegistryCompleteGate.run(factContext(FACTS))).toEqual([]);
   });

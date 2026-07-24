@@ -74,6 +74,7 @@
     "test:e2e:stress": "pnpm exec playwright test --config tests/e2e/playwright.config.ts tests/e2e/capture.e2e.ts --workers 1 --repeat-each 10",
     "test:e2e:stream-stress": "pnpm exec playwright test --config tests/e2e/playwright.config.ts tests/e2e/stream.e2e.ts --workers 1 --repeat-each 10",
     "test:flake": "pnpm exec tsx scripts/test-flake.ts",
+    "test:constitution": "pnpm exec tsx scripts/test-constitution.ts",
     "test:astro": "pnpm exec tsx scripts/test-astro.ts",
     "test:cloudflare": "pnpm exec tsx scripts/test-cloudflare-astro.ts",
     "test:cloudflare-dev": "pnpm exec tsx scripts/test-cloudflare-dev.ts",
