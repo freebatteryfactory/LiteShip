@@ -7,6 +7,7 @@
  * @module
  */
 
+import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative, sep } from 'node:path';
 import { PACKAGE_CATALOG } from '../package-catalog.js';
@@ -58,18 +59,16 @@ export interface AssuranceInventory {
 }
 
 export interface AssuranceBaseline {
-  readonly schemaVersion: 1;
-  readonly packages: Readonly<
-    Record<
-      string,
-      {
-        readonly sourceLoc: number;
-        readonly authoredEvidenceLoc: number;
-        readonly ratioMilli: number;
-        readonly missingEvidence: readonly string[];
-      }
-    >
-  >;
+  readonly schemaVersion: 2;
+  /** Binds positional ratchet rows to the one canonical package catalog. */
+  readonly catalogFingerprint: string;
+  /** Metrics in canonical PACKAGE_CATALOG order; package identity is never re-authored here. */
+  readonly packages: readonly {
+    readonly sourceLoc: number;
+    readonly authoredEvidenceLoc: number;
+    readonly ratioMilli: number;
+    readonly missingEvidence: readonly string[];
+  }[];
 }
 
 export interface AssuranceRegression {
@@ -260,21 +259,23 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
   };
 }
 
-/** Freeze the current per-package ratios into a reviewable ratchet baseline. */
+function packageOrderFingerprint(packages: readonly { readonly name: string }[]): string {
+  return `sha256:${createHash('sha256')
+    .update(packages.map((entry) => entry.name).join('\n'))
+    .digest('hex')}`;
+}
+
+/** Freeze metrics in canonical catalog order without authoring another package roster. */
 export function baselineFromInventory(inventory: AssuranceInventory): AssuranceBaseline {
   return {
-    schemaVersion: 1,
-    packages: Object.fromEntries(
-      inventory.packages.map((entry) => [
-        entry.name,
-        {
-          sourceLoc: entry.sourceLoc,
-          authoredEvidenceLoc: entry.authoredEvidenceLoc,
-          ratioMilli: entry.ratioMilli,
-          missingEvidence: entry.missingEvidence,
-        },
-      ]),
-    ),
+    schemaVersion: 2,
+    catalogFingerprint: packageOrderFingerprint(inventory.packages),
+    packages: inventory.packages.map((entry) => ({
+      sourceLoc: entry.sourceLoc,
+      authoredEvidenceLoc: entry.authoredEvidenceLoc,
+      ratioMilli: entry.ratioMilli,
+      missingEvidence: entry.missingEvidence,
+    })),
   };
 }
 
@@ -283,9 +284,15 @@ export function assuranceRegressions(
   inventory: AssuranceInventory,
   baseline: AssuranceBaseline,
 ): readonly AssuranceRegression[] {
+  if (baseline.catalogFingerprint !== packageOrderFingerprint(inventory.packages)) {
+    throw new Error('assurance baseline package order does not match the canonical package catalog');
+  }
+  if (baseline.packages.length !== inventory.packages.length) {
+    throw new Error('assurance baseline row count does not match the canonical package catalog');
+  }
   return inventory.packages
-    .flatMap((entry) => {
-      const prior = baseline.packages[entry.name];
+    .flatMap((entry, index) => {
+      const prior = baseline.packages[index];
       const regressed =
         prior !== undefined &&
         prior.sourceLoc > 0 &&

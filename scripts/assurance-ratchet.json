@@ -1,22 +1,23 @@
 {
-  "schemaVersion": 1,
-  "packages": {
-    "@liteship/_spine": {
+  "schemaVersion": 2,
+  "catalogFingerprint": "sha256:512793039695046b329caee5b00d719bece1cb496b4e05cb54fa9c747d8fde10",
+  "packages": [
+    {
       "sourceLoc": 3420,
       "authoredEvidenceLoc": 2614,
       "ratioMilli": 764,
       "missingEvidence": []
     },
-    "@liteship/error": {
-      "sourceLoc": 1829,
-      "authoredEvidenceLoc": 15556,
-      "ratioMilli": 8505,
+    {
+      "sourceLoc": 1844,
+      "authoredEvidenceLoc": 15749,
+      "ratioMilli": 8540,
       "missingEvidence": []
     },
-    "@liteship/canonical": {
+    {
       "sourceLoc": 609,
-      "authoredEvidenceLoc": 5958,
-      "ratioMilli": 9783,
+      "authoredEvidenceLoc": 6029,
+      "ratioMilli": 9899,
       "missingEvidence": [
         "property",
         "component|integration|browser|e2e",
@@ -25,13 +26,13 @@
         "benchmark"
       ]
     },
-    "@liteship/core": {
+    {
       "sourceLoc": 26860,
-      "authoredEvidenceLoc": 91194,
-      "ratioMilli": 3395,
+      "authoredEvidenceLoc": 93300,
+      "ratioMilli": 3473,
       "missingEvidence": []
     },
-    "@liteship/genui": {
+    {
       "sourceLoc": 610,
       "authoredEvidenceLoc": 2800,
       "ratioMilli": 4590,
@@ -43,7 +44,7 @@
         "benchmark"
       ]
     },
-    "@liteship/quantizer": {
+    {
       "sourceLoc": 1344,
       "authoredEvidenceLoc": 4879,
       "ratioMilli": 3630,
@@ -51,56 +52,55 @@
         "simulation|chaos"
       ]
     },
-    "@liteship/compiler": {
+    {
       "sourceLoc": 8331,
-      "authoredEvidenceLoc": 12066,
-      "ratioMilli": 1448,
+      "authoredEvidenceLoc": 12172,
+      "ratioMilli": 1461,
       "missingEvidence": []
     },
-    "@liteship/web": {
+    {
       "sourceLoc": 6924,
-      "authoredEvidenceLoc": 17458,
-      "ratioMilli": 2521,
+      "authoredEvidenceLoc": 19301,
+      "ratioMilli": 2787,
       "missingEvidence": [
         "simulation|chaos",
         "benchmark"
       ]
     },
-    "@liteship/detect": {
+    {
       "sourceLoc": 1294,
-      "authoredEvidenceLoc": 3446,
-      "ratioMilli": 2663,
+      "authoredEvidenceLoc": 3604,
+      "ratioMilli": 2785,
       "missingEvidence": [
         "property"
       ]
     },
-    "@liteship/edge": {
+    {
       "sourceLoc": 2180,
-      "authoredEvidenceLoc": 4089,
-      "ratioMilli": 1875,
+      "authoredEvidenceLoc": 4783,
+      "ratioMilli": 2194,
       "missingEvidence": [
         "property"
       ]
     },
-    "@liteship/vite": {
+    {
       "sourceLoc": 4364,
       "authoredEvidenceLoc": 7966,
       "ratioMilli": 1825,
       "missingEvidence": []
     },
-    "@liteship/worker": {
+    {
       "sourceLoc": 3700,
-      "authoredEvidenceLoc": 6424,
-      "ratioMilli": 1736,
+      "authoredEvidenceLoc": 7326,
+      "ratioMilli": 1980,
       "missingEvidence": [
-        "property",
         "simulation|chaos"
       ]
     },
-    "@liteship/remotion": {
+    {
       "sourceLoc": 407,
-      "authoredEvidenceLoc": 1369,
-      "ratioMilli": 3363,
+      "authoredEvidenceLoc": 1735,
+      "ratioMilli": 4262,
       "missingEvidence": [
         "property",
         "component|integration|browser|e2e",
@@ -108,24 +108,24 @@
         "benchmark"
       ]
     },
-    "@liteship/scene": {
+    {
       "sourceLoc": 2188,
-      "authoredEvidenceLoc": 4600,
-      "ratioMilli": 2102,
+      "authoredEvidenceLoc": 5163,
+      "ratioMilli": 2359,
       "missingEvidence": [
         "property"
       ]
     },
-    "@liteship/astro": {
+    {
       "sourceLoc": 11961,
-      "authoredEvidenceLoc": 20393,
-      "ratioMilli": 1704,
+      "authoredEvidenceLoc": 22710,
+      "ratioMilli": 1898,
       "missingEvidence": [
         "property",
         "simulation|chaos"
       ]
     },
-    "@liteship/cloudflare": {
+    {
       "sourceLoc": 741,
       "authoredEvidenceLoc": 1323,
       "ratioMilli": 1785,
@@ -133,10 +133,10 @@
         "property"
       ]
     },
-    "@liteship/stage": {
+    {
       "sourceLoc": 921,
-      "authoredEvidenceLoc": 927,
-      "ratioMilli": 1006,
+      "authoredEvidenceLoc": 1293,
+      "ratioMilli": 1403,
       "missingEvidence": [
         "property",
         "component|integration|browser|e2e",
@@ -144,7 +144,7 @@
         "benchmark"
       ]
     },
-    "@liteship/assets": {
+    {
       "sourceLoc": 1126,
       "authoredEvidenceLoc": 3112,
       "ratioMilli": 2763,
@@ -157,67 +157,63 @@
         "benchmark"
       ]
     },
-    "@liteship/gauntlet": {
+    {
       "sourceLoc": 18597,
-      "authoredEvidenceLoc": 17042,
-      "ratioMilli": 916,
+      "authoredEvidenceLoc": 17453,
+      "ratioMilli": 938,
       "missingEvidence": [
         "component|integration|browser|e2e",
         "benchmark"
       ]
     },
-    "@liteship/audit": {
+    {
       "sourceLoc": 9239,
-      "authoredEvidenceLoc": 9823,
-      "ratioMilli": 1063,
+      "authoredEvidenceLoc": 10582,
+      "ratioMilli": 1145,
       "missingEvidence": [
-        "component|integration|browser|e2e",
         "benchmark"
       ]
     },
-    "@liteship/command": {
-      "sourceLoc": 6724,
-      "authoredEvidenceLoc": 9463,
-      "ratioMilli": 1407,
+    {
+      "sourceLoc": 6677,
+      "authoredEvidenceLoc": 10145,
+      "ratioMilli": 1519,
       "missingEvidence": [
-        "property",
         "benchmark"
       ]
     },
-    "@liteship/cli": {
-      "sourceLoc": 18080,
-      "authoredEvidenceLoc": 18163,
-      "ratioMilli": 1004,
+    {
+      "sourceLoc": 18177,
+      "authoredEvidenceLoc": 23825,
+      "ratioMilli": 1310,
       "missingEvidence": [
         "property",
         "benchmark"
       ]
     },
-    "@liteship/mcp-server": {
+    {
       "sourceLoc": 2845,
-      "authoredEvidenceLoc": 5343,
-      "ratioMilli": 1878,
+      "authoredEvidenceLoc": 5666,
+      "ratioMilli": 1991,
       "missingEvidence": [
         "property",
         "simulation|chaos",
         "benchmark"
       ]
     },
-    "create-liteship": {
+    {
       "sourceLoc": 257,
-      "authoredEvidenceLoc": 582,
-      "ratioMilli": 2264,
+      "authoredEvidenceLoc": 1044,
+      "ratioMilli": 4062,
       "missingEvidence": [
         "property"
       ]
     },
-    "liteship": {
+    {
       "sourceLoc": 953,
-      "authoredEvidenceLoc": 1967,
-      "ratioMilli": 2064,
-      "missingEvidence": [
-        "property"
-      ]
+      "authoredEvidenceLoc": 3534,
+      "ratioMilli": 3708,
+      "missingEvidence": []
     }
-  }
+  ]
 }

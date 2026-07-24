@@ -89,4 +89,16 @@ describe('assurance inventory', () => {
     ]);
     expect(assuranceRegressions(inventory, baseline)).toEqual([]);
   });
+
+  it('fails closed when positional metrics are detached from the canonical catalog', () => {
+    const inventory = buildAssuranceInventory(fixture());
+    const baseline = baselineFromInventory(inventory);
+
+    expect(() =>
+      assuranceRegressions(inventory, {
+        ...baseline,
+        catalogFingerprint: `sha256:${'0'.repeat(64)}`,
+      }),
+    ).toThrow('canonical package catalog');
+  });
 });
