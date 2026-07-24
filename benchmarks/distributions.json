@@ -462,6 +462,20 @@
       "inputSize": 250000,
       "shape": "alloc-batches-x-ops-forced-gc",
       "replicates": 50
+    },
+    {
+      "name": "affected plan — one L4 source path",
+      "file": "tests/bench/affected-plan.bench.ts",
+      "inputSize": 1,
+      "shape": "changed-paths",
+      "replicates": 100
+    },
+    {
+      "name": "affected plan — 250 changed test paths",
+      "file": "tests/bench/affected-plan.bench.ts",
+      "inputSize": 250,
+      "shape": "changed-paths",
+      "replicates": 100
     }
   ]
 }

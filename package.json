@@ -66,7 +66,7 @@
     "bench:trend": "tsx scripts/bench-trend.ts",
     "bench:reality": "pnpm run build && tsx scripts/bench-reality.ts",
     "bench:contracts": "tsx scripts/bench-contracts.ts",
-    "bench": "pnpm run build && tsx tests/bench/core.bench.ts && tsx tests/bench/compiler.bench.ts && tsx tests/bench/video.bench.ts && tsx tests/bench/self-measure.bench.ts && tsx tests/bench/directive.bench.ts && tsx tests/bench/ecs-composition.bench.ts && tsx tests/bench/wasm-compute.bench.ts",
+    "bench": "pnpm run build && tsx tests/bench/core.bench.ts && tsx tests/bench/compiler.bench.ts && tsx tests/bench/video.bench.ts && tsx tests/bench/self-measure.bench.ts && tsx tests/bench/directive.bench.ts && tsx tests/bench/ecs-composition.bench.ts && tsx tests/bench/wasm-compute.bench.ts && tsx tests/bench/affected-plan.bench.ts",
     "capsule:compile": "pnpm exec tsx scripts/capsule-compile.ts",
     "capsule:verify": "pnpm exec tsx packages/cli/src/bin.ts capsule-verify",
     "check": "pnpm exec tsx packages/cli/src/bin.ts check",

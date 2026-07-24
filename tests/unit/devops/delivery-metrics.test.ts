@@ -5,7 +5,7 @@ import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 
 const inventory: AssuranceInventory = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -34,7 +34,15 @@ const inventory: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
-  totals: { sourceLoc: 25, authoredEvidenceLoc: 25, generatedEvidenceLoc: 0, ratioMilli: 1_000, targetMilli: 10_000 },
+  totals: {
+    sourceLoc: 25,
+    authoredEvidenceLoc: 25,
+    generatedEvidenceLoc: 0,
+    corpusLoc: 0,
+    ratioMilli: 1_000,
+    targetMilli: 10_000,
+    sourceRoles: { product: 25, verificationEngine: 0, rustWasm: 0, workflowAuthority: 0, generated: 0 },
+  },
 };
 
 const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory, {

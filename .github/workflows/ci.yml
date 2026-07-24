@@ -51,7 +51,8 @@ jobs:
     timeout-minutes: 10
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
-      affected: ${{ steps.affected.outputs.plan }}
+      affected-browser-required: ${{ steps.affected.outputs.browser-required }}
+      affected-plan-id: ${{ steps.affected.outputs.plan-id }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -103,16 +104,20 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
       - run: pnpm run build
       - run: pnpm run check -- --profile quick --no-cache
       - run: pnpm run test:affected
         env:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
-          LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}
+          LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
 
   pr-browser-affected:
-    if: github.event_name == 'pull_request' && fromJSON(needs.plan.outputs.affected).browserRequired
+    if: github.event_name == 'pull_request' && needs.plan.outputs.affected-browser-required == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     needs: plan
@@ -126,10 +131,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
       - run: pnpm run build
-      - run: pnpm exec tsx scripts/affected-plan.ts --verify-current-head
-        env:
-          LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}
+      - run: pnpm exec tsx scripts/affected-plan.ts --verify-current-head --input .liteship/affected-plan.json
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
       - run: pnpm exec vitest run --config vitest.browser.config.ts
         env:
@@ -152,12 +159,16 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
       - run: pnpm run build
       - run: pnpm run test:affected
         env:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
-          LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}
+          LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
 
   # Serial full gauntlet — nightly/manual exhaustive authority. Pull requests use
   # the conservative affected closure; pushes use the full parallel projection.

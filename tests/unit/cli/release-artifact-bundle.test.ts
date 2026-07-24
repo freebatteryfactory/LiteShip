@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -20,6 +20,7 @@ afterEach(() => {
 });
 
 const sha256 = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');
+const FIXTURE_VERSION = '1.2.3';
 
 function writeAscii(target: Buffer, offset: number, width: number, value: string): void {
   target.write(value.slice(0, width), offset, width, 'ascii');
@@ -53,14 +54,13 @@ function fixture(sourceCommit = 'a'.repeat(40)): { dir: string; manifest: Releas
   const dir = mkdtempSync(join(tmpdir(), 'liteship-release-bundle-'));
   roots.push(dir);
   const artifacts = PACKAGES.map((pkg) => {
-    const packageJson = JSON.parse(readFileSync(resolve(pkg.dir, 'package.json'), 'utf8')) as { version: string };
-    const bytes = packedManifest(pkg.name, packageJson.version);
-    const file = `${pkg.name.replace(/^@/, '').replaceAll('/', '-')}-${packageJson.version}.tgz`;
+    const bytes = packedManifest(pkg.name, FIXTURE_VERSION);
+    const file = `${pkg.name.replace(/^@/, '').replaceAll('/', '-')}-${FIXTURE_VERSION}.tgz`;
     writeFileSync(join(dir, file), bytes);
     const semantic = tarballManifestAddress(bytes);
     return {
       package: pkg.name,
-      version: packageJson.version,
+      version: FIXTURE_VERSION,
       file,
       sha256: sha256(bytes),
       semanticAddress: {

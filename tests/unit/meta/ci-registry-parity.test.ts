@@ -301,7 +301,9 @@ describe('(c) projected lane commands equal the recorded baseline (byte-identica
 describe('(d) CI event tiers execute the intended authority', () => {
   it('plans pull-request impact from the canonical affected-test planner', () => {
     const plan = JOB_BLOCKS.get('plan')!;
-    expect(plan).toContain('affected: ${{ steps.affected.outputs.plan }}');
+    expect(plan).toContain('affected-browser-required: ${{ steps.affected.outputs.browser-required }}');
+    expect(plan).toContain('affected-plan-id: ${{ steps.affected.outputs.plan-id }}');
+    expect(plan).not.toContain('affected: ${{ steps.affected.outputs.plan }}');
     expect(plan).not.toContain("if: github.event_name == 'pull_request'");
     expect(plan).toContain(
       'pnpm exec tsx scripts/affected-plan.ts --output .liteship/affected-plan.json --github-output "$GITHUB_OUTPUT"',
@@ -323,8 +325,12 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run check -- --profile quick --no-cache'));
     expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run test:affected'));
     expect(windows.indexOf('pnpm run build')).toBeLessThan(windows.indexOf('pnpm run test:affected'));
-    expect(linux).toContain('LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}');
-    expect(windows).toContain('LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}');
+    expect(linux).toContain('LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json');
+    expect(windows).toContain('LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json');
+    expect(linux).not.toContain('LITESHIP_AFFECTED_PLAN:');
+    expect(windows).not.toContain('LITESHIP_AFFECTED_PLAN:');
+    expect(linux).toContain('name: affected-plan');
+    expect(windows).toContain('name: affected-plan');
     expect(linux).toContain('LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}');
     expect(windows).toContain('LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}');
   });
@@ -332,10 +338,13 @@ describe('(d) CI event tiers execute the intended authority', () => {
   it('runs browser authority on a pull request only when the impact plan requires it', () => {
     const browser = JOB_BLOCKS.get('pr-browser-affected')!;
     expect(browser).toContain(
-      "if: github.event_name == 'pull_request' && fromJSON(needs.plan.outputs.affected).browserRequired",
+      "if: github.event_name == 'pull_request' && needs.plan.outputs.affected-browser-required == 'true'",
     );
-    expect(browser).toContain('pnpm exec tsx scripts/affected-plan.ts --verify-current-head');
-    expect(browser).toContain('LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}');
+    expect(browser).toContain(
+      'pnpm exec tsx scripts/affected-plan.ts --verify-current-head --input .liteship/affected-plan.json',
+    );
+    expect(browser).not.toContain('LITESHIP_AFFECTED_PLAN:');
+    expect(browser).toContain('name: affected-plan');
     expect(browser).toContain('LITESHIP_VITEST_BROWSERS: chromium');
   });
 

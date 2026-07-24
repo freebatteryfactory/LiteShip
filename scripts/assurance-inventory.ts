@@ -1,10 +1,10 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import {
   assuranceRegressions,
   baselineFromInventory,
   buildAssuranceInventory,
-  type AssuranceBaseline,
+  parseAssuranceBaseline,
 } from './lib/assurance-inventory.js';
 
 const cwd = process.cwd();
@@ -18,8 +18,9 @@ if (process.argv.includes('--write-baseline')) {
   process.exit(0);
 }
 
+mkdirSync(dirname(reportPath), { recursive: true });
 writeFileSync(reportPath, `${JSON.stringify(inventory, null, 2)}\n`, 'utf8');
-const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as AssuranceBaseline;
+const baseline = parseAssuranceBaseline(JSON.parse(readFileSync(baselinePath, 'utf8')) as unknown);
 const regressions = assuranceRegressions(inventory, baseline);
 if (regressions.length > 0) {
   for (const regression of regressions) {

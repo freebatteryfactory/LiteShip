@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import CORPUS_JSON from '../../fixtures/affected-impact-corpus.json';
 import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 import { buildAssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 import { planAffectedTests, type AffectedRiskLevel } from '../../../scripts/lib/affected-test-plan.js';
@@ -15,9 +15,7 @@ interface ImpactCase {
 }
 
 const RISK_RANK: Readonly<Record<AffectedRiskLevel, number>> = { low: 0, moderate: 1, high: 2, critical: 3 };
-const CORPUS = JSON.parse(
-  readFileSync(new URL('../../fixtures/affected-impact-corpus.json', import.meta.url), 'utf8'),
-) as readonly ImpactCase[];
+const CORPUS = CORPUS_JSON as readonly ImpactCase[];
 const INVENTORY = buildAssuranceInventory(process.cwd());
 
 describe('affected-plan impact corpus', () => {

@@ -1,25 +1,14 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
 import { scanWorkflowActionPins } from '../../../packages/cli/src/lib/workflow-action-pins.js';
+import { readReleasePromotionWorkspace, workflowJob } from '../../../scripts/lib/release-promotion-contract.js';
 
-const release = readFileSync('.github/workflows/release.yml', 'utf8');
-const ci = readFileSync('.github/workflows/ci.yml', 'utf8');
-const rootManifest = JSON.parse(readFileSync('package.json', 'utf8')) as {
-  readonly scripts: Readonly<Record<string, string>>;
-};
-
-function job(name: string, next?: string): string {
-  const start = release.indexOf(`  ${name}:`);
-  if (start < 0) throw new Error(`missing release job ${name}`);
-  const end = next === undefined ? release.length : release.indexOf(`  ${next}:`, start + 1);
-  if (end < 0) throw new Error(`missing release job ${next}`);
-  return release.slice(start, end);
-}
+const workspace = readReleasePromotionWorkspace(process.cwd());
+const { releaseWorkflow: release, ciWorkflow: ci, rootScripts } = workspace;
 
 describe('build once, verify once, promote exact artifacts', () => {
   it('the certification job owns the one frozen build, WASM stage, pack, proofs, and attestation', () => {
-    const certified = job('release-certified', 'publish');
+    const certified = workflowJob(release, 'release-certified', 'publish');
     expect(certified.match(/pnpm run build(?:\s|$)/g)).toHaveLength(1);
     expect(certified).toContain('pnpm run build:wasm');
     expect(certified).toContain('scripts/build-release-artifacts.ts release-artifacts/tarballs');
@@ -31,7 +20,7 @@ describe('build once, verify once, promote exact artifacts', () => {
   });
 
   it('publish downloads, attestation-verifies, and ships the exact bundle without build or pack', () => {
-    const publish = job('publish');
+    const publish = workflowJob(release, 'publish');
     expect(publish).toContain('name: frozen-release-artifacts');
     expect(publish).toContain('gh attestation verify');
     expect(publish).toContain('--artifact-dir release-artifacts/tarballs');
@@ -45,8 +34,8 @@ describe('build once, verify once, promote exact artifacts', () => {
   });
 
   it('keeps package smoke build-free after the explicit workspace-build prerequisite', () => {
-    expect(rootManifest.scripts['package:smoke']).toBe('node packages/liteship/bin/liteship.mjs package-smoke');
-    expect(rootManifest.scripts['package:smoke:hermetic']).toBe(
+    expect(rootScripts['package:smoke']).toBe('node packages/liteship/bin/liteship.mjs package-smoke');
+    expect(rootScripts['package:smoke:hermetic']).toBe(
       'node packages/liteship/bin/liteship.mjs package-smoke --hermetic',
     );
     expect(CHECK_REGISTRY.find((check) => check.id === 'check/package-smoke')?.command).toBe('pnpm run package:smoke');

@@ -1943,6 +1943,22 @@
           "kind": "type"
         },
         {
+          "name": "CureArtifact",
+          "kind": "type"
+        },
+        {
+          "name": "CurePacket",
+          "kind": "type"
+        },
+        {
+          "name": "CurePacketInput",
+          "kind": "type"
+        },
+        {
+          "name": "CureReproducerKind",
+          "kind": "type"
+        },
+        {
           "name": "ExplainDiagnostic",
           "kind": "type"
         },

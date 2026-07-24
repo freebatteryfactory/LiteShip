@@ -24,6 +24,7 @@ export interface ChangedPathRead {
 }
 
 export type GitDiffReader = (cwd: string, base: string) => ChangedPathRead;
+export type AffectedOutputWriter = (path: string, data: string, encoding: 'utf8') => void;
 
 /** Read one Git object id for plan-to-checkout binding. */
 export function readGitSha(cwd: string, ref: string): string {
@@ -77,10 +78,23 @@ export function createAffectedPlan(
   );
 }
 
-/** Append one validated compact JSON output. Writing happens only after validation succeeds. */
-export function writeAffectedGithubOutput(path: string, plan: AffectedTestPlan): void {
+/** Append only bounded routing metadata. The addressed plan itself travels as an artifact file. */
+export function writeAffectedGithubOutput(
+  path: string,
+  plan: AffectedTestPlan,
+  append: AffectedOutputWriter = appendFileSync,
+): void {
   const validated = parseAffectedTestPlan(plan);
-  appendFileSync(path, `plan=${JSON.stringify(validated)}\n`, 'utf8');
+  append(
+    path,
+    `plan-id=${validated.planId}\nbrowser-required=${String(validated.browserRequired)}\nmode=${validated.mode}\n`,
+    'utf8',
+  );
+}
+
+/** Read and boundary-validate one addressed affected plan from disk. */
+export function readAffectedPlanFile(path: string): AffectedTestPlan {
+  return parseAffectedTestPlan(JSON.parse(readFileSync(path, 'utf8')) as unknown);
 }
 
 /** Atomically persist and read-back validate the exact plan bytes handed to downstream jobs. */
@@ -112,9 +126,16 @@ function optionValue(argv: readonly string[], name: string): string | undefined 
 export function main(argv: readonly string[] = process.argv.slice(2)): void {
   const cwd = process.cwd();
   if (argv.includes('--verify-current-head')) {
+    const input = optionValue(argv, '--input');
     const raw = process.env['LITESHIP_AFFECTED_PLAN'];
-    if (raw === undefined) throw new TypeError('LITESHIP_AFFECTED_PLAN is required for verification');
-    const supplied = parseAffectedTestPlan(JSON.parse(raw) as unknown);
+    if (input === undefined && raw === undefined) {
+      throw new TypeError('--input or LITESHIP_AFFECTED_PLAN is required for verification');
+    }
+    if (input !== undefined && raw !== undefined) {
+      throw new TypeError('supply affected plan by file or environment, not both');
+    }
+    const supplied =
+      input === undefined ? parseAffectedTestPlan(JSON.parse(raw!) as unknown) : readAffectedPlanFile(input);
     assertAffectedPlanHead(supplied, readGitSha(cwd, 'HEAD'));
     process.stdout.write(`${supplied.planId}\n`);
     return;

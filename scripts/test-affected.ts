@@ -1,13 +1,21 @@
-import { assertAffectedPlanHead, createAffectedPlan, readGitSha } from './affected-plan.js';
+import { assertAffectedPlanHead, createAffectedPlan, readAffectedPlanFile, readGitSha } from './affected-plan.js';
 import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
 import { runPnpm } from './support/pnpm-process.js';
 
 const cwd = process.cwd();
 const base = process.env['LITESHIP_AFFECTED_BASE'] ?? 'origin/main';
 const supplied = process.env['LITESHIP_AFFECTED_PLAN'];
+const suppliedPath = process.env['LITESHIP_AFFECTED_PLAN_PATH'];
+if (supplied !== undefined && suppliedPath !== undefined) {
+  throw new TypeError('supply affected plan by file or environment, not both');
+}
 const plan =
-  supplied === undefined ? createAffectedPlan(cwd, base) : parseAffectedTestPlan(JSON.parse(supplied) as unknown);
-if (supplied !== undefined) assertAffectedPlanHead(plan, readGitSha(cwd, 'HEAD'));
+  supplied !== undefined
+    ? parseAffectedTestPlan(JSON.parse(supplied) as unknown)
+    : suppliedPath !== undefined
+      ? readAffectedPlanFile(suppliedPath)
+      : createAffectedPlan(cwd, base);
+if (supplied !== undefined || suppliedPath !== undefined) assertAffectedPlanHead(plan, readGitSha(cwd, 'HEAD'));
 
 process.stdout.write(`[affected] ${plan.mode}: ${plan.reason}\n`);
 if (plan.affectedPackages.length > 0)

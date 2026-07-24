@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -6,6 +6,7 @@ import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 import {
   assertAffectedPlanHead,
   createAffectedPlan,
+  readAffectedPlanFile,
   writeAffectedGithubOutput,
   writeAffectedPlanFile,
 } from '../../../scripts/affected-plan.js';
@@ -16,10 +17,11 @@ import {
   planAffectedTests,
 } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
+import { forbiddenSourceImports } from '../../../scripts/lib/source-import-contract.js';
 
 function inventory(evidence: Readonly<Record<string, readonly string[]>>): AssuranceInventory {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     packages: PACKAGE_CATALOG.map((record) => ({
       name: record.name,
       sourceLoc: 1,
@@ -48,16 +50,27 @@ function inventory(evidence: Readonly<Record<string, readonly string[]>>): Assur
       },
       evidenceFiles: evidence[record.name] ?? [],
     })),
-    totals: { sourceLoc: 25, authoredEvidenceLoc: 25, generatedEvidenceLoc: 0, ratioMilli: 1_000, targetMilli: 10_000 },
+    totals: {
+      sourceLoc: 25,
+      authoredEvidenceLoc: 25,
+      generatedEvidenceLoc: 0,
+      corpusLoc: 0,
+      ratioMilli: 1_000,
+      targetMilli: 10_000,
+      sourceRoles: { product: 25, verificationEngine: 0, rustWasm: 0, workflowAuthority: 0, generated: 0 },
+    },
   };
 }
 
 describe('affected test planning', () => {
   it('keeps the clean-checkout planner independent from built workspace packages', () => {
-    const source = readFileSync(join(process.cwd(), 'scripts/affected-plan.ts'), 'utf8');
-    expect(source).not.toMatch(/from ['"]@liteship\//u);
-    expect(source).not.toMatch(/(?:^|\/)dist(?:\/|['"])/u);
-    expect(source).not.toContain('./lib/spawn.js');
+    expect(
+      forbiddenSourceImports(process.cwd(), 'scripts/affected-plan.ts', [
+        { pattern: /^@liteship\//u, reason: 'workspace runtime package' },
+        { pattern: /(?:^|\/)dist(?:\/|$)/u, reason: 'built output' },
+        { pattern: /^\.\/lib\/spawn\.js$/u, reason: 'built CLI spawn helper' },
+      ]),
+    ).toEqual([]);
   });
 
   it('walks reverse dependencies from the canonical catalog', () => {
@@ -125,19 +138,27 @@ describe('affected test planning', () => {
 
   it('writes no GitHub output when plan validation fails', () => {
     const directory = mkdtempSync(join(tmpdir(), 'liteship-affected-plan-'));
-    const output = join(directory, 'github-output.txt');
     try {
       const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
-      writeAffectedGithubOutput(output, valid);
-      expect(readFileSync(output, 'utf8')).toBe(`plan=${JSON.stringify(valid)}\n`);
+      const writes: string[] = [];
+      const append = (_path: string, data: string): void => {
+        writes.push(data);
+      };
+      writeAffectedGithubOutput('github-output.txt', valid, append);
+      expect(writes).toEqual([
+        `plan-id=${valid.planId}\nbrowser-required=${String(valid.browserRequired)}\nmode=${valid.mode}\n`,
+      ]);
       const planPath = join(directory, 'plan', 'affected.json');
       writeAffectedPlanFile(planPath, valid);
-      expect(JSON.parse(readFileSync(planPath, 'utf8'))).toEqual(valid);
-      const before = readFileSync(output, 'utf8');
-      expect(() => writeAffectedGithubOutput(output, { ...valid, prerequisites: [] } as never)).toThrow(
+      expect(readAffectedPlanFile(planPath)).toEqual(valid);
+      expect(() =>
+        writeAffectedGithubOutput('github-output.txt', { ...valid, prerequisites: [] } as never, append),
+      ).toThrow(/workspace-build/u);
+      expect(writes).toHaveLength(1);
+      expect(() => writeAffectedPlanFile(planPath, { ...valid, prerequisites: [] } as never)).toThrow(
         /workspace-build/u,
       );
-      expect(readFileSync(output, 'utf8')).toBe(before);
+      expect(readAffectedPlanFile(planPath)).toEqual(valid);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
