@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { IntegrityDigest } from '@liteship/core';
-import { createCurePacket } from '../../../packages/cli/src/lib/cure-packet.js';
+import { createCurePacket } from '../../../../packages/cli/src/lib/cure-packet.js';
 
 const BASE_INPUT = {
   headSha: '0123456789abcdef',
