@@ -255,6 +255,33 @@ describe('fromMediaQueries — decomposition branches', () => {
     ]);
   });
 
+  it('refuses mixed :root/scoped top-level defaults atomically', () => {
+    const result = fromMediaQueries(`
+      :root, .card { --accent: red; }
+      @media (prefers-color-scheme: dark) { :root { --accent: black; } }
+    `);
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedSelector,
+        severity: 'error',
+        path: [':root, .card'],
+      }),
+    ]);
+  });
+
+  it('preserves :root/:host companion defaults without widening a scoped selector', () => {
+    const result = fromMediaQueries(`
+      :root, :host { --accent: red; }
+      @media (prefers-color-scheme: dark) { :root { --accent: black; } }
+    `);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes).toHaveLength(1);
+    expect(result.themes[0]!.tokens.accent).toEqual({ light: 'red', dark: 'black' });
+  });
+
   it('keeps a recognized discrete feature as a media: boundary and flags it unmappable', () => {
     const result = fromMediaQueries(`
       @media (prefers-reduced-motion: reduce) { .x { animation: none; } }

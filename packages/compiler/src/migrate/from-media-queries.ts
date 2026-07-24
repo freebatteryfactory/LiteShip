@@ -202,15 +202,26 @@ function matchBrace(blanked: string, openIdx: number): number {
   return blanked.length;
 }
 
+interface RootSelectorScope {
+  readonly targetsRoot: boolean;
+  readonly allMembersRootCompatible: boolean;
+}
+
 /**
- * Whether a selector list targets `:root` — one of its comma-separated
- * components, with block braces stripped, is exactly `:root`. A custom property
- * is a theme-wide token ONLY when declared on `:root`; a scoped selector's custom
- * property stays scoped, so harvesting it would silently widen its scope to the
- * whole migrated theme.
+ * Classify a selector list used for shared theme defaults. `html` and `:host`
+ * are compatible companions only when the list also contains `:root`; any
+ * other arm carries a narrower scope that a Theme cannot preserve.
  */
-function selectorTargetsRoot(selector: string): boolean {
-  return splitCSSSelectorList(selector).some((part) => part.toLowerCase() === ':root');
+function rootSelectorScope(selector: string): RootSelectorScope {
+  const members = splitCSSSelectorList(selector).map((part) => part.toLowerCase());
+  const targetsRoot = members.includes(':root');
+  return {
+    targetsRoot,
+    allMembersRootCompatible:
+      targetsRoot &&
+      members.length > 0 &&
+      members.every((member) => member === ':root' || member === ':host' || member === 'html'),
+  };
 }
 
 interface RootCustomPropertyRule {
@@ -242,10 +253,8 @@ function collectRootCustomPropertyRules(css: string, start: number, end: number)
       const selector = css.slice(selStart, i);
       const { props, end: blockEnd } = parseFlatDeclarationValues(css, i + 1);
       const customProperties = Object.entries(props).filter(([name]) => name.startsWith('--'));
-      const selectorMembers = splitCSSSelectorList(selector);
-      const targetsOnlyRoot =
-        selectorMembers.length > 0 && selectorMembers.every((part) => part.toLowerCase() === ':root');
-      if (customProperties.length > 0 && targetsOnlyRoot) {
+      const selectorScope = rootSelectorScope(selector);
+      if (customProperties.length > 0 && selectorScope.allMembersRootCompatible) {
         out.push({
           props: Object.fromEntries(customProperties.map(([name, value]) => [name.slice(2), value])),
         });
@@ -765,11 +774,23 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
     const selector = css.slice(i, k);
     const bodyStart = k + 1;
     const bodyEnd = matchBrace(blanked, k);
-    if (selectorTargetsRoot(selector)) {
+    const selectorScope = rootSelectorScope(selector);
+    if (selectorScope.targetsRoot) {
       const { props } = parseFlatDeclarationValues(css, bodyStart);
+      const customProperties = Object.entries(props).filter(([property]) => property.startsWith('--'));
+      if (customProperties.length > 0 && !selectorScope.allMembersRootCompatible) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedSelector,
+            `Selector "${selector.trim()}" mixes :root theme defaults with a narrower selector scope; the complete stylesheet was refused.`,
+            { path: [selector.trim()], severity: 'error' },
+          ),
+        );
+        return { boundaries: [], tokens: [], themes: [], diagnostics };
+      }
       recordSchemeDeclarations(
         ['light', 'dark'],
-        Object.fromEntries(Object.entries(props).flatMap(([p, v]) => (p.startsWith('--') ? [[p.slice(2), v]] : []))),
+        Object.fromEntries(customProperties.map(([property, value]) => [property.slice(2), value])),
       );
     }
     i = bodyEnd + 1;
