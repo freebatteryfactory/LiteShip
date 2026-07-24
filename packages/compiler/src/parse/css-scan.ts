@@ -146,6 +146,16 @@ export function blankCssCommentsAndStrings(css: string): string {
   return out.join('');
 }
 
+/**
+ * Whether an offset range in a comment/string/URL-blanked stylesheet contains
+ * syntax shaped like a custom-property declaration. Callers deliberately use
+ * the blanked structural view so examples in comments, strings, or data URLs
+ * never trigger a semantic refusal. The range may contain nested blocks.
+ */
+export function containsCustomPropertyDeclaration(blanked: string, start: number, end: number): boolean {
+  return /--[a-zA-Z0-9_-]*\s*:/.test(blanked.slice(start, end));
+}
+
 /** 1-based line number of a character offset. */
 export function lineOfOffset(css: string, offset: number): number {
   let line = 1;

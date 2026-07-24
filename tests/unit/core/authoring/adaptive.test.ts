@@ -110,6 +110,48 @@ describe('defineAdaptive — pure lowering', () => {
     expect(adaptive.style.boundary).not.toBe(unrelated);
   });
 
+  test('snapshots caller-owned style inputs before addressing or retaining them', () => {
+    const mutableStyle = {
+      base: {
+        properties: { color: 'black' },
+        pseudo: { ':hover': { color: 'gray' } },
+        boxShadow: [{ x: 0, y: 1, blur: 2, color: 'black' }],
+      },
+      states: {
+        lg: {
+          properties: { color: 'white' },
+          boxShadow: [{ x: 0, y: 2, blur: 4, color: 'navy' }],
+        },
+      },
+      transition: { duration: 200, properties: ['color'] },
+    };
+    const adaptive = defineAdaptive({ boundary: boundarySpec, style: mutableStyle });
+    const id = adaptive.id;
+    const styleId = adaptive.style.id;
+    const css = adaptive.plan().css;
+    const explanation = adaptive.explain(1024);
+
+    mutableStyle.base.properties.color = 'hotpink';
+    mutableStyle.base.pseudo[':hover']!.color = 'lime';
+    mutableStyle.base.boxShadow.push({ x: 9, y: 9, blur: 9, color: 'red' });
+    mutableStyle.states.lg.properties.color = 'orange';
+    mutableStyle.transition.properties.push('opacity');
+
+    expect(adaptive.id).toBe(id);
+    expect(adaptive.style.id).toBe(styleId);
+    expect(adaptive.plan().css).toBe(css);
+    expect(adaptive.explain(1024)).toEqual(explanation);
+    expect(adaptive.style.base.properties.color).toBe('black');
+    expect(adaptive.style.states?.lg?.properties.color).toBe('white');
+    expect(adaptive.style.transition?.properties).toEqual(['color']);
+    expect(Object.isFrozen(adaptive.style.base)).toBe(true);
+    expect(Object.isFrozen(adaptive.style.base.properties)).toBe(true);
+    expect(Object.isFrozen(adaptive.style.base.pseudo?.[':hover'])).toBe(true);
+    expect(Object.isFrozen(adaptive.style.base.boxShadow)).toBe(true);
+    expect(Object.isFrozen(adaptive.style.states?.lg)).toBe(true);
+    expect(Object.isFrozen(adaptive.style.transition?.properties)).toBe(true);
+  });
+
   test('tokens and theme lower to the hand-lowered constructor outputs', () => {
     const tokenSpec = { name: 'gap', category: 'spacing', value: '8px' } as const;
     const themeSpec = {

@@ -40,7 +40,7 @@ import {
   winsCSSCascade,
   type CSSDeclarationValue,
 } from '../parse/css-cascade.js';
-import { parseFlatDeclarationValues } from '../parse/css-scan.js';
+import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '../parse/css-scan.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 import { parseQueryLength } from './query-length.js';
@@ -231,6 +231,7 @@ interface RootCustomPropertyRule {
 interface RootCustomPropertyCollection {
   readonly rules: readonly RootCustomPropertyRule[];
   readonly unsupportedSelectors: readonly string[];
+  readonly unsupportedAtRules: readonly string[];
 }
 
 /**
@@ -245,6 +246,7 @@ interface RootCustomPropertyCollection {
 function collectRootCustomPropertyRules(css: string, start: number, end: number): RootCustomPropertyCollection {
   const out: RootCustomPropertyRule[] = [];
   const unsupportedSelectors: string[] = [];
+  const unsupportedAtRules: string[] = [];
   const structural = blankCssCommentsAndStrings(css);
   let i = start;
   let selStart = start;
@@ -252,6 +254,15 @@ function collectRootCustomPropertyRules(css: string, start: number, end: number)
     if (structural[i] === '{') {
       const selector = css.slice(selStart, i);
       const { props, end: blockEnd } = parseFlatDeclarationValues(css, i + 1);
+      const normalizedSelector = selector.trim();
+      if (normalizedSelector.startsWith('@')) {
+        if (containsCustomPropertyDeclaration(structural, i + 1, blockEnd)) {
+          unsupportedAtRules.push(normalizedSelector.split(/[\s(]/, 1)[0] ?? normalizedSelector);
+        }
+        i = blockEnd > i ? blockEnd : i + 1;
+        selStart = i;
+        continue;
+      }
       const customProperties = Object.entries(props).filter(([name]) => name.startsWith('--'));
       const selectorScope = rootSelectorScope(selector);
       if (customProperties.length > 0 && selectorScope.allMembersRootCompatible) {
@@ -267,7 +278,7 @@ function collectRootCustomPropertyRules(css: string, start: number, end: number)
       i++;
     }
   }
-  return { rules: out, unsupportedSelectors };
+  return { rules: out, unsupportedSelectors, unsupportedAtRules };
 }
 
 /**
@@ -568,6 +579,18 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       const variant = (feat.value ?? '').toLowerCase();
       if (variant !== 'light' && variant !== 'dark') continue;
       const collected = collectRootCustomPropertyRules(css, bodyStart, bodyEnd);
+      if (collected.unsupportedAtRules.length > 0) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedAtRule,
+            `@media "${diagnosticPrelude}" contains custom-property declarations under wrapper ${collected.unsupportedAtRules.join(
+              ', ',
+            )}; the wrapper semantics cannot be preserved, so the complete block was refused.`,
+            { path: ['@media', diagnosticPrelude, collected.unsupportedAtRules[0]!], severity: 'error' },
+          ),
+        );
+        return;
+      }
       if (collected.unsupportedSelectors.length > 0) {
         diagnostics.push(
           makeMigrationDiagnostic(

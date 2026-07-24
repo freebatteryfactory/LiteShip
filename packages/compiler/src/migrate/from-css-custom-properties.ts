@@ -45,7 +45,7 @@ import {
   winsCSSCascade,
   type CSSDeclarationValue,
 } from '../parse/css-cascade.js';
-import { parseFlatDeclarationValues } from '../parse/css-scan.js';
+import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '../parse/css-scan.js';
 import { inferSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
@@ -206,16 +206,6 @@ function readTopLevelRules(css: string): RawRule[] {
   return rules;
 }
 
-/**
- * Does an opaque block contain syntax shaped like a custom-property
- * declaration? The offset-preserving blanked view removes comments, strings,
- * and URL payloads first, so teaching examples or data strings cannot trigger
- * a refusal. This intentionally detects declarations at any nested depth.
- */
-function containsCustomPropertyDeclaration(blanked: string, rule: RawRule): boolean {
-  return /--[a-zA-Z0-9_-]*\s*:/.test(blanked.slice(rule.bodyStart, rule.bodyEnd));
-}
-
 // ---------------------------------------------------------------------------
 // Custom-property → token-name inversion + category inference
 // ---------------------------------------------------------------------------
@@ -289,7 +279,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const topLevelRules = readTopLevelRules(css);
 
   const wrappedDefinition = topLevelRules.find(
-    (rule) => rule.selector.startsWith('@') && containsCustomPropertyDeclaration(blanked, rule),
+    (rule) => rule.selector.startsWith('@') && containsCustomPropertyDeclaration(blanked, rule.bodyStart, rule.bodyEnd),
   );
   if (wrappedDefinition !== undefined) {
     const wrapper = wrappedDefinition.selector.split(/[\s(]/, 1)[0] ?? wrappedDefinition.selector;
@@ -307,7 +297,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     (rule) =>
       !rule.selector.startsWith('@') &&
       hasUnsupportedSelectorMember(rule.selector) &&
-      containsCustomPropertyDeclaration(blanked, rule),
+      containsCustomPropertyDeclaration(blanked, rule.bodyStart, rule.bodyEnd),
   );
   if (scopedDefinition !== undefined) {
     diagnostics.push(

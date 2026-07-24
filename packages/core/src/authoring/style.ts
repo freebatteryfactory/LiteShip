@@ -14,6 +14,7 @@ import type { StateUnion } from './types.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 import { ValidationError } from '@liteship/error';
 
 /** Single `box-shadow` layer — compiled into a space-separated CSS value by {@link Style.tap}. */
@@ -238,21 +239,34 @@ export function defineStyle<B extends Boundary>(config: {
     }
   }
 
-  // Brand the duration internally (Millis is a type-level brand; the hash input is unchanged).
-  const transition: StyleDef['transition'] =
+  // Snapshot every caller-owned style value BEFORE hashing or retaining it.
+  // The content address and every later Style.tap / compiler projection therefore
+  // observe the exact same immutable bytes even when the author mutates their
+  // original config object after definition.
+  const base = snapshotDefinitionValue(config.base) as StyleLayer;
+  const states =
+    config.states === undefined ? undefined : (snapshotDefinitionValue(config.states) as StyleDef<B>['states']);
+
+  // Brand the duration internally (Millis is a type-level brand; the hash input is unchanged),
+  // then snapshot the derived record and its optional properties array too.
+  const authoredTransition: StyleDef['transition'] =
     config.transition === undefined
       ? undefined
       : { ...config.transition, duration: Millis(config.transition.duration) };
+  const transition =
+    authoredTransition === undefined
+      ? undefined
+      : (snapshotDefinitionValue(authoredTransition) as StyleDef['transition']);
 
-  const id = deterministicId<B>(config.boundary, config.base, config.states, transition);
+  const id = deterministicId<B>(config.boundary, base, states, transition);
 
   const def: StyleDef<B> = {
     _tag: 'StyleDef',
     _version: 1,
     id,
     ...(config.boundary !== undefined ? { boundary: config.boundary } : {}),
-    base: config.base,
-    ...(config.states !== undefined ? { states: config.states } : {}),
+    base,
+    ...(states !== undefined ? { states } : {}),
     ...(transition !== undefined ? { transition } : {}),
   };
   return Object.freeze(def);

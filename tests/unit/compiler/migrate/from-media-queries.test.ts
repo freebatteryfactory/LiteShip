@@ -255,6 +255,45 @@ describe('fromMediaQueries — decomposition branches', () => {
     ]);
   });
 
+  it.each([
+    ['layer', '@layer tokens { :root { --bg: black; } }'],
+    ['supports', '@supports (color: oklch(0 0 0)) { :root { --bg: oklch(.7 .2 20); } }'],
+    ['scope', '@scope (.theme) { :root { --bg: black; } }'],
+    ['nested wrappers', '@layer tokens { @supports (color: black) { :root { --bg: black; } } }'],
+  ])('refuses %s-wrapped color-scheme properties atomically', (_name, wrappedRule) => {
+    const result = fromMediaQueries(`
+      :root { --bg: white; }
+      @media (prefers-color-scheme: dark) { ${wrappedRule} }
+    `);
+
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    ]);
+  });
+
+  it('does not mistake comments, strings, or URL payloads for wrapped color-scheme properties', () => {
+    const result = fromMediaQueries(`
+      :root { --bg: white; }
+      @media (prefers-color-scheme: dark) {
+        @layer utilities {
+          /* :root { --comment-token: red; } */
+          .demo {
+            content: "--string-token: blue";
+            background: url(data:text/plain,--url-token:green);
+          }
+        }
+        :root { --bg: black; }
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes).toHaveLength(1);
+    expect(result.themes[0]!.tokens.bg).toEqual({ light: 'white', dark: 'black' });
+  });
+
   it('refuses mixed :root/scoped top-level defaults atomically', () => {
     const result = fromMediaQueries(`
       :root, .card { --accent: red; }
