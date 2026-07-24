@@ -83,7 +83,7 @@ describe('defineConfig()', () => {
     authored.vite.dirs.boundary = '/after';
     authored.vite.environments.push('shader');
     authored.vite.wasm.path = '/after.wasm';
-    (authoredBoundary.thresholds as number[])[1] = 1200;
+    expect(() => ((authoredBoundary.thresholds as number[])[1] = 1200)).toThrow();
 
     expect(cfg.id).toBe(id);
     expect(cfg.vite).toEqual({
@@ -145,7 +145,7 @@ describe('defineConfig()', () => {
     const second = defineConfig({ boundaries: { gated: secondBoundary } });
 
     sourceRegistry.gated = boundary;
-    (firstBoundary.thresholds as number[])[1] = 1200;
+    expect(() => ((firstBoundary.thresholds as number[])[1] = 1200)).toThrow();
 
     expect(first.id).toBe(second.id);
     expect(first.boundaries['gated']).not.toBe(firstBoundary);
@@ -193,8 +193,8 @@ describe('defineConfig()', () => {
     const firstId = first.id;
 
     sourceRegistry.responsive = defineStyle({ base: { properties: { display: 'none' } } });
-    firstStyle.base.properties['display'] = 'flex';
-    (firstBoundary.thresholds as number[])[1] = 1200;
+    expect(() => (firstStyle.base.properties['display'] = 'flex')).toThrow();
+    expect(() => ((firstBoundary.thresholds as number[])[1] = 1200)).toThrow();
 
     expect(first.id).toBe(firstId);
     expect(first.id).toBe(second.id);

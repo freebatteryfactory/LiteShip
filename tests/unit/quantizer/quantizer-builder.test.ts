@@ -124,6 +124,42 @@ describe('defineQuantizer() config creation', () => {
     expect(config1).toBe(config2);
   });
 
+  test('host-only boundary filters memoize per boundary object without poisoning portable twins', () => {
+    const makeBoundary = (deviceFilter?: (capabilities: Record<string, unknown>) => boolean) =>
+      defineBoundary({
+        input: 'device.filter-cache',
+        at: [[0, 'ready']] as const,
+        spec: {
+          experimentId: 'filter-cache',
+          ...(deviceFilter === undefined ? {} : { deviceFilter }),
+        },
+      });
+    const makeOutputs = (tag: string) => ({ css: { ready: { [`--${tag}`]: 'ready' } } });
+
+    const filteredFirst = makeBoundary(() => true);
+    const portableSecond = makeBoundary();
+    const firstOutputs = makeOutputs(`filtered-first-${++outputCounter}`);
+    const filteredConfig = defineQuantizer(filteredFirst, { outputs: firstOutputs });
+    const portableConfig = defineQuantizer(portableSecond, { outputs: firstOutputs });
+
+    expect(filteredConfig.id).toBe(portableConfig.id);
+    expect(filteredConfig).not.toBe(portableConfig);
+    expect(filteredConfig.boundary).toBe(filteredFirst);
+    expect(portableConfig.boundary).toBe(portableSecond);
+    expect(defineQuantizer(filteredFirst, { outputs: firstOutputs })).toBe(filteredConfig);
+
+    const portableFirst = makeBoundary();
+    const filteredSecond = makeBoundary(() => false);
+    const secondOutputs = makeOutputs(`portable-first-${++outputCounter}`);
+    const portableFirstConfig = defineQuantizer(portableFirst, { outputs: secondOutputs });
+    const filteredSecondConfig = defineQuantizer(filteredSecond, { outputs: secondOutputs });
+
+    expect(portableFirstConfig.id).toBe(filteredSecondConfig.id);
+    expect(portableFirstConfig).not.toBe(filteredSecondConfig);
+    expect(portableFirstConfig.boundary).toBe(portableFirst);
+    expect(filteredSecondConfig.boundary).toBe(filteredSecond);
+  });
+
   test('different outputs produce different content address', () => {
     const b = viewport();
     const config1 = defineQuantizer(b, {

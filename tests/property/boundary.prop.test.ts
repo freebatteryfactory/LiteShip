@@ -2,7 +2,7 @@
  * Property test: Boundary monotonicity and hysteresis laws.
  */
 
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
 import { Boundary, defineBoundary } from '@liteship/core';
 
@@ -118,6 +118,40 @@ describe('Boundary properties', () => {
         const boundary = defineBoundary({ input: 'x', at: pairs as any });
         return /^fnv1a:[0-9a-f]{8}$/.test(boundary.id);
       }),
+    );
+  });
+
+  test('authored portable activation inputs cannot mutate behavior under a minted id', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: -1_000_000, max: 1_000_000 }),
+        fc.integer({ min: 1, max: 1_000_000 }),
+        fc.string({ minLength: 1, maxLength: 24 }),
+        (from, duration, experimentId) => {
+          const timeRange = { from, until: from + duration };
+          const spec = { timeRange, experimentId };
+          const at: [number, 'low' | 'high'][] = [
+            [0, 'low'],
+            [100, 'high'],
+          ];
+          const boundary = defineBoundary({ input: 'x', at, spec });
+          const before = {
+            id: boundary.id,
+            thresholds: [...boundary.thresholds],
+            timeRange: { ...boundary.spec!.timeRange },
+            experimentId: boundary.spec!.experimentId,
+          };
+
+          at[1]![0] = 200;
+          timeRange.from -= 1;
+          spec.experimentId = `${experimentId}-changed`;
+
+          expect(boundary.id).toBe(before.id);
+          expect(boundary.thresholds).toEqual(before.thresholds);
+          expect(boundary.spec?.timeRange).toEqual(before.timeRange);
+          expect(boundary.spec?.experimentId).toBe(before.experimentId);
+        },
+      ),
     );
   });
 });

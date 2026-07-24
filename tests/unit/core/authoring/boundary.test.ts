@@ -210,6 +210,37 @@ describe('Boundary.isActive / BoundarySpec.isActive', () => {
     );
   });
 
+  test('snapshots and recursively freezes authored arrays and portable activation fields', () => {
+    const at: [number, 'off' | 'on'][] = [
+      [0, 'off'],
+      [800, 'on'],
+    ];
+    const timeRange = { from: 100, until: 200 };
+    const spec = {
+      timeRange,
+      experimentId: 'gpu-test',
+      deviceFilter: (capabilities: Record<string, unknown>) => capabilities['gpu'] === true,
+    };
+    const boundary = defineBoundary({ input: 'device.width', at, spec });
+    const id = boundary.id;
+
+    at[1]![0] = 1200;
+    timeRange.from = 999;
+    spec.experimentId = 'poisoned';
+
+    expect(boundary.id).toBe(id);
+    expect(boundary.thresholds).toEqual([0, 800]);
+    expect(boundary.spec?.timeRange).toEqual({ from: 100, until: 200 });
+    expect(boundary.spec?.experimentId).toBe('gpu-test');
+    expect(Object.isFrozen(boundary)).toBe(true);
+    expect(Object.isFrozen(boundary.thresholds)).toBe(true);
+    expect(Object.isFrozen(boundary.states)).toBe(true);
+    expect(Object.isFrozen(boundary.spec)).toBe(true);
+    expect(Object.isFrozen(boundary.spec?.timeRange)).toBe(true);
+    expect(() => ((boundary.thresholds as number[])[1] = 1200)).toThrow();
+    expect(() => ((boundary.spec!.timeRange as { from: number }).from = 999)).toThrow();
+  });
+
   test('returns true when no spec is present', () => {
     const boundary = defineBoundary({
       input: 'viewport.width',

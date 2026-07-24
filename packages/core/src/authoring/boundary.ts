@@ -19,6 +19,7 @@ import { inputToSource } from '../reactive/signal-input.js';
 import { wallClock } from '../clock/clock.js';
 import type { EvaluateResult } from './types.js';
 import { ValidationError } from '@liteship/error';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 
 /** The core primitive. Source of truth for quantization boundaries. */
 interface BoundaryDef<
@@ -316,10 +317,11 @@ export function defineBoundary<I extends string, const S extends readonly [strin
     }
     seen.add(name);
   }
-  const thresholds = pairs.map(([t]) => mkThresholdValue(t));
+  const thresholds = Object.freeze(pairs.map(([t]) => mkThresholdValue(t)));
   // tupleMap preserves arity but fn returns `string`, not per-element S[K]; one narrow cast is unavoidable.
-  const states = pairs.map(([, s]) => s) as unknown as S;
-  const id = deterministicId(config.input, thresholds, states, config.hysteresis, config.spec);
+  const states = Object.freeze(pairs.map(([, s]) => s)) as unknown as S;
+  const spec = snapshotBoundarySpec(config.spec);
+  const id = deterministicId(config.input, thresholds, states, config.hysteresis, spec);
 
   const source = inputToSource(config.input);
   if (source?.type === 'scroll' && source.axis === 'progress') {
@@ -347,7 +349,7 @@ export function defineBoundary<I extends string, const S extends readonly [strin
     }
   }
 
-  return {
+  return Object.freeze({
     _tag: 'BoundaryDef',
     _version: 1,
     id,
@@ -355,8 +357,8 @@ export function defineBoundary<I extends string, const S extends readonly [strin
     thresholds,
     states,
     ...(config.hysteresis !== undefined ? { hysteresis: config.hysteresis } : {}),
-    ...(config.spec !== undefined ? { spec: config.spec } : {}),
-  };
+    ...(spec !== undefined ? { spec } : {}),
+  });
 }
 
 /**
@@ -402,6 +404,22 @@ export interface BoundaryWireSpec {
   readonly experimentId?: string;
 }
 
+/**
+ * Snapshot the complete authored activation spec while keeping its host-only
+ * closure outside portable bytes. The JSON-safe projection is recursively
+ * copied/frozen; the function reference is retained intentionally and the
+ * containing record is frozen, so caller mutation cannot change behavior under
+ * an already-minted boundary id.
+ */
+function snapshotBoundarySpec(spec: BoundarySpec | undefined): BoundarySpec | undefined {
+  if (spec === undefined) return undefined;
+  const wire = boundaryWireSpec(spec);
+  return Object.freeze({
+    ...(wire ?? {}),
+    ...(spec.deviceFilter !== undefined ? { deviceFilter: spec.deviceFilter } : {}),
+  });
+}
+
 /** Project portable activation semantics; host-only deviceFilter never crosses this seam. */
 export function boundaryWireSpec(spec: BoundarySpec | undefined): BoundaryWireSpec | undefined {
   if (spec === undefined) return undefined;
@@ -416,7 +434,7 @@ export function boundaryWireSpec(spec: BoundarySpec | undefined): BoundaryWireSp
       : {}),
     ...(spec.experimentId !== undefined ? { experimentId: spec.experimentId } : {}),
   };
-  return Object.keys(wire).length > 0 ? wire : undefined;
+  return Object.keys(wire).length > 0 ? snapshotDefinitionValue(wire) : undefined;
 }
 
 /** Check if a BoundarySpec allows evaluation given current context. */

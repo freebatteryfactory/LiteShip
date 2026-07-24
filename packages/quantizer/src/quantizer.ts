@@ -372,6 +372,11 @@ function outputCacheAddress(configId: ContentAddress, state: string): ContentAdd
 // ---------------------------------------------------------------------------
 
 const configCache = MemoCache.make<CachedQuantizerConfig>();
+// A deviceFilter is host-owned executable identity and deliberately absent from
+// Boundary's portable content label. Such boundaries may still memoize against
+// themselves, but must never collide globally with a portable twin or a
+// different closure that has the same portable bytes.
+const hostFilteredConfigCaches = new WeakMap<Boundary, MemoCache<CachedQuantizerConfig>>();
 const outputCache = MemoCache.make<Partial<{ [K in OutputTarget]: Record<string, unknown> }>>();
 const springCSSCache = new Map<string, string>();
 
@@ -513,8 +518,20 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
 
   const id = contentAddress(boundary, outputsSnapshot, tier, springSnapshot, forceSnapshot);
 
-  // Content-address memoization: identical definitions share one object.
-  const cachedConfig = configCache.get(id);
+  // Portable definitions share the global content-address cache. Definitions
+  // carrying a host-only closure share only within the same Boundary object:
+  // the closure has no canonical bytes, so global reuse would return whichever
+  // callback happened to populate the id first.
+  let cache = configCache;
+  if (boundary.spec?.deviceFilter !== undefined) {
+    let boundaryCache = hostFilteredConfigCaches.get(boundary);
+    if (boundaryCache === undefined) {
+      boundaryCache = MemoCache.make<CachedQuantizerConfig>();
+      hostFilteredConfigCaches.set(boundary, boundaryCache);
+    }
+    cache = boundaryCache;
+  }
+  const cachedConfig = cache.get(id);
   if (cachedConfig) return cachedConfig as QuantizerConfig<B, O>;
 
   const config: QuantizerConfig<B, O> = Object.freeze({
@@ -525,7 +542,7 @@ export function defineQuantizer<B extends Boundary, O extends QuantizerOutputs<B
     spring: springSnapshot,
     force: forceSnapshot,
   });
-  configCache.set(id, config);
+  cache.set(id, config);
   return config;
 }
 
