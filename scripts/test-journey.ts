@@ -32,6 +32,7 @@ import { journeyColdAgentContext } from '../tests/journey/journey-cold-agent-con
 import { journeyInstalledAdd } from '../tests/journey/journey-installed-add.js';
 import {
   journeysPassed,
+  loadReleaseArtifactWorkspace,
   packWorkspace,
   removeDir,
   type JourneyResult,
@@ -52,11 +53,27 @@ async function main(): Promise<void> {
 
   // Pack the workspace ONCE — journeys 1, 2, 4, 5, and 7 share the tarballs.
   let packed: PackedWorkspace | undefined;
+  let ownsPackedDirectory = false;
   let packError: string | undefined;
-  console.log('[pack] packing every publishable scope in-workspace (ignore-scripts)...');
+  const releaseArtifactDir = process.env.LITESHIP_RELEASE_ARTIFACT_DIR;
+  console.log(
+    releaseArtifactDir === undefined
+      ? '[pack] packing every publishable scope in-workspace (ignore-scripts)...'
+      : `[pack] verifying frozen release fleet at ${releaseArtifactDir}...`,
+  );
   try {
-    packed = await packWorkspace();
-    console.log(`[pack] packed ${packed.tarballByName.size} tarballs.\n`);
+    if (releaseArtifactDir === undefined) {
+      packed = await packWorkspace();
+      ownsPackedDirectory = true;
+      console.log(`[pack] packed ${packed.tarballByName.size} tarballs.\n`);
+    } else {
+      packed = loadReleaseArtifactWorkspace(
+        releaseArtifactDir,
+        process.env.GITHUB_SHA,
+        process.env.LITESHIP_AFFECTED_PLAN_ID,
+      );
+      console.log(`[pack] admitted ${packed.tarballByName.size} exact release tarballs.\n`);
+    }
   } catch (error) {
     packError = error instanceof Error ? error.message : String(error);
     console.log(`[pack] FAILED: ${packError}\n`);
@@ -99,7 +116,7 @@ async function main(): Promise<void> {
     }
     results.push(await journeyColdAgentContext());
   } finally {
-    removeDir(packed?.tarballDir);
+    if (ownsPackedDirectory) removeDir(packed?.tarballDir);
   }
 
   console.log('');

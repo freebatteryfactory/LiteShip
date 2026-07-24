@@ -44,6 +44,7 @@ import {
   tarballFileUrl,
 } from '../lib/package-smoke-helpers.js';
 import { checkPackedMetadata } from '../lib/package-metadata-catalog.js';
+import { verifyReleaseArtifactBundle } from '../lib/release-artifact-bundle.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** `PEER_INSTALLS` → `{name: version}` map (the extracted, unit-tested helper). */
@@ -641,13 +642,19 @@ type PackageSmokeScanResult = PackageSmokeSummary & { readonly hermetic?: Hermet
  */
 export async function runPackageSmokeScan(
   root: string,
-  opts: { hermetic?: boolean; generatedAt?: string } = {},
+  opts: {
+    hermetic?: boolean;
+    generatedAt?: string;
+    artifactDir?: string;
+    expectedSourceCommit?: string;
+    expectedPlanId?: string;
+  } = {},
 ): Promise<PackageSmokeScanResult> {
   const scratch = await createScratchDir(root);
-  const tarballDir = join(scratch, 'tarballs');
+  const tarballDir = opts.artifactDir ?? join(scratch, 'tarballs');
   const consumerDir = join(scratch, 'consumer');
 
-  await mkdir(tarballDir, { recursive: true });
+  if (opts.artifactDir === undefined) await mkdir(tarballDir, { recursive: true });
   await mkdir(consumerDir, { recursive: true });
 
   // Bracketed step prints so the failing step is identifiable from the CI log
@@ -667,16 +674,24 @@ export async function runPackageSmokeScan(
   let importsSmoked = 0;
 
   try {
-    const tarballByPackage = new Map<string, string>();
-
-    step(`pack ${PACKAGES.length} packages via pnpm pack`);
-    for (const pkg of PACKAGES) {
-      const cwd = resolve(root, pkg.dir);
-      const tarball = await packPackage(cwd, tarballDir);
-      tarballByPackage.set(pkg.name, tarball);
-      packagesPacked += 1;
+    let tarballByPackage: Map<string, string>;
+    if (opts.artifactDir !== undefined) {
+      step(`verify immutable release artifact bundle (${opts.artifactDir})`);
+      const verified = verifyReleaseArtifactBundle(opts.artifactDir, opts.expectedSourceCommit, opts.expectedPlanId);
+      tarballByPackage = new Map(verified.tarballByPackage);
+      packagesPacked = tarballByPackage.size;
+      stepOk(`verified ${packagesPacked} prepacked tarballs at manifest ${verified.manifest.manifestDigest}`);
+    } else {
+      tarballByPackage = new Map<string, string>();
+      step(`pack ${PACKAGES.length} packages via pnpm pack`);
+      for (const pkg of PACKAGES) {
+        const cwd = resolve(root, pkg.dir);
+        const tarball = await packPackage(cwd, tarballDir);
+        tarballByPackage.set(pkg.name, tarball);
+        packagesPacked += 1;
+      }
+      stepOk(`packed ${PACKAGES.length} tarballs into ${tarballDir}`);
     }
-    stepOk(`packed ${PACKAGES.length} tarballs into ${tarballDir}`);
 
     if (process.platform === 'win32') {
       const externalDeps = collectPackedExternalDependencies(tarballByPackage);
@@ -844,7 +859,16 @@ for (const specifier of imports) {
 }
 
 /** Execute `liteship package-smoke` — pack/install/import-smoke every publishable scope; emit a verdict. */
-export async function packageSmoke(opts: { cwd?: string; pretty?: boolean; hermetic?: boolean } = {}): Promise<number> {
+export async function packageSmoke(
+  opts: {
+    cwd?: string;
+    pretty?: boolean;
+    hermetic?: boolean;
+    artifactDir?: string;
+    expectedSourceCommit?: string;
+    expectedPlanId?: string;
+  } = {},
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
   const hermetic = opts.hermetic ?? false;
   // The passed-in timestamp for the reproducibility report — stamped at the
@@ -853,7 +877,14 @@ export async function packageSmoke(opts: { cwd?: string; pretty?: boolean; herme
 
   const context: CommandContext = {
     cwd,
-    runPackageSmoke: async () => runPackageSmokeScan(cwd, { hermetic, generatedAt }),
+    runPackageSmoke: async () =>
+      runPackageSmokeScan(cwd, {
+        hermetic,
+        generatedAt,
+        ...(opts.artifactDir ? { artifactDir: opts.artifactDir } : {}),
+        ...(opts.expectedSourceCommit ? { expectedSourceCommit: opts.expectedSourceCommit } : {}),
+        ...(opts.expectedPlanId ? { expectedPlanId: opts.expectedPlanId } : {}),
+      }),
   };
 
   const result = await packageSmokeCommand.handler({ name: 'package-smoke', args: {} }, context);

@@ -104,6 +104,11 @@ export interface SbomReceipt extends BaseReceipt {
   readonly artifact_path: string;
   /** Content address (AddressedDigest display id) of the emitted SBOM. */
   readonly content_address: ContentAddress;
+  /** CycloneDX VEX projection over the same component identities. */
+  readonly vex_artifact_path: string;
+  readonly vex_content_address: ContentAddress;
+  /** Zero means no assessments were supplied, not that no vulnerabilities exist. */
+  readonly vex_assessment_count: number;
   /** Total components (workspace + external) enumerated. */
   readonly component_count: number;
   /** Lockfile packages the SBOM covers. */

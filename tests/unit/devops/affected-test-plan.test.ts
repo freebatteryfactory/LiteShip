@@ -100,6 +100,20 @@ describe('affected test planning', () => {
     expect(plan.testFiles).toContain('tests/unit/devops/check-registry.test.ts');
   });
 
+  it('disables optimization and fails broad when the selector error budget is exhausted', () => {
+    const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}), {
+      baseRef: 'origin/main',
+      baseSha: 'a'.repeat(40),
+      headSha: 'b'.repeat(40),
+      confidence: 'high',
+      selectorErrorBudgetRemaining: 0,
+    });
+    expect(plan.mode).toBe('full');
+    expect(plan.browserRequired).toBe(true);
+    expect(plan.reason).toContain('error budget is exhausted');
+    expect(plan.rationale).toContain('selector optimization disabled by error budget');
+  });
+
   it('rejects partial, foreign, and prerequisite-free plans at the process boundary', () => {
     const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
     expect(parseAffectedTestPlan(valid)).toEqual(valid);

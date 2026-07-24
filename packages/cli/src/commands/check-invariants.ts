@@ -35,6 +35,7 @@ import {
 } from '@liteship/command';
 import { spawnArgvCapture } from '@liteship/command/host';
 import { emit, type WallClockTimestamp } from '../receipts.js';
+import { scanWorkflowActionPins } from '../lib/workflow-action-pins.js';
 
 /** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
@@ -238,6 +239,21 @@ export async function runCheckInvariantsScan(
     const violations = findViolations(invariant, root);
     if (violations.length === 0) continue;
     groups.push({ name: invariant.name, message: invariant.message, violations });
+  }
+
+  const actionPinViolations: InvariantViolation[] = [];
+  for (const file of walkFiles(resolve(root, '.github/workflows'), { suffixes: ['.yml', '.yaml'] })) {
+    const rel = normalizeRepoPath(relative(root, file));
+    for (const violation of scanWorkflowActionPins(readFileSync(file, 'utf8'))) {
+      actionPinViolations.push({ file: rel, line: violation.line, content: violation.content });
+    }
+  }
+  if (actionPinViolations.length > 0) {
+    groups.push({
+      name: 'IMMUTABLE_WORKFLOW_ACTIONS',
+      message: 'Pin every third-party GitHub Action to an immutable 40-character commit SHA.',
+      violations: actionPinViolations,
+    });
   }
 
   const lineEndings = await findLineEndingViolations(root, spawn);

@@ -5,9 +5,10 @@ name: Release (OIDC trusted publishing)
 #   git tag -a v0.2.0 -m "v0.2.0"
 #   git push origin v0.2.0
 #
-# auth: OIDC trusted publishing — no tokens anywhere. `liteship ship` packs each
-# package with pnpm (which rewrites `workspace:*` to concrete versions) and then
-# hands the tarball to the **npm CLI** (`npm publish <tgz> --provenance`) for the
+# auth: OIDC trusted publishing — no tokens anywhere. Certification packs the
+# already-built fleet once with pnpm (which rewrites `workspace:*` to concrete
+# versions), then `liteship ship` verifies and hands those exact tarballs to the
+# **npm CLI** (`npm publish <tgz> --provenance`) for the
 # upload. npm >= 11.5.1 performs npm's OIDC trusted-publishing token exchange
 # natively in CI (id-token: write below); `pnpm publish` does NOT do the exchange
 # (pnpm#11513 / pnpm#9812) — that gap was the ENEEDAUTH at 0.4.0 and 0.6.0's first
@@ -37,7 +38,9 @@ on:
 
 permissions:
   contents: write # creating the GitHub Release + uploading capsule assets
+  actions: read # delivery metrics and frozen-artifact admission
   id-token: write # OIDC trusted publishing (pnpm exchanges this for the publish credential)
+  attestations: write # GitHub artifact attestations for the exact frozen tarballs
 
 concurrency:
   group: release-${{ github.ref }}
@@ -49,9 +52,10 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
+      actions: read
 
   release-certified:
-    name: Release certification (publishability gate)
+    name: Frozen release build and certification
     needs: full-authority
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -59,22 +63,69 @@ jobs:
     # Linux, browser, platform, Rust/WASM, mutation, MC/DC, and analysis tiers.
     # This job owns only the narrower tag-time publishability question.
     steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Download the addressed authority plan
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
+      - name: Bind release evidence to the plan
+        run: echo "LITESHIP_AFFECTED_PLAN_ID=$(jq -r .planId .liteship/affected-plan.json)" >> "$GITHUB_ENV"
       - run: pnpm run build
-      - run: pnpm run typecheck
-      - run: pnpm run lint
-      - run: pnpm test
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        with:
+          toolchain: 1.85.1
+          targets: wasm32-unknown-unknown
+      - run: pnpm run build:wasm
+      - name: Pack the immutable release fleet once
+        run: pnpm exec tsx scripts/build-release-artifacts.ts release-artifacts/tarballs
+      - name: Generate supply-chain inventory
+        run: |
+          node packages/liteship/bin/liteship.mjs sbom
+          mkdir -p release-artifacts/evidence
+          cp reports/sbom.json release-artifacts/evidence/sbom.cdx.json
+          cp reports/vex.json release-artifacts/evidence/vex.cdx.json
+          cp .liteship/affected-plan.json release-artifacts/evidence/affected-plan.json
+      - name: Mint ShipCapsules over the immutable tarballs
+        run: |
+          mkdir -p release-artifacts/capsules
+          node packages/liteship/bin/liteship.mjs ship --dry-run \
+            --artifact-dir release-artifacts/tarballs \
+            --capsule-dir release-artifacts/capsules
+      - name: Run consumer journeys against the exact release tarballs
+        run: pnpm run test:journey
         env:
           CI: true
-      - run: pnpm run package:smoke
+          GITHUB_SHA: ${{ github.sha }}
+          LITESHIP_RELEASE_ARTIFACT_DIR: release-artifacts/tarballs
+      - name: Verify the exact release tarballs as an external consumer
+        run: |
+          node packages/liteship/bin/liteship.mjs package-smoke --hermetic \
+            --artifact-dir release-artifacts/tarballs
         env:
           CI: true
+          GITHUB_SHA: ${{ github.sha }}
+      - name: Upload frozen release build
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: frozen-release-artifacts
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            release-artifacts/
+            packages/*/dist/
+      - name: Attest exact release tarballs
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
+        with:
+          subject-path: release-artifacts/tarballs/*.tgz
 
   publish:
     name: Publish the fleet (roster from scripts/ci/publish-roster.json) + attach ShipCapsules
@@ -87,11 +138,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0 # liteship ship reads git rev-parse HEAD + git status
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
 
       # No registry-url here: setup-node's registry-url writes an
       # `_authToken=${NODE_AUTH_TOKEN}` line into ~/.npmrc, and with no
@@ -100,7 +151,7 @@ jobs:
       # all — the npm CLI exchanges the runner's OIDC token at publish
       # time (registry defaults to registry.npmjs.org). Node >= 22.14 is a
       # trusted-publishing requirement; node-version 22 resolves to latest 22.x.
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: pnpm
@@ -127,20 +178,21 @@ jobs:
           echo "OIDC endpoint present; the npm CLI will exchange the token at publish time."
 
       - run: pnpm install --frozen-lockfile
-
-      - run: pnpm run build
-
-      # Build the liteship-compute WASM kernel from Rust and stage it into the core
-      # package's dist BEFORE the ship loop packs the tarball — otherwise the
-      # published core package carries no `.wasm` and an installed consumer's
-      # `liteship({ wasm: { enabled: true } })` silently runs the TS fallback (the
-      # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
-      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # action implementation pinned
+      - name: Download the certified build (never rebuild or repack)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
-          # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
-          toolchain: 1.85.1
-          targets: wasm32-unknown-unknown
-      - run: pnpm run build:wasm
+          name: frozen-release-artifacts
+          path: .
+      - name: Bind publish admission to the certified plan
+        run: echo "LITESHIP_AFFECTED_PLAN_ID=$(jq -r .planId release-artifacts/tarballs/release-artifacts.json)" >> "$GITHUB_ENV"
+      - name: Verify GitHub attestations before admission
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for tarball in release-artifacts/tarballs/*.tgz; do
+            gh attestation verify "$tarball" --repo "$GITHUB_REPOSITORY"
+          done
 
       # ─── GitHub Release FIRST, then the ship loop ────────────────────
       # The Release is created BEFORE any package publishes so each
@@ -226,10 +278,12 @@ jobs:
 
           for pkg in $(jq -r '.packages[]' scripts/ci/publish-roster.json); do
             echo "::group::$pkg"
-            node packages/liteship/bin/liteship.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
+            node packages/liteship/bin/liteship.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG \
+              --artifact-dir release-artifacts/tarballs \
+              --capsule-dir release-artifacts/capsules
             if [ "$ATTACH" = "true" ]; then
               shopt -s nullglob
-              capsules=(packages/*/*-"$VERSION".shipcapsule.cbor)
+              capsules=(release-artifacts/capsules/*-"$VERSION".shipcapsule.cbor)
               shopt -u nullglob
               for capsule in "${capsules[@]}"; do
                 if ! grep -qxF "$capsule" "$UPLOADED_LIST"; then
@@ -251,7 +305,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           shopt -s nullglob
-          capsules=(packages/*/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor)
+          capsules=(release-artifacts/capsules/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor)
           if [ ${#capsules[@]} -gt 0 ]; then
             gh release upload "${GITHUB_REF_NAME}" "${capsules[@]}" --clobber
           else

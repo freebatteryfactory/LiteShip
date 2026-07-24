@@ -10,6 +10,7 @@ import {
   ship,
   isAlreadyPublishedFailure,
   buildNpmPublishArgv,
+  buildNpmPublishDryRunArgv,
   topoSortByDependencies,
 } from '../../../../packages/cli/src/commands/ship.js';
 import type { WorkspacePackage } from '@liteship/command';
@@ -158,6 +159,10 @@ describe('buildNpmPublishArgv (OIDC publish handoff — npm CLI, not pnpm)', () 
       '--otp',
       '123456',
     ]);
+  });
+
+  it('dry-runs the exact tarball rather than rebuilding from a package directory', () => {
+    expect(buildNpmPublishDryRunArgv(tgz)).toEqual(['publish', tgz, '--access', 'public', '--dry-run']);
   });
 });
 

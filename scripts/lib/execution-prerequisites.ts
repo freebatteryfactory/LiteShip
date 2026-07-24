@@ -35,8 +35,8 @@ export const EXECUTION_PREREQUISITES = Object.freeze({
   },
   'packed-artifacts': {
     id: 'packed-artifacts',
-    command: 'pnpm run package:smoke',
-    claim: 'The package authority has immutable tarballs from the current source.',
+    command: 'pnpm exec tsx scripts/build-release-artifacts.ts release-artifacts/tarballs',
+    claim: 'The package authority materialized the immutable source-and-plan-bound tarball fleet.',
   },
   'coverage-inputs': {
     id: 'coverage-inputs',

@@ -5,9 +5,9 @@
  * `pnpm pack` — `ERR_PNPM_CATALOG_ENTRY_NOT_FOUND` outside workspace context.
  * `catalog:` and `workspace:*` specs only resolve to concrete ranges when pnpm
  * packs from INSIDE the workspace. The real release path
- * (`.github/workflows/release.yml` → `liteship ship` →
- * `spawnArgvCapture('pnpm', ['pack'], { cwd: pkgDir })`) packs each package from
- * its own directory *within the monorepo*, so pnpm rewrites the specs. A pack
+ * (`.github/workflows/release.yml` → `scripts/build-release-artifacts.ts` →
+ * the release-bundle owner) packs each package from its own directory *within
+ * the monorepo*, so pnpm rewrites the specs. A pack
  * from a tmp copy severed from the workspace does not — that was the bug.
  *
  * Three tests need this exact mechanic: `tests/unit/ship-manifest.test.ts`,
@@ -31,12 +31,12 @@ export interface PackInWorkspaceOptions {
    *
    * pnpm's manifest transform (`catalog:`/`workspace:*` → concrete ranges) is
    * performed independently of lifecycle scripts — verified byte-identical with
-   * and without this flag — so a guard that only inspects the packed
+   * and without this flag — so a guard or frozen release build that inspects the packed
    * `package.json` can skip the `prepack` `tsc` rebuild for speed and
    * hermeticity (no dist mutation racing sibling test workers) without weakening
    * what it asserts. The in-workspace resolution — the load-bearing S0.5
-   * property — is unaffected. Default `false`, which mirrors release.yml (whose
-   * `pnpm pack` runs `prepack`).
+   * property — is unaffected. Default `false`; the frozen release-bundle owner
+   * explicitly enables it after the one authoritative workspace build.
    */
   readonly ignoreScripts?: boolean;
 }
@@ -66,14 +66,10 @@ export async function packInWorkspace(
   // not flood the test reporter; keep stderr piped so a failure's tail is captured.
   const result = await spawnArgv('pnpm', args, { cwd: packageDir, stdio: ['ignore', 'ignore', 'pipe'] });
   if (result.exitCode !== 0) {
-    throw new Error(
-      `pnpm pack failed in ${packageDir} (exit ${result.exitCode}): ${result.stderrTail.trim()}`,
-    );
+    throw new Error(`pnpm pack failed in ${packageDir} (exit ${result.exitCode}): ${result.stderrTail.trim()}`);
   }
 
-  const created = readdirSync(destinationDir).filter(
-    (entry) => !before.has(entry) && entry.endsWith('.tgz'),
-  );
+  const created = readdirSync(destinationDir).filter((entry) => !before.has(entry) && entry.endsWith('.tgz'));
   if (created.length !== 1) {
     throw new Error(
       `expected exactly one .tgz from packing ${packageDir}, found ${created.length}` +

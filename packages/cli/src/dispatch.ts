@@ -542,7 +542,19 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
   'audit-floor': () => auditFloor(),
   plumb: () => plumb(),
   'check-invariants': () => checkInvariants(),
-  'package-smoke': (rest) => packageSmoke({ hermetic: rest.includes('--hermetic') }),
+  'package-smoke': (rest) => {
+    const artifactDir = takeFlagValue(rest, '--artifact-dir');
+    if (artifactDir.present && artifactDir.value === undefined) {
+      emitError('package-smoke', 'cli/usage', 'usage: liteship package-smoke [--hermetic] [--artifact-dir <dir>]');
+      return 1;
+    }
+    return packageSmoke({
+      hermetic: rest.includes('--hermetic'),
+      ...(artifactDir.value ? { artifactDir: artifactDir.value } : {}),
+      ...(process.env.GITHUB_SHA ? { expectedSourceCommit: process.env.GITHUB_SHA } : {}),
+      ...(process.env.LITESHIP_AFFECTED_PLAN_ID ? { expectedPlanId: process.env.LITESHIP_AFFECTED_PLAN_ID } : {}),
+    });
+  },
   'capsule-verify': () => capsuleVerifyGate(),
   verify: (rest) => verify(rest),
 };

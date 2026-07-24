@@ -16,6 +16,8 @@ export interface AffectedPlanContext {
   readonly headSha: string;
   readonly confidence: AffectedPlanConfidence;
   readonly rationale?: readonly string[];
+  /** Zero disables selector optimization until escaped-miss debt is cured. */
+  readonly selectorErrorBudgetRemaining?: number;
 }
 
 export interface AffectedTestPlan {
@@ -235,12 +237,27 @@ export function planAffectedTests(
     changedPaths: normalized,
     affectedPackages,
   };
-  if (broadPath !== undefined || context.confidence === 'low') {
+  if (broadPath !== undefined || context.confidence === 'low' || context.selectorErrorBudgetRemaining === 0) {
     const reason =
-      context.confidence === 'low'
-        ? 'selector confidence is low; selected full authority'
-        : `global authority changed: ${broadPath}`;
-    return finalizePlan({ ...common, mode: 'full', reason, testFiles: [], browserRequired: true }, inventory);
+      context.selectorErrorBudgetRemaining === 0
+        ? 'selector error budget is exhausted; selected full authority'
+        : context.confidence === 'low'
+          ? 'selector confidence is low; selected full authority'
+          : `global authority changed: ${broadPath}`;
+    return finalizePlan(
+      {
+        ...common,
+        mode: 'full',
+        reason,
+        rationale:
+          context.selectorErrorBudgetRemaining === 0
+            ? [...common.rationale, 'selector optimization disabled by error budget']
+            : common.rationale,
+        testFiles: [],
+        browserRequired: true,
+      },
+      inventory,
+    );
   }
 
   const packageSet = new Set(affectedPackages);

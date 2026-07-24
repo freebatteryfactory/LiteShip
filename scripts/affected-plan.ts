@@ -62,6 +62,7 @@ export function createAffectedPlan(
   cwd: string,
   base: string,
   readDiff: GitDiffReader = readChangedPaths,
+  selectorErrorBudgetRemaining = 1,
 ): AffectedTestPlan {
   const changed = readDiff(cwd, base);
   return parseAffectedTestPlan(
@@ -70,6 +71,7 @@ export function createAffectedPlan(
       baseSha: changed.baseSha,
       headSha: changed.headSha,
       confidence: changed.degradedReason === undefined ? 'high' : 'low',
+      selectorErrorBudgetRemaining,
       ...(changed.degradedReason === undefined ? {} : { rationale: [changed.degradedReason] }),
     }),
   );
@@ -117,8 +119,13 @@ export function main(argv: readonly string[] = process.argv.slice(2)): void {
     process.stdout.write(`${supplied.planId}\n`);
     return;
   }
-  const base = process.env['LITESHIP_AFFECTED_BASE'] ?? 'origin/main';
-  const plan = createAffectedPlan(cwd, base);
+  const base = process.env['LITESHIP_AFFECTED_BASE'] || 'origin/main';
+  const rawBudget = process.env['LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING'] ?? '1';
+  const selectorErrorBudgetRemaining = Number(rawBudget);
+  if (!Number.isSafeInteger(selectorErrorBudgetRemaining) || selectorErrorBudgetRemaining < 0) {
+    throw new TypeError('LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING must be a non-negative integer');
+  }
+  const plan = createAffectedPlan(cwd, base, readChangedPaths, selectorErrorBudgetRemaining);
   const output = optionValue(argv, '--github-output');
   const file = optionValue(argv, '--output');
   if (file !== undefined) writeAffectedPlanFile(file, plan);

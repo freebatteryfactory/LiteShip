@@ -142,15 +142,19 @@ describe('liteship sbom — clean run emits a deterministic, content-addressed r
 
     // The serialized SBOM was written to the canonical artifact path.
     expect(mkdirSyncMock).toHaveBeenCalledTimes(1);
-    expect(writeFileSyncMock).toHaveBeenCalledTimes(1);
+    expect(writeFileSyncMock).toHaveBeenCalledTimes(2);
     const [, written] = writeFileSyncMock.mock.calls[0]!;
     expect(written).toBe('{"bomFormat":"CycloneDX"}');
+    expect(String(writeFileSyncMock.mock.calls[1]![0])).toMatch(/reports[\\/]vex\.json$/);
+    expect(String(writeFileSyncMock.mock.calls[1]![1])).toContain('"vulnerabilities": []');
 
     const receipt = lastReceipt(stdout);
     expect(receipt).toMatchObject({
       status: 'ok',
       command: 'sbom',
       artifact_path: 'reports/sbom.json',
+      vex_artifact_path: 'reports/vex.json',
+      vex_assessment_count: 0,
       component_count: 2,
       lockfile_package_count: 7,
       violations: [],
@@ -189,6 +193,6 @@ describe('liteship sbom — a non-hermetic supply chain fails (exit 1) with flat
       { code: 'incomplete-sbom', subject: '@liteship/web' },
     ]);
     // The artifact is still written — the SBOM is reviewable even when non-hermetic.
-    expect(writeFileSyncMock).toHaveBeenCalledTimes(1);
+    expect(writeFileSyncMock).toHaveBeenCalledTimes(2);
   });
 });

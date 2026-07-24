@@ -42,7 +42,14 @@ import {
   type LockfilePolicy,
   type PublishedImporters,
 } from '../../../packages/cli/src/lib/supply-chain-policy.js';
-import { generateSbom, serializeSbom, sbomAddress } from '../../../packages/cli/src/lib/sbom.js';
+import {
+  generateSbom,
+  generateVex,
+  serializeSbom,
+  serializeVex,
+  sbomAddress,
+  vexAddress,
+} from '../../../packages/cli/src/lib/sbom.js';
 import {
   analyzeLockfile,
   buildSbom,
@@ -424,7 +431,13 @@ describe('SBOM — synthetic build coverage', () => {
       lockfileVersion: '9.0',
       importers: [],
       packages: [
-        { key: '@liteship/cli@0.4.0', name: '@liteship/cli', version: '0.4.0', integrity: 'sha512-X', resolutionKind: null },
+        {
+          key: '@liteship/cli@0.4.0',
+          name: '@liteship/cli',
+          version: '0.4.0',
+          integrity: 'sha512-X',
+          resolutionKind: null,
+        },
       ],
     };
     const sbom = generateSbom(lf, [{ name: '@liteship/cli', version: '0.4.0' }]);
@@ -487,6 +500,34 @@ describe('SBOM — synthetic build coverage', () => {
     );
     expect(sbomAddress(sbom)).toBe(sbomAddress(sbom));
     expect(sbomAddress(sbom)).toMatch(/^fnv1a:[0-9a-f]+$/);
+  });
+
+  it('projects deterministic CycloneDX VEX without inventing vulnerability conclusions', () => {
+    const sbom = generateSbom(
+      {
+        lockfileVersion: '9.0',
+        importers: [],
+        packages: [{ key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null }],
+      },
+      [],
+    );
+    const vex = generateVex(sbom);
+    expect(vex.vulnerabilities).toEqual([]);
+    expect(serializeVex(vex)).toBe(serializeVex(vex));
+    expect(vexAddress(vex)).toMatch(/^fnv1a:[0-9a-f]+$/);
+  });
+
+  it('refuses a VEX assessment aimed at a component absent from the SBOM', () => {
+    const sbom = generateSbom({ lockfileVersion: '9.0', importers: [], packages: [] }, []);
+    expect(() =>
+      generateVex(sbom, [
+        {
+          id: 'CVE-2099-0001',
+          affects: [{ ref: 'pkg:npm/ghost@1.0.0' }],
+          analysis: { state: 'not_affected', justification: 'code_not_present' },
+        },
+      ]),
+    ).toThrow(/absent SBOM component/);
   });
 
   it('LAW (property): same package set in ANY input order ⇒ byte-identical SBOM + address', () => {

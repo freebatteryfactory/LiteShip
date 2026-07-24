@@ -28,6 +28,9 @@ import {
 } from '../lib/supply-chain.js';
 import { emit, emitError } from '../receipts.js';
 import type { SbomReceipt } from '../receipts.js';
+import { generateVex, serializeVex, vexAddress } from '../lib/sbom.js';
+
+const VEX_ARTIFACT_PATH = 'reports/vex.json' as const;
 
 function toAnalyzerPkg(p: WorkspacePackageIdentity): WorkspacePkg {
   return { name: p.name, version: p.version, private: p.private, importerPath: p.importerPath };
@@ -91,11 +94,15 @@ export function sbom(_args: readonly string[], deps: SbomDeps = defaultSbomDeps)
 
   const { sbom: doc, serialized, address } = buildSbom(lockfile, workspace);
   const sbomFacts = checkSbomCompleteness(doc, lockfile, workspace, address);
+  const vex = generateVex(doc);
+  const vexSerialized = serializeVex(vex);
+  const vexContentAddress = vexAddress(vex);
 
   // Write the reviewable artifact (create the parent dir if needed).
   const outPath = join(cwd, SBOM_ARTIFACT_PATH);
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, serialized);
+  writeFileSync(join(cwd, VEX_ARTIFACT_PATH), vexSerialized);
 
   const violations = [...lockfileFacts.violations, ...sbomFacts.violations].map((v) => ({
     code: v.code,
@@ -108,6 +115,9 @@ export function sbom(_args: readonly string[], deps: SbomDeps = defaultSbomDeps)
     timestamp: new Date(wallClock.now()).toISOString(),
     artifact_path: SBOM_ARTIFACT_PATH,
     content_address: ContentAddress(address),
+    vex_artifact_path: VEX_ARTIFACT_PATH,
+    vex_content_address: ContentAddress(vexContentAddress),
+    vex_assessment_count: vex.vulnerabilities.length,
     component_count: doc.components.length,
     lockfile_package_count: lockfileFacts.packageCount,
     violations,

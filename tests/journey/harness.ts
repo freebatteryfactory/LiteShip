@@ -32,6 +32,7 @@ import { PACKAGES, PEER_INSTALLS } from '../../packages/command/src/commands/pac
 import { scaffold } from '../../packages/create-liteship/src/scaffold.js';
 import { packInWorkspace } from '../support/pack.js';
 import { tarballFileUrl } from '../../packages/cli/src/lib/package-smoke-helpers.js';
+import { verifyReleaseArtifactBundle } from '../../packages/cli/src/lib/release-artifact-bundle.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.js';
 import { PRIOR_ASTRO_PACKAGE, PRIOR_CORE_PACKAGE } from './prior-operation-brand.js';
@@ -147,6 +148,27 @@ export async function packWorkspace(): Promise<PackedWorkspace> {
     tarballByName.set(pkg.name, tgz);
   }
   return { tarballDir, tarballByName };
+}
+
+/**
+ * Admit the exact frozen release fleet into the consumer journeys.
+ *
+ * The bundle is verified before a journey receives any path: source commit,
+ * addressed assurance plan, complete 25-package roster, raw tarball hashes,
+ * package identity, and semantic manifest digests all have to agree. The
+ * caller owns the directory, so the journey harness must not remove it.
+ */
+export function loadReleaseArtifactWorkspace(
+  artifactDir: string,
+  expectedSourceCommit?: string,
+  expectedPlanId?: string,
+): PackedWorkspace {
+  const absoluteArtifactDir = resolve(artifactDir);
+  const verified = verifyReleaseArtifactBundle(absoluteArtifactDir, expectedSourceCommit, expectedPlanId);
+  return {
+    tarballDir: absoluteArtifactDir,
+    tarballByName: verified.tarballByPackage,
+  };
 }
 
 /**

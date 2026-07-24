@@ -302,10 +302,12 @@ describe('(d) CI event tiers execute the intended authority', () => {
   it('plans pull-request impact from the canonical affected-test planner', () => {
     const plan = JOB_BLOCKS.get('plan')!;
     expect(plan).toContain('affected: ${{ steps.affected.outputs.plan }}');
-    expect(plan).toContain("if: github.event_name == 'pull_request'");
+    expect(plan).not.toContain("if: github.event_name == 'pull_request'");
     expect(plan).toContain(
       'pnpm exec tsx scripts/affected-plan.ts --output .liteship/affected-plan.json --github-output "$GITHUB_OUTPUT"',
     );
+    expect(plan).toContain('name: affected-plan');
+    expect(plan).toContain('LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING');
     expect(plan).not.toContain('echo "plan=$(');
     expect(plan).not.toContain('continue-on-error: true');
   });

@@ -160,6 +160,20 @@ export function findWorkspaceSpecLeaks(tarballBytes: Uint8Array): readonly strin
   return leaks;
 }
 
+/** Read the package identity carried by the tarball's authoritative manifest. */
+export function packedPackageIdentity(tarballBytes: Uint8Array): { readonly name: string; readonly version: string } {
+  const unzipped = new Uint8Array(gunzipSync(tarballBytes));
+  const entry = parseTar(unzipped).find((candidate) => candidate.path === 'package/package.json');
+  if (!entry) {
+    throw NotFoundError('package.json', 'package/package.json', 'tarball has no package/package.json entry');
+  }
+  const parsed = JSON.parse(new TextDecoder().decode(entry.bytes)) as { name?: unknown; version?: unknown };
+  if (typeof parsed.name !== 'string' || typeof parsed.version !== 'string') {
+    throw NotFoundError('package identity', 'package/package.json', 'tarball package.json has no name/version');
+  }
+  return { name: parsed.name, version: parsed.version };
+}
+
 /** Address a pnpm-lock.yaml (or equivalent) by its raw file bytes. YAML is its own normalization. */
 export const lockfileAddress = (lockfileBytes: Uint8Array): AddressedDigestType => AddressedDigest.of(lockfileBytes);
 
