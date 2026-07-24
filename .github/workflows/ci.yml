@@ -566,8 +566,10 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
-          name: reproducibility-report
-          path: benchmarks/reproducibility-report.json
+          name: consumer-evidence
+          path: |
+            benchmarks/reproducibility-report.json
+            benchmarks/one-install-cost-report.json
           if-no-files-found: ignore
           retention-days: 7
 

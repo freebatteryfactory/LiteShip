@@ -53,7 +53,7 @@ export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.gene
 export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
 export const TYPEDOC_JSON = 'typedoc.json';
-const LITESHIP_INDEX_REL = 'packages/liteship/src/index.ts';
+const LITESHIP_ROSTER_REL = 'packages/liteship/src/testing/package-roster.ts';
 
 export interface CatalogManifest {
   readonly name?: string;
@@ -421,17 +421,17 @@ function write(): number {
     writeIfChanged(relativePath, applyMarkdownProjection(source, marker, render()));
   }
 
-  const indexPath = resolve(REPO_ROOT, LITESHIP_INDEX_REL);
+  const indexPath = resolve(REPO_ROOT, LITESHIP_ROSTER_REL);
   const source = readFileSync(indexPath, 'utf8');
   if (!LITESHIP_BLOCK.test(source)) {
-    process.stderr.write(`gen-roster: markers missing from ${LITESHIP_INDEX_REL}\n`);
+    process.stderr.write(`gen-roster: markers missing from ${LITESHIP_ROSTER_REL}\n`);
     return 1;
   }
   const stamped = source.replace(
     LITESHIP_BLOCK,
     (_match, begin: string, end: string) => `${begin}${renderLiteshipPackages()}${end}`,
   );
-  writeIfChanged(LITESHIP_INDEX_REL, stamped);
+  writeIfChanged(LITESHIP_ROSTER_REL, stamped);
   process.stdout.write(
     `gen-roster: generated ${renderGeneratedProjections().length + 1} catalog projections and ${fragmentCount} packaged fragments from ${PACKAGE_CATALOG.length} catalog records.\n`,
   );
@@ -666,10 +666,10 @@ export function collectGeneratedProjectionDrift(
     }
   }
 
-  const indexSource = readProjection(LITESHIP_INDEX_REL);
+  const indexSource = readProjection(LITESHIP_ROSTER_REL);
   const match = indexSource == null ? null : LITESHIP_BLOCK.exec(indexSource);
   if (!match || !match[0].includes(renderLiteshipPackages())) {
-    drift.push({ copy: LITESHIP_INDEX_REL, detail: 'stale generated LITESHIP_PACKAGES block' });
+    drift.push({ copy: LITESHIP_ROSTER_REL, detail: 'stale generated LITESHIP_PACKAGES block' });
   }
 
   return drift;
@@ -698,7 +698,7 @@ function emit(): void {
   for (const [relativePath, expected] of renderGeneratedProjections()) {
     process.stdout.write(`# ${relativePath}\n${expected}\n`);
   }
-  process.stdout.write(`# ${LITESHIP_INDEX_REL}\n${renderLiteshipPackages()}\n`);
+  process.stdout.write(`# ${LITESHIP_ROSTER_REL}\n${renderLiteshipPackages()}\n`);
 }
 
 function check(): number {

@@ -157,7 +157,12 @@ describe('PACKAGE_CATALOG negative controls', () => {
 
   it('rejects one stale generated projection without touching the checkout', () => {
     const source = new Map(renderGeneratedProjections());
-    for (const path of ['ARCHITECTURE.md', 'PACKAGE-SURFACES.md', 'AGENTS.md', 'packages/liteship/src/index.ts']) {
+    for (const path of [
+      'ARCHITECTURE.md',
+      'PACKAGE-SURFACES.md',
+      'AGENTS.md',
+      'packages/liteship/src/testing/package-roster.ts',
+    ]) {
       source.set(path, readFileSync(resolve(REPO, path), 'utf8'));
     }
     source.set('scripts/ci/publish-roster.json', '{"stale":true}\n');

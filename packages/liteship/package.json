@@ -25,7 +25,7 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "//exports-facade": "CURATED FACADE (P13): the `.` root is a BUDGETED authoring surface (enforced by the gauntlet/facade-export-budget gate against src/export-budget.ts); the twelve domain SUBPATHS each resolve to a `src/<name>.ts` facade of EXPLICIT curated named re-exports (facade law — no `export *`, guarded by the sgrules facade globs). Importing `.` evaluates NO host integration; `./astro` and `./vite` live behind their own subpaths whose module graphs are independent, so a vite-only app never evaluates @liteship/astro. `./migrate` (added in P14) re-exports the @liteship/compiler/migrate adapters.",
+  "//exports-facade": "CURATED FACADE: the `.` root is a BUDGETED authoring and inspection surface (enforced by the gauntlet/facade-export-budget gate against src/export-budget.ts); the thirteen governed expert SUBPATHS each resolve to a `src/<name>.ts` facade of EXPLICIT curated named re-exports (facade law — no `export *`, guarded by the sgrules facade globs). Importing `.` evaluates NO host integration; `./astro` and `./vite` live behind their own subpaths whose module graphs are independent, so a vite-only app never evaluates @liteship/astro. `./migrate` re-exports the @liteship/compiler/migrate adapters and `./genui` directly re-exports @liteship/genui without wrappers.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -91,6 +91,11 @@
       "types": "./dist/migrate.d.ts",
       "import": "./dist/migrate.js",
       "development": "./src/migrate.ts"
+    },
+    "./genui": {
+      "types": "./dist/genui.d.ts",
+      "import": "./dist/genui.js",
+      "development": "./src/genui.ts"
     }
   },
   "files": [

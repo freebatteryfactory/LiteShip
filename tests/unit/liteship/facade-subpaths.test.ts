@@ -3,7 +3,7 @@
  * The `liteship` curated-facade RESOLUTION + TYPE-CHECK gate (P13).
  *
  * The umbrella became a REAL curated facade: a budgeted root `.` authoring surface
- * plus twelve domain SUBPATHS (`liteship/schema`, `liteship/reactive`, …), each a
+ * plus governed expert SUBPATHS (`liteship/schema`, `liteship/reactive`, …), each a
  * `src/<name>.ts` file of explicit named re-exports. This gate proves the promise a
  * consumer actually depends on:
  *
@@ -36,8 +36,15 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, symlinkSync, existsSync,
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ROOT_VALUE_BUDGET, ROOT_TYPE_BUDGET } from '../../../packages/liteship/src/export-budget.js';
+import {
+  FACADE_SUBPATH_CONTRACT,
+  ROOT_EXPORT_CONTRACT,
+  ROOT_VALUE_BUDGET,
+  ROOT_TYPE_BUDGET,
+} from '../../../packages/liteship/src/export-budget.js';
 import * as Root from '../../../packages/liteship/src/index.js';
+import * as GenuiFacade from '../../../packages/liteship/src/genui.js';
+import * as GenuiOwner from '../../../packages/genui/src/index.js';
 import { facadeExportBudgetGate, verifyGate, memoryContext } from '../../../packages/gauntlet/src/index.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
@@ -59,33 +66,22 @@ interface FacadeEntry {
   readonly symbol: string;
 }
 
-/** The thirteen declared facade entries — the root plus the twelve domain subpaths. */
+/** The facade entries derived from the role-bearing product contract. */
 const FACADE: readonly FacadeEntry[] = [
   { subpath: '.', specifier: 'liteship', dist: 'index.d.ts', symbol: 'defineBoundary' },
-  { subpath: './schema', specifier: 'liteship/schema', dist: 'schema.d.ts', symbol: 'schema' },
-  { subpath: './reactive', specifier: 'liteship/reactive', dist: 'reactive.d.ts', symbol: 'createCell' },
-  { subpath: './motion', specifier: 'liteship/motion', dist: 'motion.d.ts', symbol: 'createTimeline' },
-  { subpath: './graph', specifier: 'liteship/graph', dist: 'graph.d.ts', symbol: 'DAG' },
-  { subpath: './media', specifier: 'liteship/media', dist: 'media.d.ts', symbol: 'Compositor' },
-  { subpath: './evidence', specifier: 'liteship/evidence', dist: 'evidence.d.ts', symbol: 'chooseTier' },
-  { subpath: './compiler', specifier: 'liteship/compiler', dist: 'compiler.d.ts', symbol: 'CSSCompiler' },
-  { subpath: './runtime', specifier: 'liteship/runtime', dist: 'runtime.d.ts', symbol: 'Morph' },
-  { subpath: './astro', specifier: 'liteship/astro', dist: 'astro.d.ts', symbol: 'adaptiveAttrs' },
-  { subpath: './vite', specifier: 'liteship/vite', dist: 'vite.d.ts', symbol: 'plugin' },
-  { subpath: './testing', specifier: 'liteship/testing', dist: 'testing.d.ts', symbol: 'resetCapsuleCatalog' },
-  { subpath: './migrate', specifier: 'liteship/migrate', dist: 'migrate.d.ts', symbol: 'fromMediaQueries' },
+  ...FACADE_SUBPATH_CONTRACT.map((entry) => ({
+    subpath: entry.subpath,
+    specifier: entry.specifier,
+    dist: `${entry.subpath.slice(2)}.d.ts`,
+    symbol: entry.symbol,
+  })),
 ];
 
 /** Host-integration scopes the root `.` must NEVER pull into its module graph. */
 const HOST_SCOPES = ['@liteship/astro', '@liteship/vite', '@liteship/web'] as const;
 
 /** The host-integration-free runtime scopes the root `.` is allowed to evaluate. */
-const ROOT_RUNTIME_SCOPES = [
-  '@liteship/core',
-  '@liteship/quantizer',
-  '@liteship/compiler',
-  '@liteship/error',
-] as const;
+const ROOT_RUNTIME_SCOPES = ['@liteship/core', '@liteship/quantizer', '@liteship/compiler', '@liteship/error'] as const;
 
 /** Shared compiler options; only the module/resolution pair differs per mode. */
 function optionsFor(mode: 'node16' | 'bundler'): ts.CompilerOptions {
@@ -209,6 +205,33 @@ describe('liteship facade — consumer type-checks (node16 + bundler)', () => {
 });
 
 describe('liteship facade — root export budget (exact match + caps)', () => {
+  it('derives both exact budgets from complete role-bearing decisions', () => {
+    expect(ROOT_EXPORT_CONTRACT.every((entry) => entry.role === 'authoring' || entry.role === 'inspection')).toBe(true);
+    expect(ROOT_EXPORT_CONTRACT.every((entry) => entry.userStory.length > 0 && entry.failureContract.length > 0)).toBe(
+      true,
+    );
+    expect(ROOT_VALUE_BUDGET).toEqual(
+      ROOT_EXPORT_CONTRACT.filter((entry) => entry.kind === 'value').map((entry) => entry.name),
+    );
+    expect(ROOT_TYPE_BUDGET).toEqual(
+      ROOT_EXPORT_CONTRACT.filter((entry) => entry.kind === 'type').map((entry) => entry.name),
+    );
+  });
+
+  it('governs every expert subpath with a packed proof and operating contract', () => {
+    expect(
+      FACADE_SUBPATH_CONTRACT.every(
+        (entry) =>
+          entry.userStory.length > 0 &&
+          entry.dependencyCost.length > 0 &&
+          entry.packedProof.length > 0 &&
+          entry.lifecycle.length > 0 &&
+          entry.failureContract.length > 0 &&
+          entry.reason.length > 0,
+      ),
+    ).toBe(true);
+  });
+
   it('every runtime value the root exports is listed in ROOT_VALUE_BUDGET', () => {
     const budget = new Set<string>(ROOT_VALUE_BUDGET);
     const unlisted = Object.keys(Root).filter((name) => !budget.has(name));
@@ -240,9 +263,25 @@ describe('liteship facade — root export budget (exact match + caps)', () => {
 describe('gauntlet/facade-export-budget — exact-match gate (both directions)', () => {
   const BUDGET_FILE = 'packages/liteship/src/export-budget.ts';
   const ROOT_DTS_FILE = 'packages/liteship/dist/index.d.ts';
-  const FIXTURE_BUDGET =
-    "export const ROOT_VALUE_BUDGET = [\n  'alpha',\n  'beta',\n] as const;\n" +
-    "export const ROOT_TYPE_BUDGET = [\n  'Gamma',\n  'Delta',\n] as const;\n";
+  const entry = (name: string, kind: 'value' | 'type', role = 'authoring') => ({
+    name,
+    kind,
+    role,
+    owner: '@liteship/core',
+    userStory: `Use ${name}.`,
+    lifecycle: 'pure',
+    failureContract: `${name} fails explicitly.`,
+    example: name,
+    stability: 'stable',
+  });
+  const source = (entries: readonly object[]): string =>
+    `export const ROOT_EXPORT_CONTRACT_SOURCE = \`${JSON.stringify(entries)}\`;`;
+  const FIXTURE_BUDGET = source([
+    entry('alpha', 'value'),
+    entry('beta', 'value'),
+    entry('Gamma', 'type'),
+    entry('Delta', 'type'),
+  ]);
 
   it('self-proves (red caught, green clean, mutation killed)', () => {
     const proof = verifyGate(facadeExportBudgetGate);
@@ -277,6 +316,32 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
     const findings = facadeExportBudgetGate.run(ctx);
     expect(findings.some((f) => f.detail.includes('beta') && f.title.includes('dropped'))).toBe(true);
   });
+
+  it('a tooling role is rejected even while the numeric budget and exact names fit', () => {
+    const ctx = memoryContext({
+      [BUDGET_FILE]: source([entry('alpha', 'value', 'tooling')]),
+      [ROOT_DTS_FILE]: 'export declare const alpha: number;\n',
+    });
+    expect(facadeExportBudgetGate.run(ctx).some((finding) => finding.title.includes('role-ineligible'))).toBe(true);
+  });
+
+  it('a role-eligible exact surface still reds when it exceeds the numeric cap', () => {
+    const entries = Array.from({ length: 31 }, (_, index) => entry(`value${index}`, 'value'));
+    const dts = entries.map((item) => `export declare const ${item.name}: number;`).join('\n');
+    const findings = facadeExportBudgetGate.run(
+      memoryContext({ [BUDGET_FILE]: source(entries), [ROOT_DTS_FILE]: dts }),
+    );
+    expect(findings.some((finding) => finding.title.includes('cap exceeded'))).toBe(true);
+  });
+});
+
+describe('liteship/genui — direct owner identity', () => {
+  it('re-exports every runtime value by reference instead of wrapping the owner', () => {
+    expect(Object.keys(GenuiFacade).sort()).toEqual(Object.keys(GenuiOwner).sort());
+    for (const name of Object.keys(GenuiOwner)) {
+      expect(GenuiFacade[name as keyof typeof GenuiFacade], name).toBe(GenuiOwner[name as keyof typeof GenuiOwner]);
+    }
+  });
 });
 
 describe('liteship facade — the root is host-integration-free', () => {
@@ -300,12 +365,8 @@ describe('liteship facade — the root is host-integration-free', () => {
     ).toEqual([]);
   });
 
-  it('the root d.ts type-only host re-exports are erased from the runtime graph', () => {
-    // `@liteship/gauntlet` (Finding) is a TYPE-only root re-export: it must be erased
-    // from the emitted JS, proving type-only host links never become runtime edges.
-    // (The name still appears as DATA inside the `LITESHIP_PACKAGES` roster array — so
-    // assert the absence of the module-EDGE form `from '@liteship/gauntlet'`, not the
-    // bare substring.)
+  it('the root d.ts has no evidence-tooling runtime edge', () => {
+    // Finding moved to `liteship/evidence`; root must not evaluate gauntlet tooling.
     const js = readFileSync(ROOT_JS, 'utf8');
     expect(js).not.toMatch(/from\s*['"]@liteship\/gauntlet['"]/);
   });

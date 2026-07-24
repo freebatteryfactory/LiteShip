@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
-import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/index.js';
+import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/testing.js';
 import { CANONICAL_ROSTER, renderLiteshipPackages } from '../../../scripts/gen-roster.js';
 import { packageManifests, packageRoster } from '../../support/repo-truths.js';
 
@@ -17,7 +17,13 @@ import { packageManifests, packageRoster } from '../../support/repo-truths.js';
 // `@liteship/*` (the umbrella can't depend on the non-scoped `liteship` /
 // `create-liteship`). This guard's ASSERTIONS are unchanged.
 
-const LITESHIP_INDEX = resolve(import.meta.dirname, '..', '..', '..', 'packages/liteship/src/index.ts');
+const LITESHIP_ROSTER = resolve(
+  import.meta.dirname,
+  '..',
+  '..',
+  '..',
+  'packages/liteship/src/testing/package-roster.ts',
+);
 
 function liteshipDependenciesFromManifest(): string[] {
   const liteship = packageManifests().find((manifest) => manifest.dir === 'liteship');
@@ -28,9 +34,13 @@ function liteshipDependenciesFromManifest(): string[] {
 
 /** The exact text inside the `BEGIN/END gen-roster: LITESHIP_PACKAGES` markers. */
 function generatedBlock(): string {
-  const src = readFileSync(LITESHIP_INDEX, 'utf8');
-  const match = /\/\* BEGIN gen-roster: LITESHIP_PACKAGES[^\n]*\*\/\n([\s\S]*?)\n\/\* END gen-roster: LITESHIP_PACKAGES/.exec(src);
-  if (!match) throw new Error('packages/liteship/src/index.ts: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found');
+  const src = readFileSync(LITESHIP_ROSTER, 'utf8');
+  const match =
+    /\/\* BEGIN gen-roster: LITESHIP_PACKAGES[^\n]*\*\/\n([\s\S]*?)\n\/\* END gen-roster: LITESHIP_PACKAGES/.exec(src);
+  if (!match)
+    throw new Error(
+      'packages/liteship/src/testing/package-roster.ts: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found',
+    );
   return match[1]!;
 }
 

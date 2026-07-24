@@ -34,5 +34,5 @@ export const GENERATED_PACKAGE_TOPOLOGY = {
   // The generated scaffold imports core and the core/fs-walk public subpath.
   "create-liteship": { kind: "standalone", allowedInternalImports: ["@liteship/core"] },
   // The facade is a dependency sink whose explicit subpaths re-export these semantic and host owners.
-  "liteship": { kind: "host-adjacent", allowedInternalImports: ["@liteship/core", "@liteship/quantizer", "@liteship/gauntlet", "@liteship/compiler", "@liteship/web", "@liteship/astro", "@liteship/vite"] },
+  "liteship": { kind: "host-adjacent", allowedInternalImports: ["@liteship/core", "@liteship/quantizer", "@liteship/gauntlet", "@liteship/compiler", "@liteship/web", "@liteship/astro", "@liteship/vite", "@liteship/genui"] },
 } as const;

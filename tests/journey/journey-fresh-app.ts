@@ -5,6 +5,9 @@
  *
  * The journey invokes the executable resolved from the packed consumer's own
  * install under both npm and pnpm. The load-bearing assertion is that each
+ * strict one-install consumer resolves `liteship/genui` through the facade's
+ * own dependency graph with an exact runtime namespace/reference match to
+ * `@liteship/genui`, and that each
  * built `dist/**` HTML carries BOTH `data-liteship-boundary` (the serialized
  * boundary identity `adaptiveAttrs` emits) AND
  * `data-liteship-directive="adaptive"` (the directive-boot marker) — the end-to-end
@@ -22,6 +25,7 @@ import {
   installConsumer,
   journeyAssert,
   parseReceipt,
+  proveInstalledRuntimeFacadeIdentity,
   rewriteConsumerToTarballs,
   removeDir,
   runConsumerScript,
@@ -33,6 +37,25 @@ import {
 } from './harness.js';
 
 const MANAGERS: readonly ConsumerPackageManager[] = ['npm', 'pnpm'];
+
+async function proveGenuiFacadeIdentity(appDir: string, manager: ConsumerPackageManager): Promise<number> {
+  const proof = await proveInstalledRuntimeFacadeIdentity(appDir, 'liteship/genui', '@liteship/genui');
+  journeyAssert(proof.exportNames.length > 0, `${manager} liteship/genui exposed an empty runtime namespace`);
+
+  for (const [role, url] of [
+    ['facade', proof.facadeUrl],
+    ['owner', proof.ownerUrl],
+  ] as const) {
+    const normalized = url.replaceAll('\\', '/');
+    journeyAssert(normalized.includes('/node_modules/'), `${manager} GenUI ${role} escaped the packed install: ${url}`);
+    journeyAssert(
+      !normalized.includes('/packages/liteship/') && !normalized.includes('/packages/genui/'),
+      `${manager} GenUI ${role} resolved through workspace source instead of packed node_modules: ${url}`,
+    );
+  }
+
+  return proof.exportNames.length;
+}
 
 async function proveOwnedDirectiveEntrypoints(appDir: string, manager: ConsumerPackageManager): Promise<void> {
   const probePath = join(appDir, '.liteship-owned-entrypoints.mjs');
@@ -83,7 +106,12 @@ async function proveOwnedDirectiveEntrypoints(appDir: string, manager: ConsumerP
   }
 }
 
-async function proveManager(manager: ConsumerPackageManager, packed: PackedWorkspace): Promise<number> {
+interface FreshAppProof {
+  readonly htmlCount: number;
+  readonly genuiExportCount: number;
+}
+
+async function proveManager(manager: ConsumerPackageManager, packed: PackedWorkspace): Promise<FreshAppProof> {
   const appDir = scaffoldConsumer();
   try {
     rewriteConsumerToTarballs(appDir, packed, { packageManager: manager });
@@ -116,6 +144,7 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
       `${manager} one-install did not link the facade-owned liteship executable`,
     );
 
+    const genuiExports = await proveGenuiFacadeIdentity(appDir, manager);
     await proveOwnedDirectiveEntrypoints(appDir, manager);
 
     const check = await runConsumerScript('check', appDir, manager);
@@ -153,7 +182,7 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
     );
     journeyAssert(boundaryHit, `${manager} built HTML contains no data-liteship-boundary`);
     journeyAssert(directiveHit, `${manager} built HTML contains no data-liteship-directive="adaptive"`);
-    return htmlFiles.length;
+    return { htmlCount: htmlFiles.length, genuiExportCount: genuiExports };
   } finally {
     removeDir(join(appDir, '..'));
   }
@@ -162,15 +191,18 @@ async function proveManager(manager: ConsumerPackageManager, packed: PackedWorks
 export async function journeyFreshApp(packed: PackedWorkspace): Promise<JourneyResult> {
   const name = 'journey-fresh-app';
   try {
-    const htmlCounts = new Map<ConsumerPackageManager, number>();
-    for (const manager of MANAGERS) htmlCounts.set(manager, await proveManager(manager, packed));
+    const proofs = new Map<ConsumerPackageManager, FreshAppProof>();
+    for (const manager of MANAGERS) proofs.set(manager, await proveManager(manager, packed));
 
     return {
       name,
       status: 'pass',
       detail:
-        `npm (${htmlCounts.get('npm')} HTML) + pnpm (${htmlCounts.get('pnpm')} HTML) packed installs each ran ` +
-        'installed liteship build and emitted dist with data-liteship-boundary + data-liteship-directive="adaptive"',
+        `npm (${proofs.get('npm')?.htmlCount} HTML, ${proofs.get('npm')?.genuiExportCount} GenUI exports) + ` +
+        `pnpm (${proofs.get('pnpm')?.htmlCount} HTML, ${proofs.get('pnpm')?.genuiExportCount} GenUI exports) ` +
+        'packed installs each proved ' +
+        'liteship/genui owner identity, ran installed liteship build, and emitted dist with ' +
+        'data-liteship-boundary + data-liteship-directive="adaptive"',
       notes: [],
     };
   } catch (error) {

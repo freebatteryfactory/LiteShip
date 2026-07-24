@@ -48,14 +48,14 @@ These are the performance and capability decisions:
 
 ### If the question is "What is the IR everything casts from?"
 
-Read [ARCHITECTURE.md](./ARCHITECTURE.md) — "Document graph (the IR)" and "AI cast" — then
+Read [ARCHITECTURE.md](./ARCHITECTURE.md) — "Document graph (the IR)" and "AI projection" — then
 [ADR-0015 document graph IR](./docs/adr/0015-document-graph-ir.md).
 
 This is the keystone:
 
 - the content-addressed document graph (eight node families)
 - `GraphPatch`, the one typed mutation path
-- the AI cast envelope (validate before apply, never the reverse)
+- the AI proposal envelope (validate before apply, never the reverse)
 
 ### If the question is "How should I think with this on a visually rich Astro site?"
 
@@ -175,51 +175,51 @@ Read [CHANGELOG.md](./CHANGELOG.md). For shipping npm/GitHub releases, see
 
 For agents and grep-first humans, here is where the canonical answer lives:
 
-| Question | File |
-|---|---|
-| Where is `Boundary` defined? | `packages/core/src/authoring/boundary.ts` (re-exported from `packages/core/src/index.ts`) |
-| Where is `Token` defined? | `packages/core/src/authoring/token.ts` |
-| Where is `Style` defined? | `packages/core/src/authoring/style.ts` |
-| Where is `Theme` defined? | `packages/core/src/authoring/theme.ts` |
-| Where does the canonical CBOR encoder live? | `packages/canonical/src/cbor.ts` (`@liteship/canonical`; re-exported from `packages/core/src/schema/cbor.ts`) |
-| Where is the FNV-1a hash? | `packages/canonical/src/fnv.ts` (re-anchored to core brands by `packages/core/src/evidence/fnv.ts`) |
-| Where is the generated UI catalog renderer? | `packages/genui/src/` (`defineComponentCatalog`, `renderFromCatalog`; ADR-0014) |
-| Where is the SPSC ring buffer? | `packages/worker/src/spsc-ring.ts` |
-| Where is the compositor pool? | `packages/core/src/media/compositor-pool.ts` |
-| Where is `DirtyFlags`? | `packages/core/src/reactive/dirty.ts` |
-| Where is the HTML sanitizer? | `packages/web/src/security/html-trust.ts` |
-| Where is the SSRF / private-IP guard? | `packages/web/src/security/runtime-url.ts` |
-| Where is the runtime policy global written? | `packages/astro/src/runtime/policy.ts`, via `globals.ts` |
-| Where does `client:adaptive` register? | `packages/astro/src/integration.ts` |
-| Where is the `Adaptive` Astro component? | `packages/astro/src/Adaptive.astro` (default export from `@liteship/astro/Adaptive`) |
-| Where is the document graph IR? | `packages/core/src/graph/document-graph.ts` + `graph/document-graph-address.ts` (`sealNode`/`sealGraph`; ADR-0015) |
-| How do I mutate a graph? | `packages/core/src/graph/graph-patch.ts` (`GraphPatch.diff`/`apply`/`validate`; apply re-seals) |
-| Where is the AI cast / how is a model proposal validated? | `packages/core/src/authoring/ai-cast.ts` (`castContext` → `validateGraphPatchProposal` → `applyValidatedPatch`); envelope in `evidence/validated-output.ts` (ADR-0015) |
-| How does a surface choose a render tier? | `packages/core/src/evidence/escalation.ts` (`chooseTier`; budget-gated, wired in the compositor) |
-| Where is the dual-export (one graph → page + video)? | `packages/stage/src/dual-export.ts` (`dualExport`; ffmpeg backend on `@liteship/stage/ffmpeg`) |
-| What runs in `lint:structural`? | `sgconfig.yml` + `sgrules/` (AST guards; `AUDIT.md` "Structural lint") |
-| How do I add a new compile target? | `docs/adr/0006-compiler-dispatch.md`, then `packages/compiler/src/dispatch.ts` |
-| How do I add a new primitive? | `docs/adr/0001-namespace-pattern.md`, then mirror the existing primitive shape in `packages/core/src/` |
-| How do I extend an existing type union? | The pattern is grep-first today; see CONTRIBUTING.md "Architecture changes" and the affected `_spine/*.d.ts` file |
-| Where is the canonical CI workflow? | `.github/workflows/ci.yml` (truth-linux job runs `pnpm run gauntlet:full`) |
-| What is the 0.9 PR accept bar? | `pnpm run gauntlet:full -- --profile local-safe` — omits `docs:check` (memory-hungry; run alone when docs inputs change; see SKILL.md) |
-| Which API docs build is canonical? | [ADR-0038](./docs/adr/0038-typedoc-monolith-canonical.md) — monolith `pnpm run docs:build`; sharded is experimental |
-| Where is the red-team regression suite? | `tests/regression/red-team-runtime.test.ts` |
-| What does `flex:verify` check? | `scripts/flex-verify.ts` (7 dimensions; gauntlet's final phase rollup) |
-| How do I batch-evaluate many values against one boundary? | `Boundary.evaluateBatch(boundary, values)` in `packages/core/src/authoring/boundary.ts` (routed through `WASMDispatch.kernels()`; output-identical to scalar `evaluate`) |
-| Where does the WASM kernel ship / get resolved? | `scripts/build-wasm.ts` stages it into `@liteship/core/dist`; `packages/vite/src/wasm-resolve.ts` resolves it through the module graph (`@liteship/vite` → `@liteship/core`) |
-| How do I force the GPU shader below the tier gate? | `client:gpu={{ force: true }}` or `data-liteship-gpu-force` (ASTRO-RUNTIME-MODEL.md § `gpu`; `packages/astro/src/runtime/gpu.ts`) |
-| When does capability detection finish? | the `liteship:detect-ready` event on `document` (ASTRO-RUNTIME-MODEL.md § "Capability detection"; `packages/astro/src/detect-upgrade.ts`) |
-| How do I read the resolved GPU tier client-side? | the `liteship:detect-ready` detail or `window.__LITESHIP_DETECT__` — `gpuTier`/`webgpu` are not `<html>` attributes (as of 0.3.0) |
-| How do I drive a boundary from live audio? | `driveAudioFromAnalyser(analyser)` from `@liteship/astro/runtime`, then `defineBoundary({ input: 'audio.amplitude' or 'audio.beat', ... })` (`packages/astro/src/runtime/audio-signal.ts`) |
-| Where is the canonical signal-input vocabulary? | `SignalSource` + `sourceToInput`/`inputToSource` in `packages/core/src/reactive/signal-input.ts` (source of truth for `viewport.width`, `scroll.progress`, `audio.amplitude`, ...) |
-| How do I open the dev boundary inspector? | the Astro dev-toolbar (liteship toolbar icon) in `astro dev`; opt out with `liteship({ inspector: false })` |
-| How do I skip the manual `src/middleware.ts`? | `liteship({ middleware: true })` auto-wires detection (`@liteship/astro/middleware-entry`); typed `Astro.locals.liteship.tiers` |
-| How does a client send an edit back to the server? | `createGraphMutationClient` + `sendGraphMutation` (`packages/core/src/graph/graph-mutation-client.ts`, `graph/graph-mutation.ts`); the host route is `graphMutationRoute` (ARCHITECTURE.md § "The mutation channel"; `examples/06-mutation-roundtrip`) |
-| How do I bind a form to the mutation channel? | `bindGraphForm` from `@liteship/web` (`packages/web/src/mutation/graph-form.ts`; ADR-0031; `examples/06-mutation-roundtrip`) |
-| How do I keep the morph out of a client-owned subtree (CodeMirror, canvas)? | mark it `data-liteship-morph-opaque` — `MorphOpaque` in `@liteship/web` (`packages/web/src/morph/opaque.ts`; ADR-0032) |
-| How do I use LiteShip's node schema with a Standard-Schema-aware library? | `DocumentGraphNodeSchema` carries `~standard` (Standard Schema V1) (`packages/core/src/graph/document-graph-schema.ts`; ADR-0033) |
-| What does a `staleBase` refusal / HTTP 409 mean? | the mutation was proposed against a base the server has moved past — reload and re-propose (the client does this automatically with `refreshBase`); `packages/core/src/graph/graph-mutation.ts`, ADR-0031 |
+| Question                                                                    | File                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Where is `Boundary` defined?                                                | `packages/core/src/authoring/boundary.ts` (re-exported from `packages/core/src/index.ts`)                                                                                                                                                              |
+| Where is `Token` defined?                                                   | `packages/core/src/authoring/token.ts`                                                                                                                                                                                                                 |
+| Where is `Style` defined?                                                   | `packages/core/src/authoring/style.ts`                                                                                                                                                                                                                 |
+| Where is `Theme` defined?                                                   | `packages/core/src/authoring/theme.ts`                                                                                                                                                                                                                 |
+| Where does the canonical CBOR encoder live?                                 | `packages/canonical/src/cbor.ts` (`@liteship/canonical`; re-exported from `packages/core/src/schema/cbor.ts`)                                                                                                                                          |
+| Where is the FNV-1a hash?                                                   | `packages/canonical/src/fnv.ts` (re-anchored to core brands by `packages/core/src/evidence/fnv.ts`)                                                                                                                                                    |
+| Where is the generated UI catalog renderer?                                 | `packages/genui/src/` (`defineComponentCatalog`, `renderFromCatalog`; ADR-0014)                                                                                                                                                                        |
+| Where is the SPSC ring buffer?                                              | `packages/worker/src/spsc-ring.ts`                                                                                                                                                                                                                     |
+| Where is the compositor pool?                                               | `packages/core/src/media/compositor-pool.ts`                                                                                                                                                                                                           |
+| Where is `DirtyFlags`?                                                      | `packages/core/src/reactive/dirty.ts`                                                                                                                                                                                                                  |
+| Where is the HTML sanitizer?                                                | `packages/web/src/security/html-trust.ts`                                                                                                                                                                                                              |
+| Where is the SSRF / private-IP guard?                                       | `packages/web/src/security/runtime-url.ts`                                                                                                                                                                                                             |
+| Where is the runtime policy global written?                                 | `packages/astro/src/runtime/policy.ts`, via `globals.ts`                                                                                                                                                                                               |
+| Where does `client:adaptive` register?                                      | `packages/astro/src/integration.ts`                                                                                                                                                                                                                    |
+| Where is the `Adaptive` Astro component?                                    | `packages/astro/src/Adaptive.astro` (default export from `@liteship/astro/Adaptive`)                                                                                                                                                                   |
+| Where is the document graph IR?                                             | `packages/core/src/graph/document-graph.ts` + `graph/document-graph-address.ts` (`sealNode`/`sealGraph`; ADR-0015)                                                                                                                                     |
+| How do I mutate a graph?                                                    | `packages/core/src/graph/graph-patch.ts` (`GraphPatch.diff`/`apply`/`validate`; apply re-seals)                                                                                                                                                        |
+| Where is the AI projection / how is a model proposal validated?             | `packages/core/src/authoring/ai-cast.ts` (`castContext` → `validateGraphPatchProposal` → `applyValidatedPatch`); envelope in `evidence/validated-output.ts` (ADR-0015)                                                                                 |
+| How does a surface choose a render tier?                                    | `packages/core/src/evidence/escalation.ts` (`chooseTier`; budget-gated, wired in the compositor)                                                                                                                                                       |
+| Where is the dual-export (one graph → page + video)?                        | `packages/stage/src/dual-export.ts` (`dualExport`; ffmpeg backend on `@liteship/stage/ffmpeg`)                                                                                                                                                         |
+| What runs in `lint:structural`?                                             | `sgconfig.yml` + `sgrules/` (AST guards; `AUDIT.md` "Structural lint")                                                                                                                                                                                 |
+| How do I add a new compile target?                                          | `docs/adr/0006-compiler-dispatch.md`, then `packages/compiler/src/dispatch.ts`                                                                                                                                                                         |
+| How do I add a new primitive?                                               | `docs/adr/0001-namespace-pattern.md`, then mirror the existing primitive shape in `packages/core/src/`                                                                                                                                                 |
+| How do I extend an existing type union?                                     | The pattern is grep-first today; see CONTRIBUTING.md "Architecture changes" and the affected `_spine/*.d.ts` file                                                                                                                                      |
+| Where is the canonical CI workflow?                                         | `.github/workflows/ci.yml` (truth-linux job runs `pnpm run gauntlet:full`)                                                                                                                                                                             |
+| What is the 0.9 PR accept bar?                                              | `pnpm run gauntlet:full -- --profile local-safe` — omits `docs:check` (memory-hungry; run alone when docs inputs change; see SKILL.md)                                                                                                                 |
+| Which API docs build is canonical?                                          | [ADR-0038](./docs/adr/0038-typedoc-monolith-canonical.md) — monolith `pnpm run docs:build`; sharded is experimental                                                                                                                                    |
+| Where is the red-team regression suite?                                     | `tests/regression/red-team-runtime.test.ts`                                                                                                                                                                                                            |
+| What does `flex:verify` check?                                              | `scripts/flex-verify.ts` (7 dimensions; gauntlet's final phase rollup)                                                                                                                                                                                 |
+| How do I batch-evaluate many values against one boundary?                   | `Boundary.evaluateBatch(boundary, values)` in `packages/core/src/authoring/boundary.ts` (routed through `WASMDispatch.kernels()`; output-identical to scalar `evaluate`)                                                                               |
+| Where does the WASM kernel ship / get resolved?                             | `scripts/build-wasm.ts` stages it into `@liteship/core/dist`; `packages/vite/src/wasm-resolve.ts` resolves it through the module graph (`@liteship/vite` → `@liteship/core`)                                                                           |
+| How do I force the GPU shader below the tier gate?                          | `client:gpu={{ force: true }}` or `data-liteship-gpu-force` (ASTRO-RUNTIME-MODEL.md § `gpu`; `packages/astro/src/runtime/gpu.ts`)                                                                                                                      |
+| When does capability detection finish?                                      | the `liteship:detect-ready` event on `document` (ASTRO-RUNTIME-MODEL.md § "Capability detection"; `packages/astro/src/detect-upgrade.ts`)                                                                                                              |
+| How do I read the resolved GPU tier client-side?                            | the `liteship:detect-ready` detail or `window.__LITESHIP_DETECT__` — `gpuTier`/`webgpu` are not `<html>` attributes (as of 0.3.0)                                                                                                                      |
+| How do I drive a boundary from live audio?                                  | `driveAudioFromAnalyser(analyser)` from `@liteship/astro/runtime`, then `defineBoundary({ input: 'audio.amplitude' or 'audio.beat', ... })` (`packages/astro/src/runtime/audio-signal.ts`)                                                             |
+| Where is the canonical signal-input vocabulary?                             | `SignalSource` + `sourceToInput`/`inputToSource` in `packages/core/src/reactive/signal-input.ts` (source of truth for `viewport.width`, `scroll.progress`, `audio.amplitude`, ...)                                                                     |
+| How do I open the dev boundary inspector?                                   | the Astro dev-toolbar (liteship toolbar icon) in `astro dev`; opt out with `liteship({ inspector: false })`                                                                                                                                            |
+| How do I skip the manual `src/middleware.ts`?                               | `liteship({ middleware: true })` auto-wires detection (`@liteship/astro/middleware-entry`); typed `Astro.locals.liteship.tiers`                                                                                                                        |
+| How does a client send an edit back to the server?                          | `createGraphMutationClient` + `sendGraphMutation` (`packages/core/src/graph/graph-mutation-client.ts`, `graph/graph-mutation.ts`); the host route is `graphMutationRoute` (ARCHITECTURE.md § "The mutation channel"; `examples/06-mutation-roundtrip`) |
+| How do I bind a form to the mutation channel?                               | `bindGraphForm` from `@liteship/web` (`packages/web/src/mutation/graph-form.ts`; ADR-0031; `examples/06-mutation-roundtrip`)                                                                                                                           |
+| How do I keep the morph out of a client-owned subtree (CodeMirror, canvas)? | mark it `data-liteship-morph-opaque` — `MorphOpaque` in `@liteship/web` (`packages/web/src/morph/opaque.ts`; ADR-0032)                                                                                                                                 |
+| How do I use LiteShip's node schema with a Standard-Schema-aware library?   | `DocumentGraphNodeSchema` carries `~standard` (Standard Schema V1) (`packages/core/src/graph/document-graph-schema.ts`; ADR-0033)                                                                                                                      |
+| What does a `staleBase` refusal / HTTP 409 mean?                            | the mutation was proposed against a base the server has moved past — reload and re-propose (the client does this automatically with `refreshBase`); `packages/core/src/graph/graph-mutation.ts`, ADR-0031                                              |
 
 ---
 

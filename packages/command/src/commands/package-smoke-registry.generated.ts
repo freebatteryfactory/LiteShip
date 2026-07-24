@@ -25,5 +25,5 @@ export const GENERATED_PACKAGE_SMOKE_SPECS = [
   { dir: "packages/cli", name: "@liteship/cli", runtimeSurface: "module", imports: ["@liteship/cli"] },
   { dir: "packages/mcp-server", name: "@liteship/mcp-server", runtimeSurface: "module", imports: ["@liteship/mcp-server"] },
   { dir: "packages/create-liteship", name: "create-liteship", runtimeSurface: "module", imports: ["create-liteship"] },
-  { dir: "packages/liteship", name: "liteship", runtimeSurface: "module", imports: ["liteship"] },
+  { dir: "packages/liteship", name: "liteship", runtimeSurface: "module", imports: ["liteship", "liteship/genui"] },
 ] as const;

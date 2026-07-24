@@ -41,7 +41,7 @@ Product naming for surrounding docs: [GLOSSARY.md](./GLOSSARY.md).
 | `@liteship/cli` | tooling | `.` | command-dispatcher, terminal-rendering, project-doctor, package-smoke |
 | `@liteship/mcp-server` | tooling | `.` | mcp-server, agent-tools |
 | `create-liteship` | tooling | `.` | project-scaffolding |
-| `liteship` | facade | `.`, `./schema`, `./reactive`, `./motion`, `./graph`, `./media`, `./evidence`, `./compiler`, `./runtime`, `./astro`, `./vite`, `./testing`, `./migrate` | curated-facade, public-executable, host-subpaths, one-install |
+| `liteship` | facade | `.`, `./schema`, `./reactive`, `./motion`, `./graph`, `./media`, `./evidence`, `./compiler`, `./runtime`, `./astro`, `./vite`, `./testing`, `./migrate`, `./genui` | curated-facade, public-executable, host-subpaths, one-install |
 <!-- END PACKAGE-SURFACE-INDEX -->
 
 ---

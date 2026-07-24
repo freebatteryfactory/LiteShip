@@ -31,7 +31,11 @@ import { defineAdaptive } from 'liteship';
 export const layout = defineAdaptive({
   boundary: {
     input: 'viewport.width',
-    at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
+    at: [
+      [0, 'mobile'],
+      [768, 'tablet'],
+      [1280, 'desktop'],
+    ],
   },
   style: {
     base: { properties: { display: 'grid', gap: '1rem', 'grid-template-columns': '1fr' } },
@@ -81,11 +85,11 @@ Run `pnpm dev` and drag the window edge. The state marker changes `mobile` → `
 
 For `client:llm` streaming, LiteShip can render **structured UI trees** instead of model-emitted HTML. You define which components exist; the model references them by name. LiteShip validates props and renders through a trusted catalog — interactions surface as DOM events for your app to handle.
 
-The generated-UI surface ships in `@liteship/genui` (already installed with `liteship`; it doesn't yet ride a `liteship/*` subpath, so import it directly). Register a catalog (component names, prop schemas, allowed children):
+The generated-UI surface rides the governed `liteship/genui` expert subpath. Register a catalog (component names, prop schemas, allowed children):
 
 ```ts
 // src/genui-catalog.ts
-import { defineComponentCatalog } from '@liteship/genui';
+import { defineComponentCatalog } from 'liteship/genui';
 
 export const appCatalog = defineComponentCatalog({
   version: 'app-1',
@@ -108,7 +112,7 @@ export const appCatalog = defineComponentCatalog({
 Wire the catalog into an LLM session (or add `data-liteship-genui` on the directive root to use the built-in demo catalog). Stream chunks use the discriminator `{ "_genui": true, "name": "...", "props": { ... } }` — legacy token/text paths stay unchanged when the marker is absent.
 
 ```ts
-import { createLLMSession } from '@liteship/astro/runtime';
+import { createLLMSession } from 'liteship/astro';
 import { appCatalog } from './genui-catalog.js';
 
 const session = createLLMSession({
@@ -138,13 +142,17 @@ import { adaptiveAttrs } from 'liteship/astro';
 
 const viewport = defineBoundary({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1280, 'desktop'],
+  ],
 });
 
 const attrs = adaptiveAttrs({ boundary: viewport });
 ```
 
-`defineBoundary` exposes the continuous-to-named-state contract directly. `adaptiveAttrs` adds Astro-specific serialization and options. They are supported public APIs, but they require the author to assemble style compilation and inspection explicitly; start with `defineAdaptive` unless that control is the reason you are here. The package-owned `Adaptive` component (`import Adaptive from '@liteship/astro/Adaptive'`) wraps the same host attributes.
+`defineBoundary` exposes the continuous-to-named-state contract directly. `adaptiveAttrs` adds Astro-specific serialization and options. They are supported public APIs, but they require the author to assemble style compilation and inspection explicitly; start with `defineAdaptive` unless that control is the reason you are here.
 
 ## 4. Use a target compiler directly
 

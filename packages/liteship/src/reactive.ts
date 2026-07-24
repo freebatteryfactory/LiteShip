@@ -60,6 +60,7 @@ export { createCell } from '@liteship/core/reactive';
 export type { Cell } from '@liteship/core/reactive';
 
 export { Derived, computed } from '@liteship/core/reactive';
+export type { Computed } from '@liteship/core/reactive';
 
 export { Zap } from '@liteship/core/reactive';
 
@@ -74,3 +75,6 @@ export type { LiveCell } from '@liteship/core/reactive';
 
 export { isCell, isDerived, isZap } from '@liteship/core/reactive';
 export type { Primitive } from '@liteship/core/reactive';
+
+export { createQuantizer } from '@liteship/quantizer';
+export type { LiveQuantizer, QuantizerConfig, QuantizerRuntime, OwnedQuantizer } from '@liteship/quantizer';

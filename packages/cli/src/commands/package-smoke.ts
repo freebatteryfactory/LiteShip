@@ -44,6 +44,7 @@ import {
   tarballFileUrl,
 } from '../lib/package-smoke-helpers.js';
 import { checkPackedMetadata } from '../lib/package-metadata-catalog.js';
+import { measureOneInstallCostReport } from '../lib/one-install-cost-evidence.js';
 import { verifyReleaseArtifactBundle } from '../lib/release-artifact-bundle.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
@@ -653,6 +654,7 @@ export async function runPackageSmokeScan(
   const scratch = await createScratchDir(root);
   const tarballDir = opts.artifactDir ?? join(scratch, 'tarballs');
   const consumerDir = join(scratch, 'consumer');
+  const generatedAt = opts.generatedAt ?? new Date(wallClock.now()).toISOString();
 
   if (opts.artifactDir === undefined) await mkdir(tarballDir, { recursive: true });
   await mkdir(consumerDir, { recursive: true });
@@ -755,6 +757,28 @@ export async function runPackageSmokeScan(
       stepOk('pnpm install complete');
     }
 
+    step('record one-install fleet cost evidence from the existing pack/install');
+    const costReport = measureOneInstallCostReport({
+      generatedAt,
+      environment: {
+        platform: process.platform,
+        architecture: process.arch,
+        nodeVersion: process.version,
+        packageManager: 'pnpm',
+      },
+      fleetPackages: PACKAGES.map((pkg) => pkg.name),
+      tarballs: tarballByPackage,
+      consumerDir,
+    });
+    const costReportRelative = 'benchmarks/one-install-cost-report.json';
+    await mkdir(join(root, 'benchmarks'), { recursive: true });
+    await writeFile(join(root, costReportRelative), `${JSON.stringify(costReport, null, 2)}\n`);
+    stepOk(
+      `one-install cost recorded (${costReport.observation.compressedTarballs.totalBytes} compressed bytes; ` +
+        `${costReport.observation.installed.uniqueRegularFileBytes} installed unique-file bytes; no threshold) -> ` +
+        costReportRelative,
+    );
+
     step('verify no workspace: protocols leaked into packed tarball manifests');
     for (const pkg of PACKAGES) {
       ensureNoWorkspaceProtocolsInTarball(tarballByPackage.get(pkg.name)!, pkg.name);
@@ -816,7 +840,7 @@ for (const specifier of imports) {
         scratch,
         consumerDir,
         tarballByPackage,
-        generatedAt: opts.generatedAt ?? new Date(wallClock.now()).toISOString(),
+        generatedAt,
       });
       const { hermeticBuild, packedConsumerClosure, doubleBuildRepro } = hermetic;
 

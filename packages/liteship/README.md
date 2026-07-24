@@ -15,54 +15,58 @@ Starting a new app? `npm create liteship` (also `pnpm create liteship`) scaffold
 ## 30 seconds
 
 ```ts
-import { defineBoundary, defineStyle } from 'liteship';
+import { defineAdaptive } from 'liteship';
 
-// Define an input's states: viewport width → mobile / tablet / desktop.
-const layout = defineBoundary({
-  input: 'viewport.width',
-  at: [
-    [0, 'mobile'],
-    [768, 'tablet'],
-    [1280, 'desktop'],
-  ],
-});
-
-// Define each state's outputs.
-const card = defineStyle({
-  boundary: layout,
-  base: { properties: { padding: '1rem' } },
-  states: { desktop: { properties: { padding: '2rem' } } },
+const layout = defineAdaptive({
+  boundary: {
+    input: 'viewport.width',
+    at: [
+      [0, 'mobile'],
+      [768, 'desktop'],
+    ],
+  },
+  style: {
+    base: { properties: { padding: '1rem' } },
+    states: { desktop: { properties: { padding: '2rem' } } },
+  },
 });
 ```
 
-In an Astro page, apply the boundary to an element — it gets a `data-liteship-state` that updates live on the client as the input crosses a threshold:
+Apply its attributes and compiled plan in host markup, then inspect the same definition when needed:
 
-```ts
-import { adaptiveAttrs } from 'liteship/astro';
-// <main {...adaptiveAttrs({ boundary: layout })}> … </main>
+```astro
+---
+const plan = layout.plan();
+const preview = layout.explain(940);
+---
+
+<main {...layout.attrs()}>At 940px: {preview.boundary.state}</main>
+<style is:inline set:html={plan.css}></style>
 ```
 
 ## The surface
 
-The root `liteship` entry is a curated, budget-enforced authoring surface — the `define*` / `create*` verbs, `schema`, `computed`, `chooseTier`, `explainDiagnostic`, plus the domain nouns as types. Deeper surfaces ride domain subpaths:
+The root `liteship` entry is a curated, budget-enforced immutable authoring and diagnostic-inspection surface. Stateful allocation, motion, tiers, receipts, testing, and fleet metadata ride governed expert subpaths:
 
-| Subpath              | What it re-exports                                            |
-| -------------------- | ------------------------------------------------------------ |
-| `liteship/schema`    | the effect-free schema kernel                                |
-| `liteship/reactive`  | signals, cells, lifetimes, the scheduler                     |
-| `liteship/motion`    | timelines, transitions, easing                               |
-| `liteship/graph`     | the DocumentGraph IR + mutation/query channels               |
-| `liteship/media`     | the compositor + responsive media                            |
-| `liteship/evidence`  | receipts, tiers, diagnostics, the validated-apply envelope   |
-| `liteship/compiler`  | the CSS / GLSL / WGSL / ARIA / AI cast targets               |
-| `liteship/runtime`   | the `@liteship/web` DOM client runtime                       |
-| `liteship/astro`     | LiteShip on Astro (integration, `adaptiveAttrs`, routes)     |
-| `liteship/vite`      | the Vite plugin + `@token` / `@style` / `@quantize` compilers |
-| `liteship/testing`   | the test-only registry reset + harness generators            |
+| Subpath             | What it re-exports                                            |
+| ------------------- | ------------------------------------------------------------- |
+| `liteship/schema`   | the effect-free schema kernel                                 |
+| `liteship/reactive` | signals, cells, lifetimes, the scheduler                      |
+| `liteship/motion`   | timelines, transitions, easing                                |
+| `liteship/graph`    | the DocumentGraph IR + mutation/query channels                |
+| `liteship/media`    | the compositor + responsive media                             |
+| `liteship/evidence` | receipts, tiers, diagnostics, the validated-apply envelope    |
+| `liteship/compiler` | the CSS / GLSL / WGSL / ARIA / AI projection targets          |
+| `liteship/runtime`  | the `@liteship/web` DOM client runtime                        |
+| `liteship/astro`    | LiteShip on Astro (integration, `adaptiveAttrs`, routes)      |
+| `liteship/vite`     | the Vite plugin + `@token` / `@style` / `@quantize` compilers |
+| `liteship/testing`  | the test-only registry reset + harness generators             |
+| `liteship/migrate`  | source migration adapters with refusal diagnostics            |
+| `liteship/genui`    | trusted generated-UI catalogs, validation, and rendering      |
 
 Importing the root `.` never evaluates a host integration: `liteship/astro` and `liteship/vite` live behind their own subpaths (with `astro` / `vite` as optional peers), so a host-free or vite-only app pays no astro cost. The full rationale is [ADR-0048](../../docs/adr/0048-facade-export-budget.md).
 
-`LITESHIP_PACKAGES` still lists every `@liteship/*` package this facade installs, for audit and release tooling.
+`LITESHIP_PACKAGES` remains available from `liteship/testing` for audit and release tooling; it is not production-root ontology.
 
 ## Docs
 

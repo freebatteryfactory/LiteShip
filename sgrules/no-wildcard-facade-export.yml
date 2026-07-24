@@ -22,15 +22,14 @@
 id: no-wildcard-facade-export
 language: typescript
 severity: error
-message: "Wildcard facade re-export `export * from ...` is forbidden (ADR-0045) — enumerate the surface with explicit `export {...} from` / `export type {...} from` so the public API is diff-visible and cannot drift silently."
+message: 'Wildcard facade re-export `export * from ...` is forbidden (ADR-0045) — enumerate the surface with explicit `export {...} from` / `export type {...} from` so the public API is diff-visible and cannot drift silently.'
 files:
-  - "**/packages/*/src/*/index.ts"
-  - "**/packages/core/src/index.ts"
-  # The `liteship` curated facade (P13) — the root index.ts + the eleven domain
-  # subpaths. No wildcard clause is exempted here (unlike facade-only, which
-  # excludes the two DATA files): a `export * from` must be forbidden on EVERY
-  # liteship src file, the data files included, so the surface stays enumerated.
-  - "**/packages/liteship/src/*.ts"
+  - '**/packages/*/src/*/index.ts'
+  - '**/packages/core/src/index.ts'
+  # The `liteship` curated facade — the root index.ts + every governed expert
+  # subpath. No wildcard clause is exempted: a wildcard must be forbidden on
+  # every liteship src file, including the role-contract data module.
+  - '**/packages/liteship/src/*.ts'
 rule:
   kind: export_statement
   regex: "^export\\s+\\*"

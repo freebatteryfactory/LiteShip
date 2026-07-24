@@ -506,6 +506,58 @@ export async function runInstalledNode(
   return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
 
+/** Receipt from an installed facade-to-owner runtime identity proof. */
+export interface InstalledRuntimeFacadeIdentity {
+  /** Physical URL selected for the facade subpath by the consumer install. */
+  readonly facadeUrl: string;
+  /** Physical URL selected for the owner from the facade package's dependency graph. */
+  readonly ownerUrl: string;
+  /** Exact runtime namespace proven equal by key and `Object.is` identity. */
+  readonly exportNames: readonly string[];
+}
+
+/**
+ * Prove an installed facade subpath is a transparent runtime alias of its owner.
+ *
+ * The owner is deliberately resolved FROM the facade's physical module URL. A
+ * strict-linker consumer therefore does not need (and must not gain) a direct
+ * dependency on the implementation package merely so this proof can import it.
+ */
+export async function proveInstalledRuntimeFacadeIdentity(
+  cwd: string,
+  facadeSpecifier: string,
+  ownerSpecifier: string,
+): Promise<InstalledRuntimeFacadeIdentity> {
+  const probe = [
+    "import { createRequire } from 'node:module';",
+    "import { pathToFileURL } from 'node:url';",
+    `const facadeSpecifier = ${JSON.stringify(facadeSpecifier)};`,
+    `const ownerSpecifier = ${JSON.stringify(ownerSpecifier)};`,
+    'const facadeUrl = import.meta.resolve(facadeSpecifier);',
+    'const ownerUrl = pathToFileURL(createRequire(facadeUrl).resolve(ownerSpecifier)).href;',
+    'const [facade, owner] = await Promise.all([import(facadeUrl), import(ownerUrl)]);',
+    'const facadeNames = Object.keys(facade).sort();',
+    'const ownerNames = Object.keys(owner).sort();',
+    'if (JSON.stringify(facadeNames) !== JSON.stringify(ownerNames)) {',
+    '  throw new Error(`runtime export set differs: facade=[${facadeNames}] owner=[${ownerNames}]`);',
+    '}',
+    'for (const name of ownerNames) {',
+    '  if (!Object.is(facade[name], owner[name])) {',
+    '    throw new Error(`runtime export "${name}" is wrapped or copied instead of re-exported by reference`);',
+    '  }',
+    '}',
+    'process.stdout.write(JSON.stringify({ facadeUrl, ownerUrl, exportNames: ownerNames }));',
+  ].join('\n');
+
+  const result = await runInstalledNode(['--input-type=module', '--eval', probe], cwd);
+  journeyAssert(
+    result.code === 0,
+    `installed runtime identity probe failed for ${facadeSpecifier} → ${ownerSpecifier} ` +
+      `(exit ${result.code}):\n${boundedJourneyOutput(result.stderr || result.stdout)}`,
+  );
+  return JSON.parse(result.stdout) as InstalledRuntimeFacadeIdentity;
+}
+
 /** Parse the last JSON object emitted on a CLI receipt stdout stream (tolerant of leading log lines). */
 export function parseReceipt(stdout: string): Record<string, unknown> {
   const trimmed = stdout.trim();

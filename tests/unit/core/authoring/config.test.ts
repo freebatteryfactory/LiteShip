@@ -312,4 +312,33 @@ describe('Config.toTestAliases()', () => {
     expect(aliases['@liteship/canonical']).toContain('packages/canonical');
     expect(aliases['@liteship/genui']).toContain('packages/genui');
   });
+
+  test('covers every curated @liteship/core export subpath before the root prefix', () => {
+    const cfg = defineConfig({});
+    const aliases = Config.toTestAliases(cfg, '/repo');
+    const keys = Object.keys(aliases);
+    const rootIndex = keys.indexOf('@liteship/core');
+    const expected = [
+      'authoring',
+      'reactive',
+      'motion',
+      'graph',
+      'evidence',
+      'schema',
+      'media',
+      'clock',
+      'wasm',
+      'testing',
+      'harness',
+      'simulation',
+      'fs-walk',
+    ];
+
+    expect(rootIndex).toBeGreaterThan(0);
+    for (const subpath of expected) {
+      const specifier = `@liteship/core/${subpath}`;
+      expect(aliases[specifier], specifier).toContain(`packages/core/src/${subpath}`);
+      expect(keys.indexOf(specifier), `${specifier} must precede the root prefix`).toBeLessThan(rootIndex);
+    }
+  });
 });

@@ -20,6 +20,7 @@ export { QUALITY_TIER_TARGETS, QUALITY_TIER_COUNT, projectQualityTiers } from '@
 export type { QualityTierTarget } from '@liteship/core/evidence';
 
 export { chooseTier } from '@liteship/core/evidence';
+export { tierTargets } from '@liteship/core/evidence';
 export type { TierChoice, EscalationResult } from '@liteship/core/evidence';
 
 export type {
@@ -29,6 +30,8 @@ export type {
   ChainValidationOptions,
 } from '@liteship/core/evidence';
 export { Receipt } from '@liteship/core/evidence';
+export { inspectReceipt } from '@liteship/core/evidence';
+export type { ReceiptInspection } from '@liteship/core/evidence';
 
 export { contentAddressOf, canonicalAddressBytes } from '@liteship/core/evidence';
 
@@ -39,3 +42,6 @@ export { Diagnostics } from '@liteship/core/evidence';
 export type { DiagnosticEvent, DiagnosticLevel, DiagnosticPayload, DiagnosticsSink } from '@liteship/core/evidence';
 
 export { AddressedDigest } from '@liteship/core/evidence';
+
+export type { Finding } from '@liteship/gauntlet';
+export type { DiagnosticCode } from '@liteship/error';

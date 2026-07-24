@@ -3,8 +3,9 @@
  * only `liteship`; attrs/explain/plan all work without module-registration order.
  */
 import { describe, expect, test } from 'vitest';
-import { computed, defineAdaptive } from '../../../packages/liteship/src/index.js';
-import type { Computed } from '../../../packages/liteship/src/index.js';
+import { defineAdaptive } from '../../../packages/liteship/src/index.js';
+import { computed } from '../../../packages/liteship/src/reactive.js';
+import type { Computed } from '../../../packages/liteship/src/reactive.js';
 
 const spec = {
   boundary: {
@@ -41,7 +42,7 @@ describe('liteship root Adaptive composition', () => {
     expect(adaptive.plan().css).toContain('[data-liteship-state="md"]');
   });
 
-  test('Computed<T> is the public type matching computed()', async () => {
+  test('Computed<T> remains reachable from the governed reactive expert subpath', async () => {
     const value: Computed<number> = computed(() => 42);
     expect(value.read()).toBe(42);
     await value.dispose();

@@ -310,16 +310,35 @@ describe('facade-only-reexports (a) — facades are pure re-export surfaces', ()
   });
 
   it('GREEN: nested liteship domain modules remain implementation owners, not facade entries', async () => {
-    const f = fixture(
-      'packages/liteship/src/authoring/adaptive.ts',
-      'export function defineAdaptive() { return { kind: "adaptive" }; }\n',
-    );
-    expect((await scan(RULE, f)).length).toBe(0);
+    const owners = [
+      fixture(
+        'packages/liteship/src/authoring/adaptive.ts',
+        'export function defineAdaptive() { return { kind: "adaptive" }; }\n',
+      ),
+      fixture(
+        'packages/liteship/src/testing/package-roster.ts',
+        'export const LITESHIP_PACKAGES = ["@liteship/core"] as const;\n',
+      ),
+    ];
+    for (const owner of owners) expect((await scan(RULE, owner)).length).toBe(0);
   });
 
   it('RED: top-level liteship subpath entries remain facade-only', async () => {
     const f = fixture('packages/liteship/src/schema.ts', 'export const localSchema = {} as const;\n');
     expect((await scan(RULE, f)).length).toBe(1);
+  });
+
+  it('RED: the liteship root cannot regain local declarations after fleet data moved to testing', async () => {
+    const f = fixture('packages/liteship/src/index.ts', 'export const leakedRootTool = {} as const;\n');
+    expect((await scan(RULE, f)).length).toBe(1);
+  });
+
+  it('GREEN: the liteship root remains an explicit named re-export seam', async () => {
+    const f = fixture(
+      'packages/liteship/src/index.ts',
+      "export { defineAdaptive } from './authoring/adaptive.js';\nexport type { Adaptive } from '@liteship/core';\n",
+    );
+    expect((await scan(RULE, f)).length).toBe(0);
   });
 
   it('RED: nested liteship index files remain facade-only', async () => {

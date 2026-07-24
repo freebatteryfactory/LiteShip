@@ -15,6 +15,7 @@
     { "path": "../astro" },
     { "path": "../vite" },
     { "path": "../error" },
-    { "path": "../gauntlet" }
+    { "path": "../gauntlet" },
+    { "path": "../genui" }
   ]
 }

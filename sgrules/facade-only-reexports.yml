@@ -27,9 +27,9 @@
 # still carry migration-era declarations and ratchet in later; types.ts purity is
 # a separate rule (types-file-purity); internal/ files are modules, never facades.
 #
-# Exemptions: NONE. packages/core/src/{harness,schema,simulation}/index.ts were
-# checked and are already pure named re-exports, so no ignore is earned. Every
-# in-scope facade passes clean on the current tree.
+# Facade exemptions: NONE. The exact nested implementation owners below are not
+# facade entries; ast-grep's globstar matcher reaches them through the top-level
+# `*.ts` pattern, so they are excluded by concrete path only.
 #
 # Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
 id: facade-only-reexports
@@ -40,20 +40,17 @@ files:
   - '**/packages/*/src/*/index.ts'
   - '**/packages/core/src/index.ts'
   # The `liteship` curated facade (P13): every top-level src/*.ts is a facade
-  # ENTRY — the root index.ts and the eleven domain subpaths (schema/reactive/
-  # motion/graph/media/evidence/compiler/runtime/astro/vite/testing) — governed
-  # as pure re-export surfaces. Two files under this glob are DATA, not facades,
-  # and are excluded below: the root index.ts (it keeps the gen-roster
-  # `LITESHIP_PACKAGES` const + the `LiteshipPackageName` type) and
-  # export-budget.ts (the allowlist DATA the facade-export-budget gate reads).
+  # ENTRY — the root index.ts and the thirteen governed expert subpaths — as
+  # pure re-export surfaces. `export-budget.ts` alone is DATA rather than a
+  # facade and is excluded below.
   - '**/packages/liteship/src/*.ts'
 ignores:
-  - '**/packages/liteship/src/index.ts'
   - '**/packages/liteship/src/export-budget.ts'
   # ast-grep's globstar matcher lets the top-level `*.ts` pattern reach this
   # nested implementation owner. Exempt only the concrete owner: a broad
   # `*/*.ts` ignore would also disable the domain-index facade law below it.
   - '**/packages/liteship/src/authoring/adaptive.ts'
+  - '**/packages/liteship/src/testing/package-roster.ts'
 rule:
   any:
     - kind: function_declaration
