@@ -118,6 +118,25 @@ describe('liteship build', () => {
     });
   });
 
+  it('refuses a Yarn project instead of spawning through npm', async () => {
+    const root = fixture('liteship.config.ts', 'astro.config.ts');
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'yarn@4.9.2' }));
+    const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+    const run = createBuildCommand(spawn);
+    const result = await captureCli(() => run({ cwd: root }));
+
+    expect(result.exit).toBe(1);
+    expect(spawn).not.toHaveBeenCalled();
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr.trim())).toMatchObject({
+      status: 'failed',
+      command: 'build',
+      code: 'cli/config-invalid',
+      error: expect.stringContaining('unsupported yarn project'),
+      hint: expect.stringContaining('supports npm and pnpm'),
+    });
+  });
+
   it.each([
     'vite.config.ts',
     'vite.config.mts',

@@ -7,7 +7,7 @@ The mental model is one sentence: you declare an **input's named states** and **
 ## Install
 
 ```bash
-npm install liteship   # or  pnpm add liteship  ·  yarn add liteship
+npm install liteship   # or: pnpm add liteship
 ```
 
 Starting a new app? `npm create liteship` (also `pnpm create liteship`) scaffolds a minimal Astro starter wired to this package.

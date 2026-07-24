@@ -20,6 +20,8 @@ import { detectHost, type BuildHost } from '../lib/host-detect.js';
 import {
   detectProjectPackageManager,
   projectBinaryInvocation,
+  UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT,
+  unsupportedProjectPackageManagerMessage,
   type ProjectPackageManager,
 } from '../lib/project-package-manager.js';
 import { spawnArgvVisible } from '../lib/spawn.js';
@@ -74,7 +76,17 @@ export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildC
       return 1;
     }
 
-    const packageManager = detectProjectPackageManager(cwd);
+    const detectedManager = detectProjectPackageManager(cwd);
+    if (detectedManager.kind === 'unsupported') {
+      emitError(
+        'build',
+        'cli/config-invalid',
+        unsupportedProjectPackageManagerMessage(detectedManager),
+        UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT,
+      );
+      return 1;
+    }
+    const packageManager = detectedManager.manager;
     const invocation = projectBinaryInvocation(packageManager, host, ['build']);
     const result = await spawn(invocation.command, invocation.args, { cwd });
 

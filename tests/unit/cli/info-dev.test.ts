@@ -188,6 +188,31 @@ describe('liteship dev — consumer-app host route', () => {
     }
   });
 
+  it('refuses a Yarn consumer app before spawning its host', async () => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-dev-yarn-'));
+    try {
+      writeFileSync(join(app, 'liteship.config.ts'), '');
+      writeFileSync(join(app, 'astro.config.ts'), '');
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ packageManager: 'yarn@4.9.2' }));
+      const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+      const run = createDevCommand(spawn);
+      const result = await capture(() => run({ cwd: app }));
+
+      expect(result.exit).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(spawn).not.toHaveBeenCalled();
+      expect(JSON.parse(result.stderr.trim())).toMatchObject({
+        status: 'failed',
+        command: 'dev',
+        code: 'cli/config-invalid',
+        error: expect.stringContaining('unsupported yarn project'),
+        hint: expect.stringContaining('supports npm and pnpm'),
+      });
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     'vite.config.ts',
     'vite.config.mts',

@@ -39,7 +39,11 @@ import { createNodeCommandContext, currentEnvFingerprint } from '@liteship/comma
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
-import { detectProjectPackageManager, projectBinaryInvocation } from '../lib/project-package-manager.js';
+import {
+  detectProjectPackageManager,
+  projectBinaryInvocation,
+  unsupportedProjectPackageManagerMessage,
+} from '../lib/project-package-manager.js';
 
 /** Receipt emitted by `liteship check gates`. */
 export interface CheckReceipt extends CheckPayload {
@@ -475,6 +479,20 @@ function executeCheckPlan(
       continue;
     }
 
+    const materialized = materializeCheckCommand(check, cwd);
+    if (materialized.kind === 'unsupported-manager') {
+      if (check.authority === 'blocking') blocked = true;
+      results.push({
+        id: check.id,
+        verdict: 'fail',
+        durationMs: 0,
+        cacheHit: false,
+        findings: [materialized.finding],
+      });
+      continue;
+    }
+    const command = materialized.command;
+
     let cacheKey: string | null = null;
     if (check.cacheable) {
       cacheKey = checkCacheKey(check, plan, inputCorpus, env);
@@ -494,7 +512,6 @@ function executeCheckPlan(
       }
     }
 
-    const command = materializeCheckCommand(check, cwd);
     const start = now();
     const r = spawn(command, cwd, check.timeoutMs);
     const durationMs = Math.max(0, now() - start);
@@ -529,12 +546,22 @@ function executeCheckPlan(
   };
 }
 
+type MaterializedCheckCommand =
+  | { readonly kind: 'command'; readonly command: string }
+  | { readonly kind: 'unsupported-manager'; readonly finding: string };
+
 /** Materialize structured application checks only at the CLI host boundary. */
-function materializeCheckCommand(check: CheckPlan['checks'][number], cwd: string): string {
-  if (check.execution === undefined) return check.command;
-  const manager = detectProjectPackageManager(cwd);
-  const invocation = projectBinaryInvocation(manager, 'liteship', check.execution.argv);
-  return [invocation.command, ...invocation.args].join(' ');
+function materializeCheckCommand(check: CheckPlan['checks'][number], cwd: string): MaterializedCheckCommand {
+  if (check.execution === undefined) return { kind: 'command', command: check.command };
+  const detectedManager = detectProjectPackageManager(cwd);
+  if (detectedManager.kind === 'unsupported') {
+    return {
+      kind: 'unsupported-manager',
+      finding: unsupportedProjectPackageManagerMessage(detectedManager),
+    };
+  }
+  const invocation = projectBinaryInvocation(detectedManager.manager, 'liteship', check.execution.argv);
+  return { kind: 'command', command: [invocation.command, ...invocation.args].join(' ') };
 }
 
 interface InputCorpus {

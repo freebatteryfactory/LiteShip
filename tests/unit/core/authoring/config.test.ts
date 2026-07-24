@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { defineBoundary } from '@liteship/core';
+import { defineBoundary, defineStyle } from '@liteship/core';
 import { Config, defineConfig } from '@liteship/core';
 
 const boundary = defineBoundary({
@@ -155,6 +155,78 @@ describe('defineConfig()', () => {
     expect(Object.isFrozen(first.boundaries)).toBe(true);
     expect(Object.isFrozen(first.boundaries['gated'])).toBe(true);
     expect(Object.isFrozen(first.boundaries['gated']?.spec)).toBe(true);
+  });
+
+  test('preserves host-only filters on boundaries embedded in configured styles', () => {
+    const firstFilter = (capabilities: Record<string, unknown>) => capabilities['webgpu'] === true;
+    const secondFilter = (capabilities: Record<string, unknown>) => capabilities['webgpu'] === true;
+    const firstBoundary = defineBoundary({
+      input: 'device.width',
+      at: [
+        [0, 'off'],
+        [800, 'on'],
+      ] as const,
+      spec: { experimentId: 'gpu-style', deviceFilter: firstFilter },
+    });
+    const secondBoundary = defineBoundary({
+      input: 'device.width',
+      at: [
+        [0, 'off'],
+        [800, 'on'],
+      ] as const,
+      spec: { experimentId: 'gpu-style', deviceFilter: secondFilter },
+    });
+    const firstStyle = defineStyle({
+      boundary: firstBoundary,
+      base: { properties: { display: 'block' } },
+      states: { on: { properties: { display: 'grid' } } },
+    });
+    const secondStyle = defineStyle({
+      boundary: secondBoundary,
+      base: { properties: { display: 'block' } },
+      states: { on: { properties: { display: 'grid' } } },
+    });
+
+    const sourceRegistry = { responsive: firstStyle };
+    const first = defineConfig({ styles: sourceRegistry });
+    const second = defineConfig({ styles: { responsive: secondStyle } });
+    const firstId = first.id;
+
+    sourceRegistry.responsive = defineStyle({ base: { properties: { display: 'none' } } });
+    firstStyle.base.properties['display'] = 'flex';
+    (firstBoundary.thresholds as number[])[1] = 1200;
+
+    expect(first.id).toBe(firstId);
+    expect(first.id).toBe(second.id);
+    expect(first.styles['responsive']).not.toBe(firstStyle);
+    expect(first.styles['responsive']?.base.properties['display']).toBe('block');
+    expect(first.styles['responsive']?.boundary?.thresholds).toEqual([0, 800]);
+    expect(first.styles['responsive']?.boundary?.spec?.deviceFilter).toBe(firstFilter);
+    expect(first.styles['responsive']?.boundary?.spec?.deviceFilter?.({ webgpu: true })).toBe(true);
+    expect(Object.isFrozen(first.styles)).toBe(true);
+    expect(Object.isFrozen(first.styles['responsive'])).toBe(true);
+    expect(Object.isFrozen(first.styles['responsive']?.base)).toBe(true);
+    expect(Object.isFrozen(first.styles['responsive']?.base.properties)).toBe(true);
+    expect(Object.isFrozen(first.styles['responsive']?.boundary)).toBe(true);
+    expect(Object.isFrozen(first.styles['responsive']?.boundary?.spec)).toBe(true);
+
+    const changedPortableSpec = defineConfig({
+      styles: {
+        responsive: defineStyle({
+          boundary: defineBoundary({
+            input: 'device.width',
+            at: [
+              [0, 'off'],
+              [800, 'on'],
+            ] as const,
+            spec: { experimentId: 'other-experiment', deviceFilter: firstFilter },
+          }),
+          base: { properties: { display: 'block' } },
+          states: { on: { properties: { display: 'grid' } } },
+        }),
+      },
+    });
+    expect(changedPortableSpec.id).not.toBe(first.id);
   });
 
   test('defineConfig() is an alias for defineConfig()', () => {

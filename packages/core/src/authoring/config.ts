@@ -173,6 +173,23 @@ function snapshotBoundary(boundary: Boundary): DeepReadonly<Boundary> {
   return Object.freeze({ ...snappedBoundary, spec: snappedSpec }) as DeepReadonly<Boundary>;
 }
 
+/**
+ * Styles embed their boundary definition. Snapshot ordinary authored fields
+ * recursively, then route the embedded boundary through the callback-aware
+ * boundary snapshot so host-only `deviceFilter` remains usable without
+ * entering portable identity bytes.
+ */
+function snapshotStyle(style: Style): DeepReadonly<Style> {
+  const { boundary, ...portableStyle } = style;
+  const snappedStyle = snapshotDefinitionValue(portableStyle);
+  if (boundary === undefined) return snappedStyle as DeepReadonly<Style>;
+
+  return Object.freeze({
+    ...snappedStyle,
+    boundary: snapshotBoundary(boundary),
+  }) as DeepReadonly<Style>;
+}
+
 function definitionIds<T extends ConfigDefinition>(
   registry: Readonly<Record<string, T>>,
 ): Record<string, ContentAddress> {
@@ -188,7 +205,7 @@ export function defineConfig(input: ConfigInput): Config {
   const boundaries = snapshotDefinitionRegistry(input.boundaries ?? {}, snapshotBoundary);
   const tokens = snapshotDefinitionRegistry(input.tokens ?? {}, snapshotDefinitionValue);
   const themes = snapshotDefinitionRegistry(input.themes ?? {}, snapshotDefinitionValue);
-  const styles = snapshotDefinitionRegistry(input.styles ?? {}, snapshotDefinitionValue);
+  const styles = snapshotDefinitionRegistry(input.styles ?? {}, snapshotStyle);
   const vite = input.vite === undefined ? undefined : snapshotDefinitionValue(input.vite);
   const astro = input.astro === undefined ? undefined : snapshotDefinitionValue(input.astro);
   // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
