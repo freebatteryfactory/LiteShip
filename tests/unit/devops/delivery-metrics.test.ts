@@ -50,6 +50,7 @@ const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory, {
   baseSha: 'a'.repeat(40),
   headSha: 'b'.repeat(40),
   confidence: 'high',
+  selectorCalibrationId: `sha256:${'c'.repeat(64)}`,
 });
 
 const base = () =>

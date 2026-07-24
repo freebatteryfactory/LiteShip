@@ -16,12 +16,12 @@ export interface AffectedPlanContext {
   readonly headSha: string;
   readonly confidence: AffectedPlanConfidence;
   readonly rationale?: readonly string[];
-  /** Zero disables selector optimization until escaped-miss debt is cured. */
-  readonly selectorErrorBudgetRemaining?: number;
+  /** The current zero-miss calibration that admitted focused selection. */
+  readonly selectorCalibrationId?: `sha256:${string}` | null;
 }
 
 export interface AffectedTestPlan {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly planId: `sha256:${string}`;
   readonly base: { readonly ref: string; readonly sha: string };
   readonly headSha: string;
@@ -29,6 +29,7 @@ export interface AffectedTestPlan {
   readonly mode: 'focused' | 'full';
   readonly reason: string;
   readonly confidence: AffectedPlanConfidence;
+  readonly selectorCalibrationId: `sha256:${string}` | null;
   readonly rationale: readonly string[];
   readonly changedPaths: readonly string[];
   readonly affectedPackages: readonly string[];
@@ -84,6 +85,7 @@ const DEFAULT_CONTEXT: AffectedPlanContext = {
   baseSha: '0000000000000000000000000000000000000000',
   headSha: '0000000000000000000000000000000000000000',
   confidence: 'high',
+  selectorCalibrationId: null,
 };
 
 function normalize(path: string): string {
@@ -229,30 +231,26 @@ export function planAffectedTests(
   const broadPath = normalized.find((path) => GLOBAL_AUTHORITY.some((pattern) => pattern.test(path)));
   const affectedPackages = affectedPackageNames(normalized, catalog);
   const common = {
-    schemaVersion: 2 as const,
+    schemaVersion: 3 as const,
     base: { ref: context.baseRef, sha: context.baseSha },
     headSha: context.headSha,
     confidence: context.confidence,
+    selectorCalibrationId: context.selectorCalibrationId ?? null,
     rationale: [...(context.rationale ?? [])],
     changedPaths: normalized,
     affectedPackages,
   };
-  if (broadPath !== undefined || context.confidence === 'low' || context.selectorErrorBudgetRemaining === 0) {
+  if (broadPath !== undefined || context.confidence === 'low') {
     const reason =
-      context.selectorErrorBudgetRemaining === 0
-        ? 'selector error budget is exhausted; selected full authority'
-        : context.confidence === 'low'
-          ? 'selector confidence is low; selected full authority'
-          : `global authority changed: ${broadPath}`;
+      context.confidence === 'low'
+        ? 'selector confidence is low; selected full authority'
+        : `global authority changed: ${broadPath}`;
     return finalizePlan(
       {
         ...common,
         mode: 'full',
         reason,
-        rationale:
-          context.selectorErrorBudgetRemaining === 0
-            ? [...common.rationale, 'selector optimization disabled by error budget']
-            : common.rationale,
+        rationale: common.rationale,
         testFiles: [],
         browserRequired: true,
       },
@@ -365,6 +363,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     'requiredChecks',
     'risk',
     'schemaVersion',
+    'selectorCalibrationId',
     'testFiles',
     'testPartitions',
   ].sort();
@@ -372,7 +371,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
     throw new TypeError(`affected plan keys are invalid: ${actualKeys.join(', ')}`);
   }
-  if (candidate['schemaVersion'] !== 2) throw new TypeError('affected plan schemaVersion must be 2');
+  if (candidate['schemaVersion'] !== 3) throw new TypeError('affected plan schemaVersion must be 3');
   if (candidate['mode'] !== 'focused' && candidate['mode'] !== 'full')
     throw new TypeError('affected plan mode is invalid');
   if (candidate['confidence'] !== 'high' && candidate['confidence'] !== 'low')
@@ -396,6 +395,15 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('affected plan planId is invalid');
   if (!/^sha256:[0-9a-f]{64}$/u.test(String(candidate['changedPathDigest'])))
     throw new TypeError('affected plan changedPathDigest is invalid');
+  if (
+    candidate['selectorCalibrationId'] !== null &&
+    !/^sha256:[0-9a-f]{64}$/u.test(String(candidate['selectorCalibrationId']))
+  ) {
+    throw new TypeError('affected plan selector calibration id is invalid');
+  }
+  if (candidate['confidence'] === 'high' && candidate['selectorCalibrationId'] === null) {
+    throw new TypeError('high-confidence affected plans require selector calibration evidence');
+  }
   if (!hasExactKeys(candidate['base'], ['ref', 'sha'])) throw new TypeError('affected plan base is invalid');
   if (typeof candidate['base']['ref'] !== 'string' || typeof candidate['base']['sha'] !== 'string') {
     throw new TypeError('affected plan base values are invalid');

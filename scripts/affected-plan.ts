@@ -9,12 +9,22 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PACKAGE_CATALOG } from './package-catalog.js';
-import { buildAssuranceInventory } from './lib/assurance-inventory.js';
+import IMPACT_CORPUS_JSON from '../tests/fixtures/affected-impact-corpus.json';
+import { buildAssuranceInventory, type AssuranceInventory } from './lib/assurance-inventory.js';
 import { parseAffectedTestPlan, planAffectedTests, type AffectedTestPlan } from './lib/affected-test-plan.js';
+import {
+  assertAffectedSelectorCalibrationCurrent,
+  buildAffectedSelectorCalibration,
+  parseAffectedSelectorCalibration,
+  type AffectedImpactCase,
+  type AffectedSelectorCalibration,
+  type AffectedSelectorCalibrationInputs,
+} from './lib/affected-selector-calibration.js';
 
 export interface ChangedPathRead {
   readonly paths: readonly string[];
@@ -25,6 +35,19 @@ export interface ChangedPathRead {
 
 export type GitDiffReader = (cwd: string, base: string) => ChangedPathRead;
 export type AffectedOutputWriter = (path: string, data: string, encoding: 'utf8') => void;
+export type AffectedCalibrationProvider = (inputs: AffectedSelectorCalibrationInputs) => unknown;
+export type AssuranceInventoryBuilder = (cwd: string) => AssuranceInventory;
+
+export interface AffectedPlanningBundle {
+  readonly plan: AffectedTestPlan;
+  readonly calibration: AffectedSelectorCalibration | null;
+}
+
+const IMPACT_CORPUS = IMPACT_CORPUS_JSON as readonly AffectedImpactCase[];
+const SELECTOR_SOURCE_PATHS = [
+  'scripts/lib/affected-test-plan.ts',
+  'scripts/lib/affected-selector-calibration.ts',
+] as const;
 
 /** Read one Git object id for plan-to-checkout binding. */
 export function readGitSha(cwd: string, ref: string): string {
@@ -58,24 +81,77 @@ export const readChangedPaths: GitDiffReader = (cwd, base) => {
   }
 };
 
-/** Produce and boundary-validate the plan before another process may consume it. */
+/** Bind calibration to the exact selector implementation that produced it. */
+export function affectedSelectorSourceFingerprint(cwd: string): `sha256:${string}` {
+  const hash = createHash('sha256');
+  for (const path of SELECTOR_SOURCE_PATHS) {
+    hash.update(path);
+    hash.update('\0');
+    hash.update(readFileSync(`${cwd}/${path}`));
+    hash.update('\0');
+  }
+  return `sha256:${hash.digest('hex')}`;
+}
+
+function calibrationInputs(cwd: string, inventory: AssuranceInventory): AffectedSelectorCalibrationInputs {
+  return {
+    selectorFingerprint: affectedSelectorSourceFingerprint(cwd),
+    catalog: PACKAGE_CATALOG,
+    inventory,
+    corpus: IMPACT_CORPUS,
+  };
+}
+
+const buildCurrentCalibration: AffectedCalibrationProvider = (inputs) => buildAffectedSelectorCalibration(inputs);
+
+/** Produce and boundary-validate the plan plus the evidence that admitted narrowing. */
+export function createAffectedPlanningBundle(
+  cwd: string,
+  base: string,
+  readDiff: GitDiffReader = readChangedPaths,
+  provideCalibration: AffectedCalibrationProvider = buildCurrentCalibration,
+  buildInventory: AssuranceInventoryBuilder = buildAssuranceInventory,
+): AffectedPlanningBundle {
+  const changed = readDiff(cwd, base);
+  const inventory = buildInventory(cwd);
+  const inputs = calibrationInputs(cwd, inventory);
+  let calibration: AffectedSelectorCalibration | null = null;
+  let calibrationFailure: string | undefined;
+  try {
+    const supplied = provideCalibration(inputs);
+    if (supplied === null || supplied === undefined) throw new TypeError('selector calibration is missing');
+    const candidate = parseAffectedSelectorCalibration(supplied);
+    assertAffectedSelectorCalibrationCurrent(candidate, inputs);
+    calibration = candidate;
+  } catch (error) {
+    calibrationFailure = error instanceof Error ? error.message : String(error);
+  }
+  const degradedReasons = [
+    ...(changed.degradedReason === undefined ? [] : [changed.degradedReason]),
+    ...(calibrationFailure === undefined ? [] : [`selector calibration unavailable: ${calibrationFailure}`]),
+  ];
+  const plan = parseAffectedTestPlan(
+    planAffectedTests(changed.paths, PACKAGE_CATALOG, inventory, {
+      baseRef: base,
+      baseSha: changed.baseSha,
+      headSha: changed.headSha,
+      confidence: degradedReasons.length === 0 ? 'high' : 'low',
+      selectorCalibrationId: calibration?.calibrationId ?? null,
+      ...(degradedReasons.length === 0 ? {} : { rationale: degradedReasons }),
+    }),
+  );
+  return { plan, calibration };
+}
+
+/** Compatibility projection for callers that only need the plan. */
 export function createAffectedPlan(
   cwd: string,
   base: string,
   readDiff: GitDiffReader = readChangedPaths,
-  selectorErrorBudgetRemaining = 1,
+  provideCalibration: AffectedCalibrationProvider = buildCurrentCalibration,
+  buildInventory: AssuranceInventoryBuilder = buildAssuranceInventory,
 ): AffectedTestPlan {
-  const changed = readDiff(cwd, base);
-  return parseAffectedTestPlan(
-    planAffectedTests(changed.paths, PACKAGE_CATALOG, buildAssuranceInventory(cwd), {
-      baseRef: base,
-      baseSha: changed.baseSha,
-      headSha: changed.headSha,
-      confidence: changed.degradedReason === undefined ? 'high' : 'low',
-      selectorErrorBudgetRemaining,
-      ...(changed.degradedReason === undefined ? {} : { rationale: [changed.degradedReason] }),
-    }),
-  );
+  return createAffectedPlanningBundle(cwd, base, readDiff, provideCalibration, buildInventory).plan;
 }
 
 /** Append only bounded routing metadata. The addressed plan itself travels as an artifact file. */
@@ -106,6 +182,24 @@ export function writeAffectedPlanFile(path: string, plan: AffectedTestPlan): voi
   const readBack = parseAffectedTestPlan(JSON.parse(readFileSync(temporary, 'utf8')) as unknown);
   if (readBack.planId !== validated.planId) throw new TypeError('affected plan file changed during write');
   renameSync(temporary, path);
+}
+
+/** Atomically persist and read-back validate selector calibration evidence. */
+export function writeAffectedSelectorCalibrationFile(path: string, calibration: AffectedSelectorCalibration): void {
+  const validated = parseAffectedSelectorCalibration(calibration);
+  mkdirSync(dirname(path), { recursive: true });
+  const temporary = `${path}.tmp`;
+  writeFileSync(temporary, `${JSON.stringify(validated)}\n`, 'utf8');
+  const readBack = parseAffectedSelectorCalibration(JSON.parse(readFileSync(temporary, 'utf8')) as unknown);
+  if (readBack.calibrationId !== validated.calibrationId) {
+    throw new TypeError('affected selector calibration file changed during write');
+  }
+  renameSync(temporary, path);
+}
+
+/** Read and boundary-validate one selector calibration artifact from disk. */
+export function readAffectedSelectorCalibrationFile(path: string): AffectedSelectorCalibration {
+  return parseAffectedSelectorCalibration(JSON.parse(readFileSync(path, 'utf8')) as unknown);
 }
 
 /** Refuse a valid plan addressed to any checkout other than the one executing it. */
@@ -141,15 +235,15 @@ export function main(argv: readonly string[] = process.argv.slice(2)): void {
     return;
   }
   const base = process.env['LITESHIP_AFFECTED_BASE'] || 'origin/main';
-  const rawBudget = process.env['LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING'] ?? '1';
-  const selectorErrorBudgetRemaining = Number(rawBudget);
-  if (!Number.isSafeInteger(selectorErrorBudgetRemaining) || selectorErrorBudgetRemaining < 0) {
-    throw new TypeError('LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING must be a non-negative integer');
-  }
-  const plan = createAffectedPlan(cwd, base, readChangedPaths, selectorErrorBudgetRemaining);
+  const bundle = createAffectedPlanningBundle(cwd, base);
+  const plan = bundle.plan;
   const output = optionValue(argv, '--github-output');
   const file = optionValue(argv, '--output');
+  const calibrationFile = optionValue(argv, '--calibration-output');
   if (file !== undefined) writeAffectedPlanFile(file, plan);
+  if (calibrationFile !== undefined && bundle.calibration !== null) {
+    writeAffectedSelectorCalibrationFile(calibrationFile, bundle.calibration);
+  }
   if (output !== undefined) writeAffectedGithubOutput(output, plan);
   if (output === undefined) process.stdout.write(`${JSON.stringify(plan)}\n`);
 }

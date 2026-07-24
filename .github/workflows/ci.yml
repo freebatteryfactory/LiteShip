@@ -76,13 +76,14 @@ jobs:
         name: Emit the conservative affected-test plan
         env:
           LITESHIP_AFFECTED_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || 'origin/main' }}
-          LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING: ${{ vars.LITESHIP_SELECTOR_ERROR_BUDGET_REMAINING || '1' }}
-        run: pnpm exec tsx scripts/affected-plan.ts --output .liteship/affected-plan.json --github-output "$GITHUB_OUTPUT"
+        run: pnpm exec tsx scripts/affected-plan.ts --output .liteship/affected-plan.json --calibration-output .liteship/affected-selector-calibration.json --github-output "$GITHUB_OUTPUT"
       - name: Upload the addressed plan
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: affected-plan
-          path: .liteship/affected-plan.json
+          path: |
+            .liteship/affected-plan.json
+            .liteship/affected-selector-calibration.json
           if-no-files-found: error
           retention-days: 7
 

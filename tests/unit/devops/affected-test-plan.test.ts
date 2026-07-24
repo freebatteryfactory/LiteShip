@@ -19,6 +19,8 @@ import {
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 import { forbiddenSourceImports } from '../../../scripts/lib/source-import-contract.js';
 
+const CALIBRATION_ID = `sha256:${'c'.repeat(64)}` as const;
+
 function inventory(evidence: Readonly<Record<string, readonly string[]>>): AssuranceInventory {
   return {
     schemaVersion: 2,
@@ -113,22 +115,28 @@ describe('affected test planning', () => {
     expect(plan.testFiles).toContain('tests/unit/devops/check-registry.test.ts');
   });
 
-  it('disables optimization and fails broad when the selector error budget is exhausted', () => {
-    const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}), {
+  it('fails broad when selector calibration evidence is absent', () => {
+    const plan = createAffectedPlan(
+      process.cwd(),
+      'origin/main',
+      () => ({ paths: ['README.md'], baseSha: 'a'.repeat(40), headSha: 'b'.repeat(40) }),
+      () => null,
+      () => inventory({}),
+    );
+    expect(plan.mode).toBe('full');
+    expect(plan.browserRequired).toBe(true);
+    expect(plan.selectorCalibrationId).toBeNull();
+    expect(plan.rationale.join('\n')).toContain('selector calibration is missing');
+  });
+
+  it('rejects partial, foreign, and prerequisite-free plans at the process boundary', () => {
+    const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}), {
       baseRef: 'origin/main',
       baseSha: 'a'.repeat(40),
       headSha: 'b'.repeat(40),
       confidence: 'high',
-      selectorErrorBudgetRemaining: 0,
+      selectorCalibrationId: CALIBRATION_ID,
     });
-    expect(plan.mode).toBe('full');
-    expect(plan.browserRequired).toBe(true);
-    expect(plan.reason).toContain('error budget is exhausted');
-    expect(plan.rationale).toContain('selector optimization disabled by error budget');
-  });
-
-  it('rejects partial, foreign, and prerequisite-free plans at the process boundary', () => {
-    const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
     expect(parseAffectedTestPlan(valid)).toEqual(valid);
     expect(() => parseAffectedTestPlan({ ...valid, schemaVersion: 1 })).toThrow(/schemaVersion/u);
     expect(() => parseAffectedTestPlan({ ...valid, prerequisites: [] })).toThrow(/workspace-build/u);
@@ -139,7 +147,13 @@ describe('affected test planning', () => {
   it('writes no GitHub output when plan validation fails', () => {
     const directory = mkdtempSync(join(tmpdir(), 'liteship-affected-plan-'));
     try {
-      const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
+      const valid = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}), {
+        baseRef: 'origin/main',
+        baseSha: 'a'.repeat(40),
+        headSha: 'b'.repeat(40),
+        confidence: 'high',
+        selectorCalibrationId: CALIBRATION_ID,
+      });
       const writes: string[] = [];
       const append = (_path: string, data: string): void => {
         writes.push(data);
@@ -186,6 +200,7 @@ describe('affected test planning', () => {
       baseSha: 'a'.repeat(40),
       headSha: 'b'.repeat(40),
       confidence: 'high',
+      selectorCalibrationId: CALIBRATION_ID,
     });
     expect(() => assertAffectedPlanHead(plan, 'c'.repeat(40))).toThrow(/does not match checkout/u);
     expect(() => assertAffectedPlanHead(plan, 'b'.repeat(40))).not.toThrow();

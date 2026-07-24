@@ -21,6 +21,17 @@ const PATHS = [
   'orphan-runtime.ts',
 ] as const;
 const pathSet = fc.uniqueArray(fc.constantFrom(...PATHS), { minLength: 0, maxLength: PATHS.length });
+const CALIBRATED_CONTEXT = {
+  baseRef: 'origin/main',
+  baseSha: 'a'.repeat(40),
+  headSha: 'b'.repeat(40),
+  confidence: 'high' as const,
+  selectorCalibrationId: `sha256:${'c'.repeat(64)}` as const,
+};
+
+function plan(paths: readonly string[]) {
+  return planAffectedTests(paths, PACKAGE_CATALOG, INVENTORY, CALIBRATED_CONTEXT);
+}
 
 describe('affected-plan properties', () => {
   it('is invariant to changed-path order and duplication', () => {
@@ -28,9 +39,7 @@ describe('affected-plan properties', () => {
       fc.property(pathSet, fc.array(fc.nat(), { maxLength: 16 }), (paths, noise) => {
         const permuted = [...paths].sort((a, b) => (noise[PATHS.indexOf(a)] ?? 0) - (noise[PATHS.indexOf(b)] ?? 0));
         const duplicated = [...permuted, ...permuted];
-        expect(planAffectedTests(duplicated, PACKAGE_CATALOG, INVENTORY).planId).toBe(
-          planAffectedTests(paths, PACKAGE_CATALOG, INVENTORY).planId,
-        );
+        expect(plan(duplicated).planId).toBe(plan(paths).planId);
       }),
       { seed: 0x1a11ce, numRuns: 100 },
     );
@@ -39,8 +48,8 @@ describe('affected-plan properties', () => {
   it('adding scope never lowers risk or removes required checks and prerequisites', () => {
     fc.assert(
       fc.property(pathSet, fc.constantFrom(...PATHS), (paths, additional) => {
-        const before = planAffectedTests(paths, PACKAGE_CATALOG, INVENTORY);
-        const after = planAffectedTests([...paths, additional], PACKAGE_CATALOG, INVENTORY);
+        const before = plan(paths);
+        const after = plan([...paths, additional]);
         expect(RISK_RANK[after.risk.level]).toBeGreaterThanOrEqual(RISK_RANK[before.risk.level]);
         for (const check of before.requiredChecks) expect(after.requiredChecks).toContain(check);
         for (const prerequisite of before.prerequisites) {
@@ -54,8 +63,8 @@ describe('affected-plan properties', () => {
   it('every generated plan round-trips through the strict decoder', () => {
     fc.assert(
       fc.property(pathSet, (paths) => {
-        const plan = planAffectedTests(paths, PACKAGE_CATALOG, INVENTORY);
-        expect(parseAffectedTestPlan(JSON.parse(JSON.stringify(plan)) as unknown)).toEqual(plan);
+        const affected = plan(paths);
+        expect(parseAffectedTestPlan(JSON.parse(JSON.stringify(affected)) as unknown)).toEqual(affected);
       }),
       { seed: 0xadd2e55, numRuns: 100 },
     );
