@@ -309,7 +309,10 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
   'typecheck',
   'lint',
   'lint:structural',
+  'docs:check:fast',
   'docs:check',
+  'assurance:gate',
+  'test:constitution',
   'invariants',
   'check:gates',
   'audit:floor',
@@ -326,6 +329,7 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
   'test:redteam',
   'bench',
   'bench:gate',
+  'bench:contracts',
   'bench:trend',
   'bench:reality',
   'package:smoke',
@@ -348,12 +352,12 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
   'flex:verify',
 ];
 
-describe('the gauntlet-phases projection reproduces the pre-change order', () => {
-  it('projects EXACTLY the pinned 43 labels in the pinned order', () => {
+describe('the gauntlet-phases projection preserves the reviewed release order', () => {
+  it('projects EXACTLY the pinned 47 labels in the pinned order', () => {
     expect(gauntletPhaseLabels()).toEqual(PINNED_GAUNTLET_LABELS);
   });
 
-  it('has 43 phases (the release-profile projection of CHECK_REGISTRY + the executor-only phases)', () => {
-    expect(gauntletPhaseLabels()).toHaveLength(43);
+  it('has 47 phases (the release-profile projection of CHECK_REGISTRY + the executor-only phases)', () => {
+    expect(gauntletPhaseLabels()).toHaveLength(47);
   });
 });

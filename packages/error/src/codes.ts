@@ -439,15 +439,25 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'The package, scripts, and tests projects all typecheck (tsc --build + scripts + tests).',
     'fix the type errors (tsc --build + scripts + tests projects).',
   ),
-  'check/test-unit': check(
-    'Unit tests (fast lane)',
-    'The fast unit suite is green — the quick-lane behavioural floor.',
-    'make the failing unit assertions pass.',
-  ),
   'check/docs': check(
     'TSDoc freshness (docs:check)',
     'The committed API docs match the current public TSDoc surface.',
     "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
+  ),
+  'check/docs-fast': check(
+    'TypeDoc input fingerprint',
+    'The committed API documentation fingerprint matches every source input that can change TypeDoc output.',
+    "run 'pnpm run docs:build' after changing a public declaration, TSDoc, or TypeDoc configuration.",
+  ),
+  'check/assurance-density': check(
+    'Per-package assurance density ratchet',
+    'Authored test and benchmark evidence per source LOC never decreases for any package while progressing toward 10:1.',
+    'add robust authored evidence for the package, or review the ratio baseline only after proving an equivalent source reduction.',
+  ),
+  'check/test-constitution': check(
+    'Refactor-proof test constitution',
+    'Deterministic tests add no new real-time waits, ambient clocks, or source-byte coupling.',
+    'inject a manual clock/scheduler or assert public behavior instead of source bytes.',
   ),
   'check/gates': check(
     'Gauntlet gate fold (check:gates)',
@@ -589,6 +599,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'No benchmark regressed past its committed threshold (replicated).',
     'recover the regressed benchmark, or re-baseline with justification.',
   ),
+  'check/bench-contracts': check(
+    'Live performance-contract measurement',
+    'Every governed benchmark has a declared distribution and every live hot-path curve stays within its complexity ceiling.',
+    'restore the missing distribution, trustworthy fit, or accepted hot-path complexity class.',
+  ),
   'check/bench-trend': check(
     'Benchmark trend gate',
     'The benchmark trend has not drifted outside its strict envelope.',
@@ -621,13 +636,13 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
   ),
   'check/journey': check(
     'Consumer journey flows',
-    'Every consumer journey (scaffold, build, diagnostic, upgrade, package-author, cold-agent context) stays green from packed tarballs.',
+    'A real consumer can scaffold, build, debug, upgrade, author against, and navigate LiteShip from packed tarballs.',
     'fix the consumer flow the journey test exercised (scaffold, build, diagnostic, upgrade, or context).',
   ),
   'check/hermetic': check(
     'Hermetic release build + closure',
-    'The packed release rebuilds with the network disabled, every public subpath import-resolves, and the build reproduces.',
-    'fix the offline rebuild or the public-subpath export that failed to resolve in the hermetic closure.',
+    'The packed release reinstalls with the network disabled, every public subpath is proved from packed artifacts, and package contents reproduce.',
+    'fix the offline reinstall, public-subpath proof, or semantic package-content drift reported by the hermetic closure.',
   ),
   'check/devcontainer-pins': check(
     'Devcontainer pin parity',
@@ -637,7 +652,7 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
   'check/app-build': check(
     'LiteShip application build',
     'The current LiteShip application config is recognized and its host build completes.',
-    'fix the application config, detected host integration, or host build failure reported by liteship build.',
+    'fix the LiteShip config or host build failure reported by `liteship build`.',
   ),
 
   // ── schema: strict decoder issues ───────────────────────────────────────────
