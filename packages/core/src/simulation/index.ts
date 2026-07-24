@@ -20,7 +20,14 @@
  * @module
  */
 
-export { type Scheduler, type SchedulerWorld, type SimStep, type StepOutcome, realLoopScheduler } from './scheduler.js';
+export {
+  type Scheduler,
+  type SchedulerWorld,
+  type SimStep,
+  type StepOutcome,
+  realLoopScheduler,
+  seededInterleavingScheduler,
+} from './scheduler.js';
 
 export { type Fault, type FaultKind, type FaultTable, type FaultDecision, consultFault } from './fault.js';
 
