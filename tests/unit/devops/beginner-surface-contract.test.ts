@@ -30,6 +30,15 @@ describe('beginner surface contract', () => {
 
   it.each([
     {
+      name: 'repository README quick start',
+      source: () =>
+        beginner(
+          'README.md#quick-start',
+          markdownSection(read('README.md'), '## Quick start', '## What you can stop hand-rolling'),
+          { format: 'markdown' },
+        ),
+    },
+    {
       name: 'root README quick start',
       source: () =>
         beginner(
@@ -56,6 +65,14 @@ describe('beginner surface contract', () => {
     expect(analysis.violations).toEqual([]);
     expect(analysis.conceptFamilies).toEqual(beginnerConceptFamiliesFromContract());
     expect(analysis.conceptFamilies).toHaveLength(3);
+  });
+
+  it('keeps the documentation map pointed at the same beginner route', () => {
+    const useLayer = markdownSection(read('DOCS.md'), '## Four layers', '## Start Here');
+    expect(useLayer).toContain('[GETTING-STARTED.md](./GETTING-STARTED.md)');
+    expect(useLayer).toContain('`npm create liteship`');
+    expect(useLayer).not.toContain('@liteship/core');
+    expect(useLayer).not.toContain('@quantize');
   });
 
   it('keeps the generated project on one root import and one explicit host subpath', () => {

@@ -15,6 +15,8 @@ import { fnv1aBytes } from '../evidence/fnv.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { normalizeRepoPath } from '../repository-path.js';
 import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
+import { booleanValue, inputRecord, nonEmptyString, stringArray } from './input-validation.js';
+import { ValidationError } from '@liteship/error';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -203,18 +205,71 @@ function definitionIds<T extends ConfigDefinition>(
   return Object.fromEntries(Object.entries(registry).map(([name, member]) => [name, member.id]));
 }
 
+function validateDefinitionRegistry(value: unknown, field: string, expectedTag: string): void {
+  if (value === undefined) return;
+  const registry = inputRecord(value, 'defineConfig', Object.keys(value as object));
+  for (const [name, member] of Object.entries(registry)) {
+    nonEmptyString(name, 'defineConfig', `${field} key`);
+    if (
+      typeof member !== 'object' ||
+      member === null ||
+      (member as { _tag?: unknown })._tag !== expectedTag ||
+      typeof (member as { id?: unknown }).id !== 'string'
+    ) {
+      throw ValidationError('defineConfig', `${field}.${name} must be a definition produced by its define* owner.`);
+    }
+  }
+}
+
+function validatePluginConfig(value: unknown): void {
+  if (value === undefined) return;
+  const vite = inputRecord(value, 'defineConfig', ['dirs', 'hmr', 'environments', 'wasm']);
+  if (vite['dirs'] !== undefined) {
+    const dirs = inputRecord(vite['dirs'], 'defineConfig', ['boundary', 'token', 'theme', 'style']);
+    for (const [kind, path] of Object.entries(dirs)) nonEmptyString(path, 'defineConfig', `vite.dirs.${kind}`);
+  }
+  if (vite['hmr'] !== undefined) booleanValue(vite['hmr'], 'defineConfig', 'vite.hmr');
+  if (vite['environments'] !== undefined) {
+    const environments = stringArray(vite['environments'], 'defineConfig', 'vite.environments');
+    const allowed = new Set(['browser', 'server', 'shader']);
+    const foreign = environments.filter((environment) => !allowed.has(environment));
+    if (foreign.length > 0)
+      throw ValidationError('defineConfig', `vite.environments contains unsupported value ${foreign[0]}.`);
+  }
+  if (vite['wasm'] !== undefined && typeof vite['wasm'] !== 'boolean') {
+    const wasm = inputRecord(vite['wasm'], 'defineConfig', ['enabled', 'path']);
+    if (wasm['enabled'] !== undefined) booleanValue(wasm['enabled'], 'defineConfig', 'vite.wasm.enabled');
+    if (wasm['path'] !== undefined) nonEmptyString(wasm['path'], 'defineConfig', 'vite.wasm.path');
+  }
+}
+
+function validateAstroConfig(value: unknown): void {
+  if (value === undefined) return;
+  const astro = inputRecord(value, 'defineConfig', ['adaptive', 'edgeRuntime']);
+  if (astro['adaptive'] !== undefined) booleanValue(astro['adaptive'], 'defineConfig', 'astro.adaptive');
+  if (astro['edgeRuntime'] !== undefined) booleanValue(astro['edgeRuntime'], 'defineConfig', 'astro.edgeRuntime');
+}
+
 /**
  * Define a liteship {@link Config} — the single project-configuration hub every
  * adapter (Vite, Astro, test runners, edge runtime) projects from. Produces a
  * frozen, FNV-1a content-addressed value from raw {@link ConfigInput}.
  */
 export function defineConfig(input: ConfigInput): Config {
-  const boundaries = snapshotDefinitionRegistry(input.boundaries ?? {}, snapshotBoundary);
-  const tokens = snapshotDefinitionRegistry(input.tokens ?? {}, snapshotDefinitionValue);
-  const themes = snapshotDefinitionRegistry(input.themes ?? {}, snapshotDefinitionValue);
-  const styles = snapshotDefinitionRegistry(input.styles ?? {}, snapshotStyle);
-  const vite = input.vite === undefined ? undefined : snapshotDefinitionValue(input.vite);
-  const astro = input.astro === undefined ? undefined : snapshotDefinitionValue(input.astro);
+  const admitted = inputRecord(input, 'defineConfig', ['boundaries', 'tokens', 'themes', 'styles', 'vite', 'astro']);
+  validateDefinitionRegistry(admitted['boundaries'], 'boundaries', 'BoundaryDef');
+  validateDefinitionRegistry(admitted['tokens'], 'tokens', 'TokenDef');
+  validateDefinitionRegistry(admitted['themes'], 'themes', 'ThemeDef');
+  validateDefinitionRegistry(admitted['styles'], 'styles', 'StyleDef');
+  validatePluginConfig(admitted['vite']);
+  validateAstroConfig(admitted['astro']);
+  const config = admitted as unknown as ConfigInput;
+  const boundaries = snapshotDefinitionRegistry(config.boundaries ?? {}, snapshotBoundary);
+  const tokens = snapshotDefinitionRegistry(config.tokens ?? {}, snapshotDefinitionValue);
+  const themes = snapshotDefinitionRegistry(config.themes ?? {}, snapshotDefinitionValue);
+  const styles = snapshotDefinitionRegistry(config.styles ?? {}, snapshotStyle);
+  const vite = config.vite === undefined ? undefined : snapshotDefinitionValue(config.vite);
+  const astro = config.astro === undefined ? undefined : snapshotDefinitionValue(config.astro);
   // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
   // (RFC 8949 §4.2.1, recursive key sort, always-float64), the same path as
   // every other `fnv1a:` content address. This replaces the old top-level-only

@@ -16,6 +16,7 @@ import { Diagnostics } from '../evidence/diagnostics.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
 import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 import { ValidationError } from '@liteship/error';
+import { inputRecord, stringArray } from './input-validation.js';
 
 /** Single `box-shadow` layer — compiled into a space-separated CSS value by {@link Style.tap}. */
 export interface ShadowLayer {
@@ -56,6 +57,53 @@ interface TransitionConfig {
   readonly duration: number;
   readonly easing?: string;
   readonly properties?: readonly string[];
+}
+
+function validateStringRecord(value: unknown, field: string): void {
+  const record = inputRecord(value, 'defineStyle', Object.keys((value ?? {}) as object));
+  for (const [name, entry] of Object.entries(record)) {
+    if (name.length === 0 || typeof entry !== 'string') {
+      throw ValidationError('defineStyle', `${field} must contain non-empty property names with string values.`);
+    }
+  }
+}
+
+function validateStyleLayer(value: unknown, field: string): void {
+  const layer = inputRecord(value, 'defineStyle', ['properties', 'pseudo', 'boxShadow'], ['properties']);
+  validateStringRecord(layer['properties'], `${field}.properties`);
+  if (layer['pseudo'] !== undefined) {
+    const pseudo = inputRecord(layer['pseudo'], 'defineStyle', Object.keys(layer['pseudo'] as object));
+    for (const [selector, properties] of Object.entries(pseudo)) {
+      if (selector.length === 0) throw ValidationError('defineStyle', `${field}.pseudo contains an empty selector.`);
+      validateStringRecord(properties, `${field}.pseudo.${selector}`);
+    }
+  }
+  if (layer['boxShadow'] !== undefined) {
+    if (!Array.isArray(layer['boxShadow']))
+      throw ValidationError('defineStyle', `${field}.boxShadow must be an array.`);
+    for (const [index, shadowValue] of layer['boxShadow'].entries()) {
+      const shadow = inputRecord(
+        shadowValue,
+        'defineStyle',
+        ['x', 'y', 'blur', 'spread', 'color', 'inset'],
+        ['x', 'y', 'blur', 'color'],
+      );
+      for (const numberField of ['x', 'y', 'blur', 'spread'] as const) {
+        if (
+          shadow[numberField] !== undefined &&
+          (typeof shadow[numberField] !== 'number' || !Number.isFinite(shadow[numberField]))
+        ) {
+          throw ValidationError('defineStyle', `${field}.boxShadow[${index}].${numberField} must be finite.`);
+        }
+      }
+      if (typeof shadow['color'] !== 'string') {
+        throw ValidationError('defineStyle', `${field}.boxShadow[${index}].color must be a string.`);
+      }
+      if (shadow['inset'] !== undefined && typeof shadow['inset'] !== 'boolean') {
+        throw ValidationError('defineStyle', `${field}.boxShadow[${index}].inset must be a boolean.`);
+      }
+    }
+  }
 }
 
 function deterministicId<B extends Boundary>(
@@ -226,6 +274,36 @@ export function defineStyle<B extends Boundary>(config: {
   readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
   readonly transition?: TransitionConfig;
 }): StyleDef<B> {
+  const admitted = inputRecord(config, 'defineStyle', ['boundary', 'base', 'states', 'transition'], ['base']);
+  if (
+    admitted['boundary'] !== undefined &&
+    (typeof admitted['boundary'] !== 'object' ||
+      admitted['boundary'] === null ||
+      (admitted['boundary'] as { _tag?: unknown })._tag !== 'BoundaryDef')
+  ) {
+    throw ValidationError('defineStyle', 'boundary must be a definition produced by defineBoundary.');
+  }
+  validateStyleLayer(admitted['base'], 'base');
+  if (admitted['states'] !== undefined) {
+    const states = inputRecord(admitted['states'], 'defineStyle', Object.keys(admitted['states'] as object));
+    for (const [state, layer] of Object.entries(states)) validateStyleLayer(layer, `states.${state}`);
+  }
+  if (admitted['transition'] !== undefined) {
+    const transition = inputRecord(
+      admitted['transition'],
+      'defineStyle',
+      ['duration', 'easing', 'properties'],
+      ['duration'],
+    );
+    if (typeof transition['duration'] !== 'number') {
+      throw ValidationError('defineStyle', 'transition.duration must be a finite non-negative number.');
+    }
+    if (transition['easing'] !== undefined && typeof transition['easing'] !== 'string') {
+      throw ValidationError('defineStyle', 'transition.easing must be a string.');
+    }
+    if (transition['properties'] !== undefined)
+      stringArray(transition['properties'], 'defineStyle', 'transition.properties');
+  }
   if (config.boundary && config.states) {
     const boundaryStates = config.boundary.states as readonly string[];
     const stateKeys = Object.keys(config.states);

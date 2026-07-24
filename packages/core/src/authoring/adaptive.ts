@@ -30,6 +30,8 @@ import { tierTargets } from '../evidence/escalation.js';
 import type { TierChoice } from '../evidence/escalation.js';
 import type { QualityTierTarget } from '../evidence/quality-tiers.js';
 import type { MotionTier } from '../evidence/ui-quality.js';
+import { ValidationError } from '@liteship/error';
+import { inputRecord } from './input-validation.js';
 // `@liteship/core` takes NO import — not even type-only — on `@liteship/quantizer`
 // or `@liteship/compiler`. Both DEPEND ON core, so a back-import (even a type one,
 // whose `.d.ts` resolution loops back to `core/dist`) closes a project-reference
@@ -358,14 +360,28 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
   spec: AdaptiveSpec<B>,
   lowering: AdaptiveLowering,
 ): Adaptive {
-  const boundary = defineBoundary(spec.boundary);
+  const admitted = inputRecord(
+    spec,
+    'defineAdaptive',
+    ['boundary', 'style', 'quantize', 'tokens', 'theme', 'tier'],
+    ['boundary', 'style'],
+  );
+  const authoredTier = admitted['tier'];
+  if (
+    authoredTier !== undefined &&
+    !(['static', 'styled', 'reactive', 'animated', 'gpu'] as const).includes(authoredTier as CapTier)
+  ) {
+    throw ValidationError('defineAdaptive', 'tier must be one of static, styled, reactive, animated, or gpu.');
+  }
+  const input = admitted as unknown as AdaptiveSpec<B>;
+  const boundary = defineBoundary(input.boundary);
   // The generated boundary is authoritative. A JavaScript caller can still
   // smuggle a `boundary` key through the type-level Omit, so splice it LAST.
-  const style = defineStyle({ ...spec.style, boundary });
-  const quantizer = spec.quantize !== undefined ? lowering.defineQuantizer(boundary, spec.quantize) : undefined;
-  const tokens = spec.tokens !== undefined ? Object.freeze(spec.tokens.map((t) => defineToken(t))) : undefined;
-  const theme = spec.theme !== undefined ? defineTheme(spec.theme) : undefined;
-  const tier: CapTier = spec.tier ?? 'styled';
+  const style = defineStyle({ ...input.style, boundary });
+  const quantizer = input.quantize !== undefined ? lowering.defineQuantizer(boundary, input.quantize) : undefined;
+  const tokens = input.tokens !== undefined ? Object.freeze(input.tokens.map((t) => defineToken(t))) : undefined;
+  const theme = input.theme !== undefined ? defineTheme(input.theme) : undefined;
+  const tier: CapTier = input.tier ?? 'styled';
 
   const id = aggregateId(
     boundary.id,

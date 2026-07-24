@@ -20,6 +20,7 @@ import { wallClock } from '../clock/clock.js';
 import type { EvaluateResult } from './types.js';
 import { ValidationError } from '@liteship/error';
 import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
+import { finiteNumber, inputRecord, nonEmptyString } from './input-validation.js';
 
 /** The core primitive. Source of truth for quantization boundaries. */
 interface BoundaryDef<
@@ -294,12 +295,35 @@ export function defineBoundary<I extends string, const S extends readonly [strin
   readonly hysteresis?: number;
   readonly spec?: BoundarySpec;
 }): BoundaryDef<I, S> {
+  const admitted = inputRecord(config, 'defineBoundary', ['input', 'at', 'hysteresis', 'spec'], ['input', 'at']);
+  if (typeof admitted['input'] !== 'string') {
+    throw ValidationError('defineBoundary', 'input must be a string accepted by the SignalInput contract.');
+  }
+  if (!Array.isArray(admitted['at']) || admitted['at'].length === 0) {
+    throw ValidationError(
+      'defineBoundary',
+      'at must contain at least one [threshold, state] pair, for example at: [[0, "default"]].',
+    );
+  }
+  for (const [index, pair] of admitted['at'].entries()) {
+    if (!Array.isArray(pair) || pair.length !== 2 || typeof pair[0] !== 'number') {
+      throw ValidationError('defineBoundary', `at[${index}] must be one [numeric threshold, state] pair.`);
+    }
+    nonEmptyString(pair[1], 'defineBoundary', `at[${index}][1]`);
+  }
+  if (admitted['hysteresis'] !== undefined) {
+    const hysteresis = finiteNumber(admitted['hysteresis'], 'defineBoundary', 'hysteresis');
+    if (hysteresis < 0) throw ValidationError('defineBoundary', 'hysteresis must be zero or greater.');
+  }
+  if (admitted['spec'] !== undefined) validateBoundarySpec(admitted['spec']);
+
   const pairs = config.at;
   for (let i = 1; i < pairs.length; i++) {
     if (pairs[i]![0] <= pairs[i - 1]![0]) {
       // Build the copy-pasteable fix from the user's own pairs, sorted.
       const sorted = [...(pairs as readonly (readonly [number, string])[])].sort((a, b) => a[0] - b[0]);
-      const suggestion = sorted.map(([t, s]) => `[${t}, '${s}']`).join(', ');
+      const visible = sorted.slice(0, 8);
+      const suggestion = `${visible.map(([t, s]) => `[${t}, '${s}']`).join(', ')}${sorted.length > visible.length ? `, … (+${sorted.length - visible.length})` : ''}`;
       throw ValidationError(
         'defineBoundary',
         `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}. Reorder your \`at:\` pairs so thresholds increase: at: [${suggestion}].`,
@@ -359,6 +383,23 @@ export function defineBoundary<I extends string, const S extends readonly [strin
     ...(config.hysteresis !== undefined ? { hysteresis: config.hysteresis } : {}),
     ...(spec !== undefined ? { spec } : {}),
   });
+}
+
+function validateBoundarySpec(value: unknown): void {
+  const spec = inputRecord(value, 'defineBoundary', ['deviceFilter', 'timeRange', 'experimentId']);
+  if (spec['deviceFilter'] !== undefined && typeof spec['deviceFilter'] !== 'function') {
+    throw ValidationError('defineBoundary', 'spec.deviceFilter must be a function.');
+  }
+  if (spec['experimentId'] !== undefined) nonEmptyString(spec['experimentId'], 'defineBoundary', 'spec.experimentId');
+  if (spec['timeRange'] === undefined) return;
+  const range = inputRecord(spec['timeRange'], 'defineBoundary', ['from', 'until']);
+  const from =
+    range['from'] === undefined ? undefined : finiteNumber(range['from'], 'defineBoundary', 'spec.timeRange.from');
+  const until =
+    range['until'] === undefined ? undefined : finiteNumber(range['until'], 'defineBoundary', 'spec.timeRange.until');
+  if (from !== undefined && until !== undefined && from > until) {
+    throw ValidationError('defineBoundary', 'spec.timeRange.from must not be later than spec.timeRange.until.');
+  }
 }
 
 /**
