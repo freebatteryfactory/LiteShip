@@ -10,6 +10,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative, sep } from 'node:path';
 import { PACKAGE_CATALOG } from '../package-catalog.js';
+import { rankOf, type AssuranceLevel } from '../../packages/gauntlet/src/assurance.js';
+import { levelOf } from '../../packages/gauntlet/src/assurance-map.js';
 
 export const ASSURANCE_TARGET_MILLI = 10_000;
 
@@ -36,6 +38,9 @@ export interface PackageAssuranceInventory {
   readonly ratioMilli: number;
   readonly targetMilli: number;
   readonly targetReached: boolean;
+  readonly highestAssurance: AssuranceLevel;
+  readonly evidenceRequirements: readonly string[];
+  readonly missingEvidence: readonly string[];
   readonly evidenceClasses: Readonly<Record<EvidenceClass, number>>;
   readonly evidenceFiles: readonly string[];
 }
@@ -61,6 +66,7 @@ export interface AssuranceBaseline {
         readonly sourceLoc: number;
         readonly authoredEvidenceLoc: number;
         readonly ratioMilli: number;
+        readonly missingEvidence: readonly string[];
       }
     >
   >;
@@ -68,8 +74,10 @@ export interface AssuranceBaseline {
 
 export interface AssuranceRegression {
   readonly package: string;
-  readonly priorMilli: number;
-  readonly currentMilli: number;
+  readonly kind: 'density' | 'evidence-gap';
+  readonly priorMilli?: number;
+  readonly currentMilli?: number;
+  readonly evidenceGap?: string;
 }
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.rs']);
@@ -158,6 +166,27 @@ function directlyOwnedEvidence(path: string, packageDir: string): boolean {
   ).test(normalized);
 }
 
+const REQUIREMENTS: Readonly<Record<AssuranceLevel, readonly (readonly EvidenceClass[])[]>> = {
+  L0: [],
+  L1: [['unit']],
+  L2: [['unit'], ['property']],
+  L3: [['unit'], ['property'], ['component', 'integration', 'browser', 'e2e'], ['simulation', 'chaos'], ['benchmark']],
+  L4: [
+    ['unit'],
+    ['property'],
+    ['component', 'integration', 'browser', 'e2e'],
+    ['simulation', 'chaos'],
+    ['mutation'],
+    ['mcdc'],
+    ['fuzz'],
+    ['benchmark'],
+  ],
+};
+
+function requirementLabel(alternatives: readonly EvidenceClass[]): string {
+  return alternatives.join('|');
+}
+
 /** Compute the inventory from current repository bytes. */
 export function buildAssuranceInventory(cwd: string): AssuranceInventory {
   const evidenceFiles = filesUnder(join(cwd, 'tests')).filter((path) => EVIDENCE_EXTENSIONS.has(extname(path)));
@@ -187,6 +216,15 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
     for (const entry of authored) {
       for (const kind of classifyEvidence(entry.path)) evidenceClasses[kind] += 1;
     }
+    const highestAssurance = sourceFiles.reduce<AssuranceLevel>((highest, path) => {
+      const level = levelOf(normalize(relative(cwd, path)));
+      return rankOf(level) > rankOf(highest) ? level : highest;
+    }, 'L0');
+    const requirementGroups = REQUIREMENTS[highestAssurance];
+    const evidenceRequirements = requirementGroups.map(requirementLabel);
+    const missingEvidence = requirementGroups
+      .filter((alternatives) => alternatives.every((kind) => evidenceClasses[kind] === 0))
+      .map(requirementLabel);
     return {
       name: record.name,
       sourceLoc,
@@ -195,6 +233,9 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
       ratioMilli,
       targetMilli: ASSURANCE_TARGET_MILLI,
       targetReached: ratioMilli >= ASSURANCE_TARGET_MILLI,
+      highestAssurance,
+      evidenceRequirements,
+      missingEvidence,
       evidenceClasses,
       evidenceFiles: authored.map((entry) => entry.path).sort(),
     } satisfies PackageAssuranceInventory;
@@ -226,6 +267,7 @@ export function baselineFromInventory(inventory: AssuranceInventory): AssuranceB
           sourceLoc: entry.sourceLoc,
           authoredEvidenceLoc: entry.authoredEvidenceLoc,
           ratioMilli: entry.ratioMilli,
+          missingEvidence: entry.missingEvidence,
         },
       ]),
     ),
@@ -245,7 +287,16 @@ export function assuranceRegressions(
         prior.sourceLoc > 0 &&
         entry.sourceLoc > 0 &&
         entry.authoredEvidenceLoc * prior.sourceLoc < prior.authoredEvidenceLoc * entry.sourceLoc;
-      return regressed ? [{ package: entry.name, priorMilli: prior.ratioMilli, currentMilli: entry.ratioMilli }] : [];
+      const regressions: AssuranceRegression[] = regressed
+        ? [{ package: entry.name, kind: 'density', priorMilli: prior!.ratioMilli, currentMilli: entry.ratioMilli }]
+        : [];
+      if (prior !== undefined) {
+        const priorGaps = new Set(prior.missingEvidence);
+        for (const evidenceGap of entry.missingEvidence) {
+          if (!priorGaps.has(evidenceGap)) regressions.push({ package: entry.name, kind: 'evidence-gap', evidenceGap });
+        }
+      }
+      return regressions;
     })
     .sort((left, right) => left.package.localeCompare(right.package));
 }

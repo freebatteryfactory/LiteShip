@@ -24,7 +24,9 @@ const regressions = assuranceRegressions(inventory, baseline);
 if (regressions.length > 0) {
   for (const regression of regressions) {
     process.stderr.write(
-      `assurance density regressed for ${regression.package}: ${(regression.priorMilli / 1_000).toFixed(3)}x -> ${(regression.currentMilli / 1_000).toFixed(3)}x\n`,
+      regression.kind === 'density'
+        ? `assurance density regressed for ${regression.package}: ${((regression.priorMilli ?? 0) / 1_000).toFixed(3)}x -> ${((regression.currentMilli ?? 0) / 1_000).toFixed(3)}x\n`
+        : `assurance evidence gap opened for ${regression.package}: ${regression.evidenceGap}\n`,
     );
   }
   process.exit(1);
