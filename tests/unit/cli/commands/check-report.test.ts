@@ -17,7 +17,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { IntegrityDigest } from '@liteship/core';
-import { CHECK_REGISTRY, createCurePacket, type CheckPlan, type CheckReport } from '@liteship/command';
+import { CHECK_REGISTRY, type CheckPlan, type CheckReport } from '@liteship/command';
+import { createCurePacket } from '../../../../packages/cli/src/lib/cure-packet.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 import {
   check,

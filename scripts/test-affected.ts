@@ -1,14 +1,17 @@
-import { spawnSync } from 'node:child_process';
 import { PACKAGE_CATALOG } from './package-catalog.js';
 import { buildAssuranceInventory } from './lib/assurance-inventory.js';
 import { planAffectedTests } from './lib/affected-test-plan.js';
+import { spawnArgvCapture } from './lib/spawn.js';
 import { runPnpm } from './support/pnpm-process.js';
 
 const cwd = process.cwd();
 const base = process.env['LITESHIP_AFFECTED_BASE'] ?? 'origin/main';
-const diff = spawnSync('git', ['diff', '--name-only', `${base}...HEAD`], { cwd, encoding: 'utf8' });
+const diff = await spawnArgvCapture('git', ['diff', '--name-only', `${base}...HEAD`], {
+  cwd,
+  captureBytes: 1024 * 1024,
+});
 const changedPaths =
-  diff.status === 0 && typeof diff.stdout === 'string' ? diff.stdout.split(/\r?\n/u).filter(Boolean) : ['package.json']; // Fail broad when the base cannot be resolved.
+  diff.exitCode === 0 ? diff.stdout.split(/\r?\n/u).filter(Boolean) : ['package.json']; // Fail broad when the base cannot be resolved.
 const plan = planAffectedTests(changedPaths, PACKAGE_CATALOG, buildAssuranceInventory(cwd));
 
 if (process.argv.includes('--print-plan')) {

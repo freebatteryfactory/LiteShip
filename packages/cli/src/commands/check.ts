@@ -24,7 +24,6 @@ import { sha256Hex } from '@liteship/canonical';
 import { IoError, ParseError } from '@liteship/error';
 import {
   checkGatesCommand,
-  createCurePacket,
   formatCheckPlan,
   planChecks,
   type CheckPayload,
@@ -41,6 +40,7 @@ import { createNodeCommandContext, currentEnvFingerprint } from '@liteship/comma
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
+import { createCurePacket } from '../lib/cure-packet.js';
 import {
   detectProjectPackageManager,
   projectBinaryInvocation,
