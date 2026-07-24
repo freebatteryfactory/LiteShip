@@ -17,9 +17,8 @@
  *  • DOC claims — a perf-claim keyword in a DOC/COMMENT line (comments kept,
  *    strings blanked, so a keyword inside a string literal — e.g. another gate's
  *    own keyword list — does NOT count).
- * A claim site is SATISFIED when a bench MEASURES it: a declared bench
- * (`benchmarks/distributions.json`) or a `tests/bench/*.bench.ts` registration
- * whose NAME references the claiming symbol OR the claiming source file's module.
+ * A claim site is SATISFIED only by a schema-v2 subject whose package owner and
+ * symbol match the claim and whose call is reachable from the measured task.
  * An UNSATISFIED claim (no bench anywhere references it) is the finding.
  *
  * PRECISION (the always-must for a blocking gate). The keyword list is curated +
@@ -30,7 +29,7 @@
  * comments kept) so a keyword inside a string literal never fires. The gate's own
  * keyword list lives in a string array → it does not flag itself.
  *
- * LEAN: a pure fold over GateContext bytes (no `typescript`, no IR). It ships
+ * Deterministic: an AST fold over GateContext bytes (no benchmark execution or IR). It ships
  * red/green/mutation fixtures, so it self-proves via the authority ratchet, and it
  * rides in `LITESHIP_IR_GATES` alongside the other claim-vs-reality gates.
  *
@@ -40,8 +39,15 @@
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import { stableEvidenceDigest } from '../verdict-cache.js';
-import { codeOnly, stringsBlanked, commentsBlanked } from './code-only.js';
+import { factAccessEvidenceDigest, stableEvidenceDigest } from '../verdict-cache.js';
+import { codeOnly, stringsBlanked } from './code-only.js';
+import {
+  benchmarkSubjectFactFor,
+  parseQualifiedBenchDistribution,
+  type BenchmarkSubjectFacts,
+  type BenchSubject,
+  type QualifiedBenchDistribution,
+} from './bench-subjects.js';
 
 export const PERF_CLAIM_BENCH_RULE_ID = 'gauntlet/perf-claim-without-bench';
 
@@ -255,53 +261,31 @@ function commentStart(line: string): number {
 }
 
 /**
- * The benched surface — every name a bench MEASURES, lower-cased for matching:
- *  • declared bench names from benchmarks/distributions.json,
- *  • bench registrations scanned from every governed `tests/bench/*.bench.ts`.
- * A claim is satisfied iff some benched name references its symbol or its file's
- * module (the file's basename without extension).
+ * The qualified SUT surface. Names do not count: a subject must be declared and
+ * statically reachable from the registered measured execution.
  */
-function benchedSurface(context: GateContext): readonly string[] {
-  const surface: string[] = [];
-  const distText = context.readFile(DISTRIBUTIONS_PATH);
-  if (distText !== undefined) {
-    // A malformed distributions.json is the performance-contracts gate's finding,
-    // not this gate's; tryParseJson returns null (no benched names) rather than
-    // throwing — the conservative direction (a claim then reads as unbenched, never
-    // a false GREEN). The parse error is NOT swallowed silently: tryParseJson binds
-    // and inspects it (it distinguishes a syntax error from a real value).
-    const parsed = tryParseJson(distText);
-    if (isRecord(parsed) && Array.isArray(parsed.distributions)) {
-      for (const d of parsed.distributions) {
-        if (isRecord(d) && typeof d.name === 'string') surface.push(d.name.toLowerCase());
-      }
-    }
-  }
-  // Bench registrations in any governed bench file the context exposes.
-  for (const file of context.files()) {
-    if (!file.endsWith('.bench.ts')) continue;
-    const text = context.readFile(file);
-    if (text === undefined) continue;
-    // commentsBlanked (NOT codeOnly): the bench NAME lives in a string literal, so
-    // strings must SURVIVE; only comments are blanked (a commented-out bench.add
-    // must not register). Mirrors the performance-contracts gate's scan.
-    for (const name of benchRegistrationNames(commentsBlanked(text))) surface.push(name.toLowerCase());
-  }
-  return surface;
+interface QualifiedSurfaceEntry {
+  readonly name: string;
+  readonly subject: BenchSubject;
 }
 
-const BENCH_REGISTRATION = /\bbench(?:\.add)?\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
-
-function benchRegistrationNames(codeOnlyText: string): readonly string[] {
-  const out: string[] = [];
-  BENCH_REGISTRATION.lastIndex = 0;
-  let m: RegExpExecArray | null = BENCH_REGISTRATION.exec(codeOnlyText);
-  while (m !== null) {
-    const name = m[2];
-    if (name !== undefined && name.length > 0) out.push(name);
-    m = BENCH_REGISTRATION.exec(codeOnlyText);
+function qualifiedSutSurface(context: GateContext): readonly QualifiedSurfaceEntry[] {
+  const distText = context.readFile(DISTRIBUTIONS_PATH);
+  if (distText === undefined) return [];
+  const parsed = tryParseJson(distText);
+  if (!isRecord(parsed) || parsed.schemaVersion !== 2 || !Array.isArray(parsed.distributions)) return [];
+  const declared = parsed.distributions
+    .map(parseQualifiedBenchDistribution)
+    .filter((distribution): distribution is QualifiedBenchDistribution => distribution !== null);
+  const surface: QualifiedSurfaceEntry[] = [];
+  for (const distribution of declared) {
+    const qualification = benchmarkSubjectFactFor(context.benchmarkSubjects, distribution)?.qualification;
+    if (qualification === undefined) continue;
+    if (qualification.issues.length === 0) {
+      surface.push(...qualification.qualifyingSutSubjects.map((subject) => ({ name: distribution.name, subject })));
+    }
   }
-  return out;
+  return surface;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -325,10 +309,18 @@ function tryParseJson(text: string): unknown {
   }
 }
 
-/** The file's module token a bench name may reference (the basename without extension). */
+/** The file's module token a subject symbol may reference (basename without extension). */
 function moduleToken(file: string): string {
   const base = file.slice(file.lastIndexOf('/') + 1);
   return base.replace(/\.ts$/, '').toLowerCase();
+}
+
+function packageSpecifier(file: string): string | null {
+  const match = /^packages\/([^/]+)\/src\//u.exec(file);
+  const slug = match?.[1];
+  if (slug === undefined) return null;
+  if (slug === 'liteship' || slug === 'create-liteship') return slug;
+  return `@liteship/${slug}`;
 }
 
 /**
@@ -350,14 +342,21 @@ function moduleWords(file: string): readonly string[] {
   return [...words];
 }
 
-/** Is the claim site MEASURED by some benched name? */
-function isBenched(site: ClaimSite, surface: readonly string[]): boolean {
+/** Is the claim site measured by a qualified product SUT subject? */
+function isBenched(site: ClaimSite, surface: readonly QualifiedSurfaceEntry[]): boolean {
+  const owner = packageSpecifier(site.file);
+  if (owner === null) return false;
   const symbol = site.symbol.toLowerCase();
   const words = moduleWords(site.file);
-  for (const name of surface) {
-    if (symbol.length > 0 && name.includes(symbol)) return true;
+  for (const entry of surface) {
+    const subject = entry.subject;
+    if (subject.origin.kind !== 'module' || subject.origin.specifier !== owner) continue;
+    const measured = `${subject.symbol} ${entry.name}`.toLowerCase();
+    if (symbol.length > 0 && measured.replace(/[^a-z0-9]/gu, '').includes(symbol.replace(/[^a-z0-9]/gu, ''))) {
+      return true;
+    }
     for (const w of words) {
-      if (name.includes(w)) return true;
+      if (measured.includes(w)) return true;
     }
   }
   return false;
@@ -369,7 +368,25 @@ function isPublishedSource(file: string): boolean {
 }
 
 function scan(context: GateContext): readonly Finding[] {
-  const surface = benchedSurface(context);
+  if (context.benchmarkSubjects === undefined) {
+    return [
+      finding({
+        ruleId: PERF_CLAIM_BENCH_RULE_ID,
+        severity: 'warning',
+        level: 'L3',
+        title: 'Benchmark subject facts unavailable',
+        detail:
+          'the lean gate host supplied no parser-backed benchmark reachability facts; this run cannot grant or deny performance-claim benchmark assurance',
+        location: { file: DISTRIBUTIONS_PATH },
+        remediation: {
+          kind: 'instruction',
+          description: 'Run the repository-hosted parser-backed gate path.',
+          steps: ['Run `liteship check gates --ir`.'],
+        },
+      }),
+    ];
+  }
+  const surface = qualifiedSutSurface(context);
   const findings: Finding[] = [];
   for (const file of context.files()) {
     if (!isPublishedSource(file)) continue;
@@ -383,15 +400,15 @@ function scan(context: GateContext): readonly Finding[] {
           severity: 'error',
           level: 'L3',
           title: 'Performance claim with no benchmark',
-          detail: `${site.file}:${site.line} — ${site.detail}, but no bench measures it. A measurable performance claim shipped in published source with no measurement behind it is unproven prose: a downstream consumer ships on a property nothing verifies. Either MEASURE it (a declared bench whose name references the claim) or drop the claim.`,
+          detail: `${site.file}:${site.line} — ${site.detail}, but no qualified benchmark subject measures it. A measurable performance claim shipped in published source with no measurement behind it is unproven prose: a downstream consumer ships on a property nothing verifies. Either MEASURE it with a reachable schema-v2 SUT subject or drop the claim.`,
           location: { file: site.file, line: site.line },
           remediation: {
             kind: 'instruction',
             description: 'Back the perf claim with a benchmark, or remove the claim.',
             steps: [
               site.kind === 'code'
-                ? `Add a bench in tests/bench/*.bench.ts whose name references "${site.symbol}" (or the module "${moduleToken(site.file)}"), and declare it in benchmarks/distributions.json.`
-                : `Add a bench whose name references the module "${moduleToken(site.file)}" and declare it in benchmarks/distributions.json — or, if the claim is not actually measured, soften the wording so it no longer promises a measured property.`,
+                ? `Add a bench that invokes "${site.symbol}" and declare its exact module-owned SUT subject in benchmarks/distributions.json.`
+                : `Add a bench with a reachable SUT subject for module "${moduleToken(site.file)}" — or soften wording that is not actually measured.`,
               'A "zero-allocation" claim is measured by an allocation bench (live bytes/op under forced GC); a complexity claim (O(1)/O(n)) by a complexity-map fit; a "fast-path"/"hot-path" by a throughput bench on that path.',
             ],
           },
@@ -409,7 +426,7 @@ function scan(context: GateContext): readonly Finding[] {
 const RED_SOURCE = '/** A lookup. */\nexport function fastPath(): number {\n  return 1;\n}\n';
 const GREEN_SOURCE = '/** A benched lookup. */\nexport function fastPath(): number {\n  return 1;\n}\n';
 const GREEN_DISTRIBUTIONS = JSON.stringify({
-  schemaVersion: 1,
+  schemaVersion: 2,
   distributions: [
     {
       name: 'fastPath -- single call',
@@ -417,9 +434,45 @@ const GREEN_DISTRIBUTIONS = JSON.stringify({
       inputSize: 1,
       shape: 'single-call',
       replicates: 1,
+      subjects: [
+        {
+          role: 'sut',
+          origin: { kind: 'module', specifier: '@liteship/widget' },
+          symbol: 'fastPath',
+          binding: 'fastPath',
+        },
+      ],
     },
   ],
 });
+const GREEN_BENCHMARK_SUBJECTS: BenchmarkSubjectFacts = {
+  schemaVersion: 1,
+  distributions: [
+    {
+      name: 'fastPath -- single call',
+      file: 'tests/bench/widget.bench.ts',
+      qualification: {
+        issues: [],
+        reachableSubjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/widget' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+        qualifyingSutSubjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/widget' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
+    },
+  ],
+};
 
 /**
  * The OUT-OF-IR EVIDENCE digest — the verdict-cache soundness fold. The published source
@@ -428,17 +481,28 @@ const GREEN_DISTRIBUTIONS = JSON.stringify({
  * `*.bench.ts` file (under `benchmarks/`/`tests/bench/` — OUTSIDE the IR) — is not.
  * Removing a bench that backed a claim flips it from benched to unbenched WITHOUT touching
  * the claimed source, so the cache would serve a stale verdict unless this is folded. We
- * fold the EXACT benched-surface sources {@link benchedSurface} reads: the distributions
+ * fold the exact qualified-surface sources {@link qualifiedSutSurface} reads: the distributions
  * registry + the `.bench.ts` files `context.files()` exposes, each present/absent-tagged.
  */
 function perfClaimBenchEvidenceDigest(context: GateContext): string {
   const tag = (text: string | undefined): string => (text === undefined ? 'A' : `P${text}`);
   const entries: [string, string][] = [[DISTRIBUTIONS_PATH, tag(context.readFile(DISTRIBUTIONS_PATH))]];
-  for (const file of context.files()) {
-    if (!file.endsWith('.bench.ts')) continue;
-    entries.push([file, tag(context.readFile(file))]);
+  const parsed = tryParseJson(context.readFile(DISTRIBUTIONS_PATH) ?? 'null');
+  if (isRecord(parsed) && Array.isArray(parsed.distributions)) {
+    for (const value of parsed.distributions) {
+      const distribution = parseQualifiedBenchDistribution(value);
+      if (distribution !== null) {
+        entries.push([distribution.file, tag(context.readFile(distribution.file))]);
+      }
+      if (distribution?.execution?.kind === 'collector') {
+        entries.push([distribution.execution.file, tag(context.readFile(distribution.execution.file))]);
+      }
+    }
   }
-  return stableEvidenceDigest(entries);
+  return stableEvidenceDigest([
+    ['sources', stableEvidenceDigest(entries)],
+    ['benchmarkSubjects', factAccessEvidenceDigest('benchmarkSubjects', context.benchmarkSubjects) ?? 'absent'],
+  ]);
 }
 
 /** The qualified gate — fixtures included, so it self-proves via the ratchet. */
@@ -452,14 +516,22 @@ export const perfClaimBenchGate: Gate = defineGate({
   fixtures: {
     red: {
       name: 'a `fastPath` function in published src with NO bench measuring it',
-      context: memoryContext({ 'packages/widget/src/lookup.ts': RED_SOURCE }),
+      context: {
+        ...memoryContext({ 'packages/widget/src/lookup.ts': RED_SOURCE }),
+        benchmarkSubjects: { schemaVersion: 1, distributions: [] },
+      },
     },
     green: {
       name: 'the same `fastPath` claim, now measured by a declared bench that names it',
-      context: memoryContext({
-        'packages/widget/src/lookup.ts': GREEN_SOURCE,
-        'benchmarks/distributions.json': GREEN_DISTRIBUTIONS,
-      }),
+      context: {
+        ...memoryContext({
+          'packages/widget/src/lookup.ts': GREEN_SOURCE,
+          'benchmarks/distributions.json': GREEN_DISTRIBUTIONS,
+          'tests/bench/widget.bench.ts':
+            "import { fastPath } from '@liteship/widget';\nbench('fastPath -- single call', () => fastPath());\n",
+        }),
+        benchmarkSubjects: GREEN_BENCHMARK_SUBJECTS,
+      },
     },
     mutation: {
       describe:

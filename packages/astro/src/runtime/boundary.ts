@@ -526,8 +526,8 @@ export function evaluateBoundary(
   // Activation gating only matters when the boundary carries a spec
   // (time-range / experiment / device filter). For the common spec-less
   // case `isActive` is unconditionally true, so building the activation
-  // context here — which allocates and, in a browser, creates a canvas +
-  // WebGL2 context on every call — is pure hot-path waste. Skip it.
+  // context here would create a canvas + WebGL2 context even though the result
+  // cannot affect a spec-less boundary. Skip that semantically dead work.
   if (boundary.boundary.spec) {
     const context = buildBoundaryActivationContext(clock);
     if (!Boundary.isActive(boundary.boundary, context)) {

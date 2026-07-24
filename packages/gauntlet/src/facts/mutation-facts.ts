@@ -36,6 +36,8 @@
 export interface MutationFacts {
   /** Every evaluated mutant's outcome — the substrate the gate folds. */
   readonly outcomes: readonly MutantOutcome[];
+  /** Every operator's applicability count for every admitted target, including zero. */
+  readonly operatorApplicability: readonly MutationOperatorApplicability[];
   /**
    * The committed per-file mutation-score baseline (the ratchet artifact, e.g.
    * `benchmarks/mutation-score.json`). A file whose freshly-computed score DROPS
@@ -45,6 +47,13 @@ export interface MutationFacts {
    * regression). Keyed by the same {@link MutantOutcome.file} ids.
    */
   readonly scoreBaseline: Readonly<Record<string, number>>;
+}
+
+/** One explicit operator-applicability census row for an admitted mutation target. */
+export interface MutationOperatorApplicability {
+  readonly file: string;
+  readonly operator: string;
+  readonly applicableMutants: number;
 }
 
 /**
@@ -88,4 +97,12 @@ export interface MutantOutcome {
   readonly originalText: string;
   /** The text the span was replaced with — the `original → mutated` the reader sees. */
   readonly mutatedText: string;
+  /** Sorted tests mapped to this site, even when an equivalent registry bypasses execution. */
+  readonly coveringTests: readonly string[];
+  /** Human proof for an equivalent mutant; null for every executable verdict. */
+  readonly equivalentJustification: string | null;
+  /** Content address of the mutant-bound equivalent proof; null for non-equivalents. */
+  readonly equivalentJustificationDigest: string | null;
+  /** Proven mutation-subsumption parents. Empty means no subsumption is claimed. */
+  readonly subsumedBy: readonly string[];
 }

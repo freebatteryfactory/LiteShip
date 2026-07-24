@@ -5,17 +5,15 @@
  * Two host-only computations the mutation run needs, both PURE + deterministic over
  * the repo bytes:
  *
- * 1. {@link l4SeamTargets} — the CRITICAL L4 seam set to aim the mutation cannon at,
- *    computed from the LIVE propagated assurance levels (the
+ * 1. {@link l4SeamTargets} — the COMPLETE mutation-analyzable L4 source census to aim the
+ *    mutation cannon at, computed from the LIVE propagated assurance levels (the
  *    {@link propagateAssuranceLevels} fixpoint over the injected IR's import graph,
  *    floored by the committed glob map — THE LAW: the level is computed from the live
- *    IR, never a hardcoded list beside the file). The first deployment is scoped to a
- *    curated, tractable subset of the effective-L4 files — the "if this lies,
- *    downstream trusts bad reality" trust spine: the content-address / canonical
- *    kernel, the HLC clock, the plan / DAG / receipt / validated-output / assembly
- *    cores. Each candidate is intersected with the effective-L4 set, so a file that
- *    is NOT actually L4 (a map edit) silently drops rather than mutating a
- *    non-critical file.
+ *    IR, never a hardcoded list beside the file). There is no second curated
+ *    candidate list: every package TypeScript source file the live fixpoint rates
+ *    L4 is in the census. Omitting one is a target-census error, not a quiet
+ *    optimization. Execution coverage and content-addressed verdict caching bound
+ *    cost without narrowing the semantic target set.
  *
  * 2. {@link buildSeamCoverageMap} — the DETERMINISTIC, SOUND covering-tests map a
  *    mutant's verdict reads. THE COVERAGE MODEL (documented because soundness is
@@ -57,76 +55,26 @@ import {
   type SeamTestExecution,
 } from './seam-execution-coverage.js';
 
-/**
- * The curated first-deployment L4 seam CANDIDATES — the trust-spine files whose
- * lie would make downstream trust bad reality. Each is intersected with the LIVE
- * effective-L4 set in {@link l4SeamTargets}, so the assurance map remains the source
- * of truth: a candidate that the propagated map does not actually rate L4 is dropped
- * (never mutated on a stale assumption). Repo-relative POSIX paths.
- *
- * THE CANONICAL/IDENTITY KERNEL (the deterministic content-addressing + FNV bytes)
- * is the most critical L4 seam ("if the content address lies, EVERY downstream
- * cache/receipt/capsule trusts a forged identity") AND the TRACTABLE one: the
- * canonical barrel is rarely imported, so its covering set is small (~9 tests/seam).
- *
- * THE BROAD CORE TRUST-SPINE SEAMS (hlc / dag, plus content-address / graph-patch
- * whose effective-L4 status is decided by the LIVE propagation, NEVER assumed here)
- * were previously deferred: their covering set is dominated by the SOUND barrel
- * over-approximation (every `@liteship/core` importer — ~220 tests), making a
- * suite-run-per-mutant intractable. The EXECUTION-BASED coverage filter
- * ({@link buildSeamCoverageMap} → `seam-execution-coverage.ts`) solves exactly this:
- * a barrel importer is kept for a seam's function-body lines ONLY when it actually
- * EXECUTES a function of the seam (proven by a scoped v8 coverage probe), pruning
- * ~220 barrel candidates to the handful that genuinely exercise the seam. The cannon
- * is now AIMED at the broad seams too, with no soundness compromise (a pruned test
- * provably never enters the seam, so it could never kill a mutant there; top-level
- * lines keep the full barrel closure — see the soundness note in
- * `seam-execution-coverage.ts`).
- *
- * Each candidate is intersected with the LIVE effective-L4 set in
- * {@link l4SeamTargets}: a candidate the propagation does NOT rate L4 (e.g. a file no
- * L4 file imports) is DROPPED and surfaced (`skippedNotL4`), never mutated on a stale
- * assumption. So adding a broad-seam candidate here is safe — the map is the source
- * of truth for what is actually targeted. The budget still caps the per-file
- * catalogue. Owner-redlinable.
- */
-const L4_SEAM_CANDIDATES: readonly string[] = [
-  // The canonical/identity kernel — content-addressing + deterministic FNV bytes.
-  // The keystone of EVERY content address downstream trusts.
-  'packages/canonical/src/addressed-digest.ts',
-  'packages/canonical/src/fnv.ts',
-  // The broad core trust-spine seams — now tractable via the execution-coverage
-  // filter. content-address / graph-patch are listed as candidates but only mutated
-  // if the LIVE propagation actually rates them L4 (content-address is pulled L4 by
-  // validated-output; graph-patch's level is whatever the fixpoint computes — if it
-  // is not L4 it is surfaced as skipped, never silently mutated).
-  'packages/core/src/clock/hlc.ts',
-  'packages/core/src/graph/dag.ts',
-  'packages/core/src/evidence/content-address.ts',
-  'packages/core/src/graph/graph-patch.ts',
-  // The Wave-5.5 REACTIVE KERNELS (the transition cage's mutation retarget). Enrolling
-  // the pinned kernel + the reactive primitives as mutation targets aims the existing
-  // deterministic engine at the exact ordering/replay/emission logic the fc.commands
-  // single-oracle model checks: a SURVIVING ordering/replay mutant here proves the model
-  // (and its law-table tests) has a HOLE — no external mutator adopted, the same engine
-  // retargeted. Each is intersected with the LIVE effective-L4 set in l4SeamTargets, so a
-  // path the propagated map does NOT yet rate L4 (the reactive kernels resolve L4 only
-  // once the assurance-map redline lands — remaining-waves.md §"assurance matrix") is
-  // surfaced as skippedNotL4 and never mutated on a stale assumption. Landing the
-  // candidates now is safe + forward-compatible: they ACTIVATE the moment the map (or the
-  // live import propagation) rates them L4, with zero further targeting change.
-  'packages/core/src/reactive/cell-kernel.ts',
-  'packages/core/src/reactive/cell.ts',
-  'packages/core/src/reactive/derived.ts',
-  'packages/core/src/reactive/store.ts',
-  'packages/core/src/reactive/signal.ts',
-  'packages/core/src/motion/timeline.ts',
-  'packages/core/src/reactive/live-cell.ts',
-];
+/** Is an IR file a package TypeScript source the mutation analyzers own? */
+function isPackageMutationSource(file: string): boolean {
+  return /^packages\/[^/]+\/src\/.+\.ts$/.test(file) && !file.endsWith('.d.ts');
+}
 
 /**
- * The L4 seam target set for the live mutation run — the curated candidates that the
- * LIVE propagated assurance levels actually rate effective-L4, paired with their
+ * The complete live L4 source census. Assurance propagation is the sole owner of
+ * eligibility; a hand-maintained seam list cannot silently lag a move or rename.
+ */
+export function eligibleL4SeamFiles(ir: RepoIR): readonly string[] {
+  const effective = propagateAssuranceLevels(ir, (file) => levelOf(file));
+  return [...ir.files.keys()]
+    .filter(isPackageMutationSource)
+    .filter((file) => (effective.get(file) ?? levelOf(file)) === 'L4')
+    .sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * The L4 seam target set for the live mutation run — every package source the
+ * LIVE propagated assurance levels rate effective-L4, paired with its
  * current source bytes (the {@link MutationTargetFile} the engine mutates). Computed
  * from the IR's propagation fixpoint (THE LAW), so a file is targeted ONLY if it is
  * genuinely on the trust spine. Deterministic: sorted by file id.
@@ -138,20 +86,11 @@ const L4_SEAM_CANDIDATES: readonly string[] = [
  *         surfaces it), so a vanished seam is visible, never a quiet drop.
  */
 export function l4SeamTargets(ir: RepoIR, repoRoot: string): SeamTargetResult {
-  const effective = propagateAssuranceLevels(ir, (file) => levelOf(file));
+  const expectedFiles = eligibleL4SeamFiles(ir);
   const targets: MutationTargetFile[] = [];
-  const skippedNotL4: string[] = [];
   const unreadable: string[] = [];
 
-  for (const candidate of [...L4_SEAM_CANDIDATES].sort((a, b) => a.localeCompare(b))) {
-    // The level is the LIVE propagated level (IR fixpoint floored by the glob map),
-    // never a hardcoded assumption — a candidate the map no longer rates L4 is
-    // dropped, recorded so the caller can surface the drift.
-    const level = effective.get(candidate) ?? levelOf(candidate);
-    if (level !== 'L4') {
-      skippedNotL4.push(candidate);
-      continue;
-    }
+  for (const candidate of expectedFiles) {
     let text: string;
     try {
       text = readFileSync(join(repoRoot, candidate), 'utf8');
@@ -162,17 +101,41 @@ export function l4SeamTargets(ir: RepoIR, repoRoot: string): SeamTargetResult {
     targets.push({ file: candidate, text });
   }
 
-  return { targets, skippedNotL4, unreadable };
+  return { expectedFiles, targets, unreadable };
 }
 
 /** The outcome of {@link l4SeamTargets} — the targets + the visible drops. */
 export interface SeamTargetResult {
+  /** Every mutation-analyzable source file the live propagated assurance map rates L4. */
+  readonly expectedFiles: readonly string[];
   /** The effective-L4 seam files paired with their current bytes (the mutate set). */
   readonly targets: readonly MutationTargetFile[];
-  /** Candidates the live propagation does NOT rate L4 (dropped — surfaced, not hidden). */
-  readonly skippedNotL4: readonly string[];
   /** Candidates whose bytes could not be read (a vanished seam — surfaced, not hidden). */
   readonly unreadable: readonly string[];
+}
+
+/**
+ * Compare a materialized target list with the live L4 census. Any omission,
+ * duplicate, foreign target, or unreadable eligible file blocks admission.
+ */
+export function targetCensusErrors(result: SeamTargetResult): readonly string[] {
+  const errors: string[] = [];
+  const actual = result.targets.map((target) => target.file);
+  const actualSet = new Set(actual);
+  for (const file of result.expectedFiles) {
+    if (!actualSet.has(file)) errors.push(`eligible L4 target omitted: ${file}`);
+  }
+  const expectedSet = new Set(result.expectedFiles);
+  for (const file of actualSet) {
+    if (!expectedSet.has(file)) errors.push(`foreign non-L4 target admitted: ${file}`);
+  }
+  const seen = new Set<string>();
+  for (const file of actual) {
+    if (seen.has(file)) errors.push(`duplicate mutation target: ${file}`);
+    seen.add(file);
+  }
+  for (const file of result.unreadable) errors.push(`eligible L4 target unreadable: ${file}`);
+  return errors.sort((a, b) => a.localeCompare(b));
 }
 
 /** The repo-relative test roots scanned for covering tests (the vitest include set). */

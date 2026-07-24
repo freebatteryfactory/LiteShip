@@ -61,11 +61,13 @@ const base = () =>
     jobAttempts: 10,
     reruns: 0,
     knownFlakyReruns: 0,
+    flakeAttempts: 30,
     requiredEvidence: 10,
     presentEvidence: 10,
     escapedDefects: 0,
     artifactMismatches: 0,
     selectorMisses: 0,
+    flakeEvidenceId: `sha256:${'d'.repeat(64)}` as const,
   }) as const;
 
 describe('delivery metrics and SLO fold', () => {
@@ -76,6 +78,10 @@ describe('delivery metrics and SLO fold', () => {
     expect(first.metricsId).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(first.verdict).toBe('within-slo');
     expect(first.evidenceCompleteness).toBe(1);
+    expect(first.evidenceSources).toEqual({
+      selectorCalibrationId: plan.selectorCalibrationId,
+      flakeEvidenceId: `sha256:${'d'.repeat(64)}`,
+    });
   });
 
   it('reports every violated SLO instead of averaging failures away', () => {
@@ -84,6 +90,7 @@ describe('delivery metrics and SLO fold', () => {
       timings: { ...base().timings, feedbackLatencyMs: 31 * 60_000 },
       reruns: 2,
       knownFlakyReruns: 2,
+      flakeAttempts: 10,
       presentEvidence: 9,
       escapedDefects: 1,
       artifactMismatches: 1,
@@ -97,11 +104,13 @@ describe('delivery metrics and SLO fold', () => {
     const metrics = buildDeliveryMetrics({
       ...base(),
       knownFlakyReruns: null,
+      flakeAttempts: null,
       requiredEvidence: null,
       presentEvidence: null,
       escapedDefects: null,
       artifactMismatches: null,
       selectorMisses: null,
+      flakeEvidenceId: null,
     });
     expect(metrics.verdict).toBe('insufficient-evidence');
     expect(metrics.slos).toMatchObject({
@@ -115,5 +124,8 @@ describe('delivery metrics and SLO fold', () => {
 
   it('refuses impossible evidence counts', () => {
     expect(() => buildDeliveryMetrics({ ...base(), presentEvidence: 11 })).toThrow(/exceeds required/);
+    expect(() => buildDeliveryMetrics({ ...base(), flakeEvidenceId: 'sha256:wrong' as never })).toThrow(
+      /flakeEvidenceId/u,
+    );
   });
 });

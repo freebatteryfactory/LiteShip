@@ -94,7 +94,7 @@ import { buildStandardsIntegrityFacts, type StandardsFactsOptions } from './stan
 import { runSimulationCorpus } from './simulation-corpus.js';
 import { gauntletToolchainDigest, makeFsVerdictCache, makeFsMutantVerdictCache } from './gauntlet-verdict-cache.js';
 import { makeVitestMutationRunner } from './mutation-runner.js';
-import { l4SeamTargets, buildSeamCoverageMap } from './mutation-targets.js';
+import { l4SeamTargets, targetCensusErrors, buildSeamCoverageMap } from './mutation-targets.js';
 import { makeFsSeamCoverageProbeCache, type SeamExecutionCoverageOptions } from './seam-execution-coverage.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
@@ -270,9 +270,25 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
  * text-only) — the triangulation substrate the divergence gate folds.
  */
 export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = false): RepoIR {
+  const registryPath = join(repoRoot, 'benchmarks', 'distributions.json');
+  let benchmarkDistributions: readonly unknown[] | undefined;
+  if (existsSync(registryPath)) {
+    const registry = JSON.parse(readFileSync(registryPath, 'utf8')) as {
+      schemaVersion?: unknown;
+      distributions?: unknown;
+    };
+    if (registry.schemaVersion !== 2 || !Array.isArray(registry.distributions)) {
+      throw InvariantViolationError(
+        'benchmark-subject-facts',
+        'benchmarks/distributions.json must be a schema-v2 artifact with a distributions array',
+      );
+    }
+    benchmarkDistributions = registry.distributions;
+  }
   return buildRepoIR(withRepoRoot(liteshipDevopsProfile, repoRoot), {
     extraFactOracles: [liteshipRegexOracle],
     withSymbolReferences,
+    ...(benchmarkDistributions !== undefined ? { benchmarkDistributions } : {}),
   });
 }
 
@@ -298,6 +314,13 @@ export async function runGauntletWithRepoIR(
 ): Promise<GauntletResult> {
   const withSymbols = cacheOpts.withSymbolReferences === true;
   const ir = buildRepoIRForRepo(repoRoot, withSymbols);
+  const benchmarkSubjects = ir.benchmarkSubjects;
+  if (benchmarkSubjects === undefined) {
+    throw InvariantViolationError(
+      'benchmark-subject-facts',
+      'the production gauntlet requires benchmarks/distributions.json qualification evidence',
+    );
+  }
   const cache = resolveVerdictCache(repoRoot, cacheOpts);
 
   // Each avionics opt-in composes its gate onto the IR-host set + injects its facts
@@ -507,6 +530,7 @@ export async function runGauntletWithRepoIR(
     // a real parser tokenization (regex-vs-division, nested templates) over the char-machine fallback
     // — pinned equivalent by tests/unit/audit/code-ranges.test.ts.
     codeOnly: codeOnlyAST,
+    benchmarkSubjects,
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only
@@ -564,16 +588,15 @@ const MUTATION_EQUIVALENTS = 'benchmarks/mutation-equivalents.json';
  * just the survivor surfacing).
  */
 function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): MutationFacts {
-  const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
-  // Surface a vanished/demoted seam LOUDLY (stderr) rather than silently dropping it —
-  // a candidate the live map no longer rates L4, or whose bytes vanished, is drift the
-  // owner must see (never a quiet hole in the trust-spine coverage).
-  for (const f of skippedNotL4) {
-    process.stderr.write(`liteship check gates --mutate: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+  const targetResult = l4SeamTargets(ir, repoRoot);
+  const censusErrors = targetCensusErrors(targetResult);
+  if (censusErrors.length > 0) {
+    throw InvariantViolationError(
+      'buildRepoMutationFacts',
+      `live L4 mutation target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
+    );
   }
-  for (const f of unreadable) {
-    process.stderr.write(`liteship check gates --mutate: seam candidate "${f}" could not be read (skipped)\n`);
-  }
+  const { targets } = targetResult;
 
   // EXECUTION-based coverage (the barrel-problem fix): each barrel-importer of a broad
   // core seam (~220 `@liteship/core` importers) is probed with a scoped v8 coverage run
@@ -595,6 +618,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   const mutantCache = makeFsMutantVerdictCache(repoRoot);
 
   const outcomes: MutationFacts['outcomes'][number][] = [];
+  const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   for (const target of targets) {
     // One runner per seam file — it backs up / mutates / restores exactly that file.
     const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
@@ -608,6 +632,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const o of fileFacts.outcomes) outcomes.push(o);
+    for (const row of fileFacts.operatorApplicability) operatorApplicability.push(row);
   }
   // Re-sort the merged outcomes deterministically (same total order buildMutationFacts
   // uses) so the facts are byte-stable regardless of the per-file iteration.
@@ -619,7 +644,8 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       a.operator.localeCompare(b.operator) ||
       a.mutatedText.localeCompare(b.mutatedText),
   );
-  return { outcomes: sorted, scoreBaseline };
+  operatorApplicability.sort((a, b) => a.file.localeCompare(b.file) || a.operator.localeCompare(b.operator));
+  return { outcomes: sorted, operatorApplicability, scoreBaseline };
 }
 
 /**
@@ -643,14 +669,15 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
  * deterministic over the seam bytes + the runner verdicts.
  */
 function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): McdcFacts {
-  const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
-  // Surface a vanished/demoted seam LOUDLY (stderr), never a quiet hole in the coverage.
-  for (const f of skippedNotL4) {
-    process.stderr.write(`liteship check gates --mcdc: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+  const targetResult = l4SeamTargets(ir, repoRoot);
+  const censusErrors = targetCensusErrors(targetResult);
+  if (censusErrors.length > 0) {
+    throw InvariantViolationError(
+      'buildRepoMcdcFacts',
+      `live L4 MC/DC target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
+    );
   }
-  for (const f of unreadable) {
-    process.stderr.write(`liteship check gates --mcdc: seam candidate "${f}" could not be read (skipped)\n`);
-  }
+  const { targets } = targetResult;
 
   // The SAME execution-filtered coverage map the mutation run uses (the barrel-problem
   // fix) — a pin's covering set is the deep-importers ∪ the executing barrel-importers.
@@ -663,6 +690,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
   const mutantCache = makeFsMutantVerdictCache(repoRoot);
 
   const conditions: McdcFacts['conditions'][number][] = [];
+  const targetCensus: McdcFacts['targetCensus'][number][] = [];
   for (const target of targets) {
     // One runner per seam file — it backs up / pins / restores exactly that file.
     const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
@@ -673,6 +701,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const c of fileFacts.conditions) conditions.push(c);
+    for (const row of fileFacts.targetCensus) targetCensus.push(row);
   }
   // Re-sort the merged conditions deterministically (the same total order buildMcdcFacts
   // uses) so the facts are byte-stable regardless of the per-file iteration.
@@ -680,7 +709,8 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
     (a, b) =>
       a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.condition.localeCompare(b.condition),
   );
-  return { conditions: sorted };
+  targetCensus.sort((a, b) => a.file.localeCompare(b.file));
+  return { conditions: sorted, targetCensus };
 }
 
 /**

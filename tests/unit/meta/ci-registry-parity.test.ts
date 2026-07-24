@@ -356,6 +356,17 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(serial).toContain("github.event_name == 'workflow_dispatch'");
   });
 
+  it('carries addressed flake and selector evidence into delivery metrics', () => {
+    const integration = JOB_BLOCKS.get('truth-linux-parallel-integration')!;
+    const metrics = JOB_BLOCKS.get('delivery-metrics')!;
+    expect(integration).toContain('name: flake-evidence');
+    expect(integration).toContain('reports/flake-evidence.json');
+    expect(metrics).toContain('name: affected-plan');
+    expect(metrics).toContain('name: flake-evidence');
+    expect(metrics).toContain('.liteship/affected-selector-calibration.json');
+    expect(metrics).toContain('reports/flake-evidence.json');
+  });
+
   it('the final fold waits for both PR and exhaustive tier owners', () => {
     const summary = JOB_BLOCKS.get('ci-summary')!;
     for (const owner of [

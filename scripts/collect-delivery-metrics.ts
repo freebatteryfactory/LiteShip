@@ -1,9 +1,12 @@
 /** Collect workflow timings from GitHub and fold them through the deterministic metrics kernel. */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { buildDeliveryMetrics } from './lib/delivery-metrics.js';
 import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
+import { parseAffectedSelectorCalibration } from './lib/affected-selector-calibration.js';
+import { assertFlakeEvidenceCurrent, parseFlakeEvidence } from './lib/flake-evidence.js';
+import { FLAKE_TARGETS } from './test-flake-targets.js';
 
 interface GithubJob {
   readonly name: string;
@@ -30,6 +33,8 @@ const runId = requireEnv('GITHUB_RUN_ID');
 const token = requireEnv('GH_TOKEN');
 const planPath = process.argv[2] ?? '.liteship/affected-plan.json';
 const outputPath = process.argv[3] ?? 'reports/delivery-metrics.json';
+const selectorCalibrationPath = process.argv[4] ?? '.liteship/affected-selector-calibration.json';
+const flakeEvidencePath = process.argv[5] ?? 'reports/flake-evidence.json';
 const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' };
 const runResponse = await fetch(`https://api.github.com/repos/${repository}/actions/runs/${runId}`, { headers });
 if (!runResponse.ok) throw new Error(`GitHub run API returned ${runResponse.status}`);
@@ -64,6 +69,22 @@ const lastCompletion = Math.max(...jobs.map((job) => Date.parse(job.completed_at
 const testJobs = jobs.filter((job) => /test|browser|smoke|gauntlet|mutation|mcdc|consumer|hermetic/iu.test(job.name));
 const buildJobs = jobs.filter((job) => /build|setup|rust|wasm|package/iu.test(job.name));
 const plan = parseAffectedTestPlan(JSON.parse(readFileSync(planPath, 'utf8')) as unknown);
+const selectorCalibration = existsSync(selectorCalibrationPath)
+  ? parseAffectedSelectorCalibration(JSON.parse(readFileSync(selectorCalibrationPath, 'utf8')) as unknown)
+  : null;
+if (selectorCalibration !== null && selectorCalibration.calibrationId !== plan.selectorCalibrationId) {
+  throw new TypeError('selector calibration does not belong to the affected plan');
+}
+const flakeEvidence = existsSync(flakeEvidencePath)
+  ? parseFlakeEvidence(JSON.parse(readFileSync(flakeEvidencePath, 'utf8')) as unknown)
+  : null;
+if (flakeEvidence !== null) {
+  assertFlakeEvidenceCurrent(flakeEvidence, {
+    headSha: plan.headSha,
+    targets: FLAKE_TARGETS,
+    today: new Date().toISOString().slice(0, 10),
+  });
+}
 const metrics = buildDeliveryMetrics({
   plan,
   reports: [],
@@ -76,14 +97,16 @@ const metrics = buildDeliveryMetrics({
   },
   jobAttempts: allJobs.length,
   reruns: Math.max(0, Number(process.env['GITHUB_RUN_ATTEMPT'] ?? '1') - 1),
-  knownFlakyReruns: null,
+  knownFlakyReruns: flakeEvidence?.recoveredRetries ?? null,
+  flakeAttempts: flakeEvidence?.attempts ?? null,
   // Job completion is not equivalent to addressed evidence completeness. The
   // evidence manifest must supply these counts; absence remains unknown.
   requiredEvidence: null,
   presentEvidence: null,
   escapedDefects: null,
   artifactMismatches: null,
-  selectorMisses: null,
+  selectorMisses: selectorCalibration?.selectorMisses ?? null,
+  flakeEvidenceId: flakeEvidence?.evidenceId ?? null,
 });
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, `${JSON.stringify(metrics, null, 2)}\n`, 'utf8');

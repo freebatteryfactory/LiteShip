@@ -43,6 +43,14 @@
 export interface McdcFacts {
   /** Every L4 decision's atomic conditions, each with both pins' folded verdict. */
   readonly conditions: readonly McdcConditionOutcome[];
+  /** Every admitted target, including files with zero applicable boolean conditions. */
+  readonly targetCensus: readonly McdcTargetCensus[];
+}
+
+/** One explicit MC/DC applicability row for an admitted target file. */
+export interface McdcTargetCensus {
+  readonly file: string;
+  readonly applicableConditions: number;
 }
 
 /**
@@ -85,6 +93,8 @@ export interface McdcConditionOutcome {
   readonly forceTrueVerdict: McdcPinVerdict;
   /** The verdict of the force-FALSE pin — `killed` ⇒ the false-effect is observed. */
   readonly forceFalseVerdict: McdcPinVerdict;
+  /** Sorted tests mapped to the decision site for both condition pins. */
+  readonly coveringTests: readonly string[];
 }
 
 /**

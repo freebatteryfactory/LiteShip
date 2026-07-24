@@ -29,6 +29,8 @@ export interface DeliveryMetricsInput {
   readonly reruns: number;
   /** Retries independently classified as flakes; null when no classifier evidence exists. */
   readonly knownFlakyReruns: number | null;
+  /** Planned flake-campaign attempts underlying knownFlakyReruns; null with absent flake evidence. */
+  readonly flakeAttempts: number | null;
   /** Required evidence item count; null until an addressed evidence manifest is supplied. */
   readonly requiredEvidence: number | null;
   /** Present evidence item count; null until an addressed evidence manifest is supplied. */
@@ -39,16 +41,22 @@ export interface DeliveryMetricsInput {
   readonly artifactMismatches: number | null;
   /** Selector misses found by broad/control comparison; null when no comparison evidence was supplied. */
   readonly selectorMisses: number | null;
+  /** Addressed flake campaign admitted by the host; null when no campaign record exists. */
+  readonly flakeEvidenceId: `sha256:${string}` | null;
   readonly resolvedCurePacketIds?: readonly string[];
 }
 
 export interface DeliveryMetrics {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly metricsId: `sha256:${string}`;
   readonly planId: AffectedTestPlan['planId'];
   readonly headSha: string;
   readonly risk: AffectedTestPlan['risk']['level'];
   readonly confidence: AffectedTestPlan['confidence'];
+  readonly evidenceSources: {
+    readonly selectorCalibrationId: AffectedTestPlan['selectorCalibrationId'];
+    readonly flakeEvidenceId: `sha256:${string}` | null;
+  };
   readonly selectionWidth: {
     readonly changedPaths: number;
     readonly packages: number;
@@ -104,6 +112,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
   for (const [name, value] of numeric) nonNegative(name, value);
   for (const [name, value] of [
     ['knownFlakyReruns', input.knownFlakyReruns],
+    ['flakeAttempts', input.flakeAttempts],
     ['requiredEvidence', input.requiredEvidence],
     ['presentEvidence', input.presentEvidence],
     ['escapedDefects', input.escapedDefects],
@@ -114,6 +123,18 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
   }
   if ((input.requiredEvidence === null) !== (input.presentEvidence === null)) {
     throw new TypeError('required and present evidence must both be known or both be null');
+  }
+  if (
+    (input.knownFlakyReruns === null) !== (input.flakeAttempts === null) ||
+    (input.knownFlakyReruns === null) !== (input.flakeEvidenceId === null)
+  ) {
+    throw new TypeError('flake count, attempt count, and evidence identity must be supplied together');
+  }
+  if (input.knownFlakyReruns !== null && input.flakeAttempts !== null && input.knownFlakyReruns > input.flakeAttempts) {
+    throw new TypeError('known flaky reruns exceed observed flake attempts');
+  }
+  if (input.flakeEvidenceId !== null && !/^sha256:[0-9a-f]{64}$/u.test(input.flakeEvidenceId)) {
+    throw new TypeError('flakeEvidenceId must be a SHA-256 integrity digest');
   }
   if (
     input.requiredEvidence !== null &&
@@ -141,7 +162,11 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
         : input.presentEvidence / input.requiredEvidence;
   const rerunRate = input.jobAttempts === 0 ? 0 : input.reruns / input.jobAttempts;
   const flakeRate =
-    input.knownFlakyReruns === null || input.jobAttempts === 0 ? null : input.knownFlakyReruns / input.jobAttempts;
+    input.knownFlakyReruns === null || input.flakeAttempts === null
+      ? null
+      : input.flakeAttempts === 0
+        ? 0
+        : input.knownFlakyReruns / input.flakeAttempts;
   const assessed = (condition: boolean): DeliverySloResult => (condition ? 'pass' : 'fail');
   const slos = {
     zeroFalseGreen:
@@ -170,11 +195,15 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
       ? ('insufficient-evidence' as const)
       : ('within-slo' as const);
   const unsigned = {
-    schemaVersion: 1 as const,
+    schemaVersion: 2 as const,
     planId: input.plan.planId,
     headSha: input.plan.headSha,
     risk: input.plan.risk.level,
     confidence: input.plan.confidence,
+    evidenceSources: {
+      selectorCalibrationId: input.plan.selectorCalibrationId,
+      flakeEvidenceId: input.flakeEvidenceId,
+    },
     selectionWidth: {
       changedPaths: input.plan.changedPaths.length,
       packages: input.plan.affectedPackages.length,

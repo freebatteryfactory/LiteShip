@@ -120,11 +120,17 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
     forceTrue?: McdcPinVerdict;
     forceFalse?: McdcPinVerdict;
     conditionId: string;
+    coveringTests: readonly string[];
   }
   const byCondition = new Map<string, Partial>();
+  const targetCensus: McdcFacts['targetCensus'][number][] = [];
 
   for (const target of files) {
     const mutants = generateConditionMutants(parseTarget(target), { file: target.file });
+    targetCensus.push({
+      file: target.file,
+      applicableConditions: new Set(mutants.map(groupKey)).size,
+    });
     for (const mutant of mutants) {
       const verdict = evaluateMutant(mutant, {
         runner: options.runner,
@@ -144,6 +150,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
         decision: mutant.decision,
         condition: mutant.condition,
         conditionId: conditionId(mutant.file, mutant.line, mutant.column, mutant.condition),
+        coveringTests: [...options.coverage.covering(mutant.file, mutant.line)].sort((a, b) => a.localeCompare(b)),
       };
       assignPin(partial, mutant.force, tag);
       byCondition.set(key, partial);
@@ -167,6 +174,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
       condition: partial.condition,
       forceTrueVerdict: partial.forceTrue,
       forceFalseVerdict: partial.forceFalse,
+      coveringTests: partial.coveringTests,
     });
   }
 
@@ -175,7 +183,8 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
     (a, b) =>
       a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.condition.localeCompare(b.condition),
   );
-  return { conditions };
+  targetCensus.sort((a, b) => a.file.localeCompare(b.file));
+  return { conditions, targetCensus };
 }
 
 /** Assign one pin's verdict into the partial outcome by its force direction. */

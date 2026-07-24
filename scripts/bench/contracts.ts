@@ -42,6 +42,13 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationError } from '@liteship/error';
 import { systemClock, type Clock } from '@liteship/core';
+import {
+  parseQualifiedBenchDistribution,
+  type BenchExecution,
+  type BenchSubject,
+} from '../../packages/gauntlet/src/gates/bench-subjects.ts';
+
+export type { BenchExecution, BenchSubject };
 
 /**
  * The DECLARED input distribution of a benchmark — the law's anchor. A bench
@@ -76,11 +83,15 @@ export interface BenchDistribution {
    * intent so a reader knows the statistical weight behind the number).
    */
   readonly replicates: number;
+  /** Exact implementation subjects the measured execution reaches. */
+  readonly subjects: readonly BenchSubject[];
+  /** Callback by default; collector for measurement harnesses such as allocation. */
+  readonly execution?: BenchExecution;
 }
 
 /** The committed declared-distribution registry artifact. */
 export interface DistributionRegistry {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly distributions: readonly BenchDistribution[];
 }
 
@@ -156,8 +167,7 @@ export interface RegisteredBench {
  * identifier — `tree.add(` / `store.set(` do not match because they are not the
  * `bench` identifier. Quote handling covers single + double + backtick literals.
  */
-const BENCH_REGISTRATION =
-  /\bbench(?:\.add)?\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
+const BENCH_REGISTRATION = /\bbench(?:\.add)?\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
 
 /**
  * Extract the registered bench-task names from ONE bench file's text. The caller
@@ -385,7 +395,11 @@ export function readDistributionRegistry(root: string): DistributionRegistry | n
   return readArtifact<DistributionRegistry>(
     resolve(root, DISTRIBUTIONS_ARTIFACT_PATH),
     (parsed): parsed is DistributionRegistry =>
-      parsed.schemaVersion === 1 && Array.isArray((parsed as DistributionRegistry).distributions),
+      parsed.schemaVersion === 2 &&
+      Array.isArray((parsed as DistributionRegistry).distributions) &&
+      (parsed as DistributionRegistry).distributions.every(
+        (distribution) => parseQualifiedBenchDistribution(distribution) !== null,
+      ),
   );
 }
 
@@ -393,8 +407,7 @@ export function readDistributionRegistry(root: string): DistributionRegistry | n
 export function readComplexityMap(root: string): ComplexityMap | null {
   return readArtifact<ComplexityMap>(
     resolve(root, COMPLEXITY_MAP_ARTIFACT_PATH),
-    (parsed): parsed is ComplexityMap =>
-      parsed.schemaVersion === 1 && Array.isArray((parsed as ComplexityMap).entries),
+    (parsed): parsed is ComplexityMap => parsed.schemaVersion === 1 && Array.isArray((parsed as ComplexityMap).entries),
   );
 }
 
@@ -420,7 +433,10 @@ function readArtifact<T extends { readonly schemaVersion: number }>(
   try {
     parsed = JSON.parse(raw) as { readonly schemaVersion: number };
   } catch (cause) {
-    throw ValidationError('readArtifact', `committed contract artifact ${filePath} is not valid JSON: ${String(cause)}`);
+    throw ValidationError(
+      'readArtifact',
+      `committed contract artifact ${filePath} is not valid JSON: ${String(cause)}`,
+    );
   }
 
   if (!isValid(parsed)) {

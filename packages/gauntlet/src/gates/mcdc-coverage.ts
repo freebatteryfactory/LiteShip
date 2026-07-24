@@ -213,6 +213,7 @@ function coveredCondition(): McdcConditionOutcome {
     condition: 'a',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'killed',
+    coveringTests: ['tests/fixture.test.ts'],
   };
 }
 
@@ -227,6 +228,7 @@ function uncoveredCondition(): McdcConditionOutcome {
     condition: 'x <= hi',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'survived',
+    coveringTests: ['tests/fixture.test.ts'],
   };
 }
 
@@ -244,11 +246,17 @@ function uncoveredCondition(): McdcConditionOutcome {
 const FIXTURES = {
   red: {
     name: 'MC/DC facts with an UNCOVERED L4 condition (a surviving pin — the unobserved effect the gate must flag)',
-    context: mcdcContext(fixtureIR(), { conditions: [uncoveredCondition()] }),
+    context: mcdcContext(fixtureIR(), {
+      conditions: [uncoveredCondition()],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1 }],
+    }),
   },
   green: {
     name: 'MC/DC facts with only a fully-COVERED L4 condition (both pins killed — full MC/DC, clean)',
-    context: mcdcContext(fixtureIR(), { conditions: [coveredCondition()] }),
+    context: mcdcContext(fixtureIR(), {
+      conditions: [coveredCondition()],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1 }],
+    }),
   },
   mutation: {
     describe:

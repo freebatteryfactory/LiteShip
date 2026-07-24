@@ -22,6 +22,7 @@ export type DeliveryEvidenceKind =
   | 'vex'
   | 'attestation'
   | 'delivery-metrics'
+  | 'flake'
   | 'reproducibility'
   | 'standards'
   | 'consumer'

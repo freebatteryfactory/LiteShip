@@ -50,8 +50,11 @@
  *
  * @module
  */
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import ts from 'typescript';
 import { addressedDigestOf } from '@liteship/canonical';
+import { InvariantViolationError } from '@liteship/error';
 import {
   makeRepoIR,
   type RepoIR,
@@ -75,6 +78,7 @@ import type { SourceFileRecord } from './shared.js';
 import { buildPackageExportTargets, hasModifier, resolveImport } from './structure.js';
 import { createTypeDirectedProgram } from './ts-program.js';
 import { symbolReferenceOracle } from './repo-ir-language-service.js';
+import { buildBenchmarkSubjectFacts, parseBenchmarkSubjectDistribution } from './benchmark-subject-facts.js';
 
 /** UTF-8 encoder reused across files (stateless, deterministic). */
 const UTF8 = new TextEncoder();
@@ -126,6 +130,11 @@ export interface BuildRepoIROptions {
    * nothing (no symbol-evidenced facts) — harmless.
    */
   readonly withSymbolReferences?: boolean;
+  /**
+   * Optional raw benchmark registry rows. When present, audit validates and
+   * qualifies their measured SUT reachability into the same immutable RepoIR.
+   */
+  readonly benchmarkDistributions?: readonly unknown[];
 }
 
 /**
@@ -562,6 +571,25 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, opti
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const benchmarkSubjects = (() => {
+    if (options.benchmarkDistributions === undefined) return undefined;
+    const distributions = options.benchmarkDistributions.map(parseBenchmarkSubjectDistribution);
+    const invalid = distributions.findIndex((distribution) => distribution === null);
+    if (invalid >= 0) {
+      throw InvariantViolationError(
+        'buildRepoIR',
+        `benchmark distribution at index ${invalid} has an invalid subject/execution contract`,
+      );
+    }
+    return buildBenchmarkSubjectFacts(
+      distributions.filter((distribution) => distribution !== null),
+      (path) => {
+        const absolutePath = resolve(profile.repoRoot, path);
+        return existsSync(absolutePath) ? readFileSync(absolutePath, 'utf8') : undefined;
+      },
+    );
+  })();
+
   // Drop a symbol whose file is, by some profile quirk, not in the file table —
   // makeRepoIR would (correctly) reject it; the records loop guarantees the file
   // is present, so this is belt-and-braces consistency, not a silent skip path.
@@ -591,6 +619,7 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, opti
     packages,
     refs,
     facts: tables.facts,
+    ...(benchmarkSubjects !== undefined ? { benchmarkSubjects } : {}),
   });
 }
 

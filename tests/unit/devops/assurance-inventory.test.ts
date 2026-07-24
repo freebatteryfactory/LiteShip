@@ -137,6 +137,50 @@ describe('assurance inventory', () => {
     expect(core.evidenceClasses.chaos).toBe(0);
   });
 
+  it('grants benchmark evidence only to a package-owned SUT reached by the measured callback', () => {
+    const root = fixture();
+    mkdirSync(join(root, 'tests', 'bench'), { recursive: true });
+    mkdirSync(join(root, 'benchmarks'), { recursive: true });
+    const benchPath = join(root, 'tests', 'bench', 'core.bench.ts');
+    writeFileSync(
+      join(root, 'benchmarks', 'distributions.json'),
+      JSON.stringify({
+        schemaVersion: 2,
+        distributions: [
+          {
+            name: 'fastPath',
+            file: 'tests/bench/core.bench.ts',
+            inputSize: 1,
+            shape: 'single-call',
+            replicates: 1,
+            subjects: [
+              {
+                role: 'sut',
+                origin: { kind: 'module', specifier: '@liteship/core/evidence' },
+                symbol: 'value',
+                binding: 'value',
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    writeFileSync(benchPath, "import { value } from '@liteship/core/evidence';\nbench.add('fastPath', () => {});\n");
+    expect(
+      buildAssuranceInventory(root).packages.find((entry) => entry.name === '@liteship/core')!.evidenceClasses
+        .benchmark,
+    ).toBe(0);
+
+    writeFileSync(
+      benchPath,
+      "import { value } from '@liteship/core/evidence';\nbench.add('fastPath', () => value());\n",
+    );
+    expect(
+      buildAssuranceInventory(root).packages.find((entry) => entry.name === '@liteship/core')!.evidenceClasses
+        .benchmark,
+    ).toBe(1);
+  });
+
   it('normalizes formatting and comments before counting TypeScript LOC', () => {
     const expanded = 'export const one = 1;\n// prose\nexport const two = 2;\n';
     const compact = 'export const one=1; export const two=2;';

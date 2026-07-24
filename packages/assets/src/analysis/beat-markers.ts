@@ -94,7 +94,7 @@ export function BeatMarkerProjection(
     // Derives from the asset's raw WAV bytes: decode to samples (audioDecoder)
     // then autocorrelate the energy envelope (detectBeats). Both steps are
     // pure and deterministic over identical bytes, so the content-addressed
-    // cache-hit / invalidation probes hold. Declaration-tagged byte schema
+    // cache reuse and invalidation properties hold. Declaration-tagged byte schema
     // (shared with the asset decl) — random-source property test self-skips
     // honestly; the canonical `.wav` fixture drives the real derive.
     input: AssetBytes,

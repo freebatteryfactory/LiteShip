@@ -34,6 +34,7 @@ import type { ProofFacts } from './facts/proof-facts.js';
 import type { CompositionFacts } from './facts/composition-facts.js';
 import type { SpineRelationFacts } from './facts/spine-relation-facts.js';
 import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
+import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -196,6 +197,8 @@ export interface RunGauntletOnRepoOptions {
    * via `(context.codeOnly ?? codeOnly)`. Omit it (the lean path) and the char-machine fallback runs.
    */
   readonly codeOnly?: (source: string) => string;
+  /** Host-computed parser-backed benchmark subject reachability. */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
   /**
    * The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
    * and never builds an IR; a host (the CLI, via `@liteship/audit`'s `ts.Program`)
@@ -363,7 +366,8 @@ export function runGauntletOnRepo(
     opts.capabilityLink !== undefined ||
     opts.skipDetector !== undefined ||
     opts.earlyReturnDetector !== undefined ||
-    opts.codeOnly !== undefined
+    opts.codeOnly !== undefined ||
+    opts.benchmarkSubjects !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
@@ -377,6 +381,7 @@ export function runGauntletOnRepo(
           ...(opts.earlyReturnDetector !== undefined ? { earlyReturnDetector: opts.earlyReturnDetector } : {}),
           // The SOUND scanner codeOnly floor (injected by the host); omitted ⇒ char-machine fallback.
           ...(opts.codeOnly !== undefined ? { codeOnly: opts.codeOnly } : {}),
+          ...(opts.benchmarkSubjects !== undefined ? { benchmarkSubjects: opts.benchmarkSubjects } : {}),
         }
       : baseContext;
   return runGates(gates, context, runOpts);
@@ -527,6 +532,7 @@ export function litelaunchGauntletWithIR(
       // `capabilityGateLinkGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the set on the
       // default `--ir` run (capability-link is opt-in: `--capability-gate`).
       ...(cacheOpts.capabilityLink !== undefined ? { capabilityLink: cacheOpts.capabilityLink } : {}),
+      ...(cacheOpts.benchmarkSubjects !== undefined ? { benchmarkSubjects: cacheOpts.benchmarkSubjects } : {}),
       // Inject the host-computed requirements-traceability facts when supplied —
       // `traceabilityBridgeGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the
       // set at all. The CLI composes the gate + injects these always-on on the `--ir`
@@ -599,6 +605,8 @@ export interface LitelaunchCacheOptions {
    * the avionics gate never appears (no `not-evidenced` noise on the default path).
    */
   readonly gates?: readonly Gate[];
+  /** Always-on host-computed benchmark subject reachability facts. */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
   /**
    * OPTIONAL host-computed supply-chain facts (Slice C) threaded onto the
    * {@link GateContext} for `supplyChainGate` to fold. Supplied ONLY on the

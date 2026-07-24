@@ -237,6 +237,12 @@ function makeFixture(files: Record<string, string>): string {
     'traces:\n  - id: INV-EX-LAW\n    waiver:\n      owner: fixture\n      justification: "hermetic test fixture"\n      expiry: "2999-01-01"\n',
     'utf8',
   );
+  mkdirSync(join(root, 'benchmarks'), { recursive: true });
+  writeFileSync(
+    join(root, 'benchmarks', 'distributions.json'),
+    JSON.stringify({ schemaVersion: 2, distributions: [] }),
+    'utf8',
+  );
   const liveSurface = readLiveStandardsSurface(root, NOW);
   writeFileSync(join(root, 'traceability', 'standards-snapshot.json'), serializeStandardsSurface(liveSurface), 'utf8');
   return root;

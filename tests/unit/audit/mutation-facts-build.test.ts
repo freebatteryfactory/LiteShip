@@ -12,6 +12,8 @@ import {
   buildMutationFacts,
   makeCoverageMap,
   generateMutants,
+  makeEquivalentMutantRegistry,
+  MUTATION_OPERATORS,
   type MutantTestRunner,
 } from '@liteship/audit';
 import ts from 'typescript';
@@ -52,6 +54,53 @@ describe('buildMutationFacts — host bridge folds engine + runner into facts', 
     expect(arithmetic!.verdict).toBe('survived'); // the weak test misses the `+`→`-`
     expect(arithmetic!.originalText).toBe('+');
     expect(arithmetic!.mutatedText).toBe('-');
+    expect(arithmetic!.coveringTests).toEqual(['t']);
+    expect(arithmetic!.equivalentJustification).toBeNull();
+    expect(arithmetic!.equivalentJustificationDigest).toBeNull();
+    expect(arithmetic!.subsumedBy).toEqual([]);
+  });
+
+  it('records every operator for every target, including zero-applicability rows', () => {
+    const facts = buildMutationFacts([{ file: FILE, text: SRC }], { runner: weakTypeRunner, coverage: coverageFor() });
+    expect(facts.operatorApplicability).toHaveLength(MUTATION_OPERATORS.length);
+    expect(facts.operatorApplicability?.map((row) => row.operator)).toEqual(
+      [...MUTATION_OPERATORS].sort((a, b) => a.localeCompare(b)),
+    );
+    expect(facts.operatorApplicability?.every((row) => row.file === FILE)).toBe(true);
+    expect(
+      facts.operatorApplicability?.find((row) => row.operator === 'arithmetic')?.applicableMutants,
+    ).toBeGreaterThan(0);
+    expect(facts.operatorApplicability?.some((row) => row.applicableMutants === 0)).toBe(true);
+  });
+
+  it('binds an equivalent verdict to its human justification with a cryptographic digest', () => {
+    const sf = ts.createSourceFile(FILE, SRC, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const mutant = generateMutants(sf, { file: FILE }).find((candidate) => candidate.operator === 'arithmetic');
+    expect(mutant).toBeDefined();
+    const justification = 'the fixture declares this rewrite equivalent for provenance testing';
+    const equivalents = makeEquivalentMutantRegistry([
+      {
+        mutantId: mutant!.id,
+        file: mutant!.file,
+        line: mutant!.line,
+        column: mutant!.column,
+        operator: mutant!.operator,
+        originalText: mutant!.originalText,
+        mutatedText: mutant!.mutatedText,
+        justification,
+      },
+    ]);
+    const facts = buildMutationFacts([{ file: FILE, text: SRC }], {
+      runner: weakTypeRunner,
+      coverage: coverageFor(),
+      equivalents,
+    });
+    const outcome = facts.outcomes.find((candidate) => candidate.mutantId === mutant!.id);
+    expect(outcome?.verdict).toBe('equivalent');
+    expect(outcome?.coveringTests).toEqual(['t']);
+    expect(outcome?.equivalentJustification).toBe(justification);
+    expect(outcome?.equivalentJustificationDigest).toMatch(/^blake3:/u);
+    expect(outcome?.subsumedBy).toEqual([]);
   });
 
   it('is deterministic — same source + runner → byte-identical facts', () => {

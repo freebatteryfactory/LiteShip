@@ -167,6 +167,7 @@ export function scopeContextByLevel(
     // to the char-machine — making the injection inert on the production `litelaunchGauntlet*` path
     // (codex review, PR #60; the same scoping drop the capabilityLink pass-through fixed).
     ...(context.codeOnly !== undefined ? { codeOnly: context.codeOnly } : {}),
+    ...(context.benchmarkSubjects !== undefined ? { benchmarkSubjects: context.benchmarkSubjects } : {}),
     // Pass the injected IR through unchanged — scoping narrows `files()`, not the
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
     // the key entirely when no IR was injected, so the shape stays minimal.

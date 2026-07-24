@@ -37,6 +37,7 @@ import type { SkipMatch } from './gates/skip-detect.js';
 import type { SkipSiteFacts } from './facts/skip-site-facts.js';
 import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
 import type { CheckGovernanceFacts, WaiverFreshnessFact } from './facts/check-governance-facts.js';
+import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
 
 /**
@@ -100,6 +101,11 @@ export interface GateContext {
    * differential test (tests/unit/audit/code-ranges.test.ts), so the fallback stays faithful.
    */
   readonly codeOnly?: (source: string) => string;
+  /**
+   * Parser-backed benchmark reachability facts produced by a repository host.
+   * The gauntlet folds these flat facts and never imports the TypeScript compiler.
+   */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
   /**
    * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
    * design: `@liteship/gauntlet` is the lean engine and the IR is built+injected by

@@ -82,8 +82,13 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
             operator: 'equality',
             originalText: '===',
             mutatedText: '!==',
+            coveringTests: ['tests/fixture.test.ts'],
+            equivalentJustification: null,
+            equivalentJustificationDigest: null,
+            subsumedBy: [],
           },
         ],
+        operatorApplicability: [{ file: TRUE_L4_FILE, operator: 'equality', applicableMutants: 1 }],
         scoreBaseline: {},
       },
     };

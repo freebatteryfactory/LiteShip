@@ -36,6 +36,7 @@ import {
 import { ACCEPTED_COMPLEXITY_CEILINGS } from '../../../packages/gauntlet/src/gates/performance-contracts.ts';
 import { verifyMeasuredComplexityMap } from '../../../scripts/bench-contracts.ts';
 import { commentsBlanked } from '../../../packages/gauntlet/src/gates/code-only.ts';
+import { qualifyBenchDistribution } from '../../../packages/audit/src/benchmark-subject-facts.ts';
 import { repoRoot } from '../../../vitest.shared.ts';
 
 describe('extractRegisteredBenches — the bench-name fold', () => {
@@ -161,22 +162,136 @@ describe('live complexity producer self-proof', () => {
 
 describe('foldDeclaredDistributions — the headline-law cross-check', () => {
   it('reports no issues when declarations and registrations match exactly', () => {
-    const sources = new Map([['tests/bench/x.bench.ts', "bench.add('a', () => {});\n"]]);
+    const sources = new Map([
+      ['tests/bench/x.bench.ts', "import { fastPath } from '@liteship/x';\nbench.add('a', () => fastPath());\n"],
+    ]);
     const result = foldDeclaredDistributions(sources, [
-      { name: 'a', file: 'tests/bench/x.bench.ts', inputSize: 1, shape: 'single-call', replicates: 1 },
+      {
+        name: 'a',
+        file: 'tests/bench/x.bench.ts',
+        inputSize: 1,
+        shape: 'single-call',
+        replicates: 1,
+        subjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/x' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
     ]);
     expect(result.issues).toHaveLength(0);
     expect(result.discoveredBenchCount).toBe(1);
   });
 
   it('reports UNDECLARED and ORPHAN in their respective directions', () => {
-    const sources = new Map([['tests/bench/x.bench.ts', "bench.add('a', () => {});\nbench.add('b', () => {});\n"]]);
+    const sources = new Map([
+      [
+        'tests/bench/x.bench.ts',
+        "import { fastPath } from '@liteship/x';\nbench.add('a', () => fastPath());\nbench.add('b', () => {});\n",
+      ],
+    ]);
     const result = foldDeclaredDistributions(sources, [
-      { name: 'a', file: 'tests/bench/x.bench.ts', inputSize: 1, shape: 's', replicates: 1 },
-      { name: 'gone', file: 'tests/bench/x.bench.ts', inputSize: 1, shape: 's', replicates: 1 },
+      {
+        name: 'a',
+        file: 'tests/bench/x.bench.ts',
+        inputSize: 1,
+        shape: 's',
+        replicates: 1,
+        subjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/x' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
+      {
+        name: 'gone',
+        file: 'tests/bench/x.bench.ts',
+        inputSize: 1,
+        shape: 's',
+        replicates: 1,
+        subjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/x' },
+            symbol: 'fastPath',
+            binding: 'fastPath',
+          },
+        ],
+      },
     ]);
     expect(result.issues.filter((i) => i.kind === 'undeclared').map((i) => i.name)).toEqual(['b']);
     expect(result.issues.filter((i) => i.kind === 'orphan').map((i) => i.name)).toEqual(['gone']);
+  });
+});
+
+describe('benchmark subject qualification — measured implementation, not names', () => {
+  const distribution = {
+    name: 'fastPath -- wrapper',
+    file: 'tests/bench/x.bench.ts',
+    inputSize: 1,
+    shape: 'single-call',
+    replicates: 1,
+    subjects: [
+      {
+        role: 'sut' as const,
+        origin: { kind: 'module' as const, specifier: '@liteship/x' },
+        symbol: 'fastPath',
+        binding: 'fastPath',
+      },
+    ],
+  };
+
+  it('follows a bounded same-file wrapper to the imported SUT', () => {
+    const source =
+      "import { fastPath } from '@liteship/x';\nfunction runFast(){ return fastPath(); }\nbench.add('fastPath -- wrapper', () => runFast());\n";
+    expect(qualifyBenchDistribution(distribution, () => source)).toMatchObject({
+      issues: [],
+      qualifyingSutSubjects: [{ symbol: 'fastPath' }],
+    });
+  });
+
+  it('traces a destructured product returned by an imported factory to its module owner', () => {
+    const factoryDistribution = {
+      ...distribution,
+      name: 'pair -- push and pop',
+      subjects: [
+        {
+          role: 'sut' as const,
+          origin: { kind: 'module' as const, specifier: '@liteship/x' },
+          symbol: 'Factory.createPair().producer.push',
+          binding: 'producer.push',
+        },
+        {
+          role: 'sut' as const,
+          origin: { kind: 'module' as const, specifier: '@liteship/x' },
+          symbol: 'Factory.createPair().consumer.pop',
+          binding: 'consumer.pop',
+        },
+      ],
+    };
+    const source =
+      "import { Factory } from '@liteship/x';\nconst { producer, consumer } = Factory.createPair();\nbench.add('pair -- push and pop', () => { producer.push(1); consumer.pop(); });\n";
+    expect(qualifyBenchDistribution(factoryDistribution, () => source)).toMatchObject({
+      issues: [],
+      qualifyingSutSubjects: [
+        { symbol: 'Factory.createPair().producer.push' },
+        { symbol: 'Factory.createPair().consumer.pop' },
+      ],
+    });
+  });
+
+  it('rejects a comment/reference mention when the callback invokes no SUT', () => {
+    const source =
+      "import { fastPath } from '@liteship/x';\nbench.add('fastPath -- wrapper', () => { void fastPath; /* fastPath() */ });\n";
+    expect(qualifyBenchDistribution(distribution, () => source).issues.map((issue) => issue.kind)).toContain(
+      'uninvoked-subject',
+    );
   });
 });
 

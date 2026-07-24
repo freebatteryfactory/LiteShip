@@ -269,6 +269,10 @@ function killedOutcome(): MutantOutcome {
     operator: 'equality',
     originalText: '===',
     mutatedText: '!==',
+    coveringTests: ['tests/fixture.test.ts'],
+    equivalentJustification: null,
+    equivalentJustificationDigest: null,
+    subsumedBy: [],
   };
 }
 
@@ -283,6 +287,10 @@ function survivedL4Outcome(): MutantOutcome {
     operator: 'conditional-boundary',
     originalText: '>=',
     mutatedText: '>',
+    coveringTests: ['tests/fixture.test.ts'],
+    equivalentJustification: null,
+    equivalentJustificationDigest: null,
+    subsumedBy: [],
   };
 }
 
@@ -302,6 +310,7 @@ const FIXTURES = {
     name: 'mutation facts with a SURVIVED L4 mutant (untested behaviour the gate must flag)',
     context: mutationContext(fixtureIR(), {
       outcomes: [survivedL4Outcome()],
+      operatorApplicability: [{ file: L4_FILE, operator: 'conditional-boundary', applicableMutants: 1 }],
       scoreBaseline: {},
     }),
   },
@@ -309,6 +318,7 @@ const FIXTURES = {
     name: 'mutation facts with only a KILLED L4 mutant at its committed score baseline (adequate, no regression)',
     context: mutationContext(fixtureIR(), {
       outcomes: [killedOutcome()],
+      operatorApplicability: [{ file: L4_FILE, operator: 'equality', applicableMutants: 1 }],
       // The file's measured score is 1.0 (1 killed / 1 total); the baseline is 1.0,
       // so there is no ratchet drop. A clean green.
       scoreBaseline: { [L4_FILE]: 1.0 },

@@ -11,9 +11,12 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, posix, relative, sep } from 'node:path';
 import ts from 'typescript';
+import { ValidationError } from '@liteship/error';
 import { PACKAGE_CATALOG } from '../package-catalog.js';
 import { rankOf, type AssuranceLevel } from '../../packages/gauntlet/src/assurance.js';
 import { levelOf } from '../../packages/gauntlet/src/assurance-map.js';
+import { parseQualifiedBenchDistribution } from '../../packages/gauntlet/src/gates/bench-subjects.js';
+import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.js';
 
 export const ASSURANCE_TARGET_MILLI = 10_000;
 
@@ -252,9 +255,6 @@ function classifyEvidence(path: string, source: string): readonly EvidenceClass[
     if (kind === 'fuzz' && !/\b(?:fc\.assert|fuzzGenerated|runFuzz|fuzzCorpus|arbitrary)\b/u.test(source)) continue;
     classes.add(kind);
   }
-  if ((normalized.includes('/bench/') || normalized.includes('.bench.')) && /\bbench\.add\s*\(/u.test(source)) {
-    classes.add('benchmark');
-  }
   if ((normalized.includes('simulation') || normalized.includes('determinism')) && hasTest) classes.add('simulation');
   if ((normalized.includes('mutation') || normalized.includes('mutant')) && hasTest && /mutat|mutant/iu.test(source)) {
     classes.add('mutation');
@@ -264,6 +264,52 @@ function classifyEvidence(path: string, source: string): readonly EvidenceClass[
     classes.add('chaos');
   }
   return [...classes].sort();
+}
+
+/** Module-owned SUT subjects that each benchmark file actually reaches. */
+function qualifiedBenchmarkOwners(cwd: string): ReadonlyMap<string, ReadonlySet<string>> {
+  const artifact = join(cwd, 'benchmarks', 'distributions.json');
+  if (!existsSync(artifact)) return new Map();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(artifact, 'utf8'));
+  } catch (cause) {
+    throw ValidationError('assuranceInventory', `cannot parse ${artifact}: ${String(cause)}`);
+  }
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('schemaVersion' in parsed) ||
+    parsed.schemaVersion !== 2 ||
+    !('distributions' in parsed) ||
+    !Array.isArray(parsed.distributions)
+  ) {
+    throw ValidationError('assuranceInventory', `${artifact} is not a schema-v2 distribution registry`);
+  }
+  const owners = new Map<string, Set<string>>();
+  for (const [index, value] of parsed.distributions.entries()) {
+    const distribution = parseQualifiedBenchDistribution(value);
+    if (distribution === null) {
+      throw ValidationError('assuranceInventory', `${artifact} distribution ${index} has an invalid subject contract`);
+    }
+    const qualification = qualifyBenchDistribution(distribution, (path) => {
+      const absolute = join(cwd, ...path.split('/'));
+      return existsSync(absolute) ? readFileSync(absolute, 'utf8') : undefined;
+    });
+    if (qualification.issues.length > 0) continue;
+    const fileOwners = owners.get(distribution.file) ?? new Set<string>();
+    for (const subject of qualification.qualifyingSutSubjects) {
+      if (subject.origin.kind !== 'module') continue;
+      const owner = PACKAGE_CATALOG.find(
+        (record) =>
+          subject.origin.kind === 'module' &&
+          (subject.origin.specifier === record.name || subject.origin.specifier.startsWith(`${record.name}/`)),
+      );
+      if (owner !== undefined) fileOwners.add(owner.name);
+    }
+    owners.set(distribution.file, fileOwners);
+  }
+  return owners;
 }
 
 function packageMatchers(name: string, dir: string): readonly RegExp[] {
@@ -354,6 +400,7 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
     };
   });
 
+  const benchmarkOwners = qualifiedBenchmarkOwners(cwd);
   const knownEvidencePaths = new Set(evidenceSources.map((entry) => entry.path));
   const directOwners = new Map<string, Set<string>>();
   const dependencies = new Map<string, readonly string[]>();
@@ -362,7 +409,10 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
       const matchers = packageMatchers(record.name, record.dir);
       return directlyOwnedEvidence(entry.path, record.dir) || matchers.some((matcher) => matcher.test(entry.source));
     });
-    directOwners.set(entry.path, new Set(matches.map((record) => record.name)));
+    directOwners.set(
+      entry.path,
+      new Set([...matches.map((record) => record.name), ...(benchmarkOwners.get(entry.path) ?? [])]),
+    );
     dependencies.set(entry.path, relativeTestImports(entry.path, entry.source, knownEvidencePaths));
   }
   const transitiveOwners = new Map([...directOwners].map(([path, owners]) => [path, new Set(owners)] as const));
@@ -413,6 +463,7 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
     const evidenceClasses = emptyClasses();
     for (const entry of authored) {
       for (const kind of classifyEvidence(entry.path, entry.source)) evidenceClasses[kind] += 1;
+      if (benchmarkOwners.get(entry.path)?.has(record.name) === true) evidenceClasses.benchmark += 1;
     }
     const highestAssurance = sourceFiles.reduce<AssuranceLevel>((highest, path) => {
       const level = levelOf(normalize(relative(cwd, path)));

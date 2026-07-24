@@ -19,6 +19,7 @@ import {
   createTokenBuffer,
 } from '@liteship/core';
 import { evaluate } from '@liteship/quantizer';
+import { parseBoundary } from '@liteship/astro/runtime';
 import { SPSCRing } from '@liteship/worker';
 import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.ts';
 
@@ -237,6 +238,10 @@ const boundaryJSON = JSON.stringify({
 bench.add('[DIRECTIVE] adaptive full cycle -- parse + evaluate', () => {
   const b = JSON.parse(boundaryJSON);
   adaptiveEvaluate(b.thresholds, b.states, 800);
+});
+
+bench.add('[DIRECTIVE] astro parseBoundary -- validated payload', () => {
+  parseBoundary(boundaryJSON);
 });
 
 // Worker: full composite state build (inline, no Effect)

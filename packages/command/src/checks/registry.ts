@@ -41,54 +41,14 @@ interface RepositoryCheckRowBase {
 }
 
 /**
- * Formerly-exempt blockers now share one executable proof harness. The harness
- * drives the real tool/runner/decision authority on deterministic bad input and
- * asserts a non-zero/red result for every id listed here.
- */
-const EXECUTED_CONTROL = 'tests/unit/devops/blocking-check-negative-controls.test.ts';
-const _EXECUTED_CONTROL_IDS = [
-  'check/format',
-  'check/lint-structural',
-  'check/lint',
-  'check/docs',
-  'check/test',
-  'check/test-redteam',
-  'check/runtime-gate',
-  'check/flex-verify',
-  'check/devx',
-  'check/test-vite',
-  'check/test-astro',
-  'check/test-cloudflare',
-  'check/test-cloudflare-dev',
-  'check/test-tailwind',
-  'check/test-e2e',
-  'check/test-e2e-stress',
-  'check/test-e2e-stream-stress',
-  'check/bench-trend',
-  'check/bench-reality',
-  'check/bench-alloc',
-  'check/coverage',
-  'check/package-smoke',
-  'check/journey',
-  'check/hermetic',
-] as const;
-
-type ExecutedControlId = (typeof _EXECUTED_CONTROL_IDS)[number];
-
-/**
- * A repository row is statically unrepresentable as a blocker without either
- * its own negative control or membership in the shared executed-control suite.
+ * A repository row is statically unrepresentable as a blocker without its own
+ * explicitly declared negative control.
  * Keeping this law in the type removes the check registry's former runtime
  * dependency on built `@liteship/error` artifacts, so the CI plan can project
  * the registry before any package build exists.
  */
 type RepositoryCheckRow = RepositoryCheckRowBase &
   (
-    | {
-        readonly authority: 'blocking';
-        readonly id: ExecutedControlId;
-        readonly negativeControl?: string;
-      }
     | {
         readonly authority: 'blocking';
         readonly negativeControl: string;
@@ -102,8 +62,7 @@ type RepositoryCheckRow = RepositoryCheckRowBase &
 /** Add the explicit repository context and close any former control hole. */
 function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   if (row.authority === 'blocking') {
-    const negativeControl = row.negativeControl ?? EXECUTED_CONTROL;
-    return { ...row, contexts: ['repository'], authority: 'blocking', negativeControl };
+    return { ...row, contexts: ['repository'], authority: 'blocking' };
   }
   const { negativeControl: _unused, ...advisory } = row;
   return { ...advisory, contexts: ['repository'], authority: 'advisory' };
@@ -128,6 +87,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 60_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: "run 'pnpm run format' to auto-fix, then re-run.",
   },
   {
@@ -151,6 +111,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 90_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/lint-structural-negative-control.test.ts',
     remediation: "fix the ast-grep finding (or run 'pnpm run lint:structural' for the full report).",
   },
   {
@@ -165,6 +126,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 180_000,
     cache: 'content-addressed',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: "run 'pnpm run fix' (format + eslint --fix), then re-run.",
   },
   {
@@ -224,6 +186,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
   },
   {
@@ -300,6 +263,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-aggregate-negative-control.test.ts',
     remediation: 'make the failing assertions pass.',
   },
   {
@@ -314,6 +278,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-redteam-negative-control.test.ts',
     remediation: 'fix the runtime safety regression the red-team assertion caught.',
   },
   {
@@ -328,6 +293,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 180_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'restore the runtime seam the gate flagged (inject the dependency, do not hard-couple).',
   },
   {
@@ -432,6 +398,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 120_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'fix the flex-policy inconsistency the verifier reported.',
   },
   {
@@ -446,6 +413,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 60_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'restore the devx policy invariant the check reported.',
   },
   {
@@ -521,6 +489,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-vite-negative-control.test.ts',
     remediation: 'fix the Vite integration failure the harness reported.',
   },
   {
@@ -535,6 +504,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-astro-negative-control.test.ts',
     remediation: 'fix the Astro integration failure the harness reported.',
   },
   {
@@ -549,6 +519,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-cloudflare-negative-control.test.ts',
     remediation: 'fix the Cloudflare/Astro integration failure the harness reported.',
   },
   {
@@ -563,6 +534,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-cloudflare-dev-negative-control.test.ts',
     remediation: 'fix the Cloudflare dev-server integration failure the harness reported.',
   },
   {
@@ -577,6 +549,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-tailwind-negative-control.test.ts',
     remediation: 'fix the Tailwind integration failure the harness reported.',
   },
 
@@ -593,6 +566,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-e2e-negative-control.test.ts',
     remediation: 'fix the e2e failure the Playwright run reported.',
   },
   {
@@ -607,6 +581,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-e2e-stress-negative-control.test.ts',
     remediation: 'fix the capture-path instability the stress run exposed.',
   },
   {
@@ -621,6 +596,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/test-e2e-stream-stress-negative-control.test.ts',
     remediation: 'fix the stream-path instability the stress run exposed.',
   },
   {
@@ -702,6 +678,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'investigate the trend drift the gate reported.',
   },
   {
@@ -716,6 +693,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'restore a real measured workload for the vacuous benchmark the gate flagged.',
   },
   {
@@ -730,6 +708,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/bench-alloc-negative-control.test.ts',
     remediation: 'reclaim the allocations that exceeded the hot-path budget.',
   },
 
@@ -746,6 +725,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 900_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'add tests to lift the under-covered file back over the floor.',
   },
   {
@@ -760,6 +740,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation: 'fix the packed-package export/peer that failed to resolve in the consumer smoke.',
   },
   {
@@ -790,6 +771,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 600_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/journey-negative-control.test.ts',
     remediation: 'fix the consumer flow the journey test exercised (scaffold, build, diagnostic, upgrade, or context).',
   },
   {
@@ -805,6 +787,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 420_000,
     cache: 'none',
     authority: 'blocking',
+    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
     remediation:
       'fix the offline reinstall, public-subpath proof, or semantic package-content drift reported by the hermetic closure.',
   },

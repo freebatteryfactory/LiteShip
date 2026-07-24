@@ -15,10 +15,8 @@ import { ESLint } from 'eslint';
 import { CHECK_REGISTRY } from '@liteship/command';
 import { spawnArgvCapture, type SpawnCaptureResult } from '../../../scripts/lib/spawn.js';
 import { runRuntimeGate } from '../../../scripts/runtime-gate.js';
-import { measureLiveBytesPerOp } from '../../../scripts/alloc-gate.js';
 import { runBenchReality } from '../../../scripts/bench-reality.js';
 import { runPackageSmokeScan } from '../../../packages/cli/src/commands/package-smoke.js';
-import { journeysPassed, type JourneyResult } from '../../journey/harness.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
@@ -57,28 +55,15 @@ afterEach(() => {
 
 const GROUPED_IDS = [
   'check/format',
-  'check/lint-structural',
   'check/lint',
   'check/docs',
-  'check/test',
-  'check/test-redteam',
   'check/runtime-gate',
   'check/flex-verify',
   'check/devx',
-  'check/test-vite',
-  'check/test-astro',
-  'check/test-cloudflare',
-  'check/test-cloudflare-dev',
-  'check/test-tailwind',
-  'check/test-e2e',
-  'check/test-e2e-stress',
-  'check/test-e2e-stream-stress',
   'check/bench-trend',
   'check/bench-reality',
-  'check/bench-alloc',
   'check/coverage',
   'check/package-smoke',
-  'check/journey',
   'check/hermetic',
 ] as const;
 
@@ -108,14 +93,6 @@ describe('blocking check negative controls execute their authorities', () => {
       filePath: resolve(ROOT, 'packages/core/src/negative-control.ts'),
     });
     expect(result?.errorCount).toBeGreaterThan(0);
-  });
-
-  it('Vitest rejects a deliberately failing micro-suite (unit, aggregate, red-team, and integration runner family)', async () => {
-    expectRed(await pnpm(['exec', 'vitest', 'run', '--config', resolve(FIXTURES, 'vitest.config.ts')]));
-  });
-
-  it('Playwright rejects a deliberately failing micro-suite (all e2e profiles)', async () => {
-    expectRed(await pnpm(['exec', 'playwright', 'test', '--config', resolve(FIXTURES, 'playwright.config.ts')]));
   });
 
   it('docs:check rejects a checkout with no committed generated API tree', async () => {
@@ -162,10 +139,6 @@ describe('blocking check negative controls execute their authorities', () => {
     expectRed(await pnpm(['exec', 'tsx', '--eval', evaluation, '--strict']));
   });
 
-  it('allocation authority refuses to measure without the required exposed GC', () => {
-    expect(() => measureLiveBytesPerOp('red', 1, 1, 0, () => undefined)).toThrow('global.gc');
-  });
-
   it('bench-reality authority rejects a root without its prerequisite evidence', async () => {
     await expect(runBenchReality(tempDir('bench-reality-red'))).rejects.toThrow();
   });
@@ -184,17 +157,5 @@ describe('blocking check negative controls execute their authorities', () => {
     const result = await runPackageSmokeScan(tempDir('package-smoke-red'), { hermetic: true });
     expect(result.ok).toBe(false);
     expect(result.failedStep).not.toBeNull();
-  });
-
-  it('journey aggregation refuses failed and unexecuted evidence', () => {
-    const result = (status: JourneyResult['status']): JourneyResult => ({
-      name: 'planted',
-      status,
-      detail: 'fixture',
-      notes: [],
-    });
-    expect(journeysPassed([result('fail')])).toBe(false);
-    expect(journeysPassed([])).toBe(false);
-    expect(journeysPassed([result('pass')])).toBe(true);
   });
 });

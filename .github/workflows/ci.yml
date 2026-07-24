@@ -492,6 +492,14 @@ jobs:
       - run: pnpm run gauntlet:full -- --profile ci-parallel-integration --skip-build
         env:
           CI: true
+      - name: Upload addressed flake evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: flake-evidence
+          path: reports/flake-evidence.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   truth-linux-parallel-mid:
     runs-on: ubuntu-latest
@@ -1109,10 +1117,21 @@ jobs:
         with:
           name: affected-plan
           path: .liteship
+      - name: Download flake evidence when the campaign reached its evidence write
+        continue-on-error: true
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: flake-evidence
+          path: reports
       - name: Collect evidence-native delivery metrics
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm exec tsx scripts/collect-delivery-metrics.ts .liteship/affected-plan.json reports/delivery-metrics.json
+        run: >-
+          pnpm exec tsx scripts/collect-delivery-metrics.ts
+          .liteship/affected-plan.json
+          reports/delivery-metrics.json
+          .liteship/affected-selector-calibration.json
+          reports/flake-evidence.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: delivery-metrics

@@ -4,14 +4,12 @@
  * PURE + DETERMINISTIC over the repo bytes (no clock, no rng, no network), so this proof
  * pins the LAWS, never implementation churn, with an in-memory IR + a throwaway repo dir.
  *
- * THE TARGETING LAW ({@link l4SeamTargets}) — a candidate is mutated ONLY when the LIVE
- * propagated assurance level rates it effective-L4, NEVER a hardcoded assumption. A
- * candidate the propagation does NOT rate L4 is DROPPED + surfaced (`skippedNotL4`); a
- * candidate whose bytes vanished is surfaced (`unreadable`). Both visible, never a quiet
- * drop. This proves the "the map is the source of truth" invariant on both arms:
- *   - a base-L4 candidate (canonical/*, core/hlc) is targeted;
- *   - a base-low candidate (content-address, graph-patch) is SKIPPED when nothing L4
- *     imports it, and PULLED IN when an L4 file imports it (the propagation fixpoint).
+ * THE TARGETING LAW ({@link l4SeamTargets}) — every mutation-analyzable package source the LIVE
+ * propagated assurance level rates effective-L4 is targeted, with no second curated
+ * list. A file outside that census is excluded; a lower-level dependency becomes
+ * eligible the instant an L4 importer lifts it through the propagation fixpoint. A
+ * vanished eligible file is surfaced as unreadable and makes the target census fail.
+ * An omitted, duplicate, or foreign materialized target is likewise a census error.
  *
  * THE COVERAGE LAW ({@link partitionSeamCandidates} + {@link buildSeamCoverageMap}) — the
  * covering set OVER-APPROXIMATES (a missed covering test is a false survivor, the worst
@@ -32,7 +30,9 @@ import { join } from 'node:path';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '@liteship/gauntlet';
 import { makeCoverageMap, type MutationTargetFile } from '@liteship/audit';
 import {
+  eligibleL4SeamFiles,
   l4SeamTargets,
+  targetCensusErrors,
   partitionSeamCandidates,
   buildSeamCoverageMap,
 } from '../../../../packages/cli/src/lib/mutation-targets.js';
@@ -89,7 +89,7 @@ function makeRepoWithTests(tests: ReadonlyMap<string, string>): string {
   return root;
 }
 
-describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the source of truth)', () => {
+describe('l4SeamTargets — complete LIVE-propagation target census', () => {
   it('targets a base-L4 candidate present on disk, paired with its exact bytes', () => {
     const hlcText = 'export const hlc = () => 0;\n';
     const fnvText = 'export const fnv = () => 1;\n';
@@ -109,15 +109,14 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
       // The bytes are the EXACT on-disk source (a byte-faithful read, not a re-encode).
       expect(result.targets.find((t) => t.file === HLC)?.text).toBe(hlcText);
       expect(result.targets.find((t) => t.file === CANON_FNV)?.text).toBe(fnvText);
-      expect(result.skippedNotL4).not.toContain(HLC);
+      expect(result.expectedFiles).toEqual([CANON_FNV, HLC]);
+      expect(targetCensusErrors(result)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it('SKIPS a base-low candidate when nothing L4 imports it (surfaced via skippedNotL4, never silently mutated)', () => {
-    // content-address.ts / graph-patch.ts are NOT in the L4 glob; with no L4 importer the
-    // live propagation leaves them below L4 → the LAW drops them, recorded for the caller.
+  it('excludes a non-L4 source because the live assurance fixpoint, not a curated list, owns eligibility', () => {
     const root = makeRepoWithSources(
       new Map([
         [CONTENT_ADDR, 'export const ca = 1;\n'],
@@ -127,11 +126,10 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
     try {
       const ir = buildIR([CONTENT_ADDR, GRAPH_PATCH]);
       const result = l4SeamTargets(ir, root);
-      expect(result.targets.map((t) => t.file)).not.toContain(CONTENT_ADDR);
-      expect(result.targets.map((t) => t.file)).not.toContain(GRAPH_PATCH);
-      // The drop is VISIBLE — surfaced on skippedNotL4, never hidden.
-      expect(result.skippedNotL4).toContain(CONTENT_ADDR);
-      expect(result.skippedNotL4).toContain(GRAPH_PATCH);
+      expect(eligibleL4SeamFiles(ir)).toEqual([]);
+      expect(result.expectedFiles).toEqual([]);
+      expect(result.targets).toEqual([]);
+      expect(targetCensusErrors(result)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -151,7 +149,8 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
       const result = l4SeamTargets(ir, root);
       // The level was COMPUTED from the live IR, not assumed — content-address is now L4.
       expect(result.targets.map((t) => t.file)).toContain(CONTENT_ADDR);
-      expect(result.skippedNotL4).not.toContain(CONTENT_ADDR);
+      expect(result.expectedFiles).toEqual([HLC, CONTENT_ADDR]);
+      expect(targetCensusErrors(result)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -164,14 +163,41 @@ describe('l4SeamTargets — the LIVE-propagation targeting LAW (the map is the s
       const ir = buildIR([HLC, CANON_FNV]);
       const result = l4SeamTargets(ir, root);
       expect(result.unreadable).toContain(HLC);
-      // It was NOT skipped (it IS L4) and NOT silently dropped from targets.
-      expect(result.skippedNotL4).not.toContain(HLC);
+      // It is still in the expected census, so admission fails rather than shrinking.
+      expect(result.expectedFiles).toContain(HLC);
       expect(result.targets.map((t) => t.file)).not.toContain(HLC);
       // The readable L4 candidate is still targeted — one vanished seam doesn't sink the run.
       expect(result.targets.map((t) => t.file)).toContain(CANON_FNV);
+      expect(targetCensusErrors(result)).toContain(`eligible L4 target omitted: ${HLC}`);
+      expect(targetCensusErrors(result)).toContain(`eligible L4 target unreadable: ${HLC}`);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it('reds when one eligible target is omitted from an otherwise plausible materialized census', () => {
+    const result = {
+      expectedFiles: [CANON_FNV, HLC],
+      targets: [{ file: CANON_FNV, text: 'export const fnv = 1;\n' }],
+      unreadable: [],
+    };
+    expect(targetCensusErrors(result)).toEqual([`eligible L4 target omitted: ${HLC}`]);
+  });
+
+  it('reds foreign and duplicate targets instead of accepting target-count coincidence', () => {
+    const result = {
+      expectedFiles: [HLC],
+      targets: [
+        { file: HLC, text: 'export const hlc = 1;\n' },
+        { file: HLC, text: 'export const hlc = 1;\n' },
+        { file: GRAPH_PATCH, text: 'export const graphPatch = 1;\n' },
+      ],
+      unreadable: [],
+    };
+    expect(targetCensusErrors(result)).toEqual([
+      `duplicate mutation target: ${HLC}`,
+      `foreign non-L4 target admitted: ${GRAPH_PATCH}`,
+    ]);
   });
 
   it('is DETERMINISTIC + sorted — the same IR + repo yields an identical, file-id-ordered target list', () => {
@@ -288,29 +314,26 @@ describe('partitionSeamCandidates — the deep-vs-barrel covering partition (sou
 
   it('PROPERTY — the partition is a pure function of the corpus: shuffling the on-disk write order never changes the (sorted) result', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(fc.integer({ min: 0, max: 50 }), { minLength: 1, maxLength: 8 }),
-        (idxs) => {
-          const entries: [string, string][] = idxs.map((i) => [
-            `tests/unit/core/t${i}.test.ts`,
-            `import { hlc } from '@liteship/core';`,
-          ]);
-          const buildFrom = (order: [string, string][]): readonly string[] => {
-            const root = makeRepoWithTests(new Map(order));
-            try {
-              const [seam] = partitionSeamCandidates(root, [SEAM]);
-              return seam?.barrelImporters.map((b) => b.id) ?? [];
-            } finally {
-              rmSync(root, { recursive: true, force: true });
-            }
-          };
-          const forward = buildFrom(entries);
-          const reversed = buildFrom([...entries].reverse());
-          // Same corpus, reversed write order → identical sorted barrel set (determinism).
-          expect(reversed).toEqual(forward);
-          expect(forward).toEqual([...forward].sort((a, b) => a.localeCompare(b)));
-        },
-      ),
+      fc.property(fc.uniqueArray(fc.integer({ min: 0, max: 50 }), { minLength: 1, maxLength: 8 }), (idxs) => {
+        const entries: [string, string][] = idxs.map((i) => [
+          `tests/unit/core/t${i}.test.ts`,
+          `import { hlc } from '@liteship/core';`,
+        ]);
+        const buildFrom = (order: [string, string][]): readonly string[] => {
+          const root = makeRepoWithTests(new Map(order));
+          try {
+            const [seam] = partitionSeamCandidates(root, [SEAM]);
+            return seam?.barrelImporters.map((b) => b.id) ?? [];
+          } finally {
+            rmSync(root, { recursive: true, force: true });
+          }
+        };
+        const forward = buildFrom(entries);
+        const reversed = buildFrom([...entries].reverse());
+        // Same corpus, reversed write order → identical sorted barrel set (determinism).
+        expect(reversed).toEqual(forward);
+        expect(forward).toEqual([...forward].sort((a, b) => a.localeCompare(b)));
+      }),
       { numRuns: 25 },
     );
   });
@@ -338,10 +361,7 @@ describe('buildSeamCoverageMap — the deterministic SOUND coverage map (barrel 
           'tests/unit/core/deep.test.ts',
         ]);
       }
-      expect(coveringBySeam.get(HLC)).toEqual([
-        'tests/unit/core/barrel.test.ts',
-        'tests/unit/core/deep.test.ts',
-      ]);
+      expect(coveringBySeam.get(HLC)).toEqual(['tests/unit/core/barrel.test.ts', 'tests/unit/core/deep.test.ts']);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -22,6 +22,7 @@
  */
 
 import { InvariantViolationError } from '@liteship/error';
+import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import type { SourceLocation } from './finding.js';
 import type { AssuranceLevel } from './assurance.js';
 
@@ -275,6 +276,8 @@ export interface RepoIR {
   readonly levels?: ReadonlyMap<FileId | SymbolId, AssuranceLevel>;
   /** The oracle-emitted facts — the substrate the triangulation layer folds. */
   readonly facts: readonly Fact[];
+  /** Optional host-qualified benchmark reachability evidence for this repository image. */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
 }
 
 /**
@@ -295,6 +298,7 @@ export interface RepoIRParts {
   readonly refs?: ReadonlyMap<SymbolId, readonly RefSite[]>;
   readonly levels?: ReadonlyMap<FileId | SymbolId, AssuranceLevel>;
   readonly facts?: readonly Fact[];
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
 }
 
 /**
@@ -383,6 +387,7 @@ export function makeRepoIR(parts: RepoIRParts): RepoIR {
     refs,
     ...(parts.levels !== undefined ? { levels: parts.levels } : {}),
     facts: Object.freeze([...facts]),
+    ...(parts.benchmarkSubjects !== undefined ? { benchmarkSubjects: parts.benchmarkSubjects } : {}),
   };
   return Object.freeze(ir);
 }
