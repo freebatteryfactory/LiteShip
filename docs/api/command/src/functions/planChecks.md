@@ -8,7 +8,7 @@
 
 > **planChecks**(`profile`, `platform`, `context?`): [`CheckPlan`](../interfaces/CheckPlan.md)
 
-Defined in: [command/src/checks/plan.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L142)
+Defined in: [command/src/checks/plan.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L149)
 
 Project [CHECK\_REGISTRY](../variables/CHECK_REGISTRY.md) into the ordered, cache-annotated plan for
 `profile` on `platform`. PURE + TOTAL: filter by profile membership, preserve

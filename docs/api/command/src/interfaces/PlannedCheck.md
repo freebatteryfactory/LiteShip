@@ -6,7 +6,7 @@
 
 # Interface: PlannedCheck
 
-Defined in: [command/src/checks/plan.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L33)
+Defined in: [command/src/checks/plan.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L34)
 
 One check as scheduled into a plan — the registry entry projected to what a run needs.
 
@@ -16,7 +16,7 @@ One check as scheduled into a plan — the registry entry projected to what a ru
 
 > `readonly` **authority**: [`CheckAuthority`](../type-aliases/CheckAuthority.md)
 
-Defined in: [command/src/checks/plan.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L49)
+Defined in: [command/src/checks/plan.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L52)
 
 Whether a finding (or non-zero exit) blocks the aggregate verdict.
 
@@ -26,7 +26,7 @@ Whether a finding (or non-zero exit) blocks the aggregate verdict.
 
 > `readonly` **cache**: [`CheckCache`](../type-aliases/CheckCache.md)
 
-Defined in: [command/src/checks/plan.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L51)
+Defined in: [command/src/checks/plan.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L54)
 
 The verdict cache discipline (see [CheckCache](../type-aliases/CheckCache.md)).
 
@@ -36,7 +36,7 @@ The verdict cache discipline (see [CheckCache](../type-aliases/CheckCache.md)).
 
 > `readonly` **cacheable**: `boolean`
 
-Defined in: [command/src/checks/plan.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L53)
+Defined in: [command/src/checks/plan.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L56)
 
 True iff `cache === 'content-addressed'` — a warm run may skip this check when no input changed.
 
@@ -46,7 +46,7 @@ True iff `cache === 'content-addressed'` — a warm run may skip this check when
 
 > `readonly` **claim**: `string`
 
-Defined in: [command/src/checks/plan.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L39)
+Defined in: [command/src/checks/plan.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L40)
 
 The single sentence this check proves.
 
@@ -56,7 +56,7 @@ The single sentence this check proves.
 
 > `readonly` **command**: `string`
 
-Defined in: [command/src/checks/plan.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L43)
+Defined in: [command/src/checks/plan.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L44)
 
 The full shell line the host spawns.
 
@@ -66,7 +66,7 @@ The full shell line the host spawns.
 
 > `readonly` **context**: [`CheckContext`](../type-aliases/CheckContext.md)
 
-Defined in: [command/src/checks/plan.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L41)
+Defined in: [command/src/checks/plan.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L42)
 
 The context in which this check's claim is being scheduled.
 
@@ -76,7 +76,7 @@ The context in which this check's claim is being scheduled.
 
 > `readonly` `optional` **execution?**: [`CliCheckExecution`](CliCheckExecution.md)
 
-Defined in: [command/src/checks/plan.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L45)
+Defined in: [command/src/checks/plan.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L46)
 
 Structured CLI execution, when this check is owned by the current LiteShip application.
 
@@ -86,7 +86,7 @@ Structured CLI execution, when this check is owned by the current LiteShip appli
 
 > `readonly` **id**: `string`
 
-Defined in: [command/src/checks/plan.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L35)
+Defined in: [command/src/checks/plan.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L36)
 
 The check identity, `check/<slug>`.
 
@@ -96,7 +96,7 @@ The check identity, `check/<slug>`.
 
 > `readonly` **inputs**: readonly `string`[]
 
-Defined in: [command/src/checks/plan.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L57)
+Defined in: [command/src/checks/plan.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L60)
 
 Globs whose change invalidates this check's content-addressed verdict.
 
@@ -106,9 +106,19 @@ Globs whose change invalidates this check's content-addressed verdict.
 
 > `readonly` **owner**: `string`
 
-Defined in: [command/src/checks/plan.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L47)
+Defined in: [command/src/checks/plan.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L48)
 
 The package or script path that owns the assertion.
+
+***
+
+### remediation
+
+> `readonly` **remediation**: `string`
+
+Defined in: [command/src/checks/plan.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L50)
+
+Precise first remediation step projected into failure evidence.
 
 ***
 
@@ -116,7 +126,7 @@ The package or script path that owns the assertion.
 
 > `readonly` **timeoutMs**: `number`
 
-Defined in: [command/src/checks/plan.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L55)
+Defined in: [command/src/checks/plan.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L58)
 
 The wall-clock ceiling (ms) after which the host aborts the check.
 
@@ -126,6 +136,6 @@ The wall-clock ceiling (ms) after which the host aborts the check.
 
 > `readonly` **title**: `string`
 
-Defined in: [command/src/checks/plan.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L37)
+Defined in: [command/src/checks/plan.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L38)
 
 Human title for the plan line.

@@ -8,6 +8,6 @@
 
 > `const` **CHECK\_CONTEXTS**: readonly [`CheckContext`](../type-aliases/CheckContext.md)[]
 
-Defined in: [command/src/checks/plan.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L134)
+Defined in: [command/src/checks/plan.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L141)
 
 The execution contexts a plan may target.
