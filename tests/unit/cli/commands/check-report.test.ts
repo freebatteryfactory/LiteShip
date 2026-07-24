@@ -16,7 +16,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CHECK_REGISTRY, type CheckPlan, type CheckReport } from '@liteship/command';
+import { IntegrityDigest } from '@liteship/core';
+import { CHECK_REGISTRY, createCurePacket, type CheckPlan, type CheckReport } from '@liteship/command';
 import { captureCli } from '../../../integration/cli/capture.js';
 import {
   check,
@@ -58,6 +59,7 @@ function passingReport(plan: CheckPlan): CheckReport {
     ok: true,
     blocked: false,
     results: plan.checks.map((c) => ({ id: c.id, verdict: 'pass', durationMs: 1, cacheHit: false, findings: [] })),
+    curePackets: [],
   };
 }
 
@@ -75,6 +77,7 @@ describe('liteship check --profile — the profile sweep emits a CheckReport', (
       process.platform === 'darwin' || process.platform === 'win32' ? process.platform : 'linux',
     );
     expect(Array.isArray(report['results'])).toBe(true);
+    expect(report['curePackets']).toEqual([]);
     for (const r of report['results'] as Record<string, unknown>[]) {
       expect(r).toHaveProperty('id');
       expect(r).toHaveProperty('verdict');
@@ -139,6 +142,7 @@ describe('liteship check --profile — the profile sweep emits a CheckReport', (
           findings: ['pnpm run lint exited with status 1'],
         },
       ],
+      curePackets: [],
     }));
     const { exit, stdout } = await captureCli(() =>
       check({ profile: 'full', json: true }, { runCheckPlan: runCheckPlanMock }),
@@ -167,6 +171,7 @@ describe('liteship check --profile — the profile sweep emits a CheckReport', (
           findings: ['pnpm run lint exited with status 1'],
         },
       ],
+      curePackets: [],
     }));
     const { exit, stdout } = await captureCli(() => check({ profile: 'quick' }, { runCheckPlan: runCheckPlanMock }));
     expect(exit).toBe(1);
@@ -175,6 +180,64 @@ describe('liteship check --profile — the profile sweep emits a CheckReport', (
     expect(stdout).toContain('FAIL  check/lint');
     expect(stdout).toContain('pnpm run lint exited with status 1');
     expect(stdout).toContain('CHECK BLOCKED');
+  });
+
+  it('--cure emits only deterministic failure prompts and preserves the failing exit code', async () => {
+    runCheckPlanMock.mockImplementation((plan) => {
+      const packet = createCurePacket({
+        headSha: 'test-head',
+        treeDigest: IntegrityDigest(`sha256:${'a'.repeat(64)}`),
+        checkId: 'check/probe',
+        title: 'Probe',
+        claim: 'The probe passes.',
+        owner: 'probe.js',
+        remediation: 'Repair the probe.',
+        command: 'pnpm run probe',
+        findings: ['planted failure'],
+        profile: plan.profile,
+        lane: `profile:${plan.profile}`,
+        platform: plan.platform,
+        toolchain: 'test',
+      });
+      return {
+        profile: plan.profile,
+        platform: plan.platform,
+        context: plan.context,
+        ok: false,
+        blocked: true,
+        results: [
+          {
+            id: 'check/probe',
+            verdict: 'fail',
+            durationMs: 1,
+            cacheHit: false,
+            findings: ['planted failure'],
+            curePacketId: packet.packetId,
+          },
+        ],
+        curePackets: [packet],
+      };
+    });
+
+    const { exit, stdout } = await captureCli(() =>
+      check({ profile: 'quick', cure: true }, { runCheckPlan: runCheckPlanMock }),
+    );
+
+    expect(exit).toBe(1);
+    expect(stdout).toContain('# LiteShip cure packet sha256:');
+    expect(stdout).toContain('Authority: check/probe (quick/');
+    expect(stdout).toContain('planted failure');
+    expect(stdout).not.toContain('check report —');
+  });
+
+  it('rejects ambiguous cure output combinations', async () => {
+    const direct = await captureCli(() => check({ cure: true, json: true }, { runCheckPlan: runCheckPlanMock }));
+    expect(direct.exit).toBe(1);
+    expect(direct.stderr).toContain('--cure is a profile output mode');
+
+    const dispatch = await captureCli(() => runDispatch(['check', '--cure', '--plan']));
+    expect(dispatch.exit).toBe(1);
+    expect(dispatch.stderr).toContain('--cure cannot be combined');
   });
 
   it('WITHOUT --profile, bare check runs the quick profile sweep', async () => {
@@ -319,6 +382,7 @@ describe('check profile cache and diagnostic execution', () => {
           context: 'repository',
           command: 'pnpm run probe',
           owner: 'probe.js',
+          remediation: 'Repair the probe and rerun it.',
           authority: 'blocking',
           cache: 'content-addressed',
           cacheable: true,
@@ -400,6 +464,7 @@ describe('check profile cache and diagnostic execution', () => {
       expect(report.results[0]).toMatchObject({ verdict: 'fail', cacheHit: false });
       expect(report.results[0]!.findings.join(' ')).toContain('unsupported yarn project');
       expect(report.results[0]!.findings.join(' ')).toContain('supports npm and pnpm');
+      expect(report.results[0]!.curePacketId).toBe(report.curePackets[0]!.packetId);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -489,6 +554,12 @@ describe('check profile cache and diagnostic execution', () => {
       expect(report.results[0]!.findings[0]).toContain('exited with status 2');
       expect(report.results[0]!.findings[1]).toContain('output truncated');
       expect(report.results[0]!.findings[1]!.length).toBeLessThan(33_000);
+      expect(report.curePackets).toHaveLength(1);
+      expect(report.curePackets[0]).toMatchObject({
+        authority: { checkId: 'check/probe', profile: 'quick' },
+        contract: { owner: 'probe.js' },
+      });
+      expect(report.curePackets[0]!.prompt).toContain('Do not weaken, skip, retry away');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -503,12 +574,14 @@ describe('check profile cache and diagnostic execution', () => {
       expect(missing).toMatchObject({ ok: false, blocked: true });
       expect(missing.results[0]).toMatchObject({ verdict: 'fail', cacheHit: false });
       expect(missing.results[0]!.findings.join(' ')).toContain('planned authority is missing');
+      expect(missing.curePackets).toHaveLength(1);
 
       writeFileSync(join(root, 'package.json'), '{ malformed');
       const malformed = createCheckPlanRunner({ spawn: vi.fn() })(plan, root);
       expect(malformed).toMatchObject({ ok: false, blocked: true });
       expect(malformed.results[0]).toMatchObject({ verdict: 'fail', cacheHit: false });
       expect(malformed.results[0]!.findings.join(' ')).toContain('package.json');
+      expect(malformed.curePackets).toHaveLength(1);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

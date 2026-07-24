@@ -94,6 +94,8 @@ export type {
   CliCheckExecution,
 } from './checks/definition.js';
 export { planChecks, formatCheckPlan, CHECK_PROFILES, CHECK_CONTEXTS, CHECK_PLATFORMS } from './checks/plan.js';
+export { createCurePacket, formatCurePrompt } from './checks/cure-packet.js';
+export type { CurePacket, CurePacketInput, CureArtifact, CureReproducerKind } from './checks/cure-packet.js';
 export type {
   CheckPlan,
   PlannedCheck,

@@ -97,6 +97,7 @@ const CLI_OWNED_DESCRIPTORS = [
         profile: { type: 'string', enum: ['quick', 'full', 'release', 'consumer', 'environment'] },
         plan: { type: 'boolean' },
         json: { type: 'boolean' },
+        cure: { type: 'boolean' },
         'no-cache': { type: 'boolean' },
       },
     },

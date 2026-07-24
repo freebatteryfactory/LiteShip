@@ -28,6 +28,7 @@ import type {
   CliCheckExecution,
 } from './definition.js';
 import { CHECK_REGISTRY } from './registry.js';
+import type { CurePacket } from './cure-packet.js';
 
 /** One check as scheduled into a plan — the registry entry projected to what a run needs. */
 export interface PlannedCheck {
@@ -45,6 +46,8 @@ export interface PlannedCheck {
   readonly execution?: CliCheckExecution;
   /** The package or script path that owns the assertion. */
   readonly owner: string;
+  /** Precise first remediation step projected into failure evidence. */
+  readonly remediation: string;
   /** Whether a finding (or non-zero exit) blocks the aggregate verdict. */
   readonly authority: CheckAuthority;
   /** The verdict cache discipline (see {@link CheckCache}). */
@@ -100,6 +103,8 @@ export interface CheckRunResult {
   readonly cacheHit: boolean;
   /** The human-readable findings this check surfaced (empty on a clean pass). */
   readonly findings: readonly string[];
+  /** Content-digested cure packet for this failure, when one was emitted. */
+  readonly curePacketId?: string;
 }
 
 /**
@@ -122,6 +127,8 @@ export interface CheckReport {
   readonly blocked: boolean;
   /** The per-check results, in plan order. */
   readonly results: readonly CheckRunResult[];
+  /** Deterministic repair evidence for every failed authority in this report. */
+  readonly curePackets: readonly CurePacket[];
 }
 
 /** The profiles a caller may plan, in escalation order — the closed set {@link planChecks} accepts. */
@@ -159,6 +166,7 @@ export function planChecks(
         command: check.command,
         ...(check.execution !== undefined ? { execution: check.execution } : {}),
         owner: check.owner,
+        remediation: check.remediation,
         authority: check.authority,
         cache: check.cache,
         cacheable: check.cache === 'content-addressed',

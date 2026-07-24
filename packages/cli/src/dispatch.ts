@@ -358,7 +358,7 @@ function execAudit(rest: readonly string[]): Promise<number> {
   });
 }
 
-/** `check [gates] [--plan] [--profile <p>] [--json] [--ir] [gate flags]`. */
+/** `check [gates] [--plan] [--profile <p>] [--json|--cure] [--ir] [gate flags]`. */
 function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number> {
   const subcommand = positional(rest);
   if (subcommand !== undefined && subcommand !== 'gates') {
@@ -372,6 +372,7 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // the profile the plan projects (default quick), validated against the closed set.
   const plan = rest.includes('--plan');
   const json = rest.includes('--json');
+  const cure = rest.includes('--cure');
   const profileFlag = takeFlagValue(rest, '--profile');
   if (
     profileFlag.present &&
@@ -476,8 +477,12 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     emitError('check', 'cli/invalid-argument', 'gate-only flags require the explicit `check gates` subcommand');
     return Promise.resolve(1);
   }
-  if ((gates || hasGateFlag) && (plan || profile !== undefined)) {
-    emitError('check', 'cli/conflict', 'gate mode cannot be combined with --plan or --profile');
+  if ((gates || hasGateFlag) && (plan || profile !== undefined || cure)) {
+    emitError('check', 'cli/conflict', 'gate mode cannot be combined with --plan, --profile, or --cure');
+    return Promise.resolve(1);
+  }
+  if (cure && (plan || json)) {
+    emitError('check', 'cli/conflict', '--cure cannot be combined with --plan or --json');
     return Promise.resolve(1);
   }
   // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
@@ -488,6 +493,7 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     {
       ...(plan ? { plan } : {}),
       ...(json ? { json } : {}),
+      ...(cure ? { cure } : {}),
       ...(profile ? { profile } : {}),
       ...(gates ? { gates } : {}),
       ...(ir ? { ir } : {}),

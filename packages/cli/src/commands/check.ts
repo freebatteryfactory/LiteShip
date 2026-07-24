@@ -2,7 +2,7 @@
  * check (CLI adapter) — one public profile command with an explicit gate subcommand.
  *
  * - `liteship check` projects and executes the quick profile from the canonical
- *   check registry. `--profile`, `--plan`, `--json`, and `--no-cache` refine that
+ *   check registry. `--profile`, `--plan`, `--json`, `--cure`, and `--no-cache` refine that
  *   profile execution without changing its identity.
  * - `liteship check gates` runs the IR-free, MCP-safe pure gauntlet fold exposed as
  *   the handler command `check.gates`.
@@ -18,12 +18,13 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
-import { CanonicalCbor, normalizeRepoPath, systemClock, wallClock } from '@liteship/core';
+import { CanonicalCbor, IntegrityDigest, normalizeRepoPath, systemClock, wallClock } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { sha256Hex } from '@liteship/canonical';
 import { IoError, ParseError } from '@liteship/error';
 import {
   checkGatesCommand,
+  createCurePacket,
   formatCheckPlan,
   planChecks,
   type CheckPayload,
@@ -34,6 +35,7 @@ import {
   type CheckReport,
   type CheckRunResult,
   type CheckVerdict,
+  type CurePacket,
 } from '@liteship/command';
 import { createNodeCommandContext, currentEnvFingerprint } from '@liteship/command/host';
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
@@ -105,6 +107,8 @@ export interface CheckOptions {
    * `gates`, suppress the pretty stderr summary (the receipt is already JSON on stdout).
    */
   readonly json?: boolean;
+  /** `--cure`: emit deterministic agent-ready CurePacket prompts for failed profile checks. */
+  readonly cure?: boolean;
   /** Run the explicit in-process gate fold instead of the default quick profile. */
   readonly gates?: boolean;
   /** `--ir`: under `check gates`, run the CLI-only IR-enriched cross-check instead of the lean fold. */
@@ -225,6 +229,13 @@ export interface CheckOptions {
 export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
+  if (opts.cure === true && (opts.plan === true || opts.gates === true || opts.json === true)) {
+    process.stderr.write(
+      'liteship check: --cure is a profile output mode and cannot be combined with --plan, gates, or --json.\n',
+    );
+    return 1;
+  }
+
   // `--plan`: PURE — project the registry into the ordered plan and print it. Runs
   // nothing (no gauntlet fold, no IR build, no receipt), so it returns before any
   // execution path. `--json` selects the structured plan; otherwise human text.
@@ -258,7 +269,13 @@ export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Prom
     const profile = opts.profile ?? 'quick';
     const plan = planChecks(profile, currentCheckPlatform(), detectCheckContext(cwd));
     const report = (deps.runCheckPlan ?? defaultCheckPlanRunner)(plan, cwd, { noCache: opts.noCache === true });
-    process.stdout.write((opts.json === true ? JSON.stringify(report) : formatCheckReport(report)) + '\n');
+    process.stdout.write(
+      (opts.cure === true
+        ? formatCurePackets(report.curePackets)
+        : opts.json === true
+          ? JSON.stringify(report)
+          : formatCheckReport(report)) + '\n',
+    );
     return report.ok ? 0 : 1;
   }
 
@@ -433,6 +450,7 @@ function executeCheckPlan(
   now: NonNullable<CheckRunnerDeps['now']>,
   env: Readonly<Record<string, string>>,
 ): CheckReport {
+  const curePackets: CurePacket[] = [];
   const results: CheckRunResult[] = plan.skipped.map((skip) => ({
     id: skip.id,
     verdict: 'skipped',
@@ -444,24 +462,33 @@ function executeCheckPlan(
   try {
     definedScripts = readDefinedScripts(cwd);
   } catch (error) {
-    const finding = error instanceof Error ? error.message : String(error);
+    const failure = error instanceof Error ? error.message : String(error);
+    const treeDigest = digestEvidence({ failure, profile: plan.profile, platform: plan.platform });
+    const failedResults = plan.checks.map((check) => {
+      const packet = curePacketForCheck(check, plan, env, resolveHeadSha(cwd), treeDigest, [failure]);
+      curePackets.push(packet);
+      return {
+        id: check.id,
+        verdict: 'fail' as const,
+        durationMs: 0,
+        cacheHit: false,
+        findings: [failure],
+        curePacketId: packet.packetId,
+      };
+    });
     return {
       profile: plan.profile,
       platform: plan.platform,
       context: plan.context,
       ok: false,
       blocked: true,
-      results: plan.checks.map((check) => ({
-        id: check.id,
-        verdict: 'fail',
-        durationMs: 0,
-        cacheHit: false,
-        findings: [finding],
-      })),
+      results: failedResults,
+      curePackets,
     };
   }
 
   const inputCorpus = createInputCorpus(cwd);
+  const headSha = resolveHeadSha(cwd);
   let blocked = false;
   for (const check of plan.checks) {
     // Applicability was decided by planChecks before execution. Once a check is in
@@ -469,12 +496,23 @@ function executeCheckPlan(
     const script = check.execution === undefined ? invokedScriptName(check.command) : null;
     if (script !== null && definedScripts !== null && !definedScripts.has(script)) {
       if (check.authority === 'blocking') blocked = true;
+      const findings = [`${check.command} — planned authority is missing the "${script}" package.json script`];
+      const packet = curePacketForCheck(
+        check,
+        plan,
+        env,
+        headSha,
+        checkEvidenceDigest(check, plan, inputCorpus, env),
+        findings,
+      );
+      curePackets.push(packet);
       results.push({
         id: check.id,
         verdict: 'fail',
         durationMs: 0,
         cacheHit: false,
-        findings: [`${check.command} — planned authority is missing the "${script}" package.json script`],
+        findings,
+        curePacketId: packet.packetId,
       });
       continue;
     }
@@ -482,12 +520,23 @@ function executeCheckPlan(
     const materialized = materializeCheckCommand(check, cwd);
     if (materialized.kind === 'unsupported-manager') {
       if (check.authority === 'blocking') blocked = true;
+      const findings = [materialized.finding];
+      const packet = curePacketForCheck(
+        check,
+        plan,
+        env,
+        headSha,
+        checkEvidenceDigest(check, plan, inputCorpus, env),
+        findings,
+      );
+      curePackets.push(packet);
       results.push({
         id: check.id,
         verdict: 'fail',
         durationMs: 0,
         cacheHit: false,
-        findings: [materialized.finding],
+        findings,
+        curePacketId: packet.packetId,
       });
       continue;
     }
@@ -519,7 +568,18 @@ function executeCheckPlan(
     if (!passed && check.authority === 'blocking') blocked = true;
     const verdict: CheckVerdict = passed ? 'pass' : 'fail';
     const findings = passed ? [] : checkFailureFindings(command, check.timeoutMs, r);
-    const result: CheckRunResult = { id: check.id, verdict, durationMs, cacheHit: false, findings };
+    const packet = passed
+      ? null
+      : curePacketForCheck(check, plan, env, headSha, checkEvidenceDigest(check, plan, inputCorpus, env), findings);
+    if (packet !== null) curePackets.push(packet);
+    const result: CheckRunResult = {
+      id: check.id,
+      verdict,
+      durationMs,
+      cacheHit: false,
+      findings,
+      ...(packet === null ? {} : { curePacketId: packet.packetId }),
+    };
     results.push(result);
 
     // Cache only a successful deterministic verdict. A timeout, signal, spawn
@@ -543,7 +603,62 @@ function executeCheckPlan(
     ok: executed && !blocked,
     blocked,
     results,
+    curePackets,
   };
+}
+
+function resolveHeadSha(cwd: string): string {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+  return result.status === 0 && typeof result.stdout === 'string' && result.stdout.trim() !== ''
+    ? result.stdout.trim()
+    : 'unversioned';
+}
+
+function digestEvidence(value: unknown): ReturnType<typeof IntegrityDigest> {
+  return IntegrityDigest(`sha256:${sha256Hex(CanonicalCbor.encode(value))}`);
+}
+
+function checkEvidenceDigest(
+  check: CheckPlan['checks'][number],
+  plan: CheckPlan,
+  corpus: InputCorpus,
+  env: Readonly<Record<string, string>>,
+): ReturnType<typeof IntegrityDigest> {
+  const cacheIdentity = checkCacheKey(check, plan, corpus, env);
+  return IntegrityDigest(cacheIdentity.replace(/^check-sha256:/, 'sha256:'));
+}
+
+function curePacketForCheck(
+  check: CheckPlan['checks'][number],
+  plan: CheckPlan,
+  env: Readonly<Record<string, string>>,
+  headSha: string,
+  treeDigest: ReturnType<typeof IntegrityDigest>,
+  findings: readonly string[],
+): CurePacket {
+  const toolchain = Object.entries(env)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(';');
+  return createCurePacket({
+    headSha,
+    treeDigest,
+    checkId: check.id,
+    title: check.title,
+    claim: check.claim,
+    owner: check.owner,
+    remediation: check.remediation,
+    command: check.command,
+    findings,
+    profile: plan.profile,
+    lane: `profile:${plan.profile}`,
+    platform: plan.platform,
+    toolchain,
+  });
 }
 
 type MaterializedCheckCommand =
@@ -758,6 +873,12 @@ function formatCheckReport(report: CheckReport): string {
         : 'CHECK UNVERIFIED — no authoritative check executed.',
   );
   return lines.join('\n');
+}
+
+/** Render failed profile evidence as deterministic, copy-ready agent prompts. */
+function formatCurePackets(packets: readonly CurePacket[]): string {
+  if (packets.length === 0) return 'NO CURE PACKETS — every executed authority passed.';
+  return packets.map((packet) => packet.prompt).join('\n\n---\n\n');
 }
 
 /**
