@@ -75,7 +75,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'bench',
     description: 'Tinybench suites + the bench-gate and trend gate.',
-    scripts: ['bench', 'bench:gate', 'bench:alloc', 'bench:trend', 'bench:reality'],
+    scripts: ['bench', 'bench:gate', 'bench:alloc', 'bench:trend', 'bench:reality', 'bench:contracts'],
   },
   {
     name: 'lint-format',

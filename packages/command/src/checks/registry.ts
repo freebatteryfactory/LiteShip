@@ -669,6 +669,28 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     remediation: 'recover the regressed benchmark, or re-baseline with justification.',
   },
   {
+    id: 'check/bench-contracts',
+    title: 'Live performance-contract measurement',
+    claim:
+      'Every governed benchmark has a declared distribution and every live hot-path curve stays within its complexity ceiling.',
+    owner: 'scripts/bench-contracts.ts',
+    command: 'pnpm run bench:contracts',
+    inputs: [
+      SRC_GLOB,
+      'tests/bench/**/*.ts',
+      'scripts/bench-contracts.ts',
+      'scripts/bench/**/*.ts',
+      'benchmarks/distributions.json',
+    ],
+    profiles: ['release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 300_000,
+    cache: 'none',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/meta/bench-contracts.test.ts',
+    remediation: 'restore the missing distribution, trustworthy fit, or accepted hot-path complexity class.',
+  },
+  {
     id: 'check/bench-trend',
     title: 'Benchmark trend gate',
     claim: 'The benchmark trend has not drifted outside its strict envelope.',

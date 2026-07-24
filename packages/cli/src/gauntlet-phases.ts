@@ -110,6 +110,7 @@ const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
   { checkId: 'check/test-redteam', label: 'test:redteam' },
   { checkId: 'check/bench', label: 'bench' },
   { checkId: 'check/bench-gate', label: 'bench:gate' },
+  { checkId: 'check/bench-contracts', label: 'bench:contracts' },
   { checkId: 'check/bench-trend', label: 'bench:trend' },
   { checkId: 'check/bench-reality', label: 'bench:reality' },
   { checkId: 'check/package-smoke', label: 'package:smoke' },
@@ -212,7 +213,13 @@ export const CI_PARALLEL_SETUP_LABELS: readonly string[] = ['build', 'capsule:co
 
 export const CI_PARALLEL_SHARDED_TEST_LABEL = 'test (unit + component + property + integration)' as const;
 
-export const CI_PARALLEL_BENCH_LABELS: readonly string[] = ['bench', 'bench:gate', 'bench:trend', 'bench:reality'];
+export const CI_PARALLEL_BENCH_LABELS: readonly string[] = [
+  'bench',
+  'bench:gate',
+  'bench:contracts',
+  'bench:trend',
+  'bench:reality',
+];
 
 export const CI_PARALLEL_MUTATING_LABELS: readonly string[] = ['capsule:verify'];
 

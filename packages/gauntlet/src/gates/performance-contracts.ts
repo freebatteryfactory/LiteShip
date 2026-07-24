@@ -61,7 +61,7 @@ export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityCla
 };
 
 /** The R² floor below which a complexity fit is too noisy to trust as a verdict. */
-const MIN_FIT_R2 = 0.5;
+export const MIN_COMPLEXITY_FIT_R2 = 0.5;
 
 // The complexity-class ladder, ordered ascending by growth — DUPLICATED here as
 // the gate's own closed constant (the gauntlet is lean and must NOT import the
@@ -289,14 +289,14 @@ function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null)
       continue;
     }
 
-    if (entry.fittedR2 < MIN_FIT_R2) {
+    if (entry.fittedR2 < MIN_COMPLEXITY_FIT_R2) {
       findings.push(
         finding({
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
           severity: 'error',
           level: 'L3',
           title: 'Complexity fit too noisy to trust',
-          detail: `${COMPLEXITY_MAP_PATH} records path "${entry.path}" with R² ${entry.fittedR2} (below the ${MIN_FIT_R2} floor). A fit this noisy gives no trustworthy class verdict — re-measure with more replicates/sizes.`,
+          detail: `${COMPLEXITY_MAP_PATH} records path "${entry.path}" with R² ${entry.fittedR2} (below the ${MIN_COMPLEXITY_FIT_R2} floor). A fit this noisy gives no trustworthy class verdict — re-measure with more replicates/sizes.`,
           location: { file: COMPLEXITY_MAP_PATH },
         }),
       );

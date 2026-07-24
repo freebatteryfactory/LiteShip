@@ -34,6 +34,7 @@ import {
   distributionFilesWithoutExecutionPath,
 } from '../../../scripts/bench/contract-coverage.ts';
 import { ACCEPTED_COMPLEXITY_CEILINGS } from '../../../packages/gauntlet/src/gates/performance-contracts.ts';
+import { verifyMeasuredComplexityMap } from '../../../scripts/bench-contracts.ts';
 import { commentsBlanked } from '../../../packages/gauntlet/src/gates/code-only.ts';
 import { repoRoot } from '../../../vitest.shared.ts';
 
@@ -80,22 +81,23 @@ describe('fitComplexityClass — the log-log slope fit (a CLASS verdict, not an 
 
   it('rejects a degenerate input (fewer than two distinct sizes) — fails LOUD', () => {
     expect(() => fitComplexityClass([{ size: 10, latencyNs: 5 }])).toThrow(/fitComplexityClass/);
-    expect(() => fitComplexityClass([{ size: 10, latencyNs: 5 }, { size: 10, latencyNs: 6 }])).toThrow();
+    expect(() =>
+      fitComplexityClass([
+        { size: 10, latencyNs: 5 },
+        { size: 10, latencyNs: 6 },
+      ]),
+    ).toThrow();
   });
 
   it('PROPERTY: a pure power-law curve k·n^e classifies by its exponent e (load-robust)', () => {
     fc.assert(
-      fc.property(
-        fc.double({ min: 1, max: 500, noNaN: true }),
-        fc.constantFrom(0, 1, 2),
-        (k, e) => {
-          const fit = fitComplexityClass(curve(k, e, sizes));
-          const expected = e === 0 ? 'O(1)' : e === 1 ? 'O(n)' : 'O(n^2)';
-          // The fit recovers the exponent the curve was generated from — the slope
-          // is a ratio (scale-free), so the coefficient k never changes the class.
-          return fit.class === expected;
-        },
-      ),
+      fc.property(fc.double({ min: 1, max: 500, noNaN: true }), fc.constantFrom(0, 1, 2), (k, e) => {
+        const fit = fitComplexityClass(curve(k, e, sizes));
+        const expected = e === 0 ? 'O(1)' : e === 1 ? 'O(n)' : 'O(n^2)';
+        // The fit recovers the exponent the curve was generated from — the slope
+        // is a ratio (scale-free), so the coefficient k never changes the class.
+        return fit.class === expected;
+      }),
       { numRuns: 200 },
     );
   });
@@ -123,6 +125,37 @@ describe('classifySlope — wide bands keep the verdict load-robust', () => {
     for (const ceiling of Object.values(ACCEPTED_COMPLEXITY_CEILINGS)) {
       expect(COMPLEXITY_CLASSES).toContain(ceiling);
     }
+  });
+});
+
+describe('live complexity producer self-proof', () => {
+  const entry = (path: string, klass: (typeof COMPLEXITY_CLASSES)[number], fittedR2 = 0.99) => ({
+    path,
+    describe: path,
+    shape: 'fixture',
+    sizes: [8, 16],
+    class: klass,
+    fittedSlope: klass === 'O(n^2)' ? 2 : 1,
+    fittedR2,
+  });
+
+  it('accepts complete, trustworthy measurements at their ceilings', () => {
+    expect(
+      verifyMeasuredComplexityMap({
+        schemaVersion: 1,
+        entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, klass]) => entry(path, klass)),
+      }),
+    ).toEqual([]);
+  });
+
+  it('reds on missing, noisy, and complexity-regressed live evidence', () => {
+    const paths = Object.keys(ACCEPTED_COMPLEXITY_CEILINGS);
+    expect(
+      verifyMeasuredComplexityMap({
+        schemaVersion: 1,
+        entries: [entry(paths[0]!, 'O(n^2)', 0.1)],
+      }).map((issue) => issue.reason),
+    ).toEqual(['class-regression', 'noisy-fit', 'missing']);
   });
 });
 
@@ -162,10 +195,7 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
   it('benchmarks/distributions.json — every declared file is executed by pnpm bench or generated benches', () => {
     const registry = readDistributionRegistry(repoRoot);
     expect(registry).not.toBeNull();
-    const uncovered = distributionFilesWithoutExecutionPath(
-      registry!.distributions,
-      benchScriptTargets(repoRoot),
-    );
+    const uncovered = distributionFilesWithoutExecutionPath(registry!.distributions, benchScriptTargets(repoRoot));
     expect(uncovered, `distribution files without bench execution path: ${uncovered.join(', ')}`).toEqual([]);
   });
 

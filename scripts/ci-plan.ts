@@ -117,7 +117,7 @@ export const CI_LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
     job: 'truth-linux-parallel-bench',
     kind: 'gauntlet',
     profile: 'ci-parallel-bench',
-    checkIds: ['check/bench', 'check/bench-gate', 'check/bench-trend', 'check/bench-reality'],
+    checkIds: ['check/bench', 'check/bench-gate', 'check/bench-contracts', 'check/bench-trend', 'check/bench-reality'],
   },
   mutating: {
     job: 'truth-linux-parallel-mutating',
