@@ -44,16 +44,20 @@ concurrency:
   cancel-in-progress: false # never cancel a release mid-flight
 
 jobs:
+  full-authority:
+    name: Complete frozen-head authority
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   release-certified:
     name: Release certification (publishability gate)
+    needs: full-authority
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # The full gauntlet (gauntlet:full — bench / coverage / e2e /
-    # timing-sensitive lanes) runs on every PR and on main via
-    # .github/workflows/ci.yml > truth-linux. By the time a v*.*.* tag
-    # is pushed, main has already cleared that bar. This job's job is
-    # the narrower question: are the tarballs publishable RIGHT NOW.
-    # Slim, stable, CI-deterministic.
+    # The reusable CI workflow above proves this exact tag across the complete
+    # Linux, browser, platform, Rust/WASM, mutation, MC/DC, and analysis tiers.
+    # This job owns only the narrower tag-time publishability question.
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6

@@ -331,11 +331,33 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'browser-e2e',
       'windows-smoke',
       'rust-wasm-parity',
+      'exhaustive-analysis',
+      'exhaustive-mutation',
+      'exhaustive-mcdc',
     ]) {
       expect(summary).toContain(`- ${owner}`);
     }
     expect(summary).toContain('test "$SERIAL" = "success"');
     expect(summary).toContain('test "$PR_AFFECTED" = "success"');
     expect(summary).toContain('test "$PARALLEL" = "success"');
+    expect(summary).toContain('test "$EXHAUSTIVE_ANALYSIS" = "success"');
+    expect(summary).toContain('test "$EXHAUSTIVE_MUTATION" = "success"');
+    expect(summary).toContain('test "$EXHAUSTIVE_MCDC" = "success"');
+  });
+
+  it('isolates the exhaustive IR, mutation, and MC/DC campaigns from pull requests', () => {
+    const expectedCondition =
+      "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')";
+    const analysis = JOB_BLOCKS.get('exhaustive-analysis')!;
+    const mutation = JOB_BLOCKS.get('exhaustive-mutation')!;
+    const mcdc = JOB_BLOCKS.get('exhaustive-mcdc')!;
+    expect(analysis).toContain(`if: ${expectedCondition}`);
+    expect(mutation).toContain(`if: ${expectedCondition}`);
+    expect(mcdc).toContain(`if: ${expectedCondition}`);
+    expect(analysis).toContain('--symbols --supply-chain --simulate --taint --proof --composition');
+    expect(mutation).toContain('check gates --ir --no-cache --mutate');
+    expect(mcdc).toContain('check gates --ir --no-cache --mcdc');
+    expect(mutation).not.toContain('--mcdc');
+    expect(mcdc).not.toContain('--mutate');
   });
 });

@@ -27,9 +27,13 @@ const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const RELEASE_YML = resolve(REPO, '.github/workflows/release.yml');
 const PUBLISH_ROSTER_JSON = resolve(REPO, 'scripts/ci/publish-roster.json');
 
+function releaseWorkflowText(): string {
+  return readFileSync(RELEASE_YML, 'utf8');
+}
+
 /** The text of the `publish:` job — the file's last job, so from its header to EOF. */
 function publishJobText(): string {
-  const yaml = readFileSync(RELEASE_YML, 'utf8');
+  const yaml = releaseWorkflowText();
   const index = yaml.indexOf('\n  publish:');
   if (index === -1) throw new Error('release.yml: `publish:` job not found');
   return yaml.slice(index);
@@ -93,6 +97,14 @@ function publishableNames(): string[] {
 }
 
 describe('release.yml publish job is a projection of scripts/ci/publish-roster.json', () => {
+  it('cannot publish until the exact tag clears the reusable complete CI authority', () => {
+    const yaml = releaseWorkflowText();
+    expect(yaml).toContain('full-authority:');
+    expect(yaml).toContain('uses: ./.github/workflows/ci.yml');
+    expect(yaml).toMatch(/release-certified:[\s\S]*needs: full-authority/u);
+    expect(yaml).toMatch(/publish:[\s\S]*needs: release-certified/u);
+  });
+
   it('carries no @liteship/* package literals in its run blocks', () => {
     const literals = [...publishJobRunBlocks().matchAll(/@liteship\/[a-z_-]+/g)].map((match) => match[0]);
     expect(

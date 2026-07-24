@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches: [main]
   pull_request:
@@ -917,6 +918,90 @@ jobs:
       - run: pnpm run test:e2e
       - run: pnpm run coverage:browser
 
+  # Exhaustive trust-spine campaigns are isolated because mutation and MC/DC
+  # rewrite source temporarily. They run nightly/manual and on the exact release
+  # tag through workflow_call, never in the pull-request hot path.
+  exhaustive-analysis:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Run the non-mutating exhaustive IR campaign
+        run: |
+          mkdir -p reports/exhaustive
+          set -o pipefail
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --symbols --supply-chain --simulate --taint --proof --composition --capability-gate --spine-relation 2>&1 | tee reports/exhaustive/analysis.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: exhaustive-analysis-${{ github.run_attempt }}
+          path: reports/exhaustive
+          retention-days: 7
+
+  exhaustive-mutation:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Run isolated trust-spine mutation authority
+        run: |
+          mkdir -p reports/exhaustive
+          set -o pipefail
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mutate 2>&1 | tee reports/exhaustive/mutation.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: exhaustive-mutation-${{ github.run_attempt }}
+          path: reports/exhaustive
+          retention-days: 7
+
+  exhaustive-mcdc:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Run isolated trust-spine MC/DC authority
+        run: |
+          mkdir -p reports/exhaustive
+          set -o pipefail
+          pnpm exec tsx packages/cli/src/bin.ts check gates --ir --no-cache --mcdc 2>&1 | tee reports/exhaustive/mcdc.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: exhaustive-mcdc-${{ github.run_attempt }}
+          path: reports/exhaustive
+          retention-days: 7
+
   ci-summary:
     if: always()
     runs-on: ubuntu-latest
@@ -931,6 +1016,9 @@ jobs:
       - browser-e2e
       - windows-smoke
       - rust-wasm-parity
+      - exhaustive-analysis
+      - exhaustive-mutation
+      - exhaustive-mcdc
     steps:
       - name: Fold the event-appropriate authority tier
         env:
@@ -944,6 +1032,10 @@ jobs:
           BROWSER: ${{ needs.browser-e2e.result }}
           WINDOWS: ${{ needs.windows-smoke.result }}
           RUST_WASM: ${{ needs.rust-wasm-parity.result }}
+          EXHAUSTIVE_ANALYSIS: ${{ needs.exhaustive-analysis.result }}
+          EXHAUSTIVE_MUTATION: ${{ needs.exhaustive-mutation.result }}
+          EXHAUSTIVE_MCDC: ${{ needs.exhaustive-mcdc.result }}
+          REF: ${{ github.ref }}
         run: |
           set -euo pipefail
           test "$FORMAT" = "success"
@@ -961,5 +1053,10 @@ jobs:
             test "$BROWSER" = "success"
             test "$WINDOWS" = "success"
             test "$RUST_WASM" = "success"
+            if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ] || [[ "$REF" == refs/tags/v* ]]; then
+              test "$EXHAUSTIVE_ANALYSIS" = "success"
+              test "$EXHAUSTIVE_MUTATION" = "success"
+              test "$EXHAUSTIVE_MCDC" = "success"
+            fi
             echo "CI exhaustive authority passed."
           fi
