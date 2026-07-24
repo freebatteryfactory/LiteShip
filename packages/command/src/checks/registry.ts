@@ -193,6 +193,26 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   },
   // ── The full lane (aggregate tests + the blocking gate family) ─────────────
   {
+    id: 'check/docs-fast',
+    title: 'TypeDoc input fingerprint',
+    claim: 'The committed API documentation fingerprint matches every source input that can change TypeDoc output.',
+    owner: 'scripts/docs-input-fingerprint.ts',
+    command: 'pnpm run docs:check:fast',
+    inputs: [
+      SRC_GLOB,
+      'typedoc.json',
+      'scripts/lib/typedoc-input-fingerprint.ts',
+      'docs/api/.typedoc-input-fingerprint.json',
+    ],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 30_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/typedoc-input-fingerprint.test.ts',
+    remediation: "run 'pnpm run docs:build' after changing a public declaration, TSDoc, or TypeDoc configuration.",
+  },
+  {
     id: 'check/docs',
     title: 'TSDoc freshness (docs:check)',
     claim: 'The committed API docs match the current public TSDoc surface.',

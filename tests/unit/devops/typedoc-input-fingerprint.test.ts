@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { resolve } from 'node:path';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import {
   assertTypeDocInputFingerprint,
   fingerprintTypeDocInputs,
@@ -53,5 +55,28 @@ describe('TypeDoc input fingerprint', () => {
 
   test('committed generated docs carry the current cheap input fingerprint', () => {
     expect(() => assertTypeDocInputFingerprint(REPO)).not.toThrow();
+  });
+
+  test('refuses missing and stale committed fingerprints', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-typedoc-fingerprint-'));
+    try {
+      mkdirSync(resolve(root, 'packages', 'demo', 'src'), { recursive: true });
+      writeFileSync(
+        resolve(root, 'typedoc.json'),
+        `${JSON.stringify({ entryPoints: ['packages/demo/src/index.ts'] })}\n`,
+      );
+      writeFileSync(resolve(root, 'packages', 'demo', 'src', 'index.ts'), '/** Public. */\nexport const value = 1;\n');
+
+      expect(() => assertTypeDocInputFingerprint(root)).toThrow(/missing .*typedoc-input-fingerprint/);
+
+      mkdirSync(resolve(root, 'docs', 'api'), { recursive: true });
+      writeFileSync(
+        resolve(root, 'docs', 'api', '.typedoc-input-fingerprint.json'),
+        '{"schemaVersion":1,"algorithm":"sha256","digest":"sha256:stale","inputCount":0}\n',
+      );
+      expect(() => assertTypeDocInputFingerprint(root)).toThrow(/is stale/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

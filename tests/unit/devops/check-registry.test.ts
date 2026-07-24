@@ -135,12 +135,10 @@ describe('the check-registry PARTITION is total + disjoint against the root scri
     expect(unresolved.map((entry) => `${entry.id}→${entry.script}`)).toEqual([]);
   });
 
-  it('the partition covers the root scripts EXACTLY (42 repository checks + 47 exemptions = 89 scripts)', () => {
-    expect(CHECK_REGISTRY.length).toBe(43);
-    expect(FACTS.partition.registered).toHaveLength(42);
-    expect(SCRIPT_EXEMPTIONS.length).toBe(47);
-    expect(scripts.length).toBe(89);
-    expect(new Set([...registeredScripts, ...exempted]).size).toBe(scripts.length);
+  it('the partition covers the root scripts exactly without a hand-authored count mirror', () => {
+    const projected = new Set([...registeredScripts, ...exempted]);
+    expect(projected).toEqual(new Set(scripts));
+    expect(FACTS.partition.registered.length + SCRIPT_EXEMPTIONS.length).toBe(scripts.length);
   });
 });
 
@@ -209,8 +207,8 @@ describe('negative controls are total over the blocking checks', () => {
     expect(found.some((f) => f.title.includes('no negative control'))).toBe(true);
   });
 
-  it('all 38 blocking checks carry controls (including application build)', () => {
-    expect(blocking).toHaveLength(38);
+  it('every currently declared blocking check carries a control without a hand-authored count mirror', () => {
+    expect(blocking.length).toBeGreaterThan(0);
     expect(blocking.every((check) => check.negativeControl.length > 0)).toBe(true);
   });
 });
