@@ -13,12 +13,21 @@ import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { walkFiles } from '@liteship/core/fs-walk';
+import { assertTypeDocInputFingerprint, writeTypeDocInputFingerprint } from './lib/typedoc-input-fingerprint.js';
 
 const COMMITTED_DIR = 'docs/api';
+const REPO_ROOT = process.cwd();
 const DOCS_NODE_OPTIONS = ['--max-old-space-size=8192', process.env.NODE_OPTIONS ?? ''].join(' ').trim();
 
 if (!existsSync(COMMITTED_DIR)) {
   console.error(`docs:check — ${COMMITTED_DIR} does not exist. Run 'pnpm run docs:build' first.`);
+  process.exit(1);
+}
+
+try {
+  assertTypeDocInputFingerprint(REPO_ROOT);
+} catch (error) {
+  console.error(`docs:check — ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }
 
@@ -53,6 +62,11 @@ try {
     );
     process.exit(1);
   }
+
+  // The manifest is part of committed generated truth. TypeDoc itself does not
+  // emit it, so project the same live input fingerprint into the fresh tree
+  // before the exact no-index diff.
+  writeTypeDocInputFingerprint(REPO_ROOT, join(tempDir, '.typedoc-input-fingerprint.json'));
 
   const diff = spawnSync('git', ['diff', '--no-index', '--stat', COMMITTED_DIR, tempDir], {
     stdio: 'pipe',
