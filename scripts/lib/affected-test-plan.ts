@@ -4,13 +4,26 @@ import type { PackageCatalogRecord } from '../package-catalog.js';
 import type { AssuranceInventory } from './assurance-inventory.js';
 
 export interface AffectedTestPlan {
+  readonly schemaVersion: 1;
   readonly mode: 'focused' | 'full';
   readonly reason: string;
   readonly changedPaths: readonly string[];
   readonly affectedPackages: readonly string[];
   readonly testFiles: readonly string[];
   readonly browserRequired: boolean;
+  /** Commands that must succeed before any selected authority is executable. */
+  readonly prerequisites: readonly AffectedPlanPrerequisite[];
 }
+
+export interface AffectedPlanPrerequisite {
+  readonly id: 'workspace-build';
+  readonly command: 'pnpm run build';
+}
+
+/** One prerequisite truth for affected Node and browser execution. */
+export const AFFECTED_PLAN_PREREQUISITES = [
+  { id: 'workspace-build', command: 'pnpm run build' },
+] as const satisfies readonly AffectedPlanPrerequisite[];
 
 const GLOBAL_AUTHORITY = [
   /^(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml)$/u,
@@ -71,12 +84,14 @@ export function planAffectedTests(
   const affectedPackages = affectedPackageNames(normalized, catalog);
   if (broadPath !== undefined) {
     return {
+      schemaVersion: 1,
       mode: 'full',
       reason: `global authority changed: ${broadPath}`,
       changedPaths: normalized,
       affectedPackages,
       testFiles: [],
       browserRequired: true,
+      prerequisites: AFFECTED_PLAN_PREREQUISITES,
     };
   }
 
@@ -92,30 +107,95 @@ export function planAffectedTests(
   );
   if (affectedPackages.length === 0 && changedTests.length === 0) {
     return {
+      schemaVersion: 1,
       mode: 'focused',
       reason: 'no runtime package owner changed; run governance canaries',
       changedPaths: normalized,
       affectedPackages: [],
       testFiles: [...MANDATORY_AFFECTED_TESTS],
       browserRequired: false,
+      prerequisites: AFFECTED_PLAN_PREREQUISITES,
     };
   }
   if (testFiles.length > 250) {
     return {
+      schemaVersion: 1,
       mode: 'full',
       reason: `affected closure selected ${testFiles.length} node tests (safety ceiling 250)`,
       changedPaths: normalized,
       affectedPackages,
       testFiles: [],
       browserRequired: true,
+      prerequisites: AFFECTED_PLAN_PREREQUISITES,
     };
   }
   return {
+    schemaVersion: 1,
     mode: 'focused',
     reason: `canonical dependency closure selected ${affectedPackages.length} package(s)`,
     changedPaths: normalized,
     affectedPackages,
     testFiles,
     browserRequired,
+    prerequisites: AFFECTED_PLAN_PREREQUISITES,
   };
+}
+
+function isStringArray(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+/** Parse an affected plan at a process/CI boundary. Foreign or partial plans fail closed. */
+export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new TypeError('affected plan must be an object');
+  }
+  const candidate = value as Record<string, unknown>;
+  const expectedKeys = [
+    'affectedPackages',
+    'browserRequired',
+    'changedPaths',
+    'mode',
+    'prerequisites',
+    'reason',
+    'schemaVersion',
+    'testFiles',
+  ];
+  const actualKeys = Object.keys(candidate).sort();
+  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
+    throw new TypeError(`affected plan keys are invalid: ${actualKeys.join(', ')}`);
+  }
+  if (candidate['schemaVersion'] !== 1) throw new TypeError('affected plan schemaVersion must be 1');
+  if (candidate['mode'] !== 'focused' && candidate['mode'] !== 'full') {
+    throw new TypeError('affected plan mode must be focused or full');
+  }
+  if (typeof candidate['reason'] !== 'string' || candidate['reason'].length === 0) {
+    throw new TypeError('affected plan reason must be a non-empty string');
+  }
+  if (!isStringArray(candidate['changedPaths'])) throw new TypeError('affected plan changedPaths must be strings');
+  if (!isStringArray(candidate['affectedPackages'])) {
+    throw new TypeError('affected plan affectedPackages must be strings');
+  }
+  if (!isStringArray(candidate['testFiles'])) throw new TypeError('affected plan testFiles must be strings');
+  if (typeof candidate['browserRequired'] !== 'boolean') {
+    throw new TypeError('affected plan browserRequired must be boolean');
+  }
+  const prerequisites = candidate['prerequisites'];
+  if (
+    !Array.isArray(prerequisites) ||
+    prerequisites.length !== 1 ||
+    typeof prerequisites[0] !== 'object' ||
+    prerequisites[0] === null ||
+    (prerequisites[0] as Record<string, unknown>)['id'] !== 'workspace-build' ||
+    (prerequisites[0] as Record<string, unknown>)['command'] !== 'pnpm run build' ||
+    Object.keys(prerequisites[0] as object)
+      .sort()
+      .join(',') !== 'command,id'
+  ) {
+    throw new TypeError('affected plan must declare the canonical workspace-build prerequisite');
+  }
+  if (candidate['mode'] === 'full' && candidate['testFiles'].length !== 0) {
+    throw new TypeError('full affected plans must not carry a focused test list');
+  }
+  return candidate as unknown as AffectedTestPlan;
 }

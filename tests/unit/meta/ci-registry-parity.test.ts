@@ -290,7 +290,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
     const plan = JOB_BLOCKS.get('plan')!;
     expect(plan).toContain('affected: ${{ steps.affected.outputs.plan }}');
     expect(plan).toContain("if: github.event_name == 'pull_request'");
-    expect(plan).toContain('pnpm exec tsx scripts/test-affected.ts --print-plan');
+    expect(plan).toContain('pnpm exec tsx scripts/affected-plan.ts --github-output "$GITHUB_OUTPUT"');
+    expect(plan).not.toContain('echo "plan=$(');
   });
 
   it('runs quick plus affected Linux and Windows authority on pull requests', () => {
@@ -301,6 +302,11 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(linux).toContain('pnpm run test:affected');
     expect(windows).toContain("if: github.event_name == 'pull_request'");
     expect(windows).toContain('pnpm run test:affected');
+    expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run check -- --profile quick --no-cache'));
+    expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run test:affected'));
+    expect(windows.indexOf('pnpm run build')).toBeLessThan(windows.indexOf('pnpm run test:affected'));
+    expect(linux).toContain('LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}');
+    expect(windows).toContain('LITESHIP_AFFECTED_PLAN: ${{ needs.plan.outputs.affected }}');
     expect(linux).toContain('LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}');
     expect(windows).toContain('LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}');
   });

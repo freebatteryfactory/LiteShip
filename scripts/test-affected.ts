@@ -1,23 +1,12 @@
-import { PACKAGE_CATALOG } from './package-catalog.js';
-import { buildAssuranceInventory } from './lib/assurance-inventory.js';
-import { planAffectedTests } from './lib/affected-test-plan.js';
-import { spawnArgvCapture } from './lib/spawn.js';
+import { createAffectedPlan } from './affected-plan.js';
+import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
 import { runPnpm } from './support/pnpm-process.js';
 
 const cwd = process.cwd();
 const base = process.env['LITESHIP_AFFECTED_BASE'] ?? 'origin/main';
-const diff = await spawnArgvCapture('git', ['diff', '--name-only', `${base}...HEAD`], {
-  cwd,
-  captureBytes: 1024 * 1024,
-});
-const changedPaths =
-  diff.exitCode === 0 ? diff.stdout.split(/\r?\n/u).filter(Boolean) : ['package.json']; // Fail broad when the base cannot be resolved.
-const plan = planAffectedTests(changedPaths, PACKAGE_CATALOG, buildAssuranceInventory(cwd));
-
-if (process.argv.includes('--print-plan')) {
-  process.stdout.write(`${JSON.stringify(plan)}\n`);
-  process.exit(0);
-}
+const supplied = process.env['LITESHIP_AFFECTED_PLAN'];
+const plan =
+  supplied === undefined ? createAffectedPlan(cwd, base) : parseAffectedTestPlan(JSON.parse(supplied) as unknown);
 
 process.stdout.write(`[affected] ${plan.mode}: ${plan.reason}\n`);
 if (plan.affectedPackages.length > 0)

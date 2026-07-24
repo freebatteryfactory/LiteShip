@@ -223,6 +223,7 @@ export default tseslint.config(
       'scripts/audit/shared.ts', // reason: execFileSync('git', ['ls-files']) — sync, no code under test
       'scripts/check-invariants.ts', // reason: execFileSync('git', ['ls-files', '--eol']) — sync
       'scripts/docs-check.ts', // reason: spawnSync for typedoc + git diff — sync CI gate
+      'scripts/affected-plan.ts', // reason: execFileSync('git diff') is the clean-checkout CI bootstrap planner; it must run before @liteship/command dist exists, writes only a validated plan, and has a planted no-output-on-invalid-plan control
       'scripts/flex-verify.ts', // reason: spawnSync with shell:true for arbitrary verifier commands
       'scripts/link-pre-commit.ts', // reason: spawnSync('git rev-parse') from prepare hook before tsc --build; cannot import spawn shim (@liteship/command dist)
       'packages/cli/src/commands/package-smoke.ts', // reason: execFileSync (sync packaging smoke test) — migrated from scripts/package-smoke.ts (CUT A5); the runPackageSmoke engine is CLI-only, spawns sync pnpm pack/install/tar/node with no code under test
