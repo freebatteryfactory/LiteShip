@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
 import { executionPrerequisites, type ExecutionPrerequisite } from './execution-prerequisites.js';
 import type { AssuranceLevel } from '../../packages/gauntlet/src/assurance.js';
-import type { PackageCatalogRecord } from '../package-catalog.js';
+import { PACKAGE_CATALOG, type PackageCatalogRecord } from '../package-catalog.js';
 import type { AssuranceInventory } from './assurance-inventory.js';
 
 export type AffectedRiskLevel = 'low' | 'moderate' | 'high' | 'critical';
@@ -79,8 +79,8 @@ export const MANDATORY_AFFECTED_TESTS = [
 
 const DEFAULT_CONTEXT: AffectedPlanContext = {
   baseRef: 'unknown',
-  baseSha: 'unresolved',
-  headSha: 'unresolved',
+  baseSha: '0000000000000000000000000000000000000000',
+  headSha: '0000000000000000000000000000000000000000',
   confidence: 'high',
 };
 
@@ -310,6 +310,19 @@ function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
 }
 
+function hasExactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...keys].sort())
+  );
+}
+
+function isSortedUnique(values: readonly string[]): boolean {
+  return values.every((value, index) => index === 0 || values[index - 1]! < value);
+}
+
 /** Parse an affected plan at a process/CI boundary and verify its cryptographic identity. */
 export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -366,6 +379,77 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('affected plan planId is invalid');
   if (!/^sha256:[0-9a-f]{64}$/u.test(String(candidate['changedPathDigest'])))
     throw new TypeError('affected plan changedPathDigest is invalid');
+  if (!hasExactKeys(candidate['base'], ['ref', 'sha'])) throw new TypeError('affected plan base is invalid');
+  if (typeof candidate['base']['ref'] !== 'string' || typeof candidate['base']['sha'] !== 'string') {
+    throw new TypeError('affected plan base values are invalid');
+  }
+  const gitObject = /^(?:[0-9a-f]{40}|[0-9a-f]{64}|unresolved)$/u;
+  if (!gitObject.test(candidate['base']['sha']) || !gitObject.test(String(candidate['headSha']))) {
+    throw new TypeError('affected plan Git identities are invalid');
+  }
+  if (
+    candidate['confidence'] === 'high' &&
+    (candidate['base']['sha'] === 'unresolved' || candidate['headSha'] === 'unresolved')
+  ) {
+    throw new TypeError('high-confidence affected plans require resolved Git identities');
+  }
+  if (
+    !isSortedUnique(candidate['changedPaths']) ||
+    new Set(candidate['affectedPackages']).size !== candidate['affectedPackages'].length ||
+    !isSortedUnique(candidate['testFiles'])
+  ) {
+    throw new TypeError('affected plan path/test arrays must be sorted and package identities unique');
+  }
+  const packageNames = new Set(PACKAGE_CATALOG.map((record) => record.name));
+  if (candidate['affectedPackages'].some((name) => !packageNames.has(name))) {
+    throw new TypeError('affected plan references a foreign package');
+  }
+  const checkIds = new Set(CHECK_REGISTRY.map((check) => check.id));
+  if (
+    new Set(candidate['requiredChecks']).size !== candidate['requiredChecks'].length ||
+    candidate['requiredChecks'].some((id) => !checkIds.has(id))
+  ) {
+    throw new TypeError('affected plan references a duplicate or foreign check');
+  }
+  const expectedPlatforms = candidate['browserRequired'] ? ['linux', 'win32', 'browser'] : ['linux', 'win32'];
+  if (stableSerialize(candidate['platforms']) !== stableSerialize(expectedPlatforms)) {
+    throw new TypeError('affected plan platforms do not match its browser authority');
+  }
+  if (stableSerialize(candidate['artifacts']) !== stableSerialize(['affected-plan', 'test-results'])) {
+    throw new TypeError('affected plan artifacts are invalid');
+  }
+  if (!hasExactKeys(candidate['risk'], ['level', 'highestAssurance', 'factors'])) {
+    throw new TypeError('affected plan risk is invalid');
+  }
+  if (!['low', 'moderate', 'high', 'critical'].includes(String(candidate['risk']['level']))) {
+    throw new TypeError('affected plan risk level is invalid');
+  }
+  if (
+    !['L0', 'L1', 'L2', 'L3', 'L4'].includes(String(candidate['risk']['highestAssurance'])) ||
+    !isStringArray(candidate['risk']['factors'])
+  ) {
+    throw new TypeError('affected plan risk evidence is invalid');
+  }
+  if (!hasExactKeys(candidate['testPartitions'], ['node', 'browserRequired'])) {
+    throw new TypeError('affected plan test partitions are invalid');
+  }
+  if (
+    stableSerialize(candidate['testPartitions']['node']) !== stableSerialize(candidate['testFiles']) ||
+    candidate['testPartitions']['browserRequired'] !== candidate['browserRequired']
+  ) {
+    throw new TypeError('affected plan test partitions are stale');
+  }
+  if (!hasExactKeys(candidate['estimatedCost'], ['selectedNodeTests', 'upperBoundMs'])) {
+    throw new TypeError('affected plan estimated cost is invalid');
+  }
+  if (
+    !Number.isSafeInteger(candidate['estimatedCost']['selectedNodeTests']) ||
+    Number(candidate['estimatedCost']['selectedNodeTests']) < 0 ||
+    !Number.isSafeInteger(candidate['estimatedCost']['upperBoundMs']) ||
+    Number(candidate['estimatedCost']['upperBoundMs']) < 0
+  ) {
+    throw new TypeError('affected plan estimated cost values are invalid');
+  }
   const prerequisites = candidate['prerequisites'];
   if (stableSerialize(prerequisites) !== stableSerialize(AFFECTED_PLAN_PREREQUISITES)) {
     throw new TypeError('affected plan must declare the canonical install and workspace-build prerequisites');

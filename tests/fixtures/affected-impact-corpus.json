@@ -1,0 +1,47 @@
+[
+  {
+    "id": "prose-only",
+    "paths": ["README.md"],
+    "mode": "focused",
+    "minimumRisk": "low",
+    "browserRequired": false,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test"]
+  },
+  {
+    "id": "canonical-kernel",
+    "paths": ["packages/canonical/src/cbor.ts"],
+    "mode": "full",
+    "minimumRisk": "critical",
+    "browserRequired": true,
+    "requiredOwners": ["@liteship/canonical", "@liteship/core", "liteship"],
+    "requiredChecks": ["check/test", "check/test-e2e"]
+  },
+  {
+    "id": "workflow-authority",
+    "paths": [".github/workflows/ci.yml"],
+    "mode": "full",
+    "minimumRisk": "critical",
+    "browserRequired": true,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test", "check/test-e2e"]
+  },
+  {
+    "id": "unknown-runtime-owner",
+    "paths": ["orphan-runtime.ts"],
+    "mode": "full",
+    "minimumRisk": "critical",
+    "browserRequired": true,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test", "check/test-e2e"]
+  },
+  {
+    "id": "browser-evidence-change",
+    "paths": ["tests/browser/adaptive-runtime.browser.test.ts"],
+    "mode": "focused",
+    "minimumRisk": "low",
+    "browserRequired": true,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test", "check/test-e2e"]
+  }
+]
