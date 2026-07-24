@@ -88,21 +88,37 @@ interface SupportedSelector {
   readonly specificity: number;
 }
 
+function supportedSelectorOf(member: string): SupportedSelector | null {
+  if (member.toLowerCase() === ':root') return { variant: DEFAULT_VARIANT, specificity: 100 };
+  const match = DATA_THEME_RE.exec(member);
+  const variant = match?.[1] ?? match?.[2] ?? match?.[3];
+  if (variant === undefined) return null;
+  return { variant, specificity: /^html\b/i.test(member) ? 101 : 100 };
+}
+
 /** Recognized selectors carried by one comma-separated selector list. */
 function supportedSelectorsOf(selector: string): readonly SupportedSelector[] {
   const selectors: SupportedSelector[] = [];
   for (const member of splitCSSSelectorList(selector)) {
-    if (member.toLowerCase() === ':root') {
-      selectors.push({ variant: DEFAULT_VARIANT, specificity: 100 });
-      continue;
-    }
-    const match = DATA_THEME_RE.exec(member);
-    const variant = match?.[1] ?? match?.[2] ?? match?.[3];
-    if (variant !== undefined) {
-      selectors.push({ variant, specificity: /^html\b/i.test(member) ? 101 : 100 });
-    }
+    const supported = supportedSelectorOf(member);
+    if (supported !== null) selectors.push(supported);
   }
   return selectors;
+}
+
+/**
+ * True when any member of a selector list falls outside the Token/Theme scope
+ * model. `:host` is a compatible companion only when the same list also has a
+ * `:root` arm; the root arm already establishes the global authored value, while
+ * a lone `:host` would be an unfaithful scope widening.
+ */
+function hasUnsupportedSelectorMember(selector: string): boolean {
+  const members = splitCSSSelectorList(selector);
+  const hasRoot = members.some((member) => supportedSelectorOf(member)?.variant === DEFAULT_VARIANT);
+  return (
+    members.length === 0 ||
+    members.some((member) => supportedSelectorOf(member) === null && !(hasRoot && member.toLowerCase() === ':host'))
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -290,7 +306,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   const scopedDefinition = topLevelRules.find(
     (rule) =>
       !rule.selector.startsWith('@') &&
-      supportedSelectorsOf(rule.selector).length === 0 &&
+      hasUnsupportedSelectorMember(rule.selector) &&
       containsCustomPropertyDeclaration(blanked, rule),
   );
   if (scopedDefinition !== undefined) {

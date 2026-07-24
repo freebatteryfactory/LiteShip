@@ -217,17 +217,23 @@ interface RootCustomPropertyRule {
   readonly props: Readonly<Record<string, CSSDeclarationValue>>;
 }
 
+interface RootCustomPropertyCollection {
+  readonly rules: readonly RootCustomPropertyRule[];
+  readonly unsupportedSelectors: readonly string[];
+}
+
 /**
  * Collect the `:root` custom-property declarations (`--name: value`) inside a
  * source range, walking each nested rule block with the shared
  * declaration scanner. Names are returned WITHOUT the leading `--`. Only
- * `:root` blocks contribute — a scoped selector inside the range
- * (`.card { --accent }`) is skipped, so a block's custom properties never
- * silently become theme-wide values. Used to read the `:root { … }` overrides
- * inside a `prefers-color-scheme` media block.
+ * `:root` blocks contribute. A scoped or mixed selector carrying custom
+ * properties is returned as unsupported so the caller can refuse the complete
+ * media block before any theme accumulator changes. Used to read the
+ * `:root { … }` overrides inside a `prefers-color-scheme` media block.
  */
-function collectRootCustomPropertyRules(css: string, start: number, end: number): readonly RootCustomPropertyRule[] {
+function collectRootCustomPropertyRules(css: string, start: number, end: number): RootCustomPropertyCollection {
   const out: RootCustomPropertyRule[] = [];
+  const unsupportedSelectors: string[] = [];
   const structural = blankCssCommentsAndStrings(css);
   let i = start;
   let selStart = start;
@@ -235,12 +241,16 @@ function collectRootCustomPropertyRules(css: string, start: number, end: number)
     if (structural[i] === '{') {
       const selector = css.slice(selStart, i);
       const { props, end: blockEnd } = parseFlatDeclarationValues(css, i + 1);
-      if (selectorTargetsRoot(selector)) {
+      const customProperties = Object.entries(props).filter(([name]) => name.startsWith('--'));
+      const selectorMembers = splitCSSSelectorList(selector);
+      const targetsOnlyRoot =
+        selectorMembers.length > 0 && selectorMembers.every((part) => part.toLowerCase() === ':root');
+      if (customProperties.length > 0 && targetsOnlyRoot) {
         out.push({
-          props: Object.fromEntries(
-            Object.entries(props).flatMap(([k, v]) => (k.startsWith('--') ? [[k.slice(2), v]] : [])),
-          ),
+          props: Object.fromEntries(customProperties.map(([name, value]) => [name.slice(2), value])),
         });
+      } else if (customProperties.length > 0) {
+        unsupportedSelectors.push(selector.trim() || '(unknown selector)');
       }
       i = blockEnd > i ? blockEnd : i + 1;
       selStart = i;
@@ -248,7 +258,7 @@ function collectRootCustomPropertyRules(css: string, start: number, end: number)
       i++;
     }
   }
-  return out;
+  return { rules: out, unsupportedSelectors };
 }
 
 /**
@@ -540,6 +550,30 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
       return;
     }
 
+    // A color-scheme theme can preserve only :root-scoped custom properties.
+    // Preflight the whole block before mutating any shared accumulator so a
+    // mixed/scoped selector never yields a partial theme plus a warning.
+    const colorSchemeRules = new Map<string, readonly RootCustomPropertyRule[]>();
+    for (const feat of feats) {
+      if (feat.feature !== 'prefers-color-scheme') continue;
+      const variant = (feat.value ?? '').toLowerCase();
+      if (variant !== 'light' && variant !== 'dark') continue;
+      const collected = collectRootCustomPropertyRules(css, bodyStart, bodyEnd);
+      if (collected.unsupportedSelectors.length > 0) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.unsupportedSelector,
+            `@media "${diagnosticPrelude}" contains custom-property declarations under unrepresentable selector scope (${collected.unsupportedSelectors.join(
+              ', ',
+            )}); the complete block was refused.`,
+            { path: ['@media', diagnosticPrelude, collected.unsupportedSelectors[0]!], severity: 'error' },
+          ),
+        );
+        return;
+      }
+      colorSchemeRules.set(variant, collected.rules);
+    }
+
     // Preflight dimensional features before mutating any shared accumulator.
     // Only inclusive min predicates are faithful. Multiple min predicates on
     // the same axis intersect at their maximum lower bound.
@@ -627,7 +661,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
           continue;
         }
         sawColorScheme = true;
-        for (const rule of collectRootCustomPropertyRules(css, bodyStart, bodyEnd)) {
+        for (const rule of colorSchemeRules.get(variant) ?? []) {
           recordSchemeDeclarations([variant], rule.props);
         }
         targets.add('color-scheme');

@@ -455,6 +455,20 @@ describe('fromCSSCustomProperties — degenerate inputs', () => {
     ]);
   });
 
+  it('refuses a mixed supported/scoped selector list atomically', () => {
+    const result = fromCSSCustomProperties(`html[data-theme="dark"], .special { --accent: black; }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedSelector,
+        severity: 'error',
+        path: ['html[data-theme="dark"], .special'],
+      }),
+    ]);
+  });
+
   it('does not mistake comment/string lookalikes in an unsupported selector for scoped declarations', () => {
     const result = fromCSSCustomProperties(`
       .card {

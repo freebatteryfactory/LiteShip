@@ -223,20 +223,36 @@ describe('fromMediaQueries — decomposition branches', () => {
     expect(t.tokens.accent).toEqual({ light: '#f90', dark: '#f90' });
   });
 
-  it('harvests only :root custom properties as theme tokens (scoped selectors stay scoped)', () => {
+  it('refuses scoped custom properties inside a color-scheme block instead of silently dropping them', () => {
     const result = fromMediaQueries(`
-      :root { --bg: #fff; }
-      .card { --accent: red; }
       @media (prefers-color-scheme: dark) {
-        :root { --bg: #111; }
         .card { --accent: darkred; }
       }
     `);
-    const t = result.themes[0]!;
-    // Only :root's --bg is a theme token; .card's scoped --accent is excluded
-    // from BOTH the light defaults and the dark variant (no scope widening).
-    expect(t.tokens).toEqual({ bg: { light: '#fff', dark: '#111' } });
-    expect(Object.keys(t.tokens)).not.toContain('accent');
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: MIGRATE_CODES.unsupportedSelector,
+        severity: 'error',
+        path: ['@media', '(prefers-color-scheme: dark)', '.card'],
+      }),
+    ]);
+  });
+
+  it('refuses mixed :root/scoped selector lists inside color-scheme blocks', () => {
+    const result = fromMediaQueries(`
+      @media (prefers-color-scheme: dark) {
+        :root, .card { --accent: darkred; }
+      }
+    `);
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedSelector, severity: 'error' }),
+    ]);
   });
 
   it('keeps a recognized discrete feature as a media: boundary and flags it unmappable', () => {
