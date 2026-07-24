@@ -17,10 +17,9 @@
  * @module
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { journeyAssert, parseReceipt, removeDir, runLiteshipCli, type JourneyResult } from './harness.js';
+import { findFiles, journeyAssert, parseReceipt, runInstalledLiteshipCli, type JourneyResult } from './harness.js';
 
 /** The stable diagnostic code the planted bare-throw misconfig must surface. */
 const EXPECTED_CODE = 'gauntlet/no-bare-throw';
@@ -31,19 +30,25 @@ const MISCONFIG_SOURCE = `export function boom(): void {
 }
 `;
 
-export async function journeyDebugDiagnostic(): Promise<JourneyResult> {
+const REMEDIATED_SOURCE = `export function boom(): void {
+  // The planted failure had no legitimate error condition, so the safe repair
+  // removes the fabricated throw instead of inventing another exception type.
+}
+`;
+
+export async function journeyDebugDiagnostic(appDir: string): Promise<JourneyResult> {
   const name = 'journey-debug-diagnostic';
-  let scratch: string | undefined;
+  const plantedDir = join(appDir, 'packages', 'planted');
   try {
     // Plant the misconfig inside the glob the gauntlet gate fold walks
     // (DEFAULT_GAUNTLET_GLOBS = `packages/*/src/**/*.ts`), scoped to this scratch cwd.
-    scratch = mkdtempSync(join(tmpdir(), 'liteship-journey-diag-'));
-    const srcDir = join(scratch, 'packages', 'planted', 'src');
+    const srcDir = join(plantedDir, 'src');
     mkdirSync(srcDir, { recursive: true });
-    writeFileSync(join(srcDir, 'bad.ts'), MISCONFIG_SOURCE);
+    const plantedPath = join(srcDir, 'bad.ts');
+    writeFileSync(plantedPath, MISCONFIG_SOURCE);
 
-    // Run the in-process gauntlet gate fold, cwd-scoped to the planted tree.
-    const check = await runLiteshipCli(['check', 'gates', '--json'], scratch);
+    // Run the INSTALLED facade-owned gate fold, cwd-scoped to the planted tree.
+    const check = await runInstalledLiteshipCli(['check', 'gates', '--json'], appDir);
     journeyAssert(
       check.code === 1,
       `expected a blocked check (exit 1) over the planted misconfig, got exit ${check.code}\n${check.stderr.slice(-600)}`,
@@ -57,7 +62,7 @@ export async function journeyDebugDiagnostic(): Promise<JourneyResult> {
     );
 
     // Resolve the code to its remediation — the actionable half of the loop.
-    const explain = await runLiteshipCli(['explain', EXPECTED_CODE, '--json'], scratch);
+    const explain = await runInstalledLiteshipCli(['explain', EXPECTED_CODE, '--json'], appDir);
     journeyAssert(explain.code === 0, `liteship explain ${EXPECTED_CODE} exited ${explain.code}`);
     const explained = parseReceipt(explain.stdout);
     journeyAssert(
@@ -70,16 +75,33 @@ export async function journeyDebugDiagnostic(): Promise<JourneyResult> {
       typeof remediation === 'string' && remediation.trim().length > 0,
       `ExplainDiagnostic.remediation is empty for ${EXPECTED_CODE}`,
     );
+    journeyAssert((remediation as string).length <= 2_000, `remediation for ${EXPECTED_CODE} is unbounded`);
+
+    writeFileSync(plantedPath, REMEDIATED_SOURCE);
+    const correctedCheck = await runInstalledLiteshipCli(['check', 'gates', '--json'], appDir);
+    journeyAssert(
+      correctedCheck.code === 0,
+      `corrected source remained blocked (exit ${correctedCheck.code})\n${correctedCheck.stderr.slice(-600)}`,
+    );
+
+    const build = await runInstalledLiteshipCli(['build', '--json'], appDir);
+    journeyAssert(build.code === 0, `installed liteship build exited ${build.code}\n${build.stderr.slice(-800)}`);
+    const htmlFiles = findFiles(join(appDir, 'dist'), '.html');
+    journeyAssert(htmlFiles.length > 0, 'corrected packed consumer build emitted no HTML');
+    const html = htmlFiles.map((path) => readFileSync(path, 'utf8')).join('\n');
+    journeyAssert(html.includes('data-liteship-'), 'corrected packed consumer build emitted no LiteShip markers');
 
     return {
       name,
       status: 'pass',
-      detail: `planted misconfig → check surfaced stable code ${EXPECTED_CODE} → explain returned remediation ("${(remediation as string).slice(0, 60)}…")`,
-      notes: ['used the explicit `check gates --json` Finding surface, then resolved its stable code'],
+      detail:
+        `packed fault → ${EXPECTED_CODE} → bounded remediation → corrected gate → installed build ` +
+        `(${htmlFiles.length} HTML file(s))`,
+      notes: ['all operator commands ran through the packed facade-owned executable'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };
   } finally {
-    removeDir(scratch);
+    rmSync(plantedDir, { recursive: true, force: true });
   }
 }

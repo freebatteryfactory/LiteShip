@@ -15,7 +15,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
-import { journeyAssert, parseReceipt, REPO_ROOT, runLiteshipCli, type JourneyResult } from './harness.js';
+import { journeyAssert, parseReceipt, REPO_ROOT, runInstalledLiteshipCliAt, type JourneyResult } from './harness.js';
 
 const TASK = 'debug-check-failure';
 
@@ -29,10 +29,10 @@ const REQUIRED_LANDMARKS: Readonly<Record<string, string>> = {
   'tests/unit/command/check.test.ts': 'checkGatesCommand',
 };
 
-export async function journeyColdAgentContext(): Promise<JourneyResult> {
+export async function journeyColdAgentContext(installedAppDir: string): Promise<JourneyResult> {
   const name = 'journey-cold-agent-context';
   try {
-    const result = await runLiteshipCli(['context', '--task', TASK, '--json'], REPO_ROOT);
+    const result = await runInstalledLiteshipCliAt(['context', '--task', TASK, '--json'], installedAppDir, REPO_ROOT);
     journeyAssert(
       result.code === 0,
       `liteship context --task ${TASK} exited ${result.code}\n${result.stderr.slice(-600)}`,
@@ -98,9 +98,9 @@ export async function journeyColdAgentContext(): Promise<JourneyResult> {
       name,
       status: 'pass',
       detail:
-        `context --task ${TASK} returned ${pointers!.length} live pointers with owner, entrypoint, test, registered check, ` +
+        `packed context --task ${TASK} returned ${pointers!.length} live pointers with owner, entrypoint, test, registered check, ` +
         'and Finding→explain landmarks sufficient for the task',
-      notes: ['validated semantic landmarks and registered authority, not path existence alone'],
+      notes: ['ran the packed facade executable; validated semantic landmarks and registered authority'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };

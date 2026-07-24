@@ -484,6 +484,18 @@ export async function runInstalledLiteshipCli(
   return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
 }
 
+/** Run the packed facade-owned executable while giving it an independent task cwd. */
+export async function runInstalledLiteshipCliAt(
+  args: readonly string[],
+  installedAppDir: string,
+  taskCwd: string,
+): Promise<{ readonly code: number; readonly stdout: string; readonly stderr: string }> {
+  const bin = resolve(installedAppDir, 'node_modules', 'liteship', 'bin', 'liteship.mjs');
+  journeyAssert(existsSync(bin), `packed operator consumer has no facade-owned executable at ${bin}`);
+  const result = await spawnArgvCapture(process.execPath, [bin, ...args], { cwd: taskCwd });
+  return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr };
+}
+
 /** Run one package-owned consumer script through its selected package manager. */
 export async function runConsumerScript(
   script: string,

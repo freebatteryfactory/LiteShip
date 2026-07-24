@@ -11,10 +11,10 @@
  * REAL headless `astro build` — never mocks:
  *   1. journey-fresh-app          scaffold → packed install → installed CLI build → data-liteship-* HTML
  *   2. journey-add-feature        defineAdaptive hero → rebuild → markup == plan()/explain()
- *   3. journey-debug-diagnostic   plant misconfig → check names a stable code → explain it
+ *   3. journey-debug-diagnostic   packed fault → code → remediation → corrected gate/build
  *   4. journey-upgrade            exact 2141ec25 build → explicit source migration → current packed build
  *   5. journey-package-author     liteship/schema + /evidence typecheck (node16 + bundler)
- *   6. journey-cold-agent-context context pointers all name real files
+ *   6. journey-cold-agent-context packed CLI returns sufficient live task pointers
  *   7. journey-installed-add      packed installed CLI lists + byte-faithfully copies a fragment
  *
  * This script runs ONLY via `test:journey` — `tests/journey/**` is deliberately kept
@@ -22,6 +22,8 @@
  *
  * @module
  */
+
+import { join } from 'node:path';
 
 import { journeyFreshApp } from '../tests/journey/journey-fresh-app.js';
 import { journeyAddFeature } from '../tests/journey/journey-add-feature.js';
@@ -32,9 +34,12 @@ import { journeyColdAgentContext } from '../tests/journey/journey-cold-agent-con
 import { journeyInstalledAdd } from '../tests/journey/journey-installed-add.js';
 import {
   journeysPassed,
+  installConsumer,
   loadReleaseArtifactWorkspace,
   packWorkspace,
   removeDir,
+  rewriteConsumerToTarballs,
+  scaffoldConsumer,
   type JourneyResult,
   type PackedWorkspace,
 } from '../tests/journey/harness.js';
@@ -101,9 +106,37 @@ async function main(): Promise<void> {
       }
     }
 
-    // The diagnostic + context journeys are repo-local. Package-author consumes
-    // the same packed fleet as the application journeys (never a workspace link).
-    results.push(await journeyDebugDiagnostic());
+    // Diagnostic recovery and cold-agent context share ONE packed operator app.
+    // The executable is installed from the same frozen fleet as every consumer
+    // journey; context runs that executable against the repository task cwd.
+    if (packed === undefined) {
+      for (const name of ['journey-debug-diagnostic', 'journey-cold-agent-context']) {
+        results.push({
+          name,
+          status: 'fail',
+          detail: 'workspace packing unavailable',
+          notes: [`packWorkspace failed: ${packError ?? 'unknown'}`],
+        });
+      }
+    } else {
+      const operatorApp = scaffoldConsumer();
+      try {
+        rewriteConsumerToTarballs(operatorApp, packed);
+        const install = await installConsumer(operatorApp, 'pnpm');
+        if (install.code !== 0) {
+          const detail = `packed operator consumer install failed (${install.code}): ${install.stderr.slice(-600)}`;
+          results.push({ name: 'journey-debug-diagnostic', status: 'fail', detail, notes: [] });
+          results.push({ name: 'journey-cold-agent-context', status: 'fail', detail, notes: [] });
+        } else {
+          results.push(await journeyDebugDiagnostic(operatorApp));
+          results.push(await journeyColdAgentContext(operatorApp));
+        }
+      } finally {
+        removeDir(join(operatorApp, '..'));
+      }
+    }
+
+    // Package-author consumes the same packed fleet (never a workspace link).
     if (packed === undefined) {
       results.push({
         name: 'journey-package-author',
@@ -114,7 +147,6 @@ async function main(): Promise<void> {
     } else {
       results.push(await journeyPackageAuthor(packed));
     }
-    results.push(await journeyColdAgentContext());
   } finally {
     if (ownsPackedDirectory) removeDir(packed?.tarballDir);
   }
