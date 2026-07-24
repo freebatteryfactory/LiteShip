@@ -88,6 +88,10 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
 
   // ── Test plumbing / dev loops ──────────────────────────────────────────────
   { script: 'test:shard', reason: 'Test plumbing: CI shard splitter for the parallel test lane.' },
+  {
+    script: 'test:affected',
+    reason: 'Test plumbing: conservative package-DAG selector for the pull-request affected lane.',
+  },
   { script: 'test:watch', reason: 'Dev loop: interactive vitest watch mode.' },
 
   // ── Release / ship / demo workflows ────────────────────────────────────────

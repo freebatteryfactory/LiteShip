@@ -140,6 +140,15 @@ describe('the check-registry PARTITION is total + disjoint against the root scri
     expect(projected).toEqual(new Set(scripts));
     expect(FACTS.partition.registered.length + SCRIPT_EXEMPTIONS.length).toBe(scripts.length);
   });
+
+  it('classifies the affected selector as CI plumbing rather than a second test authority', () => {
+    const affected = SCRIPT_EXEMPTIONS.find((entry) => entry.script === 'test:affected');
+    expect(affected).toEqual({
+      script: 'test:affected',
+      reason: 'Test plumbing: conservative package-DAG selector for the pull-request affected lane.',
+    });
+    expect(CHECK_REGISTRY.some((entry) => entry.command === 'pnpm run test:affected')).toBe(false);
+  });
 });
 
 describe('the check-governance meta-gates are GREEN over the real repo', () => {

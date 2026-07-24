@@ -44,6 +44,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
       'test:flake',
       'test:constitution',
       'test:shard',
+      'test:affected',
       'test:e2e',
       'test:e2e:stress',
       'test:e2e:stream-stress',
