@@ -314,9 +314,12 @@ describe('fault campaign projection — activation, degradation, and recovery ar
 
   it('rejects malformed corpus metadata before minting an unverifiable fact', async () => {
     const scenario: SimScenario = { id: 'empty-owner', steps: () => [{ label: 'x', act: () => 1 }] };
-    await expect(runSimulationCorpus([{ ...baselineEntry(scenario, [1]), owner: '' }])).rejects.toThrow(
-      /owner and invariant/u,
+    const failure = await runSimulationCorpus([{ ...baselineEntry(scenario, [1]), owner: '' }]).then(
+      () => null,
+      (error: unknown) => error,
     );
+    expect(failure).toMatchObject({ _tag: 'ValidationError', module: 'simulation-corpus' });
+    expect(failure).toHaveProperty('message', expect.stringMatching(/owner and invariant/u));
   });
 });
 

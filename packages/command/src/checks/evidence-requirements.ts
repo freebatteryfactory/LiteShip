@@ -9,6 +9,7 @@ import type {
   CheckEvidenceVerifier,
   CheckProfile,
 } from './definition.js';
+import { ValidationError } from '@liteship/error';
 
 const EVIDENCE_KINDS = new Set<CheckEvidenceKind>(['check-report']);
 
@@ -41,7 +42,7 @@ export interface CheckEvidenceManifestRequirement extends CheckEvidenceRequireme
 }
 
 function fail(message: string): never {
-  throw new TypeError(`invalid check evidence requirements: ${message}`);
+  throw ValidationError('check-evidence-requirements', message);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

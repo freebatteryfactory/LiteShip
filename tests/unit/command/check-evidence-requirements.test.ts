@@ -77,6 +77,14 @@ describe('canonical check evidence requirements', () => {
     expect(() => projectCheckEvidenceRequirements([withRequirements(check!, [])])).toThrow(
       /has no evidence requirements/u,
     );
+
+    let failure: unknown = null;
+    try {
+      projectCheckEvidenceRequirements([missing as unknown as CheckDefinition]);
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toMatchObject({ _tag: 'ValidationError', module: 'check-evidence-requirements' });
   });
 
   test('fails closed on duplicate check and evidence identities', () => {

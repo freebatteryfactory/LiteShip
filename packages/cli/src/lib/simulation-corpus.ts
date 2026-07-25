@@ -56,6 +56,7 @@ import {
   type SimStep,
   type SchedulerWorld,
 } from '@liteship/core/simulation';
+import { ValidationError } from '@liteship/error';
 import type {
   ScenarioReplayFact,
   SimulationFacts,
@@ -420,12 +421,15 @@ export async function runSimulationCorpus(
   for (const entry of corpus) {
     const { scenario, seeds, owner, invariant, faultSchedule, recoveryExpectation } = entry;
     if (owner.trim().length === 0 || invariant.trim().length === 0) {
-      throw new TypeError(`simulation corpus entry ${scenario.id} requires a non-empty owner and invariant`);
+      throw ValidationError('simulation-corpus', `entry ${scenario.id} requires a non-empty owner and invariant`);
     }
-    if (seeds.length === 0) throw new TypeError(`simulation corpus entry ${scenario.id} requires at least one seed`);
+    if (seeds.length === 0) {
+      throw ValidationError('simulation-corpus', `entry ${scenario.id} requires at least one seed`);
+    }
     if ((faultSchedule.length === 0) !== (recoveryExpectation === null)) {
-      throw new TypeError(
-        `simulation corpus entry ${scenario.id} must pair a non-empty fault schedule with a recovery expectation`,
+      throw ValidationError(
+        'simulation-corpus',
+        `entry ${scenario.id} must pair a non-empty fault schedule with a recovery expectation`,
       );
     }
     for (const seed of seeds) {

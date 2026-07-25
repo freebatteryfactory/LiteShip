@@ -72,6 +72,29 @@ function mutationFacts(over: Partial<MutationFacts> = {}): MutationFacts {
 }
 
 describe('semantic assurance execution receipt', () => {
+  it('classifies malformed and tampered receipts through distinct tagged errors', () => {
+    let malformed: unknown = null;
+    try {
+      parseSemanticAssuranceReceipt(null);
+    } catch (error) {
+      malformed = error;
+    }
+    expect(malformed).toMatchObject({ _tag: 'ParseError', source: 'semantic-assurance-receipt' });
+
+    const receipt = buildSemanticAssuranceReceipt({
+      mode: 'mutation',
+      facts: mutationFacts(),
+      ir: ir(),
+      toolchainDigest: TOOLCHAIN,
+    });
+    let tampered: unknown = null;
+    try {
+      parseSemanticAssuranceReceipt({ ...receipt, receiptId: `sha256:${'0'.repeat(64)}` });
+    } catch (error) {
+      tampered = error;
+    }
+    expect(tampered).toMatchObject({ _tag: 'IntegrityError', subject: 'semantic-assurance-receipt' });
+  });
   it('is deterministic, self-addressed, parseable, and independently bound to the live selection', () => {
     const first = buildSemanticAssuranceReceipt({
       mode: 'mutation',

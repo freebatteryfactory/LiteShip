@@ -104,4 +104,17 @@ describe('CurePacket', () => {
     expect(second.packetId).toBe(first.packetId);
     expect(second.prompt).toBe(first.prompt);
   });
+
+  it('rejects non-canonical reproducer data through the tagged error algebra', () => {
+    let failure: unknown = null;
+    try {
+      createCurePacket({
+        ...BASE_INPUT,
+        reproducer: { kind: 'schedule', schedule: [{ probability: Number.NaN }] },
+      });
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toMatchObject({ _tag: 'ValidationError', module: 'CurePacket.reproducer' });
+  });
 });

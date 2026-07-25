@@ -11,6 +11,7 @@
 import { sha256Hex } from '@liteship/canonical';
 import { CanonicalCbor, IntegrityDigest } from '@liteship/core';
 import { snapshotDefinitionValue } from '@liteship/core/evidence';
+import { ValidationError } from '@liteship/error';
 import { finding } from '@liteship/gauntlet';
 import type { CurePacket, CurePacketInput } from '@liteship/command';
 
@@ -22,7 +23,7 @@ const FORBIDDEN_SHORTCUTS = Object.freeze([
 
 function stableJson(value: unknown): string {
   if (typeof value === 'number' && !Number.isFinite(value)) {
-    throw new TypeError('CurePacket reproducer cannot render a non-finite number');
+    throw ValidationError('CurePacket.reproducer', 'cannot render a non-finite number');
   }
   if (value === null || typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
     return JSON.stringify(value) as string;
@@ -35,7 +36,7 @@ function stableJson(value: unknown): string {
       .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
       .join(',')}}`;
   }
-  throw new TypeError(`CurePacket reproducer cannot render ${typeof value}`);
+  throw ValidationError('CurePacket.reproducer', `cannot render ${typeof value}`);
 }
 
 /** Render the agent-facing prompt solely from packet facts. */

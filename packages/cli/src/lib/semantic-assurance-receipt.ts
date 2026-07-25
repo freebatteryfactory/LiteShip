@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { currentEnvFingerprint } from '@liteship/command/host';
+import { IntegrityError, ParseError, ValidationError } from '@liteship/error';
 import type {
   AssuranceTargetReason,
   McdcFacts,
@@ -62,6 +63,18 @@ export interface SemanticAssuranceReceipt extends SemanticAssuranceReceiptUnsign
 
 type UnknownRecord = Record<string, unknown>;
 
+function invalidReceipt(detail: string): never {
+  throw ValidationError('semantic-assurance-receipt', detail);
+}
+
+function malformedReceipt(detail: string): never {
+  throw ParseError('semantic-assurance-receipt', detail);
+}
+
+function untrustedReceipt(detail: string): never {
+  throw IntegrityError('semantic-assurance-receipt', detail);
+}
+
 function codeUnitCompare(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
@@ -69,7 +82,7 @@ function codeUnitCompare(left: string, right: string): number {
 function stableJson(value: unknown): string {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
   if (typeof value === 'number') {
-    if (!Number.isFinite(value)) throw new TypeError('semantic assurance receipt contains a non-finite number');
+    if (!Number.isFinite(value)) invalidReceipt('contains a non-finite number');
     return JSON.stringify(value);
   }
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
@@ -80,7 +93,7 @@ function stableJson(value: unknown): string {
       .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
       .join(',')}}`;
   }
-  throw new TypeError(`semantic assurance receipt cannot contain ${typeof value}`);
+  return invalidReceipt(`cannot contain ${typeof value}`);
 }
 
 function digest(value: unknown): `sha256:${string}` {
@@ -93,7 +106,7 @@ function sortedUnique(values: Iterable<string>): readonly string[] {
 
 function sourceDigest(ir: RepoIR, file: string): string {
   const digestValue = ir.files.get(file)?.contentDigest;
-  if (digestValue === undefined) throw new TypeError(`semantic assurance target is absent from the RepoIR: ${file}`);
+  if (digestValue === undefined) invalidReceipt(`target is absent from the RepoIR: ${file}`);
   return digestValue;
 }
 
@@ -108,7 +121,7 @@ function mutationTargetReceipt(
 ): SemanticAssuranceTargetReceipt {
   const outcomes = facts.outcomes.filter((outcome) => outcome.file === row.file);
   if (outcomes.length !== row.applicableMutants) {
-    throw new TypeError(
+    invalidReceipt(
       `mutation receipt target ${row.file} evaluated ${outcomes.length} outcomes but declared ${row.applicableMutants} applicable mutants`,
     );
   }
@@ -119,7 +132,7 @@ function mutationTargetReceipt(
   const executedTests = sortedUnique(outcomes.flatMap((outcome) => outcome.coveringTests));
   const executable = killed + survived;
   if (executable > 0 && executedTests.length === 0) {
-    throw new TypeError(`mutation receipt target ${row.file} records executed outcomes but no executed tests`);
+    invalidReceipt(`mutation target ${row.file} records executed outcomes but no executed tests`);
   }
   const verdict =
     row.applicableMutants === 0
@@ -150,7 +163,7 @@ function mcdcTargetReceipt(
 ): SemanticAssuranceTargetReceipt {
   const outcomes = facts.conditions.filter((condition) => condition.file === row.file);
   if (outcomes.length !== row.applicableConditions) {
-    throw new TypeError(
+    invalidReceipt(
       `MC/DC receipt target ${row.file} evaluated ${outcomes.length} conditions but declared ${row.applicableConditions} applicable conditions`,
     );
   }
@@ -163,7 +176,7 @@ function mcdcTargetReceipt(
   const survived = outcomes.length - killed - noCoverage;
   const executedTests = sortedUnique(outcomes.flatMap((outcome) => outcome.coveringTests));
   if (row.applicableConditions > 0 && executedTests.length === 0) {
-    throw new TypeError(`MC/DC receipt target ${row.file} records evaluated conditions but no executed tests`);
+    invalidReceipt(`MC/DC target ${row.file} records evaluated conditions but no executed tests`);
   }
   const verdict =
     row.applicableConditions === 0
@@ -194,9 +207,9 @@ export function buildSemanticAssuranceReceipt(input: {
   readonly ir: RepoIR;
   readonly toolchainDigest: string;
 }): SemanticAssuranceReceipt {
-  if (input.toolchainDigest.length === 0) throw new TypeError('semantic assurance receipt requires a toolchain digest');
+  if (input.toolchainDigest.length === 0) invalidReceipt('requires a toolchain digest');
   const census = input.facts.targetCensus;
-  if (census.length === 0) throw new TypeError('semantic assurance receipt requires a non-empty target census');
+  if (census.length === 0) invalidReceipt('requires a non-empty target census');
   const targets = (
     input.mode === 'mutation'
       ? (census as MutationFacts['targetCensus']).map((row) =>
@@ -219,11 +232,11 @@ export function buildSemanticAssuranceReceipt(input: {
 
 function exactKeys(value: object, expected: readonly string[], label: string): void {
   const actual = Reflect.ownKeys(value);
-  if (actual.some((key) => typeof key !== 'string')) throw new TypeError(`${label} contains a symbol key`);
+  if (actual.some((key) => typeof key !== 'string')) malformedReceipt(`${label} contains a symbol key`);
   const left = (actual as string[]).sort(codeUnitCompare);
   const right = [...expected].sort(codeUnitCompare);
   if (left.length !== right.length || left.some((key, index) => key !== right[index])) {
-    throw new TypeError(`${label} keys must be exactly ${right.join(', ')}`);
+    malformedReceipt(`${label} keys must be exactly ${right.join(', ')}`);
   }
 }
 
@@ -251,7 +264,7 @@ function isReason(value: unknown): value is AssuranceTargetReason {
 /** Parse and cryptographically self-check an untrusted receipt document. */
 export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssuranceReceipt {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw new TypeError('semantic assurance receipt must be an object');
+    malformedReceipt('receipt must be an object');
   }
   exactKeys(
     value,
@@ -281,12 +294,12 @@ export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssurance
     !Array.isArray(receipt.targets) ||
     receipt.targets.length === 0
   ) {
-    throw new TypeError('semantic assurance receipt envelope is invalid');
+    malformedReceipt('receipt envelope is invalid');
   }
   const seen = new Set<string>();
   for (const [index, target] of receipt.targets.entries()) {
     if (typeof target !== 'object' || target === null || Array.isArray(target)) {
-      throw new TypeError(`semantic assurance target ${index} is invalid`);
+      malformedReceipt(`target ${index} is invalid`);
     }
     exactKeys(
       target,
@@ -328,29 +341,28 @@ export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssurance
       !/^sha256:[0-9a-f]{64}$/u.test(target.outcomeDigest) ||
       (target.verdict !== 'pass' && target.verdict !== 'fail' && target.verdict !== 'not-applicable')
     ) {
-      throw new TypeError(`semantic assurance target ${index} fields are invalid`);
+      malformedReceipt(`target ${index} fields are invalid`);
     }
     seen.add(target.file);
-    if (target.evaluated !== target.applicable)
-      throw new TypeError(`semantic assurance target ${target.file} is partial`);
+    if (target.evaluated !== target.applicable) malformedReceipt(`target ${target.file} is partial`);
     if (target.killed + target.survived + target.noCoverage + target.equivalent !== target.evaluated) {
-      throw new TypeError(`semantic assurance target ${target.file} counts do not close`);
+      malformedReceipt(`target ${target.file} counts do not close`);
     }
     if (target.applicable === 0 && target.verdict !== 'not-applicable') {
-      throw new TypeError(`semantic assurance target ${target.file} must record zero applicability explicitly`);
+      malformedReceipt(`target ${target.file} must record zero applicability explicitly`);
     }
     if (target.applicable > 0 && target.killed + target.survived > 0 && target.executedTests.length === 0) {
-      throw new TypeError(`semantic assurance target ${target.file} records no executed tests`);
+      malformedReceipt(`target ${target.file} records no executed tests`);
     }
   }
   const typed = receipt as SemanticAssuranceReceipt;
   const { receiptId, ...unsigned } = typed;
-  if (receiptId !== digest(unsigned)) throw new TypeError('semantic assurance receipt identity mismatch');
+  if (receiptId !== digest(unsigned)) untrustedReceipt('receipt identity mismatch');
   if (typed.selectionDigest !== digest(selectionPayload(typed.targets))) {
-    throw new TypeError('semantic assurance receipt selection identity mismatch');
+    untrustedReceipt('selection identity mismatch');
   }
   const expectedVerdict = typed.targets.every((target) => target.verdict !== 'fail') ? 'pass' : 'fail';
-  if (typed.verdict !== expectedVerdict) throw new TypeError('semantic assurance receipt verdict mismatch');
+  if (typed.verdict !== expectedVerdict) untrustedReceipt('verdict mismatch');
   return Object.freeze(typed);
 }
 
@@ -364,12 +376,12 @@ export function verifySemanticAssuranceReceipt(
     readonly toolchainDigest: string;
   },
 ): void {
-  if (receipt.mode !== expected.mode) throw new TypeError('semantic assurance receipt mode mismatch');
+  if (receipt.mode !== expected.mode) untrustedReceipt('mode mismatch');
   if (receipt.toolchainDigest !== expected.toolchainDigest) {
-    throw new TypeError('semantic assurance receipt toolchain mismatch');
+    untrustedReceipt('toolchain mismatch');
   }
   if (expected.selection.unresolvedEntrypoints.length > 0) {
-    throw new TypeError(
+    invalidReceipt(
       `semantic assurance selection has unresolved entrypoints: ${expected.selection.unresolvedEntrypoints.join(', ')}`,
     );
   }
@@ -384,9 +396,9 @@ export function verifySemanticAssuranceReceipt(
     reasons,
   }));
   if (stableJson(observedRows) !== stableJson(expectedRows)) {
-    throw new TypeError('semantic assurance receipt target census or source digest is stale');
+    untrustedReceipt('target census or source digest is stale');
   }
-  if (receipt.verdict !== 'pass') throw new TypeError('semantic assurance receipt did not pass');
+  if (receipt.verdict !== 'pass') invalidReceipt('receipt did not pass');
 }
 
 /** Atomically write one ignored run artifact for later independent admission. */
