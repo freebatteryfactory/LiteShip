@@ -43,6 +43,7 @@ import {
 import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '../parse/css-scan.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+import { migrationRecord } from './record.js';
 import { parseQueryLength } from './query-length.js';
 
 // ---------------------------------------------------------------------------
@@ -208,9 +209,9 @@ interface RootSelectorScope {
 }
 
 /**
- * Classify a selector list used for shared theme defaults. `html` and `:host`
- * are compatible companions only when the list also contains `:root`; any
- * other arm carries a narrower scope that a Theme cannot preserve.
+ * Classify a selector list used for shared theme defaults. Every member must be
+ * root-compatible; a `:host` arm carries shadow-host behavior a Theme cannot
+ * preserve even when a `:root` arm is also present.
  */
 function rootSelectorScope(selector: string): RootSelectorScope {
   const members = splitCSSSelectorList(selector).map((part) => part.toLowerCase());
@@ -218,9 +219,7 @@ function rootSelectorScope(selector: string): RootSelectorScope {
   return {
     targetsRoot,
     allMembersRootCompatible:
-      targetsRoot &&
-      members.length > 0 &&
-      members.every((member) => member === ':root' || member === ':host' || member === 'html'),
+      targetsRoot && members.length > 0 && members.every((member) => member === ':root' || member === 'html'),
   };
 }
 
@@ -895,7 +894,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   if (sawColorScheme) {
     const names = [...new Set([...schemeCandidates.light.keys(), ...schemeCandidates.dark.keys()])];
     if (names.length > 0) {
-      const tokens: Record<string, Record<'light' | 'dark', unknown>> = {};
+      const tokens = migrationRecord<Record<'light' | 'dark', unknown>>();
       for (const name of names) {
         // Cross-fill so the theme is complete (defineTheme validates every
         // variant is present); a variant-only token reuses its sibling value.

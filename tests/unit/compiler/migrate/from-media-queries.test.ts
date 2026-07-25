@@ -69,6 +69,17 @@ describe('fromMediaQueries — clean lossless case', () => {
 });
 
 describe('fromMediaQueries — decomposition branches', () => {
+  it('preserves __proto__ color-scheme tokens as own theme data', () => {
+    const result = fromMediaQueries(`
+      @media (prefers-color-scheme: light) { :root { --__proto__: white; } }
+      @media (prefers-color-scheme: dark) { :root { --__proto__: black; } }
+    `);
+    const theme = result.themes[0]!;
+    expect(Object.hasOwn(theme.tokens, '__proto__')).toBe(true);
+    expect(theme.tokens['__proto__']).toEqual({ light: 'white', dark: 'black' });
+    expect(({} as { polluted?: unknown }).polluted).toBeUndefined();
+  });
+
   it('refuses max-width instead of approximating a finite upper bound', () => {
     const result = fromMediaQueries(`@media (max-width: 767px) { .x { a: b; } }`);
     expect(result.boundaries).toEqual([]);
@@ -311,14 +322,17 @@ describe('fromMediaQueries — decomposition branches', () => {
     ]);
   });
 
-  it('preserves :root/:host companion defaults without widening a scoped selector', () => {
+  it('refuses :host companion defaults because shadow-host scope cannot be preserved', () => {
     const result = fromMediaQueries(`
       :root, :host { --accent: red; }
       @media (prefers-color-scheme: dark) { :root { --accent: black; } }
     `);
-    expect(result.diagnostics).toEqual([]);
-    expect(result.themes).toHaveLength(1);
-    expect(result.themes[0]!.tokens.accent).toEqual({ light: 'red', dark: 'black' });
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedSelector, severity: 'error' }),
+    );
   });
 
   it('keeps a recognized discrete feature as a media: boundary and flags it unmappable', () => {

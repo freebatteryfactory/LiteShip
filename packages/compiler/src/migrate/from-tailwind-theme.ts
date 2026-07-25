@@ -8,7 +8,7 @@
  * `token-tailwind.ts` produces in reverse. This adapter is that inverse:
  *
  *  - Each `--<namespace>-<name>: value` declaration recovers a
- *    `(TokenCategory, name)` pair from a NEW LOCAL inverse of the (private)
+ *    `(TokenCategory, namespace-qualified name)` pair from a NEW LOCAL inverse of the (private)
  *    `CATEGORY_PREFIX` table and lowers to a `defineToken`.
  *  - Numeric-suffixed scale vars (`--color-primary-500`, `--color-primary-700`)
  *    are reconstructed into a SINGLE multi-value `defineToken` on a synthesized
@@ -130,6 +130,11 @@ function collectThemeDeclarations(css: string): CollectedThemeDeclarations {
     sawThemeMarker = true;
     let brace = at + 6;
     while (/\s/.test(blanked[brace] ?? '')) brace++;
+    const modifierMatch = /^(static|inline)\b/u.exec(blanked.slice(brace));
+    if (modifierMatch !== null) {
+      brace += modifierMatch[0].length;
+      while (/\s/.test(blanked[brace] ?? '')) brace++;
+    }
     if (blanked[brace] !== '{') {
       diagnostics.push(
         makeMigrationDiagnostic(
@@ -204,7 +209,7 @@ function buildValueKey(byAxis: Readonly<Record<string, string>>, axes: readonly 
  *     --breakpoint-md: 768px;
  *   }
  * `);
- * // tokens[0]: name 'primary', category 'color', axes ['scale'],
+ * // tokens[0]: name 'color-primary', category 'color', axes ['scale'],
  * //            values { '500': '#6366f1', '700': '#4338ca' }
  * // boundaries[0]: input 'viewport.width', thresholds [0, 768]
  * ```
@@ -279,7 +284,18 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
     }
 
     const [pfx, category] = match;
+    const namespace = pfx.slice(2, -1);
     const rest = name.slice(pfx.length);
+    if (rest.length === 0) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.lossyTokenConversion,
+          `Tailwind var "${name}" has no token name after its namespace; skipped.`,
+          { path: [name], severity: 'error' },
+        ),
+      );
+      continue;
+    }
 
     // Flag values that reference / compute rather than state a literal — kept as
     // written, but not losslessly representable. inferSyntax is the sanity gate:
@@ -298,9 +314,9 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
     const scaleMatch = SCALE_SUFFIX_RE.exec(rest);
     if (scaleMatch) {
       const [, base, scaleValue] = scaleMatch;
-      groupFor(category, base!).scales[scaleValue!] = value;
+      groupFor(category, `${namespace}-${base!}`).scales[scaleValue!] = value;
     } else {
-      groupFor(category, rest).bare = value;
+      groupFor(category, `${namespace}-${rest}`).bare = value;
     }
   }
 

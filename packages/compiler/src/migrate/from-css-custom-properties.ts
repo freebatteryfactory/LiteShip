@@ -49,6 +49,7 @@ import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '.
 import { inferSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+import { migrationRecord } from './record.js';
 
 // ---------------------------------------------------------------------------
 // Options
@@ -76,11 +77,11 @@ function publicVariantName(variant: VariantKey): string {
 }
 
 /**
- * Recognize an `html[data-theme="X"]` (or bare `[data-theme="X"]`) selector and
+ * Recognize an `html[data-theme="X"]` selector and
  * capture the variant name `X` — the exact inverse of the `theme-css.ts` /
  * `token-css.ts` emit selector. Accepts single-, double-, or un-quoted values.
  */
-const DATA_THEME_RE = /^(?:html)?\s*\[\s*data-theme\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]$/i;
+const DATA_THEME_RE = /^html\s*\[\s*data-theme\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]$/i;
 
 interface SupportedSelector {
   readonly variant: VariantKey;
@@ -108,17 +109,13 @@ function supportedSelectorsOf(selector: string): readonly SupportedSelector[] {
 
 /**
  * True when any member of a selector list falls outside the Token/Theme scope
- * model. `:host` is a compatible companion only when the same list also has a
- * `:root` arm; the root arm already establishes the global authored value, while
- * a lone `:host` would be an unfaithful scope widening.
+ * model. Every member must be independently representable; dropping a `:host`
+ * or subtree-scoped arm would lose authored behavior even when `:root` is also
+ * present.
  */
 function hasUnsupportedSelectorMember(selector: string): boolean {
   const members = splitCSSSelectorList(selector);
-  const hasRoot = members.some((member) => supportedSelectorOf(member)?.variant === DEFAULT_VARIANT);
-  return (
-    members.length === 0 ||
-    members.some((member) => supportedSelectorOf(member) === null && !(hasRoot && member.toLowerCase() === ':host'))
-  );
+  return members.length === 0 || members.some((member) => supportedSelectorOf(member) === null);
 }
 
 // ---------------------------------------------------------------------------
@@ -310,6 +307,23 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     return { boundaries, tokens, themes, diagnostics };
   }
 
+  const nestedDefinition = topLevelRules.find(
+    (rule) =>
+      !rule.selector.startsWith('@') &&
+      containsCustomPropertyDeclaration(blanked, rule.bodyStart, rule.bodyEnd) &&
+      blanked.slice(rule.bodyStart, rule.bodyEnd).includes('{'),
+  );
+  if (nestedDefinition !== undefined) {
+    diagnostics.push(
+      makeMigrationDiagnostic(
+        MIGRATE_CODES.unsupportedAtRule,
+        `Selector "${nestedDefinition.selector}" contains nested rule semantics that Token/Theme cannot preserve; the stylesheet was refused.`,
+        { path: [nestedDefinition.selector], severity: 'error' },
+      ),
+    );
+    return { boundaries, tokens, themes, diagnostics };
+  }
+
   // -------------------------------------------------------------------------
   // Read every recognized rule into cascade candidates. A :root declaration
   // applies to the root element in every named theme; a named selector applies
@@ -461,12 +475,12 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   // -------------------------------------------------------------------------
   // Multiple variants → one defineTheme (cross-variant completeness enforced).
   // -------------------------------------------------------------------------
-  const themeTokens: Record<string, Record<string, unknown>> = {};
+  const themeTokens = migrationRecord<Record<string, unknown>>();
 
   for (const name of tokenOrder) {
     const candidates = byToken.get(name)!;
     const baseDeclaration = resolveCascade(name, DEFAULT_VARIANT);
-    const entry: Record<string, unknown> = {};
+    const entry = migrationRecord<unknown>();
     let dropped = false;
 
     for (const variant of variants) {

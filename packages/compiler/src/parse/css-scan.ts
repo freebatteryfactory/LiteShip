@@ -246,7 +246,10 @@ export function cssPrologueEnd(blanked: string): number {
 }
 
 /** Default `property-name` pattern: standard and custom CSS properties. */
-const DEFAULT_PROP_PATTERN = /^[a-zA-Z-][a-zA-Z0-9-]*$/;
+// CSS custom properties permit underscores (including the valid hostile key
+// `--__proto__`). Keep ordinary declaration names on the narrower historical
+// subset while admitting the complete ASCII custom-property subset here.
+const DEFAULT_PROP_PATTERN = /^(?:--[a-zA-Z0-9_-]+|[a-zA-Z-][a-zA-Z0-9-]*)$/;
 
 /**
  * Parse all flat property declarations inside a block starting at `pos`

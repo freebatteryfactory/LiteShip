@@ -36,14 +36,14 @@ describe('fromTailwindTheme — clean lossless case', () => {
 
     const [primary, md] = result.tokens;
     expect(primary!._tag).toBe('TokenDef');
-    expect(primary!.name).toBe('primary');
+    expect(primary!.name).toBe('color-primary');
     expect(primary!.category).toBe('color');
     expect([...primary!.axes]).toEqual([]);
     expect(primary!.values).toEqual({});
     expect(primary!.fallback).toBe('#6366f1');
-    expect(primary!.cssProperty).toBe('--liteship-primary');
+    expect(primary!.cssProperty).toBe('--liteship-color-primary');
 
-    expect(md!.name).toBe('md');
+    expect(md!.name).toBe('spacing-md');
     expect(md!.category).toBe('spacing');
     expect(md!.fallback).toBe('1rem');
   });
@@ -52,7 +52,7 @@ describe('fromTailwindTheme — clean lossless case', () => {
     const result = fromTailwindTheme(`--radius-lg: 0.5rem; --shadow-sm: 0 1px 2px #0001;`);
     expect(result.diagnostics).toEqual([]);
     const cats = result.tokens.map((t) => `${t.category}:${t.name}`).sort();
-    expect(cats).toEqual(['radius:lg', 'shadow:sm']);
+    expect(cats).toEqual(['radius:radius-lg', 'shadow:shadow-sm']);
   });
 
   it('diagnoses a malformed marker without letting it steal a later valid block', () => {
@@ -65,15 +65,21 @@ describe('fromTailwindTheme — clean lossless case', () => {
     `);
 
     expect(result.tokens).toHaveLength(1);
-    expect(result.tokens[0]?.name).toBe('accent');
+    expect(result.tokens[0]?.name).toBe('color-accent');
     expect(result.tokens[0]?.fallback).toBe('red');
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error', path: ['@theme'] }),
     );
   });
 
-  it.each(['@theme inline { --color-accent: red; }', '@theme { --color-accent: red;'])(
-    'refuses a structurally malformed @theme block: %s',
+  it.each(['static', 'inline'])('accepts the valid Tailwind @theme %s modifier', (modifier) => {
+    const result = fromTailwindTheme(`@theme ${modifier} { --color-accent: red; }`);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens[0]?.name).toBe('color-accent');
+  });
+
+  it.each(['@theme reference { --color-accent: red; }', '@theme { --color-accent: red;'])(
+    'refuses a structurally unsupported or malformed @theme block: %s',
     (css) => {
       const result = fromTailwindTheme(css);
       expect(result.tokens).toEqual([]);
@@ -96,7 +102,7 @@ describe('fromTailwindTheme — token decomposition branches', () => {
 
     expect(result.tokens).toHaveLength(1);
     const t = result.tokens[0]!;
-    expect(t.name).toBe('primary');
+    expect(t.name).toBe('color-primary');
     expect(t.category).toBe('color');
     expect([...t.axes]).toEqual(['scale']);
     // Single-axis value keys are the axis value directly (alphabetical join is a no-op).
@@ -115,7 +121,7 @@ describe('fromTailwindTheme — token decomposition branches', () => {
     `);
     expect(result.tokens).toHaveLength(1);
     const t = result.tokens[0]!;
-    expect(t.name).toBe('brand');
+    expect(t.name).toBe('color-brand');
     expect([...t.axes]).toEqual(['scale']);
     expect(t.values).toEqual({ '500': '#123456' });
     expect(t.fallback).toBe('#000000');
@@ -129,7 +135,11 @@ describe('fromTailwindTheme — token decomposition branches', () => {
       }
     `);
     const pairs = result.tokens.map((t) => `${t.category}:${t.name}`).sort();
-    expect(pairs).toEqual(['color:accent', 'spacing:accent']);
+    expect(pairs).toEqual(['color:color-accent', 'spacing:spacing-accent']);
+    expect(result.tokens.map((token) => token.cssProperty).sort()).toEqual([
+      '--liteship-color-accent',
+      '--liteship-spacing-accent',
+    ]);
   });
 });
 
@@ -201,7 +211,7 @@ describe('fromTailwindTheme — every diagnostic code has teeth', () => {
     const result = fromTailwindTheme(`@theme { --color-accent: var(--color-primary-500); }`);
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
     // Still kept the token verbatim (lossy-but-usable, warning severity).
-    const accent = result.tokens.find((t) => t.name === 'accent');
+    const accent = result.tokens.find((t) => t.name === 'color-accent');
     expect(accent!.fallback).toBe('var(--color-primary-500)');
     expect(result.diagnostics.find((d) => d.code === MIGRATE_CODES.lossyTokenConversion)!.severity).toBe('warning');
   });
@@ -251,8 +261,8 @@ describe('fromTailwindTheme — every diagnostic code has teeth', () => {
 });
 
 describe('fromTailwindTheme — pathological input is caught, not thrown', () => {
-  it('surfaces a defineToken ValidationError as a severity:error diagnostic', () => {
-    // `--color-` strips to an EMPTY token name; defineToken's name gate rejects it.
+  it('refuses an empty namespace suffix before construction', () => {
+    // `--color-` strips to an EMPTY token name and is refused at the source grammar.
     let result!: ReturnType<typeof fromTailwindTheme>;
     expect(() => {
       result = fromTailwindTheme(`@theme { --color-: #ffffff; }`);
@@ -260,11 +270,11 @@ describe('fromTailwindTheme — pathological input is caught, not thrown', () =>
 
     // No token was produced (the whole declaration was dropped)...
     expect(result.tokens).toEqual([]);
-    // ...and the failure is an error-severity diagnostic carrying the cause.
+    // ...and the failure is an error-severity migration diagnostic.
     const err = result.diagnostics.find((d) => d.severity === 'error');
     expect(err).toBeDefined();
     expect(err!.code).toBe(MIGRATE_CODES.lossyTokenConversion);
-    expect(err!.cause).toBeDefined();
+    expect(err!.message).toContain('no token name');
   });
 
   it('refuses a non-finite screen length at the shared query grammar boundary', () => {

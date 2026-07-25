@@ -95,8 +95,11 @@ function emitStyleLayerBlock(layer: StyleLayer, selector: string, indent: string
 function buildTransition(style: Style): Record<string, string> {
   if (!style.transition) return {};
   const { duration, easing = 'ease', properties } = style.transition;
-  const propList = properties && properties.length > 0 ? properties.join(', ') : 'all';
-  return { transition: `${propList} ${duration}ms ${easing}` };
+  const transitions =
+    properties && properties.length > 0
+      ? properties.map((property) => `${property} ${duration}ms ${easing}`).join(', ')
+      : `all ${duration}ms ${easing}`;
+  return { transition: transitions };
 }
 
 /**

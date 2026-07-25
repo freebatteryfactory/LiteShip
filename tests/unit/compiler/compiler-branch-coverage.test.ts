@@ -609,7 +609,6 @@ describe('compiler branch coverage', () => {
           },
         },
         states: {
-          compact: undefined,
           wide: {
             properties: {},
           },
@@ -624,6 +623,17 @@ describe('compiler branch coverage', () => {
     expect(compiled.scoped).not.toContain(':scope:hover');
     expect(compiled.layers).toContain('@layer liteship.components');
     expect(compiled.startingStyle).toContain('@starting-style');
+  });
+
+  test('StyleCSSCompiler repeats timing for every transition property', () => {
+    const style = defineStyle({
+      base: { properties: { padding: '1rem', fontSize: '1rem' } },
+      transition: { duration: 200, easing: 'ease-out', properties: ['padding', 'font-size'] },
+    });
+
+    const compiled = StyleCSSCompiler.compile(style);
+    expect(compiled.scoped).toContain('transition: padding 200ms ease-out, font-size 200ms ease-out;');
+    expect(compiled.scoped).not.toContain('transition: padding, font-size 200ms ease-out;');
   });
 
   test('StyleCSSCompiler skips container output when every boundary state layer is absent', () => {

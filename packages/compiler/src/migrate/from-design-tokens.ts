@@ -48,6 +48,7 @@ import { ValidationError, hasTag } from '@liteship/error';
 import { stringifyCSSValue } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
+import { migrationRecord } from './record.js';
 
 /** The exact Design Tokens Format revision this adapter implements. */
 export const DTCG_FORMAT_VERSION = '2025.10' as const;
@@ -242,6 +243,18 @@ function isSupportedDtcgName(name: string): boolean {
   );
 }
 
+/**
+ * Preserve top-level token names and encode nested group paths into one valid,
+ * collision-resistant CSS custom-property suffix. DTCG `$root` denotes the
+ * containing group and therefore contributes no additional public segment.
+ */
+function tokenNameForPath(path: readonly string[]): string {
+  const semanticPath = path.at(-1) === '$root' ? path.slice(0, -1) : path;
+  if (semanticPath.length === 0) return 'root';
+  if (semanticPath.length === 1) return semanticPath[0]!;
+  return `dtcg-path-${semanticPath.map((segment) => `${segment.length}-${segment}`).join('-')}`;
+}
+
 /** An alias reference (`{group.token}`) or a `calc()` expression can't be lowered losslessly. */
 function isLossyValue(value: unknown): boolean {
   if (typeof value !== 'string') return false;
@@ -397,7 +410,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
   }
 
   // Theme accumulation — one defineTheme for every mode token in the document.
-  const themeTokens: Record<string, Record<string, unknown>> = {};
+  const themeTokens = migrationRecord<Record<string, unknown>>();
   let sawModeToken = false;
 
   const refuseUnresolvedValue = (value: unknown, path: readonly string[]): boolean => {
@@ -451,7 +464,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     path: readonly string[],
   ): void => {
     // Collect the modes actually present (own key, non-null value).
-    const present: Record<string, unknown> = {};
+    const present = migrationRecord<unknown>();
     for (const mode of modeSet) {
       if (Object.hasOwn(value, mode) && value[mode] !== null && value[mode] !== undefined) {
         present[mode] = value[mode];
@@ -475,7 +488,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     // (scalar structured → CSS string; composite → refused with an error) and flag
     // alias/calc verbatim values, BEFORE cross-filling — otherwise a structured
     // scalar mode value ({value,unit}) would reach the compiler as `[object Object]`.
-    const converted: Record<string, unknown> = {};
+    const converted = migrationRecord<unknown>();
     for (const mode of presentModes) {
       if (refuseUnresolvedValue(present[mode], [...path, mode])) return;
       const conversion = toModeCssValue(present[mode], type, name, [...path, mode]);
@@ -484,7 +497,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     }
 
     const fallback = converted[presentModes[0]!];
-    const perVariant: Record<string, unknown> = {};
+    const perVariant = migrationRecord<unknown>();
     for (const mode of modeSet) {
       if (mode in converted) {
         perVariant[mode] = converted[mode];
@@ -566,7 +579,7 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
 
     const tok = result.value;
     const type = tok.$type ?? inheritedType;
-    const name = path.join('.');
+    const name = tokenNameForPath(path);
     const value = tok.$value;
 
     if (type === undefined) {
