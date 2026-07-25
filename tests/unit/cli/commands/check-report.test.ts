@@ -471,6 +471,32 @@ describe('check profile cache and diagnostic execution', () => {
     }
   });
 
+  it('fails an application check with a cure packet when package.json is malformed', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-check-invalid-manifest-'));
+    try {
+      const spawn = vi.fn(() => ({ status: 0, signal: null, stdout: '', stderr: '' }));
+      const plan = oneCheckPlan(root, {
+        context: 'application',
+        command: 'liteship build',
+        execution: { kind: 'cli-command', argv: ['build'] },
+        cache: 'none',
+        cacheable: false,
+      });
+      writeFileSync(join(root, 'package.json'), '{ not-json');
+
+      const report = createCheckPlanRunner({ spawn })(plan, root);
+
+      expect(spawn).not.toHaveBeenCalled();
+      expect(report).toMatchObject({ ok: false, blocked: true });
+      expect(report.results[0]).toMatchObject({ verdict: 'fail', cacheHit: false });
+      expect(report.results[0]!.findings.join(' ')).toContain('could not read a valid package manifest');
+      expect(report.results[0]!.findings.join(' ')).toContain('Repair the nearest package.json');
+      expect(report.results[0]!.curePacketId).toBe(report.curePackets[0]!.packetId);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('keeps non-quick checks uncached and invalidates cache probes on support/config changes', () => {
     const structural = CHECK_REGISTRY.find((entry) => entry.id === 'check/lint-structural')!;
     expect(structural.inputs).toEqual(

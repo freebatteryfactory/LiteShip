@@ -19,9 +19,9 @@ import { wallClock } from '@liteship/core';
 import { detectHost, type BuildHost } from '../lib/host-detect.js';
 import {
   detectProjectPackageManager,
+  projectPackageManagerFailureHint,
+  projectPackageManagerFailureMessage,
   projectBinaryInvocation,
-  UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT,
-  unsupportedProjectPackageManagerMessage,
   type ProjectPackageManager,
 } from '../lib/project-package-manager.js';
 import { spawnArgvVisible } from '../lib/spawn.js';
@@ -79,12 +79,12 @@ export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildC
     }
 
     const detectedManager = detectProjectPackageManager(cwd);
-    if (detectedManager.kind === 'unsupported') {
+    if (detectedManager.kind !== 'supported') {
       emitError(
         'build',
         'cli/config-invalid',
-        unsupportedProjectPackageManagerMessage(detectedManager),
-        UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT,
+        projectPackageManagerFailureMessage(detectedManager),
+        projectPackageManagerFailureHint(detectedManager),
       );
       return 1;
     }

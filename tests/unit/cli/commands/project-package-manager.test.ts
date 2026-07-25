@@ -122,6 +122,24 @@ describe('consumer project package-manager authority', () => {
     });
   });
 
+  it.each(['{', '[]', 'null'])('returns a structured failure for invalid package manifest %j', (source) => {
+    const root = fixture();
+    const manifestPath = join(root, 'package.json');
+    writeFileSync(manifestPath, source);
+
+    expect(detectProjectPackageManager(root, {})).toEqual({ kind: 'invalid-manifest', manifestPath });
+  });
+
+  it('reports a malformed owning workspace manifest from a nested application', () => {
+    const root = fixture();
+    const app = join(root, 'apps', 'site');
+    const manifestPath = join(root, 'package.json');
+    mkdirSync(app, { recursive: true });
+    writeFileSync(manifestPath, '{ not-json');
+
+    expect(detectProjectPackageManager(app, {})).toEqual({ kind: 'invalid-manifest', manifestPath });
+  });
+
   it('emits the native npm and pnpm exec argv without a shell string', () => {
     expect(projectBinaryInvocation('npm', 'astro', ['build'])).toEqual({
       command: 'npm',

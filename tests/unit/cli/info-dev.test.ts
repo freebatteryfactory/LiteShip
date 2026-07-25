@@ -215,6 +215,31 @@ describe('liteship dev — consumer-app host route', () => {
     }
   });
 
+  it('turns a malformed project manifest into a structured failed host receipt', async () => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-dev-invalid-manifest-'));
+    try {
+      writeFileSync(join(app, 'liteship.config.ts'), '');
+      writeFileSync(join(app, 'astro.config.ts'), '');
+      writeFileSync(join(app, 'package.json'), '{ not-json');
+      const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+      const run = createDevCommand(spawn);
+      const result = await capture(() => run({ cwd: app }));
+
+      expect(result.exit).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(spawn).not.toHaveBeenCalled();
+      expect(JSON.parse(result.stderr.trim())).toMatchObject({
+        status: 'failed',
+        command: 'dev',
+        code: 'cli/config-invalid',
+        error: expect.stringContaining('could not read a valid package manifest'),
+        hint: expect.stringContaining('Repair the nearest package.json'),
+      });
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     'vite.config.ts',
     'vite.config.mts',

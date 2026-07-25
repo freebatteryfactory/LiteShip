@@ -702,7 +702,7 @@ export function frameToT(frame: number, totalFrames: number): number {
 /** Strip the `--liteship-` prefix and kebab→snake a `cssVar` into a WGSL struct field name. */
 function wgslFieldFromCssVar(cssVar: string): string {
   const stripped = cssVar.startsWith('--') ? cssVar.slice(2) : cssVar;
-  const withoutPrefix = stripped.startsWith('liteship-') ? stripped.slice(5) : stripped;
+  const withoutPrefix = stripped.startsWith('liteship-') ? stripped.slice('liteship-'.length) : stripped;
   return withoutPrefix.replace(/-/g, '_');
 }
 

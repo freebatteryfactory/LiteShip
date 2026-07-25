@@ -386,6 +386,7 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(metrics).toContain('name: flake-evidence');
     expect(metrics).toContain('.liteship/affected-selector-calibration.json');
     expect(metrics).toContain('reports/flake-evidence.json');
+    expect(metrics).toContain('fetch-depth: 0');
     expect(metrics.indexOf('pnpm run build')).toBeLessThan(metrics.indexOf('scripts/collect-delivery-metrics.ts'));
   });
 

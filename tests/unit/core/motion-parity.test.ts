@@ -32,6 +32,7 @@
  */
 
 import { describe, test, expect, afterEach } from 'vitest';
+import fc from 'fast-check';
 import {
   sampleProgram,
   sampleProgramUniforms,
@@ -218,6 +219,35 @@ function runtimeDomSample(plan: RuntimeWritePlan, t: number, ref: Map<string, Ty
 // -- The oracle -----------------------------------------------------------------------
 
 describe('cross-target motion parity — the #130 differential oracle', () => {
+  test('standard LiteShip numeric properties project to bare WGSL field names', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.stringMatching(/^[a-z][a-z0-9]*$/u), { minLength: 1, maxLength: 5 }),
+        fc.double({ min: -1_000, max: 1_000, noNaN: true, noDefaultInfinity: true }),
+        (segments, terminal) => {
+          const cssVar = `--liteship-${segments.join('-')}`;
+          const plan: RuntimeWritePlan = {
+            ...MOTION_PARITY_FIXTURES[0]!.plan,
+            properties: [
+              {
+                cssVar,
+                from: { k: 'number', v: 0 },
+                to: { k: 'number', v: terminal },
+              },
+            ],
+          };
+          const uniforms = sampleProgramUniforms(plan, 1);
+          const expectedTerminal = Object.is(terminal, -0) ? 0 : terminal;
+
+          expect(uniforms.css).toEqual({ [cssVar]: String(expectedTerminal) });
+          expect(uniforms.wgsl).toEqual({ [segments.join('_')]: expectedTerminal });
+          expect(Object.keys(uniforms.wgsl).every((field) => !field.startsWith('hip_'))).toBe(true);
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+
   for (const fixture of MOTION_PARITY_FIXTURES) {
     describe(fixture.name, () => {
       for (const t of fixture.sampleTimes) {

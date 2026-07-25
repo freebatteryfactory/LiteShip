@@ -126,7 +126,7 @@ describe('Boundary properties', () => {
       fc.property(
         fc.integer({ min: -1_000_000, max: 1_000_000 }),
         fc.integer({ min: 1, max: 1_000_000 }),
-        fc.string({ minLength: 1, maxLength: 24 }),
+        fc.string({ maxLength: 23 }).map((value) => `experiment:${value}`),
         (from, duration, experimentId) => {
           const timeRange = { from, until: from + duration };
           const spec = { timeRange, experimentId };
@@ -150,6 +150,28 @@ describe('Boundary properties', () => {
           expect(boundary.thresholds).toEqual(before.thresholds);
           expect(boundary.spec?.timeRange).toEqual(before.timeRange);
           expect(boundary.spec?.experimentId).toBe(before.experimentId);
+        },
+      ),
+    );
+  });
+
+  test('whitespace-only experiment ids are outside the admitted activation domain', () => {
+    fc.assert(
+      fc.property(
+        fc
+          .array(fc.constantFrom(' ', '\t', '\n', '\r'), { minLength: 1, maxLength: 24 })
+          .map((chars) => chars.join('')),
+        (experimentId) => {
+          expect(() =>
+            defineBoundary({
+              input: 'x',
+              at: [
+                [0, 'low'],
+                [100, 'high'],
+              ],
+              spec: { experimentId },
+            }),
+          ).toThrow(/experimentId must be a non-empty string/u);
         },
       ),
     );

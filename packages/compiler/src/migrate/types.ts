@@ -76,7 +76,7 @@ export interface FromMediaQueriesOptions {
 export interface ContainerInputRequest {
   /** The authored container name, or `undefined` for the nearest anonymous query container. */
   readonly name?: string;
-  /** The queried physical/logical axis after normalization. */
+  /** The authored physical query axis. Logical axes are refused because writing mode is not available here. */
   readonly axis: 'width' | 'height';
   /** The authored threshold unit; `zero` is unitless zero. */
   readonly unit: QueryLengthUnit;

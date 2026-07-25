@@ -137,6 +137,25 @@ describe('liteship build', () => {
     });
   });
 
+  it('turns a malformed project manifest into a structured failed receipt', async () => {
+    const root = fixture('liteship.config.ts', 'astro.config.ts', 'package.json');
+    writeFileSync(join(root, 'package.json'), '{ not-json');
+    const spawn = vi.fn(async () => ({ exitCode: 0, stderrTail: '' }));
+    const run = createBuildCommand(spawn);
+    const result = await captureCli(() => run({ cwd: root }));
+
+    expect(result.exit).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(spawn).not.toHaveBeenCalled();
+    expect(JSON.parse(result.stderr.trim())).toMatchObject({
+      status: 'failed',
+      command: 'build',
+      code: 'cli/config-invalid',
+      error: expect.stringContaining('could not read a valid package manifest'),
+      hint: expect.stringContaining('Repair the nearest package.json'),
+    });
+  });
+
   it.each([
     'vite.config.ts',
     'vite.config.mts',

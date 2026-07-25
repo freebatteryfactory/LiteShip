@@ -20,7 +20,10 @@ export type ProjectPackageManagerDetection =
       readonly kind: 'unsupported';
       readonly manager: string;
       readonly source: 'packageManager' | 'lockfile' | 'user-agent';
-    };
+    }
+  | { readonly kind: 'invalid-manifest'; readonly manifestPath: string };
+
+export type ProjectPackageManagerFailure = Exclude<ProjectPackageManagerDetection, { readonly kind: 'supported' }>;
 
 export interface PackageManagerInvocation {
   readonly command: ProjectPackageManager;
@@ -59,10 +62,15 @@ export function detectProjectPackageManager(
     const manifestPath = resolve(directory, 'package.json');
     let manifest: { readonly packageManager?: unknown; readonly workspaces?: unknown } | undefined;
     if (existsSync(manifestPath)) {
-      manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-        readonly packageManager?: unknown;
-        readonly workspaces?: unknown;
-      };
+      try {
+        const candidate: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+        if (typeof candidate !== 'object' || candidate === null || Array.isArray(candidate)) {
+          return { kind: 'invalid-manifest', manifestPath };
+        }
+        manifest = candidate;
+      } catch {
+        return { kind: 'invalid-manifest', manifestPath };
+      }
     }
     const ownsNestedProjects =
       first ||
@@ -113,6 +121,20 @@ export function unsupportedProjectPackageManagerMessage(
 /** One shared remediation for unsupported consumer project managers. */
 export const UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT =
   'LiteShip supports npm and pnpm project delegation; use one of those managers for this project';
+
+/** One structured failure message for every package-manager ownership refusal. */
+export function projectPackageManagerFailureMessage(detection: ProjectPackageManagerFailure): string {
+  return detection.kind === 'unsupported'
+    ? unsupportedProjectPackageManagerMessage(detection)
+    : `could not read a valid package manifest at ${detection.manifestPath}`;
+}
+
+/** Remediation paired with {@link projectPackageManagerFailureMessage}. */
+export function projectPackageManagerFailureHint(detection: ProjectPackageManagerFailure): string {
+  return detection.kind === 'unsupported'
+    ? UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT
+    : 'Repair the nearest package.json so it contains a readable JSON object, then retry the LiteShip command';
+}
 
 /** Build the manager-specific argv that executes one project-local binary. */
 export function projectBinaryInvocation(

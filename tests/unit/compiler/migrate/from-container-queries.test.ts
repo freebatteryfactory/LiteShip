@@ -3,7 +3,7 @@
  * host mapping. It never substitutes viewport dimensions for container facts.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import fc from 'fast-check';
 import { Boundary } from '@liteship/core';
 import { fromContainerQueries, MIGRATE_CODES } from '@liteship/compiler/migrate';
@@ -186,6 +186,20 @@ describe('fromContainerQueries — explicit input ownership', () => {
 });
 
 describe('fromContainerQueries — refusal and diagnostic teeth', () => {
+  it.each(['min-inline-size: 400px', 'min-block-size: 400px', 'inline-size >= 400px', 'block-size >= 400px'])(
+    'refuses logical-axis condition %s before asking the host for a physical signal',
+    (condition) => {
+      const resolveInput = vi.fn(() => 'custom:container.wrong-physical-axis');
+      const result = fromContainerQueries(`@container (${condition}) { .x {} }`, { resolveInput });
+
+      expect(resolveInput).not.toHaveBeenCalled();
+      expect(result.boundaries).toEqual([]);
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+      );
+    },
+  );
+
   it.each([
     'width < 400px',
     'width > 400px',

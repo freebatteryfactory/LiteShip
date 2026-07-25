@@ -43,8 +43,9 @@ import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
 import { createCurePacket } from '../lib/cure-packet.js';
 import {
   detectProjectPackageManager,
+  projectPackageManagerFailureHint,
+  projectPackageManagerFailureMessage,
   projectBinaryInvocation,
-  unsupportedProjectPackageManagerMessage,
 } from '../lib/project-package-manager.js';
 
 /** Receipt emitted by `liteship check gates`. */
@@ -461,8 +462,9 @@ function executeCheckPlan(
   let definedScripts: ReadonlySet<string> | null;
   try {
     definedScripts = readDefinedScripts(cwd);
-  } catch (error) {
-    const failure = error instanceof Error ? error.message : String(error);
+  } catch {
+    const manifestFailure = { kind: 'invalid-manifest', manifestPath: resolve(cwd, 'package.json') } as const;
+    const failure = `${projectPackageManagerFailureMessage(manifestFailure)}; ${projectPackageManagerFailureHint(manifestFailure)}`;
     const treeDigest = digestEvidence({ failure, profile: plan.profile, platform: plan.platform });
     const failedResults = plan.checks.map((check) => {
       const packet = curePacketForCheck(check, plan, env, resolveHeadSha(cwd), treeDigest, [failure]);
@@ -518,7 +520,7 @@ function executeCheckPlan(
     }
 
     const materialized = materializeCheckCommand(check, cwd);
-    if (materialized.kind === 'unsupported-manager') {
+    if (materialized.kind === 'manager-failure') {
       if (check.authority === 'blocking') blocked = true;
       const findings = [materialized.finding];
       const packet = curePacketForCheck(
@@ -663,16 +665,16 @@ function curePacketForCheck(
 
 type MaterializedCheckCommand =
   | { readonly kind: 'command'; readonly command: string }
-  | { readonly kind: 'unsupported-manager'; readonly finding: string };
+  | { readonly kind: 'manager-failure'; readonly finding: string };
 
 /** Materialize structured application checks only at the CLI host boundary. */
 function materializeCheckCommand(check: CheckPlan['checks'][number], cwd: string): MaterializedCheckCommand {
   if (check.execution === undefined) return { kind: 'command', command: check.command };
   const detectedManager = detectProjectPackageManager(cwd);
-  if (detectedManager.kind === 'unsupported') {
+  if (detectedManager.kind !== 'supported') {
     return {
-      kind: 'unsupported-manager',
-      finding: unsupportedProjectPackageManagerMessage(detectedManager),
+      kind: 'manager-failure',
+      finding: `${projectPackageManagerFailureMessage(detectedManager)}; ${projectPackageManagerFailureHint(detectedManager)}`,
     };
   }
   const invocation = projectBinaryInvocation(detectedManager.manager, 'liteship', check.execution.argv);

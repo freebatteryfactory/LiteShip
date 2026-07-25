@@ -70,10 +70,8 @@ interface AxisBound {
 function axisOfFeature(feature: string): Axis | null {
   switch (feature) {
     case 'width':
-    case 'inline-size':
       return 'width';
     case 'height':
-    case 'block-size':
       return 'height';
     default:
       return null;
@@ -84,7 +82,7 @@ function axisOfFeature(feature: string): Axis | null {
  * Parse one parenthesized feature's inner text into an {@link AxisBound}, or
  * `null` when it is not reducible to a single-axis width/height bound. Handles:
  *
- * - legacy `min-width`/`min-height` (and `min-inline-size` / `min-block-size`),
+ * - legacy physical `min-width`/`min-height`,
  * - the inclusive range form `<axis> >= <value>`.
  *
  * Every finite-upper, strict, exact, interval, or unsupported-unit form returns
@@ -99,10 +97,8 @@ function parseFeature(inner: string): AxisBound | null {
     const feature = text.slice(0, colon).trim().toLowerCase();
     const length = parseQueryLength(text.slice(colon + 1));
     if (length === null) return null;
-    if (feature === 'min-width' || feature === 'min-inline-size')
-      return { axis: 'width', lo: length.value, unit: length.unit };
-    if (feature === 'min-height' || feature === 'min-block-size')
-      return { axis: 'height', lo: length.value, unit: length.unit };
+    if (feature === 'min-width') return { axis: 'width', lo: length.value, unit: length.unit };
+    if (feature === 'min-height') return { axis: 'height', lo: length.value, unit: length.unit };
     // Exact size queries are point predicates; a threshold state persists above
     // its lower bound and cannot represent them.
     const exact = axisOfFeature(feature);
