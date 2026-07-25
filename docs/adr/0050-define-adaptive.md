@@ -110,7 +110,7 @@ off the adaptive's members — non-tautological):
   facade explicitly owns composition; direct core consumers must supply a
   lowering object to `lowerAdaptive` rather than relying on ambient state.
 - The core `.` and `liteship` `.` barrels GAIN `defineAdaptive` (value) and
-  `Adaptive` (type-only). The `0.19.0` release projection records that additive
+  `Adaptive` (type-only). The `0.20.0` release projection records that additive
   Adaptive surface and the compiler-owned state-marker projection; the API
   snapshot was regenerated only after the version gate accepted the minor bump.
 

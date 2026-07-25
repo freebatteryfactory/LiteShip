@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "astro": "^7.1.0",
-    "liteship": "^0.19.0",
+    "liteship": "^0.20.0",
     "typescript": "^5.7.0"
   }
 }

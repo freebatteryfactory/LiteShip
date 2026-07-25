@@ -4,7 +4,7 @@ All notable changes to LiteShip. The format follows [Keep a Changelog](https://k
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
-## [0.19.0] (unreleased)
+## [0.20.0] (unreleased)
 
 The **framework overhaul** wave: one brand, one grammar, one import path. This is a
 broad rename-and-consolidate pass across the whole stack — the public value surface
