@@ -49,13 +49,20 @@ const DISTRIBUTIONS = JSON.stringify({
 });
 const BENCH_FILE =
   "import { Bench } from 'tinybench';\nimport { Boundary } from '@liteship/core';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 1));\n";
-const HEALTHY_MAP = JSON.stringify({
-  schemaVersion: 1,
-  entries: [
-    { path: 'boundary.evaluateBatch', class: 'O(n)', fittedR2: 0.98 },
-    { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-  ],
-});
+function healthyComplexityEntries(
+  overrides: Readonly<Record<string, { readonly class: string; readonly fittedR2: number }>> = {},
+  omitted: ReadonlySet<string> = new Set(),
+): readonly { readonly path: string; readonly class: string; readonly fittedR2: number }[] {
+  return Object.entries(ACCEPTED_COMPLEXITY_CEILINGS)
+    .filter(([path]) => !omitted.has(path))
+    .map(([path, ceiling], index) => ({
+      path,
+      class: overrides[path]?.class ?? ceiling,
+      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.01,
+    }));
+}
+
+const HEALTHY_MAP = JSON.stringify({ schemaVersion: 1, entries: healthyComplexityEntries() });
 
 /** A green context: every bench declared, every hot path within its ceiling. */
 function greenContext() {
@@ -280,10 +287,9 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
         schemaVersion: 1,
-        entries: [
-          { path: 'boundary.evaluateBatch', class: 'O(n^2)', fittedR2: 0.99 },
-          { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-        ],
+        entries: healthyComplexityEntries({
+          'boundary.evaluateBatch': { class: 'O(n^2)', fittedR2: 0.99 },
+        }),
       }),
     });
     const findings = performanceContractsGate.run(ctx);
@@ -299,10 +305,9 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
         schemaVersion: 1,
-        entries: [
-          { path: 'boundary.evaluateBatch', class: 'O(1)', fittedR2: 0.9 },
-          { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-        ],
+        entries: healthyComplexityEntries({
+          'boundary.evaluateBatch': { class: 'O(1)', fittedR2: 0.9 },
+        }),
       }),
     });
     expect(performanceContractsGate.run(ctx)).toHaveLength(0);
@@ -314,7 +319,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
         schemaVersion: 1,
-        entries: [{ path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 }],
+        entries: healthyComplexityEntries({}, new Set(['boundary.evaluateBatch'])),
       }),
     });
     const findings = performanceContractsGate.run(ctx);
@@ -327,10 +332,9 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
         schemaVersion: 1,
-        entries: [
-          { path: 'boundary.evaluateBatch', class: 'O(n)', fittedR2: 0.2 },
-          { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-        ],
+        entries: healthyComplexityEntries({
+          'boundary.evaluateBatch': { class: 'O(n)', fittedR2: 0.2 },
+        }),
       }),
     });
     const findings = performanceContractsGate.run(ctx);

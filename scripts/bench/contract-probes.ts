@@ -31,6 +31,7 @@
  */
 
 import { Boundary, contentAddressOf, defineBoundary } from '@liteship/core';
+import { CanonicalCbor, decode as decodeCanonicalCbor } from '@liteship/canonical';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
@@ -73,6 +74,20 @@ function buildContentAddressOfSize(elementCount: number): () => void {
   };
 }
 
+function buildCanonicalEncodeOfSize(elementCount: number): () => void {
+  const value = Array.from({ length: elementCount }, (_, index) => index);
+  return (): void => {
+    void CanonicalCbor.encode(value);
+  };
+}
+
+function buildCanonicalDecodeOfSize(elementCount: number): () => void {
+  const bytes = CanonicalCbor.encode(Array.from({ length: elementCount }, (_, index) => index));
+  return (): void => {
+    void decodeCanonicalCbor(bytes);
+  };
+}
+
 /** The boundary-evaluator batch hot path — O(n) in value count. */
 export const boundaryEvaluateProbe: ComplexityProbe = {
   path: 'boundary.evaluateBatch',
@@ -94,8 +109,28 @@ export const contentAddressProbe: ComplexityProbe = {
   workloadFor: buildContentAddressOfSize,
 };
 
+/** Canonical array encoding — O(n) in encoded element count. */
+export const canonicalEncodeProbe: ComplexityProbe = {
+  path: 'canonical.encode',
+  describe: 'CanonicalCbor.encode — one deterministic fold over array elements; O(n) in element count.',
+  shape: 'canonical-array-elements',
+  sizes: [64, 256, 1024, 4096, 16384],
+  workloadFor: buildCanonicalEncodeOfSize,
+};
+
+/** Canonical array decoding — O(n) in encoded element count. */
+export const canonicalDecodeProbe: ComplexityProbe = {
+  path: 'canonical.decode',
+  describe: 'canonical decode — one strict cursor walk over encoded array elements; O(n) in element count.',
+  shape: 'canonical-array-elements',
+  sizes: [64, 256, 1024, 4096, 16384],
+  workloadFor: buildCanonicalDecodeOfSize,
+};
+
 /** Every complexity probe the contract layer measures + maps. */
 export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   boundaryEvaluateProbe,
   contentAddressProbe,
+  canonicalEncodeProbe,
+  canonicalDecodeProbe,
 ];

@@ -1632,6 +1632,42 @@
           "binding": "planAffectedTests"
         }
       ]
+    },
+    {
+      "name": "CanonicalCbor.encode -- 256 integers",
+      "file": "tests/bench/canonical.bench.ts",
+      "inputSize": 256,
+      "shape": "integer-array-payload",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/canonical"
+          },
+          "symbol": "CanonicalCbor.encode",
+          "binding": "CanonicalCbor.encode"
+        }
+      ]
+    },
+    {
+      "name": "canonical decode -- 256 integers",
+      "file": "tests/bench/canonical.bench.ts",
+      "inputSize": 256,
+      "shape": "canonical-cbor-bytes",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/canonical"
+          },
+          "symbol": "decode",
+          "binding": "decode"
+        }
+      ]
     }
   ]
 }

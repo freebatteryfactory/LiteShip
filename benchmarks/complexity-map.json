@@ -5,31 +5,37 @@
       "path": "boundary.evaluateBatch",
       "describe": "Boundary.evaluateBatch — one scan over the value array; O(n) in value count.",
       "shape": "batch-values",
-      "sizes": [
-        256,
-        1024,
-        4096,
-        16384,
-        65536
-      ],
+      "sizes": [256, 1024, 4096, 16384, 65536],
       "class": "O(n)",
-      "fittedSlope": 0.9302,
-      "fittedR2": 0.9965
+      "fittedSlope": 1.0029,
+      "fittedR2": 0.9993
     },
     {
       "path": "contentAddress.of",
       "describe": "contentAddressOf — canonicalize → CanonicalCbor → fnv1a; O(n) in element count.",
       "shape": "address-elements",
-      "sizes": [
-        8,
-        32,
-        128,
-        512,
-        2048
-      ],
+      "sizes": [8, 32, 128, 512, 2048],
       "class": "O(n)",
-      "fittedSlope": 0.96,
-      "fittedR2": 0.9983
+      "fittedSlope": 0.9736,
+      "fittedR2": 0.9985
+    },
+    {
+      "path": "canonical.encode",
+      "describe": "CanonicalCbor.encode — one deterministic fold over array elements; O(n) in element count.",
+      "shape": "canonical-array-elements",
+      "sizes": [64, 256, 1024, 4096, 16384],
+      "class": "O(n)",
+      "fittedSlope": 1.0565,
+      "fittedR2": 0.9994
+    },
+    {
+      "path": "canonical.decode",
+      "describe": "canonical decode — one strict cursor walk over encoded array elements; O(n) in element count.",
+      "shape": "canonical-array-elements",
+      "sizes": [64, 256, 1024, 4096, 16384],
+      "class": "O(n)",
+      "fittedSlope": 1.0537,
+      "fittedR2": 0.9894
     }
   ]
 }

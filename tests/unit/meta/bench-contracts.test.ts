@@ -151,12 +151,13 @@ describe('live complexity producer self-proof', () => {
 
   it('reds on missing, noisy, and complexity-regressed live evidence', () => {
     const paths = Object.keys(ACCEPTED_COMPLEXITY_CEILINGS);
-    expect(
-      verifyMeasuredComplexityMap({
-        schemaVersion: 1,
-        entries: [entry(paths[0]!, 'O(n^2)', 0.1)],
-      }).map((issue) => issue.reason),
-    ).toEqual(['class-regression', 'noisy-fit', 'missing']);
+    const reasons = verifyMeasuredComplexityMap({
+      schemaVersion: 1,
+      entries: [entry(paths[0]!, 'O(n^2)', 0.1)],
+    }).map((issue) => issue.reason);
+    expect(reasons.filter((reason) => reason === 'class-regression')).toHaveLength(1);
+    expect(reasons.filter((reason) => reason === 'noisy-fit')).toHaveLength(1);
+    expect(reasons.filter((reason) => reason === 'missing')).toHaveLength(paths.length - 1);
   });
 });
 

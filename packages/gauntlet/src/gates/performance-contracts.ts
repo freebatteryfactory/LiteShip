@@ -64,6 +64,8 @@ const COMPLEXITY_MAP_PATH = 'benchmarks/complexity-map.json';
 export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityClass>> = {
   'boundary.evaluateBatch': 'O(n)',
   'contentAddress.of': 'O(n)',
+  'canonical.encode': 'O(n)',
+  'canonical.decode': 'O(n)',
 };
 
 /** The R² floor below which a complexity fit is too noisy to trust as a verdict. */
@@ -502,13 +504,20 @@ const GREEN_DISTRIBUTIONS = JSON.stringify({
 });
 const GREEN_BENCH_FILE =
   "import { Bench } from 'tinybench';\nimport { Boundary } from '@liteship/core';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 1));\n";
-const GREEN_COMPLEXITY_MAP = JSON.stringify({
-  schemaVersion: 1,
-  entries: [
-    { path: 'boundary.evaluateBatch', class: 'O(n)', fittedR2: 0.98 },
-    { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-  ],
-});
+function fixtureComplexityMap(
+  overrides: Readonly<Record<string, { readonly class: ComplexityClass; readonly fittedR2: number }>> = {},
+): string {
+  return JSON.stringify({
+    schemaVersion: 1,
+    entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, ceiling], index) => ({
+      path,
+      class: overrides[path]?.class ?? ceiling,
+      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.01,
+    })),
+  });
+}
+
+const GREEN_COMPLEXITY_MAP = fixtureComplexityMap();
 const GREEN_BENCHMARK_SUBJECTS: BenchmarkSubjectFacts = {
   schemaVersion: 1,
   distributions: [
@@ -543,12 +552,8 @@ const GREEN_BENCHMARK_SUBJECTS: BenchmarkSubjectFacts = {
 // boundary.evaluateBatch (a ceiling-pinned path) to O(n^2). Both contracts fire.
 const RED_BENCH_FILE =
   "import { Bench } from 'tinybench';\nimport { Boundary } from '@liteship/core';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 1));\nbench.add('Undeclared.bench -- no distribution', () => {});\n";
-const RED_COMPLEXITY_MAP = JSON.stringify({
-  schemaVersion: 1,
-  entries: [
-    { path: 'boundary.evaluateBatch', class: 'O(n^2)', fittedR2: 0.99 },
-    { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-  ],
+const RED_COMPLEXITY_MAP = fixtureComplexityMap({
+  'boundary.evaluateBatch': { class: 'O(n^2)', fittedR2: 0.99 },
 });
 
 /** The qualified gate — fixtures included, so it self-proves via the ratchet. */
