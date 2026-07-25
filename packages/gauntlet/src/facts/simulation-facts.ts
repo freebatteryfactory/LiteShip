@@ -44,8 +44,18 @@ export interface SimulationFacts {
 export interface ScenarioReplayFact {
   /** The scenario's stable id (the corpus / regression-seed key). */
   readonly scenarioId: string;
+  /** Package or subsystem that owns the exercised behavior. */
+  readonly owner: string;
+  /** The steady-state law the scenario is intended to preserve. */
+  readonly invariant: string;
   /** The seed both replays used — the reproducible identity of any divergence. */
   readonly seed: number;
+  /** The deterministic fault schedule applied to both replays. */
+  readonly faultSchedule: readonly SimulationFaultFact[];
+  /** Expected degradation/recovery claims, or null for a no-fault baseline. */
+  readonly recoveryExpectation: SimulationRecoveryExpectation | null;
+  /** Host-observed campaign results, or null for a no-fault baseline. */
+  readonly recoveryObservation: SimulationRecoveryObservation | null;
   /**
    * The two replay trace digests. EQUAL ⇒ deterministic; the host still records
    * them so the gate can SHOW the agreeing identity on a clean run if asked.
@@ -58,6 +68,30 @@ export interface ScenarioReplayFact {
    * Finding names a concrete divergence, not just "not equal".
    */
   readonly divergence?: ReplayDivergence;
+}
+
+/** A serialized fault-table entry carried across the host/lean-engine seam. */
+export interface SimulationFaultFact {
+  readonly point: string;
+  readonly kind: 'drop' | 'delay' | 'reorder' | 'error';
+  readonly probability: number;
+  readonly delayTicks?: number;
+  readonly detail?: string;
+}
+
+/** The authored recovery law attached to a fault-bearing scenario. */
+export interface SimulationRecoveryExpectation {
+  readonly steadyState: string;
+  readonly degradation: string;
+  readonly recovery: string;
+}
+
+/** The already-decided observations the host projects from the scenario trace. */
+export interface SimulationRecoveryObservation {
+  readonly steadyStateObserved: boolean;
+  readonly activatedFaultPoints: readonly string[];
+  readonly degradationObserved: boolean;
+  readonly recoveryObserved: boolean;
 }
 
 /**

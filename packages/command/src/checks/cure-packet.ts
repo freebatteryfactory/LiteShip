@@ -13,6 +13,13 @@ import type { Finding } from '@liteship/gauntlet';
 
 export type CureReproducerKind = 'command' | 'fixture' | 'seed' | 'schedule' | 'benchmark';
 
+export interface CureReproducerInput {
+  readonly kind: CureReproducerKind;
+  readonly seed?: string;
+  readonly fixture?: string;
+  readonly schedule?: readonly unknown[];
+}
+
 export interface CureArtifact {
   readonly path: string;
   readonly digest: IntegrityDigestValue;
@@ -80,4 +87,5 @@ export interface CurePacketInput {
   readonly invariantIds?: readonly string[];
   readonly publicRoutes?: readonly string[];
   readonly artifacts?: readonly CureArtifact[];
+  readonly reproducer?: CureReproducerInput;
 }

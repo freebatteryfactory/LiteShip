@@ -49,12 +49,19 @@ import {
 } from '@liteship/core';
 import {
   assertReplayDeterministic,
+  type Fault,
   type SimScenario,
+  type SimTrace,
   type SimWorld,
   type SimStep,
   type SchedulerWorld,
 } from '@liteship/core/simulation';
-import type { ScenarioReplayFact, SimulationFacts } from '@liteship/gauntlet';
+import type {
+  ScenarioReplayFact,
+  SimulationFacts,
+  SimulationRecoveryExpectation,
+  SimulationRecoveryObservation,
+} from '@liteship/gauntlet';
 
 /**
  * One corpus entry: a scenario paired with the seeds the host replays it from.
@@ -62,11 +69,89 @@ import type { ScenarioReplayFact, SimulationFacts } from '@liteship/gauntlet';
  * seed but leaks under another is caught by replaying each. The corpus is a pure
  * data list (composition, no class).
  */
-export interface CorpusEntry {
+interface CorpusEntryBase {
   /** The scenario driving a real L4 SUT through the seeded world. */
   readonly scenario: SimScenario;
+  /** Package or subsystem that owns the behavior exercised by the scenario. */
+  readonly owner: string;
+  /** The steady-state law the scenario is required to preserve. */
+  readonly invariant: string;
   /** The seeds the host replays this scenario from (each twice → compare digests). */
   readonly seeds: readonly number[];
+}
+
+/** A no-fault determinism baseline. */
+export interface BaselineCorpusEntry extends CorpusEntryBase {
+  readonly faultSchedule: readonly [];
+  readonly recoveryExpectation: null;
+}
+
+/** A deterministic fault campaign with an explicit degradation/recovery law. */
+export interface RecoveryCorpusEntry extends CorpusEntryBase {
+  readonly faultSchedule: readonly [Fault, ...Fault[]];
+  readonly recoveryExpectation: SimulationRecoveryExpectation;
+}
+
+export type CorpusEntry = BaselineCorpusEntry | RecoveryCorpusEntry;
+
+export type CampaignObservationPhase = 'steady-state' | 'fault-activated' | 'degradation' | 'recovery';
+
+/**
+ * A scenario-emitted observation marker. The host reads these markers from the
+ * byte-exact trace and projects the already-decided recovery facts for the lean
+ * gate. Markers are ordinary trace values, so they participate in replay identity.
+ */
+export interface CampaignObservationMarker {
+  readonly _tag: 'SimulationCampaignObservation';
+  readonly phase: CampaignObservationPhase;
+  readonly observed: boolean;
+  readonly point?: string;
+}
+
+/** Construct one frozen observation marker for a deterministic campaign trace. */
+export function campaignObservation(
+  phase: CampaignObservationPhase,
+  observed: boolean,
+  point?: string,
+): CampaignObservationMarker {
+  return Object.freeze({
+    _tag: 'SimulationCampaignObservation' as const,
+    phase,
+    observed,
+    ...(point === undefined ? {} : { point }),
+  });
+}
+
+function isCampaignObservation(value: unknown): value is CampaignObservationMarker {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const marker = value as Partial<CampaignObservationMarker>;
+  return (
+    marker._tag === 'SimulationCampaignObservation' &&
+    (marker.phase === 'steady-state' ||
+      marker.phase === 'fault-activated' ||
+      marker.phase === 'degradation' ||
+      marker.phase === 'recovery') &&
+    typeof marker.observed === 'boolean' &&
+    (marker.point === undefined || typeof marker.point === 'string')
+  );
+}
+
+function projectRecoveryObservation(trace: SimTrace): SimulationRecoveryObservation {
+  const markers = trace.entries.map((entry) => entry.value).filter(isCampaignObservation);
+  return Object.freeze({
+    steadyStateObserved: markers.some((marker) => marker.phase === 'steady-state' && marker.observed),
+    activatedFaultPoints: Object.freeze(
+      [
+        ...new Set(
+          markers
+            .filter((marker) => marker.phase === 'fault-activated' && marker.observed && marker.point !== undefined)
+            .map((marker) => marker.point!),
+        ),
+      ].sort(),
+    ),
+    degradationObserved: markers.some((marker) => marker.phase === 'degradation' && marker.observed),
+    recoveryObserved: markers.some((marker) => marker.phase === 'recovery' && marker.observed),
+  });
 }
 
 // ─────────────────────── L4 SUT #1 — CONTENT-ADDRESS ────────────────────────
@@ -273,10 +358,38 @@ const boundaryEvaluateScenario: SimScenario = {
  * facts' display order (the gate folds each independently).
  */
 export const SIMULATION_CORPUS: readonly CorpusEntry[] = [
-  { scenario: contentAddressScenario, seeds: [1, 0xc0ffee, 2 ** 30] },
-  { scenario: hlcCausalScenario, seeds: [2, 0xbeef, 99] },
-  { scenario: graphPatchScenario, seeds: [3, 1337, 7] },
-  { scenario: boundaryEvaluateScenario, seeds: [4, 0xdeadbe, 123456] },
+  {
+    scenario: contentAddressScenario,
+    owner: '@liteship/core',
+    invariant: 'equal canonical definition bytes produce the same content label',
+    seeds: [1, 0xc0ffee, 2 ** 30],
+    faultSchedule: [],
+    recoveryExpectation: null,
+  },
+  {
+    scenario: hlcCausalScenario,
+    owner: '@liteship/core',
+    invariant: 'seeded HLC increment and merge histories replay with identical causal order',
+    seeds: [2, 0xbeef, 99],
+    faultSchedule: [],
+    recoveryExpectation: null,
+  },
+  {
+    scenario: graphPatchScenario,
+    owner: '@liteship/core',
+    invariant: 'graph patch application and diff re-address the same target graph deterministically',
+    seeds: [3, 1337, 7],
+    faultSchedule: [],
+    recoveryExpectation: null,
+  },
+  {
+    scenario: boundaryEvaluateScenario,
+    owner: '@liteship/core',
+    invariant: 'boundary evaluation preserves the f32 threshold partition for every seeded batch',
+    seeds: [4, 0xdeadbe, 123456],
+    faultSchedule: [],
+    recoveryExpectation: null,
+  },
 ];
 
 /**
@@ -304,12 +417,28 @@ export async function runSimulationCorpus(
   corpus: readonly CorpusEntry[] = SIMULATION_CORPUS,
 ): Promise<SimulationFacts> {
   const runs: ScenarioReplayFact[] = [];
-  for (const { scenario, seeds } of corpus) {
+  for (const entry of corpus) {
+    const { scenario, seeds, owner, invariant, faultSchedule, recoveryExpectation } = entry;
+    if (owner.trim().length === 0 || invariant.trim().length === 0) {
+      throw new TypeError(`simulation corpus entry ${scenario.id} requires a non-empty owner and invariant`);
+    }
+    if (seeds.length === 0) throw new TypeError(`simulation corpus entry ${scenario.id} requires at least one seed`);
+    if ((faultSchedule.length === 0) !== (recoveryExpectation === null)) {
+      throw new TypeError(
+        `simulation corpus entry ${scenario.id} must pair a non-empty fault schedule with a recovery expectation`,
+      );
+    }
     for (const seed of seeds) {
-      const result = await assertReplayDeterministic(seed, scenario);
+      const result = await assertReplayDeterministic(seed, scenario, { faults: faultSchedule });
+      const projectedExpectation = recoveryExpectation === null ? null : Object.freeze({ ...recoveryExpectation });
       const base = {
         scenarioId: scenario.id,
+        owner,
+        invariant,
         seed: result.seed,
+        faultSchedule: Object.freeze(faultSchedule.map((fault) => Object.freeze({ ...fault }))),
+        recoveryExpectation: projectedExpectation,
+        recoveryObservation: faultSchedule.length === 0 ? null : projectRecoveryObservation(result.first),
         firstDigest: result.firstDigest,
         secondDigest: result.secondDigest,
       };

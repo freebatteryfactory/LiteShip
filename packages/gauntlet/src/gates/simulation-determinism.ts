@@ -72,6 +72,145 @@ function divergenceFinding(run: ScenarioReplayFact): Finding {
   });
 }
 
+function campaignFinding(
+  run: ScenarioReplayFact,
+  suffix: string,
+  title: string,
+  detail: string,
+  remediation: string,
+): Finding {
+  return finding({
+    ruleId: `${RULE_NS}/${suffix}`,
+    severity: 'error',
+    level: 'L3',
+    title,
+    detail:
+      `Scenario "${run.scenarioId}" (owner ${run.owner}, seed ${run.seed}) claims invariant ` +
+      `"${run.invariant}". ${detail}`,
+    location: { file: run.owner },
+    remediation: {
+      kind: 'instruction',
+      description: remediation,
+      steps: [
+        `Replay scenario "${run.scenarioId}" with seed ${run.seed} and its recorded fault schedule.`,
+        remediation,
+      ],
+    },
+  });
+}
+
+function campaignFindings(run: ScenarioReplayFact): readonly Finding[] {
+  const findings: Finding[] = [];
+  if (run.owner.trim().length === 0 || run.invariant.trim().length === 0) {
+    findings.push(
+      campaignFinding(
+        run,
+        'campaign-metadata-invalid',
+        `Simulation campaign "${run.scenarioId}" has invalid ownership metadata`,
+        'The host supplied an empty owner or invariant, so the result cannot be attributed to a behavioral law.',
+        'Attach the semantic owner and one non-empty steady-state invariant to the corpus entry.',
+      ),
+    );
+  }
+
+  if (run.faultSchedule.length === 0) {
+    if (run.recoveryExpectation !== null || run.recoveryObservation !== null) {
+      findings.push(
+        campaignFinding(
+          run,
+          'campaign-metadata-invalid',
+          `No-fault scenario "${run.scenarioId}" carries recovery claims`,
+          'A no-fault baseline cannot prove degradation or recovery.',
+          'Remove the recovery claim or attach the deterministic fault schedule that the scenario actually executes.',
+        ),
+      );
+    }
+    return findings;
+  }
+
+  const expectation = run.recoveryExpectation;
+  const observation = run.recoveryObservation;
+  if (expectation === null || observation === null) {
+    findings.push(
+      campaignFinding(
+        run,
+        'campaign-not-evidenced',
+        `Fault campaign "${run.scenarioId}" has no recovery evidence`,
+        'A fault schedule was declared, but its steady state, degradation, and recovery were not projected into facts.',
+        'Emit campaign observation markers for steady state, fault activation, degradation, and recovery.',
+      ),
+    );
+    return findings;
+  }
+
+  if (
+    expectation.steadyState.trim().length === 0 ||
+    expectation.degradation.trim().length === 0 ||
+    expectation.recovery.trim().length === 0
+  ) {
+    findings.push(
+      campaignFinding(
+        run,
+        'campaign-metadata-invalid',
+        `Fault campaign "${run.scenarioId}" has an empty recovery expectation`,
+        'Each campaign must name its steady state, expected degradation, and recovered state.',
+        'Replace empty recovery expectation fields with falsifiable behavioral claims.',
+      ),
+    );
+  }
+
+  if (!observation.steadyStateObserved) {
+    findings.push(
+      campaignFinding(
+        run,
+        'steady-state-not-observed',
+        `Fault campaign "${run.scenarioId}" never established steady state`,
+        `The expected steady state was not observed: ${expectation.steadyState}.`,
+        'Observe the healthy state before injecting the fault; otherwise degradation has no control condition.',
+      ),
+    );
+  }
+
+  const activated = new Set(observation.activatedFaultPoints);
+  for (const point of new Set(run.faultSchedule.map((fault) => fault.point))) {
+    if (activated.has(point)) continue;
+    findings.push(
+      campaignFinding(
+        run,
+        'fault-not-activated',
+        `Scheduled fault "${point}" did not activate`,
+        `The schedule declared a fault at "${point}", but the trace contains no activated-fault observation for it.`,
+        'Choose a replay seed/schedule that activates the fault and record its activation in the trace.',
+      ),
+    );
+  }
+
+  if (!observation.degradationObserved) {
+    findings.push(
+      campaignFinding(
+        run,
+        'degradation-not-observed',
+        `Fault campaign "${run.scenarioId}" observed no degradation`,
+        `The expected degradation was not observed: ${expectation.degradation}.`,
+        'Assert an externally observable degraded state after fault activation; a fault that changes nothing proves nothing.',
+      ),
+    );
+  }
+
+  if (!observation.recoveryObserved) {
+    findings.push(
+      campaignFinding(
+        run,
+        'recovery-failed',
+        `Fault campaign "${run.scenarioId}" did not recover`,
+        `The expected recovered state was not observed: ${expectation.recovery}.`,
+        'Drive the scenario through recovery and assert the stated steady-state invariant is restored.',
+      ),
+    );
+  }
+  return findings;
+}
+
 /** The advisory finding for absent DST evidence (honest under-coverage). */
 function notEvidencedFinding(): Finding {
   return finding({
@@ -104,9 +243,10 @@ function fold(context: GateContext): readonly Finding[] {
   }
   const findings: Finding[] = [];
   for (const run of facts.runs) {
-    if (run.divergence !== undefined) {
+    if (run.divergence !== undefined || run.firstDigest !== run.secondDigest) {
       findings.push(divergenceFinding(run));
     }
+    findings.push(...campaignFindings(run));
   }
   return findings;
 }
@@ -121,13 +261,23 @@ const CLEAN_FACTS: SimulationFacts = {
   runs: [
     {
       scenarioId: 'boundary-evaluate-sequence',
+      owner: '@liteship/core',
+      invariant: 'boundary evaluation replays deterministically',
       seed: 1,
+      faultSchedule: [],
+      recoveryExpectation: null,
+      recoveryObservation: null,
       firstDigest: 'fnv1a:0a0b0c0d',
       secondDigest: 'fnv1a:0a0b0c0d',
     },
     {
       scenarioId: 'graph-patch-apply',
+      owner: '@liteship/core',
+      invariant: 'graph patch application replays deterministically',
       seed: 2,
+      faultSchedule: [],
+      recoveryExpectation: null,
+      recoveryObservation: null,
       firstDigest: 'fnv1a:11223344',
       secondDigest: 'fnv1a:11223344',
     },
@@ -139,13 +289,23 @@ const DIVERGED_FACTS: SimulationFacts = {
   runs: [
     {
       scenarioId: 'boundary-evaluate-sequence',
+      owner: '@liteship/core',
+      invariant: 'boundary evaluation replays deterministically',
       seed: 1,
+      faultSchedule: [],
+      recoveryExpectation: null,
+      recoveryObservation: null,
       firstDigest: 'fnv1a:0a0b0c0d',
       secondDigest: 'fnv1a:0a0b0c0d',
     },
     {
       scenarioId: 'leaky-clock-read',
+      owner: '@liteship/core',
+      invariant: 'simulation reads time only through the injected clock',
       seed: 1337,
+      faultSchedule: [],
+      recoveryExpectation: null,
+      recoveryObservation: null,
       firstDigest: 'fnv1a:deadbeef',
       secondDigest: 'fnv1a:feedface',
       divergence: {

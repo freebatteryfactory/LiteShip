@@ -63,4 +63,45 @@ describe('CurePacket', () => {
     expect(Object.isFrozen(packet.observation.actual)).toBe(true);
     expect(Object.isFrozen(packet.editBoundary.forbiddenShortcuts)).toBe(true);
   });
+
+  it('carries a deterministic seed, fixture, and fault schedule into identity and the repair prompt', () => {
+    const schedule = [{ point: 'worker.message', kind: 'drop', probability: 1 }];
+    const packet = createCurePacket({
+      ...BASE_INPUT,
+      reproducer: {
+        kind: 'schedule',
+        seed: '555',
+        fixture: 'seeded-fault-flow',
+        schedule,
+      },
+    });
+    schedule[0]!.point = 'mutated';
+
+    expect(packet.reproducer).toEqual({
+      kind: 'schedule',
+      command: ['pnpm run test:example'],
+      seed: '555',
+      fixture: 'seeded-fault-flow',
+      schedule: [{ point: 'worker.message', kind: 'drop', probability: 1 }],
+    });
+    expect(packet.prompt).toContain('Seed: 555');
+    expect(packet.prompt).toContain('Fixture: seeded-fault-flow');
+    expect(packet.prompt).toContain('worker.message');
+    expect(Object.isFrozen(packet.reproducer.schedule)).toBe(true);
+    expect(Object.isFrozen(packet.reproducer.schedule![0])).toBe(true);
+  });
+
+  it('renders semantically equal schedule records identically regardless of caller key order', () => {
+    const first = createCurePacket({
+      ...BASE_INPUT,
+      reproducer: { kind: 'schedule', schedule: [{ point: 'x', kind: 'delay', delayTicks: 2 }] },
+    });
+    const second = createCurePacket({
+      ...BASE_INPUT,
+      reproducer: { kind: 'schedule', schedule: [{ delayTicks: 2, kind: 'delay', point: 'x' }] },
+    });
+
+    expect(second.packetId).toBe(first.packetId);
+    expect(second.prompt).toBe(first.prompt);
+  });
 });

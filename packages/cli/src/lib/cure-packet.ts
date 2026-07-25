@@ -20,8 +20,31 @@ const FORBIDDEN_SHORTCUTS = Object.freeze([
   'Do not update generated evidence before the owning behavior is correct.',
 ]);
 
+function stableJson(value: unknown): string {
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    throw new TypeError('CurePacket reproducer cannot render a non-finite number');
+  }
+  if (value === null || typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
+    return JSON.stringify(value) as string;
+  }
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
+      .join(',')}}`;
+  }
+  throw new TypeError(`CurePacket reproducer cannot render ${typeof value}`);
+}
+
 /** Render the agent-facing prompt solely from packet facts. */
 export function formatCurePrompt(packet: Omit<CurePacket, 'prompt'>): string {
+  const replayContext = [
+    ...(packet.reproducer.seed === undefined ? [] : [`Seed: ${packet.reproducer.seed}`]),
+    ...(packet.reproducer.fixture === undefined ? [] : [`Fixture: ${packet.reproducer.fixture}`]),
+    ...(packet.reproducer.schedule === undefined ? [] : [`Schedule: ${stableJson(packet.reproducer.schedule)}`]),
+  ];
   return [
     `# LiteShip cure packet ${packet.packetId}`,
     '',
@@ -40,6 +63,7 @@ export function formatCurePrompt(packet: Omit<CurePacket, 'prompt'>): string {
     '',
     'Reproduce:',
     ...packet.reproducer.command.map((command) => `- ${command}`),
+    ...replayContext.map((line) => `- ${line}`),
     '',
     'Verify:',
     ...packet.verification.map((command) => `- ${command}`),
@@ -76,7 +100,13 @@ export function createCurePacket(input: CurePacketInput): CurePacket {
       publicRoutes: [...(input.publicRoutes ?? [])].sort(),
     },
     finding: projectedFinding,
-    reproducer: { kind: 'command' as const, command: [input.command] },
+    reproducer: {
+      kind: input.reproducer?.kind ?? ('command' as const),
+      command: [input.command],
+      ...(input.reproducer?.seed === undefined ? {} : { seed: input.reproducer.seed }),
+      ...(input.reproducer?.fixture === undefined ? {} : { fixture: input.reproducer.fixture }),
+      ...(input.reproducer?.schedule === undefined ? {} : { schedule: [...input.reproducer.schedule] }),
+    },
     observation: { expected: input.claim, actual: [...input.findings] },
     evidence: { artifacts: [...(input.artifacts ?? [])] },
     editBoundary: { allowedOwners: [input.owner], forbiddenShortcuts: FORBIDDEN_SHORTCUTS },

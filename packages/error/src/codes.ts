@@ -400,6 +400,36 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'No deterministic-simulation (DST) facts were injected, so replay-determinism could not be attested — an honest advisory rather than a silent green.',
     'Supply the DST facts so the avionics gate can attest replay-determinism.',
   ),
+  'gauntlet/simulation-determinism/campaign-metadata-invalid': gauntlet(
+    'Simulation campaign metadata is invalid',
+    'A deterministic simulation campaign has no attributable owner/invariant, pairs recovery claims with no fault schedule, or carries an incomplete recovery expectation.',
+    'Attach one semantic owner, one falsifiable invariant, and a coherent fault-schedule/recovery contract.',
+  ),
+  'gauntlet/simulation-determinism/campaign-not-evidenced': gauntlet(
+    'Simulation recovery campaign is not evidenced',
+    'A fault schedule was declared, but the host supplied no steady-state, activation, degradation, and recovery observations for the gate to fold.',
+    'Emit deterministic campaign observation markers and project them into the simulation facts.',
+  ),
+  'gauntlet/simulation-determinism/steady-state-not-observed': gauntlet(
+    'Simulation campaign never established steady state',
+    'The scenario injected a fault without first observing the healthy control state, so later degradation cannot be interpreted honestly.',
+    'Observe the healthy invariant before fault activation and retain it in the replay trace.',
+  ),
+  'gauntlet/simulation-determinism/fault-not-activated': gauntlet(
+    'Scheduled simulation fault did not activate',
+    'A fault-bearing campaign completed without observing activation at one of its declared injection points, so it did not exercise the claimed failure mode.',
+    'Use a seed and schedule that activate every declared fault and record each activation in the trace.',
+  ),
+  'gauntlet/simulation-determinism/degradation-not-observed': gauntlet(
+    'Simulation campaign observed no degradation',
+    'The scheduled fault activated but produced no externally observable degraded state, making the fault injection behaviorally toothless.',
+    'Assert the bounded degraded behavior caused by the activated fault.',
+  ),
+  'gauntlet/simulation-determinism/recovery-failed': gauntlet(
+    'Simulation campaign failed to recover',
+    'The campaign observed its fault and degradation but did not observe restoration of the declared recovered state.',
+    'Drive the scenario through recovery and assert that its steady-state invariant is restored.',
+  ),
   'gauntlet/fuzz-corpus/not-evidenced': gauntlet(
     'Decode-surface fuzzing not evidenced',
     'No decode-fuzz facts were injected, so the untrusted-byte decode surface could not be attested fail-closed — an honest advisory rather than a silent green.',

@@ -28,12 +28,30 @@ import { describe, it, expect } from 'vitest';
 import { contentAddressOf } from '@liteship/core';
 import {
   assertReplayDeterministic,
+  consultFault,
   type SimScenario,
   type SimWorld,
   type SimStep,
   type SchedulerWorld,
 } from '@liteship/core/simulation';
-import { SIMULATION_CORPUS, runSimulationCorpus } from '../../../../packages/cli/src/lib/simulation-corpus.js';
+import {
+  campaignObservation,
+  SIMULATION_CORPUS,
+  runSimulationCorpus,
+  type BaselineCorpusEntry,
+  type RecoveryCorpusEntry,
+} from '../../../../packages/cli/src/lib/simulation-corpus.js';
+
+function baselineEntry(scenario: SimScenario, seeds: readonly number[]): BaselineCorpusEntry {
+  return {
+    scenario,
+    owner: '@liteship/core',
+    invariant: 'the same seed produces the same observable trace',
+    seeds,
+    faultSchedule: [],
+    recoveryExpectation: null,
+  };
+}
 
 describe('SIMULATION_CORPUS — the committed L4 trust-spine corpus', () => {
   it('covers the four L4 SUT seams, each with a non-empty integer seed list', () => {
@@ -44,7 +62,11 @@ describe('SIMULATION_CORPUS — the committed L4 trust-spine corpus', () => {
       'graph-patch-apply-diff-sequence',
       'boundary-evaluate-batch-sequence',
     ]);
-    for (const { seeds } of SIMULATION_CORPUS) {
+    for (const { owner, invariant, faultSchedule, recoveryExpectation, seeds } of SIMULATION_CORPUS) {
+      expect(owner.length).toBeGreaterThan(0);
+      expect(invariant.length).toBeGreaterThan(0);
+      expect(faultSchedule).toEqual([]);
+      expect(recoveryExpectation).toBeNull();
       expect(seeds.length).toBeGreaterThan(0);
       for (const seed of seeds) expect(Number.isInteger(seed)).toBe(true);
     }
@@ -70,6 +92,11 @@ describe('runSimulationCorpus — the determinism certificate the gate folds', (
     // Every PURE SUT replays byte-exact → no run carries a divergence + the two digests
     // agree. A divergence here would be a real nondeterminism bug, surfaced not hidden.
     for (const run of runs) {
+      expect(run.owner).toBe('@liteship/core');
+      expect(run.invariant.length).toBeGreaterThan(0);
+      expect(run.faultSchedule).toEqual([]);
+      expect(run.recoveryExpectation).toBeNull();
+      expect(run.recoveryObservation).toBeNull();
       expect(run.divergence).toBeUndefined();
       expect(run.firstDigest).toBe(run.secondDigest);
       expect(run.firstDigest).toMatch(/^fnv1a:[0-9a-f]+$/);
@@ -189,7 +216,7 @@ describe('the divergence path — the honest catch (the harness DETECTS ambient 
         },
       ],
     };
-    const facts = await runSimulationCorpus([{ scenario: leaky, seeds: [1] }]);
+    const facts = await runSimulationCorpus([baselineEntry(leaky, [1])]);
     const run = (facts.runs ?? [])[0]!;
     expect(run.divergence).toBeDefined();
     expect(run.divergence!.firstDivergentLabel).toBe('leaked.draw');
@@ -213,12 +240,83 @@ describe('the divergence path — the honest catch (the harness DETECTS ambient 
         return out;
       },
     };
-    const facts = await runSimulationCorpus([{ scenario: variableLength, seeds: [1] }]);
+    const facts = await runSimulationCorpus([baselineEntry(variableLength, [1])]);
     const div = (facts.runs ?? [])[0]!.divergence;
     expect(div).toBeDefined();
     expect(div!.firstDivergentLabel).toBeNull();
     expect(div!.detail).toContain('different length/shape');
     expect(div!.detail).toContain('leaky-shape-divergence');
+  });
+});
+
+describe('fault campaign projection — activation, degradation, and recovery are facts', () => {
+  it('projects one deterministic recovery campaign from trace markers', async () => {
+    const scenario: SimScenario = {
+      id: 'worker-drop-recovery',
+      steps: (world: SimWorld): readonly SimStep[] => {
+        let activated = false;
+        return [
+          {
+            label: 'worker.steady',
+            act: (): unknown => campaignObservation('steady-state', true),
+          },
+          {
+            label: 'worker.fault',
+            act: (schedulerWorld): unknown => {
+              const decision = consultFault(world.faults, 'worker.message', schedulerWorld.rng);
+              activated = decision.fired;
+              return campaignObservation('fault-activated', activated, 'worker.message');
+            },
+          },
+          {
+            label: 'worker.degraded',
+            act: (): unknown => campaignObservation('degradation', activated),
+          },
+          {
+            label: 'worker.recovered',
+            act: (): unknown => campaignObservation('recovery', activated),
+          },
+        ];
+      },
+    };
+    const entry: RecoveryCorpusEntry = {
+      scenario,
+      owner: '@liteship/worker',
+      invariant: 'a dropped message degrades delivery and the worker returns to accepting messages',
+      seeds: [555],
+      faultSchedule: [{ point: 'worker.message', kind: 'drop', probability: 1 }],
+      recoveryExpectation: {
+        steadyState: 'the worker accepts messages',
+        degradation: 'the scheduled message is dropped',
+        recovery: 'the worker accepts the next message',
+      },
+    };
+
+    const facts = await runSimulationCorpus([entry]);
+    expect(facts.runs).toEqual([
+      expect.objectContaining({
+        scenarioId: 'worker-drop-recovery',
+        owner: '@liteship/worker',
+        invariant: entry.invariant,
+        seed: 555,
+        faultSchedule: entry.faultSchedule,
+        recoveryExpectation: entry.recoveryExpectation,
+        recoveryObservation: {
+          steadyStateObserved: true,
+          activatedFaultPoints: ['worker.message'],
+          degradationObserved: true,
+          recoveryObserved: true,
+        },
+      }),
+    ]);
+    expect(facts.runs![0]!.divergence).toBeUndefined();
+  });
+
+  it('rejects malformed corpus metadata before minting an unverifiable fact', async () => {
+    const scenario: SimScenario = { id: 'empty-owner', steps: () => [{ label: 'x', act: () => 1 }] };
+    await expect(runSimulationCorpus([{ ...baselineEntry(scenario, [1]), owner: '' }])).rejects.toThrow(
+      /owner and invariant/u,
+    );
   });
 });
 

@@ -164,7 +164,14 @@ export {
   type CiAuthorityFacts,
 } from './facts/supply-chain-facts.js';
 
-export { type SimulationFacts, type ScenarioReplayFact, type ReplayDivergence } from './facts/simulation-facts.js';
+export {
+  type SimulationFacts,
+  type ScenarioReplayFact,
+  type ReplayDivergence,
+  type SimulationFaultFact,
+  type SimulationRecoveryExpectation,
+  type SimulationRecoveryObservation,
+} from './facts/simulation-facts.js';
 
 export {
   type FuzzCorpusFacts,
