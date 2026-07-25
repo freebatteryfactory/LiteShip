@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   detectProjectPackageManager,
+  invalidProjectManifestFailure,
   projectBinaryInvocation,
 } from '../../../../packages/cli/src/lib/project-package-manager.js';
 
@@ -127,7 +128,17 @@ describe('consumer project package-manager authority', () => {
     const manifestPath = join(root, 'package.json');
     writeFileSync(manifestPath, source);
 
-    expect(detectProjectPackageManager(root, {})).toEqual({ kind: 'invalid-manifest', manifestPath });
+    const result = detectProjectPackageManager(root, {});
+    expect(result).toEqual({
+      kind: 'invalid-manifest',
+      manifestPath,
+      reason: expect.any(String),
+    });
+    if (result.kind === 'invalid-manifest') {
+      expect(result.reason.length).toBeGreaterThan(0);
+      expect(result.reason.length).toBeLessThanOrEqual(320);
+      expect(result.reason).not.toMatch(/[\r\n]/u);
+    }
   });
 
   it('reports a malformed owning workspace manifest from a nested application', () => {
@@ -137,7 +148,19 @@ describe('consumer project package-manager authority', () => {
     mkdirSync(app, { recursive: true });
     writeFileSync(manifestPath, '{ not-json');
 
-    expect(detectProjectPackageManager(app, {})).toEqual({ kind: 'invalid-manifest', manifestPath });
+    expect(detectProjectPackageManager(app, {})).toEqual({
+      kind: 'invalid-manifest',
+      manifestPath,
+      reason: expect.stringContaining('JSON'),
+    });
+  });
+
+  it('bounds and single-lines admitted manifest failure causes', () => {
+    const failure = invalidProjectManifestFailure('package.json', `line one\n${'x'.repeat(1_000)}`);
+    expect(failure.reason.length).toBe(320);
+    expect(failure.reason).not.toMatch(/[\r\n]/u);
+    expect(failure.reason.endsWith('…')).toBe(true);
+    expect(Object.isFrozen(failure)).toBe(true);
   });
 
   it('emits the native npm and pnpm exec argv without a shell string', () => {

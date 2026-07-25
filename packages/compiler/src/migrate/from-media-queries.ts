@@ -42,6 +42,7 @@ import {
 } from '../parse/css-cascade.js';
 import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '../parse/css-scan.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
+import { tokenNameForCSSCustomProperty } from './custom-property-name.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 import { migrationRecord } from './record.js';
 import { parseQueryLength } from './query-length.js';
@@ -224,6 +225,7 @@ function rootSelectorScope(selector: string): RootSelectorScope {
 }
 
 interface RootCustomPropertyRule {
+  /** Original property names stay intact until the non-injective-name preflight. */
   readonly props: Readonly<Record<string, CSSDeclarationValue>>;
 }
 
@@ -266,7 +268,7 @@ function collectRootCustomPropertyRules(css: string, start: number, end: number)
       const selectorScope = rootSelectorScope(selector);
       if (customProperties.length > 0 && selectorScope.allMembersRootCompatible) {
         out.push({
-          props: Object.fromEntries(customProperties.map(([name, value]) => [name.slice(2), value])),
+          props: Object.fromEntries(customProperties),
         });
       } else if (customProperties.length > 0) {
         unsupportedSelectors.push(selector.trim() || '(unknown selector)');
@@ -414,6 +416,8 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   };
   let schemeSourceOrder = 0;
   let sawColorScheme = false;
+  let fatalThemePropertyCollision = false;
+  const sourcePropertyByThemeToken = new Map<string, string>();
 
   const cloneSchemeCandidates = (): Record<SchemeVariant, Map<string, SchemeCandidate[]>> => ({
     light: new Map([...schemeCandidates.light].map(([name, candidates]) => [name, [...candidates]])),
@@ -430,15 +434,31 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   const recordSchemeDeclarations = (
     variants: readonly SchemeVariant[],
     props: Readonly<Record<string, CSSDeclarationValue>>,
-  ): void => {
+  ): boolean => {
     const sourceOrder = schemeSourceOrder++;
-    for (const variant of variants) {
-      for (const [name, declaration] of Object.entries(props)) {
+    for (const [sourceProperty, declaration] of Object.entries(props)) {
+      const name = tokenNameForCSSCustomProperty(sourceProperty);
+      if (name === null) continue;
+      const priorSourceProperty = sourcePropertyByThemeToken.get(name);
+      if (priorSourceProperty !== undefined && priorSourceProperty !== sourceProperty) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.malformedInput,
+            `Custom properties "${priorSourceProperty}" and "${sourceProperty}" both map to theme token "${name}"; the stylesheet was refused because the mapping is not injective.`,
+            { path: [priorSourceProperty, sourceProperty], severity: 'error' },
+          ),
+        );
+        fatalThemePropertyCollision = true;
+        return false;
+      }
+      sourcePropertyByThemeToken.set(name, sourceProperty);
+      for (const variant of variants) {
         const candidates = schemeCandidates[variant].get(name) ?? [];
         candidates.push({ declaration, specificity: 100, sourceOrder });
         schemeCandidates[variant].set(name, candidates);
       }
     }
+    return true;
   };
 
   const resolveSchemeValue = (variant: SchemeVariant, name: string): CSSDeclarationValue | undefined => {
@@ -693,7 +713,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         }
         sawColorScheme = true;
         for (const rule of colorSchemeRules.get(variant) ?? []) {
-          recordSchemeDeclarations([variant], rule.props);
+          if (!recordSchemeDeclarations([variant], rule.props)) return;
         }
         targets.add('color-scheme');
       } else {
@@ -810,10 +830,7 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
         );
         return { boundaries: [], tokens: [], themes: [], diagnostics };
       }
-      recordSchemeDeclarations(
-        ['light', 'dark'],
-        Object.fromEntries(customProperties.map(([property, value]) => [property.slice(2), value])),
-      );
+      recordSchemeDeclarations(['light', 'dark'], Object.fromEntries(customProperties));
     }
     i = bodyEnd + 1;
   }
@@ -891,6 +908,10 @@ export function fromMediaQueries(css: string, options?: FromMediaQueriesOptions)
   // -------------------------------------------------------------------------
   // prefers-color-scheme → light/dark theme.
   // -------------------------------------------------------------------------
+  if (fatalThemePropertyCollision) {
+    return { boundaries: [], tokens: [], themes: [], diagnostics };
+  }
+
   if (sawColorScheme) {
     const names = [...new Set([...schemeCandidates.light.keys(), ...schemeCandidates.dark.keys()])];
     if (names.length > 0) {

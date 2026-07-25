@@ -305,6 +305,37 @@ describe('fromMediaQueries — decomposition branches', () => {
     expect(result.themes[0]!.tokens.bg).toEqual({ light: 'white', dark: 'black' });
   });
 
+  it('inverts the complete --liteship- prefix for root and color-scheme theme tokens', () => {
+    const result = fromMediaQueries(`
+      :root { --liteship-bg: white; }
+      @media (prefers-color-scheme: dark) { :root { --liteship-bg: black; } }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.themes).toHaveLength(1);
+    expect(result.themes[0]!.tokens.bg).toEqual({ light: 'white', dark: 'black' });
+    expect(result.themes[0]!.tokens['liteship-bg']).toBeUndefined();
+  });
+
+  it('refuses a plain/prefixed media-theme token collision atomically', () => {
+    const result = fromMediaQueries(`
+      :root { --foo: red; }
+      @media (prefers-color-scheme: dark) { :root { --liteship-foo: blue; } }
+      @media (min-width: 40px) { .card { display: grid; } }
+    `);
+
+    expect(result.boundaries).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.malformedInput,
+        severity: 'error',
+        path: ['--foo', '--liteship-foo'],
+      }),
+    );
+  });
+
   it('refuses mixed :root/scoped top-level defaults atomically', () => {
     const result = fromMediaQueries(`
       :root, .card { --accent: red; }

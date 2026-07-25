@@ -49,13 +49,6 @@
       "owner": "heyoub",
       "justification": "Glob-membership RESTRUCTURE, not a rigor loss: the P4 core-domain migration split the flat L4 group {receipt,hlc,plan,dag,validated-output,assembly,brands}.ts into the domain-homed L4 globs it now lives under — evidence/{receipt,validated-output}.ts, clock/hlc.ts, authoring/{plan,assembly}.ts, graph/dag.ts, schema/brands.ts (each surfaced as a paired ADD strengthen in the same run). Every path KEPT its L4 assurance band; no file dropped a rigor level. The waiver key embeds the exact glob string, so relocating the files surfaces as remove(old flat glob)+add(new subdir globs). Net rigor unchanged. Signed vs the base-ref baseline (the P4 restructure window).",
       "expiry": "2027-06-20"
-    },
-    {
-      "elementKey": "assurance::packages/core/src/{boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
-      "weakening": "assurance-level-lowered",
-      "owner": "heyoub",
-      "justification": "Glob-membership RESTRUCTURE, not a rigor loss: the former L3 group {boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts was SPLIT — signal.ts moved into the new reactive-core group {cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts at L4 (a PROMOTION L3→L4; see assurance-map.ts: 'signal moves L4 from its former L3 … a CellKernel-backed value channel, not a bespoke source') plus a new mutation-score floor, and the remaining paths stay L3 under the renamed glob {boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts (surfaced as the paired ADD strengthen). The waiver key embeds the exact glob string, so editing group membership surfaces as remove(old glob)+add(new glob) — no path lost its rigor band; net rigor INCREASED. Surfaces as a weakening vs origin/main now that the base ref carries the snapshot (the gate moved from birth-baseline to origin/main baseline).",
-      "expiry": "2027-06-20"
     }
   ]
 }

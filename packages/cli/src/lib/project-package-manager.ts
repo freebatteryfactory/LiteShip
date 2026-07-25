@@ -21,13 +21,35 @@ export type ProjectPackageManagerDetection =
       readonly manager: string;
       readonly source: 'packageManager' | 'lockfile' | 'user-agent';
     }
-  | { readonly kind: 'invalid-manifest'; readonly manifestPath: string };
+  | { readonly kind: 'invalid-manifest'; readonly manifestPath: string; readonly reason: string };
 
 export type ProjectPackageManagerFailure = Exclude<ProjectPackageManagerDetection, { readonly kind: 'supported' }>;
 
 export interface PackageManagerInvocation {
   readonly command: ProjectPackageManager;
   readonly args: readonly string[];
+}
+
+const MAX_MANIFEST_FAILURE_REASON_LENGTH = 320;
+
+function boundedManifestFailureReason(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const normalized = raw.replace(/\s+/gu, ' ').trim() || 'unknown package manifest failure';
+  return normalized.length <= MAX_MANIFEST_FAILURE_REASON_LENGTH
+    ? normalized
+    : `${normalized.slice(0, MAX_MANIFEST_FAILURE_REASON_LENGTH - 1)}…`;
+}
+
+/** Preserve a bounded cause when a project manifest cannot be admitted. */
+export function invalidProjectManifestFailure(
+  manifestPath: string,
+  error: unknown,
+): Extract<ProjectPackageManagerDetection, { readonly kind: 'invalid-manifest' }> {
+  return Object.freeze({
+    kind: 'invalid-manifest',
+    manifestPath,
+    reason: boundedManifestFailureReason(error),
+  });
 }
 
 function managerNameFromSpecifier(value: unknown): string | null {
@@ -65,11 +87,11 @@ export function detectProjectPackageManager(
       try {
         const candidate: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
         if (typeof candidate !== 'object' || candidate === null || Array.isArray(candidate)) {
-          return { kind: 'invalid-manifest', manifestPath };
+          return invalidProjectManifestFailure(manifestPath, 'package.json must contain a JSON object');
         }
         manifest = candidate;
-      } catch {
-        return { kind: 'invalid-manifest', manifestPath };
+      } catch (error) {
+        return invalidProjectManifestFailure(manifestPath, error);
       }
     }
     const ownsNestedProjects =
@@ -126,7 +148,7 @@ export const UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT =
 export function projectPackageManagerFailureMessage(detection: ProjectPackageManagerFailure): string {
   return detection.kind === 'unsupported'
     ? unsupportedProjectPackageManagerMessage(detection)
-    : `could not read a valid package manifest at ${detection.manifestPath}`;
+    : `could not read a valid package manifest at ${detection.manifestPath}: ${detection.reason}`;
 }
 
 /** Remediation paired with {@link projectPackageManagerFailureMessage}. */

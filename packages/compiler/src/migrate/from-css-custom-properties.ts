@@ -48,6 +48,7 @@ import {
 import { containsCustomPropertyDeclaration, parseFlatDeclarationValues } from '../parse/css-scan.js';
 import { inferSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult } from './types.js';
+import { tokenNameForCSSCustomProperty } from './custom-property-name.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
 import { migrationRecord } from './record.js';
 
@@ -64,9 +65,6 @@ export interface FromCSSCustomPropertiesOptions {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-/** The compiler's own custom-property prefix (`token-css.ts` / `theme-css.ts` emit `--liteship-<name>`). */
-const LITESHIP_PREFIX = '--liteship-';
 
 /** The base/default variant contributed by a `:root { … }` rule. */
 const DEFAULT_VARIANT = Symbol('liteship.migrate.css-root');
@@ -208,17 +206,6 @@ function readTopLevelRules(css: string): RawRule[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Recover a token name from a custom-property declaration, inverting the
- * `--liteship-<name>` emit convention. A plain `--<name>` custom property is
- * accepted too (its bare name). Returns `null` for a non-custom property.
- */
-function tokenNameOf(prop: string): string | null {
-  if (prop.startsWith(LITESHIP_PREFIX)) return prop.slice(LITESHIP_PREFIX.length);
-  if (prop.startsWith('--')) return prop.slice(2);
-  return null;
-}
-
-/**
  * Infer a {@link TokenCategory} from a raw CSS value, plus the diagnostic (if any)
  * the inference warrants. A `var()` / `calc()` reference cannot be represented
  * losslessly (`lossyTokenConversion`); a value whose syntax does not classify into
@@ -357,7 +344,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     for (const { variant } of selectors) recordVariant(variant);
     const { props } = parseFlatDeclarationValues(css, rule.bodyStart);
     for (const [prop, declaration] of Object.entries(props)) {
-      const name = tokenNameOf(prop);
+      const name = tokenNameForCSSCustomProperty(prop);
       if (name === null) continue;
       const priorSourceProperty = sourcePropertyByToken.get(name);
       if (priorSourceProperty !== undefined && priorSourceProperty !== prop) {

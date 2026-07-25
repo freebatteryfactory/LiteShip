@@ -43,6 +43,7 @@ import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
 import { createCurePacket } from '../lib/cure-packet.js';
 import {
   detectProjectPackageManager,
+  invalidProjectManifestFailure,
   projectPackageManagerFailureHint,
   projectPackageManagerFailureMessage,
   projectBinaryInvocation,
@@ -462,8 +463,8 @@ function executeCheckPlan(
   let definedScripts: ReadonlySet<string> | null;
   try {
     definedScripts = readDefinedScripts(cwd);
-  } catch {
-    const manifestFailure = { kind: 'invalid-manifest', manifestPath: resolve(cwd, 'package.json') } as const;
+  } catch (error) {
+    const manifestFailure = invalidProjectManifestFailure(resolve(cwd, 'package.json'), error);
     const failure = `${projectPackageManagerFailureMessage(manifestFailure)}; ${projectPackageManagerFailureHint(manifestFailure)}`;
     const treeDigest = digestEvidence({ failure, profile: plan.profile, platform: plan.platform });
     const failedResults = plan.checks.map((check) => {
