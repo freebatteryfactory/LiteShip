@@ -42,7 +42,7 @@ After the host connects, its `tools/list` call returns the liteship command cata
 | `capsule.list` | List capsules, optionally filtered by kind. |
 | `capsule.verify` | Verify a capsule’s generated tests. |
 | `check.gates` | Run the pure gauntlet gate fold in-process (litelaunchGauntlet) and return structured findings + a blocking verdict. |
-| `context` | Get the ordered file/check/test pointers for a repo task (add-boundary, release, extend-cli, …). |
+| `context` | Get ordered owner/check/proof context for a repo task or curated public symbol. |
 | `explain` | Explain a diagnostic code (its meaning + emitter + negative control) or an exported symbol (its owner + TSDoc). |
 | `plumb` | Plumb-completeness gate: fail on any tests/generated/ placeholder skip or unclassified published package. |
 | `scene.compile` | Compile a scene capsule. |
