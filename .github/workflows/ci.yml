@@ -183,6 +183,14 @@ jobs:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
           LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
+          LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-windows-affected.xml
+      - name: Upload affected Windows test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: vitest-results-pr-windows-affected
+          path: reports/vitest-results-pr-windows-affected.xml
+          if-no-files-found: warn
 
   # Serial full gauntlet — nightly/manual exhaustive authority. Pull requests use
   # the conservative affected closure; pushes use the full parallel projection.
@@ -1095,7 +1103,7 @@ jobs:
           name: semantic-assurance-mcdc-${{ github.run_attempt }}
           path: reports
       - name: Independently admit the two live semantic-assurance receipts
-        run: pnpm run assurance:gate
+        run: pnpm run assurance:gate -- --require-semantic
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: semantic-assurance-admission-${{ github.run_attempt }}

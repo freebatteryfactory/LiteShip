@@ -331,6 +331,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   // known so specificity and source order are preserved across those selectors.
   // -------------------------------------------------------------------------
   interface CascadeCandidate {
+    readonly sourceProperty: string;
     readonly sourceVariant: VariantKey;
     readonly declaration: CSSDeclarationValue;
     readonly specificity: number;
@@ -338,6 +339,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
   }
 
   const byToken = new Map<string, CascadeCandidate[]>();
+  const sourcePropertyByToken = new Map<string, string>();
   const tokenOrder: string[] = [];
   const variantOrder: VariantKey[] = [];
   const variantSeen = new Set<VariantKey>();
@@ -357,6 +359,18 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
     for (const [prop, declaration] of Object.entries(props)) {
       const name = tokenNameOf(prop);
       if (name === null) continue;
+      const priorSourceProperty = sourcePropertyByToken.get(name);
+      if (priorSourceProperty !== undefined && priorSourceProperty !== prop) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.malformedInput,
+            `Custom properties "${priorSourceProperty}" and "${prop}" both map to token "${name}"; the stylesheet was refused because the mapping is not injective.`,
+            { path: [priorSourceProperty, prop], severity: 'error' },
+          ),
+        );
+        return { boundaries, tokens: [], themes: [], diagnostics };
+      }
+      sourcePropertyByToken.set(name, prop);
       let candidates = byToken.get(name);
       if (!candidates) {
         candidates = [];
@@ -365,6 +379,7 @@ export function fromCSSCustomProperties(css: string, options?: FromCSSCustomProp
       }
       for (const selector of selectors) {
         candidates.push({
+          sourceProperty: prop,
           sourceVariant: selector.variant,
           declaration,
           specificity: selector.specificity,

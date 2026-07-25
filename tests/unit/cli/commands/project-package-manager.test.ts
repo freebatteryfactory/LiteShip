@@ -1,6 +1,6 @@
 /** Project package-manager selection and local-binary argv laws. */
 
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -82,6 +82,44 @@ describe('consumer project package-manager authority', () => {
         source: 'user-agent',
       },
     );
+  });
+
+  it('walks to the nearest owning workspace marker and lets a nearer project marker win', () => {
+    const root = fixture();
+    const app = join(root, 'apps', 'site');
+    mkdirSync(app, { recursive: true });
+    writeFileSync(
+      join(root, 'package.json'),
+      JSON.stringify({ packageManager: 'pnpm@10.32.1', workspaces: ['apps/*'] }),
+    );
+    expect(detectProjectPackageManager(app, {})).toEqual({ kind: 'supported', manager: 'pnpm' });
+
+    writeFileSync(join(app, 'package-lock.json'), '{}\n');
+    expect(detectProjectPackageManager(app, {})).toEqual({ kind: 'supported', manager: 'npm' });
+  });
+
+  it('finds an ancestor Yarn workspace before the ambient npm user agent', () => {
+    const root = fixture();
+    const app = join(root, 'packages', 'nested-app');
+    mkdirSync(app, { recursive: true });
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ workspaces: ['packages/*'] }));
+    writeFileSync(join(root, 'yarn.lock'), '# yarn lockfile\n');
+    expect(detectProjectPackageManager(app, { npm_config_user_agent: 'npm/10.9.2 node/v22' })).toEqual({
+      kind: 'unsupported',
+      manager: 'yarn',
+      source: 'lockfile',
+    });
+  });
+
+  it('refuses conflicting markers at one ownership boundary instead of guessing from the user agent', () => {
+    const root = fixture();
+    writeFileSync(join(root, 'pnpm-lock.yaml'), 'lockfileVersion: 9\n');
+    writeFileSync(join(root, 'package-lock.json'), '{}\n');
+    expect(detectProjectPackageManager(root, { npm_config_user_agent: 'npm/10.9.2 node/v22' })).toEqual({
+      kind: 'unsupported',
+      manager: 'conflicting lockfiles (npm, pnpm)',
+      source: 'lockfile',
+    });
   });
 
   it('emits the native npm and pnpm exec argv without a shell string', () => {

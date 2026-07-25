@@ -31,6 +31,7 @@ import {
   type ProjectReferenceConfig,
   type ProjectReferenceSource,
 } from './lib/project-reference-contract.js';
+import { TEMPLATE_RENAMES } from '../packages/create-liteship/src/template-renames.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -59,6 +60,7 @@ export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.ge
 export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
 export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.generated.ts';
 export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
+export const CLI_TEMPLATE_RENAMES_TS = 'packages/cli/src/lib/template-renames.generated.ts';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
 export const TYPEDOC_JSON = 'typedoc.json';
 const LITESHIP_ROSTER_REL = 'packages/liteship/src/testing/package-roster.ts';
@@ -499,6 +501,10 @@ export function renderGeneratedProjections(): ReadonlyArray<readonly [string, st
     [DOC_PACKAGE_GROUPS_TS, renderDocPackageGroups()],
     [API_SURFACE_PACKAGES_TS, renderApiSurfacePackages()],
     [PUBLIC_SURFACE_CONTEXT_TS, renderPublicSurfaceContext()],
+    [
+      CLI_TEMPLATE_RENAMES_TS,
+      `${generatedHeader('scripts/gen-roster.ts from packages/create-liteship/src/template-renames.ts')}// prettier-ignore\nexport const GENERATED_TEMPLATE_RENAMES: Readonly<Record<string, string>> = Object.freeze(${JSON.stringify(TEMPLATE_RENAMES, null, 2)});\n`,
+    ],
     [ROOT_TSCONFIG_JSON, renderRootTsconfig()],
     [TYPEDOC_JSON, renderTypedocJson()],
     [PUBLISH_ROSTER_JSON, renderPublishRosterJson()],

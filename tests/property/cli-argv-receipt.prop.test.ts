@@ -4,7 +4,7 @@ import { positional, takeFlagValue } from '../../packages/cli/src/lib/argv.js';
 
 const token = fc
   .string({ minLength: 1, maxLength: 32 })
-  .filter((value) => !value.startsWith('-') && !value.includes('\0'));
+  .filter((value) => !value.startsWith('-') && !value.includes('\0') && value.trim().length > 0);
 
 describe('CLI argv value laws', () => {
   it('round-trips arbitrary inline and space-separated values', () => {
@@ -42,10 +42,12 @@ describe('CLI argv value laws', () => {
     );
   });
 
-  it('distinguishes absence, missing value, and an explicitly empty inline value', () => {
+  it('distinguishes absence from presence while refusing every blank value spelling', () => {
     expect(takeFlagValue([], '--profile')).toEqual({ present: false, value: undefined });
     expect(takeFlagValue(['--profile'], '--profile')).toEqual({ present: true, value: undefined });
-    expect(takeFlagValue(['--profile='], '--profile')).toEqual({ present: true, value: '' });
+    expect(takeFlagValue(['--profile='], '--profile')).toEqual({ present: true, value: undefined });
+    expect(takeFlagValue(['--profile=   '], '--profile')).toEqual({ present: true, value: undefined });
+    expect(takeFlagValue(['--profile', '   '], '--profile')).toEqual({ present: true, value: undefined });
   });
 
   it('admits only the first non-flag token as the positional argument', () => {

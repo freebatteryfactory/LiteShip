@@ -26,6 +26,17 @@ const color = (hex: string, components: readonly number[] = [0, 0, 0]) => ({
   hex,
 });
 
+const encodedTokenName = (...segments: readonly string[]): string => {
+  return `dtcg-path-${segments
+    .map((segment) => {
+      const codeUnits = Array.from({ length: segment.length }, (_, index) =>
+        segment.charCodeAt(index).toString(16).padStart(4, '0'),
+      ).join('');
+      return `${segment.length}-${codeUnits}`;
+    })
+    .join('-')}`;
+};
+
 describe('fromDesignTokens — clean lossless case', () => {
   it('lowers a two-group document into exactly two single-value tokens with no diagnostics', () => {
     const result = fromDesignTokens({
@@ -40,14 +51,14 @@ describe('fromDesignTokens — clean lossless case', () => {
 
     const [primary, sm] = result.tokens;
     expect(primary!._tag).toBe('TokenDef');
-    expect(primary!.name).toBe('dtcg-path-5-color-7-primary');
+    expect(primary!.name).toBe(encodedTokenName('color', 'primary'));
     expect(primary!.category).toBe('color');
     expect([...primary!.axes]).toEqual([]);
     expect(primary!.values).toEqual({});
     expect(primary!.fallback).toBe('#0066cc');
-    expect(primary!.cssProperty).toBe('--liteship-dtcg-path-5-color-7-primary');
+    expect(primary!.cssProperty).toBe(`--liteship-${encodedTokenName('color', 'primary')}`);
 
-    expect(sm!.name).toBe('dtcg-path-5-space-2-sm');
+    expect(sm!.name).toBe(encodedTokenName('space', 'sm'));
     expect(sm!.category).toBe('spacing');
     expect(sm!.fallback).toBe('8px');
   });
@@ -70,8 +81,8 @@ describe('fromDesignTokens — clean lossless case', () => {
     expect(t.name).toBe('migrated-theme');
     expect([...t.variants]).toEqual(['light', 'dark']);
     expect(t.tokens).toEqual({
-      'dtcg-path-5-color-2-bg': { light: '#ffffff', dark: '#111111' },
-      'dtcg-path-5-color-2-fg': { light: '#000000', dark: '#eeeeee' },
+      [encodedTokenName('color', 'bg')]: { light: '#ffffff', dark: '#111111' },
+      [encodedTokenName('color', 'fg')]: { light: '#000000', dark: '#eeeeee' },
     });
     expect(t.meta).toBeUndefined();
   });
@@ -117,8 +128,8 @@ describe('fromDesignTokens — decomposition branches', () => {
     });
     expect(result.diagnostics).toEqual([]);
     expect(result.tokens.map((token) => [token.name, token.fallback])).toEqual([
-      ['dtcg-path-5-color-6-accent', '#dd0000'],
-      ['dtcg-path-5-color-6-accent-5-light', '#ff2222'],
+      [encodedTokenName('color', 'accent'), '#dd0000'],
+      [encodedTokenName('color', 'accent', 'light'), '#ff2222'],
     ]);
   });
 
@@ -132,7 +143,7 @@ describe('fromDesignTokens — decomposition branches', () => {
   it('flattens deeply nested groups to valid length-delimited names', () => {
     const result = fromDesignTokens({ a: { b: { c: { $type: 'dimension', $value: { value: 4, unit: 'px' } } } } });
     expect(result.tokens).toHaveLength(1);
-    expect(result.tokens[0]!.name).toBe('dtcg-path-1-a-1-b-1-c');
+    expect(result.tokens[0]!.name).toBe(encodedTokenName('a', 'b', 'c'));
     expect(result.tokens[0]!.cssProperty).toMatch(/^--liteship-[a-zA-Z0-9_-]+$/u);
   });
 
@@ -143,7 +154,7 @@ describe('fromDesignTokens — decomposition branches', () => {
     });
     const names = result.tokens.map((token) => token.name);
     expect(new Set(names).size).toBe(2);
-    expect(names).toEqual(['dtcg-path-3-a-b-1-c', 'dtcg-path-1-a-3-b-c']);
+    expect(names).toEqual([encodedTokenName('a-b', 'c'), encodedTokenName('a', 'b-c')]);
   });
 
   it('refuses a top-level __proto__ token loudly at the schema trust boundary', () => {
@@ -163,7 +174,10 @@ describe('fromDesignTokens — decomposition branches', () => {
       color: { $type: 'color', primary: { $value: color('#123456') }, secondary: { $value: color('#654321') } },
     });
     expect(result.tokens.map((t) => t.category)).toEqual(['color', 'color']);
-    expect(result.tokens.map((t) => t.name)).toEqual(['dtcg-path-5-color-7-primary', 'dtcg-path-5-color-9-secondary']);
+    expect(result.tokens.map((t) => t.name)).toEqual([
+      encodedTokenName('color', 'primary'),
+      encodedTokenName('color', 'secondary'),
+    ]);
     expect(result.diagnostics).toEqual([]);
   });
 
@@ -184,7 +198,7 @@ describe('fromDesignTokens — decomposition branches', () => {
     const result = fromDesignTokens({ color: { accent: { $type: 'color', $value: { light: color('#ff9900') } } } });
     const t = result.themes[0]!;
     // dark reuses the light value so the theme stays complete.
-    expect(t.tokens['dtcg-path-5-color-6-accent']).toEqual({ light: '#ff9900', dark: '#ff9900' });
+    expect(t.tokens[encodedTokenName('color', 'accent')]).toEqual({ light: '#ff9900', dark: '#ff9900' });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(true);
   });
 
@@ -196,7 +210,7 @@ describe('fromDesignTokens — decomposition branches', () => {
     const t = result.themes[0]!;
     expect(t.name).toBe('brand');
     expect([...t.variants]).toEqual(['day', 'night']);
-    expect(t.tokens['dtcg-path-1-c-1-x']).toEqual({ day: '#ffffff', night: '#000000' });
+    expect(t.tokens[encodedTokenName('c', 'x')]).toEqual({ day: '#ffffff', night: '#000000' });
     expect(result.tokens).toEqual([]);
   });
 
@@ -214,7 +228,7 @@ describe('fromDesignTokens — decomposition branches', () => {
     const result = fromDesignTokens({ space: { sm: { $type: 'dimension', $value: { value: 8, unit: 'px' } } } });
     expect(result.tokens).toHaveLength(1);
     const t = result.tokens[0]!;
-    expect(t.name).toBe('dtcg-path-5-space-2-sm');
+    expect(t.name).toBe(encodedTokenName('space', 'sm'));
     expect(t.category).toBe('spacing');
     // Serialized to a CSS string, so the Token CSS compiler emits `8px`, not `[object Object]`.
     expect(t.fallback).toBe('8px');
@@ -232,7 +246,7 @@ describe('fromDesignTokens — decomposition branches', () => {
     const t = result.themes[0]!;
     // Each mode's { value, unit } is serialized, so the Theme CSS compiler emits
     // `8px`/`16px`, not `[object Object]`.
-    expect(t.tokens['dtcg-path-5-space-3-gap']).toEqual({ light: '8px', dark: '16px' });
+    expect(t.tokens[encodedTokenName('space', 'gap')]).toEqual({ light: '8px', dark: '16px' });
     // A cleanly-serialized scalar is lossless — no lossy/composite flag.
     expect(result.diagnostics).toEqual([]);
   });
@@ -243,7 +257,7 @@ describe('fromDesignTokens — decomposition branches', () => {
     });
     const t = result.themes[0]!;
     // The missing dark variant reuses the serialized light value (not the raw object).
-    expect(t.tokens['dtcg-path-5-space-3-gap']).toEqual({ light: '4px', dark: '4px' });
+    expect(t.tokens[encodedTokenName('space', 'gap')]).toEqual({ light: '4px', dark: '4px' });
     expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.incompleteThemeVariant)).toBe(true);
   });
 
@@ -282,6 +296,8 @@ describe('fromDesignTokens — decomposition branches', () => {
     ['dimension', { value: 8, unit: 'em' }],
     ['dimension', '8px'],
     ['duration', { value: 200, unit: 'px' }],
+    ['duration', { value: -1, unit: 'ms' }],
+    ['duration', { value: -0.001, unit: 's' }],
     ['fontWeight', 1001],
     ['fontWeight', 'Bold'],
     ['cubicBezier', [-0.1, 0, 0.5, 1]],
@@ -293,6 +309,19 @@ describe('fromDesignTokens — decomposition branches', () => {
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error', path: ['bad'] }),
     );
+  });
+
+  it('encodes every accepted top-level name into one valid, collision-free CSS identifier', () => {
+    const alreadyEncodedLooking = encodedTokenName('brand accent');
+    const result = fromDesignTokens({
+      'brand accent': { $type: 'number', $value: 1 },
+      [alreadyEncodedLooking]: { $type: 'number', $value: 2 },
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens).toHaveLength(2);
+    expect(new Set(result.tokens.map((token) => token.name)).size).toBe(2);
+    expect(result.tokens.every((token) => /^dtcg-path-[a-z0-9-]+$/u.test(token.name))).toBe(true);
+    expect(result.tokens.every((token) => /^--liteship-[a-z0-9-]+$/u.test(token.cssProperty))).toBe(true);
   });
 
   it('refuses a complete mode token when any mode value violates its declared type', () => {
@@ -446,8 +475,9 @@ describe('fromDesignTokens — property: flat color tokens fold losslessly', () 
           expect(result.diagnostics).toEqual([]);
           const byName = Object.fromEntries(result.tokens.map((t) => [t.name, t.fallback]));
           for (const [name, hex] of entries) {
-            expect(byName[name]).toBe(hex);
-            expect(result.tokens.find((t) => t.name === name)!.category).toBe('color');
+            const encoded = encodedTokenName(name);
+            expect(byName[encoded]).toBe(hex);
+            expect(result.tokens.find((t) => t.name === encoded)!.category).toBe('color');
           }
         },
       ),

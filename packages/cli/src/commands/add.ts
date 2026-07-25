@@ -16,11 +16,12 @@
  * @module
  */
 
-import { cpSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { cpSync, existsSync, readdirSync, renameSync, statSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { wallClock } from '@liteship/core';
 import { emit, emitError } from '../receipts.js';
+import { GENERATED_TEMPLATE_RENAMES } from '../lib/template-renames.generated.js';
 
 /** The scaffold-fragment kinds this minimal copier understands. */
 export type FragmentKind = 'example' | 'template';
@@ -135,6 +136,12 @@ export async function add(opts: { kind?: string; name?: string; cwd?: string } =
   }
 
   cpSync(source, destination, { recursive: true });
+  if (opts.kind === 'template') {
+    for (const [from, to] of Object.entries(GENERATED_TEMPLATE_RENAMES)) {
+      const fromPath = join(destination, from);
+      if (existsSync(fromPath)) renameSync(fromPath, join(destination, to));
+    }
+  }
   const fileCount = countFiles(destination);
 
   emit({

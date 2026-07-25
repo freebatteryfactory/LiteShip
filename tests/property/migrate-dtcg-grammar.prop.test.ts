@@ -23,7 +23,14 @@ const finiteIntegerArb = fc.integer({ min: -100_000, max: 100_000 });
 
 /** Independent oracle for the adapter's length-delimited nested-path projection. */
 function encodedNestedTokenName(group: string, token: string): string {
-  return `dtcg-path-${group.length}-${group}-${token.length}-${token}`;
+  return `dtcg-path-${[group, token]
+    .map((segment) => {
+      const codeUnits = Array.from({ length: segment.length }, (_, index) =>
+        segment.charCodeAt(index).toString(16).padStart(4, '0'),
+      ).join('');
+      return `${segment.length}-${codeUnits}`;
+    })
+    .join('-')}`;
 }
 
 const scalarCaseArb: fc.Arbitrary<ScalarCase> = fc.oneof(
@@ -84,6 +91,10 @@ const invalidScalarCaseArb = fc.oneof(
   fc.constant({ type: 'dimension', value: { value: 8, unit: 'px', ignored: true } }),
   fc.constant({ type: 'duration', value: { value: 100, unit: 'px' } }),
   fc.constant({ type: 'duration', value: { value: Number.POSITIVE_INFINITY, unit: 'ms' } }),
+  fc.tuple(fc.integer({ min: -100_000, max: -1 }), fc.constantFrom('ms', 's')).map(([value, unit]) => ({
+    type: 'duration',
+    value: { value, unit },
+  })),
   fc.integer({ min: 1001, max: 100_000 }).map((value) => ({ type: 'fontWeight', value })),
   fc.constant({ type: 'fontFamily', value: [] }),
   fc.constant({ type: 'cubicBezier', value: [-0.01, 0, 0.5, 1] }),

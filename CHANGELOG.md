@@ -4,6 +4,20 @@ All notable changes to LiteShip. The format follows [Keep a Changelog](https://k
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.21.0] (unreleased)
+
+### Changed
+
+- **Assurance authority admission.** Pull-request quick checks ratchet deterministic,
+  continuously available evidence; addressed mutation and MC/DC receipts are admitted
+  by their isolated exhaustive campaign instead of being required before that campaign
+  can run. The public gauntlet gate surface records its evidence dependency so cached
+  verdicts cannot outlive the facade manifest they inspect.
+- **Consumer and migration edge closure.** Package-manager discovery follows workspace
+  ownership, all value-taking flags reject blank values, template fragments restore
+  packaged dotfiles, and migration adapters refuse non-injective CSS/DTCG names and
+  invalid negative durations.
+
 ## [0.20.0] (unreleased)
 
 The **framework overhaul** wave: one brand, one grammar, one import path. This is a

@@ -6,7 +6,7 @@
 One app, the cast family together: worker, GPU, stream, and LLM client
 directives, five pages driven from the same boundary/token/theme definitions.
 
-When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.20.0`.
+When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.21.0`.
 
 ## Run it
 
@@ -48,7 +48,7 @@ pnpm dev
   `Easing.spring`, so the curve is identical (Law 4). Reduced-motion settles to the
   final pose with no tween; the continuous tween never patches the graph.
 - **`/motion-chain`** — the multi-step motion algebra cookbook (#141): ONE authored
-  `Reveal.chain` (`src/server/motion-chain.ts`) — a **seq** (the rise) *followed by* a
+  `Reveal.chain` (`src/server/motion-chain.ts`) — a **seq** (the rise) _followed by_ a
   **choice** that picks the terminal hue by `viewport.width`. `lowerRevealChain` builds
   one graph + a `TransitionProgram`; `interpretProgram` lowers it to REAL multi-offset
   keyframes + per-window sub-samplers (distinct windows, not the old two-endpoint

@@ -90,6 +90,26 @@ describe('assurance inventory', () => {
     expect(assuranceRegressions(inventory, baseline)).toEqual([]);
   });
 
+  it('keeps live mutation and MC/DC receipts out of quick authority and fail-closed in admission', () => {
+    const inventory = buildAssuranceInventory(fixture());
+    const baseline = baselineFromInventory(inventory);
+    const artificiallyAdmitted = {
+      ...baseline,
+      packages: baseline.packages.map((entry) => ({
+        ...entry,
+        missingEvidence: entry.missingEvidence.filter((gap) => gap !== 'mutation' && gap !== 'mcdc'),
+      })),
+    };
+
+    expect(assuranceRegressions(inventory, artificiallyAdmitted)).toEqual([]);
+    expect(assuranceRegressions(inventory, artificiallyAdmitted, { requireSemanticAssurance: true })).toEqual(
+      expect.arrayContaining([
+        { package: '@liteship/core', kind: 'evidence-gap', evidenceGap: 'mcdc' },
+        { package: '@liteship/core', kind: 'evidence-gap', evidenceGap: 'mutation' },
+      ]),
+    );
+  });
+
   it('fails closed when positional metrics are detached from the canonical catalog', () => {
     const inventory = buildAssuranceInventory(fixture());
     const baseline = baselineFromInventory(inventory);
@@ -295,6 +315,22 @@ describe('assurance inventory', () => {
         'tests/unit/core/value.test.ts',
         "import { value } from '@liteship/core';\ntest('value', () => expect(value).toBe(1));\n",
       ),
+    );
+  });
+
+  it('reports generated source separately without charging mechanical bytes to authored density', () => {
+    const root = fixture();
+    writeFileSync(
+      join(root, 'packages', 'core', 'src', 'catalog.generated.ts'),
+      'export const generatedOne = 1;\nexport const generatedTwo = 2;\n',
+    );
+    const inventory = buildAssuranceInventory(root);
+    expect(inventory.totals.sourceRoles.generated).toBeGreaterThan(0);
+    expect(inventory.totals.sourceLoc).toBe(
+      inventory.totals.sourceRoles.product +
+        inventory.totals.sourceRoles.verificationEngine +
+        inventory.totals.sourceRoles.rustWasm +
+        inventory.totals.sourceRoles.workflowAuthority,
     );
   });
 });

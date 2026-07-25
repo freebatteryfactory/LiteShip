@@ -244,15 +244,25 @@ function isSupportedDtcgName(name: string): boolean {
 }
 
 /**
- * Preserve top-level token names and encode nested group paths into one valid,
- * collision-resistant CSS custom-property suffix. DTCG `$root` denotes the
- * containing group and therefore contributes no additional public segment.
+ * Encode every accepted semantic path into one valid, injective ASCII CSS
+ * identifier. Encoding top-level and nested names through the same function is
+ * load-bearing: a raw top-level name must never collide with a nested-path
+ * projection, and whitespace/Unicode in a valid DTCG name must not leak into a
+ * CSS custom-property identifier. DTCG `$root` denotes the containing group and
+ * therefore contributes no additional public segment.
  */
 function tokenNameForPath(path: readonly string[]): string {
   const semanticPath = path.at(-1) === '$root' ? path.slice(0, -1) : path;
-  if (semanticPath.length === 0) return 'root';
-  if (semanticPath.length === 1) return semanticPath[0]!;
-  return `dtcg-path-${semanticPath.map((segment) => `${segment.length}-${segment}`).join('-')}`;
+  if (semanticPath.length === 0) return 'dtcg-root';
+  const encoded = semanticPath.map((segment) => {
+    // Preserve every JavaScript/JSON string exactly. TextEncoder replaces lone
+    // surrogates, which would make distinct authored names collide.
+    const hex = Array.from({ length: segment.length }, (_, index) =>
+      segment.charCodeAt(index).toString(16).padStart(4, '0'),
+    ).join('');
+    return `${segment.length}-${hex}`;
+  });
+  return `dtcg-path-${encoded.join('-')}`;
 }
 
 /** An alias reference (`{group.token}`) or a `calc()` expression can't be lowered losslessly. */
@@ -320,6 +330,9 @@ function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
       !units.has(value['unit'])
     ) {
       return { ok: false, reason: `${type} requires { value: finite number, unit: ${[...units].join('|')} }` };
+    }
+    if (type === 'duration' && value['value'] < 0) {
+      return { ok: false, reason: 'duration requires a non-negative value' };
     }
     return { ok: true, value: `${value['value']}${value['unit']}` };
   }

@@ -22,20 +22,38 @@ function fixture(source: string): string {
 }
 
 describe('test constitution', () => {
-  it('detects executable timing and source-byte coupling but ignores prose', () => {
+  it('detects executable timing and raw source assertions but ignores prose and semantic parsing', () => {
     const root = fixture(`
       const prose = 'setTimeout Date.now readFileSync';
       setTimeout(() => {}, 10);
       Date.now();
       performance.now();
       new Date();
-      readFileSync('packages/core/src/index.ts', 'utf8');
+      const raw = readFileSync('packages/core/src/index.ts', 'utf8');
+      JSON.parse(readFileSync('fixture.json', 'utf8'));
+      verifyReceipt(readFileSync('receipt.json', 'utf8'));
+      expect(raw).toContain('implementation spelling');
     `);
     expect(scanTestConstitution(root).map(({ kind }) => kind)).toEqual([
       'ambient-clock',
       'ambient-clock',
       'ambient-clock',
       'real-timer',
+      'source-byte-oracle',
+    ]);
+  });
+
+  it('follows raw-text aliases and reader helpers into brittle string operations', () => {
+    const root = fixture(`
+      const read = (path: string) => readFileSync(path, 'utf8');
+      const original = read('packages/core/src/index.ts');
+      const alias = original;
+      expect(alias.indexOf('first')).toBeLessThan(alias.indexOf('second'));
+      expect(alias).toMatch(/private implementation/u);
+    `);
+    expect(scanTestConstitution(root).map(({ kind }) => kind)).toEqual([
+      'source-byte-oracle',
+      'source-byte-oracle',
       'source-byte-oracle',
     ]);
   });

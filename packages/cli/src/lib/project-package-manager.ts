@@ -10,7 +10,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 export type ProjectPackageManager = 'npm' | 'pnpm';
 
@@ -53,19 +53,49 @@ export function detectProjectPackageManager(
   cwd: string,
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): ProjectPackageManagerDetection {
-  const manifestPath = resolve(cwd, 'package.json');
-  if (existsSync(manifestPath)) {
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { readonly packageManager?: unknown };
-    const declared = managerNameFromSpecifier(manifest.packageManager);
-    if (declared !== null) return classifyManager(declared, 'packageManager');
-  }
+  let directory = resolve(cwd);
+  let first = true;
+  for (;;) {
+    const manifestPath = resolve(directory, 'package.json');
+    let manifest: { readonly packageManager?: unknown; readonly workspaces?: unknown } | undefined;
+    if (existsSync(manifestPath)) {
+      manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+        readonly packageManager?: unknown;
+        readonly workspaces?: unknown;
+      };
+    }
+    const ownsNestedProjects =
+      first ||
+      existsSync(resolve(directory, 'pnpm-workspace.yaml')) ||
+      (manifest !== undefined &&
+        (Array.isArray(manifest.workspaces) ||
+          (typeof manifest.workspaces === 'object' && manifest.workspaces !== null)));
+    if (ownsNestedProjects && manifest !== undefined) {
+      const declared = managerNameFromSpecifier(manifest.packageManager);
+      if (declared !== null) return classifyManager(declared, 'packageManager');
+    }
 
-  const lockfileManagers = [
-    ...(existsSync(resolve(cwd, 'pnpm-lock.yaml')) ? ['pnpm'] : []),
-    ...(existsSync(resolve(cwd, 'package-lock.json')) ? ['npm'] : []),
-    ...(existsSync(resolve(cwd, 'yarn.lock')) ? ['yarn'] : []),
-  ];
-  if (lockfileManagers.length === 1) return classifyManager(lockfileManagers[0]!, 'lockfile');
+    const lockfileManagers = ownsNestedProjects
+      ? [
+          ...(existsSync(resolve(directory, 'pnpm-lock.yaml')) ? ['pnpm'] : []),
+          ...(existsSync(resolve(directory, 'package-lock.json')) ? ['npm'] : []),
+          ...(existsSync(resolve(directory, 'yarn.lock')) ? ['yarn'] : []),
+        ]
+      : [];
+    if (lockfileManagers.length === 1) return classifyManager(lockfileManagers[0]!, 'lockfile');
+    if (lockfileManagers.length > 1) {
+      return {
+        kind: 'unsupported',
+        manager: `conflicting lockfiles (${lockfileManagers.sort().join(', ')})`,
+        source: 'lockfile',
+      };
+    }
+
+    const parent = dirname(directory);
+    if (parent === directory) break;
+    directory = parent;
+    first = false;
+  }
 
   const invoking = managerNameFromUserAgent(env['npm_config_user_agent']);
   if (invoking !== null) return classifyManager(invoking, 'user-agent');
@@ -77,12 +107,12 @@ export function detectProjectPackageManager(
 export function unsupportedProjectPackageManagerMessage(
   detection: Extract<ProjectPackageManagerDetection, { readonly kind: 'unsupported' }>,
 ): string {
-  return `detected unsupported ${detection.manager} project via ${detection.source}; LiteShip 0.19 project delegation supports npm and pnpm`;
+  return `detected unsupported ${detection.manager} project via ${detection.source}; LiteShip project delegation supports npm and pnpm`;
 }
 
 /** One shared remediation for unsupported consumer project managers. */
 export const UNSUPPORTED_PROJECT_PACKAGE_MANAGER_HINT =
-  'LiteShip 0.19 supports npm and pnpm project delegation; use one of those managers for this project';
+  'LiteShip supports npm and pnpm project delegation; use one of those managers for this project';
 
 /** Build the manager-specific argv that executes one project-local binary. */
 export function projectBinaryInvocation(

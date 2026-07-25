@@ -21,11 +21,12 @@ export function takeFlagValue(argv: readonly string[], flag: string | readonly s
         const next = argv[index + 1];
         return {
           present: true,
-          value: next === undefined || next.startsWith('-') ? undefined : next,
+          value: next === undefined || next.startsWith('-') || next.trim().length === 0 ? undefined : next,
         };
       }
       if (token.startsWith(`${name}=`)) {
-        return { present: true, value: token.slice(name.length + 1) };
+        const value = token.slice(name.length + 1);
+        return { present: true, value: value.trim().length === 0 ? undefined : value };
       }
     }
   }

@@ -56,6 +56,8 @@ describe.sequential('liteship add packaged fragments', () => {
     expect(readFileSync(copied)).toEqual(
       readFileSync(resolve(REPO, 'packages/create-liteship/templates/default/package.json')),
     );
+    expect(existsSync(join(cwd, 'default', '.gitignore'))).toBe(true);
+    expect(existsSync(join(cwd, 'default', 'gitignore'))).toBe(false);
   });
 
   it('preserves the existing example-fragment capability from packaged projections', async () => {

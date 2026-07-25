@@ -10,17 +10,13 @@
  * valid npm name derived from the target directory.
  */
 
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, renameSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeRepoPath } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { ValidationError } from '@liteship/error';
-
-/** Files stored under a neutral name in the template, restored on copy. */
-const TEMPLATE_RENAMES: Readonly<Record<string, string>> = {
-  gitignore: '.gitignore',
-};
+import { restoreTemplateNames } from './template-renames.js';
 
 /** Result of a successful scaffold: where it went and what was written. */
 export interface ScaffoldResult {
@@ -97,10 +93,7 @@ export function scaffold(targetDir: string, options: ScaffoldOptions = {}): Scaf
   cpSync(templateDir, projectDir, { recursive: true });
 
   // Restore names npm strips from published tarballs.
-  for (const [from, to] of Object.entries(TEMPLATE_RENAMES)) {
-    const fromPath = join(projectDir, from);
-    if (existsSync(fromPath)) renameSync(fromPath, join(projectDir, to));
-  }
+  restoreTemplateNames(projectDir);
 
   // Stamp the project name into package.json.
   const projectName = projectNameFromDir(projectDir);

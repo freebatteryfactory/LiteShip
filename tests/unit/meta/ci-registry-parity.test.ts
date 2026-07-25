@@ -333,6 +333,10 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(windows.indexOf('pnpm run build')).toBeLessThan(windows.indexOf('pnpm run test:affected'));
     expect(linux).toContain('LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json');
     expect(windows).toContain('LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json');
+    expect(windows).toContain('LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-windows-affected.xml');
+    expect(windows).toContain('if: always()');
+    expect(windows).toContain('name: vitest-results-pr-windows-affected');
+    expect(windows).toContain('path: reports/vitest-results-pr-windows-affected.xml');
     expect(linux).not.toContain('LITESHIP_AFFECTED_PLAN:');
     expect(windows).not.toContain('LITESHIP_AFFECTED_PLAN:');
     expect(linux).toContain('name: affected-plan');

@@ -1,5 +1,8 @@
+import { mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { assertAffectedPlanHead, createAffectedPlan, readAffectedPlanFile, readGitSha } from './affected-plan.js';
 import { parseAffectedTestPlan } from './lib/affected-test-plan.js';
+import { affectedVitestExecution } from './lib/affected-test-execution.js';
 import { runPnpm } from './support/pnpm-process.js';
 
 const cwd = process.cwd();
@@ -20,9 +23,10 @@ if (supplied !== undefined || suppliedPath !== undefined) assertAffectedPlanHead
 process.stdout.write(`[affected] ${plan.mode}: ${plan.reason}\n`);
 if (plan.affectedPackages.length > 0)
   process.stdout.write(`[affected] packages: ${plan.affectedPackages.join(', ')}\n`);
-const args =
-  plan.mode === 'full' ? ['test'] : ['exec', 'vitest', 'run', '--config', 'vitest.config.ts', ...plan.testFiles];
-const result = await runPnpm(args, { cwd });
+const junitPath = process.env['LITESHIP_AFFECTED_JUNIT_PATH'];
+const execution = affectedVitestExecution(plan.mode, plan.testFiles, junitPath);
+if (execution.junitPath !== undefined) mkdirSync(dirname(resolve(cwd, execution.junitPath)), { recursive: true });
+const result = await runPnpm(execution.args, { cwd });
 process.stdout.write(result.stdout);
 process.stderr.write(result.stderr);
 process.exit(result.code);

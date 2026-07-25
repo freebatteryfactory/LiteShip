@@ -473,6 +473,24 @@ describe('fromCSSCustomProperties — diagnostic teeth (every code the adapter e
 });
 
 describe('fromCSSCustomProperties — degenerate inputs', () => {
+  it('refuses non-injective plain/prefixed custom-property names atomically', () => {
+    const result = fromCSSCustomProperties(`
+      :root {
+        --foo: red;
+        --liteship-foo: blue;
+      }
+    `);
+    expect(result.tokens).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.malformedInput,
+        severity: 'error',
+        path: ['--foo', '--liteship-foo'],
+      }),
+    );
+  });
+
   it('returns an empty result for CSS with no recognized custom-property rules', () => {
     const result = fromCSSCustomProperties(`.btn { color: red; }`);
     expect(result).toEqual({ boundaries: [], tokens: [], themes: [], diagnostics: [] });

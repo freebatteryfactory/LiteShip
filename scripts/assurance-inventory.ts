@@ -21,7 +21,9 @@ if (process.argv.includes('--write-baseline')) {
 mkdirSync(dirname(reportPath), { recursive: true });
 writeFileSync(reportPath, `${JSON.stringify(inventory, null, 2)}\n`, 'utf8');
 const baseline = parseAssuranceBaseline(JSON.parse(readFileSync(baselinePath, 'utf8')) as unknown);
-const regressions = assuranceRegressions(inventory, baseline);
+const regressions = assuranceRegressions(inventory, baseline, {
+  requireSemanticAssurance: process.argv.includes('--require-semantic'),
+});
 if (regressions.length > 0) {
   for (const regression of regressions) {
     process.stderr.write(
