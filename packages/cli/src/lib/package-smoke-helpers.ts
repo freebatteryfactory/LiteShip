@@ -72,13 +72,17 @@ export function packedLiteshipBin(consumerDir: string): string {
 }
 
 /**
- * `PEER_INSTALLS` specifiers → a `{name: version}` map. Splits on the LAST `@` so
- * a scoped specifier (`@scope/pkg@1.0.0`) keeps its leading scope `@`.
+ * `PEER_INSTALLS` specifiers → a `{name: version}` map. The separator follows npm
+ * package-name grammar, so scoped names and alias specs both remain intact.
  */
 export function peerDependenciesOnly(peerInstalls: readonly string[]): Record<string, string> {
   return Object.fromEntries(
     peerInstalls.map((specifier) => {
-      const atIndex = specifier.lastIndexOf('@');
+      const packageEnd = specifier.startsWith('@') ? specifier.indexOf('/') + 1 : 0;
+      const atIndex = specifier.indexOf('@', packageEnd);
+      if (atIndex <= 0 || atIndex === specifier.length - 1) {
+        throw IntegrityError('package-smoke peer installs', `Invalid pinned peer install specifier: ${specifier}`);
+      }
       return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
     }),
   );

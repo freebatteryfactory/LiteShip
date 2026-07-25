@@ -106,6 +106,7 @@ export const CI_LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
     profile: 'ci-parallel-preflight',
     checkIds: [
       'check/typecheck',
+      'check/typescript-toolchain-qualification',
       'check/lint',
       'check/lint-structural',
       'check/docs-fast',

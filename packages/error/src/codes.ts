@@ -466,8 +466,13 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
   ),
   'check/typecheck': check(
     'TypeScript typecheck',
-    'The package, scripts, and tests projects all typecheck (tsc --build + scripts + tests).',
-    'fix the type errors (tsc --build + scripts + tests projects).',
+    'The package, scripts, and tests projects all typecheck through the bounded native TypeScript 7 compiler.',
+    'fix the native TypeScript errors in the build, scripts, and tests projects.',
+  ),
+  'check/typescript-toolchain-qualification': check(
+    'TypeScript dual-toolchain qualification',
+    'TypeScript 7 and the TypeScript 6 compatibility authority agree on admitted diagnostics, declaration graphs, and emitted package surfaces.',
+    'classify the TypeScript 6/7 mismatch or restore the pinned toolchain, emitted declaration surface, or worker ceiling.',
   ),
   'check/docs': check(
     'TSDoc freshness (docs:check)',

@@ -41,13 +41,23 @@ describe('packedLiteshipBin — facade owns the public executable', () => {
   });
 });
 
-describe('peerDependenciesOnly — PEER_INSTALLS → {name: version} (split on LAST @)', () => {
+describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
   it('keeps the leading scope @ for a scoped specifier', () => {
     expect(peerDependenciesOnly(['@scope/pkg@1.2.3'])).toEqual({ '@scope/pkg': '1.2.3' });
   });
 
   it('handles an unscoped specifier', () => {
     expect(peerDependenciesOnly(['react@18.0.0'])).toEqual({ react: '18.0.0' });
+  });
+
+  it('preserves an npm alias target containing scoped at-signs', () => {
+    expect(peerDependenciesOnly(['typescript@npm:@typescript/typescript6@6.0.2'])).toEqual({
+      typescript: 'npm:@typescript/typescript6@6.0.2',
+    });
+  });
+
+  it('refuses an unpinned package name', () => {
+    expect(() => peerDependenciesOnly(['typescript'])).toThrow('Invalid pinned peer install specifier');
   });
 
   it('maps every specifier in the list', () => {

@@ -29,7 +29,7 @@ export interface ScriptExemption {
  */
 export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
   // ── Build / gen / compile workflows (produce artifacts) ────────────────────
-  { script: 'build', reason: 'Build workflow: compiles every package to dist via tsc --build.' },
+  { script: 'build', reason: 'Build workflow: compiles every package to dist through the bounded native tsc owner.' },
   { script: 'build:wasm', reason: 'Build workflow: compiles the WASM compute artifacts.' },
   {
     script: 'capsule:compile',

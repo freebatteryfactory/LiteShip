@@ -1,7 +1,7 @@
 /**
  * Workspace verify — first-run aggregate. Sequence:
  *   1. doctor (preflight checks)
- *   2. build (tsc --build)
+ *   2. build (bounded native TypeScript 7 project build)
  *   3. test (fast inner loop)
  *   4. LiteShip quick profile (the registry-backed local coherence claim)
  *
@@ -36,7 +36,7 @@ export const VERIFY_PHASES: readonly VerifyPhase[] = [
   {
     name: 'build',
     cmd: ['pnpm', 'run', 'build'],
-    hint: 'tsc --build across the whole workspace.',
+    hint: 'Bounded native TypeScript 7 project build across the whole workspace.',
   },
   {
     name: 'test',

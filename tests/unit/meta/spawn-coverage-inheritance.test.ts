@@ -2,9 +2,8 @@
  * Drift guard — asserts scripts/lib/spawn.ts preserves NODE_V8_COVERAGE
  * (and process.env in general) when spawning children.
  *
- * If a future commit adds an `env: { ... }` override to spawnArgv or
- * startSpawn, this test fails immediately. Subprocess coverage capture
- * depends on uninterrupted env inheritance.
+ * Subprocess coverage capture depends on uninterrupted env inheritance. The
+ * cold-build launcher separately proves bounded additions merge over the parent.
  *
  * @module
  */
@@ -14,6 +13,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnArgv } from '../../../scripts/lib/spawn.js';
+import { spawnArgvCaptureWithEnv } from '../../../packages/command/src/host/launcher.js';
 
 describe('spawn coverage inheritance', () => {
   it('children inherit NODE_V8_COVERAGE from parent', async () => {
@@ -50,6 +50,29 @@ describe('spawn coverage inheritance', () => {
       // Match the unique tmpdir suffix — survives even after Node's path
       // resolution and Windows separator rewriting.
       expect(result.stderrTail).toContain('liteship-cov-marker-');
+    } finally {
+      delete process.env.NODE_V8_COVERAGE;
+      rmSync(covDir, { recursive: true, force: true });
+    }
+  });
+
+  it('env additions preserve inherited coverage while supplying the bounded child setting', async () => {
+    const covDir = mkdtempSync(join(tmpdir(), 'liteship-parent-coverage-'));
+    process.env.NODE_V8_COVERAGE = covDir;
+    try {
+      const result = await spawnArgvCaptureWithEnv(
+        'node',
+        [
+          '-e',
+          'process.stdout.write(`${process.env.NODE_V8_COVERAGE ?? "MISSING"}|${process.env.GOMAXPROCS ?? "MISSING"}`)',
+        ],
+        {
+          envAdditions: { GOMAXPROCS: '2' },
+        },
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('liteship-parent-coverage');
+      expect(result.stdout).toContain('|2');
     } finally {
       delete process.env.NODE_V8_COVERAGE;
       rmSync(covDir, { recursive: true, force: true });

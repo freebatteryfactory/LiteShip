@@ -20,8 +20,8 @@
  *       snapshot. Each floor sits far below the current tree with margin, so it
  *       reds only on a genuine collapse (references emptied, globs narrowed,
  *       snapshot gutted), not on ordinary churn.
- *   (c) VACUITY TRIPWIRE — the typecheck script's first leg must be exactly
- *       `tsc --build` (the exact form the S0.3 fix installed). A revert to a
+ *   (c) VACUITY TRIPWIRE — the typecheck script's first leg must invoke the
+ *       bounded native tsc owner in build mode. A revert to a
  *       `-p tsconfig.json` / `--noEmit` solution-file invocation reds here.
  *
  * Deviations from a literal reading of the disposition, and why:
@@ -42,7 +42,6 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { createRequire } from 'node:module';
 import fg from 'fast-glob';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
@@ -57,8 +56,7 @@ import {
 } from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const localRequire = createRequire(import.meta.url);
-const TSC = localRequire.resolve('typescript/bin/tsc');
+const TSC = resolve(REPO, 'node_modules', '.bin', process.platform === 'win32' ? 'tsc.cmd' : 'tsc');
 
 // Every repo TRUTH this canary asserts against — root tsconfig references, each
 // package's compile inputs, the tests project's include, the api-surface
@@ -87,7 +85,7 @@ interface TscResult {
  * to stdout, so the combined stream is scanned for the diagnostic code.
  */
 async function runTscBuild(projectPath: string): Promise<TscResult> {
-  const result = await spawnArgvCapture(process.execPath, [TSC, '--build', projectPath]);
+  const result = await spawnArgvCapture(TSC, ['--build', projectPath]);
   return { status: result.exitCode, output: result.stdout + result.stderr };
 }
 
@@ -213,12 +211,12 @@ describe('(b) coverage floors — gates cover a non-trivial surface', () => {
 // (c) Vacuity tripwire — the exact S0.3 regression shape reds here.
 // --------------------------------------------------------------------------
 
-describe('(c) vacuity tripwire — typecheck leg 1 is `tsc --build`', () => {
+describe('(c) vacuity tripwire — typecheck leg 1 is native tsc build mode', () => {
   const legs = typecheckLegs();
   const leg1 = legs[0] ?? '';
 
-  it('leg 1 is exactly `tsc --build` (build-mode, references-driven)', () => {
-    expect(leg1).toBe('tsc --build');
+  it('leg 1 is exactly the bounded native tsc owner in build mode', () => {
+    expect(leg1).toBe('pnpm exec tsx scripts/native-tsc.ts -- --build');
   });
 
   it('leg 1 is not a solution-file `-p` / `--noEmit` invocation (the S0.3 vacuous form)', () => {

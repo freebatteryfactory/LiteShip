@@ -55,6 +55,8 @@ export const PEER_INSTALLS: readonly string[] = [
   'remotion@4.0.440',
   'fast-check@4.7.0',
   // @liteship/audit's runtime deps — the engine parses + globs the target repo.
-  'typescript@5.9.3',
+  // Keep the ordinary `typescript` dependency identity for API consumers while
+  // selecting the compatibility implementation explicitly.
+  'typescript@npm:@typescript/typescript6@6.0.2',
   'fast-glob@3.3.3',
 ];

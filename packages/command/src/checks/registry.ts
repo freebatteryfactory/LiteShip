@@ -143,7 +143,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   {
     id: 'check/typecheck',
     title: 'TypeScript typecheck',
-    claim: 'The package, scripts, and tests projects all typecheck (tsc --build + scripts + tests).',
+    claim: 'The package, scripts, and tests projects all typecheck through the bounded native TypeScript 7 compiler.',
     owner: 'tsconfig.json',
     command: 'pnpm run typecheck',
     inputs: [
@@ -162,7 +162,31 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     cache: 'content-addressed',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/gate-canaries.test.ts',
-    remediation: 'fix the type errors (tsc --build + scripts + tests projects).',
+    remediation: 'fix the native TypeScript errors in the build, scripts, and tests projects.',
+  },
+  {
+    id: 'check/typescript-toolchain-qualification',
+    title: 'TypeScript dual-toolchain qualification',
+    claim:
+      'TypeScript 7 and the TypeScript 6 compatibility authority agree on admitted diagnostics, declaration graphs, and emitted package surfaces.',
+    owner: 'scripts/typescript-toolchain-qualification.ts',
+    command: 'pnpm run typecheck:qualify',
+    inputs: [
+      'package.json',
+      'pnpm-lock.yaml',
+      'scripts/native-tsc.ts',
+      'scripts/typescript-toolchain-qualification.ts',
+      'scripts/lib/typescript-toolchain-qualification.ts',
+      'tests/fixtures/typescript-dual-toolchain/**',
+    ],
+    profiles: ['release'],
+    platforms: ['linux'],
+    timeoutMs: 120_000,
+    cache: 'none',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/typescript-toolchain-qualification.test.ts',
+    remediation:
+      'classify the TypeScript 6/7 mismatch or restore the pinned toolchain, emitted declaration surface, or worker ceiling.',
   },
   // ── The full lane (aggregate tests + the blocking gate family) ─────────────
   {

@@ -158,7 +158,7 @@ interface RootTsconfig {
 
 /**
  * The `./packages/<dir>` references declared in the root `tsconfig.json` —
- * the build topology (`build` is a bare `tsc --build`). Only `./packages/<dir>`
+ * the build topology (the native tsc owner runs build mode). Only `./packages/<dir>`
  * references are counted; nested or external paths are ignored.
  */
 export function rootTsconfigReferenceDirs(): readonly string[] {
@@ -220,7 +220,7 @@ export function lintGlobs(): readonly string[] {
 
 /**
  * The `&&`-chained legs of the root `typecheck` script, each trimmed. Leg 0 is
- * the build-mode `tsc --build` the S0.3 vacuity tripwire pins.
+ * the build-mode native tsc command the S0.3 vacuity tripwire pins.
  */
 export function typecheckLegs(): readonly string[] {
   return (rootManifest().scripts.typecheck ?? '').split('&&').map((leg) => leg.trim());

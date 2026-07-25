@@ -26,7 +26,15 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'build',
     description: 'Compile the workspace.',
-    scripts: ['build', 'build:wasm', 'typecheck', 'typecheck:scripts', 'typecheck:tests', 'typecheck:spine'],
+    scripts: [
+      'build',
+      'build:wasm',
+      'typecheck',
+      'typecheck:scripts',
+      'typecheck:tests',
+      'typecheck:spine',
+      'typecheck:qualify',
+    ],
   },
   {
     name: 'test',

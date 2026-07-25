@@ -309,7 +309,7 @@ describe('the check-governance meta-gates self-prove → blocking authority', ()
 // ── The gauntlet-phases projection is PINNED to the exact pre-change order ─────
 
 /**
- * The 43 gauntlet phase labels, in execution order — captured from the executor's
+ * The 48 gauntlet phase labels, in execution order — reviewed against the executor's
  * dry-run BEFORE `gauntletPhases` became a projection of `CHECK_REGISTRY`. The
  * projection must reproduce this list byte-for-byte (identical labels, identical order):
  * a divergence here means the projection or the registry drifted the release sequence.
@@ -319,6 +319,7 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
   'build',
   'capsule:compile',
   'typecheck',
+  'typecheck:qualify',
   'lint',
   'lint:structural',
   'docs:check:fast',
@@ -365,11 +366,11 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
 ];
 
 describe('the gauntlet-phases projection preserves the reviewed release order', () => {
-  it('projects EXACTLY the pinned 47 labels in the pinned order', () => {
+  it('projects EXACTLY the pinned 48 labels in the pinned order', () => {
     expect(gauntletPhaseLabels()).toEqual(PINNED_GAUNTLET_LABELS);
   });
 
-  it('has 47 phases (the release-profile projection of CHECK_REGISTRY + the executor-only phases)', () => {
-    expect(gauntletPhaseLabels()).toHaveLength(47);
+  it('has 48 phases (the release-profile projection of CHECK_REGISTRY + the executor-only phases)', () => {
+    expect(gauntletPhaseLabels()).toHaveLength(48);
   });
 });

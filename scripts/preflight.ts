@@ -61,7 +61,7 @@ const STEPS: readonly PreflightStep[] = [
   {
     label: 'typecheck',
     script: 'typecheck',
-    remedy: 'fix the type errors above (tsc --build + scripts + tests projects)',
+    remedy: 'fix the native TypeScript errors above (build + scripts + tests projects)',
   },
   {
     label: 'docs:check',
@@ -145,7 +145,9 @@ async function main(argv: readonly string[]): Promise<void> {
   console.log(`\n${RULE}`);
   console.log('  PREFLIGHT PASSED');
   console.log(RULE);
-  console.log(`\n  ${STEPS.length} static checks${testTargets.length > 0 ? ' + targeted tests' : ''} green in ${formatDuration(totalMs)}.`);
+  console.log(
+    `\n  ${STEPS.length} static checks${testTargets.length > 0 ? ' + targeted tests' : ''} green in ${formatDuration(totalMs)}.`,
+  );
   console.log('  Necessary, not sufficient — integration owns the global gates.\n');
 }
 

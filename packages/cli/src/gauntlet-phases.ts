@@ -84,6 +84,7 @@ const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
   { phase: { label: 'build', command: 'pnpm run build' } },
   { phase: { label: 'capsule:compile', command: 'pnpm run capsule:compile' } },
   { checkId: 'check/typecheck', label: 'typecheck' },
+  { checkId: 'check/typescript-toolchain-qualification', label: 'typecheck:qualify' },
   { checkId: 'check/lint', label: 'lint' },
   { checkId: 'check/lint-structural', label: 'lint:structural' },
   { checkId: 'check/docs-fast', label: 'docs:check:fast' },
@@ -247,6 +248,7 @@ export const CI_PARALLEL_TEST_SHARD_COUNT = 4;
 
 export const CI_PARALLEL_PREFLIGHT_LABELS: readonly string[] = [
   'typecheck',
+  'typecheck:qualify',
   'lint',
   'lint:structural',
   'docs:check:fast',

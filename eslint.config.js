@@ -215,6 +215,7 @@ export default tseslint.config(
       // (1) Canonical helper + thin re-exports. CUT A1 capstone-1: the canonical
       // spawn impl now lives in @liteship/command/host; cli/lib/spawn.ts is a re-export.
       'packages/command/src/host/spawn.ts',
+      'packages/command/src/host/launcher.ts',
       'packages/cli/src/lib/spawn.ts',
       'scripts/lib/spawn.ts',
       'scripts/support/pnpm-process.ts',

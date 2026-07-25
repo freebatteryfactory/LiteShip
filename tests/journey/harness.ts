@@ -31,7 +31,7 @@ import { fileURLToPath } from 'node:url';
 import { PACKAGES, PEER_INSTALLS } from '../../packages/command/src/commands/package-smoke-registry.js';
 import { scaffold } from '../../packages/create-liteship/src/scaffold.js';
 import { packInWorkspace } from '../support/pack.js';
-import { tarballFileUrl } from '../../packages/cli/src/lib/package-smoke-helpers.js';
+import { peerDependenciesOnly, tarballFileUrl } from '../../packages/cli/src/lib/package-smoke-helpers.js';
 import { verifyReleaseArtifactBundle } from '../../packages/cli/src/lib/release-artifact-bundle.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.js';
@@ -121,15 +121,13 @@ export function boundedJourneyOutput(...chunks: readonly string[]): string {
 }
 
 /**
- * `PEER_INSTALLS` specifier (`name@version`, scope-safe on the LAST `@`) → its exact
- * pinned version. Used to install the consumer's `astro` / `typescript` at the exact
+ * `PEER_INSTALLS` specifier → its exact pinned version. Used to install the
+ * consumer's `astro` / `typescript` at the exact
  * versions the warm store already holds, maximizing offline hits.
  */
 export function peerVersion(name: string): string {
-  for (const specifier of PEER_INSTALLS) {
-    const at = specifier.lastIndexOf('@');
-    if (specifier.slice(0, at) === name) return specifier.slice(at + 1);
-  }
+  const version = peerDependenciesOnly(PEER_INSTALLS)[name];
+  if (version !== undefined) return version;
   throw new JourneyAssertionError(`PEER_INSTALLS has no pin for ${name}`);
 }
 
