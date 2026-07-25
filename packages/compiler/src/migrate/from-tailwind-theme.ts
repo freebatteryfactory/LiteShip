@@ -356,9 +356,9 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
 
   if (screenEntries.length > 0) {
     // Parse each screen without collapsing relative units. A value that is not a supported
-    // length (`40vw`, `100%`, a malformed number) cannot become a threshold — it
-    // is DROPPED, so surface it as a diagnostic rather than silently losing the
-    // breakpoint (the adapter's no-silent-drift contract).
+    // length (`40vw`, `100%`, a malformed number) cannot become a threshold. One
+    // bad screen refuses the complete boundary transaction; partially retaining
+    // the others would silently change the authored responsive partition.
     const parsed: Array<{ name: string; value: number; input: string }> = [];
     let refuseBoundary = false;
     for (const { name, raw } of screenEntries) {
@@ -367,10 +367,11 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
         diagnostics.push(
           makeMigrationDiagnostic(
             MIGRATE_CODES.unsupportedAtRule,
-            `Tailwind screen "${name}" value "${raw}" is not a supported length (px/em/rem or unitless zero); dropped from the boundary.`,
-            { path: [name] },
+            `Tailwind screen "${name}" value "${raw}" is not a finite non-negative supported length (px/em/rem or unitless zero); the complete breakpoint boundary was refused.`,
+            { path: [name], severity: 'error' },
           ),
         );
+        refuseBoundary = true;
         continue;
       }
       const input =

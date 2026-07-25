@@ -642,9 +642,7 @@ describe('fromMediaQueries — boolean logic (not/or/comma) is rejected, never i
 });
 
 describe('fromMediaQueries — pathological input is caught, not thrown', () => {
-  it('surfaces a constructor ValidationError as a severity:error diagnostic', () => {
-    // 1e400px parses to a NON-finite length; defineBoundary's ThresholdValue
-    // gate rejects it. The adapter must catch the throw, not propagate it.
+  it('refuses a non-finite length at the shared query grammar boundary', () => {
     let result!: ReturnType<typeof fromMediaQueries>;
     expect(() => {
       result = fromMediaQueries(`@media (min-width: 1e400px) { .x { a: b; } }`);
@@ -652,11 +650,10 @@ describe('fromMediaQueries — pathological input is caught, not thrown', () => 
 
     // No boundary was produced (the whole width fold was dropped)...
     expect(result.boundaries).toEqual([]);
-    // ...and the failure is an error-severity diagnostic carrying the cause.
+    // ...and the grammar refusal is an error-severity migration diagnostic.
     const err = result.diagnostics.find((d) => d.severity === 'error');
     expect(err).toBeDefined();
-    expect(err!.code).toBe(MIGRATE_CODES.unsupportedAtRule);
-    expect(err!.cause).toBeDefined();
+    expect(err!.code).toBe(MIGRATE_CODES.unmappableMediaFeature);
   });
 });
 

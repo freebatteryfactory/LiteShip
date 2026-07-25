@@ -207,23 +207,22 @@ describe('fromTailwindTheme — every diagnostic code has teeth', () => {
   });
 
   it('emits unsupported-at-rule for a screen value that is not a supported length', () => {
-    // `40vw` (and any non px/rem/em value) cannot become a threshold; the screen
-    // is dropped, and per the no-silent-drift contract that drop is surfaced.
+    // `40vw` (and any non px/rem/em value) cannot participate in the one ordered
+    // boundary, so the complete breakpoint fold is refused atomically.
     const result = fromTailwindTheme(`@theme { --breakpoint-sm: 640px; --breakpoint-wide: 40vw; }`);
     const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
     expect(d).toBeDefined();
     expect(d!.message).toContain('wide');
     expect(d!.message).toContain('40vw');
-    // The parseable screen still folds into the boundary; only `wide` was dropped.
-    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 640]);
-    expect([...result.boundaries[0]!.states]).toEqual(['base', 'sm']);
+    expect(d!.severity).toBe('error');
+    expect(result.boundaries).toEqual([]);
   });
 
   it('refuses a unitless nonzero breakpoint while accepting unitless zero', () => {
     const refused = fromTailwindTheme(`@theme { --breakpoint-md: 768; }`);
     expect(refused.boundaries).toEqual([]);
     expect(refused.diagnostics).toContainEqual(
-      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'warning' }),
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
     );
 
     const zero = fromTailwindTheme(`@theme { --breakpoint-base: 0; }`);
@@ -232,7 +231,10 @@ describe('fromTailwindTheme — every diagnostic code has teeth', () => {
 
   it('also diagnoses an unsupported value supplied through the screens option', () => {
     const result = fromTailwindTheme(`@theme { --color-x: red; }`, { screens: { huge: '100%' } });
-    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unsupportedAtRule)).toBe(true);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
   });
 
   it('emits non-ascending-thresholds when screens are out of source order', () => {
@@ -265,8 +267,7 @@ describe('fromTailwindTheme — pathological input is caught, not thrown', () =>
     expect(err!.cause).toBeDefined();
   });
 
-  it('surfaces a non-finite screen length as a caught severity:error diagnostic', () => {
-    // 1e400px parses to a non-finite threshold; defineBoundary's gate rejects it.
+  it('refuses a non-finite screen length at the shared query grammar boundary', () => {
     let result!: ReturnType<typeof fromTailwindTheme>;
     expect(() => {
       result = fromTailwindTheme(`@theme { --breakpoint-huge: 1e400px; }`);
@@ -274,7 +275,7 @@ describe('fromTailwindTheme — pathological input is caught, not thrown', () =>
     expect(result.boundaries).toEqual([]);
     const err = result.diagnostics.find((d) => d.severity === 'error');
     expect(err).toBeDefined();
-    expect(err!.cause).toBeDefined();
+    expect(err!.code).toBe(MIGRATE_CODES.unsupportedAtRule);
   });
 });
 
