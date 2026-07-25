@@ -6,7 +6,7 @@
 
 # Interface: ExplainEmitter
 
-Defined in: [command/src/commands/explain.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L50)
+Defined in: [command/src/commands/explain.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L55)
 
 The emitter that produces a diagnostic code, plus its negative-control pointer.
 A flat, nullable shape (not a discriminated union) so it validates cleanly
@@ -24,7 +24,7 @@ against the structural [ExplainPayloadSchema](../variables/ExplainPayloadSchema.
 
 > `readonly` **authority**: `string` \| `null`
 
-Defined in: [command/src/commands/explain.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L63)
+Defined in: [command/src/commands/explain.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L68)
 
 The check's authority over the verdict (`blocking` / `advisory`), or null.
 
@@ -34,7 +34,7 @@ The check's authority over the verdict (`blocking` / `advisory`), or null.
 
 > `readonly` **command**: `string` \| `null`
 
-Defined in: [command/src/commands/explain.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L61)
+Defined in: [command/src/commands/explain.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L66)
 
 The check's root-script command line, or null.
 
@@ -44,7 +44,7 @@ The check's root-script command line, or null.
 
 > `readonly` **id**: `string` \| `null`
 
-Defined in: [command/src/commands/explain.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L53)
+Defined in: [command/src/commands/explain.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L58)
 
 The emitting gate id, check id, or stable domain diagnostic code.
 
@@ -54,7 +54,7 @@ The emitting gate id, check id, or stable domain diagnostic code.
 
 > `readonly` **kind**: `"gate"` \| `"check"` \| `"domain"`
 
-Defined in: [command/src/commands/explain.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L51)
+Defined in: [command/src/commands/explain.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L56)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [command/src/commands/explain.ts:51](https://github.com/freebatteryf
 
 > `readonly` **negativeControl**: `string` \| `null`
 
-Defined in: [command/src/commands/explain.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L55)
+Defined in: [command/src/commands/explain.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L60)
 
 The red-fixture / negative-control file that proves the emitter can fail, or null.
 
@@ -72,7 +72,7 @@ The red-fixture / negative-control file that proves the emitter can fail, or nul
 
 > `readonly` **owner**: `string` \| `null`
 
-Defined in: [command/src/commands/explain.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L59)
+Defined in: [command/src/commands/explain.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L64)
 
 The check's owner (where the assertion lives), or null.
 
@@ -82,6 +82,6 @@ The check's owner (where the assertion lives), or null.
 
 > `readonly` **provenByCheck**: `string` \| `null`
 
-Defined in: [command/src/commands/explain.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L57)
+Defined in: [command/src/commands/explain.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L62)
 
 The check id whose negative control proves this gauntlet gate, or null.

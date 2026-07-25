@@ -20,6 +20,16 @@ Defined in: [audit/src/mcdc-facts-build.ts:40](https://github.com/freebatteryfac
 
 ***
 
+### reasons?
+
+> `readonly` `optional` **reasons?**: readonly `AssuranceTargetReason`[]
+
+Defined in: [audit/src/mcdc-facts-build.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L43)
+
+The independently derived provenance for admitting this target.
+
+***
+
 ### text
 
 > `readonly` **text**: `string`

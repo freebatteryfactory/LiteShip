@@ -8,7 +8,7 @@
 
 > **FactOracle** = (`input`) => readonly [`Fact`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)[]
 
-Defined in: [audit/src/repo-ir-build.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L104)
+Defined in: [audit/src/repo-ir-build.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L108)
 
 A host-supplied fact oracle — the injection hook that keeps `@liteship/audit`
 LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to

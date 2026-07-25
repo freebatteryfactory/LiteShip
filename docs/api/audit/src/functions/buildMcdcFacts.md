@@ -8,7 +8,7 @@
 
 > **buildMcdcFacts**(`files`, `options`): [`McdcFacts`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts)
 
-Defined in: [audit/src/mcdc-facts-build.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L112)
+Defined in: [audit/src/mcdc-facts-build.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L114)
 
 Build the [McdcFacts](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts) for a set of target files — generate the deterministic
 condition-mutants per file, evaluate each FORCE-TRUE / FORCE-FALSE pin against the

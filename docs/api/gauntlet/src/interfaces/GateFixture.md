@@ -6,7 +6,7 @@
 
 # Interface: GateFixture
 
-Defined in: [gauntlet/src/gate.ts:382](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L382)
+Defined in: [gauntlet/src/gate.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L388)
 
 A named known-input for self-proof. `context` is the world the gate runs in;
 the harness asserts the gate's findings against the fixture's role.
@@ -17,7 +17,7 @@ the harness asserts the gate's findings against the fixture's role.
 
 > `readonly` **context**: [`GateContext`](GateContext.md)
 
-Defined in: [gauntlet/src/gate.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L384)
+Defined in: [gauntlet/src/gate.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L390)
 
 ***
 
@@ -25,4 +25,4 @@ Defined in: [gauntlet/src/gate.ts:384](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **name**: `string`
 
-Defined in: [gauntlet/src/gate.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L383)
+Defined in: [gauntlet/src/gate.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L389)

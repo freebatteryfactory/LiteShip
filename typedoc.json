@@ -158,6 +158,7 @@
     },
     "typescript": {
       "Map": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+      "AbortController": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController",
       "AbortSignal": "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal",
       "ts.CompilerOptions": "https://www.typescriptlang.org/docs/handbook/compiler-options.html",
       "ts.Program": "https://github.com/microsoft/TypeScript/blob/main/src/compiler/types.ts",

@@ -8,7 +8,7 @@
 
 > `const` **Boundary**: `object`
 
-Defined in: [core/src/authoring/boundary.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L374)
+Defined in: [core/src/authoring/boundary.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts#L415)
 
 Boundary — the evaluation namespace for a Boundary definition.
 

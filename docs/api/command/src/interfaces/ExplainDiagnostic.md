@@ -6,7 +6,7 @@
 
 # Interface: ExplainDiagnostic
 
-Defined in: [command/src/commands/explain.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L67)
+Defined in: [command/src/commands/explain.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L72)
 
 The resolved meaning of a diagnostic code — the `DiagnosticEntry` fields plus its [ExplainEmitter](ExplainEmitter.md).
 
@@ -14,9 +14,9 @@ The resolved meaning of a diagnostic code — the `DiagnosticEntry` fields plus 
 
 ### area
 
-> `readonly` **area**: `"gauntlet"` \| `"check"` \| `"core"` \| `"schema"` \| `"compiler"` \| `"astro"` \| `"cli"` \| `"migrate"`
+> `readonly` **area**: `"gauntlet"` \| `"schema"` \| `"check"` \| `"core"` \| `"compiler"` \| `"astro"` \| `"cli"` \| `"migrate"`
 
-Defined in: [command/src/commands/explain.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L69)
+Defined in: [command/src/commands/explain.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L74)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [command/src/commands/explain.ts:69](https://github.com/freebatteryf
 
 > `readonly` **code**: `string`
 
-Defined in: [command/src/commands/explain.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L68)
+Defined in: [command/src/commands/explain.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L73)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [command/src/commands/explain.ts:68](https://github.com/freebatteryf
 
 > `readonly` **emitter**: [`ExplainEmitter`](ExplainEmitter.md)
 
-Defined in: [command/src/commands/explain.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L73)
+Defined in: [command/src/commands/explain.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L78)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [command/src/commands/explain.ts:73](https://github.com/freebatteryf
 
 > `readonly` **explanation**: `string`
 
-Defined in: [command/src/commands/explain.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L71)
+Defined in: [command/src/commands/explain.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L76)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [command/src/commands/explain.ts:71](https://github.com/freebatteryf
 
 > `readonly` **remediation**: `string`
 
-Defined in: [command/src/commands/explain.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L72)
+Defined in: [command/src/commands/explain.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L77)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [command/src/commands/explain.ts:72](https://github.com/freebatteryf
 
 > `readonly` **title**: `string`
 
-Defined in: [command/src/commands/explain.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L70)
+Defined in: [command/src/commands/explain.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L75)

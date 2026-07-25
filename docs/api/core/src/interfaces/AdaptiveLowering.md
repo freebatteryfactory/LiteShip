@@ -6,7 +6,7 @@
 
 # Interface: AdaptiveLowering
 
-Defined in: [core/src/authoring/adaptive.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L258)
+Defined in: [core/src/authoring/adaptive.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L260)
 
 The supplied `@liteship/compiler` Adaptive state-marker CSS projection.
 
@@ -16,7 +16,7 @@ The supplied `@liteship/compiler` Adaptive state-marker CSS projection.
 
 > `readonly` **compileAdaptiveCss**: (`style`) => `string`
 
-Defined in: [core/src/authoring/adaptive.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L267)
+Defined in: [core/src/authoring/adaptive.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L269)
 
 The real `@liteship/compiler` state-marker projection.
 
@@ -36,7 +36,7 @@ The real `@liteship/compiler` state-marker projection.
 
 > `readonly` **defineQuantizer**: `AdaptiveQuantizerLowering`
 
-Defined in: [core/src/authoring/adaptive.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L260)
+Defined in: [core/src/authoring/adaptive.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L262)
 
 The real memoized `@liteship/quantizer` constructor.
 
@@ -46,7 +46,7 @@ The real memoized `@liteship/quantizer` constructor.
 
 > `readonly` **resolveQuantizerTargets**: (`tier`, `force`) => `ReadonlySet`\<[`QualityTierTarget`](../type-aliases/QualityTierTarget.md)\>
 
-Defined in: [core/src/authoring/adaptive.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L262)
+Defined in: [core/src/authoring/adaptive.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L264)
 
 The quantizer owner's exact tier + force target resolver used by live dispatch.
 

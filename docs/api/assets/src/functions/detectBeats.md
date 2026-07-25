@@ -16,6 +16,10 @@ Detect downbeats on a decoded audio buffer.
 
 ### audio
 
+#### channels?
+
+`number`
+
 #### sampleRate
 
 `number`

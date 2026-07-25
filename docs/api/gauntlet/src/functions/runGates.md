@@ -8,7 +8,7 @@
 
 > **runGates**(`gates`, `context`, `opts?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/engine.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L408)
+Defined in: [gauntlet/src/engine.ts:409](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L409)
 
 Run a set of gates over `context`. Each gate is first verified against its own
 fixtures; unproven gates run but are demoted to advisory. When `opts.assuranceMap`

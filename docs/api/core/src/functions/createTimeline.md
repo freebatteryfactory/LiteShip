@@ -8,7 +8,7 @@
 
 > **createTimeline**\<`B`\>(`boundary`, `config?`): `TimelineShape`\<`B`\>
 
-Defined in: [core/src/motion/timeline.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/timeline.ts#L74)
+Defined in: [core/src/motion/timeline.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/timeline.ts#L68)
 
 Create a [Timeline](../type-aliases/Timeline.md) — scheduler-driven advancement over a
 [Boundary](../variables/Boundary.md). Produces a plain reactive timeline that seeks or plays

@@ -8,7 +8,7 @@
 
 > **videoDecoder**(`bytes`, `sourcePath?`): `Promise`\<[`DecodedVideo`](../interfaces/DecodedVideo.md)\>
 
-Defined in: [assets/src/decoders/video.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L30)
+Defined in: [assets/src/decoders/video.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L32)
 
 Probe a video buffer for container/codec metadata.
 

@@ -8,7 +8,7 @@
 
 > `const` **Config**: `object`
 
-Defined in: [core/src/authoring/config.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L54)
+Defined in: [core/src/authoring/config.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L56)
 
 Config namespace — the single hub that every liteship adapter (Vite, Astro, test
 runners, edge runtime) projects from. Construction lives in the standalone

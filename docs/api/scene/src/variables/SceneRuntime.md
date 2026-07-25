@@ -8,7 +8,7 @@
 
 > `const` **SceneRuntime**: `object`
 
-Defined in: [scene/src/runtime.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L305)
+Defined in: [scene/src/runtime.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L311)
 
 SceneRuntime namespace — build a live, tickable handle from a
 compiled scene. The companion type namespace exposes

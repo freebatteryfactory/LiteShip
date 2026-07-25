@@ -8,7 +8,7 @@
 
 > **AssetRegistry**: `object`
 
-Defined in: [assets/src/contract.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L263)
+Defined in: [assets/src/contract.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L331)
 
 Assemble an immutable AssetRegistry from the capsules returned by
 [defineAsset](../functions/defineAsset.md). Duplicate ids throw at assembly time. This is the ONE
@@ -24,7 +24,7 @@ registration seam — no module-global Map, no import-order dependence.
 
 ##### capsules
 
-readonly [`AssetCapsule`](../type-aliases/AssetCapsule.md)[]
+readonly [`AnyAssetCapsule`](../type-aliases/AnyAssetCapsule.md)[]
 
 #### Returns
 
@@ -36,5 +36,5 @@ readonly [`AssetCapsule`](../type-aliases/AssetCapsule.md)[]
 const introBed = defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
 const registry = AssetRegistry.make([introBed]);
 registry.ref('intro-bed');                 // branded id, validated
-const decode = registry.resolveDecoder('intro-bed');
+const decode = registry.resolveAudioDecoder('intro-bed');
 ```

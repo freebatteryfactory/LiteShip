@@ -8,6 +8,6 @@
 
 > **Encoded** = `Uint8Array`
 
-Defined in: canonical/dist/cbor.d.ts:31
+Defined in: canonical/dist/cbor.d.ts:32
 
 Output type — raw CBOR bytes per RFC 8949 §4.2.1.

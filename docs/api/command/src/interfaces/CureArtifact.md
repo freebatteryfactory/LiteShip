@@ -6,7 +6,7 @@
 
 # Interface: CureArtifact
 
-Defined in: [command/src/checks/cure-packet.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L16)
+Defined in: [command/src/checks/cure-packet.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L23)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [command/src/checks/cure-packet.ts:16](https://github.com/freebatter
 
 > `readonly` **digest**: `IntegrityDigest`
 
-Defined in: [command/src/checks/cure-packet.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L18)
+Defined in: [command/src/checks/cure-packet.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L25)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [command/src/checks/cure-packet.ts:18](https://github.com/freebatter
 
 > `readonly` **path**: `string`
 
-Defined in: [command/src/checks/cure-packet.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L17)
+Defined in: [command/src/checks/cure-packet.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L24)

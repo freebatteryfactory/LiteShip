@@ -8,7 +8,7 @@
 
 > **Style**\<`B`\> = `StyleDef`\<`B`\>
 
-Defined in: [core/src/authoring/style.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L281)
+Defined in: [core/src/authoring/style.ts:359](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/style.ts#L359)
 
 Public structural type for `Style`.
 

@@ -20,6 +20,10 @@ here so the contract lives in `@liteship/command` without an import of the
 CLI-side api-index that produces it (the CLI injects it; over MCP the capability
 is absent and a symbol lookup degrades to `unresolved`).
 
+## Extended by
+
+- [`ExplainSymbol`](ExplainSymbol.md)
+
 ## Properties
 
 ### file

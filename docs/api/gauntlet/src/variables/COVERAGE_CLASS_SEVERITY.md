@@ -8,7 +8,7 @@
 
 > `const` **COVERAGE\_CLASS\_SEVERITY**: `Readonly`\<`Record`\<`"same"` \| `"cross"`, `"advisory"` \| `"warning"` \| `"error"`\>\>
 
-Defined in: [gauntlet/src/repo-ir.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L95)
+Defined in: [gauntlet/src/repo-ir.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L96)
 
 The redlinable coverage-class severity matrix (design §2 — the data knob the
 owner redlines, sibling to the assurance map). It calibrates how LOUD an

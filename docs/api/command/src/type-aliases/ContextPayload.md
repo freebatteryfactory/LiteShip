@@ -8,7 +8,7 @@
 
 > **ContextPayload** = `object`
 
-Defined in: [command/src/commands/context.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L50)
+Defined in: [command/src/commands/context.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L57)
 
 Structured payload returned by the context command.
 
@@ -18,7 +18,23 @@ Structured payload returned by the context command.
 
 > `readonly` **pointers**: readonly [`ContextPointer`](../interfaces/ContextPointer.md)[]
 
-Defined in: [command/src/commands/context.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L54)
+Defined in: [command/src/commands/context.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L62)
+
+***
+
+### publicSurface
+
+> `readonly` **publicSurface**: [`PublicSymbolContext`](../interfaces/PublicSymbolContext.md) \| `null`
+
+Defined in: [command/src/commands/context.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L63)
+
+***
+
+### subject
+
+> `readonly` **subject**: `string` \| `null`
+
+Defined in: [command/src/commands/context.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L59)
 
 ***
 
@@ -26,15 +42,15 @@ Defined in: [command/src/commands/context.ts:54](https://github.com/freebatteryf
 
 > `readonly` **summary**: `string`
 
-Defined in: [command/src/commands/context.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L53)
+Defined in: [command/src/commands/context.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L61)
 
 ***
 
 ### task
 
-> `readonly` **task**: `string`
+> `readonly` **task**: `string` \| `null`
 
-Defined in: [command/src/commands/context.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L51)
+Defined in: [command/src/commands/context.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L58)
 
 ***
 
@@ -42,4 +58,4 @@ Defined in: [command/src/commands/context.ts:51](https://github.com/freebatteryf
 
 > `readonly` **title**: `string`
 
-Defined in: [command/src/commands/context.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L52)
+Defined in: [command/src/commands/context.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/context.ts#L60)

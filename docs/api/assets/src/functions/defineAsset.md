@@ -6,9 +6,9 @@
 
 # Function: defineAsset()
 
-> **defineAsset**\<`K`\>(`decl`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>, `unknown`\>
+> **defineAsset**\<`K`\>(`decl`): [`AssetCapsule`](../type-aliases/AssetCapsule.md)\<`K`\>
 
-Defined in: [assets/src/contract.ts:221](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L221)
+Defined in: [assets/src/contract.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L240)
 
 Declare an asset as a cachedProjection capsule. PURE — returns the capsule
 with NO side effect; assemble the returned capsules into an
@@ -39,4 +39,4 @@ An explicit `decl.site` wins over both derivations after validation
 
 ## Returns
 
-`CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>, `unknown`\>
+[`AssetCapsule`](../type-aliases/AssetCapsule.md)\<`K`\>

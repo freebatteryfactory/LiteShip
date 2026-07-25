@@ -6,7 +6,7 @@
 
 # Interface: ConstraintTrace
 
-Defined in: [core/src/authoring/adaptive.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L149)
+Defined in: [core/src/authoring/adaptive.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L151)
 
 One threshold's contribution to the evaluated state — the per-threshold row of
 [AdaptiveExplanation.boundary.matched](AdaptiveExplanation.md#boundary). `state` is the state a value
@@ -19,7 +19,7 @@ is that state's lower bound), and `satisfied` is `value >= threshold`.
 
 > `readonly` **index**: `number`
 
-Defined in: [core/src/authoring/adaptive.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L151)
+Defined in: [core/src/authoring/adaptive.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L153)
 
 Index of the threshold in `boundary.thresholds`.
 
@@ -29,7 +29,7 @@ Index of the threshold in `boundary.thresholds`.
 
 > `readonly` **satisfied**: `boolean`
 
-Defined in: [core/src/authoring/adaptive.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L157)
+Defined in: [core/src/authoring/adaptive.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L159)
 
 Whether the evaluated value clears this threshold (`value >= threshold`).
 
@@ -39,7 +39,7 @@ Whether the evaluated value clears this threshold (`value >= threshold`).
 
 > `readonly` **state**: `string`
 
-Defined in: [core/src/authoring/adaptive.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L155)
+Defined in: [core/src/authoring/adaptive.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L157)
 
 The state entered at or above this threshold (`boundary.states[index]`).
 
@@ -49,6 +49,6 @@ The state entered at or above this threshold (`boundary.states[index]`).
 
 > `readonly` **threshold**: `number`
 
-Defined in: [core/src/authoring/adaptive.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L153)
+Defined in: [core/src/authoring/adaptive.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L155)
 
 The numeric threshold value.

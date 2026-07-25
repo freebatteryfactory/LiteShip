@@ -8,7 +8,7 @@
 
 > **ExplainPayload** = `object`
 
-Defined in: [command/src/commands/explain.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L131)
+Defined in: [command/src/commands/explain.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L139)
 
 Structured payload returned by the explain command.
 
@@ -18,7 +18,7 @@ Structured payload returned by the explain command.
 
 > `readonly` **diagnostic**: [`ExplainDiagnostic`](../interfaces/ExplainDiagnostic.md) \| `null`
 
-Defined in: [command/src/commands/explain.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L134)
+Defined in: [command/src/commands/explain.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L142)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/explain.ts:134](https://github.com/freebattery
 
 > `readonly` **kind**: `"diagnostic"` \| `"symbol"` \| `"unresolved"`
 
-Defined in: [command/src/commands/explain.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L133)
+Defined in: [command/src/commands/explain.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L141)
 
 ***
 
@@ -34,12 +34,12 @@ Defined in: [command/src/commands/explain.ts:133](https://github.com/freebattery
 
 > `readonly` **query**: `string`
 
-Defined in: [command/src/commands/explain.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L132)
+Defined in: [command/src/commands/explain.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L140)
 
 ***
 
 ### symbol
 
-> `readonly` **symbol**: [`ExplainSymbol`](ExplainSymbol.md) \| `null`
+> `readonly` **symbol**: [`ExplainSymbol`](../interfaces/ExplainSymbol.md) \| `null`
 
-Defined in: [command/src/commands/explain.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L135)
+Defined in: [command/src/commands/explain.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/explain.ts#L143)

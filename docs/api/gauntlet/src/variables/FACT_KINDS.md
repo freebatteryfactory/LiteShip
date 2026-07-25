@@ -8,7 +8,7 @@
 
 > `const` **FACT\_KINDS**: readonly \[`"skipSites"`, `"activeSurfaceFacts"`, `"checkGovernance"`\]
 
-Defined in: [gauntlet/src/gate.ts:505](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L505)
+Defined in: [gauntlet/src/gate.ts:511](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L511)
 
 The runtime tuple of FactKinds a [FactGate](../interfaces/FactGate.md) may require — the SINGLE SOURCE for the
 [FactKind](../type-aliases/FactKind.md) type (derived below, never re-typed) AND the runtime allowlist
