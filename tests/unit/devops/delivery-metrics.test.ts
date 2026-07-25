@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { IntegrityDigest } from '@liteship/core';
 import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 import {
   admitVerifiedArtifactIdentity,
   buildDeliveryMetrics,
   parseDeliveryMetrics,
 } from '../../../scripts/lib/delivery-metrics.js';
+import { buildChangeIntent } from '../../../scripts/lib/change-intent.js';
+import {
+  createBenchmarkEvidence,
+  createBenchmarkEvidenceArtifact,
+} from '../../../scripts/bench/contracts.js';
 import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 
@@ -49,13 +55,50 @@ const inventory: AssuranceInventory = {
   },
 };
 
-const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory, {
+const plan = planAffectedTests(['packages/core/src/index.ts'], PACKAGE_CATALOG, inventory, {
   baseRef: 'origin/main',
   baseSha: 'a'.repeat(40),
   headSha: 'b'.repeat(40),
   confidence: 'high',
   selectorCalibrationId: `sha256:${'c'.repeat(64)}`,
 });
+
+const intent = buildChangeIntent({
+  schemaVersion: 1,
+  sponsor: { value: { login: 'heyoub', ownership: 'repository-owner' }, provenance: 'github-verified' },
+  hypothesis: { value: 'Measure library delivery health.', provenance: 'agent-self-declared' },
+  affectedUserSurface: {
+    value: { visibility: 'internal', areas: ['delivery evidence'] },
+    provenance: 'agent-self-declared',
+  },
+  expectedOutcome: { value: 'Current evidence produces bounded classifications.', provenance: 'agent-self-declared' },
+  guardrails: { value: ['do not invent deployment metrics'], provenance: 'agent-self-declared' },
+  reversibility: {
+    value: { kind: 'reversible', rollback: 'Revert the metrics projection.' },
+    provenance: 'agent-self-declared',
+  },
+  actorClass: { value: 'human', provenance: 'agent-self-declared' },
+  uncertainty: { value: { level: 'low', unknowns: [] }, provenance: 'agent-self-declared' },
+  sourceSha: { value: plan.headSha, provenance: 'github-verified' },
+  repositoryIdentity: {
+    value: { host: 'github.com', owner: 'freebatteryfactory', name: 'LiteShip', nodeId: 'R_delivery' },
+    provenance: 'github-verified',
+  },
+});
+
+const timeline = {
+  sourceSha: plan.headSha,
+  planId: plan.planId,
+  committedAt: '2026-07-24T12:00:00.000Z',
+  firstEvidenceAt: '2026-07-24T12:00:30.000Z',
+  lastEvidenceAt: '2026-07-24T12:01:00.000Z',
+  failureAt: null,
+  recoveredAt: null,
+  reviewStartedAt: '2026-07-24T12:00:10.000Z',
+  reviewCompletedAt: '2026-07-24T12:00:20.000Z',
+  batchStartedAt: '2026-07-24T12:00:30.000Z',
+  batchCompletedAt: '2026-07-24T12:01:00.000Z',
+} as const;
 
 const base = () =>
   ({
@@ -72,6 +115,8 @@ const base = () =>
     artifactMismatches: 0,
     selectorMisses: 0,
     flakeEvidenceId: `sha256:${'d'.repeat(64)}` as const,
+    changeIntent: intent,
+    timeline,
   }) as const;
 
 describe('delivery metrics and SLO fold', () => {
@@ -85,6 +130,17 @@ describe('delivery metrics and SLO fold', () => {
     expect(first.evidenceSources).toEqual({
       selectorCalibrationId: plan.selectorCalibrationId,
       flakeEvidenceId: `sha256:${'d'.repeat(64)}`,
+    });
+    expect(first.health).toMatchObject({
+      scope: { kind: 'library', packages: [...plan.affectedPackages].sort() },
+      intentId: intent.intentId,
+      feedback: { classification: 'known', milliseconds: 60_000, slo: 'pass' },
+      commitToEvidence: { classification: 'known', milliseconds: 60_000 },
+      failureRecovery: { classification: 'unknown', milliseconds: null },
+      reviewBatch: { classification: 'single-batch', reviewMs: 10_000, batchMs: 30_000 },
+      quickCureCache: { classification: 'unknown' },
+      compute: { classification: 'measured', totalMinutes: 2 / 3 },
+      benchmark: { classification: 'unknown', artifactId: null },
     });
   });
 
@@ -115,6 +171,8 @@ describe('delivery metrics and SLO fold', () => {
       artifactMismatches: null,
       selectorMisses: null,
       flakeEvidenceId: null,
+      changeIntent: null,
+      timeline: null,
     });
     expect(metrics.verdict).toBe('insufficient-evidence');
     expect(metrics.slos).toMatchObject({
@@ -124,6 +182,93 @@ describe('delivery metrics and SLO fold', () => {
       artifactIdentity: 'unknown',
       selectorWithinBudget: 'unknown',
     });
+    expect(metrics.health).toMatchObject({
+      intentId: null,
+      commitToEvidence: { classification: 'unknown', milliseconds: null },
+      failureRecovery: { classification: 'unknown', milliseconds: null },
+      reviewBatch: { classification: 'unknown', reviewMs: null, batchMs: null },
+      quickCureCache: { classification: 'unknown' },
+      benchmark: { classification: 'unknown' },
+    });
+  });
+
+  it('classifies quick execution, cache service, rebatching, and explicit failure recovery from owned evidence', () => {
+    const quickReport = {
+      profile: 'quick' as const,
+      platform: 'linux' as const,
+      context: 'repository' as const,
+      ok: true,
+      blocked: false,
+      results: [
+        { id: 'check/typecheck', verdict: 'pass' as const, durationMs: 0, cacheHit: true, findings: [] },
+        { id: 'check/test', verdict: 'pass' as const, durationMs: 25, cacheHit: false, findings: [] },
+      ],
+      curePackets: [],
+    };
+    const metrics = buildDeliveryMetrics({
+      ...base(),
+      reports: [quickReport],
+      reruns: 1,
+      timeline: {
+        ...timeline,
+        failureAt: '2026-07-24T12:00:35.000Z',
+        recoveredAt: '2026-07-24T12:00:50.000Z',
+      },
+    });
+    expect(metrics.health.quickCureCache).toMatchObject({
+      classification: 'mixed-cache',
+      executed: 2,
+      cacheHits: 1,
+    });
+    expect(metrics.health.failureRecovery).toEqual({ classification: 'recovered', milliseconds: 15_000 });
+    expect(metrics.health.reviewBatch.classification).toBe('rebatch');
+  });
+
+  it('reuses benchmark admission so current evidence passes and stale source evidence remains unknown', () => {
+    const owner = plan.affectedPackages[0]!;
+    const benchmark = (sourceSha: string) =>
+      createBenchmarkEvidence({
+        sut: { id: `${owner}/hot-path`, owner, benchmark: 'hot path', file: 'tests/bench/core.bench.ts' },
+        input: { dimensions: [{ name: 'items', unit: 'count', distribution: 'linear' }], sizes: [1, 2, 4] },
+        measurement: {
+          mode: 'warm',
+          warmupIterations: 1,
+          repetitions: 3,
+          canaries: [{ id: 'invokes-sut', verdict: 'pass' }],
+        },
+        environment: {
+          sourceSha,
+          sourceDigest: IntegrityDigest(`sha256:${'1'.repeat(64)}`),
+          environmentDigest: IntegrityDigest(`sha256:${'2'.repeat(64)}`),
+          platform: 'linux',
+          arch: 'x64',
+          runtime: 'node',
+          toolchain: 'typescript',
+        },
+        complexity: { expected: 'O(n)', measured: 'O(n)', fittedSlope: 1, fittedR2: 0.99 },
+        allocation: null,
+        confidence: { minimumR2: 0.9, coefficientOfVariation: 0.01, maximumCoefficientOfVariation: 0.1 },
+      });
+    const authority = {
+      sourceSha: plan.headSha,
+      sourceDigest: IntegrityDigest(`sha256:${'1'.repeat(64)}`),
+      environmentDigest: IntegrityDigest(`sha256:${'2'.repeat(64)}`),
+      toolchain: 'typescript',
+    };
+    const current = buildDeliveryMetrics({
+      ...base(),
+      benchmarkEvidence: { artifact: createBenchmarkEvidenceArtifact([benchmark(plan.headSha)]), authority },
+    });
+    expect(current.health.benchmark).toMatchObject({ classification: 'pass', reasons: [] });
+
+    const stale = buildDeliveryMetrics({
+      ...base(),
+      benchmarkEvidence: { artifact: createBenchmarkEvidenceArtifact([benchmark('a'.repeat(40))]), authority },
+    });
+    expect(stale.health.benchmark).toMatchObject({
+      classification: 'unknown',
+      reasons: ['stale-source-sha'],
+    });
   });
 
   it('refuses impossible evidence counts', () => {
@@ -131,6 +276,18 @@ describe('delivery metrics and SLO fold', () => {
     expect(() => buildDeliveryMetrics({ ...base(), flakeEvidenceId: 'sha256:wrong' as never })).toThrow(
       /flakeEvidenceId/u,
     );
+    expect(() =>
+      buildDeliveryMetrics({ ...base(), timeline: { ...timeline, sourceSha: 'e'.repeat(40) } }),
+    ).toThrow(/foreign head/u);
+    expect(() =>
+      buildDeliveryMetrics({ ...base(), timeline: { ...timeline, planId: `sha256:${'e'.repeat(64)}` } }),
+    ).toThrow(/stale for the affected plan/u);
+    expect(() =>
+      buildDeliveryMetrics({
+        ...base(),
+        timeline: { ...timeline, failureAt: null, recoveredAt: '2026-07-24T12:00:50.000Z' },
+      }),
+    ).toThrow(/no preceding failure/u);
   });
 
   it('re-addresses artifact identity only after standalone admission', () => {
@@ -155,5 +312,23 @@ describe('delivery metrics and SLO fold', () => {
     expect(() => parseDeliveryMetrics({ ...metrics, slos: { ...metrics.slos, artifactIdentity: 'unknown' } })).toThrow(
       /verdict|identity/u,
     );
+    expect(() =>
+      parseDeliveryMetrics({
+        ...metrics,
+        health: {
+          ...metrics.health,
+          compute: { ...metrics.health.compute, perChangedPathMinutes: 99 },
+        },
+      }),
+    ).toThrow(/per-path compute/u);
+    expect(() =>
+      parseDeliveryMetrics({
+        ...metrics,
+        health: {
+          ...metrics.health,
+          benchmark: { classification: 'pass', artifactId: null, reasons: [] },
+        },
+      }),
+    ).toThrow(/benchmark classification/u);
   });
 });

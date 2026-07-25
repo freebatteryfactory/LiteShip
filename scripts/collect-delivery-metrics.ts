@@ -106,6 +106,9 @@ const repositoryFacts = await githubJson<{ node_id?: string }>(`/repos/${reposit
 if (typeof repositoryFacts.node_id !== 'string' || repositoryFacts.node_id.length === 0) {
   throw new TypeError('GitHub repository API returned no node_id');
 }
+const commitFacts = await githubJson<{ commit?: { committer?: { date?: string | null } } }>(
+  `/repos/${repository}/commits/${headSha}`,
+);
 let intentBody: string | null = null;
 let sponsorLogin = run.triggering_actor?.login ?? run.actor?.login;
 let intentEvent: GitHubChangeIntentEvent = ref.startsWith('refs/tags/') ? 'tag' : 'push';
@@ -259,6 +262,23 @@ const metrics = buildDeliveryMetrics({
   artifactMismatches: null,
   selectorMisses: selectorCalibration?.selectorMisses ?? null,
   flakeEvidenceId: flakeEvidence?.evidenceId ?? null,
+  changeIntent: admittedIntent.intent,
+  timeline: {
+    sourceSha: headSha,
+    planId: plan.planId,
+    committedAt:
+      commitFacts.commit?.committer?.date === undefined || commitFacts.commit.committer.date === null
+        ? null
+        : new Date(commitFacts.commit.committer.date).toISOString(),
+    firstEvidenceAt: new Date(firstStart).toISOString(),
+    lastEvidenceAt: new Date(lastCompletion).toISOString(),
+    failureAt: null,
+    recoveredAt: null,
+    reviewStartedAt: null,
+    reviewCompletedAt: null,
+    batchStartedAt: new Date(firstStart).toISOString(),
+    batchCompletedAt: new Date(lastCompletion).toISOString(),
+  },
 });
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, `${JSON.stringify(metrics, null, 2)}\n`, 'utf8');

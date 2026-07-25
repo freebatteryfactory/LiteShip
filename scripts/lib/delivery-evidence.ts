@@ -150,7 +150,7 @@ export function buildDeliveryEvidenceManifest(input: DeliveryEvidenceBuilderInpu
       kind: 'delivery-metrics',
       path: 'reports/delivery-metrics.json',
       digest: sha256RawBytes(metricsBytes),
-      verifier: 'delivery-evidence/metrics-v2',
+      verifier: 'delivery-evidence/metrics-v3',
     }),
     verdict: 'accepted',
   };

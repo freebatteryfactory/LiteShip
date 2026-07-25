@@ -306,7 +306,8 @@ export function verifyStandaloneDeliveryEvidence(input: VerifyDeliveryEvidenceIn
 
   const intentBytes = readContained(input.evidenceRoot, manifest.intent.path);
   if (manifest.intent.digest !== sha256RawBytes(intentBytes)) fail('raw change intent digest mismatch');
-  if (manifest.intent.id !== verifyChangeIntent(intentBytes, plan, input.expected)) {
+  const verifiedIntentId = verifyChangeIntent(intentBytes, plan, input.expected);
+  if (manifest.intent.id !== verifiedIntentId) {
     fail('manifest change intent id does not match raw intent');
   }
 
@@ -412,6 +413,15 @@ export function verifyStandaloneDeliveryEvidence(input: VerifyDeliveryEvidenceIn
   }
   if (metrics.evidenceSources.selectorCalibrationId !== plan.selectorCalibrationId) {
     fail('delivery metrics selector calibration does not match the admitted plan');
+  }
+  if (metrics.health.intentId !== verifiedIntentId) {
+    fail('delivery health intent does not match the admitted change intent');
+  }
+  if (
+    metrics.health.scope.kind !== 'library' ||
+    !sameStrings(metrics.health.scope.packages, plan.affectedPackages)
+  ) {
+    fail('delivery health scope does not match the affected library packages');
   }
   if (
     metrics.selectionWidth.changedPaths !== plan.changedPaths.length ||

@@ -2,7 +2,14 @@
 
 import { createHash } from 'node:crypto';
 import type { CheckReport } from '../../packages/command/src/checks/plan.js';
+import {
+  admitBenchmarkEvidence,
+  parseBenchmarkEvidenceArtifact,
+  type BenchmarkEvidenceArtifact,
+  type BenchmarkEvidenceAuthority,
+} from '../bench/contracts.js';
 import type { AffectedTestPlan } from './affected-test-plan.js';
+import { parseChangeIntent, type ChangeIntent } from './change-intent.js';
 
 export const DELIVERY_SLOS = {
   falseGreenMax: 0,
@@ -44,10 +51,79 @@ export interface DeliveryMetricsInput {
   /** Addressed flake campaign admitted by the host; null when no campaign record exists. */
   readonly flakeEvidenceId: `sha256:${string}` | null;
   readonly resolvedCurePacketIds?: readonly string[];
+  /** Admitted intent bound to this head; absent means intent-scoped health is unknown. */
+  readonly changeIntent?: ChangeIntent | null;
+  /** Optional timestamps from the current plan/head evidence batch. */
+  readonly timeline?: DeliveryHealthTimelineInput | null;
+  /** Existing scientific benchmark artifact plus its live admission authority. */
+  readonly benchmarkEvidence?: DeliveryBenchmarkEvidenceInput | null;
+}
+
+export interface DeliveryHealthTimelineInput {
+  readonly sourceSha: string;
+  readonly planId: AffectedTestPlan['planId'];
+  readonly committedAt: string | null;
+  readonly firstEvidenceAt: string | null;
+  readonly lastEvidenceAt: string | null;
+  readonly failureAt: string | null;
+  readonly recoveredAt: string | null;
+  readonly reviewStartedAt: string | null;
+  readonly reviewCompletedAt: string | null;
+  readonly batchStartedAt: string | null;
+  readonly batchCompletedAt: string | null;
+}
+
+export interface DeliveryBenchmarkEvidenceInput {
+  readonly artifact: BenchmarkEvidenceArtifact;
+  readonly authority: BenchmarkEvidenceAuthority;
+}
+
+type KnownDuration =
+  | { readonly classification: 'known'; readonly milliseconds: number }
+  | { readonly classification: 'unknown'; readonly milliseconds: null };
+
+export interface DeliveryHealth {
+  readonly scope: {
+    readonly kind: 'library';
+    readonly packages: readonly string[];
+  };
+  readonly intentId: ChangeIntent['intentId'] | null;
+  readonly feedback: {
+    readonly classification: 'known';
+    readonly milliseconds: number;
+    readonly slo: 'pass' | 'fail';
+  };
+  readonly commitToEvidence: KnownDuration;
+  readonly failureRecovery: {
+    readonly classification: 'no-observed-failure' | 'recovered' | 'failed' | 'unknown';
+    readonly milliseconds: number | null;
+  };
+  readonly reviewBatch: {
+    readonly classification: 'single-batch' | 'rebatch' | 'unknown';
+    readonly reviewMs: number | null;
+    readonly batchMs: number | null;
+  };
+  readonly quickCureCache: {
+    readonly classification: 'executed' | 'cache-served' | 'mixed-cache' | 'repair-open' | 'repair-closed' | 'unknown';
+    readonly executed: number;
+    readonly cacheHits: number;
+    readonly curePacketsEmitted: number;
+    readonly curePacketsResolved: number;
+  };
+  readonly compute: {
+    readonly classification: 'measured';
+    readonly totalMinutes: number;
+    readonly perChangedPathMinutes: number;
+  };
+  readonly benchmark: {
+    readonly classification: 'pass' | 'fail' | 'unknown';
+    readonly artifactId: string | null;
+    readonly reasons: readonly string[];
+  };
 }
 
 export interface DeliveryMetrics {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly metricsId: `sha256:${string}`;
   readonly planId: AffectedTestPlan['planId'];
   readonly headSha: string;
@@ -69,6 +145,7 @@ export interface DeliveryMetrics {
   readonly flakeRate: number | null;
   readonly evidenceCompleteness: number | null;
   readonly costPerVerifiedPathMinutes: number;
+  readonly health: DeliveryHealth;
   readonly curePackets: { readonly emitted: number; readonly resolved: number };
   readonly slos: {
     readonly zeroFalseGreen: DeliverySloResult;
@@ -132,6 +209,159 @@ function sha256OrNull(value: unknown, label: string): `sha256:${string}` | null 
   return value as `sha256:${string}`;
 }
 
+function instant(value: string | null, label: string): number | null {
+  if (value === null) return null;
+  if (typeof value !== 'string') throw new TypeError(`${label} must be an ISO timestamp or null`);
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed) || new Date(parsed).toISOString() !== value) {
+    throw new TypeError(`${label} must be a canonical ISO timestamp or null`);
+  }
+  return parsed;
+}
+
+function durationBetween(start: number | null, end: number | null, label: string): number | null {
+  if (start === null || end === null) return null;
+  if (end < start) throw new TypeError(`${label} ends before it starts`);
+  return end - start;
+}
+
+function buildDeliveryHealth(
+  input: DeliveryMetricsInput,
+  resolvedCurePackets: ReadonlySet<string>,
+): DeliveryHealth {
+  const intent = input.changeIntent === undefined || input.changeIntent === null ? null : parseChangeIntent(input.changeIntent);
+  if (intent !== null && intent.sourceSha.value !== input.plan.headSha) {
+    throw new TypeError('delivery health change intent belongs to a foreign head');
+  }
+
+  const timeline = input.timeline ?? null;
+  if (timeline !== null && timeline.sourceSha !== input.plan.headSha) {
+    throw new TypeError('delivery health timeline belongs to a foreign head');
+  }
+  if (timeline !== null && timeline.planId !== input.plan.planId) {
+    throw new TypeError('delivery health timeline is stale for the affected plan');
+  }
+
+  const committedAt = timeline === null ? null : instant(timeline.committedAt, 'delivery health committedAt');
+  const firstEvidenceAt =
+    timeline === null ? null : instant(timeline.firstEvidenceAt, 'delivery health firstEvidenceAt');
+  const lastEvidenceAt = timeline === null ? null : instant(timeline.lastEvidenceAt, 'delivery health lastEvidenceAt');
+  const failureAt = timeline === null ? null : instant(timeline.failureAt, 'delivery health failureAt');
+  const recoveredAt = timeline === null ? null : instant(timeline.recoveredAt, 'delivery health recoveredAt');
+  const reviewStartedAt =
+    timeline === null ? null : instant(timeline.reviewStartedAt, 'delivery health reviewStartedAt');
+  const reviewCompletedAt =
+    timeline === null ? null : instant(timeline.reviewCompletedAt, 'delivery health reviewCompletedAt');
+  const batchStartedAt = timeline === null ? null : instant(timeline.batchStartedAt, 'delivery health batchStartedAt');
+  const batchCompletedAt =
+    timeline === null ? null : instant(timeline.batchCompletedAt, 'delivery health batchCompletedAt');
+
+  if (firstEvidenceAt !== null && lastEvidenceAt !== null && lastEvidenceAt < firstEvidenceAt) {
+    throw new TypeError('delivery health evidence completion precedes first evidence');
+  }
+  if (recoveredAt !== null && failureAt === null) {
+    throw new TypeError('delivery health recovery has no preceding failure');
+  }
+  const commitToEvidenceMs = durationBetween(committedAt, lastEvidenceAt, 'delivery health commit-to-evidence');
+  const recoveryMs = durationBetween(failureAt, recoveredAt, 'delivery health failure recovery');
+  const reviewMs = durationBetween(reviewStartedAt, reviewCompletedAt, 'delivery health review');
+  const batchMs = durationBetween(batchStartedAt, batchCompletedAt, 'delivery health batch');
+
+  const quickReports = input.reports.filter((report) => report.profile === 'quick');
+  const quickResults = quickReports.flatMap((report) => report.results).filter((result) => result.verdict !== 'skipped');
+  const quickPacketIds = new Set(quickReports.flatMap((report) => report.curePackets.map((packet) => packet.packetId)));
+  const resolvedQuickPackets = [...resolvedCurePackets].filter((packet) => quickPacketIds.has(packet)).length;
+  const quickCacheHits = quickResults.filter((result) => result.cacheHit).length;
+  const quickClassification: DeliveryHealth['quickCureCache']['classification'] =
+    quickResults.length === 0
+      ? 'unknown'
+      : quickPacketIds.size > resolvedQuickPackets
+        ? 'repair-open'
+        : quickPacketIds.size > 0
+          ? 'repair-closed'
+          : quickCacheHits === quickResults.length
+            ? 'cache-served'
+            : quickCacheHits > 0
+              ? 'mixed-cache'
+              : 'executed';
+
+  let benchmark: DeliveryHealth['benchmark'] = { classification: 'unknown', artifactId: null, reasons: [] };
+  if (input.benchmarkEvidence !== undefined && input.benchmarkEvidence !== null) {
+    if (input.benchmarkEvidence.authority.sourceSha !== input.plan.headSha) {
+      throw new TypeError('delivery health benchmark authority belongs to a foreign head');
+    }
+    const artifact = parseBenchmarkEvidenceArtifact(input.benchmarkEvidence.artifact);
+    const affected = new Set(input.plan.affectedPackages);
+    const records = artifact.evidence.filter((evidence) => affected.has(evidence.sut.owner));
+    if (records.length === 0) {
+      benchmark = {
+        classification: 'unknown',
+        artifactId: artifact.artifactId,
+        reasons: ['no-affected-package-benchmark-evidence'],
+      };
+    } else {
+      const admissions = records.map((evidence) => admitBenchmarkEvidence(evidence, input.benchmarkEvidence!.authority));
+      const reasons = [...new Set(admissions.flatMap((admission) => admission.reasons))].sort();
+      benchmark = {
+        classification: admissions.some((admission) => admission.disposition === 'fail')
+          ? 'fail'
+          : admissions.some((admission) => admission.disposition === 'unknown')
+            ? 'unknown'
+            : 'pass',
+        artifactId: artifact.artifactId,
+        reasons,
+      };
+    }
+  }
+
+  const anyFailedReport = input.reports.some((report) =>
+    report.results.some((result) => result.verdict === 'fail'),
+  );
+  const failureRecovery: DeliveryHealth['failureRecovery'] =
+    failureAt === null
+      ? input.reports.length === 0
+        ? { classification: 'unknown', milliseconds: null }
+        : anyFailedReport
+          ? { classification: 'failed', milliseconds: null }
+          : { classification: 'no-observed-failure', milliseconds: null }
+      : recoveredAt === null
+        ? { classification: 'failed', milliseconds: null }
+        : { classification: 'recovered', milliseconds: recoveryMs };
+
+  return Object.freeze({
+    scope: Object.freeze({ kind: 'library' as const, packages: Object.freeze([...input.plan.affectedPackages].sort()) }),
+    intentId: intent?.intentId ?? null,
+    feedback: Object.freeze({
+      classification: 'known' as const,
+      milliseconds: input.timings.feedbackLatencyMs,
+      slo: input.timings.feedbackLatencyMs <= DELIVERY_SLOS.feedbackLatencyMsMax ? ('pass' as const) : ('fail' as const),
+    }),
+    commitToEvidence:
+      commitToEvidenceMs === null
+        ? Object.freeze({ classification: 'unknown' as const, milliseconds: null })
+        : Object.freeze({ classification: 'known' as const, milliseconds: commitToEvidenceMs }),
+    failureRecovery: Object.freeze(failureRecovery),
+    reviewBatch: Object.freeze({
+      classification: batchMs === null ? ('unknown' as const) : input.reruns > 0 ? ('rebatch' as const) : ('single-batch' as const),
+      reviewMs,
+      batchMs,
+    }),
+    quickCureCache: Object.freeze({
+      classification: quickClassification,
+      executed: quickResults.length,
+      cacheHits: quickCacheHits,
+      curePacketsEmitted: quickPacketIds.size,
+      curePacketsResolved: resolvedQuickPackets,
+    }),
+    compute: Object.freeze({
+      classification: 'measured' as const,
+      totalMinutes: input.timings.totalComputeMs / 60_000,
+      perChangedPathMinutes: input.timings.totalComputeMs / 60_000 / Math.max(1, input.plan.changedPaths.length),
+    }),
+    benchmark: Object.freeze(benchmark),
+  });
+}
+
 const DELIVERY_METRICS_KEYS = [
   'schemaVersion',
   'metricsId',
@@ -147,6 +377,7 @@ const DELIVERY_METRICS_KEYS = [
   'flakeRate',
   'evidenceCompleteness',
   'costPerVerifiedPathMinutes',
+  'health',
   'curePackets',
   'slos',
   'verdict',
@@ -155,7 +386,7 @@ const DELIVERY_METRICS_KEYS = [
 /** Parse the complete addressed metrics record. Unknown, missing, and malformed evidence fail closed. */
 export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
   const record = exactRecord(value, DELIVERY_METRICS_KEYS, 'delivery metrics');
-  if (record['schemaVersion'] !== 2) throw new TypeError('delivery metrics schemaVersion must be 2');
+  if (record['schemaVersion'] !== 3) throw new TypeError('delivery metrics schemaVersion must be 3');
   const metricsId = sha256OrNull(record['metricsId'], 'delivery metrics metricsId');
   if (metricsId === null) throw new TypeError('delivery metrics metricsId is required');
   const planId = sha256OrNull(record['planId'], 'delivery metrics planId');
@@ -206,6 +437,195 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
     totalComputeMs: finiteNonNegative(timings['totalComputeMs'], 'delivery metrics totalComputeMs'),
   };
 
+  const health = exactRecord(
+    record['health'],
+    ['scope', 'intentId', 'feedback', 'commitToEvidence', 'failureRecovery', 'reviewBatch', 'quickCureCache', 'compute', 'benchmark'],
+    'delivery metrics health',
+  );
+  const scope = exactRecord(health['scope'], ['kind', 'packages'], 'delivery metrics health scope');
+  if (scope['kind'] !== 'library') throw new TypeError('delivery metrics health scope must be library');
+  if (!Array.isArray(scope['packages']) || scope['packages'].some((value) => typeof value !== 'string')) {
+    throw new TypeError('delivery metrics health packages must be strings');
+  }
+  const healthPackages = scope['packages'] as string[];
+  if (
+    new Set(healthPackages).size !== healthPackages.length ||
+    JSON.stringify(healthPackages) !== JSON.stringify([...healthPackages].sort())
+  ) {
+    throw new TypeError('delivery metrics health packages must be sorted and unique');
+  }
+  if (healthPackages.length !== parsedSelectionWidth.packages) {
+    throw new TypeError('delivery metrics health package scope contradicts selection width');
+  }
+  const intentId = sha256OrNull(health['intentId'], 'delivery metrics health intentId');
+  const duration = (candidate: unknown, label: string): KnownDuration => {
+    const row = exactRecord(candidate, ['classification', 'milliseconds'], label);
+    if (row['classification'] === 'unknown') {
+      if (row['milliseconds'] !== null) throw new TypeError(`${label} unknown duration must be null`);
+      return { classification: 'unknown', milliseconds: null };
+    }
+    if (row['classification'] !== 'known') throw new TypeError(`${label} classification is invalid`);
+    return { classification: 'known', milliseconds: finiteNonNegative(row['milliseconds'], `${label} milliseconds`) };
+  };
+  const feedbackRow = exactRecord(
+    health['feedback'],
+    ['classification', 'milliseconds', 'slo'],
+    'delivery metrics health feedback',
+  );
+  if (feedbackRow['classification'] !== 'known') throw new TypeError('delivery metrics health feedback must be known');
+  const feedbackMs = finiteNonNegative(feedbackRow['milliseconds'], 'delivery metrics health feedback milliseconds');
+  const expectedFeedbackSlo = feedbackMs <= DELIVERY_SLOS.feedbackLatencyMsMax ? 'pass' : 'fail';
+  if (feedbackRow['slo'] !== expectedFeedbackSlo || feedbackMs !== parsedTimings.feedbackLatencyMs) {
+    throw new TypeError('delivery metrics health feedback contradicts measured timings');
+  }
+  const commitToEvidence = duration(health['commitToEvidence'], 'delivery metrics health commitToEvidence');
+
+  const failureRecovery = exactRecord(
+    health['failureRecovery'],
+    ['classification', 'milliseconds'],
+    'delivery metrics health failureRecovery',
+  );
+  if (!['no-observed-failure', 'recovered', 'failed', 'unknown'].includes(String(failureRecovery['classification']))) {
+    throw new TypeError('delivery metrics health failureRecovery classification is invalid');
+  }
+  const recoveryMs =
+    failureRecovery['milliseconds'] === null
+      ? null
+      : finiteNonNegative(failureRecovery['milliseconds'], 'delivery metrics health failureRecovery milliseconds');
+  if ((failureRecovery['classification'] === 'recovered') !== (recoveryMs !== null)) {
+    throw new TypeError('delivery metrics health recovery duration contradicts classification');
+  }
+
+  const reviewBatch = exactRecord(
+    health['reviewBatch'],
+    ['classification', 'reviewMs', 'batchMs'],
+    'delivery metrics health reviewBatch',
+  );
+  if (!['single-batch', 'rebatch', 'unknown'].includes(String(reviewBatch['classification']))) {
+    throw new TypeError('delivery metrics health reviewBatch classification is invalid');
+  }
+  const reviewMs =
+    reviewBatch['reviewMs'] === null
+      ? null
+      : finiteNonNegative(reviewBatch['reviewMs'], 'delivery metrics health reviewMs');
+  const batchMs =
+    reviewBatch['batchMs'] === null
+      ? null
+      : finiteNonNegative(reviewBatch['batchMs'], 'delivery metrics health batchMs');
+  if ((reviewBatch['classification'] === 'unknown') !== (batchMs === null)) {
+    throw new TypeError('delivery metrics health batch duration contradicts classification');
+  }
+
+  const quickCureCache = exactRecord(
+    health['quickCureCache'],
+    ['classification', 'executed', 'cacheHits', 'curePacketsEmitted', 'curePacketsResolved'],
+    'delivery metrics health quickCureCache',
+  );
+  if (!['executed', 'cache-served', 'mixed-cache', 'repair-open', 'repair-closed', 'unknown'].includes(String(quickCureCache['classification']))) {
+    throw new TypeError('delivery metrics health quickCureCache classification is invalid');
+  }
+  const quickExecuted = finiteNonNegative(quickCureCache['executed'], 'delivery metrics health quick executed', true);
+  const quickCacheHits = finiteNonNegative(quickCureCache['cacheHits'], 'delivery metrics health quick cache hits', true);
+  const quickEmitted = finiteNonNegative(
+    quickCureCache['curePacketsEmitted'],
+    'delivery metrics health quick cure packets emitted',
+    true,
+  );
+  const quickResolved = finiteNonNegative(
+    quickCureCache['curePacketsResolved'],
+    'delivery metrics health quick cure packets resolved',
+    true,
+  );
+  if (quickCacheHits > quickExecuted || quickResolved > quickEmitted) {
+    throw new TypeError('delivery metrics health quick/cache/cure counts are inconsistent');
+  }
+  if ((quickCureCache['classification'] === 'unknown') !== (quickExecuted === 0)) {
+    throw new TypeError('delivery metrics health quick classification contradicts executions');
+  }
+  const quickClassification = quickCureCache['classification'];
+  if (
+    (quickClassification === 'cache-served' && quickCacheHits !== quickExecuted) ||
+    (quickClassification === 'mixed-cache' && (quickCacheHits === 0 || quickCacheHits === quickExecuted)) ||
+    (quickClassification === 'executed' && (quickCacheHits !== 0 || quickEmitted !== 0)) ||
+    (quickClassification === 'repair-open' && quickEmitted <= quickResolved) ||
+    (quickClassification === 'repair-closed' && (quickEmitted === 0 || quickEmitted !== quickResolved))
+  ) {
+    throw new TypeError('delivery metrics health quick classification contradicts cache or cure evidence');
+  }
+
+  const compute = exactRecord(
+    health['compute'],
+    ['classification', 'totalMinutes', 'perChangedPathMinutes'],
+    'delivery metrics health compute',
+  );
+  if (compute['classification'] !== 'measured') throw new TypeError('delivery metrics health compute must be measured');
+  const computeTotal = finiteNonNegative(compute['totalMinutes'], 'delivery metrics health compute totalMinutes');
+  const computePerPath = finiteNonNegative(
+    compute['perChangedPathMinutes'],
+    'delivery metrics health compute perChangedPathMinutes',
+  );
+  if (computeTotal !== parsedTimings.totalComputeMs / 60_000) {
+    throw new TypeError('delivery metrics health compute contradicts measured timings');
+  }
+  if (computePerPath !== computeTotal / Math.max(1, parsedSelectionWidth.changedPaths)) {
+    throw new TypeError('delivery metrics health per-path compute contradicts selection width');
+  }
+
+  const benchmark = exactRecord(
+    health['benchmark'],
+    ['classification', 'artifactId', 'reasons'],
+    'delivery metrics health benchmark',
+  );
+  if (!['pass', 'fail', 'unknown'].includes(String(benchmark['classification']))) {
+    throw new TypeError('delivery metrics health benchmark classification is invalid');
+  }
+  const benchmarkArtifactId = sha256OrNull(benchmark['artifactId'], 'delivery metrics health benchmark artifactId');
+  if (!Array.isArray(benchmark['reasons']) || benchmark['reasons'].some((reason) => typeof reason !== 'string')) {
+    throw new TypeError('delivery metrics health benchmark reasons must be strings');
+  }
+  const benchmarkReasons = benchmark['reasons'] as string[];
+  if (new Set(benchmarkReasons).size !== benchmarkReasons.length || JSON.stringify(benchmarkReasons) !== JSON.stringify([...benchmarkReasons].sort())) {
+    throw new TypeError('delivery metrics health benchmark reasons must be sorted and unique');
+  }
+  if (
+    (benchmarkArtifactId === null &&
+      (benchmark['classification'] !== 'unknown' || benchmarkReasons.length !== 0)) ||
+    (benchmark['classification'] === 'pass' &&
+      (benchmarkArtifactId === null || benchmarkReasons.length !== 0)) ||
+    (benchmark['classification'] !== 'pass' && benchmarkArtifactId !== null && benchmarkReasons.length === 0)
+  ) {
+    throw new TypeError('delivery metrics health benchmark classification contradicts admitted evidence');
+  }
+
+  const parsedHealth: DeliveryHealth = {
+    scope: { kind: 'library', packages: healthPackages },
+    intentId,
+    feedback: { classification: 'known', milliseconds: feedbackMs, slo: expectedFeedbackSlo },
+    commitToEvidence,
+    failureRecovery: {
+      classification: failureRecovery['classification'] as DeliveryHealth['failureRecovery']['classification'],
+      milliseconds: recoveryMs,
+    },
+    reviewBatch: {
+      classification: reviewBatch['classification'] as DeliveryHealth['reviewBatch']['classification'],
+      reviewMs,
+      batchMs,
+    },
+    quickCureCache: {
+      classification: quickCureCache['classification'] as DeliveryHealth['quickCureCache']['classification'],
+      executed: quickExecuted,
+      cacheHits: quickCacheHits,
+      curePacketsEmitted: quickEmitted,
+      curePacketsResolved: quickResolved,
+    },
+    compute: { classification: 'measured', totalMinutes: computeTotal, perChangedPathMinutes: computePerPath },
+    benchmark: {
+      classification: benchmark['classification'] as DeliveryHealth['benchmark']['classification'],
+      artifactId: benchmarkArtifactId,
+      reasons: benchmarkReasons,
+    },
+  };
+
   const curePackets = exactRecord(record['curePackets'], ['emitted', 'resolved'], 'delivery metrics curePackets');
   const parsedCurePackets = {
     emitted: finiteNonNegative(curePackets['emitted'], 'delivery metrics emitted cure packets', true),
@@ -251,7 +671,7 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
   if (record['verdict'] !== expectedVerdict) throw new TypeError('delivery metrics verdict does not match SLOs');
 
   const parsed: DeliveryMetrics = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     metricsId,
     planId: planId as DeliveryMetrics['planId'],
     headSha: record['headSha'],
@@ -268,6 +688,7 @@ export function parseDeliveryMetrics(value: unknown): DeliveryMetrics {
       record['costPerVerifiedPathMinutes'],
       'delivery metrics costPerVerifiedPathMinutes',
     ),
+    health: parsedHealth,
     curePackets: parsedCurePackets,
     slos: parsedSlos,
     verdict: expectedVerdict,
@@ -375,7 +796,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
       ? ('insufficient-evidence' as const)
       : ('within-slo' as const);
   const unsigned = {
-    schemaVersion: 2 as const,
+    schemaVersion: 3 as const,
     planId: input.plan.planId,
     headSha: input.plan.headSha,
     risk: input.plan.risk.level,
@@ -396,6 +817,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
     flakeRate,
     evidenceCompleteness,
     costPerVerifiedPathMinutes: input.timings.totalComputeMs / 60_000 / Math.max(1, input.plan.changedPaths.length),
+    health: buildDeliveryHealth(input, resolved),
     curePackets: { emitted: emittedCurePackets.size, resolved: resolved.size },
     slos,
     verdict,

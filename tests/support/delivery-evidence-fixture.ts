@@ -161,23 +161,6 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
   };
   const fixtureBase = { root, plan, expected };
   const evidence = selected.map((selection) => writeCheckEvidence(fixtureBase, selection));
-  const metrics = buildDeliveryMetrics({
-    plan,
-    reports: [],
-    timings: { queueMs: 10, feedbackLatencyMs: 100, buildMs: 20, testMs: 30, totalComputeMs: 60 },
-    jobAttempts: selected.length,
-    reruns: 0,
-    knownFlakyReruns: 0,
-    flakeAttempts: 1,
-    requiredEvidence: selected.length,
-    presentEvidence: selected.length,
-    escapedDefects: 0,
-    artifactMismatches: 0,
-    selectorMisses: 0,
-    flakeEvidenceId: `sha256:${createHash('sha256').update('flake-fixture').digest('hex')}`,
-  });
-  const metricsRaw = `${JSON.stringify(metrics, null, 2)}\n`;
-  writeRaw(root, 'reports/delivery-metrics.json', metricsRaw);
   const intent = buildChangeIntent({
     schemaVersion: 1,
     sponsor: { value: { login: 'heyoub', ownership: 'repository-owner' }, provenance: 'github-verified' },
@@ -204,6 +187,24 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
   if (!admission.accepted) throw new TypeError('fixture change intent was not admitted');
   const intentRaw = `${JSON.stringify({ origin: 'declared', intent, admission }, null, 2)}\n`;
   writeRaw(root, 'reports/change-intent.json', intentRaw);
+  const metrics = buildDeliveryMetrics({
+    plan,
+    reports: [],
+    timings: { queueMs: 10, feedbackLatencyMs: 100, buildMs: 20, testMs: 30, totalComputeMs: 60 },
+    jobAttempts: selected.length,
+    reruns: 0,
+    knownFlakyReruns: 0,
+    flakeAttempts: 1,
+    requiredEvidence: selected.length,
+    presentEvidence: selected.length,
+    escapedDefects: 0,
+    artifactMismatches: 0,
+    selectorMisses: 0,
+    flakeEvidenceId: `sha256:${createHash('sha256').update('flake-fixture').digest('hex')}`,
+    changeIntent: intent,
+  });
+  const metricsRaw = `${JSON.stringify(metrics, null, 2)}\n`;
+  writeRaw(root, 'reports/delivery-metrics.json', metricsRaw);
 
   const authority = buildCiAuthorityEvidence({
     identity: {
@@ -266,7 +267,7 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
       kind: 'delivery-metrics',
       path: 'reports/delivery-metrics.json',
       digest: sha256RawBytes(metricsRaw),
-      verifier: 'delivery-evidence/metrics-v2',
+      verifier: 'delivery-evidence/metrics-v3',
     },
     verdict: 'accepted',
   };
