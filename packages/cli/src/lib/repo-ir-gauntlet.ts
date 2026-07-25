@@ -94,7 +94,7 @@ import { buildStandardsIntegrityFacts, type StandardsFactsOptions } from './stan
 import { runSimulationCorpus } from './simulation-corpus.js';
 import { gauntletToolchainDigest, makeFsVerdictCache, makeFsMutantVerdictCache } from './gauntlet-verdict-cache.js';
 import { makeVitestMutationRunner } from './mutation-runner.js';
-import { l4SeamTargets, targetCensusErrors, buildSeamCoverageMap } from './mutation-targets.js';
+import { assuranceTargets, targetCensusErrors, buildSeamCoverageMap } from './mutation-targets.js';
 import { makeFsSeamCoverageProbeCache, type SeamExecutionCoverageOptions } from './seam-execution-coverage.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
@@ -573,9 +573,9 @@ const MUTATION_EQUIVALENTS = 'benchmarks/mutation-equivalents.json';
 /**
  * Build the {@link MutationFacts} the avionics `mutationDivergenceGate` folds — the
  * HOST's heavy job (Slice C, mutation-as-divergence):
- *   1. Compute the LIVE effective-L4 seam targets from the IR's propagation fixpoint
- *      ({@link l4SeamTargets} — the level is computed from the live IR, never a
- *      hardcoded list beside the file).
+ *   1. Compute the LIVE effective-L4 and catalog-enrolled semantic targets
+ *      ({@link assuranceTargets} — levels and public reachability come from the live IR,
+ *      never a hardcoded file list).
  *   2. Build the SOUND covering-tests map ({@link buildSeamCoverageMap} — the
  *      over-approximating deep-import ∪ barrel-import closure; under-mapping yields
  *      false survivors, so it errs toward running too many tests).
@@ -588,12 +588,12 @@ const MUTATION_EQUIVALENTS = 'benchmarks/mutation-equivalents.json';
  * just the survivor surfacing).
  */
 function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): MutationFacts {
-  const targetResult = l4SeamTargets(ir, repoRoot);
+  const targetResult = assuranceTargets(ir, repoRoot);
   const censusErrors = targetCensusErrors(targetResult);
   if (censusErrors.length > 0) {
     throw InvariantViolationError(
       'buildRepoMutationFacts',
-      `live L4 mutation target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
+      `live mutation assurance target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
     );
   }
   const { targets } = targetResult;
@@ -618,6 +618,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
   const mutantCache = makeFsMutantVerdictCache(repoRoot);
 
   const outcomes: MutationFacts['outcomes'][number][] = [];
+  const targetCensus: MutationFacts['targetCensus'][number][] = [];
   const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   for (const target of targets) {
     // One runner per seam file — it backs up / mutates / restores exactly that file.
@@ -632,6 +633,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
     });
     for (const o of fileFacts.outcomes) outcomes.push(o);
+    for (const row of fileFacts.targetCensus) targetCensus.push(row);
     for (const row of fileFacts.operatorApplicability) operatorApplicability.push(row);
   }
   // Re-sort the merged outcomes deterministically (same total order buildMutationFacts
@@ -645,7 +647,8 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       a.mutatedText.localeCompare(b.mutatedText),
   );
   operatorApplicability.sort((a, b) => a.file.localeCompare(b.file) || a.operator.localeCompare(b.operator));
-  return { outcomes: sorted, operatorApplicability, scoreBaseline };
+  targetCensus.sort((a, b) => a.file.localeCompare(b.file));
+  return { outcomes: sorted, targetCensus, operatorApplicability, scoreBaseline };
 }
 
 /**
@@ -655,8 +658,9 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
  * shared), differing only in WHAT is mutated: instead of operator-mutants it mints, per
  * atomic CONDITION of each L4 decision, the force-true/force-false pin, evaluates each via
  * the per-pin vitest runner, and folds the two pins per condition into one outcome:
- *   1. The LIVE effective-L4 seam targets from the IR's propagation fixpoint
- *      ({@link l4SeamTargets} — the level is computed from the live IR, never hardcoded).
+ *   1. The LIVE effective-L4 and catalog-enrolled semantic targets
+ *      ({@link assuranceTargets} — levels and public reachability come from the live IR,
+ *      never a hardcoded file list).
  *   2. The SOUND covering-tests map ({@link buildSeamCoverageMap}, the same execution-
  *      filtered deep-import ∪ barrel closure the mutation run uses — under-mapping yields
  *      false MC/DC gaps, so it errs toward running too many tests).
@@ -669,12 +673,12 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
  * deterministic over the seam bytes + the runner verdicts.
  */
 function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): McdcFacts {
-  const targetResult = l4SeamTargets(ir, repoRoot);
+  const targetResult = assuranceTargets(ir, repoRoot);
   const censusErrors = targetCensusErrors(targetResult);
   if (censusErrors.length > 0) {
     throw InvariantViolationError(
       'buildRepoMcdcFacts',
-      `live L4 MC/DC target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
+      `live MC/DC assurance target census is incomplete:\n${censusErrors.map((error) => `- ${error}`).join('\n')}`,
     );
   }
   const { targets } = targetResult;
@@ -829,7 +833,7 @@ export interface RepoIRGauntletCacheOptions {
   /**
    * Compose the avionics-tier `mutationDivergenceGate` (L4) onto the run and inject
    * the host-computed {@link MutationFacts} (`liteship check gates --ir --mutate`). The host
-   * generates the deterministic mutants over the live effective-L4 seams, runs the
+   * generates deterministic mutants over effective-L4 and enrolled semantic-campaign targets, runs the
    * per-mutant vitest runner, and folds the verdicts. It changes BOTH which gates run
    * AND the injected facts, so the verdict cache is NAMESPACED by this mode (see
    * {@link resolveVerdictCache}): a mutation-run verdict can never be served to a

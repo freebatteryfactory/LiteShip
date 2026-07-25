@@ -30,11 +30,14 @@ import { join } from 'node:path';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '@liteship/gauntlet';
 import { makeCoverageMap, type MutationTargetFile } from '@liteship/audit';
 import {
+  assuranceTargets,
+  eligibleAssuranceTargets,
   eligibleL4SeamFiles,
   l4SeamTargets,
   targetCensusErrors,
   partitionSeamCandidates,
   buildSeamCoverageMap,
+  type SemanticAssuranceCampaign,
 } from '../../../../packages/cli/src/lib/mutation-targets.js';
 
 /** Repo-relative seam ids the targeting LAW is exercised against. */
@@ -43,6 +46,20 @@ const DAG = 'packages/core/src/graph/dag.ts'; // base L4 (the graph/dag glob)
 const CANON_FNV = 'packages/canonical/src/fnv.ts'; // base L4 (canonical/**)
 const CONTENT_ADDR = 'packages/core/src/evidence/content-address.ts'; // base LOW — L4 only by propagation
 const GRAPH_PATCH = 'packages/core/src/graph/graph-patch.ts'; // base LOW — L4 only by propagation
+const GENUI_INDEX = 'packages/genui/src/index.ts';
+const GENUI_RENDER = 'packages/genui/src/render.ts';
+const GENUI_PRIVATE = 'packages/genui/src/private.ts';
+const ASSETS_INDEX = 'packages/assets/src/index.ts';
+
+const GENUI_CAMPAIGN: SemanticAssuranceCampaign = {
+  id: 'wave5/genui-semantic',
+  owner: '@liteship/genui',
+  packageDir: 'packages/genui',
+  scope: 'public-runtime-closure',
+  required: ['mutation', 'mcdc'],
+  class: 'semantic-l4',
+  entrypoints: [GENUI_INDEX],
+};
 
 /** A FileNode for the in-memory IR — the placeholder digest a fixture always uses. */
 function fileNode(id: string): { readonly id: string; readonly contentDigest: string; readonly packageName: string } {
@@ -217,6 +234,110 @@ describe('l4SeamTargets — complete LIVE-propagation target census', () => {
       const ids = first.targets.map((t) => t.file);
       const sorted = [...ids].sort((a, b) => a.localeCompare(b));
       expect(ids).toEqual(sorted);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('eligibleAssuranceTargets — catalog campaign runtime closure', () => {
+  it('admits reachable package files without relabeling them L4 and excludes private, foreign, and unenrolled files', () => {
+    const ir = buildIR(
+      [GENUI_INDEX, GENUI_RENDER, GENUI_PRIVATE, ASSETS_INDEX],
+      [
+        [GENUI_INDEX, GENUI_RENDER],
+        [GENUI_RENDER, ASSETS_INDEX],
+      ],
+    );
+    const selected = eligibleAssuranceTargets(ir, [GENUI_CAMPAIGN]);
+    expect(eligibleL4SeamFiles(ir)).toEqual([]);
+    expect(selected.unresolvedEntrypoints).toEqual([]);
+    expect(selected.expectedTargets.map((target) => target.file)).toEqual([GENUI_INDEX, GENUI_RENDER]);
+    for (const target of selected.expectedTargets) {
+      expect(target.reasons).toEqual([
+        {
+          kind: 'semantic-campaign',
+          campaignId: GENUI_CAMPAIGN.id,
+          owner: GENUI_CAMPAIGN.owner,
+          class: 'semantic-l4',
+          required: ['mcdc', 'mutation'],
+        },
+      ]);
+    }
+  });
+
+  it('automatically grows when the public entrypoint re-exports a formerly private helper', () => {
+    const before = eligibleAssuranceTargets(buildIR([GENUI_INDEX, GENUI_PRIVATE]), [GENUI_CAMPAIGN]);
+    const after = eligibleAssuranceTargets(buildIR([GENUI_INDEX, GENUI_PRIVATE], [[GENUI_INDEX, GENUI_PRIVATE]]), [
+      GENUI_CAMPAIGN,
+    ]);
+    expect(before.expectedTargets.map((target) => target.file)).toEqual([GENUI_INDEX]);
+    expect(after.expectedTargets.map((target) => target.file)).toEqual([GENUI_INDEX, GENUI_PRIVATE]);
+  });
+
+  it('merges effective-level and campaign provenance without duplicating the target', () => {
+    const campaign: SemanticAssuranceCampaign = {
+      ...GENUI_CAMPAIGN,
+      id: 'test/canonical-semantic',
+      owner: '@liteship/canonical',
+      packageDir: 'packages/canonical',
+      entrypoints: [CANON_FNV],
+    };
+    const selected = eligibleAssuranceTargets(buildIR([CANON_FNV]), [campaign]);
+    expect(selected.expectedTargets).toEqual([
+      {
+        file: CANON_FNV,
+        reasons: [
+          { kind: 'effective-level', level: 'L4' },
+          {
+            kind: 'semantic-campaign',
+            campaignId: campaign.id,
+            owner: campaign.owner,
+            class: 'semantic-l4',
+            required: ['mcdc', 'mutation'],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('fails the census when a campaign entrypoint is absent from the live IR', () => {
+    const root = makeRepoWithSources(new Map());
+    try {
+      const result = assuranceTargets(buildIR([]), root, [GENUI_CAMPAIGN]);
+      expect(result.targets).toEqual([]);
+      expect(targetCensusErrors(result)).toEqual([
+        `semantic campaign entrypoint unresolved: ${GENUI_CAMPAIGN.id}:${GENUI_INDEX}`,
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('materializes exact bytes and reasons, and is deterministic under campaign ordering', () => {
+    const assetsCampaign: SemanticAssuranceCampaign = {
+      ...GENUI_CAMPAIGN,
+      id: 'wave5/assets-semantic',
+      owner: '@liteship/assets',
+      packageDir: 'packages/assets',
+      entrypoints: [ASSETS_INDEX],
+    };
+    const root = makeRepoWithSources(
+      new Map([
+        [GENUI_INDEX, 'export const genui = 1;\n'],
+        [ASSETS_INDEX, 'export const assets = 1;\n'],
+      ]),
+    );
+    try {
+      const ir = buildIR([ASSETS_INDEX, GENUI_INDEX]);
+      const first = assuranceTargets(ir, root, [GENUI_CAMPAIGN, assetsCampaign]);
+      const second = assuranceTargets(ir, root, [assetsCampaign, GENUI_CAMPAIGN]);
+      expect(second).toEqual(first);
+      expect(first.targets.map(({ file, text }) => ({ file, text }))).toEqual([
+        { file: ASSETS_INDEX, text: 'export const assets = 1;\n' },
+        { file: GENUI_INDEX, text: 'export const genui = 1;\n' },
+      ]);
+      expect(targetCensusErrors(first)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

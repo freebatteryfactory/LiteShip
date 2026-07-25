@@ -62,6 +62,7 @@ describe('buildMutationFacts — host bridge folds engine + runner into facts', 
 
   it('records every operator for every target, including zero-applicability rows', () => {
     const facts = buildMutationFacts([{ file: FILE, text: SRC }], { runner: weakTypeRunner, coverage: coverageFor() });
+    expect(facts.targetCensus).toEqual([{ file: FILE, applicableMutants: facts.outcomes.length, reasons: [] }]);
     expect(facts.operatorApplicability).toHaveLength(MUTATION_OPERATORS.length);
     expect(facts.operatorApplicability?.map((row) => row.operator)).toEqual(
       [...MUTATION_OPERATORS].sort((a, b) => a.localeCompare(b)),

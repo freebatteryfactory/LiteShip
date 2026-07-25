@@ -5,13 +5,14 @@
  * Two host-only computations the mutation run needs, both PURE + deterministic over
  * the repo bytes:
  *
- * 1. {@link l4SeamTargets} — the COMPLETE mutation-analyzable L4 source census to aim the
- *    mutation cannon at, computed from the LIVE propagated assurance levels (the
+ * 1. {@link assuranceTargets} — the COMPLETE mutation-analyzable source census: live
+ *    effective-L4 files plus catalog-enrolled public runtime closures, computed from
+ *    propagated assurance levels and resolved RepoIR reachability (the
  *    {@link propagateAssuranceLevels} fixpoint over the injected IR's import graph,
  *    floored by the committed glob map — THE LAW: the level is computed from the live
- *    IR, never a hardcoded list beside the file). There is no second curated
- *    candidate list: every package TypeScript source file the live fixpoint rates
- *    L4 is in the census. Omitting one is a target-census error, not a quiet
+ *    IR, never a hardcoded list beside the file). There is no second curated candidate
+ *    list: campaigns are projected from the one package catalog and package export
+ *    maps. Omitting an L4 or campaign-reachable source is a target-census error, not a quiet
  *    optimization. Execution coverage and content-addressed verdict caching bound
  *    cost without narrowing the semantic target set.
  *
@@ -40,11 +41,18 @@
  * @module
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeRepoPath } from '@liteship/audit';
 import { makeCoverageMap, type CoverageMap, type MutationTargetFile } from '@liteship/audit';
-import { levelOf, propagateAssuranceLevels, type RepoIR } from '@liteship/gauntlet';
+import {
+  levelOf,
+  propagateAssuranceLevels,
+  type AssuranceTargetReason,
+  type RepoIR,
+  type SemanticAssuranceRequirement,
+} from '@liteship/gauntlet';
+import { GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS } from './semantic-assurance-campaigns.generated.js';
 import {
   computeSeamExecutionCoverage,
   executionCoverageRelation,
@@ -54,6 +62,7 @@ import {
   type SeamExecutionCoverageOptions,
   type SeamTestExecution,
 } from './seam-execution-coverage.js';
+import { collectRepoTestFiles, type RepoTestFile } from './test-corpus.js';
 
 /** Is an IR file a package TypeScript source the mutation analyzers own? */
 function isPackageMutationSource(file: string): boolean {
@@ -72,6 +81,143 @@ export function eligibleL4SeamFiles(ir: RepoIR): readonly string[] {
     .sort((a, b) => a.localeCompare(b));
 }
 
+/** One catalog-authored semantic assurance campaign projected from package exports. */
+export interface SemanticAssuranceCampaign {
+  readonly id: string;
+  readonly owner: string;
+  readonly packageDir: string;
+  readonly scope: 'public-runtime-closure';
+  readonly required: readonly SemanticAssuranceRequirement[];
+  readonly class: 'semantic-l4';
+  readonly entrypoints: readonly string[];
+}
+
+/** One expected target plus every independent reason that admitted it. */
+export interface ExpectedAssuranceTarget {
+  readonly file: string;
+  readonly reasons: readonly AssuranceTargetReason[];
+}
+
+/** The pure target selection before source bytes are read. */
+export interface AssuranceTargetSelection {
+  readonly expectedTargets: readonly ExpectedAssuranceTarget[];
+  readonly unresolvedEntrypoints: readonly string[];
+}
+
+function reasonKey(reason: AssuranceTargetReason): string {
+  return reason.kind === 'effective-level'
+    ? `effective-level:${reason.level}`
+    : `semantic-campaign:${reason.campaignId}:${reason.owner}:${reason.required.join(',')}`;
+}
+
+function sortedReasons(reasons: Iterable<AssuranceTargetReason>): readonly AssuranceTargetReason[] {
+  return [...reasons].sort((left, right) => reasonKey(left).localeCompare(reasonKey(right)));
+}
+
+/**
+ * Select the effective-L4 trust spine plus each enrolled package's live public runtime
+ * closure. Campaign reachability follows the same resolved RepoIR edges used by the
+ * assurance engine and may not escape the owning package's `src` tree.
+ */
+export function eligibleAssuranceTargets(
+  ir: RepoIR,
+  campaigns: readonly SemanticAssuranceCampaign[] = GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS,
+): AssuranceTargetSelection {
+  const byFile = new Map<string, Map<string, AssuranceTargetReason>>();
+  const admit = (file: string, reason: AssuranceTargetReason): void => {
+    const reasons = byFile.get(file) ?? new Map<string, AssuranceTargetReason>();
+    reasons.set(reasonKey(reason), reason);
+    byFile.set(file, reasons);
+  };
+
+  for (const file of eligibleL4SeamFiles(ir)) admit(file, { kind: 'effective-level', level: 'L4' });
+
+  const edgesBySource = new Map<string, string[]>();
+  for (const edge of ir.imports) {
+    if (edge.targetFile === undefined) continue;
+    const targets = edgesBySource.get(edge.fromFile) ?? [];
+    targets.push(edge.targetFile);
+    edgesBySource.set(edge.fromFile, targets);
+  }
+  for (const targets of edgesBySource.values()) targets.sort((left, right) => left.localeCompare(right));
+
+  const unresolvedEntrypoints: string[] = [];
+  for (const campaign of [...campaigns].sort((left, right) => left.id.localeCompare(right.id))) {
+    const sourcePrefix = `${normalizeRepoPath(campaign.packageDir)}/src/`;
+    const reason: AssuranceTargetReason = {
+      kind: 'semantic-campaign',
+      campaignId: campaign.id,
+      owner: campaign.owner,
+      class: campaign.class,
+      required: [...campaign.required].sort((left, right) => left.localeCompare(right)),
+    };
+    const pending = [...campaign.entrypoints].map(normalizeRepoPath).sort((left, right) => right.localeCompare(left));
+    const visited = new Set<string>();
+    while (pending.length > 0) {
+      const file = pending.pop()!;
+      if (visited.has(file)) continue;
+      visited.add(file);
+      if (!ir.files.has(file)) {
+        if (campaign.entrypoints.map(normalizeRepoPath).includes(file)) {
+          unresolvedEntrypoints.push(`${campaign.id}:${file}`);
+        }
+        continue;
+      }
+      if (!file.startsWith(sourcePrefix) || !isPackageMutationSource(file)) continue;
+      admit(file, reason);
+      for (const target of edgesBySource.get(file) ?? []) {
+        if (target.startsWith(sourcePrefix) && !visited.has(target)) pending.push(target);
+      }
+      pending.sort((left, right) => right.localeCompare(left));
+    }
+  }
+
+  const expectedTargets = [...byFile.entries()]
+    .map(([file, reasons]) => ({ file, reasons: sortedReasons(reasons.values()) }))
+    .sort((left, right) => left.file.localeCompare(right.file));
+  return {
+    expectedTargets,
+    unresolvedEntrypoints: [...new Set(unresolvedEntrypoints)].sort((left, right) => left.localeCompare(right)),
+  };
+}
+
+function materializeTargets(
+  selection: AssuranceTargetSelection,
+  repoRoot: string,
+  censusLabel: SeamTargetResult['censusLabel'],
+): SeamTargetResult {
+  const targets: MutationTargetFile[] = [];
+  const unreadable: string[] = [];
+  for (const candidate of selection.expectedTargets) {
+    try {
+      targets.push({
+        file: candidate.file,
+        text: readFileSync(join(repoRoot, candidate.file), 'utf8'),
+        reasons: candidate.reasons,
+      });
+    } catch {
+      unreadable.push(candidate.file);
+    }
+  }
+  return {
+    expectedFiles: selection.expectedTargets.map((target) => target.file),
+    expectedTargets: selection.expectedTargets,
+    targets,
+    unreadable,
+    unresolvedEntrypoints: selection.unresolvedEntrypoints,
+    censusLabel,
+  };
+}
+
+/** Materialize the union of effective-L4 and catalog-enrolled semantic campaign targets. */
+export function assuranceTargets(
+  ir: RepoIR,
+  repoRoot: string,
+  campaigns: readonly SemanticAssuranceCampaign[] = GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS,
+): SeamTargetResult {
+  return materializeTargets(eligibleAssuranceTargets(ir, campaigns), repoRoot, 'assurance');
+}
+
 /**
  * The L4 seam target set for the live mutation run — every package source the
  * LIVE propagated assurance levels rate effective-L4, paired with its
@@ -86,32 +232,33 @@ export function eligibleL4SeamFiles(ir: RepoIR): readonly string[] {
  *         surfaces it), so a vanished seam is visible, never a quiet drop.
  */
 export function l4SeamTargets(ir: RepoIR, repoRoot: string): SeamTargetResult {
-  const expectedFiles = eligibleL4SeamFiles(ir);
-  const targets: MutationTargetFile[] = [];
-  const unreadable: string[] = [];
-
-  for (const candidate of expectedFiles) {
-    let text: string;
-    try {
-      text = readFileSync(join(repoRoot, candidate), 'utf8');
-    } catch {
-      unreadable.push(candidate);
-      continue;
-    }
-    targets.push({ file: candidate, text });
-  }
-
-  return { expectedFiles, targets, unreadable };
+  return materializeTargets(
+    {
+      expectedTargets: eligibleL4SeamFiles(ir).map((file) => ({
+        file,
+        reasons: [{ kind: 'effective-level', level: 'L4' }],
+      })),
+      unresolvedEntrypoints: [],
+    },
+    repoRoot,
+    'eligible L4',
+  );
 }
 
 /** The outcome of {@link l4SeamTargets} — the targets + the visible drops. */
 export interface SeamTargetResult {
   /** Every mutation-analyzable source file the live propagated assurance map rates L4. */
   readonly expectedFiles: readonly string[];
+  /** The same census with independently derived admission provenance. */
+  readonly expectedTargets?: readonly ExpectedAssuranceTarget[];
   /** The effective-L4 seam files paired with their current bytes (the mutate set). */
   readonly targets: readonly MutationTargetFile[];
   /** Candidates whose bytes could not be read (a vanished seam — surfaced, not hidden). */
   readonly unreadable: readonly string[];
+  /** Campaign entrypoints absent from the live IR (a catalog/IR mismatch). */
+  readonly unresolvedEntrypoints?: readonly string[];
+  /** Diagnostic noun used by the compatibility L4 wrapper and the campaign selector. */
+  readonly censusLabel?: 'eligible L4' | 'assurance';
 }
 
 /**
@@ -120,71 +267,29 @@ export interface SeamTargetResult {
  */
 export function targetCensusErrors(result: SeamTargetResult): readonly string[] {
   const errors: string[] = [];
+  const label = result.censusLabel ?? 'eligible L4';
   const actual = result.targets.map((target) => target.file);
   const actualSet = new Set(actual);
   for (const file of result.expectedFiles) {
-    if (!actualSet.has(file)) errors.push(`eligible L4 target omitted: ${file}`);
+    if (!actualSet.has(file)) errors.push(`${label} target omitted: ${file}`);
   }
   const expectedSet = new Set(result.expectedFiles);
   for (const file of actualSet) {
-    if (!expectedSet.has(file)) errors.push(`foreign non-L4 target admitted: ${file}`);
+    if (!expectedSet.has(file))
+      errors.push(
+        label === 'eligible L4' ? `foreign non-L4 target admitted: ${file}` : `foreign target admitted: ${file}`,
+      );
   }
   const seen = new Set<string>();
   for (const file of actual) {
     if (seen.has(file)) errors.push(`duplicate mutation target: ${file}`);
     seen.add(file);
   }
-  for (const file of result.unreadable) errors.push(`eligible L4 target unreadable: ${file}`);
+  for (const file of result.unreadable) errors.push(`${label} target unreadable: ${file}`);
+  for (const entrypoint of result.unresolvedEntrypoints ?? []) {
+    errors.push(`semantic campaign entrypoint unresolved: ${entrypoint}`);
+  }
   return errors.sort((a, b) => a.localeCompare(b));
-}
-
-/** The repo-relative test roots scanned for covering tests (the vitest include set). */
-const TEST_ROOTS: readonly string[] = [
-  'tests/unit',
-  'tests/integration',
-  'tests/bench',
-  'tests/smoke',
-  'tests/property',
-  'tests/component',
-  'tests/regression',
-  'tests/generated',
-];
-
-/** A discovered test file — its repo-relative POSIX id + its raw bytes (read once). */
-interface TestFile {
-  readonly id: string;
-  readonly text: string;
-}
-
-/**
- * Recursively collect every `*.test.ts` file under `root` (repo-relative POSIX
- * ids), reading each one's bytes once. The established cli `readdirSync` recursion
- * (no new glob dependency). A missing root is skipped (a repo without that test
- * tier is valid); any other read fault propagates (never a silent swallow).
- */
-function collectTestFiles(repoRoot: string, root: string): TestFile[] {
-  const out: TestFile[] = [];
-  const walk = (relDir: string): void => {
-    let names: readonly string[];
-    try {
-      names = readdirSync(join(repoRoot, relDir));
-    } catch (err) {
-      // A missing test root is valid (skip); anything else is a real fault.
-      if ((err as NodeJS.ErrnoException).code === 'ENOENT') return;
-      throw err;
-    }
-    for (const name of names) {
-      const relPath = normalizeRepoPath(`${relDir}/${name}`);
-      const stat = statSync(join(repoRoot, relPath));
-      if (stat.isDirectory()) {
-        walk(relPath);
-      } else if (stat.isFile() && name.endsWith('.test.ts')) {
-        out.push({ id: relPath, text: readFileSync(join(repoRoot, relPath), 'utf8') });
-      }
-    }
-  };
-  walk(root);
-  return out;
 }
 
 /**
@@ -212,7 +317,7 @@ function deepImportSpecifier(seamFile: string): string {
  * test that references `packages/P/src/F.js` exercises F by construction (it is
  * always kept, on every line, no probe).
  */
-function testDeepImports(test: TestFile, seamFile: string): boolean {
+function testDeepImports(test: RepoTestFile, seamFile: string): boolean {
   return test.text.includes(deepImportSpecifier(seamFile));
 }
 
@@ -224,7 +329,7 @@ function testDeepImports(test: TestFile, seamFile: string): boolean {
  * function of F (the barrel-problem fix). Matches both quote styles. Returns `false`
  * when the seam has no package barrel (then only the deep-import signal applies).
  */
-function testImportsBarrel(test: TestFile, seamFile: string): boolean {
+function testImportsBarrel(test: RepoTestFile, seamFile: string): boolean {
   const barrel = barrelOf(seamFile);
   if (barrel === null) return false;
   return (
@@ -245,16 +350,7 @@ export function partitionSeamCandidates(
   repoRoot: string,
   seams: readonly MutationTargetFile[],
 ): readonly SeamCandidates[] {
-  const seen = new Set<string>();
-  const tests: TestFile[] = [];
-  for (const root of TEST_ROOTS) {
-    for (const t of collectTestFiles(repoRoot, root)) {
-      if (seen.has(t.id)) continue;
-      seen.add(t.id);
-      tests.push(t);
-    }
-  }
-  tests.sort((a, b) => a.id.localeCompare(b.id));
+  const tests = collectRepoTestFiles(repoRoot);
 
   return seams.map((seam) => {
     const deepImporters: string[] = [];

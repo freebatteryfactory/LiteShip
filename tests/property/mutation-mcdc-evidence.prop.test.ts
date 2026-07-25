@@ -226,8 +226,8 @@ describe('MC/DC evidence properties', () => {
       coverage: mcdcCoverage([RANGE, CONSTANT], ['tests/unit/range.test.ts']),
     });
     expect(facts.targetCensus).toEqual([
-      { file: CONSTANT.file, applicableConditions: 0 },
-      { file: RANGE.file, applicableConditions: 2 },
+      { file: CONSTANT.file, applicableConditions: 0, reasons: [] },
+      { file: RANGE.file, applicableConditions: 2, reasons: [] },
     ]);
     for (const row of facts.targetCensus) {
       expect(row.applicableConditions).toBe(facts.conditions.filter((condition) => condition.file === row.file).length);

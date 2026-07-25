@@ -4,7 +4,7 @@
  * of the on-disk test bytes (no clock, no rng, no network).
  *
  * Pins (over an isolated temp repo so the corpus is fully controlled):
- *  - the TEST-TIER set: a `*.test.ts` under each scanned root (tests/unit … generated)
+ *  - the TEST-TIER set: a `*.test.ts` under each scanned root (tests/unit … fuzz)
  *    is collected; a file outside every root is NOT.
  *  - the RECURSION: a `*.test.ts` nested arbitrarily deep under a root is collected.
  *  - the EXTENSION gate: only `*.test.ts` files (not `.ts` / `.test.tsx` / dirs) count.
@@ -19,7 +19,11 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import fc from 'fast-check';
-import { collectRepoTestFiles, type RepoTestFile } from '../../../../packages/cli/src/lib/test-corpus.js';
+import {
+  collectRepoTestFiles,
+  TEST_CORPUS_ROOTS,
+  type RepoTestFile,
+} from '../../../../packages/cli/src/lib/test-corpus.js';
 
 let root: string;
 
@@ -37,27 +41,15 @@ function write(rel: string, text: string): void {
   writeFileSync(full, text, 'utf8');
 }
 
-/** The eight roots the corpus reader scans (mirror of TEST_ROOTS — a drift pin). */
-const TEST_ROOTS = [
-  'tests/unit',
-  'tests/integration',
-  'tests/bench',
-  'tests/smoke',
-  'tests/property',
-  'tests/component',
-  'tests/regression',
-  'tests/generated',
-] as const;
-
 describe('test-corpus reader — the test-tier set', () => {
   it('collects a *.test.ts under EVERY scanned root, one entry per root', () => {
-    for (const r of TEST_ROOTS) write(`${r}/x.test.ts`, '// x');
+    for (const r of TEST_CORPUS_ROOTS) write(`${r}/x.test.ts`, '// x');
     const corpus = collectRepoTestFiles(root);
     const ids = corpus.map((t) => t.id);
-    for (const r of TEST_ROOTS) {
+    for (const r of TEST_CORPUS_ROOTS) {
       expect(ids).toContain(`${r}/x.test.ts`);
     }
-    expect(corpus).toHaveLength(TEST_ROOTS.length);
+    expect(corpus).toHaveLength(TEST_CORPUS_ROOTS.length);
   });
 
   it('does NOT collect a *.test.ts that lives OUTSIDE every scanned root', () => {
@@ -77,11 +69,7 @@ describe('test-corpus reader — recursion + the extension gate', () => {
     write('tests/unit/sub/b.test.ts', '// b');
     write('tests/unit/sub/deeper/c.test.ts', '// c');
     const ids = collectRepoTestFiles(root).map((t) => t.id);
-    expect(ids).toEqual([
-      'tests/unit/a.test.ts',
-      'tests/unit/sub/b.test.ts',
-      'tests/unit/sub/deeper/c.test.ts',
-    ]);
+    expect(ids).toEqual(['tests/unit/a.test.ts', 'tests/unit/sub/b.test.ts', 'tests/unit/sub/deeper/c.test.ts']);
   });
 
   it('collects ONLY *.test.ts — a plain .ts, a .test.tsx, and a *.test.ts directory do not count', () => {
@@ -129,12 +117,10 @@ describe('test-corpus reader — determinism', () => {
       fc.property(
         fc.uniqueArray(
           fc.tuple(
-            fc.constantFrom(...TEST_ROOTS),
+            fc.constantFrom(...TEST_CORPUS_ROOTS),
             fc
               .array(
-                fc
-                  .stringMatching(/^[a-z][a-z0-9]{0,7}$/)
-                  .filter((s) => s.length > 0),
+                fc.stringMatching(/^[a-z][a-z0-9]{0,7}$/).filter((s) => s.length > 0),
                 { minLength: 1, maxLength: 3 },
               )
               .map((segs) => `${segs.join('/')}.test.ts`),

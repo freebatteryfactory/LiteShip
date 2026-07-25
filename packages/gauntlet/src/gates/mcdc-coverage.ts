@@ -131,10 +131,22 @@ function pinWord(verdict: McdcPinVerdict): string {
  * than a partial gap at the same level). REPORT-not-DECIDE: the remediation is "write the
  * distinguishing test", the reader acts.
  */
-function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel): Finding {
+function requiredCampaigns(facts: McdcFacts, file: string): readonly string[] {
+  const row = facts.targetCensus.find((target) => target.file === file);
+  return (row?.reasons ?? [])
+    .filter((reason) => reason.kind === 'semantic-campaign' && reason.required.includes('mcdc'))
+    .map((reason) => (reason.kind === 'semantic-campaign' ? reason.campaignId : ''))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function uncoveredFinding(
+  outcome: McdcConditionOutcome,
+  level: AssuranceLevel,
+  campaignIds: readonly string[] = [],
+): Finding {
   const noCoverage = isNoCoverage(outcome);
   const base = MCDC_SEVERITY_BY_LEVEL[level];
-  const severity = noCoverage ? louder(base) : base;
+  const severity = campaignIds.length > 0 ? 'error' : noCoverage ? louder(base) : base;
   const loc = `${outcome.file}:${outcome.line}:${outcome.column}`;
   const gaps = gapDescription(outcome);
   const what = noCoverage
@@ -145,7 +157,7 @@ function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel):
     severity,
     level,
     title: `Condition not MC/DC-covered at ${loc} (${level})`,
-    detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` ${what}. MC/DC (DO-178B Level A) requires each condition's independent effect to be observed — both its force-true and force-false condition-mutant must be KILLED by a covering test. Here ${gaps} survived, an MC/DC gap at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}). The engine reports the gap; you decide whether to add the missing distinguishing test.`,
+    detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` ${what}. MC/DC (DO-178B Level A) requires each condition's independent effect to be observed — both its force-true and force-false condition-mutant must be KILLED by a covering test. Here ${gaps} survived, an MC/DC gap at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}).${campaignIds.length > 0 ? ` Semantic campaign(s) ${campaignIds.join(', ')} independently require MC/DC closure for this public runtime path, so this finding blocks without relabeling the file's actual assurance level.` : ''} The engine reports the gap; you decide whether to add the missing distinguishing test.`,
     location: { file: outcome.file, line: outcome.line, column: outcome.column },
     remediation: {
       kind: 'instruction',
@@ -174,7 +186,9 @@ function foldMcdc(context: GateContext): readonly Finding[] {
   const findings: Finding[] = [];
   for (const outcome of facts.conditions) {
     if (isMcdcCovered(outcome)) continue; // both pins killed — the independent effect is observed
-    findings.push(uncoveredFinding(outcome, levelForFile(outcome.file, levels)));
+    findings.push(
+      uncoveredFinding(outcome, levelForFile(outcome.file, levels), requiredCampaigns(facts, outcome.file)),
+    );
   }
   findings.sort(
     (a, b) =>
@@ -248,14 +262,14 @@ const FIXTURES = {
     name: 'MC/DC facts with an UNCOVERED L4 condition (a surviving pin — the unobserved effect the gate must flag)',
     context: mcdcContext(fixtureIR(), {
       conditions: [uncoveredCondition()],
-      targetCensus: [{ file: L4_FILE, applicableConditions: 1 }],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1, reasons: [] }],
     }),
   },
   green: {
     name: 'MC/DC facts with only a fully-COVERED L4 condition (both pins killed — full MC/DC, clean)',
     context: mcdcContext(fixtureIR(), {
       conditions: [coveredCondition()],
-      targetCensus: [{ file: L4_FILE, applicableConditions: 1 }],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1, reasons: [] }],
     }),
   },
   mutation: {

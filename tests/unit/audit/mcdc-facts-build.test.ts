@@ -43,7 +43,7 @@ describe('buildMcdcFacts — folds two pins per condition into one outcome', () 
       expect(c.forceFalseVerdict).toBe('killed');
       expect(c.coveringTests).toEqual(['inRange.test']);
     }
-    expect(facts.targetCensus).toEqual([{ file: FILE, applicableConditions: 2 }]);
+    expect(facts.targetCensus).toEqual([{ file: FILE, applicableConditions: 2, reasons: [] }]);
   });
 
   it('a weak mid-only suite → each condition has a SURVIVING force-TRUE pin (an MC/DC gap)', () => {
@@ -71,7 +71,7 @@ describe('buildMcdcFacts — folds two pins per condition into one outcome', () 
       coverage: makeCoverageMap([]),
     });
     expect(facts.conditions).toEqual([]);
-    expect(facts.targetCensus).toEqual([{ file, applicableConditions: 0 }]);
+    expect(facts.targetCensus).toEqual([{ file, applicableConditions: 0, reasons: [] }]);
   });
 
   it('is deterministic — two runs produce byte-identical facts', () => {

@@ -211,6 +211,7 @@ function mutationCtx(verdict: 'killed' | 'survived'): GateContext {
         subsumedBy: [],
       },
     ],
+    targetCensus: [{ file, applicableMutants: 1, reasons: [] }],
     operatorApplicability: [{ file, operator: 'conditional-boundary', applicableMutants: 1 }],
     scoreBaseline: {},
   };

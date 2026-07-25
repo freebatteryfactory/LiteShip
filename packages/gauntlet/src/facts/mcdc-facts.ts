@@ -31,11 +31,12 @@
  *
  * @module
  */
+import type { AssuranceTargetReason } from './mutation-facts.js';
 
 /**
  * The host-supplied MC/DC evidence over one run. The condition-mutation engine is HEAVY
  * (a vitest run per pin, two pins per condition), so production runs it OPT-IN, scoped to
- * the propagated-L4 seams + cached + shardable; when the host did not run it this whole
+ * effective-L4 and catalog-enrolled semantic targets + cached + shardable; when the host did not run it this whole
  * capability is simply ABSENT from the GateContext and the gate is not in the set (no
  * cost, no noise). When present it carries every per-condition outcome (both pins'
  * verdicts folded) — the substrate the gate folds into MC/DC-gap Findings.
@@ -51,6 +52,8 @@ export interface McdcFacts {
 export interface McdcTargetCensus {
   readonly file: string;
   readonly applicableConditions: number;
+  /** Why this file was admitted even when it has no applicable conditions. */
+  readonly reasons: readonly AssuranceTargetReason[];
 }
 
 /**

@@ -48,6 +48,7 @@ export const PUBLISH_ROSTER_JSON = 'scripts/ci/publish-roster.json';
 export const AUDIT_ROSTER_TS = 'packages/audit/src/package-catalog.generated.ts';
 export const COMMAND_SMOKE_TS = 'packages/command/src/commands/package-smoke-registry.generated.ts';
 export const CLI_METADATA_TS = 'packages/cli/src/lib/package-metadata-catalog.generated.ts';
+export const CLI_ASSURANCE_CAMPAIGNS_TS = 'packages/cli/src/lib/semantic-assurance-campaigns.generated.ts';
 export const AUDIT_TOPOLOGY_TS = 'packages/audit/src/package-topology.generated.ts';
 export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.generated.ts';
 export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
@@ -160,6 +161,60 @@ export function renderCliMetadataCatalog(): string {
   return (
     generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
     `// prettier-ignore\nexport const GENERATED_PACKAGE_METADATA = {\n${rows}\n} as const;\n`
+  );
+}
+
+type ExportTarget = string | readonly ExportTarget[] | Readonly<Record<string, ExportTarget | null>> | null;
+
+function developmentTargets(target: ExportTarget | undefined): readonly string[] {
+  if (target === undefined || target === null) return [];
+  if (typeof target === 'string') return [];
+  if (Array.isArray(target)) return target.flatMap((entry) => developmentTargets(entry));
+  const record = target as Readonly<Record<string, ExportTarget | null>>;
+  const development = record['development'];
+  if (typeof development === 'string') return [development];
+  return Object.values(record).flatMap((entry) => developmentTargets(entry ?? undefined));
+}
+
+function campaignEntrypoints(record: PackageCatalogRecord): readonly string[] {
+  if (record.assuranceCampaign === undefined) return [];
+  const manifest = JSON.parse(readFileSync(resolve(REPO_ROOT, record.dir, 'package.json'), 'utf8')) as CatalogManifest;
+  if (typeof manifest.exports !== 'object' || manifest.exports === null || Array.isArray(manifest.exports)) {
+    throw new Error(`${record.name}: semantic assurance campaign requires an object exports map`);
+  }
+  const exportsMap = manifest.exports as Readonly<Record<string, ExportTarget>>;
+  const entrypoints = record.publicSubpaths.flatMap((subpath) =>
+    developmentTargets(exportsMap[subpath]).map((target) => {
+      if (!target.startsWith('./src/') || !target.endsWith('.ts')) {
+        throw new Error(`${record.name}:${subpath}: campaign development target must be a source TypeScript file`);
+      }
+      const path = `${record.dir}/${target.slice(2)}`;
+      if (!existsSync(resolve(REPO_ROOT, path)))
+        throw new Error(`${record.name}:${subpath}: missing campaign entrypoint ${path}`);
+      return path;
+    }),
+  );
+  if (entrypoints.length === 0)
+    throw new Error(`${record.name}: semantic assurance campaign has no development entrypoint`);
+  return [...new Set(entrypoints)].sort((left, right) => left.localeCompare(right));
+}
+
+export function renderCliAssuranceCampaigns(): string {
+  const rows = PACKAGE_CATALOG.filter((record) => record.assuranceCampaign !== undefined)
+    .map((record) => {
+      const campaign = record.assuranceCampaign!;
+      return (
+        `  { id: ${quote(campaign.id)}, owner: ${quote(record.name)}, packageDir: ${quote(record.dir)}, ` +
+        `scope: ${quote(campaign.scope)}, required: [${campaign.required.map((item) => quote(item)).join(', ')}], ` +
+        `class: ${quote(campaign.class)}, entrypoints: [${campaignEntrypoints(record)
+          .map((entry) => quote(entry))
+          .join(', ')}] },`
+      );
+    })
+    .join('\n');
+  return (
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts and package export maps') +
+    `// prettier-ignore\nexport const GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS = [\n${rows}\n] as const;\n`
   );
 }
 
@@ -404,6 +459,7 @@ export function renderGeneratedProjections(): ReadonlyArray<readonly [string, st
     [AUDIT_ROSTER_TS, renderAuditRoster()],
     [COMMAND_SMOKE_TS, renderCommandSmokeRoster()],
     [CLI_METADATA_TS, renderCliMetadataCatalog()],
+    [CLI_ASSURANCE_CAMPAIGNS_TS, renderCliAssuranceCampaigns()],
     [AUDIT_TOPOLOGY_TS, renderAuditTopology()],
     [COMMAND_PLUMB_TS, renderCommandPlumb()],
     [DOC_PACKAGE_GROUPS_TS, renderDocPackageGroups()],

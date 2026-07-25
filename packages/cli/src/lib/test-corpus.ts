@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { normalizeRepoPath } from '@liteship/audit';
 
 /** The repo-relative test roots scanned for the corpus (the vitest include set). */
-const TEST_ROOTS: readonly string[] = [
+export const TEST_CORPUS_ROOTS = [
   'tests/unit',
   'tests/integration',
   'tests/bench',
@@ -25,7 +25,8 @@ const TEST_ROOTS: readonly string[] = [
   'tests/component',
   'tests/regression',
   'tests/generated',
-];
+  'tests/fuzz',
+] as const;
 
 /** A discovered test file — its repo-relative POSIX id + its raw bytes (read once). */
 export interface RepoTestFile {
@@ -66,14 +67,14 @@ function collectUnder(repoRoot: string, root: string): RepoTestFile[] {
 }
 
 /**
- * Collect the WHOLE test corpus across {@link TEST_ROOTS}, de-duplicated by id and
+ * Collect the WHOLE test corpus across {@link TEST_CORPUS_ROOTS}, de-duplicated by id and
  * sorted (deterministic). Read once — callers scan the returned bytes for their
  * signals.
  */
 export function collectRepoTestFiles(repoRoot: string): readonly RepoTestFile[] {
   const seen = new Set<string>();
   const tests: RepoTestFile[] = [];
-  for (const root of TEST_ROOTS) {
+  for (const root of TEST_CORPUS_ROOTS) {
     for (const t of collectUnder(repoRoot, root)) {
       if (seen.has(t.id)) continue;
       seen.add(t.id);

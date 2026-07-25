@@ -60,7 +60,8 @@ function ctx(ir: RepoIR, mcdc: TestMcdcFacts): GateContext {
     ir,
     mcdc: {
       ...mcdc,
-      targetCensus: mcdc.targetCensus ?? mcdc.conditions.map((item) => ({ file: item.file, applicableConditions: 1 })),
+      targetCensus:
+        mcdc.targetCensus ?? mcdc.conditions.map((item) => ({ file: item.file, applicableConditions: 1, reasons: [] })),
     },
   };
 }
@@ -123,6 +124,33 @@ describe('mcdcCoverageGate — floor calibration by level', () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]!.severity).toBe('advisory');
     expect(findings[0]!.level).toBe('L1');
+  });
+
+  it('a semantic-campaign L1 gap blocks while retaining its actual L1 level', () => {
+    const findings = mcdcCoverageGate.run(
+      ctx(simpleIR([L1_FILE]), {
+        conditions: [condition({ file: L1_FILE, forceTrueVerdict: 'survived', forceFalseVerdict: 'killed' })],
+        targetCensus: [
+          {
+            file: L1_FILE,
+            applicableConditions: 1,
+            reasons: [
+              {
+                kind: 'semantic-campaign',
+                campaignId: 'wave5/example',
+                owner: '@liteship/x',
+                class: 'semantic-l4',
+                required: ['mcdc'],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.level).toBe('L1');
+    expect(findings[0]!.severity).toBe('error');
+    expect(findings[0]!.detail).toContain('wave5/example');
   });
 
   it('a fully-NO-COVERAGE condition is ONE step louder than a partial gap at the same level', () => {

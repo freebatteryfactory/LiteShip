@@ -28,7 +28,7 @@
 /**
  * The host-supplied mutation evidence over one run. The mutation engine is HEAVY
  * (a vitest run per mutant), so production runs it OPT-IN, scoped to the
- * propagated-L4 seams + cached + shardable; when the host did not run mutation this
+ * effective-L4 and catalog-enrolled semantic targets + cached + shardable; when the host did not run mutation this
  * whole capability is simply ABSENT from the GateContext and the gate is not in the
  * set (no cost, no noise). When present it carries every per-mutant outcome plus the
  * committed score BASELINE the ratchet compares against.
@@ -36,6 +36,8 @@
 export interface MutationFacts {
   /** Every evaluated mutant's outcome — the substrate the gate folds. */
   readonly outcomes: readonly MutantOutcome[];
+  /** Every admitted target and why it entered the run, including zero-applicability files. */
+  readonly targetCensus: readonly MutationTargetCensus[];
   /** Every operator's applicability count for every admitted target, including zero. */
   readonly operatorApplicability: readonly MutationOperatorApplicability[];
   /**
@@ -47,6 +49,30 @@ export interface MutationFacts {
    * regression). Keyed by the same {@link MutantOutcome.file} ids.
    */
   readonly scoreBaseline: Readonly<Record<string, number>>;
+}
+
+/** An assurance capability a semantic campaign can require over its public runtime closure. */
+export type SemanticAssuranceRequirement = 'mutation' | 'mcdc';
+
+/** Why one source file was admitted to a mutation or MC/DC run. */
+export type AssuranceTargetReason =
+  | {
+      readonly kind: 'effective-level';
+      readonly level: 'L4';
+    }
+  | {
+      readonly kind: 'semantic-campaign';
+      readonly campaignId: string;
+      readonly owner: string;
+      readonly class: 'semantic-l4';
+      readonly required: readonly SemanticAssuranceRequirement[];
+    };
+
+/** One explicit mutation target row, including targets with no applicable mutants. */
+export interface MutationTargetCensus {
+  readonly file: string;
+  readonly applicableMutants: number;
+  readonly reasons: readonly AssuranceTargetReason[];
 }
 
 /** One explicit operator-applicability census row for an admitted mutation target. */

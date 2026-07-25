@@ -88,6 +88,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
             subsumedBy: [],
           },
         ],
+        targetCensus: [{ file: TRUE_L4_FILE, applicableMutants: 1, reasons: [] }],
         operatorApplicability: [{ file: TRUE_L4_FILE, operator: 'equality', applicableMutants: 1 }],
         scoreBaseline: {},
       },

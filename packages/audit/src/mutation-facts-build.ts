@@ -10,11 +10,11 @@
  * deterministic mutant catalogue per file ({@link generateMutants}), evaluates each
  * mutant against the INJECTED test runner ({@link evaluateMutant}), and folds the
  * verdicts into the flat facts. The CLI integrator wires the production vitest runner
- * + the B2 verdict cache + the propagated-L4 scoping; the meta-proof wires a
+ * + the B2 verdict cache + the host-selected assurance target census; the meta-proof wires a
  * deterministic stub runner. Pure w.r.t. its inputs (the runner + the source bytes).
  *
  * AIM THE CANNON. Mutation is HEAVY (a suite run per mutant), so a production caller
- * scopes `files` to the propagated-L4 seams (the {@link MutationBuildOptions.budget}
+ * scopes `files` to its admitted assurance targets (the {@link MutationBuildOptions.budget}
  * caps the per-file catalogue, the B2 cache makes it changed-only-cost, and the
  * caller may shard the file list). The builder itself is deterministic: same source
  * bytes + same runner verdicts → byte-identical facts.
@@ -22,7 +22,7 @@
  * @module
  */
 import ts from 'typescript';
-import type { MutationFacts, MutantOutcome } from '@liteship/gauntlet';
+import type { AssuranceTargetReason, MutationFacts, MutantOutcome } from '@liteship/gauntlet';
 import { CanonicalCbor, addressedDigestOf } from '@liteship/canonical';
 import { generateMutants, MUTATION_OPERATORS, type GenerateMutantsOptions } from './mutation-engine.js';
 import {
@@ -37,6 +37,8 @@ import {
 export interface MutationTargetFile {
   readonly file: string;
   readonly text: string;
+  /** The independently derived provenance for admitting this target. */
+  readonly reasons?: readonly AssuranceTargetReason[];
 }
 
 /** Options for {@link buildMutationFacts} — the host-injection surface. */
@@ -80,11 +82,17 @@ function parseTarget(target: MutationTargetFile): ts.SourceFile {
  */
 export function buildMutationFacts(files: readonly MutationTargetFile[], options: MutationBuildOptions): MutationFacts {
   const outcomes: MutantOutcome[] = [];
+  const targetCensus: MutationFacts['targetCensus'][number][] = [];
   const operatorApplicability: MutationFacts['operatorApplicability'][number][] = [];
   for (const target of files) {
     const genOptions: GenerateMutantsOptions =
       options.budget !== undefined ? { file: target.file, budget: options.budget } : { file: target.file };
     const mutants = generateMutants(parseTarget(target), genOptions);
+    targetCensus.push({
+      file: target.file,
+      applicableMutants: mutants.length,
+      reasons: target.reasons ?? [],
+    });
     for (const operator of MUTATION_OPERATORS) {
       operatorApplicability.push({
         file: target.file,
@@ -140,5 +148,6 @@ export function buildMutationFacts(files: readonly MutationTargetFile[], options
       a.mutatedText.localeCompare(b.mutatedText),
   );
   operatorApplicability.sort((a, b) => a.file.localeCompare(b.file) || a.operator.localeCompare(b.operator));
-  return { outcomes, operatorApplicability, scoreBaseline: options.scoreBaseline ?? {} };
+  targetCensus.sort((a, b) => a.file.localeCompare(b.file));
+  return { outcomes, targetCensus, operatorApplicability, scoreBaseline: options.scoreBaseline ?? {} };
 }

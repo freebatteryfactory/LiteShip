@@ -470,6 +470,11 @@ describe('runGauntletWithRepoIR — build IR + always-on facts + run + receipt',
 // ───────────────────────────────────────────────────────────────────────────
 
 describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seams present)', () => {
+  const campaignEntrypointFixtures = {
+    'packages/genui/src/index.ts': 'export type GenuiFixture = string;\n',
+    'packages/assets/src/index.ts': 'export type AssetsFixture = string;\n',
+  } as const;
+
   it(
     '--mutate composes the mutation gate; an absent baseline/registry yields an empty (no-floor) run',
     async () => {
@@ -477,7 +482,7 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
       // produces zero targets (every candidate recorded as unreadable → no per-mutant
       // subprocess), exercising the host's mutation-fact assembly + the absent-artifact
       // branches of readMutationScoreBaseline / readEquivalentMutantRegistry.
-      const root = freshFixture();
+      const root = freshFixture(campaignEntrypointFixtures);
       const result = await runGauntletWithRepoIR(root, NOW, undefined, { cacheCwd: root, withMutate: true });
       expect(Array.isArray(result.findings)).toBe(true);
     },
@@ -487,7 +492,7 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
   it(
     '--mcdc composes the MC/DC gate over the same empty-seam path',
     async () => {
-      const root = freshFixture();
+      const root = freshFixture(campaignEntrypointFixtures);
       const result = await runGauntletWithRepoIR(root, NOW, undefined, { cacheCwd: root, withMcdc: true });
       expect(Array.isArray(result.findings)).toBe(true);
     },
@@ -501,6 +506,7 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
       // READERS' success path (each finite-number entry accepted, the registry built) — the
       // ratchet floor is armed even though this fixture has no live L4 seams to score.
       const root = freshFixture({
+        ...campaignEntrypointFixtures,
         'benchmarks/mutation-score.json': JSON.stringify({ 'packages/example/src/index.ts': 0.9 }),
         'benchmarks/mutation-equivalents.json': JSON.stringify({ entries: [] }),
       });

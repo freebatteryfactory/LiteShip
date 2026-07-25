@@ -43,6 +43,13 @@ export interface PackageCatalogRecord {
   readonly dependencies: readonly string[];
   readonly capabilities: readonly string[];
   readonly publicSubpaths: readonly string[];
+  /** Optional semantic assurance campaign over this package's public runtime closure. */
+  readonly assuranceCampaign?: {
+    readonly id: string;
+    readonly scope: 'public-runtime-closure';
+    readonly required: readonly ('mutation' | 'mcdc')[];
+    readonly class: 'semantic-l4';
+  };
   readonly smokeImports: readonly string[];
   readonly description: string;
   readonly keywords: readonly string[];
@@ -176,6 +183,12 @@ export const PACKAGE_CATALOG = [
     dependencies: ['@liteship/_spine', '@liteship/canonical', '@liteship/error'],
     capabilities: ['trusted-component-catalog', 'generated-ui-validation'],
     publicSubpaths: ['.'],
+    assuranceCampaign: {
+      id: 'wave5/genui-semantic',
+      scope: 'public-runtime-closure',
+      required: ['mutation', 'mcdc'],
+      class: 'semantic-l4',
+    },
     smokeImports: ['@liteship/genui'],
     description:
       "Render AI-generated UI safely in LiteShip: validate a model's proposed component tree against a host-owned catalog and draw only trusted, whitelisted components.",
@@ -532,6 +545,12 @@ export const PACKAGE_CATALOG = [
     dependencies: ['@liteship/_spine', '@liteship/core', '@liteship/error'],
     capabilities: ['asset-declarations', 'media-analysis'],
     publicSubpaths: ['.'],
+    assuranceCampaign: {
+      id: 'wave5/assets-semantic',
+      scope: 'public-runtime-closure',
+      required: ['mutation', 'mcdc'],
+      class: 'semantic-l4',
+    },
     smokeImports: ['@liteship/assets'],
     description:
       'Manage media assets for LiteShip: declare audio, video, and image assets and read cached analysis such as waveforms, beat markers, and onsets.',

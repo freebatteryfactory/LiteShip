@@ -114,7 +114,14 @@ export {
 // shadow-diff before any promotion to the production gate set.
 export { noSkippedTestFactGate, decideSkips } from './gates/no-skipped-test-fact.js';
 
-export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './facts/mutation-facts.js';
+export {
+  type AssuranceTargetReason,
+  type MutationFacts,
+  type MutationTargetCensus,
+  type MutantOutcome,
+  type MutantVerdictTag,
+  type SemanticAssuranceRequirement,
+} from './facts/mutation-facts.js';
 
 // The BISIMULATION fact family (Wave 5.5, the transition cage) — the DYNAMIC-SUBJECT
 // half of the conformance backbone. Flat, no-heavy-dep facts (parallel to MutationFacts):

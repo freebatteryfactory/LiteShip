@@ -2,6 +2,7 @@ import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Config, defineConfig } from './packages/core/src/authoring/config.js';
+import { TEST_CORPUS_ROOTS } from './packages/cli/src/lib/test-corpus.js';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
@@ -219,17 +220,5 @@ export function scaledTimeout(baseMs: number): number {
   return coverageActive() ? Math.max(scaled, COVERAGE_TIMEOUT_FLOOR_MS) : scaled;
 }
 
-export const nodeTestInclude = [
-  'tests/unit/**/*.test.ts',
-  'tests/integration/**/*.test.ts',
-  'tests/bench/**/*.test.ts',
-  'tests/smoke/**/*.test.ts',
-  'tests/property/**/*.test.ts',
-  'tests/component/**/*.test.ts',
-  'tests/regression/**/*.test.ts',
-  'tests/generated/**/*.test.ts',
-  // The decode-fuzz harness: the committed corpus replay (the regression floor,
-  // incl. the __proto__ CVE seed) + the deterministic seeded generated fuzz over
-  // every L4 untrusted-byte decoder, plus the fuzzCorpusGate self-proof.
-  'tests/fuzz/**/*.test.ts',
-];
+/** One authored corpus root set drives Vitest and every assurance evidence scanner. */
+export const nodeTestInclude = TEST_CORPUS_ROOTS.map((root) => `${root}/**/*.test.ts`);

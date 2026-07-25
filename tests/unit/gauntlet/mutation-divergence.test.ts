@@ -53,8 +53,8 @@ function outcome(over: Partial<MutantOutcome> & Pick<MutantOutcome, 'file' | 've
   };
 }
 
-type TestMutationFacts = Omit<MutationFacts, 'operatorApplicability'> &
-  Partial<Pick<MutationFacts, 'operatorApplicability'>>;
+type TestMutationFacts = Omit<MutationFacts, 'operatorApplicability' | 'targetCensus'> &
+  Partial<Pick<MutationFacts, 'operatorApplicability' | 'targetCensus'>>;
 
 function ctx(ir: RepoIR, mutation: TestMutationFacts): GateContext {
   return {
@@ -62,6 +62,9 @@ function ctx(ir: RepoIR, mutation: TestMutationFacts): GateContext {
     ir,
     mutation: {
       ...mutation,
+      targetCensus:
+        mutation.targetCensus ??
+        mutation.outcomes.map((item) => ({ file: item.file, applicableMutants: 1, reasons: [] })),
       operatorApplicability:
         mutation.operatorApplicability ??
         mutation.outcomes.map((item) => ({ file: item.file, operator: item.operator, applicableMutants: 1 })),
@@ -105,6 +108,34 @@ describe('mutationDivergenceGate — kill-floor calibration by level', () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]!.severity).toBe('advisory');
     expect(findings[0]!.level).toBe('L1');
+  });
+
+  it('a semantic-campaign L1 survivor blocks while retaining its actual L1 level', () => {
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L1_FILE]), {
+        outcomes: [outcome({ file: L1_FILE, verdict: 'survived' })],
+        targetCensus: [
+          {
+            file: L1_FILE,
+            applicableMutants: 1,
+            reasons: [
+              {
+                kind: 'semantic-campaign',
+                campaignId: 'wave5/example',
+                owner: '@liteship/x',
+                class: 'semantic-l4',
+                required: ['mutation'],
+              },
+            ],
+          },
+        ],
+        scoreBaseline: {},
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.level).toBe('L1');
+    expect(findings[0]!.severity).toBe('error');
+    expect(findings[0]!.detail).toContain('wave5/example');
   });
 
   it('a no-coverage mutant is ONE step louder than a survivor at the same level', () => {
@@ -251,7 +282,7 @@ describe('mutationDivergenceGate — the guards fail LOUD', () => {
   it('requireIR throws a tagged error when no IR was injected', () => {
     const noIR: GateContext = {
       ...memoryContext({}),
-      mutation: { outcomes: [], operatorApplicability: [], scoreBaseline: {} },
+      mutation: { outcomes: [], targetCensus: [], operatorApplicability: [], scoreBaseline: {} },
     };
     expect.assertions(1);
     try {

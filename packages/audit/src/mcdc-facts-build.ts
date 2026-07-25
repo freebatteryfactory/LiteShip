@@ -12,11 +12,11 @@
  * verdict/cache path the classic mutation engine uses), and FOLDS the two pins per atomic
  * condition into a single {@link McdcConditionOutcome} (the condition is MC/DC-covered iff
  * BOTH pins were KILLED). The CLI integrator wires the production vitest runner + the B2
- * verdict cache + the propagated-L4 scoping; the meta-proof wires a deterministic stub
+ * verdict cache + the host-selected assurance target census; the meta-proof wires a deterministic stub
  * runner. Pure w.r.t. its inputs (the runner + the source bytes).
  *
  * AIM THE CANNON. MC/DC is HEAVY (a suite run per pin, TWO pins per condition), so a
- * production caller scopes `files` to the propagated-L4 seams; the B2 cache makes it
+ * production caller scopes `files` to its admitted assurance targets; the B2 cache makes it
  * changed-only-cost and the caller may shard the file list. The builder itself is
  * deterministic: same source bytes + same runner verdicts → byte-identical facts
  * (the conditions are sorted by (file, line, column)).
@@ -26,7 +26,7 @@
 import ts from 'typescript';
 import { InvariantViolationError } from '@liteship/error';
 import { CanonicalCbor, addressedDigestOf } from '@liteship/canonical';
-import type { McdcFacts, McdcConditionOutcome, McdcPinVerdict } from '@liteship/gauntlet';
+import type { AssuranceTargetReason, McdcFacts, McdcConditionOutcome, McdcPinVerdict } from '@liteship/gauntlet';
 import { generateConditionMutants, type ConditionMutant, type ConditionForce } from './mcdc-engine.js';
 import {
   evaluateMutant,
@@ -39,6 +39,8 @@ import {
 export interface McdcTargetFile {
   readonly file: string;
   readonly text: string;
+  /** The independently derived provenance for admitting this target. */
+  readonly reasons?: readonly AssuranceTargetReason[];
 }
 
 /** Options for {@link buildMcdcFacts} — the host-injection surface (mirrors the mutation builder). */
@@ -130,6 +132,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
     targetCensus.push({
       file: target.file,
       applicableConditions: new Set(mutants.map(groupKey)).size,
+      reasons: target.reasons ?? [],
     });
     for (const mutant of mutants) {
       const verdict = evaluateMutant(mutant, {
