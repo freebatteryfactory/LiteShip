@@ -55,6 +55,7 @@ import { info } from './commands/info.js';
 import { add } from './commands/add.js';
 import { readCliVersion, version } from './commands/version.js';
 import { runGauntletWithRepoIR } from './lib/repo-ir-gauntlet.js';
+import { positional, takeFlagValue } from './lib/argv.js';
 import { emitError } from './receipts.js';
 
 /**
@@ -674,49 +675,4 @@ function normalizeTopLevel(raw: string | undefined): string | undefined {
   if (raw === '--help' || raw === '-h') return 'help';
   if (raw === '--version' || raw === '-V' || raw === '-v') return 'version';
   return raw;
-}
-
-/** A value-taking flag read from argv: whether it appeared at all, and its parsed value (if any). */
-interface FlagValue {
-  /** The flag token appeared (either `--flag=…` or a bare `--flag`). */
-  readonly present: boolean;
-  /**
-   * The parsed value — `undefined` when the flag is absent OR is present in space
-   * form with no usable value (end of argv, or the next token is itself a flag).
-   * Callers tell "omitted" (`!present`) apart from "given without a value"
-   * (`present && value === undefined`).
-   */
-  readonly value: string | undefined;
-}
-
-/**
- * Read a value-taking flag from argv in either the `--flag=value` or the
- * `--flag value` space form. One or more names may be given so aliases
- * (`['-o', '--output']`) resolve through the same rule.
- *
- * The load-bearing rule (F-PROTO-4): a space-form flag must NEVER consume a
- * following token that begins with `-`. That token is the NEXT flag, not this
- * flag's value — so `doctor --deployed --fix` reads as "--deployed with no value"
- * (a clean usage error), not "--deployed=--fix" (which then probed the literal
- * string "--fix" as a URL). This is the guard the scene-render `-o` path already
- * had, lifted into one shared parser for every value-taking flag.
- */
-function takeFlagValue(argv: readonly string[], flag: string | readonly string[]): FlagValue {
-  const names = typeof flag === 'string' ? [flag] : flag;
-  for (const a of argv) {
-    for (const name of names) {
-      if (a.startsWith(`${name}=`)) return { present: true, value: a.slice(name.length + 1) };
-    }
-  }
-  const idx = argv.findIndex((a) => names.includes(a));
-  if (idx < 0) return { present: false, value: undefined };
-  const next = argv[idx + 1];
-  if (next === undefined || next.startsWith('-')) return { present: true, value: undefined };
-  return { present: true, value: next };
-}
-
-/** First positional argument: argv[0] only when present and not a flag. */
-function positional(argv: readonly string[]): string | undefined {
-  const first = argv[0];
-  return first !== undefined && !first.startsWith('-') ? first : undefined;
 }
