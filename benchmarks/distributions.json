@@ -1668,6 +1668,54 @@
           "binding": "decode"
         }
       ]
+    },
+    {
+      "name": "alloc curve -- CanonicalCbor.encode",
+      "file": "tests/bench/allocation-curves.bench.ts",
+      "inputSize": 65536,
+      "shape": "retained-allocation-curve-canonical-array-elements",
+      "replicates": 24,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/canonical"
+          },
+          "symbol": "CanonicalCbor.encode",
+          "binding": "CanonicalCbor.encode"
+        }
+      ],
+      "execution": {
+        "kind": "collector",
+        "file": "scripts/bench/allocation-probes.ts",
+        "export": "collectCanonicalEncodeAllocationCurve",
+        "resultKey": "canonical.encode.retainedAllocation"
+      }
+    },
+    {
+      "name": "alloc curve -- canonical decode",
+      "file": "tests/bench/allocation-curves.bench.ts",
+      "inputSize": 65536,
+      "shape": "retained-allocation-curve-canonical-array-elements",
+      "replicates": 24,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/canonical"
+          },
+          "symbol": "decode",
+          "binding": "decode"
+        }
+      ],
+      "execution": {
+        "kind": "collector",
+        "file": "scripts/bench/allocation-probes.ts",
+        "export": "collectCanonicalDecodeAllocationCurve",
+        "resultKey": "canonical.decode.retainedAllocation"
+      }
     }
   ]
 }

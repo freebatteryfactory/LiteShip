@@ -85,6 +85,8 @@
     "tests/property/token-buffer-zero-alloc.test.ts",
     "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
     "tests/bench/allocation.bench.ts",
+    "tests/bench/allocation-curves.bench.ts",
+    "tests/unit/meta/allocation-contracts.test.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",
     "tests/helpers/mock-dom.ts",

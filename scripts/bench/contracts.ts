@@ -10,7 +10,8 @@
  * CONTRACT on TOP: the declared-distribution registry and the complexity-class
  * fit, each backed by a committed sibling artifact the gate folds over.
  *
- * Two contracts live here:
+ * Two latency contracts live here. Retained-allocation curves reuse the same
+ * unit-agnostic growth fit from `scripts/bench/allocation-curves.ts`.
  *
  * 1. DECLARED INPUT DISTRIBUTION (the headline law). A benchmark's number is only
  *    comparable across runs when the SHAPE + SIZE of the input it drives the SUT
@@ -46,7 +47,7 @@ import {
   parseQualifiedBenchDistribution,
   type BenchExecution,
   type BenchSubject,
-} from '../../packages/gauntlet/src/gates/bench-subjects.ts';
+} from '../../packages/gauntlet/src/gates/bench-subjects.js';
 
 export type { BenchExecution, BenchSubject };
 
@@ -207,6 +208,12 @@ export interface ComplexitySample {
   readonly latencyNs: number;
 }
 
+/** A unit-agnostic growth sample used by latency and retained-allocation curves. */
+export interface GrowthSample {
+  readonly size: number;
+  readonly cost: number;
+}
+
 /** The result of a log-log linear fit over complexity samples. */
 export interface ComplexityFit {
   /** The slope of log(latency) vs log(size) — ≈0 → O(1), ≈1 → O(n), ≈2 → O(n²). */
@@ -250,18 +257,18 @@ export function classifySlope(slope: number): ComplexityClass {
  * distinct sizes, or a non-positive size/latency that has no logarithm) — a fit
  * with no signal must fail LOUD, never silently return a meaningless O(1).
  */
-export function fitComplexityClass(samples: readonly ComplexitySample[]): ComplexityFit {
-  const usable = samples.filter((s) => s.size > 0 && s.latencyNs > 0);
+export function fitGrowthClass(samples: readonly GrowthSample[]): ComplexityFit {
+  const usable = samples.filter((s) => s.size > 0 && s.cost > 0);
   const distinctSizes = new Set(usable.map((s) => s.size));
   if (usable.length < 2 || distinctSizes.size < 2) {
     throw ValidationError(
       'fitComplexityClass',
-      `need >= 2 samples with distinct positive sizes and positive latencies to fit a complexity class; got ${usable.length} usable sample(s) across ${distinctSizes.size} distinct size(s)`,
+      `need >= 2 samples with distinct positive sizes and positive costs to fit a growth class; got ${usable.length} usable sample(s) across ${distinctSizes.size} distinct size(s)`,
     );
   }
 
   const xs = usable.map((s) => Math.log(s.size));
-  const ys = usable.map((s) => Math.log(s.latencyNs));
+  const ys = usable.map((s) => Math.log(s.cost));
   const n = xs.length;
   const meanX = xs.reduce((sum, x) => sum + x, 0) / n;
   const meanY = ys.reduce((sum, y) => sum + y, 0) / n;
@@ -287,6 +294,11 @@ export function fitComplexityClass(samples: readonly ComplexitySample[]): Comple
   const r2 = syy === 0 ? 1 : Math.max(0, Math.min(1, (sxy * sxy) / (sxx * syy)));
 
   return { slope, r2, class: classifySlope(slope) };
+}
+
+/** Fit latency growth while preserving the established latency-shaped API. */
+export function fitComplexityClass(samples: readonly ComplexitySample[]): ComplexityFit {
+  return fitGrowthClass(samples.map((sample) => ({ size: sample.size, cost: sample.latencyNs })));
 }
 
 // ---------------------------------------------------------------------------

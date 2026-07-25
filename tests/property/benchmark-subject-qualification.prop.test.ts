@@ -179,6 +179,24 @@ describe('benchmark subject qualification properties', () => {
     expect(qualify(source, value, collector).issues).toEqual([]);
   });
 
+  it('follows collector-owned object callbacks into the measured SUT', () => {
+    const source = registration('() => 0');
+    const collector = [
+      "import { Boundary } from '@liteship/core/authoring';",
+      'function measure(probe: { operationFor: () => () => unknown }) { return probe.operationFor()(); }',
+      'export function collect() {',
+      "  return { key: 'boundary.bytesPerOp', value: measure({ operationFor: () => () => Boundary.evaluate({} as never, 1) }) };",
+      '}',
+    ].join('\n');
+    const value = distribution([moduleSubject()], {
+      kind: 'collector',
+      file: COLLECTOR_FILE,
+      export: 'collect',
+      resultKey: 'boundary.bytesPerOp',
+    });
+    expect(qualify(source, value, collector).issues).toEqual([]);
+  });
+
   it('reports both missing collector result-key evidence and an uninvoked subject in stable order', () => {
     const source = registration('() => 0');
     const collector = [

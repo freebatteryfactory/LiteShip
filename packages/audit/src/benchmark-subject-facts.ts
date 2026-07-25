@@ -271,7 +271,16 @@ function reachableFrom(ast: ts.SourceFile, root: Callable, collectorMode: boolea
       (ts.isArrowFunction(node) || ts.isFunctionExpression(node) || ts.isFunctionDeclaration(node)) &&
       node !== owner
     ) {
-      if (collectorMode && node.parent !== undefined && ts.isReturnStatement(node.parent)) visitCallable(node);
+      if (
+        collectorMode &&
+        node.parent !== undefined &&
+        (ts.isReturnStatement(node.parent) ||
+          ts.isPropertyAssignment(node.parent) ||
+          ts.isCallExpression(node.parent) ||
+          (ts.isArrowFunction(node.parent) && node.parent.body === node))
+      ) {
+        visitCallable(node);
+      }
       return;
     }
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) strings.add(node.text);

@@ -24,6 +24,7 @@ import { buildBenchmarkSubjectFacts } from '../../../packages/audit/src/benchmar
 import {
   performanceContractsGate,
   PERFORMANCE_CONTRACTS_RULE_ID,
+  ACCEPTED_ALLOCATION_CEILINGS,
   ACCEPTED_COMPLEXITY_CEILINGS,
 } from '../../../packages/gauntlet/src/gates/performance-contracts.js';
 
@@ -63,6 +64,14 @@ function healthyComplexityEntries(
 }
 
 const HEALTHY_MAP = JSON.stringify({ schemaVersion: 1, entries: healthyComplexityEntries() });
+const HEALTHY_ALLOCATION_MAP = JSON.stringify({
+  schemaVersion: 1,
+  entries: Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, klass], index) => ({
+    path,
+    class: klass,
+    fittedR2: 0.99 - index * 0.01,
+  })),
+});
 
 /** A green context: every bench declared, every hot path within its ceiling. */
 function greenContext() {
@@ -118,7 +127,9 @@ function withBenchmarkSubjects(context: GateContext): GateContext {
 }
 
 function memoryContext(files: Readonly<Record<string, string>>): GateContext {
-  return withBenchmarkSubjects(baseMemoryContext(files));
+  return withBenchmarkSubjects(
+    baseMemoryContext({ 'benchmarks/allocation-map.json': HEALTHY_ALLOCATION_MAP, ...files }),
+  );
 }
 
 describe('performance-contracts gate — self-proof (the authority ratchet)', () => {
@@ -353,6 +364,44 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
   it('pins the accepted ceilings to the trust-spine hot paths', () => {
     expect(ACCEPTED_COMPLEXITY_CEILINGS['boundary.evaluateBatch']).toBe('O(n)');
     expect(ACCEPTED_COMPLEXITY_CEILINGS['contentAddress.of']).toBe('O(n)');
+  });
+});
+
+describe('THE RETAINED-ALLOCATION LAW — output growth must remain bounded', () => {
+  it('accepts a complete allocation map at its ceilings', () => {
+    expect(performanceContractsGate.run(greenContext())).toHaveLength(0);
+  });
+
+  it('FLAGS a superlinear retained-allocation regression', () => {
+    const entries = Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, klass], index) => ({
+      path,
+      class: index === 0 ? 'O(n^2)' : klass,
+      fittedR2: 0.99,
+    }));
+    const findings = performanceContractsGate.run(
+      memoryContext({ 'benchmarks/allocation-map.json': JSON.stringify({ schemaVersion: 1, entries }) }),
+    );
+    expect(findings.some((finding) => finding.title.includes('Retained-allocation class regressed'))).toBe(true);
+  });
+
+  it('FLAGS a missing allocation map instead of silently dropping the contract', () => {
+    const findings = performanceContractsGate.run(
+      withBenchmarkSubjects(
+        baseMemoryContext({
+          'benchmarks/distributions.json': DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': BENCH_FILE,
+          'benchmarks/complexity-map.json': HEALTHY_MAP,
+        }),
+      ),
+    );
+    expect(findings.some((finding) => finding.title === 'Retained-allocation map is missing')).toBe(true);
+  });
+
+  it('pins both canonical allocation paths to linear growth', () => {
+    expect(ACCEPTED_ALLOCATION_CEILINGS).toEqual({
+      'canonical.encode.retainedAllocation': 'O(n)',
+      'canonical.decode.retainedAllocation': 'O(n)',
+    });
   });
 });
 

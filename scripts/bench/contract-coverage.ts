@@ -137,6 +137,7 @@ export function benchScriptTargets(repoRoot: string): readonly string[] {
   const matches = scripts.match(/tests\/bench\/[^\s'"]+\.bench\.ts/g) ?? [];
   if (pkg.scripts?.['bench:alloc']) {
     matches.push('tests/bench/allocation.bench.ts');
+    matches.push('tests/bench/allocation-curves.bench.ts');
   }
   return [...new Set(matches)].sort();
 }
