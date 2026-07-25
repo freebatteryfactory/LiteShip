@@ -34,6 +34,7 @@ import { Boundary, contentAddressOf, defineBoundary } from '@liteship/core';
 import { CanonicalCbor, decode as decodeCanonicalCbor } from '@liteship/canonical';
 import { defineComponentCatalog, renderHash, validateGeneratedUITree, type GeneratedUINode } from '@liteship/genui';
 import { computeWaveform, detectBeats, detectOnsets, walkRiff } from '@liteship/assets';
+import { defineGate, finding, memoryContext, runGates, type Gate } from '@liteship/gauntlet';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
@@ -166,6 +167,38 @@ function buildBeatsOfSize(frameCount: number): () => void {
   };
 }
 
+const GAUNTLET_PROBE_CONTEXT = memoryContext({ 'subject.ts': 'clean' });
+const GAUNTLET_PROBE_GATE: Gate = defineGate({
+  id: 'complexity/gauntlet-clean-token',
+  level: 'L4',
+  describe: 'scan one file for a forbidden complexity-probe token',
+  run: (context) =>
+    context
+      .files()
+      .filter((file) => (context.readFile(file) ?? '').includes('FORBIDDEN'))
+      .map((file) =>
+        finding({
+          ruleId: 'complexity/gauntlet-clean-token',
+          severity: 'error',
+          level: 'L4',
+          title: 'forbidden complexity-probe token',
+          detail: file,
+        }),
+      ),
+  fixtures: {
+    red: { name: 'token present', context: memoryContext({ 'bad.ts': 'FORBIDDEN' }) },
+    green: { name: 'token absent', context: memoryContext({ 'good.ts': 'clean' }) },
+    mutation: { describe: 'disable detection', mutate: (gate) => ({ ...gate, run: () => [] }) },
+  },
+});
+
+function buildGauntletRunOfSize(gateCount: number): () => void {
+  const gates = Array.from({ length: gateCount }, () => GAUNTLET_PROBE_GATE);
+  return (): void => {
+    void runGates(gates, GAUNTLET_PROBE_CONTEXT);
+  };
+}
+
 /** The boundary-evaluator batch hot path — O(n) in value count. */
 export const boundaryEvaluateProbe: ComplexityProbe = {
   path: 'boundary.evaluateBatch',
@@ -259,6 +292,15 @@ export const assetBeatsProbe: ComplexityProbe = {
   workloadFor: buildBeatsOfSize,
 };
 
+export const gauntletRunGatesProbe: ComplexityProbe = {
+  path: 'gauntlet.runGates',
+  describe: 'runGates — one qualification and decision fold per gate; O(n) in gate count.',
+  shape: 'qualified-gates',
+  sizes: [8, 32, 128, 512, 2048],
+  measurement: { innerIterations: 10, replicates: 5, warmupIterations: 5 },
+  workloadFor: buildGauntletRunOfSize,
+};
+
 /** Every complexity probe the contract layer measures + maps. */
 export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   boundaryEvaluateProbe,
@@ -271,4 +313,5 @@ export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   assetWaveformProbe,
   assetOnsetsProbe,
   assetBeatsProbe,
+  gauntletRunGatesProbe,
 ];

@@ -7,8 +7,8 @@
       "shape": "batch-values",
       "sizes": [256, 1024, 4096, 16384, 65536],
       "class": "O(n)",
-      "fittedSlope": 0.9667,
-      "fittedR2": 0.9992,
+      "fittedSlope": 0.9951,
+      "fittedR2": 0.9996,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -21,8 +21,8 @@
       "shape": "address-elements",
       "sizes": [8, 32, 128, 512, 2048],
       "class": "O(n)",
-      "fittedSlope": 0.9485,
-      "fittedR2": 0.9951,
+      "fittedSlope": 0.9653,
+      "fittedR2": 0.998,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -35,8 +35,8 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0493,
-      "fittedR2": 0.9995,
+      "fittedSlope": 1.0422,
+      "fittedR2": 0.999,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -49,8 +49,8 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0475,
-      "fittedR2": 0.9891,
+      "fittedSlope": 1.0495,
+      "fittedR2": 0.9896,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -63,8 +63,8 @@
       "shape": "generated-ui-nodes",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 0.9398,
-      "fittedR2": 0.9979,
+      "fittedSlope": 0.938,
+      "fittedR2": 0.9977,
       "measurement": {
         "innerIterations": 25,
         "replicates": 5,
@@ -77,8 +77,8 @@
       "shape": "generated-ui-nodes",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 1.0125,
-      "fittedR2": 0.9999,
+      "fittedSlope": 0.996,
+      "fittedR2": 0.9998,
       "measurement": {
         "innerIterations": 8,
         "replicates": 5,
@@ -91,8 +91,8 @@
       "shape": "riff-chunks",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 0.9114,
-      "fittedR2": 0.9976,
+      "fittedSlope": 0.908,
+      "fittedR2": 0.9983,
       "measurement": {
         "innerIterations": 25,
         "replicates": 5,
@@ -105,8 +105,8 @@
       "shape": "audio-frames",
       "sizes": [65536, 131072, 262144, 524288],
       "class": "O(n)",
-      "fittedSlope": 0.9737,
-      "fittedR2": 0.9999,
+      "fittedSlope": 0.9749,
+      "fittedR2": 0.9993,
       "measurement": {
         "innerIterations": 5,
         "replicates": 5,
@@ -119,8 +119,8 @@
       "shape": "audio-frames",
       "sizes": [65536, 131072, 262144, 524288],
       "class": "O(n)",
-      "fittedSlope": 1.0408,
-      "fittedR2": 0.9994,
+      "fittedSlope": 1.0117,
+      "fittedR2": 1,
       "measurement": {
         "innerIterations": 4,
         "replicates": 5,
@@ -133,12 +133,26 @@
       "shape": "audio-frames-fixed-sample-rate",
       "sizes": [65536, 131072, 262144, 524288],
       "class": "O(n)",
-      "fittedSlope": 0.9474,
-      "fittedR2": 0.9909,
+      "fittedSlope": 1.1532,
+      "fittedR2": 0.9211,
       "measurement": {
         "innerIterations": 3,
         "replicates": 5,
         "warmupIterations": 2
+      }
+    },
+    {
+      "path": "gauntlet.runGates",
+      "describe": "runGates — one qualification and decision fold per gate; O(n) in gate count.",
+      "shape": "qualified-gates",
+      "sizes": [8, 32, 128, 512, 2048],
+      "class": "O(n)",
+      "fittedSlope": 0.8935,
+      "fittedR2": 0.9926,
+      "measurement": {
+        "innerIterations": 10,
+        "replicates": 5,
+        "warmupIterations": 5
       }
     }
   ]

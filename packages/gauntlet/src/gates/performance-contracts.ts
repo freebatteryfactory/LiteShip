@@ -77,6 +77,7 @@ export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityCla
   'assets.computeWaveform': 'O(n)',
   'assets.detectOnsets': 'O(n)',
   'assets.detectBeats': 'O(n)',
+  'gauntlet.runGates': 'O(n)',
 };
 
 /** Accepted retained-allocation growth for public semantic kernels. */

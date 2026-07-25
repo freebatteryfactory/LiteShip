@@ -1827,6 +1827,21 @@
         "export": "collectAssetWaveformAllocationCurve",
         "resultKey": "assets.computeWaveform.retainedAllocation"
       }
+    },
+    {
+      "name": "gauntlet runGates -- 128 qualified gates",
+      "file": "tests/bench/gauntlet.bench.ts",
+      "inputSize": 128,
+      "shape": "qualified-gates",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/gauntlet" },
+          "symbol": "runGates",
+          "binding": "runGates"
+        }
+      ]
     }
   ]
 }
