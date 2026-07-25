@@ -10,6 +10,8 @@ interface ImpactCase {
   readonly mode: 'focused' | 'full';
   readonly minimumRisk: AffectedRiskLevel;
   readonly browserRequired: boolean;
+  readonly benchmarkRequired?: boolean;
+  readonly rustWasmRequired?: boolean;
   readonly requiredOwners: readonly string[];
   readonly requiredChecks: readonly string[];
 }
@@ -27,6 +29,9 @@ describe('affected-plan impact corpus', () => {
         'workflow-authority',
         'unknown-runtime-owner',
         'browser-evidence-change',
+        'benchmark-evidence-change',
+        'rust-wasm-change',
+        'astro-host-fixture-change',
       ]),
     );
   });
@@ -36,6 +41,8 @@ describe('affected-plan impact corpus', () => {
     expect(plan.mode).toBe(entry.mode);
     expect(RISK_RANK[plan.risk.level]).toBeGreaterThanOrEqual(RISK_RANK[entry.minimumRisk]);
     expect(plan.browserRequired).toBe(entry.browserRequired);
+    if (entry.benchmarkRequired !== undefined) expect(plan.benchmarkRequired).toBe(entry.benchmarkRequired);
+    if (entry.rustWasmRequired !== undefined) expect(plan.rustWasmRequired).toBe(entry.rustWasmRequired);
     for (const owner of entry.requiredOwners) expect(plan.affectedPackages).toContain(owner);
     for (const check of entry.requiredChecks) expect(plan.requiredChecks).toContain(check);
   });

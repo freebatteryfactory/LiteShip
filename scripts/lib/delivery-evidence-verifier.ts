@@ -192,6 +192,7 @@ function verifyAuthority(raw: Uint8Array, plan: AffectedTestPlan, expected: Trus
     event: expected.event,
     ref: expected.ref,
     browserAffected: plan.browserRequired,
+    rustWasmAffected: plan.rustWasmRequired,
   });
   if (!sameStrings(authority.requiredJobs, requiredJobs)) fail('CI authority required jobs are stale or foreign');
   if (authority.verdict !== 'accepted') fail('CI authority verdict is not accepted');

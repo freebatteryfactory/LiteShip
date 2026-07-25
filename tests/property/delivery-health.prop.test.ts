@@ -8,7 +8,7 @@ const HEAD = 'b'.repeat(40);
 const PLAN_ID = `sha256:${'c'.repeat(64)}` as const;
 
 const plan: AffectedTestPlan = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   planId: PLAN_ID,
   base: { ref: 'origin/main', sha: 'a'.repeat(40) },
   headSha: HEAD,
@@ -23,8 +23,10 @@ const plan: AffectedTestPlan = {
   risk: { level: 'high', highestAssurance: 'L4', factors: ['L4-authority'] },
   requiredChecks: ['check/test'],
   testFiles: ['tests/unit/core/content-address.test.ts'],
-  testPartitions: { node: ['tests/unit/core/content-address.test.ts'], browserRequired: false },
+  testPartitions: { node: ['tests/unit/core/content-address.test.ts'], benchmark: [], browserRequired: false },
   browserRequired: false,
+  benchmarkRequired: false,
+  rustWasmRequired: false,
   platforms: ['linux'],
   prerequisites: [],
   artifacts: ['affected-plan', 'test-results'],

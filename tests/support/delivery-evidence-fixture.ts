@@ -139,7 +139,12 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
   const event = 'pull_request' as const;
   const ref = 'refs/pull/161/merge';
   const selected = selectCheckEvidence(plan, event);
-  const authorityJobs = requiredAuthorityJobs({ event, ref, browserAffected: plan.browserRequired });
+  const authorityJobs = requiredAuthorityJobs({
+    event,
+    ref,
+    browserAffected: plan.browserRequired,
+    rustWasmAffected: plan.rustWasmRequired,
+  });
   const observedJobs = [...new Set([...authorityJobs, ...selected.flatMap((selection) => selection.jobNames)])]
     .sort()
     .map((name, index) => ({

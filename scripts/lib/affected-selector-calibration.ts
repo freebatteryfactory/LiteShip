@@ -11,6 +11,8 @@ export interface AffectedImpactCase {
   readonly mode: 'focused' | 'full';
   readonly minimumRisk: AffectedRiskLevel;
   readonly browserRequired: boolean;
+  readonly benchmarkRequired?: boolean;
+  readonly rustWasmRequired?: boolean;
   readonly requiredOwners: readonly string[];
   readonly requiredChecks: readonly string[];
 }
@@ -91,6 +93,12 @@ function missesFor(entry: AffectedImpactCase, plan: AffectedTestPlan): readonly 
   }
   if (plan.browserRequired !== entry.browserRequired) {
     misses.push(`browser:${String(entry.browserRequired)}`);
+  }
+  if (entry.benchmarkRequired !== undefined && plan.benchmarkRequired !== entry.benchmarkRequired) {
+    misses.push(`benchmark:${String(entry.benchmarkRequired)}`);
+  }
+  if (entry.rustWasmRequired !== undefined && plan.rustWasmRequired !== entry.rustWasmRequired) {
+    misses.push(`rust-wasm:${String(entry.rustWasmRequired)}`);
   }
   for (const owner of entry.requiredOwners) {
     if (!plan.affectedPackages.includes(owner)) misses.push(`owner:${owner}`);

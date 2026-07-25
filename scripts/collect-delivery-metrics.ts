@@ -224,7 +224,12 @@ const reportPath = 'reports/check-reports.json';
 mkdirSync(dirname(reportPath), { recursive: true });
 writeFileSync(reportPath, `${JSON.stringify(reports, null, 2)}\n`, 'utf8');
 
-const authorityJobs = requiredAuthorityJobs({ event: eventName, ref, browserAffected: plan.browserRequired });
+const authorityJobs = requiredAuthorityJobs({
+  event: eventName,
+  ref,
+  browserAffected: plan.browserRequired,
+  rustWasmAffected: plan.rustWasmRequired,
+});
 const observedAuthorityJobs = jobs
   .filter((job) => authorityJobs.some((required) => jobNameMatches(job.name, required)))
   .map((job) => ({

@@ -17,6 +17,9 @@ const PATHS = [
   'packages/vite/src/index.ts',
   'tests/unit/core/authoring/boundary.test.ts',
   'tests/browser/adaptive-runtime.browser.test.ts',
+  'tests/bench/core.bench.ts',
+  'crates/liteship-compute/src/lib.rs',
+  'examples/showcase/src/pages/index.astro',
   '.github/workflows/ci.yml',
   'orphan-runtime.ts',
 ] as const;

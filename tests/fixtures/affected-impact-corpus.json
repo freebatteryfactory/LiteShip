@@ -43,5 +43,38 @@
     "browserRequired": true,
     "requiredOwners": [],
     "requiredChecks": ["check/test", "check/test-e2e"]
+  },
+  {
+    "id": "benchmark-evidence-change",
+    "paths": ["tests/bench/core.bench.ts"],
+    "mode": "focused",
+    "minimumRisk": "low",
+    "browserRequired": false,
+    "benchmarkRequired": true,
+    "rustWasmRequired": false,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test", "check/bench"]
+  },
+  {
+    "id": "rust-wasm-change",
+    "paths": ["crates/liteship-compute/src/lib.rs"],
+    "mode": "focused",
+    "minimumRisk": "low",
+    "browserRequired": false,
+    "benchmarkRequired": false,
+    "rustWasmRequired": true,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test"]
+  },
+  {
+    "id": "astro-host-fixture-change",
+    "paths": ["examples/showcase/src/pages/index.astro"],
+    "mode": "full",
+    "minimumRisk": "critical",
+    "browserRequired": true,
+    "benchmarkRequired": true,
+    "rustWasmRequired": true,
+    "requiredOwners": [],
+    "requiredChecks": ["check/test", "check/test-e2e", "check/bench"]
   }
 ]

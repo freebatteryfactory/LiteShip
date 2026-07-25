@@ -18,6 +18,7 @@ export function requiredAuthorityJobs(input: {
   readonly event: DeliveryCiEvent;
   readonly ref: string;
   readonly browserAffected: boolean;
+  readonly rustWasmAffected: boolean;
 }): readonly string[] {
   if (input.event === 'pull_request') {
     return uniqueSorted([
@@ -25,6 +26,7 @@ export function requiredAuthorityJobs(input: {
       'pr-affected',
       'pr-windows-affected',
       ...(input.browserAffected ? ['pr-browser-affected'] : []),
+      ...(input.rustWasmAffected ? ['rust-wasm-parity'] : []),
     ]);
   }
   const exhaustive =

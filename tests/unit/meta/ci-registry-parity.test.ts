@@ -302,6 +302,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
   it('plans pull-request impact from the canonical affected-test planner', () => {
     const plan = JOB_BLOCKS.get('plan')!;
     expect(plan).toContain('affected-browser-required: ${{ steps.affected.outputs.browser-required }}');
+    expect(plan).toContain('affected-benchmark-required: ${{ steps.affected.outputs.benchmark-required }}');
+    expect(plan).toContain('affected-rust-wasm-required: ${{ steps.affected.outputs.rust-wasm-required }}');
     expect(plan).toContain('affected-plan-id: ${{ steps.affected.outputs.plan-id }}');
     expect(plan).not.toContain('affected: ${{ steps.affected.outputs.plan }}');
     expect(plan).not.toContain("if: github.event_name == 'pull_request'");
@@ -321,6 +323,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(linux).toContain("if: github.event_name == 'pull_request'");
     expect(linux).toContain('pnpm run check -- --profile quick --no-cache');
     expect(linux).toContain('pnpm run test:affected');
+    expect(linux).toContain("if: needs.plan.outputs.affected-benchmark-required == 'true'");
+    expect(linux).toContain('pnpm run bench');
     expect(windows).toContain("if: github.event_name == 'pull_request'");
     expect(windows).toContain('pnpm run test:affected');
     expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run check -- --profile quick --no-cache'));
@@ -347,6 +351,15 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(browser).not.toContain('LITESHIP_AFFECTED_PLAN:');
     expect(browser).toContain('name: affected-plan');
     expect(browser).toContain('LITESHIP_VITEST_BROWSERS: chromium');
+    expect(browser).toContain('pnpm run test:e2e');
+  });
+
+  it('runs Rust/WASM authority on pull requests when the impact plan requires it', () => {
+    const rust = JOB_BLOCKS.get('rust-wasm-parity')!;
+    expect(rust).toContain(
+      "github.event_name != 'pull_request' || needs.plan.outputs.affected-rust-wasm-required == 'true'",
+    );
+    expect(rust).toContain('needs: plan');
   });
 
   it('keeps full parallel authority on pushes and serial authority on nightly/manual runs', () => {

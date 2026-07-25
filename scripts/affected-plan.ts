@@ -163,7 +163,7 @@ export function writeAffectedGithubOutput(
   const validated = parseAffectedTestPlan(plan);
   append(
     path,
-    `plan-id=${validated.planId}\nbrowser-required=${String(validated.browserRequired)}\nmode=${validated.mode}\n`,
+    `plan-id=${validated.planId}\nbrowser-required=${String(validated.browserRequired)}\nbenchmark-required=${String(validated.benchmarkRequired)}\nrust-wasm-required=${String(validated.rustWasmRequired)}\nmode=${validated.mode}\n`,
     'utf8',
   );
 }

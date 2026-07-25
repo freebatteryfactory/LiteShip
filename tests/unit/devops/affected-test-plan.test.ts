@@ -95,6 +95,8 @@ describe('affected test planning', () => {
     expect(plan.testFiles).toContain('tests/unit/core/authoring/boundary.test.ts');
     expect(plan.testFiles).not.toContain('tests/browser/core-boundary.test.ts');
     expect(plan.browserRequired).toBe(true);
+    expect(plan.benchmarkRequired).toBe(false);
+    expect(plan.rustWasmRequired).toBe(false);
     expect(plan.prerequisites).toEqual(AFFECTED_PLAN_PREREQUISITES);
     expect(plan.planId).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(plan.changedPathDigest).toMatch(/^sha256:[0-9a-f]{64}$/u);
@@ -160,7 +162,7 @@ describe('affected test planning', () => {
       };
       writeAffectedGithubOutput('github-output.txt', valid, append);
       expect(writes).toEqual([
-        `plan-id=${valid.planId}\nbrowser-required=${String(valid.browserRequired)}\nmode=${valid.mode}\n`,
+        `plan-id=${valid.planId}\nbrowser-required=${String(valid.browserRequired)}\nbenchmark-required=${String(valid.benchmarkRequired)}\nrust-wasm-required=${String(valid.rustWasmRequired)}\nmode=${valid.mode}\n`,
       ]);
       const planPath = join(directory, 'plan', 'affected.json');
       writeAffectedPlanFile(planPath, valid);
@@ -204,5 +206,24 @@ describe('affected test planning', () => {
     });
     expect(() => assertAffectedPlanHead(plan, 'c'.repeat(40))).toThrow(/does not match checkout/u);
     expect(() => assertAffectedPlanHead(plan, 'b'.repeat(40))).not.toThrow();
+  });
+
+  it('selects benchmark and Rust/WASM authorities instead of dropping their changed evidence', () => {
+    const benchmark = planAffectedTests(['tests/bench/core.bench.ts'], PACKAGE_CATALOG, inventory({}));
+    expect(benchmark).toMatchObject({ mode: 'focused', benchmarkRequired: true, rustWasmRequired: false });
+    expect(benchmark.testPartitions.benchmark).toEqual(['tests/bench/core.bench.ts']);
+    expect(benchmark.requiredChecks).toContain('check/bench');
+
+    const rust = planAffectedTests(['crates/liteship-compute/src/lib.rs'], PACKAGE_CATALOG, inventory({}));
+    expect(rust).toMatchObject({ mode: 'focused', benchmarkRequired: false, rustWasmRequired: true });
+  });
+
+  it('fails broad for runtime host fixtures outside package ownership', () => {
+    expect(planAffectedTests(['examples/showcase/src/pages/index.astro'], PACKAGE_CATALOG, inventory({}))).toMatchObject({
+      mode: 'full',
+      browserRequired: true,
+      benchmarkRequired: true,
+      rustWasmRequired: true,
+    });
   });
 });

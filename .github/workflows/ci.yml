@@ -52,6 +52,8 @@ jobs:
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
       affected-browser-required: ${{ steps.affected.outputs.browser-required }}
+      affected-benchmark-required: ${{ steps.affected.outputs.benchmark-required }}
+      affected-rust-wasm-required: ${{ steps.affected.outputs.rust-wasm-required }}
       affected-plan-id: ${{ steps.affected.outputs.plan-id }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -116,6 +118,9 @@ jobs:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
           LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
+      - name: Run benchmark authority selected by the affected plan
+        if: needs.plan.outputs.affected-benchmark-required == 'true'
+        run: pnpm run bench
 
   pr-browser-affected:
     if: github.event_name == 'pull_request' && needs.plan.outputs.affected-browser-required == 'true'
@@ -143,6 +148,11 @@ jobs:
         env:
           CI: true
           LITESHIP_VITEST_BROWSERS: chromium
+      - name: Run the declared browser E2E authority
+        run: pnpm run test:e2e
+        env:
+          CI: true
+          LITESHIP_PLAYWRIGHT_BROWSER: chromium
 
   pr-windows-affected:
     if: github.event_name == 'pull_request'
@@ -795,9 +805,10 @@ jobs:
   # property suite running against that fresh artifact — the "build truth"
   # doctrine applied to the compute kernels (nothing prebuilt is trusted).
   rust-wasm-parity:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' || needs.plan.outputs.affected-rust-wasm-required == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: plan
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # action implementation pinned
@@ -1097,6 +1108,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
+      - plan
       - format
       - pr-affected
       - pr-browser-affected
@@ -1124,6 +1136,7 @@ jobs:
           BROWSER: ${{ needs.browser-e2e.result }}
           WINDOWS: ${{ needs.windows-smoke.result }}
           RUST_WASM: ${{ needs.rust-wasm-parity.result }}
+          RUST_WASM_REQUIRED: ${{ needs.plan.outputs.affected-rust-wasm-required }}
           EXHAUSTIVE_ANALYSIS: ${{ needs.exhaustive-analysis.result }}
           EXHAUSTIVE_MUTATION: ${{ needs.exhaustive-mutation.result }}
           EXHAUSTIVE_MCDC: ${{ needs.exhaustive-mcdc.result }}
@@ -1138,6 +1151,11 @@ jobs:
             test "$PR_AFFECTED" = "success"
             test "$PR_WINDOWS" = "success"
             test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
+            if [ "$RUST_WASM_REQUIRED" = "true" ]; then
+              test "$RUST_WASM" = "success"
+            else
+              test "$RUST_WASM" = "skipped"
+            fi
             echo "CI pull-request authority passed (quick + affected Linux/Windows + affected browser)."
           else
             if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then

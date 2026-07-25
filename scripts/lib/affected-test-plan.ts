@@ -21,7 +21,7 @@ export interface AffectedPlanContext {
 }
 
 export interface AffectedTestPlan {
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly planId: `sha256:${string}`;
   readonly base: { readonly ref: string; readonly sha: string };
   readonly headSha: string;
@@ -42,9 +42,12 @@ export interface AffectedTestPlan {
   readonly testFiles: readonly string[];
   readonly testPartitions: {
     readonly node: readonly string[];
+    readonly benchmark: readonly string[];
     readonly browserRequired: boolean;
   };
   readonly browserRequired: boolean;
+  readonly benchmarkRequired: boolean;
+  readonly rustWasmRequired: boolean;
   readonly platforms: readonly ('linux' | 'win32' | 'browser')[];
   readonly prerequisites: readonly ExecutionPrerequisite[];
   readonly artifacts: readonly ['affected-plan', 'test-results'];
@@ -120,12 +123,13 @@ function highestAssurance(affected: readonly string[], inventory: AssuranceInven
     );
 }
 
-function requiredCheckIds(browserRequired: boolean): readonly string[] {
+function requiredCheckIds(browserRequired: boolean, benchmarkRequired: boolean): readonly string[] {
   const ids = CHECK_REGISTRY.filter(
     (check) => check.contexts.includes('repository') && check.profiles.includes('quick'),
   ).map((check) => check.id);
   const required = new Set([...ids, 'check/test']);
   if (browserRequired) required.add('check/test-e2e');
+  if (benchmarkRequired) required.add('check/bench');
   const registryOrder = new Map(CHECK_REGISTRY.map((check, index) => [check.id, index] as const));
   return [...required].sort(
     (a, b) => (registryOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (registryOrder.get(b) ?? Number.MAX_SAFE_INTEGER),
@@ -170,16 +174,21 @@ function finalizePlan(
     | 'prerequisites'
     | 'artifacts'
     | 'estimatedCost'
-  >,
+  > & { readonly benchmarkFiles: readonly string[] },
   inventory: AssuranceInventory,
 ): AffectedTestPlan {
   const risk = riskFor(input.mode, input.changedPaths, input.affectedPackages, inventory, input.confidence);
+  const { benchmarkFiles, ...planInput } = input;
   const unsigned: UnsignedAffectedTestPlan = {
-    ...input,
+    ...planInput,
     changedPathDigest: digest(input.changedPaths),
     risk,
-    requiredChecks: requiredCheckIds(input.browserRequired),
-    testPartitions: { node: input.testFiles, browserRequired: input.browserRequired },
+    requiredChecks: requiredCheckIds(input.browserRequired, input.benchmarkRequired),
+    testPartitions: {
+      node: input.testFiles,
+      benchmark: benchmarkFiles,
+      browserRequired: input.browserRequired,
+    },
     platforms: input.browserRequired ? ['linux', 'win32', 'browser'] : ['linux', 'win32'],
     prerequisites: AFFECTED_PLAN_PREREQUISITES,
     artifacts: ['affected-plan', 'test-results'],
@@ -231,7 +240,7 @@ export function planAffectedTests(
   const broadPath = normalized.find((path) => GLOBAL_AUTHORITY.some((pattern) => pattern.test(path)));
   const affectedPackages = affectedPackageNames(normalized, catalog);
   const common = {
-    schemaVersion: 3 as const,
+    schemaVersion: 4 as const,
     base: { ref: context.baseRef, sha: context.baseSha },
     headSha: context.headSha,
     confidence: context.confidence,
@@ -252,7 +261,10 @@ export function planAffectedTests(
         reason,
         rationale: common.rationale,
         testFiles: [],
+        benchmarkFiles: [],
         browserRequired: true,
+        benchmarkRequired: true,
+        rustWasmRequired: true,
       },
       inventory,
     );
@@ -265,11 +277,23 @@ export function planAffectedTests(
   const changedTests = normalized.filter((path) => /^tests\/.*\.[cm]?[jt]sx?$/u.test(path));
   const candidates = [...new Set([...MANDATORY_AFFECTED_TESTS, ...ownedEvidence, ...changedTests])].sort();
   const browserRequired = candidates.some((path) => path.startsWith('tests/browser/') || path.startsWith('tests/e2e/'));
+  const benchmarkFiles = candidates.filter((path) => path.endsWith('.bench.ts'));
+  const benchmarkRequired = benchmarkFiles.length > 0;
+  const rustWasmRequired = normalized.some(
+    (path) =>
+      path.startsWith('crates/') ||
+      path === 'rust-toolchain.toml' ||
+      /^packages\/core\/src\/.*wasm[^/]*\.[cm]?[jt]s$/u.test(path) ||
+      /^tests\/(?:unit|property)\/core\/.*wasm[^/]*\.[cm]?[jt]s$/u.test(path),
+  );
   const testFiles = candidates.filter(
     (path) => !path.startsWith('tests/browser/') && !path.startsWith('tests/e2e/') && !path.endsWith('.bench.ts'),
   );
   const unknownRuntimePath = normalized.find(
-    (path) => /\.[cm]?[jt]sx?$/u.test(path) && !path.startsWith('tests/') && !path.startsWith('packages/'),
+    (path) =>
+      /\.(?:[cm]?[jt]sx?|astro|css)$/u.test(path) &&
+      !path.startsWith('tests/') &&
+      !path.startsWith('packages/'),
   );
   if (unknownRuntimePath !== undefined) {
     return finalizePlan(
@@ -279,12 +303,20 @@ export function planAffectedTests(
         reason: `runtime source has no package owner: ${unknownRuntimePath}`,
         rationale: [...common.rationale, 'unknown ownership fails broad'],
         testFiles: [],
+        benchmarkFiles: [],
         browserRequired: true,
+        benchmarkRequired: true,
+        rustWasmRequired: true,
       },
       inventory,
     );
   }
-  if (affectedPackages.length === 0 && changedTests.length === 0) {
+  if (
+    affectedPackages.length === 0 &&
+    changedTests.length === 0 &&
+    !benchmarkRequired &&
+    !rustWasmRequired
+  ) {
     return finalizePlan(
       {
         ...common,
@@ -292,7 +324,10 @@ export function planAffectedTests(
         reason: 'no runtime package owner changed; run governance canaries',
         affectedPackages: [],
         testFiles: [...MANDATORY_AFFECTED_TESTS],
+        benchmarkFiles: [],
         browserRequired: false,
+        benchmarkRequired: false,
+        rustWasmRequired: false,
       },
       inventory,
     );
@@ -304,7 +339,10 @@ export function planAffectedTests(
         mode: 'full',
         reason: `affected closure selected ${testFiles.length} node tests (safety ceiling 250)`,
         testFiles: [],
+        benchmarkFiles: [],
         browserRequired: true,
+        benchmarkRequired: true,
+        rustWasmRequired: true,
       },
       inventory,
     );
@@ -315,7 +353,10 @@ export function planAffectedTests(
       mode: 'focused',
       reason: `canonical dependency closure selected ${affectedPackages.length} package(s)`,
       testFiles,
+      benchmarkFiles,
       browserRequired,
+      benchmarkRequired,
+      rustWasmRequired,
     },
     inventory,
   );
@@ -348,6 +389,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     'affectedPackages',
     'artifacts',
     'base',
+    'benchmarkRequired',
     'browserRequired',
     'changedPathDigest',
     'changedPaths',
@@ -362,6 +404,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     'reason',
     'requiredChecks',
     'risk',
+    'rustWasmRequired',
     'schemaVersion',
     'selectorCalibrationId',
     'testFiles',
@@ -371,7 +414,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
     throw new TypeError(`affected plan keys are invalid: ${actualKeys.join(', ')}`);
   }
-  if (candidate['schemaVersion'] !== 3) throw new TypeError('affected plan schemaVersion must be 3');
+  if (candidate['schemaVersion'] !== 4) throw new TypeError('affected plan schemaVersion must be 4');
   if (candidate['mode'] !== 'focused' && candidate['mode'] !== 'full')
     throw new TypeError('affected plan mode is invalid');
   if (candidate['confidence'] !== 'high' && candidate['confidence'] !== 'low')
@@ -391,6 +434,10 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('affected plan reason is invalid');
   if (typeof candidate['browserRequired'] !== 'boolean')
     throw new TypeError('affected plan browserRequired is invalid');
+  if (typeof candidate['benchmarkRequired'] !== 'boolean')
+    throw new TypeError('affected plan benchmarkRequired is invalid');
+  if (typeof candidate['rustWasmRequired'] !== 'boolean')
+    throw new TypeError('affected plan rustWasmRequired is invalid');
   if (!/^sha256:[0-9a-f]{64}$/u.test(String(candidate['planId'])))
     throw new TypeError('affected plan planId is invalid');
   if (!/^sha256:[0-9a-f]{64}$/u.test(String(candidate['changedPathDigest'])))
@@ -455,14 +502,27 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   ) {
     throw new TypeError('affected plan risk evidence is invalid');
   }
-  if (!hasExactKeys(candidate['testPartitions'], ['node', 'browserRequired'])) {
+  if (!hasExactKeys(candidate['testPartitions'], ['node', 'benchmark', 'browserRequired'])) {
     throw new TypeError('affected plan test partitions are invalid');
   }
   if (
     stableSerialize(candidate['testPartitions']['node']) !== stableSerialize(candidate['testFiles']) ||
-    candidate['testPartitions']['browserRequired'] !== candidate['browserRequired']
+    candidate['testPartitions']['browserRequired'] !== candidate['browserRequired'] ||
+    !isStringArray(candidate['testPartitions']['benchmark']) ||
+    !isSortedUnique(candidate['testPartitions']['benchmark']) ||
+    candidate['testPartitions']['benchmark'].some((path) => !path.endsWith('.bench.ts')) ||
+    (candidate['mode'] === 'focused' &&
+      (candidate['testPartitions']['benchmark'].length > 0) !== candidate['benchmarkRequired'])
   ) {
     throw new TypeError('affected plan test partitions are stale');
+  }
+  if (
+    (candidate['browserRequired'] && !candidate['requiredChecks'].includes('check/test-e2e')) ||
+    (candidate['benchmarkRequired'] && !candidate['requiredChecks'].includes('check/bench')) ||
+    (candidate['mode'] === 'full' &&
+      (!candidate['browserRequired'] || !candidate['benchmarkRequired'] || !candidate['rustWasmRequired']))
+  ) {
+    throw new TypeError('affected plan authority requirements are incomplete');
   }
   if (!hasExactKeys(candidate['estimatedCost'], ['selectedNodeTests', 'upperBoundMs'])) {
     throw new TypeError('affected plan estimated cost is invalid');
