@@ -85,7 +85,7 @@ const DEFAULT_THEME_NAME = 'migrated-theme';
  * outside this table is treated as absent (best-effort classification via
  * {@link inferSyntax} takes over).
  */
-const DTCG_TYPE_TO_CATEGORY: Readonly<Record<string, TokenCategory>> = {
+const DTCG_TYPE_TO_CATEGORY: Readonly<Record<string, TokenCategory>> = Object.freeze({
   color: 'color',
   dimension: 'spacing',
   fontFamily: 'typography',
@@ -96,7 +96,90 @@ const DTCG_TYPE_TO_CATEGORY: Readonly<Record<string, TokenCategory>> = {
   duration: 'animation',
   cubicBezier: 'animation',
   number: 'effect',
-};
+});
+
+const TOKEN_MEMBERS = Object.freeze(['$value', '$type', '$description', '$extensions', '$deprecated'] as const);
+const GROUP_MEMBERS = Object.freeze(['$type', '$description', '$extensions', '$deprecated', '$root'] as const);
+const DIMENSION_UNITS = Object.freeze(['px', 'rem'] as const);
+const DURATION_UNITS = Object.freeze(['ms', 's'] as const);
+const COLOR_SPACES = Object.freeze([
+  'srgb',
+  'srgb-linear',
+  'display-p3',
+  'a98-rgb',
+  'prophoto-rgb',
+  'rec2020',
+  'xyz-d50',
+  'xyz-d65',
+] as const);
+const GENERIC_FONT_FAMILIES = Object.freeze([
+  'serif',
+  'sans-serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+  'system-ui',
+  'ui-serif',
+  'ui-sans-serif',
+  'ui-monospace',
+  'ui-rounded',
+  'emoji',
+  'math',
+  'fangsong',
+] as const);
+const FONT_WEIGHT_VALUES = Object.freeze([
+  'thin',
+  'hairline',
+  'extra-light',
+  'ultra-light',
+  'light',
+  'normal',
+  'regular',
+  'book',
+  'medium',
+  'semi-bold',
+  'demi-bold',
+  'bold',
+  'extra-bold',
+  'ultra-bold',
+  'black',
+  'heavy',
+  'extra-black',
+  'ultra-black',
+] as const);
+const DIMENSION_VALUE_MEMBERS = Object.freeze(['value', 'unit'] as const);
+const COLOR_VALUE_MEMBERS = Object.freeze(['colorSpace', 'components', 'alpha', 'hex'] as const);
+
+/** The explicit, internal grammar implemented by this DTCG migration subset. */
+export const DTCG_MIGRATION_GRAMMAR = Object.freeze({
+  id: 'dtcg/2025.10-scalar-subset/v1',
+  format: DTCG_FORMAT_VERSION,
+  recognizedTypes: Object.freeze(Object.keys(DTCG_TYPE_TO_CATEGORY)),
+  scalarTypes: Object.freeze(['color', 'dimension', 'fontFamily', 'fontWeight', 'duration', 'cubicBezier', 'number']),
+  refusedCompositeTypes: Object.freeze(['typography', 'shadow', 'borderRadius']),
+  names: Object.freeze({ nonEmpty: true, forbiddenPrefix: '$', forbiddenCharacters: Object.freeze(['{', '}', '.']) }),
+  tokenMembers: TOKEN_MEMBERS,
+  groupMembers: GROUP_MEMBERS,
+  dimensionUnits: DIMENSION_UNITS,
+  durationUnits: DURATION_UNITS,
+  colorSpaces: COLOR_SPACES,
+  dimensionValueMembers: DIMENSION_VALUE_MEMBERS,
+  colorValueMembers: COLOR_VALUE_MEMBERS,
+  genericFontFamilies: GENERIC_FONT_FAMILIES,
+  fontWeightValues: FONT_WEIGHT_VALUES,
+  cubicBezier: Object.freeze({ arity: 4, xMinimum: 0, xMaximum: 1 }),
+} as const);
+
+const TOKEN_MEMBER_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.tokenMembers);
+const GROUP_MEMBER_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.groupMembers);
+const DIMENSION_UNIT_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.dimensionUnits);
+const DURATION_UNIT_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.durationUnits);
+const COLOR_SPACE_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.colorSpaces);
+const GENERIC_FONT_FAMILY_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.genericFontFamilies);
+const FONT_WEIGHT_NAME_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.fontWeightValues);
+const DIMENSION_VALUE_MEMBER_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.dimensionValueMembers);
+const COLOR_VALUE_MEMBER_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.colorValueMembers);
+const REFUSED_COMPOSITE_TYPE_SET = new Set<string>(DTCG_MIGRATION_GRAMMAR.refusedCompositeTypes);
 
 // ---------------------------------------------------------------------------
 // Token schema — the per-leaf trust gate (document-graph-schema pattern)
@@ -114,8 +197,8 @@ const DtcgTokenSchema = schema.brand(
     $value: schema.unknown,
     $type: schema.optional(schema.string),
     $description: schema.optional(schema.string),
-    $extensions: schema.optional(schema.unknown),
-    $deprecated: schema.optional(schema.unknown),
+    $extensions: schema.optional(schema.record(schema.unknown)),
+    $deprecated: schema.optional(schema.union(schema.boolean, schema.string)),
   }),
   (tok) => {
     if (tok.$value === null || tok.$value === undefined) {
@@ -143,6 +226,22 @@ function isTokenNode(value: unknown): value is Record<string, unknown> {
   return isPlainObject(value) && Object.hasOwn(value, '$value');
 }
 
+function firstForeignMember(node: Record<string, unknown>, allowed: ReadonlySet<string>): string | undefined {
+  return Object.keys(node).find((key) => !allowed.has(key));
+}
+
+function hasOnlyMembers(node: Record<string, unknown>, allowed: ReadonlySet<string>): boolean {
+  return firstForeignMember(node, allowed) === undefined;
+}
+
+function isSupportedDtcgName(name: string): boolean {
+  return (
+    name.length > 0 &&
+    !name.startsWith(DTCG_MIGRATION_GRAMMAR.names.forbiddenPrefix) &&
+    !DTCG_MIGRATION_GRAMMAR.names.forbiddenCharacters.some((character) => name.includes(character))
+  );
+}
+
 /** An alias reference (`{group.token}`) or a `calc()` expression can't be lowered losslessly. */
 function isLossyValue(value: unknown): boolean {
   if (typeof value !== 'string') return false;
@@ -153,31 +252,12 @@ function isLossyValue(value: unknown): boolean {
 type LoweredDtcgValue =
   { readonly ok: true; readonly value: string | number } | { readonly ok: false; readonly reason: string };
 
-const FONT_WEIGHT_NAMES = new Set([
-  'thin',
-  'hairline',
-  'extra-light',
-  'ultra-light',
-  'light',
-  'normal',
-  'regular',
-  'book',
-  'medium',
-  'semi-bold',
-  'demi-bold',
-  'bold',
-  'extra-bold',
-  'ultra-bold',
-  'black',
-  'heavy',
-  'extra-black',
-  'ultra-black',
-]);
-
 /** Validate one supported DTCG 2025.10 scalar and lower it to faithful CSS. */
 function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
   if (type === 'fontFamily') {
-    if (typeof value === 'string' && value.length > 0) return { ok: true, value };
+    const serializeFontFamily = (part: string): string =>
+      GENERIC_FONT_FAMILY_SET.has(part.toLowerCase()) ? part : JSON.stringify(part);
+    if (typeof value === 'string' && value.length > 0) return { ok: true, value: serializeFontFamily(value) };
     if (
       !Array.isArray(value) ||
       value.length === 0 ||
@@ -185,42 +265,27 @@ function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
     ) {
       return { ok: false, reason: 'fontFamily requires a non-empty font name or non-empty array of font names' };
     }
-    const generics = new Set([
-      'serif',
-      'sans-serif',
-      'monospace',
-      'cursive',
-      'fantasy',
-      'system-ui',
-      'ui-serif',
-      'ui-sans-serif',
-      'ui-monospace',
-      'ui-rounded',
-      'emoji',
-      'math',
-      'fangsong',
-    ]);
     return {
       ok: true,
-      value: value.map((part) => (generics.has(part.toLowerCase()) ? part : JSON.stringify(part))).join(', '),
+      value: value.map(serializeFontFamily).join(', '),
     };
   }
   if (type === 'fontWeight') {
     if (typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 1000) {
       return { ok: true, value };
     }
-    if (typeof value === 'string' && FONT_WEIGHT_NAMES.has(value)) return { ok: true, value };
+    if (typeof value === 'string' && FONT_WEIGHT_NAME_SET.has(value)) return { ok: true, value };
     return { ok: false, reason: 'fontWeight requires a number in [1, 1000] or an exact DTCG font-weight name' };
   }
   if (type === 'cubicBezier') {
     if (
       !Array.isArray(value) ||
-      value.length !== 4 ||
+      value.length !== DTCG_MIGRATION_GRAMMAR.cubicBezier.arity ||
       !value.every((part) => typeof part === 'number' && Number.isFinite(part)) ||
-      (value[0] as number) < 0 ||
-      (value[0] as number) > 1 ||
-      (value[2] as number) < 0 ||
-      (value[2] as number) > 1
+      (value[0] as number) < DTCG_MIGRATION_GRAMMAR.cubicBezier.xMinimum ||
+      (value[0] as number) > DTCG_MIGRATION_GRAMMAR.cubicBezier.xMaximum ||
+      (value[2] as number) < DTCG_MIGRATION_GRAMMAR.cubicBezier.xMinimum ||
+      (value[2] as number) > DTCG_MIGRATION_GRAMMAR.cubicBezier.xMaximum
     ) {
       return { ok: false, reason: 'cubicBezier requires four finite numbers with both x coordinates in [0, 1]' };
     }
@@ -232,9 +297,10 @@ function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
       : { ok: false, reason: 'number requires a finite JSON number' };
   }
   if (type === 'dimension' || type === 'duration') {
-    const units = type === 'dimension' ? new Set(['px', 'rem']) : new Set(['ms', 's']);
+    const units = type === 'dimension' ? DIMENSION_UNIT_SET : DURATION_UNIT_SET;
     if (
       !isPlainObject(value) ||
+      !hasOnlyMembers(value, DIMENSION_VALUE_MEMBER_SET) ||
       typeof value['value'] !== 'number' ||
       !Number.isFinite(value['value']) ||
       typeof value['unit'] !== 'string' ||
@@ -247,6 +313,7 @@ function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
   if (type === 'color') {
     if (
       !isPlainObject(value) ||
+      !hasOnlyMembers(value, COLOR_VALUE_MEMBER_SET) ||
       typeof value['colorSpace'] !== 'string' ||
       !Array.isArray(value['components']) ||
       value['components'].length !== 3 ||
@@ -256,19 +323,9 @@ function lowerDtcgValue(value: unknown, type: string): LoweredDtcgValue {
     ) {
       return { ok: false, reason: 'color requires a structured colorSpace/components value' };
     }
-    const colorFunctionSpaces = new Set([
-      'srgb',
-      'srgb-linear',
-      'display-p3',
-      'a98-rgb',
-      'prophoto-rgb',
-      'rec2020',
-      'xyz-d50',
-      'xyz-d65',
-    ]);
     const colorSpace = value['colorSpace'].toLowerCase();
     const alpha = value['alpha'];
-    if (!colorFunctionSpaces.has(colorSpace)) return { ok: false, reason: `unsupported color space "${colorSpace}"` };
+    if (!COLOR_SPACE_SET.has(colorSpace)) return { ok: false, reason: `unsupported color space "${colorSpace}"` };
     if (
       alpha !== undefined &&
       alpha !== 'none' &&
@@ -373,10 +430,9 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     const lowered =
       type === undefined ? { ok: false as const, reason: 'missing DTCG type' } : lowerDtcgValue(value, type);
     if (lowered.ok) return lowered;
-    const code =
-      type === 'shadow' || type === 'typography' || type === 'borderRadius'
-        ? MIGRATE_CODES.lossyTokenConversion
-        : MIGRATE_CODES.malformedInput;
+    const code = REFUSED_COMPOSITE_TYPE_SET.has(type ?? '')
+      ? MIGRATE_CODES.lossyTokenConversion
+      : MIGRATE_CODES.malformedInput;
     diagnostics.push(
       makeMigrationDiagnostic(
         code,
@@ -481,6 +537,17 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
       );
       return;
     }
+    const foreignMember = firstForeignMember(node, TOKEN_MEMBER_SET);
+    if (foreignMember !== undefined) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          `DTCG ${DTCG_FORMAT_VERSION} token "${path.join('.')}" contains unsupported member "${foreignMember}"; the token was refused rather than silently dropping that member.`,
+          { path: [...path, foreignMember], severity: 'error' },
+        ),
+      );
+      return;
+    }
     const result = decode(DtcgTokenSchema, node);
     if (!result.ok) {
       // Project each DecodeIssue → a migrate diagnostic, keeping its path and
@@ -536,10 +603,9 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
     }
     const lowered = lowerDtcgValue(value, type);
     if (!lowered.ok) {
-      const code =
-        type === 'shadow' || type === 'typography' || type === 'borderRadius'
-          ? MIGRATE_CODES.lossyTokenConversion
-          : MIGRATE_CODES.malformedInput;
+      const code = REFUSED_COMPOSITE_TYPE_SET.has(type)
+        ? MIGRATE_CODES.lossyTokenConversion
+        : MIGRATE_CODES.malformedInput;
       diagnostics.push(
         makeMigrationDiagnostic(
           code,
@@ -567,6 +633,72 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
       );
       return;
     }
+    const foreignMetadata = Object.keys(node).find((key) => key.startsWith('$') && !GROUP_MEMBER_SET.has(key));
+    if (foreignMetadata !== undefined) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" contains unsupported member "${foreignMetadata}"; the complete group was refused.`,
+          { path: [...prefix, foreignMetadata], severity: 'error' },
+        ),
+      );
+      return;
+    }
+    const declaredGroupType = node['$type'];
+    if (Object.hasOwn(node, '$type') && typeof declaredGroupType !== 'string') {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" has a non-string $type; the complete group was refused.`,
+          { path: [...prefix, '$type'], severity: 'error' },
+        ),
+      );
+      return;
+    }
+    if (typeof declaredGroupType === 'string' && !Object.hasOwn(DTCG_TYPE_TO_CATEGORY, declaredGroupType)) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.unknownTokenCategory,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" declares unsupported $type "${declaredGroupType}"; the complete group was refused.`,
+          { path: [...prefix, '$type'], severity: 'error' },
+        ),
+      );
+      return;
+    }
+    if (Object.hasOwn(node, '$description') && typeof node['$description'] !== 'string') {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" has a non-string $description; the complete group was refused.`,
+          { path: [...prefix, '$description'], severity: 'error' },
+        ),
+      );
+      return;
+    }
+    if (Object.hasOwn(node, '$extensions') && !isPlainObject(node['$extensions'])) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" has a non-object $extensions member; the complete group was refused.`,
+          { path: [...prefix, '$extensions'], severity: 'error' },
+        ),
+      );
+      return;
+    }
+    if (
+      Object.hasOwn(node, '$deprecated') &&
+      typeof node['$deprecated'] !== 'boolean' &&
+      typeof node['$deprecated'] !== 'string'
+    ) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.malformedInput,
+          `DTCG ${DTCG_FORMAT_VERSION} group "${prefix.join('.') || '(root)'}" has an invalid $deprecated member; the complete group was refused.`,
+          { path: [...prefix, '$deprecated'], severity: 'error' },
+        ),
+      );
+      return;
+    }
     for (const key of Object.keys(node)) {
       const child = node[key];
       const path = [...prefix, key];
@@ -587,6 +719,16 @@ export function fromDesignTokens(json: unknown, options?: FromDesignTokensOption
         continue;
       }
       if (key.startsWith('$')) continue; // DTCG group metadata ($type/$description/$extensions/…)
+      if (!isSupportedDtcgName(key)) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.malformedInput,
+            `DTCG ${DTCG_FORMAT_VERSION} name "${key}" is outside the migration subset (non-empty, no leading "$", and no ".", "{", or "}"); the complete member was refused.`,
+            { path, severity: 'error' },
+          ),
+        );
+        continue;
+      }
       if (isTokenNode(child)) {
         processToken(child, path, inheritedType);
       } else if (isPlainObject(child)) {

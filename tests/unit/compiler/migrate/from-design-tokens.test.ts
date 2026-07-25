@@ -386,20 +386,20 @@ describe('fromDesignTokens — every diagnostic code has teeth', () => {
 });
 
 describe('fromDesignTokens — pathological input is caught, not thrown', () => {
-  it('surfaces a defineToken ValidationError (empty name from an empty JSON key) as a severity:error diagnostic', () => {
+  it('refuses an empty DTCG name at the declared grammar boundary', () => {
     let result!: ReturnType<typeof fromDesignTokens>;
     expect(() => {
       // An empty JSON key yields an empty token name; defineToken rejects it.
       result = fromDesignTokens({ '': { $type: 'color', $value: color('#ffffff') } });
     }).not.toThrow();
 
-    // No token was produced (the throw was caught)...
+    // No token was produced...
     expect(result.tokens).toEqual([]);
-    // ...and the failure is an error-severity diagnostic carrying the cause.
+    // ...and the grammar failure is an error-severity diagnostic.
     const d = result.diagnostics.find((x) => x.severity === 'error');
     expect(d).toBeDefined();
     expect(d!.code).toBe(MIGRATE_CODES.malformedInput);
-    expect(d!.cause).toBeDefined();
+    expect(d!.path).toEqual(['']);
   });
 });
 
