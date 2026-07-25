@@ -531,11 +531,16 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
   explain: (rest) => explain(positional(rest) ?? null, { json: rest.includes('--json') }),
   context: (rest) => {
     const task = takeFlagValue(rest, '--task');
+    const subject = takeFlagValue(rest, '--subject');
     if (task.present && task.value === undefined) {
-      emitError('context', 'cli/usage', 'usage: liteship context --task <task-id>');
+      emitError('context', 'cli/usage', 'usage: liteship context (--task <task-id> | --subject <symbol>)');
       return 1;
     }
-    return context(task.value ?? null, { json: rest.includes('--json') });
+    if (subject.present && subject.value === undefined) {
+      emitError('context', 'cli/usage', 'usage: liteship context (--task <task-id> | --subject <symbol>)');
+      return 1;
+    }
+    return context(task.value ?? null, { json: rest.includes('--json') }, subject.value ?? null);
   },
   version: () => version(),
   audit: (rest) => execAudit(rest),

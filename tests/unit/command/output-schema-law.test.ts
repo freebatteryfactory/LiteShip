@@ -193,6 +193,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     },
     context: {
       task: 'add-boundary',
+      subject: null,
       title: 'Add or extend a boundary primitive',
       summary: 'author it in @liteship/core, evaluate it in @liteship/quantizer',
       pointers: [
@@ -203,6 +204,7 @@ describe('D2 — payload conformance + validator teeth', () => {
           checkId: null,
         },
       ],
+      publicSurface: null,
     },
   };
 

@@ -32,6 +32,11 @@ import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@lite
 import { defineCommand, failed, ok, type ApiSymbolResolution } from '../registry.js';
 import { CHECK_REGISTRY } from '../checks/registry.js';
 import type { CheckDefinition } from '../checks/definition.js';
+import {
+  PublicSymbolContextSchema,
+  publicSurfaceForSymbol,
+  type PublicSymbolContext,
+} from './public-surface-context.js';
 
 /** The gauntlet gate source tree — registered check inputs identify the emitting gate owner. */
 const GATE_SOURCE_PREFIX = 'packages/gauntlet/src/gates/';
@@ -73,8 +78,10 @@ export interface ExplainDiagnostic {
   readonly emitter: ExplainEmitter;
 }
 
-/** The resolved owner of an exported symbol — a mirror of {@link ApiSymbolResolution}. */
-export type ExplainSymbol = ApiSymbolResolution;
+/** An exported symbol plus the curated facade context available for it. */
+export interface ExplainSymbol extends ApiSymbolResolution {
+  readonly surface: PublicSymbolContext | null;
+}
 
 /**
  * The descriptor `outputSchema` for the explain command — hand-written JSON-Schema
@@ -120,8 +127,9 @@ export const ExplainPayloadSchema = {
         kind: { type: 'string' },
         summary: { type: 'string' },
         packageDescription: { type: 'string' },
+        surface: PublicSymbolContextSchema,
       },
-      required: ['symbol', 'package', 'subpath', 'file', 'kind', 'summary', 'packageDescription'],
+      required: ['symbol', 'package', 'subpath', 'file', 'kind', 'summary', 'packageDescription', 'surface'],
     },
   },
   required: ['query', 'kind', 'diagnostic', 'symbol'],
@@ -253,7 +261,12 @@ export const explainCommand = defineCommand({
     // (b) EXPORTED SYMBOL — CLI-injected capability; absent over MCP → unresolved.
     const symbol = context.resolveApiSymbol?.(query) ?? null;
     if (symbol !== null) {
-      return ok('explain', { query, kind: 'symbol', diagnostic: null, symbol });
+      return ok('explain', {
+        query,
+        kind: 'symbol',
+        diagnostic: null,
+        symbol: { ...symbol, surface: publicSurfaceForSymbol(query) },
+      });
     }
 
     return failed('explain', { query, kind: 'unresolved', diagnostic: null, symbol: null }, 1);

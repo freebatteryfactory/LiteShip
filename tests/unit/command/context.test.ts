@@ -26,6 +26,11 @@ async function context(task: string) {
   return { result, payload: result.payload as ContextPayload };
 }
 
+async function contextSubject(subject: string) {
+  const result = await contextCommand.handler({ name: 'context', args: { subject } }, {});
+  return { result, payload: result.payload as ContextPayload };
+}
+
 describe('@liteship/command context command', () => {
   it('CONTEXT_TASK_IDS is exactly the sorted CONTEXT_MAP keys', () => {
     expect([...CONTEXT_TASK_IDS]).toEqual(Object.keys(CONTEXT_MAP).sort());
@@ -38,6 +43,8 @@ describe('@liteship/command context command', () => {
     expect(result.status).toBe('ok');
     expect(result.command).toBe('context');
     expect(payload.task).toBe('add-boundary');
+    expect(payload.subject).toBeNull();
+    expect(payload.publicSurface).toBeNull();
     expect(payload.title.length).toBeGreaterThan(0);
     expect(payload.summary.length).toBeGreaterThan(0);
     expect(payload.pointers.length).toBeGreaterThan(0);
@@ -87,9 +94,11 @@ describe('@liteship/command context command', () => {
     const commandNames = new Set(COMMAND_CATALOG.map((descriptor) => descriptor.name));
     const invocation = /`liteship\s+([a-z][\w.-]*)/gu;
     for (const [task, contextTask] of Object.entries(CONTEXT_MAP)) {
-      const prose = [contextTask.title, contextTask.summary, ...contextTask.pointers.map((pointer) => pointer.note)].join(
-        '\n',
-      );
+      const prose = [
+        contextTask.title,
+        contextTask.summary,
+        ...contextTask.pointers.map((pointer) => pointer.note),
+      ].join('\n');
       for (const match of prose.matchAll(invocation)) {
         const command = match[1] as string;
         expect(commandNames.has(command), `${task}: unknown liteship command ${command}`).toBe(true);
@@ -102,5 +111,42 @@ describe('@liteship/command context command', () => {
     expect(result.status).toBe('failed');
     expect(result.exitCode ?? 0).toBeGreaterThan(0);
     expect(payload.pointers).toEqual([]);
+  });
+
+  it('recovers owner, route, lifecycle, failure, checks, and proofs for a curated facade subject', async () => {
+    const { result, payload } = await contextSubject('createTimeline');
+    expect(result.status).toBe('ok');
+    expect(payload.task).toBeNull();
+    expect(payload.subject).toBe('createTimeline');
+    expect(payload.publicSurface).toMatchObject({
+      symbol: 'createTimeline',
+      specifier: 'liteship/motion',
+      lifecycle: 'timeline resources require disposal',
+      allocation: {
+        operation: 'createTimeline',
+        classification: 'active-owned',
+        postDispose: 'inert',
+        siblingCleanup: 'aggregate',
+      },
+    });
+    expect(payload.publicSurface!.failureContract.length).toBeGreaterThan(0);
+    expect(payload.publicSurface!.checkIds).toContain('check/test');
+    expect(payload.publicSurface!.proofRefs).toContain('tests/unit/liteship/facade-lifecycle-contract.test.ts');
+    expect(
+      payload.pointers.some((pointer) => pointer.kind === 'entrypoint' && pointer.path.endsWith('motion.ts')),
+    ).toBe(true);
+    for (const pointer of payload.pointers) {
+      expect(existsSync(resolve(REPO_ROOT, pointer.path)), pointer.path).toBe(true);
+    }
+  });
+
+  it('fails structurally when neither or both selectors are supplied', async () => {
+    const neither = await contextCommand.handler({ name: 'context', args: {} }, {});
+    const both = await contextCommand.handler(
+      { name: 'context', args: { task: 'add-boundary', subject: 'defineAdaptive' } },
+      {},
+    );
+    expect(neither.status).toBe('failed');
+    expect(both.status).toBe('failed');
   });
 });

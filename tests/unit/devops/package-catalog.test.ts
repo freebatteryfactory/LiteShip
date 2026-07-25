@@ -181,6 +181,7 @@ describe('PACKAGE_CATALOG negative controls', () => {
     expect(
       findAuthoredFleetLists([
         { path: 'packages/audit/src/package-catalog.generated.ts', text: fleet },
+        { path: 'benchmarks/one-install-cost-baseline.json', text: fleet },
         { path: 'tests/fixtures/package-catalog-red/second-roster.ts', text: fleet },
       ]),
     ).toEqual([]);

@@ -76,7 +76,7 @@ Use this index to find the semantic owner; public subpaths and dependency edges 
 | `liteship check-invariants` | Fast-lane invariant gate: fail on any banned source pattern (require/module.exports/var/ESM violation) or line-ending policy breach. | shared handler |
 | `liteship check gates` | Run the pure gauntlet gate fold in-process (litelaunchGauntlet) and return structured findings + a blocking verdict. | shared handler |
 | `liteship completion` | Emit a shell tab-completion script for sourcing into a shell rc. | CLI orchestration |
-| `liteship context` | Get the ordered file/check/test pointers for a repo task (add-boundary, release, extend-cli, …). | shared handler |
+| `liteship context` | Get ordered owner/check/proof context for a repo task or curated public symbol. | shared handler |
 | `liteship describe` | Dump the capsule catalog + command schema (the AI discovery surface). | CLI orchestration |
 | `liteship dev` | Launch the detected Astro/Vite host in a LiteShip application; repository-only --example/--tutorial selectors remain explicit. | CLI orchestration |
 | `liteship doctor` | Preflight environment check: Node, pnpm, workspace, build artifacts, git hooks. | CLI orchestration |

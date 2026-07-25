@@ -24,6 +24,8 @@ import { fileURLToPath } from 'node:url';
 import { isDirectExecution, walkAllFiles, walkTrackedFiles } from './audit/shared.js';
 import { PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
 import { renderAgentRepositoryContext } from './lib/agent-context.js';
+import { PUBLIC_SURFACE_CONTEXT_TS, renderPublicSurfaceContext } from './gen-public-surface-context.js';
+import { spawnArgvCapture } from './lib/spawn.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -54,6 +56,7 @@ export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
 export const TYPEDOC_JSON = 'typedoc.json';
 const LITESHIP_ROSTER_REL = 'packages/liteship/src/testing/package-roster.ts';
+const ONE_INSTALL_COST_BASELINE_JSON = 'benchmarks/one-install-cost-baseline.json';
 
 export interface CatalogManifest {
   readonly name?: string;
@@ -247,6 +250,10 @@ function isSanctionedFleetSource(path: string): boolean {
   const normalized = path.replaceAll('\\', '/');
   const exactGenerated = new Set([
     ...renderGeneratedProjections().map(([relativePath]) => relativePath),
+    // Addressed evidence minted from the catalog-driven 25-tarball package-smoke
+    // observation. It is validated against the live packed fleet at admission;
+    // it is not an independently authored roster owner.
+    ONE_INSTALL_COST_BASELINE_JSON,
     'scripts/ci/publish-roster.json',
     'tests/fixtures/api-surface-snapshot.json',
     'tests/fixtures/type-export-surface.json',
@@ -341,13 +348,47 @@ export function findAuthoredFleetLists(sources: readonly CatalogSource[]): reado
   return drift;
 }
 
-function trackedCatalogSources(): readonly CatalogSource[] {
-  // `git ls-files` still reports an unstaged deletion from the index. Filter
-  // against the live tree so a generated API page that was legitimately
-  // replaced/renamed can be checked before the commit is staged.
-  const paths = walkTrackedFiles(REPO_ROOT).filter(
-    (path) => /\.(?:[cm]?[jt]sx?|json|ya?ml|md)$/u.test(path) && existsSync(resolve(REPO_ROOT, path)),
-  );
+async function trackedCatalogSources(): Promise<readonly CatalogSource[]> {
+  // A second FULL fleet list necessarily contains the first canonical package.
+  // Ask git for that small candidate set instead of reading every tracked doc and
+  // source file (thousands of files on Windows). Fall back to the complete tracked
+  // census only when git itself is unavailable or errors.
+  let paths: readonly string[];
+  try {
+    const grep = await spawnArgvCapture(
+      'git',
+      [
+        'grep',
+        '-l',
+        '-F',
+        '-e',
+        CANONICAL_ROSTER[0]!,
+        '--',
+        '*.ts',
+        '*.tsx',
+        '*.mts',
+        '*.cts',
+        '*.js',
+        '*.jsx',
+        '*.mjs',
+        '*.cjs',
+        '*.json',
+        '*.yaml',
+        '*.yml',
+        '*.md',
+      ],
+      { cwd: REPO_ROOT },
+    );
+    paths =
+      grep.exitCode === 0
+        ? grep.stdout.split(/\r?\n/u).filter((path) => path.length > 0)
+        : grep.exitCode === 1
+          ? []
+          : walkTrackedFiles(REPO_ROOT);
+  } catch {
+    paths = walkTrackedFiles(REPO_ROOT);
+  }
+  paths = paths.filter((path) => existsSync(resolve(REPO_ROOT, path)));
   return paths.map((path) => ({ path, text: readFileSync(resolve(REPO_ROOT, path), 'utf8') }));
 }
 
@@ -367,6 +408,7 @@ export function renderGeneratedProjections(): ReadonlyArray<readonly [string, st
     [COMMAND_PLUMB_TS, renderCommandPlumb()],
     [DOC_PACKAGE_GROUPS_TS, renderDocPackageGroups()],
     [API_SURFACE_PACKAGES_TS, renderApiSurfacePackages()],
+    [PUBLIC_SURFACE_CONTEXT_TS, renderPublicSurfaceContext()],
     [ROOT_TSCONFIG_JSON, renderRootTsconfig()],
     [TYPEDOC_JSON, renderTypedocJson()],
     [PUBLISH_ROSTER_JSON, renderPublishRosterJson()],
@@ -676,12 +718,12 @@ export function collectGeneratedProjectionDrift(
 }
 
 /** Every mismatch between the catalog, package manifests, and generated projections. */
-export function collectRosterDrift(): readonly CatalogDrift[] {
+export async function collectRosterDrift(): Promise<readonly CatalogDrift[]> {
   const drift = [
     ...catalogDrift(),
     ...collectGeneratedProjectionDrift(),
     ...collectCliFragmentProjectionDrift(),
-    ...findAuthoredFleetLists(trackedCatalogSources()),
+    ...findAuthoredFleetLists(await trackedCatalogSources()),
   ];
 
   const publishJob = publishJobText(readReleaseYaml());
@@ -701,8 +743,8 @@ function emit(): void {
   process.stdout.write(`# ${LITESHIP_ROSTER_REL}\n${renderLiteshipPackages()}\n`);
 }
 
-function check(): number {
-  const drift = collectRosterDrift();
+async function check(): Promise<number> {
+  const drift = await collectRosterDrift();
   if (drift.length === 0) {
     process.stdout.write(`gen-roster: ${PACKAGE_CATALOG.length} package records and all projections are current.\n`);
     return 0;
@@ -712,11 +754,21 @@ function check(): number {
   return 1;
 }
 
-export function main(argv: readonly string[]): number {
+export async function main(argv: readonly string[]): Promise<number> {
   if (argv.includes('--check')) return check();
   if (argv.includes('--write')) return write();
   emit();
   return 0;
 }
 
-if (isDirectExecution(import.meta.url)) process.exit(main(process.argv.slice(2)));
+if (isDirectExecution(import.meta.url)) {
+  void main(process.argv.slice(2)).then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (error: unknown) => {
+      process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
+      process.exitCode = 1;
+    },
+  );
+}

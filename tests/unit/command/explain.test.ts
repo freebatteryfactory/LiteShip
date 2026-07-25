@@ -118,6 +118,40 @@ describe('@liteship/command explain command — exported-symbol arm', () => {
     expect(s.kind).toBe('function');
     expect(s.summary.length).toBeGreaterThan(0);
     expect(s.packageDescription.length).toBeGreaterThan(0);
+    expect(s.surface).toMatchObject({
+      symbol: 'explainDiagnostic',
+      specifier: 'liteship',
+      lifecycle: 'pure-reader',
+    });
+  });
+
+  it('adds curated root ownership and failure context without replacing symbol resolution', async () => {
+    const { payload } = await explain('defineAdaptive', resolver);
+    expect(payload.symbol).toMatchObject({
+      symbol: 'defineAdaptive',
+      package: 'liteship',
+      surface: {
+        symbol: 'defineAdaptive',
+        specifier: 'liteship',
+        lifecycle: 'immutable-definition',
+        stability: 'stable',
+      },
+    });
+    expect(payload.symbol!.surface!.failureContract.length).toBeGreaterThan(0);
+    expect(payload.symbol!.surface!.proofRefs).toContain('tests/property/adaptive-lowering-equivalence.prop.test.ts');
+  });
+
+  it('explains active resource ownership from the generated lifecycle contract', async () => {
+    const { payload } = await explain('createTimeline', resolver);
+    expect(payload.symbol!.surface).toMatchObject({
+      specifier: 'liteship/motion',
+      allocation: {
+        classification: 'active-owned',
+        disposal: 'dispose-async',
+        postDispose: 'inert',
+        siblingCleanup: 'aggregate',
+      },
+    });
   });
 
   it('does not expose a declaration that is private to a package implementation', () => {

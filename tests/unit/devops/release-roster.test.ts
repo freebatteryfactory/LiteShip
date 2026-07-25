@@ -101,7 +101,9 @@ describe('release publish roster matches the workspace (scripts/ci/publish-roste
     for (const name of order) {
       for (const dep of deps.get(name) ?? []) {
         if ((pos.get(dep) ?? -1) > (pos.get(name) ?? -1)) {
-          violations.push(`${name} (pos ${pos.get(name)}) publishes before its dependency ${dep} (pos ${pos.get(dep)})`);
+          violations.push(
+            `${name} (pos ${pos.get(name)}) publishes before its dependency ${dep} (pos ${pos.get(dep)})`,
+          );
         }
       }
     }
@@ -119,15 +121,17 @@ describe('release publish roster matches the workspace (scripts/ci/publish-roste
     // [DUP] Re-anchor: the publish roster's `@liteship/*` membership is owned by `@liteship/audit`'s
     // LITESHIP_PACKAGE_ROSTER; the two non-`@liteship` umbrellas that publish last are added on top
     // (deliberately absent from the scoped fleet).
-    expect([...publishRoster().packages].sort()).toEqual([...LITESHIP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort());
+    expect([...publishRoster().packages].sort()).toEqual(
+      [...LITESHIP_PACKAGE_ROSTER, 'create-liteship', 'liteship'].sort(),
+    );
   });
 
-  it('gen-roster reports no roster drift across the authored roster and shipped copies', () => {
+  it('gen-roster reports no roster drift across the authored roster and shipped copies', async () => {
     // The gen-roster staleness gate (`pnpm exec tsx scripts/gen-roster.ts --check`) run
     // in-process: it cross-checks CANONICAL_ROSTER / PUBLISHABLE_ROSTER, the generated
     // publish-roster.json, and release.yml's publish job against the repo-truths-derived
     // set. An empty drift list is the green gate.
-    expect(collectRosterDrift()).toEqual([]);
+    expect(await collectRosterDrift()).toEqual([]);
   });
 
   it('the trusted-publisher checklist (RELEASING.md) states the right publishable count', () => {

@@ -77,6 +77,16 @@ export { explainCommand, ExplainPayloadSchema } from './commands/explain.js';
 export type { ExplainPayload, ExplainDiagnostic, ExplainEmitter, ExplainSymbol } from './commands/explain.js';
 export { contextCommand, ContextPayloadSchema, CONTEXT_MAP, CONTEXT_TASK_IDS } from './commands/context.js';
 export type { ContextPayload, ContextPointer, ContextPointerKind, ContextTask } from './commands/context.js';
+export {
+  PUBLIC_SURFACE_CONTEXT,
+  PublicSymbolContextSchema,
+  publicSurfaceForSymbol,
+} from './commands/public-surface-context.js';
+export type {
+  PublicAllocationContext,
+  PublicSurfaceStability,
+  PublicSymbolContext,
+} from './commands/public-surface-context.js';
 export type { ApiSymbolResolution } from './registry.js';
 
 // The check registry (data) + the pure profile planner — the source a profile

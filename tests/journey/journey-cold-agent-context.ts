@@ -94,13 +94,61 @@ export async function journeyColdAgentContext(installedAppDir: string): Promise<
       'context packet omits one or more load-bearing debugging owners/tests',
     );
 
+    const describeResult = await runInstalledLiteshipCliAt(['describe', '--format=json'], installedAppDir, REPO_ROOT);
+    journeyAssert(describeResult.code === 0, `packed describe exited ${describeResult.code}`);
+    const described = parseReceipt(describeResult.stdout);
+    const publicSurface = described['publicSurface'] as
+      { root?: readonly unknown[]; subpaths?: readonly unknown[]; lifecycle?: readonly unknown[] } | undefined;
+    journeyAssert(
+      Array.isArray(publicSurface?.root) &&
+        Array.isArray(publicSurface?.subpaths) &&
+        Array.isArray(publicSurface?.lifecycle) &&
+        publicSurface.lifecycle.length === 24,
+      'packed describe does not expose the generated facade and lifecycle projection',
+    );
+
+    const explainResult = await runInstalledLiteshipCliAt(
+      ['explain', 'defineAdaptive', '--json'],
+      installedAppDir,
+      REPO_ROOT,
+    );
+    journeyAssert(explainResult.code === 0, `packed explain defineAdaptive exited ${explainResult.code}`);
+    const explained = parseReceipt(explainResult.stdout);
+    const explainedSurface = (explained['symbol'] as { surface?: Record<string, unknown> } | undefined)?.surface;
+    journeyAssert(explainedSurface?.['specifier'] === 'liteship', 'packed explain omits defineAdaptive root ownership');
+    journeyAssert(
+      typeof explainedSurface?.['failureContract'] === 'string' &&
+        (explainedSurface['failureContract'] as string).length > 0,
+      'packed explain omits defineAdaptive failure behavior',
+    );
+    journeyAssert(
+      Array.isArray(explainedSurface?.['proofRefs']) && Array.isArray(explainedSurface?.['checkIds']),
+      'packed explain omits defineAdaptive checks or proof references',
+    );
+
+    const subjectResult = await runInstalledLiteshipCliAt(
+      ['context', '--subject', 'createTimeline', '--json'],
+      installedAppDir,
+      REPO_ROOT,
+    );
+    journeyAssert(subjectResult.code === 0, `packed context --subject createTimeline exited ${subjectResult.code}`);
+    const subjectReceipt = parseReceipt(subjectResult.stdout);
+    const subjectSurface = subjectReceipt['publicSurface'] as
+      { allocation?: { classification?: string; postDispose?: string; siblingCleanup?: string } } | undefined;
+    journeyAssert(
+      subjectSurface?.allocation?.classification === 'active-owned' &&
+        subjectSurface.allocation.postDispose === 'inert' &&
+        subjectSurface.allocation.siblingCleanup === 'aggregate',
+      'packed subject context omits the active resource disposal contract',
+    );
+
     return {
       name,
       status: 'pass',
       detail:
-        `packed context --task ${TASK} returned ${pointers!.length} live pointers with owner, entrypoint, test, registered check, ` +
-        'and Finding→explain landmarks sufficient for the task',
-      notes: ['ran the packed facade executable; validated semantic landmarks and registered authority'],
+        `packed context --task ${TASK} returned ${pointers!.length} live pointers and the facade projection exposed ` +
+        'owner, route, failure, proof, and lifecycle recovery without package archaeology',
+      notes: ['ran packed describe, explain, task context, and public-subject context through the facade executable'],
     };
   } catch (error) {
     return { name, status: 'fail', detail: error instanceof Error ? error.message : String(error), notes: [] };

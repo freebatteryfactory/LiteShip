@@ -10,7 +10,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { COMMAND_CATALOG, mcpExposedDescriptors } from '@liteship/command';
+import { COMMAND_CATALOG, PUBLIC_SURFACE_CONTEXT, mcpExposedDescriptors } from '@liteship/command';
 import type { CapsuleCommandDescriptor } from '@liteship/core';
 
 /** Closed catalog of the seven assembly kinds (matches ADR-0008). */
@@ -28,6 +28,7 @@ const ASSEMBLY_KINDS = [
 export interface DescribeReceipt {
   readonly assemblyKinds: readonly string[];
   readonly commands: readonly CapsuleCommandDescriptor[];
+  readonly publicSurface: typeof PUBLIC_SURFACE_CONTEXT;
 }
 
 /** MCP tool descriptor as emitted in --format=mcp mode. */
@@ -65,5 +66,5 @@ export function describe(
     }
     return { tools: mcpTools() };
   }
-  return { assemblyKinds: ASSEMBLY_KINDS, commands: COMMAND_CATALOG };
+  return { assemblyKinds: ASSEMBLY_KINDS, commands: COMMAND_CATALOG, publicSurface: PUBLIC_SURFACE_CONTEXT };
 }

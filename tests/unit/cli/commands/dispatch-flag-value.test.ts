@@ -102,7 +102,16 @@ describe('dispatch — a value-taking flag never swallows the next flag (F-PROTO
   it.each([
     { argv: ['dev', '--example'], command: 'dev', usage: 'usage: liteship dev --example <name>' },
     { argv: ['audit', '--profile'], command: 'audit', usage: 'usage: liteship audit --profile <path>' },
-    { argv: ['context', '--task'], command: 'context', usage: 'usage: liteship context --task <task-id>' },
+    {
+      argv: ['context', '--task'],
+      command: 'context',
+      usage: 'usage: liteship context (--task <task-id> | --subject <symbol>)',
+    },
+    {
+      argv: ['context', '--subject'],
+      command: 'context',
+      usage: 'usage: liteship context (--task <task-id> | --subject <symbol>)',
+    },
     { argv: ['mcp', '--http'], command: 'mcp', usage: 'usage: liteship mcp --http <address>' },
     {
       argv: ['capsule', 'list', '--kind'],

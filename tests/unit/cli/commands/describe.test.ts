@@ -25,9 +25,16 @@ describeTest('describe command', () => {
   });
 
   it('default JSON mode emits assembly kinds + command list', () => {
-    const r = describe({}) as { assemblyKinds: readonly string[]; commands: readonly unknown[] };
+    const r = describe({}) as {
+      assemblyKinds: readonly string[];
+      commands: readonly unknown[];
+      publicSurface: { root: readonly unknown[]; subpaths: readonly unknown[]; lifecycle: readonly unknown[] };
+    };
     expect(r.assemblyKinds.length).toBeGreaterThan(5);
     expect(r.commands.length).toBeGreaterThan(5);
+    expect(r.publicSurface.root.length).toBeGreaterThan(5);
+    expect(r.publicSurface.subpaths.length).toBeGreaterThan(5);
+    expect(r.publicSurface.lifecycle).toHaveLength(24);
   });
 
   it('explicit JSON mode behaves the same as default', () => {
@@ -57,7 +64,11 @@ describeTest('describe command', () => {
     mkdirSync(dirname(MANIFEST_PATH), { recursive: true });
     const cached = {
       tools: [
-        { name: 'cached.tool.x', description: 'cached', inputSchema: { type: 'object', properties: { id: { type: 'string' } } } },
+        {
+          name: 'cached.tool.x',
+          description: 'cached',
+          inputSchema: { type: 'object', properties: { id: { type: 'string' } } },
+        },
       ],
     };
     writeFileSync(MANIFEST_PATH, JSON.stringify(cached), 'utf8');
