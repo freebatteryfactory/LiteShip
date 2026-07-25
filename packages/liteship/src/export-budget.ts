@@ -14,6 +14,10 @@ import { ValidationError } from '@liteship/error';
 export type RootExportKind = 'value' | 'type';
 export type RootExportRole = 'authoring' | 'inspection';
 export type FacadeStability = 'stable' | 'experimental';
+export type FacadeLifecycleClass = 'active-owned' | 'gc-owned-mutable' | 'pure-allocation';
+export type FacadeDisposalContract = 'dispose-async' | 'dispose-sync' | 'close-sync' | 'none';
+export type FacadePostDisposeContract = 'inert' | 'not-applicable';
+export type FacadeSiblingCleanupContract = 'aggregate' | 'not-applicable';
 
 export interface RootExportContract {
   readonly name: string;
@@ -41,6 +45,19 @@ export interface FacadeSubpathContract {
   readonly stability: FacadeStability;
   readonly symbol: string;
   readonly reason: string;
+}
+
+/** One public allocation operation and its exact resource-ownership law. */
+export interface FacadeLifecycleOperationContract {
+  readonly operation: string;
+  readonly specifier: `liteship/${string}`;
+  readonly owner: `@liteship/${string}`;
+  readonly classification: FacadeLifecycleClass;
+  readonly disposal: FacadeDisposalContract;
+  readonly postDispose: FacadePostDisposeContract;
+  readonly siblingCleanup: FacadeSiblingCleanupContract;
+  readonly proof: `tests/${string}`;
+  readonly rationale: string;
 }
 
 /** Authored root decisions. The root admits default authoring and inspection only. */
@@ -251,6 +268,38 @@ export const FACADE_SUBPATH_CONTRACT_SOURCE = `[
   {"subpath":"./genui","specifier":"liteship/genui","owner":"@liteship/genui","role":"generated-ui","userStory":"Define a trusted component catalog, validate generated UI, and render it without raw package discovery.","dependencyCost":"pure generated-UI catalog and renderer","packedProof":"check/journey:one-install-runtime-reference-identity","lifecycle":"immutable catalog and pure validation/rendering","failureContract":"Unknown components, props, or invalid generated trees are refused before rendering.","example":"defineComponentCatalog(input)","stability":"stable","symbol":"defineComponentCatalog","reason":"Generated UI is a documented product capability that deserves a discoverable facade subpath."}
 ]`;
 
+/**
+ * Authored lifecycle decisions for every public facade allocation operation.
+ * The exact runtime census is proved against this list: adding a `create*` or
+ * namespace `.create` without declaring its ownership law fails closed.
+ */
+export const FACADE_LIFECYCLE_CONTRACT_SOURCE = `[
+  {"operation":"RuntimeCoordinator.create","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/reactive/runtime-coordinator.test.ts","rationale":"Bounded in-memory stores own no timer, subscription, process, or external handle."},
+  {"operation":"StateCellStore.create","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/reactive/state-cell.test.ts","rationale":"The registry is an in-memory authority over a coordinator and starts no background work."},
+  {"operation":"createCell","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/reactive/cell.test.ts","rationale":"The cell owns subscriptions and exposes its Lifetime directly through dispose."},
+  {"operation":"createDirtyFlags","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/reactive/dirty-flags-runtime.test.ts","rationale":"Dirty flags are bounded synchronous bit storage with no active resource."},
+  {"operation":"createLifetime","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/reactive/lifetime.test.ts","rationale":"Lifetime is the aggregate exactly-once finalizer authority."},
+  {"operation":"createLiveCell","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/reactive/disposed-write-inert.test.ts","rationale":"The live cell owns its reactive kernel and closes writes and subscribers on disposal."},
+  {"operation":"createLiveCellBoundary","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/reactive/disposed-write-inert.test.ts","rationale":"The boundary live cell owns its reactive kernel and crossing stream."},
+  {"operation":"createQuantizer","specifier":"liteship/reactive","owner":"@liteship/quantizer","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/quantizer/animated-quantizer.test.ts","rationale":"A live quantizer owns input subscriptions, transition work, and output delivery."},
+  {"operation":"createSignal","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/reactive/signal.test.ts","rationale":"A signal owns source listeners and its delivery kernel."},
+  {"operation":"createStore","specifier":"liteship/reactive","owner":"@liteship/core/reactive","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/reactive/store.test.ts","rationale":"A store owns subscribers and reducer delivery through one Lifetime."},
+  {"operation":"createBlendTree","specifier":"liteship/motion","owner":"@liteship/core/motion","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/motion/blend-tree.test.ts","rationale":"The blend tree owns its change kernel and derived subscriptions."},
+  {"operation":"createTimeline","specifier":"liteship/motion","owner":"@liteship/core/motion","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The timeline owns its scheduler and state delivery kernel through direct disposal."},
+  {"operation":"createGraphMutationClient","specifier":"liteship/graph","owner":"@liteship/core/graph","classification":"pure-allocation","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/graph/graph-mutation-client.test.ts","rationale":"The client allocates request closures but owns no persistent connection or background work."},
+  {"operation":"createGraphQueryRefreshBase","specifier":"liteship/graph","owner":"@liteship/core/graph","classification":"pure-allocation","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/graph/graph-query.test.ts","rationale":"The helper creates immutable refresh metadata and no active resource."},
+  {"operation":"Compositor.create","specifier":"liteship/media","owner":"@liteship/core/media","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/media/compositor.test.ts","rationale":"The compositor owns reactive coordination, state delivery, and registered teardown."},
+  {"operation":"createCompositorStatePool","specifier":"liteship/media","owner":"@liteship/core/media","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/media/compositor-pool.test.ts","rationale":"The state pool is bounded reusable memory with no active external handle."},
+  {"operation":"createFrameBudget","specifier":"liteship/media","owner":"@liteship/core/media","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/media/frame-budget-runtime.test.ts","rationale":"The frame budget owns an animation-frame loop and must cancel it directly."},
+  {"operation":"createTokenBuffer","specifier":"liteship/media","owner":"@liteship/core/media","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/media/token-buffer.test.ts","rationale":"The token buffer is bounded synchronous storage and owns no active resource."},
+  {"operation":"LLMAdapter.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/llm-adapter.test.ts","rationale":"The adapter transforms caller-driven iteration and starts no independent task or connection."},
+  {"operation":"SSE.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"close-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The client owns timers, one EventSource generation, buffers, and two delivery streams."},
+  {"operation":"SlotRegistry.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/slot.test.ts","rationale":"The registry is inert storage; DOM observation is a separate operation returning its own disposer."},
+  {"operation":"createAudioProcessor","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The processor owns a worklet node, graph connection, and bridge running state."},
+  {"operation":"createHtmlFragment","specifier":"liteship/runtime","owner":"@liteship/web","classification":"pure-allocation","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/escape-html.test.ts","rationale":"The helper returns an inert document fragment and starts no observer or background work."},
+  {"operation":"createLLMSession","specifier":"liteship/astro","owner":"@liteship/astro/runtime","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/astro/llm-session-lifecycle.test.ts","rationale":"The session owns pooled render runtime state and queued delivery work."}
+]`;
+
 const ROOT_KEYS = [
   'name',
   'kind',
@@ -277,6 +326,18 @@ const SUBPATH_KEYS = [
   'stability',
   'symbol',
   'reason',
+] as const;
+
+const LIFECYCLE_KEYS = [
+  'operation',
+  'specifier',
+  'owner',
+  'classification',
+  'disposal',
+  'postDispose',
+  'siblingCleanup',
+  'proof',
+  'rationale',
 ] as const;
 
 function exactStringRecord(value: unknown, keys: readonly string[]): value is Record<string, string> {
@@ -355,8 +416,64 @@ export function parseFacadeSubpathContract(source: string): readonly FacadeSubpa
   );
 }
 
+/** @internal Parse and freeze the exact public allocation lifecycle contract. */
+export function parseFacadeLifecycleContract(source: string): readonly FacadeLifecycleOperationContract[] {
+  const value = parseContractJson(source);
+  if (!Array.isArray(value) || value.length === 0)
+    return invalidContract('facade lifecycle contract must be non-empty');
+  const seen = new Set<string>();
+  return Object.freeze(
+    value.map((entry): FacadeLifecycleOperationContract => {
+      if (!exactStringRecord(entry, LIFECYCLE_KEYS)) return invalidContract('facade lifecycle entry is malformed');
+      const candidate = entry as Record<(typeof LIFECYCLE_KEYS)[number], string>;
+      if (!/^(?:create[A-Z][A-Za-z0-9]*|[A-Z][A-Za-z0-9]*\.create)$/.test(candidate.operation)) {
+        return invalidContract('facade lifecycle operation is invalid');
+      }
+      if (!/^liteship\/[a-z0-9][a-z0-9-]*$/.test(candidate.specifier)) {
+        return invalidContract('facade lifecycle specifier is invalid');
+      }
+      if (!/^@liteship\/[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9][a-z0-9_-]*)?$/.test(candidate.owner)) {
+        return invalidContract('facade lifecycle owner is invalid');
+      }
+      if (!['active-owned', 'gc-owned-mutable', 'pure-allocation'].includes(candidate.classification)) {
+        return invalidContract('facade lifecycle classification is invalid');
+      }
+      if (!['dispose-async', 'dispose-sync', 'close-sync', 'none'].includes(candidate.disposal)) {
+        return invalidContract('facade lifecycle disposal is invalid');
+      }
+      if (!['inert', 'not-applicable'].includes(candidate.postDispose)) {
+        return invalidContract('facade lifecycle post-dispose contract is invalid');
+      }
+      if (!['aggregate', 'not-applicable'].includes(candidate.siblingCleanup)) {
+        return invalidContract('facade lifecycle sibling-cleanup contract is invalid');
+      }
+      const active = candidate.classification === 'active-owned';
+      if (
+        (active &&
+          (candidate.disposal === 'none' ||
+            candidate.postDispose !== 'inert' ||
+            candidate.siblingCleanup !== 'aggregate')) ||
+        (!active &&
+          (candidate.disposal !== 'none' ||
+            candidate.postDispose !== 'not-applicable' ||
+            candidate.siblingCleanup !== 'not-applicable'))
+      ) {
+        return invalidContract('facade lifecycle guarantees contradict the operation classification');
+      }
+      if (!/^tests\/[A-Za-z0-9_./-]+\.test\.ts$/.test(candidate.proof)) {
+        return invalidContract('facade lifecycle proof path is invalid');
+      }
+      if (seen.has(candidate.operation))
+        return invalidContract(`duplicate facade lifecycle operation: ${candidate.operation}`);
+      seen.add(candidate.operation);
+      return Object.freeze(candidate as unknown as FacadeLifecycleOperationContract);
+    }),
+  );
+}
+
 export const ROOT_EXPORT_CONTRACT = parseRootExportContract(ROOT_EXPORT_CONTRACT_SOURCE);
 export const FACADE_SUBPATH_CONTRACT = parseFacadeSubpathContract(FACADE_SUBPATH_CONTRACT_SOURCE);
+export const FACADE_LIFECYCLE_CONTRACT = parseFacadeLifecycleContract(FACADE_LIFECYCLE_CONTRACT_SOURCE);
 
 /** Exact root allowlists derived from the role-bearing contract. */
 export const ROOT_VALUE_BUDGET = Object.freeze(

@@ -242,8 +242,13 @@ export const create = (config: SSEConfig): SSEClient => {
     if (!src) return;
     src.onmessage = null;
     src.onerror = null;
-    src.close();
-    machine.source = null;
+    try {
+      src.close();
+    } finally {
+      // Release the generation even when the host's close hook throws. A
+      // retained source is already detached and must never be treated as live.
+      machine.source = null;
+    }
   };
 
   /**
@@ -502,19 +507,33 @@ export const create = (config: SSEConfig): SSEClient => {
     },
   };
 
-  // One Lifetime owns the teardown finalizer (replacing the former Scope). Its
-  // sync body runs synchronously inside `dispose()`, so `close()` tears the
-  // transport down in one pass — a straggler frame from a dead generation
-  // cannot morph the fresh one on reinit.
+  // One Lifetime owns every teardown sibling (replacing the former Scope).
+  // Each wrapper records its own fault so Lifetime can continue through the
+  // complete LIFO pass; close() then surfaces one synchronous AggregateError
+  // only AFTER every timer, source, buffer, and stream received its release
+  // attempt. A hostile host close hook therefore cannot strand later siblings.
   const lifetime = Lifetime.make();
-  lifetime.add(() => {
-    clearReconnectHandle();
-    clearHeartbeat();
-    detachSource();
-    pendingMessages = [];
-    messageWakeup.close();
-    stateEdges.close();
-  });
+  const teardownErrors: unknown[] = [];
+  const attemptTeardown =
+    (operation: () => void): (() => void) =>
+    () => {
+      try {
+        operation();
+      } catch (error) {
+        teardownErrors.push(error);
+      }
+    };
+  // Lifetime is LIFO; register in reverse of the intended teardown order.
+  lifetime.add(attemptTeardown(() => stateEdges.close()));
+  lifetime.add(attemptTeardown(() => messageWakeup.close()));
+  lifetime.add(
+    attemptTeardown(() => {
+      pendingMessages = [];
+    }),
+  );
+  lifetime.add(attemptTeardown(detachSource));
+  lifetime.add(attemptTeardown(clearHeartbeat));
+  lifetime.add(attemptTeardown(clearReconnectHandle));
 
   const client: SSEClient = {
     messages,
@@ -551,9 +570,16 @@ export const create = (config: SSEConfig): SSEClient => {
       // have already cleared it). Publish the edge BEFORE disposing so a
       // `stateChanges` subscriber sees the final transition, then complete.
       setStatus('disconnected');
-      // Sync finalizer lands synchronously inside dispose(); teardown is
-      // fire-and-forget (there is no async finalizer), so the promise is dropped.
+      // All registered arms are synchronous and land before dispose() returns.
+      // Their wrappers keep the Lifetime promise green while preserving faults
+      // here for the synchronous close() contract.
       void lifetime.dispose();
+      if (teardownErrors.length > 0) {
+        throw new AggregateError(
+          [...teardownErrors],
+          'SSE close failed after attempting every transport teardown step',
+        );
+      }
     },
 
     reconnect: () => {

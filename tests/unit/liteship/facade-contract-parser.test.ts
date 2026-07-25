@@ -4,9 +4,12 @@ import { describe, expect, it } from 'vitest';
 import {
   FACADE_SUBPATH_CONTRACT,
   FACADE_SUBPATH_CONTRACT_SOURCE,
+  FACADE_LIFECYCLE_CONTRACT,
+  FACADE_LIFECYCLE_CONTRACT_SOURCE,
   ROOT_EXPORT_CONTRACT,
   ROOT_EXPORT_CONTRACT_SOURCE,
   parseFacadeSubpathContract,
+  parseFacadeLifecycleContract,
   parseRootExportContract,
 } from '../../../packages/liteship/src/export-budget.js';
 
@@ -16,6 +19,31 @@ describe('facade role-contract parser', () => {
     expect(ROOT_EXPORT_CONTRACT.every(Object.isFrozen)).toBe(true);
     expect(Object.isFrozen(FACADE_SUBPATH_CONTRACT)).toBe(true);
     expect(FACADE_SUBPATH_CONTRACT.every(Object.isFrozen)).toBe(true);
+    expect(Object.isFrozen(FACADE_LIFECYCLE_CONTRACT)).toBe(true);
+    expect(FACADE_LIFECYCLE_CONTRACT.every(Object.isFrozen)).toBe(true);
+  });
+
+  it.each([
+    ['foreign operation', (entry: Record<string, unknown>) => (entry.operation = 'makeThing')],
+    ['active resource without disposal', (entry: Record<string, unknown>) => (entry.disposal = 'none')],
+    ['active resource without inertness', (entry: Record<string, unknown>) => (entry.postDispose = 'not-applicable')],
+    [
+      'active resource without aggregate cleanup',
+      (entry: Record<string, unknown>) => (entry.siblingCleanup = 'not-applicable'),
+    ],
+    ['non-test proof path', (entry: Record<string, unknown>) => (entry.proof = 'packages/core/src/index.ts')],
+  ])('rejects a lifecycle contract with %s', (_name, mutate) => {
+    const entries = JSON.parse(FACADE_LIFECYCLE_CONTRACT_SOURCE) as Array<Record<string, unknown>>;
+    const active = entries.find((entry) => entry.classification === 'active-owned')!;
+    mutate(active);
+    expect(() => parseFacadeLifecycleContract(JSON.stringify(entries))).toThrow();
+  });
+
+  it('rejects duplicate lifecycle operations', () => {
+    const entries = JSON.parse(FACADE_LIFECYCLE_CONTRACT_SOURCE) as object[];
+    expect(() => parseFacadeLifecycleContract(JSON.stringify([...entries, entries[0]]))).toThrow(
+      /duplicate facade lifecycle operation/,
+    );
   });
 
   it('does not treat record order as product meaning', () => {

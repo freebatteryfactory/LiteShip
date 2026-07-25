@@ -29,10 +29,11 @@ import type { Scheduler } from '../reactive/scheduler.js';
 import { Scheduler as SchedulerImpl } from '../reactive/scheduler.js';
 import { CellKernel } from '../reactive/cell-kernel.js';
 import type { Disposer } from '../reactive/cell-kernel.js';
-import { Lifetime } from '../reactive/lifetime.js';
+import { Lifetime, attachLifetime } from '../reactive/lifetime.js';
+import type { AsyncOwnedResource } from '../reactive/lifetime.js';
 import { clamp01 } from './clamp.js';
 
-interface TimelineShape<B extends Boundary = Boundary> {
+interface TimelineShape<B extends Boundary = Boundary> extends AsyncOwnedResource {
   readonly boundary: B;
   /** Current boundary state (sync; was `state: Effect.Effect<StateUnion<B>>`). */
   state(): StateUnion<B>;
@@ -56,13 +57,6 @@ interface TimelineShape<B extends Boundary = Boundary> {
   seek(ms: Millis): void;
   /** Set elapsed by progress fraction, clamped to 0..1 (sync; was `Effect.Effect<void>`). */
   scrub(progress: number): void;
-  /**
-   * Owns the timeline's teardown — its finalizers cancel the scheduler and close
-   * the state kernel (completing subscribers), so consumers thread the timeline
-   * lifecycle through one uniform `dispose()` (replacing the `Scope`-bound
-   * `addFinalizer(sched.cancel)`).
-   */
-  readonly lifetime: Lifetime;
 }
 
 /**
@@ -150,38 +144,40 @@ export function createTimeline<B extends Boundary>(
     sched.cancel(schedId);
   });
 
-  return {
-    boundary,
-    state: () => stateKernel.read(),
-    progress: () => Math.max(0, Math.min(currentElapsed / duration, 1)),
-    elapsed: () => mkMillis(currentElapsed),
-    subscribe: (subscriber) => stateKernel.subscribe(subscriber),
-    play: () => {
-      playing = true;
-    },
-    pause: () => {
-      playing = false;
-    },
-    reverse: () => {
-      direction = direction === 1 ? -1 : 1;
-    },
-    seek: (ms: Millis) => {
-      // Disposed → the state kernel is closed and `setState` is inert; advancing
-      // `currentElapsed` here would move `elapsed()`/`progress()` while `state()` stays
-      // frozen — a post-teardown divergence. Keep seek/scrub inert once disposed.
-      if (disposed) return;
-      const clamped = Math.max(0, Math.min(duration, ms));
-      currentElapsed = clamped;
-      setState(clamped);
-    },
-    scrub: (progress: number) => {
-      if (disposed) return;
-      const val = clamp01(progress) * duration;
-      currentElapsed = val;
-      setState(val);
+  return attachLifetime(
+    {
+      boundary,
+      state: () => stateKernel.read(),
+      progress: () => Math.max(0, Math.min(currentElapsed / duration, 1)),
+      elapsed: () => mkMillis(currentElapsed),
+      subscribe: (subscriber: CellKernel.Subscriber<StateUnion<B>>) => stateKernel.subscribe(subscriber),
+      play: () => {
+        playing = true;
+      },
+      pause: () => {
+        playing = false;
+      },
+      reverse: () => {
+        direction = direction === 1 ? -1 : 1;
+      },
+      seek: (ms: Millis) => {
+        // Disposed → the state kernel is closed and `setState` is inert; advancing
+        // `currentElapsed` here would move `elapsed()`/`progress()` while `state()` stays
+        // frozen — a post-teardown divergence. Keep seek/scrub inert once disposed.
+        if (disposed) return;
+        const clamped = Math.max(0, Math.min(duration, ms));
+        currentElapsed = clamped;
+        setState(clamped);
+      },
+      scrub: (progress: number) => {
+        if (disposed) return;
+        const val = clamp01(progress) * duration;
+        currentElapsed = val;
+        setState(val);
+      },
     },
     lifetime,
-  };
+  );
 }
 
 /** Public structural type for `Timeline`. */

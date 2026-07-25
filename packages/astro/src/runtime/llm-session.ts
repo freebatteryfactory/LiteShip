@@ -522,9 +522,29 @@ class LLMSessionController implements LLMSessionShape {
   }
 
   dispose(): void {
-    this.resetSession(this.currentTarget);
-    this.pipeline.releaseRuntime();
+    if (this.isDisposed()) {
+      return;
+    }
+    // Claim disposal before crossing any host boundary. A hostile host callback
+    // cannot leave the session callable or cause a second release attempt.
     this.runtimeState = 'disposed';
+
+    const errors: unknown[] = [];
+    const attempt = (operation: () => void): void => {
+      try {
+        operation();
+      } catch (error) {
+        errors.push(error);
+      }
+    };
+    this.toolCallBuffer = null;
+    attempt(() => this.host.setTarget(this.currentTarget));
+    attempt(() => this.pipeline.resetPipelineState());
+    attempt(() => this.receiptTracker.reset());
+    attempt(() => this.pipeline.releaseRuntime());
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'LLM session disposal failed after attempting every teardown step');
+    }
   }
 
   private isDisposed(): boolean {
