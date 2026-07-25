@@ -12,12 +12,25 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { walkFiles } from '@liteship/core/fs-walk';
 import { assertTypeDocInputFingerprint, writeTypeDocInputFingerprint } from './lib/typedoc-input-fingerprint.js';
+import {
+  awaitLocalDocsAdmission,
+  formatLocalResourcePlan,
+  withAdmittedNodeHeap,
+} from './lib/local-resource-profile.js';
+import {
+  buildTypeDocProofIdentity,
+  assertCompleteTypeDocProjection,
+  countTypeDocMarkdown,
+  readTypeDocProofReceipt,
+  writeTypeDocProofReceipt,
+} from './lib/typedoc-proof-cache.js';
 
 const COMMITTED_DIR = 'docs/api';
 const REPO_ROOT = process.cwd();
-const DOCS_NODE_OPTIONS = ['--max-old-space-size=8192', process.env.NODE_OPTIONS ?? ''].join(' ').trim();
+const useLocalCache = process.argv.includes('--local-cache') && process.env.CI !== 'true';
+const printPlan = process.argv.includes('--plan');
+const json = process.argv.includes('--json');
 
 if (!existsSync(COMMITTED_DIR)) {
   console.error(`docs:check — ${COMMITTED_DIR} does not exist. Run 'pnpm run docs:build' first.`);
@@ -31,6 +44,44 @@ try {
   process.exit(1);
 }
 
+const proofIdentity = buildTypeDocProofIdentity(REPO_ROOT);
+const cacheHit = useLocalCache && readTypeDocProofReceipt(REPO_ROOT, proofIdentity) !== null;
+if (cacheHit) {
+  const receipt = {
+    schema: 'liteship/local-docs-plan@1',
+    action: 'reuse-proof',
+    cacheHit: true,
+    proofKey: proofIdentity.proofKey,
+  } as const;
+  console.log(json ? JSON.stringify(receipt, null, 2) : `docs:check local proof hit — ${proofIdentity.proofKey}`);
+  process.exit(0);
+}
+
+let resourcePlan: Awaited<ReturnType<typeof awaitLocalDocsAdmission>>;
+try {
+  resourcePlan = await awaitLocalDocsAdmission({
+    ci: process.env.CI === 'true',
+    onObservation: printPlan && json ? undefined : (plan) => console.error(formatLocalResourcePlan(plan)),
+  });
+} catch (error) {
+  console.error(`docs:check — ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+}
+
+if (printPlan) {
+  const receipt = {
+    schema: 'liteship/local-docs-plan@1',
+    action: 'run-full-proof',
+    cacheHit: false,
+    proofKey: proofIdentity.proofKey,
+    resource: resourcePlan,
+  } as const;
+  console.log(
+    json ? JSON.stringify(receipt, null, 2) : `${formatLocalResourcePlan(resourcePlan)}; full proof required`,
+  );
+  process.exit(0);
+}
+
 const tempDir = mkdtempSync(join(tmpdir(), 'liteship-docs-check-'));
 
 try {
@@ -39,7 +90,7 @@ try {
     shell: true,
     env: {
       ...process.env,
-      NODE_OPTIONS: DOCS_NODE_OPTIONS,
+      NODE_OPTIONS: withAdmittedNodeHeap(process.env.NODE_OPTIONS, resourcePlan.docs.heapMiB),
     },
   });
   if (build.status !== 0) {
@@ -51,15 +102,12 @@ try {
   // leaving PARTIAL output that diffs as phantom mass-deletion drift. File
   // count is the honest signal: a fresh build that produced far fewer pages
   // than the committed tree did not finish — fail with the real cause.
-  const countMd = (dir: string): number => walkFiles(dir, { suffixes: ['.md'] }).length;
-  const committedCount = countMd(COMMITTED_DIR);
-  const freshCount = countMd(tempDir);
-  if (freshCount < committedCount * 0.9) {
-    console.error(
-      `docs:check — the fresh typedoc build produced ${freshCount} pages vs ${committedCount} committed: ` +
-        'the build did not finish (typically an out-of-memory abort laundered to exit 0). ' +
-        'Raise --max-old-space-size in docs:build / docs-check.ts rather than committing the partial output.',
-    );
+  const committedCount = countTypeDocMarkdown(COMMITTED_DIR);
+  const freshCount = countTypeDocMarkdown(tempDir);
+  try {
+    assertCompleteTypeDocProjection(committedCount, freshCount);
+  } catch (error) {
+    console.error(`docs:check — ${error instanceof Error ? error.message : String(error)}.`);
     process.exit(1);
   }
 
@@ -81,7 +129,11 @@ try {
     process.exit(1);
   }
 
-  console.log(`docs:check passed — committed ${COMMITTED_DIR}/ matches source TSDoc.`);
+  if (useLocalCache) writeTypeDocProofReceipt(REPO_ROOT, proofIdentity);
+  console.log(
+    `docs:check passed — committed ${COMMITTED_DIR}/ matches source TSDoc.` +
+      (useLocalCache ? ` Proof ${proofIdentity.proofKey} cached locally.` : ''),
+  );
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
 }

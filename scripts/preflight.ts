@@ -28,6 +28,11 @@
 import { spawnArgv, spawnArgvCapture } from './lib/spawn.js';
 import { isDirectExecution } from './audit/shared.js';
 import { buildLocalVerificationPlan } from './lib/local-verification-plan.js';
+import {
+  formatLocalResourcePlan,
+  sampleLocalResources,
+  selectLocalResourcePlan,
+} from './lib/local-resource-profile.js';
 
 /** One preflight step: a label plus the `pnpm run` script it invokes. */
 const RULE = '='.repeat(64);
@@ -89,10 +94,12 @@ async function main(argv: readonly string[]): Promise<void> {
     changedPaths = changed.stdout.split(/\r?\n/u).filter(Boolean);
   }
   const plan = buildLocalVerificationPlan({ staged, ...(changedPaths === undefined ? {} : { changedPaths }) });
+  const resourcePlan = selectLocalResourcePlan(await sampleLocalResources(), { ci: process.env.CI === 'true' });
   if (printPlan) {
-    if (json) console.log(JSON.stringify(plan, null, 2));
+    if (json) console.log(JSON.stringify({ ...plan, resource: resourcePlan }, null, 2));
     else {
       console.log(`preflight plan (${plan.mode}; docs=${plan.docsReason})`);
+      console.log(formatLocalResourcePlan(resourcePlan));
       for (const step of plan.steps) console.log(`- pnpm ${step.argv.join(' ')}`);
     }
     return;
@@ -102,6 +109,11 @@ async function main(argv: readonly string[]): Promise<void> {
   const overallStart = Date.now();
 
   console.log(`[preflight] mode=${plan.mode} docs=${plan.docsReason}`);
+  console.log(formatLocalResourcePlan(resourcePlan));
+  const inheritedWorkers = process.env.LITESHIP_NATIVE_TSC_WORKERS;
+  if (inheritedWorkers === undefined) {
+    process.env.LITESHIP_NATIVE_TSC_WORKERS = String(resourcePlan.nativeTypeScriptWorkers);
+  }
 
   for (const step of plan.steps) {
     const exitCode = await runStep(step.label, step.argv);
@@ -136,6 +148,7 @@ async function main(argv: readonly string[]): Promise<void> {
     `\n  ${plan.steps.length} static checks${testTargets.length > 0 ? ' + targeted tests' : ''} green in ${formatDuration(totalMs)}.`,
   );
   console.log('  Necessary, not sufficient — integration owns the global gates.\n');
+  if (inheritedWorkers === undefined) delete process.env.LITESHIP_NATIVE_TSC_WORKERS;
 }
 
 if (isDirectExecution(import.meta.url)) {
