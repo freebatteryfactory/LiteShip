@@ -8,7 +8,7 @@
 
 > `const` **Theme**: `object`
 
-Defined in: [core/src/authoring/theme.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L142)
+Defined in: [core/src/authoring/theme.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L146)
 
 Theme — the resolution namespace for a Theme definition. Construction
 lives in the standalone [defineTheme](../functions/defineTheme.md); this object carries

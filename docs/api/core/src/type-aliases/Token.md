@@ -8,7 +8,7 @@
 
 > **Token**\<`N`, `Axes`\> = `TokenDef`\<`N`, `Axes`\>
 
-Defined in: [core/src/authoring/token.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L280)
+Defined in: [core/src/authoring/token.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L283)
 
 Public structural type for `Token`.
 

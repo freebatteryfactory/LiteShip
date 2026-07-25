@@ -8,7 +8,7 @@
 
 > **defineTheme**\<`V`\>(`config`): `ThemeDef`\<`V`\>
 
-Defined in: [core/src/authoring/theme.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L109)
+Defined in: [core/src/authoring/theme.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/theme.ts#L110)
 
 Define a theme — maps token names to variant-keyed values, enabling coherent
 multi-variant token resolution (e.g. light/dark themes).

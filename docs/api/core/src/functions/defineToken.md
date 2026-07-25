@@ -10,7 +10,7 @@
 
 > **defineToken**\<`N`\>(`config`): `TokenDef`\<`N`, readonly \[\]\>
 
-Defined in: [core/src/authoring/token.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L162)
+Defined in: [core/src/authoring/token.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L163)
 
 Define a design token — a named design value that varies across axes (theme,
 density, contrast, …).
@@ -71,7 +71,7 @@ const token = defineToken({
 
 > **defineToken**\<`N`, `A`\>(`config`): `TokenDef`\<`N`, `A`\>
 
-Defined in: [core/src/authoring/token.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L168)
+Defined in: [core/src/authoring/token.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L169)
 
 Define a design token — a named design value that varies across axes (theme,
 density, contrast, …).

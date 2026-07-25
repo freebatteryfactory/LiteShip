@@ -8,7 +8,7 @@
 
 > `const` **Token**: `object`
 
-Defined in: [core/src/authoring/token.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L280)
+Defined in: [core/src/authoring/token.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/token.ts#L283)
 
 Token — the resolution namespace for a Token definition. Construction
 lives in the standalone [defineToken](../functions/defineToken.md); this object carries
