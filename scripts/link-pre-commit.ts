@@ -3,7 +3,7 @@ import { chmodSync, copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const repoRoot = resolve(import.meta.dirname, '..');
-const source = resolve(repoRoot, 'scripts', 'pre-commit.sh');
+const source = resolve(repoRoot, 'scripts', 'pre-commit-wrapper.sh');
 
 if (!existsSync(resolve(repoRoot, '.git')) || !existsSync(source)) {
   process.exit(0);

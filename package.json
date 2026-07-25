@@ -97,6 +97,7 @@
     "docs:bundle": "pnpm exec tsx scripts/docs-bundle.ts",
     "docs:check": "pnpm exec tsx scripts/docs-check.ts",
     "docs:check:fast": "pnpm exec tsx scripts/docs-input-fingerprint.ts --check",
+    "docs:check:local": "pnpm run docs:check",
     "docs:gen": "pnpm exec tsx scripts/gen-docs.ts",
     "lint": "eslint --max-warnings 0 \"packages/*/src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\"",
     "lint:structural": "ast-grep scan -c sgconfig.yml packages tests scripts vitest.config.ts vitest.browser.config.ts vitest.shared.ts",
