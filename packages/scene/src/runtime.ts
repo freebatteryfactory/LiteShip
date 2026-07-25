@@ -25,7 +25,7 @@
 
 import type { System, World as WorldNS, Entity } from '@liteship/core';
 import { defineCapsule, createWorld, schema } from '@liteship/core';
-import { InvariantViolationError } from '@liteship/error';
+import { InvariantViolationError, ValidationError } from '@liteship/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './capsules/beat-binding.js';
 import { VideoSystem } from './systems/video.js';
@@ -255,6 +255,12 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
         throw InvariantViolationError(
           'scene.runtime',
           "SceneRuntime: tick() was called after release(). release() closes the world's scope, so entities and systems are gone — call SceneRuntime.build(compiledScene) again to get a fresh handle.",
+        );
+      }
+      if (!Number.isFinite(dtMs) || dtMs < 0) {
+        throw ValidationError(
+          'SceneRuntime.tick',
+          `dtMs must be a finite, non-negative duration — got ${String(dtMs)}. Pass elapsed milliseconds since the previous tick.`,
         );
       }
       ctx.timeMs += dtMs;
