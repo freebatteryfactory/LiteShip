@@ -14,11 +14,14 @@ function job(name: string, next: string): string {
 }
 
 describe('affected PR result artifacts', () => {
-  it('persists Linux Vitest evidence even when the affected authority fails', () => {
+  it('persists Linux execution state even when quick fails before Vitest runs', () => {
     const body = job('pr-affected', 'pr-browser-affected');
+    expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_QUICK: ${{ steps.quick.outcome }}');
+    expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}');
+    expect(body).toContain('reports/affected-result-pr-linux.json');
     expect(body).toContain('LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-affected.xml');
     expect(body).toMatch(/name: Upload affected Linux test evidence\s+if: always\(\)/u);
-    expect(body).toContain('path: reports/vitest-results-pr-affected.xml');
+    expect(body).toContain('reports/vitest-results-pr-affected.xml');
     expect(body).toContain('if-no-files-found: error');
   });
 
@@ -26,6 +29,8 @@ describe('affected PR result artifacts', () => {
     const body = job('pr-browser-affected', 'pr-windows-affected');
     expect(body).toContain('--outputFile.junit=reports/vitest-results-pr-browser-affected.xml');
     expect(body).toContain('PLAYWRIGHT_JUNIT_OUTPUT_FILE: reports/playwright-results-pr-browser-affected.xml');
+    expect(body).toContain('reports/affected-result-pr-browser.json');
+    expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_E2E: ${{ steps.e2e.outcome }}');
     expect(body).toMatch(/name: Upload affected browser test evidence\s+if: always\(\)/u);
     expect(body).toContain('reports/vitest-results-pr-browser-affected.xml');
     expect(body).toContain('reports/playwright-results-pr-browser-affected.xml');
@@ -35,6 +40,8 @@ describe('affected PR result artifacts', () => {
   it('treats a missing Windows JUnit file as failed proof rather than an advisory upload', () => {
     const body = job('pr-windows-affected', 'truth-linux');
     expect(body).toContain('LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-windows-affected.xml');
+    expect(body).toContain('reports/affected-result-pr-windows.json');
+    expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}');
     expect(body).toMatch(/name: Upload affected Windows test evidence\s+if: always\(\)/u);
     expect(body).toContain('if-no-files-found: error');
   });

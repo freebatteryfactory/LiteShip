@@ -52,17 +52,31 @@ describe('generated AGENTS repository context', () => {
 
   it('AGENTS marker content is byte-identical to the live projection', () => {
     const source = readFileSync(resolve(REPO_ROOT, 'AGENTS.md'), 'utf8');
-    const match = /<!-- BEGIN AGENT-PACKAGE-CONTEXT[^]*?-->\n([^]*?)\n<!-- END AGENT-PACKAGE-CONTEXT -->/.exec(
-      source,
-    );
+    const match = /<!-- BEGIN AGENT-PACKAGE-CONTEXT[^]*?-->\n([^]*?)\n<!-- END AGENT-PACKAGE-CONTEXT -->/.exec(source);
     expect(match?.[1]).toBe(renderAgentRepositoryContext());
   });
 
   it('projects every command, check profile, and task id from the live registries', () => {
     const rendered = renderAgentRepositoryContext();
-    for (const command of COMMAND_CATALOG) expect(rendered).toContain(`\`liteship ${command.name.replaceAll('.', ' ')}\``);
+    for (const command of COMMAND_CATALOG)
+      expect(rendered).toContain(`\`liteship ${command.name.replaceAll('.', ' ')}\``);
     for (const profile of AGENT_CONTEXT_PROFILES) expect(rendered).toContain(`\`${profile}\``);
     for (const taskId of Object.keys(CONTEXT_MAP)) expect(rendered).toContain(`\`${taskId}\``);
     expect(LIVE_AGENT_CONTEXT_SOURCES.contexts).toBe(CONTEXT_MAP);
+  });
+
+  it('keeps authored agent-loop commands backed by live operational owners', () => {
+    const source = readFileSync(resolve(REPO_ROOT, 'AGENTS.md'), 'utf8');
+    const loop = /## Agent operating loop\n([^]*?)\n<!-- BEGIN AGENT-PACKAGE-CONTEXT/u.exec(source)?.[1];
+    if (loop === undefined) throw new TypeError('AGENTS.md is missing the authored agent operating loop');
+    const manifest = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    const citedScripts = [...loop.matchAll(/`pnpm (?:run )?([a-z][a-z0-9:-]*)[^`]*`/gu)].map((match) => match[1]!);
+    expect(citedScripts.length).toBeGreaterThan(0);
+    for (const script of citedScripts) {
+      expect(manifest.scripts[script], `AGENTS.md cites missing pnpm script ${script}`).toBeTypeOf('string');
+    }
+    expect(COMMAND_CATALOG.some((command) => command.name === 'context')).toBe(true);
   });
 });

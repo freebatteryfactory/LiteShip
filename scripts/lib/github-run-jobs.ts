@@ -106,8 +106,12 @@ export async function fetchCompletedGithubRunJobs(
       ) {
         throw new TypeError(`GitHub returned malformed completed job ${job.name}`);
       }
-      const startedAt = nullableTimestamp(job.started_at, job.name);
-      const completedAt = nullableTimestamp(job.completed_at, job.name);
+      // GitHub sometimes supplies synthetic, even inverted timestamps for jobs
+      // whose conclusion is `skipped`. A skipped job did not execute, so its
+      // timing is never authority: preserve the conclusion and discard the
+      // placeholder clock fields instead of laundering them as duration proof.
+      const startedAt = job.conclusion === 'skipped' ? null : nullableTimestamp(job.started_at, job.name);
+      const completedAt = job.conclusion === 'skipped' ? null : nullableTimestamp(job.completed_at, job.name);
       if (startedAt !== null && completedAt !== null && Date.parse(completedAt) < Date.parse(startedAt)) {
         throw new TypeError(`GitHub returned malformed completed job ${job.name}`);
       }

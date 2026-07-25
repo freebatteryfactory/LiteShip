@@ -251,9 +251,32 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
             states: { wide: { properties: {}, boxShadow: stateShadows } },
           });
           const expected = Style.tap(style, 'wide')['box-shadow'];
+          const adaptive = defineAdaptive({
+            boundary: {
+              input: 'viewport.width',
+              at: [
+                [0, 'compact'],
+                [800, 'wide'],
+              ] as const,
+            },
+            style: {
+              base: { properties: {}, boxShadow: baseShadows },
+              states: { wide: { properties: {}, boxShadow: stateShadows } },
+            },
+          });
 
           expect(expected).toBeDefined();
           expect(StyleCSSCompiler.compileAdaptive(style)).toContain(`box-shadow: ${expected};`);
+          const explanation = adaptive.explain(800).style;
+          expect(explanation['box-shadow']).toBeUndefined();
+          expect(explanation['box-shadow[base]']).toEqual({
+            value: Style.tap(defineStyle({ base: { properties: {}, boxShadow: baseShadows } }))['box-shadow'],
+            source: 'base',
+          });
+          expect(explanation['box-shadow[state]']).toEqual({
+            value: Style.tap(defineStyle({ base: { properties: {}, boxShadow: stateShadows } }))['box-shadow'],
+            source: 'state',
+          });
         },
       ),
       { numRuns: 100, seed: SEED },

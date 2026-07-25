@@ -220,17 +220,16 @@ pnpm install
 pnpm verify            # first-run aggregate: doctor → install → build → test
 # ...or step through it yourself:
 pnpm run doctor           # preflight environment check (Node, pnpm, build, hooks)
-pnpm run build
-pnpm run typecheck
-pnpm test                 # unit + component + property + integration (~75s)
-pnpm run gauntlet:full    # full release-grade gate (~22min)
+pnpm resources:plan       # current workstation/load admission
+pnpm preflight --staged  # resource-aware static proof for the staged packet
+pnpm test <focused path>  # the packet's smallest deterministic proof
 ```
 
 Dev-loop ergonomics: `pnpm dev` (showcase example dev server), `pnpm test:watch` (vitest watch), `pnpm run clean` (wipe build/test artifacts), `pnpm scripts` (categorized script index), `pnpm run glossary <term>` (CLI lookup into the ontology), `pnpm fix` (prettier + eslint --fix). The CLI mirrors the same surface: `liteship doctor`, `liteship help`, `liteship version`, `liteship glossary cast`.
 
 Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:adaptive-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-`pnpm run gauntlet:full` is the full release-grade gate. It runs the complete ordered phase sequence (see `STATUS.md` for the list), starting with an enforced environment preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed.
+`pnpm run gauntlet:full` is the full release-grade gate. It runs the complete ordered phase sequence from `packages/cli/src/gauntlet-phases.ts`, starting with an enforced environment preflight and ending with `flex:verify`, or it fails closed. It is CI/frozen-head authority—not an ordinary local edit loop. Pull requests first run the conservative affected closure; the final head receives one complete cloud authority.
 
 ## Last generated gauntlet benchmark snapshot
 

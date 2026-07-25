@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { scheduleShowcaseSseHeartbeat } from '../../server/sse-heartbeat';
 
 /**
  * Echo-LLM stub for the generative-UI showcase (chat.astro / `client:llm`).
@@ -32,7 +33,7 @@ export const GET: APIRoute = () => {
         controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'text', partial: true, content })}\n\n`));
       }
       controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
-      keepAlive = setInterval(() => controller.enqueue(enc.encode(': keep-alive\n\n')), 15_000);
+      keepAlive = scheduleShowcaseSseHeartbeat(controller, enc);
     },
     cancel() {
       if (keepAlive) clearInterval(keepAlive);

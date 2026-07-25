@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { crossingReceiptFrame } from '../../server/stream-graph';
+import { scheduleShowcaseSseHeartbeat } from '../../server/sse-heartbeat';
 
 /**
  * SSE emit leg for graph-native stream recovery (#133-full) — the cookbook route.
@@ -34,7 +35,7 @@ export const GET: APIRoute = async () => {
       // 2) the attested transition receipt frame the client buffers for gap replay.
       controller.enqueue(enc.encode(`data: ${welcome}\n\n`));
       controller.enqueue(enc.encode(`data: ${receiptFrame}\n\n`));
-      keepAlive = setInterval(() => controller.enqueue(enc.encode(': keep-alive\n\n')), 15_000);
+      keepAlive = scheduleShowcaseSseHeartbeat(controller, enc);
     },
     cancel() {
       if (keepAlive) clearInterval(keepAlive);

@@ -93,7 +93,7 @@ in CI with `CI=1` (already standard) or `LITESHIP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
-**0.9 tier / PR accept bar:** `pnpm run gauntlet:full -- --profile local-safe` runs build → capsule:compile → typecheck → lint → lint:structural → invariants → check:gates → audit:floor → full unit test → standards:gate → capability:gate (see `LOCAL_SAFE_LABELS` in `packages/cli/src/gauntlet-phases.ts`). Run `pnpm run docs:check` separately when API docs inputs change — TypeDoc is memory-hungry (SKILL.md).
+**Local packet admission:** run `pnpm resources:plan`, the smallest focused unit/property/integration proof, then `pnpm preflight --staged`. The staged preflight applies the local worker/resource policy and includes `docs:check:local` only when TypeDoc inputs changed. Pull requests run the addressed affected closure; uncertain or globally authoritative changes fail broad. Complete gauntlet and platform authority belongs to the frozen cloud head, not an ordinary workstation loop.
 
 `pnpm run gauntlet:full` is the contract: the full release-grade gate. It runs the complete ordered phase sequence (the canonical ordered list + count is `packages/cli/src/gauntlet-phases.ts`, pinned by `tests/unit/devops/gauntlet-profile.test.ts` — never hand-counted):
 
@@ -118,7 +118,7 @@ tagged message and exits zero (fresh clones are not trapped). The gauntlet runs
 `bench:trend` with `BENCH_TREND_STRICT=1` so regression failures are enforced
 when history exists.
 
-The gauntlet exits cleanly with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed. Not a stylistic gate; a correctness gate. PRs need to be green here before merge.
+The gauntlet exits cleanly with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed. Not a stylistic gate; a correctness gate. The final frozen PR head must receive this complete authority before merge; intermediate PR packets use the conservative affected authority.
 
 **Slow machine?** Timing-sensitive phases (test timeouts, spawn deadlines)
 flake when sibling workloads load the box. Set `LITESHIP_TEST_TIMEOUT_SCALE=<n>`
@@ -292,7 +292,7 @@ The test now lives permanently in `tests/regression/` and runs on every `pnpm te
 
 ### Gauntlet integration
 
-Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after the environment preflight, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [STATUS.md](./STATUS.md) for the complete phase list.
+Worth noting: `pnpm test` is a registered phase of `pnpm run gauntlet:full` and covers the full Vitest surface including `tests/regression/`. The canonical order and profiles live in `packages/cli/src/gauntlet-phases.ts`; do not copy a phase number into prose.
 
 ## Architecture changes
 

@@ -183,9 +183,11 @@ The release-certification job in `release.yml` runs the publishability
 subset — `build` / `typecheck` / `lint` / `test` / `package:smoke` — not
 `pnpm run gauntlet:full`. The full gauntlet (bench, e2e, stream-stress,
 flake, redteam, bench-gate / trend / reality, runtime-seams audit, coverage
-merge, flex:verify) runs on every PR and on `main` via
-`.github/workflows/ci.yml`. By the time a `v*.*.*` tag is pushed, `main`
-has already cleared that bar — re-running it on the tag added ~20 minutes
+merge, flex:verify) runs on pushes and scheduled/manual complete-authority
+events via `.github/workflows/ci.yml`. Pull requests first run the addressed,
+conservative affected closure; a frozen release candidate then receives the
+complete authority. By the time a `v*.*.*` tag is pushed, the exact `main`
+SHA has already cleared that bar — re-running it on the tag added ~20 minutes
 of CI time without adding signal, and the timing-sensitive lanes flaked
 intermittently in the GHA runner under different load than the local box.
 The original v0.1.1 release ate six failed runs before this split landed.

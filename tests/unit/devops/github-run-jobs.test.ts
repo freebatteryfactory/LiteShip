@@ -31,8 +31,10 @@ describe('GitHub run jobs observation', () => {
             name: 'windows-smoke',
             status: 'completed',
             conclusion: 'skipped',
-            started_at: null,
-            completed_at: null,
+            // GitHub has emitted contradictory placeholder timing for skipped
+            // jobs in production. It is not execution evidence.
+            started_at: '2026-07-24T12:00:02.000Z',
+            completed_at: '2026-07-24T12:00:01.000Z',
             run_attempt: 2,
           },
         ],

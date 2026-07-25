@@ -143,6 +143,9 @@
     "tests/unit/devops/check-registry.test.ts": {
       "source-byte-oracle": 1
     },
+    "tests/unit/devops/ci-authority.test.ts": {
+      "source-byte-oracle": 2
+    },
     "tests/unit/devops/ci-plan-prebuild-closure.test.ts": {
       "source-byte-oracle": 3
     },
@@ -216,7 +219,7 @@
       "source-byte-oracle": 1
     },
     "tests/unit/meta/doc-links.test.ts": {
-      "source-byte-oracle": 1
+      "source-byte-oracle": 2
     },
     "tests/unit/meta/float-determinism.test.ts": {
       "source-byte-oracle": 6

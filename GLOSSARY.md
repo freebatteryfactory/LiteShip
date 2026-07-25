@@ -154,6 +154,10 @@ The vocabulary of `@liteship/gauntlet` ([AUDIT.md](./AUDIT.md), [ADR-0023](./doc
 - **finding** — a gate's emitted result (`ruleId`, severity, level, location, remediation).
 - **authority ratchet** — a gate is `advisory` until it self-proves red/green/mutation, then `blocking`. Authority is earned, not granted.
 - **evidence digest** — the out-of-IR bytes a gate's verdict depends on, folded into the verdict-cache key. A FactGate derives it from its declared channels; a closure gate must author it.
+- **execution-qualified evidence** — proof whose receipt demonstrates that the claimed engine and subject actually ran with semantic teeth. A named file, registered job, or scheduled-but-skipped authority is not execution-qualified.
+- **affected plan** — the content-addressed, conservative mapping from changed paths and live ownership evidence to checks, executable tests, platforms, artifacts, and cost. Unknown ownership or stale selector calibration fails broad.
+- **CurePacket** — the replayable failure record emitted when an authority finds a defect: exact obligation, owner, platform/toolchain, seed or minimized input, diagnostic tail, evidence paths, and focused verification boundary. It preserves the red long enough to root-fix it and retain a permanent cheap scar.
+- **frozen head** — the exact Git SHA whose implementation, generated projections, evidence graph, standards state, and published artifacts receive one complete authority. Historical green from another SHA is not transferable.
 - **green is not clean** — the standing discipline: a passing gauntlet means only that the gates that ran, on the surfaces they scanned, found nothing — never that the repo is correct.
 
 ## Drift check

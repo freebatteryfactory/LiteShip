@@ -359,11 +359,30 @@ describe('defineAdaptive.explain', () => {
     expect(lg.style[':hover::color']).toEqual({ value: 'blue', source: 'state' });
     expect(lg.style[':hover::opacity']).toEqual({ value: '0.5', source: 'base' });
     expect(lg.style['::before::content']).toEqual({ value: '"wide"', source: 'state' });
-    expect(lg.style['box-shadow']?.source).toBe('state');
+    expect(lg.style['box-shadow']).toBeUndefined();
+    expect(lg.style['box-shadow[base]']).toEqual({ value: '0px 1px 2px #000', source: 'base' });
+    expect(lg.style['box-shadow[state]']).toEqual({ value: '0px 2px 4px #333', source: 'state' });
 
     const sm = adaptive.explain(400);
     expect(sm.style[':hover::color']?.source).toBe('base');
     expect(sm.style['box-shadow']?.source).toBe('base');
+  });
+
+  test('box-shadow provenance keeps the aggregate key for a single owning layer', () => {
+    const baseOnly = defineAdaptive({
+      boundary: boundarySpec,
+      style: { base: { properties: {}, boxShadow: [{ x: 0, y: 1, blur: 2, color: '#000' }] } },
+    });
+    const stateOnly = defineAdaptive({
+      boundary: boundarySpec,
+      style: {
+        base: { properties: {} },
+        states: { lg: { properties: {}, boxShadow: [{ x: 0, y: 2, blur: 4, color: '#333' }] } },
+      },
+    });
+
+    expect(baseOnly.explain(1400).style['box-shadow']?.source).toBe('base');
+    expect(stateOnly.explain(1400).style['box-shadow']?.source).toBe('state');
   });
 });
 

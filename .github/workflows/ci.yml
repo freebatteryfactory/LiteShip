@@ -115,8 +115,10 @@ jobs:
           name: affected-plan
           path: .liteship
       - run: pnpm run build
-      - run: pnpm run check --profile quick --no-cache
-      - run: pnpm run test:affected
+      - id: quick
+        run: pnpm run check --profile quick --no-cache
+      - id: vitest
+        run: pnpm run test:affected
         env:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
@@ -125,12 +127,24 @@ jobs:
       - name: Run benchmark authority selected by the affected plan
         if: needs.plan.outputs.affected-benchmark-required == 'true'
         run: pnpm run bench
+      - name: Record affected Linux execution state
+        if: always()
+        run: pnpm exec tsx scripts/write-affected-result-evidence.ts
+        env:
+          LITESHIP_AFFECTED_LANE: pr-linux
+          LITESHIP_AFFECTED_STEPS: quick,vitest
+          LITESHIP_AFFECTED_OUTCOME_QUICK: ${{ steps.quick.outcome }}
+          LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}
+          LITESHIP_AFFECTED_EVIDENCE_VITEST: reports/vitest-results-pr-affected.xml
+          LITESHIP_AFFECTED_RESULT_PATH: reports/affected-result-pr-linux.json
       - name: Upload affected Linux test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: vitest-results-pr-affected
-          path: reports/vitest-results-pr-affected.xml
+          path: |
+            reports/affected-result-pr-linux.json
+            reports/vitest-results-pr-affected.xml
           if-no-files-found: error
 
   pr-browser-affected:
@@ -155,7 +169,8 @@ jobs:
       - run: pnpm run build
       - run: pnpm exec tsx scripts/affected-plan.ts --verify-current-head --input .liteship/affected-plan.json
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
-      - run: >-
+      - id: vitest
+        run: >-
           pnpm exec vitest run --config vitest.browser.config.ts
           --reporter=default --reporter=junit
           --outputFile.junit=reports/vitest-results-pr-browser-affected.xml
@@ -163,17 +178,30 @@ jobs:
           CI: true
           LITESHIP_VITEST_BROWSERS: chromium
       - name: Run the declared browser E2E authority
+        id: e2e
         run: pnpm run test:e2e -- --reporter=line,junit
         env:
           CI: true
           LITESHIP_PLAYWRIGHT_BROWSER: chromium
           PLAYWRIGHT_JUNIT_OUTPUT_FILE: reports/playwright-results-pr-browser-affected.xml
+      - name: Record affected browser execution state
+        if: always()
+        run: pnpm exec tsx scripts/write-affected-result-evidence.ts
+        env:
+          LITESHIP_AFFECTED_LANE: pr-browser
+          LITESHIP_AFFECTED_STEPS: vitest,e2e
+          LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}
+          LITESHIP_AFFECTED_OUTCOME_E2E: ${{ steps.e2e.outcome }}
+          LITESHIP_AFFECTED_EVIDENCE_VITEST: reports/vitest-results-pr-browser-affected.xml
+          LITESHIP_AFFECTED_EVIDENCE_E2E: reports/playwright-results-pr-browser-affected.xml
+          LITESHIP_AFFECTED_RESULT_PATH: reports/affected-result-pr-browser.json
       - name: Upload affected browser test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: test-results-pr-browser-affected
           path: |
+            reports/affected-result-pr-browser.json
             reports/vitest-results-pr-browser-affected.xml
             reports/playwright-results-pr-browser-affected.xml
           if-no-files-found: error
@@ -199,18 +227,30 @@ jobs:
           name: affected-plan
           path: .liteship
       - run: pnpm run build
-      - run: pnpm run test:affected
+      - id: vitest
+        run: pnpm run test:affected
         env:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
           LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
           LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-windows-affected.xml
+      - name: Record affected Windows execution state
+        if: always()
+        run: pnpm exec tsx scripts/write-affected-result-evidence.ts
+        env:
+          LITESHIP_AFFECTED_LANE: pr-windows
+          LITESHIP_AFFECTED_STEPS: vitest
+          LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}
+          LITESHIP_AFFECTED_EVIDENCE_VITEST: reports/vitest-results-pr-windows-affected.xml
+          LITESHIP_AFFECTED_RESULT_PATH: reports/affected-result-pr-windows.json
       - name: Upload affected Windows test evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: vitest-results-pr-windows-affected
-          path: reports/vitest-results-pr-windows-affected.xml
+          path: |
+            reports/affected-result-pr-windows.json
+            reports/vitest-results-pr-windows-affected.xml
           if-no-files-found: error
 
   # Serial full gauntlet — nightly/manual exhaustive authority. Pull requests use

@@ -444,11 +444,11 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
     for (const [selector, properties] of Object.entries(stateLayer?.pseudo ?? {})) {
       for (const property of Object.keys(properties)) stateDeclared.add(`${selector}::${property}`);
     }
-    if ((stateLayer?.boxShadow?.length ?? 0) > 0) stateDeclared.add('box-shadow');
-    const styleRecord: Record<string, { readonly value: string; readonly source: 'base' | 'state' }> = {};
+    const styleRecord: Record<string, ExplainedStyleProperty> = {};
     for (const [property, propValue] of Object.entries(stateResolved)) {
-      const source: 'base' | 'state' = stateDeclared.has(property) ? 'state' : 'base';
-      styleRecord[property] = { value: propValue, source };
+      for (const [key, explained] of propertyExplanation(property, propValue, stateDeclared, style.base, stateLayer)) {
+        styleRecord[key] = explained;
+      }
     }
 
     return {
@@ -490,4 +490,33 @@ export function lowerAdaptive<const B extends AdaptiveBoundarySpec>(
     explain,
     plan,
   });
+}
+
+type ExplainedStyleProperty = { readonly value: string; readonly source: 'base' | 'state' };
+type ExplainedStyleEntry = readonly [property: string, explanation: ExplainedStyleProperty];
+
+function boxShadowValue(layer: StyleLayer): string {
+  return Style.tap({ base: layer } as StyleType)['box-shadow']!;
+}
+
+/** Keep aggregate keys for single-owner properties; split composed shadows by their actual owner. */
+function propertyExplanation(
+  property: string,
+  value: string,
+  stateDeclared: ReadonlySet<string>,
+  base: StyleLayer,
+  state: StyleLayer | undefined,
+): readonly ExplainedStyleEntry[] {
+  if (property !== 'box-shadow') {
+    return [[property, { value, source: stateDeclared.has(property) ? 'state' : 'base' }]];
+  }
+  const baseHasShadow = (base.boxShadow?.length ?? 0) > 0;
+  const stateHasShadow = (state?.boxShadow?.length ?? 0) > 0;
+  if (!baseHasShadow || !stateHasShadow) {
+    return [[property, { value, source: stateHasShadow ? 'state' : 'base' }]];
+  }
+  return [
+    ['box-shadow[base]', { value: boxShadowValue(base), source: 'base' }],
+    ['box-shadow[state]', { value: boxShadowValue(state!), source: 'state' }],
+  ];
 }

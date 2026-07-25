@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { scheduleShowcaseSseHeartbeat } from '../../server/sse-heartbeat';
 
 /**
  * SSE feed for the streaming showcase (stream.astro / `client:stream`).
@@ -22,14 +23,14 @@ export const GET: APIRoute = () => {
   let keepAlive: ReturnType<typeof setInterval> | undefined;
 
   // A REAL streaming response (not a buffered string): emit the welcome patch, then hold
-  // the connection OPEN with periodic keep-alive comments. A buffered body hits EOF at
+  // the connection OPEN with periodic application-visible heartbeats. A buffered body hits EOF at
   // once, which the browser reads as a disconnect — `initStreamDirective` then closes and
   // reconnects up to its max attempts, re-fetching forever. A live feed would push more
   // patches in `start`; the demo idles open until the client navigates away.
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       controller.enqueue(enc.encode(`data: ${patch}\n\n`));
-      keepAlive = setInterval(() => controller.enqueue(enc.encode(': keep-alive\n\n')), 15_000);
+      keepAlive = scheduleShowcaseSseHeartbeat(controller, enc);
     },
     cancel() {
       if (keepAlive) clearInterval(keepAlive);
