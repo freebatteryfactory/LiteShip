@@ -9,7 +9,7 @@
       "@liteship/error": ["../error/src/index.ts"]
     }
   },
-  "references": [{ "path": "../error" }],
+  "references": [{ "path": "../core" }, { "path": "../error" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "templates"]
 }

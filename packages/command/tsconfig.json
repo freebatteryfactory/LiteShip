@@ -10,5 +10,11 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }, { "path": "../assets" }, { "path": "../error" }, { "path": "../gauntlet" }]
+  "references": [
+    { "path": "../canonical" },
+    { "path": "../core" },
+    { "path": "../assets" },
+    { "path": "../error" },
+    { "path": "../gauntlet" }
+  ]
 }

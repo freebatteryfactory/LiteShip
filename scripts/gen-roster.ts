@@ -26,6 +26,11 @@ import { PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js
 import { renderAgentRepositoryContext } from './lib/agent-context.js';
 import { PUBLIC_SURFACE_CONTEXT_TS, renderPublicSurfaceContext } from './gen-public-surface-context.js';
 import { spawnArgvCapture } from './lib/spawn.js';
+import {
+  validateProjectReferenceClosure,
+  type ProjectReferenceConfig,
+  type ProjectReferenceSource,
+} from './lib/project-reference-contract.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -769,6 +774,20 @@ function catalogDrift(): readonly CatalogDrift[] {
   return validatePackageCatalog(PACKAGE_CATALOG, manifests, dirsOnDisk);
 }
 
+function projectReferenceDrift(): readonly CatalogDrift[] {
+  const configs = new Map<string, ProjectReferenceConfig>();
+  for (const record of PACKAGE_CATALOG) {
+    const path = resolve(REPO_ROOT, record.dir, 'tsconfig.json');
+    if (existsSync(path)) {
+      configs.set(record.dir, JSON.parse(readFileSync(path, 'utf8')) as ProjectReferenceConfig);
+    }
+  }
+  const sources: ProjectReferenceSource[] = walkTrackedFiles(REPO_ROOT)
+    .filter((path) => /^packages\/[^/]+\/src\/.*\.tsx?$/.test(path))
+    .map((path) => ({ path, text: readFileSync(resolve(REPO_ROOT, path), 'utf8') }));
+  return validateProjectReferenceClosure(PACKAGE_CATALOG, configs, sources);
+}
+
 export type ProjectionReader = (relativePath: string) => string | undefined;
 
 function readRepoProjection(relativePath: string): string | undefined {
@@ -806,6 +825,7 @@ export function collectGeneratedProjectionDrift(
 export async function collectRosterDrift(): Promise<readonly CatalogDrift[]> {
   const drift = [
     ...catalogDrift(),
+    ...projectReferenceDrift(),
     ...collectGeneratedProjectionDrift(),
     ...collectCliFragmentProjectionDrift(),
     ...findAuthoredFleetLists(await trackedCatalogSources()),

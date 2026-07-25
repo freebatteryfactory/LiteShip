@@ -11,6 +11,12 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import { LITESHIP_PACKAGE_ROSTER, packageTopology } from '@liteship/audit';
 import { PACKAGE_CATALOG, type PackageCatalogRecord } from '../../../scripts/package-catalog.js';
 import {
+  validateProjectReferenceClosure,
+  type ProjectReferenceConfig,
+  type ProjectReferenceSource,
+} from '../../../scripts/lib/project-reference-contract.js';
+import { walkTrackedFiles } from '../../../scripts/audit/shared.js';
+import {
   collectGeneratedProjectionDrift,
   findAuthoredFleetLists,
   renderGeneratedProjections,
@@ -39,6 +45,23 @@ function replaceRecord(
 
 function details(catalog: readonly PackageCatalogRecord[], manifestMap = manifests()): string[] {
   return validatePackageCatalog(catalog, manifestMap, [...manifestMap.keys()]).map((drift) => drift.detail);
+}
+
+function projectReferenceTruth(): {
+  readonly configs: ReadonlyMap<string, ProjectReferenceConfig>;
+  readonly sources: readonly ProjectReferenceSource[];
+} {
+  return {
+    configs: new Map(
+      PACKAGE_CATALOG.map((record) => [
+        record.dir,
+        JSON.parse(readFileSync(resolve(REPO, record.dir, 'tsconfig.json'), 'utf8')) as ProjectReferenceConfig,
+      ]),
+    ),
+    sources: walkTrackedFiles(REPO)
+      .filter((path) => /^packages\/[^/]+\/src\/.*\.tsx?$/.test(path))
+      .map((path) => ({ path, text: readFileSync(resolve(REPO, path), 'utf8') })),
+  };
 }
 
 describe('PACKAGE_CATALOG negative controls', () => {
@@ -211,5 +234,31 @@ describe('generated audit topology', () => {
     expect(record?.audit).toEqual(
       expect.objectContaining({ kind: 'standalone', allowedInternalImports: ['@liteship/core'] }),
     );
+  });
+});
+
+describe('workspace project-reference closure', () => {
+  it('declares every static workspace import as a TypeScript build edge', () => {
+    const truth = projectReferenceTruth();
+    expect(validateProjectReferenceClosure(PACKAGE_CATALOG, truth.configs, truth.sources)).toEqual([]);
+  });
+
+  it('reds when a real source edge is removed from a package project', () => {
+    const truth = projectReferenceTruth();
+    const configs = new Map(truth.configs);
+    const vite = configs.get('packages/vite')!;
+    configs.set('packages/vite', {
+      ...vite,
+      references: vite.references?.filter((reference) => reference.path !== '../web'),
+    });
+
+    expect(validateProjectReferenceClosure(PACKAGE_CATALOG, configs, truth.sources)).toEqual([
+      expect.objectContaining({
+        copy: 'packages/vite/tsconfig.json',
+        packageName: '@liteship/vite',
+        dependency: '@liteship/web',
+        importers: expect.arrayContaining(['packages/vite/src/hmr.ts']),
+      }),
+    ]);
   });
 });

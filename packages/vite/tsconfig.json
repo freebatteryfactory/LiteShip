@@ -16,6 +16,7 @@
     { "path": "../core" },
     { "path": "../compiler" },
     { "path": "../edge" },
+    { "path": "../web" },
     { "path": "../error" }
   ]
 }

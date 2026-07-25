@@ -9,5 +9,5 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }, { "path": "../genui" }, { "path": "../error" }]
+  "references": [{ "path": "../canonical" }, { "path": "../core" }, { "path": "../genui" }, { "path": "../error" }]
 }

@@ -11,12 +11,14 @@
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
+    { "path": "../canonical" },
     { "path": "../core" },
     { "path": "../command" },
     { "path": "../scene" },
     { "path": "../assets" },
     { "path": "../audit" },
     { "path": "../edge" },
-    { "path": "../error" }
+    { "path": "../error" },
+    { "path": "../gauntlet" }
   ]
 }

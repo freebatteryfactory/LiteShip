@@ -15,6 +15,7 @@
     { "path": "../command" },
     { "path": "../compiler" },
     { "path": "../genui" },
+    { "path": "../web" },
     { "path": "../error" }
   ]
 }
