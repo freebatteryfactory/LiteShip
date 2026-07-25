@@ -363,6 +363,7 @@ describe('(d) CI event tiers execute the intended authority', () => {
     const metrics = JOB_BLOCKS.get('delivery-evidence-collect')!;
     expect(integration).toContain('name: flake-evidence');
     expect(integration).toContain('reports/flake-evidence.json');
+    expect(integration).toContain('reports/flake-signature-ledger.json');
     expect(metrics).toContain('name: affected-plan');
     expect(metrics).toContain('name: flake-evidence');
     expect(metrics).toContain('.liteship/affected-selector-calibration.json');

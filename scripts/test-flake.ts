@@ -11,6 +11,12 @@ import {
   type FlakeAttemptObservation,
   type FlakeEvidence,
 } from './lib/flake-evidence.js';
+import {
+  buildFlakeSignatureLedger,
+  parseFlakeSignatureLedger,
+  serializeFlakeSignatureLedger,
+  type FlakeSignatureLedger,
+} from './lib/flake-signature-ledger.js';
 import { spawnArgvCapture } from './lib/spawn.js';
 import { runPnpm, type PnpmRunResult } from './support/pnpm-process.js';
 import { FLAKE_TARGETS, type FlakeTarget } from './test-flake-targets.js';
@@ -78,14 +84,12 @@ export async function runFlakeCampaign(deps: FlakeCampaignDeps): Promise<FlakeEv
         result = { code: 1, stdout: '', stderr: error instanceof Error ? error.message : String(error) };
       }
       const verdict = result.code === 0 ? ('pass' as const) : ('fail' as const);
-      observations.push({ target: target.path, iteration, verdict, exitCode: result.code });
+      const stdoutTail = boundedTail(result.stdout);
+      const stderrTail = boundedTail(result.stderr);
+      observations.push({ target: target.path, iteration, verdict, exitCode: result.code, stdoutTail, stderrTail });
       if (verdict === 'fail') {
         failures.push(
-          [
-            `${target.path} failed on iteration ${iteration} (exit ${result.code})`,
-            boundedTail(result.stdout),
-            boundedTail(result.stderr),
-          ]
+          [`${target.path} failed on iteration ${iteration} (exit ${result.code})`, stdoutTail, stderrTail]
             .filter(Boolean)
             .join('\n'),
         );
@@ -143,8 +147,21 @@ export function writeFlakeEvidenceFile(path: string, evidence: FlakeEvidence): F
   return readBack;
 }
 
+/** Atomically persist the signature ledger derived from admitted campaign evidence. */
+export function writeFlakeSignatureLedgerFile(path: string, ledger: FlakeSignatureLedger): FlakeSignatureLedger {
+  const validated = parseFlakeSignatureLedger(ledger);
+  mkdirSync(dirname(path), { recursive: true });
+  const temporary = `${path}.tmp`;
+  writeFileSync(temporary, serializeFlakeSignatureLedger(validated), 'utf8');
+  const readBack = parseFlakeSignatureLedger(JSON.parse(readFileSync(temporary, 'utf8')) as unknown);
+  if (readBack.ledgerId !== validated.ledgerId) throw new TypeError('flake signature ledger changed during write');
+  renameSync(temporary, path);
+  return readBack;
+}
+
 export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<void> {
   const output = optionValue(argv, '--output') ?? 'reports/flake-evidence.json';
+  const ledgerOutput = optionValue(argv, '--ledger-output') ?? 'reports/flake-signature-ledger.json';
   const observedOn = utcDate(new Date());
   const evidence = await runFlakeCampaign({
     cwd: root,
@@ -159,7 +176,8 @@ export async function main(argv: readonly string[] = process.argv.slice(2)): Pro
     observedOn,
     expires: addUtcDays(observedOn, EVIDENCE_VALID_DAYS),
   });
-  writeFlakeEvidenceFile(resolve(root, output), evidence);
+  const persisted = writeFlakeEvidenceFile(resolve(root, output), evidence);
+  writeFlakeSignatureLedgerFile(resolve(root, ledgerOutput), buildFlakeSignatureLedger([persisted]));
   process.stdout.write(`${evidence.evidenceId} ${evidence.verdict} rate=${evidence.observedFailureRate}\n`);
   if (evidence.verdict !== 'pass') {
     throw new Error(

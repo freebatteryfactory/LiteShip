@@ -44,13 +44,29 @@ describe('flake evidence', () => {
     const second = build();
     expect(second).toEqual(first);
     expect(first.evidenceId).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(first.schemaVersion).toBe(2);
     expect(first.targets[0]).toMatchObject({
       owner: TARGET.owner,
       provingScar: TARGET.provingScar,
       remediation: TARGET.remediation,
       reproducer: ['pnpm', 'exec', 'vitest', 'run', '--config', 'vitest.config.ts', TARGET.path],
       observedFailureRate: 0,
+      scarReceipt: {
+        target: TARGET.path,
+        owner: TARGET.owner,
+        provingScar: TARGET.provingScar,
+        sourceSha: SHA,
+        attempts: 3,
+        verdict: 'pass',
+      },
     });
+    expect(first.targets[0]!.scarReceipt.receiptId).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(first.targets[0]!.observations[0]).toMatchObject({
+      stdoutTail: '',
+      stderrTail: '',
+      failureSignature: null,
+    });
+    expect(first.targets[0]!.observations[0]!.outputDigest).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(parseFlakeEvidence(JSON.parse(JSON.stringify(first)) as unknown)).toEqual(first);
   });
 
@@ -75,6 +91,8 @@ describe('flake evidence', () => {
     expect(headReads).toBe(2);
     expect(evidence).toMatchObject({ verdict: 'fail', failures: 1, attempts: 3, recoveredRetries: 2 });
     expect(evidence.observedFailureRate).toBe(1 / 3);
+    expect(evidence.targets[0]!.observations[0]!.failureSignature).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(evidence.targets[0]!.scarReceipt.verdict).toBe('fail');
   });
 
   it('refuses malformed, stale, expired, and foreign records', () => {
