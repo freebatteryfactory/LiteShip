@@ -7,6 +7,9 @@ import {
   selectLocalResourcePlan,
 } from './lib/local-resource-profile.js';
 
-const plan = selectLocalResourcePlan(await sampleLocalResources(), { ci: process.env.CI === 'true' });
+const plan = selectLocalResourcePlan(await sampleLocalResources(), {
+  ci: process.env.CI === 'true',
+  allowSwap: process.env.LITESHIP_DOCS_USE_SWAP === '1',
+});
 if (process.argv.includes('--json')) console.log(JSON.stringify(plan, null, 2));
 else console.log(formatLocalResourcePlan(plan));

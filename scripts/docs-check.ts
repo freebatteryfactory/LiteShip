@@ -8,7 +8,6 @@
  * when TSDoc blocks change to refresh the committed output.
  */
 
-import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,6 +24,7 @@ import {
   readTypeDocProofReceipt,
   writeTypeDocProofReceipt,
 } from './lib/typedoc-proof-cache.js';
+import { spawnArgv, spawnArgvCapture } from './lib/spawn.js';
 
 const COMMITTED_DIR = 'docs/api';
 const REPO_ROOT = process.cwd();
@@ -85,18 +85,16 @@ if (printPlan) {
 const tempDir = mkdtempSync(join(tmpdir(), 'liteship-docs-check-'));
 
 try {
-  const build = spawnSync('pnpm', ['exec', 'typedoc', '--out', tempDir], {
-    stdio: 'inherit',
-    shell: true,
-    env: {
-      ...process.env,
-      NODE_OPTIONS: withAdmittedNodeHeap(process.env.NODE_OPTIONS, resourcePlan.docs.heapMiB),
-    },
-  });
-  if (build.status !== 0) {
-    console.error('docs:check — typedoc build failed');
-    process.exit(1);
+  const inheritedNodeOptions = process.env.NODE_OPTIONS;
+  process.env.NODE_OPTIONS = withAdmittedNodeHeap(inheritedNodeOptions, resourcePlan.docs.heapMiB);
+  let build: Awaited<ReturnType<typeof spawnArgv>>;
+  try {
+    build = await spawnArgv('pnpm', ['exec', 'typedoc', '--out', tempDir], { stdio: 'inherit' });
+  } finally {
+    if (inheritedNodeOptions === undefined) delete process.env.NODE_OPTIONS;
+    else process.env.NODE_OPTIONS = inheritedNodeOptions;
   }
+  if (build.exitCode !== 0) throw new Error(`typedoc build failed (exit ${build.exitCode})`);
 
   // A typedoc OOM can be laundered to exit 0 through the pnpm exec chain,
   // leaving PARTIAL output that diffs as phantom mass-deletion drift. File
@@ -104,29 +102,21 @@ try {
   // than the committed tree did not finish — fail with the real cause.
   const committedCount = countTypeDocMarkdown(COMMITTED_DIR);
   const freshCount = countTypeDocMarkdown(tempDir);
-  try {
-    assertCompleteTypeDocProjection(committedCount, freshCount);
-  } catch (error) {
-    console.error(`docs:check — ${error instanceof Error ? error.message : String(error)}.`);
-    process.exit(1);
-  }
+  assertCompleteTypeDocProjection(committedCount, freshCount);
 
   // The manifest is part of committed generated truth. TypeDoc itself does not
   // emit it, so project the same live input fingerprint into the fresh tree
   // before the exact no-index diff.
   writeTypeDocInputFingerprint(REPO_ROOT, join(tempDir, '.typedoc-input-fingerprint.json'));
 
-  const diff = spawnSync('git', ['diff', '--no-index', '--stat', COMMITTED_DIR, tempDir], {
-    stdio: 'pipe',
-    shell: true,
-  });
-  const diffOutput = (diff.stdout?.toString() ?? '') + (diff.stderr?.toString() ?? '');
+  const diff = await spawnArgvCapture('git', ['diff', '--no-index', '--stat', COMMITTED_DIR, tempDir]);
+  const diffOutput = diff.stdout + diff.stderr;
 
-  if (diff.status !== 0 || diffOutput.trim().length > 0) {
-    console.error(`docs:check — committed ${COMMITTED_DIR}/ is out of sync with source TSDoc:`);
-    console.error(diffOutput);
-    console.error(`Run 'pnpm run docs:build' and commit the result.`);
-    process.exit(1);
+  if (diff.exitCode !== 0 || diffOutput.trim().length > 0) {
+    throw new Error(
+      `committed ${COMMITTED_DIR}/ is out of sync with source TSDoc:\n${diffOutput}\n` +
+        `Run 'pnpm run docs:build' and commit the result.`,
+    );
   }
 
   if (useLocalCache) writeTypeDocProofReceipt(REPO_ROOT, proofIdentity);
@@ -134,6 +124,9 @@ try {
     `docs:check passed — committed ${COMMITTED_DIR}/ matches source TSDoc.` +
       (useLocalCache ? ` Proof ${proofIdentity.proofKey} cached locally.` : ''),
   );
+} catch (error) {
+  console.error(`docs:check — ${error instanceof Error ? error.message : String(error)}`);
+  process.exitCode = 1;
 } finally {
   rmSync(tempDir, { recursive: true, force: true });
 }

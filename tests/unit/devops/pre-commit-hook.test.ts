@@ -33,9 +33,9 @@ describe('pre-commit hook ownership', () => {
     expect(packageJson.scripts['resources:plan']).toContain('local-resources.ts');
     expect(preflight).toContain('resource: resourcePlan');
     expect(docsCheck).toContain('assertTypeDocInputFingerprint(REPO_ROOT)');
-    expect(docsCheck).toContain("spawnSync('pnpm', ['exec', 'typedoc'");
+    expect(docsCheck).toContain("spawnArgv('pnpm', ['exec', 'typedoc'");
     expect(docsCheck.indexOf('assertTypeDocInputFingerprint(REPO_ROOT)')).toBeLessThan(
-      docsCheck.indexOf("spawnSync('pnpm', ['exec', 'typedoc'"),
+      docsCheck.indexOf("spawnArgv('pnpm', ['exec', 'typedoc'"),
     );
   });
 });

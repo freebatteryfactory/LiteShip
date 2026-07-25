@@ -85,7 +85,17 @@ export function createTypeDocProofIdentity(input: {
 /** Build a conservative identity over sources, committed output, tools, and host. */
 export function buildTypeDocProofIdentity(repoRoot: string): TypeDocProofIdentity {
   const fingerprint = buildTypeDocInputFingerprint(repoRoot);
-  const toolchainPaths = ['package.json', 'pnpm-lock.yaml', 'typedoc.json'];
+  const toolchainPaths = [
+    'package.json',
+    'pnpm-lock.yaml',
+    'typedoc.json',
+    'scripts/docs-build.ts',
+    'scripts/docs-check.ts',
+    'scripts/docs-input-fingerprint.ts',
+    'scripts/lib/local-resource-profile.ts',
+    'scripts/lib/typedoc-input-fingerprint.ts',
+    'scripts/lib/typedoc-proof-cache.ts',
+  ];
   const toolchainDigest = digestParts(toolchainPaths.flatMap((path) => [path, readFileSync(resolve(repoRoot, path))]));
   return createTypeDocProofIdentity({
     inputDigest: fingerprint.digest,

@@ -42,9 +42,26 @@ describe('local resource profile', () => {
     expect(plan).toMatchObject({
       profile: 'balanced',
       nativeTypeScriptWorkers: 2,
-      docs: { admitted: true, heapMiB: 4096, reservedMemoryMiB: 2048, reason: 'admitted' },
+      docs: { admitted: true, heapMiB: 4096, reservedMemoryMiB: 2048, swapBacked: false, reason: 'admitted' },
     });
     expect(formatLocalResourcePlan(plan)).toContain('typedoc=4096 MiB, admitted');
+  });
+
+  test('admits an explicitly authorized swap-backed run without changing the heap or proof', () => {
+    const plan = selectLocalResourcePlan(observation({ freeMemoryBytes: 4.9 * GIB, cpuBusyPercent: 10 }), {
+      allowSwap: true,
+    });
+    expect(plan).toMatchObject({
+      profile: 'constrained',
+      nativeTypeScriptWorkers: 1,
+      docs: {
+        admitted: true,
+        heapMiB: 4096,
+        reservedMemoryMiB: 768,
+        swapBacked: true,
+        reason: 'admitted-swap',
+      },
+    });
   });
 
   test('refuses insufficient memory or extreme contention without reducing proof scope', () => {

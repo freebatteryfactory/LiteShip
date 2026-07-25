@@ -178,6 +178,13 @@ describe('doctor/probes-workspace — probeBuilt()', () => {
 });
 
 describe('doctor/probes-workspace — probeGitHooks()', () => {
+  const canonicalHook = '#!/usr/bin/env sh\nexec sh "$repo_root/scripts/pre-commit.sh"\n';
+  const installCanonicalHook = (dir: string): string => {
+    mkdirSync(resolve(dir, 'scripts'), { recursive: true });
+    writeFileSync(resolve(dir, 'scripts', 'pre-commit-wrapper.sh'), canonicalHook);
+    return canonicalHook;
+  };
+
   it('ok when there is no .git (not a worktree)', () => {
     expect(probeGitHooks(mkTmp())).toMatchObject({ status: 'ok', detail: 'no .git (not a worktree)' });
   });
@@ -190,10 +197,31 @@ describe('doctor/probes-workspace — probeGitHooks()', () => {
 
   it('ok when the pre-commit hook is installed', () => {
     const dir = mkTmp();
+    const canonical = installCanonicalHook(dir);
     const hooks = resolve(dir, '.git', 'hooks');
     mkdirSync(hooks, { recursive: true });
-    writeFileSync(resolve(hooks, 'pre-commit'), '#!/bin/sh\n');
-    expect(probeGitHooks(dir)).toMatchObject({ status: 'ok', detail: 'pre-commit installed' });
+    writeFileSync(resolve(hooks, 'pre-commit'), canonical);
+    expect(probeGitHooks(dir)).toMatchObject({ status: 'ok', detail: 'pre-commit installed and current' });
+  });
+
+  it('a FIXABLE warn when the installed hook has drifted from the canonical wrapper', () => {
+    const dir = mkTmp();
+    installCanonicalHook(dir);
+    const hooks = resolve(dir, '.git', 'hooks');
+    mkdirSync(hooks, { recursive: true });
+    writeFileSync(resolve(hooks, 'pre-commit'), '#!/bin/sh\necho stale\n');
+    expect(probeGitHooks(dir)).toMatchObject({ status: 'warn', fixable: true, detail: expect.stringMatching(/stale/) });
+  });
+
+  it('refuses to call an installed hook current when its canonical owner is missing', () => {
+    const dir = mkTmp();
+    const hooks = resolve(dir, '.git', 'hooks');
+    mkdirSync(hooks, { recursive: true });
+    writeFileSync(resolve(hooks, 'pre-commit'), canonicalHook);
+    expect(probeGitHooks(dir)).toMatchObject({
+      status: 'warn',
+      detail: expect.stringMatching(/cannot be verified/),
+    });
   });
 
   it('warn-unresolved (NOT fixable) on a corrupt .git pointer file', () => {
@@ -211,24 +239,26 @@ describe('doctor/probes-workspace — probeGitHooks()', () => {
     const realGit = resolve(dir, 'realrepo', '.git');
     const wt = resolve(realGit, 'worktrees', 'feat');
     mkdirSync(resolve(realGit, 'hooks'), { recursive: true });
-    writeFileSync(resolve(realGit, 'hooks', 'pre-commit'), '#!/bin/sh\n');
+    writeFileSync(resolve(realGit, 'hooks', 'pre-commit'), canonicalHook);
     mkdirSync(wt, { recursive: true });
     writeFileSync(resolve(wt, 'commondir'), '../..\n');
     const work = resolve(dir, 'worktree');
     mkdirSync(work, { recursive: true });
+    installCanonicalHook(work);
     writeFileSync(resolve(work, '.git'), `gitdir: ${wt}\n`);
-    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit installed' });
+    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit installed and current' });
   });
 
   it('falls back to the worktree gitdir hooks when no commondir file exists', () => {
     const dir = mkTmp();
     const wt = resolve(dir, '.git', 'worktrees', 'feat');
     mkdirSync(resolve(wt, 'hooks'), { recursive: true });
-    writeFileSync(resolve(wt, 'hooks', 'pre-commit'), '#!/bin/sh\n');
+    writeFileSync(resolve(wt, 'hooks', 'pre-commit'), canonicalHook);
     const work = resolve(dir, 'worktree');
     mkdirSync(work, { recursive: true });
+    installCanonicalHook(work);
     writeFileSync(resolve(work, '.git'), `gitdir: ${wt}\n`);
-    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit installed' });
+    expect(probeGitHooks(work)).toMatchObject({ status: 'ok', detail: 'pre-commit installed and current' });
   });
 });
 

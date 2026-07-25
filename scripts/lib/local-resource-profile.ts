@@ -12,6 +12,7 @@ export const LOCAL_RESOURCE_POLICY = Object.freeze({
   localDocsHeapMiB: 4_096,
   ciDocsHeapMiB: 8_192,
   reservedMemoryMiB: 2_048,
+  swapBackedReservedMemoryMiB: 768,
   maximumBusyPercent: 90,
   openFreeMemoryGiB: 12,
   openMaximumBusyPercent: 35,
@@ -42,7 +43,8 @@ export interface LocalResourcePlan {
     readonly admitted: boolean;
     readonly heapMiB: number;
     readonly reservedMemoryMiB: number;
-    readonly reason: 'admitted' | 'cpu-contended' | 'memory-headroom';
+    readonly swapBacked: boolean;
+    readonly reason: 'admitted' | 'admitted-swap' | 'cpu-contended' | 'memory-headroom';
   };
 }
 
@@ -78,15 +80,20 @@ export function cpuBusyPercent(before: CpuTimesSnapshot, after: CpuTimesSnapshot
 /** Pure resource policy: load may change scheduling, never which proof is required. */
 export function selectLocalResourcePlan(
   observation: LocalResourceObservation,
-  options: { readonly ci?: boolean } = {},
+  options: { readonly ci?: boolean; readonly allowSwap?: boolean } = {},
 ): LocalResourcePlan {
   const ci = options.ci === true;
+  const swapBacked = !ci && options.allowSwap === true;
   const heapMiB = ci ? LOCAL_RESOURCE_POLICY.ciDocsHeapMiB : LOCAL_RESOURCE_POLICY.localDocsHeapMiB;
+  const reservedMemoryMiB = swapBacked
+    ? LOCAL_RESOURCE_POLICY.swapBackedReservedMemoryMiB
+    : LOCAL_RESOURCE_POLICY.reservedMemoryMiB;
   const freeMiB = observation.freeMemoryBytes / MIB;
-  const enoughMemory = ci || freeMiB >= heapMiB + LOCAL_RESOURCE_POLICY.reservedMemoryMiB;
+  const enoughMemory = ci || freeMiB >= heapMiB + reservedMemoryMiB;
   const cpuAdmitted = ci || observation.cpuBusyPercent <= LOCAL_RESOURCE_POLICY.maximumBusyPercent;
   const admitted = enoughMemory && cpuAdmitted;
   const profile =
+    !swapBacked &&
     admitted &&
     observation.availableParallelism >= 8 &&
     observation.freeMemoryBytes >= LOCAL_RESOURCE_POLICY.openFreeMemoryGiB * GIB &&
@@ -105,8 +112,15 @@ export function selectLocalResourcePlan(
     docs: Object.freeze({
       admitted,
       heapMiB,
-      reservedMemoryMiB: LOCAL_RESOURCE_POLICY.reservedMemoryMiB,
-      reason: enoughMemory ? (cpuAdmitted ? 'admitted' : 'cpu-contended') : 'memory-headroom',
+      reservedMemoryMiB,
+      swapBacked,
+      reason: enoughMemory
+        ? cpuAdmitted
+          ? swapBacked
+            ? 'admitted-swap'
+            : 'admitted'
+          : 'cpu-contended'
+        : 'memory-headroom',
     }),
   });
 }
@@ -148,7 +162,7 @@ export function formatLocalResourcePlan(plan: LocalResourcePlan): string {
     `[local-admission] ${plan.profile}: ${plan.observation.logicalCpus} CPUs, ` +
     `${plan.observation.cpuBusyPercent.toFixed(1)}% busy, ${freeGiB.toFixed(1)} GiB free; ` +
     `tsc=${plan.nativeTypeScriptWorkers}, typedoc=${plan.docs.heapMiB} MiB, ` +
-    `${plan.docs.admitted ? 'admitted' : `refused:${plan.docs.reason}`}`
+    `${plan.docs.admitted ? plan.docs.reason : `refused:${plan.docs.reason}`}`
   );
 }
 
@@ -156,6 +170,7 @@ export function formatLocalResourcePlan(plan: LocalResourcePlan): string {
 export async function awaitLocalDocsAdmission(
   input: {
     readonly ci?: boolean;
+    readonly allowSwap?: boolean;
     readonly sampler?: LocalResourceSampler;
     readonly wait?: (ms: number) => Promise<void>;
     readonly maxWaitMs?: number;
@@ -169,7 +184,10 @@ export async function awaitLocalDocsAdmission(
   const retryMs = input.retryMs ?? LOCAL_RESOURCE_POLICY.retryMs;
   let elapsed = 0;
   while (true) {
-    const plan = selectLocalResourcePlan(await sampler(), { ci: input.ci });
+    const plan = selectLocalResourcePlan(await sampler(), {
+      ci: input.ci,
+      allowSwap: input.allowSwap ?? process.env.LITESHIP_DOCS_USE_SWAP === '1',
+    });
     input.onObservation?.(plan);
     if (plan.docs.admitted) return plan;
     if (elapsed >= maxWaitMs) {
@@ -177,7 +195,8 @@ export async function awaitLocalDocsAdmission(
       throw new Error(
         `local-resource-insufficient: TypeDoc needs ${plan.docs.heapMiB} MiB plus ${plan.docs.reservedMemoryMiB} MiB reserved; ` +
           `observed ${freeGiB.toFixed(1)} GiB free at ${plan.observation.cpuBusyPercent.toFixed(1)}% CPU busy. ` +
-          'Close competing builds/browser tabs or retry later; the docs proof was not skipped.',
+          'Close competing builds/browser tabs or retry later. After verifying OS swap headroom, ' +
+          'LITESHIP_DOCS_USE_SWAP=1 enables the explicit swap-backed profile; the docs proof was not skipped.',
       );
     }
     await wait(retryMs);

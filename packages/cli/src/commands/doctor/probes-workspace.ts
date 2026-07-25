@@ -207,6 +207,7 @@ export function probeGitHooks(cwd: string): DoctorCheck {
     };
   }
   const hook = resolve(hooksDir.value, 'pre-commit');
+  const canonicalHook = resolve(cwd, 'scripts', 'pre-commit-wrapper.sh');
   if (!existsSync(hook)) {
     return {
       id: 'git.hooks',
@@ -217,7 +218,35 @@ export function probeGitHooks(cwd: string): DoctorCheck {
       fixable: true,
     };
   }
-  return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit installed' };
+  if (!existsSync(canonicalHook)) {
+    return {
+      id: 'git.hooks',
+      label: 'git hooks',
+      status: 'warn',
+      detail: 'scripts/pre-commit-wrapper.sh is missing; installed hook cannot be verified',
+    };
+  }
+  try {
+    const normalize = (text: string): string => text.replace(/\r\n?/gu, '\n');
+    if (normalize(readFileSync(hook, 'utf8')) !== normalize(readFileSync(canonicalHook, 'utf8'))) {
+      return {
+        id: 'git.hooks',
+        label: 'git hooks',
+        status: 'warn',
+        detail: 'pre-commit hook is stale relative to scripts/pre-commit-wrapper.sh',
+        hint: 'Repair it: pnpm exec tsx scripts/link-pre-commit.ts',
+        fixable: true,
+      };
+    }
+  } catch (error) {
+    return {
+      id: 'git.hooks',
+      label: 'git hooks',
+      status: 'warn',
+      detail: `pre-commit parity unreadable: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+  return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit installed and current' };
 }
 
 export function probeFfmpegRenderCheck(probe: typeof probeFfmpegRender = probeFfmpegRender): DoctorCheck {

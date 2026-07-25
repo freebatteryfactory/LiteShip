@@ -94,7 +94,10 @@ async function main(argv: readonly string[]): Promise<void> {
     changedPaths = changed.stdout.split(/\r?\n/u).filter(Boolean);
   }
   const plan = buildLocalVerificationPlan({ staged, ...(changedPaths === undefined ? {} : { changedPaths }) });
-  const resourcePlan = selectLocalResourcePlan(await sampleLocalResources(), { ci: process.env.CI === 'true' });
+  const resourcePlan = selectLocalResourcePlan(await sampleLocalResources(), {
+    ci: process.env.CI === 'true',
+    allowSwap: process.env.LITESHIP_DOCS_USE_SWAP === '1',
+  });
   if (printPlan) {
     if (json) console.log(JSON.stringify({ ...plan, resource: resourcePlan }, null, 2));
     else {

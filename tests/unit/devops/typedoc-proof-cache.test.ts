@@ -31,6 +31,11 @@ describe('TypeDoc proof cache', () => {
         outputDigest: digest('d'),
       });
       expect(readTypeDocProofReceipt(root, changedOutput)).toBeNull();
+      const changedToolchain = createTypeDocProofIdentity({
+        ...identity,
+        toolchainDigest: digest('e'),
+      });
+      expect(readTypeDocProofReceipt(root, changedToolchain)).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
