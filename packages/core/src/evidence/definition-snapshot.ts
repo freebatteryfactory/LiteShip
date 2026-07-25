@@ -63,7 +63,16 @@ export function snapshotDefinitionValue<T>(value: T): DeepReadonly<T> {
         if (descriptor === undefined || !('value' in descriptor)) {
           return unsupported(`${path}.${key}`, 'uses an accessor property.');
         }
-        copy[key] = snapshot(descriptor.value, `${path}.${key}`);
+        // Assignment is not an own-data operation for the legacy `__proto__`
+        // accessor inherited by ordinary records. Install every authored key
+        // through one descriptor path so JSON-shaped poison-key data is copied
+        // without changing the snapshot's prototype.
+        Object.defineProperty(copy, key, {
+          value: snapshot(descriptor.value, `${path}.${key}`),
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
       }
       return Object.freeze(copy);
     } finally {

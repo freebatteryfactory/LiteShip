@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { buildAssuranceInventory, normalizedLogicalLoc } from '../../scripts/lib/assurance-inventory.js';
+import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 
 const roots: string[] = [];
 
@@ -36,6 +37,18 @@ function fixture(): string {
 
 function packageByName(root: string, name: string) {
   return buildAssuranceInventory(root).packages.find((entry) => entry.name === name)!;
+}
+
+async function git(root: string, args: readonly string[]): Promise<string> {
+  const result = await spawnArgvCapture('git', args, { cwd: root });
+  if (result.exitCode !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderrTail}`);
+  return result.stdout;
+}
+
+async function visibleRepositoryFiles(root: string): Promise<readonly string[]> {
+  return (await git(root, ['ls-files', '-z', '--cached', '--others', '--exclude-standard']))
+    .split('\0')
+    .filter(Boolean);
 }
 
 const statementCount = fc.integer({ min: 1, max: 40 });
@@ -139,6 +152,40 @@ describe('unique authored evidence accounting', () => {
 });
 
 describe('non-authored corpus separation', () => {
+  it('gives ignored generated output zero credit while counting new non-ignored evidence before commit', async () => {
+    const root = fixture();
+    writeFileSync(join(root, '.gitignore'), 'tests/integration/astro/.astro/\n');
+    await git(root, ['init', '--quiet']);
+    await git(root, ['add', '.']);
+
+    const baseline = buildAssuranceInventory(root).totals.authoredEvidenceLoc;
+    const ignoredRoot = join(root, 'tests', 'integration', 'astro', '.astro');
+    mkdirSync(ignoredRoot, { recursive: true });
+    const ignoredPath = 'tests/integration/astro/.astro/content.d.ts';
+    writeFileSync(
+      join(root, ...ignoredPath.split('/')),
+      "import type { Boundary } from '@liteship/core';\nexport declare const generatedAstroType: Boundary;\n",
+    );
+    expect((await git(root, ['check-ignore', ignoredPath])).trim()).toBe(ignoredPath);
+    expect(await visibleRepositoryFiles(root)).toContain('packages/core/src/index.ts');
+    expect(await visibleRepositoryFiles(root)).not.toContain(ignoredPath);
+    const afterIgnoredOutput = buildAssuranceInventory(root);
+    expect(afterIgnoredOutput.totals.authoredEvidenceLoc).toBe(baseline);
+    expect(afterIgnoredOutput.totals.generatedEvidenceLoc).toBe(0);
+    expect(packageByName(root, '@liteship/core').evidenceFiles).not.toContain(ignoredPath);
+
+    const candidate = join(root, 'tests', 'property', 'candidate.prop.test.ts');
+    const candidateSource =
+      "import { defineBoundary } from '@liteship/core';\n" +
+      "test('candidate evidence', () => expect(defineBoundary).toBeDefined());\n";
+    writeFileSync(candidate, candidateSource);
+    expect(await visibleRepositoryFiles(root)).toContain('tests/property/candidate.prop.test.ts');
+    expect(buildAssuranceInventory(root).totals.authoredEvidenceLoc).toBe(
+      baseline + normalizedLogicalLoc(candidate, candidateSource),
+    );
+    expect(packageByName(root, '@liteship/core').evidenceFiles).toContain('tests/property/candidate.prop.test.ts');
+  });
+
   it('reports generated tests without crediting them to authored density', () => {
     fc.assert(
       fc.property(statementCount, (count) => {

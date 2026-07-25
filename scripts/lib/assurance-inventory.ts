@@ -7,6 +7,8 @@
  * @module
  */
 
+// eslint-disable-next-line no-restricted-imports -- the public inventory API is synchronous; one Git census runs no code under test.
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, posix, relative, sep } from 'node:path';
@@ -195,6 +197,29 @@ function filesUnder(root: string): readonly string[] {
   return files;
 }
 
+/**
+ * Enumerate repository-owned files without crediting ignored build output.
+ * New, non-ignored files remain visible before commit so the local ratchet and
+ * clean CI measure the same candidate source tree.
+ */
+function repositoryOwnedFiles(cwd: string): readonly string[] | undefined {
+  if (!existsSync(join(cwd, '.git'))) return undefined;
+  const output = execFileSync('git', ['-C', cwd, 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
+    encoding: 'utf8',
+    maxBuffer: 16 * 1024 * 1024,
+    windowsHide: true,
+  });
+  return [...new Set(output.split('\0').filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right))
+    .map((path) => join(cwd, ...path.split('/')));
+}
+
+function ownedFilesUnder(root: string, ownedFiles: readonly string[] | undefined): readonly string[] {
+  if (ownedFiles === undefined) return filesUnder(root);
+  const prefix = `${normalize(root).replace(/\/$/u, '')}/`;
+  return ownedFiles.filter((path) => normalize(path).startsWith(prefix));
+}
+
 function physicalCodeLoc(source: string): number {
   let inBlockComment = false;
   return source.split(/\r?\n/u).filter((line) => {
@@ -235,7 +260,10 @@ function generatedPath(path: string): boolean {
 
 type SourceRole = keyof AssuranceInventory['totals']['sourceRoles'];
 
-function implementationSources(cwd: string): readonly { readonly path: string; readonly role: SourceRole }[] {
+function implementationSources(
+  cwd: string,
+  ownedFiles: readonly string[] | undefined,
+): readonly { readonly path: string; readonly role: SourceRole }[] {
   const entries = new Map<string, SourceRole>();
   const add = (absolute: string, role: SourceRole): void => {
     const path = normalize(relative(cwd, absolute));
@@ -245,13 +273,13 @@ function implementationSources(cwd: string): readonly { readonly path: string; r
   for (const record of PACKAGE_CATALOG) {
     const role: SourceRole =
       record.layer === 'verification' || record.layer === 'tooling' ? 'verificationEngine' : 'product';
-    for (const file of filesUnder(join(cwd, record.dir))) add(file, role);
+    for (const file of ownedFilesUnder(join(cwd, record.dir), ownedFiles)) add(file, role);
   }
-  for (const file of filesUnder(join(cwd, 'scripts'))) add(file, 'verificationEngine');
-  for (const file of filesUnder(join(cwd, 'crates'))) {
+  for (const file of ownedFilesUnder(join(cwd, 'scripts'), ownedFiles)) add(file, 'verificationEngine');
+  for (const file of ownedFilesUnder(join(cwd, 'crates'), ownedFiles)) {
     if (normalize(relative(cwd, file)).includes('/src/')) add(file, 'rustWasm');
   }
-  for (const file of filesUnder(join(cwd, '.github', 'workflows'))) add(file, 'workflowAuthority');
+  for (const file of ownedFilesUnder(join(cwd, '.github', 'workflows'), ownedFiles)) add(file, 'workflowAuthority');
   for (const entry of readdirSync(cwd, { withFileTypes: true })) {
     if (!entry.isFile()) continue;
     if (/\.config\.[cm]?[jt]s$/u.test(entry.name) || entry.name === 'vitest.shared.ts') {
@@ -483,7 +511,10 @@ function verifiedSemanticAssuranceCredits(
 
 /** Compute the inventory from current repository bytes. */
 export function buildAssuranceInventory(cwd: string, options: AssuranceInventoryOptions = {}): AssuranceInventory {
-  const evidenceFiles = filesUnder(join(cwd, 'tests')).filter((path) => EVIDENCE_EXTENSIONS.has(extname(path)));
+  const ownedFiles = repositoryOwnedFiles(cwd);
+  const evidenceFiles = ownedFilesUnder(join(cwd, 'tests'), ownedFiles).filter((path) =>
+    EVIDENCE_EXTENSIONS.has(extname(path)),
+  );
   const evidenceSources = evidenceFiles.map((path) => {
     const source = readFileSync(path, 'utf8');
     return {
@@ -538,7 +569,7 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
 
   const packages = PACKAGE_CATALOG.map((record) => {
     const packageRoot = join(cwd, record.dir);
-    const sourceFiles = filesUnder(packageRoot).filter((path) => {
+    const sourceFiles = ownedFilesUnder(packageRoot, ownedFiles).filter((path) => {
       return SOURCE_EXTENSIONS.has(extname(path));
     });
     const sourceLoc = sourceFiles.reduce(
@@ -593,7 +624,7 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
     workflowAuthority: 0,
     generated: 0,
   } satisfies Record<SourceRole, number>;
-  for (const entry of implementationSources(cwd)) {
+  for (const entry of implementationSources(cwd, ownedFiles)) {
     const source = readFileSync(join(cwd, entry.path), 'utf8');
     sourceRoles[entry.role] += normalizedLogicalLoc(entry.path, source);
   }
@@ -611,7 +642,7 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
   const generatedEvidenceLoc = evidenceSources
     .filter((entry) => entry.path.startsWith('tests/generated/'))
     .reduce((sum, entry) => sum + entry.loc, 0);
-  const corpusLoc = filesUnder(join(cwd, 'tests', 'fixtures')).reduce(
+  const corpusLoc = ownedFilesUnder(join(cwd, 'tests', 'fixtures'), ownedFiles).reduce(
     (sum, path) => sum + physicalCodeLoc(readFileSync(path, 'utf8')),
     0,
   );

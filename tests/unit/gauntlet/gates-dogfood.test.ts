@@ -147,13 +147,13 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     }
   });
 
-  it('each gate is deterministic — the same repo state yields the same findings twice', () => {
-    for (const [, gate] of GATES) {
+  for (const [id, gate] of GATES) {
+    it(`${id} is deterministic — the same repo state yields the same findings twice`, () => {
       const run = (): readonly string[] =>
         gate.run(nodeContext(REPO_ROOT, [...GLOBS])).map((f) => locOf(f.location?.file, f.location?.line));
       expect(run()).toEqual(run());
-    }
-  });
+    });
+  }
 
   it('no-nondeterminism: the L3-scoped backlog is EXACTLY the three substrate boundaries', () => {
     const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
