@@ -9,7 +9,7 @@
  * @module
  */
 
-import { Diagnostics, contentAddressOf, decodeLenient, type ContentAddress, schema } from '@liteship/core';
+import { Diagnostics, contentAddressOf, decode, decodeLenient, type ContentAddress, schema } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import type { EdgeTierResult } from './edge-tier.js';
 import { tierKey } from './manifest.js';
@@ -424,6 +424,9 @@ const UniformValuesSchema = schema.record(schema.number);
 /** Per-state GLSL uniforms — `state → (u_* → number)`. */
 const NestedUniformValuesSchema = schema.record(UniformValuesSchema);
 
+/** Per-state ARIA/data attributes — `state → (attribute → string)`. */
+const AriaSchema = schema.record(schema.record(schema.string));
+
 /** A WGSL binding value leaf: coerce-or-reject through {@link asWGSLUniformValue}. */
 const WGSLUniformValueSchema = schema.brand(
   schema.unknown,
@@ -451,10 +454,60 @@ const WGSLCastSchema = schema.struct({ declarations: schema.string, bindingValue
 
 /** Compiled-outputs entry head — the three required fields that carry the outer shape. */
 const CompiledEntryHeadSchema = schema.struct({
-  css: schema.unknown,
-  propertyRegistrations: schema.unknown,
-  containerQueries: schema.unknown,
+  css: schema.string,
+  propertyRegistrations: schema.string,
+  containerQueries: schema.string,
 });
+
+function parseAria(value: unknown): Readonly<Record<string, Readonly<Record<string, string>>>> | undefined {
+  if (value === undefined) return undefined;
+  const decoded = decode(AriaSchema, value);
+  return decoded.ok ? decoded.value : undefined;
+}
+
+function sortedRecord<T>(record: Readonly<Record<string, T>>): Record<string, T> {
+  return Object.fromEntries(
+    Object.entries(record).sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)),
+  );
+}
+
+function sortedNestedRecord<T>(
+  record: Readonly<Record<string, Readonly<Record<string, T>>>>,
+): Record<string, Record<string, T>> {
+  return Object.fromEntries(
+    Object.entries(record)
+      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+      .map(([key, value]) => [key, sortedRecord(value)]),
+  );
+}
+
+/** Stable JSON projection for the semantically unordered authored maps in one cache entry. */
+function serializeCompiledOutputs(outputs: CompiledOutputs): string {
+  return JSON.stringify({
+    css: outputs.css,
+    propertyRegistrations: outputs.propertyRegistrations,
+    containerQueries: outputs.containerQueries,
+    ...(outputs.aria ? { aria: sortedNestedRecord(outputs.aria) } : {}),
+    ...(outputs.glsl
+      ? {
+          glsl: {
+            declarations: outputs.glsl.declarations,
+            uniformValues: sortedRecord(outputs.glsl.uniformValues),
+            ...(outputs.glsl.stateUniforms ? { stateUniforms: sortedNestedRecord(outputs.glsl.stateUniforms) } : {}),
+          },
+        }
+      : {}),
+    ...(outputs.wgsl
+      ? {
+          wgsl: {
+            declarations: outputs.wgsl.declarations,
+            bindingValues: sortedRecord(outputs.wgsl.bindingValues),
+            ...(outputs.wgsl.stateBindings ? { stateBindings: sortedNestedRecord(outputs.wgsl.stateBindings) } : {}),
+          },
+        }
+      : {}),
+  });
+}
 
 /**
  * Coerce an `unknown` JSON value into a per-state `Record<state, Record<u_*, number>>`
@@ -605,7 +658,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       // containerQueries collapses the head to `null` and reads as a cache miss.
       const head = decodeLenient(CompiledEntryHeadSchema, parsed);
       if (head !== null) {
-        const aria = (parsed as { aria?: unknown }).aria;
+        const aria = parseAria((parsed as { aria?: unknown }).aria);
         const glslBase = parseShaderCast((parsed as { glsl?: unknown }).glsl, 'uniformValues');
         // Per-state authored uniforms ride the GLSL cast so the live runtime can
         // resolve `stateUniforms[currentState]` — the GLSL analog of `aria`.
@@ -625,12 +678,10 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
           ? { ...wgslBase, ...(wgslStateBindings ? { stateBindings: wgslStateBindings } : {}) }
           : null;
         return {
-          css: String(head.css),
-          propertyRegistrations: String(head.propertyRegistrations),
-          containerQueries: String(head.containerQueries),
-          ...(typeof aria === 'object' && aria !== null
-            ? { aria: aria as Readonly<Record<string, Readonly<Record<string, string>>>> }
-            : {}),
+          css: head.css,
+          propertyRegistrations: head.propertyRegistrations,
+          containerQueries: head.containerQueries,
+          ...(aria ? { aria } : {}),
           ...(glsl ? { glsl } : {}),
           ...(wgsl ? { wgsl } : {}),
         };
@@ -657,14 +708,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       tags?: readonly string[],
     ): Promise<void> {
       const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier, themeFp);
-      const value = JSON.stringify({
-        css: outputs.css,
-        propertyRegistrations: outputs.propertyRegistrations,
-        containerQueries: outputs.containerQueries,
-        ...(outputs.aria ? { aria: outputs.aria } : {}),
-        ...(outputs.glsl ? { glsl: outputs.glsl } : {}),
-        ...(outputs.wgsl ? { wgsl: outputs.wgsl } : {}),
-      });
+      const value = serializeCompiledOutputs(outputs);
 
       await kv.put(key, value, ttl !== undefined ? { expirationTtl: ttl } : undefined);
 

@@ -32,22 +32,20 @@ export interface CloudflareCacheApi {
  */
 export function resolveKvBinding(env: CloudflareWorkersEnv, binding: string): KVNamespace | null {
   const candidate = env[binding];
-  if (
-    candidate !== null &&
-    candidate !== undefined &&
-    typeof candidate === 'object' &&
-    'get' in candidate &&
-    'put' in candidate &&
-    typeof (candidate as KVNamespace).get === 'function' &&
-    typeof (candidate as KVNamespace).put === 'function'
-  ) {
-    return candidate as KVNamespace;
+  if (candidate !== null && candidate !== undefined && typeof candidate === 'object') {
+    try {
+      if (typeof Reflect.get(candidate, 'get') === 'function' && typeof Reflect.get(candidate, 'put') === 'function') {
+        return candidate as KVNamespace;
+      }
+    } catch {
+      return null;
+    }
   }
   return null;
 }
 
-function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: string): void {
-  const available = Object.keys(envSource());
+function warnMissingBinding(env: CloudflareWorkersEnv, binding: string): void {
+  const available = Object.keys(env);
   Diagnostics.warnOnce({
     source: 'liteship/cloudflare.edge-cache',
     code: 'kv-binding-missing',
@@ -55,6 +53,17 @@ function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: stri
       `KV binding "${binding}" is not present in the Workers env` +
       (available.length > 0 ? ` (available: ${available.join(', ')})` : ' (no bindings found)') +
       `. Fix: add a kv_namespaces entry with binding "${binding}" in wrangler.jsonc.`,
+  });
+}
+
+function warnCacheApiFailure(operation: 'read' | 'write', binding: string, cause: unknown): void {
+  Diagnostics.warnOnce({
+    source: 'liteship/cloudflare.edge-cache',
+    code: `cache-api-${operation}-failed`,
+    message:
+      `Cloudflare Cache API ${operation} failed for KV binding "${binding}" and was bypassed. ` +
+      'Workers KV remains the authoritative cache source; inspect the attached cause and the host Cache API implementation.',
+    cause,
   });
 }
 
@@ -96,25 +105,35 @@ export function createCloudflareEdgeCache(
     async get(key: string): Promise<string | null> {
       const request = edgeCache ? cacheRequest(options.binding, key) : null;
       if (edgeCache && request) {
-        const matched = await edgeCache.match(request);
-        if (matched) return matched.text();
+        try {
+          const matched = await edgeCache.match(request);
+          if (matched) return await matched.text();
+        } catch (cause) {
+          warnCacheApiFailure('read', options.binding, cause);
+        }
       }
 
-      const kv = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const kv = resolveKvBinding(env, options.binding);
       if (!kv) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return null;
       }
       const value = await kv.get(key, kvGetOptions(options.cacheTtl));
       if (value !== null && edgeCache && request && options.ctx) {
-        options.ctx.waitUntil(edgeCache.put(request, new Response(value)));
+        options.ctx.waitUntil(
+          edgeCache.put(request, new Response(value)).catch((cause: unknown) => {
+            warnCacheApiFailure('write', options.binding, cause);
+          }),
+        );
       }
       return value;
     },
     async put(key: string, value: string, putOptions?: { expirationTtl?: number }): Promise<void> {
-      const kv = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const kv = resolveKvBinding(env, options.binding);
       if (!kv) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return;
       }
       await kv.put(key, value, putOptions);
@@ -123,9 +142,10 @@ export function createCloudflareEdgeCache(
     // binding really has them. This keeps @liteship/edge's capability checks honest
     // for tests/custom adapters while still allowing late-bound workerd env.
     get delete() {
-      const current = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const current = resolveKvBinding(env, options.binding);
       if (!current) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return undefined;
       }
       if (typeof current.delete !== 'function') {
@@ -133,9 +153,10 @@ export function createCloudflareEdgeCache(
         return undefined;
       }
       return async (key: string): Promise<void> => {
-        const kv = resolveKvBinding(envSource(), options.binding);
+        const env = envSource();
+        const kv = resolveKvBinding(env, options.binding);
         if (!kv) {
-          warnMissingBinding(envSource, options.binding);
+          warnMissingBinding(env, options.binding);
           return;
         }
         if (typeof kv.delete !== 'function') {
@@ -149,9 +170,10 @@ export function createCloudflareEdgeCache(
       };
     },
     get list() {
-      const current = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const current = resolveKvBinding(env, options.binding);
       if (!current) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return undefined;
       }
       if (typeof current.list !== 'function') {
@@ -159,9 +181,10 @@ export function createCloudflareEdgeCache(
         return undefined;
       }
       return async (listOptions: { prefix: string; cursor?: string }) => {
-        const kv = resolveKvBinding(envSource(), options.binding);
+        const env = envSource();
+        const kv = resolveKvBinding(env, options.binding);
         if (!kv) {
-          warnMissingBinding(envSource, options.binding);
+          warnMissingBinding(env, options.binding);
           return { keys: [], list_complete: true };
         }
         if (typeof kv.list !== 'function') {
