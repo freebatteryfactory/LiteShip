@@ -111,12 +111,19 @@ function _classify(raw: unknown): ParseOutcome {
     return { kind: 'invalid-request', id: null };
   }
   const obj = raw as Record<string, unknown>;
-  if (obj.jsonrpc !== '2.0' || typeof obj.method !== 'string') {
+  const hasId = 'id' in obj && obj.id !== undefined;
+  const validId = !hasId || typeof obj.id === 'string' || typeof obj.id === 'number' || obj.id === null;
+  const validParams =
+    !('params' in obj) ||
+    obj.params === undefined ||
+    Array.isArray(obj.params) ||
+    (typeof obj.params === 'object' && obj.params !== null);
+  if (obj.jsonrpc !== '2.0' || typeof obj.method !== 'string' || !validId || !validParams) {
     const id =
       typeof obj.id === 'string' || typeof obj.id === 'number' || obj.id === null ? (obj.id as JsonRpcId) : null;
     return { kind: 'invalid-request', id };
   }
-  if (!('id' in obj) || obj.id === undefined) {
+  if (!hasId) {
     return { kind: 'notification', message: obj as unknown as JsonRpcNotification };
   }
   return { kind: 'request', message: obj as unknown as JsonRpcRequest };
