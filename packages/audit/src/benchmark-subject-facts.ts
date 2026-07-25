@@ -120,7 +120,7 @@ type Callable = ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpressio
 
 interface Reachability {
   readonly calls: ReadonlySet<string>;
-  readonly strings: ReadonlySet<string>;
+  readonly emittedResultKeys: ReadonlySet<string>;
   readonly hasExecutableBody: boolean;
 }
 
@@ -253,8 +253,43 @@ function reachableFrom(ast: ts.SourceFile, root: Callable, collectorMode: boolea
   const functions = localCallables(ast);
   const visitedFunctions = new Set<Callable>();
   const calls = new Set<string>();
-  const strings = new Set<string>();
+  const emittedResultKeys = new Set<string>();
+  const stringConstants = new Map<string, string>();
+  const collectConstant = (node: ts.Node): void => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.initializer !== undefined &&
+      (ts.isStringLiteral(node.initializer) || ts.isNoSubstitutionTemplateLiteral(node.initializer))
+    ) {
+      stringConstants.set(node.name.text, node.initializer.text);
+    }
+    ts.forEachChild(node, collectConstant);
+  };
+  collectConstant(ast);
   let hasExecutableBody = false;
+
+  const staticString = (node: ts.Node | undefined): string | undefined => {
+    if (node === undefined) return undefined;
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+    if (ts.isIdentifier(node)) return stringConstants.get(node.text);
+    return undefined;
+  };
+
+  const staticPropertyName = (node: ts.PropertyName): string | undefined => {
+    if (ts.isIdentifier(node)) return node.text;
+    return staticString(node);
+  };
+
+  const contributesToReturn = (node: ts.Node, owner: Callable): boolean => {
+    if (ts.isArrowFunction(owner) && !ts.isBlock(owner.body)) return true;
+    let current: ts.Node | undefined = node;
+    while (current !== undefined && current !== owner) {
+      if (ts.isReturnStatement(current)) return true;
+      current = current.parent;
+    }
+    return false;
+  };
 
   const visitCallable = (callable: Callable): void => {
     if (visitedFunctions.has(callable)) return;
@@ -283,7 +318,14 @@ function reachableFrom(ast: ts.SourceFile, root: Callable, collectorMode: boolea
       }
       return;
     }
-    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) strings.add(node.text);
+    if (collectorMode && ts.isPropertyAssignment(node) && contributesToReturn(node, owner)) {
+      const propertyName = staticPropertyName(node.name);
+      if (propertyName !== undefined) emittedResultKeys.add(propertyName);
+      if (propertyName === 'key' || propertyName === 'path' || propertyName === 'label') {
+        const value = staticString(node.initializer);
+        if (value !== undefined) emittedResultKeys.add(value);
+      }
+    }
     if (ts.isCallExpression(node)) {
       const call = calleeText(node.expression, ast);
       calls.add(call);
@@ -303,7 +345,7 @@ function reachableFrom(ast: ts.SourceFile, root: Callable, collectorMode: boolea
   };
 
   visitCallable(root);
-  return { calls, strings, hasExecutableBody };
+  return { calls, emittedResultKeys, hasExecutableBody };
 }
 
 function exportedCallable(ast: ts.SourceFile, name: string): Callable | null {
@@ -361,6 +403,9 @@ function moduleProvenance(ast: ts.SourceFile): ReadonlyMap<string, ModuleProvena
       };
     }
     if (ts.isCallExpression(expression)) {
+      if (ts.isArrowFunction(expression.expression) || ts.isFunctionExpression(expression.expression)) {
+        return resolveExpression(expression.expression);
+      }
       const callee = resolveExpression(expression.expression);
       if (callee === null) return null;
       return { specifier: callee.specifier, symbol: `${callee.symbol}()` };
@@ -439,9 +484,7 @@ function moduleOriginMatches(subject: BenchSubject, ast: ts.SourceFile): boolean
   if (provenance === undefined || provenance.specifier !== subject.origin.specifier) return false;
   const resolved = [provenance.symbol, ...properties].filter((part) => part.length > 0).join('.');
   const expected = subject.symbol;
-  if (resolved.replace(/\(\)/gu, '') === expected.replace(/\(\)/gu, '')) return true;
-  const rootOf = (value: string): string => value.split(/[.(]/u)[0] ?? '';
-  return rootOf(resolved) === rootOf(expected) && normalizedTerminal(resolved) === normalizedTerminal(expected);
+  return resolved.replace(/\(\)/gu, '') === expected.replace(/\(\)/gu, '');
 }
 
 function originMatches(subject: BenchSubject, executionFile: string, ast: ts.SourceFile): boolean {
@@ -558,7 +601,7 @@ export function qualifyBenchDistribution(
   }
 
   const reachability = reachableFrom(executionAst, root, collectorMode);
-  if (execution.kind === 'collector' && !reachability.strings.has(execution.resultKey)) {
+  if (execution.kind === 'collector' && !reachability.emittedResultKeys.has(execution.resultKey)) {
     issues.push({
       kind: 'missing-result-key',
       name: distribution.name,

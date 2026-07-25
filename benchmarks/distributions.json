@@ -167,7 +167,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.compute",
+          "symbol": "Compositor.create().compute",
           "binding": "compositor.compute"
         }
       ]
@@ -401,7 +401,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "ComposableWorld.spawn",
+          "symbol": "ComposableWorld.make().spawn",
           "binding": "scopedComposableWorld.spawn"
         }
       ]
@@ -437,7 +437,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "ComposableWorld.spawn",
+          "symbol": "ComposableWorld.make().spawn",
           "binding": "scopedComposableWorld.spawn"
         },
         {
@@ -446,7 +446,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "ComposableWorld.evaluate",
+          "symbol": "ComposableWorld.make().evaluate",
           "binding": "scopedComposableWorld.evaluate"
         }
       ]
@@ -680,7 +680,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "ComposableWorld.spawn",
+          "symbol": "ComposableWorld.make().spawn",
           "binding": "scopedComposableWorld.spawn"
         },
         {
@@ -689,7 +689,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "ComposableWorld.query",
+          "symbol": "ComposableWorld.make().query",
           "binding": "scopedComposableWorld.query"
         }
       ]
@@ -941,7 +941,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Scheduler.schedule",
+          "symbol": "Scheduler.fixedStep().schedule",
           "binding": "sched.schedule"
         },
         {
@@ -950,7 +950,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Scheduler.step",
+          "symbol": "Scheduler.fixedStep().step",
           "binding": "sched.step"
         }
       ]
@@ -986,7 +986,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "VideoRenderer.frames",
+          "symbol": "VideoRenderer.make().frames",
           "binding": "renderer.frames"
         }
       ]
@@ -1022,7 +1022,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "VideoRenderer.frames",
+          "symbol": "VideoRenderer.make().frames",
           "binding": "renderer.frames"
         }
       ]
@@ -1049,7 +1049,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.compute",
+          "symbol": "Compositor.create().compute",
           "binding": "c.compute"
         }
       ]
@@ -1067,7 +1067,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.compute",
+          "symbol": "Compositor.create().compute",
           "binding": "blendTreeCompositor.compute"
         }
       ]
@@ -1301,7 +1301,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.compute",
+          "symbol": "Compositor.create().compute",
           "binding": "emptyCompositor.compute"
         }
       ]
@@ -1589,7 +1589,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Compositor.compute",
+          "symbol": "Compositor.create().compute",
           "binding": "compositor.compute"
         }
       ],

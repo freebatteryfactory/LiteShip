@@ -508,22 +508,31 @@ function churningReferenceOp(): () => void {
 }
 
 /** The two governed hot paths — each measured against the shared LIVE budget. */
+const TOKEN_BUFFER_RESULT_KEY = 'core/token-buffer push+drainInto';
+const COMPOSITOR_RESULT_KEY = 'core/compositor compute (selective recompute)';
+
 export function runAllocGate(): readonly AllocResult[] {
   return [
-    measureLiveBytesPerOp(
-      'core/token-buffer push+drainInto',
-      ALLOC_BATCHES,
-      ALLOC_OPS_PER_BATCH,
-      ALLOC_BUDGET_BYTES_PER_OP,
-      tokenBufferOp(),
-    ),
-    measureLiveBytesPerOp(
-      'core/compositor compute (selective recompute)',
-      ALLOC_BATCHES,
-      ALLOC_OPS_PER_BATCH,
-      ALLOC_BUDGET_BYTES_PER_OP,
-      compositorOp(),
-    ),
+    {
+      ...measureLiveBytesPerOp(
+        TOKEN_BUFFER_RESULT_KEY,
+        ALLOC_BATCHES,
+        ALLOC_OPS_PER_BATCH,
+        ALLOC_BUDGET_BYTES_PER_OP,
+        tokenBufferOp(),
+      ),
+      label: TOKEN_BUFFER_RESULT_KEY,
+    },
+    {
+      ...measureLiveBytesPerOp(
+        COMPOSITOR_RESULT_KEY,
+        ALLOC_BATCHES,
+        ALLOC_OPS_PER_BATCH,
+        ALLOC_BUDGET_BYTES_PER_OP,
+        compositorOp(),
+      ),
+      label: COMPOSITOR_RESULT_KEY,
+    },
   ];
 }
 

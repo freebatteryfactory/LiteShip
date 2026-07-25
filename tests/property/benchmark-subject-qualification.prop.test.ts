@@ -147,10 +147,23 @@ describe('benchmark subject qualification properties', () => {
       registration('() => compositor.compute()'),
     ].join('\n');
     const subject = moduleSubject({
-      symbol: 'Compositor.compute',
+      symbol: 'Compositor.create().compute',
       binding: 'compositor.compute',
     });
     expect(qualify(source, distribution([subject])).issues).toEqual([]);
+  });
+
+  it('refuses a same-root/same-terminal subject with a different member chain', () => {
+    const source = [
+      "import { Factory } from '@liteship/core/authoring';",
+      'const instance = Factory.safe().build();',
+      registration('() => instance.run()'),
+    ].join('\n');
+    const subject = moduleSubject({
+      symbol: 'Factory.unsafe().build().run',
+      binding: 'instance.run',
+    });
+    expect(issueKinds(source, distribution([subject]))).toContain('wrong-origin');
   });
 
   it('does not treat an uninvoked helper containing the SUT call as callback reachability', () => {
@@ -211,6 +224,25 @@ describe('benchmark subject qualification properties', () => {
       resultKey: 'boundary.bytesPerOp',
     });
     expect(issueKinds(source, value, collector)).toEqual(['missing-result-key', 'uninvoked-subject']);
+  });
+
+  it('does not accept a collector result key merely because reachable code mentions its string', () => {
+    const source = registration('() => 0');
+    const collector = [
+      "import { Boundary } from '@liteship/core/authoring';",
+      'export function collectSubject() {',
+      "  void 'boundary.bytesPerOp';",
+      '  Boundary.evaluate({} as never, 1);',
+      "  return { 'other.key': 4 };",
+      '}',
+    ].join('\n');
+    const value = distribution([moduleSubject()], {
+      kind: 'collector',
+      file: COLLECTOR_FILE,
+      export: 'collectSubject',
+      resultKey: 'boundary.bytesPerOp',
+    });
+    expect(issueKinds(source, value, collector)).toEqual(['missing-result-key']);
   });
 
   it('refuses ambiguous duplicate registrations instead of choosing a convenient callback', () => {
