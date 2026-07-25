@@ -1101,91 +1101,43 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
   });
 });
 
-// ───────────── FINDING 3 — the LIVE 17 sign-offs convert vs the snapshot birth ───────────
+// ───────────── CURRENT BASE AUTHORITY — no historical sign-off genealogy ─────────────
 //
-// The ground-truth proof: diffing the LIVE surface vs the snapshot's REAL birth commit
-// (the intro commit, resolved by the REAL git seam) yields EXACTLY 17 weakenings, and the
-// committed 17 owner sign-offs convert ALL of them to signed (zero unsigned). An 18th,
-// unsigned fake skip BLOCKS. This is the real-repo cut-gate proof, not a hermetic stub.
-describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth weakenings (and an 18th blocks)', () => {
-  /**
-   * Resolve the snapshot's real introduction commit over the LIVE git history (via the
-   * canonical spawn helper — no `node:child_process` import), then read the birth snapshot's
-   * elements at it. Returns undefined if the birth commit is not reachable in this checkout.
-   */
-  async function realBirthElements(): Promise<readonly StandardsElement[] | undefined> {
-    // A SHALLOW checkout (the platform smoke runners use a default depth-1 clone) cannot
-    // reach the snapshot's real introduction commit: `git log --diff-filter=A` mis-reports
-    // the shallow BOUNDARY commit as the "birth" (git cannot see before the boundary, so the
-    // file looks newly-added there) — a wrong, recent baseline, not undefined. This real-repo
-    // invariant is OS-independent, so it runs authoritatively on the full-history runner
-    // (truth-linux, fetch-depth:0) and skips cleanly when the clone is shallow.
-    const shallow = await spawnArgvCapture('git', ['rev-parse', '--is-shallow-repository'], {
-      cwd: REPO_ROOT,
+// Birth is a bootstrap fallback only when the selected base predates the snapshot. Once
+// the base carries a snapshot, that exact base is the review authority. Sign-offs therefore
+// govern live-vs-base changes, not every change since the file's first-ever commit. The
+// hermetic bootstrap and same-commit attack suites above retain the no-laundering proof.
+describe('current base authority supersedes bootstrap history', () => {
+  test('a present base snapshot is selected without consulting snapshot-birth history', () => {
+    let introLookupCount = 0;
+    const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
+      gitShow: committedBaseGitShow,
+      gitIntroCommit: () => {
+        introLookupCount += 1;
+        return 'a'.repeat(40);
+      },
     });
-    if (shallow.exitCode !== 0 || shallow.stdout.trim() === 'true') return undefined;
-    const res = await spawnArgvCapture(
-      'git',
-      ['log', '--diff-filter=A', '--format=%H', '--reverse', '--', STANDARDS_SNAPSHOT_PATH],
-      { cwd: REPO_ROOT },
-    );
-    if (res.exitCode !== 0) return undefined;
-    const introCommit =
-      res.stdout
-        .split('\n')
-        .map((l) => l.trim())
-        .find((l) => l !== '') ?? '';
-    if (introCommit === '') return undefined;
-    const birthRaw = defaultGitShow(REPO_ROOT, introCommit, STANDARDS_SNAPSHOT_PATH);
-    if (birthRaw === undefined) return undefined;
-    return JSON.parse(birthRaw).elements as readonly StandardsElement[];
-  }
-
-  test('the 17 committed sign-offs convert every live-vs-birth weakening to signed (zero unsigned)', async () => {
-    const birth = await realBirthElements();
-    if (birth === undefined) {
-      expect(birth, 'the birth commit is not reachable in this checkout').toBeUndefined();
-    } else {
-      const live = readLiveStandardsSurface(REPO_ROOT, NOW);
-      const signoffs = readStandardsWaivers(REPO_ROOT);
-      const changes = diffStandardsSurface(birth, live.elements);
-      const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
-      // THE portable safety property — every live-vs-birth weakening is signed (the test's namesake),
-      // and no sign-off is forbidden or expired. Holds on a feature branch (17 weakenings, all signed) AND
-      // on post-squash main (0 weakenings — birth == live — vacuously zero unsigned).
-      expect(part.unsignedWeakenings).toEqual([]);
-      expect(part.forbiddenSignoffs).toEqual([]);
-      expect(part.expiredSignoffs).toEqual([]);
-      // We deliberately do NOT assert `signedWeakenings.length === signoffs.length` ("every sign-off is
-      // load-bearing"). That equality only holds against a PRE-erosion baseline (a feature branch where
-      // birth predates the skips); after a squash to main the snapshot's birth already CONTAINS the skips,
-      // so the bootstrap sign-offs are legitimately orphaned vs birth (birth == live → 0 weakenings), and
-      // a later VALID standards change (a strengthening gate, a newly-signed weakening) would re-red it
-      // though nothing is wrong (codex PR#58 review — my first `changes.length > 0` guard was too broad).
-      // And `signedWeakenings ⊆ signoffs` ALWAYS, so the equality can never CATCH a bug, only false-red —
-      // orphan sign-offs are the standards:gate base-ref diff's job, not this birth test's.
-    }
+    const facts = activeFacts(result);
+    expect(introLookupCount).toBe(0);
+    expect(facts.unsignedWeakenings).toEqual([]);
+    expect(facts.forbiddenSignoffs).toEqual([]);
+    expect(facts.expiredSignoffs).toEqual([]);
   });
 
-  test('an 18th UNSIGNED fake skip (a probe) BLOCKS vs the birth baseline (the no-grandfather floor)', async () => {
-    const birth = await realBirthElements();
-    if (birth === undefined) {
-      expect(birth, 'the birth commit is not reachable in this checkout').toBeUndefined();
-    } else {
-      const live = [...readLiveStandardsSurface(REPO_ROOT, NOW).elements];
-      const fake18th: StandardsElement = {
-        _tag: 'skip-allowlist',
-        file: 'tests/unit/fake/an-eighteenth-unsigned-skip.test.ts',
-        site: "it.skip('an unsigned capability gate probe', () => {});",
-        capability: 'ffmpeg-absent',
-      };
-      const signoffs = readStandardsWaivers(REPO_ROOT); // the committed 17 — NOT covering the 18th.
-      const changes = diffStandardsSurface(birth, [...live, fake18th]);
-      const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
-      // The 18th is unsigned → blocking; the original 17 are still signed.
-      expect(part.unsignedWeakenings.some((c) => c.elementKey.includes('an-eighteenth-unsigned-skip'))).toBe(true);
-      const ctx = { ...memoryContext({}), standards: { ...part, committedAddress: 'x', liveAddress: 'y' } };
-      expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
-    }
+  test('one new unsigned capability skip still blocks against the selected base snapshot', () => {
+    const committed = readCommittedSnapshot(REPO_ROOT);
+    const fakeSkip: StandardsElement = {
+      _tag: 'skip-allowlist',
+      file: 'tests/unit/fake/new-unsigned-skip.test.ts',
+      site: "it.skip('an unsigned capability gate probe', () => {});",
+      capability: 'ffmpeg-absent',
+    };
+    const changes = diffStandardsSurface(committed.elements, [...committed.elements, fakeSkip]);
+    const part = applyStandardsWaivers(changes, readStandardsWaivers(REPO_ROOT), NOW, ALWAYS_BLOCKING);
+    expect(part.unsignedWeakenings.map((change) => change.elementKey)).toContain(
+      "skip-allowlist::tests/unit/fake/new-unsigned-skip.test.ts::it.skip('an unsigned capability gate probe', () => {});",
+    );
+    const ctx = { ...memoryContext({}), standards: { ...part, committedAddress: 'x', liveAddress: 'y' } };
+    expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
   });
 });

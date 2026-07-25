@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:92a71fa1",
+  "address": "fnv1a:68b071b1",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -226,13 +226,67 @@
     },
     {
       "_tag": "floor",
+      "name": "complexity-class::assets.computeWaveform",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::assets.detectBeats",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::assets.detectOnsets",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::assets.walkRiff",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
       "name": "complexity-class::boundary.evaluateBatch",
       "value": 2,
       "direction": "lower-is-stronger"
     },
     {
       "_tag": "floor",
+      "name": "complexity-class::canonical.decode",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::canonical.encode",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
       "name": "complexity-class::contentAddress.of",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::gauntlet.runGates",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::genui.renderHash",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::genui.validate",
       "value": 2,
       "direction": "lower-is-stronger"
     },
