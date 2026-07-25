@@ -14,6 +14,7 @@ import {
   Easing,
   Token,
   defineToken,
+  defineTheme,
   defineStyle,
   Signal,
   createSignal,
@@ -98,6 +99,61 @@ describe('defineToken value-key validation', () => {
     expect(token.values).toEqual({});
     expect(token.fallback).toBe('8px');
     expect(Token.tap(token, {})).toBe('8px');
+  });
+
+  test('an explicitly authored null is a value, not a fallback miss', () => {
+    const token = defineToken({
+      name: 'optional-shadow',
+      category: 'shadow',
+      axes: ['mode'] as const,
+      values: { none: null },
+      fallback: '0 1px 2px black',
+    });
+
+    expect(Token.tap(token, { mode: 'none' })).toBeNull();
+  });
+
+  test('snapshots nested values, axes, and fallback before addressing', () => {
+    const axes = ['mode'] as ['mode'];
+    const values = { calm: { color: 'blue', stops: [0, 1] } };
+    const fallback = { color: 'gray', stops: [0] };
+    const token = defineToken({ name: 'surface', category: 'color', axes, values, fallback });
+    const id = token.id;
+
+    axes[0] = 'changed';
+    values.calm.color = 'red';
+    values.calm.stops.push(2);
+    fallback.color = 'black';
+
+    expect(token.id).toBe(id);
+    expect(token.axes).toEqual(['mode']);
+    expect(token.values).toEqual({ calm: { color: 'blue', stops: [0, 1] } });
+    expect(token.fallback).toEqual({ color: 'gray', stops: [0] });
+    expect(Object.isFrozen(token.values)).toBe(true);
+    expect(Object.isFrozen((token.values['calm'] as { stops: readonly number[] }).stops)).toBe(true);
+  });
+});
+
+describe('defineTheme ownership', () => {
+  test('snapshots variants, token maps, and metadata before addressing', () => {
+    const variants = ['light', 'dark'] as ['light', 'dark'];
+    const tokens = { surface: { light: { color: 'white' }, dark: { color: 'black' } } };
+    const meta = {
+      light: { label: 'Light', mode: 'light' as const },
+      dark: { label: 'Dark', mode: 'dark' as const },
+    };
+    const theme = defineTheme({ name: 'owned', variants, tokens, meta });
+    const id = theme.id;
+
+    variants[0] = 'dark';
+    tokens.surface.light.color = 'pink';
+    meta.light.label = 'Changed';
+
+    expect(theme.id).toBe(id);
+    expect(theme.variants).toEqual(['light', 'dark']);
+    expect(theme.tokens.surface?.light).toEqual({ color: 'white' });
+    expect(theme.meta?.light?.label).toBe('Light');
+    expect(Object.isFrozen(theme.tokens.surface?.light)).toBe(true);
   });
 });
 

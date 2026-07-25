@@ -12,6 +12,7 @@ import { CanonicalCbor } from '../schema/cbor.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
 import { ValidationError } from '@liteship/error';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 
 /** Design-system category of a {@link Token} — governs compilation strategy and CSS property prefix. */
 export type TokenCategory = 'color' | 'spacing' | 'typography' | 'shadow' | 'radius' | 'animation' | 'effect';
@@ -86,7 +87,7 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
       message: `Token "${token.name}": no value for key "${key}" — known keys: [${Object.keys(token.values).join(', ')}]; returning fallback.`,
     });
   }
-  return (token.values[key] ?? token.fallback) as T;
+  return (Object.hasOwn(token.values, key) ? token.values[key] : token.fallback) as T;
 }
 
 /**
@@ -197,9 +198,9 @@ export function defineToken<N extends string, const A extends readonly [string, 
     if (simple.name === '') {
       throw ValidationError('defineToken', 'Token name must not be empty.');
     }
-    const axes = [] as unknown as A;
-    const values = {};
-    const fallback = simple.value;
+    const axes = Object.freeze([]) as unknown as A;
+    const values = snapshotDefinitionValue({}) as Record<string, unknown>;
+    const fallback = snapshotDefinitionValue(simple.value);
     const id = deterministicId(simple.name, simple.category, axes, values, fallback);
     return Object.freeze({
       _tag: 'TokenDef' as const,
@@ -224,7 +225,7 @@ export function defineToken<N extends string, const A extends readonly [string, 
   if (full.name === '') {
     throw ValidationError('defineToken', 'Token name must not be empty.');
   }
-  const axes = (full.axes ?? ['default']) as A;
+  const axes = snapshotDefinitionValue([...(full.axes ?? ['default'])]) as unknown as A;
   const seen = new Set<string>();
   for (const axis of axes) {
     if (seen.has(axis)) {
@@ -245,9 +246,10 @@ export function defineToken<N extends string, const A extends readonly [string, 
     }
   }
 
+  const values = snapshotDefinitionValue(full.values) as Record<string, unknown>;
   let fallback = full.fallback;
   if (!('fallback' in full)) {
-    if (!('default' in full.values)) {
+    if (!Object.hasOwn(full.values, 'default')) {
       throw ValidationError(
         'defineToken',
         'fallback omitted and values has no "default" key — add values.default or pass fallback explicitly.',
@@ -256,7 +258,8 @@ export function defineToken<N extends string, const A extends readonly [string, 
     fallback = full.values['default'];
   }
 
-  const id = deterministicId(full.name, full.category, axes, full.values, fallback);
+  const fallbackSnapshot = snapshotDefinitionValue(fallback);
+  const id = deterministicId(full.name, full.category, axes, values, fallbackSnapshot);
 
   return Object.freeze({
     _tag: 'TokenDef' as const,
@@ -265,8 +268,8 @@ export function defineToken<N extends string, const A extends readonly [string, 
     name: full.name,
     category: full.category,
     axes,
-    values: full.values,
-    fallback,
+    values,
+    fallback: fallbackSnapshot,
     cssProperty: `--liteship-${full.name}` as const,
   });
 }

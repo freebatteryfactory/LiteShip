@@ -11,6 +11,7 @@ import type { ContentAddress } from '../schema/brands.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
 import { ValidationError } from '@liteship/error';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 
 interface ThemeDef<V extends readonly string[] = readonly string[]> {
   readonly _tag: 'ThemeDef';
@@ -112,8 +113,11 @@ export function defineTheme<const V extends readonly [string, ...string[]]>(conf
   readonly tokens: Record<string, Record<V[number] & string, unknown>>;
   readonly meta?: ThemeDef<V>['meta'];
 }): ThemeDef<V> {
-  const variantSet = new Set(config.variants as readonly string[]);
-  for (const [tokenName, variantMap] of Object.entries(config.tokens)) {
+  const variants = snapshotDefinitionValue([...config.variants]) as unknown as V;
+  const tokens = snapshotDefinitionValue(config.tokens) as ThemeDef<V>['tokens'];
+  const meta = config.meta === undefined ? undefined : (snapshotDefinitionValue(config.meta) as ThemeDef<V>['meta']);
+  const variantSet = new Set(variants as readonly string[]);
+  for (const [tokenName, variantMap] of Object.entries(tokens)) {
     for (const variant of variantSet) {
       if (!(variant in variantMap)) {
         throw ValidationError('defineTheme', `Token "${tokenName}" is missing value for variant "${variant}"`);
@@ -121,16 +125,16 @@ export function defineTheme<const V extends readonly [string, ...string[]]>(conf
     }
   }
 
-  const id = deterministicId<V>(config.name, config.variants, config.tokens, config.meta);
+  const id = deterministicId<V>(config.name, variants, tokens, meta);
 
   return Object.freeze({
     _tag: 'ThemeDef' as const,
     _version: 1 as const,
     id,
     name: config.name,
-    variants: config.variants,
-    tokens: config.tokens,
-    ...(config.meta !== undefined ? { meta: config.meta } : {}),
+    variants,
+    tokens,
+    ...(meta !== undefined ? { meta } : {}),
   });
 }
 
