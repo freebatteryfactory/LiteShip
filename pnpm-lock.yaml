@@ -66,6 +66,9 @@ importers:
       '@liteship/gauntlet':
         specifier: workspace:*
         version: link:packages/gauntlet
+      '@liteship/genui':
+        specifier: workspace:*
+        version: link:packages/genui
       '@liteship/quantizer':
         specifier: workspace:*
         version: link:packages/quantizer

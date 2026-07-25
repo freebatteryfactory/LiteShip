@@ -137,6 +137,12 @@ export interface ComplexityMapEntry {
   readonly fittedSlope: number;
   /** The fit's R² — recorded so a reader can see the linear fit's quality. */
   readonly fittedR2: number;
+  /** Measurement regime used to produce the curve. */
+  readonly measurement?: {
+    readonly innerIterations: number;
+    readonly replicates: number;
+    readonly warmupIterations: number;
+  };
 }
 
 /** The committed complexity-map artifact. */
@@ -315,6 +321,11 @@ export interface ComplexityProbe {
   readonly shape: string;
   /** The input sizes to sweep (ascending; >= 2 distinct positive sizes). */
   readonly sizes: readonly number[];
+  readonly measurement?: {
+    readonly innerIterations: number;
+    readonly replicates: number;
+    readonly warmupIterations: number;
+  };
   /**
    * Build the workload for a given input size. Returns a thunk that performs ONE
    * unit of the hot path's work at that size — called repeatedly per measurement.
@@ -359,9 +370,9 @@ export function measureComplexityCurve(
     readonly clock?: Clock;
   } = {},
 ): ComplexityCurve {
-  const innerIterations = options.innerIterations ?? 200;
-  const replicates = options.replicates ?? 7;
-  const warmupIterations = options.warmupIterations ?? 50;
+  const innerIterations = options.innerIterations ?? probe.measurement?.innerIterations ?? 200;
+  const replicates = options.replicates ?? probe.measurement?.replicates ?? 7;
+  const warmupIterations = options.warmupIterations ?? probe.measurement?.warmupIterations ?? 50;
   const clock = options.clock ?? systemClock;
 
   const samples: ComplexitySample[] = [];

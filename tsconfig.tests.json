@@ -130,6 +130,16 @@
     // script (no second oracle / corpus / law), so a drift fails the typecheck.
     "tests/support/reactive-conformance.ts",
     "tests/property/reactive-conformance.prop.test.ts",
+    // Wave 5 generated-UI assurance: shared valid/invalid generators, the
+    // validator decision table, fuzz/property campaigns, and benchmark subject
+    // all consume the public @liteship/genui contracts. Typecheck the packet so
+    // fixture or catalog drift fails before the runtime campaigns execute.
+    "tests/support/genui-fixtures.ts",
+    "tests/property/genui-tree.prop.test.ts",
+    "tests/fuzz/genui-tree-fuzz.test.ts",
+    "tests/unit/genui/validation-fault-simulation.test.ts",
+    "tests/unit/genui/validation-mcdc.test.ts",
+    "tests/bench/genui.bench.ts",
     // The transition-conformance gate RUNNER proof (green over the native transports + red on
     // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
     // gate script does, so a runner/law drift fails the typecheck.

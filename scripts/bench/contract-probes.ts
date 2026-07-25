@@ -32,6 +32,7 @@
 
 import { Boundary, contentAddressOf, defineBoundary } from '@liteship/core';
 import { CanonicalCbor, decode as decodeCanonicalCbor } from '@liteship/canonical';
+import { defineComponentCatalog, renderHash, validateGeneratedUITree, type GeneratedUINode } from '@liteship/genui';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
@@ -88,6 +89,43 @@ function buildCanonicalDecodeOfSize(elementCount: number): () => void {
   };
 }
 
+const GENUI_PROBE_CATALOG = defineComponentCatalog({
+  version: 'complexity-v1',
+  components: {
+    Root: {
+      props: { title: { type: 'string', required: true } },
+      children: 'optional',
+      allowedChildNames: ['Text'],
+    },
+    Text: { props: { text: { type: 'string', required: true } }, children: 'none' },
+  },
+});
+
+function buildGenuiProbeTree(nodeCount: number): GeneratedUINode {
+  return {
+    name: 'Root',
+    props: { title: 'complexity' },
+    children: Array.from({ length: nodeCount - 1 }, (_, index) => ({
+      name: 'Text',
+      props: { text: `leaf-${index}` },
+    })),
+  };
+}
+
+function buildGenuiValidationOfSize(nodeCount: number): () => void {
+  const tree = buildGenuiProbeTree(nodeCount);
+  return (): void => {
+    void validateGeneratedUITree(tree, GENUI_PROBE_CATALOG);
+  };
+}
+
+function buildGenuiRenderHashOfSize(nodeCount: number): () => void {
+  const tree = buildGenuiProbeTree(nodeCount);
+  return (): void => {
+    void renderHash(tree, GENUI_PROBE_CATALOG);
+  };
+}
+
 /** The boundary-evaluator batch hot path — O(n) in value count. */
 export const boundaryEvaluateProbe: ComplexityProbe = {
   path: 'boundary.evaluateBatch',
@@ -127,10 +165,30 @@ export const canonicalDecodeProbe: ComplexityProbe = {
   workloadFor: buildCanonicalDecodeOfSize,
 };
 
+export const genuiValidationProbe: ComplexityProbe = {
+  path: 'genui.validate',
+  describe: 'validateGeneratedUITree — one structural visit per generated node; O(n) in node count.',
+  shape: 'generated-ui-nodes',
+  sizes: [32, 128, 512, 2048, 8192],
+  measurement: { innerIterations: 25, replicates: 5, warmupIterations: 10 },
+  workloadFor: buildGenuiValidationOfSize,
+};
+
+export const genuiRenderHashProbe: ComplexityProbe = {
+  path: 'genui.renderHash',
+  describe: 'renderHash — canonical encoding and hashing of one generated tree; O(n) in node count.',
+  shape: 'generated-ui-nodes',
+  sizes: [32, 128, 512, 2048, 8192],
+  measurement: { innerIterations: 8, replicates: 5, warmupIterations: 5 },
+  workloadFor: buildGenuiRenderHashOfSize,
+};
+
 /** Every complexity probe the contract layer measures + maps. */
 export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   boundaryEvaluateProbe,
   contentAddressProbe,
   canonicalEncodeProbe,
   canonicalDecodeProbe,
+  genuiValidationProbe,
+  genuiRenderHashProbe,
 ];

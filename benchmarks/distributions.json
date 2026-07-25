@@ -1716,6 +1716,36 @@
         "export": "collectCanonicalDecodeAllocationCurve",
         "resultKey": "canonical.decode.retainedAllocation"
       }
+    },
+    {
+      "name": "genui validate -- 1024 nodes",
+      "file": "tests/bench/genui.bench.ts",
+      "inputSize": 1024,
+      "shape": "generated-ui-nodes",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/genui" },
+          "symbol": "validateGeneratedUITree",
+          "binding": "validateGeneratedUITree"
+        }
+      ]
+    },
+    {
+      "name": "genui renderHash -- 1024 nodes",
+      "file": "tests/bench/genui.bench.ts",
+      "inputSize": 1024,
+      "shape": "generated-ui-nodes",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/genui" },
+          "symbol": "renderHash",
+          "binding": "renderHash"
+        }
+      ]
     }
   ]
 }

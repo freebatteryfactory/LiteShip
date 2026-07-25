@@ -7,8 +7,13 @@
       "shape": "batch-values",
       "sizes": [256, 1024, 4096, 16384, 65536],
       "class": "O(n)",
-      "fittedSlope": 1.0029,
-      "fittedR2": 0.9993
+      "fittedSlope": 0.9701,
+      "fittedR2": 0.9988,
+      "measurement": {
+        "innerIterations": 200,
+        "replicates": 7,
+        "warmupIterations": 50
+      }
     },
     {
       "path": "contentAddress.of",
@@ -16,8 +21,13 @@
       "shape": "address-elements",
       "sizes": [8, 32, 128, 512, 2048],
       "class": "O(n)",
-      "fittedSlope": 0.9736,
-      "fittedR2": 0.9985
+      "fittedSlope": 0.9573,
+      "fittedR2": 0.9972,
+      "measurement": {
+        "innerIterations": 200,
+        "replicates": 7,
+        "warmupIterations": 50
+      }
     },
     {
       "path": "canonical.encode",
@@ -25,8 +35,13 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0565,
-      "fittedR2": 0.9994
+      "fittedSlope": 1.0536,
+      "fittedR2": 0.9995,
+      "measurement": {
+        "innerIterations": 200,
+        "replicates": 7,
+        "warmupIterations": 50
+      }
     },
     {
       "path": "canonical.decode",
@@ -34,8 +49,41 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0537,
-      "fittedR2": 0.9894
+      "fittedSlope": 1.0545,
+      "fittedR2": 0.9895,
+      "measurement": {
+        "innerIterations": 200,
+        "replicates": 7,
+        "warmupIterations": 50
+      }
+    },
+    {
+      "path": "genui.validate",
+      "describe": "validateGeneratedUITree — one structural visit per generated node; O(n) in node count.",
+      "shape": "generated-ui-nodes",
+      "sizes": [32, 128, 512, 2048, 8192],
+      "class": "O(n)",
+      "fittedSlope": 0.8402,
+      "fittedR2": 0.9818,
+      "measurement": {
+        "innerIterations": 25,
+        "replicates": 5,
+        "warmupIterations": 10
+      }
+    },
+    {
+      "path": "genui.renderHash",
+      "describe": "renderHash — canonical encoding and hashing of one generated tree; O(n) in node count.",
+      "shape": "generated-ui-nodes",
+      "sizes": [32, 128, 512, 2048, 8192],
+      "class": "O(n)",
+      "fittedSlope": 1.0268,
+      "fittedR2": 0.9999,
+      "measurement": {
+        "innerIterations": 8,
+        "replicates": 5,
+        "warmupIterations": 5
+      }
     }
   ]
 }

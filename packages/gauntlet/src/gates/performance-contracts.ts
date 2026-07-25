@@ -71,6 +71,8 @@ export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityCla
   'contentAddress.of': 'O(n)',
   'canonical.encode': 'O(n)',
   'canonical.decode': 'O(n)',
+  'genui.validate': 'O(n)',
+  'genui.renderHash': 'O(n)',
 };
 
 /** Accepted retained-allocation growth for public semantic kernels. */
