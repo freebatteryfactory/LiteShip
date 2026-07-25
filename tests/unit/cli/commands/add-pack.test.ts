@@ -13,6 +13,8 @@ import { scaledTimeout } from '../../../../vitest.shared.js';
 import { packInWorkspace } from '../../../support/pack.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..', '..');
+const FLEET_VERSION = (JSON.parse(readFileSync(resolve(REPO, 'package.json'), 'utf8')) as { readonly version: string })
+  .version;
 
 /** Extract one short-path regular file from a pnpm package tarball. */
 function extractEntry(tgz: Uint8Array, wantPath: string): Uint8Array | undefined {
@@ -43,6 +45,7 @@ describe('packed @liteship/cli fragments', () => {
         const bytes = new Uint8Array(readFileSync(tarball));
         const template = extractEntry(bytes, 'package/fragments/template/default/package.json');
         const example = extractEntry(bytes, 'package/fragments/example/07-stagger-reveal/stagger-preset.ts');
+        const showcaseManifest = extractEntry(bytes, 'package/fragments/example/showcase/package.json');
 
         expect(template).toEqual(
           new Uint8Array(readFileSync(resolve(REPO, 'packages/create-liteship/templates/default/package.json'))),
@@ -50,6 +53,11 @@ describe('packed @liteship/cli fragments', () => {
         expect(example).toEqual(
           new Uint8Array(readFileSync(resolve(REPO, 'examples/07-stagger-reveal/stagger-preset.ts'))),
         );
+        const parsed = JSON.parse(new TextDecoder().decode(showcaseManifest)) as {
+          readonly dependencies: Readonly<Record<string, string>>;
+        };
+        expect(Object.values(parsed.dependencies)).not.toContain('workspace:*');
+        expect(parsed.dependencies['@liteship/core']).toBe(FLEET_VERSION);
       } finally {
         rmSync(scratch, { recursive: true, force: true });
       }

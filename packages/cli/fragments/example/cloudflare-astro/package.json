@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.0.0",
-    "@liteship/astro": "workspace:*",
-    "@liteship/cloudflare": "workspace:*",
-    "@liteship/core": "workspace:*",
-    "@liteship/edge": "workspace:*",
-    "@liteship/vite": "workspace:*",
+    "@liteship/astro": "0.20.0",
+    "@liteship/cloudflare": "0.20.0",
+    "@liteship/core": "0.20.0",
+    "@liteship/edge": "0.20.0",
+    "@liteship/vite": "0.20.0",
     "astro": "^7.1.0"
   },
   "devDependencies": {

@@ -18,7 +18,7 @@
  * @module
  */
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectExecution, walkAllFiles, walkTrackedFiles } from './audit/shared.js';
@@ -61,6 +61,7 @@ const ONE_INSTALL_COST_BASELINE_JSON = 'benchmarks/one-install-cost-baseline.jso
 
 export interface CatalogManifest {
   readonly name?: string;
+  readonly version?: string;
   readonly private?: boolean;
   readonly description?: string;
   readonly keywords?: readonly string[];
@@ -83,6 +84,34 @@ export interface CatalogSource {
 export interface CliFragmentProjection {
   readonly source: string;
   readonly destination: string;
+}
+
+const ROOT_MANIFEST = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as CatalogManifest;
+const FLEET_VERSION = ROOT_MANIFEST.version;
+if (FLEET_VERSION === undefined) throw new Error('root package.json must declare the matched LiteShip fleet version');
+const FLEET_PACKAGES = new Set(PACKAGE_CATALOG.map((record) => record.name));
+
+/**
+ * Render one publishable CLI fragment from its authored template/example owner.
+ *
+ * Source-checkout examples correctly use `workspace:*`; an installed copier
+ * cannot. Package manifests therefore receive one deterministic release
+ * projection while every other asset remains byte-identical to its owner.
+ */
+export function renderCliFragmentProjection(projection: CliFragmentProjection): Uint8Array {
+  const source = readFileSync(resolve(REPO_ROOT, projection.source));
+  if (!projection.source.endsWith('/package.json')) return source;
+  const manifest = JSON.parse(Buffer.from(source).toString('utf8')) as Record<string, unknown>;
+  for (const field of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'] as const) {
+    const dependencies = manifest[field];
+    if (typeof dependencies !== 'object' || dependencies === null || Array.isArray(dependencies)) continue;
+    for (const [name, value] of Object.entries(dependencies as Record<string, unknown>)) {
+      if (value === 'workspace:*' && FLEET_PACKAGES.has(name)) {
+        (dependencies as Record<string, unknown>)[name] = FLEET_VERSION;
+      }
+    }
+  }
+  return new TextEncoder().encode(`${JSON.stringify(manifest, null, 2)}\n`);
 }
 
 /**
@@ -351,7 +380,7 @@ export function collectCliFragmentProjectionDrift(
   const drift: CatalogDrift[] = [];
   const expectedPaths = new Set(projections.map((projection) => projection.destination));
   for (const projection of projections) {
-    const expected = readFileSync(resolve(REPO_ROOT, projection.source));
+    const expected = renderCliFragmentProjection(projection);
     const actual = readProjection(projection.destination);
     if (actual === undefined) {
       drift.push({ copy: projection.destination, detail: `missing generated fragment from ${projection.source}` });
@@ -377,7 +406,7 @@ function writeCliFragmentProjections(): number {
   for (const projection of cliFragmentProjections()) {
     const destination = resolve(REPO_ROOT, projection.destination);
     mkdirSync(dirname(destination), { recursive: true });
-    copyFileSync(resolve(REPO_ROOT, projection.source), destination);
+    writeFileSync(destination, renderCliFragmentProjection(projection));
   }
   return cliFragmentProjections().length;
 }

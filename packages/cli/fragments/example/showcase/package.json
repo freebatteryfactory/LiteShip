@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.0.0",
-    "@liteship/core": "workspace:*",
-    "@liteship/astro": "workspace:*",
-    "@liteship/compiler": "workspace:*",
-    "@liteship/edge": "workspace:*",
+    "@liteship/core": "0.20.0",
+    "@liteship/astro": "0.20.0",
+    "@liteship/compiler": "0.20.0",
+    "@liteship/edge": "0.20.0",
     "astro": "^7.1.0",
     "typescript": "^5.7.0"
   }
