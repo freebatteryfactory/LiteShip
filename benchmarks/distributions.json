@@ -1073,6 +1073,42 @@
       ]
     },
     {
+      "name": "Stage exportVideo -- 32 components x 4 frames",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 128,
+      "shape": "frame-component-projections",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/stage"
+          },
+          "symbol": "exportVideo",
+          "binding": "exportVideo"
+        }
+      ]
+    },
+    {
+      "name": "Remotion cssVarsFromState -- 1024 frame outputs",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 1024,
+      "shape": "frame-css-outputs",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/remotion"
+          },
+          "symbol": "cssVarsFromState",
+          "binding": "cssVarsFromState"
+        }
+      ]
+    },
+    {
       "name": "WASM blend_normalize -- 3 weights × 1000",
       "file": "tests/bench/wasm-compute.bench.ts",
       "inputSize": 3000,
@@ -1827,6 +1863,36 @@
         "export": "collectAssetWaveformAllocationCurve",
         "resultKey": "assets.computeWaveform.retainedAllocation"
       }
+    },
+    {
+      "name": "audit detectSkipsAST -- 1024 declarations",
+      "file": "tests/bench/audit.bench.ts",
+      "inputSize": 1024,
+      "shape": "typescript-test-declarations",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/audit" },
+          "symbol": "detectSkipsAST",
+          "binding": "detectSkipsAST"
+        }
+      ]
+    },
+    {
+      "name": "mcp JsonRpcServer.parse -- 128 mixed messages",
+      "file": "tests/bench/mcp-server.bench.ts",
+      "inputSize": 128,
+      "shape": "json-rpc-mixed-batch",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/mcp-server" },
+          "symbol": "JsonRpcServer.parse",
+          "binding": "JsonRpcServer.parse"
+        }
+      ]
     },
     {
       "name": "gauntlet runGates -- 128 qualified gates",

@@ -11,13 +11,15 @@ import {
   sealNode,
   type CellMeta,
   type ComponentNode,
+  type CompositeState,
   type ContentAddress,
   type DocumentGraph,
   type EntityNode,
   type PoseNode,
   type ProjectionNode,
 } from '@liteship/core';
-import { dualExport, exportAstroPage, exportVideo } from '@liteship/stage';
+import { dualExport, exportAstroPage, exportVideo, exportVideoEncoded } from '@liteship/stage';
+import { cssVarsFromState } from '@liteship/remotion';
 
 const timestamp = HLC.increment(HLC.create('stage-property'), 1);
 const meta: CellMeta = { created: timestamp, updated: timestamp, version: 1 };
@@ -135,6 +137,44 @@ describe('@liteship/stage cross-carrier contract', () => {
         );
       }),
       { seed: 0x5eed_1806, numRuns: 80 },
+    );
+  });
+
+  test('encoded frames and their receipt retain authored poses through the public Remotion projection', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 1, max: 4096 }),
+        fc.integer({ min: 1, max: 255 }),
+        async (threshold, mobileSize) => {
+          const desktopSize = mobileSize + 1;
+          const graph = graphFor(threshold, mobileSize, desktopSize);
+          let observedFrames: readonly CompositeState[] = [];
+          const result = await exportVideoEncoded(graph, async (frames) => {
+            observedFrames = frames;
+            return {
+              bytes: CanonicalCbor.encode(frames.map((frame) => frame.outputs.css)),
+              codec: 'fixture/raw-cbor',
+              container: 'application/cbor',
+            };
+          });
+
+          expect(observedFrames).toHaveLength(4);
+          expect(cssVarsFromState(observedFrames[0]!)['--font-size']).toBe(String(mobileSize));
+          expect(cssVarsFromState(observedFrames.at(-1)!)['--font-size']).toBe(String(desktopSize));
+          expect(result.receipt.kind).toBe('stage.export.video.encoded');
+          expect(result.receipt.subject.id).toBe(result.node.id);
+          expect(result.receipt.previous).toBe('genesis');
+
+          const changed = await exportVideoEncoded(graphFor(threshold, mobileSize, desktopSize + 1), async (frames) => ({
+            bytes: CanonicalCbor.encode(frames.map((frame) => frame.outputs.css)),
+            codec: 'fixture/raw-cbor',
+            container: 'application/cbor',
+          }));
+          expect(changed.bytesDigest).not.toEqual(result.bytesDigest);
+          expect(changed.receipt.hash).not.toBe(result.receipt.hash);
+        },
+      ),
+      { seed: 0x5eed_1807, numRuns: 40 },
     );
   });
 });

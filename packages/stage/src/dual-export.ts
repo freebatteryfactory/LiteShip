@@ -50,6 +50,7 @@ import {
 import { ValidationError } from '@liteship/error';
 import { CSSCompiler } from '@liteship/compiler';
 import { resolveInitialState, adaptiveAttrs } from '@liteship/astro';
+import { snapshotDefinitionValue } from '@liteship/core/evidence';
 // `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
 // requires OffscreenCanvas / createImageBitmap, which are not present in a
 // headless Node test env (see packages/web/src/capture/pipeline.ts). We import
@@ -441,6 +442,8 @@ export interface EncodedVideoExport {
   readonly encoded: EncodedVideo;
   /** Content address of the encoded container bytes (the mp4 byte stream). */
   readonly bytesDigest: AddressedDigest;
+  /** Genesis receipt binding the source graph, rendered frames, and encoded bytes. */
+  readonly receipt: ReceiptEnvelope;
 }
 
 /**
@@ -458,15 +461,18 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
   const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
   const frames = produceVideoFrames(graph);
 
-  const encoded = await encode(
-    frames.map((frame) => frame.composite),
-    {
+  // The injected process receives an immutable snapshot, not Stage's mutable
+  // working records. Otherwise a hostile/buggy encoder could rewrite a pose
+  // after rendering and make the artifact digest describe encoder mutation
+  // instead of the authored graph that actually produced the frame.
+  const encoderFrames = snapshotDefinitionValue(frames.map((frame) => frame.composite));
+  const encodeConfig = Object.freeze({
       fps: VIDEO_CONFIG.fps,
       width: VIDEO_CONFIG.width,
       height: VIDEO_CONFIG.height,
       durationMs: VIDEO_CONFIG.durationMs,
-    },
-  );
+  });
+  const encoded = await encode(encoderFrames, encodeConfig);
 
   // Content-address the REAL encoded bytes, then pin that into the node digest.
   const bytesDigest = AddressedDigestNS.of(encoded.bytes);
@@ -483,7 +489,41 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
     artifactDigest,
   });
 
-  return { node, encoded, bytesDigest };
+  // The frame-only cast has its own proof receipt in `dualExport`. A byte encode
+  // is a distinct externally-observable artifact and therefore needs its own
+  // receipt: returning bytes + a digest without a receipt left the injected
+  // process outside the evidence chain. This payload binds the exact source,
+  // frame-derived export node, codec metadata, and encoded bytes under the same
+  // receipt kernel used by every other Stage carrier.
+  const receiptPayload = await TypedRef.create('liteship/stage.export.video.encoded', {
+    graphId: graph.id,
+    sourceDigest: graph.digest.display_id,
+    sourceIntegrity: graph.digest.integrity_digest,
+    sourceRefs,
+    exportId: node.id,
+    artifactDigest: node.artifactDigest.display_id,
+    artifactIntegrity: node.artifactDigest.integrity_digest,
+    bytesDigest: bytesDigest.display_id,
+    bytesIntegrity: bytesDigest.integrity_digest,
+    codec: encoded.codec,
+    container: encoded.container,
+    frameCount: frames.length,
+    config: {
+      fps: VIDEO_CONFIG.fps,
+      width: VIDEO_CONFIG.width,
+      height: VIDEO_CONFIG.height,
+      durationMs: VIDEO_CONFIG.durationMs,
+    },
+  });
+  const receipt = await Receipt.createEnvelope(
+    'stage.export.video.encoded',
+    { type: 'artifact', id: node.id },
+    receiptPayload,
+    HLC.increment(HLC.create('liteship-stage-encoded'), 1),
+    Receipt.GENESIS,
+  );
+
+  return { node, encoded, bytesDigest, receipt };
 }
 
 // ---------------------------------------------------------------------------
@@ -605,6 +645,8 @@ export interface DualExportNodeResult extends DualExportResult {
   readonly encoded: EncodedVideo;
   /** Content address of the encoded container bytes (the mp4 byte stream). */
   readonly bytesDigest: AddressedDigest;
+  /** Receipt for the real encoded-byte artifact (separate from the frame proof). */
+  readonly encodedReceipt: ReceiptEnvelope;
 }
 
 /**
@@ -642,6 +684,6 @@ export async function dualExportNode(graph: DocumentGraph, encode: FrameEncoder)
   // Untouched by the byte-encode, so the invariant is byte-for-byte `dualExport`.
   const proof = await dualExport(graph);
   // The real injected byte-encode over the SAME deterministic frame stream.
-  const { encoded, bytesDigest } = await exportVideoEncoded(graph, encode);
-  return { ...proof, encoded, bytesDigest };
+  const { encoded, bytesDigest, receipt: encodedReceipt } = await exportVideoEncoded(graph, encode);
+  return { ...proof, encoded, bytesDigest, encodedReceipt };
 }

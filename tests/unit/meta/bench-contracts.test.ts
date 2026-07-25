@@ -17,6 +17,8 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   COMPLEXITY_CLASSES,
   classifySlope,
@@ -313,6 +315,24 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
     expect(registry).not.toBeNull();
     const uncovered = distributionFilesWithoutExecutionPath(registry!.distributions, benchScriptTargets(repoRoot));
     expect(uncovered, `distribution files without bench execution path: ${uncovered.join(', ')}`).toEqual([]);
+  });
+
+  it('Stage render and Remotion frame projection have declared, SUT-reachable throughput contracts', () => {
+    const registry = readDistributionRegistry(repoRoot)!;
+    const names = [
+      'Stage exportVideo -- 32 components x 4 frames',
+      'Remotion cssVarsFromState -- 1024 frame outputs',
+    ];
+    const declared = registry.distributions.filter((entry) => names.includes(entry.name));
+    const source = readFileSync(join(repoRoot, 'tests/bench/video.bench.ts'), 'utf8');
+
+    expect(declared.map((entry) => entry.name).sort()).toEqual([...names].sort());
+    expect(declared.map((entry) => entry.shape).sort()).toEqual(
+      ['frame-component-projections', 'frame-css-outputs'].sort(),
+    );
+    for (const entry of declared) {
+      expect(qualifyBenchDistribution(entry, () => source).issues).toEqual([]);
+    }
   });
 
   it('benchmarks/complexity-map.json holds a recognized, well-fitted class per ceiling-pinned path', () => {
