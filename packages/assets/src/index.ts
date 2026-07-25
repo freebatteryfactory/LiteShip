@@ -8,7 +8,15 @@ export {
   defaultDecodeP95MsFor,
 } from './contract.js';
 export type { AssetRefId } from './brands.js';
-export type { AssetDecl, AssetKind, DecodedAsset, AssetDecoder, AssetCapsule, AssetDescriptor } from './contract.js';
+export type {
+  AssetDecl,
+  AssetKind,
+  DecodedAsset,
+  AssetDecoder,
+  AssetCapsule,
+  AnyAssetCapsule,
+  AssetDescriptor,
+} from './contract.js';
 
 export { audioDecoder } from './decoders/audio.js';
 export type { DecodedAudio } from './decoders/audio.js';

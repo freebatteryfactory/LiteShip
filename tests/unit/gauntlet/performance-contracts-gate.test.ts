@@ -397,10 +397,11 @@ describe('THE RETAINED-ALLOCATION LAW — output growth must remain bounded', ()
     expect(findings.some((finding) => finding.title === 'Retained-allocation map is missing')).toBe(true);
   });
 
-  it('pins both canonical allocation paths to linear growth', () => {
+  it('pins canonical and asset retained-allocation paths to linear growth', () => {
     expect(ACCEPTED_ALLOCATION_CEILINGS).toEqual({
       'canonical.encode.retainedAllocation': 'O(n)',
       'canonical.decode.retainedAllocation': 'O(n)',
+      'assets.computeWaveform.retainedAllocation': 'O(n)',
     });
   });
 });

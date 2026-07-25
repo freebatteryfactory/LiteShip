@@ -1746,6 +1746,87 @@
           "binding": "renderHash"
         }
       ]
+    },
+    {
+      "name": "assets walkRiff -- 1024 empty chunks",
+      "file": "tests/bench/assets.bench.ts",
+      "inputSize": 1024,
+      "shape": "riff-empty-chunks",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/assets" },
+          "symbol": "walkRiff",
+          "binding": "walkRiff"
+        }
+      ]
+    },
+    {
+      "name": "assets computeWaveform -- 65536 frames",
+      "file": "tests/bench/assets.bench.ts",
+      "inputSize": 65536,
+      "shape": "mono-float32-audio-frames",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/assets" },
+          "symbol": "computeWaveform",
+          "binding": "computeWaveform"
+        }
+      ]
+    },
+    {
+      "name": "assets detectOnsets -- 65536 frames",
+      "file": "tests/bench/assets.bench.ts",
+      "inputSize": 65536,
+      "shape": "mono-float32-audio-frames",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/assets" },
+          "symbol": "detectOnsets",
+          "binding": "detectOnsets"
+        }
+      ]
+    },
+    {
+      "name": "assets detectBeats -- 65536 frames",
+      "file": "tests/bench/assets.bench.ts",
+      "inputSize": 65536,
+      "shape": "mono-float32-audio-frames-fixed-sample-rate",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/assets" },
+          "symbol": "detectBeats",
+          "binding": "detectBeats"
+        }
+      ]
+    },
+    {
+      "name": "alloc curve -- assets.computeWaveform",
+      "file": "tests/bench/allocation-curves.bench.ts",
+      "inputSize": 65536,
+      "shape": "retained-allocation-curve-waveform-bins",
+      "replicates": 24,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/assets" },
+          "symbol": "computeWaveform",
+          "binding": "computeWaveform"
+        }
+      ],
+      "execution": {
+        "kind": "collector",
+        "file": "scripts/bench/allocation-probes.ts",
+        "export": "collectAssetWaveformAllocationCurve",
+        "resultKey": "assets.computeWaveform.retainedAllocation"
+      }
     }
   ]
 }

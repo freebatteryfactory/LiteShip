@@ -33,6 +33,7 @@
 import { Boundary, contentAddressOf, defineBoundary } from '@liteship/core';
 import { CanonicalCbor, decode as decodeCanonicalCbor } from '@liteship/canonical';
 import { defineComponentCatalog, renderHash, validateGeneratedUITree, type GeneratedUINode } from '@liteship/genui';
+import { computeWaveform, detectBeats, detectOnsets, walkRiff } from '@liteship/assets';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
@@ -126,6 +127,45 @@ function buildGenuiRenderHashOfSize(nodeCount: number): () => void {
   };
 }
 
+function buildRiffWalkOfSize(chunkCount: number): () => void {
+  const bytes = new Uint8Array(12 + chunkCount * 8);
+  bytes.set(new TextEncoder().encode('RIFF'), 0);
+  new DataView(bytes.buffer).setUint32(4, bytes.byteLength - 8, true);
+  bytes.set(new TextEncoder().encode('WAVE'), 8);
+  for (let index = 0; index < chunkCount; index++) bytes.set(new TextEncoder().encode('JUNK'), 12 + index * 8);
+  return (): void => {
+    for (const chunk of walkRiff(bytes.buffer)) void chunk;
+  };
+}
+
+function assetAudioOfSize(frameCount: number): { readonly sampleRate: number; readonly samples: Float32Array } {
+  return {
+    sampleRate: 48_000,
+    samples: Float32Array.from({ length: frameCount }, (_, index) => Math.sin((2 * Math.PI * index) / 1200)),
+  };
+}
+
+function buildWaveformOfSize(frameCount: number): () => void {
+  const audio = assetAudioOfSize(frameCount);
+  return (): void => {
+    void computeWaveform(audio, { bins: 512 });
+  };
+}
+
+function buildOnsetsOfSize(frameCount: number): () => void {
+  const audio = assetAudioOfSize(frameCount);
+  return (): void => {
+    void detectOnsets(audio);
+  };
+}
+
+function buildBeatsOfSize(frameCount: number): () => void {
+  const audio = assetAudioOfSize(frameCount);
+  return (): void => {
+    void detectBeats(audio);
+  };
+}
+
 /** The boundary-evaluator batch hot path — O(n) in value count. */
 export const boundaryEvaluateProbe: ComplexityProbe = {
   path: 'boundary.evaluateBatch',
@@ -183,6 +223,42 @@ export const genuiRenderHashProbe: ComplexityProbe = {
   workloadFor: buildGenuiRenderHashOfSize,
 };
 
+export const assetRiffWalkProbe: ComplexityProbe = {
+  path: 'assets.walkRiff',
+  describe: 'walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.',
+  shape: 'riff-chunks',
+  sizes: [32, 128, 512, 2048, 8192],
+  measurement: { innerIterations: 25, replicates: 5, warmupIterations: 10 },
+  workloadFor: buildRiffWalkOfSize,
+};
+
+export const assetWaveformProbe: ComplexityProbe = {
+  path: 'assets.computeWaveform',
+  describe: 'computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.',
+  shape: 'audio-frames',
+  sizes: [65_536, 131_072, 262_144, 524_288],
+  measurement: { innerIterations: 5, replicates: 5, warmupIterations: 3 },
+  workloadFor: buildWaveformOfSize,
+};
+
+export const assetOnsetsProbe: ComplexityProbe = {
+  path: 'assets.detectOnsets',
+  describe: 'detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.',
+  shape: 'audio-frames',
+  sizes: [65_536, 131_072, 262_144, 524_288],
+  measurement: { innerIterations: 4, replicates: 5, warmupIterations: 3 },
+  workloadFor: buildOnsetsOfSize,
+};
+
+export const assetBeatsProbe: ComplexityProbe = {
+  path: 'assets.detectBeats',
+  describe: 'detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.',
+  shape: 'audio-frames-fixed-sample-rate',
+  sizes: [65_536, 131_072, 262_144, 524_288],
+  measurement: { innerIterations: 3, replicates: 5, warmupIterations: 2 },
+  workloadFor: buildBeatsOfSize,
+};
+
 /** Every complexity probe the contract layer measures + maps. */
 export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   boundaryEvaluateProbe,
@@ -191,4 +267,8 @@ export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   canonicalDecodeProbe,
   genuiValidationProbe,
   genuiRenderHashProbe,
+  assetRiffWalkProbe,
+  assetWaveformProbe,
+  assetOnsetsProbe,
+  assetBeatsProbe,
 ];

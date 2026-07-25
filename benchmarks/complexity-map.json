@@ -7,8 +7,8 @@
       "shape": "batch-values",
       "sizes": [256, 1024, 4096, 16384, 65536],
       "class": "O(n)",
-      "fittedSlope": 0.9701,
-      "fittedR2": 0.9988,
+      "fittedSlope": 0.9667,
+      "fittedR2": 0.9992,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -21,8 +21,8 @@
       "shape": "address-elements",
       "sizes": [8, 32, 128, 512, 2048],
       "class": "O(n)",
-      "fittedSlope": 0.9573,
-      "fittedR2": 0.9972,
+      "fittedSlope": 0.9485,
+      "fittedR2": 0.9951,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -35,7 +35,7 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0536,
+      "fittedSlope": 1.0493,
       "fittedR2": 0.9995,
       "measurement": {
         "innerIterations": 200,
@@ -49,8 +49,8 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0545,
-      "fittedR2": 0.9895,
+      "fittedSlope": 1.0475,
+      "fittedR2": 0.9891,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -63,8 +63,8 @@
       "shape": "generated-ui-nodes",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 0.8402,
-      "fittedR2": 0.9818,
+      "fittedSlope": 0.9398,
+      "fittedR2": 0.9979,
       "measurement": {
         "innerIterations": 25,
         "replicates": 5,
@@ -77,12 +77,68 @@
       "shape": "generated-ui-nodes",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 1.0268,
+      "fittedSlope": 1.0125,
       "fittedR2": 0.9999,
       "measurement": {
         "innerIterations": 8,
         "replicates": 5,
         "warmupIterations": 5
+      }
+    },
+    {
+      "path": "assets.walkRiff",
+      "describe": "walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.",
+      "shape": "riff-chunks",
+      "sizes": [32, 128, 512, 2048, 8192],
+      "class": "O(n)",
+      "fittedSlope": 0.9114,
+      "fittedR2": 0.9976,
+      "measurement": {
+        "innerIterations": 25,
+        "replicates": 5,
+        "warmupIterations": 10
+      }
+    },
+    {
+      "path": "assets.computeWaveform",
+      "describe": "computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.",
+      "shape": "audio-frames",
+      "sizes": [65536, 131072, 262144, 524288],
+      "class": "O(n)",
+      "fittedSlope": 0.9737,
+      "fittedR2": 0.9999,
+      "measurement": {
+        "innerIterations": 5,
+        "replicates": 5,
+        "warmupIterations": 3
+      }
+    },
+    {
+      "path": "assets.detectOnsets",
+      "describe": "detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.",
+      "shape": "audio-frames",
+      "sizes": [65536, 131072, 262144, 524288],
+      "class": "O(n)",
+      "fittedSlope": 1.0408,
+      "fittedR2": 0.9994,
+      "measurement": {
+        "innerIterations": 4,
+        "replicates": 5,
+        "warmupIterations": 3
+      }
+    },
+    {
+      "path": "assets.detectBeats",
+      "describe": "detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.",
+      "shape": "audio-frames-fixed-sample-rate",
+      "sizes": [65536, 131072, 262144, 524288],
+      "class": "O(n)",
+      "fittedSlope": 0.9474,
+      "fittedR2": 0.9909,
+      "measurement": {
+        "innerIterations": 3,
+        "replicates": 5,
+        "warmupIterations": 2
       }
     }
   ]

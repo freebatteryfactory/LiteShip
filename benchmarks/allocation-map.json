@@ -5,12 +5,7 @@
       "path": "canonical.encode.retainedAllocation",
       "describe": "CanonicalCbor.encode retained output storage; linear in encoded element count.",
       "shape": "canonical-array-elements",
-      "sizes": [
-        1024,
-        4096,
-        16384,
-        65536
-      ],
+      "sizes": [1024, 4096, 16384, 65536],
       "repetitions": 8,
       "samples": [
         {
@@ -38,17 +33,12 @@
       "path": "canonical.decode.retainedAllocation",
       "describe": "Canonical CBOR decoded array storage; linear in decoded element count.",
       "shape": "canonical-array-elements",
-      "sizes": [
-        1024,
-        4096,
-        16384,
-        65536
-      ],
+      "sizes": [1024, 4096, 16384, 65536],
       "repetitions": 8,
       "samples": [
         {
           "size": 1024,
-          "retainedBytesPerOperation": 8508
+          "retainedBytesPerOperation": 8526
         },
         {
           "size": 4096,
@@ -56,7 +46,7 @@
         },
         {
           "size": 16384,
-          "retainedBytesPerOperation": 132424
+          "retainedBytesPerOperation": 132616
         },
         {
           "size": 65536,
@@ -64,7 +54,35 @@
         }
       ],
       "class": "O(n)",
-      "fittedSlope": 0.9908,
+      "fittedSlope": 0.9905,
+      "fittedR2": 1
+    },
+    {
+      "path": "assets.computeWaveform.retainedAllocation",
+      "describe": "computeWaveform retained output storage; linear in requested bin count.",
+      "shape": "waveform-bins",
+      "sizes": [1024, 4096, 16384, 65536],
+      "repetitions": 6,
+      "samples": [
+        {
+          "size": 1024,
+          "retainedBytesPerOperation": 8404
+        },
+        {
+          "size": 4096,
+          "retainedBytesPerOperation": 32838.67
+        },
+        {
+          "size": 16384,
+          "retainedBytesPerOperation": 131142.67
+        },
+        {
+          "size": 65536,
+          "retainedBytesPerOperation": 524358.67
+        }
+      ],
+      "class": "O(n)",
+      "fittedSlope": 0.9944,
       "fittedR2": 1
     }
   ]

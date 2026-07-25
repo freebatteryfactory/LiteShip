@@ -91,6 +91,9 @@ export type AssetCapsule<K extends AssetKind = AssetKind> = CapsuleDef<
   readonly asset: AssetDescriptor<K>;
 };
 
+/** Discriminated union accepted by heterogeneous registries without erasing each capsule's decoded output. */
+export type AnyAssetCapsule = { readonly [K in AssetKind]: AssetCapsule<K> }[AssetKind];
+
 /** Decode function shape shared by AssetDecl.decoder and the built-ins. */
 export type AssetDecoder<K extends AssetKind = AssetKind> = (bytes: ArrayBuffer) => Promise<DecodedAsset<K>>;
 
@@ -331,7 +334,7 @@ export interface AssetRegistry {
   /** Sorted ids of every capsule in this registry (for teaching errors / listing). */
   ids(): readonly string[];
   /** The capsule registered under `id`, or `undefined`. */
-  capsule(id: string): AssetCapsule | undefined;
+  capsule(id: string): AnyAssetCapsule | undefined;
   /**
    * Validate `id` is registered and return it as a branded {@link AssetRefId}.
    * Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
@@ -353,8 +356,8 @@ export interface AssetRegistry {
   resolveAudioDecoder(assetId: string): AssetDecoder<'audio'>;
 }
 
-function makeAssetRegistry(capsules: readonly AssetCapsule[]): AssetRegistry {
-  const index = new Map<string, AssetCapsule>();
+function makeAssetRegistry(capsules: readonly AnyAssetCapsule[]): AssetRegistry {
+  const index = new Map<string, AnyAssetCapsule>();
   for (const capsule of capsules) {
     if (index.has(capsule.name)) {
       throw ValidationError(
@@ -369,7 +372,7 @@ function makeAssetRegistry(capsules: readonly AssetCapsule[]): AssetRegistry {
   return Object.freeze({
     has: (id: string): boolean => index.has(id),
     ids: sortedIds,
-    capsule: (id: string): AssetCapsule | undefined => index.get(id),
+    capsule: (id: string): AnyAssetCapsule | undefined => index.get(id),
     ref: (id: string): AssetRefId => {
       if (!index.has(id)) throw registryMissError(`AssetRef('${id}')`, id, sortedIds());
       return mkAssetRefId(id);

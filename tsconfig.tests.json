@@ -140,6 +140,18 @@
     "tests/unit/genui/validation-fault-simulation.test.ts",
     "tests/unit/genui/validation-mcdc.test.ts",
     "tests/bench/genui.bench.ts",
+    // Wave 5 asset assurance: strict binary fixtures, audio properties,
+    // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
+    // differential, and benchmark subject all consume the public asset API.
+    "tests/support/wav-fixtures.ts",
+    "tests/property/assets-audio.prop.test.ts",
+    "tests/fuzz/assets-binary-fuzz.test.ts",
+    "tests/unit/assets/analysis/projection-execution.test.ts",
+    "tests/unit/assets/binary-fault-simulation.test.ts",
+    "tests/unit/assets/binary-mcdc.test.ts",
+    "tests/unit/assets/decoder-fault-injection.test.ts",
+    "tests/integration/assets-image-differential.test.ts",
+    "tests/bench/assets.bench.ts",
     // The transition-conformance gate RUNNER proof (green over the native transports + red on
     // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
     // gate script does, so a runner/law drift fails the typecheck.

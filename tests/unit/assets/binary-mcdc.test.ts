@@ -1,3 +1,5 @@
+/** MC/DC condition-independence table for RIFF, audio-decode, and analysis admission boundaries. */
+
 import { describe, expect, it } from 'vitest';
 import { hasTag } from '@liteship/error';
 import { audioDecoder, computeWaveform, walkRiff } from '@liteship/assets';

@@ -8,6 +8,7 @@ const bench = { add: (name: string): number => registered.push(name) };
 
 bench.add('alloc curve -- CanonicalCbor.encode');
 bench.add('alloc curve -- canonical decode');
+bench.add('alloc curve -- assets.computeWaveform');
 
 if (isDirectExecution(import.meta.url)) {
   void registered;

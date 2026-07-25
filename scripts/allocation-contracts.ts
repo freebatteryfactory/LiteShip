@@ -8,7 +8,7 @@ import {
 import { repoRoot } from '../vitest.shared.js';
 import { isDirectExecution, writeTextFile } from './audit/shared.js';
 import type { AllocationCurve } from './bench/allocation-curves.js';
-import { runCanonicalAllocationCurves } from './bench/allocation-probes.js';
+import { runAllAllocationCurves } from './bench/allocation-probes.js';
 import { complexityRank, type ComplexityClass } from './bench/contracts.js';
 
 export const ALLOCATION_MAP_ARTIFACT_PATH = 'benchmarks/allocation-map.json';
@@ -48,7 +48,7 @@ export function verifyMeasuredAllocationMap(map: AllocationMap): readonly Alloca
 export function buildAllocationMap(): AllocationMap {
   return {
     schemaVersion: 1,
-    entries: runCanonicalAllocationCurves().map((curve) => {
+    entries: runAllAllocationCurves().map((curve) => {
       return {
         path: curve.path,
         describe: curve.describe,

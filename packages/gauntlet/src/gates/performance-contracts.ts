@@ -73,12 +73,17 @@ export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityCla
   'canonical.decode': 'O(n)',
   'genui.validate': 'O(n)',
   'genui.renderHash': 'O(n)',
+  'assets.walkRiff': 'O(n)',
+  'assets.computeWaveform': 'O(n)',
+  'assets.detectOnsets': 'O(n)',
+  'assets.detectBeats': 'O(n)',
 };
 
 /** Accepted retained-allocation growth for public semantic kernels. */
 export const ACCEPTED_ALLOCATION_CEILINGS: Readonly<Record<string, ComplexityClass>> = {
   'canonical.encode.retainedAllocation': 'O(n)',
   'canonical.decode.retainedAllocation': 'O(n)',
+  'assets.computeWaveform.retainedAllocation': 'O(n)',
 };
 
 /** The R² floor below which a complexity fit is too noisy to trust as a verdict. */
