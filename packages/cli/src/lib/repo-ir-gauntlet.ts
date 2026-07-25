@@ -98,6 +98,11 @@ import { assuranceTargets, targetCensusErrors, buildSeamCoverageMap } from './mu
 import { makeFsSeamCoverageProbeCache, type SeamExecutionCoverageOptions } from './seam-execution-coverage.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
+import {
+  buildSemanticAssuranceReceipt,
+  semanticAssuranceReceiptToolchainDigest,
+  writeSemanticAssuranceReceipt,
+} from './semantic-assurance-receipt.js';
 
 /**
  * The CLEAN {@link StandardsIntegrityFacts} folded when the raccoon-rule backstop is
@@ -395,6 +400,15 @@ export async function runGauntletWithRepoIR(
   if (cacheOpts.withMutate === true) {
     gateSet.push(mutationDivergenceGate);
     mutationFacts = buildRepoMutationFacts(repoRoot, ir, cache.toolchainDigest);
+    writeSemanticAssuranceReceipt(
+      repoRoot,
+      buildSemanticAssuranceReceipt({
+        mode: 'mutation',
+        facts: mutationFacts,
+        ir,
+        toolchainDigest: semanticAssuranceReceiptToolchainDigest('mutation'),
+      }),
+    );
   }
 
   // The `--mcdc` opt-in (DO-178B Level A's Modified Condition/Decision Coverage via
@@ -411,6 +425,15 @@ export async function runGauntletWithRepoIR(
   if (cacheOpts.withMcdc === true) {
     gateSet.push(mcdcCoverageGate);
     mcdcFacts = buildRepoMcdcFacts(repoRoot, ir, cache.toolchainDigest);
+    writeSemanticAssuranceReceipt(
+      repoRoot,
+      buildSemanticAssuranceReceipt({
+        mode: 'mcdc',
+        facts: mcdcFacts,
+        ir,
+        toolchainDigest: semanticAssuranceReceiptToolchainDigest('mcdc'),
+      }),
+    );
   }
 
   // The `--simulate` opt-in (the determinism spine, DST going LIVE): drive the

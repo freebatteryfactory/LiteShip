@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { makeRepoIR, type McdcFacts, type MutationFacts } from '@liteship/gauntlet';
 import {
   assuranceRegressions,
   baselineFromInventory,
@@ -10,6 +11,10 @@ import {
   parseAssuranceBaseline,
   type AssuranceInventory,
 } from '../../../scripts/lib/assurance-inventory.js';
+import {
+  buildSemanticAssuranceReceipt,
+  writeSemanticAssuranceReceipt,
+} from '../../../packages/cli/src/lib/semantic-assurance-receipt.js';
 
 const roots: string[] = [];
 afterEach(() => {
@@ -133,8 +138,97 @@ describe('assurance inventory', () => {
   it('does not grant a proof class from a filename alone', () => {
     const root = fixture();
     writeFileSync(join(root, 'tests', 'unit', 'core', 'chaos.test.ts'), "test('ordinary', () => expect(1).toBe(1));\n");
+    writeFileSync(
+      join(root, 'tests', 'unit', 'core', 'mutation.test.ts'),
+      "import { value } from '@liteship/core';\ntest('mutation mutant mcdc condition', () => expect(value).toBe(1));\n",
+    );
     const core = buildAssuranceInventory(root).packages.find((entry) => entry.name === '@liteship/core')!;
     expect(core.evidenceClasses.chaos).toBe(0);
+    expect(core.evidenceClasses.mutation).toBe(0);
+    expect(core.evidenceClasses.mcdc).toBe(0);
+  });
+
+  it('grants mutation credit only from a current addressed live-execution receipt', () => {
+    const root = fixture();
+    const file = 'packages/core/src/schema/brands.ts';
+    const reason = { kind: 'effective-level', level: 'L4' } as const;
+    const ir = makeRepoIR({
+      files: [{ id: file, contentDigest: 'blake3:fixture-brands', packageName: '@liteship/core' }],
+    });
+    const facts: MutationFacts = {
+      outcomes: [
+        {
+          mutantId: 'blake3:fixture-mutant',
+          verdict: 'killed',
+          file,
+          line: 1,
+          column: 1,
+          operator: 'equality',
+          originalText: '===',
+          mutatedText: '!==',
+          coveringTests: ['tests/unit/core/value.test.ts'],
+          equivalentJustification: null,
+          equivalentJustificationDigest: null,
+          subsumedBy: [],
+        },
+      ],
+      targetCensus: [{ file, applicableMutants: 1, reasons: [reason] }],
+      operatorApplicability: [{ file, operator: 'equality', applicableMutants: 1 }],
+      scoreBaseline: {},
+    };
+    writeSemanticAssuranceReceipt(
+      root,
+      buildSemanticAssuranceReceipt({ mode: 'mutation', facts, ir, toolchainDigest: 'tc-sha256:fixture' }),
+    );
+    const inventory = buildAssuranceInventory(root, {
+      semanticAssurance: {
+        ir,
+        selection: { expectedTargets: [{ file, reasons: [reason] }], unresolvedEntrypoints: [] },
+        toolchainDigests: { mutation: 'tc-sha256:fixture', mcdc: 'tc-sha256:fixture-mcdc' },
+      },
+    });
+    const core = inventory.packages.find((entry) => entry.name === '@liteship/core')!;
+    expect(core.evidenceClasses.mutation).toBe(1);
+    expect(core.missingEvidence).not.toContain('mutation');
+  });
+
+  it('grants MC/DC credit only from a current addressed live-execution receipt', () => {
+    const root = fixture();
+    const file = 'packages/core/src/schema/brands.ts';
+    const reason = { kind: 'effective-level', level: 'L4' } as const;
+    const ir = makeRepoIR({
+      files: [{ id: file, contentDigest: 'blake3:fixture-brands', packageName: '@liteship/core' }],
+    });
+    const facts: McdcFacts = {
+      conditions: [
+        {
+          conditionId: 'blake3:fixture-condition',
+          file,
+          line: 1,
+          column: 1,
+          decision: 'left && right',
+          condition: 'left',
+          forceTrueVerdict: 'killed',
+          forceFalseVerdict: 'killed',
+          coveringTests: ['tests/unit/core/value.test.ts'],
+        },
+      ],
+      targetCensus: [{ file, applicableConditions: 1, reasons: [reason] }],
+    };
+    writeSemanticAssuranceReceipt(
+      root,
+      buildSemanticAssuranceReceipt({ mode: 'mcdc', facts, ir, toolchainDigest: 'tc-sha256:fixture-mcdc' }),
+    );
+    const inventory = buildAssuranceInventory(root, {
+      semanticAssurance: {
+        ir,
+        selection: { expectedTargets: [{ file, reasons: [reason] }], unresolvedEntrypoints: [] },
+        toolchainDigests: { mutation: 'tc-sha256:fixture', mcdc: 'tc-sha256:fixture-mcdc' },
+      },
+    });
+    const core = inventory.packages.find((entry) => entry.name === '@liteship/core')!;
+    expect(core.evidenceClasses.mcdc).toBe(1);
+    expect(core.missingEvidence).not.toContain('mcdc');
   });
 
   it('grants benchmark evidence only to a package-owned SUT reached by the measured callback', () => {

@@ -61,6 +61,7 @@ import {
   DEFAULT_EXPORT_CHECK_EXCLUDED,
   type RepoIRGauntletCacheOptions,
 } from '../../../../packages/cli/src/lib/repo-ir-gauntlet.js';
+import { parseSemanticAssuranceReceipt } from '../../../../packages/cli/src/lib/semantic-assurance-receipt.js';
 
 /** The injected wall-clock — every run is reproducible against THIS date (two-clock law). */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
@@ -478,13 +479,17 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
   it(
     '--mutate composes the mutation gate; an absent baseline/registry yields an empty (no-floor) run',
     async () => {
-      // The fixture has NONE of the real LiteShip L4 seam files, so `l4SeamTargets`
-      // produces zero targets (every candidate recorded as unreadable → no per-mutant
-      // subprocess), exercising the host's mutation-fact assembly + the absent-artifact
-      // branches of readMutationScoreBaseline / readEquivalentMutantRegistry.
+      // The fixture has the generated campaign entrypoints but no applicable runtime
+      // mutants. The run must record that zero-applicability census rather than silently
+      // disappearing, while also exercising the absent-artifact baseline/registry paths.
       const root = freshFixture(campaignEntrypointFixtures);
       const result = await runGauntletWithRepoIR(root, NOW, undefined, { cacheCwd: root, withMutate: true });
       expect(Array.isArray(result.findings)).toBe(true);
+      expect(
+        parseSemanticAssuranceReceipt(
+          JSON.parse(readFileSync(join(root, 'reports', 'semantic-assurance-mutation.json'), 'utf8')),
+        ),
+      ).toMatchObject({ mode: 'mutation', verdict: 'pass' });
     },
     HEAVY,
   );
@@ -495,6 +500,11 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
       const root = freshFixture(campaignEntrypointFixtures);
       const result = await runGauntletWithRepoIR(root, NOW, undefined, { cacheCwd: root, withMcdc: true });
       expect(Array.isArray(result.findings)).toBe(true);
+      expect(
+        parseSemanticAssuranceReceipt(
+          JSON.parse(readFileSync(join(root, 'reports', 'semantic-assurance-mcdc.json'), 'utf8')),
+        ),
+      ).toMatchObject({ mode: 'mcdc', verdict: 'pass' });
     },
     HEAVY,
   );

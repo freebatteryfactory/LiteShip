@@ -17,6 +17,19 @@ import { rankOf, type AssuranceLevel } from '../../packages/gauntlet/src/assuran
 import { levelOf } from '../../packages/gauntlet/src/assurance-map.js';
 import { parseQualifiedBenchDistribution } from '../../packages/gauntlet/src/gates/bench-subjects.js';
 import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.js';
+import { buildRepoIRForRepo } from '../../packages/cli/src/lib/repo-ir-gauntlet.js';
+import {
+  SEMANTIC_ASSURANCE_RECEIPT_PATHS,
+  parseSemanticAssuranceReceipt,
+  semanticAssuranceReceiptToolchainDigest,
+  verifySemanticAssuranceReceipt,
+  type SemanticAssuranceMode,
+} from '../../packages/cli/src/lib/semantic-assurance-receipt.js';
+import {
+  eligibleAssuranceTargets,
+  type AssuranceTargetSelection,
+} from '../../packages/cli/src/lib/mutation-targets.js';
+import type { RepoIR } from '../../packages/gauntlet/src/repo-ir.js';
 
 export const ASSURANCE_TARGET_MILLI = 10_000;
 
@@ -67,6 +80,15 @@ export interface AssuranceInventory {
       workflowAuthority: number;
       generated: number;
     }>;
+  };
+}
+
+/** Injectable current-state authority for deterministic receipt-verifier tests. */
+export interface AssuranceInventoryOptions {
+  readonly semanticAssurance?: {
+    readonly ir: RepoIR;
+    readonly selection: AssuranceTargetSelection;
+    readonly toolchainDigests: Readonly<Record<SemanticAssuranceMode, string>>;
   };
 }
 
@@ -256,10 +278,6 @@ function classifyEvidence(path: string, source: string): readonly EvidenceClass[
     classes.add(kind);
   }
   if ((normalized.includes('simulation') || normalized.includes('determinism')) && hasTest) classes.add('simulation');
-  if ((normalized.includes('mutation') || normalized.includes('mutant')) && hasTest && /mutat|mutant/iu.test(source)) {
-    classes.add('mutation');
-  }
-  if (normalized.includes('mcdc') && hasTest && /mcdc|condition/iu.test(source)) classes.add('mcdc');
   if (/chaos|fault-injection|fault_injection/u.test(normalized) && hasTest && /chaos|fault/iu.test(source)) {
     classes.add('chaos');
   }
@@ -387,8 +405,73 @@ function requirementLabel(alternatives: readonly EvidenceClass[]): string {
   return alternatives.join('|');
 }
 
+function packageOwnerOfTarget(file: string): string | null {
+  const normalized = normalize(file);
+  return PACKAGE_CATALOG.find((record) => normalized.startsWith(`${normalize(record.dir)}/src/`))?.name ?? null;
+}
+
+/**
+ * Admit mutation/MC/DC credit only from addressed live execution receipts. Test-file
+ * names and prose are deliberately irrelevant: the receipt must bind the complete
+ * current selector, current source digests, current fact-producing toolchain, and a
+ * passing non-empty execution census.
+ */
+function verifiedSemanticAssuranceCredits(
+  cwd: string,
+  injected: AssuranceInventoryOptions['semanticAssurance'],
+): ReadonlyMap<string, ReadonlySet<SemanticAssuranceMode>> {
+  const present = (
+    Object.entries(SEMANTIC_ASSURANCE_RECEIPT_PATHS) as readonly [SemanticAssuranceMode, string][]
+  ).filter(([, path]) => existsSync(join(cwd, path)));
+  if (present.length === 0) return new Map();
+
+  const ir = injected?.ir ?? buildRepoIRForRepo(cwd);
+  const selection = injected?.selection ?? eligibleAssuranceTargets(ir);
+  const toolchains =
+    injected?.toolchainDigests ??
+    ({
+      mutation: semanticAssuranceReceiptToolchainDigest('mutation'),
+      mcdc: semanticAssuranceReceiptToolchainDigest('mcdc'),
+    } satisfies Readonly<Record<SemanticAssuranceMode, string>>);
+  const credits = new Map<string, Set<SemanticAssuranceMode>>();
+
+  for (const [mode, path] of present) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(readFileSync(join(cwd, path), 'utf8'));
+    } catch (cause) {
+      throw ValidationError('assuranceInventory', `cannot parse semantic assurance receipt ${path}: ${String(cause)}`);
+    }
+    try {
+      const receipt = parseSemanticAssuranceReceipt(parsed);
+      verifySemanticAssuranceReceipt(receipt, {
+        mode,
+        ir,
+        selection,
+        toolchainDigest: toolchains[mode],
+      });
+      for (const target of receipt.targets) {
+        const owners = new Set<string>();
+        const pathOwner = packageOwnerOfTarget(target.file);
+        if (pathOwner !== null) owners.add(pathOwner);
+        for (const reason of target.reasons) {
+          if (reason.kind === 'semantic-campaign' && reason.required.includes(mode)) owners.add(reason.owner);
+        }
+        for (const owner of owners) {
+          const modes = credits.get(owner) ?? new Set<SemanticAssuranceMode>();
+          modes.add(mode);
+          credits.set(owner, modes);
+        }
+      }
+    } catch (cause) {
+      throw ValidationError('assuranceInventory', `invalid semantic assurance receipt ${path}: ${String(cause)}`);
+    }
+  }
+  return credits;
+}
+
 /** Compute the inventory from current repository bytes. */
-export function buildAssuranceInventory(cwd: string): AssuranceInventory {
+export function buildAssuranceInventory(cwd: string, options: AssuranceInventoryOptions = {}): AssuranceInventory {
   const evidenceFiles = filesUnder(join(cwd, 'tests')).filter((path) => EVIDENCE_EXTENSIONS.has(extname(path)));
   const evidenceSources = evidenceFiles.map((path) => {
     const source = readFileSync(path, 'utf8');
@@ -401,6 +484,7 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
   });
 
   const benchmarkOwners = qualifiedBenchmarkOwners(cwd);
+  const semanticAssuranceCredits = verifiedSemanticAssuranceCredits(cwd, options.semanticAssurance);
   const knownEvidencePaths = new Set(evidenceSources.map((entry) => entry.path));
   const directOwners = new Map<string, Set<string>>();
   const dependencies = new Map<string, readonly string[]>();
@@ -465,6 +549,8 @@ export function buildAssuranceInventory(cwd: string): AssuranceInventory {
       for (const kind of classifyEvidence(entry.path, entry.source)) evidenceClasses[kind] += 1;
       if (benchmarkOwners.get(entry.path)?.has(record.name) === true) evidenceClasses.benchmark += 1;
     }
+    if (semanticAssuranceCredits.get(record.name)?.has('mutation') === true) evidenceClasses.mutation += 1;
+    if (semanticAssuranceCredits.get(record.name)?.has('mcdc') === true) evidenceClasses.mcdc += 1;
     const highestAssurance = sourceFiles.reduce<AssuranceLevel>((highest, path) => {
       const level = levelOf(normalize(relative(cwd, path)));
       return rankOf(level) > rankOf(highest) ? level : highest;
