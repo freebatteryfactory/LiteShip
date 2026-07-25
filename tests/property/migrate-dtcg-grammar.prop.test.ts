@@ -21,6 +21,11 @@ interface ScalarCase {
 const identifierArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,11}$/);
 const finiteIntegerArb = fc.integer({ min: -100_000, max: 100_000 });
 
+/** Independent oracle for the adapter's length-delimited nested-path projection. */
+function encodedNestedTokenName(group: string, token: string): string {
+  return `dtcg-path-${group.length}-${group}-${token.length}-${token}`;
+}
+
 const scalarCaseArb: fc.Arbitrary<ScalarCase> = fc.oneof(
   fc.tuple(finiteIntegerArb, fc.constantFrom('px' as const, 'rem' as const)).map(([value, unit]) => ({
     type: 'dimension',
@@ -142,9 +147,11 @@ describe('DTCG declared grammar', () => {
         expect(result.themes).toEqual([]);
         expect(result.diagnostics).toEqual([]);
         expect(result.tokens).toHaveLength(1);
+        const expectedName = encodedNestedTokenName(group, token);
         expect(result.tokens[0]).toEqual(
           expect.objectContaining({
-            name: `${group}.${token}`,
+            name: expectedName,
+            cssProperty: `--liteship-${expectedName}`,
             category: scalar.category,
             fallback: scalar.expected,
           }),
