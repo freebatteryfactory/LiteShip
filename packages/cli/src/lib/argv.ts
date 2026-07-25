@@ -37,3 +37,14 @@ export function positional(argv: readonly string[]): string | undefined {
   const first = argv[0];
   return first !== undefined && !first.startsWith('-') ? first : undefined;
 }
+
+/** Return the first option token outside a route's closed option vocabulary. */
+export function firstUnknownFlag(argv: readonly string[], known: readonly string[]): string | undefined {
+  const admitted = new Set(known);
+  for (const token of argv) {
+    if (!token.startsWith('-')) continue;
+    const name = token.includes('=') ? token.slice(0, token.indexOf('=')) : token;
+    if (!admitted.has(name)) return token;
+  }
+  return undefined;
+}

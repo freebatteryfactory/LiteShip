@@ -55,7 +55,7 @@ import { info } from './commands/info.js';
 import { add } from './commands/add.js';
 import { readCliVersion, version } from './commands/version.js';
 import { runGauntletWithRepoIR } from './lib/repo-ir-gauntlet.js';
-import { positional, takeFlagValue } from './lib/argv.js';
+import { firstUnknownFlag, positional, takeFlagValue } from './lib/argv.js';
 import { emitError } from './receipts.js';
 
 /**
@@ -361,6 +361,28 @@ function execAudit(rest: readonly string[]): Promise<number> {
 
 /** `check [gates] [--plan] [--profile <p>] [--json|--cure] [--ir] [gate flags]`. */
 function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number> {
+  const unknownFlag = firstUnknownFlag(rest, [
+    '--plan',
+    '--profile',
+    '--json',
+    '--cure',
+    '--ir',
+    '--no-cache',
+    '--symbols',
+    '--supply-chain',
+    '--mutate',
+    '--mcdc',
+    '--simulate',
+    '--taint',
+    '--proof',
+    '--composition',
+    '--capability-gate',
+    '--spine-relation',
+  ]);
+  if (unknownFlag !== undefined) {
+    emitError('check', 'cli/invalid-argument', `unknown option: ${unknownFlag}`);
+    return Promise.resolve(1);
+  }
   const subcommand = positional(rest);
   if (subcommand !== undefined && subcommand !== 'gates') {
     emitError('check', 'cli/invalid-argument', `expected subcommand: gates (got: ${subcommand})`);

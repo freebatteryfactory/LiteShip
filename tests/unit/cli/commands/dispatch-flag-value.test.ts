@@ -12,6 +12,7 @@
  * forward exactly the parsed value.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import fc from 'fast-check';
 
 const doctorMock = vi.fn(async () => 0);
 
@@ -136,5 +137,48 @@ describe('dispatch — a value-taking flag never swallows the next flag (F-PROTO
     const r = await capture(() => runDispatch(['asset', 'analyze', 'missing-asset', '--projection', 'beat']));
     expect(r.exit).toBe(1);
     expect(lastStderrReceipt(r.stderr).error).not.toMatch(/missing --projection/);
+  });
+
+  it('refuses a misspelled check option instead of silently running the quick profile', async () => {
+    const r = await capture(() => runDispatch(['check', '--profle', 'release']));
+    expect(r.exit).toBe(1);
+    expect(lastStderrReceipt(r.stderr)).toEqual(
+      expect.objectContaining({ command: 'check', error: 'unknown option: --profle' }),
+    );
+  });
+
+  it('PROPERTY: every foreign check flag is rejected before any check execution', async () => {
+    const known = new Set([
+      'plan',
+      'profile',
+      'json',
+      'cure',
+      'ir',
+      'no-cache',
+      'symbols',
+      'supply-chain',
+      'mutate',
+      'mcdc',
+      'simulate',
+      'taint',
+      'proof',
+      'composition',
+      'capability-gate',
+      'spine-relation',
+    ]);
+    await fc.assert(
+      fc.asyncProperty(
+        fc.stringMatching(/^[a-z][a-z-]{0,20}$/u).filter((name) => !known.has(name)),
+        async (name) => {
+          const checkHandler = vi.fn();
+          const runCheckPlan = vi.fn();
+          const r = await capture(() => runDispatch(['check', `--${name}`, 'release'], { checkHandler, runCheckPlan }));
+          expect(r.exit).toBe(1);
+          expect(checkHandler).not.toHaveBeenCalled();
+          expect(runCheckPlan).not.toHaveBeenCalled();
+        },
+      ),
+      { seed: 0xc11f1a9, numRuns: 40 },
+    );
   });
 });
