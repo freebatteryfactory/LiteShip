@@ -1013,6 +1013,13 @@ jobs:
           name: exhaustive-mutation-${{ github.run_attempt }}
           path: reports/exhaustive
           retention-days: 7
+      - name: Preserve the addressed mutation execution receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: semantic-assurance-mutation-${{ github.run_attempt }}
+          path: reports/semantic-assurance-mutation.json
+          if-no-files-found: error
+          retention-days: 30
 
   exhaustive-mcdc:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
@@ -1040,6 +1047,50 @@ jobs:
           name: exhaustive-mcdc-${{ github.run_attempt }}
           path: reports/exhaustive
           retention-days: 7
+      - name: Preserve the addressed MC/DC execution receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: semantic-assurance-mcdc-${{ github.run_attempt }}
+          path: reports/semantic-assurance-mcdc.json
+          if-no-files-found: error
+          retention-days: 30
+
+  semantic-assurance-admission:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - exhaustive-mutation
+      - exhaustive-mcdc
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: semantic-assurance-mutation-${{ github.run_attempt }}
+          path: reports
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: semantic-assurance-mcdc-${{ github.run_attempt }}
+          path: reports
+      - name: Independently admit the two live semantic-assurance receipts
+        run: pnpm run assurance:gate
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: semantic-assurance-admission-${{ github.run_attempt }}
+          path: |
+            reports/semantic-assurance-mutation.json
+            reports/semantic-assurance-mcdc.json
+            reports/assurance-inventory.json
+          if-no-files-found: error
+          retention-days: 30
 
   ci-summary:
     if: always()
@@ -1058,6 +1109,7 @@ jobs:
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc
+      - semantic-assurance-admission
       - evidence-admission
     steps:
       - name: Fold the event-appropriate authority tier
@@ -1075,6 +1127,7 @@ jobs:
           EXHAUSTIVE_ANALYSIS: ${{ needs.exhaustive-analysis.result }}
           EXHAUSTIVE_MUTATION: ${{ needs.exhaustive-mutation.result }}
           EXHAUSTIVE_MCDC: ${{ needs.exhaustive-mcdc.result }}
+          SEMANTIC_ASSURANCE_ADMISSION: ${{ needs.semantic-assurance-admission.result }}
           EVIDENCE_ADMISSION: ${{ needs.evidence-admission.result }}
           REF: ${{ github.ref }}
         run: |
@@ -1099,6 +1152,7 @@ jobs:
               test "$EXHAUSTIVE_ANALYSIS" = "success"
               test "$EXHAUSTIVE_MUTATION" = "success"
               test "$EXHAUSTIVE_MCDC" = "success"
+              test "$SEMANTIC_ASSURANCE_ADMISSION" = "success"
             fi
             echo "CI exhaustive authority passed."
           fi

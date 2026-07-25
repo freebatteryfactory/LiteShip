@@ -27,6 +27,13 @@ describe('CI authority requirements', () => {
     );
     const tag = requiredAuthorityJobs({ event: 'workflow_call', ref: 'refs/tags/v0.19.0', browserAffected: false });
     expect(tag).toContain('truth-linux-parallel');
-    expect(tag).toEqual(expect.arrayContaining(['exhaustive-analysis', 'exhaustive-mutation', 'exhaustive-mcdc']));
+    expect(tag).toEqual(
+      expect.arrayContaining([
+        'exhaustive-analysis',
+        'exhaustive-mutation',
+        'exhaustive-mcdc',
+        'semantic-assurance-admission',
+      ]),
+    );
   });
 });

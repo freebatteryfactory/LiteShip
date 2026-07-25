@@ -72,4 +72,19 @@ describe('parallel setup artifact ships dist + capsule manifest', () => {
     expect(consumerBlock).toContain('benchmarks/reproducibility-report.json');
     expect(consumerBlock).toContain('benchmarks/one-install-cost-report.json');
   });
+
+  it('persists mutation and MC/DC receipts and re-admits both in an independent job', () => {
+    const mutationBlock = ci.slice(ci.indexOf('exhaustive-mutation:'), ci.indexOf('exhaustive-mcdc:'));
+    const mcdcBlock = ci.slice(ci.indexOf('exhaustive-mcdc:'), ci.indexOf('semantic-assurance-admission:'));
+    const admissionBlock = ci.slice(ci.indexOf('semantic-assurance-admission:'), ci.indexOf('ci-summary:'));
+
+    expect(mutationBlock).toContain('reports/semantic-assurance-mutation.json');
+    expect(mutationBlock).toContain('if-no-files-found: error');
+    expect(mcdcBlock).toContain('reports/semantic-assurance-mcdc.json');
+    expect(mcdcBlock).toContain('if-no-files-found: error');
+    expect(admissionBlock).toContain('semantic-assurance-mutation-${{ github.run_attempt }}');
+    expect(admissionBlock).toContain('semantic-assurance-mcdc-${{ github.run_attempt }}');
+    expect(admissionBlock).toContain('pnpm run assurance:gate');
+    expect(admissionBlock).toContain('reports/assurance-inventory.json');
+  });
 });

@@ -2,7 +2,12 @@
 
 import type { DeliveryCiEvent } from './ci-evidence-selection.js';
 
-const EXHAUSTIVE = ['exhaustive-analysis', 'exhaustive-mutation', 'exhaustive-mcdc'] as const;
+const EXHAUSTIVE = [
+  'exhaustive-analysis',
+  'exhaustive-mutation',
+  'exhaustive-mcdc',
+  'semantic-assurance-admission',
+] as const;
 
 function uniqueSorted(values: readonly string[]): readonly string[] {
   return Object.freeze([...new Set(values)].sort());
