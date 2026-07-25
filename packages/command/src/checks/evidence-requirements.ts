@@ -10,18 +10,9 @@ import type {
   CheckProfile,
 } from './definition.js';
 import { ValidationError } from '@liteship/error';
+import { REQUIRED_EVIDENCE_CONDITIONS } from './evidence-requirement-derivation.js';
 
 const EVIDENCE_KINDS = new Set<CheckEvidenceKind>(['check-report']);
-
-const REQUIRED_EVIDENCE_CONDITIONS = [
-  'head-sha-match',
-  'plan-id-match',
-  'platform-match',
-  'producer-match',
-  'command-match',
-  'verdict-pass',
-  'digest-match',
-] as const satisfies readonly CheckEvidenceCondition[];
 
 const EVIDENCE_CONDITIONS = new Set<CheckEvidenceCondition>(REQUIRED_EVIDENCE_CONDITIONS);
 const EVIDENCE_VERIFIERS = new Set<CheckEvidenceVerifier>(['delivery-evidence/check-report-v1']);
@@ -115,21 +106,6 @@ function sortedConditions(
   const [first, ...rest] = [...conditions].sort();
   if (first === undefined) fail('validated evidence conditions became empty');
   return Object.freeze([first, ...rest]);
-}
-
-/** Derive the universal check-result obligation from the check's own canonical id. */
-export function deriveCheckEvidenceRequirements(checkId: string): readonly [CheckEvidenceRequirement] {
-  const slug = checkId.replace(/^check\//u, '');
-  return Object.freeze([
-    Object.freeze({
-      id: `evidence/check/${slug}`,
-      kind: 'check-report',
-      path: `reports/checks/${slug}.json`,
-      producer: checkId,
-      requiredConditions: REQUIRED_EVIDENCE_CONDITIONS,
-      verifier: 'delivery-evidence/check-report-v1',
-    }),
-  ]);
 }
 
 /**

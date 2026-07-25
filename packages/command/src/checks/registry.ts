@@ -15,7 +15,7 @@
  */
 
 import type { CheckDefinition, CheckProfile, CheckPlatform } from './definition.js';
-import { deriveCheckEvidenceRequirements } from './evidence-requirements.js';
+import { deriveCheckEvidenceRequirements } from './evidence-requirement-derivation.js';
 
 /** Package TypeScript source — the covered bytes of every source-reading check. */
 const SRC_GLOB = 'packages/*/src/**/*.ts';
