@@ -122,11 +122,6 @@ function posesForEntity(graph: DocumentGraph, entityId: ContentAddress): readonl
   return graph.nodes.filter((node): node is PoseNode => node.family === 'pose' && node.entityRef === entityId);
 }
 
-/** All pose nodes — the video cast sweeps every authored pose track. */
-function poses(graph: DocumentGraph): readonly PoseNode[] {
-  return graph.nodes.filter((node): node is PoseNode => node.family === 'pose');
-}
-
 /**
  * Reconstruct the live {@link Boundary} a component encodes from its inline
  * `thresholds` + `states` (carried on {@link ComponentNode} precisely so eval
@@ -291,7 +286,6 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   // synchronous, so the whole cast collapses to straight-line JS.
   const compositor = Compositor.create();
   try {
-    const posed = poses(graph);
     // Keep each added quantizer + its boundary so the per-frame schedule can
     // drive `evaluate` over a swept input. A pose-parked quantizer that is
     // never evaluated yields a frozen frame stream — a degenerate "video";
@@ -302,7 +296,13 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
     // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
     // a non-empty thresholds tuple (it throws otherwise), so the endpoints
     // are always present — no defensive fallback branch to leave uncovered.
-    const driven: { key: string; quantizer: Quantizer<Boundary>; lo: number; hi: number }[] = [];
+    const driven: {
+      key: string;
+      quantizer: Quantizer<Boundary>;
+      lo: number;
+      hi: number;
+      bindingsByState: ReadonlyMap<string, Readonly<Record<string, number | string>>>;
+    }[] = [];
     for (const projection of projections) {
       const component = componentFor(graph, projection.sourceRef);
       if (!component) continue;
@@ -310,11 +310,14 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
       const thresholds = boundary.thresholds as readonly number[];
       const lo = thresholds[0]!;
       const hi = thresholds[thresholds.length - 1]!;
-      for (const pose of posed) {
+      const entity = entityForComponent(graph, component.id);
+      const componentPoses = entity === undefined ? [] : posesForEntity(graph, entity.id);
+      const bindingsByState = new Map(componentPoses.map((pose) => [pose.state as string, pose.bindings] as const));
+      for (const pose of componentPoses) {
         const key = `${component.name}:${pose.state}`;
         const quantizer = poseQuantizer(boundary, pose.state as string);
         compositor.add(key, quantizer);
-        driven.push({ key, quantizer, lo, hi });
+        driven.push({ key, quantizer, lo, hi, bindingsByState });
       }
     }
     const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
@@ -337,7 +340,30 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
         posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;
         compositor.runtime.markDirty(key);
       }
-      collected.push({ composite: compositor.compute(), posed: posedFrame });
+      const computed = compositor.compute();
+      const css = { ...computed.outputs.css };
+      // A state-only compositor marker is not the complete visual frame. Fold the
+      // active PoseNode bindings into the frame snapshot before addressing or
+      // encoding it so changing authored visual bytes cannot leave video evidence
+      // unchanged. The Astro carrier uses the same `--<binding>` projection.
+      for (const { key, bindingsByState } of driven) {
+        const active = posedFrame[key];
+        if (active === undefined) continue;
+        for (const [binding, value] of Object.entries(bindingsByState.get(active) ?? {})) {
+          css[`--${binding}`] = value;
+        }
+      }
+      const composite: CompositeState = {
+        discrete: { ...computed.discrete },
+        blend: Object.fromEntries(Object.entries(computed.blend).map(([name, weights]) => [name, { ...weights }])),
+        outputs: {
+          css,
+          glsl: { ...computed.outputs.glsl },
+          wgsl: { ...computed.outputs.wgsl },
+          aria: { ...computed.outputs.aria },
+        },
+      };
+      collected.push({ composite, posed: posedFrame });
     }
     return collected;
   } finally {
