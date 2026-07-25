@@ -275,12 +275,17 @@ const DEFAULT_PROP_PATTERN = /^(?:--[a-zA-Z0-9_-]+|[a-zA-Z-][a-zA-Z0-9-]*)$/;
  * @returns The parsed properties and the position immediately after the
  *          closing `}` of the block.
  */
-export function parseFlatDeclarationValues(
+function scanFlatDeclarationValues(
   css: string,
   pos: number,
   propPattern: RegExp = DEFAULT_PROP_PATTERN,
-): { props: Record<string, CSSDeclarationValue>; end: number } {
+): {
+  props: Record<string, CSSDeclarationValue>;
+  declarations: Array<{ readonly name: string; readonly value: CSSDeclarationValue }>;
+  end: number;
+} {
   const props: Record<string, CSSDeclarationValue> = {};
+  const declarations: Array<{ readonly name: string; readonly value: CSSDeclarationValue }> = [];
   let braceDepth = 0;
 
   while (pos < css.length) {
@@ -301,7 +306,7 @@ export function parseFlatDeclarationValues(
     // Closing brace of the block
     if (ch === '}' && braceDepth === 0) {
       pos++;
-      return { props, end: pos };
+      return { props, declarations, end: pos };
     }
 
     // Opening brace nested inside a value (e.g. var(--x, {}))
@@ -419,12 +424,43 @@ export function parseFlatDeclarationValues(
         // Equal-priority declarations retain ordinary CSS last-one-wins order.
         if (current === undefined || candidate.important || !current.important) {
           props[propName] = candidate;
+          declarations.push({ name: propName, value: candidate });
         }
       }
     }
   }
 
-  return { props, end: pos };
+  return { props, declarations, end: pos };
+}
+
+/** Parse flat declarations into their supported cascade winners. */
+export function parseFlatDeclarationValues(
+  css: string,
+  pos: number,
+  propPattern: RegExp = DEFAULT_PROP_PATTERN,
+): { props: Record<string, CSSDeclarationValue>; end: number } {
+  const { props, end } = scanFlatDeclarationValues(css, pos, propPattern);
+  return { props, end };
+}
+
+/**
+ * Internal source-order view for adapters whose grammar includes namespace
+ * resets. This is intentionally not re-exported from `@liteship/compiler/parse`:
+ * it supports compiler-owned lowering without widening the public parser API.
+ */
+export function parseOrderedFlatDeclarations(
+  css: string,
+  pos: number,
+  propPattern: RegExp = DEFAULT_PROP_PATTERN,
+): {
+  declarations: Array<{ readonly name: string; readonly value: string }>;
+  end: number;
+} {
+  const { declarations, end } = scanFlatDeclarationValues(css, pos, propPattern);
+  return {
+    declarations: declarations.map(({ name, value }) => ({ name, value: serializeCSSDeclarationValue(value) })),
+    end,
+  };
 }
 
 /**

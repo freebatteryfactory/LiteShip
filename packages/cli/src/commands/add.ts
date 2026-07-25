@@ -16,7 +16,7 @@
  * @module
  */
 
-import { cpSync, existsSync, readdirSync, renameSync, statSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { wallClock } from '@liteship/core';
@@ -30,6 +30,26 @@ export type FragmentKind = 'example' | 'template';
 const FRAGMENT_ROOTS: Record<FragmentKind, string> = {
   example: 'example',
   template: 'template',
+};
+
+interface AddFileOperations {
+  readonly exists: (path: string) => boolean;
+  readonly makeTemporaryDirectory: (prefix: string) => string;
+  readonly list: (path: string) => readonly string[];
+  readonly isDirectory: (path: string) => boolean;
+  readonly copyTree: (source: string, destination: string) => void;
+  readonly rename: (source: string, destination: string) => void;
+  readonly removeTree: (path: string) => void;
+}
+
+const NODE_ADD_FILE_OPERATIONS: AddFileOperations = {
+  exists: existsSync,
+  makeTemporaryDirectory: mkdtempSync,
+  list: readdirSync,
+  isDirectory: (path) => statSync(path).isDirectory(),
+  copyTree: (source, destination) => cpSync(source, destination, { recursive: true }),
+  rename: renameSync,
+  removeTree: (path) => rmSync(path, { recursive: true, force: true }),
 };
 
 /**
@@ -51,27 +71,31 @@ function isFragmentKind(value: string): value is FragmentKind {
 }
 
 /** List the fragment directory names available for each kind (empty when a root is absent). */
-function listFragments(root: string): Record<FragmentKind, readonly string[]> {
+function listFragments(root: string, files: AddFileOperations): Record<FragmentKind, readonly string[]> {
   const forKind = (kind: FragmentKind): readonly string[] => {
     const dir = resolve(root, FRAGMENT_ROOTS[kind]);
-    if (!existsSync(dir)) return [];
-    return readdirSync(dir)
-      .filter((name) => statSync(resolve(dir, name)).isDirectory())
+    if (!files.exists(dir)) return [];
+    return files
+      .list(dir)
+      .filter((name) => files.isDirectory(resolve(dir, name)))
       .sort();
   };
   return { example: forKind('example'), template: forKind('template') };
 }
 
 /** Count the files (not directories) copied under `dir`, recursively. */
-function countFiles(dir: string): number {
+function countFiles(dir: string, files: AddFileOperations): number {
   let total = 0;
-  for (const name of readdirSync(dir)) {
+  for (const name of files.list(dir)) {
     const abs = resolve(dir, name);
-    if (statSync(abs).isDirectory()) total += countFiles(abs);
+    if (files.isDirectory(abs)) total += countFiles(abs, files);
     else total += 1;
   }
   return total;
 }
+
+type AddOptions = { readonly kind?: string; readonly name?: string; readonly cwd?: string };
+type AddCommand = (opts?: AddOptions) => Promise<number>;
 
 /**
  * Execute `liteship add [<kind> <name>]`. With no `kind`, lists the available
@@ -79,84 +103,130 @@ function countFiles(dir: string): number {
  * `./<name>` and reports the copied file count. Exit 1 on an unknown kind/name
  * or an already-existing destination.
  */
-export async function add(opts: { kind?: string; name?: string; cwd?: string } = {}): Promise<number> {
-  const cwd = opts.cwd ?? process.cwd();
-  const available = listFragments(PACKAGED_FRAGMENT_ROOT);
-  const timestamp = new Date(wallClock.now()).toISOString();
+export function createAddCommand(overrides: Partial<AddFileOperations> = {}): AddCommand {
+  const files: AddFileOperations = { ...NODE_ADD_FILE_OPERATIONS, ...overrides };
+  return async (opts = {}) => {
+    const cwd = opts.cwd ?? process.cwd();
+    const timestamp = new Date(wallClock.now()).toISOString();
+    let available: Record<FragmentKind, readonly string[]>;
+    try {
+      available = listFragments(PACKAGED_FRAGMENT_ROOT, files);
+    } catch (error) {
+      emitError(
+        'add',
+        'cli/command-failed',
+        `could not read packaged fragments: ${error instanceof Error ? error.message : String(error)}`,
+        'Reinstall liteship and retry the command',
+      );
+      return 1;
+    }
 
-  // List mode: no kind given.
-  if (opts.kind === undefined) {
+    // List mode: no kind given.
+    if (opts.kind === undefined) {
+      emit({
+        status: 'ok',
+        command: 'add',
+        timestamp,
+        fragments: available,
+        note: RICHER_GENERATORS_NOTE,
+      });
+      process.stderr.write(
+        `liteship add <kind> <name> — copy a scaffold fragment.\n` +
+          `  example:  ${available.example.join(', ') || '(none)'}\n` +
+          `  template: ${available.template.join(', ') || '(none)'}\n` +
+          `  ${RICHER_GENERATORS_NOTE}\n`,
+      );
+      return 0;
+    }
+
+    if (!isFragmentKind(opts.kind)) {
+      emitError(
+        'add',
+        'cli/invalid-argument',
+        `unknown fragment kind: ${opts.kind}`,
+        `Available kinds: ${Object.keys(FRAGMENT_ROOTS).join(', ')}`,
+      );
+      return 1;
+    }
+
+    const names = available[opts.kind];
+    const availableHint = `Available ${opts.kind}s: ${names.join(', ') || '(none)'}`;
+    if (opts.name === undefined) {
+      emitError('add', 'cli/usage', `usage: liteship add ${opts.kind} <name>`, availableHint);
+      return 1;
+    }
+    if (!names.includes(opts.name)) {
+      emitError('add', 'cli/not-found', `no ${opts.kind} fragment named "${opts.name}"`, availableHint);
+      return 1;
+    }
+
+    const source = resolve(PACKAGED_FRAGMENT_ROOT, FRAGMENT_ROOTS[opts.kind], opts.name);
+    const destination = resolve(cwd, opts.name);
+    if (files.exists(destination)) {
+      emitError(
+        'add',
+        'cli/conflict',
+        `destination already exists: ${destination}`,
+        'Choose an empty target path or remove it first',
+      );
+      return 1;
+    }
+
+    let staging: string | undefined;
+    let fileCount: number;
+    try {
+      staging = files.makeTemporaryDirectory(join(cwd, '.liteship-add-'));
+      files.copyTree(source, staging);
+      if (opts.kind === 'template') {
+        for (const [from, to] of Object.entries(GENERATED_TEMPLATE_RENAMES)) {
+          const fromPath = join(staging, from);
+          if (files.exists(fromPath)) files.rename(fromPath, join(staging, to));
+        }
+      }
+      fileCount = countFiles(staging, files);
+      files.rename(staging, destination);
+      staging = undefined;
+    } catch (error) {
+      let cleanupFailure: string | undefined;
+      if (staging !== undefined) {
+        try {
+          files.removeTree(staging);
+        } catch (cleanupError) {
+          cleanupFailure = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        }
+      }
+      const failure = error instanceof Error ? error.message : String(error);
+      emitError(
+        'add',
+        'cli/command-failed',
+        `could not copy ${opts.kind} fragment "${opts.name}": ${failure}${
+          cleanupFailure === undefined ? '' : `; staging cleanup also failed: ${cleanupFailure}`
+        }`,
+        'Check destination permissions and free space, then retry',
+      );
+      return 1;
+    }
+
     emit({
       status: 'ok',
       command: 'add',
       timestamp,
-      fragments: available,
+      kind: opts.kind,
+      name: opts.name,
+      dest: relative(cwd, destination) || opts.name,
+      fileCount,
       note: RICHER_GENERATORS_NOTE,
     });
     process.stderr.write(
-      `liteship add <kind> <name> — copy a scaffold fragment.\n` +
-        `  example:  ${available.example.join(', ') || '(none)'}\n` +
-        `  template: ${available.template.join(', ') || '(none)'}\n` +
+      `Copied ${opts.kind} '${opts.name}' → ${relative(cwd, destination) || opts.name} (${fileCount} file${fileCount === 1 ? '' : 's'}).\n` +
         `  ${RICHER_GENERATORS_NOTE}\n`,
     );
     return 0;
-  }
+  };
+}
 
-  if (!isFragmentKind(opts.kind)) {
-    emitError(
-      'add',
-      'cli/invalid-argument',
-      `unknown fragment kind: ${opts.kind}`,
-      `Available kinds: ${Object.keys(FRAGMENT_ROOTS).join(', ')}`,
-    );
-    return 1;
-  }
+const runAdd = createAddCommand();
 
-  const names = available[opts.kind];
-  const availableHint = `Available ${opts.kind}s: ${names.join(', ') || '(none)'}`;
-  if (opts.name === undefined) {
-    emitError('add', 'cli/usage', `usage: liteship add ${opts.kind} <name>`, availableHint);
-    return 1;
-  }
-  if (!names.includes(opts.name)) {
-    emitError('add', 'cli/not-found', `no ${opts.kind} fragment named "${opts.name}"`, availableHint);
-    return 1;
-  }
-
-  const source = resolve(PACKAGED_FRAGMENT_ROOT, FRAGMENT_ROOTS[opts.kind], opts.name);
-  const destination = resolve(cwd, opts.name);
-  if (existsSync(destination)) {
-    emitError(
-      'add',
-      'cli/conflict',
-      `destination already exists: ${destination}`,
-      'Choose an empty target path or remove it first',
-    );
-    return 1;
-  }
-
-  cpSync(source, destination, { recursive: true });
-  if (opts.kind === 'template') {
-    for (const [from, to] of Object.entries(GENERATED_TEMPLATE_RENAMES)) {
-      const fromPath = join(destination, from);
-      if (existsSync(fromPath)) renameSync(fromPath, join(destination, to));
-    }
-  }
-  const fileCount = countFiles(destination);
-
-  emit({
-    status: 'ok',
-    command: 'add',
-    timestamp,
-    kind: opts.kind,
-    name: opts.name,
-    dest: relative(cwd, destination) || opts.name,
-    fileCount,
-    note: RICHER_GENERATORS_NOTE,
-  });
-  process.stderr.write(
-    `Copied ${opts.kind} '${opts.name}' → ${relative(cwd, destination) || opts.name} (${fileCount} file${fileCount === 1 ? '' : 's'}).\n` +
-      `  ${RICHER_GENERATORS_NOTE}\n`,
-  );
-  return 0;
+export async function add(opts: AddOptions = {}): Promise<number> {
+  return runAdd(opts);
 }

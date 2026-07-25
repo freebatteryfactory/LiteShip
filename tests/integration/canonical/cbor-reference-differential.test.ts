@@ -32,6 +32,21 @@ function normalized(value: unknown): unknown {
   return value;
 }
 
+/**
+ * Decode the reference implementation's maps through `Map` so poison-key-shaped
+ * CBOR keys remain data. cborg's default object mode assigns `__proto__` through
+ * the legacy setter and drops the own property; that is a limitation of the
+ * independent oracle, not part of LiteShip's accepted value semantics.
+ */
+function normalizedReference(value: unknown): unknown {
+  if (value instanceof Uint8Array) return new Uint8Array(value);
+  if (Array.isArray(value)) return value.map(normalizedReference);
+  if (value instanceof Map) {
+    return Object.fromEntries([...value.entries()].map(([key, child]) => [String(key), normalizedReference(child)]));
+  }
+  return value;
+}
+
 describe('@liteship/canonical ↔ cborg independent differential', () => {
   it('emits the same RFC 8949 deterministic bytes over the shared non-float domain', () => {
     fc.assert(
@@ -48,10 +63,20 @@ describe('@liteship/canonical ↔ cborg independent differential', () => {
         const liteBytes = CanonicalCbor.encode(value);
         const referenceBytes = referenceEncode(value);
         expect(decode(referenceBytes)).toStrictEqual(normalized(value));
-        expect(referenceDecode(liteBytes)).toStrictEqual(normalized(value));
+        expect(normalizedReference(referenceDecode(liteBytes, { useMaps: true }))).toStrictEqual(normalized(value));
       }),
       { numRuns: 300 },
     );
+  });
+
+  it('keeps poison-key maps in the shared byte domain without trusting cborg object materialization', () => {
+    const value = Object.fromEntries([['__proto__', null]]);
+    const liteBytes = CanonicalCbor.encode(value);
+    const referenceBytes = referenceEncode(value);
+
+    expect(liteBytes).toEqual(referenceBytes);
+    expect(decode(referenceBytes)).toStrictEqual(value);
+    expect(normalizedReference(referenceDecode(liteBytes, { useMaps: true }))).toStrictEqual(value);
   });
 
   it('pins the intentional float-width divergence instead of laundering it as agreement', () => {

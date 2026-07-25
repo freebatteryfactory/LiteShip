@@ -143,6 +143,59 @@ describe('fromTailwindTheme — token decomposition branches', () => {
   });
 });
 
+describe('fromTailwindTheme — source-ordered namespace resets', () => {
+  it('clears an authored namespace and admits only declarations that follow the reset', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-red-500: #ff0000;
+        --spacing-md: 1rem;
+        --color-*: initial;
+        --color-brand: #123456;
+        --color-red-500: #cc0000;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens.map((token) => token.name).sort()).toEqual(['color-brand', 'color-red', 'spacing-md']);
+    expect(result.tokens.find((token) => token.name === 'color-red')?.values).toEqual({ '500': '#cc0000' });
+    expect(result.tokens.some((token) => token.name.includes('*'))).toBe(false);
+  });
+
+  it('applies a targeted wildcard reset without deleting sibling token families', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-lime-500: lime;
+        --color-lime-700: green;
+        --color-fuchsia-500: fuchsia;
+        --color-lime-*: initial;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens.map((token) => token.name)).toEqual(['color-fuchsia']);
+  });
+
+  it('supports exact resets and refuses wildcard selectors carrying a non-reset value', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-brand: red;
+        --color-brand: initial;
+        --color-*: red;
+        --spacing-md: 1rem;
+      }
+    `);
+
+    expect(result.tokens.map((token) => token.name)).toEqual(['spacing-md']);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.lossyTokenConversion,
+        severity: 'error',
+        path: ['--color-*'],
+      }),
+    );
+  });
+});
+
 describe('fromTailwindTheme — screens → viewport.width boundary', () => {
   it('folds --breakpoint-* vars into one ascending boundary', () => {
     const result = fromTailwindTheme(`
@@ -196,6 +249,20 @@ describe('fromTailwindTheme — screens → viewport.width boundary', () => {
     const b = result.boundaries[0]!;
     expect([...b.states]).toEqual(['bp-0', 'bp-768']);
     expect([...b.thresholds]).toEqual([0, 768]);
+  });
+
+  it('applies breakpoint resets in source order before folding the surviving partition', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --breakpoint-sm: 640px;
+        --breakpoint-*: initial;
+        --breakpoint-md: 768px;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
+    expect([...result.boundaries[0]!.states]).toEqual(['base', 'md']);
   });
 });
 

@@ -5,11 +5,11 @@
  * @module
  */
 
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { add, RICHER_GENERATORS_NOTE } from '../../../../packages/cli/src/commands/add.js';
+import { add, createAddCommand, RICHER_GENERATORS_NOTE } from '../../../../packages/cli/src/commands/add.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..', '..');
@@ -88,5 +88,46 @@ describe.sequential('liteship add packaged fragments', () => {
       error: expect.stringContaining('destination already exists'),
     });
     expect(readFileSync(destination, 'utf8')).toBe('owned by consumer');
+  });
+
+  it('stages fragment copies and returns a structured failure without leaving partial destinations', async () => {
+    const cwd = consumerDir();
+    const run = createAddCommand({
+      copyTree: (_source, staging) => {
+        writeFileSync(join(staging, 'partial.txt'), 'incomplete');
+        throw new Error('simulated disk exhaustion');
+      },
+    });
+
+    const { exit, stderr } = await captureCli(() => run({ kind: 'template', name: 'default', cwd }));
+
+    expect(exit).toBe(1);
+    expect(JSON.parse(stderr)).toMatchObject({
+      status: 'failed',
+      command: 'add',
+      code: 'cli/command-failed',
+      error: expect.stringContaining('simulated disk exhaustion'),
+    });
+    expect(existsSync(join(cwd, 'default'))).toBe(false);
+    expect(readdirSync(cwd).filter((name) => name.startsWith('.liteship-add-'))).toEqual([]);
+  });
+
+  it('does not expose a partial destination when the final commit rename fails', async () => {
+    const cwd = consumerDir();
+    const run = createAddCommand({
+      rename: () => {
+        throw new Error('simulated destination race');
+      },
+    });
+
+    const { exit, stderr } = await captureCli(() => run({ kind: 'example', name: '07-stagger-reveal', cwd }));
+
+    expect(exit).toBe(1);
+    expect(JSON.parse(stderr)).toMatchObject({
+      code: 'cli/command-failed',
+      error: expect.stringContaining('simulated destination race'),
+    });
+    expect(existsSync(join(cwd, '07-stagger-reveal'))).toBe(false);
+    expect(readdirSync(cwd).filter((name) => name.startsWith('.liteship-add-'))).toEqual([]);
   });
 });

@@ -32,7 +32,8 @@
 import { defineBoundary, defineToken, sourceToInput } from '@liteship/core';
 import type { Boundary, Token, Theme, TokenCategory } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import { blankCssCommentsAndStrings, parseFlatDeclarations } from '@liteship/compiler/parse';
+import { blankCssCommentsAndStrings } from '@liteship/compiler/parse';
+import { parseOrderedFlatDeclarations } from '../parse/css-scan.js';
 import { inferSyntax } from '../css-utils.js';
 import type { MigrationDiagnostic, MigrationResult, FromMediaQueriesOptions } from './types.js';
 import { makeMigrationDiagnostic, MIGRATE_CODES } from './diagnostics.js';
@@ -65,6 +66,9 @@ const SCALE_AXIS = 'scale';
 
 /** `--<base>-<digits>` → `{ base, scale }`; a name with no numeric tail yields `null`. */
 const SCALE_SUFFIX_RE = /^(.+)-(\d+)$/;
+
+/** Tailwind extends its theme declaration grammar with a terminal namespace-reset `*`. */
+const TAILWIND_THEME_PROPERTY_RE = /^--[-_a-zA-Z0-9]+(?:\*)?$/;
 
 // ---------------------------------------------------------------------------
 // Options
@@ -99,20 +103,21 @@ function matchBrace(blanked: string, openIdx: number): number | null {
 }
 
 interface CollectedThemeDeclarations {
-  readonly declarations: Record<string, string>;
+  readonly declarations: ReadonlyArray<{ readonly name: string; readonly value: string }>;
   readonly diagnostics: readonly MigrationDiagnostic[];
 }
 
 /**
  * Collect every `--x: y` declaration from the `@theme { }` block(s) in `css`, in
- * source order (later blocks / later duplicate names override the value but keep
- * their first position). When the input carries no `@theme` at-rule at all AND
+ * source order. This order is load-bearing for Tailwind namespace resets: a
+ * declaration after `--color-*: initial` re-admits that token, while a declaration
+ * before it is removed. When the input carries no `@theme` at-rule at all AND
  * no rule braces, the whole string is treated as a bare declaration body — so a
  * caller may pass just the block's inner declarations.
  */
 function collectThemeDeclarations(css: string): CollectedThemeDeclarations {
   const blanked = blankCssCommentsAndStrings(css);
-  const decls: Record<string, string> = {};
+  const declarations: Array<{ readonly name: string; readonly value: string }> = [];
   const diagnostics: MigrationDiagnostic[] = [];
   let found = false;
   let sawThemeMarker = false;
@@ -159,16 +164,14 @@ function collectThemeDeclarations(css: string): CollectedThemeDeclarations {
       break;
     }
     found = true;
-    const { props } = parseFlatDeclarations(css, brace + 1);
-    for (const [k, v] of Object.entries(props)) decls[k] = v;
+    declarations.push(...parseOrderedFlatDeclarations(css, brace + 1, TAILWIND_THEME_PROPERTY_RE).declarations);
     from = close + 1;
   }
 
   if (!found && !sawThemeMarker && !blanked.includes('{')) {
-    const { props } = parseFlatDeclarations(css, 0);
-    for (const [k, v] of Object.entries(props)) decls[k] = v;
+    declarations.push(...parseOrderedFlatDeclarations(css, 0, TAILWIND_THEME_PROPERTY_RE).declarations);
   }
-  return { declarations: decls, diagnostics };
+  return { declarations, diagnostics };
 }
 
 /**
@@ -223,7 +226,7 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
 
   const collected = collectThemeDeclarations(css);
   diagnostics.push(...collected.diagnostics);
-  const decls = collected.declarations;
+  const declarations = collected.declarations;
 
   // Ordered screen entries: --breakpoint-* first (source order), then the
   // options.screens map merged on top (override in place / append).
@@ -238,6 +241,17 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
       screenEntries.push({ name, raw });
     }
   };
+  const removeScreen = (name: string): void => {
+    const at = screenIndex.get(name);
+    if (at === undefined) return;
+    screenEntries.splice(at, 1);
+    screenIndex.clear();
+    for (const [index, entry] of screenEntries.entries()) screenIndex.set(entry.name, index);
+  };
+  const clearScreens = (): void => {
+    screenEntries.length = 0;
+    screenIndex.clear();
+  };
 
   // One grouped token per (category, base name); `scales` holds numeric-suffixed
   // values, `bare` the co-named unsuffixed value (used as fallback).
@@ -249,8 +263,9 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
   }
   const groups = new Map<string, TokenGroup>();
   const groupOrder: string[] = [];
+  const keyForGroup = (category: TokenCategory, base: string): string => `${category} ${base}`;
   const groupFor = (category: TokenCategory, base: string): TokenGroup => {
-    const key = `${category} ${base}`;
+    const key = keyForGroup(category, base);
     let g = groups.get(key);
     if (!g) {
       g = { category, base, scales: {} };
@@ -259,15 +274,68 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
     }
     return g;
   };
+  const removeGroup = (key: string): void => {
+    if (!groups.delete(key)) return;
+    const orderIndex = groupOrder.indexOf(key);
+    if (orderIndex !== -1) groupOrder.splice(orderIndex, 1);
+  };
+  const removeEmptyGroup = (category: TokenCategory, base: string): void => {
+    const key = keyForGroup(category, base);
+    const group = groups.get(key);
+    if (group !== undefined && group.bare === undefined && Object.keys(group.scales).length === 0) removeGroup(key);
+  };
+  const resetTokenDeclaration = (category: TokenCategory, namespace: string, rest: string): void => {
+    if (rest === '*' || rest.endsWith('-*')) {
+      const authoredPrefix = rest === '*' ? '' : rest.slice(0, -2);
+      const basePrefix = authoredPrefix.length === 0 ? `${namespace}-` : `${namespace}-${authoredPrefix}`;
+      for (const [key, group] of [...groups]) {
+        if (group.category !== category) continue;
+        const inResetNamespace =
+          authoredPrefix.length === 0 || group.base === basePrefix || group.base.startsWith(`${basePrefix}-`);
+        if (inResetNamespace) removeGroup(key);
+      }
+      return;
+    }
+
+    const scaleMatch = SCALE_SUFFIX_RE.exec(rest);
+    if (scaleMatch) {
+      const [, base, scaleValue] = scaleMatch;
+      const groupBase = `${namespace}-${base!}`;
+      const group = groups.get(keyForGroup(category, groupBase));
+      if (group !== undefined) delete group.scales[scaleValue!];
+      removeEmptyGroup(category, groupBase);
+      return;
+    }
+
+    const groupBase = `${namespace}-${rest}`;
+    const group = groups.get(keyForGroup(category, groupBase));
+    if (group !== undefined) group.bare = undefined;
+    removeEmptyGroup(category, groupBase);
+  };
+  const isInitialReset = (value: string): boolean => /^initial(?:\s*!important)?$/iu.test(value.trim());
 
   // -------------------------------------------------------------------------
   // Classify every declaration.
   // -------------------------------------------------------------------------
-  for (const [name, value] of Object.entries(decls)) {
+  for (const { name, value } of declarations) {
     if (!name.startsWith('--')) continue; // non-custom-property declaration — not a theme var
 
     if (name.startsWith(BREAKPOINT_PREFIX)) {
-      pushScreen(name.slice(BREAKPOINT_PREFIX.length), value);
+      const screenName = name.slice(BREAKPOINT_PREFIX.length);
+      if (isInitialReset(value)) {
+        if (screenName === '*') clearScreens();
+        else removeScreen(screenName);
+      } else if (screenName.includes('*')) {
+        diagnostics.push(
+          makeMigrationDiagnostic(
+            MIGRATE_CODES.lossyTokenConversion,
+            `Tailwind breakpoint namespace selector "${name}" is only supported as an "initial" reset; skipped.`,
+            { path: [name], severity: 'error' },
+          ),
+        );
+      } else {
+        pushScreen(screenName, value);
+      }
       continue;
     }
 
@@ -291,6 +359,21 @@ export function fromTailwindTheme(css: string, options?: FromTailwindThemeOption
         makeMigrationDiagnostic(
           MIGRATE_CODES.lossyTokenConversion,
           `Tailwind var "${name}" has no token name after its namespace; skipped.`,
+          { path: [name], severity: 'error' },
+        ),
+      );
+      continue;
+    }
+
+    if (isInitialReset(value)) {
+      resetTokenDeclaration(category, namespace, rest);
+      continue;
+    }
+    if (rest.includes('*')) {
+      diagnostics.push(
+        makeMigrationDiagnostic(
+          MIGRATE_CODES.lossyTokenConversion,
+          `Tailwind namespace selector "${name}" is only supported as an "initial" reset; skipped.`,
           { path: [name], severity: 'error' },
         ),
       );
