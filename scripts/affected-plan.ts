@@ -1,9 +1,10 @@
 /**
- * Clean-checkout affected-plan host.
+ * Assurance-aware affected-plan host.
  *
- * This entrypoint deliberately imports no built workspace package and no shared
- * CLI spawn helper: the CI plan job executes before `pnpm build`. It writes the
- * GitHub output itself so a failed planner cannot be laundered by `echo $(...)`.
+ * The selector consumes the full live assurance inventory, including package-owned
+ * RepoIR and receipt validators. CI therefore builds the workspace before executing
+ * this entrypoint. It writes GitHub output itself so a failed planner cannot be
+ * laundered by `echo $(...)`.
  *
  * @module
  */

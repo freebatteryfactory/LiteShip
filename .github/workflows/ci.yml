@@ -44,8 +44,9 @@ jobs:
   # lane then consumes `fromJSON(needs.plan.outputs.matrix)` to confirm — at CI runtime —
   # that its hand-written lane command still matches the projection (the offline meta test
   # tests/unit/meta/ci-registry-parity.test.ts proves byte-identity at merge time).
-  # Dist-free + <1min: ci-plan reads only the self-contained check-registry source, so it
-  # runs right after install with no workspace build.
+  # The lane matrix stays dist-free: ci-plan reads only the self-contained check-registry
+  # source. The affected selector then consumes the full live assurance inventory, so the
+  # workspace build is its explicit prerequisite rather than an accidental ambient artifact.
   plan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -74,6 +75,8 @@ jobs:
             pnpm exec tsx scripts/ci-plan.ts
             echo "PLAN_EOF"
           } >> "$GITHUB_OUTPUT"
+      - name: Build workspace dependencies for the assurance-aware affected selector
+        run: pnpm run build
       - id: affected
         name: Emit the conservative affected-test plan
         env:
