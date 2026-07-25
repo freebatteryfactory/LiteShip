@@ -11,8 +11,8 @@
 import { defineCapsule, schema } from '@liteship/core';
 import type { CapsuleDef } from '@liteship/core';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
-import { audioDecoder } from '../decoders/audio.js';
 import type { BeatMarkerSet as _BeatMarkerSet } from '@liteship/_spine';
+import { analysisFrames } from './audio-input.js';
 
 /**
  * Detected beat markers + overall BPM estimate — the raw asset/sample-space
@@ -23,19 +23,24 @@ import type { BeatMarkerSet as _BeatMarkerSet } from '@liteship/_spine';
 export type BeatMarkerSet = _BeatMarkerSet;
 
 /** Detect downbeats on a decoded audio buffer. */
-export function detectBeats(audio: { sampleRate: number; samples: Float32Array | Int16Array }): BeatMarkerSet {
+export function detectBeats(audio: {
+  sampleRate: number;
+  channels?: number;
+  samples: Float32Array | Int16Array;
+}): BeatMarkerSet {
+  const samples = analysisFrames(audio, 'detectBeats');
   const frameSize = 1024;
   const hop = 256;
   // Clamp to zero for clips shorter than one frame so we return an empty
   // result instead of throwing on a negative typed-array length.
-  const envLen = Math.max(0, Math.floor((audio.samples.length - frameSize) / hop));
+  const envLen = samples.length < frameSize ? 0 : Math.floor((samples.length - frameSize) / hop) + 1;
   if (envLen === 0) return { bpm: 0, beats: [] };
   const envelope = new Float32Array(envLen);
   for (let i = 0; i < envLen; i++) {
     let sum = 0;
     const off = i * hop;
     for (let j = 0; j < frameSize; j++) {
-      const v = typeof audio.samples[off + j] === 'number' ? Number(audio.samples[off + j]) : 0;
+      const v = Number(samples[off + j]);
       sum += v * v;
     }
     envelope[i] = Math.sqrt(sum / frameSize);
@@ -54,13 +59,15 @@ export function detectBeats(audio: { sampleRate: number; samples: Float32Array |
     }
   }
 
+  if (bestCorr <= 0) return { bpm: 0, beats: [] };
+
   const bpm = (audio.sampleRate * 60) / (bestLag * hop);
   const beatSpacing = bestLag * hop;
   const beats: number[] = [];
   const maxEnv = envelopeMax(envelope);
   if (maxEnv <= 0) return { bpm: 0, beats: [] };
   const threshold = maxEnv * 0.4;
-  for (let i = 0; i < audio.samples.length; i += beatSpacing) {
+  for (let i = 0; i < samples.length; i += beatSpacing) {
     const envIdx = Math.floor(i / hop);
     if (envIdx < envelope.length && envelope[envIdx]! >= threshold) beats.push(i);
   }
@@ -88,6 +95,7 @@ export function BeatMarkerProjection(
   audioAssetId: string,
 ): CapsuleDef<'cachedProjection', ArrayBuffer, BeatMarkerSet, unknown> {
   registry.assertAudioRegistered(audioAssetId, 'BeatMarkerProjection');
+  const decode = registry.resolveAudioDecoder(audioAssetId);
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:beats`,
@@ -99,7 +107,7 @@ export function BeatMarkerProjection(
     // honestly; the canonical `.wav` fixture drives the real derive.
     input: AssetBytes,
     output: BeatMarkerSetSchema,
-    derive: async (bytes: ArrayBuffer): Promise<BeatMarkerSet> => detectBeats(await audioDecoder(bytes)),
+    derive: async (bytes: ArrayBuffer): Promise<BeatMarkerSet> => detectBeats(await decode(bytes)),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {

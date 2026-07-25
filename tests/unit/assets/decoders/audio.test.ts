@@ -41,7 +41,8 @@ function buildWav(opts: {
   return riff;
 
   function chunk(id: string, payload: Uint8Array): Uint8Array {
-    return concat(enc.encode(id), u32le(payload.byteLength), payload);
+    const padding = payload.byteLength % 2 === 0 ? new Uint8Array(0) : new Uint8Array(1);
+    return concat(enc.encode(id), u32le(payload.byteLength), payload, padding);
   }
   function u32le(n: number): Uint8Array {
     const out = new Uint8Array(4);

@@ -15,7 +15,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Compositor, VideoRenderer, wallClock, type Millis } from '@liteship/core';
-import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@liteship/assets';
+import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@liteship/assets';
 import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@liteship/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
@@ -24,12 +24,6 @@ import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
 import { runPlumbScan } from './plumb-scan.js';
-
-// Host audio decode resolves by asset id, falling back to the built-in audio
-// decoder for any id not in a registry. An EMPTY immutable registry preserves
-// the prior global `resolveAssetDecoder` behavior (no scene is imported in the
-// host, so nothing was ever registered) without the order-dependent global.
-const HOST_ASSET_REGISTRY = AssetRegistry.make([]);
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
 const DEFAULT_WIDTH = 1280;
@@ -124,14 +118,12 @@ export function createNodeCommandContext(
     // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@liteship/cli`
     // injects `runCheckInvariants`, and over MCP it degrades to capabilityUnavailable.
     loadAssetBytes,
-    runAudioProjection: async (bytes, projection, assetId) => {
-      // The asset's OWN decoder (AssetDecl.decoder override or the kind
-      // built-in, via its capsule's derive handler) — not a hardwired
-      // audioDecoder. Falls back to the audio built-in when the asset isn't
-      // registered in this process. The three projections are audio
-      // analyses, so the decoded shape must be DecodedAudio (enforced on
-      // AssetDecl.decoder for kind 'audio').
-      const decoded = (await HOST_ASSET_REGISTRY.resolveDecoder(assetId ?? '')(bytes)) as DecodedAudio;
+    runAudioProjection: async (bytes, projection, _assetId) => {
+      // This host command consumes a compiled manifest and raw WAV bytes; it
+      // does not import the authored scene registry. Keep that explicit host
+      // adapter separate from AssetRegistry, whose authority is registered
+      // identity/kind/decoder ownership and therefore never falls back.
+      const decoded = await audioDecoder(bytes);
       if (projection === 'beat') return detectBeats(decoded).beats.length;
       if (projection === 'onset') return detectOnsets(decoded).length;
       return computeWaveform(decoded, { bins: 512 }).length;

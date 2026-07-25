@@ -249,6 +249,73 @@ describe('Asset capsule', () => {
     expect(v.site).toEqual(['node']);
   });
 
+  it('snapshots and freezes every caller-owned metadata collection before addressing', () => {
+    const site: Site[] = ['node'];
+    const budgets = { decodeP95Ms: 25, memoryMb: 4 };
+    const invariants = [{ name: 'stable', check: () => true, message: 'stable' }];
+    const attribution = { license: 'MIT', author: 'Before', url: 'https://example.test/before' };
+    const asset = defineAsset({
+      id: 'snapshot-owned-metadata',
+      source: 'owned.wav',
+      kind: 'audio',
+      site,
+      budgets,
+      invariants,
+      attribution,
+    });
+    const id = asset.id;
+
+    site.push('browser');
+    budgets.decodeP95Ms = 999;
+    invariants[0]!.name = 'mutated';
+    attribution.author = 'After';
+
+    expect(asset.id).toBe(id);
+    expect(asset.site).toEqual(['node']);
+    expect(asset.budgets).toEqual({ p95Ms: 25, memoryMb: 4 });
+    expect(asset.invariants[0]?.name).toBe('stable');
+    expect(asset.attribution).toEqual({ license: 'MIT', author: 'Before', url: 'https://example.test/before' });
+    expect(Object.isFrozen(asset)).toBe(true);
+    expect(Object.isFrozen(asset.site)).toBe(true);
+    expect(Object.isFrozen(asset.budgets)).toBe(true);
+    expect(Object.isFrozen(asset.invariants)).toBe(true);
+    expect(Object.isFrozen(asset.invariants[0])).toBe(true);
+    expect(Object.isFrozen(asset.attribution)).toBe(true);
+    expect(Object.isFrozen(asset.asset)).toBe(true);
+  });
+
+  it('freezes derived sites even when no site override is supplied', () => {
+    const asset = defineAsset({ id: 'derived-site-frozen', source: 'owned.wav', kind: 'audio' });
+    expect(Object.isFrozen(asset.site)).toBe(true);
+  });
+
+  it.each([
+    ['null declaration', null, /declaration must be an object/],
+    ['empty id', { id: '', source: 'a.wav', kind: 'audio' }, /id must be/],
+    ['whitespace id', { id: 'not valid', source: 'a.wav', kind: 'audio' }, /id must be/],
+    ['empty source', { id: 'valid', source: ' ', kind: 'audio' }, /non-empty source/],
+    ['foreign kind', { id: 'valid', source: 'a.bin', kind: 'foreign' }, /unsupported kind/],
+    ['foreign decoder', { id: 'valid', source: 'a.wav', kind: 'audio', decoder: 1 }, /decoder must be a function/],
+    ['foreign site', { id: 'valid', source: 'a.wav', kind: 'audio', site: ['moon'] }, /site must contain only/],
+    [
+      'zero decode budget',
+      { id: 'valid', source: 'a.wav', kind: 'audio', budgets: { decodeP95Ms: 0 } },
+      /finite and positive/,
+    ],
+    [
+      'negative memory budget',
+      { id: 'valid', source: 'a.wav', kind: 'audio', budgets: { memoryMb: -1 } },
+      /finite and positive/,
+    ],
+    [
+      'foreign invariants',
+      { id: 'valid', source: 'a.wav', kind: 'audio', invariants: {} },
+      /invariants must be an array/,
+    ],
+  ] as const)('refuses hostile JavaScript input: %s', (_name, candidate, expected) => {
+    expect(() => defineAsset(candidate as never)).toThrow(expected);
+  });
+
   it('an explicit site override narrows a builtin-decoded asset within the builtin site set', () => {
     const a = defineAsset({
       id: 'node-only-audio',
@@ -300,7 +367,7 @@ describe('Asset capsule', () => {
     expect(src).not.toMatch(/^import\s[^;]*['"]node:/m);
   });
 
-  it('registry.resolveDecoder returns the registered capsule decoder and falls back to the audio built-in', async () => {
+  it('registry decoder resolution preserves registered ownership and refuses unknown ids', async () => {
     const marker: DecodedAudio = {
       sampleRate: 2,
       channels: 1,
@@ -319,10 +386,17 @@ describe('Asset capsule', () => {
     });
     const registry = AssetRegistry.make([resolvable]);
     await expect(registry.resolveDecoder('resolvable-asset')(new ArrayBuffer(0))).resolves.toBe(marker);
-    // Unregistered id → audio built-in (a host that builds a registry without
-    // the scene's asset module — e.g. the CLI reading only the compiled
-    // manifest — keeps the audio-decode fallback).
-    const fallbackDecoded = (await registry.resolveDecoder('never-registered')(minimalWav())) as DecodedAudio;
-    expect(fallbackDecoded.sampleRate).toBe(48000);
+    await expect(registry.resolveAudioDecoder('resolvable-asset')(new ArrayBuffer(0))).resolves.toBe(marker);
+    expect(() => registry.resolveDecoder('never-registered')).toThrow(/registry-miss/);
+    expect(() => registry.resolveAudioDecoder('never-registered')).toThrow(/registry-miss/);
+  });
+
+  it('registry refuses non-audio assets at the audio projection boundary', () => {
+    const image = defineAsset({ id: 'cover', source: 'cover.png', kind: 'image' });
+    const registry = AssetRegistry.make([image]);
+    expect(() => registry.assertAudioRegistered('cover', 'WaveformProjection')).toThrow(
+      /requires a registered audio asset/,
+    );
+    expect(() => registry.resolveAudioDecoder('cover')).toThrow(/must be a decodable audio asset/);
   });
 });

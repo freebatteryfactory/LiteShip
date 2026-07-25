@@ -13,8 +13,8 @@ describe('imageDecoder', () => {
 
   it('reads JPEG SOF0 dimensions', async () => {
     const jpegFixture = new Uint8Array([
-      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x64, 0x00,
-      0xc8,
+      0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x64, 0x00, 0xc8, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03,
+      0x11, 0x00,
     ]).buffer;
     const img = await imageDecoder(jpegFixture);
     expect(img.format).toBe('jpeg');
@@ -36,7 +36,8 @@ describe('imageDecoder', () => {
     // APP0 → SOF0 rather than the byte-by-byte fallback.
     const fixture = new Uint8Array([
       0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-      0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x80, 0x01, 0x00,
+      0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x80, 0x01, 0x00, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03, 0x11,
+      0x00,
     ]).buffer;
     const img = await imageDecoder(fixture);
     expect(img.format).toBe('jpeg');
@@ -44,18 +45,32 @@ describe('imageDecoder', () => {
     expect(img.width).toBe(256);
   });
 
-  it('emits zero dimensions for a JPEG missing the SOF marker', async () => {
-    // SOI then a single APP segment, no SOF — the scan should fall through.
+  it('refuses a recognized JPEG missing structural dimensions', async () => {
     const fixture = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x06, 0x00, 0x00, 0xff, 0xff]).buffer;
-    const img = await imageDecoder(fixture);
-    expect(img.format).toBe('jpeg');
-    expect(img.width).toBe(0);
-    expect(img.height).toBe(0);
+    await expect(imageDecoder(fixture)).rejects.toThrow(/no structural start-of-frame dimensions/);
   });
 
   it('returns unknown for buffers shorter than the PNG/JPEG magic', async () => {
     const tiny = new Uint8Array(2).buffer;
     const img = await imageDecoder(tiny);
     expect(img.format).toBe('unknown');
+  });
+
+  it('refuses a partial PNG signature with a malformed IHDR', async () => {
+    const fixture = new Uint8Array(24);
+    fixture.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    await expect(imageDecoder(fixture.buffer)).rejects.toThrow(/IHDR/);
+  });
+
+  it('decodes WebP VP8X canvas dimensions', async () => {
+    const fixture = new Uint8Array(30);
+    fixture.set(new TextEncoder().encode('RIFF'), 0);
+    new DataView(fixture.buffer).setUint32(4, 22, true);
+    fixture.set(new TextEncoder().encode('WEBPVP8X'), 8);
+    new DataView(fixture.buffer).setUint32(16, 10, true);
+    // VP8X stores one less than the canvas size as uint24 little-endian.
+    fixture.set([0x3f, 0x01, 0x00], 24); // 320
+    fixture.set([0xef, 0x00, 0x00], 27); // 240
+    await expect(imageDecoder(fixture.buffer)).resolves.toEqual({ format: 'webp', width: 320, height: 240 });
   });
 });

@@ -7,7 +7,7 @@
  * @module
  */
 
-import { ValidationError } from '@liteship/error';
+import { ParseError, ValidationError } from '@liteship/error';
 import { walkRiff } from './riff.js';
 
 /**
@@ -32,12 +32,37 @@ export interface DecodedAudio {
 export async function audioDecoder(bytes: ArrayBuffer): Promise<DecodedAudio> {
   let fmt: DataView | undefined;
   let data: DataView | undefined;
+  let formType: string | undefined;
   const chunkIds: string[] = [];
   for (const chunk of walkRiff(bytes)) {
-    if (chunk.id === 'RIFF') continue;
+    if ('formType' in chunk) {
+      formType = chunk.formType;
+      continue;
+    }
     chunkIds.push(chunk.id);
-    if (chunk.id === 'fmt ' && 'data' in chunk) fmt = chunk.data;
-    else if (chunk.id === 'data' && 'data' in chunk) data = chunk.data;
+    if (chunk.id === 'fmt ' && 'data' in chunk) {
+      if (fmt !== undefined) {
+        throw ParseError('audio', "audioDecoder: duplicate 'fmt ' chunks are ambiguous.", {
+          code: 'malformed',
+          offset: chunk.offset,
+        });
+      }
+      fmt = chunk.data;
+    } else if (chunk.id === 'data' && 'data' in chunk) {
+      if (data !== undefined) {
+        throw ParseError('audio', "audioDecoder: duplicate 'data' chunks are ambiguous.", {
+          code: 'malformed',
+          offset: chunk.offset,
+        });
+      }
+      data = chunk.data;
+    }
+  }
+  if (formType !== 'WAVE') {
+    throw ValidationError(
+      'audio.decode',
+      `audioDecoder: RIFF form type must be 'WAVE', got ${JSON.stringify(formType)}`,
+    );
   }
   if (!fmt) {
     throw ValidationError(
@@ -55,18 +80,63 @@ export async function audioDecoder(bytes: ArrayBuffer): Promise<DecodedAudio> {
     );
   }
 
+  if (fmt.byteLength < 16) {
+    throw ValidationError(
+      'audio.decode',
+      `audioDecoder: 'fmt ' chunk must contain at least 16 bytes, got ${fmt.byteLength}`,
+    );
+  }
+
   const audioFormat = fmt.getUint16(0, true);
   const channels = fmt.getUint16(2, true);
   const sampleRate = fmt.getUint32(4, true);
+  const byteRate = fmt.getUint32(8, true);
+  const blockAlign = fmt.getUint16(12, true);
   const bitsPerSample = fmt.getUint16(14, true);
 
-  const samples = decodeSamples(data, audioFormat, bitsPerSample);
+  const supported =
+    (audioFormat === 1 && [8, 16, 24, 32].includes(bitsPerSample)) || (audioFormat === 3 && bitsPerSample === 32);
+  if (!supported) return unsupportedSamples(audioFormat, bitsPerSample);
+  if (channels === 0) throw ValidationError('audio.decode', 'audioDecoder: channels must be greater than zero');
+  if (sampleRate === 0) throw ValidationError('audio.decode', 'audioDecoder: sampleRate must be greater than zero');
+
   const bytesPerSample = bitsPerSample / 8;
-  const frameCount = bytesPerSample > 0 && channels > 0 ? data.byteLength / (channels * bytesPerSample) : 0;
-  const durationMs = sampleRate > 0 ? (frameCount / sampleRate) * 1000 : 0;
+  const expectedBlockAlign = channels * bytesPerSample;
+  if (blockAlign !== expectedBlockAlign) {
+    throw ValidationError(
+      'audio.decode',
+      `audioDecoder: blockAlign=${blockAlign} does not match channels × bytesPerSample (${expectedBlockAlign})`,
+    );
+  }
+  const expectedByteRate = sampleRate * blockAlign;
+  if (byteRate !== expectedByteRate) {
+    throw ValidationError(
+      'audio.decode',
+      `audioDecoder: byteRate=${byteRate} does not match sampleRate × blockAlign (${expectedByteRate})`,
+    );
+  }
+  if (data.byteLength % blockAlign !== 0) {
+    throw ValidationError(
+      'audio.decode',
+      `audioDecoder: data chunk length ${data.byteLength} is not a whole number of ${blockAlign}-byte frames`,
+    );
+  }
+
+  const samples = decodeSamples(data, audioFormat, bitsPerSample);
+  const frameCount = data.byteLength / blockAlign;
+  const durationMs = (frameCount / sampleRate) * 1000;
   // sampleCount = frames per channel (interleaved samples / channels).
   const sampleCount = frameCount;
   return { sampleRate, channels, bitsPerSample, sampleCount, samples, durationMs };
+}
+
+function unsupportedSamples(format: number, bitsPerSample: number): never {
+  throw ValidationError(
+    'audio.decode',
+    `audioDecoder: unsupported-format — found audioFormat=${formatAudioFormatName(format)} ` +
+      `bitsPerSample=${bitsPerSample}. Supported: PCM (format 1) at 8/16/24/32 bits, ` +
+      `IEEE float (format 3) at 32 bits. Re-export: ffmpeg -i input -c:a pcm_s16le output.wav`,
+  );
 }
 
 function decodeSamples(data: DataView, format: number, bitsPerSample: number): Int16Array | Float32Array {
@@ -101,13 +171,13 @@ function decodeSamples(data: DataView, format: number, bitsPerSample: number): I
   // refuses).
   if (format === 3 && bitsPerSample === 32) {
     if (data.byteOffset % 4 === 0) {
-      return new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4);
+      return validateFloatSamples(new Float32Array(data.buffer, data.byteOffset, data.byteLength / 4));
     }
     const out = new Float32Array(Math.floor(data.byteLength / 4));
     for (let i = 0, j = 0; i + 3 < data.byteLength; i += 4, j++) {
       out[j] = data.getFloat32(i, true);
     }
-    return out;
+    return validateFloatSamples(out);
   }
   // PCM int8 -> Float32 (uncommon but allowed by spec; data is unsigned, midpoint 128)
   if (format === 1 && bitsPerSample === 8) {
@@ -117,12 +187,16 @@ function decodeSamples(data: DataView, format: number, bitsPerSample: number): I
     }
     return out;
   }
-  throw ValidationError(
-    'audio.decode',
-    `audioDecoder: unsupported-format — found audioFormat=${formatAudioFormatName(format)} ` +
-      `bitsPerSample=${bitsPerSample}. Supported: PCM (format 1) at 8/16/24/32 bits, ` +
-      `IEEE float (format 3) at 32 bits. Re-export: ffmpeg -i input -c:a pcm_s16le output.wav`,
-  );
+  return unsupportedSamples(format, bitsPerSample);
+}
+
+function validateFloatSamples(samples: Float32Array): Float32Array {
+  for (let index = 0; index < samples.length; index++) {
+    if (!Number.isFinite(samples[index])) {
+      throw ValidationError('audio.decode', `audioDecoder: float sample ${index} is not finite`);
+    }
+  }
+  return samples;
 }
 
 function formatAudioFormatName(format: number): string {
