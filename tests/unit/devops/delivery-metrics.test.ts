@@ -7,15 +7,12 @@ import {
   parseDeliveryMetrics,
 } from '../../../scripts/lib/delivery-metrics.js';
 import { buildChangeIntent } from '../../../scripts/lib/change-intent.js';
-import {
-  createBenchmarkEvidence,
-  createBenchmarkEvidenceArtifact,
-} from '../../../scripts/bench/contracts.js';
+import { createBenchmarkEvidence, createBenchmarkEvidenceArtifact } from '../../../scripts/bench/contracts.js';
 import { planAffectedTests } from '../../../scripts/lib/affected-test-plan.js';
 import type { AssuranceInventory } from '../../../scripts/lib/assurance-inventory.js';
 
 const inventory: AssuranceInventory = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -44,6 +41,7 @@ const inventory: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: 25,
     authoredEvidenceLoc: 25,
@@ -276,9 +274,9 @@ describe('delivery metrics and SLO fold', () => {
     expect(() => buildDeliveryMetrics({ ...base(), flakeEvidenceId: 'sha256:wrong' as never })).toThrow(
       /flakeEvidenceId/u,
     );
-    expect(() =>
-      buildDeliveryMetrics({ ...base(), timeline: { ...timeline, sourceSha: 'e'.repeat(40) } }),
-    ).toThrow(/foreign head/u);
+    expect(() => buildDeliveryMetrics({ ...base(), timeline: { ...timeline, sourceSha: 'e'.repeat(40) } })).toThrow(
+      /foreign head/u,
+    );
     expect(() =>
       buildDeliveryMetrics({ ...base(), timeline: { ...timeline, planId: `sha256:${'e'.repeat(64)}` } }),
     ).toThrow(/stale for the affected plan/u);

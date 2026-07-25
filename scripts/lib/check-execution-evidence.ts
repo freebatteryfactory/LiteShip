@@ -6,8 +6,8 @@ import type { CheckEvidenceManifestRequirement } from '../../packages/command/sr
 export interface ObservedGithubJob {
   readonly name: string;
   readonly conclusion: string | null;
-  readonly startedAt: string;
-  readonly completedAt: string;
+  readonly startedAt: string | null;
+  readonly completedAt: string | null;
   readonly runAttempt: number;
 }
 
@@ -97,8 +97,8 @@ function codeUnitCompare(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function validDate(value: string): boolean {
-  return value.length > 0 && Number.isFinite(Date.parse(value));
+function validNullableDate(value: string | null): boolean {
+  return value === null || (value.length > 0 && Number.isFinite(Date.parse(value)));
 }
 
 function snapshotJobs(jobs: readonly ObservedGithubJob[]): readonly ObservedGithubJob[] {
@@ -108,10 +108,14 @@ function snapshotJobs(jobs: readonly ObservedGithubJob[]): readonly ObservedGith
     [...jobs]
       .map((job) => {
         if (job.name.trim() !== job.name || job.name.length === 0) throw new TypeError('observed job name is invalid');
-        if (!validDate(job.startedAt) || !validDate(job.completedAt)) {
+        if (!validNullableDate(job.startedAt) || !validNullableDate(job.completedAt)) {
           throw new TypeError(`observed job ${job.name} has invalid timestamps`);
         }
-        if (Date.parse(job.completedAt) < Date.parse(job.startedAt)) {
+        if (
+          job.startedAt !== null &&
+          job.completedAt !== null &&
+          Date.parse(job.completedAt) < Date.parse(job.startedAt)
+        ) {
           throw new TypeError(`observed job ${job.name} completes before it starts`);
         }
         if (!Number.isInteger(job.runAttempt) || job.runAttempt < 1) {
@@ -128,7 +132,11 @@ function snapshotJobs(jobs: readonly ObservedGithubJob[]): readonly ObservedGith
 
 function resultFor(jobs: readonly ObservedGithubJob[]): CheckExecutionEvidenceUnsigned['result'] {
   const durationMs = jobs.reduce(
-    (total, job) => total + Math.max(0, Date.parse(job.completedAt) - Date.parse(job.startedAt)),
+    (total, job) =>
+      total +
+      (job.startedAt === null || job.completedAt === null
+        ? 0
+        : Math.max(0, Date.parse(job.completedAt) - Date.parse(job.startedAt))),
     0,
   );
   const conclusions = jobs.map((job) => job.conclusion);

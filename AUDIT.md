@@ -31,7 +31,7 @@ CI failure.
 
 The combined report also folds in the current state of:
 
-- `scripts/check-invariants.ts`
+- `packages/command/src/commands/check-invariants.ts`
 - `coverage/coverage-final.json`
 - `benchmarks/directive-gate.json`
 - `reports/runtime-seams.json`

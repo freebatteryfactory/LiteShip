@@ -36,6 +36,12 @@ export interface RepoTestFile {
   readonly text: string;
 }
 
+/** True only for files the canonical Node Vitest configuration can execute. */
+export function isNodeTestEntrypoint(path: string): boolean {
+  const normalized = normalizeRepoPath(path);
+  return normalized.endsWith('.test.ts') && TEST_CORPUS_ROOTS.some((root) => normalized.startsWith(`${root}/`));
+}
+
 /**
  * Recursively collect every `*.test.ts` file under `root` (repo-relative POSIX ids),
  * reading each one's bytes once. The established cli `readdirSync` recursion (no new
@@ -57,7 +63,7 @@ function collectUnder(repoRoot: string, root: string): RepoTestFile[] {
       const stat = statSync(join(repoRoot, relPath));
       if (stat.isDirectory()) {
         walk(relPath);
-      } else if (stat.isFile() && name.endsWith('.test.ts')) {
+      } else if (stat.isFile() && isNodeTestEntrypoint(relPath)) {
         out.push({ id: relPath, text: readFileSync(join(repoRoot, relPath), 'utf8') });
       }
     }

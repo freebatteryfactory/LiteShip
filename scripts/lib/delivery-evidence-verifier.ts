@@ -101,9 +101,9 @@ function validateExpected(expected: TrustedDeliveryGithubContext): void {
       job.name.length === 0 ||
       job.name.trim() !== job.name ||
       (job.conclusion !== null && (job.conclusion.length === 0 || job.conclusion.trim() !== job.conclusion)) ||
-      !Number.isFinite(Date.parse(job.startedAt)) ||
-      !Number.isFinite(Date.parse(job.completedAt)) ||
-      Date.parse(job.completedAt) < Date.parse(job.startedAt) ||
+      (job.startedAt !== null && !Number.isFinite(Date.parse(job.startedAt))) ||
+      (job.completedAt !== null && !Number.isFinite(Date.parse(job.completedAt))) ||
+      (job.startedAt !== null && job.completedAt !== null && Date.parse(job.completedAt) < Date.parse(job.startedAt)) ||
       job.runAttempt !== Number(expected.runAttempt)
     ) {
       fail(`trusted observedJobs[${index}] is invalid`);
@@ -418,10 +418,7 @@ export function verifyStandaloneDeliveryEvidence(input: VerifyDeliveryEvidenceIn
   if (metrics.health.intentId !== verifiedIntentId) {
     fail('delivery health intent does not match the admitted change intent');
   }
-  if (
-    metrics.health.scope.kind !== 'library' ||
-    !sameStrings(metrics.health.scope.packages, plan.affectedPackages)
-  ) {
+  if (metrics.health.scope.kind !== 'library' || !sameStrings(metrics.health.scope.packages, plan.affectedPackages)) {
     fail('delivery health scope does not match the affected library packages');
   }
   if (

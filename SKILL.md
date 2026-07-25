@@ -202,13 +202,12 @@ machine:
   `finally`-restore; killing it mid-run strands the mutant in your tree. If it happens,
   recover with `git checkout` on the affected package and rebuild — don't debug the
   mutant as if it were your code.
-- **Docs/asset-only changes burn zero CI.** Every push to `main` and every PR triggers
-  the full `ci.yml`. For docs-only work the sanctioned path is the direct-push recipe:
-  disable `ci.yml` → add the repo-admin ruleset bypass → commit on `main` (the local
-  pre-commit quick-verify still runs, and is free) → push → confirm no run was created
-  for the new sha → **restore the bypass and re-enable `ci.yml` immediately**. Never
-  leave the repo ungated. Ask before opening a docs _PR_ — the PR-open run is
-  unrecoverable.
+- **Docs/asset-only changes use the affected PR authority; they never bypass it.** The
+  affected planner should select the cheap documentation and projection checks needed
+  by the changed surface, while changes to global CI authority deliberately fail broad.
+  Never disable the workflow, add a ruleset bypass, or direct-push around evidence to
+  save compute. If the selected plan is unexpectedly broad, fix or calibrate the
+  planner with a negative control instead of skipping the run.
 
 ---
 

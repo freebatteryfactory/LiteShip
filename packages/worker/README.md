@@ -48,7 +48,7 @@ Logs `compact` (below 768px) or `wide` — selected inside the worker, delivered
 
 ## Where it sits
 
-A runtime layer one step below the host integrations: `@liteship/astro` delegates its worker directive here rather than carrying its own worker protocol. Its only dependency is [`@liteship/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core), for boundary definitions and the shared state-snapshot contracts. It also ships `SPSCRing` (a lock-free shared-memory ring for streaming values out of a worker without blocking either side), `RenderWorker` for OffscreenCanvas rendering, and `WorkerHost`, a typed lifecycle wrapper around `Worker`. See the
+A runtime layer one step below the host integrations: `@liteship/astro` delegates its worker directive here rather than carrying its own worker protocol. Its declared LiteShip dependencies are [`@liteship/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core), for boundary definitions and shared state-snapshot contracts, and `@liteship/error`, for the shared error algebra. It also ships `SPSCRing` (a lock-free shared-memory ring for streaming values out of a worker without blocking either side), `RenderWorker` for OffscreenCanvas rendering, and `WorkerHost`, a typed lifecycle wrapper around `Worker`. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 

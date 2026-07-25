@@ -54,6 +54,25 @@ describe('check execution evidence', () => {
     expect(evidence.result.findings).toEqual(['windows-smoke: failure']);
   });
 
+  it('records a skipped job with unknown timestamps as skipped evidence', () => {
+    const evidence = buildCheckExecutionEvidence({
+      requirement,
+      headSha: 'a'.repeat(40),
+      planId: `sha256:${'b'.repeat(64)}`,
+      identity,
+      jobs: [{ ...job, conclusion: 'skipped', startedAt: null, completedAt: null }],
+      platforms: ['win32'],
+    });
+    expect(evidence.result).toEqual({
+      verdict: 'skipped',
+      durationMs: 0,
+      cacheHit: false,
+      findings: ['truth-linux-parallel-preflight: skipped'],
+    });
+    expect(evidence.producer.jobs[0]).toMatchObject({ startedAt: null, completedAt: null });
+    expect(parseCheckExecutionEvidence(JSON.parse(serializeCheckExecutionEvidence(evidence)))).toEqual(evidence);
+  });
+
   it('rejects forged results, identities, empty jobs, and duplicate job attempts', () => {
     const evidence = buildCheckExecutionEvidence({
       requirement,

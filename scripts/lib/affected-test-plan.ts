@@ -5,6 +5,7 @@ import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
 import { executionPrerequisites, type ExecutionPrerequisite } from './execution-prerequisites.js';
 import type { AssuranceLevel } from '../../packages/gauntlet/src/assurance.js';
 import { PACKAGE_CATALOG, type PackageCatalogRecord } from '../package-catalog.js';
+import { isNodeTestEntrypoint } from '../../packages/cli/src/lib/test-corpus.js';
 import type { AssuranceInventory } from './assurance-inventory.js';
 
 export type AffectedRiskLevel = 'low' | 'moderate' | 'high' | 'critical';
@@ -274,10 +275,30 @@ export function planAffectedTests(
   const ownedEvidence = inventory.packages
     .filter((entry) => packageSet.has(entry.name))
     .flatMap((entry) => entry.evidenceFiles);
-  const changedTests = normalized.filter((path) => /^tests\/.*\.[cm]?[jt]sx?$/u.test(path));
-  const candidates = [...new Set([...MANDATORY_AFFECTED_TESTS, ...ownedEvidence, ...changedTests])].sort();
-  const browserRequired = candidates.some((path) => path.startsWith('tests/browser/') || path.startsWith('tests/e2e/'));
-  const benchmarkFiles = candidates.filter((path) => path.endsWith('.bench.ts'));
+  const knownEntrypoints = new Set(inventory.nodeTestSelection.entrypoints);
+  const dependentEntrypoints = new Map(
+    inventory.nodeTestSelection.dependents.map((entry) => [entry.path, entry.entrypoints] as const),
+  );
+  const changedEvidence = normalized.filter((path) => path.startsWith('tests/'));
+  const changedNodeEntrypoints = changedEvidence.filter(
+    (path) => knownEntrypoints.has(path) || isNodeTestEntrypoint(path),
+  );
+  const reverseClosedEntrypoints = changedEvidence.flatMap((path) => dependentEntrypoints.get(path) ?? []);
+  const candidates = [
+    ...new Set([
+      ...MANDATORY_AFFECTED_TESTS,
+      ...ownedEvidence.filter((path) => knownEntrypoints.has(path) || isNodeTestEntrypoint(path)),
+      ...changedNodeEntrypoints,
+      ...reverseClosedEntrypoints,
+    ]),
+  ].sort();
+  const browserEvidence = [...ownedEvidence, ...changedEvidence].filter(
+    (path) => path.startsWith('tests/browser/') || path.startsWith('tests/e2e/'),
+  );
+  const browserRequired = browserEvidence.length > 0;
+  const benchmarkFiles = [
+    ...new Set([...ownedEvidence, ...changedEvidence].filter((path) => path.endsWith('.bench.ts'))),
+  ].sort();
   const benchmarkRequired = benchmarkFiles.length > 0;
   const rustWasmRequired = normalized.some(
     (path) =>
@@ -286,14 +307,34 @@ export function planAffectedTests(
       /^packages\/core\/src\/.*wasm[^/]*\.[cm]?[jt]s$/u.test(path) ||
       /^tests\/(?:unit|property)\/core\/.*wasm[^/]*\.[cm]?[jt]s$/u.test(path),
   );
-  const testFiles = candidates.filter(
-    (path) => !path.startsWith('tests/browser/') && !path.startsWith('tests/e2e/') && !path.endsWith('.bench.ts'),
+  const testFiles = candidates.filter(isNodeTestEntrypoint);
+  const orphanEvidence = changedEvidence.find(
+    (path) =>
+      !isNodeTestEntrypoint(path) &&
+      !path.startsWith('tests/browser/') &&
+      !path.startsWith('tests/e2e/') &&
+      !path.endsWith('.bench.ts') &&
+      (dependentEntrypoints.get(path)?.length ?? 0) === 0,
   );
+  if (orphanEvidence !== undefined) {
+    return finalizePlan(
+      {
+        ...common,
+        mode: 'full',
+        reason: `test evidence has no executable authority: ${orphanEvidence}`,
+        rationale: [...common.rationale, 'orphan evidence fails broad'],
+        testFiles: [],
+        benchmarkFiles: [],
+        browserRequired: true,
+        benchmarkRequired: true,
+        rustWasmRequired: true,
+      },
+      inventory,
+    );
+  }
   const unknownRuntimePath = normalized.find(
     (path) =>
-      /\.(?:[cm]?[jt]sx?|astro|css)$/u.test(path) &&
-      !path.startsWith('tests/') &&
-      !path.startsWith('packages/'),
+      /\.(?:[cm]?[jt]sx?|astro|css)$/u.test(path) && !path.startsWith('tests/') && !path.startsWith('packages/'),
   );
   if (unknownRuntimePath !== undefined) {
     return finalizePlan(
@@ -311,12 +352,7 @@ export function planAffectedTests(
       inventory,
     );
   }
-  if (
-    affectedPackages.length === 0 &&
-    changedTests.length === 0 &&
-    !benchmarkRequired &&
-    !rustWasmRequired
-  ) {
+  if (affectedPackages.length === 0 && changedEvidence.length === 0 && !benchmarkRequired && !rustWasmRequired) {
     return finalizePlan(
       {
         ...common,
@@ -512,7 +548,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     !isSortedUnique(candidate['testPartitions']['benchmark']) ||
     candidate['testPartitions']['benchmark'].some((path) => !path.endsWith('.bench.ts')) ||
     (candidate['mode'] === 'focused' &&
-      (candidate['testPartitions']['benchmark'].length > 0) !== candidate['benchmarkRequired'])
+      candidate['testPartitions']['benchmark'].length > 0 !== candidate['benchmarkRequired'])
   ) {
     throw new TypeError('affected plan test partitions are stale');
   }

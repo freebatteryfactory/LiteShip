@@ -21,9 +21,21 @@ import { forbiddenSourceImports } from '../../../scripts/lib/source-import-contr
 
 const CALIBRATION_ID = `sha256:${'c'.repeat(64)}` as const;
 
-function inventory(evidence: Readonly<Record<string, readonly string[]>>): AssuranceInventory {
+function inventory(
+  evidence: Readonly<Record<string, readonly string[]>>,
+  nodeTestSelection: AssuranceInventory['nodeTestSelection'] = {
+    entrypoints: [
+      ...new Set(
+        Object.values(evidence)
+          .flat()
+          .filter((path) => path.endsWith('.test.ts')),
+      ),
+    ].sort(),
+    dependents: [],
+  },
+): AssuranceInventory {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     packages: PACKAGE_CATALOG.map((record) => ({
       name: record.name,
       sourceLoc: 1,
@@ -52,6 +64,7 @@ function inventory(evidence: Readonly<Record<string, readonly string[]>>): Assur
       },
       evidenceFiles: evidence[record.name] ?? [],
     })),
+    nodeTestSelection,
     totals: {
       sourceLoc: 25,
       authoredEvidenceLoc: 25,
@@ -102,6 +115,54 @@ describe('affected test planning', () => {
     expect(plan.changedPathDigest).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(plan.risk.highestAssurance).toBe('L1');
     expect(plan.requiredChecks).toContain('check/test');
+  });
+
+  it('reverse-closes changed support evidence to importing Vitest entrypoints only', () => {
+    const helper = 'tests/support/runtime-fixture.ts';
+    const entrypoint = 'tests/unit/core/runtime-fixture.test.ts';
+    const plan = planAffectedTests(
+      [helper],
+      PACKAGE_CATALOG,
+      inventory(
+        { '@liteship/core': [helper, entrypoint] },
+        {
+          entrypoints: [entrypoint],
+          dependents: [
+            { path: entrypoint, entrypoints: [entrypoint] },
+            { path: helper, entrypoints: [entrypoint] },
+          ],
+        },
+      ),
+    );
+
+    expect(plan).toMatchObject({ mode: 'focused', testFiles: expect.arrayContaining([entrypoint]) });
+    expect(plan.testFiles).not.toContain(helper);
+    expect(plan.testFiles.every((path) => path.endsWith('.test.ts'))).toBe(true);
+  });
+
+  it.each(['tests/journey/harness.ts', 'tests/fixtures/runtime-case.json', 'tests/support/vitest.project.config.ts'])(
+    'fails broad instead of passing orphan evidence %s to Vitest',
+    (path) => {
+      const plan = planAffectedTests([path], PACKAGE_CATALOG, inventory({}));
+      expect(plan).toMatchObject({
+        mode: 'full',
+        testFiles: [],
+        browserRequired: true,
+        benchmarkRequired: true,
+        rustWasmRequired: true,
+      });
+      expect(plan.reason).toContain(`test evidence has no executable authority: ${path}`);
+    },
+  );
+
+  it('routes browser and benchmark evidence without placing either path in Node argv', () => {
+    const browser = 'tests/e2e/runtime.e2e.ts';
+    const benchmark = 'tests/bench/core.bench.ts';
+    const plan = planAffectedTests([browser, benchmark], PACKAGE_CATALOG, inventory({}));
+    expect(plan).toMatchObject({ mode: 'focused', browserRequired: true, benchmarkRequired: true });
+    expect(plan.testPartitions.benchmark).toEqual([benchmark]);
+    expect(plan.testFiles).not.toContain(browser);
+    expect(plan.testFiles).not.toContain(benchmark);
   });
 
   it.each(['package.json', 'pnpm-lock.yaml', 'scripts/package-catalog.ts', '.github/workflows/ci.yml'])(
@@ -219,7 +280,9 @@ describe('affected test planning', () => {
   });
 
   it('fails broad for runtime host fixtures outside package ownership', () => {
-    expect(planAffectedTests(['examples/showcase/src/pages/index.astro'], PACKAGE_CATALOG, inventory({}))).toMatchObject({
+    expect(
+      planAffectedTests(['examples/showcase/src/pages/index.astro'], PACKAGE_CATALOG, inventory({})),
+    ).toMatchObject({
       mode: 'full',
       browserRequired: true,
       benchmarkRequired: true,

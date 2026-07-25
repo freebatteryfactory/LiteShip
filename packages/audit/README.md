@@ -33,7 +33,7 @@ Every finding carries a `rule` id — the key you use in a profile's allowlists:
 
 ## Where it sits
 
-Standalone — this package depends on no other `@liteship/*` package, only `fast-glob` and the TypeScript compiler API, so you can install it without the rest of the stack. The `liteship audit` verb in `@liteship/cli` is the only adapter that wires the engine; `@liteship/command` and `@liteship/mcp-server` see a structured summary of the result, never the engine itself. LiteShip's repo-local scoring and report rendering are not in this package — they compose it from the monorepo's scripts. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This is the Node-side audit engine. Its manifest carries the canonical, error, and gauntlet owners alongside `fast-glob` and the TypeScript compiler API; the generated [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) is the authority for the exact dependency graph. The `liteship audit` verb in `@liteship/cli` wires the engine; `@liteship/command` and `@liteship/mcp-server` see a structured summary of the result, never the engine itself. LiteShip's repo-local scoring and report rendering are not in this package — they compose it from the monorepo's scripts.
 
 ## If it does nothing
 

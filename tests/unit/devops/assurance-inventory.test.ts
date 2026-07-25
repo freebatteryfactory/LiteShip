@@ -72,6 +72,33 @@ describe('assurance inventory', () => {
     expect(core.evidenceFiles).toEqual(['tests/unit/core/value.test.ts', 'tests/unit/meta/projection.test.ts']);
   });
 
+  it('separates executable Node suites from support evidence and records transitive reverse closure', () => {
+    const root = fixture();
+    mkdirSync(join(root, 'tests', 'support'), { recursive: true });
+    writeFileSync(join(root, 'tests', 'support', 'base.ts'), 'export const base = 1;\n');
+    writeFileSync(join(root, 'tests', 'support', 'fixture.ts'), "export { base } from './base.js';\n");
+    writeFileSync(
+      join(root, 'tests', 'unit', 'core', 'support-closure.test.ts'),
+      "import { base } from '../../support/fixture.js';\ntest('support', () => expect(base).toBe(1));\n",
+    );
+
+    const selection = buildAssuranceInventory(root).nodeTestSelection;
+    expect(selection.entrypoints).toContain('tests/unit/core/support-closure.test.ts');
+    expect(selection.entrypoints).not.toContain('tests/support/fixture.ts');
+    expect(selection.dependents).toEqual(
+      expect.arrayContaining([
+        {
+          path: 'tests/support/base.ts',
+          entrypoints: ['tests/unit/core/support-closure.test.ts'],
+        },
+        {
+          path: 'tests/support/fixture.ts',
+          entrypoints: ['tests/unit/core/support-closure.test.ts'],
+        },
+      ]),
+    );
+  });
+
   it('detects a planted unique repository density regression and ignores a strengthening', () => {
     const inventory = buildAssuranceInventory(fixture());
     const baseline = baselineFromInventory(inventory);

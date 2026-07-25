@@ -5,12 +5,12 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "check": "liteship check --profile quick"
   },
   "dependencies": {
-    "@liteship/core": "0.21.0",
-    "@liteship/astro": "0.21.0",
     "astro": "^7.1.0",
+    "liteship": "0.21.0",
     "typescript": "^5.7.0"
   }
 }

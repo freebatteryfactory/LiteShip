@@ -6,8 +6,8 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 
 ## Capsule factory
 
-- `packages/core/src/capsule.ts`: `CapsuleContract<K, In, Out, R>` base type; `TypeValidator` runtime check against `_spine` schemas.
-- `packages/core/src/assembly.ts`: 7-arm catalog (`pureTransform`, `receiptedMutation`, `stateMachine`, `siteAdapter`, `policyGate`, `cachedProjection`, `sceneComposition`) + `defineCapsule` factory + module-level registry.
+- `packages/core/src/authoring/capsule.ts`: `CapsuleContract<K, In, Out, R>` base type; `TypeValidator` runtime check against `_spine` schemas.
+- `packages/core/src/authoring/assembly.ts`: 7-arm catalog (`pureTransform`, `receiptedMutation`, `stateMachine`, `siteAdapter`, `policyGate`, `cachedProjection`, `sceneComposition`) + `defineCapsule` factory + module-level registry.
 - `packages/core/src/harness/*`: per-arm harness templates emit property tests, benches, docs, audit receipts.
 - `scripts/capsule-compile.ts`: AST walk of every `defineCapsule(...)` call, dispatches to harness templates, emits `reports/capsule-manifest.json`.
 - `packages/command/src/commands/capsule-verify.ts` (run via `pnpm capsule:verify` / the `capsule-verify` CLI command): re-runs generated tests, checks manifest integrity.
@@ -31,5 +31,5 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 ## Spine as Canonical Types
 
 - `packages/_spine/*.d.ts` is now referenced from project references + vitest aliases.
-- `packages/core/src/brands.ts` re-exports branded types FROM `_spine`. Runtime constructors remain in the implementation packages.
+- `packages/core/src/schema/brands.ts` re-exports branded types FROM `_spine`. Runtime constructors remain in the implementation packages.
 - ADR-0010 documents the closure of the Spine Runtime Gap.

@@ -293,15 +293,12 @@ importers:
 
   examples/default:
     dependencies:
-      '@liteship/astro':
-        specifier: workspace:*
-        version: link:../../packages/astro
-      '@liteship/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       astro:
         specifier: '>=7.1.0 <8'
         version: 7.1.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
+      liteship:
+        specifier: workspace:*
+        version: link:../../packages/liteship
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

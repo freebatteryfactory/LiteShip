@@ -76,10 +76,17 @@ export function buildCiAuthorityEvidence(input: {
       .map((job) => {
         if (job.name.trim() !== job.name || job.name.length === 0)
           throw new TypeError('CI authority job name is invalid');
-        if (!Number.isFinite(Date.parse(job.startedAt)) || !Number.isFinite(Date.parse(job.completedAt))) {
+        if (
+          (job.startedAt !== null && !Number.isFinite(Date.parse(job.startedAt))) ||
+          (job.completedAt !== null && !Number.isFinite(Date.parse(job.completedAt)))
+        ) {
           throw new TypeError(`CI authority job ${job.name} has invalid timestamps`);
         }
-        if (Date.parse(job.completedAt) < Date.parse(job.startedAt)) {
+        if (
+          job.startedAt !== null &&
+          job.completedAt !== null &&
+          Date.parse(job.completedAt) < Date.parse(job.startedAt)
+        ) {
           throw new TypeError(`CI authority job ${job.name} completes before it starts`);
         }
         if (!Number.isInteger(job.runAttempt) || job.runAttempt < 1) {

@@ -32,7 +32,7 @@ morphPure(card, '<h2>Updated</h2><input name="q" />');
 
 ## Where it sits
 
-The browser runtime layer: `@liteship/astro`'s client directives call into this package, and it depends only on [`@liteship/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) (shared state and runtime contracts) plus `mediabunny` for WebCodecs capture. The main entry adds the scoped runtime surfaces: `Morph` with physical-state restore, `SlotRegistry` for addressing server-rendered slots in streamed HTML, an `SSE` client with reconnect and cross-tab resumption, and `LLMAdapter` for normalizing OpenAI / Anthropic / AI SDK chunk formats. `@liteship/web/lite` is the pure subset of all that. Off-thread evaluation lives in [`@liteship/worker`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/worker), not here. See the
+The browser runtime layer: `@liteship/astro`'s client directives call into this package. Its declared graph includes the canonical, core, error, and generated-UI owners plus `mediabunny` for WebCodecs capture; the generated package surfaces map below is the authority for the exact edges. The main entry adds the scoped runtime surfaces: `Morph` with physical-state restore, `SlotRegistry` for addressing server-rendered slots in streamed HTML, an `SSE` client with reconnect and cross-tab resumption, and `LLMAdapter` for normalizing OpenAI / Anthropic / AI SDK chunk formats. `@liteship/web/lite` is the pure subset of all that. Off-thread evaluation lives in [`@liteship/worker`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/worker), not here. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 

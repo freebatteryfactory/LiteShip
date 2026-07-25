@@ -73,7 +73,7 @@ The paved road has three moves: **define**, **apply**, **inspect**. In an Astro 
 pnpm add liteship
 ```
 
-`liteship` is the one-dependency facade over the whole stack: the authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro` — one package to install, one import path to learn. The API is synchronous (`.read()` / `.subscribe()` / plain function calls) and carries **no third-party runtime peer dependencies** to pin: LiteShip runs on its own native substrate (the `effect` peer was shed in v0.18). `pnpm create liteship` scaffolds a starter already wired this way.
+`liteship` is the one-package facade over the whole stack: the authoring verbs import from the `liteship` root, and host surfaces ride domain subpaths like `liteship/astro` — one package to install, one import path to learn. The root authoring API is synchronous (`.read()` / `.subscribe()` / plain function calls) and runs on LiteShip's native substrate (the `effect` peer was shed in v0.18). Host-specific subpaths keep their real host peer contracts explicit: for example, Astro/Vite integrations require compatible Astro/Vite hosts, and the Remotion package requires React and Remotion. `pnpm create liteship` scaffolds a starter already wired this way.
 
 Define the adaptive behavior in one root import:
 
@@ -156,11 +156,11 @@ LiteShip can adopt one surface at a time; existing CSS keeps working beside it. 
 | Vite / Astro | 8 / 7 | same — no known gap |
 | Browsers | Chromium + Firefox + WebKit | same — no known gap |
 
-**Zero third-party runtime peer dependencies.** `@liteship/core` and `@liteship/astro` — and every other published package — declare no third-party runtime peer dependency. The authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions using only the platform and each package's own workspace siblings, and its API surface is synchronous (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`, ADR-0042 / ADR-0043), so there is no beta runtime dependency to clear through procurement before adopting LiteShip in production.
+**No Effect runtime; host peers stay explicit.** The root authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions through a synchronous API (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`, ADR-0042 / ADR-0043). Optional or host-specific surfaces still declare the peers they truly execute against — including Astro, Vite, fast-check for the harness subpath, and React/Remotion for video integration — so consumer dependency validation matches the selected surface instead of making a repository-wide zero-peer claim.
 
-**Windows + Linux are tier-1.** Every push and pull request runs the full `gauntlet:full` on Linux (`truth-linux`) and a broad smoke sweep on Windows (`windows-smoke`) via `.github/workflows/ci.yml`. Both jobs are required for merge. Automated regression catches OS-specific drift before it lands. WebCodecs capture and related browser-specific paths are Chromium-first.
+**Windows + Linux are tier-1, with event-shaped authority.** Pull requests require `format`, `pr-affected`, and `pr-windows-affected`; `pr-browser-affected` and `rust-wasm-parity` join that fold when the generated affected plan selects those surfaces. Pushes require `format`, `truth-linux-parallel`, `browser-e2e`, `windows-smoke`, and `rust-wasm-parity`. Scheduled and manual runs require `format`, serial `truth-linux`, `browser-e2e`, `windows-smoke`, `rust-wasm-parity`, `exhaustive-analysis`, `exhaustive-mutation`, `exhaustive-mcdc`, and `semantic-assurance-admission`. The authoritative event-to-job mapping lives in `scripts/lib/ci-authority.ts` and is executed by `.github/workflows/ci.yml`.
 
-**macOS is tier-2: best-effort with a real CI signal.** A `macos-smoke` job runs on every push and pull request via `.github/workflows/ci.yml` (build, typecheck, lint, invariants, test, test:vite/astro/tailwind, test:redteam, package:smoke). The job is `continue-on-error: true` — a macOS regression won't block merge to main, but it surfaces in the PR check list as a real yellow signal, not as silence. Known areas where macOS may differ from the gated paths:
+**macOS is tier-2: best-effort with a real CI signal.** The push/scheduled/manual matrix carries `macos-smoke` and `macos-browser` as `continue-on-error` evidence. They do not participate in the ordinary pull-request authority fold and do not block merge, but failures remain visible on the events that execute them. Known areas where macOS may differ from the gated paths:
 
 - **Playwright browser-dep install** — the smoke job runs the test suites that don't depend on Playwright browsers; full `test:e2e` and `coverage:browser` lanes stay Linux-only because Playwright dep install on macOS is a separate path.
 - **Vite filesystem watchers** — chokidar takes different code paths on APFS (FSEvents) vs ext4 / NTFS. HMR watch behavior under `@liteship/vite` may differ.
@@ -168,8 +168,8 @@ LiteShip can adopt one surface at a time; existing CSS keeps working beside it. 
 
 Promotion path: macOS moves to tier-1 (drop `continue-on-error`, add to `ci-summary` needs) in two milestones:
 
-1. **macOS smoke green for a release cycle.** `macos-smoke` (the current job, covering build / typecheck / lint / invariants / non-browser tests / package:smoke) stays green on a fresh `macos-latest` image across a full release cycle.
-2. **macOS browser coverage added.** A second job, `macos-browser`, gets a Playwright-with-deps install (Homebrew path), runs `test:e2e` and `coverage:browser`, and stays green for a release cycle.
+1. **macOS smoke green for a release cycle.** `macos-smoke` (covering build / typecheck / lint / invariants / non-browser tests / package:smoke) stays green on a fresh `macos-latest` image across a full release cycle.
+2. **macOS browser authority green for a release cycle.** `macos-browser` runs Playwright E2E and browser coverage and stays green for a release cycle.
 
 Both milestones are signal-gated, not promise-gated. Contributors are welcome to file macOS-specific issues against the smoke job's logs and to PR the `macos-browser` job once they can verify the Playwright-deps path locally.
 
@@ -193,7 +193,7 @@ Trust is set explicitly, not by permission default.
 - Runtime endpoints stay same-origin unless you set an allowlist for cross-origin paths.
 - Artifact IDs are validated as single path segments. No smuggled traversal.
 - LLM rendering defaults to text-safe; HTML flows route through the shared trust pipeline (`text` / `sanitized-html` / explicit `trusted-html`).
-- The runtime carries no `eval` and no `new Function`. Untrusted text never becomes executable JavaScript at runtime. (WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; see `packages/core/src/wasm-fallback.ts` for the no-WASM path.)
+- The runtime carries no `eval` and no `new Function`. Untrusted text never becomes executable JavaScript at runtime. (WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; see `packages/core/src/wasm/wasm-fallback.ts` for the no-WASM path.)
 - The Astro integration publishes a frozen `__LITESHIP_RUNTIME_POLICY__` snapshot for runtime endpoint and HTML trust decisions.
 
 Full posture and trust-boundary detail in [SECURITY.md](./SECURITY.md) and [STATUS.md](./STATUS.md).

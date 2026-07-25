@@ -10,7 +10,7 @@ const HEAD = 'b'.repeat(40);
 const CALIBRATION = `sha256:${'c'.repeat(64)}` as const;
 
 const inventory: AssuranceInventory = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -39,6 +39,7 @@ const inventory: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: 25,
     authoredEvidenceLoc: 25,

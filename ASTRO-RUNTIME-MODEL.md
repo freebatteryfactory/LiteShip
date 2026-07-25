@@ -261,7 +261,7 @@ the discrete-state evaluator; the continuous signal driver remains a leaf write.
 
 ### `wasm`
 
-Use when compute cost meaningfully exceeds what the normal runtime should carry. The `liteship-compute` kernel ships inside `@liteship/core` (0.2.1+) and `@liteship/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `liteship({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `liteship:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `adaptive` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
+Use when compute cost meaningfully exceeds what the normal runtime should carry. The `liteship-compute` kernel ships inside `@liteship/core` (0.2.1+) and `@liteship/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `liteship({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `liteship:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `adaptive` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
 
 ### `graph`
 

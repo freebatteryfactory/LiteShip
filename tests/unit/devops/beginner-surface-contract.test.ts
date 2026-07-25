@@ -1,5 +1,5 @@
 // PROVES: INV-BEGINNER-SURFACE
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -98,6 +98,45 @@ describe('beginner surface contract', () => {
     expect(analysis.imports).toEqual(['liteship', 'liteship/astro']);
     expect(analysis.conceptFamilies).toEqual(beginnerConceptFamiliesFromContract());
     expect(authoredLineCount(read(`${template}/src/adaptive.ts`))).toBeLessThanOrEqual(20);
+  });
+
+  it('keeps the runnable default example byte-aligned with the generated starter contract', () => {
+    const template = 'packages/create-liteship/templates/default';
+    const example = 'examples/default';
+    for (const file of [
+      'astro.config.ts',
+      'liteship.config.ts',
+      'src/adaptive.ts',
+      'src/layouts/Base.astro',
+      'src/pages/index.astro',
+      'tsconfig.json',
+    ]) {
+      expect(read(`${example}/${file}`), `${file} drifted from the generated starter`).toBe(
+        read(`${template}/${file}`),
+      );
+    }
+    const analysis = analyzeBeginnerSurface([
+      beginner('example/src/adaptive.ts', read(`${example}/src/adaptive.ts`)),
+      beginner('example/src/pages/index.astro', read(`${example}/src/pages/index.astro`), { format: 'astro' }),
+      beginner('example/src/layouts/Base.astro', read(`${example}/src/layouts/Base.astro`), { format: 'astro' }),
+      beginner('example/liteship.config.ts', read(`${example}/liteship.config.ts`), { role: 'host-setup' }),
+      beginner('example/astro.config.ts', read(`${example}/astro.config.ts`), { role: 'host-setup' }),
+      beginner('example/README.md', read(`${example}/README.md`), { format: 'markdown' }),
+    ]);
+    expect(analysis.violations).toEqual([]);
+    expect(analysis.imports).toEqual(['liteship', 'liteship/astro']);
+    expect(analysis.conceptFamilies).toEqual(beginnerConceptFamiliesFromContract());
+
+    const manifest = JSON.parse(read(`${example}/package.json`)) as {
+      dependencies: Record<string, string>;
+      scripts: Record<string, string>;
+    };
+    expect(manifest.dependencies.liteship).toBe('workspace:*');
+    expect(Object.keys(manifest.dependencies).filter((name) => name.startsWith('@liteship/'))).toEqual([]);
+    expect(manifest.scripts.check).toBe('liteship check --profile quick');
+    for (const retired of ['src/boundaries/layout.boundaries.ts', 'src/fetch.ts', 'src/tokens/base.tokens.ts']) {
+      expect(existsSync(resolve(ROOT, example, retired)), `${retired} reintroduced the retired starter`).toBe(false);
+    }
   });
 
   it('keeps the create-liteship package README synchronized with the real beginner route', () => {

@@ -1,9 +1,9 @@
 # liteship default example
 
-The floor: one boundary, eight tokens, a `@quantize` block, and the Astro fetch
-layer — the same shape `npm create liteship` scaffolds, kept runnable inside the
-monorepo. Nothing here is showcase material; this is what a LiteShip page looks
-like before you've done anything interesting.
+The runnable workspace mirror of `npm create liteship`: one `liteship` facade
+dependency and one complete **define → apply → inspect** loop. Nothing here is
+showcase material; this is what a LiteShip page looks like before you add an
+expert compiler or host surface.
 
 When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.21.0`.
 
@@ -17,14 +17,13 @@ pnpm dev
 ## What to look for
 
 - Resize the window across 768px / 1280px: `data-liteship-state` on the grid flips
-  `mobile → tablet → desktop` (devtools → Elements), and the
-  `@quantize layout { … }` block in `src/pages/index.astro` re-lays it out as
-  static container queries — no media queries, and the CSS path needs no client JS.
-- `src/tokens/base.tokens.ts` + the `@token` blocks in `src/layouts/Base.astro`
-  compile to `--liteship-*` custom properties; change a token value and the page
-  re-themes on save.
-- `src/fetch.ts` wires `liteshipFetchLayer()` into Astro 7's front-of-pipeline
-  `Fetchable` surface — the server-side seam the edge cache rides on.
+  `mobile → tablet → desktop` (devtools → Elements), while the CSS emitted by
+  `layout.plan()` follows the same state marker.
+- `src/adaptive.ts` owns the one `defineAdaptive` declaration.
+- `src/pages/index.astro` spreads `layout.attrs()`, emits `layout.plan().css`,
+  and prints the result of `layout.explain(940)`.
+- `liteship.config.ts` is the project configuration hub consumed by the Astro
+  integration and the app-local `liteship check --profile quick` route.
 
 Done here? Climb the [examples ladder](../README.md) — `tutorial/` teaches each
 of these pieces one page at a time.

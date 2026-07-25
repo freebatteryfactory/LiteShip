@@ -26,7 +26,7 @@ import {
 import type { TrustedDeliveryGithubContext } from '../../scripts/lib/delivery-evidence-verifier.js';
 
 const inventory: AssuranceInventory = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   packages: PACKAGE_CATALOG.map((record) => ({
     name: record.name,
     sourceLoc: 1,
@@ -55,6 +55,7 @@ const inventory: AssuranceInventory = {
     },
     evidenceFiles: [],
   })),
+  nodeTestSelection: { entrypoints: [], dependents: [] },
   totals: {
     sourceLoc: 25,
     authoredEvidenceLoc: 25,

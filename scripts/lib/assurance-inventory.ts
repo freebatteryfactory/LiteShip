@@ -20,6 +20,7 @@ import { levelOf } from '../../packages/gauntlet/src/assurance-map.js';
 import { parseQualifiedBenchDistribution } from '../../packages/gauntlet/src/gates/bench-subjects.js';
 import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.js';
 import { buildRepoIRForRepo } from '../../packages/cli/src/lib/repo-ir-gauntlet.js';
+import { isNodeTestEntrypoint } from '../../packages/cli/src/lib/test-corpus.js';
 import {
   SEMANTIC_ASSURANCE_RECEIPT_PATHS,
   parseSemanticAssuranceReceipt,
@@ -66,8 +67,20 @@ export interface PackageAssuranceInventory {
 }
 
 export interface AssuranceInventory {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly packages: readonly PackageAssuranceInventory[];
+  /**
+   * Executable Node-test entrypoints and the reverse dependency closure used by
+   * affected-test planning. Support files remain assurance evidence, but they
+   * are never handed to Vitest as though they were suites.
+   */
+  readonly nodeTestSelection: {
+    readonly entrypoints: readonly string[];
+    readonly dependents: readonly {
+      readonly path: string;
+      readonly entrypoints: readonly string[];
+    }[];
+  };
   readonly totals: {
     /** Authored executable source only; generated projections are reported separately. */
     readonly sourceLoc: number;
@@ -402,9 +415,15 @@ function relativeTestImports(path: string, source: string, known: ReadonlySet<st
       raw,
       raw.replace(/\.js$/u, '.ts'),
       raw.replace(/\.js$/u, '.tsx'),
+      raw.replace(/\.mjs$/u, '.mts'),
+      raw.replace(/\.cjs$/u, '.cts'),
       `${raw}.ts`,
       `${raw}.tsx`,
+      `${raw}.js`,
+      `${raw}.mjs`,
+      `${raw}.cjs`,
       `${raw}/index.ts`,
+      `${raw}/index.tsx`,
     ];
     const found = candidates.find((candidate) => known.has(candidate));
     if (found !== undefined) imports.add(found);
@@ -421,6 +440,39 @@ function relativeTestImports(path: string, source: string, known: ReadonlySet<st
   };
   visit(ast);
   return [...imports].sort();
+}
+
+/**
+ * Reverse-close every support dependency to the executable Node suites that
+ * reach it. Cycles are harmless: each entrypoint visits each evidence path at
+ * most once.
+ */
+export function buildNodeTestSelection(
+  evidencePaths: readonly string[],
+  dependencies: ReadonlyMap<string, readonly string[]>,
+): AssuranceInventory['nodeTestSelection'] {
+  const known = new Set(evidencePaths.map(normalize));
+  const entrypoints = [...known].filter(isNodeTestEntrypoint).sort();
+  const dependents = new Map<string, Set<string>>([...known].map((path) => [path, new Set<string>()]));
+  for (const entrypoint of entrypoints) {
+    const pending = [entrypoint];
+    const visited = new Set<string>();
+    while (pending.length > 0) {
+      const path = pending.pop()!;
+      if (visited.has(path)) continue;
+      visited.add(path);
+      dependents.get(path)?.add(entrypoint);
+      for (const imported of dependencies.get(path) ?? []) {
+        if (known.has(imported)) pending.push(imported);
+      }
+    }
+  }
+  return {
+    entrypoints,
+    dependents: [...dependents]
+      .map(([path, reachedBy]) => ({ path, entrypoints: [...reachedBy].sort() }))
+      .sort((left, right) => left.path.localeCompare(right.path)),
+  };
 }
 
 const REQUIREMENTS: Readonly<Record<AssuranceLevel, readonly (readonly EvidenceClass[])[]>> = {
@@ -566,6 +618,7 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
       primaryOwner: direct?.name ?? matches[0]?.name ?? 'repository',
     };
   });
+  const nodeTestSelection = buildNodeTestSelection([...knownEvidencePaths], dependencies);
 
   const packages = PACKAGE_CATALOG.map((record) => {
     const packageRoot = join(cwd, record.dir);
@@ -647,8 +700,9 @@ export function buildAssuranceInventory(cwd: string, options: AssuranceInventory
     0,
   );
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     packages,
+    nodeTestSelection,
     totals: {
       sourceLoc,
       authoredEvidenceLoc,

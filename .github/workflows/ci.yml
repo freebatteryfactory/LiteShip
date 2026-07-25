@@ -121,9 +121,17 @@ jobs:
           CI: true
           LITESHIP_AFFECTED_BASE: origin/${{ github.base_ref }}
           LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
+          LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-affected.xml
       - name: Run benchmark authority selected by the affected plan
         if: needs.plan.outputs.affected-benchmark-required == 'true'
         run: pnpm run bench
+      - name: Upload affected Linux test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: vitest-results-pr-affected
+          path: reports/vitest-results-pr-affected.xml
+          if-no-files-found: error
 
   pr-browser-affected:
     if: github.event_name == 'pull_request' && needs.plan.outputs.affected-browser-required == 'true'
@@ -147,15 +155,28 @@ jobs:
       - run: pnpm run build
       - run: pnpm exec tsx scripts/affected-plan.ts --verify-current-head --input .liteship/affected-plan.json
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
-      - run: pnpm exec vitest run --config vitest.browser.config.ts
+      - run: >-
+          pnpm exec vitest run --config vitest.browser.config.ts
+          --reporter=default --reporter=junit
+          --outputFile.junit=reports/vitest-results-pr-browser-affected.xml
         env:
           CI: true
           LITESHIP_VITEST_BROWSERS: chromium
       - name: Run the declared browser E2E authority
-        run: pnpm run test:e2e
+        run: pnpm run test:e2e -- --reporter=line,junit
         env:
           CI: true
           LITESHIP_PLAYWRIGHT_BROWSER: chromium
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: reports/playwright-results-pr-browser-affected.xml
+      - name: Upload affected browser test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: test-results-pr-browser-affected
+          path: |
+            reports/vitest-results-pr-browser-affected.xml
+            reports/playwright-results-pr-browser-affected.xml
+          if-no-files-found: error
 
   pr-windows-affected:
     if: github.event_name == 'pull_request'
@@ -190,7 +211,7 @@ jobs:
         with:
           name: vitest-results-pr-windows-affected
           path: reports/vitest-results-pr-windows-affected.xml
-          if-no-files-found: warn
+          if-no-files-found: error
 
   # Serial full gauntlet — nightly/manual exhaustive authority. Pull requests use
   # the conservative affected closure; pushes use the full parallel projection.

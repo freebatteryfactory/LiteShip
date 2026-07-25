@@ -110,6 +110,42 @@ describe('doc-registry — every publishable package is accounted for', () => {
   });
 });
 
+describe('doc-registry — dependency prose does not outrun package manifests', () => {
+  const publishable = loadPackageManifests().filter((pkg) => pkg.publishable);
+
+  it('keeps exclusive dependency claims out of hand-authored package prose', () => {
+    const staleClaims: string[] = [];
+    const exclusiveClaims = [
+      /depends only on/i,
+      /its only dependency is/i,
+      /depends on no other `@liteship/i,
+      /every other published package[^\n]*no third-party runtime peer/i,
+    ];
+    for (const pkg of publishable) {
+      const readme = readFileSync(resolve(REPO_ROOT, 'packages', pkg.dir, 'README.md'), 'utf8');
+      for (const claim of exclusiveClaims) if (claim.test(readme)) staleClaims.push(`${pkg.name}: ${claim.source}`);
+    }
+    for (const claim of exclusiveClaims) if (claim.test(README)) staleClaims.push(`README.md: ${claim.source}`);
+    expect(
+      staleClaims,
+      `exclusive dependency prose drifts from manifests; cite the generated package surfaces instead:\n${staleClaims.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('permits "No peer dependencies" only when the package manifest has none', () => {
+    const lies: string[] = [];
+    for (const pkg of publishable) {
+      const readme = readFileSync(resolve(REPO_ROOT, 'packages', pkg.dir, 'README.md'), 'utf8');
+      if (!/No peer dependencies\./i.test(readme)) continue;
+      const manifest = JSON.parse(readFileSync(resolve(REPO_ROOT, 'packages', pkg.dir, 'package.json'), 'utf8')) as {
+        peerDependencies?: Record<string, string>;
+      };
+      if (Object.keys(manifest.peerDependencies ?? {}).length > 0) lies.push(pkg.name);
+    }
+    expect(lies, `package README falsely claims no peer dependencies: ${lies.join(', ')}`).toEqual([]);
+  });
+});
+
 describe('doc-registry — PACKAGE-SURFACES.md covers every import surface', () => {
   const surfaces = readFileSync(resolve(REPO_ROOT, 'PACKAGE-SURFACES.md'), 'utf8');
   const noSection = new Set<string>(NO_SURFACE_SECTION);
@@ -139,9 +175,16 @@ describe('doc-registry — example README version-pin advice tracks the release 
   it('every example README pin matches the workspace major.minor', () => {
     const readmes = [
       'examples/README.md',
-      ...['default', 'tutorial', 'showcase', 'cloudflare-astro', 'remotion-demo', '03-cast-aria', '05-ai-patch-refused', '06-mutation-roundtrip'].map(
-        (d) => `examples/${d}/README.md`,
-      ),
+      ...[
+        'default',
+        'tutorial',
+        'showcase',
+        'cloudflare-astro',
+        'remotion-demo',
+        '03-cast-aria',
+        '05-ai-patch-refused',
+        '06-mutation-roundtrip',
+      ].map((d) => `examples/${d}/README.md`),
     ].filter((p) => existsSync(resolve(REPO_ROOT, p)));
 
     let pinsSeen = 0;

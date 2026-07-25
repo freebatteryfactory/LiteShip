@@ -108,7 +108,7 @@ in CI with `CI=1` (already standard) or `LITESHIP_QUIET_INSTALL=1`.
 - node + browser coverage + cross-runtime merge with statementMap dedup
 - runtime-seams report, codebase audit, adaptive scan
 - feedback integrity verification (artifact fingerprint chain)
-- runtime gate, plumb gate (every published package classified runtime/tooling/deferred in `scripts/plumb-registry.ts` + no new unwired capsule — a built-not-plumbed primitive fails here), capsule verify
+- runtime gate, plumb gate (every published package classified runtime/tooling/deferred in `packages/command/src/commands/plumb-registry.ts` + no new unwired capsule — a built-not-plumbed primitive fails here), capsule verify
 - `flex:verify` 10/10 acceptance across 7 rating dimensions
 
 **Bench trend gate (`bench:trend`):** it reads `benchmarks/history.jsonl` (one
@@ -161,7 +161,7 @@ parity gate (`cargo test` + property suite against the fresh artifact).
 - TypeScript strict mode, ESM only (`.js` extensions in import specifiers
   per Node ESM rules)
 - No default exports; named exports only
-- Branded types via a local nominal-brand helper — `brand<T, B extends symbol>()` over unique symbols, with validating smart constructors (see `packages/core/src/brands.ts`)
+- Branded types via a local nominal-brand helper — `brand<T, B extends symbol>()` over unique symbols, with validating smart constructors (see `packages/core/src/schema/brands.ts`)
 - Direct generic types for module facades (ADR-0046, superseding the retired `.Shape` namespace convention): a public instance type shares its value's name directly through declaration merging, so consumers annotate against the bare generic — `Cell<number>`, `Boundary<Input, State>`, `Lifetime` — never `Cell.Shape<number>`. Construction goes through the verb grammar (`defineBoundary`, `createCell`, …), not a namespace factory like `Boundary.make`. `sgrules/no-shape-namespace-type.yml` fails any `.Shape` type reference under `packages/*/src` or the spine.
 
   ```ts
@@ -262,7 +262,7 @@ fast-check runs 100 trials by default and shrinks failing inputs automatically. 
 
 **Bug:** after a refactor of `boundary.ts`, `Boundary.evaluate` was using `>` instead of `>=` on threshold comparisons, so `value === threshold` resolved to the state *below* the crossing rather than the state *at or above* it.
 
-**Regression test** (`tests/regression/boundary-threshold.test.ts`):
+**Regression test** (`tests/unit/core/invariants.test.ts`):
 
 ```ts
 import { describe, test, expect } from 'vitest';
@@ -286,7 +286,7 @@ describe('regression: Boundary.evaluate exact-threshold resolution', () => {
 });
 ```
 
-**Fix sketch:** the conditional in `packages/core/src/boundary.ts` near the threshold loop changed from `value > threshold` back to `value >= threshold`: one character, confirmed by the test turning green.
+**Fix sketch:** the conditional in `packages/core/src/authoring/boundary.ts` near the threshold loop changed from `value > threshold` back to `value >= threshold`: one character, confirmed by the test turning green.
 
 The test now lives permanently in `tests/regression/` and runs on every `pnpm test` invocation.
 
@@ -312,7 +312,7 @@ in `flex:verify` checks the canonical ADR set is present.
 **Extending a public type union** (e.g. adding `'chaotic'` to `MotionTier`) ripples wider than it looks because exhaustive `Record<Tier, …>` tables and any `satisfies` checks downstream stop compiling until every branch is updated. The blast-radius checklist:
 
 1. Update the canonical declaration in `packages/_spine/*.d.ts` first (per ADR-0010).
-2. Update the runtime definition in the owning `packages/*/src/*.ts` file (e.g. `packages/core/src/ui-quality.ts` for `MotionTier`).
+2. Update the runtime definition in the owning `packages/*/src/*.ts` file (e.g. `packages/core/src/evidence/ui-quality.ts` for `MotionTier`).
 3. Find every `Record<TheUnion, …>` in the repo and add the new arm. Common offenders: `TIER_TARGETS`, `DEVICE_CAPABILITY_SCORES`, capability-mapping functions.
 4. Update any test that asserts an exhaustive list of values (typed as `T[]`, not `satisfies T[]` — TypeScript widens the manual list).
 5. Document the semantic position in the ladder (or orthogonality) in the owning file's JSDoc.

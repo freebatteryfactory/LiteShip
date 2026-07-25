@@ -1,12 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
-import { adaptiveAttrs } from '@liteship/astro';
-// The shared layout boundary (mobile / tablet / desktop) drives both
-// halves of the adaptive story: adaptiveAttrs() serializes it for the
-// client runtime (data-liteship-state updates), and the @quantize block in
-// the <style> below resolves the same export to compile static
-// @container queries.
-import { layout } from '../boundaries/layout.boundaries.js';
+import { layout } from '../adaptive.js';
+
+const plan = layout.plan();
+const preview = layout.explain(940);
 ---
 
 <Base>
@@ -15,18 +12,18 @@ import { layout } from '../boundaries/layout.boundaries.js';
     <p>Constraint-based adaptive rendering</p>
   </header>
 
-  <main {...adaptiveAttrs({ boundary: layout, class: 'grid' })}>
-    <article class="card">
-      <h2>Boundaries</h2>
-      <p>Define quantization points where your layout adapts.</p>
+  <main {...layout.attrs()}>
+    <article class="liteship-card">
+      <h2>Define</h2>
+      <p>A boundary turns an input into a few named states.</p>
     </article>
-    <article class="card">
-      <h2>Tokens</h2>
-      <p>Design values that vary across themes, density, and contrast.</p>
+    <article class="liteship-card">
+      <h2>Apply</h2>
+      <p>layout.attrs() wires the definition onto this element.</p>
     </article>
-    <article class="card">
-      <h2>Compile</h2>
-      <p>Output to CSS, GLSL, WGSL, ARIA, or AI targets.</p>
+    <article class="liteship-card">
+      <h2>Inspect</h2>
+      <p>At 940px, layout.explain() selects <strong>{preview.boundary.state}</strong>.</p>
     </article>
   </main>
 </Base>
@@ -34,58 +31,34 @@ import { layout } from '../boundaries/layout.boundaries.js';
 <style>
   .header {
     text-align: center;
-    padding: var(--liteship-spacing-lg) 0;
+    padding: 2rem 0;
   }
 
   .header h1 {
-    font-size: var(--liteship-font-size-lg);
+    font-size: 2rem;
     font-weight: 700;
   }
 
   .header p {
-    font-size: var(--liteship-font-size-md);
+    font-size: 1rem;
     opacity: 0.7;
   }
 
-  .card {
-    padding: var(--liteship-spacing-md);
+  .liteship-card {
+    opacity: 0.85;
+    padding: 1rem;
     border: 1px solid currentColor;
     border-radius: 0.5rem;
-    opacity: 0.85;
   }
 
-  .card h2 {
-    font-size: var(--liteship-font-size-md);
-    margin-bottom: var(--liteship-spacing-sm);
+  .liteship-card h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
   }
 
-  .card p {
-    font-size: var(--liteship-font-size-sm);
-  }
-
-  @quantize layout {
-    mobile {
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--liteship-spacing-sm);
-      }
-    }
-
-    tablet {
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--liteship-spacing-md);
-      }
-    }
-
-    desktop {
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--liteship-spacing-lg);
-      }
-    }
+  .liteship-card p {
+    font-size: 0.875rem;
   }
 </style>
+
+<style is:inline set:html={plan.css}></style>

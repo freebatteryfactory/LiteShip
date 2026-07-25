@@ -47,11 +47,16 @@ function normalizedReference(value: unknown): unknown {
   return value;
 }
 
+/** Compare the byte sequence, not the host-specific Uint8Array subclass. */
+function expectSameBytes(actual: Uint8Array, expected: Uint8Array): void {
+  expect(Array.from(actual)).toEqual(Array.from(expected));
+}
+
 describe('@liteship/canonical ↔ cborg independent differential', () => {
   it('emits the same RFC 8949 deterministic bytes over the shared non-float domain', () => {
     fc.assert(
       fc.property(differentialValue, (value) => {
-        expect(CanonicalCbor.encode(value)).toEqual(referenceEncode(value));
+        expectSameBytes(CanonicalCbor.encode(value), referenceEncode(value));
       }),
       { numRuns: 300 },
     );
@@ -74,9 +79,23 @@ describe('@liteship/canonical ↔ cborg independent differential', () => {
     const liteBytes = CanonicalCbor.encode(value);
     const referenceBytes = referenceEncode(value);
 
-    expect(liteBytes).toEqual(referenceBytes);
+    expectSameBytes(liteBytes, referenceBytes);
     expect(decode(referenceBytes)).toStrictEqual(value);
     expect(normalizedReference(referenceDecode(liteBytes, { useMaps: true }))).toStrictEqual(value);
+  });
+
+  it('treats Buffer and Uint8Array as the same canonical byte sequence', () => {
+    const value = {
+      nested: Uint8Array.from([0, 0, 0]),
+      wideInteger: 4_294_967_296,
+    };
+    const liteBytes = CanonicalCbor.encode(value);
+    const referenceBytes = referenceEncode(value);
+
+    // cborg may select Node's Buffer subclass on some hosts. Constructor
+    // identity is not part of RFC 8949 canonical-byte equality.
+    expectSameBytes(liteBytes, referenceBytes);
+    expectSameBytes(liteBytes, Uint8Array.from(referenceBytes));
   });
 
   it('pins the intentional float-width divergence instead of laundering it as agreement', () => {

@@ -38,7 +38,11 @@ describe('CI authority evidence', () => {
     const evidence = buildCiAuthorityEvidence({
       identity,
       requiredJobs: ['browser-e2e', 'windows-smoke', 'rust-wasm-parity'],
-      jobs: [job('browser-e2e (chromium)'), job('browser-e2e (webkit)', 'failure'), job('windows-smoke', 'skipped')],
+      jobs: [
+        job('browser-e2e (chromium)'),
+        job('browser-e2e (webkit)', 'failure'),
+        { ...job('windows-smoke', 'skipped'), startedAt: null, completedAt: null },
+      ],
     });
     expect(evidence.verdict).toBe('rejected');
     expect(evidence.findings).toEqual([
@@ -46,6 +50,12 @@ describe('CI authority evidence', () => {
       'rust-wasm-parity: missing',
       'windows-smoke: skipped',
     ]);
+    expect(evidence.jobs.find((observed) => observed.name === 'windows-smoke')).toMatchObject({
+      conclusion: 'skipped',
+      startedAt: null,
+      completedAt: null,
+    });
+    expect(parseCiAuthorityEvidence(JSON.parse(JSON.stringify(evidence)))).toEqual(evidence);
   });
 
   it('rejects a forged accepted verdict', () => {

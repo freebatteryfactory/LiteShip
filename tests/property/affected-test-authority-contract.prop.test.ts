@@ -129,6 +129,24 @@ describe('affected Vitest execution authority', () => {
     );
   });
 
+  it('refuses every support, journey, browser, E2E, benchmark, config, and fixture path as Node argv', () => {
+    const nonEntrypoint = fc.oneof(
+      segment.map((name) => `tests/support/${name}.ts`),
+      segment.map((name) => `tests/journey/${name}.ts`),
+      segment.map((name) => `tests/browser/${name}.test.ts`),
+      segment.map((name) => `tests/e2e/${name}.e2e.ts`),
+      segment.map((name) => `tests/bench/${name}.bench.ts`),
+      segment.map((name) => `tests/fixtures/${name}.json`),
+      segment.map((name) => `tests/unit/${name}.config.ts`),
+    );
+    fc.assert(
+      fc.property(nonEntrypoint, (path) => {
+        expect(() => affectedVitestExecution('focused', [path])).toThrow(/non-Vitest entrypoint/u);
+      }),
+      { seed: 0xaffe_c10a, numRuns: 200 },
+    );
+  });
+
   it('refuses the only two vacuous evidence projections', () => {
     fc.assert(
       fc.property(fc.stringMatching(/^\s{0,20}$/u), (blank) => {
