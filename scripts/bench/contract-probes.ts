@@ -202,6 +202,7 @@ function buildGauntletRunOfSize(gateCount: number): () => void {
 /** The boundary-evaluator batch hot path — O(n) in value count. */
 export const boundaryEvaluateProbe: ComplexityProbe = {
   path: 'boundary.evaluateBatch',
+  owner: '@liteship/core',
   describe: 'Boundary.evaluateBatch — one scan over the value array; O(n) in value count.',
   shape: 'batch-values',
   // Sizes start at 256 (not 64) so the linear term dominates fixed per-call
@@ -214,6 +215,7 @@ export const boundaryEvaluateProbe: ComplexityProbe = {
 /** The identity kernel hot path — O(n) in element count. */
 export const contentAddressProbe: ComplexityProbe = {
   path: 'contentAddress.of',
+  owner: '@liteship/core',
   describe: 'contentAddressOf — canonicalize → CanonicalCbor → fnv1a; O(n) in element count.',
   shape: 'address-elements',
   sizes: [8, 32, 128, 512, 2048],
@@ -223,6 +225,7 @@ export const contentAddressProbe: ComplexityProbe = {
 /** Canonical array encoding — O(n) in encoded element count. */
 export const canonicalEncodeProbe: ComplexityProbe = {
   path: 'canonical.encode',
+  owner: '@liteship/canonical',
   describe: 'CanonicalCbor.encode — one deterministic fold over array elements; O(n) in element count.',
   shape: 'canonical-array-elements',
   sizes: [64, 256, 1024, 4096, 16384],
@@ -232,6 +235,7 @@ export const canonicalEncodeProbe: ComplexityProbe = {
 /** Canonical array decoding — O(n) in encoded element count. */
 export const canonicalDecodeProbe: ComplexityProbe = {
   path: 'canonical.decode',
+  owner: '@liteship/canonical',
   describe: 'canonical decode — one strict cursor walk over encoded array elements; O(n) in element count.',
   shape: 'canonical-array-elements',
   sizes: [64, 256, 1024, 4096, 16384],
@@ -240,6 +244,7 @@ export const canonicalDecodeProbe: ComplexityProbe = {
 
 export const genuiValidationProbe: ComplexityProbe = {
   path: 'genui.validate',
+  owner: '@liteship/genui',
   describe: 'validateGeneratedUITree — one structural visit per generated node; O(n) in node count.',
   shape: 'generated-ui-nodes',
   sizes: [32, 128, 512, 2048, 8192],
@@ -249,6 +254,7 @@ export const genuiValidationProbe: ComplexityProbe = {
 
 export const genuiRenderHashProbe: ComplexityProbe = {
   path: 'genui.renderHash',
+  owner: '@liteship/genui',
   describe: 'renderHash — canonical encoding and hashing of one generated tree; O(n) in node count.',
   shape: 'generated-ui-nodes',
   sizes: [32, 128, 512, 2048, 8192],
@@ -258,6 +264,7 @@ export const genuiRenderHashProbe: ComplexityProbe = {
 
 export const assetRiffWalkProbe: ComplexityProbe = {
   path: 'assets.walkRiff',
+  owner: '@liteship/assets',
   describe: 'walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.',
   shape: 'riff-chunks',
   sizes: [32, 128, 512, 2048, 8192],
@@ -267,6 +274,7 @@ export const assetRiffWalkProbe: ComplexityProbe = {
 
 export const assetWaveformProbe: ComplexityProbe = {
   path: 'assets.computeWaveform',
+  owner: '@liteship/assets',
   describe: 'computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.',
   shape: 'audio-frames',
   sizes: [65_536, 131_072, 262_144, 524_288],
@@ -276,6 +284,7 @@ export const assetWaveformProbe: ComplexityProbe = {
 
 export const assetOnsetsProbe: ComplexityProbe = {
   path: 'assets.detectOnsets',
+  owner: '@liteship/assets',
   describe: 'detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.',
   shape: 'audio-frames',
   sizes: [65_536, 131_072, 262_144, 524_288],
@@ -285,6 +294,7 @@ export const assetOnsetsProbe: ComplexityProbe = {
 
 export const assetBeatsProbe: ComplexityProbe = {
   path: 'assets.detectBeats',
+  owner: '@liteship/assets',
   describe: 'detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.',
   shape: 'audio-frames-fixed-sample-rate',
   sizes: [65_536, 131_072, 262_144, 524_288],
@@ -294,6 +304,7 @@ export const assetBeatsProbe: ComplexityProbe = {
 
 export const gauntletRunGatesProbe: ComplexityProbe = {
   path: 'gauntlet.runGates',
+  owner: '@liteship/gauntlet',
   describe: 'runGates — one qualification and decision fold per gate; O(n) in gate count.',
   shape: 'qualified-gates',
   sizes: [8, 32, 128, 512, 2048],

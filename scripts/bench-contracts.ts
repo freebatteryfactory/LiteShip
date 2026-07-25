@@ -28,6 +28,7 @@
  */
 
 import { resolve } from 'node:path';
+import { IntegrityDigest } from '@liteship/canonical';
 import { systemClock } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import {
@@ -35,23 +36,148 @@ import {
   MIN_COMPLEXITY_FIT_R2,
 } from '../packages/gauntlet/src/gates/performance-contracts.js';
 import { repoRoot } from '../vitest.shared.js';
+import { PACKAGE_CATALOG } from './package-catalog.js';
+import { buildCurrentArtifactContext } from './artifact-context.js';
+import { readGitSha } from './affected-plan.js';
 import { isDirectExecution, writeTextFile } from './audit/shared.js';
 import {
+  BENCHMARK_EVIDENCE_ARTIFACT_PATH,
   type ComplexityMap,
   type ComplexityMapEntry,
+  type BenchmarkEvidence,
+  type BenchmarkEvidenceAdmission,
+  type BenchmarkEvidenceArtifact,
+  type BenchmarkEvidenceAuthority,
+  type ComplexityProbe,
   COMPLEXITY_MAP_ARTIFACT_PATH,
+  admitBenchmarkEvidence,
   complexityRank,
+  createBenchmarkEvidence,
+  createBenchmarkEvidenceArtifact,
   measureComplexityCurve,
+  parseBenchmarkEvidenceArtifact,
   readDistributionRegistry,
 } from './bench/contracts.ts';
 import { COMPLEXITY_PROBES } from './bench/contract-probes.ts';
-import { verifyDeclaredDistributions } from './bench/contract-coverage.ts';
+import { projectBenchmarkOwnerCoverage, verifyDeclaredDistributions } from './bench/contract-coverage.ts';
+
+export const BENCHMARK_OWNER_COVERAGE_ARTIFACT_PATH = 'benchmarks/benchmark-owner-coverage.json';
 
 /** One deterministic violation in a measured complexity map. */
 export interface MeasuredComplexityIssue {
   readonly path: string;
   readonly reason: 'missing' | 'unrecognized-class' | 'class-regression' | 'noisy-fit';
   readonly detail: string;
+}
+
+export const MAX_COMPLEXITY_COEFFICIENT_OF_VARIATION = 0.25;
+
+export interface BenchmarkProducerIdentity extends BenchmarkEvidenceAuthority {
+  readonly platform: string;
+  readonly arch: string;
+  readonly runtime: string;
+}
+
+export interface BenchmarkEvidenceIssue {
+  readonly path: string;
+  readonly disposition: Exclude<BenchmarkEvidenceAdmission['disposition'], 'pass'> | 'missing';
+  readonly reasons: readonly string[];
+}
+
+/** Project measured complexity entries through the one strict evidence contract. */
+export function projectComplexityBenchmarkEvidence(
+  map: ComplexityMap,
+  probes: readonly ComplexityProbe[],
+  identity: BenchmarkProducerIdentity,
+  subjectCanary: 'pass' | 'fail',
+): readonly BenchmarkEvidence[] {
+  const byPath = new Map(probes.map((probe) => [probe.path, probe] as const));
+  return map.entries.map((entry) => {
+    const probe = byPath.get(entry.path);
+    if (probe === undefined) throw new TypeError(`complexity evidence has no probe for ${entry.path}`);
+    if (entry.coefficientOfVariation === undefined) {
+      throw new TypeError(`complexity evidence has no variance measurement for ${entry.path}`);
+    }
+    const measurement = entry.measurement ?? {
+      innerIterations: 200,
+      replicates: 7,
+      warmupIterations: 50,
+    };
+    const expected = ACCEPTED_COMPLEXITY_CEILINGS[entry.path];
+    if (expected === undefined) throw new TypeError(`complexity evidence has no accepted ceiling for ${entry.path}`);
+    return createBenchmarkEvidence({
+      sut: {
+        id: entry.path,
+        owner: probe.owner,
+        benchmark: entry.path,
+        file: 'scripts/bench/contract-probes.ts',
+      },
+      input: {
+        dimensions: [{ name: entry.shape, unit: 'items', distribution: 'declared-size-sweep' }],
+        sizes: entry.sizes,
+      },
+      measurement: {
+        mode: 'warm',
+        warmupIterations: measurement.warmupIterations,
+        repetitions: measurement.replicates,
+        canaries: [{ id: 'benchmark-subject-invoked', verdict: subjectCanary }],
+      },
+      environment: {
+        sourceSha: identity.sourceSha,
+        sourceDigest: identity.sourceDigest,
+        environmentDigest: identity.environmentDigest,
+        platform: identity.platform,
+        arch: identity.arch,
+        runtime: identity.runtime,
+        toolchain: identity.toolchain,
+      },
+      complexity: {
+        expected,
+        measured: entry.class,
+        fittedSlope: entry.fittedSlope,
+        fittedR2: entry.fittedR2,
+      },
+      allocation: null,
+      confidence: {
+        minimumR2: MIN_COMPLEXITY_FIT_R2,
+        coefficientOfVariation: entry.coefficientOfVariation,
+        maximumCoefficientOfVariation: MAX_COMPLEXITY_COEFFICIENT_OF_VARIATION,
+      },
+    });
+  });
+}
+
+/** Existing producer-side gate: strict decode, freshness, and complete path admission. */
+export function verifyBenchmarkEvidenceArtifact(
+  artifact: BenchmarkEvidenceArtifact,
+  authority: BenchmarkEvidenceAuthority,
+  expectedPaths: readonly string[],
+): readonly BenchmarkEvidenceIssue[] {
+  const parsed = parseBenchmarkEvidenceArtifact(artifact);
+  const issues: BenchmarkEvidenceIssue[] = [];
+  const byPath = new Map(parsed.evidence.map((record) => [record.sut.id, record] as const));
+  const expected = new Set(expectedPaths);
+  for (const record of parsed.evidence) {
+    if (!expected.has(record.sut.id)) {
+      issues.push({
+        path: record.sut.id,
+        disposition: 'fail',
+        reasons: ['unexpected addressed benchmark evidence'],
+      });
+    }
+  }
+  for (const path of expectedPaths) {
+    const record = byPath.get(path);
+    if (record === undefined) {
+      issues.push({ path, disposition: 'missing', reasons: ['missing addressed benchmark evidence'] });
+      continue;
+    }
+    const admission = admitBenchmarkEvidence(record, authority);
+    if (admission.disposition !== 'pass') {
+      issues.push({ path, disposition: admission.disposition, reasons: admission.reasons });
+    }
+  }
+  return issues;
 }
 
 /**
@@ -192,6 +318,7 @@ function buildComplexityMap(): { readonly map: ComplexityMap; readonly hotPathBu
       class: curve.fit.class,
       fittedSlope: Number(curve.fit.slope.toFixed(4)),
       fittedR2: Number(curve.fit.r2.toFixed(4)),
+      coefficientOfVariation: Number(curve.coefficientOfVariation.toFixed(4)),
       measurement: {
         innerIterations: probe.measurement?.innerIterations ?? 200,
         replicates: probe.measurement?.replicates ?? 7,
@@ -252,13 +379,61 @@ function main(): void {
     console.error(`[bench-contracts] COMPLEXITY ${issue.reason.toUpperCase()}: ${issue.detail}`);
   }
 
+  // 2b. Project the SAME measured map into strict, addressed scientific
+  // evidence and immediately re-admit it against the live checkout. This is a
+  // consumer of the existing runner, never a second measurement path.
+  const context = buildCurrentArtifactContext(repoRoot);
+  const identity: BenchmarkProducerIdentity = {
+    sourceSha: readGitSha(repoRoot, 'HEAD'),
+    sourceDigest: IntegrityDigest(context.sourceFingerprint),
+    environmentDigest: IntegrityDigest(context.environmentFingerprint),
+    platform: process.platform,
+    arch: process.arch,
+    runtime: process.version,
+    toolchain: `node:${process.version}`,
+  };
+  const evidenceArtifact = createBenchmarkEvidenceArtifact(
+    projectComplexityBenchmarkEvidence(
+      map,
+      COMPLEXITY_PROBES,
+      identity,
+      coverage.issues.length === 0 ? 'pass' : 'fail',
+    ),
+  );
+  writeTextFile(resolve(repoRoot, BENCHMARK_EVIDENCE_ARTIFACT_PATH), `${JSON.stringify(evidenceArtifact, null, 2)}\n`);
+  const evidenceIssues = verifyBenchmarkEvidenceArtifact(
+    evidenceArtifact,
+    identity,
+    Object.keys(ACCEPTED_COMPLEXITY_CEILINGS),
+  );
+  const ownerCoverage = projectBenchmarkOwnerCoverage(
+    PACKAGE_CATALOG,
+    registry.distributions,
+    evidenceArtifact.evidence,
+  );
+  writeTextFile(
+    resolve(repoRoot, BENCHMARK_OWNER_COVERAGE_ARTIFACT_PATH),
+    `${JSON.stringify({ schemaVersion: 1, owners: ownerCoverage }, null, 2)}\n`,
+  );
+  for (const issue of evidenceIssues) {
+    console.error(
+      `[bench-contracts] EVIDENCE ${issue.disposition.toUpperCase()}: ${issue.path}: ${issue.reasons.join(', ')}`,
+    );
+  }
+
   // 3. COLD-START budget (ratio, not absolute ns).
   const budget = measureColdStartBudget();
   console.log(
     `\nCold-start budget: ${budget.path} cold ${budget.coldStartNs.toFixed(1)}ns / steady ${budget.steadyPerCallNs.toFixed(1)}ns = ${budget.ratio}x (ceiling ${budget.ratioCeiling}x) → ${budget.withinBudget ? 'OK' : 'FAIL'}`,
   );
 
-  if (coverage.issues.length > 0 || complexityIssues.length > 0 || !hotPathBudgetOk || !budget.withinBudget) {
+  if (
+    coverage.issues.length > 0 ||
+    complexityIssues.length > 0 ||
+    evidenceIssues.length > 0 ||
+    !hotPathBudgetOk ||
+    !budget.withinBudget
+  ) {
     console.error('\n[bench-contracts] CONTRACT VERIFICATION FAILED.');
     process.exitCode = 1;
     return;

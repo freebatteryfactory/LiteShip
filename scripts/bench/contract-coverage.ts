@@ -32,7 +32,8 @@ import { walkFiles } from '@liteship/core/fs-walk';
 import { commentsBlanked } from '../../packages/gauntlet/src/gates/code-only.ts';
 import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.ts';
 import type { BenchSubjectIssueKind } from '../../packages/gauntlet/src/gates/bench-subjects.ts';
-import { type BenchDistribution, extractRegisteredBenches } from './contracts.ts';
+import type { PackageCatalogRecord } from '../package-catalog.ts';
+import { type BenchDistribution, type BenchmarkEvidence, extractRegisteredBenches } from './contracts.ts';
 
 /** The repo-relative directory holding the literal-registration bench files. */
 export const BENCH_SOURCE_DIR = 'tests/bench';
@@ -62,6 +63,84 @@ export interface CoverageIssue {
 export interface CoverageResult {
   readonly discoveredBenchCount: number;
   readonly issues: readonly CoverageIssue[];
+}
+
+/** Catalog-derived owner census; uncovered is a work signal, not a fabricated benchmark. */
+export interface BenchmarkOwnerCoverage {
+  readonly packageName: string;
+  readonly directory: string;
+  readonly eligible: boolean;
+  readonly status: 'covered' | 'uncovered' | 'not-eligible';
+  readonly distributionCount: number;
+  readonly evidenceCount: number;
+  readonly benchmarks: readonly string[];
+}
+
+function packageForSubject(
+  catalog: readonly PackageCatalogRecord[],
+  subject: BenchDistribution['subjects'][number],
+): string | null {
+  if (subject.role !== 'sut') return null;
+  if (subject.origin.kind === 'module') {
+    return (
+      catalog.find(
+        (record) =>
+          subject.origin.kind === 'module' &&
+          (subject.origin.specifier === record.name || subject.origin.specifier.startsWith(`${record.name}/`)),
+      )?.name ?? null
+    );
+  }
+  if (subject.origin.kind === 'file') {
+    const normalized = subject.origin.path.replace(/\\/gu, '/').replace(/^\.\//u, '');
+    return catalog.find((record) => normalized === record.dir || normalized.startsWith(`${record.dir}/`))?.name ?? null;
+  }
+  return null;
+}
+
+/**
+ * Project benchmark ownership from the one package catalog, distribution
+ * registry, and admitted evidence. Runtime packages are eligible by one
+ * mechanical rule; the result reports gaps without manufacturing a benchmark.
+ */
+export function projectBenchmarkOwnerCoverage(
+  catalog: readonly PackageCatalogRecord[],
+  declared: readonly BenchDistribution[],
+  evidence: readonly BenchmarkEvidence[],
+): readonly BenchmarkOwnerCoverage[] {
+  const distributions = new Map<string, Set<string>>();
+  for (const distribution of declared) {
+    for (const subject of distribution.subjects) {
+      const owner = packageForSubject(catalog, subject);
+      if (owner === null) continue;
+      const names = distributions.get(owner) ?? new Set<string>();
+      names.add(`${distribution.file}::${distribution.name}`);
+      distributions.set(owner, names);
+    }
+  }
+  const evidenceByOwner = new Map<string, Set<string>>();
+  for (const record of evidence) {
+    const ids = evidenceByOwner.get(record.sut.owner) ?? new Set<string>();
+    ids.add(record.evidenceId);
+    evidenceByOwner.set(record.sut.owner, ids);
+  }
+
+  return [...catalog]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((record): BenchmarkOwnerCoverage => {
+      const eligible = record.runtimeSurface === 'module' && record.plumbStatus === 'runtime';
+      const benchmarks = [...(distributions.get(record.name) ?? [])].sort();
+      const evidenceCount = evidenceByOwner.get(record.name)?.size ?? 0;
+      const covered = benchmarks.length > 0 || evidenceCount > 0;
+      return {
+        packageName: record.name,
+        directory: record.dir,
+        eligible,
+        status: eligible ? (covered ? 'covered' : 'uncovered') : 'not-eligible',
+        distributionCount: benchmarks.length,
+        evidenceCount,
+        benchmarks,
+      };
+    });
 }
 
 /**

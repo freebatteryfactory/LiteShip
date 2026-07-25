@@ -10,11 +10,20 @@ import { describe, expect, it } from 'vitest';
 import {
   admitBenchmarkEvidence,
   createBenchmarkEvidence,
+  createBenchmarkEvidenceArtifact,
+  parseBenchmarkEvidenceArtifact,
   parseBenchmarkEvidence,
   type BenchmarkEvidence,
   type BenchmarkEvidenceInput,
   type BenchmarkEvidenceAuthority,
+  type ComplexityMap,
+  type ComplexityProbe,
 } from '../../../scripts/bench/contracts.ts';
+import {
+  projectComplexityBenchmarkEvidence,
+  verifyBenchmarkEvidenceArtifact,
+  type BenchmarkProducerIdentity,
+} from '../../../scripts/bench-contracts.ts';
 
 const SHA = 'a'.repeat(40);
 const SOURCE_DIGEST = `sha256:${'b'.repeat(64)}` as const;
@@ -195,5 +204,112 @@ describe('BenchmarkEvidence', () => {
         admission: { disposition: 'pass', reasons: [] },
       }),
     ).toThrow(/admission does not match/u);
+  });
+});
+
+describe('existing complexity producer → addressed evidence → admission', () => {
+  const probe: ComplexityProbe = {
+    path: 'boundary.evaluateBatch',
+    owner: '@liteship/core',
+    describe: 'fixture',
+    shape: 'batch-values',
+    sizes: [8, 32, 128],
+    measurement: { innerIterations: 10, replicates: 5, warmupIterations: 2 },
+    workloadFor: () => () => undefined,
+  };
+  const identity: BenchmarkProducerIdentity = {
+    sourceSha: SHA,
+    sourceDigest: SOURCE_DIGEST,
+    environmentDigest: ENVIRONMENT_DIGEST,
+    platform: 'linux',
+    arch: 'x64',
+    runtime: 'node-22',
+    toolchain: 'node:v22',
+  };
+
+  function map(overrides: Partial<ComplexityMap['entries'][number]> = {}): ComplexityMap {
+    return {
+      schemaVersion: 1,
+      entries: [
+        {
+          path: probe.path,
+          describe: probe.describe,
+          shape: probe.shape,
+          sizes: probe.sizes,
+          class: 'O(n)',
+          fittedSlope: 1,
+          fittedR2: 0.99,
+          coefficientOfVariation: 0.03,
+          measurement: { innerIterations: 10, replicates: 5, warmupIterations: 2 },
+          ...overrides,
+        },
+      ],
+    };
+  }
+
+  it('projects a real complexity-map entry into an addressed artifact and re-admits it', () => {
+    const records = projectComplexityBenchmarkEvidence(map(), [probe], identity, 'pass');
+    const artifact = createBenchmarkEvidenceArtifact(records);
+    expect(artifact.artifactId).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(parseBenchmarkEvidenceArtifact(JSON.parse(JSON.stringify(artifact)) as unknown)).toEqual(artifact);
+    expect(verifyBenchmarkEvidenceArtifact(artifact, identity, [probe.path])).toEqual([]);
+    expect(verifyBenchmarkEvidenceArtifact(artifact, identity, [])).toEqual([
+      { path: probe.path, disposition: 'fail', reasons: ['unexpected addressed benchmark evidence'] },
+    ]);
+    expect(() => createBenchmarkEvidenceArtifact([records[0]!, records[0]!])).toThrow(/unique/u);
+  });
+
+  it('the producer consumer refuses failed, unknown, stale, foreign, and missing evidence', () => {
+    const failed = createBenchmarkEvidenceArtifact(
+      projectComplexityBenchmarkEvidence(map(), [probe], identity, 'fail'),
+    );
+    expect(verifyBenchmarkEvidenceArtifact(failed, identity, [probe.path])).toEqual([
+      { path: probe.path, disposition: 'fail', reasons: ['canary-failed'] },
+    ]);
+
+    const lowConfidence = createBenchmarkEvidenceArtifact(
+      projectComplexityBenchmarkEvidence(map({ fittedR2: 0.1 }), [probe], identity, 'pass'),
+    );
+    expect(verifyBenchmarkEvidenceArtifact(lowConfidence, identity, [probe.path])[0]).toMatchObject({
+      disposition: 'unknown',
+      reasons: ['low-r2'],
+    });
+
+    const unstable = createBenchmarkEvidenceArtifact(
+      projectComplexityBenchmarkEvidence(map({ coefficientOfVariation: 0.9 }), [probe], identity, 'pass'),
+    );
+    expect(verifyBenchmarkEvidenceArtifact(unstable, identity, [probe.path])[0]).toMatchObject({
+      disposition: 'unknown',
+      reasons: ['unstable-variance'],
+    });
+
+    const healthy = createBenchmarkEvidenceArtifact(
+      projectComplexityBenchmarkEvidence(map(), [probe], identity, 'pass'),
+    );
+    expect(
+      verifyBenchmarkEvidenceArtifact(
+        healthy,
+        {
+          sourceSha: 'd'.repeat(40),
+          sourceDigest: `sha256:${'e'.repeat(64)}`,
+          environmentDigest: `sha256:${'f'.repeat(64)}`,
+          toolchain: 'foreign',
+        },
+        [probe.path, 'missing.path'],
+      ),
+    ).toEqual([
+      {
+        path: probe.path,
+        disposition: 'unknown',
+        reasons: ['stale-source-sha', 'stale-source-digest', 'foreign-environment', 'foreign-toolchain'],
+      },
+      { path: 'missing.path', disposition: 'missing', reasons: ['missing addressed benchmark evidence'] },
+    ]);
+  });
+
+  it('refuses variance-free producer output instead of inventing confidence', () => {
+    expect(() =>
+      projectComplexityBenchmarkEvidence(map({ coefficientOfVariation: undefined }), [probe], identity, 'pass'),
+    ).toThrow(/no variance measurement/u);
   });
 });

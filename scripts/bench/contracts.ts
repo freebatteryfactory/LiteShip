@@ -138,6 +138,8 @@ export interface ComplexityMapEntry {
   readonly fittedSlope: number;
   /** The fit's R² — recorded so a reader can see the linear fit's quality. */
   readonly fittedR2: number;
+  /** Maximum coefficient of variation observed across the size sweep. */
+  readonly coefficientOfVariation?: number;
   /** Measurement regime used to produce the curve. */
   readonly measurement?: {
     readonly innerIterations: number;
@@ -269,6 +271,15 @@ export interface BenchmarkEvidenceAdmission {
   readonly disposition: BenchmarkEvidenceDisposition;
   readonly reasons: readonly BenchmarkEvidenceReason[];
 }
+
+/** Addressed aggregate emitted by the existing benchmark-contract producer. */
+export interface BenchmarkEvidenceArtifact {
+  readonly schemaVersion: 1;
+  readonly artifactId: IntegrityDigest;
+  readonly evidence: readonly BenchmarkEvidence[];
+}
+
+export const BENCHMARK_EVIDENCE_ARTIFACT_PATH = 'benchmarks/benchmark-evidence.json';
 
 const SHA_RE = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/u;
 const INTEGRITY_RE = /^(?:sha256|blake3):[0-9a-f]{64}$/u;
@@ -470,6 +481,21 @@ export function createBenchmarkEvidence(input: BenchmarkEvidenceInput): Benchmar
   return deepFreezeEvidence({ ...payload, evidenceId });
 }
 
+/** Build one immutable aggregate from independently addressed evidence records. */
+export function createBenchmarkEvidenceArtifact(records: readonly BenchmarkEvidence[]): BenchmarkEvidenceArtifact {
+  if (records.length === 0) evidenceValidation('benchmark evidence artifact must be non-empty');
+  const evidence = records
+    .map((record) => parseBenchmarkEvidence(record))
+    .sort((left, right) => left.sut.id.localeCompare(right.sut.id));
+  const ids = evidence.map((record) => record.evidenceId);
+  if (new Set(ids).size !== ids.length) evidenceValidation('benchmark evidence artifact ids must be unique');
+  const paths = evidence.map((record) => record.sut.id);
+  if (new Set(paths).size !== paths.length) evidenceValidation('benchmark evidence artifact SUT ids must be unique');
+  const unsigned = { schemaVersion: 1 as const, evidence };
+  const artifactId = addressedDigestOf(CanonicalCbor.encode(unsigned), 'sha256').integrity_digest;
+  return deepFreezeEvidence({ ...unsigned, artifactId });
+}
+
 function asString(value: unknown, field: string): string {
   if (typeof value !== 'string') evidenceValidation(`${field} must be a string`);
   return value;
@@ -615,6 +641,18 @@ export function parseBenchmarkEvidence(value: unknown): BenchmarkEvidence {
     JSON.stringify(admission['reasons']) !== JSON.stringify(rebuilt.admission.reasons)
   ) {
     evidenceValidation('admission does not match measured evidence');
+  }
+  return rebuilt;
+}
+
+/** Strict decoder for the aggregate emitted by `scripts/bench-contracts.ts`. */
+export function parseBenchmarkEvidenceArtifact(value: unknown): BenchmarkEvidenceArtifact {
+  const root = exactObject(value, 'benchmark evidence artifact', ['schemaVersion', 'artifactId', 'evidence']);
+  if (root['schemaVersion'] !== 1) evidenceValidation('benchmark evidence artifact schemaVersion must be 1');
+  if (!Array.isArray(root['evidence'])) evidenceValidation('benchmark evidence artifact evidence must be an array');
+  const rebuilt = createBenchmarkEvidenceArtifact(root['evidence'].map(parseBenchmarkEvidence));
+  if (root['artifactId'] !== rebuilt.artifactId) {
+    evidenceValidation('benchmark evidence artifact id does not match its canonical evidence');
   }
   return rebuilt;
 }
@@ -803,6 +841,8 @@ export function fitComplexityClass(samples: readonly ComplexitySample[]): Comple
 export interface ComplexityProbe {
   /** Stable id of the hot path. */
   readonly path: string;
+  /** Canonical package-catalog owner of the measured implementation. */
+  readonly owner: string;
   /** Human description. */
   readonly describe: string;
   /** The input dimension the curve sweeps (the `shape`). */
@@ -830,6 +870,8 @@ export interface ComplexityCurve {
   readonly shape: string;
   readonly samples: readonly ComplexitySample[];
   readonly fit: ComplexityFit;
+  /** Maximum coefficient of variation across replicate timings at one size. */
+  readonly coefficientOfVariation: number;
 }
 
 /**
@@ -864,6 +906,7 @@ export function measureComplexityCurve(
   const clock = options.clock ?? systemClock;
 
   const samples: ComplexitySample[] = [];
+  const coefficientsOfVariation: number[] = [];
   for (const size of probe.sizes) {
     const workload = probe.workloadFor(size);
 
@@ -873,6 +916,7 @@ export function measureComplexityCurve(
     }
 
     let bestPerCallNs = Number.POSITIVE_INFINITY;
+    const replicateSamples: number[] = [];
     for (let r = 0; r < replicates; r++) {
       const startMs = clock.now();
       for (let i = 0; i < innerIterations; i++) {
@@ -880,10 +924,15 @@ export function measureComplexityCurve(
       }
       const elapsedMs = clock.now() - startMs;
       const perCallNs = (elapsedMs * 1e6) / innerIterations;
+      replicateSamples.push(perCallNs);
       if (perCallNs < bestPerCallNs) {
         bestPerCallNs = perCallNs;
       }
     }
+
+    const mean = replicateSamples.reduce((sum, sample) => sum + sample, 0) / replicateSamples.length;
+    const variance = replicateSamples.reduce((sum, sample) => sum + (sample - mean) ** 2, 0) / replicateSamples.length;
+    coefficientsOfVariation.push(mean === 0 ? Number.POSITIVE_INFINITY : Math.sqrt(variance) / mean);
 
     samples.push({ size, latencyNs: bestPerCallNs });
   }
@@ -894,6 +943,7 @@ export function measureComplexityCurve(
     shape: probe.shape,
     samples,
     fit: fitComplexityClass(samples),
+    coefficientOfVariation: Math.max(...coefficientsOfVariation),
   };
 }
 
