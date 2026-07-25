@@ -8,7 +8,7 @@
 
 > **typeDirectedCompilerOptions**(`baseUrl`): [`CompilerOptions`](https://www.typescriptlang.org/docs/handbook/compiler-options.html)
 
-Defined in: [audit/src/ts-program.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L76)
+Defined in: [audit/src/ts-program.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L83)
 
 Build the shared [ts.CompilerOptions](https://www.typescriptlang.org/docs/handbook/compiler-options.html) for a type-directed program rooted
 at `baseUrl` (the repo root the `@liteship/*` aliases resolve against). The options

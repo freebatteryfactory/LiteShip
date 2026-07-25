@@ -136,7 +136,7 @@ describe('release plan admission', () => {
 
   it('projects the independently admitted plan ID into the release builder before packing', () => {
     const workflow = readFileSync(resolve(process.cwd(), '.github/workflows/release.yml'), 'utf8');
-    const admission = workflow.indexOf('LITESHIP_AFFECTED_PLAN_ID=$(jq -r .planId .liteship/affected-plan.json)');
+    const admission = workflow.indexOf('echo "LITESHIP_AFFECTED_PLAN_ID=$PLAN_ID" >> "$GITHUB_ENV"');
     const packing = workflow.indexOf('pnpm exec tsx scripts/build-release-artifacts.ts release-artifacts/tarballs');
     expect(admission).toBeGreaterThan(0);
     expect(admission).toBeLessThan(packing);

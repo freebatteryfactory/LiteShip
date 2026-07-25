@@ -1280,6 +1280,10 @@
     "@liteship/assets": {
       "typeExports": [
         {
+          "name": "AnyAssetCapsule",
+          "kind": "type"
+        },
+        {
           "name": "AssetCapsule",
           "kind": "type"
         },
@@ -1289,6 +1293,10 @@
         },
         {
           "name": "AssetDecoder",
+          "kind": "type"
+        },
+        {
+          "name": "AssetDescriptor",
           "kind": "type"
         },
         {
@@ -1955,6 +1963,10 @@
           "kind": "type"
         },
         {
+          "name": "CureReproducerInput",
+          "kind": "type"
+        },
+        {
           "name": "CureReproducerKind",
           "kind": "type"
         },
@@ -2032,6 +2044,18 @@
         },
         {
           "name": "PlumbSkip",
+          "kind": "type"
+        },
+        {
+          "name": "PublicAllocationContext",
+          "kind": "type"
+        },
+        {
+          "name": "PublicSurfaceStability",
+          "kind": "type"
+        },
+        {
+          "name": "PublicSymbolContext",
           "kind": "type"
         },
         {
@@ -3827,6 +3851,10 @@
           "kind": "type"
         },
         {
+          "name": "AssuranceTargetReason",
+          "kind": "type"
+        },
+        {
           "name": "Authority",
           "kind": "type"
         },
@@ -4115,6 +4143,10 @@
           "kind": "type"
         },
         {
+          "name": "MutationTargetCensus",
+          "kind": "type"
+        },
+        {
           "name": "NegativeControlFact",
           "kind": "type"
         },
@@ -4195,11 +4227,27 @@
           "kind": "type"
         },
         {
+          "name": "SemanticAssuranceRequirement",
+          "kind": "type"
+        },
+        {
           "name": "Severity",
           "kind": "type"
         },
         {
           "name": "SimulationFacts",
+          "kind": "type"
+        },
+        {
+          "name": "SimulationFaultFact",
+          "kind": "type"
+        },
+        {
+          "name": "SimulationRecoveryExpectation",
+          "kind": "type"
+        },
+        {
+          "name": "SimulationRecoveryObservation",
           "kind": "type"
         },
         {

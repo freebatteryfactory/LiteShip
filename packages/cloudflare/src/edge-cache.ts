@@ -27,6 +27,17 @@ export interface CloudflareCacheApi {
   delete?(request: Request): Promise<boolean>;
 }
 
+function warnInvalidBinding(binding: string, cause: unknown): void {
+  Diagnostics.warnOnce({
+    source: 'liteship/cloudflare.edge-cache',
+    code: 'kv-binding-invalid',
+    message:
+      `KV binding "${binding}" could not be inspected and was refused. ` +
+      'Workers KV bindings must expose callable get() and put() methods; inspect the attached host error.',
+    cause,
+  });
+}
+
 /**
  * Resolve a KV namespace from a Workers env bag by binding name.
  */
@@ -37,7 +48,8 @@ export function resolveKvBinding(env: CloudflareWorkersEnv, binding: string): KV
       if (typeof Reflect.get(candidate, 'get') === 'function' && typeof Reflect.get(candidate, 'put') === 'function') {
         return candidate as KVNamespace;
       }
-    } catch {
+    } catch (cause) {
+      warnInvalidBinding(binding, cause);
       return null;
     }
   }

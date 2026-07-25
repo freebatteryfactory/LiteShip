@@ -220,12 +220,16 @@ describe('Cloudflare L1 projection and host faults', () => {
   });
 
   test('a throwing binding accessor is refused as foreign input', () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const fault = new Error('foreign getter ran');
     const candidate = Object.defineProperty({}, 'get', {
       get() {
-        throw new Error('foreign getter ran');
+        throw fault;
       },
     });
     expect(resolveKvBinding({ KV: candidate }, 'KV')).toBeNull();
+    expect(events).toContainEqual(expect.objectContaining({ code: 'kv-binding-invalid', cause: fault }));
   });
 
   test('an L1 read fault degrades to authoritative KV with a diagnostic', async () => {

@@ -321,13 +321,14 @@ describe('(d) CI event tiers execute the intended authority', () => {
     const linux = JOB_BLOCKS.get('pr-affected')!;
     const windows = JOB_BLOCKS.get('pr-windows-affected')!;
     expect(linux).toContain("if: github.event_name == 'pull_request'");
-    expect(linux).toContain('pnpm run check -- --profile quick --no-cache');
+    expect(linux).toContain('pnpm run check --profile quick --no-cache');
+    expect(linux).not.toContain('pnpm run check -- --profile');
     expect(linux).toContain('pnpm run test:affected');
     expect(linux).toContain("if: needs.plan.outputs.affected-benchmark-required == 'true'");
     expect(linux).toContain('pnpm run bench');
     expect(windows).toContain("if: github.event_name == 'pull_request'");
     expect(windows).toContain('pnpm run test:affected');
-    expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run check -- --profile quick --no-cache'));
+    expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run check --profile quick --no-cache'));
     expect(linux.indexOf('pnpm run build')).toBeLessThan(linux.indexOf('pnpm run test:affected'));
     expect(windows.indexOf('pnpm run build')).toBeLessThan(windows.indexOf('pnpm run test:affected'));
     expect(linux).toContain('LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json');
@@ -381,6 +382,7 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(metrics).toContain('name: flake-evidence');
     expect(metrics).toContain('.liteship/affected-selector-calibration.json');
     expect(metrics).toContain('reports/flake-evidence.json');
+    expect(metrics.indexOf('pnpm run build')).toBeLessThan(metrics.indexOf('scripts/collect-delivery-metrics.ts'));
   });
 
   it('the final fold waits for both PR and exhaustive tier owners', () => {

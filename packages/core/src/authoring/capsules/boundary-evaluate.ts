@@ -48,6 +48,7 @@ function _runBoundary(input: EvaluateInput): EvaluateOutput {
   const seenStates = new Set<string>();
   const uniqueStates: string[] = [];
   for (const s of input.states) {
+    if (s.trim().length === 0) continue;
     if (!seenStates.has(s)) {
       seenStates.add(s);
       uniqueStates.push(s);

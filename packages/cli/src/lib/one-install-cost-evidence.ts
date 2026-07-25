@@ -8,6 +8,7 @@
 import { gunzipSync } from 'node:zlib';
 import { lstatSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, isAbsolute, join, relative, resolve } from 'node:path';
+import { normalizeRepoPath } from '@liteship/audit';
 import { IntegrityError } from '@liteship/error';
 
 export const ONE_INSTALL_COST_SCHEMA_VERSION = 1 as const;
@@ -139,7 +140,7 @@ function fail(message: string): never {
 }
 
 function normalized(path: string): string {
-  return path.replace(/\\/g, '/');
+  return normalizeRepoPath(path);
 }
 
 function safeBytes(value: number, label: string, allowZero: boolean): number {

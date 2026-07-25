@@ -219,6 +219,8 @@ describe('D4 — projection drift pin', () => {
     // only terms still used in CLI source — so the glossary UI body digest shifted again.
     // P11 check contract completion: profile execution owns `check`; the pure fold is
     // the distinct handler/MCP command `check.gates`, changing the commands projection.
-    expect(address).toBe('fnv1a:b780fc3e');
+    // Public command schemas now expose the accepted context/explain contracts;
+    // the static commands UI is a byte-addressed projection of that catalog.
+    expect(address).toBe('fnv1a:65f421ec');
   });
 });

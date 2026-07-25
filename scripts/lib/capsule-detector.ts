@@ -144,6 +144,19 @@ function unquoteLiteralString(s: string): string | undefined {
  * CapsuleContract<K, ...> / CapsuleDef<K, ...>, else undefined.
  */
 function tryExtractKind(checker: ts.TypeChecker, type: ts.Type): string | undefined {
+  // Prefer the public structural contract over alias-name archaeology. Factory
+  // return aliases such as AssetCapsule<K> can hide CapsuleDef from the alias /
+  // base-type walk even though their resolved value still carries the complete
+  // capsule shape. Requiring the companion contract fields avoids classifying an
+  // unrelated object that merely happens to expose a `_kind` literal.
+  const structuralKind = checker.getTypeOfPropertyOfType(type, '_kind');
+  if (
+    structuralKind?.isStringLiteral() === true &&
+    ['name', 'site', 'invariants'].every((property) => checker.getPropertyOfType(type, property) !== undefined)
+  ) {
+    return structuralKind.value;
+  }
+
   // Walk the candidate type itself plus its base types so we catch
   // CapsuleDef<K,...> which extends CapsuleContract<K,...>.
   const candidates: ts.Type[] = [type];

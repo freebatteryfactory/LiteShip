@@ -115,7 +115,7 @@ jobs:
           name: affected-plan
           path: .liteship
       - run: pnpm run build
-      - run: pnpm run check -- --profile quick --no-cache
+      - run: pnpm run check --profile quick --no-cache
       - run: pnpm run test:affected
         env:
           CI: true
@@ -1216,6 +1216,7 @@ jobs:
         with:
           name: flake-evidence
           path: reports
+      - run: pnpm run build
       - name: Collect evidence-native delivery metrics
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -34,6 +34,7 @@
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
+import { stableEvidenceDigest } from '../verdict-cache.js';
 
 /** The `liteship` root allowlist source — the reviewed budget DATA. */
 const BUDGET_FILE = 'packages/liteship/src/export-budget.ts';
@@ -548,6 +549,8 @@ export const facadeExportBudgetGate: Gate = defineGate({
   describe:
     'Asserts that the liteship root exactly equals its role-bearing authoring/inspection contract, both numeric caps hold, and every exported expert subpath has a complete ownership and packed-proof contract backed by a direct owner facade.',
   run: scan,
+  evidenceDigest: (context: GateContext): string =>
+    stableEvidenceDigest([[FACADE_MANIFEST_FILE, context.readFile(FACADE_MANIFEST_FILE) ?? '<missing>']]),
   fixtures: {
     red: {
       name: "the root drifts and the manifest admits an ungoverned './rogue' subpath",

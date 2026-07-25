@@ -8,7 +8,7 @@
 
 > `const` **facadeExportBudgetGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/facade-export-budget.ts:545](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/facade-export-budget.ts#L545)
+Defined in: [gauntlet/src/gates/facade-export-budget.ts:546](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/facade-export-budget.ts#L546)
 
 The facade-export-budget gate — the curated-root guardrail. Self-proves via a
 synthetic allowlist + built surface: an unlisted export OR a dropped export reds

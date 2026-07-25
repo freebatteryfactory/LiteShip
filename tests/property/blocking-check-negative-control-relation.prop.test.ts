@@ -40,6 +40,12 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   ],
   ['check/typecheck', 'pnpm run typecheck', 'tests/unit/devops/gate-canaries.test.ts', 'check/typecheck'],
   [
+    'check/typescript-toolchain-qualification',
+    'pnpm run typecheck:qualify',
+    'tests/unit/devops/typescript-toolchain-qualification.test.ts',
+    'check/typescript-toolchain-qualification',
+  ],
+  [
     'check/docs-fast',
     'pnpm run docs:check:fast',
     'tests/unit/devops/typedoc-input-fingerprint.test.ts',
@@ -328,9 +334,9 @@ afterAll(() => {
 });
 
 describe('blocking-check negative-control relation properties', () => {
-  it('pins all 42 blockers to explicit commands and existing exact control paths', () => {
-    expect(BLOCKING_CHECKS).toHaveLength(42);
-    expect(EXPECTED_CONTROLS).toHaveLength(42);
+  it('pins all 43 blockers to explicit commands and existing exact control paths', () => {
+    expect(BLOCKING_CHECKS).toHaveLength(43);
+    expect(EXPECTED_CONTROLS).toHaveLength(43);
     expect(relationProblems(BLOCKING_CHECKS)).toEqual([]);
   });
 

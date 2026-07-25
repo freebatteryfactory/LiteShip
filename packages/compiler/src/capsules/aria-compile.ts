@@ -78,6 +78,7 @@ function buildInputs(seed: ARIACompileSeedValue): {
   const stateNames: string[] = [];
   const seenStates = new Set<string>();
   for (const raw of seed.states) {
+    if (raw.trim().length === 0) continue;
     if (seenStates.has(raw)) continue;
     seenStates.add(raw);
     stateNames.push(raw);

@@ -20,6 +20,7 @@ describe('gauntlet phase subset selection', () => {
     const selected = selectGauntletPhases({ profile: 'ci-parallel-preflight', skipBuild: true });
     expect(selected.map((phase) => phase.label)).toEqual([
       'typecheck',
+      'typecheck:qualify',
       'lint',
       'lint:structural',
       'docs:check:fast',

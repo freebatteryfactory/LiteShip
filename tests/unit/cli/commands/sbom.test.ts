@@ -70,7 +70,12 @@ beforeEach(() => {
   mkdirSyncMock.mockReturnValue(undefined);
   analyzeLockfileMock.mockImplementation(() => lockfileFacts([]));
   buildSbomMock.mockReturnValue({
-    sbom: { components: [{ purl: 'pkg:npm/@liteship/core@0.4.0' }, { purl: 'pkg:npm/cborg@4.0.0' }] },
+    sbom: {
+      components: [
+        { purl: 'pkg:npm/@liteship/core@0.4.0', 'bom-ref': 'pkg:npm/@liteship/core@0.4.0' },
+        { purl: 'pkg:npm/cborg@4.0.0', 'bom-ref': 'pkg:npm/cborg@4.0.0' },
+      ],
+    },
     serialized: '{"bomFormat":"CycloneDX"}',
     address: 'fnv1a:deadbeef',
   });

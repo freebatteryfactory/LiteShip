@@ -724,7 +724,7 @@ describe('StyleCSSCompiler', () => {
     expect(css).toContain(`${scope}[data-liteship-state="mobile"] {`);
     expect(css).toContain(`${scope}[data-liteship-state="desktop"] {`);
     expect(css).toContain('box-shadow: 0px 2px 8px 0px rgba(0,0,0,0.1);');
-    expect(css).toContain('transition: padding, font-size 200ms ease-out;');
+    expect(css).toContain('transition: padding 200ms ease-out, font-size 200ms ease-out;');
     expect(css).toContain('@starting-style');
     expect(css).not.toContain('@container');
   });
