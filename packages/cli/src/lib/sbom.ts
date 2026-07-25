@@ -31,6 +31,8 @@ export interface SbomComponent {
   readonly version: string;
   /** Package URL (`pkg:npm/<name>@<version>`) — the stable component identity. */
   readonly purl: string;
+  /** CycloneDX identity targeted by dependency and VEX references. */
+  readonly 'bom-ref': string;
   /** Integrity hashes, when the lockfile recorded one (external registry units). */
   readonly hashes?: readonly { readonly alg: string; readonly content: string }[];
 }
@@ -102,7 +104,7 @@ export function generateSbom(lockfile: ParsedLockfile, workspace: readonly Works
 
   for (const ws of workspace) {
     const purl = purlOf(ws.name, ws.version);
-    byPurl.set(purl, { type: 'application', name: ws.name, version: ws.version, purl });
+    byPurl.set(purl, { type: 'application', name: ws.name, version: ws.version, purl, 'bom-ref': purl });
   }
 
   for (const pkg of lockfile.packages) {
@@ -114,6 +116,7 @@ export function generateSbom(lockfile: ParsedLockfile, workspace: readonly Works
       name: pkg.name,
       version: pkg.version,
       purl,
+      'bom-ref': purl,
       ...(hash !== null ? { hashes: [hash] } : {}),
     });
   }
@@ -142,7 +145,10 @@ export function serializeSbom(sbom: Sbom): string {
 
 /** Build a VEX document without inventing vulnerability conclusions. */
 export function generateVex(sbom: Sbom, assessments: readonly VexAssessment[] = []): Vex {
-  const componentRefs = new Set(sbom.components.map((component) => component.purl));
+  const componentRefs = new Set(sbom.components.map((component) => component['bom-ref']));
+  if (componentRefs.size !== sbom.components.length) {
+    throw ValidationError('generateVex', 'SBOM component bom-ref values must be unique');
+  }
   for (const assessment of assessments) {
     if (assessment.affects.length === 0 || assessment.affects.some((target) => !componentRefs.has(target.ref))) {
       throw ValidationError('generateVex', `VEX assessment ${assessment.id} references an absent SBOM component`);

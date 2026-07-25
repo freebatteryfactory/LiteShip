@@ -125,6 +125,11 @@
   "peerDependencies": {
     "astro": ">=7.1.0 <8"
   },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "astro": "^7.1.0"
   },

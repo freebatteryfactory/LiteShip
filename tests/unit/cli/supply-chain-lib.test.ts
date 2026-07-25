@@ -472,6 +472,32 @@ describe('SBOM — synthetic build coverage', () => {
     expect(purls).toEqual([...purls].sort());
   });
 
+  it('gives every component one unique VEX-resolvable CycloneDX bom-ref', () => {
+    const sbom = generateSbom(
+      {
+        lockfileVersion: '9.0',
+        importers: [],
+        packages: [
+          { key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null },
+          { key: 'b@2.0.0', name: 'b', version: '2.0.0', integrity: 'sha512-Y', resolutionKind: null },
+        ],
+      },
+      [],
+    );
+    const refs = sbom.components.map((component) => component['bom-ref']);
+    expect(new Set(refs).size).toBe(sbom.components.length);
+    expect(refs).toEqual(sbom.components.map((component) => component.purl));
+    expect(() =>
+      generateVex(sbom, [
+        {
+          id: 'CVE-2099-0002',
+          affects: [{ ref: refs[0]! }],
+          analysis: { state: 'in_triage' },
+        },
+      ]),
+    ).not.toThrow();
+  });
+
   it('serializeSbom is key-sorted, 2-space, newline-terminated JSON that round-trips', () => {
     const sbom = generateSbom(
       {
@@ -528,6 +554,19 @@ describe('SBOM — synthetic build coverage', () => {
         },
       ]),
     ).toThrow(/absent SBOM component/);
+  });
+
+  it('refuses an SBOM whose CycloneDX component references are ambiguous', () => {
+    const duplicateRef = 'pkg:npm/shared@1.0.0';
+    const sbom = {
+      bomFormat: 'CycloneDX' as const,
+      specVersion: '1.5' as const,
+      components: [
+        { type: 'library' as const, name: 'a', version: '1.0.0', purl: 'pkg:npm/a@1.0.0', 'bom-ref': duplicateRef },
+        { type: 'library' as const, name: 'b', version: '1.0.0', purl: 'pkg:npm/b@1.0.0', 'bom-ref': duplicateRef },
+      ],
+    };
+    expect(() => generateVex(sbom)).toThrow(/bom-ref values must be unique/u);
   });
 
   it('LAW (property): same package set in ANY input order ⇒ byte-identical SBOM + address', () => {
@@ -592,7 +631,13 @@ describe('checkSbomCompleteness — synthetic gaps + phantoms', () => {
       ...sbom,
       components: [
         ...sbom.components,
-        { type: 'library' as const, name: 'ghost', version: '9.9.9', purl: 'pkg:npm/ghost@9.9.9' },
+        {
+          type: 'library' as const,
+          name: 'ghost',
+          version: '9.9.9',
+          purl: 'pkg:npm/ghost@9.9.9',
+          'bom-ref': 'pkg:npm/ghost@9.9.9',
+        },
       ],
     };
     const facts = checkSbomCompleteness(phantom, lf, WORKSPACE, address);
