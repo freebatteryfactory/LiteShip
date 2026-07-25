@@ -31,6 +31,7 @@ import {
   probeNode,
   probePlaywright,
   probePnpm,
+  probeProjectPackageManager,
   probeWasmToolchain,
   probeWorkspaceInstalled,
   type SpawnArgvCapture,
@@ -55,19 +56,25 @@ interface RunProbesOptions {
  * Astro 7 `/_astro/status` liveness probe, for verifying a background dev server
  * an agent (or CI) started.
  */
-export async function runAstroProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+export async function runAstroProbes(cwd: string, spawn?: SpawnArgvCapture): Promise<readonly DoctorCheck[]> {
   const minima = loadEngineMinima(cwd);
-  const [pnpm, devStatus] = await Promise.all([probePnpm(minima), probeAstroDevStatus()]);
-  return [probeNode(minima), pnpm, devStatus];
+  const [packageManager, devStatus] = await Promise.all([
+    probeProjectPackageManager(cwd, minima, spawn),
+    probeAstroDevStatus(),
+  ]);
+  return [probeNode(minima), packageManager.check, devStatus];
 }
 
-export async function runCloudflareProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+export async function runCloudflareProbes(cwd: string, spawn?: SpawnArgvCapture): Promise<readonly DoctorCheck[]> {
   const minima = loadEngineMinima(cwd);
-  const [pnpm, wrangler] = await Promise.all([probePnpm(minima), probeCloudflareWrangler(cwd)]);
+  const [packageManager, wrangler] = await Promise.all([
+    probeProjectPackageManager(cwd, minima, spawn),
+    probeCloudflareWrangler(cwd),
+  ]);
   return [
     probeNode(minima),
-    pnpm,
-    probeConsumerInstalled(cwd),
+    packageManager.check,
+    probeConsumerInstalled(cwd, packageManager.manager ?? 'npm'),
     probeCloudflareAstro(cwd),
     probeCloudflareAdapter(cwd),
     wrangler,
@@ -118,27 +125,27 @@ export async function runConsumerAppProbes(cwd: string): Promise<readonly Doctor
  * crates/ WASM toolchain), which are all wrong outside this repo.
  * `--target` stays the explicit override for host-focused profiles.
  */
-export async function runConsumerProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+export async function runConsumerProbes(cwd: string, spawn?: SpawnArgvCapture): Promise<readonly DoctorCheck[]> {
   const minima = loadEngineMinima(cwd);
-  const pnpm = await probePnpm(minima);
+  const packageManager = await probeProjectPackageManager(cwd, minima, spawn);
   // liteship.pnpm is a consumer-context probe by definition (it reads the
   // host package.json for a liteship dependency) — it lives on this profile,
   // not the maintainer one, and skips itself (null) when inapplicable.
   const liteshipPnpm = probeLiteshipPnpm(cwd);
   return [
     probeNode(minima),
-    pnpm,
-    probeConsumerInstalled(cwd),
+    packageManager.check,
+    probeConsumerInstalled(cwd, packageManager.manager ?? 'npm'),
     ...(liteshipPnpm ? [liteshipPnpm] : []),
     probeFfmpegRenderCheck(),
   ];
 }
 
 export async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<readonly DoctorCheck[]> {
-  if (opts.target === 'cloudflare') return runCloudflareProbes(cwd);
-  if (opts.target === 'astro') return runAstroProbes(cwd);
+  if (opts.target === 'cloudflare') return runCloudflareProbes(cwd, opts.spawn);
+  if (opts.target === 'astro') return runAstroProbes(cwd, opts.spawn);
   if (opts.target === 'consumer-app') return runConsumerAppProbes(cwd);
-  if (!isLiteShipWorkspace(cwd)) return runConsumerProbes(cwd);
+  if (!isLiteShipWorkspace(cwd)) return runConsumerProbes(cwd, opts.spawn);
   const minima = loadEngineMinima(cwd);
   // The three external (spawn-bearing) probes are independent — run them
   // concurrently so the wall time is the slowest single probe, not the serial

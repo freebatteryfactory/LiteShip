@@ -35,7 +35,10 @@ afterEach(() => {
  * exactly one warn remains. No .git ⇒ git probes report ok-not-a-worktree.
  */
 function writeCautionWorkspace(dir: string): void {
-  writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }));
+  writeFileSync(
+    resolve(dir, 'package.json'),
+    JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }),
+  );
   mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
   writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'lockfile: stub\n');
   for (const pkg of ['core', 'cli']) {
@@ -95,7 +98,11 @@ describe('doctor/doctor — orchestration', () => {
     const dir = mkTmp();
     writeFileSync(
       resolve(dir, 'package.json'),
-      JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', dependencies: { astro: '^6', '@astrojs/cloudflare': '^13' } }),
+      JSON.stringify({
+        name: 'liteship-monorepo',
+        version: '0.0.0',
+        dependencies: { astro: '^6', '@astrojs/cloudflare': '^13' },
+      }),
     );
     const spy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({
       exitCode: 0,
@@ -118,31 +125,84 @@ describe('doctor/doctor — orchestration', () => {
 
   it('a non-liteship cwd auto-selects the consumer profile (no maintainer probes)', async () => {
     const dir = mkTmp();
-    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'consumer-app', version: '1.0.0' }));
+    writeFileSync(
+      resolve(dir, 'package.json'),
+      JSON.stringify({ name: 'consumer-app', version: '1.0.0', packageManager: 'npm@10.9.2' }),
+    );
     mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
-    writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'x\n');
-    const spy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({
+    const spawn = vi.fn(async () => ({
       exitCode: 0,
-      stdout: '10.0.0\n',
+      stdout: '10.9.2\n',
       stderr: '',
       timedOut: false,
+    }));
+
+    const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: dir }, { spawn }));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    const ids: string[] = receipt.checks.map((check: { id: string }) => check.id);
+
+    expect(ids.some((id) => id.endsWith('.built'))).toBe(false);
+    expect(ids).toContain('node.version');
+    expect(ids).toContain('npm.version');
+    expect(ids).not.toContain('pnpm.version');
+    expect(ids).toContain('workspace.installed');
+    expect(receipt.verdict).not.toBe('blocked');
+    expect(spawn).toHaveBeenCalledWith('npm', ['--version'], { timeoutMs: 4_000 });
+  });
+
+  it('a pnpm consumer probes pnpm and keeps pnpm-specific install remediation', async () => {
+    const dir = mkTmp();
+    writeFileSync(
+      resolve(dir, 'package.json'),
+      JSON.stringify({ name: 'consumer-app', version: '1.0.0', packageManager: 'pnpm@10.32.1' }),
+    );
+    const spawn = vi.fn(async () => ({
+      exitCode: 0,
+      stdout: '10.32.1\n',
+      stderr: '',
+      timedOut: false,
+    }));
+
+    const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: dir }, { spawn }));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    const manager = receipt.checks.find((check: { id: string }) => check.id === 'pnpm.version');
+    const installed = receipt.checks.find((check: { id: string }) => check.id === 'workspace.installed');
+
+    expect(manager).toMatchObject({ status: 'ok', detail: '10.32.1' });
+    expect(installed).toMatchObject({ status: 'fail', hint: 'Set up: pnpm install' });
+    expect(receipt.verdict).toBe('blocked');
+    expect(spawn).toHaveBeenCalledWith('pnpm', ['--version'], { timeoutMs: 4_000 });
+  });
+
+  it('an unsupported consumer manager blocks without probing another executable', async () => {
+    const dir = mkTmp();
+    writeFileSync(
+      resolve(dir, 'package.json'),
+      JSON.stringify({ name: 'consumer-app', version: '1.0.0', packageManager: 'yarn@4.9.2' }),
+    );
+    mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
+    const spawn = vi.fn(async () => ({ exitCode: 0, stdout: '10.9.2\n', stderr: '', timedOut: false }));
+
+    const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: dir }, { spawn }));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    const manager = receipt.checks.find((check: { id: string }) => check.id === 'package-manager.selection');
+
+    expect(receipt.verdict).toBe('blocked');
+    expect(manager).toMatchObject({
+      status: 'fail',
+      detail: expect.stringContaining('unsupported yarn project'),
     });
-    try {
-      const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: dir }));
-      const ids: string[] = JSON.parse(stdout.trim().split('\n').pop()!).checks.map((c: { id: string }) => c.id);
-      expect(ids.some((id) => id.endsWith('.built'))).toBe(false);
-      expect(ids).toContain('node.version');
-      expect(ids).toContain('workspace.installed');
-    } finally {
-      spy.mockRestore();
-    }
+    expect(spawn).not.toHaveBeenCalled();
   });
 
   it('--preflight scopes *.built probes out of the verdict (covers the preflight filter)', async () => {
     const dir = mkTmp();
     // dist absent → core.built/cli.built warn; preflight excludes them so the
     // remaining probes drive the verdict.
-    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }));
+    writeFileSync(
+      resolve(dir, 'package.json'),
+      JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', engines: { node: '>=1', pnpm: '>=1' } }),
+    );
     mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
     writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'x\n');
     const spy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({
@@ -169,7 +229,11 @@ describe('doctor/doctor — orchestration', () => {
     // A liteship workspace with dist/ ABSENT → core.built / cli.built warn (fixable).
     writeFileSync(
       resolve(dir, 'package.json'),
-      JSON.stringify({ name: 'liteship-monorepo', version: '0.0.0', scripts: { build: 'tsc -b packages/core packages/cli' } }),
+      JSON.stringify({
+        name: 'liteship-monorepo',
+        version: '0.0.0',
+        scripts: { build: 'tsc -b packages/core packages/cli' },
+      }),
     );
     mkdirSync(resolve(dir, 'node_modules'), { recursive: true });
     writeFileSync(resolve(dir, 'node_modules', '.modules.yaml'), 'x\n');
@@ -179,7 +243,9 @@ describe('doctor/doctor — orchestration', () => {
       stderr: '',
       timedOut: false,
     });
-    const visibleSpy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
+    const visibleSpy = vi
+      .spyOn(spawnLib, 'spawnArgvVisible')
+      .mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     try {
       const { stdout } = await captureCli(() => doctor({ pretty: false, fix: true, cwd: dir }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);

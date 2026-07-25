@@ -21,7 +21,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'dev-experience',
     description: 'First-run verify, dev host, doctor, clean. Start here on a fresh clone.',
-    scripts: ['verify', 'doctor', 'dev', 'clean', 'scripts', 'glossary', 'fix'],
+    scripts: ['verify', 'doctor', 'dev', 'clean', 'scripts', 'glossary', 'fix', 'resources:plan'],
   },
   {
     name: 'build',
@@ -128,7 +128,15 @@ export const CATEGORIES: readonly CategorySpec[] = [
   {
     name: 'docs',
     description: 'Generate + check docs.',
-    scripts: ['docs:build', 'docs:build:sharded', 'docs:bundle', 'docs:check:fast', 'docs:check', 'docs:gen'],
+    scripts: [
+      'docs:build',
+      'docs:build:sharded',
+      'docs:bundle',
+      'docs:check:fast',
+      'docs:check',
+      'docs:check:local',
+      'docs:gen',
+    ],
   },
   {
     name: 'demos',

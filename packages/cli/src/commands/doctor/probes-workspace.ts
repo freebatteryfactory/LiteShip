@@ -15,6 +15,12 @@ import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import { probeFfmpegRender } from '@liteship/command/host';
 import { spawnArgvCapture } from '../../lib/spawn.js';
+import {
+  detectProjectPackageManager,
+  projectPackageManagerFailureHint,
+  projectPackageManagerFailureMessage,
+  type ProjectPackageManager,
+} from '../../lib/project-package-manager.js';
 import { findWorkspaceRoot } from './manifest.js';
 import {
   DOCTOR_PROBE_TIMEOUT_MS,
@@ -56,6 +62,64 @@ export function probeNode(minima: EngineMinima): DoctorCheck {
  * production call sites stay byte-identical.
  */
 export type SpawnArgvCapture = typeof spawnArgvCapture;
+
+/** The admitted consumer manager and the version check produced for it. */
+export interface ProjectPackageManagerProbe {
+  readonly manager: ProjectPackageManager | null;
+  readonly check: DoctorCheck;
+}
+
+async function probeNpm(spawn: SpawnArgvCapture): Promise<DoctorCheck> {
+  const result = await spawn('npm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+  if (result?.timedOut) {
+    return {
+      id: 'npm.version',
+      label: 'npm',
+      status: 'warn',
+      detail: `no response within ${DOCTOR_PROBE_TIMEOUT_MS}ms (npm slow or contended)`,
+      hint: 'Re-run on a less-loaded machine, or check npm directly: npm --version',
+    };
+  }
+  if (!result || result.exitCode !== 0) {
+    return {
+      id: 'npm.version',
+      label: 'npm',
+      status: 'fail',
+      detail: 'npm not on PATH',
+      hint: 'Install a supported Node.js distribution that includes npm',
+    };
+  }
+  const version = result.stdout.trim();
+  if (parseMajor(version) === null) {
+    return { id: 'npm.version', label: 'npm', status: 'warn', detail: `unrecognized version: ${version}` };
+  }
+  return { id: 'npm.version', label: 'npm', status: 'ok', detail: version };
+}
+
+/** Detect and probe the package manager that owns an external consumer project. */
+export async function probeProjectPackageManager(
+  cwd: string,
+  minima: EngineMinima,
+  spawn: SpawnArgvCapture = spawnArgvCapture,
+): Promise<ProjectPackageManagerProbe> {
+  const detection = detectProjectPackageManager(cwd);
+  if (detection.kind !== 'supported') {
+    return {
+      manager: null,
+      check: {
+        id: 'package-manager.selection',
+        label: 'project package manager',
+        status: 'fail',
+        detail: projectPackageManagerFailureMessage(detection),
+        hint: projectPackageManagerFailureHint(detection),
+      },
+    };
+  }
+  return {
+    manager: detection.manager,
+    check: detection.manager === 'pnpm' ? await probePnpm(minima, spawn) : await probeNpm(spawn),
+  };
+}
 
 export async function probePnpm(
   minima: EngineMinima,
@@ -117,7 +181,7 @@ export function probeWorkspaceInstalled(cwd: string): DoctorCheck {
 }
 
 /** Consumer-app install probe — accepts workspace-linked `node_modules/` without a local `.modules.yaml`. */
-export function probeConsumerInstalled(cwd: string): DoctorCheck {
+export function probeConsumerInstalled(cwd: string, manager: ProjectPackageManager = 'npm'): DoctorCheck {
   const localYaml = resolve(cwd, 'node_modules/.modules.yaml');
   if (existsSync(localYaml)) {
     return { id: 'workspace.installed', label: 'workspace install', status: 'ok', detail: 'node_modules present' };
@@ -140,7 +204,7 @@ export function probeConsumerInstalled(cwd: string): DoctorCheck {
     label: 'workspace install',
     status: 'fail',
     detail: 'node_modules missing or stale',
-    hint: 'Set up: pnpm install',
+    hint: `Set up: ${manager} install`,
   };
 }
 

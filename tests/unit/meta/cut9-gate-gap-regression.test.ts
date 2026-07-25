@@ -30,7 +30,9 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
   test('local-safe profile exists and runs capsule:compile before test', () => {
     expect(gauntletPhaseProfiles['local-safe']).toEqual(LOCAL_SAFE_LABELS);
     const labels = LOCAL_SAFE_LABELS;
-    expect(labels.indexOf('capsule:compile')).toBeLessThan(labels.indexOf('test (unit + component + property + integration)'));
+    expect(labels.indexOf('capsule:compile')).toBeLessThan(
+      labels.indexOf('test (unit + component + property + integration)'),
+    );
     expect(labels).not.toContain('docs:check');
     expect(labels).toContain('standards:gate');
     expect(labels).toContain('capability:gate');
@@ -38,13 +40,20 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
     expect(CI_PARALLEL_FINAL_LABELS).toContain('capability:gate');
   });
 
-  test('docs:build uses the monolith typedoc generator (same family as docs:check)', () => {
+  test('docs:build and docs:check route through resource-admitted TypeDoc owners', () => {
     const pkg = JSON.parse(readFileSync(resolve(REPO, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
-    expect(pkg.scripts['docs:build']).toContain('typedoc');
+    const buildOwner = readFileSync(resolve(REPO, 'scripts/docs-build.ts'), 'utf8');
+    const checkOwner = readFileSync(resolve(REPO, 'scripts/docs-check.ts'), 'utf8');
+    expect(pkg.scripts['docs:build']).toContain('scripts/docs-build.ts');
+    expect(pkg.scripts['docs:check']).toContain('scripts/docs-check.ts');
     expect(pkg.scripts['docs:build']).not.toContain('build-api-docs');
     expect(pkg.scripts['docs:build:sharded']).toContain('build-api-docs');
+    for (const owner of [buildOwner, checkOwner]) {
+      expect(owner).toContain('awaitLocalDocsAdmission');
+      expect(owner).toContain("['exec', 'typedoc'");
+    }
   });
 
   test('doctor consumer-app fs test injects EACCES via mock — no unsanctioned skipIf', () => {

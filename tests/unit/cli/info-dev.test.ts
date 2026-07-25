@@ -10,11 +10,11 @@
  * the missing-app guard that fails 1 with a structured error before any spawn.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { info } from '../../../packages/cli/src/commands/info.js';
+import { createInfoCommand, info } from '../../../packages/cli/src/commands/info.js';
 import { createDevCommand, dev } from '../../../packages/cli/src/commands/dev.js';
 import { detectHost } from '../../../packages/cli/src/lib/host-detect.js';
 
@@ -75,6 +75,101 @@ describe('liteship info', () => {
     // The receipt is still emitted to stdout as one JSON line.
     const receipt = JSON.parse(r.stdout.trim().split('\n').pop()!);
     expect(receipt.command).toBe('info');
+  });
+
+  it('reports an npm consumer as healthy without requiring pnpm metadata', async () => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-info-npm-'));
+    try {
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ name: 'consumer', packageManager: 'npm@10.9.2' }));
+      writeFileSync(join(app, 'package-lock.json'), '{}\n');
+      const nodeModules = join(app, 'node_modules');
+      mkdirSync(nodeModules);
+      const spawn = vi.fn(async () => ({ exitCode: 0, stdout: '10.9.2\n', stderr: '', timedOut: false }));
+      const runInfo = createInfoCommand(spawn);
+
+      const result = await capture(() => runInfo({ json: true, cwd: app }));
+      const receipt = JSON.parse(result.stdout.trim());
+
+      expect(result.exit).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(receipt.doctor.verdict).toBe('ready');
+      expect(receipt.doctor.checks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'npm.version', status: 'ok', detail: '10.9.2' }),
+          expect.objectContaining({ id: 'workspace.installed', status: 'ok' }),
+        ]),
+      );
+      expect(receipt.doctor.checks).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: 'pnpm.version' })]),
+      );
+      expect(spawn).toHaveBeenCalledWith('npm', ['--version'], { timeoutMs: 4_000 });
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
+  });
+
+  it('prints the selected npm version instead of a false "pnpm not found" warning', async () => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-info-npm-pretty-'));
+    try {
+      writeFileSync(join(app, 'package.json'), JSON.stringify({ name: 'consumer', packageManager: 'npm@10.9.2' }));
+      mkdirSync(join(app, 'node_modules'));
+      const runInfo = createInfoCommand(
+        vi.fn(async () => ({ exitCode: 0, stdout: '10.9.2\n', stderr: '', timedOut: false })),
+      );
+
+      const result = await capture(() => runInfo({ pretty: true, cwd: app }));
+
+      expect(result.stderr).toContain('npm 10.9.2');
+      expect(result.stderr).not.toContain('pnpm not found');
+      expect(JSON.parse(result.stdout.trim()).doctor.verdict).toBe('ready');
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the pnpm workspace probe for the LiteShip maintainer checkout', async () => {
+    const spawn = vi.fn(async () => ({ exitCode: 0, stdout: '10.32.1\n', stderr: '', timedOut: false }));
+    const runInfo = createInfoCommand(spawn);
+
+    const result = await capture(() => runInfo({ json: true, cwd: REPO_ROOT }));
+    const receipt = JSON.parse(result.stdout.trim());
+
+    expect(receipt.doctor.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'pnpm.version', status: 'ok' }),
+        expect.objectContaining({ id: 'workspace.installed', status: 'ok' }),
+      ]),
+    );
+    expect(spawn).toHaveBeenCalledWith('pnpm', ['--version'], { timeoutMs: 4_000 });
+  });
+
+  it.each([
+    { manifest: { packageManager: 'yarn@4.9.2' }, detail: 'unsupported yarn project' },
+    { manifest: '{ broken-json', detail: 'could not read a valid package manifest' },
+  ])('reports an inadmissible consumer manager as blocked: $detail', async ({ manifest, detail }) => {
+    const app = mkdtempSync(join(tmpdir(), 'liteship-info-refusal-'));
+    try {
+      writeFileSync(join(app, 'package.json'), typeof manifest === 'string' ? manifest : JSON.stringify(manifest));
+      const spawn = vi.fn(async () => ({ exitCode: 0, stdout: '10.9.2\n', stderr: '', timedOut: false }));
+      const runInfo = createInfoCommand(spawn);
+
+      const result = await capture(() => runInfo({ json: true, cwd: app }));
+      const receipt = JSON.parse(result.stdout.trim());
+
+      expect(receipt.doctor.verdict).toBe('blocked');
+      expect(receipt.doctor.checks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'package-manager.selection',
+            status: 'fail',
+            detail: expect.stringContaining(detail),
+          }),
+        ]),
+      );
+      expect(spawn).not.toHaveBeenCalled();
+    } finally {
+      rmSync(app, { recursive: true, force: true });
+    }
   });
 });
 

@@ -39,6 +39,14 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
   { script: 'docs:build:sharded', reason: 'Docs workflow: sharded API-docs build.' },
   { script: 'docs:bundle', reason: 'Docs workflow: bundles the built docs.' },
   { script: 'docs:gen', reason: 'Gen workflow: regenerates derived docs.' },
+  {
+    script: 'docs:check:local',
+    reason: 'Local resource-aware alias of check/docs; it reuses a content-addressed proof when valid.',
+  },
+  {
+    script: 'resources:plan',
+    reason: 'Local scheduling introspection: reports resource admission without asserting repository correctness.',
+  },
 
   // ── Components of an aggregate check (assertion registered under the aggregate) ──
   { script: 'typecheck:scripts', reason: 'Component of the typecheck aggregate (check/typecheck runs it).' },

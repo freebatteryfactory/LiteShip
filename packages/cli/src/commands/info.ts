@@ -19,9 +19,17 @@ import { COMMAND_CATALOG } from '@liteship/command';
 import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
 import { PACKAGE_METADATA_CATALOG } from '../lib/package-metadata-catalog.js';
 import { color, colorEnabled } from '../lib/ansi.js';
+import { isLiteShipWorkspace } from '../lib/workspace.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { findWorkspaceRoot, loadEngineMinima } from './doctor/manifest.js';
-import { probeNode, probePnpm, probeWorkspaceInstalled } from './doctor/probes-workspace.js';
+import {
+  probeConsumerInstalled,
+  probeNode,
+  probePnpm,
+  probeProjectPackageManager,
+  probeWorkspaceInstalled,
+  type SpawnArgvCapture,
+} from './doctor/probes-workspace.js';
 import { aggregate } from './doctor/summary.js';
 import type { DoctorCheck, DoctorVerdict } from './doctor/types.js';
 
@@ -52,23 +60,30 @@ export interface InfoReceipt {
 }
 
 /**
- * Execute `liteship info`. Runs a focused doctor-probe set (Node, pnpm, workspace
- * install) so the report reflects the SAME probes `liteship doctor` uses, then
- * projects the roster/catalog facts. `json` suppresses the pretty stderr summary.
+ * Execute `liteship info`. Runs a focused doctor-probe set: the maintainer
+ * workspace requires pnpm, while an external consumer is checked against its
+ * detected npm/pnpm owner and ordinary `node_modules`. `json` suppresses the
+ * pretty stderr summary.
  */
-export async function info(opts: { json?: boolean; pretty?: boolean; cwd?: string } = {}): Promise<number> {
+async function runInfo(
+  opts: { json?: boolean; pretty?: boolean; cwd?: string },
+  spawn?: SpawnArgvCapture,
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
   const workspaceRoot = findWorkspaceRoot(cwd);
   const minima = loadEngineMinima(workspaceRoot);
-
-  const checks: readonly DoctorCheck[] = [
-    probeNode(minima),
-    await probePnpm(minima),
-    probeWorkspaceInstalled(workspaceRoot),
-  ];
+  const maintainer = isLiteShipWorkspace(workspaceRoot);
+  let checks: readonly DoctorCheck[];
+  if (maintainer) {
+    checks = [probeNode(minima), await probePnpm(minima, spawn), probeWorkspaceInstalled(workspaceRoot)];
+  } else {
+    const packageManager = await probeProjectPackageManager(cwd, minima, spawn);
+    checks = [probeNode(minima), packageManager.check, probeConsumerInstalled(cwd, packageManager.manager ?? 'npm')];
+  }
   const verdict = aggregate(checks);
   const pnpmCheck = checks.find((c) => c.id === 'pnpm.version');
   const pnpmVersion = pnpmCheck?.status === 'ok' ? pnpmCheck.detail : null;
+  const managerCheck = checks.find((check) => check.id === 'npm.version' || check.id === 'pnpm.version');
 
   const publishablePackages = Object.keys(PACKAGE_METADATA_CATALOG);
   const handler = COMMAND_CATALOG.filter((d) => d.executionKind === 'handler').length;
@@ -98,7 +113,7 @@ export async function info(opts: { json?: boolean; pretty?: boolean; cwd?: strin
   if (wantPretty) {
     const on = colorEnabled();
     process.stderr.write(
-      `${color('cyan', 'liteship info', on)}  Node ${receipt.env.node}, pnpm ${receipt.env.pnpm ?? 'not found'} (${receipt.env.platform})\n` +
+      `${color('cyan', 'liteship info', on)}  Node ${receipt.env.node}, ${managerCheck?.label ?? 'package manager'} ${managerCheck?.status === 'ok' ? managerCheck.detail : 'not ready'} (${receipt.env.platform})\n` +
         `  roster: ${receipt.roster.count} @liteship/* packages, ${receipt.publishable.count} publishable\n` +
         `  commands: ${receipt.commands.total} (${receipt.commands.handler} handler, ${receipt.commands.cliOrchestration} cli-orchestration)\n` +
         `  doctor: ${receipt.doctor.verdict}\n`,
@@ -106,4 +121,14 @@ export async function info(opts: { json?: boolean; pretty?: boolean; cwd?: strin
   }
 
   return 0;
+}
+
+/** Build an info command around an injected subprocess boundary for deterministic hosts and tests. */
+export function createInfoCommand(spawn?: SpawnArgvCapture): typeof info {
+  return (opts = {}) => runInfo(opts, spawn);
+}
+
+/** Execute `liteship info` through the production subprocess boundary. */
+export function info(opts: { json?: boolean; pretty?: boolean; cwd?: string } = {}): Promise<number> {
+  return runInfo(opts);
 }

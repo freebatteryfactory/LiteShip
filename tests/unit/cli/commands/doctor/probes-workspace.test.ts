@@ -40,6 +40,7 @@ import {
   probeNode,
   probePlaywright,
   probePnpm,
+  probeProjectPackageManager,
   probeWasmToolchain,
   probeWorkspaceInstalled,
 } from '../../../../../packages/cli/src/commands/doctor/probes-workspace.js';
@@ -119,6 +120,136 @@ describe('doctor/probes-workspace — probePnpm()', () => {
   });
 });
 
+describe('doctor/probes-workspace — consumer package-manager authority', () => {
+  it('probes npm, not pnpm, for an npm-authored consumer', async () => {
+    const dir = mkTmp();
+    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ packageManager: 'npm@10.9.2' }));
+    spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: '10.9.2\n' }));
+
+    const result = await probeProjectPackageManager(dir, MINIMA, spawnMock.spawnArgvCapture);
+
+    expect(result).toEqual({
+      manager: 'npm',
+      check: { id: 'npm.version', label: 'npm', status: 'ok', detail: '10.9.2' },
+    });
+    expect(spawnMock.spawnArgvCapture).toHaveBeenCalledOnce();
+    expect(spawnMock.spawnArgvCapture).toHaveBeenCalledWith('npm', ['--version'], {
+      timeoutMs: 4_000,
+    });
+  });
+
+  it('probes pnpm and enforces the repository minimum for a pnpm consumer', async () => {
+    const dir = mkTmp();
+    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ packageManager: 'pnpm@9.15.0' }));
+    spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: '9.15.0\n' }));
+
+    const result = await probeProjectPackageManager(dir, MINIMA, spawnMock.spawnArgvCapture);
+
+    expect(result.manager).toBe('pnpm');
+    expect(result.check).toMatchObject({ id: 'pnpm.version', status: 'fail' });
+    expect(result.check.detail).toContain('need >= 10');
+    expect(spawnMock.spawnArgvCapture).toHaveBeenCalledWith('pnpm', ['--version'], {
+      timeoutMs: 4_000,
+    });
+  });
+
+  it('probes the package manager owned by an ancestor workspace from a nested consumer', async () => {
+    const root = mkTmp();
+    const app = resolve(root, 'apps', 'site');
+    mkdirSync(app, { recursive: true });
+    writeFileSync(
+      resolve(root, 'package.json'),
+      JSON.stringify({ packageManager: 'pnpm@10.32.1', workspaces: ['apps/*'] }),
+    );
+    spawnMock.spawnArgvCapture.mockResolvedValue(captured({ exitCode: 0, stdout: '10.32.1\n' }));
+
+    const result = await probeProjectPackageManager(app, MINIMA, spawnMock.spawnArgvCapture);
+
+    expect(result).toEqual({
+      manager: 'pnpm',
+      check: { id: 'pnpm.version', label: 'pnpm', status: 'ok', detail: '10.32.1' },
+    });
+    expect(spawnMock.spawnArgvCapture).toHaveBeenCalledOnce();
+    expect(spawnMock.spawnArgvCapture).toHaveBeenCalledWith('pnpm', ['--version'], {
+      timeoutMs: 4_000,
+    });
+  });
+
+  it.each([
+    {
+      name: 'timeout',
+      result: captured({ exitCode: 124, timedOut: true }),
+      expectedStatus: 'warn',
+      expectedDetail: 'no response within',
+    },
+    {
+      name: 'nonzero exit',
+      result: captured({ exitCode: 1, stderr: 'not found' }),
+      expectedStatus: 'fail',
+      expectedDetail: 'not on PATH',
+    },
+    {
+      name: 'unparseable version',
+      result: captured({ exitCode: 0, stdout: 'banana\n' }),
+      expectedStatus: 'warn',
+      expectedDetail: 'unrecognized version',
+    },
+  ])('reports an honest npm $name', async ({ result, expectedStatus, expectedDetail }) => {
+    const dir = mkTmp();
+    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ packageManager: 'npm@10.9.2' }));
+    spawnMock.spawnArgvCapture.mockResolvedValue(result);
+
+    const probe = await probeProjectPackageManager(dir, MINIMA, spawnMock.spawnArgvCapture);
+
+    expect(probe.manager).toBe('npm');
+    expect(probe.check.status).toBe(expectedStatus);
+    expect(probe.check.detail).toContain(expectedDetail);
+  });
+
+  it('turns an npm spawn rejection into a failed check rather than throwing', async () => {
+    const dir = mkTmp();
+    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ packageManager: 'npm@10.9.2' }));
+    spawnMock.spawnArgvCapture.mockRejectedValue(new Error('ENOENT'));
+
+    await expect(probeProjectPackageManager(dir, MINIMA, spawnMock.spawnArgvCapture)).resolves.toMatchObject({
+      manager: 'npm',
+      check: { id: 'npm.version', status: 'fail', detail: 'npm not on PATH' },
+    });
+  });
+
+  it('refuses an unsupported manager before any subprocess runs', async () => {
+    const dir = mkTmp();
+    writeFileSync(resolve(dir, 'package.json'), JSON.stringify({ packageManager: 'yarn@4.9.2' }));
+
+    const result = await probeProjectPackageManager(dir, MINIMA, spawnMock.spawnArgvCapture);
+
+    expect(result.manager).toBeNull();
+    expect(result.check).toMatchObject({
+      id: 'package-manager.selection',
+      status: 'fail',
+      detail: expect.stringContaining('unsupported yarn project'),
+      hint: expect.stringContaining('supports npm and pnpm'),
+    });
+    expect(spawnMock.spawnArgvCapture).not.toHaveBeenCalled();
+  });
+
+  it('refuses a malformed manifest before any subprocess runs', async () => {
+    const dir = mkTmp();
+    writeFileSync(resolve(dir, 'package.json'), '{ not-json');
+
+    const result = await probeProjectPackageManager(dir, MINIMA, spawnMock.spawnArgvCapture);
+
+    expect(result.manager).toBeNull();
+    expect(result.check).toMatchObject({
+      id: 'package-manager.selection',
+      status: 'fail',
+      detail: expect.stringContaining('could not read a valid package manifest'),
+      hint: expect.stringContaining('Repair the nearest package.json'),
+    });
+    expect(spawnMock.spawnArgvCapture).not.toHaveBeenCalled();
+  });
+});
+
 describe('doctor/probes-workspace — probeWorkspaceInstalled()', () => {
   it('ok when node_modules/.modules.yaml is present', () => {
     const dir = mkTmp();
@@ -159,7 +290,17 @@ describe('doctor/probes-workspace — probeConsumerInstalled()', () => {
   });
 
   it('fail when there is no node_modules at all', () => {
-    expect(probeConsumerInstalled(mkTmp())).toMatchObject({ status: 'fail' });
+    expect(probeConsumerInstalled(mkTmp(), 'npm')).toMatchObject({
+      status: 'fail',
+      hint: 'Set up: npm install',
+    });
+  });
+
+  it('names pnpm in remediation only when pnpm owns the consumer', () => {
+    expect(probeConsumerInstalled(mkTmp(), 'pnpm')).toMatchObject({
+      status: 'fail',
+      hint: 'Set up: pnpm install',
+    });
   });
 });
 
