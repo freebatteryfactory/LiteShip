@@ -91,9 +91,35 @@ interface WebGpuTexture {
   createView(): unknown;
 }
 
-interface GPUCanvasContext {
+interface WebGpuCanvasContext {
   configure(configuration: { device: WebGpuDevice; format: string; alphaMode: string }): void;
   getCurrentTexture(): WebGpuTexture;
+}
+
+/**
+ * Narrow the evolving platform WebGPU surface to the stable operations used by
+ * this runtime. TypeScript 5 has no native WebGPU declarations while newer
+ * compilers do; checking the operations at this boundary keeps both toolchains
+ * honest without making the runtime shim structurally compete with native
+ * descriptor types.
+ */
+function readWebGpuNavigator(value: unknown): WebGpuNavigator | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const candidate = value as { readonly gpu?: unknown };
+  const gpu = candidate.gpu;
+  if (typeof gpu !== 'object' || gpu === null) return null;
+  const methods = gpu as { readonly requestAdapter?: unknown; readonly getPreferredCanvasFormat?: unknown };
+  if (typeof methods.requestAdapter !== 'function' || typeof methods.getPreferredCanvasFormat !== 'function') {
+    return null;
+  }
+  return gpu as WebGpuNavigator;
+}
+
+function readWebGpuCanvasContext(value: unknown): WebGpuCanvasContext | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const candidate = value as { readonly configure?: unknown; readonly getCurrentTexture?: unknown };
+  if (typeof candidate.configure !== 'function' || typeof candidate.getCurrentTexture !== 'function') return null;
+  return value as WebGpuCanvasContext;
 }
 
 /**
@@ -441,16 +467,16 @@ export async function initWGSLRuntime(
   declarations?: string,
   integrity?: ShaderIntegrity | null,
 ): Promise<(() => void) | null> {
-  const nav = navigator as Navigator & { gpu?: WebGpuNavigator };
-  if (!nav.gpu) {
+  const gpu = readWebGpuNavigator(navigator);
+  if (!gpu) {
     return null;
   }
 
-  const adapter = await nav.gpu.requestAdapter();
+  const adapter = await gpu.requestAdapter();
   if (!adapter) return null;
 
   const device = await adapter.requestDevice();
-  const context = canvas.getContext('webgpu') as GPUCanvasContext | null;
+  const context = readWebGpuCanvasContext(canvas.getContext('webgpu'));
   if (!context) return null;
 
   let wgslSource = FULLSCREEN_WGSL;
@@ -549,7 +575,7 @@ export async function initWGSLRuntime(
   warnUnfedWgslUniformFields(uniformLayout, fedUniformFields, compilerIntegrated);
   const shaderModule = device.createShaderModule({ code: wgslSource });
 
-  const format = nav.gpu.getPreferredCanvasFormat();
+  const format = gpu.getPreferredCanvasFormat();
   context.configure({ device, format, alphaMode: 'premultiplied' });
 
   const pipeline = device.createRenderPipeline({

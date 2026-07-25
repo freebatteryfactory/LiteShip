@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "types": ["node"],
     "paths": {
       "@liteship/_spine": ["../_spine/index.d.ts"],
       "@liteship/canonical": ["../canonical/src/index.ts"],

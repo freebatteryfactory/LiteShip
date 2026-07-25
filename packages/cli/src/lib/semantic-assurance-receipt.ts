@@ -324,7 +324,7 @@ export function parseSemanticAssuranceReceipt(value: unknown): SemanticAssurance
       !target.reasons.every(isReason) ||
       counts.some((count) => !Number.isInteger(count) || (count as number) < 0) ||
       !Array.isArray(target.executedTests) ||
-      !target.executedTests.every((test) => typeof test === 'string' && test.length > 0) ||
+      !target.executedTests.every((test: unknown) => typeof test === 'string' && test.length > 0) ||
       !/^sha256:[0-9a-f]{64}$/u.test(target.outcomeDigest) ||
       (target.verdict !== 'pass' && target.verdict !== 'fail' && target.verdict !== 'not-applicable')
     ) {

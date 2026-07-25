@@ -467,10 +467,10 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
   // instead of the authored graph that actually produced the frame.
   const encoderFrames = snapshotDefinitionValue(frames.map((frame) => frame.composite));
   const encodeConfig = Object.freeze({
-      fps: VIDEO_CONFIG.fps,
-      width: VIDEO_CONFIG.width,
-      height: VIDEO_CONFIG.height,
-      durationMs: VIDEO_CONFIG.durationMs,
+    fps: VIDEO_CONFIG.fps,
+    width: VIDEO_CONFIG.width,
+    height: VIDEO_CONFIG.height,
+    durationMs: VIDEO_CONFIG.durationMs,
   });
   const encoded = await encode(encoderFrames, encodeConfig);
 

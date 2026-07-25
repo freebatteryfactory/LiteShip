@@ -116,6 +116,12 @@ describe('initWGSLRuntime — availability gates', () => {
     expect(await initWGSLRuntime(canvas, 'inline')).toBeNull();
   });
 
+  it('returns null when navigator.gpu does not expose the required platform operations', async () => {
+    stubGpu({ requestAdapter: true, getPreferredCanvasFormat: () => 'bgra8unorm' });
+    const { canvas } = makeCanvas(true);
+    expect(await initWGSLRuntime(canvas, 'inline')).toBeNull();
+  });
+
   it('returns null when requestAdapter yields no adapter', async () => {
     stubGpu({ requestAdapter: async () => null, getPreferredCanvasFormat: () => 'bgra8unorm' });
     const { canvas } = makeCanvas(true);
@@ -126,6 +132,14 @@ describe('initWGSLRuntime — availability gates', () => {
     const harness = makeGpuHarness();
     stubGpu(harness.gpu);
     const { canvas } = makeCanvas(false);
+    expect(await initWGSLRuntime(canvas, 'inline')).toBeNull();
+  });
+
+  it('returns null when the canvas context does not expose the required WebGPU operations', async () => {
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    const canvas = document.createElement('canvas');
+    vi.spyOn(canvas, 'getContext').mockReturnValue({ configure: true } as unknown as RenderingContext);
     expect(await initWGSLRuntime(canvas, 'inline')).toBeNull();
   });
 });
