@@ -42,6 +42,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationError } from '@liteship/error';
+import { CanonicalCbor, addressedDigestOf, type IntegrityDigest } from '@liteship/canonical';
 import { systemClock, type Clock } from '@liteship/core';
 import {
   parseQualifiedBenchDistribution,
@@ -149,6 +150,493 @@ export interface ComplexityMapEntry {
 export interface ComplexityMap {
   readonly schemaVersion: 1;
   readonly entries: readonly ComplexityMapEntry[];
+}
+
+// ---------------------------------------------------------------------------
+// Scientific benchmark evidence — one addressed admission record.
+// ---------------------------------------------------------------------------
+
+/** A benchmark result is admitted, rejected, or explicitly inconclusive. */
+export type BenchmarkEvidenceDisposition = 'pass' | 'fail' | 'unknown';
+
+/** Machine-readable reasons behind benchmark-evidence admission. */
+export type BenchmarkEvidenceReason =
+  | 'canary-failed'
+  | 'complexity-regression'
+  | 'allocation-budget-exceeded'
+  | 'leak-slope-exceeded'
+  | 'low-r2'
+  | 'unstable-variance'
+  | 'stale-source-sha'
+  | 'stale-source-digest'
+  | 'foreign-environment'
+  | 'foreign-toolchain';
+
+/** The package-owned implementation and registered benchmark being measured. */
+export interface BenchmarkEvidenceSut {
+  readonly id: string;
+  readonly owner: string;
+  readonly benchmark: string;
+  readonly file: string;
+}
+
+/** One independently meaningful input dimension. */
+export interface BenchmarkEvidenceDimension {
+  readonly name: string;
+  readonly unit: string;
+  readonly distribution: string;
+}
+
+/** One canary proves the benchmark actually distinguishes good from bad work. */
+export interface BenchmarkEvidenceCanary {
+  readonly id: string;
+  readonly verdict: 'pass' | 'fail';
+}
+
+/** Complexity evidence against the declared accepted class. */
+export interface BenchmarkComplexityEvidence {
+  readonly expected: ComplexityClass;
+  readonly measured: ComplexityClass;
+  readonly fittedSlope: number;
+  readonly fittedR2: number;
+}
+
+/** Allocation evidence is optional only for subjects with no allocation contract. */
+export interface BenchmarkAllocationEvidence {
+  readonly observedBytes: number;
+  readonly budgetBytes: number;
+  readonly leakSlope: number;
+  readonly maximumLeakSlope: number;
+}
+
+/** Inputs from which the immutable benchmark evidence is constructed. */
+export interface BenchmarkEvidenceInput {
+  readonly sut: BenchmarkEvidenceSut;
+  readonly input: {
+    readonly dimensions: readonly BenchmarkEvidenceDimension[];
+    readonly sizes: readonly number[];
+  };
+  readonly measurement: {
+    readonly mode: 'cold' | 'warm';
+    readonly warmupIterations: number;
+    readonly repetitions: number;
+    readonly canaries: readonly BenchmarkEvidenceCanary[];
+  };
+  readonly environment: {
+    readonly sourceSha: string;
+    readonly sourceDigest: IntegrityDigest;
+    readonly environmentDigest: IntegrityDigest;
+    readonly platform: string;
+    readonly arch: string;
+    readonly runtime: string;
+    readonly toolchain: string;
+  };
+  readonly complexity: BenchmarkComplexityEvidence | null;
+  readonly allocation: BenchmarkAllocationEvidence | null;
+  readonly confidence: {
+    readonly minimumR2: number;
+    readonly coefficientOfVariation: number;
+    readonly maximumCoefficientOfVariation: number;
+  };
+}
+
+/**
+ * Complete scientific benchmark evidence. The integrity id addresses every
+ * behavior-bearing fact except itself, including the derived admission. A
+ * consumer must still call {@link admitBenchmarkEvidence} with the live source
+ * and environment identities before using the verdict.
+ */
+export interface BenchmarkEvidence extends BenchmarkEvidenceInput {
+  readonly schemaVersion: 1;
+  readonly evidenceId: IntegrityDigest;
+  readonly regressionDisposition: 'none' | 'blocking' | 'inconclusive';
+  readonly admission: {
+    readonly disposition: BenchmarkEvidenceDisposition;
+    readonly reasons: readonly BenchmarkEvidenceReason[];
+  };
+}
+
+/** Live identities required before committed or downloaded evidence is trusted. */
+export interface BenchmarkEvidenceAuthority {
+  readonly sourceSha: string;
+  readonly sourceDigest: IntegrityDigest;
+  readonly environmentDigest: IntegrityDigest;
+  readonly toolchain: string;
+}
+
+/** Admission result after both evidence integrity and live freshness are checked. */
+export interface BenchmarkEvidenceAdmission {
+  readonly disposition: BenchmarkEvidenceDisposition;
+  readonly reasons: readonly BenchmarkEvidenceReason[];
+}
+
+const SHA_RE = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/u;
+const INTEGRITY_RE = /^(?:sha256|blake3):[0-9a-f]{64}$/u;
+
+function evidenceValidation(message: string): never {
+  throw ValidationError('BenchmarkEvidence', message);
+}
+
+function finite(value: number, field: string, minimum = 0): number {
+  if (!Number.isFinite(value) || value < minimum) {
+    evidenceValidation(`${field} must be a finite number >= ${minimum}`);
+  }
+  return value;
+}
+
+function finiteSigned(value: number, field: string): number {
+  if (!Number.isFinite(value)) evidenceValidation(`${field} must be finite`);
+  return value;
+}
+
+function positiveInteger(value: number, field: string): number {
+  if (!Number.isInteger(value) || value <= 0) evidenceValidation(`${field} must be a positive integer`);
+  return value;
+}
+
+function nonNegativeInteger(value: number, field: string): number {
+  if (!Number.isInteger(value) || value < 0) evidenceValidation(`${field} must be a non-negative integer`);
+  return value;
+}
+
+function nonEmpty(value: string, field: string): string {
+  if (value.trim().length === 0) evidenceValidation(`${field} must be non-empty`);
+  return value;
+}
+
+function integrity(value: string, field: string): IntegrityDigest {
+  if (!INTEGRITY_RE.test(value)) evidenceValidation(`${field} must be a canonical integrity digest`);
+  return value as IntegrityDigest;
+}
+
+function exactObject(value: unknown, field: string, keys: readonly string[]): Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    evidenceValidation(`${field} must be an object`);
+  }
+  const record = value as Record<string, unknown>;
+  const actual = Object.keys(record).sort();
+  const expected = [...keys].sort();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    evidenceValidation(`${field} has missing or foreign fields`);
+  }
+  return record;
+}
+
+function deepFreezeEvidence<T>(value: T): T {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const child of Object.values(value as Record<string, unknown>)) deepFreezeEvidence(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+function deriveBenchmarkAdmission(input: BenchmarkEvidenceInput): BenchmarkEvidenceAdmission & {
+  readonly regressionDisposition: BenchmarkEvidence['regressionDisposition'];
+} {
+  const failures: BenchmarkEvidenceReason[] = [];
+  const unknowns: BenchmarkEvidenceReason[] = [];
+
+  if (input.measurement.canaries.some((canary) => canary.verdict === 'fail')) failures.push('canary-failed');
+  if (
+    input.complexity !== null &&
+    complexityRank(input.complexity.measured) > complexityRank(input.complexity.expected)
+  ) {
+    failures.push('complexity-regression');
+  }
+  if (input.allocation !== null && input.allocation.observedBytes > input.allocation.budgetBytes) {
+    failures.push('allocation-budget-exceeded');
+  }
+  if (input.allocation !== null && input.allocation.leakSlope > input.allocation.maximumLeakSlope) {
+    failures.push('leak-slope-exceeded');
+  }
+  if (input.complexity !== null && input.complexity.fittedR2 < input.confidence.minimumR2) {
+    unknowns.push('low-r2');
+  }
+  if (input.confidence.coefficientOfVariation > input.confidence.maximumCoefficientOfVariation) {
+    unknowns.push('unstable-variance');
+  }
+
+  if (failures.length > 0) {
+    return { disposition: 'fail', reasons: failures, regressionDisposition: 'blocking' };
+  }
+  if (unknowns.length > 0) {
+    return { disposition: 'unknown', reasons: unknowns, regressionDisposition: 'inconclusive' };
+  }
+  return { disposition: 'pass', reasons: [], regressionDisposition: 'none' };
+}
+
+function snapshotBenchmarkEvidenceInput(input: BenchmarkEvidenceInput): BenchmarkEvidenceInput {
+  if (!SHA_RE.test(input.environment.sourceSha)) evidenceValidation('environment.sourceSha must be a 40/64 hex SHA');
+  if (input.input.dimensions.length === 0) evidenceValidation('input.dimensions must be non-empty');
+  if (input.input.sizes.length === 0) evidenceValidation('input.sizes must be non-empty');
+  if (input.measurement.canaries.length === 0) evidenceValidation('measurement.canaries must be non-empty');
+
+  const sizes = input.input.sizes.map((size, index) => finite(size, `input.sizes[${index}]`, Number.MIN_VALUE));
+  if (sizes.some((size, index) => index > 0 && size <= (sizes[index - 1] ?? 0))) {
+    evidenceValidation('input.sizes must be strictly ascending');
+  }
+
+  const complexity =
+    input.complexity === null
+      ? null
+      : {
+          expected: input.complexity.expected,
+          measured: input.complexity.measured,
+          fittedSlope: finiteSigned(input.complexity.fittedSlope, 'complexity.fittedSlope'),
+          fittedR2: finite(input.complexity.fittedR2, 'complexity.fittedR2'),
+        };
+  if (
+    complexity !== null &&
+    (!COMPLEXITY_CLASSES.includes(complexity.expected) || !COMPLEXITY_CLASSES.includes(complexity.measured))
+  ) {
+    evidenceValidation('complexity class is not recognized');
+  }
+  if (complexity !== null && complexity.fittedR2 > 1) evidenceValidation('complexity.fittedR2 must be <= 1');
+
+  const snapshot: BenchmarkEvidenceInput = {
+    sut: {
+      id: nonEmpty(input.sut.id, 'sut.id'),
+      owner: nonEmpty(input.sut.owner, 'sut.owner'),
+      benchmark: nonEmpty(input.sut.benchmark, 'sut.benchmark'),
+      file: nonEmpty(input.sut.file, 'sut.file'),
+    },
+    input: {
+      dimensions: input.input.dimensions.map((dimension, index) => ({
+        name: nonEmpty(dimension.name, `input.dimensions[${index}].name`),
+        unit: nonEmpty(dimension.unit, `input.dimensions[${index}].unit`),
+        distribution: nonEmpty(dimension.distribution, `input.dimensions[${index}].distribution`),
+      })),
+      sizes,
+    },
+    measurement: {
+      mode: input.measurement.mode,
+      warmupIterations: nonNegativeInteger(input.measurement.warmupIterations, 'measurement.warmupIterations'),
+      repetitions: positiveInteger(input.measurement.repetitions, 'measurement.repetitions'),
+      canaries: input.measurement.canaries.map((canary, index) => ({
+        id: nonEmpty(canary.id, `measurement.canaries[${index}].id`),
+        verdict: canary.verdict,
+      })),
+    },
+    environment: {
+      sourceSha: input.environment.sourceSha,
+      sourceDigest: integrity(input.environment.sourceDigest, 'environment.sourceDigest'),
+      environmentDigest: integrity(input.environment.environmentDigest, 'environment.environmentDigest'),
+      platform: nonEmpty(input.environment.platform, 'environment.platform'),
+      arch: nonEmpty(input.environment.arch, 'environment.arch'),
+      runtime: nonEmpty(input.environment.runtime, 'environment.runtime'),
+      toolchain: nonEmpty(input.environment.toolchain, 'environment.toolchain'),
+    },
+    complexity,
+    allocation:
+      input.allocation === null
+        ? null
+        : {
+            observedBytes: finite(input.allocation.observedBytes, 'allocation.observedBytes'),
+            budgetBytes: finite(input.allocation.budgetBytes, 'allocation.budgetBytes'),
+            leakSlope: finiteSigned(input.allocation.leakSlope, 'allocation.leakSlope'),
+            maximumLeakSlope: finite(input.allocation.maximumLeakSlope, 'allocation.maximumLeakSlope'),
+          },
+    confidence: {
+      minimumR2: finite(input.confidence.minimumR2, 'confidence.minimumR2'),
+      coefficientOfVariation: finite(input.confidence.coefficientOfVariation, 'confidence.coefficientOfVariation'),
+      maximumCoefficientOfVariation: finite(
+        input.confidence.maximumCoefficientOfVariation,
+        'confidence.maximumCoefficientOfVariation',
+      ),
+    },
+  };
+
+  if (snapshot.measurement.mode !== 'cold' && snapshot.measurement.mode !== 'warm') {
+    evidenceValidation('measurement.mode must be cold or warm');
+  }
+  if (snapshot.measurement.canaries.some((canary) => canary.verdict !== 'pass' && canary.verdict !== 'fail')) {
+    evidenceValidation('measurement.canary verdict must be pass or fail');
+  }
+  if (snapshot.confidence.minimumR2 > 1) evidenceValidation('confidence.minimumR2 must be <= 1');
+  return snapshot;
+}
+
+/** Construct immutable, integrity-addressed benchmark evidence. */
+export function createBenchmarkEvidence(input: BenchmarkEvidenceInput): BenchmarkEvidence {
+  const snapshot = snapshotBenchmarkEvidenceInput(input);
+  const derived = deriveBenchmarkAdmission(snapshot);
+  const payload = {
+    schemaVersion: 1 as const,
+    ...snapshot,
+    regressionDisposition: derived.regressionDisposition,
+    admission: { disposition: derived.disposition, reasons: derived.reasons },
+  };
+  const evidenceId = addressedDigestOf(CanonicalCbor.encode(payload), 'sha256').integrity_digest;
+  return deepFreezeEvidence({ ...payload, evidenceId });
+}
+
+function asString(value: unknown, field: string): string {
+  if (typeof value !== 'string') evidenceValidation(`${field} must be a string`);
+  return value;
+}
+
+function asNumber(value: unknown, field: string): number {
+  if (typeof value !== 'number') evidenceValidation(`${field} must be a number`);
+  return value;
+}
+
+/** Strictly decode evidence, refusing missing/foreign fields and digest drift. */
+export function parseBenchmarkEvidence(value: unknown): BenchmarkEvidence {
+  const root = exactObject(value, 'evidence', [
+    'schemaVersion',
+    'evidenceId',
+    'sut',
+    'input',
+    'measurement',
+    'environment',
+    'complexity',
+    'allocation',
+    'confidence',
+    'regressionDisposition',
+    'admission',
+  ]);
+  if (root['schemaVersion'] !== 1) evidenceValidation('schemaVersion must be 1');
+
+  const sut = exactObject(root['sut'], 'sut', ['id', 'owner', 'benchmark', 'file']);
+  const input = exactObject(root['input'], 'input', ['dimensions', 'sizes']);
+  const measurement = exactObject(root['measurement'], 'measurement', [
+    'mode',
+    'warmupIterations',
+    'repetitions',
+    'canaries',
+  ]);
+  const environment = exactObject(root['environment'], 'environment', [
+    'sourceSha',
+    'sourceDigest',
+    'environmentDigest',
+    'platform',
+    'arch',
+    'runtime',
+    'toolchain',
+  ]);
+  const confidence = exactObject(root['confidence'], 'confidence', [
+    'minimumR2',
+    'coefficientOfVariation',
+    'maximumCoefficientOfVariation',
+  ]);
+  if (!Array.isArray(input['dimensions']) || !Array.isArray(input['sizes'])) {
+    evidenceValidation('input dimensions and sizes must be arrays');
+  }
+  if (!Array.isArray(measurement['canaries'])) evidenceValidation('measurement.canaries must be an array');
+
+  const complexity =
+    root['complexity'] === null
+      ? null
+      : exactObject(root['complexity'], 'complexity', ['expected', 'measured', 'fittedSlope', 'fittedR2']);
+  const allocation =
+    root['allocation'] === null
+      ? null
+      : exactObject(root['allocation'], 'allocation', [
+          'observedBytes',
+          'budgetBytes',
+          'leakSlope',
+          'maximumLeakSlope',
+        ]);
+
+  const rebuilt = createBenchmarkEvidence({
+    sut: {
+      id: asString(sut['id'], 'sut.id'),
+      owner: asString(sut['owner'], 'sut.owner'),
+      benchmark: asString(sut['benchmark'], 'sut.benchmark'),
+      file: asString(sut['file'], 'sut.file'),
+    },
+    input: {
+      dimensions: input['dimensions'].map((item, index) => {
+        const dimension = exactObject(item, `input.dimensions[${index}]`, ['name', 'unit', 'distribution']);
+        return {
+          name: asString(dimension['name'], `input.dimensions[${index}].name`),
+          unit: asString(dimension['unit'], `input.dimensions[${index}].unit`),
+          distribution: asString(dimension['distribution'], `input.dimensions[${index}].distribution`),
+        };
+      }),
+      sizes: input['sizes'].map((item, index) => asNumber(item, `input.sizes[${index}]`)),
+    },
+    measurement: {
+      mode: asString(measurement['mode'], 'measurement.mode') as 'cold' | 'warm',
+      warmupIterations: asNumber(measurement['warmupIterations'], 'measurement.warmupIterations'),
+      repetitions: asNumber(measurement['repetitions'], 'measurement.repetitions'),
+      canaries: measurement['canaries'].map((item, index) => {
+        const canary = exactObject(item, `measurement.canaries[${index}]`, ['id', 'verdict']);
+        return {
+          id: asString(canary['id'], `measurement.canaries[${index}].id`),
+          verdict: asString(canary['verdict'], `measurement.canaries[${index}].verdict`) as 'pass' | 'fail',
+        };
+      }),
+    },
+    environment: {
+      sourceSha: asString(environment['sourceSha'], 'environment.sourceSha'),
+      sourceDigest: asString(environment['sourceDigest'], 'environment.sourceDigest') as IntegrityDigest,
+      environmentDigest: asString(environment['environmentDigest'], 'environment.environmentDigest') as IntegrityDigest,
+      platform: asString(environment['platform'], 'environment.platform'),
+      arch: asString(environment['arch'], 'environment.arch'),
+      runtime: asString(environment['runtime'], 'environment.runtime'),
+      toolchain: asString(environment['toolchain'], 'environment.toolchain'),
+    },
+    complexity:
+      complexity === null
+        ? null
+        : {
+            expected: asString(complexity['expected'], 'complexity.expected') as ComplexityClass,
+            measured: asString(complexity['measured'], 'complexity.measured') as ComplexityClass,
+            fittedSlope: asNumber(complexity['fittedSlope'], 'complexity.fittedSlope'),
+            fittedR2: asNumber(complexity['fittedR2'], 'complexity.fittedR2'),
+          },
+    allocation:
+      allocation === null
+        ? null
+        : {
+            observedBytes: asNumber(allocation['observedBytes'], 'allocation.observedBytes'),
+            budgetBytes: asNumber(allocation['budgetBytes'], 'allocation.budgetBytes'),
+            leakSlope: asNumber(allocation['leakSlope'], 'allocation.leakSlope'),
+            maximumLeakSlope: asNumber(allocation['maximumLeakSlope'], 'allocation.maximumLeakSlope'),
+          },
+    confidence: {
+      minimumR2: asNumber(confidence['minimumR2'], 'confidence.minimumR2'),
+      coefficientOfVariation: asNumber(confidence['coefficientOfVariation'], 'confidence.coefficientOfVariation'),
+      maximumCoefficientOfVariation: asNumber(
+        confidence['maximumCoefficientOfVariation'],
+        'confidence.maximumCoefficientOfVariation',
+      ),
+    },
+  });
+
+  if (root['evidenceId'] !== rebuilt.evidenceId) evidenceValidation('evidenceId does not match canonical evidence');
+  if (root['regressionDisposition'] !== rebuilt.regressionDisposition) {
+    evidenceValidation('regressionDisposition does not match measured evidence');
+  }
+  const admission = exactObject(root['admission'], 'admission', ['disposition', 'reasons']);
+  if (
+    admission['disposition'] !== rebuilt.admission.disposition ||
+    JSON.stringify(admission['reasons']) !== JSON.stringify(rebuilt.admission.reasons)
+  ) {
+    evidenceValidation('admission does not match measured evidence');
+  }
+  return rebuilt;
+}
+
+/**
+ * Admit evidence against the live source/environment. Deterministic failures
+ * outrank uncertainty; uncertainty can never be laundered into a pass.
+ */
+export function admitBenchmarkEvidence(
+  evidence: BenchmarkEvidence,
+  authority: BenchmarkEvidenceAuthority,
+): BenchmarkEvidenceAdmission {
+  const parsed = parseBenchmarkEvidence(evidence);
+  const stale: BenchmarkEvidenceReason[] = [];
+  if (parsed.environment.sourceSha !== authority.sourceSha) stale.push('stale-source-sha');
+  if (parsed.environment.sourceDigest !== authority.sourceDigest) stale.push('stale-source-digest');
+  if (parsed.environment.environmentDigest !== authority.environmentDigest) stale.push('foreign-environment');
+  if (parsed.environment.toolchain !== authority.toolchain) stale.push('foreign-toolchain');
+
+  if (parsed.admission.disposition === 'fail') return parsed.admission;
+  if (stale.length > 0) return { disposition: 'unknown', reasons: stale };
+  return parsed.admission;
 }
 
 // ---------------------------------------------------------------------------
