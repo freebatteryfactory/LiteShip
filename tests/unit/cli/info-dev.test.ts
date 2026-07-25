@@ -5,7 +5,7 @@
  * exercised here (JSON receipt + the pretty stderr digest). `dev` spawns an
  * interactive dev server on its happy path (not unit-testable), so these cover
  * the testable surface: `detectHost` (astro / vite / none); the consumer-app
- * route's receipt (`mode: 'host'` + detected host) emitted BEFORE the spawn; and
+ * route's launching and terminal receipts (`mode: 'host'` + detected host); and
  * the examples route's name resolution (default / --tutorial / --example) plus
  * the missing-app guard that fails 1 with a structured error before any spawn.
  */
@@ -163,11 +163,11 @@ describe('liteship dev — consumer-app host route', () => {
   it.each([
     { manager: 'npm', expectedCommand: 'npm', expectedArgs: ['exec', '--', 'astro', 'dev'] },
     { manager: 'pnpm', expectedCommand: 'pnpm', expectedArgs: ['exec', 'astro', 'dev'] },
-  ] as const)('delegates through $manager and emits its host receipt before spawning', async (row) => {
+  ] as const)('delegates through $manager and receipts its clean host lifecycle', async (row) => {
     // A LiteShip app: liteship.config.ts beside a recognizable host config. No
-    // example/tutorial selector → the consumer-app route. The receipt is emitted
-    // to stdout BEFORE the injected process boundary, so this unit proof never
-    // launches a long-running framework server.
+    // example/tutorial selector → the consumer-app route. The launching receipt
+    // is emitted before the injected process boundary and the terminal receipt
+    // records the scripted clean exit, so no framework server is launched.
     const app = mkdtempSync(join(tmpdir(), 'liteship-dev-host-'));
     try {
       writeFileSync(join(app, 'liteship.config.ts'), '');
@@ -182,6 +182,8 @@ describe('liteship dev — consumer-app host route', () => {
       expect(receipt.mode).toBe('host');
       expect(receipt.host).toBe('astro');
       expect(receipt.packageManager).toBe(row.manager);
+      expect(receipt.phase).toBe('exited');
+      expect(receipt.exitCode).toBe(0);
       expect(spawn).toHaveBeenCalledWith(row.expectedCommand, row.expectedArgs, { stdio: 'inherit', cwd: app });
     } finally {
       rmSync(app, { recursive: true, force: true });

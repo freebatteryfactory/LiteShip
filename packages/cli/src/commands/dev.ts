@@ -13,7 +13,8 @@
  * directory name. Passing either selector always takes this route.
  *
  * Long-running: it does not return until the spawned dev server exits (Ctrl-C),
- * so the JSON receipt is emitted BEFORE the spawn hands over the terminal.
+ * so a launching receipt is emitted BEFORE the spawn hands over the terminal.
+ * A second receipt records the eventual exit or launch failure.
  *
  * @module
  */
@@ -34,12 +35,15 @@ import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt emitted by `liteship dev` when it delegates to the consumer app's own host dev server. */
 export interface DevHostReceipt {
-  readonly status: 'ok';
+  readonly status: 'ok' | 'failed';
   readonly command: 'dev';
   readonly timestamp: WallClockTimestamp;
   readonly host: BuildHost;
   readonly packageManager: ProjectPackageManager;
   readonly mode: 'host';
+  readonly phase: 'launching' | 'exited' | 'launch-failed';
+  readonly exitCode?: number;
+  readonly failure?: string;
 }
 
 type DevSpawn = typeof spawnArgv;
@@ -59,8 +63,9 @@ function resolveExample(opts: { example?: string; tutorial?: boolean }): string 
  * config), delegates to the host's own dev server (`astro dev` / `vite dev`) and
  * emits a `{ mode: 'host', host }` receipt. Otherwise resolves an example under
  * `examples/<name>` and launches its dev server. Either way it emits a startup
- * receipt, then hands the terminal to the dev server and returns its exit code
- * (0 on a clean shutdown); exits 1 with a diagnostic when there is nothing to
+ * receipt, then hands the terminal to the dev server. A terminal receipt records
+ * a clean/nonzero exit or a launch failure. The command returns the child exit
+ * code (0 on a clean shutdown), or 1 when launch fails or there is nothing to
  * launch on the examples route.
  */
 export function createDevCommand(spawn: DevSpawn = spawnArgv): DevCommand {
@@ -91,12 +96,33 @@ export function createDevCommand(spawn: DevSpawn = spawnArgv): DevCommand {
           host,
           packageManager,
           mode: 'host',
+          phase: 'launching',
         };
         // Receipt BEFORE the spawn: the dev server is long-running/interactive and
         // never returns until Ctrl-C, so stdout must carry the JSON receipt first.
         emit(receipt);
         const invocation = projectBinaryInvocation(packageManager, host, ['dev']);
-        return (await spawn(invocation.command, invocation.args, { stdio: 'inherit', cwd })).exitCode;
+        try {
+          const result = await spawn(invocation.command, invocation.args, { stdio: 'inherit', cwd });
+          emit({
+            ...receipt,
+            status: result.exitCode === 0 ? 'ok' : 'failed',
+            timestamp: new Date(wallClock.now()).toISOString(),
+            phase: 'exited',
+            exitCode: result.exitCode,
+          });
+          return result.exitCode;
+        } catch (error) {
+          emit({
+            ...receipt,
+            status: 'failed',
+            timestamp: new Date(wallClock.now()).toISOString(),
+            phase: 'launch-failed',
+            exitCode: 1,
+            failure: error instanceof Error ? error.message : String(error),
+          });
+          return 1;
+        }
       }
     }
 
@@ -114,19 +140,40 @@ export function createDevCommand(spawn: DevSpawn = spawnArgv): DevCommand {
       return 1;
     }
 
-    emit({
+    const receipt = {
       status: 'ok',
       command: 'dev',
       timestamp: new Date(wallClock.now()).toISOString(),
       example,
       dir: exampleRel,
-    });
+      phase: 'launching',
+    } as const;
+    emit(receipt);
 
     // Mirror the root `pnpm dev` shape (`pnpm --dir examples/<name> dev`). Inherit
     // stdio so the dev server is fully interactive; the process blocks here until
     // the child exits, and its exit code becomes ours.
-    const result = await spawn('pnpm', ['--dir', exampleRel, 'dev'], { stdio: 'inherit', cwd });
-    return result.exitCode;
+    try {
+      const result = await spawn('pnpm', ['--dir', exampleRel, 'dev'], { stdio: 'inherit', cwd });
+      emit({
+        ...receipt,
+        status: result.exitCode === 0 ? 'ok' : 'failed',
+        timestamp: new Date(wallClock.now()).toISOString(),
+        phase: 'exited',
+        exitCode: result.exitCode,
+      });
+      return result.exitCode;
+    } catch (error) {
+      emit({
+        ...receipt,
+        status: 'failed',
+        timestamp: new Date(wallClock.now()).toISOString(),
+        phase: 'launch-failed',
+        exitCode: 1,
+        failure: error instanceof Error ? error.message : String(error),
+      });
+      return 1;
+    }
   };
 }
 

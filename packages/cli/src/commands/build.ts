@@ -35,6 +35,8 @@ export interface BuildReceipt {
   readonly host: BuildHost;
   readonly packageManager: ProjectPackageManager;
   readonly exitCode: number;
+  /** Bounded launch failure when the host process could not be created. */
+  readonly failure?: string;
 }
 
 type BuildSpawn = typeof spawnArgvVisible;
@@ -88,7 +90,22 @@ export function createBuildCommand(spawn: BuildSpawn = spawnArgvVisible): BuildC
     }
     const packageManager = detectedManager.manager;
     const invocation = projectBinaryInvocation(packageManager, host, ['build']);
-    const result = await spawn(invocation.command, invocation.args, { cwd });
+    let result: Awaited<ReturnType<BuildSpawn>>;
+    try {
+      result = await spawn(invocation.command, invocation.args, { cwd });
+    } catch (error) {
+      const receipt: BuildReceipt = {
+        status: 'failed',
+        command: 'build',
+        timestamp: new Date(wallClock.now()).toISOString(),
+        host,
+        packageManager,
+        exitCode: 1,
+        failure: error instanceof Error ? error.message : String(error),
+      };
+      emit(receipt);
+      return 1;
+    }
 
     const receipt: BuildReceipt = {
       status: result.exitCode === 0 ? 'ok' : 'failed',
