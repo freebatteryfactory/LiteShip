@@ -35,6 +35,17 @@ const blendOverrides = new Map();
 /** @type {Set<string>} */
 const dirtyNames = new Set();
 
+function emptyCompositeState() {
+  return {
+    discrete: {},
+    blend: {},
+    outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
+    resolvedStateGenerations: {},
+  };
+}
+
+let previousState = emptyCompositeState();
+
 const MS_PER_SEC = 1000;
 
 /** @type {number} */
@@ -42,11 +53,16 @@ let lastComputeTime = 0;
 let frameCount = 0;
 let fpsAccum = 0;
 let currentFps = 0;
+let targetFps = 60;
 
 function removeQuantizer(name) {
   quantizers.delete(name);
   blendOverrides.delete(name);
   dirtyNames.delete(name);
+  // A removal changes the full snapshot shape. Rebuild all remaining names on
+  // the next compute so no output key from the removed quantizer survives.
+  previousState = emptyCompositeState();
+  for (const remainingName of quantizers.keys()) dirtyNames.add(remainingName);
 }
 
 function evaluateQuantizer(name, value) {
@@ -68,16 +84,18 @@ function setBlendWeights(name, weights) {
 function applyResolvedStateEntry(entry) {
   const q = quantizers.get(entry.name);
   if (!q) {
-    return;
+    return false;
   }
 
   const nextGeneration = typeof entry.generation === "number" ? entry.generation : q.currentGeneration;
-  const changed = entry.state !== q.currentState || nextGeneration !== q.currentGeneration;
+  const additionalOutputsChanged = entry.state !== q.currentState;
+  const changed = additionalOutputsChanged || nextGeneration !== q.currentGeneration;
   q.currentState = entry.state;
   q.currentGeneration = nextGeneration;
   if (changed) {
     dirtyNames.add(entry.name);
   }
+  return additionalOutputsChanged;
 }
 
 function applyUpdate(update) {
@@ -99,10 +117,7 @@ function registerQuantizer(registration) {
     typeof registration.initialState === "string"
       ? registration.initialState
       : registration.states[0] || "";
-  const thresholdsRaw = registration.thresholds;
-  const thresholds = thresholdsRaw instanceof Float64Array
-    ? Array.from(thresholdsRaw)
-    : Array.from(thresholdsRaw);
+  const thresholds = Array.from(registration.thresholds);
   quantizers.set(registration.name, {
     id: registration.boundaryId,
     states: Array.from(registration.states),
@@ -146,6 +161,7 @@ function resetWorkerState() {
   quantizers.clear();
   blendOverrides.clear();
   dirtyNames.clear();
+  previousState = emptyCompositeState();
 }
 
 ${EVALUATE_THRESHOLDS_SOURCE}
@@ -157,16 +173,19 @@ ${EVALUATE_THRESHOLDS_SOURCE}
 function compute() {
   const now = typeof performance !== "undefined" ? performance.now() : Date.now();
 
-  const discrete = {};
-  const blend = {};
-  const css = {};
-  const glsl = {};
+  // Start from the prior COMPLETE snapshot. Dirty quantizers overwrite their
+  // projections below; clean quantizers remain present exactly as the canonical
+  // main-thread compositor's carry-forward law requires.
+  const discrete = Object.assign({}, previousState.discrete);
+  const blend = Object.assign({}, previousState.blend);
+  const css = Object.assign({}, previousState.outputs.css);
+  const glsl = Object.assign({}, previousState.outputs.glsl);
   // WGSL channel: the live state index is emitted below into the single fixed
   // state_index struct field (slot 0), mirroring the host emit-wgsl so off-thread
   // WGSL shaders driven by client:worker receive the same crossing as client:gpu.
-  const wgsl = {};
-  const aria = {};
-  const resolvedStateGenerations = {};
+  const wgsl = Object.assign({}, previousState.outputs.wgsl);
+  const aria = Object.assign({}, previousState.outputs.aria);
+  const resolvedStateGenerations = Object.assign({}, previousState.resolvedStateGenerations);
 
   // Only recompute dirty quantizers if we have a dirty set,
   // otherwise recompute all (initial case or fallback).
@@ -229,13 +248,15 @@ function compute() {
       self.postMessage({
         type: "metrics",
         fps: currentFps,
-        budgetUsed: dt,
+        budgetUsed: dt / (MS_PER_SEC / targetFps),
       });
     }
   }
   lastComputeTime = now;
 
-  return { discrete, blend, outputs: { css, glsl, wgsl, aria }, resolvedStateGenerations };
+  const state = { discrete, blend, outputs: { css, glsl, wgsl, aria }, resolvedStateGenerations };
+  previousState = state;
+  return state;
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +271,9 @@ self.addEventListener("message", function (e) {
     case "init": {
       // Reset state on init
       resetWorkerState();
+      targetFps = typeof msg.config?.targetFps === "number" && msg.config.targetFps > 0
+        ? msg.config.targetFps
+        : 60;
       self.postMessage({ type: "ready" });
       break;
     }
@@ -291,30 +315,32 @@ self.addEventListener("message", function (e) {
     }
 
     case "bootstrap-resolved-state": {
+      let additionalOutputsChanged = false;
       for (const entry of msg.states) {
-        applyResolvedStateEntry(entry);
+        additionalOutputsChanged = applyResolvedStateEntry(entry) || additionalOutputsChanged;
       }
       if (msg.ack === true) {
         self.postMessage({
           type: "resolved-state-ack",
           generation: typeof msg.states[0]?.generation === "number" ? msg.states[0].generation : 0,
           states: msg.states.map((entry) => ({ name: entry.name, state: entry.state })),
-          additionalOutputsChanged: false,
+          additionalOutputsChanged: additionalOutputsChanged,
         });
       }
       break;
     }
 
     case "apply-resolved-state": {
+      let additionalOutputsChanged = false;
       for (const entry of msg.states) {
-        applyResolvedStateEntry(entry);
+        additionalOutputsChanged = applyResolvedStateEntry(entry) || additionalOutputsChanged;
       }
       if (msg.ack === true) {
         self.postMessage({
           type: "resolved-state-ack",
           generation: typeof msg.states[0]?.generation === "number" ? msg.states[0].generation : 0,
           states: msg.states.map((entry) => ({ name: entry.name, state: entry.state })),
-          additionalOutputsChanged: false,
+          additionalOutputsChanged: additionalOutputsChanged,
         });
       }
       break;
@@ -345,8 +371,13 @@ self.addEventListener("message", function (e) {
     case "warm-reset": {
       blendOverrides.clear();
       dirtyNames.clear();
+      previousState = emptyCompositeState();
       for (const quantizer of quantizers.values()) {
         quantizer.currentState = quantizer.states[0] || "";
+        quantizer.currentGeneration = 0;
+      }
+      for (const name of quantizers.keys()) {
+        dirtyNames.add(name);
       }
       break;
     }

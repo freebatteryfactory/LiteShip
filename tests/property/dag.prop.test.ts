@@ -76,8 +76,8 @@ describe('DAG properties', () => {
 
         // Each hash should appear after its parent
         for (let i = 1; i < hashes.length; i++) {
-          const parentIdx = hashOrder.indexOf(hashes[i - 1]);
-          const childIdx = hashOrder.indexOf(hashes[i]);
+          const parentIdx = hashOrder.indexOf(hashes[i - 1]!);
+          const childIdx = hashOrder.indexOf(hashes[i]!);
           if (childIdx <= parentIdx) return false;
         }
         return true;

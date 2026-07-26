@@ -54,7 +54,7 @@ const renderer = RenderWorker.create({ targetFps: 30 });
 const offscreen = canvas.transferControlToOffscreen();
 renderer.transferCanvas(offscreen);
 renderer.onFrame((frame) => {
-  // stream frame.image / frame.timestampMs somewhere
+  // project frame.state.outputs.css and frame.progress somewhere
 });
 renderer.startRender({ durationMs: 4000, fps: 30, width: 640, height: 360 });
 ```

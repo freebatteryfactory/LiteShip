@@ -10,7 +10,7 @@
 
 Defined in: [core/src/motion/interpret-transition.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L261)
 
-Interpret a [TransitionNode](../interfaces/TransitionNode.md) into CSS + runtime motion plans.
+Interpret a `TransitionNode` into CSS + runtime motion plans.
 
 Reads `fromPose`, `toPose`, `routing`, and `durationMs`; resolves the boundary
 transitively via pose → entity → component; diffs bindings into typed tweens.

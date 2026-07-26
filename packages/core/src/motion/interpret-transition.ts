@@ -253,7 +253,7 @@ function emptyPlan(graphId: ContentAddress, diagnostics: MotionDiagnosticPayload
 }
 
 /**
- * Interpret a {@link TransitionNode} into CSS + runtime motion plans.
+ * Interpret a `TransitionNode` into CSS + runtime motion plans.
  *
  * Reads `fromPose`, `toPose`, `routing`, and `durationMs`; resolves the boundary
  * transitively via pose → entity → component; diffs bindings into typed tweens.

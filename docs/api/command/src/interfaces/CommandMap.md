@@ -6,7 +6,7 @@
 
 # Interface: CommandMap
 
-Defined in: [command/src/catalog.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L57)
+Defined in: [command/src/catalog.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L58)
 
 The name-keyed payload contract: for each handler-backed command, the `payload`
 type its result carries. `dispatch<N extends keyof CommandMap>` reads this to
@@ -23,7 +23,7 @@ handler-backed command maps to its own named payload type (no `unknown`), so a
 
 > `readonly` **asset.analyze**: [`AssetAnalyzePayload`](../type-aliases/AssetAnalyzePayload.md)
 
-Defined in: [command/src/catalog.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L63)
+Defined in: [command/src/catalog.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L64)
 
 ***
 
@@ -31,7 +31,7 @@ Defined in: [command/src/catalog.ts:63](https://github.com/freebatteryfactory/Li
 
 > `readonly` **asset.verify**: [`AssetVerifyPayload`](../type-aliases/AssetVerifyPayload.md)
 
-Defined in: [command/src/catalog.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L64)
+Defined in: [command/src/catalog.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L65)
 
 ***
 
@@ -39,7 +39,7 @@ Defined in: [command/src/catalog.ts:64](https://github.com/freebatteryfactory/Li
 
 > `readonly` **audit**: [`AuditPayload`](../type-aliases/AuditPayload.md)
 
-Defined in: [command/src/catalog.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L69)
+Defined in: [command/src/catalog.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L70)
 
 ***
 
@@ -47,7 +47,7 @@ Defined in: [command/src/catalog.ts:69](https://github.com/freebatteryfactory/Li
 
 > `readonly` **audit-floor**: [`AuditFloorPayload`](../type-aliases/AuditFloorPayload.md)
 
-Defined in: [command/src/catalog.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L70)
+Defined in: [command/src/catalog.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L71)
 
 ***
 
@@ -55,7 +55,7 @@ Defined in: [command/src/catalog.ts:70](https://github.com/freebatteryfactory/Li
 
 > `readonly` **capsule-verify**: [`CapsuleVerifyPayload`](../type-aliases/CapsuleVerifyPayload.md)
 
-Defined in: [command/src/catalog.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L74)
+Defined in: [command/src/catalog.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L75)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [command/src/catalog.ts:74](https://github.com/freebatteryfactory/Li
 
 > `readonly` **capsule.inspect**: [`CapsuleInspectPayload`](../type-aliases/CapsuleInspectPayload.md)
 
-Defined in: [command/src/catalog.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L60)
+Defined in: [command/src/catalog.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L61)
 
 ***
 
@@ -71,7 +71,7 @@ Defined in: [command/src/catalog.ts:60](https://github.com/freebatteryfactory/Li
 
 > `readonly` **capsule.list**: [`CapsuleListPayload`](../type-aliases/CapsuleListPayload.md)
 
-Defined in: [command/src/catalog.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L61)
+Defined in: [command/src/catalog.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L62)
 
 ***
 
@@ -79,7 +79,7 @@ Defined in: [command/src/catalog.ts:61](https://github.com/freebatteryfactory/Li
 
 > `readonly` **capsule.verify**: [`CapsuleVerifyResultPayload`](../type-aliases/CapsuleVerifyResultPayload.md)
 
-Defined in: [command/src/catalog.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L62)
+Defined in: [command/src/catalog.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L63)
 
 ***
 
@@ -87,7 +87,7 @@ Defined in: [command/src/catalog.ts:62](https://github.com/freebatteryfactory/Li
 
 > `readonly` **check-invariants**: [`CheckInvariantsPayload`](../type-aliases/CheckInvariantsPayload.md)
 
-Defined in: [command/src/catalog.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L73)
+Defined in: [command/src/catalog.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L74)
 
 ***
 
@@ -95,7 +95,7 @@ Defined in: [command/src/catalog.ts:73](https://github.com/freebatteryfactory/Li
 
 > `readonly` **check.gates**: [`CheckPayload`](../type-aliases/CheckPayload.md)
 
-Defined in: [command/src/catalog.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L75)
+Defined in: [command/src/catalog.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L76)
 
 ***
 
@@ -103,7 +103,7 @@ Defined in: [command/src/catalog.ts:75](https://github.com/freebatteryfactory/Li
 
 > `readonly` **context**: [`ContextPayload`](../type-aliases/ContextPayload.md)
 
-Defined in: [command/src/catalog.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L77)
+Defined in: [command/src/catalog.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L78)
 
 ***
 
@@ -111,7 +111,7 @@ Defined in: [command/src/catalog.ts:77](https://github.com/freebatteryfactory/Li
 
 > `readonly` **explain**: [`ExplainPayload`](../type-aliases/ExplainPayload.md)
 
-Defined in: [command/src/catalog.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L76)
+Defined in: [command/src/catalog.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L77)
 
 ***
 
@@ -119,7 +119,7 @@ Defined in: [command/src/catalog.ts:76](https://github.com/freebatteryfactory/Li
 
 > `readonly` **glossary**: [`GlossaryPayload`](../type-aliases/GlossaryPayload.md)
 
-Defined in: [command/src/catalog.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L58)
+Defined in: [command/src/catalog.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L59)
 
 ***
 
@@ -127,7 +127,7 @@ Defined in: [command/src/catalog.ts:58](https://github.com/freebatteryfactory/Li
 
 > `readonly` **package-smoke**: [`PackageSmokePayload`](../type-aliases/PackageSmokePayload.md)
 
-Defined in: [command/src/catalog.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L72)
+Defined in: [command/src/catalog.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L73)
 
 ***
 
@@ -135,7 +135,7 @@ Defined in: [command/src/catalog.ts:72](https://github.com/freebatteryfactory/Li
 
 > `readonly` **plumb**: [`PlumbPayload`](../type-aliases/PlumbPayload.md)
 
-Defined in: [command/src/catalog.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L71)
+Defined in: [command/src/catalog.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L72)
 
 ***
 
@@ -143,7 +143,7 @@ Defined in: [command/src/catalog.ts:71](https://github.com/freebatteryfactory/Li
 
 > `readonly` **scene.compile**: [`SceneCompilePayload`](../type-aliases/SceneCompilePayload.md)
 
-Defined in: [command/src/catalog.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L66)
+Defined in: [command/src/catalog.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L67)
 
 ***
 
@@ -151,7 +151,7 @@ Defined in: [command/src/catalog.ts:66](https://github.com/freebatteryfactory/Li
 
 > `readonly` **scene.render**: [`SceneRenderPayload`](../type-aliases/SceneRenderPayload.md)
 
-Defined in: [command/src/catalog.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L67)
+Defined in: [command/src/catalog.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L68)
 
 ***
 
@@ -159,7 +159,7 @@ Defined in: [command/src/catalog.ts:67](https://github.com/freebatteryfactory/Li
 
 > `readonly` **scene.verify**: [`SceneVerifyPayload`](../type-aliases/SceneVerifyPayload.md)
 
-Defined in: [command/src/catalog.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L65)
+Defined in: [command/src/catalog.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L66)
 
 ***
 
@@ -167,7 +167,7 @@ Defined in: [command/src/catalog.ts:65](https://github.com/freebatteryfactory/Li
 
 > `readonly` **verify**: [`VerifyPayload`](../type-aliases/VerifyPayload.md)
 
-Defined in: [command/src/catalog.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L68)
+Defined in: [command/src/catalog.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L69)
 
 ***
 
@@ -175,4 +175,4 @@ Defined in: [command/src/catalog.ts:68](https://github.com/freebatteryfactory/Li
 
 > `readonly` **version**: [`VersionPayload`](../type-aliases/VersionPayload.md)
 
-Defined in: [command/src/catalog.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L59)
+Defined in: [command/src/catalog.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L60)

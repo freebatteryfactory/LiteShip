@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 const demoDouble = () =>
@@ -24,8 +23,6 @@ const REAL_CTX = {
 } as const;
 
 describe('generatePureTransformHarness', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   it('emits a real property test + real bench when the binding and compile-time probe are supplied', () => {
     const { testFile, benchFile } = Harness.generatePureTransform(demoDouble(), REAL_CTX);
     expect(testFile).toContain("describe('demo.double'");

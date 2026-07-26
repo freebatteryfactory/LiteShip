@@ -422,7 +422,13 @@ describe('initWGSLRuntime — liteship:uniform-update → uniform buffer (D1-WGS
     // and is dropped with a warnOnce at binding setup (layout-derived from the
     // declared struct, not from event payload order).
     const dispose = await initWGSLRuntime(canvas, OVERFLOW_SHADER, el);
-    expect(events).toContainEqual(expect.objectContaining({ code: 'astro/wgpu/wgsl-uniform-buffer-full' }));
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        code: 'astro/wgpu/wgsl-uniform-buffer-full',
+        message: expect.stringContaining('split it across smaller shader programs'),
+      }),
+    );
+    expect(events.every((event) => !event.message.includes('wgpu.ts'))).toBe(true);
     dispose!();
   });
 

@@ -43,7 +43,7 @@ Defined in: [edge/src/kv-cache.ts:50](https://github.com/freebatteryfactory/Lite
 
 ### glsl?
 
-> `readonly` `optional` **glsl?**: `CompiledGLSLOutput`
+> `readonly` `optional` **glsl?**: [`CompiledGLSLOutput`](CompiledGLSLOutput.md)
 
 Defined in: [edge/src/kv-cache.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L68)
 
@@ -66,7 +66,7 @@ Defined in: [edge/src/kv-cache.ts:51](https://github.com/freebatteryfactory/Lite
 
 ### wgsl?
 
-> `readonly` `optional` **wgsl?**: `CompiledWGSLOutput`
+> `readonly` `optional` **wgsl?**: [`CompiledWGSLOutput`](CompiledWGSLOutput.md)
 
 Defined in: [edge/src/kv-cache.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L76)
 

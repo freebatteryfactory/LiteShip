@@ -25,7 +25,7 @@ for (const f of result.findings) {
 }
 ```
 
-In a repo with `@liteship/*` packages installed, this logs the merged counts and one line per finding. `consumerDevopsProfile(cwd)` audits what is actually installed in `node_modules` (every liteship package publishes `src/` alongside `dist/`, so source-level checks run on shipped artifacts); inside the LiteShip monorepo itself, call `runAuditPasses()` with no argument to glob `packages/*` instead.
+In a repo with `@liteship/*` packages installed, this logs the merged counts and one line per finding. `consumerDevopsProfile(cwd)` audits what is actually installed in `node_modules` using each package's catalog-declared analyzable artifacts (ordinary source packages ship `src/`; the types-only spine ships declarations). A discovered package whose declared artifacts match no files is reported as unverified rather than clean. Inside the LiteShip monorepo itself, call `runAuditPasses()` with no argument to audit `packages/*` instead.
 
 ## Rule ids
 

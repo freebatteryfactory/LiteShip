@@ -41,6 +41,11 @@ function runtimeSpecifiers(path: string): readonly string[] {
   return specifiers;
 }
 
+/** Parse the static runtime import/export specifiers for one source entrypoint. */
+export function sourceRuntimeImports(root: string, entry: string): readonly string[] {
+  return runtimeSpecifiers(resolve(root, entry)).sort((left, right) => left.localeCompare(right));
+}
+
 function resolveSourceImport(importer: string, specifier: string): string | null {
   if (!specifier.startsWith('.')) return null;
   const unresolved = resolve(dirname(importer), specifier);

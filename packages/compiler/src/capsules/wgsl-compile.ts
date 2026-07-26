@@ -210,6 +210,3 @@ export const wgslCompileCapsule = defineCapsule({
     return { stateNames, fieldNames, states, result };
   },
 });
-
-/** Internal helpers exported for direct unit assertions over the seed→inputs builder. */
-export const _wgslCompileInternals = { buildInputs, makeBoundary } as const;

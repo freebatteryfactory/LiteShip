@@ -4,6 +4,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { liteshipMiddleware } from '@liteship/astro';
+import { CAP_AXES } from '@liteship/detect';
 import { onRequest as autoWiredOnRequest } from '../../../packages/astro/src/middleware-entry.js';
 
 // ---------------------------------------------------------------------------
@@ -155,6 +156,8 @@ describe('liteshipMiddleware', () => {
 
     const liteship = context.locals.liteship as Record<string, unknown>;
     const tiers = liteship.tiers as Record<string, string>;
+    expect(Object.keys(tiers)).toEqual(CAP_AXES);
+    expect(Object.isFrozen(tiers)).toBe(true);
     expect(tiers.tier).toBeDefined();
     expect(tiers.motion).toBeDefined();
     expect(tiers.design).toBeDefined();

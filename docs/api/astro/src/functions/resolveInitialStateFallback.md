@@ -20,7 +20,7 @@ For smarter resolution with client hints and user agent parsing, use
 
 ### boundary
 
-[`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+[`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ## Returns
 

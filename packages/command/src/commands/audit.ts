@@ -112,6 +112,7 @@ export const auditCommand = defineCommand({
         findings: { type: 'boolean' },
       },
     } as const satisfies CommandJsonSchema,
+    cli: { outputMode: 'json', adapterFlags: { '--consumer-app': { type: 'boolean' } } },
     outputSchema: AuditPayloadSchema,
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'setup' },

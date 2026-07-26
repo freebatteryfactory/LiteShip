@@ -44,7 +44,7 @@ Normalized program time `frame / max(1, totalFrames-1)` — endpoint-inclusive.
 
 ### values
 
-> `readonly` **values**: `ReadonlyMap`\<`string`, `TypedValue`\>
+> `readonly` **values**: `ReadonlyMap`\<`string`, [`TypedValue`](../../../liteship/src/motion/type-aliases/TypedValue.md)\>
 
 Defined in: [stage/src/motion-export.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L29)
 

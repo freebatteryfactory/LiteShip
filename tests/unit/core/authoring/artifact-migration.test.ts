@@ -216,7 +216,31 @@ describe('artifact migration — DocumentGraph (_version)', () => {
       thrown = e;
     }
     expect(hasTag(thrown, 'ParseError')).toBe(true);
-    expect((thrown as { code?: string }).code).toBe('malformed_node');
+    expect((thrown as { code?: string }).code).toBe('core/document-graph/malformed_node');
+  });
+
+  test.each([
+    [
+      'edge',
+      (wire: Record<string, unknown>) => {
+        wire.edges = [{ from: 'fnv1a:00000000', to: 'fnv1a:00000000', type: 'bogus' }];
+      },
+      'core/document-graph/malformed_edge',
+    ],
+    ['metadata', (wire: Record<string, unknown>) => void (wire.meta = null), 'core/document-graph/malformed_meta'],
+    ['identity', (wire: Record<string, unknown>) => void (wire.id = null), 'core/document-graph/malformed_id'],
+    ['digest', (wire: Record<string, unknown>) => void (wire.digest = null), 'core/document-graph/malformed_digest'],
+  ] as const)('a malformed %s fails with its registered diagnostic identity', (_label, corrupt, code) => {
+    const wire = JSON.parse(JSON.stringify(graph([node('a')], []))) as Record<string, unknown>;
+    corrupt(wire);
+    let thrown: unknown;
+    try {
+      decodeDocumentGraph(wire);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ParseError')).toBe(true);
+    expect((thrown as { code?: string }).code).toBe(code);
   });
 });
 

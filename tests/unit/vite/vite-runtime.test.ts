@@ -352,6 +352,12 @@ describe('@liteship/vite plugin', () => {
     expect(vitePlugin.transformIndexHtml?.()).toEqual([]);
   });
 
+  test('never injects the dev-only HMR client into production builds', () => {
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root: process.cwd(), command: 'build', base: '/' } as never);
+    expect(vitePlugin.transformIndexHtml?.()).toEqual([]);
+  });
+
   test('derives browser environment by default and honors explicit overrides', async () => {
     const defaultPlugin = plugin();
     const defaultResult = (await defaultPlugin.config?.()) as { environments: Record<string, unknown> };
@@ -1340,6 +1346,42 @@ describe('@liteship/vite plugin', () => {
       } as never,
     );
     expect(cssUpdate).toEqual([cssModule]);
+  });
+
+  test('purges query-bearing shadow evidence when a CSS module is deleted', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'mobile']] as const });
+    writeModule(srcDir, 'boundaries.ts', 'layout', boundary);
+
+    const boundaryFile = join(srcDir, 'boundary.css');
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve', base: '/' } as never);
+    await vitePlugin.transform?.call(
+      { warn() {}, addWatchFile() {} } as never,
+      '@quantize layout { mobile { .hero { color: red; } } }',
+      `${boundaryFile}?direct`,
+    );
+
+    const moduleGraph = {
+      idToModuleMap: new Map(),
+      getModuleById() {
+        return undefined;
+      },
+    };
+    vitePlugin.hotUpdate?.call(
+      { environment: { moduleGraph } } as never,
+      { file: boundaryFile, type: 'delete', modules: [] } as never,
+    );
+
+    const warnings: string[] = [];
+    await vitePlugin.transform?.call(
+      { warn(message: string) { warnings.push(message); }, addWatchFile() {} } as never,
+      '.hero { color: green; }',
+      join(srcDir, 'foreign.css'),
+    );
+    expect(warnings).toEqual([]);
   });
 
   test('returns nothing for missed css modules or when hmr is disabled', () => {

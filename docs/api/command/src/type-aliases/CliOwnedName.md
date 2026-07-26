@@ -8,7 +8,7 @@
 
 > **CliOwnedName** = *typeof* [`CLI_OWNED_DESCRIPTORS`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts)\[`number`\]\[`"name"`\]
 
-Defined in: [command/src/catalog.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L244)
+Defined in: [command/src/catalog.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L286)
 
 The closed union of CLI-owned command names, DERIVED from
 [CLI\_OWNED\_DESCRIPTORS](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts) (`as const`). The CLI's dispatch keys its

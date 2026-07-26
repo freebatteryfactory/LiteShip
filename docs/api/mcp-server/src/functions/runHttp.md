@@ -6,11 +6,13 @@
 
 # Function: runHttp()
 
-> **runHttp**(`bind`): `Promise`\<`void`\>
+> **runHttp**(`bind`): `Promise`\<`HttpServerHandle`\>
 
-Defined in: [mcp-server/src/http-server.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/http-server.ts#L57)
+Defined in: [mcp-server/src/http-server.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/http-server.ts#L70)
 
-Run the MCP HTTP server bound to `bind` (e.g. 3838, ":3838", or "127.0.0.1:8080").
+Start the MCP HTTP server bound to `bind` and return its lifecycle handle.
+This function never writes process output or installs signal handlers, so it
+is safe to embed in another host.
 
 ## Parameters
 
@@ -20,4 +22,4 @@ Run the MCP HTTP server bound to `bind` (e.g. 3838, ":3838", or "127.0.0.1:8080"
 
 ## Returns
 
-`Promise`\<`void`\>
+`Promise`\<`HttpServerHandle`\>

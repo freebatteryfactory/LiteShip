@@ -14,6 +14,8 @@ export {
   scaffold,
   defaultTemplateDir,
   projectNameFromDir,
+  type ScaffoldError,
+  type ScaffoldFailureReason,
   type ScaffoldOptions,
   type ScaffoldResult,
 } from './scaffold.js';

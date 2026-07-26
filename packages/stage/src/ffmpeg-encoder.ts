@@ -7,8 +7,8 @@
  * This module is NODE-ONLY (`node:child_process`, `node:fs`) and is deliberately
  * NOT imported by `dual-export.ts` (stage's pure graph-walk core). It is
  * INJECTED at the call site — `exportVideoEncoded(graph, ffmpegFrameEncoder())`.
- * The browser counterpart is `@liteship/web`'s WebCodecs `captureVideo`; both are
- * real backends of the one {@link FrameEncoder} shape.
+ * `@liteship/web`'s canvas/WebCodecs capture route is a distinct renderer
+ * contract and is not presented as an implementation of this encoder shape.
  *
  * ffmpeg is a standard dev/CI binary, not a hard dependency: {@link ffmpegEncodeAvailable}
  * probes for it (and for libx264) so callers can env-gate honestly — an

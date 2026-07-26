@@ -86,6 +86,7 @@ export const noBareThrowIRGate: Gate = defineGate({
   level: 'L1',
   describe:
     "Flags bare `throw new Error(...)` by folding the IR's AST-precise `bare-throw` facts (the IR-fold twin of no-bare-throw).",
+  access: { ir: ['facts'] },
   run: fold,
   fixtures: {
     red: {

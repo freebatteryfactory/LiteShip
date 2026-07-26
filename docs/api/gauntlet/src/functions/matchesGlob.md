@@ -8,7 +8,7 @@
 
 > **matchesGlob**(`file`, `glob`): `boolean`
 
-Defined in: [gauntlet/src/assurance-map.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L250)
+Defined in: [gauntlet/src/assurance-map.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L273)
 
 True iff `file` matches `glob` under the small dialect. Pure + deterministic.
 

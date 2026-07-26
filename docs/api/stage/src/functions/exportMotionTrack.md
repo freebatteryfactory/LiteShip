@@ -20,7 +20,7 @@ video leg, exactly as `dual-export.ts` content-addresses its frame stream.
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### totalFrames
 

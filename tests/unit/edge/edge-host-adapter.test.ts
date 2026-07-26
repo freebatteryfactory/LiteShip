@@ -182,6 +182,33 @@ describe('createEdgeHostAdapter', () => {
     expect(result.cacheStatus).toBe('miss');
   });
 
+  test('request capability changes cannot reuse a compiled output from the same visible motion/design tier', async () => {
+    const { kv } = makeKV();
+    let compileCalls = 0;
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaryId: testBoundary.id,
+        compile: ({ tier, capabilities }) => {
+          compileCalls++;
+          return {
+            css: `/* ${tier.capTier}:${capabilities.viewportWidth} */`,
+            propertyRegistrations: '',
+            containerQueries: '',
+          };
+        },
+      },
+    });
+
+    const high = await adapter.resolve(makeHeaders({ 'sec-ch-device-memory': '8', 'sec-ch-viewport-width': '2560' }));
+    const low = await adapter.resolve(makeHeaders({ 'sec-ch-device-memory': '2', 'sec-ch-viewport-width': '360' }));
+
+    expect(high.compiledOutputs?.css).toBe('/* reactive:2560 */');
+    expect(low.compiledOutputs?.css).toBe('/* styled:360 */');
+    expect(low.cacheStatus).toBe('miss');
+    expect(compileCalls).toBe(2);
+  });
+
   test('serves precompiled manifest outputs without touching KV', async () => {
     const { kv, store } = makeKV();
     const boundary = defineBoundary({

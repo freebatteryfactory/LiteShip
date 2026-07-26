@@ -119,9 +119,9 @@ export type {
 
 export { TypeValidator } from './capsule.js';
 
-export { defineCapsule, getCapsuleCatalog } from './assembly.js';
+export { defineCapsule, defineCapsuleCatalog } from './assembly.js';
 
-export type { CapsuleDef } from './assembly.js';
+export type { CapsuleCatalog, CapsuleDef } from './assembly.js';
 
 export { boundaryEvaluateCapsule } from './capsules/boundary-evaluate.js';
 

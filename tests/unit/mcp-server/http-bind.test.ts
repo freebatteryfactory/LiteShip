@@ -1,7 +1,6 @@
 /**
- * Unit tests for the `--http` bind shapes (parseHttpBind). The bootstrap
- * (createServer/listen/SIGINT) stays untested here — only the pure bind
- * resolution, so no server process is ever spawned.
+ * Unit tests for the `--http` bind shapes (parseHttpBind). Embedded socket
+ * lifecycle is proved separately in http-lifecycle.test.ts.
  */
 import { describe, it, expect } from 'vitest';
 import { hasTag } from '@liteship/error';

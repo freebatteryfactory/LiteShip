@@ -69,8 +69,10 @@ describe('@liteship/command explain command — diagnostic-code arm', () => {
   });
 
   it.each([
+    ['error/match-tag/unhandled', 'error', '@liteship/error'],
     ['schema/type', 'schema', '@liteship/core/schema'],
     ['compiler/css/unknown-state-key', 'compiler', '@liteship/compiler'],
+    ['genui/unknown-component', 'genui', '@liteship/genui'],
     ['astro/wgpu/webgpu-unavailable', 'astro', '@liteship/astro'],
     ['cli/usage', 'cli', '@liteship/cli'],
     ['migrate/malformed-input', 'migrate', '@liteship/compiler/migrate'],
@@ -150,6 +152,26 @@ describe('@liteship/command explain command — exported-symbol arm', () => {
         disposal: 'dispose-async',
         postDispose: 'inert',
         siblingCleanup: 'aggregate',
+      },
+    });
+  });
+
+  it('projects the compiler facade failure as an exact executable operation and observation', async () => {
+    const { payload } = await explain('CSSCompiler', resolver);
+    expect(payload.symbol!.surface).toMatchObject({
+      specifier: 'liteship/compiler',
+      failureContract:
+        'CSS state keys outside the boundary are omitted and emit the registered compiler/css/unknown-state-key diagnostic.',
+      failureProof: {
+        test: expect.stringContaining(
+          'facade-failure-contract.test.ts::liteship/compiler failure contract > CSSCompiler.compile',
+        ),
+        operation: 'CSSCompiler.compile',
+        observation: {
+          kind: 'diagnostic-and-output-omission',
+          code: 'compiler/css/unknown-state-key',
+          outputField: 'raw',
+        },
       },
     });
   });

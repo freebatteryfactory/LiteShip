@@ -6,7 +6,7 @@
 
 # Interface: Gate
 
-Defined in: [gauntlet/src/gate.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L418)
+Defined in: [gauntlet/src/gate.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L472)
 
 A gate — the registered fitness function.
 
@@ -16,11 +16,23 @@ A gate — the registered fitness function.
 
 ## Properties
 
+### access?
+
+> `readonly` `optional` **access?**: [`GateAccessManifest`](GateAccessManifest.md)
+
+Defined in: [gauntlet/src/gate.ts:537](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L537)
+
+Declared GateContext access. Built-in compositions require this manifest;
+downstream legacy gates may omit it and remain uncached/conservatively
+covered, but cannot enter a manifest-qualified composition unnoticed.
+
+***
+
 ### coverage?
 
 > `readonly` `optional` **coverage?**: (`ir`) => readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:445](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L445)
+Defined in: [gauntlet/src/gate.ts:499](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L499)
 
 OPTIONAL coverage declaration (Slice B, B2 — the content-addressed cache).
 Returns the [FileId](../type-aliases/FileId.md)s whose CONTENT this gate's verdict depends on, so
@@ -55,7 +67,7 @@ readonly `string`[]
 
 > `readonly` `optional` **decide?**: (`facts`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:500](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L500)
+Defined in: [gauntlet/src/gate.ts:560](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L560)
 
 (FactGate only) The bounded, DATA-ONLY decision: maps the declared FactPack to
 findings with NO [GateContext](GateContext.md) access. Set by [defineFactGate](../functions/defineFactGate.md); the
@@ -77,7 +89,7 @@ readonly [`Finding`](Finding.md)[]
 
 > `readonly` **describe**: `string`
 
-Defined in: [gauntlet/src/gate.ts:424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L424)
+Defined in: [gauntlet/src/gate.ts:478](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L478)
 
 One-line human description of what it checks.
 
@@ -87,7 +99,7 @@ One-line human description of what it checks.
 
 > `readonly` `optional` **evidenceDigest?**: (`context`) => `string` \| `undefined`
 
-Defined in: [gauntlet/src/gate.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L477)
+Defined in: [gauntlet/src/gate.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L531)
 
 OPTIONAL out-of-IR EVIDENCE digest (the verdict-cache soundness keystone). A
 gate's [coverage](#coverage) (or the default-to-all floor) captures only the bytes
@@ -135,7 +147,7 @@ the evidence the digest folds matches the evidence `run` reads.
 
 > `readonly` **fixtures**: [`GateFixtures`](GateFixtures.md)
 
-Defined in: [gauntlet/src/gate.ts:479](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L479)
+Defined in: [gauntlet/src/gate.ts:539](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L539)
 
 The self-proof evidence — required, by construction.
 
@@ -145,7 +157,7 @@ The self-proof evidence — required, by construction.
 
 > `readonly` `optional` **form?**: `"hosted"` \| `"fact"`
 
-Defined in: [gauntlet/src/gate.ts:487](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L487)
+Defined in: [gauntlet/src/gate.ts:547](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L547)
 
 The gate's EXECUTION FORM — the discriminant of the [FactGate](FactGate.md) variant. Absent
 (or `'hosted'`) is the default closure gate: an arbitrary [run](#run) body that may
@@ -159,7 +171,7 @@ evidence. Built by [defineFactGate](../functions/defineFactGate.md); never hand-
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/gate.ts:420](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L420)
+Defined in: [gauntlet/src/gate.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L474)
 
 Stable id; namespaces every [Finding](Finding.md) it emits (traceability).
 
@@ -169,7 +181,7 @@ Stable id; namespaces every [Finding](Finding.md) it emits (traceability).
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/gate.ts:422](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L422)
+Defined in: [gauntlet/src/gate.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L476)
 
 The assurance level this gate operates at — aims its rigor.
 
@@ -179,7 +191,7 @@ The assurance level this gate operates at — aims its rigor.
 
 > `readonly` `optional` **requires?**: readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"checkGovernance"`)[]
 
-Defined in: [gauntlet/src/gate.ts:494](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L494)
+Defined in: [gauntlet/src/gate.ts:554](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L554)
 
 (FactGate only) The fact channels this gate's decision DECLARES it consumes — the
 data analogue of "what evidence does this gate read". The engine folds exactly these
@@ -192,7 +204,7 @@ STRUCTURAL (not a gate-authored [evidenceDigest](#evidencedigest) you must remem
 
 > `readonly` **run**: (`context`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:426](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L426)
+Defined in: [gauntlet/src/gate.ts:480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L480)
 
 The fold: produce findings for `context`. Pure w.r.t. the context.
 

@@ -6,13 +6,13 @@
 
 # Function: exportAstroPage()
 
-> **exportAstroPage**(`graph`): [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+> **exportAstroPage**(`graph`): [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L166)
+Defined in: [stage/src/dual-export.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L156)
 
 Cast the graph's css projections to a static Astro page string.
 
-Walks each `css` [ProjectionNode](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts) → its source [ComponentNode](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts) →
+Walks each `css` [ProjectionNode](../../../liteship/src/graph/interfaces/ProjectionNode.md) → its source [ComponentNode](../../../liteship/src/graph/interfaces/ComponentNode.md) →
 `CSSCompiler.compile` (the existing compiler) for the `<style>` block, then
 `resolveInitialState` + `adaptiveAttrs` (the existing astro helpers) for the
 adaptive shell. The page bytes are content-addressed via
@@ -24,8 +24,8 @@ whose `sourceRefs` are exactly the projection ids it consumed.
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 ## Returns
 
-[`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)

@@ -2,14 +2,14 @@
  * `liteship capsule-verify` adapter — the CLI-only capsule-corpus freshness gate.
  *
  * `runCapsuleGateScan` is a subprocess orchestrator at its core (it spawns
- * `capsule:compile` to regeneration-confirm staleness and `vitest run` over
- * `tests/generated/`), but a substantial slice of its logic runs IN-PROCESS before
+ * `capsule:compile` to regeneration-confirm staleness and the generated-corpus
+ * runner over exact test and benchmark files), but a substantial slice of its logic runs IN-PROCESS before
  * any spawn: the manifest-missing guard, the per-capsule artifact existence checks,
  * the bench classification (`real` vs placeholder), the bench-honesty fold, and the
  * content-hash staleness suspicion. THOSE are what these tests pin — driven over a
  * real temp manifest (via the `LITESHIP_CAPSULE_MANIFEST` host override) with the
- * digest helpers injected + `execSync` mocked so no `capsule:compile` / `vitest`
- * ever spawns (a capsule that produces errors short-circuits BEFORE the vitest spawn).
+ * digest helpers and corpus runner injected + `execSync` mocked so no child
+ * process spawns (a capsule that produces errors short-circuits first).
  *
  * The handler/projection contract (status mirror, exit-code, payload shape) is also
  * tested at the @liteship/command layer (tests/unit/command/capsule-verify-gate.test.ts);
@@ -36,9 +36,11 @@ vi.mock('node:child_process', async (importOriginal) => {
 // branches are driven over a synthetic manifest without hashing real source.
 const sourceProvenanceDigestMock = vi.fn();
 const generatorVersionDigestMock = vi.fn();
+const runGeneratedCorpusMock = vi.fn();
 const digestDeps = {
   sourceProvenanceDigest: sourceProvenanceDigestMock,
   generatorVersionDigest: generatorVersionDigestMock,
+  runGeneratedCorpus: runGeneratedCorpusMock,
 };
 
 import { capsuleVerify, runCapsuleGateScan } from '../../../../packages/cli/src/commands/capsule-verify.js';
@@ -52,9 +54,13 @@ beforeEach(() => {
   // no regeneration spawn. Each test that wants a suspect overrides these.
   generatorVersionDigestMock.mockReset().mockReturnValue('gen-v1');
   sourceProvenanceDigestMock.mockReset().mockReturnValue('src-v1');
-  // A no-op vitest/compile spawn: a 1-capsule fresh+honest corpus reaches the
-  // `vitest run tests/generated/` spawn — intercept it so no real subprocess runs.
   execSyncMock.mockReset().mockReturnValue('');
+  runGeneratedCorpusMock.mockReset().mockResolvedValue({
+    ok: true,
+    failedLane: null,
+    test: { exitCode: 0, stderrTail: '' },
+    bench: { exitCode: 0, stderrTail: '' },
+  });
 });
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
@@ -102,7 +108,7 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
     expect(summary.benches).toEqual({ total: 0, real: 0, placeholder: [] });
   });
 
-  it('an empty-capsules manifest is ok (no artifacts, no vitest spawn)', async () => {
+  it('an empty-capsules manifest is ok (no artifacts, no corpus spawn)', async () => {
     writeManifest({ generatorVersion: 'gen-v1', capsules: [] });
     const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('ok');
@@ -155,19 +161,15 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
     );
   });
 
-  it('does not spawn vitest for classified-real bench files (bench execution is meta-tested)', async () => {
-    // freshCapsule's bench has a real body ⇒ `classifyBenchSource` reads 'real' for real.
+  it('executes the exact manifest-derived test and benchmark files', async () => {
     const cap = freshCapsule('bench-exec');
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
-    const vitestCalls: string[] = [];
-    execSyncMock.mockImplementation((cmd: string) => {
-      if (cmd.includes('vitest')) vitestCalls.push(cmd);
-      return '';
-    });
     const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('ok');
-    expect(vitestCalls.length).toBe(1);
-    expect(vitestCalls[0]).not.toContain('.bench.ts');
+    expect(runGeneratedCorpusMock).toHaveBeenCalledWith(root, {
+      testFiles: ['tests/generated/bench-exec.test.ts'],
+      benchFiles: ['tests/generated/bench-exec.bench.ts'],
+    });
   });
 });
 
@@ -176,18 +178,13 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
  *  - `capsule:compile` (regeneration): writes `regenManifest` to the temp manifest
  *    path the scan passes via `LITESHIP_CAPSULE_MANIFEST` in the spawn env. `null`
  *    regen ⇒ the compile "fails" (throws), exercising the fail-closed branch.
- *  - `vitest run` (suite): returns '' (pass) unless `vitestFails` is set.
  */
-function wireExecSync(opts: { regenManifest: unknown | null; vitestFails?: boolean }): void {
+function wireExecSync(opts: { regenManifest: unknown | null }): void {
   execSyncMock.mockImplementation((cmd: string, spawnOpts?: { env?: Record<string, string> }) => {
     if (cmd.includes('capsule:compile')) {
       if (opts.regenManifest === null) throw new Error('compile failed');
       const target = spawnOpts?.env?.['LITESHIP_CAPSULE_MANIFEST'];
       if (target) writeFileSync(target, JSON.stringify(opts.regenManifest));
-      return '';
-    }
-    if (cmd.includes('vitest')) {
-      if (opts.vitestFails) throw new Error('generated suite red');
       return '';
     }
     return '';
@@ -254,14 +251,19 @@ describe('runCapsuleGateScan — content-hash suspects confirmed by regeneration
     expect(summary.errors.some((e) => e.includes('regeneration compile failed'))).toBe(true);
   });
 
-  it('a fresh+honest corpus runs the generated suite; a RED suite is status failed', async () => {
+  it('a fresh+honest corpus runs both generated lanes; a RED benchmark is status failed', async () => {
     const cap = freshCapsule('greenish');
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
-    // Digests match ⇒ no suspects ⇒ straight to the vitest run, which fails here.
-    wireExecSync({ regenManifest: { capsules: [cap] }, vitestFails: true });
+    runGeneratedCorpusMock.mockResolvedValue({
+      ok: false,
+      failedLane: 'bench',
+      test: { exitCode: 0, stderrTail: '' },
+      bench: { exitCode: 1, stderrTail: 'generated bench red' },
+    });
     const summary = await runCapsuleGateScan(root, digestDeps);
     expect(summary.status).toBe('failed');
-    expect(summary.errors.some((e) => e.includes('generated tests failed'))).toBe(true);
+    expect(summary.errors.some((e) => e.includes('generated bench lane failed with exit 1'))).toBe(true);
+    expect(summary.errors.some((e) => e.includes('generated bench red'))).toBe(true);
   });
 });
 

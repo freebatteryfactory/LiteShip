@@ -29,7 +29,15 @@ import { run as runDispatch } from '../../../../packages/cli/src/dispatch.js';
 import { lsp } from '../../../../packages/cli/src/commands/lsp.js';
 
 /** The injected optional-sibling importer resolving to the LSP stdio driver spy. */
-const importMcpServer = () => Promise.resolve({ runLspStdio: runLspStdioMock, start: async (): Promise<void> => {} });
+const importMcpServer = () =>
+  Promise.resolve({
+    runLspStdio: runLspStdioMock,
+    start: async () => ({
+      transport: 'stdio' as const,
+      done: Promise.resolve(),
+      stop: async (): Promise<void> => {},
+    }),
+  });
 
 /** Dispatch `liteship <argv>` with the IR fold + sibling importer scripted — case 1 pins dispatch→server routing. */
 const run = (argv: readonly string[]): Promise<number> =>

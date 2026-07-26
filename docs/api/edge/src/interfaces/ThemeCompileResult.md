@@ -28,7 +28,7 @@ Full CSS rule with custom property declarations inside `:root {}`.
 
 ### declarations
 
-> `readonly` **declarations**: readonly `ThemeDeclaration`[]
+> `readonly` **declarations**: readonly [`ThemeDeclaration`](ThemeDeclaration.md)[]
 
 Defined in: [edge/src/theme-compiler.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/theme-compiler.ts#L42)
 

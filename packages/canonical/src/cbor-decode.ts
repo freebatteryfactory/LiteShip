@@ -32,6 +32,7 @@
 
 import { ParseError } from '@liteship/error';
 import { compareBytes } from './compare-bytes.js';
+import { CanonicalCbor } from './cbor.js';
 
 /**
  * The reason a canonical-CBOR `ParseError` was raised. Carried in the
@@ -268,6 +269,14 @@ export function decode(bytes: Uint8Array): unknown {
   const value = decodeItem(r);
   if (r.pos !== bytes.length) {
     fail('malformed', `trailing ${bytes.length - r.pos} byte(s) after top-level item`, r.pos);
+  }
+  // The accepted byte language is exactly the encoder's image. This closes
+  // float64 forms that are structurally valid but cannot be emitted here
+  // (safe integers, negative zero, and noncanonical NaN payloads) without
+  // maintaining a second numeric-canonicality law in the decoder.
+  const canonical = CanonicalCbor.encode(value);
+  if (compareBytes(canonical, bytes) !== 0) {
+    fail('non_canonical', 'decoded value does not re-encode to the same canonical bytes', 0);
   }
   return value;
 }

@@ -59,7 +59,7 @@ Defined in: [web/src/wire/liteship-events.ts:47](https://github.com/freebatteryf
 
 ### liteship:llm-frame
 
-> **liteship:llm-frame**: `UIFrame`
+> **liteship:llm-frame**: [`UIFrame`](../../../liteship/src/media/interfaces/UIFrame.md)
 
 Defined in: [web/src/wire/liteship-events.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/liteship-events.ts#L48)
 
@@ -143,7 +143,7 @@ Defined in: [web/src/wire/liteship-events.ts:54](https://github.com/freebatteryf
 
 ### liteship:mutation
 
-> **liteship:mutation**: `GraphMutationResponse`
+> **liteship:mutation**: [`GraphMutationResponse`](../../../liteship/src/graph/type-aliases/GraphMutationResponse.md)
 
 Defined in: [web/src/wire/liteship-events.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/wire/liteship-events.ts#L55)
 

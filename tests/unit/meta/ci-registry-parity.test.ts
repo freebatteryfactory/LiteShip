@@ -11,9 +11,8 @@
  *       ci-parallel-<name> --skip-build`) maps to a registry-projected profile
  *       invocation — the profile exists in `gauntletPhaseProfiles`, and the
  *       registry-backed checks that profile runs are exactly the lane's `checkIds`.
- *   (b) every specialized hand-written job (shard / browser / smoke) runs only
- *       root scripts that are a registered {@link CHECK_REGISTRY} check or a named
- *       {@link SCRIPT_EXEMPTIONS} entry (the total, disjoint partition holds in CI).
+ *   (b) the generated execution-receipt manifest binds every asserted check to its
+ *       exact job and command, including composed coverage stages (no job allowlist).
  *   (c) the projected lane commands equal the recorded pre-projection fixture AND
  *       appear verbatim as `run:` lines in ci.yml — proving byte-identity (no lane
  *       command was rewritten, parametrized, or interpolated by the projection).
@@ -29,9 +28,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
+import { CHECK_REGISTRY } from '@liteship/command';
 import { gauntletPhases, gauntletPhaseProfiles } from '../../../packages/cli/src/gauntlet-phases.js';
-import { assertBlockingReleasePartition, buildCiPlan, CI_SPECIALIZED_CHECK_SPECS } from '../../../scripts/ci-plan.js';
+import {
+  assertBlockingReleasePartition,
+  assertCoverageAuthorityReceipts,
+  buildCiPlan,
+  CI_SPECIALIZED_CHECK_SPECS,
+} from '../../../scripts/ci-plan.js';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const CI_YML = readFileSync(resolve(ROOT, '.github/workflows/ci.yml'), 'utf8');
@@ -74,14 +78,6 @@ function runCommandsIn(text: string): string[] {
   return out;
 }
 
-/** The root `package.json` script a command invokes (`pnpm run <name>` / `pnpm test`), or null if none. */
-function rootScriptOf(command: string): string | null {
-  const runMatch = /(?:^|\s)pnpm run ([A-Za-z0-9:_-]+)/.exec(command);
-  if (runMatch) return runMatch[1]!;
-  if (/(?:^|\s)pnpm test(?:\s|$)/.test(command)) return 'test';
-  return null;
-}
-
 const JOB_BLOCKS = parseJobBlocks(CI_YML);
 const ALL_RUN_COMMANDS = new Set(runCommandsIn(CI_YML));
 const PLAN = buildCiPlan();
@@ -92,14 +88,6 @@ const PLAN = buildCiPlan();
 const COMMAND_TO_ID = new Map(CHECK_REGISTRY.map((check) => [check.command, check.id] as const));
 /** Gauntlet phase label -> registry check id (null for executor-only phases like `invariants`). */
 const LABEL_TO_ID = new Map(gauntletPhases.map((phase) => [phase.label, COMMAND_TO_ID.get(phase.command) ?? null]));
-/** Root-script name -> registry check id (from each check's declared command). */
-const SCRIPT_TO_ID = new Map<string, string>();
-for (const check of CHECK_REGISTRY) {
-  const script = rootScriptOf(check.command);
-  if (script !== null) SCRIPT_TO_ID.set(script, check.id);
-}
-const EXEMPT_SCRIPTS = new Set(SCRIPT_EXEMPTIONS.map((exemption) => exemption.script));
-
 /** ci-parallel profile name -> the projected lane in the CI plan. */
 const LANE_BY_PROFILE = new Map(
   Object.values(PLAN.lanes)
@@ -109,15 +97,6 @@ const LANE_BY_PROFILE = new Map(
 
 /** The `pnpm run gauntlet:full -- --profile ci-parallel-<name> --skip-build` command matcher. */
 const LANE_COMMAND_RE = /pnpm run gauntlet:full -- --profile (ci-parallel-[A-Za-z0-9-]+) --skip-build/g;
-
-/** The hand-written specialized jobs the parity contract covers (shard / browser / smoke). */
-const SPECIALIZED_JOBS = [
-  'truth-linux-parallel-test',
-  'browser-e2e',
-  'macos-browser',
-  'windows-smoke',
-  'macos-smoke',
-] as const;
 
 // ── Release-partition authority ─────────────────────────────────────────────
 
@@ -150,6 +129,18 @@ describe('blocking release checks have one real CI owner', () => {
     );
   });
 
+  it.each(['journey', 'hermetic'] as const)(
+    'fails closed when the packed-consumer %s authority loses its specialized owner',
+    (owner) => {
+      const withoutOwner = Object.fromEntries(
+        Object.entries(CI_SPECIALIZED_CHECK_SPECS).filter(([key]) => key !== owner),
+      );
+      expect(() => buildCiPlan({ specializedCheckSpecs: withoutOwner })).toThrow(
+        new RegExp(`unassigned blocking release checks: check/${owner}`),
+      );
+    },
+  );
+
   it('fails closed when one live check is claimed twice', () => {
     const withDuplicate = {
       ...CI_SPECIALIZED_CHECK_SPECS,
@@ -168,6 +159,7 @@ describe('blocking release checks have one real CI owner', () => {
       expect(registryCheck!.authority).toBe('blocking');
       expect(registryCheck!.profiles).toContain('release');
       expect(specialized.command).toBe(registryCheck!.command);
+      expect(specialized.execution).toEqual(registryCheck!.execution);
 
       const jobBlock = JOB_BLOCKS.get(specialized.job);
       expect(jobBlock, `ci.yml has no specialized owner job "${specialized.job}"`).toBeDefined();
@@ -191,6 +183,33 @@ describe('blocking release checks have one real CI owner', () => {
     expect(doctor).toBeGreaterThan(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell'));
     expect(doctor).toBeGreaterThan(setup.indexOf('apt-get install -y ffmpeg'));
     expect(doctor).toBeGreaterThan(setup.indexOf('pnpm run build && pnpm run capsule:compile'));
+  });
+});
+
+describe('execution-qualified CI receipts', () => {
+  it('projects every check to a named job and records the complete composed coverage authority', () => {
+    const registryIds = new Set(CHECK_REGISTRY.map((check) => check.id));
+    for (const receipt of PLAN.executionReceipts) {
+      expect(registryIds.has(receipt.checkId), receipt.id).toBe(true);
+      expect(JOB_BLOCKS.has(receipt.job), receipt.id).toBe(true);
+      if (!receipt.id.startsWith('specialized/')) {
+        expect(JOB_BLOCKS.get(receipt.job), receipt.id).toContain(receipt.command);
+      }
+    }
+    expect(() => assertCoverageAuthorityReceipts(PLAN.executionReceipts, PLAN.shardCount)).not.toThrow();
+  });
+
+  it('rejects a missing shard and a stale merge artifact dependency', () => {
+    expect(() =>
+      assertCoverageAuthorityReceipts(
+        PLAN.executionReceipts.filter((receipt) => receipt.id !== 'coverage/node-shard-3'),
+        PLAN.shardCount,
+      ),
+    ).toThrow(/coverage receipts/u);
+    const stale = PLAN.executionReceipts.map((receipt) =>
+      receipt.id === 'coverage/merge' ? { ...receipt, requires: ['coverage-browser-parallel'] } : receipt,
+    );
+    expect(() => assertCoverageAuthorityReceipts(stale, PLAN.shardCount)).toThrow(/coverage merge/u);
   });
 });
 
@@ -233,42 +252,11 @@ describe('(a) every gauntlet-lane command is a registry-projected profile invoca
   );
 });
 
-// ── (b) specialized jobs run only registered checks or named exemptions ─────
-
-describe('(b) every specialized job maps to a registry id or a named exemption', () => {
-  it.each(SPECIALIZED_JOBS)('%s runs only partitioned root scripts', (jobName) => {
-    const block = JOB_BLOCKS.get(jobName);
-    expect(block, `ci.yml has no job "${jobName}"`).toBeDefined();
-
-    const scripts = runCommandsIn(block!)
-      .map(rootScriptOf)
-      .filter((script): script is string => script !== null);
-
-    // The job must actually invoke at least one partitioned root script.
-    expect(scripts.length, `${jobName} invokes no mappable root script`).toBeGreaterThan(0);
-
-    for (const script of scripts) {
-      const mapsToCheck = SCRIPT_TO_ID.has(script);
-      const mapsToExemption = EXEMPT_SCRIPTS.has(script);
-      expect(
-        mapsToCheck || mapsToExemption,
-        `${jobName}: root script "${script}" maps to neither a registry check nor a named exemption`,
-      ).toBe(true);
-    }
-  });
-
-  it('the sharded-test job maps to the aggregate test check via a named exemption', () => {
-    // `test:shard` is the CI shard splitter (exemption); the aggregate assertion is check/test.
-    expect(EXEMPT_SCRIPTS.has('test:shard')).toBe(true);
-    expect(PLAN.lanes.shardedTest!.checkIds).toEqual(['check/test']);
-  });
-});
-
 // ── (c) projected lane commands are byte-identical to the recorded baseline ──
 
 describe('(c) projected lane commands equal the recorded baseline (byte-identical)', () => {
   it('projects executable prerequisites from the closed prerequisite catalog', () => {
-    expect(PLAN.schema).toBe('liteship/ci-plan@2');
+    expect(PLAN.schema).toBe('liteship/ci-plan@3');
     for (const lane of Object.values(PLAN.lanes)) {
       expect(lane.prerequisites.map((entry) => entry.id)).toEqual(['install', 'workspace-build']);
     }
@@ -336,7 +324,10 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(windows).toContain('LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-windows-affected.xml');
     expect(windows).toContain('if: always()');
     expect(windows).toContain('name: vitest-results-pr-windows-affected');
-    expect(windows).toContain('path: reports/vitest-results-pr-windows-affected.xml');
+    expect(windows).toContain('path: |');
+    expect(windows).toContain('reports/affected-result-pr-windows.json');
+    expect(windows).toContain('reports/vitest-results-pr-windows-affected.xml');
+    expect(windows).toContain('if-no-files-found: error');
     expect(linux).not.toContain('LITESHIP_AFFECTED_PLAN:');
     expect(windows).not.toContain('LITESHIP_AFFECTED_PLAN:');
     expect(linux).toContain('name: affected-plan');

@@ -12,11 +12,13 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   FACADE_LIFECYCLE_CONTRACT,
+  FACADE_FAILURE_PROOF_CONTRACT,
   FACADE_SUBPATH_CONTRACT,
   ROOT_EXPORT_CONTRACT,
 } from '../packages/liteship/src/export-budget.js';
 import { CHECK_REGISTRY } from '../packages/command/src/checks/registry.js';
 import { isDirectExecution } from './audit/shared.js';
+import { verifyExecutableFailureProof } from './lib/executable-failure-proof.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 export const PUBLIC_SURFACE_CONTEXT_TS = 'packages/command/src/commands/public-surface-context.generated.ts';
@@ -88,6 +90,7 @@ export function buildPublicSurfaceContext() {
       userStory: entry.userStory,
       lifecycle: entry.lifecycle,
       failureContract: entry.failureContract,
+      failureProof: null,
       example: entry.example,
       stability: entry.stability,
       expertRoutes: ROOT_EXPERT_ROUTES[entry.owner] ?? [],
@@ -99,6 +102,7 @@ export function buildPublicSurfaceContext() {
 
   const subpaths = FACADE_SUBPATH_CONTRACT.map((entry) => {
     const checkIds = subpathChecks(entry.specifier);
+    const failureProof = FACADE_FAILURE_PROOF_CONTRACT[entry.specifier] ?? null;
     const lifecycleProofs = FACADE_LIFECYCLE_CONTRACT.filter((row) => row.specifier === entry.specifier).map(
       (row) => row.proof,
     );
@@ -111,6 +115,7 @@ export function buildPublicSurfaceContext() {
       userStory: entry.userStory,
       lifecycle: entry.lifecycle,
       failureContract: entry.failureContract,
+      failureProof,
       example: entry.example,
       stability: entry.stability,
       dependencyCost: entry.dependencyCost,
@@ -118,7 +123,11 @@ export function buildPublicSurfaceContext() {
       reason: entry.reason,
       expertRoutes: [entry.specifier],
       checkIds,
-      proofRefs: dedupe(['tests/unit/liteship/facade-subpaths.test.ts', ...lifecycleProofs]),
+      proofRefs: dedupe([
+        'tests/unit/liteship/facade-subpaths.test.ts',
+        ...(failureProof === null ? [] : [failureProof.test.split('::', 1)[0]!]),
+        ...lifecycleProofs,
+      ]),
       remediation: remediation(entry.owner, entry.example, checkIds),
     };
   });
@@ -174,6 +183,16 @@ export function collectPublicSurfaceContextDrift(): readonly PublicSurfaceContex
     }
     if (!existsSync(resolve(REPO_ROOT, entry.proof))) {
       drift.push({ source: entry.operation, detail: `lifecycle proof does not exist: ${entry.proof}` });
+    }
+  }
+  const subpathSpecifiers = new Set(FACADE_SUBPATH_CONTRACT.map((entry) => entry.specifier));
+  for (const [specifier, proof] of Object.entries(FACADE_FAILURE_PROOF_CONTRACT)) {
+    if (!subpathSpecifiers.has(specifier as `liteship/${string}`)) {
+      drift.push({ source: specifier, detail: 'failure proof has no authored facade subpath contract' });
+      continue;
+    }
+    for (const finding of verifyExecutableFailureProof(REPO_ROOT, proof)) {
+      drift.push({ source: specifier, detail: `${finding.kind}: ${finding.detail}` });
     }
   }
   return drift;

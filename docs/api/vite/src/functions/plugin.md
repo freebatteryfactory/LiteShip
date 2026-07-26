@@ -8,7 +8,7 @@
 
 > **plugin**(`config?`, `resolvePackaged?`, `projectConfigLoader?`): `Plugin`
 
-Defined in: [vite/src/plugin.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L197)
+Defined in: [vite/src/plugin.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L198)
 
 Create the liteship Vite plugin.
 
@@ -46,6 +46,6 @@ const config = { plugins: [liteship()] };
 ```
 
 `resolvePackaged` is an internal seam: the packaged-`@liteship/core` binary
-resolver, defaulting to the real [resolvePackagedWasm](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/wasm-package-resolve.ts). Production leaves
+resolver, defaulting to the real `resolvePackagedWasm`. Production leaves
 it defaulted (call sites are `plugin(config)`, byte-identical); a test injects a
 stub to force the `'package'` WASM source absent against a synthetic project root.

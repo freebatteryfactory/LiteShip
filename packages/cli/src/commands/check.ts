@@ -26,6 +26,7 @@ import {
   checkGatesCommand,
   formatCheckPlan,
   planChecks,
+  renderRootScriptCheckExecution,
   type CheckPayload,
   type CheckPlan,
   type CheckContext,
@@ -76,6 +77,8 @@ interface CheckDeps {
    * exit-code fold without spawning the registry's real (heavy) check commands.
    */
   readonly runCheckPlan?: CheckPlanRunner;
+  /** Host-context seam used only to plant real engine failures through the exact lean route. */
+  readonly createCommandContext?: (cwd: string) => ReturnType<typeof createNodeCommandContext>;
 }
 
 /** Runs an ordered {@link CheckPlan} to completion, folding the executed {@link CheckReport}. */
@@ -298,7 +301,11 @@ export async function check(opts: CheckOptions = {}, deps: CheckDeps = {}): Prom
           opts.spineRelation === true,
           deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR,
         )
-      : await runLeanPath(cwd, deps.checkHandler ?? checkGatesCommand.handler);
+      : await runLeanPath(
+          cwd,
+          deps.checkHandler ?? checkGatesCommand.handler,
+          deps.createCommandContext ?? defaultLeanCommandContext,
+        );
 
   const receipt: CheckReceipt = {
     status: payload.blocked ? 'failed' : 'ok',
@@ -496,7 +503,7 @@ function executeCheckPlan(
   for (const check of plan.checks) {
     // Applicability was decided by planChecks before execution. Once a check is in
     // the plan, a missing declared script is a broken authority, never a skip.
-    const script = check.execution === undefined ? invokedScriptName(check.command) : null;
+    const script = check.execution.kind === 'root-script' ? check.execution.script : null;
     if (script !== null && definedScripts !== null && !definedScripts.has(script)) {
       if (check.authority === 'blocking') blocked = true;
       const findings = [`${check.command} — planned authority is missing the "${script}" package.json script`];
@@ -670,7 +677,9 @@ type MaterializedCheckCommand =
 
 /** Materialize structured application checks only at the CLI host boundary. */
 function materializeCheckCommand(check: CheckPlan['checks'][number], cwd: string): MaterializedCheckCommand {
-  if (check.execution === undefined) return { kind: 'command', command: check.command };
+  if (check.execution.kind === 'root-script') {
+    return { kind: 'command', command: renderRootScriptCheckExecution(check.execution) };
+  }
   const detectedManager = detectProjectPackageManager(cwd);
   if (detectedManager.kind !== 'supported') {
     return {
@@ -744,7 +753,7 @@ function checkCacheKey(
     schema: CHECK_CACHE_SCHEMA,
     id: check.id,
     command: check.command,
-    ...(check.execution !== undefined ? { execution: check.execution } : {}),
+    execution: check.execution,
     profile: plan.profile,
     platform: plan.platform,
     env,
@@ -889,16 +898,24 @@ function formatCurePackets(packets: readonly CurePacket[]): string {
  * `@liteship/command`'s `check` handler. UNCHANGED behaviour: `@liteship/command` and
  * `@liteship/mcp-server` never see the IR. Projects the handler's `CheckPayload`.
  */
-async function runLeanPath(cwd: string, handler: typeof checkGatesCommand.handler): Promise<CheckPayload> {
-  // Inject the host-built SOUND AST detectors — the CLI deps `@liteship/audit`, so even the
-  // lean (`@liteship/command`) check path gains parser-backed skip and early-return detection.
-  // The MCP adapter builds the context WITHOUT them → the lean fallbacks; this keeps
-  // `@liteship/audit` out of `@liteship/mcp-server`.
-  const context = createNodeCommandContext({
+function defaultLeanCommandContext(cwd: string): ReturnType<typeof createNodeCommandContext> {
+  return createNodeCommandContext({
     cwd,
     skipDetector: detectSkipsAST,
     earlyReturnDetector: detectEarlyReturnBeforeExpectAST,
   });
+}
+
+async function runLeanPath(
+  cwd: string,
+  handler: typeof checkGatesCommand.handler,
+  createContext: (cwd: string) => ReturnType<typeof createNodeCommandContext>,
+): Promise<CheckPayload> {
+  // Inject the host-built SOUND AST detectors — the CLI deps `@liteship/audit`, so even the
+  // lean (`@liteship/command`) check path gains parser-backed skip and early-return detection.
+  // The MCP adapter builds the context WITHOUT them → the lean fallbacks; this keeps
+  // `@liteship/audit` out of `@liteship/mcp-server`.
+  const context = createContext(cwd);
   const result = await handler({ name: 'check.gates', args: {} }, context);
   return result.payload as CheckPayload;
 }

@@ -44,7 +44,7 @@ Binding variable name.
 
 ### type
 
-> `readonly` **type**: `string`
+> `readonly` **type**: [`WGSLBindingType`](../type-aliases/WGSLBindingType.md)
 
 Defined in: [compiler/src/wgsl.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L52)
 

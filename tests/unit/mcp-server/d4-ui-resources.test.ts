@@ -221,6 +221,8 @@ describe('D4 — projection drift pin', () => {
     // the distinct handler/MCP command `check.gates`, changing the commands projection.
     // Public command schemas now expose the accepted context/explain contracts;
     // the static commands UI is a byte-addressed projection of that catalog.
-    expect(address).toBe('fnv1a:65f421ec');
+    // The commands UI projects the same catalog-owned CLI invocation/output
+    // contract as describe/help; this pin records that intentional projection.
+    expect(address).toBe('fnv1a:9d3fed32');
   });
 });

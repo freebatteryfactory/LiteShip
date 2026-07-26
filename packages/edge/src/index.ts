@@ -20,7 +20,14 @@ export { EdgeTier } from './edge-tier.js';
 export type { EdgeTierResult } from './edge-tier.js';
 
 export { createBoundaryCache, KVCache } from './kv-cache.js';
-export type { KVNamespace, BoundaryCache, CompiledOutputs } from './kv-cache.js';
+export type {
+  KVNamespace,
+  BoundaryCache,
+  CacheOptions,
+  CompiledOutputs,
+  CompiledGLSLOutput,
+  CompiledWGSLOutput,
+} from './kv-cache.js';
 
 export {
   MOTION_TIERS,
@@ -34,11 +41,12 @@ export {
 export type { TierKey, BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from './manifest.js';
 
 export { compileTheme } from './theme-compiler.js';
-export type { ThemeCompileConfig, ThemeCompileResult } from './theme-compiler.js';
+export type { ThemeCompileConfig, ThemeCompileResult, ThemeDeclaration } from './theme-compiler.js';
 
 export { createEdgeHostAdapter, EdgeHostAdapter } from './host-adapter.js';
 export type {
   EdgeHostAdapterConfig,
+  EdgeHostBackground,
   EdgeHostResolution,
   EdgeHostCacheConfig,
   EdgeHostCacheTags,

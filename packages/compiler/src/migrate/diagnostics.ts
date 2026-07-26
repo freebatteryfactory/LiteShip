@@ -14,7 +14,7 @@ import type { MigrationDiagnostic } from './types.js';
 
 /**
  * The nine pinned `migrate/*` diagnostic codes, frozen. Each is a typed
- * {@link DiagnosticCode} literal and is enrolled (verbatim) in the
+ * `DiagnosticCode` literal and is enrolled (verbatim) in the
  * `@liteship/error` DIAGNOSTIC_REGISTRY under the `migrate` area.
  */
 export const MIGRATE_CODES = Object.freeze({

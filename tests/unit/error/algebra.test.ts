@@ -17,6 +17,7 @@ import {
   UnsupportedError,
   IntegrityError,
   assertNever,
+  explainDiagnostic,
   err,
   LITESHIP_ERROR_TAGS,
   type TaggedError,
@@ -209,6 +210,25 @@ describe('matchTag — exhaustive errors-as-values dispatch', () => {
     expect(render(ParseError('cbor', 'd'))).toBe('parse:cbor');
     expect(render(IoError('readFile', 'd'))).toBe('io:readFile');
     expect(render(NotFoundError('profile', '/p'))).toBe('notfound:profile');
+  });
+
+  it('LAW: an unhandled runtime tag fails with the registered tagged identity, never a bare TypeError', () => {
+    const rogue = taggedError('RogueError', 'from an untrusted wire value', {}) as unknown as LiteShipError;
+    let caught: unknown;
+    try {
+      render(rogue);
+    } catch (error) {
+      caught = error;
+    }
+    expect(hasTag(caught, 'InvariantViolationError')).toBe(true);
+    const failure = caught as InvariantViolationError;
+    expect(failure.invariant).toBe('matchTag.exhaustive');
+    expect(failure.code).toBe('error/match-tag/unhandled');
+    expect(failure.message).toContain('RogueError');
+    expect(explainDiagnostic(failure.code!)).toMatchObject({
+      area: 'error',
+      owner: '@liteship/error',
+    });
   });
 });
 

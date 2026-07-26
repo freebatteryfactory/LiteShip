@@ -25,12 +25,19 @@ function withRequirements(
   return { ...check, evidenceRequirements } as CheckDefinition;
 }
 
+function nonEmptyConditions(
+  values: readonly CheckEvidenceCondition[],
+): readonly [CheckEvidenceCondition, ...CheckEvidenceCondition[]] {
+  if (values.length === 0) throw new Error('condition permutation unexpectedly empty');
+  return [values[0]!, ...values.slice(1)];
+}
+
 describe('check evidence requirements properties', () => {
   test('registry order cannot change the exact manifest requirements projection', () => {
     const expected = projectCheckEvidenceRequirements(CHECK_REGISTRY);
     fc.assert(
       fc.property(
-        fc.shuffledSubarray(CHECK_REGISTRY, {
+        fc.shuffledSubarray([...CHECK_REGISTRY], {
           minLength: CHECK_REGISTRY.length,
           maxLength: CHECK_REGISTRY.length,
         }),
@@ -47,10 +54,10 @@ describe('check evidence requirements properties', () => {
     const expected = projectCheckEvidenceRequirements([check]);
     fc.assert(
       fc.property(
-        fc.shuffledSubarray(CONDITIONS, { minLength: CONDITIONS.length, maxLength: CONDITIONS.length }),
+        fc.shuffledSubarray([...CONDITIONS], { minLength: CONDITIONS.length, maxLength: CONDITIONS.length }),
         (requiredConditions) => {
           const mutated = withRequirements(check, [
-            { ...check.evidenceRequirements[0], requiredConditions } as CheckEvidenceRequirement,
+            { ...check.evidenceRequirements[0]!, requiredConditions: nonEmptyConditions(requiredConditions) },
           ]);
           expect(projectCheckEvidenceRequirements([mutated])).toEqual(expected);
         },

@@ -6,7 +6,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { DEMO_COMPONENT_CATALOG, renderHash } from '@liteship/genui';
-import { createDOMLLMSessionHost } from '../../../packages/astro/src/runtime/llm-session.js';
+import { createDOMLLMSessionHost, createLLMSession } from '../../../packages/astro/src/runtime/llm-session.js';
 import { createLLMRenderPipeline } from '../../../packages/astro/src/runtime/llm-render-pipeline.js';
 
 describe('createDOMLLMSessionHost genui integration', () => {
@@ -65,5 +65,36 @@ describe('createDOMLLMSessionHost genui integration', () => {
     expect(pipeline.tryRenderGeneratedUI(payload, host, DEMO_COMPONENT_CATALOG)).toBe(true);
     expect(target.textContent).toBe('e2e');
     expect(target.dataset.liteshipGenuiRenderHash).toBeTruthy();
+  });
+
+  it('streams slots through session ingest and refuses a forbidden slotted child', () => {
+    const element = document.createElement('section');
+    const target = document.createElement('div');
+    element.appendChild(target);
+    const session = createLLMSession({
+      element,
+      target,
+      mode: 'replace',
+      getDeviceTier: () => 'animations',
+      genuiCatalog: DEMO_COMPONENT_CATALOG,
+    });
+    const valid = JSON.stringify({
+      _genui: true,
+      name: 'Card',
+      props: { title: 'slot' },
+      slots: { body: { name: 'Text', props: { text: 'admitted' } } },
+    });
+    expect(session.ingest({ type: 'text', partial: false, content: valid })).toBe('continue');
+    expect(target.querySelector('[data-liteship-genui-slot="body"]')?.textContent).toBe('admitted');
+
+    const refused = JSON.stringify({
+      _genui: true,
+      name: 'Card',
+      props: { title: 'slot' },
+      slots: { body: { name: 'Card', props: { title: 'not allowed' } } },
+    });
+    expect(session.ingest({ type: 'text', partial: false, content: refused })).toBe('continue');
+    expect(target.querySelectorAll('section')).toHaveLength(0);
+    session.dispose();
   });
 });

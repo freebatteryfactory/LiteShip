@@ -30,9 +30,10 @@ import { ValidationError } from '@liteship/error';
  * `strength` is stamped deterministically (defaults to 1). When `anchorTrackId`
  * is supplied it is carried onto every marker; otherwise the field is omitted.
  *
- * @throws RangeError if `sampleRate` is not a positive, finite number — a
- * zero/negative/NaN rate cannot define a timeline, so we fail loudly rather
- * than emit `Infinity`/`NaN` beat times.
+ * @throws ValidationError if `sampleRate` is not a positive, finite number —
+ * a zero/negative/NaN rate cannot define a timeline, so we fail loudly rather
+ * than emit `Infinity`/`NaN` beat times. The tagged error's module is
+ * `resolveBeatProjectionToSceneBeats`.
  */
 export function resolveBeatProjectionToSceneBeats(input: BeatProjectionResolutionInput): readonly BeatComponent[] {
   const { projection, sampleRate, anchorTrackId, defaultStrength = 1 } = input;

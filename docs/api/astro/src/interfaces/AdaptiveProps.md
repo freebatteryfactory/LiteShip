@@ -29,7 +29,7 @@ attributes are SSR'd onto the element; the client updates them live.
 
 ### boundary?
 
-> `readonly` `optional` **boundary?**: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+> `readonly` `optional` **boundary?**: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 Defined in: [astro/src/Adaptive.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L27)
 
@@ -59,7 +59,7 @@ Component definition used to identify the adaptive on the client.
 
 ### directive?
 
-> `readonly` `optional` **directive?**: `false` \| `DirectiveName`
+> `readonly` `optional` **directive?**: `false` \| `"adaptive"` \| `"stream"` \| `"llm"` \| `"worker"` \| `"gpu"` \| `"wasm"` \| `"graph"` \| `"motion"` \| `"svg"`
 
 Defined in: [astro/src/Adaptive.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Adaptive.ts#L41)
 

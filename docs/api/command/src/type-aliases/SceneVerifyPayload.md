@@ -8,7 +8,7 @@
 
 > **SceneVerifyPayload** = `object`
 
-Defined in: [command/src/commands/scene.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L57)
+Defined in: [command/src/commands/scene.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L59)
 
 Structured payload returned by `scene.verify` — the scene id + count of generated tests run.
 
@@ -18,7 +18,7 @@ Structured payload returned by `scene.verify` — the scene id + count of genera
 
 > `readonly` **generatedTests**: `number`
 
-Defined in: [command/src/commands/scene.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L59)
+Defined in: [command/src/commands/scene.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L61)
 
 ***
 
@@ -26,4 +26,4 @@ Defined in: [command/src/commands/scene.ts:59](https://github.com/freebatteryfac
 
 > `readonly` **sceneId**: `string`
 
-Defined in: [command/src/commands/scene.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L58)
+Defined in: [command/src/commands/scene.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L60)

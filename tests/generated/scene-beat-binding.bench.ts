@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 // BENCH-NOT-APPLICABLE: 'scene.beat-binding' is a sceneComposition-tagged capsule with no registered scene driver — it declares no compileScene-able scene (no tracks, fps, frame stream, or playback) to tick. It is a pre-runtime transform, so the frame-stream / sync / playback / per-frame-budget checks have nothing to drive.
 import { bench, expect } from 'vitest';
-import { beatBindingCapsule } from '../../packages/scene/src/capsules/beat-binding.js';
+import { beatBindingCapsule } from '../../packages/scene/src/beat-binding-capsule.js';
 
 // TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
 // capsule's `benchExemption` manifest record). 'scene.beat-binding' has no compileScene-able

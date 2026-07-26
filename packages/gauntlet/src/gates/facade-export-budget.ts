@@ -548,9 +548,15 @@ export const facadeExportBudgetGate: Gate = defineGate({
   level: 'L2',
   describe:
     'Asserts that the liteship root exactly equals its role-bearing authoring/inspection contract, both numeric caps hold, and every exported expert subpath has a complete ownership and packed-proof contract backed by a direct owner facade.',
+  access: {
+    outOfIrGlobs: [ROOT_DTS_FILE, FACADE_MANIFEST_FILE],
+  },
   run: scan,
   evidenceDigest: (context: GateContext): string =>
-    stableEvidenceDigest([[FACADE_MANIFEST_FILE, context.readFile(FACADE_MANIFEST_FILE) ?? '<missing>']]),
+    stableEvidenceDigest([
+      [FACADE_MANIFEST_FILE, context.readFile(FACADE_MANIFEST_FILE) ?? '<missing>'],
+      [ROOT_DTS_FILE, context.readFile(ROOT_DTS_FILE) ?? '<missing>'],
+    ]),
   fixtures: {
     red: {
       name: "the root drifts and the manifest admits an ungoverned './rogue' subpath",

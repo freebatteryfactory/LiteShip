@@ -50,7 +50,7 @@ import {
 import { writeContinuousMap } from '../../../packages/astro/src/runtime/write-continuous-map.js';
 import { sampleSceneMotion } from '../../../packages/scene/src/systems/motion.js';
 import { sampleMotionFrames } from '../../../packages/stage/src/motion-export.js';
-import { sampleMotionFrame } from '../../../packages/remotion/src/motion.js';
+import { motionCssVars, sampleMotionFrame } from '../../../packages/remotion/src/motion.js';
 import { motionSampleMessage } from '../../../packages/worker/src/motion-sample.js';
 import {
   MOTION_PARITY_FIXTURES,
@@ -299,6 +299,9 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
             ref,
             EPSILON_KERNEL,
             `remotion@${frame.frame}`,
+          );
+          expect(motionCssVars(fixture.plan, frame.frame, totalFrames)).toEqual(
+            sampleProgramUniforms(fixture.plan, frame.t).css,
           );
         }
       });

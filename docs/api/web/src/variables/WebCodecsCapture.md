@@ -16,7 +16,7 @@ WebCodecsCapture -- module object + namespace for browser-native video capture.
 
 ### make
 
-> `readonly` **make**: (`options?`) => `FrameCapture`
+> `readonly` **make**: (`options?`) => [`FrameCapture`](../../../liteship/src/evidence/interfaces/FrameCapture.md)
 
 #### Parameters
 
@@ -26,4 +26,4 @@ WebCodecsCapture -- module object + namespace for browser-native video capture.
 
 #### Returns
 
-`FrameCapture`
+[`FrameCapture`](../../../liteship/src/evidence/interfaces/FrameCapture.md)

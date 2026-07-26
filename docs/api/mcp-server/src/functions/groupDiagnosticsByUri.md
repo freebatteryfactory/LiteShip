@@ -6,9 +6,9 @@
 
 # Function: groupDiagnosticsByUri()
 
-> **groupDiagnosticsByUri**(`findings`): readonly `object`[]
+> **groupDiagnosticsByUri**(`findings`, `workspaceRootUri?`): readonly `object`[]
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L131)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L134)
 
 Group a flat finding list into `PublishDiagnosticsParams`-shaped buckets keyed
 by file URI. Findings with no location are dropped (they cannot anchor to a
@@ -23,6 +23,10 @@ PURE: a fold over the findings, no I/O.
 ### findings
 
 readonly [`FindingLike`](../interfaces/FindingLike.md)[]
+
+### workspaceRootUri?
+
+`string`
 
 ## Returns
 

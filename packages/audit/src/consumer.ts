@@ -2,9 +2,11 @@
  * Consumer-mode profile factory — audit the `@liteship/*` packages INSTALLED in a
  * downstream repo's node_modules instead of a monorepo `packages/*` layout.
  *
- * Every published liteship package ships `src/` alongside `dist/`, so the engine's
- * source-level passes run unmodified against installed artifacts; only package
- * DISCOVERY differs. Discovery is a directory walk, not module resolution:
+ * Every LiteShip package declares its analyzable shipped artifacts through the
+ * generated package-topology projection (TypeScript source trees for ordinary packages,
+ * `*.d.ts` for the types-only spine). A discovered package that matches none of
+ * its declared artifacts is unverified, never clean. Discovery is a directory walk,
+ * not module resolution:
  * no @liteship package exports `./package.json`, and `@liteship/_spine` carries a
  * types-only export map, so `require.resolve`/`import.meta.resolve` throw
  * `ERR_PACKAGE_PATH_NOT_EXPORTED` before ever finding a root.

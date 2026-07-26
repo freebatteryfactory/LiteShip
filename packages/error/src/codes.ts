@@ -32,12 +32,27 @@
  * - `check`     — a P11 `check/<slug>` id (the data-driven check registry).
  * - `core`      — an `@liteship/core` runtime diagnostic (a `Diagnostics.warn/error` code).
  * - `schema`    — a schema/decode diagnostic.
+ * - `audit`     — a repository/consumer audit finding rule.
  * - `compiler`  — a compile-pipeline diagnostic.
+ * - `detect`    — a device-capability detection diagnostic.
  * - `astro`     — an Astro-integration diagnostic.
  * - `cli`       — a CLI-surface diagnostic.
  * - `migrate`   — a migration/codemod diagnostic.
  */
-export const DIAGNOSTIC_AREAS = ['gauntlet', 'check', 'core', 'schema', 'compiler', 'astro', 'cli', 'migrate'] as const;
+export const DIAGNOSTIC_AREAS = [
+  'gauntlet',
+  'check',
+  'error',
+  'core',
+  'schema',
+  'audit',
+  'compiler',
+  'detect',
+  'genui',
+  'astro',
+  'cli',
+  'migrate',
+] as const;
 
 export type DiagnosticArea = (typeof DIAGNOSTIC_AREAS)[number];
 
@@ -87,6 +102,11 @@ function check(title: string, explanation: string, remediation: string): Diagnos
   return entry('check', '@liteship/command/checks', title, explanation, remediation);
 }
 
+/** Build one error-algebra entry (area `error`). */
+function error(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('error', '@liteship/error', title, explanation, remediation);
+}
+
 /** Build one core-runtime entry (area `core`). */
 function core(title: string, explanation: string, remediation: string): DiagnosticEntry {
   return entry('core', '@liteship/core', title, explanation, remediation);
@@ -97,9 +117,24 @@ function schema(title: string, explanation: string, remediation: string): Diagno
   return entry('schema', '@liteship/core/schema', title, explanation, remediation);
 }
 
+/** Build one audit-engine entry (area `audit`). */
+function audit(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('audit', '@liteship/audit', title, explanation, remediation);
+}
+
 /** Build one compiler entry (area `compiler`). */
 function compiler(title: string, explanation: string, remediation: string): DiagnosticEntry {
   return entry('compiler', '@liteship/compiler', title, explanation, remediation);
+}
+
+/** Build one device-detection entry (area `detect`). */
+function detect(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('detect', '@liteship/detect', title, explanation, remediation);
+}
+
+/** Build one generated-UI validation entry (area `genui`). */
+function genui(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('genui', '@liteship/genui', title, explanation, remediation);
 }
 
 /** Build one Astro runtime/integration entry (area `astro`). */
@@ -157,6 +192,120 @@ function migrate(title: string, explanation: string, remediation: string): Diagn
  * statically proves are enrolled.
  */
 export const DIAGNOSTIC_REGISTRY = Object.freeze({
+  // ── error: tagged-error algebra contract failures ───────────────────────────
+  'error/match-tag/unhandled': error(
+    'Exhaustive tagged-error match received an unhandled tag',
+    'A runtime value claimed to belong to a closed tagged-error union, but its `_tag` had no matching handler. This usually means stale or unvalidated data crossed a trust boundary.',
+    'Validate external tagged-error values before matching them and update the closed union and handler table together.',
+  ),
+
+  // ── audit: repository/consumer audit finding identities ────────────────────
+  'audit/console-call': audit(
+    'Unsanctioned console call',
+    'An audited source file contains a console call outside the governed allowlist.',
+    'Remove the console call or enroll the exact justified site in the audit policy owner.',
+  ),
+  'audit/consumer-package-missing': audit(
+    'Topology package is not installed',
+    'A consumer profile names a package that is absent from the installed consumer graph.',
+    'Install the package or remove it from the consumer topology when it is not shipped.',
+  ),
+  'audit/default-export': audit(
+    'Default export violates package policy',
+    'A governed package surface uses a default export where named ownership is required.',
+    'Replace the default export with a named export or enroll the exact approved exception.',
+  ),
+  'audit/export-target-missing': audit(
+    'Published export target is missing',
+    'A package export-map target does not exist at the declared physical path.',
+    'Restore the built target or remove the stale export-map entry.',
+  ),
+  'audit/fallback-laundering': audit(
+    'Fallback launders an operational failure',
+    'A broad fallback converts a real failure into an apparently valid default result.',
+    'Distinguish absence from failure and surface the failure through the package error contract.',
+  ),
+  'audit/host-surface': audit(
+    'Host surface violates its ownership contract',
+    'A host-specific import or export crosses the declared package boundary.',
+    'Move the host dependency behind its governed host subpath or repair the declared surface.',
+  ),
+  'audit/missing-manifest-dependency': audit(
+    'Static internal import lacks a manifest dependency',
+    'A package statically imports another workspace package without declaring that dependency.',
+    'Add the dependency in the correct manifest section or remove the undeclared edge.',
+  ),
+  'audit/missing-manifest-dependency-dynamic': audit(
+    'Dynamic internal import lacks a manifest dependency',
+    'A package dynamically imports another workspace package without declaring that dependency.',
+    'Add the dependency in the correct manifest section or remove the undeclared dynamic edge.',
+  ),
+  'audit/missing-runtime-capability': audit(
+    'Declared runtime capability is missing',
+    'The package metadata claims a runtime capability whose implementation surface is absent.',
+    'Restore and prove the capability or remove the stale metadata claim.',
+  ),
+  'audit/no-packages-discovered': audit(
+    'Nothing was audited',
+    'The selected audit profile discovered no package surface, so a clean result would be unverified.',
+    'Select the correct repository or consumer profile and ensure its package roots are present.',
+  ),
+  'audit/orphan-export-candidate': audit(
+    'Export appears unconsumed',
+    'The file-level audit found a public export with no observed consumer evidence.',
+    'Prove the export through a real consumer or remove the unneeded public surface.',
+  ),
+  'audit/package-export-surface': audit(
+    'Package export surface is inconsistent',
+    'A package manifest, physical target, and public surface projection disagree.',
+    'Reconcile the export map with the package owner and regenerate its projections.',
+  ),
+  'audit/package-artifacts-unverified': audit(
+    'Package analysis surface is unverified',
+    'A discovered package matched none of the analyzable artifacts declared by its audit policy.',
+    'Ship or restore the declared artifacts, or correct the package catalog policy to name the real analyzable surface.',
+  ),
+  'audit/package-topology': audit(
+    'Package dependency violates topology',
+    'A package dependency edge violates the declared architecture topology.',
+    'Move the dependency to its legal owner seam or update the canonical topology decision.',
+  ),
+  'audit/placeholder-content': audit(
+    'Placeholder content remains in governed source',
+    'A published or authoritative source contains placeholder behavior or prose.',
+    'Replace the placeholder with complete behavior or remove the unsupported claim.',
+  ),
+  'audit/stub-marker': audit(
+    'Stub marker remains in governed source',
+    'A governed source path contains a marker for an incomplete implementation.',
+    'Implement the behavior or register an explicit obligation without claiming completion.',
+  ),
+  'audit/suspicious-reimplementation': audit(
+    'Suspicious duplicate implementation detected',
+    'A package appears to reimplement behavior already owned by another semantic module.',
+    'Delegate to the canonical owner or prove that the implementation has a distinct contract.',
+  ),
+  'audit/symbol-orphan-candidate': audit(
+    'Public symbol appears unconsumed',
+    'Symbol-level evidence found a public declaration with no observed consumer.',
+    'Add a real proving consumer or remove the orphaned symbol from the public surface.',
+  ),
+  'audit/unknown-internal-package': audit(
+    'Internal import names an unknown package',
+    'A workspace-scoped import does not resolve to a package in the canonical catalog.',
+    'Correct the package specifier or add the package only through the canonical catalog decision.',
+  ),
+  'audit/unresolved-internal-import': audit(
+    'Internal import cannot be resolved',
+    'A declared workspace import cannot be resolved to its physical package target.',
+    'Repair the export map, dependency, or import specifier so the physical target resolves.',
+  ),
+  'audit/virtual-module-surface': audit(
+    'Virtual module surface is inconsistent',
+    'A host virtual-module declaration and its runtime implementation disagree.',
+    'Reconcile the virtual-module declaration, resolver, and generated public projection.',
+  ),
+
   // ── gauntlet: the seven always-on hygiene / determinism gates ────────────────
   'gauntlet/no-bare-throw': gauntlet(
     'Bare throw instead of a tagged @liteship/error variant',
@@ -744,6 +893,40 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'Rename the output key to a boundary state or add the intended state to the boundary.',
   ),
 
+  // ── detect: capability-probe diagnostics ──────────────────────────────────
+  'detect/unrecognized-gpu-renderer': detect(
+    'GPU renderer is not classified',
+    'The renderer probe succeeded, but no enrolled GPU pattern recognized the returned renderer string, so detection selected the conservative integrated tier.',
+    'File the exact renderer string on the LiteShip issue tracker so the canonical GPU pattern table can be extended.',
+  ),
+  'detect/probes-defaulted': detect(
+    'Capability probes used conservative defaults',
+    'One or more browser capability probes were unavailable or threw, so detection continued with documented conservative values and reduced confidence.',
+    'Inspect the diagnostic detail for each failed probe and restore the missing browser API or repair the throwing host adapter.',
+  ),
+
+  // ── genui: generated-tree validation failures ───────────────────────────────
+  'genui/unknown-component': genui(
+    'Generated UI names an unknown component',
+    'The generated tree referenced a component that is not an own entry in the host component catalog.',
+    'Register the component in the trusted catalog or remove it from the generated tree.',
+  ),
+  'genui/invalid-prop': genui(
+    'Generated UI carries an invalid property',
+    'A generated component property was missing, unknown, the wrong type, or outside the supported interaction contract.',
+    'Conform the generated property bag to the selected component definition.',
+  ),
+  'genui/invalid-children': genui(
+    'Generated UI carries invalid children',
+    'A generated component violated its child cardinality, shape, or allowed-child-name contract.',
+    'Supply an array of children permitted by the selected component definition.',
+  ),
+  'genui/invalid-slots': genui(
+    'Generated UI carries invalid slots',
+    'A generated component supplied a malformed slot record or an invalid node inside a slot.',
+    'Supply a slot record whose values are valid generated UI nodes or node arrays.',
+  ),
+
   // ── astro: integration and browser-runtime diagnostics ─────────────────────
   'astro/docs-mcp-route/docs-bundle-corruption': astro(
     'Generated docs bundle is corrupt',
@@ -754,6 +937,16 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'Initial state requested the raw quantizer path',
     'Astro initial-state resolution received a raw request that cannot be resolved to a named adaptive state.',
     'Provide a named state or a resolvable initial signal value.',
+  ),
+  'astro/integration/server-islands-removed': astro(
+    'Removed Server Islands option was supplied',
+    'Astro 7 supports Server Islands directly, so LiteShip no longer accepts a no-op integration flag.',
+    'Remove serverIslands and use server:defer with a configured Astro adapter.',
+  ),
+  'astro/audio/animation-clock-unavailable': astro(
+    'Live audio animation clock is unavailable',
+    'The Astro audio producer cannot schedule or cancel frame-aligned analyser sampling in this host.',
+    'Run the live audio producer in a browser host that provides requestAnimationFrame and cancelAnimationFrame.',
   ),
   'astro/boundary/boundary-json-invalid': astro(
     'Serialized boundary JSON is invalid',
@@ -1117,6 +1310,31 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'A DocumentGraph decode found the `edges` collection malformed (not the expected shape).',
     'Fix the `edges` structure in the encoded DocumentGraph.',
   ),
+  'core/document-graph/malformed_node': core(
+    'DocumentGraph decode: malformed node',
+    'A DocumentGraph node failed the versioned node-shape trust gate.',
+    'Repair the malformed node so its family, payload, and content address satisfy the DocumentGraph node contract.',
+  ),
+  'core/document-graph/malformed_edge': core(
+    'DocumentGraph decode: malformed edge',
+    'A DocumentGraph edge was not a valid from/to/type triple.',
+    'Supply string endpoints and one supported EdgeType for every graph edge.',
+  ),
+  'core/document-graph/malformed_meta': core(
+    'DocumentGraph decode: malformed metadata',
+    'A DocumentGraph carried missing or malformed version and HLC metadata.',
+    'Supply a numeric version and well-formed created and updated HLC stamps.',
+  ),
+  'core/document-graph/malformed_id': core(
+    'DocumentGraph decode: malformed identity',
+    'A DocumentGraph carried an invalid content-address field.',
+    'Supply a valid graph content address and verify it against the canonical graph bytes.',
+  ),
+  'core/document-graph/malformed_digest': core(
+    'DocumentGraph decode: malformed integrity digest',
+    'A DocumentGraph carried an invalid addressed-digest record.',
+    'Supply a display id, integrity digest, and supported sha256 or blake3 algorithm.',
+  ),
   'core/graph-patch/not_an_object': core(
     'GraphPatch decode: value is not an object',
     'A GraphPatch decode received a value that is not a plain object — the untrusted bytes did not shape-check.',
@@ -1141,6 +1359,21 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'DiscreteStateTransition decode: wrong kind',
     'A DiscreteStateTransition decode received a value whose kind is not the expected transition kind.',
     'Ensure the encoded transition carries the correct kind.',
+  ),
+  'core/state-transition/not_an_object': core(
+    'DiscreteStateTransition decode: value is not an object',
+    'A transition decode received a value that cannot carry the versioned transition envelope.',
+    'Supply a well-formed DiscreteStateTransition object.',
+  ),
+  'core/state-transition/wrong_tag': core(
+    'DiscreteStateTransition decode: wrong _tag',
+    'A transition decode received a value whose `_tag` is not DiscreteStateTransition.',
+    'Encode the value with the DiscreteStateTransition tag before decoding it.',
+  ),
+  'core/state-transition/unsupported_version': core(
+    'DiscreteStateTransition decode: unsupported version',
+    'A transition decode received a version this build does not understand.',
+    'Migrate or re-encode the transition with a supported version.',
   ),
   'core/hlc/malformed': core(
     'HLC decode: malformed timestamp',

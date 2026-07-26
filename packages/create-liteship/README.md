@@ -25,7 +25,7 @@ my-liteship-app/
 ├── tsconfig.json
 ├── .gitignore
 └── src/
-    ├── adaptive.ts                     # one 14-line Adaptive definition
+    ├── adaptive.ts                     # one 18-line Adaptive definition
     ├── layouts/Base.astro              # ordinary page shell
     └── pages/index.astro               # apply attrs/CSS and inspect the selected state
 ```

@@ -8,7 +8,7 @@
 
 > **watchCapabilities**(`onChange`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: [detect/src/detect.ts:686](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L686)
+Defined in: [detect/src/detect.ts:689](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L689)
 
 Watch for capability changes via matchMedia listeners and resize observer.
 Emits a fresh DetectionResult whenever viewport, color scheme, or

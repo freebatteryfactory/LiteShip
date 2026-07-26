@@ -13,9 +13,9 @@ pnpm add -D liteship   # brings @liteship/command with the public CLI
 ## 30 seconds
 
 ```ts
-import { commandRegistry, CommandDispatcher } from '@liteship/command';
+import { commandRegistry, createCommandDispatcher } from '@liteship/command';
 
-const dispatcher = CommandDispatcher.make(commandRegistry);
+const dispatcher = createCommandDispatcher(commandRegistry);
 
 const result = await dispatcher.dispatch(
   { name: 'glossary', args: { term: 'boundary' } },

@@ -14,7 +14,7 @@
  * did — a faithful transport swap. The elapsed channel is a read-only closure (no
  * `changes` subscribers). `state`/`progress`/`elapsed` are sync reads; the four
  * control ops are synchronous; the scheduler cancel + kernel close are owned by a
- * {@link Lifetime}. The pure logic (Boundary.evaluate, dt integration, clamping,
+ * `Lifetime`. The pure logic (Boundary.evaluate, dt integration, clamping,
  * looping) is byte-identical — only the reactive carrier changed. Behavior matches
  * the captured golden fixture (`tests/fixtures/reactive-capture/timeline.json`).
  *
@@ -63,7 +63,7 @@ interface TimelineShape<B extends Boundary = Boundary> extends AsyncOwnedResourc
  * Create a {@link Timeline} — scheduler-driven advancement over a
  * {@link Boundary}. Produces a plain reactive timeline that seeks or plays
  * between boundary states; pluggable clock via {@link Scheduler}, teardown via
- * {@link Lifetime}.
+ * `Lifetime`.
  */
 export function createTimeline<B extends Boundary>(
   boundary: B,

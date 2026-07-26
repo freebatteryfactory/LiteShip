@@ -11,6 +11,7 @@
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
+    { "path": "../canonical" },
     { "path": "../core" },
     { "path": "../command" },
     { "path": "../compiler" },

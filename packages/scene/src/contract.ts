@@ -19,7 +19,7 @@ import type {
   TrackEnvelope,
   EaseTag,
 } from '@liteship/_spine';
-import type { BeatBinding } from './capsules/beat-binding.js';
+import type { BeatBinding } from './beat-binding-capsule.js';
 
 /** Closed set of track kinds. */
 export type TrackKind = _TrackKind;
@@ -132,7 +132,7 @@ export interface SceneInvariant {
 
 /**
  * Pre-resolved beat marker on a {@link SceneContract}. Aliased to
- * `BeatBinding.Component` from `./capsules/beat-binding.ts` — single
+ * `BeatBinding.Component` from `./beat-binding-capsule.ts` — single
  * source of truth so adding a field (e.g. `pitch`) doesn't require
  * keeping two structurally-identical declarations in sync.
  */

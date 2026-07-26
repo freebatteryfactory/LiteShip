@@ -190,7 +190,7 @@ function decideEscalation(subject: EscalationSubjectValue): Decision {
 
 /**
  * Declared policyGate capsule for the escalation chooser. Registered in the
- * module-level catalog at import time; walked by the factory compiler. The
+ * immutable exported declaration; walked by the factory compiler. The
  * generated traversal samples subjects from {@link EscalationSubject}, drives the
  * REAL `decide` (which seals a real policy and calls `chooseTier`), and the
  * invariants assert the minimal-downgrade / site-gate / verdict-shape laws over

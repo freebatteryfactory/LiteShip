@@ -325,8 +325,16 @@ export interface ControllableSignal<T> extends Signal<T> {
 export declare namespace Signal {
   /** Structural shape of a seekable, pausable signal (forwarded by video/remotion). */
   export type Controllable<T> = ControllableSignal<T>;
+  /** Structural shape of an audio-sourced signal backed by a sample bridge. */
+  export type Audio = Signal<number> & AsyncOwnedResource & { poll(): number };
   /** Seekable/pausable time signal (verb grammar — a specialized constructor kept on the namespace). */
   export function controllable(): ControllableSignal<number> & AsyncOwnedResource;
+  /** Audio sample/normalized signal; the bridge remains owned by its host. */
+  export function audio(
+    bridge: { readonly sampleRate: number; getCurrentSample(): number },
+    mode?: 'sample' | 'normalized',
+    totalDurationSec?: number,
+  ): Audio;
 }
 
 /**
@@ -791,6 +799,55 @@ export declare function createLiveCellBoundary<I extends string, S extends reado
   initial: number,
 ): LiveCell<'boundary', number> & AsyncOwnedResource;
 
+/** Named phases of the shared runtime coordinator's frame plan. */
+export type RuntimePhase = 'compute-discrete' | 'compute-blend' | 'emit-css' | 'emit-glsl' | 'emit-wgsl' | 'emit-aria';
+
+/** Construction options for the shared runtime coordinator. */
+export interface RuntimeCoordinatorConfig {
+  readonly capacity?: number;
+  readonly name?: string;
+}
+
+/** Internal dense numeric-store projection carried by the coordinator. */
+interface RuntimeCoordinatorDenseStore {
+  readonly name: string;
+  readonly capacity: number;
+  readonly _dense: true;
+  readonly entityToIndex: Map<EntityId, number>;
+  readonly indexToEntity: EntityId[];
+  readonly data: Float64Array;
+  count: number;
+  get(entityId: EntityId): number | undefined;
+  set(entityId: EntityId, value: number): void;
+  has(entityId: EntityId): boolean;
+  delete(entityId: EntityId): boolean;
+  reset(): void;
+  view(): Float64Array;
+  entities(): readonly EntityId[];
+}
+
+/** Live coordinator surface shared by the core runtime and worker host. */
+export interface RuntimeCoordinatorShape {
+  readonly plan: PlanIR;
+  readonly phases: readonly RuntimePhase[];
+  readonly stores: {
+    readonly stateIndex: RuntimeCoordinatorDenseStore;
+    readonly dirtyEpoch: RuntimeCoordinatorDenseStore;
+  };
+  reset(registrations?: readonly { readonly name: string; readonly states: readonly string[] }[]): void;
+  registerQuantizer(name: string, states: readonly string[]): EntityId;
+  removeQuantizer(name: string): void;
+  hasQuantizer(name: string): boolean;
+  setState(name: string, state: string): void;
+  applyState(name: string, state: string): number;
+  getStateIndex(name: string): number;
+  markDirty(name: string): void;
+  getDirtyEpoch(name: string): number;
+  registeredNames(): readonly string[];
+}
+
+export type RuntimeCoordinator = RuntimeCoordinatorShape;
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 16. CAPABILITY LATTICE (re-parameterized from @kit: pure<read<...<system -> static<styled<...<gpu)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1037,6 +1094,63 @@ export type OpType =
 
 export type EdgeType = 'seq' | 'par' | 'choice_then' | 'choice_else';
 
+// ════════════════════════════════════════════════════════════════════════════════
+// § 22a. MOTION RUNTIME PROJECTION
+// ════════════════════════════════════════════════════════════════════════════════
+
+export interface TransformPart {
+  readonly fn: string;
+  readonly args: readonly TypedValue[];
+}
+
+export type ColorSpace = 'srgb' | 'oklch';
+
+export type TypedValue =
+  | { readonly k: 'number'; readonly v: number }
+  | { readonly k: 'opacity'; readonly v: number }
+  | { readonly k: 'length'; readonly v: number; readonly unit: 'px' | 'rem' | '%' | 'vw' | 'vh' }
+  | { readonly k: 'angle'; readonly v: number; readonly unit: 'deg' | 'rad' | 'turn' }
+  | { readonly k: 'color'; readonly space: ColorSpace; readonly components: readonly number[] }
+  | { readonly k: 'transform'; readonly parts: readonly TransformPart[] };
+
+export interface RuntimeEasing {
+  readonly kind: 'linear' | 'ease' | 'spring' | 'points' | 'bounce' | 'elastic' | 'back' | 'cubicBezier';
+  readonly spring?: {
+    readonly stiffness?: number;
+    readonly damping?: number;
+    readonly mass?: number;
+  };
+  readonly points?: readonly number[];
+}
+
+export interface RuntimeWriteProperty {
+  readonly cssVar: string;
+  readonly from: TypedValue;
+  readonly to: TypedValue;
+}
+
+export interface RuntimeWriteWindow {
+  readonly windowStart: number;
+  readonly windowEnd: number;
+  readonly properties: readonly RuntimeWriteProperty[];
+  readonly easing: RuntimeEasing;
+}
+
+export interface RuntimeWritePlan {
+  readonly properties: readonly RuntimeWriteProperty[];
+  readonly durationMs: number;
+  readonly routing: EdgeType;
+  readonly fromState: StateName;
+  readonly toState: StateName;
+  readonly easing: RuntimeEasing;
+  readonly windows?: readonly RuntimeWriteWindow[];
+}
+
+export interface ProgramUniforms {
+  readonly css: Record<string, string>;
+  readonly wgsl: Record<string, number>;
+}
+
 export interface PlanStep {
   readonly id: string;
   readonly name: string;
@@ -1065,6 +1179,10 @@ export type PlanValidationResult =
   | { readonly ok: true; readonly plan: PlanIR }
   | { readonly ok: false; readonly errors: readonly PlanValidationError[] };
 
+export type TopoSortResult =
+  | { readonly sorted: readonly string[]; readonly cycle?: undefined }
+  | { readonly sorted: readonly string[]; readonly cycle: readonly string[] };
+
 export interface PlanBuilder {
   step(name: string, opType: OpType, metadata?: Record<string, unknown>): PlanBuilder;
   seq(fromId: string, toId: string): PlanBuilder;
@@ -1076,7 +1194,7 @@ export interface PlanBuilder {
 export declare namespace Plan {
   export function make(name: string): PlanBuilder;
   export function validate(planIR: PlanIR): PlanValidationResult;
-  export function topoSort(planIR: PlanIR): readonly string[];
+  export function topoSort(planIR: PlanIR): TopoSortResult;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -1,5 +1,5 @@
 import { SlotRegistry, dispatchLiteshipEvent } from '@liteship/web';
-import type { DirectiveName } from './directive-boot.js';
+import { BOUND_ATTRIBUTE, DIRECTIVE_NAMES, type DirectiveName } from './directive-bound.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 interface RuntimeWindow extends Window {
@@ -60,17 +60,6 @@ function attributeSelector(attribute: string): string {
   return `[${attribute}]`;
 }
 
-function uniqueDirectiveAttributes(): readonly string[] {
-  return [
-    ...new Set(
-      Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
-        .flat()
-        .filter((entry) => entry.scope === 'root')
-        .map((entry) => entry.attribute),
-    ),
-  ];
-}
-
 /** Return the unambiguous attribute selectors that implicitly boot `name` on plain elements. */
 export function implicitDirectiveSelectors(name: DirectiveName): readonly string[] {
   return DIRECTIVE_ATTRIBUTE_REGISTRY[name].flatMap((entry) =>
@@ -78,12 +67,60 @@ export function implicitDirectiveSelectors(name: DirectiveName): readonly string
   );
 }
 
-function directiveOwnerSelector(owner: DirectiveName): string {
+/**
+ * Every root selector owned by one directive: canonical marker, legacy Astro
+ * spelling, live bound marker, and its unambiguous implicit root attributes.
+ */
+export function directiveRootSelectors(name: DirectiveName): readonly string[] {
   return [
-    `[data-liteship-directive~="${owner}"]`,
-    `[client\\:${owner}]`,
-    `[data-liteship-directive-bound~="${owner}"]`,
-  ].join(',');
+    `[${DIRECTIVE_MARKER_ATTRIBUTE}~="${name}"]`,
+    `[client\\:${name}]`,
+    `[${BOUND_ATTRIBUTE}~="${name}"]`,
+    ...implicitDirectiveSelectors(name),
+  ];
+}
+
+function attributeTokens(element: Element, attribute: string): readonly string[] {
+  return (element.getAttribute(attribute) ?? '').split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Whether one element carries a root spelling for `name`.
+ *
+ * The legacy `client:name` form is checked structurally instead of through a
+ * CSS selector. DOM selector engines do not agree on escaped-colon attribute
+ * selectors, while `hasAttribute()` preserves the authored attribute exactly.
+ */
+export function elementHasDirectiveRoot(name: DirectiveName, element: Element): boolean {
+  if (attributeTokens(element, DIRECTIVE_MARKER_ATTRIBUTE).includes(name)) return true;
+  if (element.hasAttribute(`client:${name}`)) return true;
+  if (attributeTokens(element, BOUND_ATTRIBUTE).includes(name)) return true;
+  return DIRECTIVE_ATTRIBUTE_REGISTRY[name].some(
+    (entry) => entry.scope === 'root' && entry.implicitBoot && element.hasAttribute(entry.attribute),
+  );
+}
+
+/** Collect the roots for one directive, including a root node passed directly. */
+export function collectDirectiveRootsForName(name: DirectiveName, root: ParentNode = document): readonly HTMLElement[] {
+  const candidates =
+    root instanceof HTMLElement
+      ? [root, ...root.querySelectorAll<HTMLElement>('*')]
+      : [...root.querySelectorAll<HTMLElement>('*')];
+  return candidates.filter((element) => elementHasDirectiveRoot(name, element));
+}
+
+/** Collect every directive root under `root` exactly once, catalog-driven. */
+export function collectDirectiveRoots(root: ParentNode = document): readonly HTMLElement[] {
+  const roots = new Set(DIRECTIVE_NAMES.flatMap((name) => collectDirectiveRootsForName(name, root)));
+  return [...roots];
+}
+
+function elementHasExplicitDirectiveRoot(owner: DirectiveName, element: Element): boolean {
+  return (
+    attributeTokens(element, DIRECTIVE_MARKER_ATTRIBUTE).includes(owner) ||
+    element.hasAttribute(`client:${owner}`) ||
+    attributeTokens(element, BOUND_ATTRIBUTE).includes(owner)
+  );
 }
 
 /** Whether `element` is a fully-qualified descendant payload owned by a marked directive root. */
@@ -94,14 +131,17 @@ export function isClaimedDirectiveDescendant(element: Element, attribute?: strin
       if (attribute !== undefined && claim.attribute !== attribute) continue;
       if (!element.hasAttribute(claim.attribute)) continue;
       if (!claim.requires.every((required) => element.hasAttribute(required))) continue;
-      const ownerRoot = element.closest(directiveOwnerSelector(claim.owner));
-      if (ownerRoot !== null && ownerRoot !== element) return true;
+      let ownerRoot = element.parentElement;
+      while (ownerRoot !== null) {
+        if (elementHasExplicitDirectiveRoot(claim.owner, ownerRoot)) return true;
+        ownerRoot = ownerRoot.parentElement;
+      }
     }
   }
   return false;
 }
 
-const REINIT_SELECTOR = [...uniqueDirectiveAttributes(), DIRECTIVE_MARKER_ATTRIBUTE].map(attributeSelector).join(',');
+const finalizedDirectiveRoots = new WeakSet<HTMLElement>();
 
 function isSlotRegistryShape(value: unknown): value is SlotRegistry {
   if (typeof value !== 'object' || value === null) return false;
@@ -210,7 +250,8 @@ export function bootstrapSlots(): SlotRegistry {
  * pipeline).
  */
 export function reinitializeDirectives(): void {
-  document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
+  collectDirectiveRoots(document).forEach((element) => {
+    finalizedDirectiveRoots.delete(element);
     dispatchLiteshipEvent(element, 'liteship:reinit');
   });
 }
@@ -221,8 +262,15 @@ export function reinitializeDirectives(): void {
  * observer/listener and do NOT re-initialize. Distinct from
  * {@link reinitializeDirectives} (re-read attrs, stay live).
  */
-export function teardownDirectives(): void {
-  document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
+export function teardownDirectiveRoots(roots: Iterable<HTMLElement>): void {
+  for (const element of roots) {
+    if (finalizedDirectiveRoots.has(element)) continue;
+    finalizedDirectiveRoots.add(element);
     dispatchLiteshipEvent(element, 'liteship:teardown');
-  });
+  }
+}
+
+/** Dispatch final teardown to every currently discoverable directive root. */
+export function teardownDirectives(): void {
+  teardownDirectiveRoots(collectDirectiveRoots(document));
 }

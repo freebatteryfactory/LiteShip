@@ -43,6 +43,7 @@ import { transformCss } from './transform-css.js';
 import {
   createPrimitiveResolutionCache,
   invalidateAllPrimitives,
+  purgeModuleEvidence,
   type TokenThemeManifest,
 } from './primitive-resolution-cache.js';
 import {
@@ -190,7 +191,7 @@ function attachAssetUrls(
  * ```
  *
  * `resolvePackaged` is an internal seam: the packaged-`@liteship/core` binary
- * resolver, defaulting to the real {@link resolvePackagedWasm}. Production leaves
+ * resolver, defaulting to the real `resolvePackagedWasm`. Production leaves
  * it defaulted (call sites are `plugin(config)`, byte-identical); a test injects a
  * stub to force the `'package'` WASM source absent against a synthetic project root.
  */
@@ -334,7 +335,7 @@ export function plugin(
     // -----------------------------------------------------------------------
 
     transformIndexHtml() {
-      if (!hmrEnabled) return [];
+      if (!hmrEnabled || isBuild) return [];
       return [
         {
           tag: 'script' as const,
@@ -483,6 +484,7 @@ export function plugin(
           file.endsWith('.css') ||
           file.endsWith('.astro');
         if (scannable) projectScan = null;
+        if (options.type === 'delete') purgeModuleEvidence(cache, file);
       }
 
       // Invalidate definition caches when source files change

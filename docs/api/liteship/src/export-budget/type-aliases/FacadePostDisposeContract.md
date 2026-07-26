@@ -1,0 +1,11 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / FacadePostDisposeContract
+
+# Type Alias: FacadePostDisposeContract
+
+> **FacadePostDisposeContract** = `"inert"` \| `"not-applicable"`
+
+Defined in: [liteship/src/export-budget.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L19)

@@ -29,11 +29,11 @@ import { walkFiles } from '@liteship/core/fs-walk';
 // the directive-suite uses to reach package internals), so the script strips bench
 // source through the identical implementation the gate uses, never a copy.
 // @liteship/gauntlet is not a root dep.
-import { commentsBlanked } from '../../packages/gauntlet/src/gates/code-only.ts';
-import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.ts';
-import type { BenchSubjectIssueKind } from '../../packages/gauntlet/src/gates/bench-subjects.ts';
-import type { PackageCatalogRecord } from '../package-catalog.ts';
-import { type BenchDistribution, type BenchmarkEvidence, extractRegisteredBenches } from './contracts.ts';
+import { commentsBlanked } from '../../packages/gauntlet/src/gates/code-only.js';
+import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.js';
+import type { BenchSubjectIssueKind } from '../../packages/gauntlet/src/gates/bench-subjects.js';
+import type { PackageCatalogRecord } from '../package-catalog.js';
+import { type BenchDistribution, type BenchmarkEvidence, extractRegisteredBenches } from './contracts.js';
 
 /** The repo-relative directory holding the literal-registration bench files. */
 export const BENCH_SOURCE_DIR = 'tests/bench';
@@ -213,7 +213,7 @@ export function benchScriptTargets(repoRoot: string): readonly string[] {
   const pkgPath = resolve(repoRoot, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: Record<string, string> };
   const scripts = [pkg.scripts?.bench ?? '', pkg.scripts?.['bench:alloc'] ?? ''].join(' ');
-  const matches = scripts.match(/tests\/bench\/[^\s'"]+\.bench\.ts/g) ?? [];
+  const matches: string[] = [...(scripts.match(/tests\/bench\/[^\s'"]+\.bench\.ts/g) ?? [])];
   if (pkg.scripts?.['bench:alloc']) {
     matches.push('tests/bench/allocation.bench.ts');
     matches.push('tests/bench/allocation-curves.bench.ts');

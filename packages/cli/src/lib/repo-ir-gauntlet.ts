@@ -29,14 +29,13 @@ import {
   buildRepoIR,
   withRepoRoot,
   liteshipDevopsProfile,
-  normalizeRepoPath,
   detectSkipsAST,
   detectEarlyReturnBeforeExpectAST,
   codeOnlyAST,
   type FactOracle,
 } from '@liteship/audit';
-import { INVARIANTS, type CheckInvariantEntry } from '@liteship/command/invariants';
-import { currentEnvFingerprint } from '@liteship/command/host';
+import { INVARIANTS, matchesInvariantExemption, type CheckInvariantEntry } from '@liteship/command/invariants';
+import { buildCheckGovernanceFacts, currentEnvFingerprint } from '@liteship/command/host';
 import { InvariantViolationError } from '@liteship/error';
 import {
   buildMutationFacts,
@@ -189,15 +188,12 @@ const RESOLVED_RULES: readonly { binding: OracleRuleBinding; rule: CheckInvarian
 );
 
 /**
- * Does `relativePath` fall under one of the rule's `exclude` prefixes? Mirrors the
- * canonical `isExcluded` semantics in `packages/cli/src/commands/check-invariants.ts`
- * EXACTLY (a normalized `.includes(prefix)` substring test), so the oracle excludes
- * the same sanctioned files the real gate does — never a divergent exclusion model.
+ * Does `relativePath` match one of the rule's structured exemptions? Both the
+ * production scanner and this independent oracle consume the same exact/file-or-
+ * subtree matcher, so an exemption cannot broaden through substring coincidence.
  */
 function ruleExcludes(rule: CheckInvariantEntry, relativePath: string): boolean {
-  if (rule.exclude === undefined || rule.exclude.length === 0) return false;
-  const normalized = normalizeRepoPath(relativePath);
-  return rule.exclude.some((prefix) => normalized.includes(prefix));
+  return rule.exemptions?.some((exemption) => matchesInvariantExemption(relativePath, exemption)) ?? false;
 }
 
 /**
@@ -554,6 +550,7 @@ export async function runGauntletWithRepoIR(
     // — pinned equivalent by tests/unit/audit/code-ranges.test.ts.
     codeOnly: codeOnlyAST,
     benchmarkSubjects,
+    checkGovernance: buildCheckGovernanceFacts(repoRoot, now),
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only

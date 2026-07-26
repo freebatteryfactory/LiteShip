@@ -1,0 +1,78 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / AudioProcessor
+
+# Interface: AudioProcessor
+
+Defined in: web/dist/audio/processor.d.ts:27
+
+Host-side surface of the AV-sync AudioWorklet processor.
+
+The returned `node` should be connected into the host's audio graph;
+the accompanying [AudioProcessor.bridge](#bridge) is shared between the
+main thread and the worklet so both sides observe the same
+sample-accurate clock.
+
+## Properties
+
+### bridge
+
+> `readonly` **bridge**: `AVBridgeShape`
+
+Defined in: web/dist/audio/processor.d.ts:31
+
+Shared AV bridge advanced 128 samples per worklet render quantum.
+
+***
+
+### node
+
+> `readonly` **node**: `AudioWorkletNode`
+
+Defined in: web/dist/audio/processor.d.ts:29
+
+The underlying `AudioWorkletNode`. Connect into the graph directly.
+
+## Methods
+
+### dispose()
+
+> **dispose**(): `void`
+
+Defined in: web/dist/audio/processor.d.ts:37
+
+Stop, disconnect, and release the worklet node.
+
+#### Returns
+
+`void`
+
+***
+
+### start()
+
+> **start**(): `void`
+
+Defined in: web/dist/audio/processor.d.ts:33
+
+Begin advancing the bridge's sample counter.
+
+#### Returns
+
+`void`
+
+***
+
+### stop()
+
+> **stop**(): `void`
+
+Defined in: web/dist/audio/processor.d.ts:35
+
+Pause advancement without tearing down the node.
+
+#### Returns
+
+`void`

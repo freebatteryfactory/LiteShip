@@ -478,7 +478,6 @@ describe('integration', () => {
   test('accepts full config with all options', () => {
     const integ = integration({
       detect: true,
-      serverIslands: true,
       vite: {
         boundaryDir: 'src/boundaries',
         tokenDir: 'src/tokens',
@@ -504,12 +503,20 @@ describe('integration', () => {
     expect(integ).toBeDefined();
   });
 
-  test('serverIslands defaults to disabled when not specified', () => {
-    // config?.serverIslands === true -> must be explicitly enabled
-    const integ = integration();
-
-    // Same as above -- the behavioral impact is inside the hook.
-    expect(integ).toBeDefined();
+  test('loudly refuses the removed serverIslands no-op for JavaScript callers', () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    const previous = Diagnostics.setSink(sink);
+    try {
+      expect(() => integration({ serverIslands: true } as never)).toThrow('Astro 7 supports Server Islands');
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          code: 'astro/integration/server-islands-removed',
+          message: expect.stringContaining('server:defer'),
+        }),
+      );
+    } finally {
+      Diagnostics.setSink(previous);
+    }
   });
 
   test('config:setup registers directives, scripts, and plugin config', async () => {
@@ -714,13 +721,9 @@ describe('integration', () => {
     expect(apps.some((app) => app.id === 'liteship-inspector')).toBe(false);
   });
 
-  test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', async () => {
+  test('config:setup honors worker, wasm, and disabled directives', async () => {
     const integ = integration({
       detect: false,
-      // Server Islands is stable in Astro (since v5); there is no experimental
-      // flag to toggle on Astro 6. The option is a documented no-op now — it
-      // must NOT push any `experimental` config update.
-      serverIslands: true,
       stream: { enabled: false },
       llm: { enabled: false },
       gpu: { enabled: false },
@@ -745,7 +748,6 @@ describe('integration', () => {
     });
 
     expect(directives.map((directive) => directive.name)).toEqual(['adaptive', 'graph', 'worker', 'wasm', 'svg']);
-    // serverIslands must NOT produce any experimental config bridge anymore.
     expect(updates.some((config) => 'experimental' in config)).toBe(false);
     expect(scripts.some((script) => script.includes('__LITESHIP_DETECT__'))).toBe(false);
     // The wasm bootstrap advertises the URL AND eagerly auto-loads at the

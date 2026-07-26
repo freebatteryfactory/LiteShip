@@ -1,0 +1,13 @@
+[**LiteShip**](../../../../../../README.md)
+
+***
+
+[LiteShip](../../../../../../modules.md) / [liteship/src/graph](../../../README.md) / [DAG](../README.md) / Node
+
+# Type Alias: Node
+
+> **Node** = [`DAGNode`](../../../interfaces/DAGNode.md)
+
+Defined in: core/dist/graph/dag.d.ts:311
+
+Alias for [DAGNode](../../../interfaces/DAGNode.md).

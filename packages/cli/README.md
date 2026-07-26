@@ -1,6 +1,6 @@
 # @liteship/cli
 
-The implementation behind the `liteship` command-line tool: every verb emits one JSON receipt (a structured result line) on stdout and keeps human-readable summaries on stderr, so output pipes cleanly into `jq`, CI, or an AI agent.
+The implementation behind the `liteship` command-line tool. Finite result-bearing verbs emit JSON receipts on stdout, while catalog projections such as `describe` emit JSON data; human-readable summaries stay on stderr. `help` and `completion` intentionally emit text, while `mcp`, `lsp`, and foreground dev/gauntlet routes own a process stream. Each command's default output mode is declared by the canonical command catalog, so agents can inspect the contract instead of guessing whether stdout is JSON, text, or a live protocol/process channel.
 
 > Install [liteship](https://www.npmjs.com/package/liteship) for the public `liteship` executable. This package owns the programmatic dispatcher; it deliberately does not publish a competing bin shim, so npm and pnpm always resolve the facade-owned command.
 

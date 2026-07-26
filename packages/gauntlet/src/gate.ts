@@ -407,6 +407,60 @@ export interface GateFixtures {
   readonly mutation: GateMutation;
 }
 
+/**
+ * Runtime fact channels a hosted gate may consume. This tuple is the canonical
+ * runtime vocabulary used by gate access manifests and by the instrumented
+ * evidence recorder. It is kept distinct from {@link FACT_KINDS}: FactGate is
+ * the deliberately smaller, data-only subset currently admitted by that
+ * constructor, while hosted gates can consume the remaining host-produced fact
+ * families through explicit access declarations.
+ */
+export const GATE_FACT_CHANNELS = [
+  'supplyChain',
+  'mutation',
+  'transition',
+  'spineRelation',
+  'mcdc',
+  'simulation',
+  'traceability',
+  'standards',
+  'declaredFix',
+  'taint',
+  'capabilityLink',
+  'fuzzCorpus',
+  'proof',
+  'composition',
+  'skipSites',
+  'activeSurfaceFacts',
+  'checkGovernance',
+  'benchmarkSubjects',
+] as const;
+
+/** One host-produced fact channel a gate may declare. */
+export type GateFactChannel = (typeof GATE_FACT_CHANNELS)[number];
+
+/** A declared fact read and whether composition without that fact is invalid. */
+export interface GateFactAccess {
+  readonly channel: GateFactChannel;
+  readonly presence: 'required' | 'optional';
+}
+
+/**
+ * Machine-readable description of the GateContext surfaces a hosted gate reads.
+ * Covered IR files need no per-file declaration: their bytes are already folded
+ * by the coverage digest. Everything outside that domain must be named here.
+ */
+export interface GateAccessManifest {
+  /** The gate enumerates the unscoped confirmer corpus. */
+  readonly allFiles?: true;
+  /** Repo-relative globs for files read outside the IR coverage domain. */
+  readonly outOfIrGlobs?: readonly string[];
+  /** Host-oracle-computed RepoIR tables the gate reads. */
+  readonly ir?: readonly ('facts' | 'refs')[];
+  /** Host-produced fact channels the gate reads. */
+  readonly facts?: readonly GateFactAccess[];
+}
+
 /** A mutation of a gate's own logic + the reason it should be caught. */
 export interface GateMutation {
   readonly describe: string;
@@ -475,6 +529,12 @@ export interface Gate {
    * the evidence the digest folds matches the evidence `run` reads.
    */
   readonly evidenceDigest?: (context: GateContext) => string | undefined;
+  /**
+   * Declared GateContext access. Built-in compositions require this manifest;
+   * downstream legacy gates may omit it and remain uncached/conservatively
+   * covered, but cannot enter a manifest-qualified composition unnoticed.
+   */
+  readonly access?: GateAccessManifest;
   /** The self-proof evidence — required, by construction. */
   readonly fixtures: GateFixtures;
   /**
@@ -726,6 +786,7 @@ export interface FactGate extends Gate {
   readonly form: 'fact';
   readonly requires: readonly FactKind[];
   readonly decide: (facts: FactBundle) => readonly Finding[];
+  readonly access: GateAccessManifest;
 }
 
 /**
@@ -915,6 +976,9 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
     decide,
     run,
     evidenceDigest,
+    access: Object.freeze({
+      facts: Object.freeze(requires.map((channel) => Object.freeze({ channel, presence: 'required' as const }))),
+    }),
     fixtures: spec.fixtures,
   };
   // FREEZE before branding (codex P1): the WeakSet brands the object IDENTITY, but an unfrozen

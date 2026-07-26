@@ -13,7 +13,7 @@ Defined in: [vite/src/wasm-resolve.ts:74](https://github.com/freebatteryfactory/
 Resolve the liteship-compute WASM binary path.
 
 `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
-to the real [resolvePackagedWasm](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/wasm-package-resolve.ts); injectable so a test simulating a
+to the real `resolvePackagedWasm`; injectable so a test simulating a
 consumer with no shipped binary can force the `'package'` source absent and
 drive the config/crate/public ordering deterministically off a temp root.
 

@@ -80,13 +80,13 @@ beforeAll(async () => {
   writeFileSync(
     join(cli, 'index.js'),
     [
-      "export async function run(args, deps = {}) {",
-      "  if (args[0] === 'mcp') { const server = await deps.importMcpServer(); await server.start(); return 0; }",
+      'export async function run(args, deps = {}) {',
+      "  if (args[0] === 'mcp') { const server = await deps.importMcpServer(); const handle = await server.start(); await handle.done; return 0; }",
       "  if (args[0] === 'lsp') { const server = await deps.importMcpServer(); await server.runLspStdio(); return 0; }",
       "  process.stdout.write(JSON.stringify({ owner: '@liteship/cli', args }) + '\\n');",
-      "  return 0;",
-      "}",
-      "",
+      '  return 0;',
+      '}',
+      '',
     ].join('\n'),
   );
   writeFileSync(
@@ -104,9 +104,15 @@ beforeAll(async () => {
   writeFileSync(
     join(mcpServer, 'index.js'),
     [
-      "export async function start() { process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'mcp' }) + '\\n'); }",
+      "import { writeFileSync } from 'node:fs';",
+      "import { join } from 'node:path';",
+      'export async function start() {',
+      "  process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'mcp' }) + '\\n');",
+      "  const done = new Promise((resolve) => setTimeout(() => { writeFileSync(join(process.cwd(), '.mcp-lifecycle-done'), 'done'); resolve(); }, 20));",
+      "  return { transport: 'stdio', done, stop: async () => {} };",
+      '}',
       "export async function runLspStdio() { process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'lsp' }) + '\\n'); }",
-      "",
+      '',
     ].join('\n'),
   );
   mcpServerTarball = await pack(mcpServer, tarballs);
@@ -172,6 +178,8 @@ async function prove(manager: Manager): Promise<void> {
   expect(JSON.parse(invocation.stdout.trim())).toEqual({ owner: '@liteship/cli', args: ['proof'] });
 
   for (const command of ['mcp', 'lsp'] as const) {
+    const lifecycleMarker = join(consumer, '.mcp-lifecycle-done');
+    if (command === 'mcp') expect(existsSync(lifecycleMarker)).toBe(false);
     const serverInvocation =
       manager === 'pnpm'
         ? await runPnpm(['exec', 'liteship', command], { cwd: consumer, env: { FORCE_COLOR: '0' } })
@@ -182,6 +190,9 @@ async function prove(manager: Manager): Promise<void> {
       owner: '@liteship/mcp-server',
       command,
     });
+    if (command === 'mcp') {
+      expect(readFileSync(lifecycleMarker, 'utf8')).toBe('done');
+    }
   }
 }
 

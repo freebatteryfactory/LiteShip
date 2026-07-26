@@ -5,8 +5,8 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { Readable, Writable } from 'node:stream';
-import { processLine, runStdio } from '../../../packages/mcp-server/src/stdio.js';
+import { PassThrough, Readable, Writable } from 'node:stream';
+import { processLine, runStdio, startStdio } from '../../../packages/mcp-server/src/stdio.js';
 
 describe('processLine — stdio framing', () => {
   it('returns null for an empty line', async () => {
@@ -94,5 +94,17 @@ describe('runStdio — full read-line-write loop', () => {
     expect(Array.isArray(out[0]?.result?.tools)).toBe(true);
     expect(out[1]?.error?.code).toBe(-32700);
     expect(out[2]?.id).toBe(2);
+  });
+
+  it('returns an idempotent stop handle for an embedded open input', async () => {
+    const input = new PassThrough();
+    const output = new PassThrough();
+    const handle = startStdio(input, output);
+
+    expect(handle.transport).toBe('stdio');
+    await Promise.all([handle.stop(), handle.stop()]);
+    await expect(handle.done).resolves.toBeUndefined();
+    input.destroy();
+    output.destroy();
   });
 });

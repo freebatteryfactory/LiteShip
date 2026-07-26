@@ -35,6 +35,7 @@ const receipt = buildAffectedResultEvidence(
   {
     lane: required('LITESHIP_AFFECTED_LANE'),
     headSha: required('GITHUB_SHA'),
+    planId: required('LITESHIP_AFFECTED_PLAN_ID') as `sha256:${string}`,
     steps,
   },
   (path) => existsSync(resolve(cwd, path)),

@@ -217,11 +217,13 @@ export interface CommandContext {
   /** Content-addressed receipt cache (adapter-backed; fs on the CLI side). */
   readonly cache?: CommandCache;
   /**
-   * Execute a loaded scene module's compile function (the adapter runs it,
-   * including any Effect). Keeps the `effect` runtime + arbitrary-user-code
-   * execution out of @liteship/command. Throws on compile failure.
+   * Execute a loaded scene module's compile function and project the small
+   * compiled contract that command handlers consume. The adapter owns arbitrary
+   * user-code execution and the scene implementation dependency; command owns
+   * only this structural result. Throws when the module has no valid compiler or
+   * compilation fails.
    */
-  readonly runSceneCompile?: (sceneModule: Record<string, unknown>) => Promise<void>;
+  readonly runSceneCompile?: (sceneModule: Record<string, unknown>) => Promise<SceneCompilation>;
   /**
    * Render a scene to the output path via the host's compositor + ffmpeg
    * pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
@@ -270,6 +272,16 @@ export interface CommandContext {
     | { readonly ok: true; readonly display_id: string; readonly integrity_digest: string }
     | { readonly ok: false; readonly error: string }
   >;
+}
+
+/** Host-projected facts from one real scene compilation. */
+export interface SceneCompilation {
+  /** Resolved scene duration, including track-derived duration when authoring omitted it. */
+  readonly durationMs: number;
+  /** Validated output frame rate. */
+  readonly fps: number;
+  /** Number of compiled track spawns, not the unvalidated authoring-array length. */
+  readonly trackCount: number;
 }
 
 /**
@@ -374,8 +386,10 @@ export interface CapsuleBenchClassification {
  * capability — the capsule-corpus freshness + bench-honesty + green-suite gate.
  * `status` is `ok` only when every generated test+bench exists, no committed file
  * is stale against a fresh regeneration, no bench is a lazy placeholder/drift, and
- * the whole generated suite passes; `stale` means a missing/stale/dishonest
- * artifact (run `capsule:compile`); `failed` means the generated tests ran red.
+ * both generated execution lanes pass and every benchmark yields a measured
+ * distribution with uncertainty; `stale` means a missing/stale/dishonest
+ * artifact (run `capsule:compile`); `failed` means generated execution or
+ * benchmark admission ran red.
  * `errors` is the human work-list (empty on success). Declared here so the
  * `capsule-verify` command's contract lives in `@liteship/command` without a host import.
  */
@@ -633,12 +647,13 @@ export function defineCommand<
   };
 }
 
-interface CommandRegistryShape {
+export interface CommandRegistry {
   readonly get: (name: string) => RegisteredCommand | undefined;
   readonly list: () => readonly CapsuleCommandDescriptor[];
 }
 
-function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
+/** Allocate an immutable name-indexed command registry. */
+export function createCommandRegistry(commands: readonly RegisteredCommand[]): CommandRegistry {
   const byName = new Map<string, RegisteredCommand>();
   for (const command of commands) {
     const { name } = command.descriptor;
@@ -659,6 +674,3 @@ function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
     list: () => descriptors,
   };
 }
-
-export const CommandRegistry = { make };
-export type CommandRegistry = CommandRegistryShape;

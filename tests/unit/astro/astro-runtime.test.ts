@@ -89,7 +89,7 @@ describe('astro shared runtime adapters', () => {
   test('bootstraps slots into the shared registry and reinitializes directives after swaps', () => {
     document.body.innerHTML = `
       <section data-liteship-slot="/hero" data-liteship-mode="replace"></section>
-      <div id="widget" data-liteship-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
+      <div id="widget" data-liteship-directive-bound="adaptive" data-liteship-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
     `;
 
     const registry = bootstrapSlots();
@@ -218,7 +218,7 @@ describe('astro shared runtime adapters', () => {
 
   test('reinitializeDirectives dispatches across stream, llm, wasm, and boundary surfaces', () => {
     document.body.innerHTML = `
-      <div id="boundary" data-liteship-boundary="{}"></div>
+      <div id="boundary" data-liteship-directive-bound="adaptive" data-liteship-boundary="{}"></div>
       <div id="stream" data-liteship-stream-url="/stream"></div>
       <div id="llm" data-liteship-llm-url="/llm"></div>
       <div id="wasm" data-liteship-wasm="true"></div>

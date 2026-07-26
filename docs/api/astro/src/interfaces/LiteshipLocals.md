@@ -6,7 +6,7 @@
 
 # Interface: LiteshipLocals
 
-Defined in: [astro/src/middleware.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L35)
+Defined in: [astro/src/middleware.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L36)
 
 Shape of `context.locals.liteship` injected by [liteshipMiddleware](../functions/liteshipMiddleware.md).
 Astro components (and downstream middleware) read this to drive
@@ -18,7 +18,7 @@ adaptive rendering decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [astro/src/middleware.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L48)
+Defined in: [astro/src/middleware.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L45)
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [astro/src/middleware.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L60)
+Defined in: [astro/src/middleware.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L57)
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -72,9 +72,9 @@ Spreadable `data-liteship-<axis>` map for `<html {...htmlAttributesMap}>`.
 
 ### responsiveMedia
 
-> `readonly` **responsiveMedia**: (`intent`) => `ResponsiveMediaPictureProjection`
+> `readonly` **responsiveMedia**: (`intent`) => [`ResponsiveMediaPictureProjection`](../../../liteship/src/media/interfaces/ResponsiveMediaPictureProjection.md)
 
-Defined in: [astro/src/middleware.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L58)
+Defined in: [astro/src/middleware.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L55)
 
 Project a responsive-media intent using THIS request's Save-Data / DPR caps
 (derived from Client Hints). Every artifact of the returned projection derives
@@ -88,19 +88,19 @@ normal representations apart (#140).
 
 ##### intent
 
-`ResponsiveMediaIntent`
+[`ResponsiveMediaIntent`](../../../liteship/src/media/interfaces/ResponsiveMediaIntent.md)
 
 #### Returns
 
-`ResponsiveMediaPictureProjection`
+[`ResponsiveMediaPictureProjection`](../../../liteship/src/media/interfaces/ResponsiveMediaPictureProjection.md)
 
 ***
 
 ### tiers
 
-> `readonly` **tiers**: `Readonly`\<\{ `design`: `DesignTier`; `motion`: [`MotionTier`](../../../quantizer/src/type-aliases/MotionTier.md); `tier`: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md); \}\>
+> `readonly` **tiers**: `CapabilityAxisValues`
 
-Defined in: [astro/src/middleware.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L42)
+Defined in: [astro/src/middleware.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L43)
 
 Resolved capability tiers keyed by axis. Each field projects to the
 matching `data-liteship-<axis>` attribute on `<html>` — the field name and the

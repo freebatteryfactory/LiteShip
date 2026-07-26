@@ -12,7 +12,7 @@ Defined in: [command/src/commands/check.ts:44](https://github.com/freebatteryfac
 
 The descriptor `outputSchema` for `check.gates` — the WELD-2 Finding-carrying shape,
 hand-written JSON-Schema and byte-parity-pinned against the parity fixture. The
-`findings` ARE plain JSON-serializable [Finding](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts) data (ruleId, severity,
+`findings` ARE plain JSON-serializable [Finding](../../../liteship/src/evidence/interfaces/Finding.md) data (ruleId, severity,
 level, title, detail, location?, remediation?), so they ride the
 `CapsuleCommandResult` payload straight through the MCP dispatch's
 `structuredContent` and the CLI receipt with no separate adapter. `blocked`

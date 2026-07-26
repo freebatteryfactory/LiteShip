@@ -26,6 +26,8 @@ export interface PackageCatalogRecord {
   readonly audit: {
     readonly kind: 'core' | 'layered' | 'host-adjacent' | 'standalone';
     readonly allowedInternalImports: readonly string[];
+    /** Package-relative source/declaration globs the audit must actually analyze. */
+    readonly analyzableArtifacts: readonly string[];
     readonly reason?: string;
   };
   readonly docs: {
@@ -55,7 +57,27 @@ export interface PackageCatalogRecord {
   readonly keywords: readonly string[];
 }
 
-const pkg = <const Record extends PackageCatalogRecord>(record: Record): Record => record;
+type PackageCatalogInput = Omit<PackageCatalogRecord, 'audit'> & {
+  readonly audit: Omit<PackageCatalogRecord['audit'], 'analyzableArtifacts'> & {
+    readonly analyzableArtifacts?: readonly string[];
+  };
+};
+
+export const DEFAULT_ANALYZABLE_ARTIFACTS = ['src/**/*.ts', 'src/**/*.tsx', '!src/**/*.d.ts'] as const;
+
+/**
+ * Normalize the common source-bearing package shape once while requiring the
+ * catalog's types-only exceptions to opt into their real declaration surface.
+ */
+const pkg = <const Record extends PackageCatalogInput>(
+  record: Record,
+): Record & { readonly audit: PackageCatalogRecord['audit'] } => ({
+  ...record,
+  audit: {
+    ...record.audit,
+    analyzableArtifacts: record.audit.analyzableArtifacts ?? DEFAULT_ANALYZABLE_ARTIFACTS,
+  },
+});
 
 export const PACKAGE_CATALOG = [
   pkg({
@@ -64,7 +86,7 @@ export const PACKAGE_CATALOG = [
     publishable: true,
     runtimeSurface: 'types-only',
     layer: 'foundation',
-    audit: { kind: 'standalone', allowedInternalImports: [] },
+    audit: { kind: 'standalone', allowedInternalImports: [], analyzableArtifacts: ['*.d.ts'] },
     docs: { group: 'runtime', order: 9, surface: false },
     plumbStatus: 'tooling',
     plumbReason: 'The published type spine — declarations only, no runtime.',
@@ -156,12 +178,11 @@ export const PACKAGE_CATALOG = [
       './media',
       './clock',
       './wasm',
-      './testing',
       './harness',
       './simulation',
       './fs-walk',
     ],
-    smokeImports: ['@liteship/core', '@liteship/core/testing', '@liteship/core/harness'],
+    smokeImports: ['@liteship/core', '@liteship/core/harness'],
     description:
       'The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync.',
     keywords: ['liteship', 'adaptive-rendering', 'constraint-based', 'ui-framework', 'typescript'],
@@ -459,6 +480,7 @@ export const PACKAGE_CATALOG = [
       './middleware',
       './middleware-entry',
       './fetch-layer',
+      './adaptive-runtime',
       './runtime',
       './runtime/inspector-toolbar-app',
       './Adaptive',
@@ -474,6 +496,7 @@ export const PACKAGE_CATALOG = [
       '@liteship/astro/client-directives/wasm',
       '@liteship/astro/middleware',
       '@liteship/astro/fetch-layer',
+      '@liteship/astro/adaptive-runtime',
       '@liteship/astro/runtime',
     ],
     description:
@@ -685,6 +708,7 @@ export const PACKAGE_CATALOG = [
     audit: {
       kind: 'host-adjacent',
       allowedInternalImports: [
+        '@liteship/canonical',
         '@liteship/core',
         '@liteship/command',
         '@liteship/compiler',
@@ -701,6 +725,7 @@ export const PACKAGE_CATALOG = [
     typedocEntry: 'packages/mcp-server/src/index.ts',
     typedocOrder: 21,
     dependencies: [
+      '@liteship/canonical',
       '@liteship/core',
       '@liteship/error',
       '@liteship/command',
@@ -729,10 +754,10 @@ export const PACKAGE_CATALOG = [
     docs: { group: 'prose-only', order: 1, surface: true },
     plumbStatus: 'tooling',
     plumbReason: 'The scaffolder — a one-shot CLI, not runtime.',
-    apiSurface: false,
-    apiSurfaceOrder: null,
-    typedocEntry: null,
-    typedocOrder: null,
+    apiSurface: true,
+    apiSurfaceOrder: 22,
+    typedocEntry: 'packages/create-liteship/src/index.ts',
+    typedocOrder: 23,
     dependencies: ['@liteship/core', '@liteship/error'],
     capabilities: ['project-scaffolding'],
     publicSubpaths: ['.'],
@@ -765,10 +790,10 @@ export const PACKAGE_CATALOG = [
     plumbStatus: 'tooling',
     plumbReason:
       'The curated facade and public executable owner, including facade-owned MCP/LSP dependency composition.',
-    apiSurface: false,
-    apiSurfaceOrder: null,
-    typedocEntry: null,
-    typedocOrder: null,
+    apiSurface: true,
+    apiSurfaceOrder: 23,
+    typedocEntry: 'packages/liteship/src',
+    typedocOrder: 24,
     dependencies: [
       '@liteship/_spine',
       '@liteship/assets',

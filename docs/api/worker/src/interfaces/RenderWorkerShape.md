@@ -90,7 +90,7 @@ Start rendering frames with the given video configuration.
 
 ##### config
 
-`VideoConfig`
+[`VideoConfig`](../../../liteship/src/media/interfaces/VideoConfig.md)
 
 #### Returns
 

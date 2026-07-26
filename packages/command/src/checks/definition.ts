@@ -115,10 +115,57 @@ export interface CheckEvidenceRequirement {
   readonly verifier: CheckEvidenceVerifier;
 }
 
+/** A repository-owned package-script execution. */
+export interface RootScriptCheckExecution {
+  readonly kind: 'root-script';
+  /** Root `package.json#scripts` key that owns the assertion. */
+  readonly script: string;
+  /** Arguments forwarded after the script invocation, preserving their exact token spelling. */
+  readonly args: readonly string[];
+  /** `pnpm test` is a real shorthand with distinct spelling; every other script uses `pnpm run`. */
+  readonly invocation: 'pnpm-run' | 'pnpm-test';
+}
+
 /** Structured execution owned by the CLI host rather than an opaque shell line. */
 export interface CliCheckExecution {
   readonly kind: 'cli-command';
   readonly argv: readonly [string, ...string[]];
+}
+
+/** The closed execution algebra for a check claim. */
+export type CheckExecution = RootScriptCheckExecution | CliCheckExecution;
+
+/**
+ * Parse the exact root-script command dialect admitted by the repository check
+ * registry. Returning `null` makes an unowned shell pipeline unrepresentable as
+ * a repository check without silently guessing its assertion owner.
+ */
+export function parseRootScriptCheckExecution(command: string): RootScriptCheckExecution | null {
+  const run = /^pnpm run ([^\s]+)(?:\s+(.*))?$/u.exec(command);
+  if (run !== null) {
+    return {
+      kind: 'root-script',
+      script: run[1]!,
+      args: run[2] === undefined ? [] : Object.freeze(run[2].split(/\s+/u)),
+      invocation: 'pnpm-run',
+    };
+  }
+  const test = /^pnpm test(?:\s+(.*))?$/u.exec(command);
+  if (test !== null) {
+    return {
+      kind: 'root-script',
+      script: 'test',
+      args: test[1] === undefined ? [] : Object.freeze(test[1].split(/\s+/u)),
+      invocation: 'pnpm-test',
+    };
+  }
+  return null;
+}
+
+/** Render the stable, package-manager-independent repository command spelling. */
+export function renderRootScriptCheckExecution(execution: RootScriptCheckExecution): string {
+  const head = execution.invocation === 'pnpm-test' ? 'pnpm test' : `pnpm run ${execution.script}`;
+  return execution.args.length === 0 ? head : `${head} ${execution.args.join(' ')}`;
 }
 
 /**
@@ -137,8 +184,8 @@ interface CheckDefinitionBase {
   readonly owner: string;
   /** The full shell line to spawn — the SAME contract as `GauntletPhase.command`; references the root script. */
   readonly command: string;
-  /** Optional structured execution. The host materializes it for the current project package manager. */
-  readonly execution?: CliCheckExecution;
+  /** The executable owner of this claim. Every check has exactly one; omission is not representable. */
+  readonly execution: CheckExecution;
   /** Globs of the bytes whose change invalidates a content-addressed verdict (the cache coverage). */
   readonly inputs: readonly string[];
   /** The profiles this check is a member of — a projection runs it iff its profile is listed. */

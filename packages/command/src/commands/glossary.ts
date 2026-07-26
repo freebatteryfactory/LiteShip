@@ -160,6 +160,7 @@ export const glossaryCommand = defineCommand({
       type: 'object',
       properties: { term: { type: 'string' } },
     } as const satisfies CommandJsonSchema,
+    cli: { outputMode: 'json', positionals: ['term'] },
     outputSchema: GlossaryPayloadSchema,
     annotations: { readOnly: true, group: 'setup' },
   },

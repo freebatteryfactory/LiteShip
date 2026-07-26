@@ -45,6 +45,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@liteship/canonical": "workspace:*",
     "@liteship/core": "workspace:*",
     "@liteship/error": "workspace:*",
     "@liteship/command": "workspace:*",

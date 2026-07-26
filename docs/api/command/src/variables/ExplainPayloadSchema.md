@@ -364,6 +364,86 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 > `readonly` **type**: `"string"` = `'string'`
 
+#### properties.symbol.properties.surface.properties.failureProof
+
+> `readonly` **failureProof**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.importSource
+
+> `readonly` **importSource**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.importSource.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation
+
+> `readonly` **observation**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties.code
+
+> `readonly` **code**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties.code.type
+
+> `readonly` **type**: ... = `'string'`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties.kind
+
+> `readonly` **kind**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties.kind.const
+
+> `readonly` **const**: ... = `'diagnostic-and-output-omission'`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties.outputField
+
+> `readonly` **outputField**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.properties.outputField.type
+
+> `readonly` **type**: ... = `'string'`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.required
+
+> `readonly` **required**: readonly \[`"kind"`, `"code"`, `"outputField"`\]
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.observation.type
+
+> `readonly` **type**: `"object"` = `'object'`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.operation
+
+> `readonly` **operation**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.operation.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.test
+
+> `readonly` **test**: `object`
+
+#### properties.symbol.properties.surface.properties.failureProof.properties.test.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.symbol.properties.surface.properties.failureProof.required
+
+> `readonly` **required**: readonly \[`"test"`, `"importSource"`, `"operation"`, `"observation"`\]
+
+#### properties.symbol.properties.surface.properties.failureProof.type
+
+> `readonly` **type**: readonly \[`"object"`, `"null"`\]
+
 #### properties.symbol.properties.surface.properties.lifecycle
 
 > `readonly` **lifecycle**: `object`
@@ -438,7 +518,7 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 #### properties.symbol.properties.surface.required
 
-> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
+> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
 
 #### properties.symbol.properties.surface.type
 

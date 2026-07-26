@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 const audioDecode = (name = 'demo.audioDecode', budgets: { p95Ms?: number } = { p95Ms: 50 }) =>
@@ -16,8 +15,6 @@ const audioDecode = (name = 'demo.audioDecode', budgets: { p95Ms?: number } = { 
   });
 
 describe('generateCachedProjection (compile-time-resolved)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   it('THROWS UnsupportedError without a binding context (wire-or-fail, never a skip)', () => {
     expect(() => Harness.generateCachedProjection(audioDecode())).toThrow(/no importable binding/i);
   });

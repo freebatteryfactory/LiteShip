@@ -25,6 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
+import { buildCheckGovernanceFacts } from '@liteship/command/host';
 import {
   litelaunchGauntlet,
   runGauntletOnRepo,
@@ -49,6 +50,20 @@ const AFTER_REVIEW = new Date('2028-01-01');
 /** All committed waivers, by ruleId — the set each gate evaluates its scope against. */
 const WAIVED_RULE_IDS = new Set(LITESHIP_WAIVERS.map((w) => w.ruleId));
 
+/** Launch the real lean composition with its required host-produced facts. */
+function launch(now: Date) {
+  return litelaunchGauntlet(
+    REPO_ROOT,
+    now,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    buildCheckGovernanceFacts(REPO_ROOT, now),
+  );
+}
+
 describe('litelaunchGauntlet — the committed waivers govern the REAL repo', () => {
   it('exposes its inputs as live, non-empty surface (no dead convenience function)', () => {
     // The runner binds REAL gates, a REAL map, and a REAL waiver list — none empty.
@@ -60,7 +75,7 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
   it(
     'BEFORE the review date: every committed waiver suppresses a REAL finding (teeth, no stale)',
     () => {
-      const result = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
+      const result = launch(BEFORE_REVIEW);
 
       // Each gate whose rule has a committed waiver must show that waiver WORKING:
       // ≥1 finding waived, and ZERO waiver-findings (no stale/expired/forbidden noise).
@@ -95,8 +110,8 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
   it(
     'AFTER the review date: the SAME waivers EXPIRE — re-red + block (the recurring audit fires)',
     () => {
-      const before = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
-      const after = litelaunchGauntlet(REPO_ROOT, AFTER_REVIEW);
+      const before = launch(BEFORE_REVIEW);
+      const after = launch(AFTER_REVIEW);
 
       // Every committed waiver expired → one waiver-expired error each, and nothing
       // is waived any more (the suppression lapsed).
@@ -130,8 +145,8 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
   it(
     'is deterministic — same repo + same injected now → identical blocking verdict',
     () => {
-      const a = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
-      const b = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
+      const a = launch(BEFORE_REVIEW);
+      const b = launch(BEFORE_REVIEW);
       expect(a.blocked).toBe(b.blocked);
       expect(a.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length])).toEqual(
         b.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length]),

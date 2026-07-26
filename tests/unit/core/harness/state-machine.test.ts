@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 const demoBuffer = () =>
@@ -16,8 +15,6 @@ const demoBuffer = () =>
   });
 
 describe('generateStateMachine', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   it('THROWS UnsupportedError without a binding context (wire-or-fail, never a skip)', () => {
     expect(() => Harness.generateStateMachine(demoBuffer())).toThrow(
       /neither a runtime tick driver nor an importable field binding/i,

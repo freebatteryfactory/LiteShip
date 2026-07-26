@@ -6,7 +6,7 @@
 
 # Interface: CliCheckExecution
 
-Defined in: [command/src/checks/definition.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L119)
+Defined in: [command/src/checks/definition.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L130)
 
 Structured execution owned by the CLI host rather than an opaque shell line.
 
@@ -16,7 +16,7 @@ Structured execution owned by the CLI host rather than an opaque shell line.
 
 > `readonly` **argv**: readonly \[`string`, `string`\]
 
-Defined in: [command/src/checks/definition.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L121)
+Defined in: [command/src/checks/definition.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L132)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [command/src/checks/definition.ts:121](https://github.com/freebatter
 
 > `readonly` **kind**: `"cli-command"`
 
-Defined in: [command/src/checks/definition.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L120)
+Defined in: [command/src/checks/definition.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L131)

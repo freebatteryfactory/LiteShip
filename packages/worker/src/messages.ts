@@ -308,7 +308,7 @@ export interface MetricsMessage {
  * @param states - The resolved entries to include.
  * @param ack - Whether the worker is expected to acknowledge the delivery.
  */
-export function makeResolvedStateEnvelope(
+export function defineResolvedStateEnvelope(
   type: 'bootstrap-resolved-state' | 'apply-resolved-state',
   states: readonly ResolvedStateEntry[],
   ack: boolean,
@@ -352,15 +352,51 @@ export type FromWorkerMessage =
  * });
  * ```
  */
+const TO_WORKER_TYPES: ReadonlySet<string> = new Set([
+  'init',
+  'add-quantizer',
+  'bootstrap-quantizers',
+  'startup-compute',
+  'bootstrap-resolved-state',
+  'apply-resolved-state',
+  'remove-quantizer',
+  'evaluate',
+  'set-blend',
+  'apply-updates',
+  'compute',
+  'warm-reset',
+  'start-render',
+  'stop-render',
+  'transfer-canvas',
+  'dispose',
+]);
+
+const FROM_WORKER_TYPES: ReadonlySet<string> = new Set([
+  'ready',
+  'state',
+  'resolved-state-ack',
+  'frame',
+  'render-complete',
+  'error',
+  'metrics',
+]);
+
+function hasKnownType(msg: unknown, types: ReadonlySet<string>): boolean {
+  if (typeof msg !== 'object' || msg === null || !('type' in msg)) return false;
+  const type = (msg as { readonly type?: unknown }).type;
+  return typeof type === 'string' && types.has(type);
+}
+
+/** Runtime guards and type projections for the worker protocol vocabulary. */
 export const Messages = {
   /** Type guard: is a ToWorkerMessage */
   isToWorker(msg: unknown): msg is ToWorkerMessage {
-    return typeof msg === 'object' && msg !== null && 'type' in msg;
+    return hasKnownType(msg, TO_WORKER_TYPES);
   },
 
   /** Type guard: is a FromWorkerMessage */
   isFromWorker(msg: unknown): msg is FromWorkerMessage {
-    return typeof msg === 'object' && msg !== null && 'type' in msg;
+    return hasKnownType(msg, FROM_WORKER_TYPES);
   },
 } as const;
 

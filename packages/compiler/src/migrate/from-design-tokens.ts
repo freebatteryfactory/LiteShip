@@ -62,7 +62,7 @@ export interface FromDesignTokensOptions {
   /**
    * The mode axis a token's `$value` object may be keyed by — a token whose
    * `$value` is an object with every key in this set lowers to a
-   * {@link defineTheme} variant rather than a {@link defineToken}. Default
+   * `defineTheme` variant rather than a `defineToken`. Default
    * `['light', 'dark']`.
    */
   readonly modes?: readonly string[];

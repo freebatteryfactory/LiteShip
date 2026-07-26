@@ -121,7 +121,11 @@ function isInIr(path: string, ctx: GateContext): boolean {
   // is OUT-OF-IR, an evidenceDigest obligation.
   if (PACKAGE_SOURCE.test(path)) return true;
   const isSourceFile = path.endsWith('.ts') || path.endsWith('.tsx');
-  return isSourceFile && !NON_IR_SOURCE_TREES.some((tree) => path.startsWith(tree));
+  // Fixture shorthand is deliberately just a bare filename (`good.ts`). A
+  // directory-qualified source path outside packages/*/src is real out-of-IR
+  // evidence: scripts/, docs/, dist/*.d.ts, or any future repository owner must
+  // be declared instead of being laundered through the fixture convention.
+  return isSourceFile && !path.includes('/');
 }
 
 /**

@@ -112,7 +112,7 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
  * but decode now runs an `schema.brand` refinement that REJECTS a non-canonical
  * `Uint8Array` (folding a thrown {@link ValidationError} into a `schema/brand`
  * issue) instead of forwarding it to the decoder. It also carries an explicit
- * harness arbitrary that samples a value with `fc.anything()` and runs it
+ * harness arbitrary that samples a value with `fc.jsonValue()` and runs it
  * through the canonical encoder — so every generated sample is, by
  * construction, valid canonical CBOR the refinement and decoder both accept.
  *
@@ -151,12 +151,12 @@ export const CanonicalCborBytes = withArbitrary(
     },
     'CanonicalCborBytes',
   ),
-  (fc) => (fc as { anything(): Arbitrary<unknown> }).anything().map((value) => CanonicalCbor.encode(value)),
+  (fc) => (fc as { jsonValue(): Arbitrary<unknown> }).jsonValue().map((value) => CanonicalCbor.encode(value)),
 );
 
 /**
  * Declared capsule for the CanonicalCbor decoder. Registered in the
- * module-level catalog at import time; walked by the factory compiler.
+ * immutable exported declaration; walked by the factory compiler.
  */
 export const canonicalCborDecodeCapsule = defineCapsule({
   _kind: 'pureTransform',

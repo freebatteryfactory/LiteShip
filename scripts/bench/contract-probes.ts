@@ -247,7 +247,7 @@ export const genuiValidationProbe: ComplexityProbe = {
   owner: '@liteship/genui',
   describe: 'validateGeneratedUITree — one structural visit per generated node; O(n) in node count.',
   shape: 'generated-ui-nodes',
-  sizes: [32, 128, 512, 2048, 8192],
+  sizes: [32, 128, 512, 2048, 4096],
   measurement: { innerIterations: 25, replicates: 5, warmupIterations: 10 },
   workloadFor: buildGenuiValidationOfSize,
 };

@@ -14,7 +14,7 @@ You author in terms of **inputs → states → outputs** — never the engine's 
 - **Inspect.** `layout.explain(value)` reports exactly why a state won, and
   the project-owned `check` script verifies the app.
 
-The first adaptive feature is one 14-line definition imported from `liteship`.
+The first adaptive feature is one 18-line definition imported from `liteship`.
 Advanced packages and projection targets remain available through explicit subpaths.
 
 ## Run

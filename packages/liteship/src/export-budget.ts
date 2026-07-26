@@ -60,6 +60,18 @@ export interface FacadeLifecycleOperationContract {
   readonly rationale: string;
 }
 
+/** Exact executable witness for a public facade failure claim. */
+export interface FacadeFailureProofContract {
+  readonly test: `tests/${string}.test.ts::${string}`;
+  readonly importSource: string;
+  readonly operation: string;
+  readonly observation: {
+    readonly kind: 'diagnostic-and-output-omission';
+    readonly code: string;
+    readonly outputField: string;
+  };
+}
+
 /** Authored root decisions. The root admits default authoring and inspection only. */
 export const ROOT_EXPORT_CONTRACT_SOURCE = `[
   {
@@ -180,7 +192,7 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "userStory": "Annotate a named-state boundary definition.",
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking preserves the input and state vocabulary.",
-    "example": "Boundary<Input, State>",
+    "example": "Boundary<'viewport.width', readonly ['mobile', 'desktop']>",
     "stability": "stable"
   },
   {
@@ -202,7 +214,7 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "userStory": "Annotate a content-addressed token definition.",
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking preserves the token value contract.",
-    "example": "Token<Value>",
+    "example": "Token<'brand-accent'>",
     "stability": "stable"
   },
   {
@@ -213,7 +225,7 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "userStory": "Annotate named token variants.",
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking preserves variant names and token values.",
-    "example": "Theme",
+    "example": "Theme<readonly ['default', 'dark']>",
     "stability": "stable"
   },
   {
@@ -224,7 +236,7 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "userStory": "Annotate state-aware style declarations.",
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking binds style states to the boundary vocabulary.",
-    "example": "Style<State>",
+    "example": "Style<Boundary>",
     "stability": "stable"
   },
   {
@@ -235,7 +247,7 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "userStory": "Annotate the flagship define, apply, and inspect aggregate.",
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking keeps attrs, explanation, and plan outputs coherent.",
-    "example": "Adaptive<State>",
+    "example": "Adaptive",
     "stability": "stable"
   },
   {
@@ -256,14 +268,14 @@ export const FACADE_SUBPATH_CONTRACT_SOURCE = `[
   {"subpath":"./schema","specifier":"liteship/schema","owner":"@liteship/core/schema","role":"schema","userStory":"Define, decode, and project transport-agnostic schemas.","dependencyCost":"pure core schema kernel","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"immutable definitions and pure decoders","failureContract":"Malformed data returns structured decode issues.","example":"schema.struct(fields)","stability":"stable","symbol":"schema","reason":"Schema authoring is a coherent expert domain beyond the first adaptive feature."},
   {"subpath":"./reactive","specifier":"liteship/reactive","owner":"@liteship/core/reactive","role":"reactive-runtime","userStory":"Allocate and dispose cells, signals, stores, lifetimes, and live quantizers.","dependencyCost":"stateful core and quantizer runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"owned resources require disposal","failureContract":"Disposed resources stop work and invalid state transitions fail loudly.","example":"createCell(initial)","stability":"stable","symbol":"createCell","reason":"Runtime allocation is intentionally distinct from immutable root authoring."},
   {"subpath":"./motion","specifier":"liteship/motion","owner":"@liteship/core/motion","role":"motion","userStory":"Define and execute transitions, timelines, easing, reveal, and stagger behavior.","dependencyCost":"motion kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"timeline resources require disposal","failureContract":"Unsupported or invalid motion intent is refused before execution.","example":"createTimeline(boundary, options)","stability":"stable","symbol":"createTimeline","reason":"Motion is an expert capability with its own lifecycle and vocabulary."},
-  {"subpath":"./graph","specifier":"liteship/graph","owner":"@liteship/core/graph","role":"document-graph","userStory":"Seal, validate, patch, query, and replay the document graph.","dependencyCost":"graph and evidence kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"immutable sealed graphs plus explicit clients","failureContract":"Invalid nodes, patches, or receipts are rejected before application.","example":"DAG.create(input)","stability":"stable","symbol":"DAG","reason":"Graph mutation is an advanced engine workflow, not first-hour authoring."},
+  {"subpath":"./graph","specifier":"liteship/graph","owner":"@liteship/core/graph","role":"document-graph","userStory":"Seal, validate, patch, query, and replay the document graph.","dependencyCost":"graph and evidence kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"immutable sealed graphs plus explicit clients","failureContract":"Invalid nodes, patches, or receipts are rejected before application.","example":"DAG.empty()","stability":"stable","symbol":"DAG","reason":"Graph mutation is an advanced engine workflow, not first-hour authoring."},
   {"subpath":"./media","specifier":"liteship/media","owner":"@liteship/core/media","role":"media-runtime","userStory":"Resolve responsive media and run compositor, audio, video, and frame-budget paths.","dependencyCost":"media and compositor runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"owned buffers and renderers require disposal","failureContract":"Invalid media inputs and exhausted budgets are surfaced explicitly.","example":"Compositor.create(options)","stability":"stable","symbol":"Compositor","reason":"Media processing has runtime and performance costs unsuitable for root."},
   {"subpath":"./evidence","specifier":"liteship/evidence","owner":"@liteship/core/evidence","role":"evidence-and-quality","userStory":"Inspect receipts, diagnostics, quality tiers, capabilities, and addressed evidence.","dependencyCost":"pure evidence kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure readers and immutable receipts","failureContract":"Invalid chains, addresses, and capability decisions are refused with structured evidence.","example":"inspectReceipt(receipt)","stability":"stable","symbol":"inspectReceipt","reason":"Receipts and tier policy are expert inspection surfaces."},
-  {"subpath":"./compiler","specifier":"liteship/compiler","owner":"@liteship/compiler","role":"projection-compiler","userStory":"Compile definitions into CSS, shader, accessibility, AI, and motion targets.","dependencyCost":"compiler kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure compilation","failureContract":"Unsupported definitions produce structured compiler errors.","example":"CSSCompiler.compile(input)","stability":"stable","symbol":"CSSCompiler","reason":"Projection targets are advanced escape hatches behind the default Adaptive plan."},
-  {"subpath":"./runtime","specifier":"liteship/runtime","owner":"@liteship/web","role":"browser-runtime","userStory":"Apply streaming, morphing, recovery, integrity, and browser runtime behavior.","dependencyCost":"browser DOM runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"connections and observers require disposal","failureContract":"Unsafe URLs, invalid patches, and broken resumptions fail closed.","example":"Morph.apply(input)","stability":"stable","symbol":"Morph","reason":"Browser runtime code must never load through the host-free root."},
-  {"subpath":"./astro","specifier":"liteship/astro","owner":"@liteship/astro","role":"astro-host","userStory":"Install LiteShip into Astro and apply Adaptive attributes and server projections.","dependencyCost":"optional Astro peer and host adapter","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"host integration lifecycle","failureContract":"Invalid host configuration fails during integration setup or build.","example":"integration(options)","stability":"stable","symbol":"adaptiveAttrs","reason":"Astro ownership and peer cost require an explicit host subpath."},
+  {"subpath":"./compiler","specifier":"liteship/compiler","owner":"@liteship/compiler","role":"projection-compiler","userStory":"Compile definitions into CSS, shader, accessibility, AI, and motion targets.","dependencyCost":"compiler kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure compilation","failureContract":"CSS state keys outside the boundary are omitted and emit the registered compiler/css/unknown-state-key diagnostic.","example":"CSSCompiler.compile(boundary, input)","stability":"stable","symbol":"CSSCompiler","reason":"Projection targets are advanced escape hatches behind the default Adaptive plan."},
+  {"subpath":"./runtime","specifier":"liteship/runtime","owner":"@liteship/web","role":"browser-runtime","userStory":"Apply streaming, morphing, recovery, integrity, and browser runtime behavior.","dependencyCost":"browser DOM runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"connections and observers require disposal","failureContract":"Unsafe URLs, invalid patches, and broken resumptions fail closed.","example":"Morph.morph(input, input)","stability":"stable","symbol":"Morph","reason":"Browser runtime code must never load through the host-free root."},
+  {"subpath":"./astro","specifier":"liteship/astro","owner":"@liteship/astro","role":"astro-host","userStory":"Install LiteShip into Astro and apply Adaptive attributes and server projections.","dependencyCost":"optional Astro peer and host adapter","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"host integration lifecycle","failureContract":"Invalid host configuration fails during integration setup or build.","example":"adaptiveAttrs(input)","stability":"stable","symbol":"adaptiveAttrs","reason":"Astro ownership and peer cost require an explicit host subpath."},
   {"subpath":"./vite","specifier":"liteship/vite","owner":"@liteship/vite","role":"vite-host","userStory":"Install LiteShip into Vite and compile directive and virtual-module projections.","dependencyCost":"optional Vite peer and host plugin","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"host plugin lifecycle","failureContract":"Invalid directives and configuration produce stable build diagnostics.","example":"plugin(options)","stability":"stable","symbol":"plugin","reason":"Vite ownership and peer cost require an explicit host subpath."},
-  {"subpath":"./testing","specifier":"liteship/testing","owner":"@liteship/core/testing","role":"test-tooling","userStory":"Generate proof harnesses, reset test registries, and inspect the installed fleet roster.","dependencyCost":"test-only harness code","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"test process only","failureContract":"Invalid harness declarations and stale fleet projections fail deterministically.","example":"generatePureTransform(spec)","stability":"stable","symbol":"resetCapsuleCatalog","reason":"Test-only operations and fleet metadata must not appear on production root."},
+  {"subpath":"./testing","specifier":"liteship/testing","owner":"@liteship/core/harness","role":"test-tooling","userStory":"Generate proof harnesses and inspect the installed fleet roster without exposing test tooling on the production root.","dependencyCost":"test-only harness code and fast-check peer","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"test process only","failureContract":"Invalid harness declarations and stale fleet projections fail deterministically.","example":"generatePureTransform(spec)","stability":"stable","symbol":"generatePureTransform","reason":"Proof generators and fleet metadata are a public package-author contract that must remain isolated from production root imports."},
   {"subpath":"./migrate","specifier":"liteship/migrate","owner":"@liteship/compiler/migrate","role":"migration","userStory":"Translate supported external syntax into ordinary LiteShip definitions.","dependencyCost":"compiler parser adapters","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure migration","failureContract":"Unrepresentable source is refused with stable diagnostics and no fabricated definition.","example":"fromMediaQueries(css)","stability":"stable","symbol":"fromMediaQueries","reason":"Migration grammar is an explicit expert boundary, not framework ontology."},
   {"subpath":"./genui","specifier":"liteship/genui","owner":"@liteship/genui","role":"generated-ui","userStory":"Define a trusted component catalog, validate generated UI, and render it without raw package discovery.","dependencyCost":"pure generated-UI catalog and renderer","packedProof":"check/journey:one-install-runtime-reference-identity","lifecycle":"immutable catalog and pure validation/rendering","failureContract":"Unknown components, props, or invalid generated trees are refused before rendering.","example":"defineComponentCatalog(input)","stability":"stable","symbol":"defineComponentCatalog","reason":"Generated UI is a documented product capability that deserves a discoverable facade subpath."}
 ]`;
@@ -294,11 +306,30 @@ export const FACADE_LIFECYCLE_CONTRACT_SOURCE = `[
   {"operation":"createTokenBuffer","specifier":"liteship/media","owner":"@liteship/core/media","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/media/token-buffer.test.ts","rationale":"The token buffer is bounded synchronous storage and owns no active resource."},
   {"operation":"LLMAdapter.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/llm-adapter.test.ts","rationale":"The adapter transforms caller-driven iteration and starts no independent task or connection."},
   {"operation":"SSE.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"close-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The client owns timers, one EventSource generation, buffers, and two delivery streams."},
-  {"operation":"SlotRegistry.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/slot.test.ts","rationale":"The registry is inert storage; DOM observation is a separate operation returning its own disposer."},
+  {"operation":"SlotRegistry.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/web-runtime-primitives.test.ts","rationale":"The registry is inert storage; DOM observation is a separate operation returning its own disposer."},
   {"operation":"createAudioProcessor","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The processor owns a worklet node, graph connection, and bridge running state."},
-  {"operation":"createHtmlFragment","specifier":"liteship/runtime","owner":"@liteship/web","classification":"pure-allocation","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/escape-html.test.ts","rationale":"The helper returns an inert document fragment and starts no observer or background work."},
-  {"operation":"createLLMSession","specifier":"liteship/astro","owner":"@liteship/astro/runtime","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/astro/llm-session-lifecycle.test.ts","rationale":"The session owns pooled render runtime state and queued delivery work."}
+  {"operation":"createHtmlFragment","specifier":"liteship/runtime","owner":"@liteship/web","classification":"pure-allocation","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/runtime-security-helpers.test.ts","rationale":"The helper returns an inert document fragment and starts no observer or background work."},
+  {"operation":"createLLMSession","specifier":"liteship/astro","owner":"@liteship/astro/runtime","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/astro/astro-runtime.test.ts","rationale":"The session owns pooled render runtime state and queued delivery work."}
 ]`;
+
+/**
+ * Exact executable evidence for facade failure claims that need an operator-visible
+ * proof beyond an owner-package filename. The compiler row is intentionally bound
+ * through `packages/liteship/src/compiler.ts`, so a deep owner test cannot satisfy
+ * the public-facade contract.
+ */
+export const FACADE_FAILURE_PROOF_CONTRACT: Readonly<Record<string, FacadeFailureProofContract>> = Object.freeze({
+  'liteship/compiler': Object.freeze({
+    test: 'tests/unit/liteship/facade-failure-contract.test.ts::liteship/compiler failure contract > CSSCompiler.compile omits an unknown state and emits its registered diagnostic',
+    importSource: '../../../packages/liteship/src/compiler.js',
+    operation: 'CSSCompiler.compile',
+    observation: Object.freeze({
+      kind: 'diagnostic-and-output-omission',
+      code: 'compiler/css/unknown-state-key',
+      outputField: 'raw',
+    }),
+  }),
+});
 
 const ROOT_KEYS = [
   'name',

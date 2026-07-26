@@ -136,6 +136,7 @@ Two invariants share a shape: ONE authored source is provably read by every targ
 @liteship/edge -> @liteship/cli
 @liteship/gauntlet -> @liteship/cli
 @liteship/error -> @liteship/cli
+@liteship/canonical -> @liteship/mcp-server
 @liteship/core -> @liteship/mcp-server
 @liteship/error -> @liteship/mcp-server
 @liteship/command -> @liteship/mcp-server

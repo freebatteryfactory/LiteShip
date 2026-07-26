@@ -72,9 +72,9 @@ The context in which this check's claim is being scheduled.
 
 ***
 
-### execution?
+### execution
 
-> `readonly` `optional` **execution?**: [`CliCheckExecution`](CliCheckExecution.md)
+> `readonly` **execution**: [`CheckExecution`](../type-aliases/CheckExecution.md)
 
 Defined in: [command/src/checks/plan.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L46)
 

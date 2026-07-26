@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 describe('generateReceiptedMutation', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   // A constructible base: under the mandatory-`mutate` rule a receiptedMutation
   // must expose a pure `mutate` core OR a typed `effect-outcome` exemption, so
   // `base` carries a trivial pure `mutate` to satisfy `defineCapsule`. The

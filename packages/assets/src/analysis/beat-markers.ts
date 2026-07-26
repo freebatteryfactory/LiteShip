@@ -46,11 +46,15 @@ export function detectBeats(audio: {
     envelope[i] = Math.sqrt(sum / frameSize);
   }
 
-  const minLag = Math.max(1, Math.floor((audio.sampleRate * 60) / 200 / hop));
+  // Integer lags must preserve the authored 60..200 BPM search band. Flooring
+  // the minimum lag can manufacture >200 BPM at lower sample rates; ceil it so
+  // every admitted lag maps back inside the declared range.
+  const minLag = Math.max(1, Math.ceil((audio.sampleRate * 60) / 200 / hop));
   const maxLag = Math.floor((audio.sampleRate * 60) / 60 / hop);
+  if (minLag > maxLag || minLag >= envelope.length) return { bpm: 0, beats: [] };
   let bestLag = minLag;
   let bestCorr = 0;
-  for (let lag = minLag; lag < maxLag && lag < envelope.length; lag++) {
+  for (let lag = minLag; lag <= maxLag && lag < envelope.length; lag++) {
     let corr = 0;
     for (let i = 0; i + lag < envelope.length; i++) corr += envelope[i]! * envelope[i + lag]!;
     if (corr > bestCorr) {

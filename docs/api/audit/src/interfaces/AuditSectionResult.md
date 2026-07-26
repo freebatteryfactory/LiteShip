@@ -6,7 +6,7 @@
 
 # Interface: AuditSectionResult\<TSummary\>
 
-Defined in: [audit/src/types.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L90)
+Defined in: [audit/src/types.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L133)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [audit/src/types.ts:90](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **findings**: readonly [`AuditFinding`](AuditFinding.md)[]
 
-Defined in: [audit/src/types.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L93)
+Defined in: [audit/src/types.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L136)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [audit/src/types.ts:93](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **section**: [`AuditSection`](../type-aliases/AuditSection.md)
 
-Defined in: [audit/src/types.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L91)
+Defined in: [audit/src/types.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L134)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [audit/src/types.ts:91](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **summary**: `TSummary`
 
-Defined in: [audit/src/types.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L92)
+Defined in: [audit/src/types.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L135)
 
 ***
 
@@ -44,4 +44,4 @@ Defined in: [audit/src/types.ts:92](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **suppressed**: readonly [`AuditSuppression`](AuditSuppression.md)[]
 
-Defined in: [audit/src/types.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L94)
+Defined in: [audit/src/types.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L137)

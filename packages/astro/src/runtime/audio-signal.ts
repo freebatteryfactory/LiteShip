@@ -30,6 +30,8 @@
  * @module
  */
 
+import { Diagnostics } from '@liteship/core';
+
 /** A beat must exceed this multiple of the causal flux baseline (EMA of recent flux). */
 export const FLUX_BEAT_MULT = 1.5;
 /** Absolute flux floor so silence / quiet noise never fires a beat. */
@@ -91,6 +93,8 @@ export function readAudioSignal(mode: 'sample' | 'normalized' | 'amplitude' | 'b
 
 const callbacks = new Set<() => void>();
 let rafId: number | null = null;
+const ANIMATION_CLOCK_UNAVAILABLE_MESSAGE =
+  'Live audio runtime requires requestAnimationFrame and cancelAnimationFrame; no audio clock was started.';
 
 /**
  * Attach an rAF observer that re-runs `callback` each frame while any audio
@@ -105,7 +109,14 @@ let rafId: number | null = null;
  * loop for the others, so the next frame is always scheduled in `finally`.
  */
 export function attachAudioObserver(callback: () => void): (() => void) | null {
-  if (typeof requestAnimationFrame === 'undefined') return null;
+  if (typeof requestAnimationFrame === 'undefined' || typeof cancelAnimationFrame === 'undefined') {
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.audio-signal',
+      code: 'astro/audio/animation-clock-unavailable',
+      message: ANIMATION_CLOCK_UNAVAILABLE_MESSAGE,
+    });
+    return null;
+  }
 
   callbacks.add(callback);
 
@@ -150,6 +161,17 @@ export function attachAudioObserver(callback: () => void): (() => void) | null {
  * ```
  */
 export function driveAudioFromAnalyser(analyser: AnalyserNode): () => void {
+  if (typeof requestAnimationFrame === 'undefined' || typeof cancelAnimationFrame === 'undefined') {
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.audio-signal',
+      code: 'astro/audio/animation-clock-unavailable',
+      message: ANIMATION_CLOCK_UNAVAILABLE_MESSAGE,
+    });
+    return () => {
+      state.amplitude = 0;
+      state.beat = 0;
+    };
+  }
   const buffer = new Float32Array(analyser.fftSize);
   // Refractory is enforced in WALL-CLOCK milliseconds off the rAF timestamp, not
   // a frame count. A frame count is wrong: rAF fires ~every 16ms regardless of

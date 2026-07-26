@@ -19,7 +19,7 @@ prove the stage/remotion video leg equals the `sampleProgram` reference within e
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### totalFrames
 

@@ -15,9 +15,8 @@
  *
  * @module
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 import type { AssemblyKind } from '@liteship/core';
 
@@ -57,8 +56,6 @@ const WIRE_OR_FAIL_ARMS: ReadonlyArray<{
 ];
 
 describe('harness factory — no generator can emit a placeholder (wire-or-fail)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   for (const { kind, gen } of WIRE_OR_FAIL_ARMS) {
     it(`${kind}: a degenerate, un-wireable capsule THROWS rather than emitting a placeholder`, () => {
       // A degenerate capsule has no importable binding / resolved probe, so there

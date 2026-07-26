@@ -34,10 +34,7 @@ function pushOwners(): ReadonlyMap<string, readonly string[]> {
     if (!current.includes(job)) current.push(job);
     owners.set(checkId, current);
   };
-  for (const lane of Object.values(plan.lanes)) {
-    for (const checkId of lane.checkIds) add(checkId, lane.job);
-  }
-  for (const check of Object.values(plan.specializedChecks)) add(check.checkId, check.job);
+  for (const receipt of plan.executionReceipts) add(receipt.checkId, receipt.job);
 
   // Registry checks that participate in cross-platform authority retain their
   // canonical Linux owner and additionally require the platform proof jobs.

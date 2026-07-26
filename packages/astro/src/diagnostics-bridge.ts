@@ -1,8 +1,8 @@
 /**
- * Bridge `@liteship/*` {@link Diagnostics} into Astro's integration logger.
+ * Bridge `@liteship/*` `Diagnostics` into Astro's integration logger.
  *
  * Runtime boundaries across `@liteship/core` / `@liteship/edge` emit operator
- * diagnostics through the swappable {@link Diagnostics} sink (e.g. the kv-cache
+ * diagnostics through the swappable `Diagnostics` sink (e.g. the kv-cache
  * "invalid cache entry" warning, the host-adapter missing-`prefix` warning).
  * By default those go straight to `console`. Inside an Astro project we'd rather
  * they flow through Astro's own logger, so they carry the liteship label, respect
@@ -69,7 +69,7 @@ export function bridgeDiagnosticsToAstroLogger(logger: AstroLoggerLike): Diagnos
 }
 
 /**
- * Install the Astro-logger bridge as the active {@link Diagnostics} sink and
+ * Install the Astro-logger bridge as the active `Diagnostics` sink and
  * return a restore function that reinstates the prior sink. Called once from the
  * integration's `astro:config:setup`; the bridge stays installed for the whole
  * dev/build session.

@@ -178,6 +178,7 @@ export const noSkippedTestGate: Gate = defineGate({
   level: 'L2',
   describe:
     'Flags every skip FORM (`it.skip(` / `.todo(` / `xit(` / `.skipIf(` / `.runIf(` / the `COND ? it : it.skip` alias) across package source + the tests/ tree — a skip ships green while proving nothing — allowed only when the file is in the enumerated capability-gated allowlist.',
+  access: { allFiles: true },
   run: scan,
   evidenceDigest: noSkippedTestEvidenceDigest,
   fixtures: {

@@ -146,9 +146,10 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
   readonly site: readonly Site[];
   readonly attribution?: AttributionDecl;
   /**
-   * Optional pure-transform handler: takes a decoded input and returns a
-   * decoded output. Used by the harness to drive generated property tests
-   * end-to-end. Only meaningful for `pureTransform` arms today.
+   * Optional deterministic transform handler: takes a decoded input and
+   * returns a decoded output. Used by the harness to drive generated property
+   * tests end-to-end for `pureTransform` capsules and pre-runtime
+   * `sceneComposition` transforms that have no tickable scene.
    */
   readonly run?: (input: In) => Out;
   /**

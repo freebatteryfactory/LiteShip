@@ -59,11 +59,14 @@ export const isBreakingClass = (changeClass: ChangeClass): boolean =>
  * export at least a minor (a new public surface is a feature, not a patch).
  *
  * The package list is the published, non-private workspace set (the same set the
- * monorepo build orders), MINUS the two pseudo-public roots whose surface is a
+ * monorepo build orders), minus the pseudo-public root whose surface is a
  * curated re-export, not a primary barrel:
  *  - `@liteship/_spine` ships `.d.ts` only (no runtime barrel to enumerate);
- *  - `liteship` / `create-liteship` are aggregator/scaffold entry points, not
- *    primitive surfaces — their drift is caught by their own integration tests.
+ *  - `liteship` is an aggregator whose exact curated budget has its own stronger lock.
+ *
+ * `create-liteship` deliberately remains in this policy: its package exports a
+ * reusable typed scaffold engine in addition to its executable, so its barrel
+ * is a real consumer contract rather than bin-only implementation detail.
  */
 export const LITESHIP_API_SURFACE_POLICY: ApiSurfacePolicy = {
   publicPackages: GENERATED_API_SURFACE_PACKAGES,

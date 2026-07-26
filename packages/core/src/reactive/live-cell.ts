@@ -168,7 +168,7 @@ function serializedCommit<T>(run: (op: (current: T) => T) => void): (op: (curren
  * Wrap an arbitrary value in a {@link LiveCell} with freshly minted identity + HLC.
  * The live cell IS its own disposable ({@link AsyncOwnedResource}) — awaiting
  * `lc.dispose()` closes the value kernel + crossings channel exactly once. `clock`
- * (default {@link wallClock}) is the injected time source for the envelope HLC —
+ * (default `wallClock`) is the injected time source for the envelope HLC —
  * pass a `manualClock`/`fixedClock` for deterministic replay.
  */
 export function createLiveCell<K extends CellKind, T>(
@@ -208,7 +208,7 @@ export function createLiveCell<K extends CellKind, T>(
 /**
  * Create a boundary-kind LiveCell that automatically publishes crossings when the
  * numeric value transitions between boundary states. The live cell IS its own
- * disposable ({@link AsyncOwnedResource}). `clock` (default {@link wallClock}) is
+ * disposable ({@link AsyncOwnedResource}). `clock` (default `wallClock`) is
  * the injected time source for the envelope HLC and crossing timestamps — pass a
  * manual/fixed clock for determinism.
  */

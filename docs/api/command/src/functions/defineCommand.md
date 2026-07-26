@@ -8,7 +8,7 @@
 
 > **defineCommand**\<`R`, `Args`, `Payload`\>(`spec`): [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/registry.ts:615](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L615)
+Defined in: [command/src/registry.ts:629](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L629)
 
 Register a finite command with COMPILE-TIME capability narrowing (T053). The
 `requires` tuple is captured as a `const` type parameter `R`, so the handler's
@@ -40,7 +40,7 @@ confirmed every declared capability is present.
 
 #### argsSchema?
 
-`Schema`\<`Args`, `Args`\>
+[`Schema`](../../../liteship/src/schema/interfaces/Schema.md)\<`Args`, `Args`\>
 
 #### descriptor
 

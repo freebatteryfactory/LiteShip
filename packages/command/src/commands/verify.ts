@@ -83,6 +83,7 @@ export const verifyCommand = defineCommand({
       properties: { tarball: { type: 'string' }, capsule: { type: 'string' } },
       required: ['tarball'],
     } as const satisfies CommandJsonSchema,
+    cli: { outputMode: 'json', positionals: ['tarball'] },
     outputSchema: VerifyPayloadSchema,
     annotations: { readOnly: true, group: 'ship' },
   },

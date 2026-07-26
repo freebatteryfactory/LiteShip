@@ -189,10 +189,11 @@ describe('Morph semantic ID matching', () => {
   test('elements with different semantic IDs are not reused', () => {
     const root = el('<div><p data-liteship-id="a">old</p></div>');
     document.body.appendChild(root);
+    const before = root.querySelector('[data-liteship-id="a"]');
     run(Morph.morph(root, '<p data-liteship-id="b">new</p>'));
     // The old element should be removed and a new one inserted
     expect(root.querySelector('[data-liteship-id="a"]')).toBeNull();
-    expect(root.querySelector('[data-liteship-id="b"]')).not.toBeNull();
+    expect(root.querySelector('[data-liteship-id="b"]')).not.toBe(before);
     root.remove();
   });
 
@@ -428,6 +429,7 @@ describe('Morph.morphWithState', () => {
     expect(result).toBeUndefined();
     expect(root.textContent).toBe('leadbody');
     expect(root.querySelector('span')?.textContent).toBe('body');
+    expect(root.querySelector('span')?.getAttribute('data-liteship-id')).toBe('client');
     root.remove();
   });
 });

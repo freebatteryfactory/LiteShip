@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_PACKAGE\_ROSTER**: readonly `string`[] = `GENERATED_LITESHIP_PACKAGE_ROSTER`
 
-Defined in: [audit/src/consumer.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L32)
+Defined in: [audit/src/consumer.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L34)
 
 The dependency-ordered scoped fleet projection authored in
 `scripts/package-catalog.ts`. Manifests remain the independent packaging

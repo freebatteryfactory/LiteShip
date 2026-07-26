@@ -511,6 +511,10 @@ export const perfClaimBenchGate: Gate = defineGate({
   level: 'L3',
   describe:
     'Perf-claim-without-bench — a measurable performance claim (zero-alloc / fast-path / O(1) …) in published src with no benchmark measuring it is a finding.',
+  access: {
+    outOfIrGlobs: ['benchmarks/**', 'tests/bench/**', 'scripts/bench/**'],
+    facts: [{ channel: 'benchmarkSubjects', presence: 'required' }],
+  },
   run: scan,
   evidenceDigest: perfClaimBenchEvidenceDigest,
   fixtures: {

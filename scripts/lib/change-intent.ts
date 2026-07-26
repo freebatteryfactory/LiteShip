@@ -1,6 +1,7 @@
 /** Internal, content-addressed change-intent evidence. Not a public package API. @module */
 
 import { createHash } from 'node:crypto';
+import { canonicalJson } from '@liteship/canonical';
 
 export type ChangeIntentProvenance = 'github-verified' | 'agent-self-declared';
 export type ChangeIntentActorClass = 'human' | 'agent' | 'automation';
@@ -227,23 +228,6 @@ function parseUnsigned(value: unknown): ChangeIntentUnsigned {
     sourceSha: provenanced(record['sourceSha'], 'changeIntent.sourceSha', parseSha),
     repositoryIdentity: provenanced(record['repositoryIdentity'], 'changeIntent.repositoryIdentity', parseRepository),
   };
-}
-
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) throw new TypeError('canonical change intent cannot contain a non-finite number');
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-  if (typeof value === 'object') {
-    const record = value as RecordValue;
-    return `{${Object.keys(record)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
-      .join(',')}}`;
-  }
-  throw new TypeError(`canonical change intent cannot contain ${typeof value}`);
 }
 
 function digest(unsigned: ChangeIntentUnsigned): ChangeIntent['intentId'] {

@@ -91,7 +91,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // the distinct handler/MCP command `check.gates`, changing the commands projection.
     // Public command schemas now expose the accepted context/explain contracts;
     // the app resource embeds the same byte-addressed commands projection.
-    expect(pin).toBe('fnv1a:65f421ec');
+    // The app embeds the same catalog-owned CLI invocation/output contract as
+    // the static commands UI; keep both projections on one content address.
+    expect(pin).toBe('fnv1a:9d3fed32');
   });
 });
 

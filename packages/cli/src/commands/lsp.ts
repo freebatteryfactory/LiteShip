@@ -54,7 +54,12 @@ type RunnerResult = {
  * re-exports only `run`, so this type never reaches the public type-export surface.
  */
 export type McpServerModule = {
-  readonly start: (opts: { readonly http?: string }) => Promise<void>;
+  // The CLI owns observation, not server shutdown. Retain only the structural
+  // completion capability dispatch actually consumes; the ambient declaration
+  // in ../mcp-server.d.ts remains the cold-build mirror of the full optional
+  // sibling handle. A static type import here would turn that optional runtime
+  // seam into a TypeScript project edge and recreate the retired CLI↔MCP cycle.
+  readonly start: (opts: { readonly http?: string }) => Promise<{ readonly done: Promise<void> }>;
   readonly runLspStdio: (runner: (globs?: readonly string[]) => Promise<RunnerResult>) => Promise<void>;
 };
 

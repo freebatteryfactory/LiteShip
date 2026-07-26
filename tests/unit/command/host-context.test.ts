@@ -168,25 +168,45 @@ describe('createNodeCommandContext', () => {
     expect(waveform).toBe(512);
   });
 
-  it('loadSceneModule and runSceneCompile invoke the compile fn regardless of return type', async () => {
-    // Wave 8: the legacy Effect-returning compile path is retired — compile fns are
-    // sync and return a CompiledScene descriptor (or a bare value). runSceneCompile
-    // invokes the fn for its side effect and returns void either way.
+  it('loadSceneModule and runSceneCompile admit only a structural compiled descriptor', async () => {
     const plainPath = join(workDir, 'plain.mjs');
     writeFileSync(plainPath, 'export function compile() { return 1; }\n');
     const descriptorPath = join(workDir, 'descriptor.mjs');
-    writeFileSync(descriptorPath, 'export function compile() { return { _kind: "compiledScene", frames: 42 }; }\n');
+    writeFileSync(
+      descriptorPath,
+      'export function compileScene() { return { duration: 1400, fps: 24, trackSpawns: [{}, {}] }; }\n',
+    );
     const ctx = createNodeCommandContext({ cwd: workDir });
     const plainMod = await ctx.loadSceneModule?.(plainPath);
     expect(plainMod).toBeTruthy();
-    await expect(ctx.runSceneCompile?.(plainMod!)).resolves.toBeUndefined();
+    await expect(ctx.runSceneCompile?.(plainMod!)).rejects.toThrow(/instead of a CompiledScene descriptor/);
     const descriptorMod = await ctx.loadSceneModule?.(descriptorPath);
-    await expect(ctx.runSceneCompile?.(descriptorMod!)).resolves.toBeUndefined();
+    await expect(ctx.runSceneCompile?.(descriptorMod!)).resolves.toEqual({
+      durationMs: 1400,
+      fps: 24,
+      trackCount: 2,
+    });
   });
 
-  it('runSceneCompile is a no-op when the module exports no callable', async () => {
+  it('loadSceneModule contains missing and malformed module failures as null', async () => {
+    const malformedPath = join(workDir, 'malformed.mjs');
+    writeFileSync(malformedPath, 'export const = ;\n');
     const ctx = createNodeCommandContext({ cwd: workDir });
-    await expect(ctx.runSceneCompile?.({ marker: 1 })).resolves.toBeUndefined();
+    await expect(ctx.loadSceneModule?.('missing.mjs')).resolves.toBeNull();
+    await expect(ctx.loadSceneModule?.('malformed.mjs')).resolves.toBeNull();
+  });
+
+  it('runSceneCompile refuses a module with no explicit compile function', async () => {
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    await expect(ctx.runSceneCompile?.({ marker: 1 })).rejects.toThrow(/exports no compile function/);
+  });
+
+  it('runSceneCompile refuses ambiguous modules instead of choosing by export order', async () => {
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    const descriptor = () => ({ duration: 1, fps: 1, trackSpawns: [] });
+    await expect(
+      ctx.runSceneCompile?.({ compileAlpha: descriptor, compileBeta: descriptor }),
+    ).rejects.toThrow(/exports multiple compile functions \(compileAlpha, compileBeta\); export exactly one/);
   });
 
   it(

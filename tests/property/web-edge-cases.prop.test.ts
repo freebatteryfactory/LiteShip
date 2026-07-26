@@ -24,7 +24,6 @@ beforeEach(() => {
 });
 
 describe('Web package edge cases', () => {
-
   describe('RuntimeURL security validation', () => {
     test('rejects dangerous protocols deterministically', () => {
       fc.assert(
@@ -46,25 +45,37 @@ describe('Web package edge cases', () => {
           }
 
           // Should return a valid resolution type for any input
-          return ['missing', 'malformed', 'cross-origin-rejected', 'origin-not-allowed', 'kind-not-allowed', 'private-ip-rejected', 'allowed'].includes(result.type);
+          return [
+            'missing',
+            'malformed',
+            'cross-origin-rejected',
+            'origin-not-allowed',
+            'kind-not-allowed',
+            'private-ip-rejected',
+            'allowed',
+          ].includes(result.type);
         }),
       );
     });
 
     test('URL parsing edge cases are handled consistently', () => {
       fc.assert(
-        fc.property(fc.oneof(
-          fc.string(),
-          fc.constant(null),
-          fc.constant(undefined)
-        ), (url) => {
+        fc.property(fc.oneof(fc.string(), fc.constant(null), fc.constant(undefined)), (url) => {
           const result = resolveRuntimeUrl(url, {
             kind: 'stream',
             policy: { mode: 'allowlist', allowOrigins: ['*'], byKind: { stream: ['*'] } },
           });
 
           // Should always return a valid resolution type
-          return ['missing', 'malformed', 'cross-origin-rejected', 'origin-not-allowed', 'kind-not-allowed', 'private-ip-rejected', 'allowed'].includes(result.type);
+          return [
+            'missing',
+            'malformed',
+            'cross-origin-rejected',
+            'origin-not-allowed',
+            'kind-not-allowed',
+            'private-ip-rejected',
+            'allowed',
+          ].includes(result.type);
         }),
       );
     });
@@ -96,7 +107,15 @@ describe('Web package edge cases', () => {
           }
 
           // Should return some valid resolution
-          return ['missing', 'malformed', 'cross-origin-rejected', 'origin-not-allowed', 'kind-not-allowed', 'private-ip-rejected', 'allowed'].includes(result.type);
+          return [
+            'missing',
+            'malformed',
+            'cross-origin-rejected',
+            'origin-not-allowed',
+            'kind-not-allowed',
+            'private-ip-rejected',
+            'allowed',
+          ].includes(result.type);
         }),
       );
     });
@@ -132,20 +151,19 @@ describe('Web package edge cases', () => {
           paths.forEach((path, index) => {
             registry.register({
               path: path as any,
-              element: elements[index],
+              element: elements[index]!,
               mode: 'partial' as const,
               mounted: true,
             });
           });
 
           // All should be registered
-          const allRegistered = paths.every(path => registry.has(path as any));
+          const allRegistered = paths.every((path) => registry.has(path as any));
 
           // Find by prefix should work
-          const prefixResults = registry.findByPrefix(paths[0] as any);
-          const prefixConsistent = prefixResults.every((entry: any) =>
-            (entry.path as string).startsWith(paths[0])
-          );
+          const prefix = paths[0]!;
+          const prefixResults = registry.findByPrefix(prefix as any);
+          const prefixConsistent = prefixResults.every((entry: any) => (entry.path as string).startsWith(prefix));
 
           return allRegistered && prefixConsistent;
         }),

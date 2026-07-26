@@ -24,10 +24,18 @@ import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
 import {
   ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
+  BENCH_FLEX_POLICY,
   LLM_STEADY_DIRECTIVE_P99_MAX_NS,
   LLM_STEADY_P99_TO_BASELINE_MAX,
   LLM_STEADY_REPLICATE_EXCEEDANCE_MAX,
+  benchFlexPolicyFailures,
 } from './bench/flex-policy.js';
+
+const FLEX_POLICY_FAILURES = benchFlexPolicyFailures(BENCH_FLEX_POLICY);
+if (FLEX_POLICY_FAILURES.length > 0) {
+  for (const failure of FLEX_POLICY_FAILURES) console.error(`FAIL flex-policy: ${failure}`);
+  process.exit(1);
+}
 
 interface CheckResult {
   pass: boolean;
@@ -111,11 +119,7 @@ interface MatchHit {
   text: string;
 }
 
-const scanFiles = (
-  patterns: string[],
-  matcher: RegExp,
-  excludeSanctioned = false,
-): MatchHit[] => {
+const scanFiles = (patterns: string[], matcher: RegExp, excludeSanctioned = false): MatchHit[] => {
   const files = fg.sync(patterns, { cwd: process.cwd() });
   const hits: MatchHit[] = [];
   for (const file of files) {
@@ -177,11 +181,7 @@ const checks: Check[] = [
       // text, and red-fixture string. That gate is the fine-grained BLOCKING authority
       // (it strips comments/strings before judging); this roll-up matches the same
       // intent coarsely so it agrees with it (a prose mention is never a violation).
-      const tsHits = scanFiles(
-        ['packages/*/src/**/*.ts'],
-        /^\s*\/(?:\/|\*)\s*@ts-(ignore|nocheck)\b/,
-        false,
-      );
+      const tsHits = scanFiles(['packages/*/src/**/*.ts'], /^\s*\/(?:\/|\*)\s*@ts-(ignore|nocheck)\b/, false);
       const lint = sh('pnpm run lint');
 
       const anyOk = anyHits.length === 0;
@@ -218,9 +218,7 @@ const checks: Check[] = [
       const gatePassed = /BENCH GATE PASSED/.test(gate.out) && gate.ok;
 
       const sseSrc = readFileSync('packages/web/src/stream/sse.ts', 'utf8');
-      const preflightMandatory =
-        !/preflight\s*[?:].*false/.test(sseSrc) &&
-        !/disablePreflight/.test(sseSrc);
+      const preflightMandatory = !/preflight\s*[?:].*false/.test(sseSrc) && !/disablePreflight/.test(sseSrc);
 
       // Signal cover for the diagnostic pairs that have been calibrated with
       // structural-floor thresholds (worker-runtime-startup at 100%, llm-runtime-
@@ -288,8 +286,7 @@ const checks: Check[] = [
           const postureOk = rs.workerStartupAudit?.posture === 'accept-honest-residual';
           const llmSignals = rs.llmRuntimeSteadySignals;
           const llmExceedancesOk =
-            llmSignals != null &&
-            llmSignals.replicateExceedanceRate <= LLM_STEADY_REPLICATE_EXCEEDANCE_MAX;
+            llmSignals != null && llmSignals.replicateExceedanceRate <= LLM_STEADY_REPLICATE_EXCEEDANCE_MAX;
           const llmP99TailOk =
             rs.llmRuntimeSteadySignals != null &&
             rs.llmRuntimeSteadySignals.directiveP99ToBaselineP99 <= LLM_STEADY_P99_TO_BASELINE_MAX;
@@ -298,9 +295,7 @@ const checks: Check[] = [
             typeof rs.llmRuntimeSteadySignals.directiveP99Ns === 'number' &&
             rs.llmRuntimeSteadySignals.directiveP99Ns <=
               (rs.llmRuntimeSteadySignals.absoluteP99BudgetNs ?? LLM_STEADY_DIRECTIVE_P99_MAX_NS);
-          const unexpectedNoisy = (rs.benchStability ?? []).filter(
-            (p) => p.noisy && !acceptedNoisyPairs.has(p.label),
-          );
+          const unexpectedNoisy = (rs.benchStability ?? []).filter((p) => p.noisy && !acceptedNoisyPairs.has(p.label));
           const stabilityOk = unexpectedNoisy.length === 0;
 
           const llmSteadyOk = (llmExceedancesOk && llmP99TailOk) || llmAbsoluteTailOk;
@@ -370,9 +365,7 @@ const checks: Check[] = [
   {
     dim: 'Docs',
     check: () => {
-      const adrCount = existsSync('docs/adr')
-        ? readdirSync('docs/adr').filter((f) => f.endsWith('.md')).length
-        : 0;
+      const adrCount = existsSync('docs/adr') ? readdirSync('docs/adr').filter((f) => f.endsWith('.md')).length : 0;
       const renderRuntimeGone = !existsSync('docs/RENDER-RUNTIME.md');
       const archExists = existsSync('ARCHITECTURE.md');
       // ARCHITECTURE.md must be SELF-SUFFICIENT — it explains the system on its own,
@@ -382,10 +375,8 @@ const checks: Check[] = [
       // old 4KB cap is now the FLOOR) AND actually describe the keystone IR in prose.
       const archBytes = archExists ? statSync('ARCHITECTURE.md').size : 0;
       const archText = archExists ? readFileSync('ARCHITECTURE.md', 'utf8') : '';
-      const archIsSelfSufficient =
-        archExists && archBytes >= 4096 && /document graph/i.test(archText);
-      const apiExists =
-        existsSync('docs/api') && readdirSync('docs/api').length > 0;
+      const archIsSelfSufficient = archExists && archBytes >= 4096 && /document graph/i.test(archText);
+      const apiExists = existsSync('docs/api') && readdirSync('docs/api').length > 0;
       const pass = adrCount >= 8 && renderRuntimeGone && archIsSelfSufficient && apiExists;
       return {
         pass,

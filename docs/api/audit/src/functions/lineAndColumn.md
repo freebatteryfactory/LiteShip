@@ -8,7 +8,7 @@
 
 > **lineAndColumn**(`sourceFile`, `position`): `object`
 
-Defined in: [audit/src/shared.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L281)
+Defined in: [audit/src/shared.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L316)
 
 ## Parameters
 

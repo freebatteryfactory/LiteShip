@@ -18,7 +18,7 @@ export const LOCAL_RESOURCE_POLICY = Object.freeze({
   openMaximumBusyPercent: 35,
   balancedFreeMemoryGiB: 6,
   balancedMaximumBusyPercent: 85,
-}) as const;
+} as const);
 
 export interface CpuTimesSnapshot {
   readonly idle: number;

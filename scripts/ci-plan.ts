@@ -31,7 +31,7 @@
 import { pathToFileURL } from 'node:url';
 import { CHECK_REGISTRY } from '../packages/command/src/checks/registry.js';
 import { planChecks } from '../packages/command/src/checks/plan.js';
-import type { CheckPlatform, CheckProfile } from '../packages/command/src/checks/definition.js';
+import type { CheckExecution, CheckPlatform, CheckProfile } from '../packages/command/src/checks/definition.js';
 import {
   executionPrerequisites,
   type ExecutionPrerequisite,
@@ -248,8 +248,20 @@ export interface CiPlanSpecializedCheck {
   readonly job: string;
   /** The exact command projected from CHECK_REGISTRY. */
   readonly command: string;
+  /** The same typed executable owner carried by the registry claim. */
+  readonly execution: CheckExecution;
   /** Canonical executable setup rows, resolved from the prerequisite catalog. */
   readonly prerequisites: readonly ExecutionPrerequisite[];
+}
+
+/** One execution-qualified receipt required before a projected check can be admitted. */
+export interface CiPlanExecutionReceipt {
+  readonly id: string;
+  readonly checkId: string;
+  readonly job: string;
+  readonly command: string;
+  readonly requires: readonly string[];
+  readonly produces: readonly string[];
 }
 
 /** One ownership claim used by the release-partition validator. */
@@ -271,7 +283,7 @@ export interface CiPlanBuildOptions {
 /** The full CI plan matrix — the projection the `plan` job publishes as its `matrix` output. */
 export interface CiPlan {
   /** Schema tag for the emitted artifact. */
-  readonly schema: 'liteship/ci-plan@2';
+  readonly schema: 'liteship/ci-plan@3';
   /** The check profile the lane partition projects (`release`). */
   readonly sourceProfile: CheckProfile;
   /** The platform the merge gate runs on (`linux`). */
@@ -282,6 +294,8 @@ export interface CiPlan {
   readonly lanes: Readonly<Record<string, CiPlanLane>>;
   /** Named checks executed by specialized jobs outside the gauntlet profile lanes. */
   readonly specializedChecks: Readonly<Record<string, CiPlanSpecializedCheck>>;
+  /** Exact check-to-job execution receipts, including every composed coverage stage. */
+  readonly executionReceipts: readonly CiPlanExecutionReceipt[];
   /** Release checks with no projected lane or specialized owner (must be empty for blocking checks). */
   readonly unfannedReleaseChecks: readonly string[];
   /** A summary of the source `planChecks(sourceProfile, platform)` projection. */
@@ -291,6 +305,112 @@ export interface CiPlan {
     readonly checkCount: number;
     readonly estimatedMs: number;
   };
+}
+
+/** Refuse a coverage projection missing a shard, browser, merge, or floor receipt. */
+export function assertCoverageAuthorityReceipts(receipts: readonly CiPlanExecutionReceipt[], shardCount: number): void {
+  const expected = [
+    ...Array.from({ length: shardCount }, (_, index) => `coverage/node-shard-${index + 1}`),
+    'coverage/browser',
+    'coverage/merge',
+    'coverage/floor',
+  ];
+  const actual = receipts.filter((receipt) => receipt.checkId === 'check/coverage').map((receipt) => receipt.id);
+  if (actual.join('\0') !== expected.join('\0')) {
+    throw new Error(`ci-plan coverage receipts must be exactly ${expected.join(', ')}`);
+  }
+  const merge = receipts.find((receipt) => receipt.id === 'coverage/merge');
+  const requiredArtifacts = [
+    ...Array.from({ length: shardCount }, (_, index) => `coverage-shard-${index + 1}`),
+    'coverage-browser-parallel',
+  ];
+  if (merge === undefined || merge.requires.join('\0') !== requiredArtifacts.join('\0')) {
+    throw new Error(`ci-plan coverage merge must require ${requiredArtifacts.join(', ')}`);
+  }
+}
+
+function buildExecutionReceipts(
+  lanes: Readonly<Record<string, CiPlanLane>>,
+  specialized: Readonly<Record<string, CiPlanSpecializedCheck>>,
+): readonly CiPlanExecutionReceipt[] {
+  const receipts: CiPlanExecutionReceipt[] = [];
+  for (const [key, lane] of Object.entries(lanes)) {
+    if (key === 'coverage') continue;
+    if (lane.kind === 'sharded') {
+      for (let shard = 1; shard <= SHARD_COUNT; shard++) {
+        receipts.push({
+          id: `check/test/shard-${shard}`,
+          checkId: 'check/test',
+          job: lane.job,
+          command: lane.command,
+          requires: [],
+          produces: [`coverage-shard-${shard}`],
+        });
+      }
+      continue;
+    }
+    for (const checkId of lane.checkIds) {
+      receipts.push({
+        id: `${key}/${checkId}`,
+        checkId,
+        job: lane.job,
+        command: lane.command,
+        requires: [],
+        produces: [],
+      });
+    }
+  }
+  for (let shard = 1; shard <= SHARD_COUNT; shard++) {
+    receipts.push({
+      id: `coverage/node-shard-${shard}`,
+      checkId: 'check/coverage',
+      job: 'truth-linux-parallel-test',
+      command: 'pnpm run test:shard',
+      requires: [],
+      produces: [`coverage-shard-${shard}`],
+    });
+  }
+  receipts.push(
+    {
+      id: 'coverage/browser',
+      checkId: 'check/coverage',
+      job: 'truth-linux-parallel-coverage-browser',
+      command: 'pnpm run coverage:browser',
+      requires: [],
+      produces: ['coverage-browser-parallel'],
+    },
+    {
+      id: 'coverage/merge',
+      checkId: 'check/coverage',
+      job: 'truth-linux-parallel-merge-coverage',
+      command: 'pnpm run coverage:merge-shards',
+      requires: [
+        ...Array.from({ length: SHARD_COUNT }, (_, index) => `coverage-shard-${index + 1}`),
+        'coverage-browser-parallel',
+      ],
+      produces: ['coverage/coverage-final.json', 'coverage/coverage-meta.json'],
+    },
+    {
+      id: 'coverage/floor',
+      checkId: 'check/coverage',
+      job: 'truth-linux-parallel-merge-coverage',
+      command: 'pnpm run coverage:merge-shards',
+      requires: ['coverage/coverage-final.json', 'coverage/coverage-meta.json'],
+      produces: [],
+    },
+  );
+  for (const [key, check] of Object.entries(specialized)) {
+    receipts.push({
+      id: `specialized/${key}`,
+      checkId: check.checkId,
+      job: check.job,
+      command: check.command,
+      requires: [],
+      produces: [],
+    });
+  }
+  assertCoverageAuthorityReceipts(receipts, SHARD_COUNT);
+  return Object.freeze(receipts.map((receipt) => Object.freeze({ ...receipt })));
 }
 
 /**
@@ -397,6 +517,7 @@ export function buildCiPlan(options: CiPlanBuildOptions = {}): CiPlan {
       checkId: spec.checkId,
       job: spec.job,
       command: check.command,
+      execution: check.execution,
       prerequisites: executionPrerequisites(spec.prerequisiteIds ?? ['install', 'workspace-build']),
     };
   }
@@ -408,14 +529,16 @@ export function buildCiPlan(options: CiPlanBuildOptions = {}): CiPlan {
 
   const assignedIds = new Set(assignments.map((assignment) => assignment.checkId));
   const unfannedReleaseChecks = releasePlan.checks.map((check) => check.id).filter((id) => !assignedIds.has(id));
+  const executionReceipts = buildExecutionReceipts(lanes, specializedChecks);
 
   return {
-    schema: 'liteship/ci-plan@2',
+    schema: 'liteship/ci-plan@3',
     sourceProfile: SOURCE_PROFILE,
     platform: PLATFORM,
     shardCount: SHARD_COUNT,
     lanes,
     specializedChecks,
+    executionReceipts,
     unfannedReleaseChecks,
     plan: {
       profile: releasePlan.profile,

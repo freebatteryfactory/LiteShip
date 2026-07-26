@@ -18,11 +18,23 @@ describe('affected PR result artifacts', () => {
     const body = job('pr-affected', 'pr-browser-affected');
     expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_QUICK: ${{ steps.quick.outcome }}');
     expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}');
+    expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_BENCHMARK: ${{ steps.benchmark.outcome }}');
+    expect(body).toContain('LITESHIP_AFFECTED_PLAN_ID: ${{ needs.plan.outputs.affected-plan-id }}');
     expect(body).toContain('reports/affected-result-pr-linux.json');
     expect(body).toContain('LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-affected.xml');
     expect(body).toMatch(/name: Upload affected Linux test evidence\s+if: always\(\)/u);
     expect(body).toContain('reports/vitest-results-pr-affected.xml');
     expect(body).toContain('if-no-files-found: error');
+  });
+
+  it('independently consumes the selected lane receipts before the PR summary can pass', () => {
+    const body = job('pr-affected-evidence', 'truth-linux');
+    expect(body).toContain('scripts/verify-affected-result-evidence.ts');
+    expect(body).toContain('reports/affected-result-admission.json');
+    expect(body).toContain("if: needs.plan.outputs.affected-browser-required == 'true'");
+    const summary = job('ci-summary', 'delivery-evidence-collect');
+    expect(summary).toContain('- pr-affected-evidence');
+    expect(summary).toContain('test "$PR_EVIDENCE" = "success"');
   });
 
   it('persists browser Vitest and Playwright evidence even when either authority fails', () => {
@@ -38,7 +50,7 @@ describe('affected PR result artifacts', () => {
   });
 
   it('treats a missing Windows JUnit file as failed proof rather than an advisory upload', () => {
-    const body = job('pr-windows-affected', 'truth-linux');
+    const body = job('pr-windows-affected', 'pr-affected-evidence');
     expect(body).toContain('LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-windows-affected.xml');
     expect(body).toContain('reports/affected-result-pr-windows.json');
     expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}');

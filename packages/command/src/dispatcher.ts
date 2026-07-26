@@ -16,7 +16,7 @@ import {
 } from './registry.js';
 import type { CommandMap } from './catalog.js';
 
-interface CommandDispatcherShape {
+export interface CommandDispatcher {
   /**
    * Resolve an invocation against the registry and run its handler. Generic over
    * the command NAME: when `N` is a `keyof CommandMap` literal (e.g. the string
@@ -40,7 +40,8 @@ function nearestCommand(name: string, registry: CommandRegistry): string | undef
   );
 }
 
-function make(registry: CommandRegistry): CommandDispatcherShape {
+/** Allocate a transport-free dispatcher over one command registry. */
+export function createCommandDispatcher(registry: CommandRegistry): CommandDispatcher {
   async function dispatch(
     invocation: CapsuleCommandInvocation,
     context: CommandContext,
@@ -104,14 +105,21 @@ function make(registry: CommandRegistry): CommandDispatcherShape {
       }
       args = decoded.value;
     }
-    return command.handler({ name: invocation.name, args }, context);
+    try {
+      return await command.handler({ name: invocation.name, args }, context);
+    } catch (error) {
+      const cause = error instanceof Error ? error.message : String(error);
+      return failed(invocation.name, {
+        error: `command execution failed: ${cause}`,
+        code: 'command_execution_failed',
+        name: invocation.name,
+        cause,
+      });
+    }
   }
   // The implementation is uniform (its payload is `unknown` on every path); the
   // NAME-indexed return type is a compile-time projection the caller reads via
   // CommandMap. One plain cast bridges the uniform impl to the indexed signature
   // — never `as unknown as`.
-  return { dispatch: dispatch as CommandDispatcherShape['dispatch'] };
+  return { dispatch: dispatch as CommandDispatcher['dispatch'] };
 }
-
-export const CommandDispatcher = { make };
-export type CommandDispatcher = CommandDispatcherShape;

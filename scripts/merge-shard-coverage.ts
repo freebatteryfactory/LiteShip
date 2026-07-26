@@ -14,6 +14,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFi
 import { basename, resolve } from 'node:path';
 import libCoverage from 'istanbul-lib-coverage';
 import { spawnArgvVisible } from './lib/spawn.js';
+import { assertCompleteCoverageShards } from './lib/coverage-shard-contract.js';
 import { repoRoot } from '../vitest.shared.js';
 
 const { createCoverageMap } = libCoverage;
@@ -62,11 +63,10 @@ function stageSubprocessDumps(): number {
 
 function mergeShardCoverage(): void {
   const shardDirs = discoverShardCoverageDirs();
-  if (shardDirs.length === 0) {
-    throw new Error(
-      'No shard coverage directories found (expected coverage/node-shard-<n>/coverage-final.json)',
-    );
-  }
+  assertCompleteCoverageShards(
+    shardDirs.map((dir) => basename(dir)),
+    4,
+  );
 
   const merged = createCoverageMap({});
   for (const shardDir of shardDirs.sort()) {
@@ -77,9 +77,7 @@ function mergeShardCoverage(): void {
 
   mkdirSync(resolve(coverageRoot, 'node'), { recursive: true });
   writeFileSync(nodeCoveragePath, JSON.stringify(merged.toJSON(), null, 2));
-  console.log(
-    `[merge-shard-coverage] wrote ${nodeCoveragePath} from ${shardDirs.length} shard fragment(s)`,
-  );
+  console.log(`[merge-shard-coverage] wrote ${nodeCoveragePath} from ${shardDirs.length} shard fragment(s)`);
 }
 
 async function runScript(script: string): Promise<void> {

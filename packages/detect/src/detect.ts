@@ -223,9 +223,9 @@ export function classifyGPURenderer(renderer: string): GPUTier {
   }
   // Unmatched renderers (e.g. next year's GPU) classify conservatively, but
   // silently: confidence still gets the renderer bonus, so make it audible.
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: 'liteship/detect',
-    code: 'unrecognized-gpu-renderer',
+    code: 'detect/unrecognized-gpu-renderer',
     message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/freebatteryfactory/LiteShip/issues so a pattern can be added.`,
     detail: { renderer },
   });
@@ -242,6 +242,8 @@ export function classifyGPURenderer(renderer: string): GPUTier {
  * The cast is contained here; callers receive a typed context or null.
  */
 function getWebGLContext(canvas: HTMLCanvasElement): WebGLRenderingContext | null {
+  const modern = canvas.getContext('webgl2');
+  if (modern !== null) return modern;
   const standard = canvas.getContext('webgl');
   if (standard !== null) return standard;
   // 'experimental-webgl' returns RenderingContext | null; we validate it is a
@@ -275,12 +277,13 @@ function probeWebGLRendererUncached(): ProbeResult<string> {
     const gl = getWebGLContext(canvas);
     if (!gl) return probeUnavailable();
     try {
-      const direct = gl.getParameter(gl.RENDERER) as string | null;
-      if (direct && direct.length > 0) return probeOk(direct);
       const ext = gl.getExtension('WEBGL_debug_renderer_info');
-      if (!ext) return probeUnavailable();
-      const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string | null;
-      return renderer && renderer.length > 0 ? probeOk(renderer) : probeUnavailable();
+      if (ext) {
+        const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string | null;
+        if (renderer && renderer.length > 0) return probeOk(renderer);
+      }
+      const direct = gl.getParameter(gl.RENDERER) as string | null;
+      return direct && direct.length > 0 ? probeOk(direct) : probeUnavailable();
     } finally {
       // Release the throwaway context so repeated probes never exhaust the
       // browser's live-context budget.
@@ -576,9 +579,9 @@ function reportDegradedProbes(probes: DetectionProbes, confidence: number): void
     if (why !== null) degraded.push(`${name} (${why})`);
   }
   if (degraded.length === 0) return;
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: 'liteship/detect',
-    code: 'probes-defaulted',
+    code: 'detect/probes-defaulted',
     message: `${degraded.length} probe(s) defaulted: ${degraded.join(', ')} — conservative fallback values were used; confidence ${confidence}.`,
     detail: { degraded, confidence },
   });

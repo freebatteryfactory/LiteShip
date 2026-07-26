@@ -20,11 +20,20 @@ import {
   runIntegrityAudit,
   runStructureAudit,
   runSurfaceAudit,
+  type AuditCoverageNotChecked,
   type DevopsProfile,
 } from '@liteship/audit';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
+
+const invalidUncheckedProof: AuditCoverageNotChecked = {
+  coverage: 'not-checked',
+  reason: 'not executed',
+  // @ts-expect-error an unexecuted relation cannot counterfeit measured candidates
+  candidateCount: 0,
+};
+void invalidUncheckedProof;
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -198,6 +207,14 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
 
     const aggregate = runAuditPasses(profile);
     expect(aggregate.structure.findings).toHaveLength(0);
+    expect(aggregate.structure.summary.coverageClassification.orphan).toEqual({
+      coverage: 'not-checked',
+      reason: expect.stringContaining('skips the source-structure pass'),
+    });
+    expect(aggregate.structure.summary.coverageClassification.symbol).toEqual({
+      coverage: 'not-checked',
+      reason: expect.stringContaining('skips symbol-orphan'),
+    });
     expect(aggregate.findings.filter((f) => f.rule === 'package-topology')).toHaveLength(0);
     expect(aggregate.counts.error).toBe(0);
   });
@@ -345,9 +362,13 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
   it('a declared dist target missing from the installed package is an error', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@acme/core/package.json': PKG('@acme/core', {}, {
-        './extra': { types: './dist/extra.d.ts', import: './dist/extra.js', development: './src/extra.ts' },
-      }),
+      'node_modules/@acme/core/package.json': PKG(
+        '@acme/core',
+        {},
+        {
+          './extra': { types: './dist/extra.d.ts', import: './dist/extra.js', development: './src/extra.ts' },
+        },
+      ),
       'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
       'node_modules/@acme/core/src/extra.ts': 'export const extra = 1;\n',
       // dist/extra.d.ts exists; dist/extra.js deliberately does NOT.
@@ -383,12 +404,16 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
   it('a fully shipped install (all conditions resolve) carries no export-target findings', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@acme/core/package.json': PKG('@acme/core', {}, {
-        './extra': { types: './dist/extra.d.ts', import: './dist/extra.js', development: './src/extra.ts' },
-        // Wildcard subpaths and fallback arrays are tolerated shapes.
-        './wild/*': { import: './dist/wild/*.js' },
-        './fallback': ['./dist/fallback.js', './src/fallback.ts'],
-      }),
+      'node_modules/@acme/core/package.json': PKG(
+        '@acme/core',
+        {},
+        {
+          './extra': { types: './dist/extra.d.ts', import: './dist/extra.js', development: './src/extra.ts' },
+          // Wildcard subpaths and fallback arrays are tolerated shapes.
+          './wild/*': { import: './dist/wild/*.js' },
+          './fallback': ['./dist/fallback.js', './src/fallback.ts'],
+        },
+      ),
       'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
       'node_modules/@acme/core/src/extra.ts': 'export const extra = 1;\n',
       'node_modules/@acme/core/src/fallback.ts': 'export const fb = 1;\n',
@@ -403,9 +428,13 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
   it('a missing development target does not double-report (package-export-surface owns it)', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
-      'node_modules/@acme/core/package.json': PKG('@acme/core', {}, {
-        './gone': { development: './src/gone.ts' },
-      }),
+      'node_modules/@acme/core/package.json': PKG(
+        '@acme/core',
+        {},
+        {
+          './gone': { development: './src/gone.ts' },
+        },
+      ),
       'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
     });
     const result = runSurfaceAudit(consumerDevopsProfile(root, acmeBase()));
@@ -421,6 +450,90 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
   });
 });
 
+describe('consumer mode — package analyzable artifacts are explicit evidence', () => {
+  function declarationProfile(root: string): DevopsProfile {
+    return consumerDevopsProfile(root, {
+      ...acmeBase(),
+      packageTopology: {
+        '@acme/spine': {
+          allowedInternalImports: [],
+          kind: 'standalone',
+          analyzableArtifacts: ['*.d.ts'],
+        },
+      },
+    });
+  }
+
+  it('analyzes a packed types-only package through its declared declaration surface', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/spine/package.json': JSON.stringify({
+        name: '@acme/spine',
+        version: '0.0.0',
+        exports: { '.': { types: './index.d.ts' } },
+      }),
+      'node_modules/@acme/spine/index.d.ts': 'export interface SharedContract { readonly id: string; }\n',
+    });
+
+    const result = runAuditPasses(declarationProfile(root));
+    expect(result.artifactCoverage).toEqual([
+      {
+        package: '@acme/spine',
+        coverage: 'analyzed',
+        expectedArtifacts: ['*.d.ts'],
+        matchedFiles: ['index.d.ts'],
+      },
+    ]);
+    expect(result.findings.filter((finding) => finding.rule === 'package-artifacts-unverified')).toHaveLength(0);
+  });
+
+  it('preserves the ordinary source audit exclusion for declaration decoys', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/core/package.json': PKG('@acme/core'),
+      'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
+      'node_modules/@acme/core/src/decoy.d.ts': 'export declare const declarationOnly: string;\n',
+    });
+
+    const result = runAuditPasses(consumerDevopsProfile(root, acmeBase()));
+    expect(result.artifactCoverage.find((entry) => entry.package === '@acme/core')).toEqual({
+      package: '@acme/core',
+      coverage: 'analyzed',
+      expectedArtifacts: ['src/**/*.ts', 'src/**/*.tsx', '!src/**/*.d.ts'],
+      matchedFiles: ['src/index.ts'],
+    });
+  });
+
+  it('reds when a discovered package matches none of its declared artifacts', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/spine/package.json': JSON.stringify({
+        name: '@acme/spine',
+        version: '0.0.0',
+        exports: { '.': { types: './index.d.ts' } },
+      }),
+    });
+
+    const result = runAuditPasses(declarationProfile(root));
+    expect(result.artifactCoverage).toEqual([
+      {
+        package: '@acme/spine',
+        coverage: 'unverified',
+        expectedArtifacts: ['*.d.ts'],
+        reason: expect.stringContaining('No files matched'),
+      },
+    ]);
+    expect(result.findings).toContainEqual(
+      expect.objectContaining({
+        id: 'support/package-artifacts/@acme/spine',
+        rule: 'package-artifacts-unverified',
+        severity: 'error',
+      }),
+    );
+    expect(result.counts.error).toBeGreaterThan(0);
+  });
+});
+
 describe('consumer mode — allowlist entries follow the package, not the monorepo layout', () => {
   // 0.1.5 re-dogfood report: a clean consumer install read 24 warnings, every
   // one a finding the monorepo allowlist already suppresses. Root cause: the
@@ -428,7 +541,9 @@ describe('consumer mode — allowlist entries follow the package, not the monore
   // match a node_modules path. Entries now carry `{ package, filePrefix }`
   // (package-relative), resolved through the profile's discovered roots.
 
-  function liteshipBase(topology: Record<string, { allowedInternalImports: string[]; kind: 'standalone' }>): DevopsProfile {
+  function liteshipBase(
+    topology: Record<string, { allowedInternalImports: string[]; kind: 'standalone' }>,
+  ): DevopsProfile {
     return {
       ...acmeBase(),
       internalPackagePrefix: '@liteship/',
@@ -450,7 +565,9 @@ describe('consumer mode — allowlist entries follow the package, not the monore
     expect(result.findings.filter((f) => f.rule === 'default-export')).toHaveLength(0);
     const suppressed = result.suppressed.filter((s) => s.rule === 'default-export');
     expect(suppressed).toHaveLength(1);
-    expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@liteship/astro/src/client-directives/adaptive.ts');
+    expect(suppressed[0]!.finding.location?.file).toContain(
+      'node_modules/@liteship/astro/src/client-directives/adaptive.ts',
+    );
   });
 
   it('does NOT flag the audit policy prose self-mention in an installed @liteship/audit — precise detector, no allowlist entry needed (report finding 2)', () => {

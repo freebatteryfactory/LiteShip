@@ -220,6 +220,86 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 > `readonly` **type**: `"string"` = `'string'`
 
+#### properties.publicSurface.properties.failureProof
+
+> `readonly` **failureProof**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.importSource
+
+> `readonly` **importSource**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.importSource.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.failureProof.properties.observation
+
+> `readonly` **observation**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties.code
+
+> `readonly` **code**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties.code.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties.kind
+
+> `readonly` **kind**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties.kind.const
+
+> `readonly` **const**: `"diagnostic-and-output-omission"` = `'diagnostic-and-output-omission'`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties.outputField
+
+> `readonly` **outputField**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.properties.outputField.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.failureProof.properties.observation.required
+
+> `readonly` **required**: readonly \[`"kind"`, `"code"`, `"outputField"`\]
+
+#### properties.publicSurface.properties.failureProof.properties.observation.type
+
+> `readonly` **type**: `"object"` = `'object'`
+
+#### properties.publicSurface.properties.failureProof.properties.operation
+
+> `readonly` **operation**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.operation.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.failureProof.properties.test
+
+> `readonly` **test**: `object`
+
+#### properties.publicSurface.properties.failureProof.properties.test.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.failureProof.required
+
+> `readonly` **required**: readonly \[`"test"`, `"importSource"`, `"operation"`, `"observation"`\]
+
+#### properties.publicSurface.properties.failureProof.type
+
+> `readonly` **type**: readonly \[`"object"`, `"null"`\]
+
 #### properties.publicSurface.properties.lifecycle
 
 > `readonly` **lifecycle**: `object`
@@ -294,7 +374,7 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 #### properties.publicSurface.required
 
-> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
+> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
 
 #### properties.publicSurface.type
 

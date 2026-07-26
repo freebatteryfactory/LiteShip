@@ -25,7 +25,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { fixedClock } from '@liteship/core';
-import { CommandRegistry, CommandDispatcher } from '@liteship/command';
+import { createCommandDispatcher, createCommandRegistry } from '@liteship/command';
 import { _setReceiptClock, _resetReceiptClock } from '../../../packages/command/src/registry.js';
 
 // A frozen epoch — the receipt timestamp must equal its ISO form exactly.
@@ -44,7 +44,7 @@ describe('command receipt timestamp is byte-reproducible under a fixed clock', (
   });
 
   it('the dispatcher unknown-command receipt stamps the injected epoch, not the ambient wall clock', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([]));
 
     const first = await dispatcher.dispatch({ name: 'no.such.command', args: {} }, {});
     const second = await dispatcher.dispatch({ name: 'no.such.command', args: {} }, {});

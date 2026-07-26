@@ -10,13 +10,22 @@ const RENDER_MOD = {
   cap: { _kind: 'sceneComposition', id: 's1', name: 'intro' },
   contract: { fps: 30, duration: 1000, tracks: [1] },
 };
+const COMPILED = { fps: 30, durationMs: 1000, trackCount: 1 } as const;
+const runSceneCompile = async () => COMPILED;
 
 describe('@liteship/command scene.compile', () => {
   it('ok with sceneId + trackCount, runs the compile fn', async () => {
     let ran = false;
     const r = await sceneCompileCommand.handler(
       { name: 'scene.compile', args: { scene: 's.ts' } },
-      { fileExists: () => true, loadSceneModule: async () => COMPILE_MOD, runSceneCompile: async () => { ran = true; } },
+      {
+        fileExists: () => true,
+        loadSceneModule: async () => COMPILE_MOD,
+        runSceneCompile: async () => {
+          ran = true;
+          return { fps: 30, durationMs: 1000, trackCount: 3 };
+        },
+      },
     );
     expect(r.status).toBe('ok');
     const p = r.payload as { sceneId: string; trackCount: number };
@@ -62,6 +71,19 @@ describe('@liteship/command scene.compile', () => {
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
   });
+
+  it.each([
+    ['null result', async () => null],
+    ['throwing provider', async () => { throw new Error('bad module syntax'); }],
+  ])('module load %s → one structured failure and no throw', async (_label, loadSceneModule) => {
+    const r = await sceneCompileCommand.handler(
+      { name: 'scene.compile', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule },
+    );
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(1);
+    expect((r.payload as { error: string }).error).toMatch(/scene module could not be loaded: s\.ts/);
+  });
 });
 
 describe('@liteship/command scene.render', () => {
@@ -73,6 +95,7 @@ describe('@liteship/command scene.render', () => {
         fileExists: () => true,
         cache: { read: () => null, write: () => {} },
         loadSceneModule: async () => RENDER_MOD,
+        runSceneCompile,
         renderScene: async (params) => {
           renderedTo = params.output;
           return { frameCount: 30, elapsedMs: 5 };
@@ -95,6 +118,7 @@ describe('@liteship/command scene.render', () => {
         fileExists: () => true,
         cache: { read: () => null, write: () => {} },
         loadSceneModule: async () => RENDER_MOD,
+        runSceneCompile,
         renderScene: async (params) => {
           renderedTo = params.output;
           return { frameCount: 30, elapsedMs: 5 };
@@ -121,6 +145,7 @@ describe('@liteship/command scene.render', () => {
         fileExists: () => true,
         cache: { read: () => null, write: (_k, v) => writes.push(v) },
         loadSceneModule: async () => RENDER_MOD,
+        runSceneCompile,
         renderScene: async (params) => {
           expect(params.fps).toBe(30);
           return { frameCount: 30, elapsedMs: 5 };
@@ -159,6 +184,7 @@ describe('@liteship/command scene.render', () => {
         fileExists: (p) => p !== 'o.mp4',
         cache: { read: () => ({ sceneId: 's1', output: 'o.mp4', frameCount: 9, elapsedMs: 1 }), write: () => {} },
         loadSceneModule: async () => RENDER_MOD,
+        runSceneCompile,
         renderScene: async () => ({ frameCount: 30, elapsedMs: 5 }),
       },
     );
@@ -174,6 +200,7 @@ describe('@liteship/command scene.render', () => {
         fileExists: () => true,
         cache: { read: () => null, write: () => {} },
         loadSceneModule: async () => RENDER_MOD,
+        runSceneCompile,
         renderScene: async () => { throw new Error('ffmpeg boom'); },
       },
     );
@@ -192,19 +219,43 @@ describe('@liteship/command scene.render', () => {
     );
   });
 
-  it('contract without numeric fps/duration → error names the got-values', async () => {
+  it('contains a throwing scene-module provider as a structured render failure', async () => {
     const r = await sceneRenderCommand.handler(
       { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
       {
         fileExists: () => true,
         cache: { read: () => null, write: () => {} },
-        loadSceneModule: async () => ({ cap: RENDER_MOD.cap, contract: { tracks: [1] } }),
+        loadSceneModule: async () => { throw new Error('loader exploded'); },
+        runSceneCompile,
+        renderScene: async () => ({ frameCount: 0, elapsedMs: 0 }),
       },
     );
-    expect(r.exitCode).toBe(1);
-    expect((r.payload as { error: string }).error).toMatch(
-      /must carry numeric fps and duration \(got fps: undefined, duration: undefined\)/,
+    expect(r.status).toBe('failed');
+    expect((r.payload as { error: string }).error).toContain('loader exploded');
+  });
+
+  it('omitted authoring duration uses the compiler-derived duration exactly once', async () => {
+    let compileCalls = 0;
+    let renderedDuration = -1;
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => null, write: () => {} },
+        loadSceneModule: async () => ({ cap: RENDER_MOD.cap, contract: { fps: 30, tracks: [1] } }),
+        runSceneCompile: async () => {
+          compileCalls += 1;
+          return { fps: 30, durationMs: 1750, trackCount: 1 };
+        },
+        renderScene: async (params) => {
+          renderedDuration = params.durationMs;
+          return { frameCount: 53, elapsedMs: 5 };
+        },
+      },
     );
+    expect(r.status).toBe('ok');
+    expect(compileCalls).toBe(1);
+    expect(renderedDuration).toBe(1750);
   });
 
   it('contract width/height thread through to renderScene; absent dims stay absent (host default)', async () => {
@@ -213,6 +264,7 @@ describe('@liteship/command scene.render', () => {
       fileExists: () => true,
       cache: { read: () => null, write: () => {} },
       loadSceneModule: async () => mod,
+      runSceneCompile,
       renderScene: async (params: Record<string, unknown>) => {
         seen.push(params);
         return { frameCount: 1, elapsedMs: 1 };

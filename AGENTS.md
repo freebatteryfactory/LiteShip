@@ -76,7 +76,7 @@ Use this index to find the semantic owner; public subpaths and dependency edges 
 | `liteship audit` | Run the profile-driven structure/integrity/surface audit; report a structured summary. | shared handler |
 | `liteship audit-floor` | Audit warning-floor gate: fail when the artifact-independent three-pass warning inventory drifts from AUDIT_WARNING_FLOOR or any error is present. | shared handler |
 | `liteship build` | Build a LiteShip consumer app (detects liteship.config.ts, runs the astro/vite host build). | CLI orchestration |
-| `liteship capsule-verify` | Capsule-corpus gate: assert every generated test+bench is present, fresh (regeneration-confirmed), bench-honest, and that the generated suite passes. | shared handler |
+| `liteship capsule-verify` | Capsule-corpus gate: assert every generated test+bench is fresh and honest, execute both lanes, and admit measured benchmark distributions with uncertainty. | shared handler |
 | `liteship capsule inspect` | Inspect a capsule manifest entry. | shared handler |
 | `liteship capsule list` | List capsules, optionally filtered by kind. | shared handler |
 | `liteship capsule verify` | Verify a capsule’s generated tests. | shared handler |

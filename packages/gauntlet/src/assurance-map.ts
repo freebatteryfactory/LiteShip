@@ -116,7 +116,17 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   },
 
   // ── L3: deterministic runtime/projection/cache + authority-bearing tooling ────
-  { glob: 'packages/core/src/authoring/{boundary,ai-cast}.ts', level: 'L3' },
+  // Definition/artifact addressing owners. A source-derived census in
+  // `assurance-map.test.ts` independently requires every non-canonical caller of
+  // `CanonicalCbor.encode` / `AddressedDigest.of` to land at L3 or above.
+  {
+    glob: 'packages/core/src/authoring/{adaptive,boundary,component,config,ship-capsule,style,theme,token,ai-cast}.ts',
+    level: 'L3',
+  },
+  { glob: 'packages/core/src/authoring/capsules/{canonical-cbor,canonical-cbor-decode}.ts', level: 'L3' },
+  { glob: 'packages/core/src/{ecs}.ts', level: 'L3' },
+  { glob: 'packages/core/src/evidence/content-address.ts', level: 'L3' },
+  { glob: 'packages/core/src/harness/site-adapter.ts', level: 'L3' },
   { glob: 'packages/core/src/reactive/{zap,speculative}.ts', level: 'L3' },
   { glob: 'packages/core/src/media/{gen-frame,token-buffer}.ts', level: 'L3' },
   { glob: 'packages/core/src/motion/{blend,animation}.ts', level: 'L3' },
@@ -128,19 +138,32 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   { glob: 'packages/worker/src/**', level: 'L3' },
   { glob: 'packages/astro/src/runtime/**', level: 'L3' },
   // Artifact-producing cores — deterministic frame/media bytes downstream trusts.
-  { glob: 'packages/stage/src/{dual-export,ffmpeg-encoder}.ts', level: 'L3' },
-  { glob: 'packages/remotion/src/composition.ts', level: 'L3' },
+  { glob: 'packages/stage/src/{dual-export,ffmpeg-encoder,motion-export}.ts', level: 'L3' },
+  { glob: 'packages/remotion/src/{composition,motion}.ts', level: 'L3' },
+  {
+    glob: 'packages/compiler/src/{responsive-media-compile,reveal-compile,scroll-timeline-compile,stagger-compile}.ts',
+    level: 'L3',
+  },
+  { glob: 'packages/genui/src/{catalog,identity}.ts', level: 'L3' },
+  { glob: 'packages/web/src/security/shader-integrity.ts', level: 'L3' },
   // The gauntlet's I/O glue + its gates (the rules ARE the standard).
   { glob: 'packages/gauntlet/src/{runner,node-context}.ts', level: 'L3' },
   { glob: 'packages/gauntlet/src/gates/**', level: 'L3' },
   // The audit authority — these four files gate topology/policy/profile/integrity.
-  { glob: 'packages/audit/src/{structure,policy,devops-profile,integrity}.ts', level: 'L3' },
+  {
+    glob: 'packages/audit/src/{structure,policy,devops-profile,integrity,mcdc-engine,mcdc-facts-build,mutation-engine,mutation-facts-build,mutation-verdict,transition-facts-build}.ts',
+    level: 'L3',
+  },
   // External-input + tool-dispatch + state-mutating boundaries.
   { glob: 'packages/mcp-server/src/{http,stdio,dispatch}.ts', level: 'L3' },
   { glob: 'packages/command/src/dispatcher.ts', level: 'L3' },
+  { glob: 'packages/command/src/host/{capsule-provenance,idempotency}.ts', level: 'L3' },
   { glob: 'packages/cli/src/dispatch.ts', level: 'L3' },
+  { glob: 'packages/cli/src/{ship-manifest}.ts', level: 'L3' },
+  { glob: 'packages/cli/src/capsules/ship-emit.ts', level: 'L3' },
+  { glob: 'packages/cli/src/lib/{cure-packet,sbom,seam-execution-coverage,supply-chain}.ts', level: 'L3' },
   {
-    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
+    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,check,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
     level: 'L3',
   },
   // The migrated gates' authority ENGINE. The command DESCRIPTORS for the migrated

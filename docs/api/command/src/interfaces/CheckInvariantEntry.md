@@ -6,9 +6,9 @@
 
 # Interface: CheckInvariantEntry
 
-Defined in: [command/src/commands/check-invariants-registry.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L17)
+Defined in: [command/src/commands/check-invariants-registry.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L26)
 
-One banned-pattern rule: a regex scoped to `dirs`, minus `exclude` prefixes.
+One banned-pattern rule: a regex scoped to `dirs`, minus explicit exemptions.
 
 ## Properties
 
@@ -16,15 +16,15 @@ One banned-pattern rule: a regex scoped to `dirs`, minus `exclude` prefixes.
 
 > `readonly` **dirs**: readonly `string`[]
 
-Defined in: [command/src/commands/check-invariants-registry.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L20)
+Defined in: [command/src/commands/check-invariants-registry.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L29)
 
 ***
 
-### exclude?
+### exemptions?
 
-> `readonly` `optional` **exclude?**: readonly `string`[]
+> `readonly` `optional` **exemptions?**: readonly [`CheckInvariantExemption`](CheckInvariantExemption.md)[]
 
-Defined in: [command/src/commands/check-invariants-registry.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L21)
+Defined in: [command/src/commands/check-invariants-registry.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L30)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [command/src/commands/check-invariants-registry.ts:21](https://githu
 
 > `readonly` **message**: `string`
 
-Defined in: [command/src/commands/check-invariants-registry.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L22)
+Defined in: [command/src/commands/check-invariants-registry.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L31)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [command/src/commands/check-invariants-registry.ts:22](https://githu
 
 > `readonly` **name**: `string`
 
-Defined in: [command/src/commands/check-invariants-registry.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L18)
+Defined in: [command/src/commands/check-invariants-registry.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L27)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [command/src/commands/check-invariants-registry.ts:18](https://githu
 
 > `readonly` **pattern**: `RegExp`
 
-Defined in: [command/src/commands/check-invariants-registry.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L19)
+Defined in: [command/src/commands/check-invariants-registry.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L28)

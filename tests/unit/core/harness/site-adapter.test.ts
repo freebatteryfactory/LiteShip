@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 /**
@@ -16,8 +15,6 @@ import * as Harness from '@liteship/core/harness';
  *  - Under EVERY branch, no lane contains a `.skip(` token.
  */
 describe('generateSiteAdapter (lane-aware, declared-integration)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   const adapterCap = (name: string) =>
     defineCapsule({
       _kind: 'siteAdapter',

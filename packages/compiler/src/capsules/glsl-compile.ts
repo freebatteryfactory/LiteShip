@@ -240,6 +240,3 @@ export const glslCompileCapsule = defineCapsule({
     return { stateNames, fieldNames, states, result };
   },
 });
-
-/** Internal helpers exported for direct unit assertions over the seed→inputs builder. */
-export const _glslCompileInternals = { buildInputs, makeBoundary } as const;

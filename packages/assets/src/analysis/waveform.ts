@@ -12,16 +12,20 @@ import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { ValidationError } from '@liteship/error';
 import { analysisFrames } from './audio-input.js';
 
+function validateWaveformBins(bins: number, source: string): void {
+  if (!Number.isSafeInteger(bins) || bins <= 0) {
+    throw ValidationError(source, `bins must be a positive safe integer, got ${String(bins)}`);
+  }
+}
+
 /** Compute a normalized RMS-per-bin waveform. */
 export function computeWaveform(
   audio: { sampleRate: number; channels?: number; samples: Float32Array | Int16Array },
   opts: { bins?: number } = {},
 ): readonly number[] {
   const bins = opts.bins ?? 512;
+  validateWaveformBins(bins, 'computeWaveform');
   const samples = analysisFrames(audio, 'computeWaveform');
-  if (!Number.isSafeInteger(bins) || bins <= 0) {
-    throw ValidationError('computeWaveform', `bins must be a positive safe integer, got ${String(bins)}`);
-  }
   const out: number[] = new Array(bins).fill(0);
   let maxRms = 0;
   for (let b = 0; b < bins; b++) {
@@ -51,8 +55,9 @@ export function WaveformProjection(
   audioAssetId: string,
   opts: { bins?: number } = {},
 ): CapsuleDef<'cachedProjection', ArrayBuffer, readonly number[], unknown> {
-  registry.assertAudioRegistered(audioAssetId, 'WaveformProjection');
   const bins = opts.bins ?? 512;
+  validateWaveformBins(bins, 'WaveformProjection');
+  registry.assertAudioRegistered(audioAssetId, 'WaveformProjection');
   const decode = registry.resolveAudioDecoder(audioAssetId);
   return defineCapsule({
     _kind: 'cachedProjection',

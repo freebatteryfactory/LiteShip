@@ -11,7 +11,7 @@
 Defined in: [core/src/reactive/runtime-coordinator.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L220)
 
 Runtime coordinator namespace — single entry point for building the shared
-[Plan](Plan.md) + ECS store bundle consumed by every host adapter.
+`Plan` + ECS store bundle consumed by every host adapter.
 
 ## Type Declaration
 
@@ -19,7 +19,7 @@ Runtime coordinator namespace — single entry point for building the shared
 
 > `readonly` **create**: (`config?`) => `RuntimeCoordinatorShape` = `createRuntimeCoordinator`
 
-Create a fresh coordinator. See [createRuntimeCoordinator](#create).
+Create a fresh coordinator. See `createRuntimeCoordinator`.
 
 Build a fresh RuntimeCoordinator with dense backing stores and the
 canonical runtime plan. Prefer [RuntimeCoordinator.create](#create), which is

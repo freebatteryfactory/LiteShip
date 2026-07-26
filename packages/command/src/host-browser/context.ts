@@ -51,7 +51,6 @@ export function createBrowserCommandContext(
     loadAssetBytes: () => null,
     loadSceneModule: async () => null,
     runVitest: async () => ({ exitCode: 1, stderrTail: 'vitest unavailable in browser host' }),
-    runSceneCompile: async () => undefined,
     renderScene: opts.mcpServerUrl
       ? async (params) => {
           const remote = await mcpToolCall(

@@ -16,7 +16,7 @@ Compile a lowered stagger graph into native CSS + runtime write plans per child.
 
 ### lowered
 
-`LoweredStagger`
+[`LoweredStagger`](../../../liteship/src/motion/interfaces/LoweredStagger.md)
 
 ### opts?
 

@@ -31,7 +31,7 @@ export type WGSLType =
   | 'mat4x4f';
 
 /** A binding's type is either a WGSL primitive type or a user-declared struct name. */
-export type WGSLBindingType = WGSLType | string;
+export type WGSLBindingType = WGSLType | (string & {});
 
 /** JSON-safe authored WGSL vector value. */
 export type WGSLUniformVector =

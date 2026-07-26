@@ -168,12 +168,16 @@ describe('@liteship/command canonical catalog', () => {
     // old hand-written `{ type:'string', enum:[...] }` — tighter, same constraint.
     expect(byName.get('scene.render')).toEqual({
       type: 'object',
-      properties: { scene: { type: 'string' }, output: { type: 'string' } },
+      properties: { scene: { type: 'string' }, output: { type: 'string' }, force: { type: 'boolean' } },
       required: ['scene'],
     });
     expect(byName.get('asset.analyze')).toEqual({
       type: 'object',
-      properties: { asset: { type: 'string' }, projection: { enum: ['beat', 'onset', 'waveform'] } },
+      properties: {
+        asset: { type: 'string' },
+        projection: { enum: ['beat', 'onset', 'waveform'] },
+        force: { type: 'boolean' },
+      },
       required: ['asset', 'projection'],
     });
     expect(byName.get('gauntlet')).toEqual({
@@ -187,6 +191,7 @@ describe('@liteship/command canonical catalog', () => {
         ci: { type: 'boolean' },
         preflight: { type: 'boolean' },
         target: { type: 'string', enum: ['cloudflare', 'astro', 'consumer-app'] },
+        deployed: { type: 'string' },
       },
     });
   });

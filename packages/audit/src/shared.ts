@@ -15,10 +15,16 @@ import { dirname, relative, resolve } from 'node:path';
 import { IoError } from '@liteship/error';
 import fg from 'fast-glob';
 import ts from 'typescript';
-import { auditIgnoreGlobs, auditSourceGlobs, findAllowlistReason, normalizeRepoPath } from './policy.js';
+import {
+  auditIgnoreGlobs,
+  auditSourceGlobs,
+  defaultAnalyzableArtifacts,
+  findAllowlistReason,
+  normalizeRepoPath,
+} from './policy.js';
 import type { PackagePathResolver } from './policy.js';
 import type { DevopsProfile } from './devops-profile.js';
-import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression } from './types.js';
+import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression, PackageArtifactCoverage } from './types.js';
 
 export interface PackageManifestInfo {
   readonly name: string;
@@ -128,7 +134,7 @@ export function listProfilePackageManifests(profile: DevopsProfile): readonly Pa
 function sourceRecordFromFile(
   absolutePath: string,
   root: string,
-  packageBySrcDir: ReadonlyMap<string, string>,
+  packageByDir: ReadonlyMap<string, string>,
 ): SourceFileRecord {
   const relativePath = normalizeRepoPath(relative(root, absolutePath));
   const text = readFileSync(absolutePath, 'utf8');
@@ -141,8 +147,9 @@ function sourceRecordFromFile(
   );
 
   const packageName =
-    [...packageBySrcDir.entries()].find(([srcDir]) => normalizeRepoPath(absolutePath).startsWith(srcDir + '/'))?.[1] ??
-    null;
+    [...packageByDir.entries()]
+      .sort(([left], [right]) => right.length - left.length)
+      .find(([packageDir]) => normalizeRepoPath(absolutePath).startsWith(packageDir + '/'))?.[1] ?? null;
 
   return {
     absolutePath,
@@ -155,9 +162,52 @@ function sourceRecordFromFile(
 
 export function readSourceFileRecords(root = defaultRoot()): readonly SourceFileRecord[] {
   const packageInfos = listPackageManifests(root);
-  const packageBySrcDir = new Map(packageInfos.map((pkg) => [pkg.srcDir, pkg.name] as const));
+  const packageByDir = new Map(packageInfos.map((pkg) => [pkg.dir, pkg.name] as const));
 
-  return walkAuditSourceFiles(root).map((absolutePath) => sourceRecordFromFile(absolutePath, root, packageBySrcDir));
+  return walkAuditSourceFiles(root).map((absolutePath) => sourceRecordFromFile(absolutePath, root, packageByDir));
+}
+
+function profileArtifactFiles(profile: DevopsProfile): ReadonlyMap<string, readonly string[]> {
+  return new Map(
+    listProfilePackageManifests(profile).map((pkg) => {
+      const globs = profile.packageTopology[pkg.name]?.analyzableArtifacts ?? defaultAnalyzableArtifacts;
+      const files = [
+        ...new Set(
+          fg.sync([...globs], {
+            cwd: pkg.dir,
+            absolute: true,
+            onlyFiles: true,
+            ignore: ['**/node_modules/**'],
+          }),
+        ),
+      ]
+        .map((file) => normalizeRepoPath(file))
+        .sort((left, right) => left.localeCompare(right));
+      return [pkg.name, files] as const;
+    }),
+  );
+}
+
+/**
+ * Classify the exact package-relative artifact contract before any audit pass
+ * can call a zero-file package clean.
+ */
+export function collectProfileArtifactCoverage(profile: DevopsProfile): readonly PackageArtifactCoverage[] {
+  const filesByPackage = profileArtifactFiles(profile);
+  return listProfilePackageManifests(profile).map((pkg): PackageArtifactCoverage => {
+    const expectedArtifacts = [
+      ...(profile.packageTopology[pkg.name]?.analyzableArtifacts ?? defaultAnalyzableArtifacts),
+    ];
+    const matchedFiles = (filesByPackage.get(pkg.name) ?? []).map((file) => normalizeRepoPath(relative(pkg.dir, file)));
+    return matchedFiles.length > 0
+      ? { package: pkg.name, coverage: 'analyzed', expectedArtifacts, matchedFiles }
+      : {
+          package: pkg.name,
+          coverage: 'unverified',
+          expectedArtifacts,
+          reason: `No files matched the declared analyzable artifacts: ${expectedArtifacts.join(', ') || '(none)'}`,
+        };
+  });
 }
 
 /**
@@ -167,26 +217,11 @@ export function readSourceFileRecords(root = defaultRoot()): readonly SourceFile
  * is exactly where consumer-installed packages live.
  */
 export function readProfileSourceFileRecords(profile: DevopsProfile): readonly SourceFileRecord[] {
-  if (!profile.packageRoots) {
-    return readSourceFileRecords(profile.repoRoot);
-  }
-
   const packageInfos = listProfilePackageManifests(profile);
-  const packageBySrcDir = new Map(packageInfos.map((pkg) => [pkg.srcDir, pkg.name] as const));
+  const packageByDir = new Map(packageInfos.map((pkg) => [pkg.dir, pkg.name] as const));
+  const files = [...profileArtifactFiles(profile).values()].flat().sort((a, b) => a.localeCompare(b));
 
-  const files = packageInfos
-    .flatMap((pkg) =>
-      fg.sync(['src/**/*.ts', 'src/**/*.tsx'], {
-        cwd: pkg.dir,
-        absolute: true,
-        onlyFiles: true,
-        ignore: ['**/*.d.ts', '**/node_modules/**'],
-      }),
-    )
-    .map((file) => normalizeRepoPath(file))
-    .sort((a, b) => a.localeCompare(b));
-
-  return files.map((absolutePath) => sourceRecordFromFile(absolutePath, profile.repoRoot, packageBySrcDir));
+  return files.map((absolutePath) => sourceRecordFromFile(absolutePath, profile.repoRoot, packageByDir));
 }
 
 export function createCounts(findings: readonly AuditFinding[]): AuditCounts {

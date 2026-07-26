@@ -6,6 +6,8 @@ import {
   AddressedDigest,
   CanonicalCbor,
   HLC,
+  StateName,
+  ThresholdValue,
   projectionKeys,
   sealGraph,
   sealNode,
@@ -32,8 +34,8 @@ function graphFor(threshold: number, mobileSize: number, desktopSize: number): D
     id: '' as ContentAddress,
     meta,
     name: 'card',
-    thresholds: [0, threshold],
-    states: ['mobile', 'desktop'],
+    thresholds: [ThresholdValue(0), ThresholdValue(threshold)],
+    states: [StateName('mobile'), StateName('desktop')],
   });
   const entity = sealNode<EntityNode>({
     _tag: 'DocGraphEntityNode',
@@ -62,7 +64,7 @@ function graphFor(threshold: number, mobileSize: number, desktopSize: number): D
       id: '' as ContentAddress,
       meta,
       entityRef: entity.id,
-      state,
+      state: StateName(state),
       bindings: { 'font-size': size },
     });
   return sealGraph({
@@ -165,11 +167,14 @@ describe('@liteship/stage cross-carrier contract', () => {
           expect(result.receipt.subject.id).toBe(result.node.id);
           expect(result.receipt.previous).toBe('genesis');
 
-          const changed = await exportVideoEncoded(graphFor(threshold, mobileSize, desktopSize + 1), async (frames) => ({
-            bytes: CanonicalCbor.encode(frames.map((frame) => frame.outputs.css)),
-            codec: 'fixture/raw-cbor',
-            container: 'application/cbor',
-          }));
+          const changed = await exportVideoEncoded(
+            graphFor(threshold, mobileSize, desktopSize + 1),
+            async (frames) => ({
+              bytes: CanonicalCbor.encode(frames.map((frame) => frame.outputs.css)),
+              codec: 'fixture/raw-cbor',
+              container: 'application/cbor',
+            }),
+          );
           expect(changed.bytesDigest).not.toEqual(result.bytesDigest);
           expect(changed.receipt.hash).not.toBe(result.receipt.hash);
         },

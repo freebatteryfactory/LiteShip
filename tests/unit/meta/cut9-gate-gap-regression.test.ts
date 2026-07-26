@@ -9,7 +9,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { detectSkipsAST } from '@liteship/audit';
+import { CHECK_REGISTRY } from '@liteship/command';
 import { sanctionedSkipFor } from '@liteship/gauntlet';
+import { projectRepositoryQuickSteps } from '../../../scripts/lib/local-verification-plan.js';
 import {
   CI_PARALLEL_PREFLIGHT_LABELS,
   CI_PARALLEL_FINAL_LABELS,
@@ -20,9 +22,12 @@ import {
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
 describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
-  test('pre-commit omits check:gates but CI parallel preflight includes it', () => {
-    const preCommit = readFileSync(resolve(REPO, 'scripts/pre-commit.sh'), 'utf8');
-    expect(preCommit).not.toContain('check:gates');
+  test('pre-commit projects the complete blocking quick profile while CI adds release-only gates', () => {
+    const expected = CHECK_REGISTRY.filter(
+      (check) =>
+        check.authority === 'blocking' && check.profiles.includes('quick') && check.contexts.includes('repository'),
+    ).map((check) => check.id);
+    expect(projectRepositoryQuickSteps().map((step) => step.checkId)).toEqual(expected);
     expect(CI_PARALLEL_PREFLIGHT_LABELS).toContain('check:gates');
     expect(CI_PARALLEL_PREFLIGHT_LABELS).toContain('docs:check');
   });

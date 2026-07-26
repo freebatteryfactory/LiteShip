@@ -57,8 +57,9 @@ export interface StyleBlock {
  * }
  * ```
  *
- * Parsing is fully character-level via the shared `css-scan` helpers
- * (same scanner as `@token` / `@theme` / `@quantize`): upstream
+ * Parsing is fully character-level via the scanner exported by
+ * `@liteship/compiler/parse` (the same scanner as `@token` / `@theme` /
+ * `@quantize`): upstream
  * compilers (e.g. the Astro compiler re-serializing a `<style>` block)
  * emit at-rules mid-line and collapse whole sheets onto a single line,
  * so no line structure is assumed. At-rule markers are located on a

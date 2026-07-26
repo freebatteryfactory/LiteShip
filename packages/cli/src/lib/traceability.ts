@@ -15,7 +15,8 @@
  *
  *   DECLARED (in invariants.yaml)
  *     → TRACED  (testing-ledger.yaml maps it to a proving test)
- *     → PROVEN  (the claimed test EXISTS and carries a matching `// PROVES:` header)
+ *     → PROVEN  (the exact nested test title EXISTS and its file carries a matching
+ *                `// PROVES:` header)
  *   UNTRACED  (declared, no proof, no waiver)                          → a finding
  *   WAIVED    (a non-expired owner-signed waiver covers it)
  *     → EXPIRED  (the waiver's expiry < the injected wall-clock date)  → a finding
@@ -27,15 +28,17 @@
  * so DRIFT in the resolved trace is detectable. A malformed ledger FAILS LOUD (a
  * tagged error), never silently misparses.
  *
- * THE HEAD-PROBE LAW: the trace is computed from the LIVE test headers, not
- * hardcoded. A ledger entry whose claimed test lacks a matching `// PROVES:` header
- * (or vice versa — a header naming an undeclared invariant) is a DIVERGENCE finding.
+ * THE HEAD-PROBE LAW: the trace is computed from LIVE test titles and headers, not
+ * hardcoded. A renamed/duplicate title, a ledger entry whose claimed file lacks a
+ * matching `// PROVES:` header, or a live header with no reverse ledger edge is a
+ * DIVERGENCE finding.
  *
  * @module
  */
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import ts from 'typescript';
 import { contentAddressOf } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { normalizeRepoPath } from '@liteship/audit';
@@ -289,8 +292,16 @@ function parseTestingLedger(text: string): readonly TraceEntry[] {
   const body = sectionUnder(significantLines(text), 'traces', TESTING_LEDGER_PATH);
   const items = parseSequenceOfMappings(body, TESTING_LEDGER_PATH);
   const out: TraceEntry[] = [];
+  const seen = new Set<string>();
   for (const item of items) {
     const id = requireField(item, 'id', TESTING_LEDGER_PATH);
+    if (seen.has(id)) {
+      throw InvariantViolationError(
+        'traceability',
+        `invariant ${id} is traced more than once in ${TESTING_LEDGER_PATH} — one invariant has exactly one proof-or-waiver owner`,
+      );
+    }
+    seen.add(id);
     const tests = item.lists.get('tests');
     const waiverMap = item.subMaps.get('waiver');
     if (tests !== undefined && waiverMap !== undefined) {
@@ -354,6 +365,222 @@ interface ProofClaim {
   readonly invariantIds: readonly string[];
 }
 
+/** One statically-resolved Vitest title, including every enclosing suite. */
+export interface ResolvedTestTitle {
+  readonly fullTitle: string;
+  readonly leafTitle: string;
+  /** Present only when the statically resolved test call owns an executable callback. */
+  readonly callback?: ts.ArrowFunction | ts.FunctionExpression;
+}
+
+type TestTitleScalar = string | number | boolean;
+type TestTitleEnvironment = ReadonlyMap<string, TestTitleScalar>;
+
+/** Strip TypeScript wrappers that do not change a test-title value. */
+function unwrapTitleExpression(expression: ts.Expression): ts.Expression {
+  let current = expression;
+  while (
+    ts.isParenthesizedExpression(current) ||
+    ts.isAsExpression(current) ||
+    ts.isTypeAssertionExpression(current) ||
+    ts.isSatisfiesExpression(current) ||
+    ts.isNonNullExpression(current)
+  ) {
+    current = current.expression;
+  }
+  return current;
+}
+
+/** Evaluate the closed scalar subset Vitest titles and simple data tables use. */
+function testTitleScalar(expression: ts.Expression, environment: TestTitleEnvironment): TestTitleScalar | undefined {
+  const current = unwrapTitleExpression(expression);
+  if (ts.isStringLiteralLike(current)) return current.text;
+  if (ts.isNumericLiteral(current)) return Number(current.text);
+  if (current.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (current.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (ts.isIdentifier(current)) return environment.get(current.text);
+  if (ts.isPrefixUnaryExpression(current) && current.operator === ts.SyntaxKind.MinusToken) {
+    const operand = testTitleScalar(current.operand, environment);
+    return typeof operand === 'number' ? -operand : undefined;
+  }
+  if (ts.isTemplateExpression(current)) {
+    let value = current.head.text;
+    for (const span of current.templateSpans) {
+      const substitution = testTitleScalar(span.expression, environment);
+      if (substitution === undefined) return undefined;
+      value += String(substitution) + span.literal.text;
+    }
+    return value;
+  }
+  return undefined;
+}
+
+/** Evaluate a literal array used by `for..of` or `it.each([...])`. */
+function testTitleRows(
+  expression: ts.Expression,
+  environment: TestTitleEnvironment,
+): readonly (readonly TestTitleScalar[])[] | undefined {
+  const current = unwrapTitleExpression(expression);
+  if (!ts.isArrayLiteralExpression(current)) return undefined;
+  const rows: TestTitleScalar[][] = [];
+  for (const element of current.elements) {
+    if (ts.isSpreadElement(element)) return undefined;
+    const rowExpression = unwrapTitleExpression(element);
+    if (ts.isArrayLiteralExpression(rowExpression)) {
+      const row: TestTitleScalar[] = [];
+      for (const cell of rowExpression.elements) {
+        if (ts.isSpreadElement(cell)) return undefined;
+        const value = testTitleScalar(cell, environment);
+        if (value === undefined) return undefined;
+        row.push(value);
+      }
+      rows.push(row);
+      continue;
+    }
+    const value = testTitleScalar(rowExpression, environment);
+    if (value === undefined) return undefined;
+    rows.push([value]);
+  }
+  return rows;
+}
+
+function memberName(expression: ts.Expression): string | undefined {
+  const current = unwrapTitleExpression(expression);
+  if (ts.isPropertyAccessExpression(current)) return current.name.text;
+  if (ts.isElementAccessExpression(current) && current.argumentExpression !== undefined) {
+    const key = testTitleScalar(current.argumentExpression, new Map());
+    return typeof key === 'string' ? key : undefined;
+  }
+  return undefined;
+}
+
+function vitestRootName(expression: ts.Expression): string | undefined {
+  const current = unwrapTitleExpression(expression);
+  if (ts.isIdentifier(current)) return current.text;
+  if (ts.isPropertyAccessExpression(current) || ts.isElementAccessExpression(current)) {
+    return vitestRootName(current.expression);
+  }
+  if (ts.isCallExpression(current)) return vitestRootName(current.expression);
+  return undefined;
+}
+
+interface VitestCall {
+  readonly kind: 'suite' | 'test';
+  readonly title: ts.Expression;
+  readonly callback?: ts.FunctionExpression | ts.ArrowFunction;
+  readonly rows?: readonly (readonly TestTitleScalar[])[];
+}
+
+/** Recognize the Vitest call shapes admitted by the traceability ledger. */
+function asVitestCall(call: ts.CallExpression, environment: TestTitleEnvironment): VitestCall | undefined {
+  const root = vitestRootName(call.expression);
+  const terminal = memberName(call.expression);
+  const kind =
+    terminal === 'describe' || root === 'describe' || root === 'suite'
+      ? 'suite'
+      : root === 'it' || root === 'test'
+        ? 'test'
+        : undefined;
+  if (kind === undefined) return undefined;
+
+  let rows: readonly (readonly TestTitleScalar[])[] | undefined;
+  if (ts.isCallExpression(call.expression) && memberName(call.expression.expression) === 'each') {
+    const data = call.expression.arguments[0];
+    if (data === undefined) return undefined;
+    rows = testTitleRows(data, environment);
+    if (rows === undefined) return undefined;
+  }
+
+  const title = call.arguments[0];
+  if (title === undefined) return undefined;
+  const callback = call.arguments.find(
+    (argument): argument is ts.FunctionExpression | ts.ArrowFunction =>
+      ts.isFunctionExpression(argument) || ts.isArrowFunction(argument),
+  );
+  return { kind, title, callback, ...(rows === undefined ? {} : { rows }) };
+}
+
+function formatEachTitle(pattern: string, row: readonly TestTitleScalar[]): string | undefined {
+  let index = 0;
+  let unsupported = false;
+  const title = pattern.replace(/%%|%[sdifjo]/g, (token) => {
+    if (token === '%%') return '%';
+    const value = row[index++];
+    if (value === undefined) {
+      unsupported = true;
+      return token;
+    }
+    if (token === '%j' || token === '%o') return JSON.stringify(value);
+    if (token === '%d' || token === '%i' || token === '%f') {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) unsupported = true;
+      return String(numeric);
+    }
+    return String(value);
+  });
+  return unsupported ? undefined : title;
+}
+
+function resolvedCallTitles(call: VitestCall, environment: TestTitleEnvironment): readonly string[] {
+  const pattern = testTitleScalar(call.title, environment);
+  if (typeof pattern !== 'string') return [];
+  if (call.rows === undefined) return [pattern];
+  return call.rows.map((row) => formatEachTitle(pattern, row)).filter((title): title is string => title !== undefined);
+}
+
+/**
+ * Parse the actual static Vitest title topology. Unlike a source substring search,
+ * this follows nested `describe` callbacks, literal `it.each` tables, and literal
+ * `for..of` title variables. Dynamic titles outside that closed subset are omitted,
+ * so a ledger pointer cannot false-green on code the resolver did not understand.
+ */
+export function scanResolvedTestTitles(file: string, text: string): readonly ResolvedTestTitle[] {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const titles: ResolvedTestTitle[] = [];
+
+  const walk = (node: ts.Node, suites: readonly string[], environment: TestTitleEnvironment): void => {
+    if (ts.isForOfStatement(node) && ts.isVariableDeclarationList(node.initializer)) {
+      const declaration = node.initializer.declarations[0];
+      const rows = testTitleRows(node.expression, environment);
+      if (declaration !== undefined && ts.isIdentifier(declaration.name) && rows !== undefined) {
+        for (const row of rows) {
+          if (row.length !== 1) continue;
+          const next = new Map(environment);
+          next.set(declaration.name.text, row[0]!);
+          walk(node.statement, suites, next);
+        }
+        return;
+      }
+    }
+
+    if (ts.isCallExpression(node)) {
+      const call = asVitestCall(node, environment);
+      if (call !== undefined) {
+        const callTitles = resolvedCallTitles(call, environment);
+        if (call.kind === 'test') {
+          for (const leafTitle of callTitles) {
+            titles.push({
+              leafTitle,
+              fullTitle: [...suites, leafTitle].join(' > '),
+              ...(call.callback === undefined ? {} : { callback: call.callback }),
+            });
+          }
+          return;
+        }
+        if (call.callback !== undefined) {
+          for (const suiteTitle of callTitles) walk(call.callback.body, [...suites, suiteTitle], environment);
+        }
+        return;
+      }
+    }
+
+    ts.forEachChild(node, (child) => walk(child, suites, environment));
+  };
+
+  walk(source, [], new Map());
+  return titles;
+}
+
 /** Recursively collect unit/property and Playwright test files under `root`. Deterministic (sorted). */
 function collectTestFiles(repoRoot: string, root: string): readonly string[] {
   const abs = join(repoRoot, root);
@@ -403,17 +630,44 @@ function waiverExpired(expiry: string, now: Date): boolean {
   return new Date(expiry).getTime() < now.getTime();
 }
 
-/** The `file::test-name` ref → its `file` part (the corpus-existence + header-match key). */
-function refFile(ref: string): string {
+interface ParsedTestRef {
+  readonly file: string;
+  readonly title: string | undefined;
+}
+
+/** Split the ledger's `file::test-name` identity without discarding either half. */
+function parseTestRef(ref: string): ParsedTestRef {
   const sep = ref.indexOf('::');
-  return sep < 0 ? ref : ref.slice(0, sep);
+  if (sep < 0) return { file: ref, title: undefined };
+  return { file: ref.slice(0, sep), title: ref.slice(sep + 2) || undefined };
+}
+
+type TestTitleResolution = 'resolved' | 'unresolved' | 'ambiguous';
+
+/**
+ * Resolve an exact full nested title. Existing un-nested ledger rows remain valid
+ * only when their leaf title is unique within the file; duplicates require the full
+ * `suite > nested suite > test` identity and duplicate full identities fail closed.
+ */
+function resolveTestTitle(
+  ref: ParsedTestRef,
+  titlesByFile: ReadonlyMap<string, readonly ResolvedTestTitle[]>,
+): TestTitleResolution {
+  if (ref.title === undefined) return 'unresolved';
+  const titles = titlesByFile.get(ref.file) ?? [];
+  const fullMatches = titles.filter((title) => title.fullTitle === ref.title);
+  if (fullMatches.length === 1) return 'resolved';
+  if (fullMatches.length > 1) return 'ambiguous';
+  const leafMatches = titles.filter((title) => title.leafTitle === ref.title);
+  if (leafMatches.length === 1) return 'resolved';
+  return leafMatches.length > 1 ? 'ambiguous' : 'unresolved';
 }
 
 /**
  * Resolve one declared invariant to its lifecycle state — the PURE transition. Given
- * the trace entry, the per-file proof-claim index, and the wall-clock date:
- *  - a `tests:` entry whose claimed test files EXIST and carry a matching PROVES
- *    header → PROVEN.
+ * the trace entry, the per-file proof-claim/title indexes, and the wall-clock date:
+ *  - a `tests:` entry whose exact titles resolve uniquely and whose files carry a
+ *    matching PROVES header → PROVEN.
  *  - a `tests:` entry with no matching live header / missing test → resolved as
  *    UNTRACED with the WHY (the divergence is recorded separately for the gate).
  *  - a `waiver:` entry → WAIVED, or EXPIRED when its expiry is past `now`.
@@ -423,6 +677,7 @@ function resolveState(
   inv: DeclaredInvariant,
   trace: TraceEntry | undefined,
   provesByFile: ReadonlyMap<string, ReadonlySet<string>>,
+  titlesByFile: ReadonlyMap<string, readonly ResolvedTestTitle[]>,
   now: Date,
 ): InvariantState {
   if (trace === undefined) {
@@ -435,17 +690,20 @@ function resolveState(
       : { _tag: 'waived', owner, justification, expiry };
   }
   const tests = trace.tests ?? [];
-  // PROVEN iff EVERY claimed test ref points at a file whose live header names this
-  // invariant. A ref that fails this is recorded as a divergence (below) and the
-  // invariant falls to UNTRACED — never a silent green on a stale claim.
-  const allBacked = tests.every((ref) => provesByFile.get(refFile(ref))?.has(inv.id) === true);
+  // PROVEN iff EVERY claimed test ref resolves one title and its file's live header
+  // names this invariant. A ref that fails either half is recorded as a divergence
+  // (below) and the invariant falls to UNTRACED — never green on a stale name.
+  const allBacked = tests.every((ref) => {
+    const parsed = parseTestRef(ref);
+    return provesByFile.get(parsed.file)?.has(inv.id) === true && resolveTestTitle(parsed, titlesByFile) === 'resolved';
+  });
   if (allBacked && tests.length > 0) {
     return { _tag: 'proven', provingTests: [...tests].sort() };
   }
   return {
     _tag: 'untraced',
     reason:
-      'its claimed proving test(s) do not carry a matching `// PROVES:` header (a ledger⇔header divergence — see the divergence findings).',
+      'its claimed proving test(s) do not resolve one exact title with a matching `// PROVES:` header (a ledger⇔test divergence — see the divergence findings).',
   };
 }
 
@@ -454,7 +712,8 @@ function resolveState(
  *  - `undeclared-proof`: a header PROVES an INV not in invariants.yaml.
  *  - `missing-test`:     a ledger `tests:` ref points at a file absent from the corpus.
  *  - `unbacked-claim`:   a ledger `tests:` ref's file exists but its header does not
- *                        name the invariant.
+ *                        name the invariant, its exact title does not resolve, or a
+ *                        live file/header proof has no reverse ledger edge.
  */
 function detectDivergences(
   declared: readonly DeclaredInvariant[],
@@ -462,6 +721,7 @@ function detectDivergences(
   claims: readonly ProofClaim[],
   corpusFiles: ReadonlySet<string>,
   provesByFile: ReadonlyMap<string, ReadonlySet<string>>,
+  titlesByFile: ReadonlyMap<string, readonly ResolvedTestTitle[]>,
 ): readonly TraceabilityDivergence[] {
   const declaredIds = new Set(declared.map((d) => d.id));
   const out: TraceabilityDivergence[] = [];
@@ -480,10 +740,14 @@ function detectDivergences(
     }
   }
 
+  const tracedProofPairs = new Set<string>();
+
   // missing-test / unbacked-claim: walk every `tests:` ref.
   for (const trace of traces) {
     for (const ref of trace.tests ?? []) {
-      const file = refFile(ref);
+      const parsed = parseTestRef(ref);
+      const file = parsed.file;
+      tracedProofPairs.add(`${file}\0${trace.id}`);
       if (!corpusFiles.has(file)) {
         out.push({
           kind: 'missing-test',
@@ -500,7 +764,35 @@ function detectDivergences(
           detail: `the ledger claims ${ref} proves ${trace.id}, but ${file}'s \`// PROVES:\` header does not name ${trace.id}.`,
           subject: ref,
         });
+        continue;
       }
+      const titleResolution = resolveTestTitle(parsed, titlesByFile);
+      if (titleResolution !== 'resolved') {
+        out.push({
+          kind: 'unbacked-claim',
+          invariantId: trace.id,
+          detail:
+            titleResolution === 'ambiguous'
+              ? `the ledger claims ${ref} proves ${trace.id}, but that title is ambiguous in ${file}; use the unique full nested title and remove duplicate full identities.`
+              : `the ledger claims ${ref} proves ${trace.id}, but its exact test title does not resolve in ${file}.`,
+          subject: ref,
+        });
+      }
+    }
+  }
+
+  // The reverse edge: every live file/header proof claim for a declared invariant
+  // must be represented by at least one ledger ref in that same file. Otherwise a
+  // test can announce authority without entering the trace register at all.
+  for (const claim of claims) {
+    for (const id of claim.invariantIds) {
+      if (!declaredIds.has(id) || tracedProofPairs.has(`${claim.file}\0${id}`)) continue;
+      out.push({
+        kind: 'unbacked-claim',
+        invariantId: id,
+        detail: `the live test ${claim.file} carries \`// PROVES: ${id}\`, but testing-ledger.yaml has no proving-test ref for ${id} in that file.`,
+        subject: claim.file,
+      });
     }
   }
 
@@ -547,12 +839,23 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
   const claims = scanProofClaims(repoRoot);
   const provesByFile = new Map<string, ReadonlySet<string>>(claims.map((c) => [c.file, new Set(c.invariantIds)]));
   const corpusFiles = new Set<string>(claims.map((c) => c.file));
+  const titlesByFile = new Map<string, readonly ResolvedTestTitle[]>();
+  const indexTitles = (file: string): void => {
+    if (titlesByFile.has(file)) return;
+    const absolute = join(repoRoot, file);
+    if (!existsSync(absolute)) return;
+    titlesByFile.set(file, scanResolvedTestTitles(file, readFileSync(absolute, 'utf8')));
+  };
+  for (const claim of claims) indexTitles(claim.file);
   // Also include EVERY test ref's file in the corpus set so a present-but-headerless
   // test is detected as `unbacked-claim`, not falsely as `missing-test`.
   for (const t of traces) {
     for (const ref of t.tests ?? []) {
-      const file = refFile(ref);
-      if (existsSync(join(repoRoot, file))) corpusFiles.add(file);
+      const file = parseTestRef(ref).file;
+      if (existsSync(join(repoRoot, file))) {
+        corpusFiles.add(file);
+        indexTitles(file);
+      }
     }
   }
 
@@ -562,11 +865,11 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
       law: inv.law,
       level: inv.level as ResolvedInvariant['level'],
       category: inv.category,
-      state: resolveState(inv, traceById.get(inv.id), provesByFile, now),
+      state: resolveState(inv, traceById.get(inv.id), provesByFile, titlesByFile, now),
     }))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  const divergences = detectDivergences(declared, traces, claims, corpusFiles, provesByFile);
+  const divergences = detectDivergences(declared, traces, claims, corpusFiles, provesByFile, titlesByFile);
 
   // Content-address the RESOLVED ledger (the one @liteship/core kernel) — the drift
   // keystone. The address omits `now` so it stays stable across a same-day re-run;

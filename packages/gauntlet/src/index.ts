@@ -44,6 +44,21 @@ export {
 } from './finding.js';
 
 export {
+  type BenchSubjectRole,
+  type BenchSubjectOrigin,
+  type BenchSubject,
+  type BenchExecution,
+  type QualifiedBenchDistribution,
+  type BenchSubjectIssueKind,
+  type BenchSubjectIssue,
+  type BenchSubjectQualification,
+  type BenchmarkSubjectFact,
+  type BenchmarkSubjectFacts,
+  parseQualifiedBenchDistribution,
+  benchmarkSubjectFactFor,
+} from './gates/bench-subjects.js';
+
+export {
   type FileId,
   type SymbolId,
   type PkgName,
@@ -72,6 +87,10 @@ export {
   type GateFixtures,
   type GateMutation,
   type Gate,
+  type GateAccessManifest,
+  type GateFactAccess,
+  type GateFactChannel,
+  GATE_FACT_CHANNELS,
   defineGate,
   requireIR,
   requireMutation,
@@ -305,6 +324,12 @@ export {
   runGauntletOnRepo,
   litelaunchGauntlet,
   LITESHIP_GATES,
+  LITESHIP_TEXT_GATES,
+  LITESHIP_GOVERNANCE_GATES,
+  LITESHIP_PROJECTION_GATES,
+  LITESHIP_IR_ONLY_GATES,
+  composeGateSets,
+  replaceGate,
   DEFAULT_GAUNTLET_GLOBS,
 } from './runner.js';
 

@@ -6,7 +6,7 @@
 
 # Interface: HandledCommand
 
-Defined in: [command/src/registry.ts:600](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L600)
+Defined in: [command/src/registry.ts:614](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L614)
 
 A fully-migrated command: descriptor + a guaranteed handler. Migrated command
 modules type their export as this so adapters can invoke `.handler` directly
@@ -20,9 +20,9 @@ without a presence check. Assignable to [RegisteredCommand](RegisteredCommand.md
 
 ### argsSchema?
 
-> `readonly` `optional` **argsSchema?**: `Schema`\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
+> `readonly` `optional` **argsSchema?**: [`Schema`](../../../liteship/src/schema/interfaces/Schema.md)\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
 
-Defined in: [command/src/registry.ts:592](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L592)
+Defined in: [command/src/registry.ts:606](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L606)
 
 The declared kernel schema for the command's args. When present, the
 dispatcher decodes `invocation.args` against it BEFORE invoking the handler
@@ -41,7 +41,7 @@ step is then a no-op passthrough).
 
 > `readonly` **descriptor**: `CapsuleCommandDescriptor`
 
-Defined in: [command/src/registry.ts:582](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L582)
+Defined in: [command/src/registry.ts:596](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L596)
 
 #### Inherited from
 
@@ -53,7 +53,7 @@ Defined in: [command/src/registry.ts:582](https://github.com/freebatteryfactory/
 
 > `readonly` **handler**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)
 
-Defined in: [command/src/registry.ts:601](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L601)
+Defined in: [command/src/registry.ts:615](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L615)
 
 #### Overrides
 

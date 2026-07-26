@@ -23,7 +23,7 @@ const GROUP_CHART: ReadonlyArray<{ readonly key: string; readonly label: string 
 const HINTS = `Hints:
   - First time? Run \`pnpm verify\` for the full first-run aggregate.
   - Stuck? \`liteship doctor\` triages your environment; \`liteship doctor --fix\` repairs.
-  - All commands emit JSON receipts on stdout; pretty output is on stderr.
+  - JSON-mode commands emit machine JSON (normally a receipt). Help/completion and long-running terminal commands emit their declared text or process stream.
   - Suppress color: NO_COLOR=1.  Force color in CI logs: FORCE_COLOR=1.
   - Releasing? \`liteship ship\` packs and publishes the workspace packages; \`liteship verify\` checks the receipt before publishing.
 
@@ -33,13 +33,14 @@ Docs:
 
 /** Render the grouped command list from the catalog. */
 function renderCommandList(catalog: readonly CapsuleCommandDescriptor[]): string {
-  const width = Math.max(...catalog.map((d) => d.name.length)) + 2;
+  const invocation = (descriptor: CapsuleCommandDescriptor): string => descriptor.name.replaceAll('.', ' ');
+  const width = Math.max(...catalog.map((descriptor) => invocation(descriptor).length)) + 2;
   const seen = new Set<string>();
   const sections: string[] = [];
 
   const renderGroup = (label: string, commands: readonly CapsuleCommandDescriptor[]): void => {
     if (commands.length === 0) return;
-    const rows = commands.map((d) => `  ${d.name.padEnd(width)}${d.summary}`);
+    const rows = commands.map((descriptor) => `  ${invocation(descriptor).padEnd(width)}${descriptor.summary}`);
     sections.push(`${label}:\n${rows.join('\n')}`);
   };
 

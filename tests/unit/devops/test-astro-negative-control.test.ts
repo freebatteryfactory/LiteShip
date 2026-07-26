@@ -1,12 +1,13 @@
 import { describe, it } from 'vitest';
-import { proveRegisteredCheckRejects } from '../../support/registered-check-negative-control.js';
+import { astroFaultFixture, proveRegisteredCheckFalsifies } from '../../support/registered-check-negative-control.js';
 
 describe('check/test-astro negative control', () => {
-  it('the registered Astro integration authority blocks on a non-zero result', () => {
-    proveRegisteredCheckRejects(
-      'check/test-astro',
-      'pnpm run test:astro',
-      'tests/unit/devops/test-astro-negative-control.test.ts',
-    );
+  it('the registered Astro route executes Astro against a planted configuration fault', () => {
+    proveRegisteredCheckFalsifies({
+      id: 'check/test-astro',
+      command: 'pnpm run test:astro',
+      control: 'tests/unit/devops/test-astro-negative-control.test.ts',
+      ...astroFaultFixture(),
+    });
   });
 });

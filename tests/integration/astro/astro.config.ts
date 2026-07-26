@@ -5,7 +5,6 @@ export default defineConfig({
   integrations: [
     integration({
       detect: true,
-      serverIslands: false,
     }),
   ],
 });

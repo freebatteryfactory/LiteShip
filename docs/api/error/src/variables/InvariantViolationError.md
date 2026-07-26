@@ -6,9 +6,9 @@
 
 # Variable: InvariantViolationError
 
-> **InvariantViolationError**: (`invariant`, `detail`) => [`InvariantViolationError`](../interfaces/InvariantViolationError.md)
+> **InvariantViolationError**: (`invariant`, `detail`, `opts`) => [`InvariantViolationError`](../interfaces/InvariantViolationError.md)
 
-Defined in: [error/src/variants.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L143)
+Defined in: [error/src/variants.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L144)
 
 Build an InvariantViolationError.
 
@@ -21,6 +21,12 @@ Build an InvariantViolationError.
 ### detail
 
 `string`
+
+### opts?
+
+#### code?
+
+`"error/match-tag/unhandled"`
 
 ## Returns
 

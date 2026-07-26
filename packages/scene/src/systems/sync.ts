@@ -74,7 +74,7 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
 
       // Extract beat timestamps in ms. The Beat component is the flat
       // BeatBinding.Component shape ({ kind, timeMs, strength, ... })
-      // written by scene.beat-binding — see packages/scene/src/capsules/beat-binding.ts.
+      // written by scene.beat-binding — see packages/scene/src/beat-binding-capsule.ts.
       const beatTimesMs: number[] = [];
       for (const e of beatEntities) {
         const beat = e.components.get('Beat');

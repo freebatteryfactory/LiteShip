@@ -6,14 +6,16 @@
 
 # Interface: CapsuleGateSummary
 
-Defined in: [command/src/registry.ts:382](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L382)
+Defined in: [command/src/registry.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L396)
 
 Structured verdict returned by the injected [CommandContext.runCapsuleGate](CommandContext.md#runcapsulegate)
 capability — the capsule-corpus freshness + bench-honesty + green-suite gate.
 `status` is `ok` only when every generated test+bench exists, no committed file
 is stale against a fresh regeneration, no bench is a lazy placeholder/drift, and
-the whole generated suite passes; `stale` means a missing/stale/dishonest
-artifact (run `capsule:compile`); `failed` means the generated tests ran red.
+both generated execution lanes pass and every benchmark yields a measured
+distribution with uncertainty; `stale` means a missing/stale/dishonest
+artifact (run `capsule:compile`); `failed` means generated execution or
+benchmark admission ran red.
 `errors` is the human work-list (empty on success). Declared here so the
 `capsule-verify` command's contract lives in `@liteship/command` without a host import.
 
@@ -23,7 +25,7 @@ artifact (run `capsule:compile`); `failed` means the generated tests ran red.
 
 > `readonly` **benches**: [`CapsuleBenchClassification`](CapsuleBenchClassification.md)
 
-Defined in: [command/src/registry.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L389)
+Defined in: [command/src/registry.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L403)
 
 Per-corpus bench-honesty classification.
 
@@ -33,7 +35,7 @@ Per-corpus bench-honesty classification.
 
 > `readonly` **capsuleCount**: `number`
 
-Defined in: [command/src/registry.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L387)
+Defined in: [command/src/registry.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L401)
 
 Number of capsules in the manifest the gate read.
 
@@ -43,7 +45,7 @@ Number of capsules in the manifest the gate read.
 
 > `readonly` **errors**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L385)
+Defined in: [command/src/registry.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L399)
 
 Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `ok`.
 
@@ -53,4 +55,4 @@ Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `o
 
 > `readonly` **status**: `"ok"` \| `"stale"` \| `"failed"`
 
-Defined in: [command/src/registry.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L383)
+Defined in: [command/src/registry.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L397)

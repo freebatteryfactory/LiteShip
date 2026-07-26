@@ -32,9 +32,44 @@ function runtimeMirror(
   typeName: string,
   runtimeModule: string,
   admittedRelation: SpineTypeAdmission['admittedRelation'] = 'exact',
-  expr: string = typeName,
+  spineExpr: string = typeName,
+  runtimeExpr: string = spineExpr,
 ): SpineTypeAdmission {
-  return { typeName, authority: 'runtime', admittedRelation, spineExpr: expr, runtimeModule, runtimeExpr: expr };
+  return { typeName, authority: 'runtime', admittedRelation, spineExpr, runtimeModule, runtimeExpr };
+}
+
+/** One public-runtime barrel whose required exact mirrors are generated as admissions. */
+export interface SpineExactRelationCatalogEntry {
+  readonly runtimeModule: string;
+  readonly relations: readonly (
+    | string
+    | {
+        readonly typeName: string;
+        readonly spineExpr: string;
+        readonly runtimeExpr?: string;
+      }
+  )[];
+}
+
+/**
+ * Project an exact-relation catalog row into the existing relation probe input.
+ *
+ * The catalog is the census authority: adding a required shared declaration is one
+ * reviewed row here, and every consumer (the CLI host, focused gate, and mutation
+ * tests) receives the same flattened admissions.  Non-exact exceptions remain
+ * explicit below so a deliberately wider surface cannot hide a second drift.
+ */
+function exactRelations(entry: SpineExactRelationCatalogEntry): readonly SpineTypeAdmission[] {
+  return entry.relations.map((relation) => {
+    if (typeof relation === 'string') return runtimeMirror(relation, entry.runtimeModule);
+    return runtimeMirror(
+      relation.typeName,
+      entry.runtimeModule,
+      'exact',
+      relation.spineExpr,
+      relation.runtimeExpr ?? relation.spineExpr,
+    );
+  });
 }
 
 /** A spine-authority branded scalar (the spine owns the brand; the runtime re-exports it). */
@@ -52,13 +87,171 @@ function reanchoredBrand(typeName: string): SpineTypeAdmission {
 const CORE = 'packages/core/src';
 const EDGE = 'packages/edge/src';
 
+/**
+ * Required exact shared-declaration relations, grouped by their real PUBLIC source
+ * barrel. This replaces sampled one-off admissions with one reviewable census.
+ * Generic declarations use one representative structural instantiation; namespace
+ * value members use `typeof`, both through the existing TypeScript relation probe.
+ */
+export const LITESHIP_SPINE_EXACT_RELATION_CATALOG: readonly SpineExactRelationCatalogEntry[] = [
+  {
+    runtimeModule: `${CORE}/index.ts`,
+    relations: [
+      'CompositeState',
+      'VideoConfig',
+      'CaptureResult',
+      'CapSet',
+      'Config',
+      { typeName: 'Plan.topoSort', spineExpr: 'typeof Plan.topoSort' },
+      'MotionTier',
+      'SignalSourceType',
+      'SignalSource',
+      { typeName: 'Signal', spineExpr: 'Signal<number>' },
+      'CapTier',
+      'TransformPart',
+      'ColorSpace',
+      'TypedValue',
+      'RuntimeEasing',
+      'RuntimeWriteProperty',
+      'RuntimeWriteWindow',
+      'RuntimeWritePlan',
+      'ProgramUniforms',
+      'RuntimeCoordinator',
+      'RuntimeCoordinatorConfig',
+      'RuntimePhase',
+      'Token',
+      'Theme',
+      'Style',
+    ],
+  },
+  {
+    runtimeModule: `${CORE}/authoring/plan.ts`,
+    relations: ['TopoSortResult'],
+  },
+  {
+    runtimeModule: `${CORE}/reactive/signal.ts`,
+    relations: [
+      { typeName: 'Signal.Controllable', spineExpr: 'Signal.Controllable<number>' },
+      { typeName: 'Signal.Audio', spineExpr: 'Signal.Audio' },
+    ],
+  },
+  {
+    runtimeModule: 'packages/quantizer/src/index.ts',
+    relations: [
+      'OutputTarget',
+      'SpringConfig',
+      { typeName: 'DefineQuantizerOptions', spineExpr: 'DefineQuantizerOptions<any, any>' },
+      'QuantizerRuntime',
+      { typeName: 'QuantizerOutputs', spineExpr: 'QuantizerOutputs<any>' },
+      { typeName: 'QuantizerConfig', spineExpr: 'QuantizerConfig<any, any>' },
+      { typeName: 'LiveQuantizer', spineExpr: 'LiveQuantizer<any, any>' },
+      { typeName: 'OwnedQuantizer', spineExpr: 'OwnedQuantizer<any, any>' },
+      'EvaluateResult',
+      'TransitionConfig',
+      { typeName: 'TransitionMap', spineExpr: 'TransitionMap<string>' },
+      { typeName: 'Transition', spineExpr: 'Transition<any>', runtimeExpr: 'TransitionType<any>' },
+      { typeName: 'InterpolatedFrame', spineExpr: 'InterpolatedFrame<any>' },
+      { typeName: 'AnimatedQuantizerShape', spineExpr: 'AnimatedQuantizerShape<any>' },
+      { typeName: 'OwnedAnimatedQuantizer', spineExpr: 'OwnedAnimatedQuantizer<any>' },
+    ],
+  },
+  {
+    runtimeModule: 'packages/worker/src/index.ts',
+    relations: [
+      'WorkerConfig',
+      'ToWorkerMessage',
+      'FromWorkerMessage',
+      'WorkerMetrics',
+      'WorkerLike',
+      'SPSCRingBufferShape',
+      'SPSCRingPair',
+      'CompositorWorkerState',
+      'ResolvedStateAckPayload',
+      'QuantizerBoundarySource',
+      'CompositorWorkerShape',
+      'RenderWorkerShape',
+      'TransferableCanvas',
+      'WorkerHostRenderConfig',
+      'WorkerHostShape',
+      'MotionSampleMessage',
+    ],
+  },
+  {
+    runtimeModule: 'packages/vite/src/index.ts',
+    relations: [
+      'PluginConfig',
+      'PrimitiveKind',
+      {
+        typeName: 'PrimitiveShape',
+        spineExpr: "PrimitiveShape<'boundary' | 'token' | 'theme' | 'style'>",
+      },
+      {
+        typeName: 'PrimitiveResolution',
+        spineExpr: "PrimitiveResolution<'boundary' | 'token' | 'theme' | 'style'>",
+      },
+      'QuantizeBlock',
+      'QuantizeStateBody',
+      'QuantizeNestedRule',
+      'QuantizeSheetContext',
+      'TokenBlock',
+      'ThemeBlock',
+      'StyleBlock',
+      'VirtualModuleId',
+      'VirtualModuleData',
+      'CollectBoundaryManifestOptions',
+      'HMRPayload',
+    ],
+  },
+  {
+    runtimeModule: 'packages/remotion/src/index.ts',
+    relations: ['RemotionVideoConfig'],
+  },
+  {
+    runtimeModule: 'packages/command/src/index.ts',
+    relations: [
+      'CommandJsonSchema',
+      'CommandAnnotations',
+      'CommandExecutionKind',
+      'CapsuleCommandDescriptor',
+      'CapsuleCommandInvocation',
+      { typeName: 'CapsuleCommandResult', spineExpr: 'CapsuleCommandResult<unknown>' },
+      'SceneCompilation',
+    ],
+  },
+  {
+    runtimeModule: `${EDGE}/index.ts`,
+    relations: [
+      'KVNamespace',
+      'CompiledOutputs',
+      'CompiledGLSLOutput',
+      'CompiledWGSLOutput',
+      'BoundaryCache',
+      'BoundaryManifest',
+      'BoundaryManifestEntry',
+      'BoundaryManifestFile',
+      'TierKey',
+      'ClientHintsHeaders',
+      'EdgeTierResult',
+      'ThemeCompileConfig',
+      'ThemeCompileResult',
+      'EdgeHostContext',
+      'EdgeHostCompileContext',
+      'EdgeHostCacheTags',
+      'EdgeHostBoundaryConfig',
+      'EdgeHostCacheConfig',
+      'EdgeHostCacheStatus',
+      'EdgeHostBoundaryResolution',
+      'EdgeHostAdapterConfig',
+      'EdgeHostResolution',
+      'EdgeHostAdapter',
+    ],
+  },
+] as const;
+
 /** The frozen admission table — every currently-pinned spine mirror type. */
 export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
-  // ── @liteship/core runtime shapes (the three historical drift fixtures live here) ──
-  runtimeMirror('CompositeState', `${CORE}/media/compositor.ts`), // WGSL-omission drift class
-  runtimeMirror('VideoConfig', `${CORE}/media/video.ts`), // Millis-brand-loss drift class
-  runtimeMirror('CaptureResult', `${CORE}/evidence/capture.ts`), // Millis-brand-loss drift class
-  runtimeMirror('CapSet', `${CORE}/evidence/caps.ts`), // Set→array drift class
+  ...LITESHIP_SPINE_EXACT_RELATION_CATALOG.flatMap(exactRelations),
+
   // Codec, decomposed into FIELDS. A whole-shape `public-wider` verdict is a WEAK
   // pin: the `schema` field alone produces (s2r=false, r2s=true), so a SECOND field
   // (encode/decode) widening in the SAME direction is absorbed and never surfaces
@@ -85,40 +278,10 @@ export const LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] = [
     'public-wider',
     "Codec<{ readonly a: 1 }, { readonly a: 1 }>['schema']",
   ),
-  runtimeMirror('Config', `${CORE}/authoring/config.ts`, 'exact', 'Config'),
-
-  // ── @liteship/design shapes (re-exported as Token/Theme/Style namespaces from core) ──
-  runtimeMirror('Token', `${CORE}/authoring/token.ts`, 'exact', 'Token'),
-  runtimeMirror('Theme', `${CORE}/authoring/theme.ts`, 'exact', 'Theme'),
-  runtimeMirror('Style', `${CORE}/authoring/style.ts`, 'exact', 'Style'),
-
-  // ── @liteship/edge KV-cache + manifest shapes (producing modules) ──
-  runtimeMirror('KVNamespace', `${EDGE}/kv-cache.ts`),
-  runtimeMirror('CompiledOutputs', `${EDGE}/kv-cache.ts`),
-  runtimeMirror('CompiledGLSLOutput', `${EDGE}/kv-cache.ts`),
-  runtimeMirror('CompiledWGSLOutput', `${EDGE}/kv-cache.ts`),
-  runtimeMirror('BoundaryCache', `${EDGE}/kv-cache.ts`),
-  runtimeMirror('BoundaryManifest', `${EDGE}/manifest.ts`),
-  runtimeMirror('BoundaryManifestEntry', `${EDGE}/manifest.ts`),
-  runtimeMirror('BoundaryManifestFile', `${EDGE}/manifest.ts`),
-  runtimeMirror('TierKey', `${EDGE}/manifest.ts`),
-
-  // ── @liteship/edge public host surface (the @liteship/edge index barrel) ──
-  runtimeMirror('ClientHintsHeaders', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeTierResult', `${EDGE}/index.ts`),
-  runtimeMirror('ThemeCompileConfig', `${EDGE}/index.ts`),
-  runtimeMirror('ThemeCompileResult', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostContext', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostCompileContext', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostCacheTags', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostBoundaryConfig', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostCacheConfig', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostCacheStatus', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostBoundaryResolution', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostAdapterConfig', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostResolution', `${EDGE}/index.ts`),
-  runtimeMirror('EdgeHostAdapter', `${EDGE}/index.ts`),
-
+  // The spine intentionally exposes the minimal bridge port Signal.audio reads,
+  // while the runtime's private implementation parameter is the richer AVBridge.
+  // Preserve the observed direction explicitly so flipping or exactifying it reds.
+  runtimeMirror('Signal.audio', `${CORE}/reactive/signal.ts`, 'public-narrower', 'typeof Signal.audio'),
   // ── @liteship/_spine-owned branded scalars (ADR-0010: the spine owns, the runtime re-exports) ──
   reanchoredBrand('Millis'),
   reanchoredBrand('ContentAddress'),

@@ -6,7 +6,7 @@
 
 # Type Alias: DetectReadyDetail
 
-> **DetectReadyDetail** = \{ `error?`: `undefined`; `gpuTier`: [`GPUTier`](GPUTier.md); `motionTier`: [`MotionTier`](../../../quantizer/src/type-aliases/MotionTier.md); `tier`: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md); `webgpu`: `boolean`; \} \| \{ `error`: `true`; \}
+> **DetectReadyDetail** = \{ `error?`: `undefined`; `gpuTier`: [`GPUTier`](GPUTier.md); `motionTier`: [`MotionTier`](../../../quantizer/src/type-aliases/MotionTier.md); `tier`: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md); `webgpu`: `boolean`; \} \| \{ `error`: `true`; \}
 
 Defined in: [detect/src/detect-ready.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect-ready.ts#L31)
 

@@ -5,6 +5,8 @@
  *   - `liteship://registry/commands` ← `COMMAND_CATALOG` (the full descriptor
  *     superset of `tools/list`: includes CLI-owned commands + executionKind +
  *     annotations + group);
+ *   - `liteship://registry/components` ← `DEMO_COMPONENT_CATALOG` (the demo
+ *     generated-UI discovery schema, not runtime authority);
  *   - `liteship://server/info`       ← `serverInfo()` + the shared `PROTOCOL_VERSION`
  *     + `SERVER_CAPABILITIES` (same source `initialize` advertises — no drift);
  *   - `liteship://glossary`          ← `GLOSSARY_ENTRIES` index (the public ontology);
@@ -61,8 +63,9 @@ function glossaryTermUri(term: string): string {
 const SORTED_GLOSSARY = [...GLOSSARY_ENTRIES].sort((a, b) => a.term.localeCompare(b.term));
 
 /**
- * The resource registry, in stable listing order: registry/commands, server/info,
- * glossary index, then the glossary terms (term-sorted). Computed once.
+ * The resource registry, in stable listing order: registry/commands,
+ * registry/components, server/info, glossary index, then the glossary terms
+ * (term-sorted). Computed once.
  */
 const REGISTRY: readonly ResourceEntry[] = [
   {

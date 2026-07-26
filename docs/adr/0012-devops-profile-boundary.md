@@ -6,8 +6,8 @@
 ## Context
 
 CUT D7 introduced `DevopsProfile` as the config seam that drives the audit engine,
-with the law *"only fields the audit actually consumes are in the profile — no
-aspirational fields."* That law lived only in a code comment + `profile.test.ts`.
+with the law _"only fields the audit actually consumes are in the profile — no
+aspirational fields."_ That law lived only in a code comment + `profile.test.ts`.
 D9b published `@czap/audit` as a downstream-installable engine (`czap audit
 --profile`), making the profile a genuine reusable surface.
 
@@ -17,8 +17,8 @@ bench (`scripts/bench/*` + `bench-gate.ts`), and the artifact/report paths
 (`reports/*`, `coverage/*`, `benchmarks/*`): should they also be threaded through
 `DevopsProfile` so downstream projects can configure them?
 
-The D7b survey answered no, with evidence. These are not project-*shape* config;
-they are LiteShip *contracts*. Threading them would be false generality (the "Glue
+The D7b survey answered no, with evidence. These are not project-_shape_ config;
+they are LiteShip _contracts_. Threading them would be false generality (the "Glue
 Inflation" smell the audit itself flags) and would violate D7's no-aspirational-fields
 law. Without an executable boundary, though, the profile could quietly accrete those
 fields later — entropy in a blazer. This ADR records the classification and the cut
@@ -26,21 +26,23 @@ fields later — entropy in a blazer. This ADR records the classification and th
 
 ## Decision
 
-`@czap/audit`'s `DevopsProfile` is **the** reusable devops seam — it carries exactly
-the fields the audit engine consumes: `repoRoot`, `internalPackagePrefix`,
-`packageTopology`, `dynamicImportExemptions`, `surfacePolicy`. Nothing else.
+`@liteship/audit`'s `DevopsProfile` is **the** reusable devops seam — it carries exactly
+the seven public keys the audit engine consumes: `repoRoot`, `internalPackagePrefix`,
+`packageTopology`, `foundationalPackages`, `dynamicImportExemptions`, `surfacePolicy`,
+and the consumer-only `packageRoots`. Nothing else. Per-package analyzable artifact
+globs live inside `packageTopology`; they do not add another profile-level authority.
 
 The remaining devops engines are **repo-local LiteShip contracts by design**, NOT
 profile fields:
 
 - **invariants** — `NO_VAR`/`NO_REQUIRE`/`NO_DEFAULT_EXPORT`/line-endings are the
   CLAUDE.md coding-convention law verbatim; excludes name specific `@czap` shim files.
-  A downstream supplies a *different rule array*, not field overrides. Repo convention.
+  A downstream supplies a _different rule array_, not field overrides. Repo convention.
 - **coverage** — thresholds keyed to `@czap` package names + literal file paths; the
   21-entry exclude list is LiteShip carve-outs; the node/browser/subprocess split is
   LiteShip's dual-runtime topology. LiteShip quality-threshold policy.
 - **bench** — the directive suite **value-imports and executes `@czap/core|edge|web|worker`**;
-  it measures *this framework's* runtime. The suite *is* the contract — a
+  it measures _this framework's_ runtime. The suite _is_ the contract — a
   `BenchProfile.directivePairs` would point at nothing off-product. CZAP runtime
   performance contract.
 - **artifact/report paths** — `reports/`, `coverage/`, `benchmarks/` names encode the
@@ -51,9 +53,9 @@ profile fields:
 **Root derivations are intentionally split into two families** and must not be merged
 into "one root to rule them all":
 
-- **checkout-root** (`import.meta`-relative) — locates the LiteShip *checkout*; used by
+- **checkout-root** (`import.meta`-relative) — locates the LiteShip _checkout_; used by
   dev scripts / repo machinery that operate on this repo regardless of caller cwd.
-- **caller-root** (`process.cwd()` / `profile.repoRoot`) — the *caller's* tree; the
+- **caller-root** (`process.cwd()` / `profile.repoRoot`) — the _caller's_ tree; the
   engine + CLI downstream default (CUT D9a). The audit audits the caller, not the checkout.
 
 The line is the same one drawn twice: the **project-shaped** thing (audit) is
@@ -74,11 +76,11 @@ checkout-root machinery) are local.
 
 ## Evidence
 
-- `packages/audit/src/devops-profile.ts:30` — `DevopsProfile` (the 5 fields).
+- `packages/audit/src/devops-profile.ts` — `DevopsProfile` and its exact seven-key projection.
 - `packages/audit/src` contains **zero** references to invariants/coverage/bench
   (verified by grep) — the reusable surface does not leak the local contracts.
 - `scripts/bench/directive-suite.ts:3-9` — value-imports `@czap/core|edge|web|worker`
-  + astro/worker runtime: it executes the framework (product-shaped).
+  - astro/worker runtime: it executes the framework (product-shaped).
 - `packages/command/src/commands/check-invariants-registry.ts` — `INVARIANTS` rule
   set (repo-local `@czap/command` data; imported by `scripts/audit/report.ts`, never
   by `@czap/audit`). The scan engine is the `check-invariants` command's host
@@ -91,8 +93,8 @@ checkout-root machinery) are local.
 
 - **Thread invariants/coverage/bench through `DevopsProfile`** — false generality;
   none are downstream-runnable (bench needs the whole CZAP runtime), and it violates
-  the no-aspirational-fields law. The mirror of audit: audit was *extracted* because
-  project-shaped; these are *nailed local* because product-shaped.
+  the no-aspirational-fields law. The mirror of audit: audit was _extracted_ because
+  project-shaped; these are _nailed local_ because product-shaped.
 - **Unify all root derivations into one shared root** — conflates two intentionally
   divergent families (checkout vs caller). The within-checkout-family duplication is
   benign (each script self-deriving its checkout root is robust + dependency-free); an

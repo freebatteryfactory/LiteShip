@@ -778,6 +778,7 @@ export const claimPropertyGate: Gate = defineGate({
   level: 'L3',
   describe:
     'Claim-without-confirmer — a NAME-based semantic property claim (deterministic / pure / content-addressed) in published src with no measurable confirmer, or a purity claim contradicted by an in-declaration ambient read, is a HARD finding; a declaration-leading DOC claim with no confirmer is advisory (Rice).',
+  access: { allFiles: true },
   run: scan,
   evidenceDigest: claimPropertyEvidenceDigest,
   fixtures: {

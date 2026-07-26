@@ -18,12 +18,15 @@ import {
   run,
   DEFAULT_DIR,
   type RunIo,
+  type ScaffoldError,
 } from '../../../packages/create-liteship/src/index.js';
 // The workspace version is a shared repo truth owned by
 // tests/support/repo-truths.ts (scar S0.4). The scaffold drift guards below read
 // it through the single owner. (Wave 8: the effect catalog-range truth was
 // retired with effect itself — the template no longer ships effect.)
 import { workspaceVersion } from '../../support/repo-truths.js';
+import { authoredLineCount } from '../../support/beginner-surface.js';
+import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 
 const EXPECTED_TREE = [
   '.gitignore',
@@ -94,9 +97,7 @@ describe('create-liteship scaffold', () => {
     const adaptive = readFileSync(join(result.projectDir, 'src/adaptive.ts'), 'utf8');
     expect(adaptive).toContain("import { defineAdaptive } from 'liteship'");
     expect(adaptive).toContain('export const layout = defineAdaptive(');
-    const authoredLines = adaptive
-      .split(/\r?\n/)
-      .filter((line) => line.trim() !== '' && !line.trim().startsWith('//')).length;
+    const authoredLines = authoredLineCount(adaptive);
     expect(authoredLines, 'first adaptive definition must stay at or below 20 authored lines').toBeLessThanOrEqual(20);
 
     const index = readFileSync(join(result.projectDir, 'src/pages/index.astro'), 'utf8');
@@ -117,7 +118,103 @@ describe('create-liteship scaffold', () => {
     expect(readme).toContain('define → apply → inspect');
     expect(readme).toContain('pnpm check');
     expect(readme).toContain('npm run check');
-    expect(readme).toContain('one 14-line definition');
+    const publishedReadme = readFileSync(join(defaultTemplateDir(), '..', '..', 'README.md'), 'utf8');
+    for (const [owner, text] of [
+      ['scaffolded README', readme],
+      ['published README', publishedReadme],
+    ] as const) {
+      const claims = [...text.matchAll(/\b(\d+)-line Adaptive definition|\b(\d+)-line definition/g)].map((match) =>
+        Number(match[1] ?? match[2]),
+      );
+      expect(claims.length, `${owner} must carry a measured first-feature claim`).toBeGreaterThan(0);
+      expect(claims, `${owner} must derive its claim from src/adaptive.ts`).toEqual(
+        Array.from({ length: claims.length }, () => authoredLines),
+      );
+    }
+  });
+
+  it('scaffolds a complete custom template relative to the declared cwd', () => {
+    const fixture = join(workDir, 'fixtures', 'custom');
+    mkdirSync(fixture, { recursive: true });
+    writeFileSync(join(fixture, 'package.json'), '{"name":"fixture","private":true}\n');
+    writeFileSync(join(fixture, 'gitignore'), 'dist/\n');
+    writeFileSync(join(fixture, 'custom.txt'), 'custom bytes');
+
+    const result = scaffold('apps/custom-app', { cwd: workDir, templateDir: 'fixtures/custom' });
+    expect(result.projectName).toBe('custom-app');
+    expect(result.files).toEqual(['.gitignore', 'custom.txt', 'package.json']);
+    expect(readFileSync(join(result.projectDir, '.gitignore'), 'utf8')).toBe('dist/\n');
+    expect(readFileSync(join(result.projectDir, 'custom.txt'), 'utf8')).toBe('custom bytes');
+  });
+
+  it.each([
+    ['missing template', 'template-missing', 'missing-template'],
+    ['template path is a file', 'template-not-directory', 'template-file'],
+    ['template without package.json', 'template-missing-manifest', 'partial-template'],
+    ['template with malformed package.json', 'template-invalid-manifest', 'malformed-template'],
+  ] as const)('refuses a %s with a typed reason before touching the target', (_label, reason, fixtureName) => {
+    const fixture = join(workDir, fixtureName);
+    if (reason === 'template-not-directory') writeFileSync(fixture, 'not a directory');
+    if (reason === 'template-missing-manifest') {
+      mkdirSync(fixture);
+      writeFileSync(join(fixture, 'only.txt'), 'partial');
+    }
+    if (reason === 'template-invalid-manifest') {
+      mkdirSync(fixture);
+      writeFileSync(join(fixture, 'package.json'), '{ nope');
+    }
+
+    const target = join(workDir, `target-${fixtureName}`);
+    let thrown: unknown;
+    try {
+      scaffold(target, { templateDir: fixture });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as ScaffoldError).reason).toBe(reason);
+    expect((thrown as ScaffoldError).path).toContain(fixtureName);
+    expect(existsSync(target), 'invalid templates must be rejected before destination creation').toBe(false);
+  });
+
+  it('refuses an ambiguous dotfile restoration instead of overwriting either source', () => {
+    const fixture = join(workDir, 'dotfile-conflict');
+    mkdirSync(fixture);
+    writeFileSync(join(fixture, 'package.json'), '{}\n');
+    writeFileSync(join(fixture, 'gitignore'), 'placeholder\n');
+    writeFileSync(join(fixture, '.gitignore'), 'authored\n');
+    const target = join(workDir, 'dotfile-target');
+
+    let thrown: unknown;
+    try {
+      scaffold(target, { templateDir: fixture });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as ScaffoldError).reason).toBe('template-dotfile-conflict');
+    expect(existsSync(target)).toBe(false);
+    expect(readFileSync(join(fixture, 'gitignore'), 'utf8')).toBe('placeholder\n');
+    expect(readFileSync(join(fixture, '.gitignore'), 'utf8')).toBe('authored\n');
+  });
+
+  it('refuses a target nested inside its template before recursive copying begins', () => {
+    const fixture = join(workDir, 'overlap-template');
+    mkdirSync(fixture);
+    writeFileSync(join(fixture, 'package.json'), '{}\n');
+    writeFileSync(join(fixture, 'source.txt'), 'source remains');
+    const target = join(fixture, 'generated-app');
+
+    let thrown: unknown;
+    try {
+      scaffold(target, { templateDir: fixture });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as ScaffoldError).reason).toBe('template-target-overlap');
+    expect(existsSync(target)).toBe(false);
+    expect(readFileSync(join(fixture, 'source.txt'), 'utf8')).toBe('source remains');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -163,6 +260,17 @@ describe('create-liteship scaffold', () => {
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).not.toMatch(/^(workspace|file|link):/);
     }
+  });
+
+  it('admits its reusable package entry to API and TypeDoc ownership', () => {
+    const owner = PACKAGE_CATALOG.find((record) => record.name === 'create-liteship');
+    expect(owner).toMatchObject({
+      runtimeSurface: 'module',
+      apiSurface: true,
+      typedocEntry: 'packages/create-liteship/src/index.ts',
+      publicSubpaths: ['.'],
+      smokeImports: ['create-liteship'],
+    });
   });
 
   // Drift guard: a scaffolded app must pull the SAME release line the workspace

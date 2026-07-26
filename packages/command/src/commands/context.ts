@@ -105,6 +105,7 @@ export const contextCommand = defineCommand({
         subject: { type: 'string' },
       },
     } as const satisfies CommandJsonSchema,
+    cli: { outputMode: 'json', adapterFlags: { '--json': { type: 'boolean' } } },
     outputSchema: ContextPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'setup' },
   },

@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Diagnostics, defineCapsule, getCapsuleCatalog, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
+import { Diagnostics, defineCapsule, defineCapsuleCatalog, schema } from '@liteship/core';
 
 describe('defineCapsule', () => {
   beforeEach(() => {
-    resetCapsuleCatalog();
     Diagnostics.reset();
   });
 
-  it('registers a pureTransform capsule and computes a content address', () => {
+  it('defines an immutable pureTransform capsule and computes a content address', () => {
     const cap = defineCapsule({
       _kind: 'pureTransform',
       name: 'demo.square',
@@ -22,6 +20,7 @@ describe('defineCapsule', () => {
     expect(cap._kind).toBe('pureTransform');
     expect(cap.id).toMatch(/^fnv1a:[0-9a-f]+$/);
     expect(cap.name).toBe('demo.square');
+    expect(Object.isFrozen(cap)).toBe(true);
   });
 
   it('emits the registered diagnostic when invariants have no runtime transform', () => {
@@ -72,10 +71,10 @@ describe('defineCapsule', () => {
     expect(invariant.check({ items: ['a'] }, { count: 2 })).toBe(false);
   });
 
-  it('catalog contains every defined capsule', () => {
-    defineCapsule({
+  it('composes an immutable catalog in deterministic name order', () => {
+    const square = defineCapsule({
       _kind: 'pureTransform',
-      name: 'demo.square',
+      name: 'demo.z-square',
       input: schema.number,
       output: schema.number,
       capabilities: { reads: [], writes: [] },
@@ -83,14 +82,26 @@ describe('defineCapsule', () => {
       budgets: { p95Ms: 1 },
       site: ['node'],
     });
-    const catalog = getCapsuleCatalog();
-    expect(catalog.some((c) => c.name === 'demo.square')).toBe(true);
+    const identity = defineCapsule({
+      _kind: 'pureTransform',
+      name: 'demo.a-identity',
+      input: schema.number,
+      output: schema.number,
+      capabilities: { reads: [], writes: [] },
+      invariants: [],
+      budgets: { p95Ms: 1 },
+      site: ['node'],
+    });
+    const catalog = defineCapsuleCatalog([square, identity]);
+    expect(catalog.map((capsule) => capsule.name)).toEqual(['demo.a-identity', 'demo.z-square']);
+    expect(Object.isFrozen(catalog)).toBe(true);
+    expect(defineCapsuleCatalog([identity, square])).toEqual(catalog);
   });
 
-  it('resetCapsuleCatalog clears the registry', () => {
-    defineCapsule({
+  it('does not accumulate declarations across repeated composition (HMR/import-repeat control)', () => {
+    const capsule = defineCapsule({
       _kind: 'pureTransform',
-      name: 'demo.a',
+      name: 'demo.repeat',
       input: schema.number,
       output: schema.number,
       capabilities: { reads: [], writes: [] },
@@ -98,7 +109,65 @@ describe('defineCapsule', () => {
       budgets: { p95Ms: 1 },
       site: ['node'],
     });
-    resetCapsuleCatalog();
-    expect(getCapsuleCatalog().length).toBe(0);
+    expect(defineCapsuleCatalog([capsule])).toEqual(defineCapsuleCatalog([capsule]));
+    expect(defineCapsuleCatalog([])).toEqual([]);
+  });
+
+  it('refuses duplicate names and duplicate identities', () => {
+    const one = defineCapsule({
+      _kind: 'pureTransform',
+      name: 'demo.duplicate',
+      input: schema.number,
+      output: schema.number,
+      capabilities: { reads: [], writes: [] },
+      invariants: [],
+      budgets: { p95Ms: 1 },
+      site: ['node'],
+    });
+    const two = defineCapsule({
+      _kind: 'pureTransform',
+      name: 'demo.duplicate',
+      input: schema.number,
+      output: schema.number,
+      capabilities: { reads: [], writes: [] },
+      invariants: [],
+      budgets: { p95Ms: 2 },
+      site: ['node'],
+    });
+    expect(() => defineCapsuleCatalog([one, two])).toThrow(/duplicate capsule name/u);
+    const forgedIdentityTwin = { ...two, name: 'demo.other', id: one.id };
+    expect(() => defineCapsuleCatalog([one, forgedIdentityTwin])).toThrow(/duplicate capsule identity/u);
+  });
+
+  it('snapshots caller-owned declaration data before hashing and storage', () => {
+    const site = ['node'] as ('node' | 'browser')[];
+    const reads = ['clock.read'];
+    const budgets = { p95Ms: 1 };
+    const initialState = { count: 0, history: ['created'] };
+    const cap = defineCapsule({
+      _kind: 'stateMachine',
+      name: 'demo.owned',
+      input: schema.number,
+      output: schema.struct({ count: schema.number, history: schema.array(schema.string) }),
+      capabilities: { reads, writes: [] },
+      invariants: [],
+      budgets,
+      site,
+      initialState,
+      step: (state, event) => ({ count: state.count + event, history: [...state.history, String(event)] }),
+    });
+    const id = cap.id;
+    site.push('browser');
+    reads.push('fs.read');
+    budgets.p95Ms = 99;
+    initialState.count = 99;
+    initialState.history.push('mutated');
+
+    expect(cap.id).toBe(id);
+    expect(cap.site).toEqual(['node']);
+    expect(cap.capabilities.reads).toEqual(['clock.read']);
+    expect(cap.budgets.p95Ms).toBe(1);
+    expect(cap.initialState).toEqual({ count: 0, history: ['created'] });
+    expect(Object.isFrozen(cap.initialState)).toBe(true);
   });
 });

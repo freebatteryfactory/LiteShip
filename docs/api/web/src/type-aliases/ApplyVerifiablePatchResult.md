@@ -6,7 +6,7 @@
 
 # Type Alias: ApplyVerifiablePatchResult
 
-> **ApplyVerifiablePatchResult** = \{ `_tag`: `"applied"`; `appliedDigest`: `AddressedDigest`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); `tier`: [`DpuTier`](DpuTier.md); \} \| \{ `_tag`: `"refused"`; `verification`: `Exclude`\<[`VerifiablePatchVerification`](VerifiablePatchVerification.md), \{ `_tag`: `"verified"`; \}\>; \} \| \{ `_tag`: `"sanitizedEmpty"`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); \}
+> **ApplyVerifiablePatchResult** = \{ `_tag`: `"applied"`; `appliedDigest`: [`AddressedDigest`](../../../liteship/src/evidence/type-aliases/AddressedDigest.md); `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); `tier`: [`DpuTier`](DpuTier.md); \} \| \{ `_tag`: `"refused"`; `verification`: `Exclude`\<[`VerifiablePatchVerification`](VerifiablePatchVerification.md), \{ `_tag`: `"verified"`; \}\>; \} \| \{ `_tag`: `"sanitizedEmpty"`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); \}
 
 Defined in: [web/src/dpu/watch-and-prepare.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L71)
 
@@ -20,7 +20,7 @@ advertised a verified patch over unchanged stale content.
 
 ### Type Literal
 
-\{ `_tag`: `"applied"`; `appliedDigest`: `AddressedDigest`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); `tier`: [`DpuTier`](DpuTier.md); \}
+\{ `_tag`: `"applied"`; `appliedDigest`: [`AddressedDigest`](../../../liteship/src/evidence/type-aliases/AddressedDigest.md); `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); `tier`: [`DpuTier`](DpuTier.md); \}
 
 #### \_tag
 
@@ -28,7 +28,7 @@ advertised a verified patch over unchanged stale content.
 
 #### appliedDigest
 
-> `readonly` **appliedDigest**: `AddressedDigest`
+> `readonly` **appliedDigest**: [`AddressedDigest`](../../../liteship/src/evidence/type-aliases/AddressedDigest.md)
 
 sha256 digest of `target.innerHTML` after apply — what the DOM attribute attests.
 

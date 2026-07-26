@@ -77,7 +77,7 @@ interface UiEntry {
   readonly render: () => string;
 }
 
-/** The two static UI resources, in stable order. Computed once. */
+/** Static UI resources, in stable order. This registry is the cardinality owner. */
 const REGISTRY: readonly UiEntry[] = [
   {
     resource: {

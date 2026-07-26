@@ -31,7 +31,7 @@ folds an empty verdict. See [ActiveSurfaceFacts](ActiveSurfaceFacts.md).
 
 ### benchmarkSubjects?
 
-> `readonly` `optional` **benchmarkSubjects?**: `BenchmarkSubjectFacts`
+> `readonly` `optional` **benchmarkSubjects?**: [`BenchmarkSubjectFacts`](BenchmarkSubjectFacts.md)
 
 Defined in: [gauntlet/src/gate.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L108)
 

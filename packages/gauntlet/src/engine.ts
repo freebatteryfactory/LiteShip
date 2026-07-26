@@ -14,6 +14,7 @@
  * @module
  */
 
+import { ValidationError } from '@liteship/error';
 import type { GateContext, Gate } from './gate.js';
 import type { Finding, Severity } from './finding.js';
 import { verifyGate, earnedAuthority, type Authority, type GateProof } from './authority.js';
@@ -407,6 +408,22 @@ function runRawCached(gate: Gate, scoped: GateContext, cache: ArmedCache): reado
  * blocking waiver finding) failed the run.
  */
 export function runGates(gates: readonly Gate[], context: GateContext, opts: RunGatesOptions = {}): GauntletResult {
+  // Composition is validated BEFORE fixture qualification or gate execution. A
+  // required fact gate in a plan with no corresponding host-produced FactPack is
+  // not a clean verdict; it is an invalid execution plan. This turns the former
+  // "present but inert" false green into a deterministic host error.
+  for (const gate of gates) {
+    const missing = (gate.access?.facts ?? [])
+      .filter((access) => access.presence === 'required')
+      .map((access) => access.channel)
+      .filter((channel) => context[channel] === undefined);
+    if (missing.length > 0) {
+      throw ValidationError(
+        'runGates',
+        `gate "${gate.id}" requires missing fact channel(s): ${missing.join(', ')}; the host must build and inject them before execution`,
+      );
+    }
+  }
   const outcomes: GateOutcome[] = [];
   const allFindings: Finding[] = [];
   const now = opts.now ?? EPOCH;

@@ -1,8 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { CommandRegistry, CommandDispatcher, commandRegistry, ok, failed, defineCommand } from '@liteship/command';
+import {
+  createCommandDispatcher,
+  createCommandRegistry,
+  commandRegistry,
+  ok,
+  failed,
+  defineCommand,
+} from '@liteship/command';
 import type { RegisteredCommand } from '@liteship/command';
 import type { GlossaryPayload } from '@liteship/command';
 import { schema } from '@liteship/core';
+import * as commandSurface from '@liteship/command';
 
 function fakeCommand(name: string): RegisteredCommand {
   return {
@@ -21,19 +29,26 @@ function fakeCommand(name: string): RegisteredCommand {
 }
 
 describe('@liteship/command registry + dispatcher', () => {
+  it('exports the sanctioned create* constructors and no retired .make namespaces', () => {
+    expect(commandSurface.createCommandRegistry).toBeTypeOf('function');
+    expect(commandSurface.createCommandDispatcher).toBeTypeOf('function');
+    expect('CommandRegistry' in commandSurface).toBe(false);
+    expect('CommandDispatcher' in commandSurface).toBe(false);
+  });
+
   it('registry.list() returns the descriptor for every registered command, sorted by name', () => {
-    const registry = CommandRegistry.make([fakeCommand('b.cmd'), fakeCommand('a.cmd')]);
+    const registry = createCommandRegistry([fakeCommand('b.cmd'), fakeCommand('a.cmd')]);
     expect(registry.list().map((d) => d.name)).toEqual(['a.cmd', 'b.cmd']);
     expect(registry.get('a.cmd')?.descriptor.summary).toBe('does a.cmd');
     expect(registry.get('missing')).toBeUndefined();
   });
 
   it('registry rejects duplicate command names', () => {
-    expect(() => CommandRegistry.make([fakeCommand('dup'), fakeCommand('dup')])).toThrow(/duplicate/i);
+    expect(() => createCommandRegistry([fakeCommand('dup'), fakeCommand('dup')])).toThrow(/duplicate/i);
   });
 
   it('dispatcher invokes the registered handler and returns its structured result', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([fakeCommand('scene.compile')]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([fakeCommand('scene.compile')]));
     const result = await dispatcher.dispatch({ name: 'scene.compile', args: { scene: '/x.ts' } }, {});
     expect(result.status).toBe('ok');
     expect(result.command).toBe('scene.compile');
@@ -41,17 +56,36 @@ describe('@liteship/command registry + dispatcher', () => {
   });
 
   it('dispatcher returns a structured failed result (not a throw) for an unknown command', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([fakeCommand('scene.compile')]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([fakeCommand('scene.compile')]));
     const result = await dispatcher.dispatch({ name: 'nope', args: {} }, {});
     expect(result.status).toBe('failed');
     expect(result.command).toBe('nope');
     expect(result.exitCode ?? 0).toBeGreaterThan(0);
   });
+
+  it('dispatcher contains a throwing handler inside the structured failure algebra', async () => {
+    const throwing = defineCommand({
+      descriptor: { name: 'throwing.command', summary: 'throws', inputSchema: { type: 'object', properties: {} } },
+      handler: async () => {
+        throw new Error('injected host fault');
+      },
+    });
+    const dispatcher = createCommandDispatcher(createCommandRegistry([throwing]));
+    const result = await dispatcher.dispatch({ name: 'throwing.command', args: {} }, {});
+
+    expect(result.status).toBe('failed');
+    expect(result.exitCode).toBe(1);
+    expect(result.payload).toMatchObject({
+      code: 'command_execution_failed',
+      name: 'throwing.command',
+      cause: 'injected host fault',
+    });
+  });
 });
 
 describe('dispatcher error contract — failed payloads teach the next step', () => {
   it('unknown command payload carries a hint naming tools/list and the registry resource', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([fakeCommand('scene.compile')]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([fakeCommand('scene.compile')]));
     const result = await dispatcher.dispatch({ name: 'zzz.unrelated', args: {} }, {});
     const payload = result.payload as { error: string; name: string; hint: string; didYouMean?: string };
     expect(payload.error).toBe('unknown_command');
@@ -61,7 +95,7 @@ describe('dispatcher error contract — failed payloads teach the next step', ()
   });
 
   it('a near-miss name gets a didYouMean suggestion; a far miss does not', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([fakeCommand('scene.compile')]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([fakeCommand('scene.compile')]));
     const near = await dispatcher.dispatch({ name: 'scene.compil', args: {} }, {});
     expect((near.payload as { didYouMean?: string }).didYouMean).toBe('scene.compile');
     const far = await dispatcher.dispatch({ name: 'zzz.unrelated', args: {} }, {});
@@ -77,7 +111,7 @@ describe('dispatcher error contract — failed payloads teach the next step', ()
         inputSchema: { type: 'object', properties: {}, required: [] },
       },
     };
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([cliOwned]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([cliOwned]));
     const result = await dispatcher.dispatch({ name: 'gauntlet', args: {} }, {});
     expect(result.status).toBe('failed');
     const payload = result.payload as { error: string; hint: string; executionKind?: string };
@@ -114,7 +148,7 @@ describe('ok()/failed() envelope constructors stamp the shared shape once', () =
 
 describe('CommandMap types the dispatch payload at compile time', () => {
   it("dispatch('glossary') yields a GlossaryPayload — read a payload field with no cast", async () => {
-    const dispatcher = CommandDispatcher.make(commandRegistry);
+    const dispatcher = createCommandDispatcher(commandRegistry);
     const result = await dispatcher.dispatch({ name: 'glossary', args: {} }, {});
     expect(result.status).toBe('ok');
     const payload = result.payload;
@@ -141,10 +175,10 @@ describe('RegisteredCommand carries a declared argsSchema slot', () => {
       argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => ok('schema.cmd', { scene: invocation.args.scene }),
     });
-    const registry = CommandRegistry.make([command]);
+    const registry = createCommandRegistry([command]);
     expect(registry.get('schema.cmd')?.argsSchema).toBeDefined();
     // A descriptor-only / legacy command has no schema slot.
-    const legacy = CommandRegistry.make([fakeCommand('legacy.cmd')]);
+    const legacy = createCommandRegistry([fakeCommand('legacy.cmd')]);
     expect(legacy.get('legacy.cmd')?.argsSchema).toBeUndefined();
   });
 });

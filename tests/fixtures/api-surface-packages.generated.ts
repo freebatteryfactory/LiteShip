@@ -23,4 +23,6 @@ export const GENERATED_API_SURFACE_PACKAGES = [
   "@liteship/command",
   "@liteship/cli",
   "@liteship/mcp-server",
+  "create-liteship",
+  "liteship",
 ] as const;

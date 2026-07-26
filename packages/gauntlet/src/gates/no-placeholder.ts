@@ -143,6 +143,7 @@ export const noPlaceholderGate: Gate = defineGate({
   level: 'L1',
   describe:
     'Flags placeholder directive comments (TODO / FIXME / XXX / HACK) across package source + the tests/ tree (incl. commented-out tests/bench/*.bench.ts TODO bodies) — unfinished work shipped as source.',
+  access: { allFiles: true },
   run: scan,
   evidenceDigest: noPlaceholderEvidenceDigest,
   fixtures: {

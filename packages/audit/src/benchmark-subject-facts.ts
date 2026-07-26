@@ -9,106 +9,22 @@
 
 import { posix } from 'node:path';
 import ts from 'typescript';
-import type { GateContext } from '@liteship/gauntlet';
+import {
+  parseQualifiedBenchDistribution,
+  type BenchSubject,
+  type GateContext,
+  type QualifiedBenchDistribution,
+} from '@liteship/gauntlet';
 
 type BenchmarkSubjectFacts = NonNullable<GateContext['benchmarkSubjects']>;
 type BenchmarkSubjectFact = BenchmarkSubjectFacts['distributions'][number];
 type BenchSubjectQualification = BenchmarkSubjectFact['qualification'];
-export type BenchSubject = BenchSubjectQualification['reachableSubjects'][number];
+export type { BenchExecution, BenchSubject, QualifiedBenchDistribution } from '@liteship/gauntlet';
 export type BenchSubjectIssue = BenchSubjectQualification['issues'][number];
-
-export type BenchExecution =
-  | { readonly kind: 'callback' }
-  | {
-      readonly kind: 'collector';
-      readonly file: string;
-      readonly export: string;
-      readonly resultKey: string;
-    };
-
-export interface QualifiedBenchDistribution {
-  readonly name: string;
-  readonly file: string;
-  readonly inputSize: number;
-  readonly shape: string;
-  readonly replicates: number;
-  readonly subjects: readonly BenchSubject[];
-  readonly execution?: BenchExecution;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function parseOrigin(value: unknown): BenchSubject['origin'] | null {
-  if (!isRecord(value) || typeof value.kind !== 'string') return null;
-  if (value.kind === 'module' && typeof value.specifier === 'string') {
-    return { kind: 'module', specifier: value.specifier };
-  }
-  if (value.kind === 'file' && typeof value.path === 'string') return { kind: 'file', path: value.path };
-  if (value.kind === 'intrinsic' && typeof value.name === 'string') return { kind: 'intrinsic', name: value.name };
-  if (value.kind === 'wasm' && typeof value.crate === 'string') return { kind: 'wasm', crate: value.crate };
-  return null;
-}
-
-function parseSubject(value: unknown): BenchSubject | null {
-  if (!isRecord(value)) return null;
-  const origin = parseOrigin(value.origin);
-  if (
-    origin === null ||
-    (value.role !== 'sut' && value.role !== 'baseline') ||
-    typeof value.symbol !== 'string' ||
-    typeof value.binding !== 'string' ||
-    value.symbol.length === 0 ||
-    value.binding.length === 0
-  ) {
-    return null;
-  }
-  return { role: value.role, origin, symbol: value.symbol, binding: value.binding };
-}
-
-function parseExecution(value: unknown): BenchExecution | null {
-  if (!isRecord(value) || typeof value.kind !== 'string') return null;
-  if (value.kind === 'callback') return { kind: 'callback' };
-  if (
-    value.kind === 'collector' &&
-    typeof value.file === 'string' &&
-    typeof value.export === 'string' &&
-    typeof value.resultKey === 'string'
-  ) {
-    return { kind: 'collector', file: value.file, export: value.export, resultKey: value.resultKey };
-  }
-  return null;
-}
 
 /** Strictly normalize one registry distribution before AST qualification. */
 export function parseBenchmarkSubjectDistribution(value: unknown): QualifiedBenchDistribution | null {
-  if (
-    !isRecord(value) ||
-    typeof value.name !== 'string' ||
-    typeof value.file !== 'string' ||
-    typeof value.inputSize !== 'number' ||
-    !Number.isFinite(value.inputSize) ||
-    typeof value.shape !== 'string' ||
-    typeof value.replicates !== 'number' ||
-    !Number.isFinite(value.replicates) ||
-    !Array.isArray(value.subjects)
-  ) {
-    return null;
-  }
-  const subjects = value.subjects.map(parseSubject);
-  if (subjects.some((subject) => subject === null)) return null;
-  const execution = value.execution === undefined ? undefined : parseExecution(value.execution);
-  if (value.execution !== undefined && execution === null) return null;
-  return {
-    name: value.name,
-    file: value.file,
-    inputSize: value.inputSize,
-    shape: value.shape,
-    replicates: value.replicates,
-    subjects: subjects as readonly BenchSubject[],
-    ...(execution === undefined || execution === null ? {} : { execution }),
-  };
+  return parseQualifiedBenchDistribution(value);
 }
 
 interface Registration {

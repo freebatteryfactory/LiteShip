@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { CommandDispatcher, commandRegistry } from '../index.js';
+import { createCommandDispatcher, commandRegistry } from '../index.js';
 import type { CommandContext } from '../registry.js';
 import { browserSafeCommandNames, createBrowserCommandContext } from './context.js';
 
@@ -38,7 +38,7 @@ export function registerWebMcpTools(opts: WebMcpProjectionOptions = {}): number 
   const host = readModelContext();
   if (!host) return 0;
 
-  const dispatcher = CommandDispatcher.make(commandRegistry);
+  const dispatcher = createCommandDispatcher(commandRegistry);
   const context =
     opts.context ??
     createBrowserCommandContext({

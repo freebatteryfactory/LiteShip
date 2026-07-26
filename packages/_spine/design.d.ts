@@ -169,20 +169,6 @@ export interface Component<B extends Boundary = Boundary, SlotNames extends read
   readonly defaultSlot?: SlotNames[number];
 }
 
-export declare namespace Component {
-  export function make<
-    B extends Boundary,
-    const SN extends readonly [string, ...string[]] = readonly ['children'],
-  >(config: {
-    readonly name: string;
-    readonly boundary?: B;
-    readonly styles: Style<B>;
-    /** Default: an implied single 'children' slot with defaultSlot 'children'. */
-    readonly slots?: { readonly [K in SN[number]]: SlotConfig };
-    readonly defaultSlot?: SN[number];
-  }): Component<B, SN>;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 7. UTILITY TYPES
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -11,9 +11,9 @@ import { describe, it, expect } from 'vitest';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
-  CommandDispatcher,
+  createCommandDispatcher,
   commandRegistry,
-  CommandRegistry,
+  createCommandRegistry,
   capsuleInspectCommand,
   capsuleListCommand,
   capsuleVerifyCommand,
@@ -25,7 +25,7 @@ import {
 import { renderWithFfmpeg } from '../../../packages/command/src/host/ffmpeg.js';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 
-const dispatcher = CommandDispatcher.make(commandRegistry);
+const dispatcher = createCommandDispatcher(commandRegistry);
 
 function errorOf(payload: unknown): string {
   return (payload as { error: string }).error;
@@ -155,7 +155,7 @@ describe('registry duplicate-name invariant points at the catalog lists', () => 
     const command = {
       descriptor: { name: 'dup', summary: 'dup', inputSchema: { type: 'object' as const, properties: {} } },
     };
-    expect(() => CommandRegistry.make([command, command])).toThrow(/HANDLER_COMMANDS \/ CLI_OWNED_DESCRIPTORS in catalog\.ts/);
+    expect(() => createCommandRegistry([command, command])).toThrow(/HANDLER_COMMANDS \/ CLI_OWNED_DESCRIPTORS in catalog\.ts/);
   });
 });
 

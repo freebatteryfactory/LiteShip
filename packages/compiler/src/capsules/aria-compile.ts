@@ -196,6 +196,3 @@ export const ariaCompileCapsule = defineCapsule({
     return { stateNames, currentState, authored, result };
   },
 });
-
-/** Internal helpers exported for direct unit assertions over the seed→inputs builder. */
-export const _ariaCompileInternals = { buildInputs, makeBoundary, compileQuietly } as const;

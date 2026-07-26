@@ -1,7 +1,5 @@
 /** Fixture: exports a sceneComposition capsule + contract + a compile function
- * that returns a plain descriptor value. scene-compile invokes the compile fn for
- * its side effect and produces the receipt from the contract. (Wave 8: replaces the
- * old effect-compile fixture — no Effect; the legacy Effect-return path is retired.) */
+ * that returns the structural CompiledScene fields consumed by the command host. */
 import { defineCapsule, schema } from '@liteship/core';
 import type { SceneContract } from '@liteship/scene';
 
@@ -27,6 +25,6 @@ export const contract: SceneContract = {
   site: ['node'],
 };
 
-export function compile(): number {
-  return 42;
+export function compile(): { duration: number; fps: number; trackSpawns: readonly unknown[] } {
+  return { duration: 100, fps: 60, trackSpawns: [] };
 }

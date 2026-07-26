@@ -7,33 +7,35 @@ import { start, type StartDeps } from '../../../packages/mcp-server/src/start.js
 // scripted stand-ins — the same parameter-injection seam `runStdio(input, output)`
 // uses for its streams.
 describe('MCP start dispatch', () => {
-  let runStdio: ReturnType<typeof vi.fn>;
-  let runHttp: ReturnType<typeof vi.fn>;
+  let startStdio: ReturnType<typeof vi.fn>;
+  let startHttp: ReturnType<typeof vi.fn>;
   let deps: StartDeps;
+  const stdioHandle = { transport: 'stdio' as const, done: Promise.resolve(), stop: vi.fn(async () => undefined) };
+  const httpHandle = { transport: 'http' as const, done: Promise.resolve(), stop: vi.fn(async () => undefined) };
 
   beforeEach(() => {
-    runStdio = vi.fn(async () => undefined);
-    runHttp = vi.fn(async (_bind: number | string) => undefined);
-    deps = { runStdio, runHttp };
+    startStdio = vi.fn(async () => stdioHandle);
+    startHttp = vi.fn(async (_bind: number | string) => httpHandle);
+    deps = { startStdio, startHttp };
   });
 
-  it('dispatches to runStdio when no http option is provided', async () => {
-    await start({}, deps);
-    expect(runStdio).toHaveBeenCalledTimes(1);
-    expect(runHttp).not.toHaveBeenCalled();
+  it('dispatches to stdio and returns its explicit lifecycle handle', async () => {
+    await expect(start({}, deps)).resolves.toBe(stdioHandle);
+    expect(startStdio).toHaveBeenCalledTimes(1);
+    expect(startHttp).not.toHaveBeenCalled();
   });
 
-  it('dispatches to runHttp with the bind string when http option is provided', async () => {
-    await start({ http: ':3838' }, deps);
-    expect(runHttp).toHaveBeenCalledTimes(1);
-    expect(runHttp).toHaveBeenCalledWith(':3838');
-    expect(runStdio).not.toHaveBeenCalled();
+  it('dispatches to HTTP with the bind string and returns its explicit lifecycle handle', async () => {
+    await expect(start({ http: ':3838' }, deps)).resolves.toBe(httpHandle);
+    expect(startHttp).toHaveBeenCalledTimes(1);
+    expect(startHttp).toHaveBeenCalledWith(':3838');
+    expect(startStdio).not.toHaveBeenCalled();
   });
 
   it('accepts a plain port number for http and forwards it to runHttp', async () => {
     await start({ http: 3838 }, deps);
-    expect(runHttp).toHaveBeenCalledTimes(1);
-    expect(runHttp).toHaveBeenCalledWith(3838);
-    expect(runStdio).not.toHaveBeenCalled();
+    expect(startHttp).toHaveBeenCalledTimes(1);
+    expect(startHttp).toHaveBeenCalledWith(3838);
+    expect(startStdio).not.toHaveBeenCalled();
   });
 });

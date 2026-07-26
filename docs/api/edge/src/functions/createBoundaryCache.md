@@ -8,7 +8,7 @@
 
 > **createBoundaryCache**(`kv`, `options?`): [`BoundaryCache`](../interfaces/BoundaryCache.md)
 
-Defined in: [edge/src/kv-cache.ts:616](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L616)
+Defined in: [edge/src/kv-cache.ts:617](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L617)
 
 Create a [BoundaryCache](../interfaces/BoundaryCache.md) backed by the provided KV namespace.
 
@@ -25,7 +25,7 @@ A generic KV namespace implementing get/put
 
 ### options?
 
-`CacheOptions`
+[`CacheOptions`](../interfaces/CacheOptions.md)
 
 Optional TTL (seconds) and key prefix configuration
 

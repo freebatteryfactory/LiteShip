@@ -25,7 +25,7 @@ import type {
   CheckContext,
   CheckPlatform,
   CheckProfile,
-  CliCheckExecution,
+  CheckExecution,
 } from './definition.js';
 import { CHECK_REGISTRY } from './registry.js';
 import type { CurePacket } from './cure-packet.js';
@@ -43,7 +43,7 @@ export interface PlannedCheck {
   /** The full shell line the host spawns. */
   readonly command: string;
   /** Structured CLI execution, when this check is owned by the current LiteShip application. */
-  readonly execution?: CliCheckExecution;
+  readonly execution: CheckExecution;
   /** The package or script path that owns the assertion. */
   readonly owner: string;
   /** Precise first remediation step projected into failure evidence. */
@@ -164,7 +164,7 @@ export function planChecks(
         claim: check.claim,
         context,
         command: check.command,
-        ...(check.execution !== undefined ? { execution: check.execution } : {}),
+        execution: check.execution,
         owner: check.owner,
         remediation: check.remediation,
         authority: check.authority,

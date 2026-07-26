@@ -6,7 +6,43 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@liteship/gauntlet';
+import { readFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { atLeast, levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@liteship/gauntlet';
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+/** Independent syntax classifier for the two operations that mint portable trust witnesses. */
+export function trustBearingOperations(sourceText: string): readonly string[] {
+  const source = ts.createSourceFile('candidate.ts', sourceText, ts.ScriptTarget.Latest, true);
+  const operations = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.name.text === 'of' &&
+      node.expression.expression.text === 'AddressedDigest'
+    ) {
+      operations.add('AddressedDigest.of');
+    }
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === 'CanonicalCbor' &&
+      node.expression.name.text === 'encode'
+    ) {
+      operations.add('CanonicalCbor.encode');
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return [...operations].sort();
+}
 
 describe('matchesGlob — the small dialect (** / * / {a,b})', () => {
   it('* matches within a single segment only (not across a slash)', () => {
@@ -81,6 +117,8 @@ describe('levelOf — first matching rule wins, default L1', () => {
     ['packages/worker/src/compositor-startup.ts', 'L3'],
     ['packages/astro/src/runtime/boundary.ts', 'L3'],
     ['packages/stage/src/dual-export.ts', 'L3'], // artifact-producing core
+    ['packages/stage/src/motion-export.ts', 'L3'], // content-addressed motion oracle
+    ['packages/remotion/src/motion.ts', 'L3'], // cross-target frame oracle
     // L2 — public API + serialized contracts + typed external boundaries
     ['packages/scene/src/index.ts', 'L2'],
     ['packages/edge/src/contract.ts', 'L2'],
@@ -125,5 +163,34 @@ describe('levelOf — first matching rule wins, default L1', () => {
     expect(LITESHIP_ASSURANCE_MAP.length).toBeGreaterThan(0);
     // The very first rule is the most specific spine (canonical), not the default.
     expect(LITESHIP_ASSURANCE_MAP[0]?.level).toBe('L4');
+  });
+
+  it('classifies trust calls structurally rather than matching comments or strings', () => {
+    expect(
+      trustBearingOperations(
+        "// AddressedDigest.of(bytes)\nconst decoy = 'CanonicalCbor.encode(value)';\nconst live = AddressedDigest.of(CanonicalCbor.encode(value));",
+      ),
+    ).toEqual(['AddressedDigest.of', 'CanonicalCbor.encode']);
+    expect(trustBearingOperations("const decoy = 'AddressedDigest.of(bytes)';")).toEqual([]);
+  });
+
+  it('every non-canonical source that mints a portable trust witness is L3 or higher', () => {
+    const packageRoot = resolve(REPO_ROOT, 'packages');
+    const underclassified = walkFiles(packageRoot, {
+      skipDirs: ['dist', 'node_modules'],
+      suffixes: ['.ts'],
+    })
+      .map((path) => relative(REPO_ROOT, path).replace(/\\/g, '/'))
+      .filter((path) => !path.startsWith('packages/canonical/'))
+      .filter((path) => trustBearingOperations(readFileSync(resolve(REPO_ROOT, path), 'utf8')).length > 0)
+      .filter((path) => !atLeast(levelOf(path), 'L3'));
+
+    expect(underclassified).toEqual([]);
+  });
+
+  it('the classifier mutation catches a trust-bearing owner left at the default level', () => {
+    const source = 'export const mint = (bytes: Uint8Array) => AddressedDigest.of(bytes);';
+    expect(trustBearingOperations(source)).toContain('AddressedDigest.of');
+    expect(atLeast(levelOf('packages/example/src/mint.ts'), 'L3')).toBe(false);
   });
 });

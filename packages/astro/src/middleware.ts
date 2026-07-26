@@ -16,8 +16,9 @@ import type {
   ThemeCompileResult,
 } from '@liteship/edge';
 import { projectResponsiveMediaPicture } from '@liteship/core';
-import type { CapTier, ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
-import type { DesignTier, ExtendedDeviceCapabilities, MotionTier } from '@liteship/detect';
+import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
+import { projectCapabilityAxisValues } from '@liteship/detect';
+import type { CapabilityAxisValues, ExtendedDeviceCapabilities } from '@liteship/detect';
 import { applyLiteshipHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import { applyResponsiveMediaVary } from './responsive-media.js';
@@ -39,11 +40,7 @@ export interface LiteshipLocals {
    * attribute name are the same CapAxis key (one source: `CAP_AXES` from
    * `@liteship/detect`), so they can never disagree.
    */
-  readonly tiers: Readonly<{
-    readonly tier: CapTier;
-    readonly motion: MotionTier;
-    readonly design: DesignTier;
-  }>;
+  readonly tiers: CapabilityAxisValues;
   /** Parsed device capabilities. */
   readonly capabilities: ExtendedDeviceCapabilities;
   /**
@@ -152,11 +149,7 @@ export function liteshipMiddleware(
 
     // Inject into locals for component access
     context.locals.liteship = {
-      tiers: {
-        tier: tier.capTier,
-        motion: tier.motionTier,
-        design: tier.designTier,
-      },
+      tiers: projectCapabilityAxisValues(tier),
       capabilities,
       responsiveMedia: (intent: ResponsiveMediaIntent): ResponsiveMediaPictureProjection =>
         projectResponsiveMediaPicture(intent, responsiveMediaCaps),

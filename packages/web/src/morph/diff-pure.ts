@@ -35,35 +35,11 @@ export const parseHTML = (html: string): DocumentFragment => {
  * Diff two nodes and determine if they should be considered "same".
  */
 export const isSameNode = (oldNode: Element, newNode: Element, hints?: MorphHints): boolean => {
-  if (SemanticIdModule.matches(oldNode, newNode)) {
-    return true;
-  }
-
-  const oldId = SemanticIdModule.get(oldNode);
-  const newId = SemanticIdModule.get(newNode);
-  if (hints?.semanticIds && oldId && newId) {
-    if (hints.semanticIds.includes(oldId) && hints.semanticIds.includes(newId)) {
-      return true;
-    }
-  }
-
-  if (oldNode.tagName === newNode.tagName) {
-    const oldId = oldNode.getAttribute('id');
-    const newId = newNode.getAttribute('id');
-    if (oldId && oldId === newId) {
-      return true;
-    }
-  }
-
-  if (oldNode.tagName !== newNode.tagName) {
-    return false;
-  }
-
-  if (oldNode instanceof HTMLInputElement && newNode instanceof HTMLInputElement) {
-    return oldNode.type === newNode.type && oldNode.name === newNode.name;
-  }
-
-  return true;
+  // `semanticIds` is an authored hint list, not permission to equate two
+  // different identities. Explicit remapping happens before matching through
+  // `idMap`; every actual reuse decision delegates to the one SemanticId law.
+  void hints;
+  return SemanticIdModule.matchNodes(oldNode, newNode).matches;
 };
 
 /**
@@ -149,48 +125,21 @@ function insertBeforeOrAppend(parent: Element, node: Node, referenceNode?: Node)
   parent.appendChild(node);
 }
 
-function moveChildIntoPosition(parent: Element, oldChildren: readonly ChildNode[], oldIdx: number, node: Node): void {
-  if (oldIdx >= oldChildren.length || oldChildren[oldIdx] === node) {
+function moveChildIntoPosition(parent: Element, oldIdx: number, node: Node): void {
+  const referenceNode = parent.childNodes[oldIdx];
+  if (referenceNode === node) {
     return;
   }
 
-  insertBeforeOrAppend(parent, node, oldChildren[oldIdx]);
+  insertBeforeOrAppend(parent, node, referenceNode);
 }
 
 /**
  * Find the best matching node in a list.
  */
 export const findBestMatch = (node: Element, candidates: Element[], hints?: MorphHints): Element | null => {
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  const nodeSemanticId = SemanticIdModule.get(node);
-
-  if (nodeSemanticId) {
-    for (const candidate of candidates) {
-      if (SemanticIdModule.get(candidate) === nodeSemanticId) {
-        return candidate;
-      }
-    }
-  }
-
-  const nodeId = node.getAttribute('id');
-  if (nodeId) {
-    for (const candidate of candidates) {
-      if (candidate.getAttribute('id') === nodeId) {
-        return candidate;
-      }
-    }
-  }
-
-  for (const candidate of candidates) {
-    if (isSameNode(node, candidate, hints)) {
-      return candidate;
-    }
-  }
-
-  return null;
+  void hints;
+  return SemanticIdModule.findBestMatch(node, candidates)?.element ?? null;
 };
 
 /**
@@ -224,22 +173,20 @@ export const syncChildren = (
     if (newChild instanceof Text) {
       const newText = newChild.data;
 
-      if (oldIdx < oldChildren.length) {
-        const oldChild = oldChildren[oldIdx]!;
-
-        if (oldChild.nodeType === Node.TEXT_NODE) {
-          if (oldChild.textContent !== newText) {
-            oldChild.textContent = newText;
-          }
-          matched.add(oldChild);
-          oldIdx++;
-          continue;
+      const currentChild = oldParent.childNodes[oldIdx];
+      if (currentChild?.nodeType === Node.TEXT_NODE) {
+        if (currentChild.textContent !== newText) {
+          currentChild.textContent = newText;
         }
+        matched.add(currentChild);
+        oldIdx++;
+        continue;
       }
 
       const textNode = document.createTextNode(newText);
-      insertBeforeOrAppend(oldParent, textNode, oldChildren[oldIdx]);
+      insertBeforeOrAppend(oldParent, textNode, currentChild);
       callbacks?.afterAdd?.(textNode);
+      oldIdx++;
       continue;
     }
 
@@ -253,7 +200,7 @@ export const syncChildren = (
         morphElement(oldElement, newElement, hints, callbacks);
         matched.add(oldElement);
 
-        moveChildIntoPosition(oldParent, oldChildren, oldIdx, oldElement);
+        moveChildIntoPosition(oldParent, oldIdx, oldElement);
         oldIdx++;
         continue;
       }
@@ -265,7 +212,7 @@ export const syncChildren = (
         morphElement(bestMatch, newElement, hints, callbacks);
         matched.add(bestMatch);
 
-        moveChildIntoPosition(oldParent, oldChildren, oldIdx, bestMatch);
+        moveChildIntoPosition(oldParent, oldIdx, bestMatch);
         oldIdx++;
         continue;
       }
@@ -275,8 +222,9 @@ export const syncChildren = (
          Element.cloneNode(true) always returns an Element of the same kind; the
          instanceof guard narrows the DOM `Node` return type for TypeScript. */
       if (clonedElement instanceof Element) {
-        insertBeforeOrAppend(oldParent, clonedElement, oldChildren[oldIdx]);
+        insertBeforeOrAppend(oldParent, clonedElement, oldParent.childNodes[oldIdx]);
         callbacks?.afterAdd?.(clonedElement);
+        oldIdx++;
       }
       continue;
     }
@@ -344,7 +292,10 @@ export const morphPure = (
     }
   } else {
     const tempParent = document.createElement(oldNode.tagName);
-    tempParent.append(parseHTML(newHTML));
+    // Consume the one parsed, sanitized, and id-remapped fragment. Re-parsing
+    // `newHTML` here discarded `idMap` on the default path and doubled sanitizer
+    // work on every streaming morph.
+    tempParent.append(fragment);
     syncChildren(oldNode, tempParent, hints, finalConfig.callbacks);
   }
 };

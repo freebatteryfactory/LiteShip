@@ -8,7 +8,7 @@
 
 > **sortFindings**\<`T`\>(`findings`): `T`[]
 
-Defined in: [audit/src/shared.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L208)
+Defined in: [audit/src/shared.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L243)
 
 ## Type Parameters
 

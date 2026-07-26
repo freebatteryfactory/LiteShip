@@ -58,6 +58,7 @@ export const noBareThrowGate: Gate = defineGate({
   id: 'gauntlet/no-bare-throw',
   level: 'L1',
   describe: 'Flags bare `throw new Error(...)` — every failure path must be a tagged @liteship/error variant.',
+  access: {},
   run: scan,
   fixtures: {
     red: {

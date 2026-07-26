@@ -10,8 +10,8 @@ Defined in: [detect/src/detect.ts:107](https://github.com/freebatteryfactory/Lit
 
 Result of a single detection sweep.
 
-Bundles the probed capabilities together with the derived [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
-tier, its monotone [CapSet](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), and a confidence score reflecting how
+Bundles the probed capabilities together with the derived [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md)
+tier, its monotone [CapSet](../../../liteship/src/evidence/interfaces/CapSet.md), and a confidence score reflecting how
 many probes returned real values (vs. defaults).
 
 ## Extended by
@@ -32,21 +32,21 @@ The probed capabilities.
 
 ### capSet
 
-> `readonly` **capSet**: [`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
+> `readonly` **capSet**: [`CapSet`](../../../liteship/src/evidence/interfaces/CapSet.md)
 
 Defined in: [detect/src/detect.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
 
-Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
+Monotone set of every [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) at or below `capTier`.
 
 ***
 
 ### capTier
 
-> `readonly` **capTier**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> `readonly` **capTier**: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md)
 
 Defined in: [detect/src/detect.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
 
-Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
+Highest [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) the device qualifies for.
 
 ***
 

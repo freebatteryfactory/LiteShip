@@ -28,8 +28,8 @@ export type { TrackRef } from './track.js';
 export { compileScene } from './compile.js';
 export type { CompiledScene, TrackSpawn } from './compile.js';
 
-export { BeatBinding, beatBindingCapsule, bindBeats } from './capsules/beat-binding.js';
-export type { BeatComponent, BeatSpawn } from './capsules/beat-binding.js';
+export { BeatBinding, beatBindingCapsule, bindBeats } from './beat-binding-capsule.js';
+export type { BeatComponent, BeatSpawn } from './beat-binding-capsule.js';
 
 // The official bridge from a raw asset-space BeatMarkerSet (sample indices)
 // to scene-space BeatComponent[] (milliseconds) — feed its output into

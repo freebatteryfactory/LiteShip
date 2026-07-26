@@ -631,6 +631,10 @@ export const performanceContractsGate: Gate = defineGate({
   level: 'L3',
   describe:
     'Performance contracts — a bench result is invalid unless its input distribution is declared; a hot path must not regress its complexity class.',
+  access: {
+    outOfIrGlobs: ['benchmarks/**', 'tests/bench/**', 'scripts/bench/**'],
+    facts: [{ channel: 'benchmarkSubjects', presence: 'required' }],
+  },
   run: scan,
   evidenceDigest: performanceContractsEvidenceDigest,
   fixtures: {

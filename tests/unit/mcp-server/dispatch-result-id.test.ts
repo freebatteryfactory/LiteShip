@@ -1,8 +1,9 @@
 /**
  * CUT B5a — resultId field-sensitivity (the JSON-protocol identity carve-out).
  *
- * `resultId` is minted by the private `computeResultId`/`canonicalJson` in
- * dispatch.ts over the STABLE field set {command, status, payload, verdict?,
+ * `resultId` is minted by private `computeResultId` through the repository's
+ * `@liteship/canonical` JSON projection over the STABLE field set
+ * {command, status, payload, verdict?,
  * exitCode?}. B5a deliberately keeps this on the JSON path (MCP wire is JSON;
  * D1/B2 law) rather than migrating it to CanonicalCbor like the internal
  * content addresses. These tests prove the identity actually DEPENDS on its
@@ -14,7 +15,7 @@
  *   - command (different tool)
  * Idempotency (identical calls → same id) is D1's lock and timestamp-blindness
  * is B2's; both are cited here, not duplicated. verdict/exitCode ride the same
- * canonicalJson field set and are exercised where verify commands run.
+ * canonical field set and are exercised where verify commands run.
  *
  * @module
  */

@@ -85,6 +85,7 @@ export const noNondeterminismGate: Gate = defineGate({
   id: 'gauntlet/no-nondeterminism',
   level: 'L3',
   describe: 'Flags `Date.now(` / `Math.random(` / argless `new Date()` — the L3 determinism contract.',
+  access: {},
   run: scan,
   fixtures: {
     red: {

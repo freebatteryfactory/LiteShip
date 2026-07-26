@@ -11,7 +11,7 @@
 Defined in: [core/src/authoring/capsules/escalation-choose-tier.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/escalation-choose-tier.ts#L199)
 
 Declared policyGate capsule for the escalation chooser. Registered in the
-module-level catalog at import time; walked by the factory compiler. The
+immutable exported declaration; walked by the factory compiler. The
 generated traversal samples subjects from [EscalationSubject](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/escalation-choose-tier.ts), drives the
 REAL `decide` (which seals a real policy and calls `chooseTier`), and the
 invariants assert the minimal-downgrade / site-gate / verdict-shape laws over

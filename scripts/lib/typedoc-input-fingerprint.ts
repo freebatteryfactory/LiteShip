@@ -17,6 +17,10 @@ interface TypeDocConfigShape {
   readonly readme?: string;
 }
 
+interface TypeScriptConfigShape {
+  readonly extends?: string;
+}
+
 export interface FingerprintInput {
   readonly path: string;
   readonly content: string;
@@ -123,6 +127,29 @@ function walkTypeScriptFiles(directory: string): readonly string[] {
   return files;
 }
 
+/** Resolve the local TypeScript config chain TypeDoc consumes for its program. */
+function collectTypeScriptConfigPaths(repoRoot: string): readonly string[] {
+  const paths: string[] = [];
+  const visited = new Set<string>();
+  let current: string | null = resolve(repoRoot, 'tsconfig.json');
+  while (current !== null && existsSync(current) && !visited.has(current)) {
+    visited.add(current);
+    paths.push(current);
+    const parsed = ts.readConfigFile(current, ts.sys.readFile);
+    if (parsed.error !== undefined) {
+      throw new Error(`typedoc-input-fingerprint: cannot read ${normalizePath(relative(repoRoot, current))}`);
+    }
+    const inherited = (parsed.config as TypeScriptConfigShape).extends;
+    if (inherited === undefined || !inherited.startsWith('.')) {
+      current = null;
+    } else {
+      const unresolved = resolve(dirname(current), inherited);
+      current = unresolved.endsWith('.json') ? unresolved : `${unresolved}.json`;
+    }
+  }
+  return paths;
+}
+
 /** Build the live fingerprint from typedoc.json's authored entry-point roots. */
 export function buildTypeDocInputFingerprint(repoRoot: string): TypeDocInputFingerprint {
   const configPath = resolve(repoRoot, 'typedoc.json');
@@ -132,7 +159,13 @@ export function buildTypeDocInputFingerprint(repoRoot: string): TypeDocInputFing
   }
   const roots = [...new Set(config.entryPoints.map((entry) => dirname(resolve(repoRoot, entry))))];
   const sourcePaths = [...new Set(roots.flatMap(walkTypeScriptFiles))];
-  const authoredPaths = [configPath, ...(config.readme === undefined ? [] : [resolve(repoRoot, config.readme)])];
+  const tsdocPath = resolve(repoRoot, 'tsdoc.json');
+  const authoredPaths = [
+    configPath,
+    ...collectTypeScriptConfigPaths(repoRoot),
+    ...(existsSync(tsdocPath) ? [tsdocPath] : []),
+    ...(config.readme === undefined ? [] : [resolve(repoRoot, config.readme)]),
+  ];
   const paths = [...sourcePaths, ...authoredPaths].filter(existsSync);
   return fingerprintTypeDocInputs(
     paths.map((path) => ({ path: normalizePath(relative(repoRoot, path)), content: readFileSync(path, 'utf8') })),

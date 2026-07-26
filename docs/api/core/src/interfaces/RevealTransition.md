@@ -35,5 +35,5 @@ Defined in: [core/src/motion/reveal.ts:46](https://github.com/freebatteryfactory
 Defined in: [core/src/motion/reveal.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L52)
 
 Spring physics for `easing: 'spring'` (ignored otherwise). Carried through to
-the lowered [TransitionNode](TransitionNode.md) so BOTH the CSS `linear()` and the JS floor
+the lowered `TransitionNode` so BOTH the CSS `linear()` and the JS floor
 sample this ONE config; omitted ⇒ the shared `DEFAULT_MOTION_SPRING`.

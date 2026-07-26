@@ -13,11 +13,11 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:229](https://github.com/fr
 Replay missed discrete crossings from a transition/receipt chain.
 
 The selected branch's receipts are run through the structural floor
-([Receipt.validateChainDetailed](../variables/Receipt.md#validatechaindetailed): hash self-consistency, chain
+(`Receipt.validateChainDetailed`: hash self-consistency, chain
 continuity, HLC ordering) BEFORE anything applies — a reordered / truncated /
 forked / HLC-regressed chain applies nothing (Law 15). Surviving transitions
 are grouped per cell and the HIGHEST-generation one is applied via
-[applyTransition](applyTransition.md); the store's generation guard is the belt-and-suspenders.
+`applyTransition`; the store's generation guard is the belt-and-suspenders.
 
 ## Parameters
 

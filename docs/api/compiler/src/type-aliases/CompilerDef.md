@@ -6,7 +6,7 @@
 
 # Type Alias: CompilerDef
 
-> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: `Config`; \} \| \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \}
+> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: [`Config`](../../../liteship/src/type-aliases/Config.md); \} \| \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \}
 
 Defined in: [compiler/src/dispatch.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L91)
 
@@ -30,7 +30,7 @@ Arms:
 
 ### Type Literal
 
-\{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \}
+\{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \}
 
 #### \_tag
 
@@ -38,7 +38,7 @@ Arms:
 
 #### boundary
 
-> `readonly` **boundary**: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+> `readonly` **boundary**: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 #### selector?
 
@@ -54,19 +54,19 @@ CSS selector for bare properties; defaults to `.liteship-boundary`.
 
 ### Type Literal
 
-\{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \}
+\{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \}
 
 ***
 
 ### Type Literal
 
-\{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \}
+\{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \}
 
 ***
 
 ### Type Literal
 
-\{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \}
+\{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \}
 
 ***
 
@@ -78,7 +78,7 @@ CSS selector for bare properties; defaults to `.liteship-boundary`.
 
 ### Type Literal
 
-\{ `_tag`: `"ConfigCompiler"`; `config`: `Config`; \}
+\{ `_tag`: `"ConfigCompiler"`; `config`: [`Config`](../../../liteship/src/type-aliases/Config.md); \}
 
 ***
 

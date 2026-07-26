@@ -6,7 +6,7 @@
  * the edge emit uses it — closing the data-liteship-cap-vs-data-liteship-tier drift.
  */
 import { describe, test, expect } from 'vitest';
-import { CAP_AXES, capAxisAttr } from '@liteship/detect';
+import { CAP_AXES, capAxisAttr, projectCapabilityAxisValues } from '@liteship/detect';
 import { EdgeTier } from '@liteship/edge';
 
 describe('CAP_AXES — one source for the data-liteship-* capability vocabulary', () => {
@@ -18,6 +18,17 @@ describe('CAP_AXES — one source for the data-liteship-* capability vocabulary'
 
   test('CAP_AXES is the canonical capability triple', () => {
     expect([...CAP_AXES]).toEqual(['tier', 'motion', 'design']);
+  });
+
+  test('projects exactly the canonical locals keys and freezes the result', () => {
+    const values = projectCapabilityAxisValues({
+      capTier: 'reactive',
+      motionTier: 'animations',
+      designTier: 'enhanced',
+    });
+    expect(Object.keys(values)).toEqual(CAP_AXES);
+    expect(values).toEqual({ tier: 'reactive', motion: 'animations', design: 'enhanced' });
+    expect(Object.isFrozen(values)).toBe(true);
   });
 
   test('edge tierDataAttributes emits exactly the registry attributes (capTier→tier)', () => {

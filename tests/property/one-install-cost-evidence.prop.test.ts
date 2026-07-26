@@ -75,7 +75,7 @@ describe('one-install cost evidence properties', () => {
       fc.property(
         fc.shuffledSubarray(NAMES, { minLength: NAMES.length, maxLength: NAMES.length }),
         fc.shuffledSubarray(tarballs(), { minLength: NAMES.length, maxLength: NAMES.length }),
-        fc.shuffledSubarray(INSTALLED.externalDependencies, {
+        fc.shuffledSubarray([...INSTALLED.externalDependencies], {
           minLength: INSTALLED.externalDependencies.length,
           maxLength: INSTALLED.externalDependencies.length,
         }),

@@ -20,6 +20,16 @@ describe('@liteship/command scene.verify', () => {
     expect(r.exitCode).toBe(1);
   });
 
+  it('contains a throwing scene-module provider as a structured verify failure', async () => {
+    const r = await sceneVerifyCommand.handler(
+      { name: 'scene.verify', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule: async () => { throw new Error('import exploded'); } },
+    );
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(1);
+    expect((r.payload as { error: string }).error).toContain('import exploded');
+  });
+
   it('capsule not in manifest → failed exit 1', async () => {
     const r = await sceneVerifyCommand.handler(
       { name: 'scene.verify', args: { scene: 's.ts' } },

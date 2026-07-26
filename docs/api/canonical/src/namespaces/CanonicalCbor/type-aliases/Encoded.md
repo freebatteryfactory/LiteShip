@@ -8,6 +8,6 @@
 
 > **Encoded** = `Uint8Array`
 
-Defined in: [canonical/src/cbor.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor.ts#L190)
+Defined in: [canonical/src/cbor.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor.ts#L208)
 
 Output type — raw CBOR bytes per RFC 8949 §4.2.1.

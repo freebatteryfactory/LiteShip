@@ -1,0 +1,11 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/export-budget](../README.md) / ROOT\_VALUE\_BUDGET\_MAX
+
+# Variable: ROOT\_VALUE\_BUDGET\_MAX
+
+> `const` **ROOT\_VALUE\_BUDGET\_MAX**: `30` = `30`
+
+Defined in: [liteship/src/export-budget.ts:517](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L517)

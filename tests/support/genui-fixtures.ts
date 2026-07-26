@@ -10,7 +10,7 @@ export const GENUI_TEST_CATALOG = defineComponentCatalog({
       tag: 'main',
       props: { title: { type: 'string', required: true } },
       children: 'optional',
-      allowedChildNames: ['Text', 'Button', 'Root'],
+      allowedChildNames: ['Text', 'Button', 'Root', 'Link'],
     },
     Text: { tag: 'p', props: { text: { type: 'string', required: true } }, children: 'none' },
     Button: {
@@ -18,6 +18,7 @@ export const GENUI_TEST_CATALOG = defineComponentCatalog({
       props: { label: { type: 'string', required: true }, onClick: { type: 'string' } },
       children: 'none',
     },
+    Link: { tag: 'a', props: { href: { type: 'string', required: true } }, children: 'none' },
   },
 });
 
@@ -52,7 +53,9 @@ export type InvalidTreeFault =
   | 'unknown-prop'
   | 'children-on-leaf'
   | 'disallowed-child'
-  | 'invalid-slots';
+  | 'disallowed-slot-child'
+  | 'invalid-slots'
+  | 'unsafe-href';
 
 export const INVALID_TREE_FAULTS: readonly InvalidTreeFault[] = [
   'unknown-component',
@@ -61,7 +64,9 @@ export const INVALID_TREE_FAULTS: readonly InvalidTreeFault[] = [
   'unknown-prop',
   'children-on-leaf',
   'disallowed-child',
+  'disallowed-slot-child',
   'invalid-slots',
+  'unsafe-href',
 ];
 
 /** Inject exactly one validator fault while leaving the source tree untouched. */
@@ -79,8 +84,12 @@ export function injectGeneratedUITreeFault(tree: GeneratedUINode, fault: Invalid
       return { name: 'Text', props: { text: 'leaf' }, children: [{ name: 'Text', props: { text: 'nested' } }] };
     case 'disallowed-child':
       return { ...tree, children: [{ name: 'ModelOwnedScript', props: {} }] };
+    case 'disallowed-slot-child':
+      return { ...tree, slots: { model: { name: 'ModelOwnedScript', props: {} } } };
     case 'invalid-slots':
       return { ...tree, slots: [] as unknown as GeneratedUINode['slots'] };
+    case 'unsafe-href':
+      return { name: 'Link', props: { href: 'javascript:alert(1)' } };
   }
 }
 

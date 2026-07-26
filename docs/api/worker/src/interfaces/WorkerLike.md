@@ -6,7 +6,7 @@
 
 # Interface: WorkerLike
 
-Defined in: [worker/src/messages.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L391)
+Defined in: [worker/src/messages.ts:427](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L427)
 
 The DOM Worker surface liteship's hosts actually drive (postMessage with
 transfer, terminate, message listening). Named so the dependency is
@@ -20,7 +20,7 @@ the build.
 
 > **addEventListener**(`type`, `listener`): `void`
 
-Defined in: [worker/src/messages.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L394)
+Defined in: [worker/src/messages.ts:430](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L430)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [worker/src/messages.ts:394](https://github.com/freebatteryfactory/L
 
 > **postMessage**(`message`, `transfer?`): `void`
 
-Defined in: [worker/src/messages.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L392)
+Defined in: [worker/src/messages.ts:428](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L428)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Defined in: [worker/src/messages.ts:392](https://github.com/freebatteryfactory/L
 
 > **removeEventListener**(`type`, `listener`): `void`
 
-Defined in: [worker/src/messages.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L395)
+Defined in: [worker/src/messages.ts:431](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L431)
 
 #### Parameters
 
@@ -86,7 +86,7 @@ Defined in: [worker/src/messages.ts:395](https://github.com/freebatteryfactory/L
 
 > **terminate**(): `void`
 
-Defined in: [worker/src/messages.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L393)
+Defined in: [worker/src/messages.ts:429](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L429)
 
 #### Returns
 

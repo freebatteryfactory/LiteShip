@@ -6,27 +6,23 @@
 
 # Function: exportVideo()
 
-> **exportVideo**(`graph`, `encode?`): [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+> **exportVideo**(`graph`): [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L410)
+Defined in: [stage/src/dual-export.ts:400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L400)
 
 Cast the graph's Pose/Projection-derived state to a deterministic video,
 content-addressing the produced per-frame `CompositeState` snapshots (NOT the
 encoded bytes). For the REAL byte-encode use [exportVideoEncoded](exportVideoEncoded.md) with
-an injected [FrameEncoder](../type-aliases/FrameEncoder.md) (headless: the ffmpeg adapter in
-`./ffmpeg-encoder`; browser: WebCodecs `captureVideo`). This frame-level cast
+an injected [FrameEncoder](../type-aliases/FrameEncoder.md) (the shipped implementation is the ffmpeg
+adapter in `./ffmpeg-encoder`). This frame-level cast
 stays sync + codec-free so the dual-export proof never depends on a codec.
 
 ## Parameters
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
-
-### encode?
-
-(`renderer`, `capture`, `renderFn?`) => `Promise`\<`CaptureResult`\>
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 ## Returns
 
-[`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)

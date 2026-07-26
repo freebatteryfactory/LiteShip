@@ -12,6 +12,7 @@ import {
   designTierFromCapabilities,
   CAP_AXES,
   capAxisAttr,
+  projectCapabilityAxisValues,
 } from '@liteship/detect';
 import type { DesignTier, ExtendedDeviceCapabilities, MotionTier, CapAxis } from '@liteship/detect';
 import { ClientHints } from './client-hints.js';
@@ -80,11 +81,7 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
 function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-liteship-${CapAxis}`, string>> {
   // The canonical axis registry is the single source: attribute names can never
   // drift from the `Astro.locals.liteship.tiers` field names / runtime readers.
-  const value: Record<CapAxis, string> = {
-    tier: result.capTier,
-    motion: result.motionTier,
-    design: result.designTier,
-  };
+  const value = projectCapabilityAxisValues(result);
   return Object.fromEntries(CAP_AXES.map((axis) => [capAxisAttr(axis), value[axis]])) as Readonly<
     Record<`data-liteship-${CapAxis}`, string>
   >;

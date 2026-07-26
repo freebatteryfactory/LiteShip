@@ -1,12 +1,16 @@
 import { describe, it } from 'vitest';
-import { proveRegisteredCheckRejects } from '../../support/registered-check-negative-control.js';
+import {
+  proveRegisteredCheckFalsifies,
+  tailwindFaultFixture,
+} from '../../support/registered-check-negative-control.js';
 
 describe('check/test-tailwind negative control', () => {
-  it('the registered Tailwind integration authority blocks on a non-zero result', () => {
-    proveRegisteredCheckRejects(
-      'check/test-tailwind',
-      'pnpm run test:tailwind',
-      'tests/unit/devops/test-tailwind-negative-control.test.ts',
-    );
+  it('the registered Tailwind route executes the compiler and rejects malformed theme CSS', () => {
+    proveRegisteredCheckFalsifies({
+      id: 'check/test-tailwind',
+      command: 'pnpm run test:tailwind',
+      control: 'tests/unit/devops/test-tailwind-negative-control.test.ts',
+      ...tailwindFaultFixture(),
+    });
   });
 });

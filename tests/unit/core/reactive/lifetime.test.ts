@@ -17,7 +17,7 @@
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { hasTag } from '@liteship/error';
-import { Lifetime, LifetimeDisposeError } from '../../../../packages/core/src/reactive/lifetime.js';
+import { createLifetime, Lifetime, LifetimeDisposeError } from '../../../../packages/core/src/reactive/lifetime.js';
 
 /** Deterministic external-settle handle — no timers in test logic. */
 interface Deferred<T> {
@@ -46,6 +46,16 @@ describe('Lifetime.make', () => {
 
   test('is not disposed before dispose()', () => {
     expect(Lifetime.make().disposed).toBe(false);
+  });
+});
+
+describe('createLifetime', () => {
+  test('is the public create-verb for one fresh lifetime', async () => {
+    const lifetime = createLifetime();
+    expect(lifetime._tag).toBe('Lifetime');
+    expect(lifetime.disposed).toBe(false);
+    await lifetime.dispose();
+    expect(lifetime.disposed).toBe(true);
   });
 });
 

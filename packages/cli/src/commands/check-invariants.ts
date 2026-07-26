@@ -30,12 +30,13 @@ import {
   type CheckInvariantsSummary,
   type CommandContext,
   type CheckInvariantEntry,
+  matchesInvariantExemption,
   type InvariantViolation,
   type InvariantViolationGroup,
 } from '@liteship/command';
 import { spawnArgvCapture } from '@liteship/command/host';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { scanWorkflowActionPins } from '../lib/workflow-action-pins.js';
+import { scanWorkflowActionPins, scanWorkflowCheckoutCredentials } from '../lib/workflow-action-pins.js';
 
 /** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {
@@ -57,10 +58,8 @@ interface LineEndingRule {
   readonly eol: 'lf' | 'crlf' | 'binary';
 }
 
-function isExcluded(relativePath: string, excludes: readonly string[] | undefined): boolean {
-  if (!excludes || excludes.length === 0) return false;
-  const normalized = normalizeRepoPath(relativePath);
-  return excludes.some((prefix) => normalized.includes(prefix));
+function isExempt(relativePath: string, invariant: CheckInvariantEntry): boolean {
+  return invariant.exemptions?.some((exemption) => matchesInvariantExemption(relativePath, exemption)) ?? false;
 }
 
 /**
@@ -82,7 +81,7 @@ export function findViolations(invariant: CheckInvariantEntry, root: string): In
       // relative-then-normalize (a relativeToRoot composition); the slash step is
       // normalizeRepoPath applied to a repo-relative path.
       const rel = normalizeRepoPath(relative(root, file));
-      if (isExcluded(rel, invariant.exclude)) continue;
+      if (isExempt(rel, invariant)) continue;
 
       const lines = readFileSync(file, 'utf8').split(/\r?\n/);
       lines.forEach((line, index) => {
@@ -244,14 +243,16 @@ export async function runCheckInvariantsScan(
   const actionPinViolations: InvariantViolation[] = [];
   for (const file of walkFiles(resolve(root, '.github/workflows'), { suffixes: ['.yml', '.yaml'] })) {
     const rel = normalizeRepoPath(relative(root, file));
-    for (const violation of scanWorkflowActionPins(readFileSync(file, 'utf8'))) {
+    const workflow = readFileSync(file, 'utf8');
+    for (const violation of [...scanWorkflowActionPins(workflow), ...scanWorkflowCheckoutCredentials(workflow)]) {
       actionPinViolations.push({ file: rel, line: violation.line, content: violation.content });
     }
   }
   if (actionPinViolations.length > 0) {
     groups.push({
       name: 'IMMUTABLE_WORKFLOW_ACTIONS',
-      message: 'Pin every third-party GitHub Action to an immutable 40-character commit SHA.',
+      message:
+        'Use only reviewed third-party GitHub Actions pinned to immutable commit SHAs and disable checkout credential persistence.',
       violations: actionPinViolations,
     });
   }

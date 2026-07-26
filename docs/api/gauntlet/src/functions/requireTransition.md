@@ -8,7 +8,7 @@
 
 > **requireTransition**(`context`, `gateId`): [`TransitionFacts`](../interfaces/TransitionFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:990](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L990)
+Defined in: [gauntlet/src/gate.ts:1054](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1054)
 
 Read the injected [TransitionFacts](../interfaces/TransitionFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

@@ -46,7 +46,7 @@ export interface RevealTransition {
   readonly easing?: 'linear' | 'ease' | 'spring';
   /**
    * Spring physics for `easing: 'spring'` (ignored otherwise). Carried through to
-   * the lowered {@link TransitionNode} so BOTH the CSS `linear()` and the JS floor
+   * the lowered `TransitionNode` so BOTH the CSS `linear()` and the JS floor
    * sample this ONE config; omitted ⇒ the shared `DEFAULT_MOTION_SPRING`.
    */
   readonly spring?: Easing.Config;

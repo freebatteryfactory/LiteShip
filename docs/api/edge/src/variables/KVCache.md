@@ -8,7 +8,7 @@
 
 > `const` **KVCache**: `object`
 
-Defined in: [edge/src/kv-cache.ts:774](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L774)
+Defined in: [edge/src/kv-cache.ts:775](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L775)
 
 KV cache namespace.
 
@@ -39,7 +39,7 @@ A generic KV namespace implementing get/put
 
 ##### options?
 
-`CacheOptions`
+[`CacheOptions`](../interfaces/CacheOptions.md)
 
 Optional TTL (seconds) and key prefix configuration
 

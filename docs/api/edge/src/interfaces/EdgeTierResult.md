@@ -6,7 +6,7 @@
 
 # Interface: EdgeTierResult
 
-Defined in: [edge/src/edge-tier.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L31)
+Defined in: [edge/src/edge-tier.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L32)
 
 Outcome of an edge-side tier detection sweep.
 
@@ -18,11 +18,11 @@ code paths from `@liteship/detect`.
 
 ### capTier
 
-> `readonly` **capTier**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> `readonly` **capTier**: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md)
 
-Defined in: [edge/src/edge-tier.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L33)
+Defined in: [edge/src/edge-tier.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L34)
 
-Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
+Highest [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) the device qualifies for.
 
 ***
 
@@ -30,7 +30,7 @@ Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/
 
 > `readonly` **designTier**: `DesignTier`
 
-Defined in: [edge/src/edge-tier.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L37)
+Defined in: [edge/src/edge-tier.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L38)
 
 Visual fidelity tier permitted for this device.
 
@@ -40,6 +40,6 @@ Visual fidelity tier permitted for this device.
 
 > `readonly` **motionTier**: `MotionTier`
 
-Defined in: [edge/src/edge-tier.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L35)
+Defined in: [edge/src/edge-tier.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L36)
 
 Motion complexity tier permitted for this device.

@@ -15,7 +15,7 @@ Props accepted by the `Quantize` Astro component and by
 
 ### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md) = [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md) = [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ## Properties
 
@@ -61,7 +61,7 @@ Explicit initial state (skips resolution).
 
 ### quantizer?
 
-> `readonly` `optional` **quantizer?**: [`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+> `readonly` `optional` **quantizer?**: [`Quantizer`](../../../liteship/src/interfaces/Quantizer.md)\<`B`\>
 
 Defined in: [astro/src/quantize.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L39)
 

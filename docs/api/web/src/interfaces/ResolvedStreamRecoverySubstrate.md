@@ -18,7 +18,7 @@ Substrate plus the live receipt buffer, as consumed by the stream directive.
 
 ### cellStore
 
-> `readonly` **cellStore**: `StateCellStoreShape`
+> `readonly` **cellStore**: [`StateCellStoreShape`](../../../liteship/src/reactive/interfaces/StateCellStoreShape.md)
 
 Defined in: [web/src/stream/recovery-substrate.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L39)
 
@@ -60,7 +60,7 @@ The host's mutation client — supplies the local base and receives the adopted 
 
 ### patchReceiptEntries
 
-> `readonly` **patchReceiptEntries**: readonly `PatchReceiptEntry`[]
+> `readonly` **patchReceiptEntries**: readonly [`PatchReceiptEntry`](../../../liteship/src/graph/interfaces/PatchReceiptEntry.md)[]
 
 Defined in: [web/src/stream/recovery-substrate.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L45)
 

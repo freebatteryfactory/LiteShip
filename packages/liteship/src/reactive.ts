@@ -7,8 +7,9 @@
  * @module
  */
 
-export { Lifetime, attachLifetime, createLifetime } from '@liteship/core/reactive';
+export { attachLifetime, createLifetime } from '@liteship/core/reactive';
 export type {
+  Lifetime,
   LifetimeShape,
   LifetimeDisposeError,
   Finalizer,

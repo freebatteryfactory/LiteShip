@@ -25,7 +25,7 @@ current sealed graph:
 
 ### store
 
-`Pick`\<`GraphStore`, `"loadGraph"`\>
+`Pick`\<[`GraphStore`](../../../liteship/src/graph/interfaces/GraphStore.md), `"loadGraph"`\>
 
 ## Returns
 

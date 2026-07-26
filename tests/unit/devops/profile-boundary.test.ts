@@ -3,7 +3,7 @@
  *
  * `@liteship/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
  * the audit consumes — no aspirational fields"; that law lived only in a comment.
- * These guards make it teeth: the profile keeps exactly its 5 fields, and the
+ * These guards make it teeth: the profile keeps exactly its seven public keys, and the
  * repo-local contracts (invariants / coverage / bench / artifact-paths) stay local —
  * they never leak onto the profile or into the published engine surface. The two
  * root-derivation families (checkout-root vs caller-root) stay split.
@@ -12,10 +12,10 @@
  *
  * @module
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, expectTypeOf } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { liteshipDevopsProfile } from '@liteship/audit';
+import { DEVOPS_PROFILE_KEYS, liteshipDevopsProfile, type DevopsProfile } from '@liteship/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');
@@ -35,30 +35,21 @@ const auditEngineSources = (): string[] => {
   return out;
 };
 
-// foundationalPackages (the runtime analogue of @liteship/_spine — packages every
-// package may import unlisted) is a CONSUMED field: structure.ts reads it to
-// bless foundational edges. So it is an approved profile field, not aspirational.
-const APPROVED_FIELDS = [
-  'repoRoot',
-  'internalPackagePrefix',
-  'packageTopology',
-  'foundationalPackages',
-  'dynamicImportExemptions',
-  'surfacePolicy',
-];
-
 describe('D7b — DevopsProfile has exactly the approved fields (no aspirational drift)', () => {
-  it('the default profile carries exactly the 6 approved fields', () => {
-    expect(Object.keys(liteshipDevopsProfile).sort()).toEqual([...APPROVED_FIELDS].sort());
+  it('the default profile carries every non-consumer key and no foreign key', () => {
+    expect(Object.keys(liteshipDevopsProfile).sort()).toEqual(
+      DEVOPS_PROFILE_KEYS.filter((key) => key !== 'packageRoots').sort(),
+    );
   });
 
-  it('the DevopsProfile interface declares the 6 approved fields and NO devops-junk-drawer field', () => {
+  it('the public key projection is exactly the DevopsProfile interface, including optional keys', () => {
+    expectTypeOf<(typeof DEVOPS_PROFILE_KEYS)[number]>().toEqualTypeOf<keyof DevopsProfile>();
+  });
+
+  it('the DevopsProfile interface declares no devops-junk-drawer field', () => {
     const src = read('packages/audit/src/devops-profile.ts');
     const body = src.match(/export interface DevopsProfile \{([\s\S]*?)\n\}/)?.[1];
     expect(body, 'DevopsProfile interface must be findable').toBeTruthy();
-    for (const f of APPROVED_FIELDS) {
-      expect(body!, `DevopsProfile must declare ${f}`).toMatch(new RegExp(`readonly\\s+${f}\\b`));
-    }
     // The instant someone adds one of these as a profile field, this fails (ADR-0012).
     expect(body!).not.toMatch(/readonly\s+(invariants|coverage|bench|artifactPaths?|reportPaths|thresholds)\b/);
   });
@@ -66,13 +57,20 @@ describe('D7b — DevopsProfile has exactly the approved fields (no aspirational
 
 describe('D7b — repo-local contracts stay local (not threaded through the profile, not in the engine)', () => {
   // The published audit engine must not reference any of the LiteShip-local contracts.
-  const FORBIDDEN_IN_ENGINE = ['invariants', 'coverageExclude', 'directivePairs', 'DIRECTIVE_BENCH_PAIRS', 'reportPaths'];
+  const FORBIDDEN_IN_ENGINE = [
+    'invariants',
+    'coverageExclude',
+    'directivePairs',
+    'DIRECTIVE_BENCH_PAIRS',
+    'reportPaths',
+  ];
   it('the published @liteship/audit engine surface references none of the local contracts', () => {
     const offenders: string[] = [];
     for (const file of auditEngineSources()) {
       const src = readFileSync(file, 'utf8');
       for (const term of FORBIDDEN_IN_ENGINE) {
-        if (src.includes(term)) offenders.push(`${file.replace(/\\/g, '/').replace(`${REPO.replace(/\\/g, '/')}/`, '')}: ${term}`);
+        if (src.includes(term))
+          offenders.push(`${file.replace(/\\/g, '/').replace(`${REPO.replace(/\\/g, '/')}/`, '')}: ${term}`);
       }
     }
     expect(offenders).toEqual([]);

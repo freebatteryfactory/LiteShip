@@ -17,8 +17,10 @@ package — it stays repo-local and composes these passes.
 
 - [ActiveSurfaceReaderOptions](interfaces/ActiveSurfaceReaderOptions.md)
 - [AllowlistUnexercisedEntry](interfaces/AllowlistUnexercisedEntry.md)
+- [AnalyzedPackageArtifacts](interfaces/AnalyzedPackageArtifacts.md)
 - [AuditAllowlistEntry](interfaces/AuditAllowlistEntry.md)
 - [AuditCounts](interfaces/AuditCounts.md)
+- [AuditCoverageNotChecked](interfaces/AuditCoverageNotChecked.md)
 - [AuditFinding](interfaces/AuditFinding.md)
 - [AuditLocation](interfaces/AuditLocation.md)
 - [AuditPassResult](interfaces/AuditPassResult.md)
@@ -79,10 +81,12 @@ package — it stays repo-local and composes these passes.
 - [TypeExportDrift](interfaces/TypeExportDrift.md)
 - [TypeExportRosterEntry](interfaces/TypeExportRosterEntry.md)
 - [TypeExportSurfaceSnapshot](interfaces/TypeExportSurfaceSnapshot.md)
+- [UnverifiedPackageArtifacts](interfaces/UnverifiedPackageArtifacts.md)
 
 ## Type Aliases
 
 - [AuditCoverageClass](type-aliases/AuditCoverageClass.md)
+- [AuditRuleId](type-aliases/AuditRuleId.md)
 - [AuditSection](type-aliases/AuditSection.md)
 - [AuditSeverity](type-aliases/AuditSeverity.md)
 - [ConditionForce](type-aliases/ConditionForce.md)
@@ -91,12 +95,14 @@ package — it stays repo-local and composes these passes.
 - [MutantVerdict](type-aliases/MutantVerdict.md)
 - [MutationOperatorId](type-aliases/MutationOperatorId.md)
 - [OracleOutcome](type-aliases/OracleOutcome.md)
+- [PackageArtifactCoverage](type-aliases/PackageArtifactCoverage.md)
 - [PackagePathResolver](type-aliases/PackagePathResolver.md)
 - [TypeExportKind](type-aliases/TypeExportKind.md)
 
 ## Variables
 
 - [ACTIVE\_SURFACE\_ORACLE\_ID](variables/ACTIVE_SURFACE_ORACLE_ID.md)
+- [AUDIT\_RULE\_IDS](variables/AUDIT_RULE_IDS.md)
 - [auditAllowlist](variables/auditAllowlist.md)
 - [auditIgnoreGlobs](variables/auditIgnoreGlobs.md)
 - [auditSourceGlobs](variables/auditSourceGlobs.md)
@@ -105,6 +111,8 @@ package — it stays repo-local and composes these passes.
 - [CONDITION\_FORCES](variables/CONDITION_FORCES.md)
 - [DEFAULT\_SURFACE\_READER](variables/DEFAULT_SURFACE_READER.md)
 - [DEFAULT\_TAINT\_INTERPROCEDURAL\_DEPTH](variables/DEFAULT_TAINT_INTERPROCEDURAL_DEPTH.md)
+- [defaultAnalyzableArtifacts](variables/defaultAnalyzableArtifacts.md)
+- [DEVOPS\_PROFILE\_KEYS](variables/DEVOPS_PROFILE_KEYS.md)
 - [dynamicImportExemptions](variables/dynamicImportExemptions.md)
 - [foundationalPackages](variables/foundationalPackages.md)
 - [LANGUAGE\_SERVICE\_ORACLE\_ID](variables/LANGUAGE_SERVICE_ORACLE_ID.md)
@@ -123,6 +131,7 @@ package — it stays repo-local and composes these passes.
 - [applyConditionMutant](functions/applyConditionMutant.md)
 - [applyMutant](functions/applyMutant.md)
 - [asOrphanValue](functions/asOrphanValue.md)
+- [auditDiagnosticCode](functions/auditDiagnosticCode.md)
 - [buildActiveSurfaceFacts](functions/buildActiveSurfaceFacts.md)
 - [buildCapabilityLinkFacts](functions/buildCapabilityLinkFacts.md)
 - [buildMcdcFacts](functions/buildMcdcFacts.md)
@@ -134,6 +143,7 @@ package — it stays repo-local and composes these passes.
 - [buildTransitionFacts](functions/buildTransitionFacts.md)
 - [buildTypeExportSurface](functions/buildTypeExportSurface.md)
 - [codeOnlyAST](functions/codeOnlyAST.md)
+- [collectProfileArtifactCoverage](functions/collectProfileArtifactCoverage.md)
 - [compareSeverity](functions/compareSeverity.md)
 - [conditionSourceDigest](functions/conditionSourceDigest.md)
 - [constTruthiness](functions/constTruthiness.md)

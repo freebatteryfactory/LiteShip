@@ -121,6 +121,24 @@ describe('@liteship/genui renderFromCatalog', () => {
     expect(a.getAttribute('data-track')).toBe('cta');
   });
 
+  it.each([
+    'javascript:alert(1)',
+    'java\nscript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    '//untrusted.example/path',
+  ])('refuses unsafe href %s before mutating the DOM', (href) => {
+    const catalog = defineComponentCatalog({
+      version: 'href-safety',
+      components: { Link: { tag: 'a', props: { href: { type: 'string', required: true } }, children: 'none' } },
+    });
+    const target = document.createElement('div');
+    target.textContent = 'preserve';
+    const result = renderFromCatalog({ name: 'Link', props: { href } }, { catalog, target });
+    expect(result.ok).toBe(false);
+    expect(target.textContent).toBe('preserve');
+    expect(target.querySelector('a')).toBeNull();
+  });
+
   it('does not set a declared-but-non-allowlisted string attribute', () => {
     // `style` is declared on the def but is NOT in the attribute allowlist, so
     // applyProps skips the setAttribute branch.

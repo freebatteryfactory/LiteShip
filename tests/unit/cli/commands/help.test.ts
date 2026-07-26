@@ -4,6 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { help, HELP_TEXT } from '../../../../packages/cli/src/commands/help.js';
+import { COMMAND_CATALOG } from '@liteship/command';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 describe('help command', () => {
@@ -36,5 +37,20 @@ describe('help command', () => {
     // script was retired, so the CLI must not point at a dead script.
     expect(HELP_TEXT).toContain('pnpm verify');
     expect(HELP_TEXT).toContain('liteship doctor');
+  });
+
+  it('projects every dotted catalog id as the invocable spaced CLI route', () => {
+    for (const descriptor of COMMAND_CATALOG) {
+      const invocation = descriptor.name.replaceAll('.', ' ');
+      expect(HELP_TEXT).toContain(`  ${invocation}`);
+      if (descriptor.name.includes('.')) {
+        expect(HELP_TEXT).not.toContain(`  ${descriptor.name}`);
+      }
+    }
+  });
+
+  it('does not promise JSON for text and long-running terminal commands', () => {
+    expect(HELP_TEXT).not.toContain('All commands emit JSON');
+    expect(HELP_TEXT).toContain('JSON-mode commands emit machine JSON');
   });
 });

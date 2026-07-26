@@ -11,7 +11,7 @@
 Defined in: [vite/src/css-quantize.ts:669](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L669)
 
 Compile a parsed [QuantizeBlock](../interfaces/QuantizeBlock.md) plus its resolved
-[Boundary](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md) into CSS `@container` query rules. Delegates
+[Boundary](../../../liteship/src/type-aliases/Boundary.md) into CSS `@container` query rules. Delegates
 to the canonical `CSSCompiler` to avoid duplicating threshold-to-query
 logic.
 
@@ -37,7 +37,7 @@ add.
 
 ### boundary
 
-[`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+[`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ### sheet?
 

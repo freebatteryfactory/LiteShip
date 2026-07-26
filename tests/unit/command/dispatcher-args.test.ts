@@ -9,7 +9,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { CommandRegistry, CommandDispatcher, defineCommand, ok } from '@liteship/command';
+import { createCommandRegistry, createCommandDispatcher, defineCommand, ok } from '@liteship/command';
 import type { RegisteredCommand, CommandJsonSchema } from '@liteship/command';
 import { schema } from '@liteship/core';
 
@@ -34,7 +34,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
         return ok('scene.probe', { scene });
       },
     });
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([probe]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([probe]));
     const result = await dispatcher.dispatch({ name: 'scene.probe', args: { scene: 'intro.ts' } }, {});
     expect(result.status).toBe('ok');
     expect(seen).toEqual([{ scene: 'intro.ts' }]);
@@ -51,7 +51,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
         return ok('scene.probe', { scene: invocation.args.scene });
       },
     });
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([probe]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([probe]));
     // `liteship scene --scene=123`-style mistyping: a number where a string is required.
     const result = await dispatcher.dispatch({ name: 'scene.probe', args: { scene: 123 } }, {});
     expect(result.status).toBe('failed');
@@ -80,7 +80,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
       argsSchema: schema.struct({ scene: schema.string }),
       handler: async (invocation) => ok('scene.probe', { scene: invocation.args.scene }),
     });
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([probe]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([probe]));
     const result = await dispatcher.dispatch({ name: 'scene.probe', args: {} }, {});
     expect(result.status).toBe('failed');
     const payload = result.payload as {
@@ -96,7 +96,7 @@ describe('dispatcher decodes args against the declared argsSchema', () => {
       descriptor: { name: 'echo.cmd', summary: 'echo', inputSchema: { type: 'object', properties: {} } },
       handler: async (invocation) => ok('echo.cmd', { echoed: invocation.args }),
     };
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([echo]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([echo]));
     const result = await dispatcher.dispatch({ name: 'echo.cmd', args: { anything: [1, 2], nested: { a: 1 } } }, {});
     expect(result.status).toBe('ok');
     expect((result.payload as { echoed: unknown }).echoed).toEqual({ anything: [1, 2], nested: { a: 1 } });

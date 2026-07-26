@@ -50,7 +50,13 @@ const boundaryIdArb = fc
   .map((parts) => `fnv1a:${parts.join('')}` as ContentAddress);
 const safeIdentityArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,15}$/);
 const tierArb: fc.Arbitrary<EdgeTierResult> = fc.record({
-  capTier: fc.constantFrom('baseline' as const, 'styled' as const, 'reactive' as const, 'generated' as const),
+  capTier: fc.constantFrom(
+    'static' as const,
+    'styled' as const,
+    'reactive' as const,
+    'animated' as const,
+    'gpu' as const,
+  ),
   motionTier: fc.constantFrom(...MOTION_TIERS),
   designTier: fc.constantFrom(...DESIGN_TIERS),
 });
@@ -123,7 +129,7 @@ describe('edge cache deterministic projection and identity', () => {
           const kv = recordingKV();
           const cache = createBoundaryCache(kv, { prefix });
           await cache.getCompiledOutputs(boundaryId, tier, qualifier, theme);
-          await cache.getCompiledOutputs(boundaryId, { ...tier, capTier: 'baseline' }, qualifier, theme);
+          await cache.getCompiledOutputs(boundaryId, { ...tier, capTier: 'static' }, qualifier, theme);
 
           const expected = `${prefix}:boundary:${boundaryId}:${qualifier}:${tier.motionTier}:${tier.designTier}:t:${theme}`;
           expect(kv.gets).toEqual([expected, expected]);

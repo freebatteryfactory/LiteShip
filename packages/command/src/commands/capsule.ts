@@ -82,6 +82,7 @@ export const capsuleInspectCommand = defineCommand({
     name: 'capsule.inspect',
     summary: 'Inspect a capsule manifest entry.',
     inputSchema: INSPECT_SCHEMA,
+    cli: { outputMode: 'json', positionals: ['id'] },
     // Minimal stable contract (decision #2): the entry is a manifest object;
     // its internal fields are not mirrored here to avoid drift with the manifest.
     outputSchema: CapsuleInspectPayloadSchema,
@@ -110,6 +111,7 @@ export const capsuleListCommand = defineCommand({
       type: 'object',
       properties: { kind: { type: 'string' } },
     } as const satisfies CommandJsonSchema,
+    cli: { outputMode: 'json' },
     outputSchema: CapsuleListPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
@@ -130,6 +132,7 @@ export const capsuleVerifyCommand = defineCommand({
     name: 'capsule.verify',
     summary: 'Verify a capsule’s generated tests.',
     inputSchema: INSPECT_SCHEMA,
+    cli: { outputMode: 'json', positionals: ['id'] },
     requires: ['runVitest'] satisfies readonly CommandCapability[],
     outputSchema: CapsuleVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'manifest' },

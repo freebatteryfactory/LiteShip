@@ -28,7 +28,7 @@
 import { closestMatch, Diagnostics } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } from './contract.js';
-import type { BeatBinding } from './capsules/beat-binding.js';
+import type { BeatBinding } from './beat-binding-capsule.js';
 import { resolveFrameMark } from './sugar/beat.js';
 import { resolveEnvelope } from './sugar/envelope.js';
 

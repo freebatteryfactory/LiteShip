@@ -22,11 +22,16 @@ import { memoryContext } from '../../../packages/gauntlet/src/engine.js';
 import { verifyGate } from '../../../packages/gauntlet/src/authority.js';
 import type { Finding } from '../../../packages/gauntlet/src/finding.js';
 import type { SpineRelationFacts } from '../../../packages/gauntlet/src/facts/spine-relation-facts.js';
-import { LITESHIP_SPINE_ADMISSIONS } from '../../../packages/cli/src/lib/spine-relation-policy.js';
+import {
+  LITESHIP_SPINE_ADMISSIONS,
+  LITESHIP_SPINE_EXACT_RELATION_CATALOG,
+} from '../../../packages/cli/src/lib/spine-relation-policy.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../..');
 const CORE_DTS = resolve(REPO_ROOT, 'packages/_spine/core.d.ts');
+const COMMAND_DTS = resolve(REPO_ROOT, 'packages/_spine/command.d.ts');
+const WORKER_DTS = resolve(REPO_ROOT, 'packages/_spine/worker.d.ts');
 const REAL_CORE = readFileSync(CORE_DTS, 'utf8');
 
 // The source-owned admission table is already `SpineTypeAdmission[]` — no remap needed.
@@ -43,6 +48,33 @@ function driftedFacts(mutate: (core: string) => string): { facts: SpineRelationF
   expect(drifted, 'the drift edit must actually change core.d.ts').not.toBe(REAL_CORE);
   return { facts: buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, { overlay: { [CORE_DTS]: drifted } }), drifted };
 }
+
+/** Build facts with any one spine declaration file drifted in-memory. */
+function driftedFileFacts(file: string, mutate: (source: string) => string): SpineRelationFacts {
+  const real = readFileSync(file, 'utf8');
+  const drifted = mutate(real);
+  expect(drifted, `the drift edit must actually change ${file}`).not.toBe(real);
+  return buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, { overlay: { [file]: drifted } });
+}
+
+describe('spine-relation exact census — generated from one public-owner catalog', () => {
+  it('projects every catalog relation exactly once as an exact admission', () => {
+    const catalogNames = LITESHIP_SPINE_EXACT_RELATION_CATALOG.flatMap((entry) =>
+      entry.relations.map((relation) => (typeof relation === 'string' ? relation : relation.typeName)),
+    );
+    expect(catalogNames.length).toBeGreaterThan(90);
+    expect(new Set(catalogNames).size).toBe(catalogNames.length);
+
+    for (const typeName of catalogNames) {
+      const matches = ADMISSIONS.filter((admission) => admission.typeName === typeName);
+      expect(matches, `${typeName} must have one catalog-derived admission`).toHaveLength(1);
+      expect(matches[0]!.admittedRelation).toBe('exact');
+    }
+    expect(catalogNames).toContain('SceneCompilation');
+    expect(catalogNames).toContain('WorkerLike');
+    expect(catalogNames).toContain('VirtualModuleId');
+  });
+});
 
 describe('spine-relation gate — GREEN on the reconciled spine (no drift, no gap)', () => {
   it(
@@ -117,6 +149,25 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
     },
   );
 
+  it('Plan.topoSort result-object drift is admitted and detected', { timeout: scaledTimeout(60_000) }, () => {
+    const { facts } = driftedFacts((c) =>
+      c.replace(
+        'export function topoSort(planIR: PlanIR): TopoSortResult;',
+        'export function topoSort(planIR: PlanIR): readonly string[];',
+      ),
+    );
+    const method = facts.observations.find((o) => o.typeName === 'Plan.topoSort')!;
+    expect(method.observedRelation).not.toBe('exact');
+    expect(gateFindings(facts).some((finding) => finding.title.includes('Plan.topoSort'))).toBe(true);
+  });
+
+  it('Signal.audio disappearance is admitted and detected', { timeout: scaledTimeout(60_000) }, () => {
+    const { facts } = driftedFacts((c) => c.replace('export function audio(', 'export function audioRemoved('));
+    const method = facts.observations.find((o) => o.typeName === 'Signal.audio')!;
+    expect(method.resolved).toBe(false);
+    expect(gateFindings(facts).some((finding) => finding.title.includes('Signal.audio'))).toBe(true);
+  });
+
   it(
     'a mirror that collapses to `any` reds as unresolved, never a false exact (review-point #2)',
     { timeout: scaledTimeout(60_000) },
@@ -142,6 +193,58 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
     expect(capSet.resolved).toBe(false);
     const findings = gateFindings(facts);
     expect(findings.some((f) => f.title.includes('CapSet') && f.title.includes('no longer resolves'))).toBe(true);
+  });
+});
+
+describe('spine-relation exact census — planted declaration mutations', () => {
+  it('reds on a missing required mirror', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = driftedFileFacts(COMMAND_DTS, (source) =>
+      source.replace('export interface SceneCompilation {', 'export interface SceneCompilationRemoved {'),
+    );
+    const observation = facts.observations.find((entry) => entry.typeName === 'SceneCompilation')!;
+    expect(observation.resolved).toBe(false);
+    expect(gateFindings(facts).some((finding) => finding.title.includes('SceneCompilation'))).toBe(true);
+  });
+
+  it('reds on a required field made optional', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = driftedFileFacts(WORKER_DTS, (source) =>
+      source.replace('  terminate(): void;', '  terminate?(): void;'),
+    );
+    const observation = facts.observations.find((entry) => entry.typeName === 'WorkerLike')!;
+    expect(observation.observedRelation).not.toBe('exact');
+    expect(gateFindings(facts).some((finding) => finding.title.includes('WorkerLike'))).toBe(true);
+  });
+
+  it('reds on an exact key-set expansion', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = driftedFileFacts(WORKER_DTS, (source) =>
+      source.replace('export interface WorkerLike {', 'export interface WorkerLike {\n  readonly inventedKey: true;'),
+    );
+    const observation = facts.observations.find((entry) => entry.typeName === 'WorkerLike')!;
+    expect(observation.observedRelation).toBe('public-narrower');
+    expect(gateFindings(facts).some((finding) => finding.title.includes('WorkerLike'))).toBe(true);
+  });
+
+  it('reds on a required field type change', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = driftedFileFacts(COMMAND_DTS, (source) =>
+      source.replace('  readonly fps: number;', '  readonly fps: string;'),
+    );
+    const observation = facts.observations.find((entry) => entry.typeName === 'SceneCompilation')!;
+    expect(observation.observedRelation).toBe('opaque');
+    expect(gateFindings(facts).some((finding) => finding.title.includes('SceneCompilation'))).toBe(true);
+  });
+
+  it('reds when an admitted directional relation is reversed', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT);
+    const reversed: SpineRelationFacts = {
+      observations: facts.observations.map((observation) =>
+        observation.typeName === 'Signal.audio'
+          ? { ...observation, admittedRelation: 'public-wider' as const }
+          : observation,
+      ),
+    };
+    const observation = reversed.observations.find((entry) => entry.typeName === 'Signal.audio')!;
+    expect(observation.observedRelation).toBe('public-narrower');
+    expect(gateFindings(reversed).some((finding) => finding.title.includes('Signal.audio'))).toBe(true);
   });
 });
 

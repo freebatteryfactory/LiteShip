@@ -376,7 +376,7 @@ describe('web runtime primitives', () => {
       isSameNode(oldNode, newNode, {
         semanticIds: ['legacy', 'next'],
       }),
-    ).toBe(true);
+    ).toBe(false);
 
     oldNode.id = '';
     newNode.id = '';
@@ -512,7 +512,7 @@ describe('web runtime primitives', () => {
       isSameNode(semanticTarget, semanticMiss, {
         semanticIds: ['hero'],
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(findBestMatch(semanticTarget, [semanticMiss, idFallback])?.id).toBe('hero-dom');
 
     const oldParent = document.createElement('div');

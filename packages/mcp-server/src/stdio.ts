@@ -11,6 +11,13 @@ import { createInterface } from 'node:readline/promises';
 import type { Readable, Writable } from 'node:stream';
 import { handleRequest } from './http.js';
 
+/** A running stdio transport and the authority required to stop its reader. */
+export interface StdioServerHandle {
+  readonly transport: 'stdio';
+  readonly done: Promise<void>;
+  stop(): Promise<void>;
+}
+
 /**
  * Process a single JSON-RPC stdio line and return the wire payload (a
  * JSON-encoded string) or `null` when no response should be emitted
@@ -34,18 +41,30 @@ export async function processLine(line: string): Promise<string | null> {
  * Readable + a sink Writable to exercise the full read-line-write loop
  * without spawning a child process.
  */
-export async function runStdio(input: Readable = process.stdin, output: Writable = process.stdout): Promise<void> {
+export function startStdio(input: Readable = process.stdin, output: Writable = process.stdout): StdioServerHandle {
   const rl = createInterface({ input });
-  for await (const line of rl) {
-    const wire = await processLine(line);
-    if (wire !== null) {
-      output.write(wire + '\n');
+  const done = (async (): Promise<void> => {
+    try {
+      for await (const line of rl) {
+        const wire = await processLine(line);
+        if (wire !== null) output.write(wire + '\n');
+      }
+    } finally {
+      rl.close();
     }
-  }
+  })();
+  let stopPromise: Promise<void> | undefined;
+  const stop = (): Promise<void> => {
+    stopPromise ??= (async (): Promise<void> => {
+      rl.close();
+      await done;
+    })();
+    return stopPromise;
+  };
+  return { transport: 'stdio', done, stop };
 }
 
-// Side-effect import installs the tsx direct-invoke guard so the integration
-// spawn (`tsx packages/mcp-server/src/stdio.ts`) keeps working. Bootstrap
-// lives in `./stdio-server.ts` because Windows-spawn coverage can't be
-// merged back through c8 ignore (source-mapped TS line numbers don't match).
-import './stdio-server.js';
+/** Run the stdio transport until its input closes. */
+export async function runStdio(input: Readable = process.stdin, output: Writable = process.stdout): Promise<void> {
+  await startStdio(input, output).done;
+}

@@ -37,6 +37,18 @@ import type { ScenarioReplayFact, SimulationFacts } from '../facts/simulation-fa
 
 const RULE_NS = 'gauntlet/simulation-determinism';
 
+/** Closed identities emitted by the campaign fold's data-driven branches. */
+const CAMPAIGN_RULE_IDS = {
+  'campaign-metadata-invalid': 'gauntlet/simulation-determinism/campaign-metadata-invalid',
+  'campaign-not-evidenced': 'gauntlet/simulation-determinism/campaign-not-evidenced',
+  'steady-state-not-observed': 'gauntlet/simulation-determinism/steady-state-not-observed',
+  'fault-not-activated': 'gauntlet/simulation-determinism/fault-not-activated',
+  'degradation-not-observed': 'gauntlet/simulation-determinism/degradation-not-observed',
+  'recovery-failed': 'gauntlet/simulation-determinism/recovery-failed',
+} as const;
+
+type CampaignRuleSuffix = keyof typeof CAMPAIGN_RULE_IDS;
+
 /**
  * Project one diverged scenario into an error Finding at the avionics level. The
  * seed and both digests are woven into the detail so the bug is reproducible from
@@ -74,13 +86,13 @@ function divergenceFinding(run: ScenarioReplayFact): Finding {
 
 function campaignFinding(
   run: ScenarioReplayFact,
-  suffix: string,
+  suffix: CampaignRuleSuffix,
   title: string,
   detail: string,
   remediation: string,
 ): Finding {
   return finding({
-    ruleId: `${RULE_NS}/${suffix}`,
+    ruleId: CAMPAIGN_RULE_IDS[suffix],
     severity: 'error',
     level: 'L3',
     title,

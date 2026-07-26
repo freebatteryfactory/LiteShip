@@ -4,7 +4,14 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { CHECK_REGISTRY, type CheckDefinition, type CheckPlan, type PlannedCheck } from '@liteship/command';
+import {
+  CHECK_REGISTRY,
+  parseRootScriptCheckExecution,
+  renderRootScriptCheckExecution,
+  type CheckDefinition,
+  type CheckPlan,
+  type PlannedCheck,
+} from '@liteship/command';
 import { createCheckPlanRunner, invokedScriptName } from '../../packages/cli/src/commands/check.js';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
@@ -49,13 +56,13 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
     'check/docs-fast',
     'pnpm run docs:check:fast',
     'tests/unit/devops/typedoc-input-fingerprint.test.ts',
-    'check/docs-fast',
+    'shared:typedoc-input-owner',
   ],
   [
     'check/docs',
     'pnpm run docs:check',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
+    'tests/unit/devops/typedoc-input-fingerprint.test.ts',
+    'shared:typedoc-input-owner',
   ],
   [
     'check/assurance-density',
@@ -69,7 +76,12 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
     'tests/unit/devops/test-constitution.test.ts',
     'check/test-constitution',
   ],
-  ['check/gates', 'pnpm run check:gates', 'tests/unit/cli/lib/repo-ir-gauntlet.test.ts', 'check/gates'],
+  [
+    'check/gates',
+    'pnpm run check:gates',
+    'tests/unit/cli/commands/check-gates-negative-control.test.ts',
+    'check/gates',
+  ],
   ['check/audit-floor', 'pnpm run audit:floor', 'tests/unit/cli/commands/audit-floor.test.ts', 'check/audit-floor'],
   ['check/test', 'pnpm test', 'tests/unit/devops/test-aggregate-negative-control.test.ts', 'check/test'],
   [
@@ -81,8 +93,8 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   [
     'check/runtime-gate',
     'pnpm run runtime:gate',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
+    'tests/unit/devops/runtime-gate-negative-control.test.ts',
+    'check/runtime-gate',
   ],
   [
     'check/standards-gate',
@@ -118,14 +130,14 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   [
     'check/flex-verify',
     'pnpm run flex:verify',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
+    'tests/unit/devops/flex-policy-negative-control.test.ts',
+    'shared:flex-policy-owner',
   ],
   [
     'check/devx',
     'pnpm run devx:check',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
+    'tests/unit/devops/flex-policy-negative-control.test.ts',
+    'shared:flex-policy-owner',
   ],
   [
     'check/capsule-verify',
@@ -184,12 +196,7 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
     'tests/unit/devops/blocking-check-negative-controls.test.ts',
     SHARED_EXTERNAL_AUTHORITY,
   ],
-  [
-    'check/bench-reality',
-    'pnpm run bench:reality',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
-  ],
+  ['check/bench-reality', 'pnpm run bench:reality', 'tests/unit/meta/bench-reality.test.ts', 'check/bench-reality'],
   [
     'check/bench-alloc',
     'pnpm run bench:alloc',
@@ -205,16 +212,16 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   [
     'check/package-smoke',
     'pnpm run package:smoke',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
+    'tests/unit/cli/commands/package-smoke-helpers.test.ts',
+    'shared:package-smoke-owner',
   ],
   ['check/doctor', 'pnpm run doctor -- --preflight --ci', 'tests/unit/cli/commands/doctor.test.ts', 'check/doctor'],
   ['check/journey', 'pnpm run test:journey', 'tests/unit/devops/journey-negative-control.test.ts', 'check/journey'],
   [
     'check/hermetic',
     'pnpm run package:smoke:hermetic',
-    'tests/unit/devops/blocking-check-negative-controls.test.ts',
-    SHARED_EXTERNAL_AUTHORITY,
+    'tests/unit/cli/commands/package-smoke-helpers.test.ts',
+    'shared:package-smoke-owner',
   ],
   [
     'check/devcontainer-pins',
@@ -236,7 +243,7 @@ function planned(check: BlockingCheck): PlannedCheck {
     claim: check.claim,
     owner: check.owner,
     command: check.command,
-    ...(check.execution === undefined ? {} : { execution: check.execution }),
+    execution: check.execution,
     context: check.contexts[0]!,
     authority: check.authority,
     cache: check.cache,
@@ -259,7 +266,7 @@ function planFor(check: BlockingCheck): CheckPlan {
 }
 
 function expectedSpawnCommand(check: BlockingCheck): string {
-  return check.execution === undefined ? check.command : 'pnpm exec liteship build';
+  return check.execution.kind === 'root-script' ? check.command : 'pnpm exec liteship build';
 }
 
 function execute(
@@ -308,7 +315,8 @@ function relationProblems(rows: readonly BlockingCheck[]): readonly string[] {
   for (const [path, group] of byPath) {
     if (group.length < 2) continue;
     const authorities = new Set(group.map((row) => EXPECTED_BY_ID.get(row.id)?.[3]));
-    if (authorities.size !== 1 || !authorities.has(SHARED_EXTERNAL_AUTHORITY)) {
+    const [authority] = authorities;
+    if (authorities.size !== 1 || authority === undefined || !authority.startsWith('shared:')) {
       problems.push(`unrelated authorities share ${path}`);
     }
   }
@@ -340,6 +348,17 @@ describe('blocking-check negative-control relation properties', () => {
     expect(relationProblems(BLOCKING_CHECKS)).toEqual([]);
   });
 
+  it('every repository claim renders from one root-script execution owner', () => {
+    const repository = CHECK_REGISTRY.filter((check) => check.contexts.includes('repository'));
+    expect(repository.length).toBeGreaterThan(0);
+    for (const check of repository) {
+      expect(check.execution.kind, check.id).toBe('root-script');
+      if (check.execution.kind === 'root-script') {
+        expect(renderRootScriptCheckExecution(check.execution), check.id).toBe(check.command);
+      }
+    }
+  });
+
   it('production execution binds every exact id and command to red/nonzero and green/zero', () => {
     fc.assert(
       fc.property(fc.constantFrom(...BLOCKING_CHECKS), fc.integer({ min: 1, max: 255 }), (check, nonzero) => {
@@ -358,7 +377,10 @@ describe('blocking-check negative-control relation properties', () => {
     expect(invokedScriptName('pnpm test')).toBe('test');
     expect(invokedScriptName('pnpm run test')).toBe('test');
     expect(invokedScriptName('pnpm run bench:trend -- --strict')).toBe('bench:trend');
-    const synthetic = { ...BLOCKING_CHECKS[0]!, id: 'check/quoted', command: 'pnpm run lint -- --label "two words"' };
+    const command = 'pnpm run lint -- --label "two words"';
+    const execution = parseRootScriptCheckExecution(command);
+    expect(execution).not.toBeNull();
+    const synthetic = { ...BLOCKING_CHECKS[0]!, id: 'check/quoted', command, execution: execution! };
     expect(execute(synthetic, 0).calls).toEqual(['pnpm run lint -- --label "two words"']);
   });
 

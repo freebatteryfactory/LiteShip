@@ -130,7 +130,7 @@ function toSpec(g: GeneratedSpec): Cfg {
   const base: Record<string, unknown> = { boundary: g.boundary, style: g.style };
   if (g.quantize !== undefined) base['quantize'] = g.quantize;
   if (g.tier !== undefined) base['tier'] = g.tier;
-  return base as Cfg;
+  return base as unknown as Cfg;
 }
 
 /** Below/at/above every threshold — the sweep that exercises each state edge. */

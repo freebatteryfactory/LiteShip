@@ -28,10 +28,14 @@ export {
   handle,
   initialLspState,
   LITESHIP_CHECK_METHOD,
+  LSP_METHOD_CATALOG,
   LSP_SERVER_CAPABILITIES,
+  projectLspCapabilities,
   type LspServerState,
   type LspHandleResult,
   type LspNotification,
+  type LspMethodDescriptor,
+  type LspServerCapabilities,
 } from './server.js';
 export { runLspStdio } from './stdio.js';
 export { makeFrameReader, encodeFrame, type FrameReader } from './framing.js';
@@ -51,8 +55,6 @@ export {
   type LspDiagnostic,
   type LspDiagnosticSeverity,
   type PublishDiagnosticsParams,
-  type LspTextEdit,
-  type LspWorkspaceEdit,
   type LspCommand,
   type LspCodeAction,
 } from './types.js';

@@ -315,6 +315,7 @@ export function makeOracleDivergenceGate(spec: OracleDivergenceSpec): Gate {
     id: spec.gateId,
     level: spec.level,
     describe: spec.describe,
+    access: { ir: ['facts'] },
     run: (context: GateContext) => foldDivergences(spec, context),
     fixtures: buildFixtures(spec),
   });

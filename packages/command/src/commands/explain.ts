@@ -245,6 +245,11 @@ export const explainCommand = defineCommand({
       required: ['query'],
       properties: { query: { type: 'string' } },
     } as const satisfies CommandJsonSchema,
+    cli: {
+      outputMode: 'json',
+      positionals: ['query'],
+      adapterFlags: { '--json': { type: 'boolean' } },
+    },
     outputSchema: ExplainPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'setup' },
   },

@@ -58,6 +58,18 @@ describe('WaveformProjection', () => {
     expect(cap.name).toBe('intro-bed:waveform:512');
   });
 
+  it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1])(
+    'refuses invalid bins %s before consulting the registry or minting a capsule',
+    (bins) => {
+      const untouched = {
+        assertAudioRegistered: () => {
+          throw new Error('registry must not run');
+        },
+      } as unknown as AssetRegistry;
+      expect(() => WaveformProjection(untouched, 'missing', { bins })).toThrow(/positive safe integer/u);
+    },
+  );
+
   it('WaveformProjection invariants reject malformed output', () => {
     const cap = WaveformProjection(registry, 'intro-bed', { bins: 4 });
     const binInv = cap.invariants.find((i) => i.name === 'bin-count-matches');

@@ -2,14 +2,14 @@
  * DiscreteStateTransition — the typed, attestation-checked authority record for a
  * discrete state crossing (#133). It REPLACES the dead-wrong
  * `discreteSignalPayloadsFromPatch`, which derived a runtime state VALUE from a
- * {@link SignalNode}'s content-address / axis. That was a category error: a
+ * `SignalNode`'s content-address / axis. That was a category error: a
  * signal node's identity is not the runtime value the cell crossed to.
  *
  * A transition is a VALUE, never a closure: the crossing's next-state value
  * arrives IN the receipt payload (`next`/`generation`), minted by the authority
  * — nothing infers a value from patch ops. It reuses the ONE hash law
- * ({@link TypedRef.create} → {@link Receipt.createEnvelope} → sha256; Law 4),
- * mirroring {@link GraphPatch.receipt} byte-for-byte, so there is no second
+ * (`TypedRef.create` → `Receipt.createEnvelope` → sha256; Law 4),
+ * mirroring `GraphPatch.receipt` byte-for-byte, so there is no second
  * hashing path. The subject law binds a receipt to exactly one `(base, cell)`
  * pair, so a receipt minted for `base#cellA` cannot be replayed against `cellB`
  * or another graph.
@@ -23,12 +23,20 @@
  * @module
  */
 
-import { ParseError } from '@liteship/error';
+import { ParseError, type DiagnosticCodeFor } from '@liteship/error';
 import type { ContentAddress, HLC, StateName } from '../schema/brands.js';
 import { Receipt, type ReceiptEnvelope } from '../evidence/receipt.js';
 import { TypedRef } from '../evidence/typed-ref.js';
 import { HLC as HLCOps } from '../clock/hlc.js';
 import type { StateAuthority, StateCell, StateCellStoreShape } from '../reactive/state-cell.js';
+
+const STATE_TRANSITION_DECODE_CODE = {
+  notAnObject: 'core/state-transition/not_an_object',
+  wrongTag: 'core/state-transition/wrong_tag',
+  unsupportedVersion: 'core/state-transition/unsupported_version',
+  wrongKind: 'core/state-transition/wrong_kind',
+  malformed: 'core/state-transition/malformed',
+} as const satisfies Readonly<Record<string, DiagnosticCodeFor<'core'>>>;
 
 /**
  * A typed authority record for a single discrete state crossing. The
@@ -79,7 +87,7 @@ export function discreteTransitionSubjectId(transition: Pick<DiscreteStateTransi
 }
 
 /**
- * The receipt PAYLOAD ref for a transition — a {@link TypedRef} over the crossing VALUE
+ * The receipt PAYLOAD ref for a transition — a `TypedRef` over the crossing VALUE
  * (`cell`/`previous`/`next`/`generation`/`authority`/`base`/`resultId`/`kind`). The SINGLE
  * source of the payload law (Law 6): both the mint ({@link transitionReceipt}) AND the
  * client-side attestation-check (`recordStreamPatchReceipt`) derive the payload from HERE.
@@ -102,8 +110,8 @@ export function discreteTransitionPayload(transition: DiscreteStateTransition): 
 
 /**
  * Mint a receipt for a {@link DiscreteStateTransition}, mirroring
- * {@link GraphPatch.receipt} byte-for-byte: a single genesis-or-linked envelope
- * whose payload is a {@link TypedRef} over the transition, subject-keyed by the
+ * `GraphPatch.receipt` byte-for-byte: a single genesis-or-linked envelope
+ * whose payload is a `TypedRef` over the transition, subject-keyed by the
  * `(base, cell)` law. Async (`Promise`-returning) because the receipt byte law
  * hashes via `crypto.subtle` (SHA-256) — the same async kernel
  * `Receipt.createEnvelope` rides on; folding it to a sync value would force a
@@ -164,8 +172,8 @@ export async function mintTransition(
 
 /**
  * VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED transition value (lowered
- * from an SSE frame / persisted JSON). Mirrors {@link GraphPatch.decode}: gates
- * `_tag`/`_version`/`kind` and rejects with ONE canonical tagged {@link ParseError}
+ * from an SSE frame / persisted JSON). Mirrors `GraphPatch.decode`: gates
+ * `_tag`/`_version`/`kind` and rejects with ONE canonical tagged `ParseError`
  * — never silently misparsed. Scope is intentionally the tag/version/kind
  * ENVELOPE (the receipt hash + subject law are checked by the attestation seam).
  *
@@ -176,7 +184,7 @@ export async function mintTransition(
 export function decodeDiscreteStateTransition(value: unknown): DiscreteStateTransition {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw ParseError('DiscreteStateTransition', `expected an object, got ${value === null ? 'null' : typeof value}`, {
-      code: 'not_an_object',
+      code: STATE_TRANSITION_DECODE_CODE.notAnObject,
     });
   }
   const record = value as Record<string, unknown>;
@@ -184,24 +192,24 @@ export function decodeDiscreteStateTransition(value: unknown): DiscreteStateTran
     throw ParseError(
       'DiscreteStateTransition',
       `expected _tag "DiscreteStateTransition", got ${JSON.stringify(record._tag)}`,
-      { code: 'wrong_tag' },
+      { code: STATE_TRANSITION_DECODE_CODE.wrongTag },
     );
   }
   if (record._version !== SUPPORTED_TRANSITION_VERSION) {
     throw ParseError(
       'DiscreteStateTransition',
       `unsupported _version ${JSON.stringify(record._version)} — this build understands _version ${SUPPORTED_TRANSITION_VERSION} only`,
-      { code: 'unsupported_version' },
+      { code: STATE_TRANSITION_DECODE_CODE.unsupportedVersion },
     );
   }
   if (record.kind !== 'discrete') {
     throw ParseError('DiscreteStateTransition', `expected kind "discrete", got ${JSON.stringify(record.kind)}`, {
-      code: 'core/state-transition/wrong_kind',
+      code: STATE_TRANSITION_DECODE_CODE.wrongKind,
     });
   }
   if (typeof record.cell !== 'string' || typeof record.next !== 'string' || typeof record.generation !== 'number') {
     throw ParseError('DiscreteStateTransition', 'missing required cell/next/generation fields', {
-      code: 'core/state-transition/malformed',
+      code: STATE_TRANSITION_DECODE_CODE.malformed,
     });
   }
   return value as DiscreteStateTransition;
@@ -210,7 +218,7 @@ export function decodeDiscreteStateTransition(value: unknown): DiscreteStateTran
 /**
  * Apply a validated {@link DiscreteStateTransition} to a cell store. The typed
  * parameter is the uncompilable seam (Law 16): a `StateCell & { kind: 'continuous' }`
- * or a raw {@link SignalNode} is NOT a `DiscreteStateTransition`, so it cannot be
+ * or a raw `SignalNode` is NOT a `DiscreteStateTransition`, so it cannot be
  * passed here — the wrong call does not compile. The store's generation-rollback
  * guard makes a stale/duplicate transition a byte-identical no-op (Law 15).
  */

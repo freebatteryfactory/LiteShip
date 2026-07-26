@@ -1,10 +1,21 @@
 /** Pure local-verification plan used by both humans and agents. @module */
 
+import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
+
 export interface LocalVerificationStep {
+  /** Null only for the existing gauntlet executor phase that has no registry check. */
+  readonly checkId: string | null;
   readonly label: string;
   readonly argv: readonly string[];
   readonly remedy: string;
 }
+
+const INVARIANTS_STEP: LocalVerificationStep = Object.freeze({
+  checkId: null,
+  label: 'check-invariants',
+  argv: Object.freeze(['exec', 'tsx', 'packages/cli/src/bin.ts', 'check-invariants']),
+  remedy: 'fix the reported invariant violation, then re-run preflight',
+});
 
 export interface LocalVerificationPlan {
   readonly schema: 'liteship/local-verification-plan@1';
@@ -13,35 +24,34 @@ export interface LocalVerificationPlan {
   readonly steps: readonly LocalVerificationStep[];
 }
 
-const STATIC_STEPS: readonly LocalVerificationStep[] = Object.freeze([
-  Object.freeze({
-    label: 'format:check',
-    argv: Object.freeze(['run', 'format:check']),
-    remedy: "run 'pnpm run format' to auto-fix, then re-run preflight",
-  }),
-  Object.freeze({
-    label: 'lint:structural',
-    argv: Object.freeze(['run', 'lint:structural']),
-    remedy: "fix the ast-grep finding above, then re-run 'pnpm run lint:structural'",
-  }),
-  Object.freeze({
-    label: 'lint',
-    argv: Object.freeze(['run', 'lint']),
-    remedy: "run 'pnpm run fix' (format + eslint --fix), then re-run preflight",
-  }),
-  Object.freeze({
-    label: 'typecheck',
-    argv: Object.freeze(['run', 'typecheck']),
-    remedy: 'fix the native TypeScript errors above (build + scripts + tests projects)',
-  }),
-  Object.freeze({
-    label: 'check-invariants',
-    argv: Object.freeze(['exec', 'tsx', 'packages/cli/src/bin.ts', 'check-invariants']),
-    remedy: 'fix the reported invariant violation, then re-run preflight',
-  }),
-]);
+function argvForRootCheck(execution: (typeof CHECK_REGISTRY)[number]['execution']): readonly string[] {
+  if (execution.kind !== 'root-script')
+    throw new TypeError('repository local verification requires root-script checks');
+  return Object.freeze([
+    ...(execution.invocation === 'pnpm-test' ? ['test'] : ['run', execution.script]),
+    ...execution.args,
+  ]);
+}
+
+/** Exact blocking quick-profile projection for repository context. */
+export function projectRepositoryQuickSteps(): readonly LocalVerificationStep[] {
+  return Object.freeze(
+    CHECK_REGISTRY.filter(
+      (check) =>
+        check.authority === 'blocking' && check.profiles.includes('quick') && check.contexts.includes('repository'),
+    ).map((check) =>
+      Object.freeze({
+        checkId: check.id,
+        label: check.id.slice('check/'.length),
+        argv: argvForRootCheck(check.execution),
+        remedy: check.remediation,
+      }),
+    ),
+  );
+}
 
 const DOCS_STEP: LocalVerificationStep = Object.freeze({
+  checkId: 'check/docs',
   label: 'docs:check',
   argv: Object.freeze(['run', 'docs:check:local']),
   remedy: "run 'pnpm run docs:build' and commit docs/api/ if the public API projection changed",
@@ -70,11 +80,12 @@ export function buildLocalVerificationPlan(input: {
   readonly staged: boolean;
   readonly changedPaths?: readonly string[];
 }): LocalVerificationPlan {
+  const quickSteps = projectRepositoryQuickSteps();
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
   return Object.freeze({
     schema: 'liteship/local-verification-plan@1',
     mode: input.staged ? 'staged' : 'workspace',
     docsReason: !input.staged ? 'workspace-authority' : docsAffected ? 'staged-docs-input' : 'not-affected',
-    steps: Object.freeze(docsAffected ? [...STATIC_STEPS, DOCS_STEP] : [...STATIC_STEPS]),
+    steps: Object.freeze(docsAffected ? [...quickSteps, INVARIANTS_STEP, DOCS_STEP] : [...quickSteps, INVARIANTS_STEP]),
   });
 }

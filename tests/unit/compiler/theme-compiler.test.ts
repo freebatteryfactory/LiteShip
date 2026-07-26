@@ -119,7 +119,7 @@ describe('compileTheme', () => {
       compileTheme({
         tokens: { exploit: 'red;display:block' },
       }),
-    ).toThrow(/forbidden characters \(;, \{, \}, <, >\)/);
+    ).toThrow(/HTML style attribute safely/);
   });
 
   test('rejects malformed serializer-context values', () => {
@@ -150,7 +150,7 @@ describe('compileTheme', () => {
 // memory/testing-philosophy.md (pin LAWS, not implementation).
 // ---------------------------------------------------------------------------
 describe('compileTheme error contracts (properties)', () => {
-  const FORBIDDEN_VALUE_CHARS = [';', '{', '}', '<', '>'] as const;
+  const FORBIDDEN_VALUE_CHARS = ['"', "'", '`', ';', '{', '}', '<', '>', '\\', '\u0000'] as const;
 
   // A token name that survives sanitization to a non-empty property — so the
   // value check is actually reached. (Pure ASCII letters always survive.)
@@ -214,7 +214,7 @@ describe('compileTheme error contracts (properties)', () => {
     fc.assert(
       fc.property(
         safeNameArb,
-        fc.string().filter((v) => !FORBIDDEN_VALUE_CHARS.some((c) => v.includes(c))),
+        fc.stringMatching(/^[a-zA-Z0-9#%., _-]*$/),
         (name, value) => {
           // Round-trips cleanly: a benign value is emitted, never rejected.
           const result = compileTheme({ tokens: { [name]: value } });

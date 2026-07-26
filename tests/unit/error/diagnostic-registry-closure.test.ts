@@ -49,9 +49,12 @@ describe('diagnostic registry closure', () => {
   it.each([
     ['gauntlet/no-bare-throw', 'gauntlet'],
     ['check/format', 'check'],
+    ['error/match-tag/unhandled', 'error'],
     ['core/boundary/unknown-previous-state', 'core'],
     ['schema/type', 'schema'],
+    ['audit/no-packages-discovered', 'audit'],
     ['compiler/css/unknown-state-key', 'compiler'],
+    ['genui/unknown-component', 'genui'],
     ['astro/wgpu/webgpu-unavailable', 'astro'],
     ['cli/usage', 'cli'],
     ['migrate/malformed-input', 'migrate'],

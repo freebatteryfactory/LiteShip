@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { IntegrityDigest } from '@liteship/core';
 import { CHECK_REGISTRY, type CheckPlan, type CheckReport } from '@liteship/command';
 import { createCurePacket } from '../../../../packages/cli/src/lib/cure-packet.js';
@@ -382,6 +382,7 @@ describe('check profile cache and diagnostic execution', () => {
           claim: 'The probe passes.',
           context: 'repository',
           command: 'pnpm run probe',
+          execution: { kind: 'root-script', script: 'probe', args: [], invocation: 'pnpm-run' },
           owner: 'probe.js',
           remediation: 'Repair the probe and rerun it.',
           authority: 'blocking',
@@ -544,6 +545,59 @@ describe('check profile cache and diagnostic execution', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it.each([
+    { checkId: 'check/format', inputPath: '.editorconfig', inputClass: 'transitive config' },
+    { checkId: 'check/format', inputPath: '.prettierignore', inputClass: 'transitive config' },
+    { checkId: 'check/lint', inputPath: 'eslint.config.js', inputClass: 'tool config' },
+    { checkId: 'check/typecheck', inputPath: 'tsconfig.base.json', inputClass: 'extended config' },
+    { checkId: 'check/typecheck', inputPath: 'scripts/native-tsc.ts', inputClass: 'transitive host' },
+    { checkId: 'check/docs-fast', inputPath: 'tsdoc.json', inputClass: 'transitive config' },
+    {
+      checkId: 'check/docs-fast',
+      inputPath: 'scripts/lib/typedoc-input-fingerprint.ts',
+      inputClass: 'transitive host',
+    },
+    {
+      checkId: 'check/docs-fast',
+      inputPath: 'docs/api/.typedoc-input-fingerprint.json',
+      inputClass: 'generated receipt',
+    },
+  ])(
+    '$checkId cache follows its $inputClass $inputPath and agrees with an uncached verdict',
+    ({ checkId, inputPath }) => {
+      const root = mkdtempSync(join(tmpdir(), 'liteship-check-cache-config-'));
+      try {
+        mkdirSync(dirname(join(root, inputPath)), { recursive: true });
+        writeFileSync(join(root, inputPath), 'admitted\n');
+        writeFileSync(join(root, 'unrelated.txt'), 'outside the declared closure\n');
+        const definition = CHECK_REGISTRY.find((entry) => entry.id === checkId)!;
+        const plan = oneCheckPlan(root, { id: checkId, inputs: definition.inputs });
+        const spawn = vi.fn(() => ({
+          status: readFileSync(join(root, inputPath), 'utf8') === 'admitted\n' ? 0 : 1,
+          signal: null,
+          stdout: '',
+          stderr: 'config rejected the fixture',
+        }));
+        const runner = createCheckPlanRunner({ spawn, env: { node: 'test' } });
+
+        expect(runner(plan, root).results[0]).toMatchObject({ verdict: 'pass', cacheHit: false });
+        expect(runner(plan, root).results[0]).toMatchObject({ verdict: 'pass', cacheHit: true });
+
+        writeFileSync(join(root, 'unrelated.txt'), 'still outside the declared closure\n');
+        expect(runner(plan, root).results[0]).toMatchObject({ verdict: 'pass', cacheHit: true });
+
+        writeFileSync(join(root, inputPath), 'rejected\n');
+        const cachedMode = runner(plan, root);
+        const uncachedMode = runner(plan, root, { noCache: true });
+        expect(cachedMode.results[0]).toMatchObject({ verdict: 'fail', cacheHit: false });
+        expect(cachedMode.results[0]!.findings).toEqual(uncachedMode.results[0]!.findings);
+        expect(uncachedMode.results[0]).toMatchObject({ verdict: 'fail', cacheHit: false });
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    },
+  );
 
   it('never caches failures and --no-cache bypasses a successful hit', () => {
     const root = mkdtempSync(join(tmpdir(), 'liteship-check-cache-fail-'));

@@ -176,7 +176,8 @@ export interface BoundaryCache {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-interface CacheOptions {
+/** Construction policy for one content-addressed boundary cache. */
+export interface CacheOptions {
   /**
    * Cache entry TTL in seconds. This is an eviction/cost knob, not a
    * freshness knob: an entry is keyed by its boundary content address, tier,

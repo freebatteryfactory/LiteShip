@@ -1,0 +1,11 @@
+[**LiteShip**](../../../README.md)
+
+***
+
+[LiteShip](../../../modules.md) / [gauntlet/src](../README.md) / BenchSubjectIssueKind
+
+# Type Alias: BenchSubjectIssueKind
+
+> **BenchSubjectIssueKind** = `"missing-subject"` \| `"missing-execution-source"` \| `"missing-registration"` \| `"ambiguous-registration"` \| `"missing-callback"` \| `"missing-collector"` \| `"missing-result-key"` \| `"wrong-origin"` \| `"uninvoked-subject"`
+
+Defined in: [gauntlet/src/gates/bench-subjects.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L48)

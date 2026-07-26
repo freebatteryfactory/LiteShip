@@ -9,6 +9,7 @@ function emptyScene(fps: number): CompiledScene {
     name: 'property-scene',
     duration: 60_000,
     fps,
+    bpm: 120,
     trackSpawns: [],
     beats: [],
   };

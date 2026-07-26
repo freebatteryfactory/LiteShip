@@ -27,6 +27,7 @@
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import ts from 'typescript';
 
 /** The monorepo root — this file lives at `tests/support/`, so up two. */
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
@@ -235,15 +236,14 @@ export function typecheckScript(): string {
 // Build config inputs — per-package tsconfig, tests project, api surface.
 // ---------------------------------------------------------------------------
 
-/** Tolerant JSONC reader: strips block + line comments before JSON.parse. */
+/** JSONC reader backed by TypeScript's grammar (glob syntax is not a comment). */
 function readJsonc<T>(absPath: string): T {
   const text = readFileSync(absPath, 'utf8');
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    const stripped = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-    return JSON.parse(stripped) as T;
+  const parsed = ts.parseConfigFileTextToJson(absPath, text);
+  if (parsed.error !== undefined) {
+    throw new Error(`cannot parse JSONC ${absPath}: TS${parsed.error.code}`);
   }
+  return parsed.config as T;
 }
 
 /** The `include` + `files` compile inputs of a tsconfig. */
@@ -265,10 +265,14 @@ export function packageTsconfigInputs(dir: string): TsconfigInputs | undefined {
   return { include: cfg.include, files: cfg.files };
 }
 
-/** The concrete (non-glob) `include` entries of `tsconfig.tests.json` (JSONC-tolerant). */
+/** Every authored `include` entry of `tsconfig.tests.json` (JSONC-tolerant). */
+export function tsconfigTestsIncludeEntries(): readonly string[] {
+  return readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
+}
+
+/** The concrete (non-glob) `include` entries of `tsconfig.tests.json`. */
 export function tsconfigTestsIncludeFiles(): readonly string[] {
-  const include = readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
-  return include.filter((entry) => !entry.includes('*'));
+  return tsconfigTestsIncludeEntries().filter((entry) => !entry.includes('*'));
 }
 
 /** The parsed api-surface snapshot fixture (plain JSON). */

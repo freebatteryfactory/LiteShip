@@ -311,7 +311,7 @@ export interface LiveQuantizer<
  * ({@link AsyncOwnedResource}): `await quantizer.dispose()` closes the state /
  * outputs / crossings kernels (completing subscribers, making publish inert). The
  * owning {@link Lifetime} stays reachable as `quantizer.lifetime` for advanced
- * composition (e.g. threading it into an {@link AnimatedQuantizer}).
+ * composition (e.g. threading it into an `AnimatedQuantizer`).
  */
 export type OwnedQuantizer<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> = LiveQuantizer<
   B,

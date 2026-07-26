@@ -402,6 +402,12 @@ function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
 }
 
+function requireStringArray(candidate: Readonly<Record<string, unknown>>, key: string): readonly string[] {
+  const value = candidate[key];
+  if (!isStringArray(value)) throw new TypeError(`affected plan ${key} must be strings`);
+  return value;
+}
+
 function hasExactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
   return (
     typeof value === 'object' &&
@@ -455,17 +461,13 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('affected plan mode is invalid');
   if (candidate['confidence'] !== 'high' && candidate['confidence'] !== 'low')
     throw new TypeError('affected plan confidence is invalid');
-  for (const key of [
-    'changedPaths',
-    'affectedPackages',
-    'testFiles',
-    'rationale',
-    'requiredChecks',
-    'platforms',
-    'artifacts',
-  ]) {
-    if (!isStringArray(candidate[key])) throw new TypeError(`affected plan ${key} must be strings`);
-  }
+  const changedPaths = requireStringArray(candidate, 'changedPaths');
+  const affectedPackages = requireStringArray(candidate, 'affectedPackages');
+  const testFiles = requireStringArray(candidate, 'testFiles');
+  requireStringArray(candidate, 'rationale');
+  const requiredChecks = requireStringArray(candidate, 'requiredChecks');
+  const platforms = requireStringArray(candidate, 'platforms');
+  const artifacts = requireStringArray(candidate, 'artifacts');
   if (typeof candidate['reason'] !== 'string' || candidate['reason'].length === 0)
     throw new TypeError('affected plan reason is invalid');
   if (typeof candidate['browserRequired'] !== 'boolean')
@@ -502,28 +504,28 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('high-confidence affected plans require resolved Git identities');
   }
   if (
-    !isSortedUnique(candidate['changedPaths']) ||
-    new Set(candidate['affectedPackages']).size !== candidate['affectedPackages'].length ||
-    !isSortedUnique(candidate['testFiles'])
+    !isSortedUnique(changedPaths) ||
+    new Set(affectedPackages).size !== affectedPackages.length ||
+    !isSortedUnique(testFiles)
   ) {
     throw new TypeError('affected plan path/test arrays must be sorted and package identities unique');
   }
-  const packageNames = new Set(PACKAGE_CATALOG.map((record) => record.name));
-  if (candidate['affectedPackages'].some((name) => !packageNames.has(name))) {
+  const packageNames = new Set<string>(PACKAGE_CATALOG.map((record) => record.name));
+  if (affectedPackages.some((name) => !packageNames.has(name))) {
     throw new TypeError('affected plan references a foreign package');
   }
   const checkIds = new Set(CHECK_REGISTRY.map((check) => check.id));
   if (
-    new Set(candidate['requiredChecks']).size !== candidate['requiredChecks'].length ||
-    candidate['requiredChecks'].some((id) => !checkIds.has(id))
+    new Set(requiredChecks).size !== requiredChecks.length ||
+    requiredChecks.some((id) => !checkIds.has(id))
   ) {
     throw new TypeError('affected plan references a duplicate or foreign check');
   }
   const expectedPlatforms = candidate['browserRequired'] ? ['linux', 'win32', 'browser'] : ['linux', 'win32'];
-  if (stableSerialize(candidate['platforms']) !== stableSerialize(expectedPlatforms)) {
+  if (stableSerialize(platforms) !== stableSerialize(expectedPlatforms)) {
     throw new TypeError('affected plan platforms do not match its browser authority');
   }
-  if (stableSerialize(candidate['artifacts']) !== stableSerialize(['affected-plan', 'test-results'])) {
+  if (stableSerialize(artifacts) !== stableSerialize(['affected-plan', 'test-results'])) {
     throw new TypeError('affected plan artifacts are invalid');
   }
   if (!hasExactKeys(candidate['risk'], ['level', 'highestAssurance', 'factors'])) {
@@ -553,8 +555,8 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('affected plan test partitions are stale');
   }
   if (
-    (candidate['browserRequired'] && !candidate['requiredChecks'].includes('check/test-e2e')) ||
-    (candidate['benchmarkRequired'] && !candidate['requiredChecks'].includes('check/bench')) ||
+    (candidate['browserRequired'] && !requiredChecks.includes('check/test-e2e')) ||
+    (candidate['benchmarkRequired'] && !requiredChecks.includes('check/bench')) ||
     (candidate['mode'] === 'full' &&
       (!candidate['browserRequired'] || !candidate['benchmarkRequired'] || !candidate['rustWasmRequired']))
   ) {
@@ -575,11 +577,11 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
   if (stableSerialize(prerequisites) !== stableSerialize(AFFECTED_PLAN_PREREQUISITES)) {
     throw new TypeError('affected plan must declare the canonical install and workspace-build prerequisites');
   }
-  if (candidate['mode'] === 'full' && candidate['testFiles'].length !== 0)
+  if (candidate['mode'] === 'full' && testFiles.length !== 0)
     throw new TypeError('full affected plans must not carry focused tests');
   const { planId, ...unsigned } = candidate;
   if (planId !== digest(unsigned)) throw new TypeError('affected plan integrity digest does not match its bytes');
-  if (candidate['changedPathDigest'] !== digest(candidate['changedPaths']))
+  if (candidate['changedPathDigest'] !== digest(changedPaths))
     throw new TypeError('affected plan changed-path digest is stale');
   return candidate as unknown as AffectedTestPlan;
 }

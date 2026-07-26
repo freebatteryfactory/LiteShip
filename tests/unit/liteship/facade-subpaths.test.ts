@@ -33,8 +33,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import ts from 'typescript';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, symlinkSync, existsSync, readFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
 import { tmpdir } from 'node:os';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   FACADE_SUBPATH_CONTRACT,
@@ -53,6 +54,8 @@ const REPO_ROOT = resolve(HERE, '../../..');
 const LITESHIP_PKG = resolve(REPO_ROOT, 'packages/liteship');
 const ROOT_DTS = resolve(LITESHIP_PKG, 'dist/index.d.ts');
 const ROOT_JS = resolve(LITESHIP_PKG, 'dist/index.js');
+const ROOT_SOURCE = resolve(LITESHIP_PKG, 'src/index.ts');
+const PACKAGE_SOURCES = resolve(REPO_ROOT, 'packages');
 
 /**
  * One declared facade entry: the `exports` key, the bare specifier a consumer
@@ -151,6 +154,159 @@ function consumerSource(entry: FacadeEntry): string {
   ].join('\n');
 }
 
+const EXAMPLE_FIXTURES = [
+  'declare const input: any;',
+  'declare const options: any;',
+  'declare const boundary: any;',
+  'declare const fields: any;',
+  'declare const receipt: any;',
+  'declare const spec: any;',
+  'declare const initial: any;',
+  'declare const code: any;',
+  'declare const css: string;',
+] as const;
+
+function contractExampleSources(): readonly { readonly name: string; readonly source: string }[] {
+  const rootValues = ROOT_EXPORT_CONTRACT.filter((entry) => entry.kind === 'value').map((entry) => entry.name);
+  const rootTypes = ROOT_EXPORT_CONTRACT.filter((entry) => entry.kind === 'type').map((entry) => entry.name);
+  const rootImports = [
+    `import { ${rootValues.join(', ')} } from 'liteship';`,
+    `import type { ${rootTypes.join(', ')} } from 'liteship';`,
+  ];
+  const root = ROOT_EXPORT_CONTRACT.map((entry) => ({
+    name: `root-${entry.name}`,
+    source: [
+      ...rootImports,
+      ...EXAMPLE_FIXTURES,
+      entry.kind === 'type' ? `type ContractExample = ${entry.example};` : `const contractExample = ${entry.example};`,
+      'export { };',
+      '',
+    ].join('\n'),
+  }));
+  const subpaths = FACADE_SUBPATH_CONTRACT.map((entry) => {
+    const operation = /^([A-Za-z_$][\w$]*)/.exec(entry.example)?.[1];
+    if (operation === undefined) throw new Error(`facade example has no callable root: ${entry.example}`);
+    const imports = [...new Set([entry.symbol, operation])];
+    return {
+      name: `subpath-${entry.subpath.slice(2)}`,
+      source: [
+        `import { ${imports.join(', ')} } from '${entry.specifier}';`,
+        ...EXAMPLE_FIXTURES,
+        `const contractExample = ${entry.example};`,
+        'export { contractExample };',
+        '',
+      ].join('\n'),
+    };
+  });
+  return [...root, ...subpaths];
+}
+
+function compileConsumerSources(
+  sources: readonly { readonly name: string; readonly source: string }[],
+  mode: 'node16' | 'bundler',
+): readonly string[] {
+  const files = sources.map(({ name, source }) => {
+    const path = join(sandbox, `contract-${name}.ts`);
+    writeFileSync(path, source);
+    return path;
+  });
+  const program = ts.createProgram({ rootNames: files, options: optionsFor(mode) });
+  const consumerSet = new Set(files.map((file) => file.replace(/\\/g, '/')));
+  return ts
+    .getPreEmitDiagnostics(program)
+    .filter(
+      (diagnostic) => diagnostic.file !== undefined && consumerSet.has(diagnostic.file.fileName.replace(/\\/g, '/')),
+    )
+    .map((diagnostic) => {
+      const where = diagnostic.file?.fileName ?? '<no file>';
+      return `${where}: TS${diagnostic.code} ${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}`;
+    });
+}
+
+function runtimeModuleSpecifiers(source: ts.SourceFile): readonly string[] {
+  const specifiers: string[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+      const clause = node.importClause;
+      const bindings = clause?.namedBindings;
+      const namedTypeOnly =
+        bindings !== undefined &&
+        ts.isNamedImports(bindings) &&
+        bindings.elements.length > 0 &&
+        bindings.elements.every((element) => element.isTypeOnly);
+      if (clause === undefined || (!clause.isTypeOnly && !namedTypeOnly)) specifiers.push(node.moduleSpecifier.text);
+    } else if (
+      ts.isExportDeclaration(node) &&
+      node.moduleSpecifier !== undefined &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      const namedTypeOnly =
+        node.exportClause !== undefined &&
+        ts.isNamedExports(node.exportClause) &&
+        node.exportClause.elements.length > 0 &&
+        node.exportClause.elements.every((element) => element.isTypeOnly);
+      if (!node.isTypeOnly && !namedTypeOnly) specifiers.push(node.moduleSpecifier.text);
+    } else if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments.length === 1 &&
+      ts.isStringLiteral(node.arguments[0])
+    ) {
+      specifiers.push(node.arguments[0].text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return specifiers;
+}
+
+interface ForbiddenRuntimeEdge {
+  readonly importer: string;
+  readonly specifier: string;
+}
+
+const NODE_BUILTINS = new Set(builtinModules.flatMap((name) => [name, `node:${name}`]));
+
+function transitiveHostEdges(
+  entry: string,
+  options: ts.CompilerOptions,
+  traversalRoot = PACKAGE_SOURCES,
+): readonly ForbiddenRuntimeEdge[] {
+  const queue = [entry];
+  const visited = new Set<string>();
+  const forbidden: ForbiddenRuntimeEdge[] = [];
+  const host = ts.createCompilerHost(options);
+  while (queue.length > 0) {
+    const importer = resolve(queue.shift()!);
+    if (visited.has(importer)) continue;
+    visited.add(importer);
+    const source = ts.createSourceFile(importer, readFileSync(importer, 'utf8'), ts.ScriptTarget.Latest, true);
+    for (const specifier of runtimeModuleSpecifiers(source)) {
+      if (
+        HOST_SCOPES.some((scope) => specifier === scope || specifier.startsWith(`${scope}/`)) ||
+        NODE_BUILTINS.has(specifier)
+      ) {
+        forbidden.push({ importer: relative(REPO_ROOT, importer).replace(/\\/g, '/'), specifier });
+        continue;
+      }
+      const resolved = ts.resolveModuleName(specifier, importer, options, host).resolvedModule?.resolvedFileName;
+      if (resolved === undefined || resolved.endsWith('.d.ts')) continue;
+      const normalized = resolve(resolved);
+      const withinTraversal = relative(traversalRoot, normalized);
+      if (withinTraversal !== '..' && !withinTraversal.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`)) {
+        queue.push(normalized);
+      }
+    }
+  }
+  return forbidden;
+}
+
+function sourceResolutionOptions(): ts.CompilerOptions {
+  const parsed = ts.getParsedCommandLineOfConfigFile(resolve(REPO_ROOT, 'tsconfig.tests.json'), {}, ts.sys);
+  if (parsed === undefined) throw new Error('tsconfig.tests.json could not be parsed');
+  return parsed.options;
+}
+
 describe('liteship facade — subpath resolution (node16 + bundler)', () => {
   it('every declared subpath equals the package.json exports keys (no silent drift)', () => {
     const manifest = JSON.parse(readFileSync(join(LITESHIP_PKG, 'package.json'), 'utf8')) as {
@@ -202,6 +358,31 @@ describe('liteship facade — consumer type-checks (node16 + bundler)', () => {
       },
     );
   }
+
+  for (const mode of ['node16', 'bundler'] as const) {
+    it(
+      `compiles every authored root and subpath contract example under ${mode}`,
+      { timeout: scaledTimeout(60_000) },
+      () => {
+        const diagnostics = compileConsumerSources(contractExampleSources(), mode);
+        expect(diagnostics, `contract examples failed under ${mode}:\n${diagnostics.join('\n')}`).toEqual([]);
+      },
+    );
+  }
+
+  it('reds when an authored example names a missing public export', () => {
+    const diagnostics = compileConsumerSources(
+      [
+        {
+          name: 'negative-missing-export',
+          source:
+            "import { definitelyNotPublic } from 'liteship';\nconst value = definitelyNotPublic();\nexport { value };\n",
+        },
+      ],
+      'bundler',
+    );
+    expect(diagnostics.some((line) => line.includes('has no exported member'))).toBe(true);
+  });
 });
 
 describe('liteship facade — root export budget (exact match + caps)', () => {
@@ -345,6 +526,25 @@ describe('liteship/genui — direct owner identity', () => {
 });
 
 describe('liteship facade — the root is host-integration-free', () => {
+  it('the complete transitive source graph contains no host integration or Node builtin edge', () => {
+    expect(transitiveHostEdges(ROOT_SOURCE, sourceResolutionOptions())).toEqual([]);
+  });
+
+  it('the transitive graph proof catches a host edge hidden behind a relative module', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'liteship-host-edge-'));
+    try {
+      const entry = join(fixture, 'entry.ts');
+      const leaf = join(fixture, 'leaf.ts');
+      writeFileSync(entry, "export { value } from './leaf.js';\n");
+      writeFileSync(leaf, "import '@liteship/web';\nexport const value = 1;\n");
+      expect(transitiveHostEdges(entry, sourceResolutionOptions(), fixture)).toEqual([
+        expect.objectContaining({ specifier: '@liteship/web' }),
+      ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it('the built dist/index.js pulls no host integration (astro/vite/web)', () => {
     const js = readFileSync(ROOT_JS, 'utf8');
     // Every `from '@liteship/…'` module specifier the emitted root evaluates.

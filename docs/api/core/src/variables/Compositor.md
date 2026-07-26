@@ -10,10 +10,10 @@
 
 Defined in: [core/src/media/compositor.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L239)
 
-Compositor — the live merge point for every attached [Quantizer](../interfaces/Quantizer.md).
+Compositor — the live merge point for every attached `Quantizer`.
 
 `Compositor.create` returns a live compositor bound to a fresh
-[RuntimeCoordinator](RuntimeCoordinator.md), paired with the [Lifetime](Lifetime.md) that owns its
+`RuntimeCoordinator`, paired with the `Lifetime` that owns its
 teardown. Adding quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA
 outputs all flow through the zero-allocation hot path backed by
 [CompositorStatePool](../type-aliases/CompositorStatePool.md).

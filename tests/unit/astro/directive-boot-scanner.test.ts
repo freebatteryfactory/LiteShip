@@ -144,6 +144,27 @@ describe('Astro directive boot scanner', () => {
     );
   });
 
+  test('gives always-on graph markers an install remedy instead of a fictional config key', async () => {
+    const { Diagnostics } = await import('@liteship/core');
+    const { sink, events } = Diagnostics.createBufferSink();
+    const previous = Diagnostics.setSink(sink);
+    Diagnostics.clearOnce();
+    try {
+      const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
+      const graph = document.createElement('div');
+      graph.setAttribute('data-liteship-directive', 'graph');
+      document.body.appendChild(graph);
+
+      await scanAndBootDirectives([]);
+
+      const warning = events.find((event) => event.code === 'astro/directive-boot/directive-not-enabled');
+      expect(warning?.message).toContain('registered automatically');
+      expect(warning?.message).not.toContain('graph: { enabled: true }');
+    } finally {
+      Diagnostics.setSink(previous);
+    }
+  });
+
   test('warns for a bare boundary payload even beside a non-consuming implicit peer (gpu)', async () => {
     const { Diagnostics } = await import('@liteship/core');
     const { sink, events } = Diagnostics.createBufferSink();

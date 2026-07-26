@@ -337,10 +337,15 @@ export function parseFlakeEvidence(value: unknown): FlakeEvidence {
       throw new TypeError('flake target evidence paths must be sorted and unique');
     }
     if (target['kind'] !== 'node' && target['kind'] !== 'browser') throw new TypeError('flake target kind is invalid');
-    for (const key of ['owner', 'provingScar', 'remediation']) {
-      if (typeof target[key] !== 'string' || target[key].length === 0)
-        throw new TypeError(`flake target ${key} is invalid`);
-    }
+    const targetOwner = target['owner'];
+    const targetProvingScar = target['provingScar'];
+    const targetRemediation = target['remediation'];
+    if (typeof targetOwner !== 'string' || targetOwner.length === 0)
+      throw new TypeError('flake target owner is invalid');
+    if (typeof targetProvingScar !== 'string' || targetProvingScar.length === 0)
+      throw new TypeError('flake target provingScar is invalid');
+    if (typeof targetRemediation !== 'string' || targetRemediation.length === 0)
+      throw new TypeError('flake target remediation is invalid');
     if (!Array.isArray(target['reproducer']) || target['reproducer'].some((part) => typeof part !== 'string')) {
       throw new TypeError('flake target reproducer is invalid');
     }
@@ -369,8 +374,9 @@ export function parseFlakeEvidence(value: unknown): FlakeEvidence {
         throw new TypeError('flake observation target or iteration is stale');
       }
       if (
+        typeof observation['exitCode'] !== 'number' ||
         !Number.isSafeInteger(observation['exitCode']) ||
-        Number(observation['exitCode']) < 0 ||
+        observation['exitCode'] < 0 ||
         (observation['verdict'] !== 'pass' && observation['verdict'] !== 'fail') ||
         (observation['exitCode'] === 0) !== (observation['verdict'] === 'pass')
       ) {
@@ -388,7 +394,7 @@ export function parseFlakeEvidence(value: unknown): FlakeEvidence {
         throw new TypeError('flake observation output evidence is invalid');
       }
       const expectedSignature = failureSignatureFor(
-        { path: target['target'], owner: target['owner'] },
+        { path: target['target'], owner: targetOwner },
         {
           verdict: observation['verdict'],
           exitCode: observation['exitCode'],

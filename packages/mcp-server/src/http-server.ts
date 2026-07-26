@@ -1,11 +1,8 @@
 /**
  * MCP HTTP server bootstrap. The pure handler logic lives in `http.ts`
  * (exported as `handleRequest` / `respond`). This module owns the
- * Node http server lifecycle (createServer + listen + SIGINT-await) and
- * is excluded from coverage because the bootstrap path can only be
- * exercised by the integration spawn at tests/integration/mcp/http.test.ts —
- * Windows can't deliver SIGINT to spawned subprocesses cleanly, so a
- * unit test would hang.
+ * Node http server lifecycle. Embedded callers receive an explicit stop
+ * handle; only the direct executable entrypoint owns process signals.
  *
  * Splitting this out lets the rest of the transport stay in coverage with
  * no `c8 ignore` annotations.
@@ -14,8 +11,20 @@
  */
 
 import { createServer } from 'node:http';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { ValidationError } from '@liteship/error';
 import { handleRequest } from './http.js';
+
+/** A running HTTP transport and the authority required to stop it. */
+export interface HttpServerHandle {
+  readonly transport: 'http';
+  readonly host: string;
+  readonly port: number;
+  readonly url: string;
+  readonly done: Promise<void>;
+  stop(): Promise<void>;
+}
 
 /**
  * Build the tagged variant for a rejected `--http` bind. The bind is a
@@ -53,8 +62,12 @@ export function parseHttpBind(bind: number | string): { readonly host: string; r
   throw invalidBind(bind);
 }
 
-/** Run the MCP HTTP server bound to `bind` (e.g. 3838, ":3838", or "127.0.0.1:8080"). */
-export async function runHttp(bind: number | string): Promise<void> {
+/**
+ * Start the MCP HTTP server bound to `bind` and return its lifecycle handle.
+ * This function never writes process output or installs signal handlers, so it
+ * is safe to embed in another host.
+ */
+export async function runHttp(bind: number | string): Promise<HttpServerHandle> {
   const { host, port } = parseHttpBind(bind);
 
   const server = createServer(async (req, res) => {
@@ -78,35 +91,66 @@ export async function runHttp(bind: number | string): Promise<void> {
     res.end(JSON.stringify(response));
   });
 
-  await new Promise<void>((resolve) => server.listen(port, host, () => resolve()));
+  await new Promise<void>((resolveListen, rejectListen) => {
+    const onError = (error: Error): void => rejectListen(error);
+    server.once('error', onError);
+    server.listen(port, host, () => {
+      server.off('error', onError);
+      resolveListen();
+    });
+  });
   // Resolve the actual bound port — when callers pass :0 they want the
   // ephemeral port the OS chose, not the literal 0 they requested.
   const addr = server.address();
   const boundPort = typeof addr === 'object' && addr ? addr.port : port;
-  process.stdout.write(
-    JSON.stringify({
-      status: 'ok',
-      command: 'mcp',
-      transport: 'http',
-      url: `http://${host}:${boundPort}/`,
-    }) + '\n',
-  );
-
-  await new Promise<void>((resolve) => {
-    process.on('SIGINT', () => {
-      server.close();
-      resolve();
-    });
+  const url = `http://${host}:${boundPort}/`;
+  const done = new Promise<void>((resolveDone, rejectDone) => {
+    server.once('close', resolveDone);
+    server.once('error', rejectDone);
   });
+  let stopPromise: Promise<void> | undefined;
+  const stop = (): Promise<void> => {
+    stopPromise ??= new Promise<void>((resolveStop, rejectStop) => {
+      if (!server.listening) {
+        resolveStop();
+        return;
+      }
+      server.close((error) => {
+        if (error) rejectStop(error);
+        else resolveStop();
+      });
+    }).then(async () => done);
+    return stopPromise;
+  };
+  return { transport: 'http', host, port: boundPort, url, done, stop };
 }
 
-if (
-  import.meta.url === `file://${process.argv[1]}` ||
-  process.argv[1]?.endsWith('http-server.ts') ||
-  process.argv[1]?.endsWith('http.ts')
-) {
+function isDirectEntrypoint(moduleUrl: string, argvPath: string | undefined): boolean {
+  return argvPath !== undefined && pathToFileURL(resolve(argvPath)).href === moduleUrl;
+}
+
+async function runHttpEntrypoint(bind: number | string): Promise<void> {
+  const handle = await runHttp(bind);
+  process.stdout.write(
+    JSON.stringify({ status: 'ok', command: 'mcp', transport: handle.transport, url: handle.url }) + '\n',
+  );
+  const stop = (): void => {
+    void handle.stop().catch((error: unknown) => {
+      process.stderr.write(JSON.stringify({ error: `failed to stop MCP HTTP server: ${String(error)}` }) + '\n');
+      process.exitCode = 1;
+    });
+  };
+  process.once('SIGINT', stop);
+  try {
+    await handle.done;
+  } finally {
+    process.removeListener('SIGINT', stop);
+  }
+}
+
+if (isDirectEntrypoint(import.meta.url, process.argv[1])) {
   const bind = process.argv[2] ?? ':0';
-  runHttp(bind).catch((err: unknown) => {
+  runHttpEntrypoint(bind).catch((err: unknown) => {
     process.stderr.write(JSON.stringify({ error: String(err) }) + '\n');
     process.exit(1);
   });

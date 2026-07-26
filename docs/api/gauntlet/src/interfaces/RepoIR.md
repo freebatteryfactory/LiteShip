@@ -20,7 +20,7 @@ edges" item). B1 ships the IR without it.
 
 ### benchmarkSubjects?
 
-> `readonly` `optional` **benchmarkSubjects?**: `BenchmarkSubjectFacts`
+> `readonly` `optional` **benchmarkSubjects?**: [`BenchmarkSubjectFacts`](BenchmarkSubjectFacts.md)
 
 Defined in: [gauntlet/src/repo-ir.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L280)
 

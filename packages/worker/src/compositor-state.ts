@@ -19,7 +19,7 @@
 import type { RuntimeCoordinator, ContentAddress } from '@liteship/core';
 import { StateName as mkStateName } from '@liteship/core';
 import type { WorkerUpdate, BootstrapQuantizerRegistration, ResolvedStateEntry } from './messages.js';
-import { makeResolvedStateEnvelope } from './messages.js';
+import { defineResolvedStateEnvelope } from './messages.js';
 import type {
   CompositorWorkerState,
   ResolvedStateAckPayload,
@@ -49,17 +49,6 @@ import type { StartupPacketState } from './compositor-types.js';
 import { type CompositorMode, initialMode, isStartup, steadyMode } from './compositor-mode.js';
 
 // ---------------------------------------------------------------------------
-// Prepared-registration transfer cache
-// ---------------------------------------------------------------------------
-
-/** A registration whose thresholds have been packed into a transferable buffer. */
-interface PreparedRegistration {
-  readonly source: BootstrapQuantizerRegistration;
-  readonly transferRegistration: BootstrapQuantizerRegistration;
-  readonly buffer: ArrayBuffer;
-}
-
-// ---------------------------------------------------------------------------
 // State record
 // ---------------------------------------------------------------------------
 
@@ -81,7 +70,6 @@ export interface CompositorWorkerRuntimeState {
   readonly snapshotByName: Map<string, BootstrapQuantizerRegistration>;
   readonly activeRegistrations: Map<string, BootstrapQuantizerRegistration>;
   readonly confirmedSnapshotNames: Set<string>;
-  readonly preparedRegistrationCache: Map<string, PreparedRegistration>;
   readonly startupPacket: StartupPacketState;
 
   // — Update-batch scheduler (steady-state) —
@@ -121,7 +109,6 @@ export function createCompositorWorkerState(params: {
     snapshotByName: new Map(bootstrapSnapshot.map((registration) => [registration.name, registration] as const)),
     activeRegistrations: new Map(),
     confirmedSnapshotNames: new Set(),
-    preparedRegistrationCache: new Map(),
     startupPacket: createStartupPacketState(bootstrapSnapshot.length > 0 ? 'warm-snapshot' : 'cold', bootstrapSnapshot),
     steadyStatePendingUpdates: [],
     flushScheduled: false,
@@ -138,39 +125,15 @@ export function createCompositorWorkerState(params: {
 // Prepared-registration cache (transfer staging)
 // ---------------------------------------------------------------------------
 
-function getPreparedRegistration(
-  state: CompositorWorkerRuntimeState,
-  registration: BootstrapQuantizerRegistration,
-): PreparedRegistration {
-  const cached = state.preparedRegistrationCache.get(registration.name);
-  /* v8 ignore next — current call sites always delete the cache entry in the same
-     synchronous turn that sets it (see `consumePreparedRegistrations`), so this
-     cache-hit arm is reserved for a future pre-flight path that warms the cache
-     before dispatch; unreachable under today's code paths. */
-  if (cached && cached.source === registration && cached.buffer.byteLength > 0) {
-    return cached;
-  }
-
-  const { registration: transferRegistration, buffer } = prepareRegistrationForTransfer(registration);
-  const prepared: PreparedRegistration = {
-    source: registration,
-    transferRegistration,
-    buffer,
-  };
-  state.preparedRegistrationCache.set(registration.name, prepared);
-  return prepared;
-}
-
-function consumePreparedRegistrations(
-  state: CompositorWorkerRuntimeState,
-  registrations: readonly BootstrapQuantizerRegistration[],
-): { registrations: BootstrapQuantizerRegistration[]; buffers: ArrayBuffer[] } {
+function consumePreparedRegistrations(registrations: readonly BootstrapQuantizerRegistration[]): {
+  registrations: BootstrapQuantizerRegistration[];
+  buffers: ArrayBuffer[];
+} {
   const buffers: ArrayBuffer[] = [];
   const transferRegistrations = registrations.map((registration) => {
-    const prepared = getPreparedRegistration(state, registration);
-    state.preparedRegistrationCache.delete(registration.name);
+    const prepared = prepareRegistrationForTransfer(registration);
     buffers.push(prepared.buffer);
-    return prepared.transferRegistration;
+    return prepared.registration;
   });
 
   return {
@@ -267,7 +230,7 @@ function ensureResolvedStateMode(state: CompositorWorkerRuntimeState): void {
     _send(state.worker, { type: 'init' });
   }
   if (registrations.length > 0) {
-    const { registrations: transferRegs, buffers } = consumePreparedRegistrations(state, registrations);
+    const { registrations: transferRegs, buffers } = consumePreparedRegistrations(registrations);
     _send(
       state.worker,
       {
@@ -294,7 +257,7 @@ function sendResolvedStateMessage(
   applyResolvedStatesToRuntime(state, states);
   const expectAck = state.resolvedStateAckListeners.size > 0 || state.startupTelemetry !== undefined;
   const dispatchStartNs = currentTimeNs();
-  _send(state.worker, makeResolvedStateEnvelope(type, states, expectAck));
+  _send(state.worker, defineResolvedStateEnvelope(type, states, expectAck));
   const dispatchCompletedNs = currentTimeNs();
   // After ensureResolvedStateMode the machine is always steady.
   if (state.mode._tag === 'steady') {
@@ -350,7 +313,6 @@ export function addQuantizer(
     return;
   }
 
-  state.preparedRegistrationCache.delete(name);
   state.activeRegistrations.set(name, registration);
   const snapshotRegistration = state.snapshotByName.get(name);
   const isSnapshotMatch = sameBootstrapRegistration(snapshotRegistration, registration);
@@ -377,13 +339,12 @@ export function addQuantizer(
     return;
   }
 
-  const { registrations: transferRegistrations, buffers } = consumePreparedRegistrations(state, [registration]);
+  const { registrations: transferRegistrations, buffers } = consumePreparedRegistrations([registration]);
   _send(state.worker, { type: 'add-quantizer', ...transferRegistrations[0]! }, buffers);
 }
 
 /** Remove a quantizer from the worker. */
 export function removeQuantizer(state: CompositorWorkerRuntimeState, name: string): void {
-  state.preparedRegistrationCache.delete(name);
   state.activeRegistrations.delete(name);
   state.confirmedSnapshotNames.delete(name);
   state.runtime.removeQuantizer(name);
@@ -500,7 +461,7 @@ export function requestCompute(state: CompositorWorkerRuntimeState): void {
   );
 
   state.flushScheduled = false;
-  const { registrations: transferRegs, buffers } = consumePreparedRegistrations(state, packet.registrations);
+  const { registrations: transferRegs, buffers } = consumePreparedRegistrations(packet.registrations);
   const transferPacket = { ...packet, registrations: transferRegs };
   const dispatchStartNs = currentTimeNs();
   _send(
@@ -560,7 +521,6 @@ export function clearTransientState(state: CompositorWorkerRuntimeState): void {
   state.stateListeners.clear();
   state.resolvedStateAckListeners.clear();
   state.metricsListeners.clear();
-  state.preparedRegistrationCache.clear();
   state.lastMetrics = null;
   state.lastWorkerError = null;
 }

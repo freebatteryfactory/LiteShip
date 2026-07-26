@@ -12,7 +12,7 @@ Defined in: [compiler/src/token-css.ts:137](https://github.com/freebatteryfactor
 
 Token CSS compiler namespace.
 
-Compiles a single [Token](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md) into its CSS custom property
+Compiles a single [Token](../../../liteship/src/type-aliases/Token.md) into its CSS custom property
 definitions (with optional `@property` registration for animatable
 values) and, when a theme is supplied, the per-variant override blocks.
 
@@ -24,7 +24,7 @@ values) and, when a theme is supplied, the per-variant override blocks.
 
 Compile a token (optionally with theme overrides) into CSS.
 
-Compile a single [Token](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md) into CSS custom property definitions.
+Compile a single [Token](../../../liteship/src/type-aliases/Token.md) into CSS custom property definitions.
 
 Emits any applicable `@property` registration, the `:root` fallback, and
 (when a `theme` is supplied) per-variant override selectors.
@@ -33,11 +33,11 @@ Emits any applicable `@property` registration, the `:root` fallback, and
 
 ##### token
 
-[`Token`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md)
+[`Token`](../../../liteship/src/type-aliases/Token.md)
 
 ##### theme?
 
-[`Theme`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Theme.md)
+[`Theme`](../../../liteship/src/type-aliases/Theme.md)
 
 #### Returns
 

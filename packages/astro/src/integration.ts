@@ -14,8 +14,9 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
+import { Diagnostics } from '@liteship/core';
 import type { BoundaryManifestFile } from '@liteship/edge';
-import { InvariantViolationError } from '@liteship/error';
+import { InvariantViolationError, ValidationError } from '@liteship/error';
 import {
   collectBoundaryManifest,
   loadProjectConfig,
@@ -110,14 +111,6 @@ export interface IntegrationConfig {
   readonly exclude?: readonly string[];
   /** Enable the inline detect script (default `true`). */
   readonly detect?: boolean;
-  /**
-   * @deprecated No-op. Server Islands is stable in Astro (since v5); there is
-   * no experimental flag to toggle on Astro 7. Using `server:defer` with a
-   * configured adapter is all that's needed — liteship does nothing here. This
-   * option is retained only so existing configs keep type-checking; it will
-   * be removed in a future major.
-   */
-  readonly serverIslands?: boolean;
   /** WASM runtime configuration. */
   readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
   /** GPU runtime configuration. */
@@ -304,6 +297,17 @@ const INSPECTOR_TOOLBAR_ICON =
  * ```
  */
 export function integration(config?: IntegrationConfig): AstroIntegration {
+  if (config && Object.prototype.hasOwnProperty.call(config, 'serverIslands')) {
+    const message =
+      '`serverIslands` was removed because Astro 7 supports Server Islands without an integration flag. ' +
+      'Remove this option and use `server:defer` with a configured Astro adapter.';
+    Diagnostics.errorRegistered({
+      source: 'liteship/astro.integration',
+      code: 'astro/integration/server-islands-removed',
+      message,
+    });
+    throw ValidationError('liteship/astro.integration', message);
+  }
   let effectiveConfig = config;
   let detectEnabled = true;
   let workersEnabled = false;

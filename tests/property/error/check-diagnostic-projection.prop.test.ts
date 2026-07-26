@@ -86,7 +86,7 @@ describe('check diagnostic projection', () => {
 
   it('does not depend on registry iteration order', () => {
     fc.assert(
-      fc.property(fc.shuffledSubarray(CHECK_REGISTRY, { minLength: CHECK_REGISTRY.length }), (permutation) => {
+      fc.property(fc.shuffledSubarray([...CHECK_REGISTRY], { minLength: CHECK_REGISTRY.length }), (permutation) => {
         return diagnosticMismatches(permutation, checkDiagnostics()).length === 0;
       }),
       { numRuns: 100 },

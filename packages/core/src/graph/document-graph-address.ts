@@ -15,7 +15,7 @@
  * @module
  */
 
-import { ParseError } from '@liteship/error';
+import { ParseError, type DiagnosticCodeFor } from '@liteship/error';
 import type { ContentAddress, AddressedDigest } from '../schema/brands.js';
 import { IntegrityDigest } from '../schema/brands.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
@@ -27,6 +27,19 @@ import type { DocumentGraph as DocGraph, DocumentGraphNode, DocumentGraphEdge } 
 import type { CellMeta } from '../schema/protocol.js';
 import type { HLC } from '../schema/brands.js';
 import { isWellFormedNode } from './document-graph-schema.js';
+
+const DOCUMENT_GRAPH_DECODE_CODE = {
+  notAnObject: 'core/document-graph/not_an_object',
+  wrongTag: 'core/document-graph/wrong_tag',
+  unsupportedVersion: 'core/document-graph/unsupported_version',
+  malformedNodes: 'core/document-graph/malformed_nodes',
+  malformedEdges: 'core/document-graph/malformed_edges',
+  malformedNode: 'core/document-graph/malformed_node',
+  malformedEdge: 'core/document-graph/malformed_edge',
+  malformedMeta: 'core/document-graph/malformed_meta',
+  malformedId: 'core/document-graph/malformed_id',
+  malformedDigest: 'core/document-graph/malformed_digest',
+} as const satisfies Readonly<Record<string, DiagnosticCodeFor<'core'>>>;
 
 /**
  * The ONE `_version` this build's DocumentGraph reader understands. A graph
@@ -169,29 +182,29 @@ export function linearizeGraph(graph: {
 export function decodeDocumentGraph(value: unknown): DocGraph {
   if (!isRecord(value)) {
     throw ParseError('DocumentGraph', `expected an object, got ${value === null ? 'null' : typeof value}`, {
-      code: 'core/document-graph/not_an_object',
+      code: DOCUMENT_GRAPH_DECODE_CODE.notAnObject,
     });
   }
   if (value._tag !== 'DocumentGraph') {
     throw ParseError('DocumentGraph', `expected _tag "DocumentGraph", got ${JSON.stringify(value._tag)}`, {
-      code: 'core/document-graph/wrong_tag',
+      code: DOCUMENT_GRAPH_DECODE_CODE.wrongTag,
     });
   }
   if (value._version !== SUPPORTED_GRAPH_VERSION) {
     throw ParseError(
       'DocumentGraph',
       `unsupported _version ${JSON.stringify(value._version)} — this build understands _version ${SUPPORTED_GRAPH_VERSION} only`,
-      { code: 'core/document-graph/unsupported_version' },
+      { code: DOCUMENT_GRAPH_DECODE_CODE.unsupportedVersion },
     );
   }
   if (!Array.isArray(value.nodes)) {
     throw ParseError('DocumentGraph', 'expected `nodes` to be an array', {
-      code: 'core/document-graph/malformed_nodes',
+      code: DOCUMENT_GRAPH_DECODE_CODE.malformedNodes,
     });
   }
   if (!Array.isArray(value.edges)) {
     throw ParseError('DocumentGraph', 'expected `edges` to be an array', {
-      code: 'core/document-graph/malformed_edges',
+      code: DOCUMENT_GRAPH_DECODE_CODE.malformedEdges,
     });
   }
   // Collect the nodes THROUGH the well-formedness gate so each is narrowed to
@@ -201,7 +214,7 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
     const candidate: unknown = value.nodes[i];
     if (!isWellFormedNode(candidate)) {
       throw ParseError('DocumentGraph', `node at index ${i} is not a well-formed DocumentGraphNode`, {
-        code: 'malformed_node',
+        code: DOCUMENT_GRAPH_DECODE_CODE.malformedNode,
       });
     }
     nodes.push(candidate);
@@ -221,7 +234,7 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
       !EDGE_TYPES.has(edge.type)
     ) {
       throw ParseError('DocumentGraph', `edge at index ${i} is not a well-formed { from, to, type: EdgeType } triple`, {
-        code: 'malformed_edge',
+        code: DOCUMENT_GRAPH_DECODE_CODE.malformedEdge,
       });
     }
     edges.push({ from: edge.from as ContentAddress, to: edge.to as ContentAddress, type: edge.type as EdgeType });
@@ -229,19 +242,21 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
   const metaRecord = value.meta;
   if (!isRecord(metaRecord) || typeof metaRecord.version !== 'number') {
     throw ParseError('DocumentGraph', 'expected `meta` to be a well-formed CellMeta (created/updated HLC + version)', {
-      code: 'malformed_meta',
+      code: DOCUMENT_GRAPH_DECODE_CODE.malformedMeta,
     });
   }
   const created = readHlc(metaRecord.created);
   const updated = readHlc(metaRecord.updated);
   if (!created || !updated) {
     throw ParseError('DocumentGraph', 'expected `meta.created` / `meta.updated` to be well-formed HLC stamps', {
-      code: 'malformed_meta',
+      code: DOCUMENT_GRAPH_DECODE_CODE.malformedMeta,
     });
   }
   const meta: CellMeta = { created, updated, version: metaRecord.version };
   if (typeof value.id !== 'string') {
-    throw ParseError('DocumentGraph', 'expected `id` to be a content-address string', { code: 'malformed_id' });
+    throw ParseError('DocumentGraph', 'expected `id` to be a content-address string', {
+      code: DOCUMENT_GRAPH_DECODE_CODE.malformedId,
+    });
   }
   const digestRecord = value.digest;
   if (
@@ -251,7 +266,7 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
     (digestRecord.algo !== 'sha256' && digestRecord.algo !== 'blake3')
   ) {
     throw ParseError('DocumentGraph', 'expected `digest` to be a well-formed AddressedDigest', {
-      code: 'malformed_digest',
+      code: DOCUMENT_GRAPH_DECODE_CODE.malformedDigest,
     });
   }
   const digest: AddressedDigest = {

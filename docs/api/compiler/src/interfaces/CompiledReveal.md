@@ -22,7 +22,7 @@ Defined in: [compiler/src/reveal-compile.ts:29](https://github.com/freebatteryfa
 
 ### graph
 
-> `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+> `readonly` **graph**: [`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 Defined in: [compiler/src/reveal-compile.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L31)
 
@@ -30,7 +30,7 @@ Defined in: [compiler/src/reveal-compile.ts:31](https://github.com/freebatteryfa
 
 ### motion
 
-> `readonly` **motion**: `LoweredMotionPlan`
+> `readonly` **motion**: [`LoweredMotionPlan`](../../../liteship/src/motion/interfaces/LoweredMotionPlan.md)
 
 Defined in: [compiler/src/reveal-compile.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L30)
 

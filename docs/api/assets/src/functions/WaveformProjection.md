@@ -8,7 +8,7 @@
 
 > **WaveformProjection**(`registry`, `audioAssetId`, `opts?`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, readonly `number`[], `unknown`\>
 
-Defined in: [assets/src/analysis/waveform.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L49)
+Defined in: [assets/src/analysis/waveform.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L53)
 
 Build a WaveformProjection cachedProjection capsule for a named audio asset,
 validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) the caller assembled.

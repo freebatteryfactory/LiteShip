@@ -135,6 +135,10 @@ export const packageSmokeCommand: HandledCommand = {
       'Release gate: pack every publishable @liteship/* scope, install into an isolated consumer, and import-smoke every module specifier (+ liteship binstub).',
     requires: ['runPackageSmoke'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
+    cli: {
+      outputMode: 'json',
+      adapterFlags: { '--hermetic': { type: 'boolean' }, '--artifact-dir': { type: 'string' } },
+    },
     outputSchema: PackageSmokePayloadSchema,
     // NOT mcpExposed: the engine is a CLI-injected subprocess orchestrator
     // (runPackageSmoke spawns pnpm pack/install/tar/node, mutating a scratch tree);

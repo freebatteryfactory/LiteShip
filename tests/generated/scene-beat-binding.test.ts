@@ -5,7 +5,7 @@
 // real premise guard so it cannot silently go stale. Reason:
 //   'scene.beat-binding' is a sceneComposition-tagged capsule with no registered scene driver — it declares no compileScene-able scene (no tracks, fps, frame stream, or playback) to tick. It is a pre-runtime transform, so the frame-stream / sync / playback / per-frame-budget checks have nothing to drive.
 import { describe, it, expect } from 'vitest';
-import { beatBindingCapsule } from '../../packages/scene/src/capsules/beat-binding.js';
+import { beatBindingCapsule } from '../../packages/scene/src/beat-binding-capsule.js';
 
 describe('scene.beat-binding', () => {
   // Non-emitted / EXEMPTED checks (documented):

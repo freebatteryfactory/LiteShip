@@ -6,7 +6,7 @@
 
 # Interface: AuditFinding
 
-Defined in: [audit/src/types.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L67)
+Defined in: [audit/src/types.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L110)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:67](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **id**: `string`
 
-Defined in: [audit/src/types.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L68)
+Defined in: [audit/src/types.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L111)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:68](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **location?**: [`AuditLocation`](AuditLocation.md)
 
-Defined in: [audit/src/types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L74)
+Defined in: [audit/src/types.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L117)
 
 ***
 
@@ -30,15 +30,15 @@ Defined in: [audit/src/types.ts:74](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **metadata?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [audit/src/types.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L75)
+Defined in: [audit/src/types.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L118)
 
 ***
 
 ### rule
 
-> `readonly` **rule**: `string`
+> `readonly` **rule**: `"console-call"` \| `"consumer-package-missing"` \| `"default-export"` \| `"export-target-missing"` \| `"fallback-laundering"` \| `"host-surface"` \| `"missing-manifest-dependency"` \| `"missing-manifest-dependency-dynamic"` \| `"missing-runtime-capability"` \| `"no-packages-discovered"` \| `"orphan-export-candidate"` \| `"package-export-surface"` \| `"package-artifacts-unverified"` \| `"package-topology"` \| `"placeholder-content"` \| `"stub-marker"` \| `"suspicious-reimplementation"` \| `"symbol-orphan-candidate"` \| `"unknown-internal-package"` \| `"unresolved-internal-import"` \| `"virtual-module-surface"`
 
-Defined in: [audit/src/types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L70)
+Defined in: [audit/src/types.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L113)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/types.ts:70](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **section**: [`AuditSection`](../type-aliases/AuditSection.md) \| `"support"`
 
-Defined in: [audit/src/types.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L69)
+Defined in: [audit/src/types.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L112)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [audit/src/types.ts:69](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **severity**: [`AuditSeverity`](../type-aliases/AuditSeverity.md)
 
-Defined in: [audit/src/types.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L71)
+Defined in: [audit/src/types.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L114)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [audit/src/types.ts:71](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **summary**: `string`
 
-Defined in: [audit/src/types.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L73)
+Defined in: [audit/src/types.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L116)
 
 ***
 
@@ -70,4 +70,4 @@ Defined in: [audit/src/types.ts:73](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **title**: `string`
 
-Defined in: [audit/src/types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L72)
+Defined in: [audit/src/types.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L115)

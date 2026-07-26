@@ -15,12 +15,18 @@
  */
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
+import { buildCheckGovernanceFacts } from '@liteship/command/host';
 import {
   LITESHIP_GATES,
   LITESHIP_IR_GATES,
+  LITESHIP_IR_ONLY_GATES,
+  composeGateSets,
   litelaunchGauntlet,
   litelaunchGauntletWithIR,
   makeRepoIR,
+  noBareThrowIRGate,
+  noDefaultExportDivergenceGate,
+  replaceGate,
   type RepoIR,
 } from '@liteship/gauntlet';
 
@@ -49,10 +55,9 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       'gauntlet/no-skipped-test',
       'gauntlet/no-placeholder',
       'gauntlet/no-early-return-test',
-      // The three check-governance FactGates — they ride in the lean set but read ONLY the
-      // injected CheckGovernanceFacts (a host folds the registry/scripts/fs/waivers/ledger),
-      // so with no facts injected they fold an EMPTY verdict (the lean path is IR-free AND
-      // fact-free unaffected). Each self-proves via its red/green/mutation fixtures.
+      // The three check-governance FactGates — they ride in the lean set and require the
+      // host-built CheckGovernanceFacts. Missing facts invalidate the execution plan before
+      // any gate runs; they can never masquerade as an empty green verdict.
       'gauntlet/check-registry-complete',
       'gauntlet/check-negative-control',
       'gauntlet/check-waiver-freshness',
@@ -72,6 +77,11 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
 });
 
 describe('the host LITESHIP_IR_GATES composition', () => {
+  it('is exactly the lean replacement union the IR-only authorities', () => {
+    const expected = composeGateSets(replaceGate(LITESHIP_GATES, noBareThrowIRGate), LITESHIP_IR_ONLY_GATES);
+    expect(LITESHIP_IR_GATES).toEqual(expected);
+  });
+
   it('adds the divergence gate AND re-expresses no-bare-throw (no duplicate ruleid)', () => {
     const got = ids(LITESHIP_IR_GATES);
     // The divergence gate is present.
@@ -111,7 +121,9 @@ function ir(): RepoIR {
 describe('litelaunchGauntletWithIR runs the IR-fold gates over the injected IR', () => {
   it('the IR-fold no-bare-throw and the divergence gate both produce outcomes', () => {
     // Empty globs → no real files scanned; the IR-fold gates fold the injected IR.
-    const result = litelaunchGauntletWithIR(REPO_ROOT, new Date(0), ir(), []);
+    const result = litelaunchGauntletWithIR(REPO_ROOT, new Date(0), ir(), [], {
+      gates: [noBareThrowIRGate, noDefaultExportDivergenceGate],
+    });
     const outcomeIds = result.outcomes.map((o) => o.gateId);
     expect(outcomeIds).toContain('gauntlet/no-bare-throw');
     expect(outcomeIds).toContain('gauntlet/no-default-export-divergence');
@@ -130,7 +142,16 @@ describe('litelaunchGauntletWithIR runs the IR-fold gates over the injected IR',
 
 describe('the lean path is unaffected — litelaunchGauntlet with NO ir', () => {
   it('runs the seven regex gates IR-free and never throws on the absent IR', () => {
-    const result = litelaunchGauntlet(REPO_ROOT, new Date(0), ['packages/gauntlet/src/**/*.ts']);
+    const result = litelaunchGauntlet(
+      REPO_ROOT,
+      new Date(0),
+      ['packages/gauntlet/src/**/*.ts'],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      buildCheckGovernanceFacts(REPO_ROOT, new Date(0)),
+    );
     const outcomeIds = result.outcomes.map((o) => o.gateId);
     // The seven lean gates ran...
     expect(outcomeIds).toContain('gauntlet/no-bare-throw');

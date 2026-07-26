@@ -7,7 +7,7 @@
  * gate is the INDEPENDENT source backstop for the exact TypeScript unions at each
  * emitter boundary: every static diagnostic `area/slug` identity in package source,
  * plus every check identity authored by CHECK_REGISTRY, must resolve through the
- * registry. It scans all eight declared areas and all quote styles without treating
+ * registry. It derives every governed area from the registry owner and scans all quote styles without treating
  * planted governance facts as emitters.
  *
  * LEAF-LEGAL BY CONSTRUCTION: the gate reads the registry from `@liteship/error` (the
@@ -21,7 +21,7 @@
  * @module
  */
 
-import { explainDiagnostic } from '@liteship/error';
+import { DIAGNOSTIC_AREAS, explainDiagnostic } from '@liteship/error';
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
@@ -34,6 +34,7 @@ const RULE_ID = 'gauntlet/diagnostic-code-registered';
 const PACKAGE_SRC = /^packages\/[^/]+\/src\//;
 const REGISTRY_FILE = 'packages/error/src/codes.ts';
 const CHECK_REGISTRY_FILE = 'packages/command/src/checks/registry.ts';
+const AUDIT_EMITTER_FILE = /^packages\/audit\/src\/(?:index|integrity|structure|surface)\.ts$/;
 
 /**
  * This gate's OWN source file — SELF-EXCLUDED from the scan. It legitimately carries
@@ -44,13 +45,17 @@ const CHECK_REGISTRY_FILE = 'packages/command/src/checks/registry.ts';
 const SELF_FILE_SUFFIX = '/gates/diagnostic-code-registered.ts';
 
 /**
- * Every static diagnostic-code string literal in the seven runtime/gate areas. Check
+ * Every static diagnostic-code string literal in the registry-owned runtime/gate areas. Check
  * identities have one authored owner (CHECK_REGISTRY) and use the adjacent pattern.
  * The emitter types reject dynamic/invented runtime identities; both regexes remain
  * deliberately independent and catch single, double, and no-substitution templates.
  */
-const STABLE_DIAGNOSTIC_CODE = /(['"`])((?:gauntlet|core|schema|compiler|astro|cli|migrate)\/[a-zA-Z0-9_/-]+)\1/g;
+const STABLE_AREA_PATTERN = DIAGNOSTIC_AREAS.filter((area) => area !== 'check')
+  .map((area) => area.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|');
+const STABLE_DIAGNOSTIC_CODE = new RegExp(`(['"\\x60])((?:${STABLE_AREA_PATTERN})/[a-zA-Z0-9_/-]+)\\1`, 'g');
 const STABLE_CHECK_ID = /(['"`])(check\/[a-zA-Z0-9_/-]+)\1/g;
+const AUDIT_RULE_ID = /\brule\s*:\s*(['"`])([a-zA-Z0-9_/-]+)\1/g;
 
 /** All the codes a single source file emits (comments stripped so a doc mention never counts). */
 function codesIn(text: string, pattern: RegExp): readonly string[] {
@@ -63,6 +68,44 @@ function codesIn(text: string, pattern: RegExp): readonly string[] {
     if (captured !== undefined) out.push(captured);
   }
   return out;
+}
+
+/**
+ * Resolve the deliberately small dynamic-code grammar used by gate families:
+ * a literal `const RULE_ID|RULE_NS = 'area/slug'` plus a no-substitution suffix
+ * template such as `${RULE_NS}/weakened`. This is still a source-proven identity;
+ * arbitrary computed diagnostics remain outside the stable registry contract.
+ */
+function resolvedTemplateCodesIn(text: string): readonly string[] {
+  const code = commentsBlanked(text);
+  const bindings = new Map<string, string>();
+  const bindingPattern = /\bconst\s+([A-Z][A-Z0-9_]*)\s*=\s*(['"])([a-z]+\/[a-zA-Z0-9_/-]+)\2\s*;/g;
+  for (const match of code.matchAll(bindingPattern)) {
+    if (match[1] !== undefined && match[3] !== undefined) bindings.set(match[1], match[3]);
+  }
+
+  const resolved: string[] = [];
+  const templatePattern = /`\$\{([A-Z][A-Z0-9_]*)\}(\/[a-zA-Z0-9_/-]+)`/g;
+  for (const match of code.matchAll(templatePattern)) {
+    const prefix = match[1] === undefined ? undefined : bindings.get(match[1]);
+    const suffix = match[2];
+    if (prefix !== undefined && suffix !== undefined) resolved.push(`${prefix}${suffix}`);
+  }
+  return resolved;
+}
+
+/**
+ * Registry keys authored by the canonical catalogue. The registry deliberately
+ * uses literal keys so the exact stable identity remains inspectable without
+ * evaluating the module; a computed key could not participate in this closure.
+ */
+function registryCodesIn(text: string): readonly string[] {
+  const code = commentsBlanked(text);
+  const pattern = new RegExp(
+    `^\\s{2}(['"\\x60])((?:${DIAGNOSTIC_AREAS.map((area) => area.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})/[a-zA-Z0-9_/-]+)\\1\\s*:`,
+    'gm',
+  );
+  return codesIn(code, pattern);
 }
 
 /** Build one "unregistered code" finding — a diagnostic code that no registry entry explains. */
@@ -85,6 +128,26 @@ function unregisteredFinding(code: string, file: string): Finding {
   });
 }
 
+/** A registry entry with no source emitter is stale authority, not a harmless spare slot. */
+function orphanFinding(code: string): Finding {
+  return finding({
+    ruleId: RULE_ID,
+    severity: 'error',
+    level: 'L2',
+    title: `Registered diagnostic code "${code}" has no emitter`,
+    detail: `${REGISTRY_FILE} enrolls "${code}", but no governed package source emits that identity. The diagnostic catalogue is an exact bidirectional contract: emitters must be registered and registered identities must remain reachable from a real emitter.`,
+    location: { file: REGISTRY_FILE },
+    remediation: {
+      kind: 'instruction',
+      description: 'Restore the real emitter or remove the stale registry entry.',
+      steps: [
+        `If "${code}" was renamed or retired, remove its entry from DIAGNOSTIC_REGISTRY.`,
+        `If the behavior remains public, restore the exact stable identity at its emitting owner and prove it through liteship explain.`,
+      ],
+    },
+  });
+}
+
 /**
  * THE SCAN — fold every governed source file into unregistered-code findings. Reads the
  * UNSCOPED corpus (`allFiles()`, falling back to `files()`) so level-scoping never hides a
@@ -96,17 +159,25 @@ function scan(context: GateContext): readonly Finding[] {
   const files = context.allFiles !== undefined ? context.allFiles() : context.files();
   const findings: Finding[] = [];
   const seen = new Set<string>();
+  const emitted = new Set<string>();
   const record = (code: string, file: string): void => {
+    emitted.add(code);
     if (explainDiagnostic(code) !== undefined) return; // enrolled — nothing to flag
     if (seen.has(code)) return; // one finding per distinct unregistered code
     seen.add(code);
     findings.push(unregisteredFinding(code, file));
   };
   for (const file of [...files].sort()) {
-    if (file.endsWith(SELF_FILE_SUFFIX)) continue; // self-exclude (carries example fixture ids)
     if (!PACKAGE_SRC.test(file) || file === REGISTRY_FILE) continue;
     const text = context.readFile(file);
     if (text === undefined) continue;
+
+    if (file.endsWith(SELF_FILE_SUFFIX)) {
+      // The file carries deliberately unregistered fixture strings, but its own
+      // literal RULE_ID is a real emitter and must satisfy the reverse theorem.
+      record(RULE_ID, file);
+      continue;
+    }
 
     // A check identity is authored exactly once by CHECK_REGISTRY. Other package files
     // legitimately carry planted check ids as negative-control facts and test data; those
@@ -115,6 +186,23 @@ function scan(context: GateContext): readonly Finding[] {
     // reaching the emitter.
     const pattern = file === CHECK_REGISTRY_FILE ? STABLE_CHECK_ID : STABLE_DIAGNOSTIC_CODE;
     for (const code of codesIn(text, pattern)) record(code, file);
+    if (AUDIT_EMITTER_FILE.test(file)) {
+      for (const rule of codesIn(text, AUDIT_RULE_ID)) record(`audit/${rule}`, file);
+    }
+    if (file !== CHECK_REGISTRY_FILE) {
+      for (const code of resolvedTemplateCodesIn(text)) record(code, file);
+    }
+  }
+
+  // The reverse direction is evaluated only when the context carries the
+  // registry owner. Synthetic single-emitter fixtures intentionally omit it;
+  // the real node/IR contexts always include it. This keeps the fixture worlds
+  // minimal while making the production theorem exact in both directions.
+  const registrySource = context.readFile(REGISTRY_FILE);
+  if (registrySource !== undefined) {
+    for (const code of registryCodesIn(registrySource)) {
+      if (!emitted.has(code)) findings.push(orphanFinding(code));
+    }
   }
   return findings;
 }
@@ -135,8 +223,12 @@ const GREEN_CONTEXT = memoryContext({
   'packages/command/src/checks/registry.ts':
     "export const CHECK_REGISTRY = [{ id: 'check/format' }, { id: 'check/typecheck' }] as const;\n",
   'packages/core/src/schema/__registered_fixture__.ts': 'export const issue = { code: `schema/type`, message: "x" };\n',
+  'packages/error/src/__registered_fixture__.ts':
+    "export const issue = { code: 'error/match-tag/unhandled', message: 'x' };\n",
   'packages/compiler/src/__registered_fixture__.ts':
     "export const warning = { code: 'compiler/css/unknown-state-key', message: 'x' };\n",
+  'packages/genui/src/__registered_fixture__.ts':
+    "export const warning = { code: 'genui/unknown-component', message: 'x' };\n",
   'packages/astro/src/__registered_fixture__.ts':
     'export const warning = { code: "astro/wgpu/webgpu-unavailable", message: "x" };\n',
   'packages/cli/src/__registered_fixture__.ts': "export const failure = { code: 'cli/usage', message: 'x' };\n",
@@ -155,7 +247,8 @@ export const diagnosticCodeRegisteredGate: Gate = defineGate({
   id: RULE_ID,
   level: 'L2',
   describe:
-    "Statically scans package source for every stable gauntlet/core/schema/compiler/astro/cli/migrate diagnostic identity plus every CHECK_REGISTRY-owned check identity, and reports any that is not a key in @liteship/error's DIAGNOSTIC_REGISTRY — the independent backstop that keeps every emitted diagnostic code explainable without treating planted governance facts as emitters.",
+    "Statically proves the exact bidirectional relation between package emitters and @liteship/error's diagnostic registry: every emitted stable identity is registered and every registered identity has a real governed emitter, without treating planted governance facts as emitters.",
+  access: { allFiles: true },
   run: scan,
   fixtures: {
     red: {

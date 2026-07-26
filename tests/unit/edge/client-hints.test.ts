@@ -122,6 +122,17 @@ describe('ClientHints', () => {
     expect(header).toContain('ECT');
   });
 
+  test('Vary names only response-shaping inputs and is not the Accept-CH request list', () => {
+    const accept = ClientHints.acceptCHHeader();
+    const vary = ClientHints.varyCHHeader();
+    expect(vary).not.toBe(accept);
+    expect(vary).toContain('User-Agent');
+    expect(vary).toContain('Sec-CH-Device-Memory');
+    expect(vary).not.toContain('RTT');
+    expect(vary).not.toContain('Sec-CH-UA-Platform');
+    expect(vary.split(', ')).not.toContain('Sec-CH-UA');
+  });
+
   test('criticalCHHeader returns subset of hints', () => {
     const header = ClientHints.criticalCHHeader();
     expect(header).toContain('Sec-CH-Prefers-Reduced-Motion');

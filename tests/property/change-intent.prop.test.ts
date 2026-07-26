@@ -51,7 +51,7 @@ describe('ChangeIntent hostile properties', () => {
   it('has the same identity for every key and set-like ordering', () => {
     fc.assert(
       fc.property(
-        fc.shuffledSubarray(requiredFields, {
+        fc.shuffledSubarray([...requiredFields], {
           minLength: requiredFields.length,
           maxLength: requiredFields.length,
         }),

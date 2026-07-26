@@ -36,7 +36,7 @@ Defined in: [command/src/commands/check.ts:86](https://github.com/freebatteryfac
 
 ### findings
 
-> `readonly` **findings**: readonly [`Finding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts)[]
+> `readonly` **findings**: readonly [`Finding`](../../../liteship/src/evidence/interfaces/Finding.md)[]
 
 Defined in: [command/src/commands/check.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L87)
 

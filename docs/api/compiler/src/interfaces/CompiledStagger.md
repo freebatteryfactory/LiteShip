@@ -14,7 +14,7 @@ Compiled stagger artifacts.
 
 ### graph
 
-> `readonly` **graph**: [`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+> `readonly` **graph**: [`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 Defined in: [compiler/src/stagger-compile.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/stagger-compile.ts#L36)
 

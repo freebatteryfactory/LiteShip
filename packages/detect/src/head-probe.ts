@@ -22,6 +22,7 @@
 import type { CapTier, MotionTier } from '@liteship/core';
 import { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
 import { DETECT_READY_EVENT } from './detect-ready.js';
+import { capAxisAttr } from './cap-axes.js';
 import type { GPUTier } from './detect.js';
 
 /**
@@ -202,7 +203,7 @@ export function emitProvisionalDetectScript(): string {
       webgpu: false,
       prefersReducedMotion: motion
     });
-    h.setAttribute('data-liteship-tier', capTier);
+    h.setAttribute('${capAxisAttr('tier')}', capTier);
     h.setAttribute('data-liteship-tier-provisional', 'true');
 
     writeDetectState({
@@ -275,6 +276,7 @@ ${emitClassifierSource()}
         if (ext) {
           renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
         }
+        if (!renderer) renderer = gl.getParameter(gl.RENDERER) || '';
         gl.getExtension('WEBGL_lose_context')?.loseContext();
       }
       const tier = classifyGpu(renderer);
@@ -295,14 +297,14 @@ ${emitClassifierSource()}
       const capTier = ${headProbeCapTier.name}(caps);
       const motionTier = ${headProbeMotionTier.name}(caps);
 
-      h.setAttribute('data-liteship-tier', capTier);
+      h.setAttribute('${capAxisAttr('tier')}', capTier);
       // The motion capability TIER, in the same vocabulary EdgeTier emits
       // server-side (data-liteship-motion). The probe already computes it; write it
       // so CSS keyed on [data-liteship-motion="physics"/"none"] matches on
       // non-edge pages too (where EdgeTier never ran), and so the edge value is
       // refined by the real GPU probe just like data-liteship-tier is. The
       // reduced-motion PREFERENCE lives separately on data-liteship-reduced-motion.
-      h.setAttribute('data-liteship-motion', motionTier);
+      h.setAttribute('${capAxisAttr('motion')}', motionTier);
       // gpuTier (numeric) and webgpu (bool) are pure ENGINE state, not author
       // CSS keys — they ride liteship:detect-ready + __LITESHIP_DETECT__ only, never the
       // DOM root (zero readers; keeps engine state off the DOM).

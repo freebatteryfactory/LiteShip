@@ -88,6 +88,48 @@ interface ResolvedDeps {
 /** One verb's executor: the argv tail after the verb + the resolved deps → exit code. */
 type Executor = (rest: readonly string[], deps: ResolvedDeps) => number | Promise<number>;
 
+/** Convert one schema property to its canonical long argv spelling. */
+function propertyFlag(property: string): `--${string}` {
+  return `--${property.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+}
+
+/**
+ * Effective CLI flags for one catalog command: semantic input properties that
+ * are not positional, plus explicitly CLI-only adapter flags and aliases.
+ * This is a projection of COMMAND_CATALOG, never a second authored flag table.
+ */
+export function catalogCliFlagNames(commandName: string): readonly string[] {
+  const descriptor = COMMAND_CATALOG.find((candidate) => candidate.name === commandName);
+  if (descriptor === undefined) return [];
+  const positionals = new Set(descriptor.cli?.positionals ?? []);
+  const properties = Object.keys(descriptor.inputSchema.properties ?? {})
+    .filter((property) => !positionals.has(property))
+    .map(propertyFlag);
+  const adapterFlags = Object.keys(descriptor.cli?.adapterFlags ?? {}) as `--${string}`[];
+  const canonical = [...new Set([...properties, ...adapterFlags])];
+  const aliases = canonical.flatMap((flag) => descriptor.cli?.flagAliases?.[flag as `--${string}`] ?? []);
+  return [...canonical, ...aliases];
+}
+
+/** Resolve one declared canonical flag, failing at import-time/test-time on catalog drift. */
+function catalogFlag(commandName: string, propertyOrFlag: string): `--${string}` {
+  const candidate = propertyOrFlag.startsWith('--') ? (propertyOrFlag as `--${string}`) : propertyFlag(propertyOrFlag);
+  if (!catalogCliFlagNames(commandName).includes(candidate)) {
+    throw InvariantViolationError(
+      'cli.catalog',
+      `${commandName} parses undeclared flag ${candidate} — declare the semantic property or CLI adapter flag in COMMAND_CATALOG`,
+    );
+  }
+  return candidate;
+}
+
+/** Canonical long flag followed by any catalog-declared short aliases. */
+function catalogFlagSpellings(commandName: string, property: string): readonly string[] {
+  const canonical = catalogFlag(commandName, property);
+  const descriptor = COMMAND_CATALOG.find((candidate) => candidate.name === commandName)!;
+  return [canonical, ...(descriptor.cli?.flagAliases?.[canonical] ?? [])];
+}
+
 /**
  * Executors for the CLI-orchestration commands, keyed by `CliOwnedName` (derived
  * from the catalog's `CLI_OWNED_DESCRIPTORS`). The typed record is the projection
@@ -98,7 +140,7 @@ type Executor = (rest: readonly string[], deps: ResolvedDeps) => number | Promis
 const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
   help: () => help(),
   describe: (rest) => {
-    const formatFlag = takeFlagValue(rest, '--format');
+    const formatFlag = takeFlagValue(rest, catalogFlag('describe', 'format'));
     const formatRaw = formatFlag.value;
     const format = formatRaw === 'json' || formatRaw === 'mcp' ? formatRaw : undefined;
     // An unknown format must not silently fall through to JSON mode.
@@ -116,8 +158,8 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     // token that begins with `-` (that token is the NEXT flag). Before, `doctor
     // --deployed --fix` read deployed='--fix' and probed the literal string
     // "--fix" as a URL; `takeFlagValue` refuses it (F-PROTO-4).
-    const target = takeFlagValue(rest, '--target');
-    const deployed = takeFlagValue(rest, '--deployed');
+    const target = takeFlagValue(rest, catalogFlag('doctor', 'target'));
+    const deployed = takeFlagValue(rest, catalogFlag('doctor', 'deployed'));
     const targetRaw = target.value;
     if (target.present && targetRaw !== 'cloudflare' && targetRaw !== 'astro' && targetRaw !== 'consumer-app') {
       emitError(
@@ -132,9 +174,9 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
       return 1;
     }
     return deps.doctor({
-      fix: rest.includes('--fix'),
-      ci: rest.includes('--ci'),
-      preflight: rest.includes('--preflight'),
+      fix: rest.includes(catalogFlag('doctor', 'fix')),
+      ci: rest.includes(catalogFlag('doctor', 'ci')),
+      preflight: rest.includes(catalogFlag('doctor', 'preflight')),
       ...(targetRaw === 'cloudflare' || targetRaw === 'astro' || targetRaw === 'consumer-app'
         ? { target: targetRaw }
         : {}),
@@ -145,7 +187,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
   ship: (rest) => ship(rest),
   sbom: (rest) => sbom(rest),
   mcp: async (rest, deps) => {
-    const httpFlag = takeFlagValue(rest, '--http');
+    const httpFlag = takeFlagValue(rest, catalogFlag('mcp', 'http'));
     if (httpFlag.present && httpFlag.value === undefined) {
       emitError('mcp', 'cli/usage', 'usage: liteship mcp --http <address>');
       return 1;
@@ -153,7 +195,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     // @liteship/mcp-server is an optional sibling install, not a dependency of
     // @liteship/cli — an unguarded import would break the one-JSON-line-on-stderr
     // contract with a raw ERR_MODULE_NOT_FOUND stack trace.
-    let mcpServer: { start: (opts: { readonly http?: string }) => Promise<void> };
+    let mcpServer: Awaited<ReturnType<ImportMcpServer>>;
     try {
       mcpServer = await deps.importMcpServer();
     } catch (err) {
@@ -173,7 +215,8 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
       );
       return 1;
     }
-    await mcpServer.start(httpFlag.value !== undefined ? { http: httpFlag.value } : {});
+    const handle = await mcpServer.start(httpFlag.value !== undefined ? { http: httpFlag.value } : {});
+    await handle.done;
     return 0;
   },
   lsp: (rest, deps) =>
@@ -182,7 +225,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     // in the CLI host and injected, so @liteship/mcp-server stays lean — see
     // commands/lsp.ts. `--ir` selects the IR-enriched fold.
     lsp(
-      { ir: rest.includes('--ir') },
+      { ir: rest.includes(catalogFlag('lsp', 'ir')) },
       { runGauntletWithRepoIR: deps.runGauntletWithRepoIR, importMcpServer: deps.importMcpServer },
     ),
   'scene.dev': (subRest) => {
@@ -200,7 +243,7 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
   'astro.stop': () => astroDev('stop'),
   dev: (rest) => {
     // `--example <name>` in either `--example=x` or `--example x` form.
-    const exampleFlag = takeFlagValue(rest, '--example');
+    const exampleFlag = takeFlagValue(rest, catalogFlag('dev', 'example'));
     if (exampleFlag.present && exampleFlag.value === undefined) {
       emitError('dev', 'cli/usage', 'usage: liteship dev --example <name>');
       return 1;
@@ -208,11 +251,11 @@ const CLI_EXECUTORS: Record<CliOwnedName, Executor> = {
     const example = exampleFlag.value;
     return dev({
       ...(example !== undefined ? { example } : {}),
-      tutorial: rest.includes('--tutorial'),
+      tutorial: rest.includes(catalogFlag('dev', 'tutorial')),
     });
   },
   build: () => build(),
-  info: (rest) => info({ json: rest.includes('--json') }),
+  info: (rest) => info({ json: rest.includes(catalogFlag('info', 'json')) }),
   add: (rest) => {
     const kind = positional(rest);
     const name = rest[1] !== undefined && !rest[1].startsWith('-') ? rest[1] : undefined;
@@ -246,12 +289,12 @@ function execScene(rest: readonly string[], deps: ResolvedDeps): number | Promis
     // through one rule (`takeFlagValue`). A present `-o`/`--output` with no value
     // — end of argv, or a following token that is itself a flag — errors instead
     // of silently discarding the user's path (with output now DERIVED when empty).
-    const output = takeFlagValue(subRest, ['-o', '--output']);
+    const output = takeFlagValue(subRest, catalogFlagSpellings('scene.render', 'output'));
     if (output.present && output.value === undefined) {
       emitError('scene.render', 'cli/usage', 'usage: liteship scene render <path-to-scene.ts> -o <output.mp4>');
       return 1;
     }
-    const force = subRest.includes('--force');
+    const force = subRest.includes(catalogFlag('scene.render', 'force'));
     // Empty output is the "derive <scene>.mp4" default, resolved in @liteship/command.
     return sceneRender(scene ?? '', output.value ?? '', force);
   }
@@ -283,7 +326,7 @@ function execAsset(rest: readonly string[]): number | Promise<number> {
       );
       return 1;
     }
-    const projectionFlag = takeFlagValue(subRest, '--projection');
+    const projectionFlag = takeFlagValue(subRest, catalogFlag('asset.analyze', 'projection'));
     const projectionRaw = projectionFlag.value;
     if (projectionRaw === undefined) {
       emitError(
@@ -301,7 +344,7 @@ function execAsset(rest: readonly string[]): number | Promise<number> {
       );
       return 1;
     }
-    const force = subRest.includes('--force');
+    const force = subRest.includes(catalogFlag('asset.analyze', 'force'));
     return assetAnalyze(id, projectionRaw, force);
   }
   if (sub === 'verify') {
@@ -327,7 +370,7 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
     return sub === 'inspect' ? capsuleInspect(name) : capsuleVerify(name);
   }
   if (sub === 'list') {
-    const kind = takeFlagValue(subRest, '--kind');
+    const kind = takeFlagValue(subRest, catalogFlag('capsule.list', 'kind'));
     if (kind.present && kind.value === undefined) {
       emitError('capsule.list', 'cli/usage', 'usage: liteship capsule list --kind <kind>');
       return 1;
@@ -342,15 +385,15 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
 function execAudit(rest: readonly string[]): Promise<number> {
   // `--profile <name>` is value-taking — the same swallow guard as doctor's
   // flags: `audit --profile --consumer` must not read profile='--consumer'.
-  const profileFlag = takeFlagValue(rest, '--profile');
+  const profileFlag = takeFlagValue(rest, catalogFlag('audit', 'profile'));
   if (profileFlag.present && profileFlag.value === undefined) {
     emitError('audit', 'cli/usage', 'usage: liteship audit --profile <path>');
     return Promise.resolve(1);
   }
   const profile = profileFlag.value;
-  const consumer = rest.includes('--consumer');
-  const consumerApp = rest.includes('--consumer-app');
-  const findings = rest.includes('--findings');
+  const consumer = rest.includes(catalogFlag('audit', 'consumer'));
+  const consumerApp = rest.includes(catalogFlag('audit', '--consumer-app'));
+  const findings = rest.includes(catalogFlag('audit', 'findings'));
   return audit({
     ...(profile ? { profile } : {}),
     ...(consumer ? { consumer } : {}),
@@ -361,24 +404,7 @@ function execAudit(rest: readonly string[]): Promise<number> {
 
 /** `check [gates] [--plan] [--profile <p>] [--json|--cure] [--ir] [gate flags]`. */
 function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number> {
-  const unknownFlag = firstUnknownFlag(rest, [
-    '--plan',
-    '--profile',
-    '--json',
-    '--cure',
-    '--ir',
-    '--no-cache',
-    '--symbols',
-    '--supply-chain',
-    '--mutate',
-    '--mcdc',
-    '--simulate',
-    '--taint',
-    '--proof',
-    '--composition',
-    '--capability-gate',
-    '--spine-relation',
-  ]);
+  const unknownFlag = firstUnknownFlag(rest, catalogCliFlagNames('check'));
   if (unknownFlag !== undefined) {
     emitError('check', 'cli/invalid-argument', `unknown option: ${unknownFlag}`);
     return Promise.resolve(1);
@@ -393,10 +419,10 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // `--profile` and run nothing. `--json` selects machine output (a JSON plan under
   // `--plan`; a receipt-only, no-pretty-summary run otherwise). `--profile <p>` picks
   // the profile the plan projects (default quick), validated against the closed set.
-  const plan = rest.includes('--plan');
-  const json = rest.includes('--json');
-  const cure = rest.includes('--cure');
-  const profileFlag = takeFlagValue(rest, '--profile');
+  const plan = rest.includes(catalogFlag('check', 'plan'));
+  const json = rest.includes(catalogFlag('check', 'json'));
+  const cure = rest.includes(catalogFlag('check', 'cure'));
+  const profileFlag = takeFlagValue(rest, catalogFlag('check', 'profile'));
   if (
     profileFlag.present &&
     (profileFlag.value === undefined || !CHECK_PROFILES.includes(profileFlag.value as CheckProfile))
@@ -414,23 +440,23 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // `--no-cache` bypasses that cache. WITHOUT `--ir`, `liteship check gates` stays
   // the lean, IR-free, MCP-safe fold (the MCP server exposes only that
   // lean handler — `--ir` never crosses into @liteship/command / @liteship/mcp-server).
-  const ir = rest.includes('--ir');
-  const noCache = rest.includes('--no-cache');
+  const ir = rest.includes(catalogFlag('check', 'ir'));
+  const noCache = rest.includes(catalogFlag('check', 'no-cache'));
   // `--symbols` adds the heavy symbol-evidenced LanguageService oracle (B3.3) —
   // only meaningful with `--ir`; the cache key is namespaced by this mode.
-  const symbols = rest.includes('--symbols');
+  const symbols = rest.includes(catalogFlag('check', 'symbols'));
   // `--supply-chain` composes the avionics-tier supplyChainGate (Slice C, L4) on
   // + injects the host-computed supply-chain facts — only meaningful with `--ir`;
   // opt-in (no SBOM cost + no not-evidenced noise on the default `--ir` run); the
   // cache key is namespaced by this mode (mirrors --symbols).
-  const supplyChain = rest.includes('--supply-chain');
+  const supplyChain = rest.includes(catalogFlag('check', 'supply-chain'));
   // `--mutate` composes the avionics-tier mutationDivergenceGate (Slice C, L4) on
   // + runs the per-mutant vitest runner over the live effective-L4 trust-spine
   // seams (each mutant → an isolated subprocess; the score's survivors surface as
   // findings). Only meaningful with `--ir`; opt-in (a covering-test suite run per
   // mutant is HEAVY); the cache key is namespaced by this mode. It mutates real
   // source files IN PLACE (verified-restored), so it must run in ISOLATION.
-  const mutate = rest.includes('--mutate');
+  const mutate = rest.includes(catalogFlag('check', 'mutate'));
   // `--mcdc` composes the avionics-tier mcdcCoverageGate (L4 — DO-178B Level A's
   // Modified Condition/Decision Coverage via CONDITION-LEVEL MUTATION) on + runs the
   // per-pin vitest runner over the live effective-L4 trust-spine seams: each atomic
@@ -440,14 +466,14 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // run per pin, two per condition, is HEAVY); the cache key is namespaced by this
   // mode. It mutates real source files IN PLACE (verified-restored), so it must run in
   // ISOLATION.
-  const mcdc = rest.includes('--mcdc');
+  const mcdc = rest.includes(catalogFlag('check', 'mcdc'));
   // `--simulate` composes the avionics-tier simulationDeterminismGate (L4 — the
   // determinism spine, DST) on + drives the committed scenario corpus through the
   // `@liteship/core/simulation` seeded world (each scenario replayed twice; a
   // byte-exact divergence is a real nondeterminism bug surfaced as an L4 finding
   // carrying the seed). Only meaningful with `--ir`; opt-in (no not-evidenced
   // advisory on the default `--ir` run); the cache key is namespaced by this mode.
-  const simulate = rest.includes('--simulate');
+  const simulate = rest.includes(catalogFlag('check', 'simulate'));
   // `--taint` composes the taintFlowGate (the TAINT-ANALYSIS family, L4) on + traces
   // the source→sink dataflow via @liteship/audit's generic taint oracle, classified by
   // the LiteShip-LOCAL source/sink/sanitizer registry the CLI injects (the shader
@@ -455,27 +481,27 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // UNSANITIZED untrusted-value→dangerous-sink flow is a finding. Only meaningful
   // with `--ir`; opt-in (a whole-corpus ts.Program + checker trace is HEAVY); the
   // cache key is namespaced by this mode.
-  const taint = rest.includes('--taint');
+  const taint = rest.includes(catalogFlag('check', 'taint'));
   // `--proof` composes the proofPropagationGate (the LOCAL-VS-GLOBAL correctness
   // family — the lax-functor, L4) on + reads the proof signals (mutation/coverage/
   // property/invariant), blends a per-module scalar, and propagates it along the dep
   // DAG (the min-fixpoint): a trust-spine module whose GLOBAL proof drops below its
   // floor via a weak dependency is a finding. Only meaningful with `--ir`; opt-in
   // (LIGHT — artifact reads + a corpus scan); the cache key is namespaced by this mode.
-  const proof = rest.includes('--proof');
+  const proof = rest.includes(catalogFlag('check', 'proof'));
   // `--composition` composes the compositionCoverageGate (the LOCAL-VS-GLOBAL family —
   // "locally green, globally untested interaction", L4) on + derives the interaction
   // edges from the IR call graph (both endpoints individually tested) and classifies
   // each integration-covered/uncovered (the sound static-reference proxy): an UNCOVERED
   // trust-spine interaction edge is a finding. Only meaningful with `--ir`; opt-in
   // (LIGHT — a corpus scan); the cache key is namespaced by this mode.
-  const composition = rest.includes('--composition');
+  const composition = rest.includes(catalogFlag('check', 'composition'));
   // `--capability-gate` composes the capabilityGateLinkGate (codex round-8, #1b — the
   // capability-link dataflow proof, L4) on + proves every sanctioned skip's guard DERIVES FROM its
   // declared capability's probe (the canonical capability symbol table); an unrelated/mislabeled
   // guard is a finding. Only meaningful with `--ir`; opt-in (a ts.Program over the sanctioned
   // files + capability modules); the cache key is namespaced by this mode.
-  const capabilityGate = rest.includes('--capability-gate');
+  const capabilityGate = rest.includes(catalogFlag('check', 'capability-gate'));
   // `--spine-relation` composes the spineRelationGate (Wave 8.5, the public constitution's
   // STATIC-projection half, L4) on + probes each admitted @liteship/_spine mirror type's
   // bidirectional assignability against its runtime source (a ts.Program probe over the
@@ -483,7 +509,7 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
   // admitted (frozen) relation, or no longer resolves, is a public-contract drift finding.
   // Only meaningful with `--ir`; opt-in (a second ts.Program build, ~3.25s, is HEAVY) but
   // REQUIRED in the release/CI profile; the cache key is namespaced by this mode.
-  const spineRelation = rest.includes('--spine-relation');
+  const spineRelation = rest.includes(catalogFlag('check', 'spine-relation'));
   const hasGateFlag =
     ir ||
     symbols ||
@@ -551,10 +577,10 @@ const GROUPED_EXECUTORS: Record<string, Executor> = {
 /** Flat handler-backed verbs — each routes to its thin CLI adapter (receipt shape preserved). */
 const HANDLER_EXECUTORS: Record<string, Executor> = {
   glossary: (rest) => glossary(rest[0] && !rest[0].startsWith('-') ? rest[0] : null),
-  explain: (rest) => explain(positional(rest) ?? null, { json: rest.includes('--json') }),
+  explain: (rest) => explain(positional(rest) ?? null, { json: rest.includes(catalogFlag('explain', '--json')) }),
   context: (rest) => {
-    const task = takeFlagValue(rest, '--task');
-    const subject = takeFlagValue(rest, '--subject');
+    const task = takeFlagValue(rest, catalogFlag('context', 'task'));
+    const subject = takeFlagValue(rest, catalogFlag('context', 'subject'));
     if (task.present && task.value === undefined) {
       emitError('context', 'cli/usage', 'usage: liteship context (--task <task-id> | --subject <symbol>)');
       return 1;
@@ -563,7 +589,11 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
       emitError('context', 'cli/usage', 'usage: liteship context (--task <task-id> | --subject <symbol>)');
       return 1;
     }
-    return context(task.value ?? null, { json: rest.includes('--json') }, subject.value ?? null);
+    return context(
+      task.value ?? null,
+      { json: rest.includes(catalogFlag('context', '--json')) },
+      subject.value ?? null,
+    );
   },
   version: () => version(),
   audit: (rest) => execAudit(rest),
@@ -571,13 +601,13 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
   plumb: () => plumb(),
   'check-invariants': () => checkInvariants(),
   'package-smoke': (rest) => {
-    const artifactDir = takeFlagValue(rest, '--artifact-dir');
+    const artifactDir = takeFlagValue(rest, catalogFlag('package-smoke', '--artifact-dir'));
     if (artifactDir.present && artifactDir.value === undefined) {
       emitError('package-smoke', 'cli/usage', 'usage: liteship package-smoke [--hermetic] [--artifact-dir <dir>]');
       return 1;
     }
     return packageSmoke({
-      hermetic: rest.includes('--hermetic'),
+      hermetic: rest.includes(catalogFlag('package-smoke', '--hermetic')),
       ...(artifactDir.value ? { artifactDir: artifactDir.value } : {}),
       ...(process.env.GITHUB_SHA ? { expectedSourceCommit: process.env.GITHUB_SHA } : {}),
       ...(process.env.LITESHIP_AFFECTED_PLAN_ID ? { expectedPlanId: process.env.LITESHIP_AFFECTED_PLAN_ID } : {}),
@@ -634,8 +664,8 @@ export function dispatchableTopLevelVerbs(): readonly string[] {
   ];
 }
 
-/** Resolve a top-level verb to its executor, or `undefined` when the verb is not routed. */
-export function resolveDispatchExecutor(verb: string): boolean {
+/** Return whether a top-level verb has a dispatch executor. */
+export function hasDispatchExecutor(verb: string): boolean {
   return resolveExecutor(verb) !== undefined;
 }
 

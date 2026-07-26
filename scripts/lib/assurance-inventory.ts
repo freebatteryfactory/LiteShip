@@ -125,7 +125,7 @@ export interface AssuranceBaseline {
 
 export interface AssuranceRegression {
   readonly package: string;
-  readonly kind: 'density' | 'evidence-gap';
+  readonly kind: 'density' | 'evidence-gap' | 'stale-strengthen';
   readonly priorMilli?: number;
   readonly currentMilli?: number;
   readonly evidenceGap?: string;
@@ -137,6 +137,47 @@ export interface AssuranceRegressionOptions {
    * authority leaves these to the isolated semantic-admission campaign.
    */
   readonly requireSemanticAssurance?: boolean;
+}
+
+export interface PackageAssuranceProgress {
+  readonly package: string;
+  readonly sourceLocDelta: number;
+  readonly authoredEvidenceLocDelta: number;
+  readonly ratioMilliDelta: number;
+  /** New authored evidence LOC per new source LOC; null when source did not grow. */
+  readonly marginalProofYieldMilli: number | null;
+  readonly earnedEvidence: readonly string[];
+  readonly openedEvidence: readonly string[];
+}
+
+/** Deterministic review surface for what changed since the committed ratchet. */
+export function assuranceProgress(
+  inventory: AssuranceInventory,
+  baseline: AssuranceBaseline,
+): readonly PackageAssuranceProgress[] {
+  if (baseline.catalogFingerprint !== packageOrderFingerprint(inventory.packages)) {
+    throw new Error('assurance baseline package order does not match the canonical package catalog');
+  }
+  if (baseline.packages.length !== inventory.packages.length) {
+    throw new Error('assurance baseline row count does not match the canonical package catalog');
+  }
+  return inventory.packages.map((entry, index) => {
+    const prior = baseline.packages[index]!;
+    const currentGaps = new Set(entry.missingEvidence);
+    const priorGaps = new Set(prior.missingEvidence);
+    const sourceLocDelta = entry.sourceLoc - prior.sourceLoc;
+    const authoredEvidenceLocDelta = entry.authoredEvidenceLoc - prior.authoredEvidenceLoc;
+    return {
+      package: entry.name,
+      sourceLocDelta,
+      authoredEvidenceLocDelta,
+      ratioMilliDelta: entry.ratioMilli - prior.ratioMilli,
+      marginalProofYieldMilli:
+        sourceLocDelta > 0 ? Math.floor((authoredEvidenceLocDelta * 1_000) / sourceLocDelta) : null,
+      earnedEvidence: prior.missingEvidence.filter((gap) => !currentGaps.has(gap)).sort(),
+      openedEvidence: entry.missingEvidence.filter((gap) => !priorGaps.has(gap)).sort(),
+    };
+  });
 }
 
 const CAMPAIGN_EVIDENCE = new Set(['mutation', 'mcdc']);
@@ -165,7 +206,7 @@ export function parseAssuranceBaseline(value: unknown): AssuranceBaseline {
       !Number.isSafeInteger(row.authoredEvidenceLoc) ||
       !Number.isSafeInteger(row.ratioMilli) ||
       !Array.isArray(row.missingEvidence) ||
-      row.missingEvidence.some((entry) => typeof entry !== 'string')
+      row.missingEvidence.some((entry: unknown) => typeof entry !== 'string')
     ) {
       throw new TypeError('assurance baseline contains an invalid package row');
     }
@@ -224,7 +265,8 @@ function repositoryOwnedFiles(cwd: string): readonly string[] | undefined {
   });
   return [...new Set(output.split('\0').filter(Boolean))]
     .sort((left, right) => left.localeCompare(right))
-    .map((path) => join(cwd, ...path.split('/')));
+    .map((path) => join(cwd, ...path.split('/')))
+    .filter((path) => existsSync(path));
 }
 
 function ownedFilesUnder(root: string, ownedFiles: readonly string[] | undefined): readonly string[] {
@@ -767,6 +809,13 @@ export function assuranceRegressions(
       for (const evidenceGap of entry.missingEvidence) {
         if (CAMPAIGN_EVIDENCE.has(evidenceGap)) continue;
         if (!priorGaps.has(evidenceGap)) regressions.push({ package: entry.name, kind: 'evidence-gap', evidenceGap });
+      }
+      const currentGaps = new Set(entry.missingEvidence);
+      for (const evidenceGap of prior.missingEvidence) {
+        if (CAMPAIGN_EVIDENCE.has(evidenceGap)) continue;
+        if (!currentGaps.has(evidenceGap)) {
+          regressions.push({ package: entry.name, kind: 'stale-strengthen', evidenceGap });
+        }
       }
     }
     return regressions;

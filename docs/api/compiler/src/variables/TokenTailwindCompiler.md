@@ -24,7 +24,7 @@ prefixes Tailwind expects (`--color-`, `--spacing-`, `--font-`, …).
 
 Compile a token array into a Tailwind v4 `@theme` block.
 
-Compile a list of [Token](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md) into a Tailwind v4 `@theme` block.
+Compile a list of [Token](../../../liteship/src/type-aliases/Token.md) into a Tailwind v4 `@theme` block.
 
 Tokens are grouped by category with a short comment separator so the
 generated CSS remains human-readable alongside hand-authored Tailwind.
@@ -33,7 +33,7 @@ generated CSS remains human-readable alongside hand-authored Tailwind.
 
 ##### tokens
 
-readonly [`Token`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md)[]
+readonly [`Token`](../../../liteship/src/type-aliases/Token.md)[]
 
 #### Returns
 

@@ -19,7 +19,7 @@ signal exposes `.read()` (latest value) and `.subscribe(sink)` (replay-1 stream
 of updates, returning a [Disposer](../type-aliases/Disposer.md)); the owning [Lifetime](../variables/Lifetime.md) stays
 reachable as `signal.lifetime` for advanced composition.
 
-`clock` (default [wallClock](../variables/wallClock.md)) is the injected time source for the `time`
+`clock` (default `wallClock`) is the injected time source for the `time`
 source family (elapsed/absolute) — pass a `manualClock`/`fixedClock` to drive an
 elapsed/absolute signal deterministically without touching the ambient clock.
 

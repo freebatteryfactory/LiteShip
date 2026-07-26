@@ -8,6 +8,6 @@
 
 > `const` **sceneCompileCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/scene.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L167)
+Defined in: [command/src/commands/scene.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L196)
 
 `scene compile <scene.ts>` — load the scene module + run its compile pipeline.

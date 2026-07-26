@@ -38,7 +38,7 @@
  * @module
  */
 
-import type { GateContext } from './gate.js';
+import { GATE_FACT_CHANNELS, type GateContext, type GateFactChannel } from './gate.js';
 import type { FileId } from './repo-ir.js';
 
 /**
@@ -55,29 +55,10 @@ import type { FileId } from './repo-ir.js';
  * cannot silently drift from the context shape. This closes the residual where the
  * recorder hand-maintained a copy that could fall behind the context.
  */
-export const FACT_CHANNELS = [
-  'supplyChain',
-  'mutation',
-  'transition',
-  'spineRelation',
-  'mcdc',
-  'simulation',
-  'traceability',
-  'standards',
-  'declaredFix',
-  'taint',
-  'capabilityLink',
-  'fuzzCorpus',
-  'proof',
-  'composition',
-  'skipSites',
-  'activeSurfaceFacts',
-  'checkGovernance',
-  'benchmarkSubjects',
-] as const;
+export const FACT_CHANNELS = GATE_FACT_CHANNELS;
 
 /** One injected-fact channel name — derived from {@link FACT_CHANNELS}, never re-typed. */
-export type FactChannel = (typeof FACT_CHANNELS)[number];
+export type FactChannel = GateFactChannel;
 
 /**
  * The closed set of EVIDENCE CHANNELS the recorder tracks — every read surface a

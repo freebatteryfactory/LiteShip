@@ -8,7 +8,7 @@
  *  1. The PURE scan primitives over a real temp fixture tree (deterministic, no
  *     mocks): `findViolations` (banned-pattern hits with repo-relative slash-
  *     normalized file + 1-based line + trimmed content; the `dist`/`node_modules`/
- *     `.d.ts` skips; the exclude prefix; the missing-scoped-dir → empty branch)
+ *     `.d.ts` skips; exact/subtree exemptions; the missing-scoped-dir → empty branch)
  *     and `expectedLineEnding`'s precedence / binary / no-match branches.
  *
  *  2. The ADAPTER projection: with the heavy `@liteship/audit`-backed scan mocked, the
@@ -19,7 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { INVARIANTS } from '@liteship/command';
+import { INVARIANTS, matchesInvariantExemption } from '@liteship/command';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 // The adapter folds the scan through its injected `spawn` seam (a defaulted param
@@ -64,21 +64,52 @@ describe('findViolations — banned-pattern scan (real fixture tree)', () => {
     expect(hits).toEqual([{ file: 'packages/x/src/a.ts', line: 2, content: 'bannedToken();' }]);
   });
 
-  it('skips dist/, node_modules/, and *.d.ts; honors the exclude prefix', () => {
+  it('skips dist/, node_modules/, and *.d.ts; honors a scoped subtree exemption only', () => {
     write('packages/x/src/keep.ts', 'bannedToken();\n');
     write('packages/x/dist/built.ts', 'bannedToken();\n');
     write('packages/x/node_modules/dep.ts', 'bannedToken();\n');
     write('packages/x/src/types.d.ts', 'bannedToken();\n');
     write('packages/x/excluded/skip.ts', 'bannedToken();\n');
+    write('packages/x/excluded-sibling/keep.ts', 'bannedToken();\n');
     const inv = {
       name: 'NO_BANNED',
       message: 'no banned token',
       dirs: ['packages'],
       pattern: /bannedToken/,
-      exclude: ['packages/x/excluded'],
+      exemptions: [
+        {
+          path: 'packages/x/excluded',
+          scope: 'subtree' as const,
+          owner: '@liteship/x',
+          reason: 'Synthetic sanctioned subtree for the scanner contract.',
+        },
+      ],
     };
     const hits = findViolations(inv, root);
-    expect(hits.map((h) => h.file)).toEqual(['packages/x/src/keep.ts']);
+    expect(hits.map((h) => h.file).sort()).toEqual(['packages/x/excluded-sibling/keep.ts', 'packages/x/src/keep.ts']);
+  });
+
+  it('does not broaden a file exemption to siblings or suffix matches', () => {
+    const exemption = {
+      path: 'packages/x/src/allowed.ts',
+      scope: 'file' as const,
+      owner: '@liteship/x',
+      reason: 'Synthetic exact-file policy.',
+    };
+
+    expect(matchesInvariantExemption('packages/x/src/allowed.ts', exemption)).toBe(true);
+    expect(matchesInvariantExemption('packages/x/src/allowed.ts.extra', exemption)).toBe(false);
+    expect(matchesInvariantExemption('nested/packages/x/src/allowed.ts', exemption)).toBe(false);
+  });
+
+  it('records an owner and reason for every live exemption', () => {
+    for (const invariant of INVARIANTS) {
+      for (const exemption of invariant.exemptions ?? []) {
+        expect(exemption.path, invariant.name).not.toHaveLength(0);
+        expect(exemption.owner, `${invariant.name}:${exemption.path}`).not.toHaveLength(0);
+        expect(exemption.reason, `${invariant.name}:${exemption.path}`).not.toHaveLength(0);
+      }
+    }
   });
 
   it('a scoped dir that does not exist contributes zero violations (ENOENT → empty, not crash)', () => {
@@ -167,6 +198,25 @@ describe('liteship check-invariants — adapter projection (scan via injected ca
     expect(stderr).toContain('[INVARIANT VIOLATION] NO_REQUIRE');
     expect(stderr).toContain('packages/x/src/bad.ts:1');
     expect(stderr).toContain('Invariant check failed.');
+  });
+
+  it('the production invariant fold rejects a checkout that retains credentials', async () => {
+    write('.gitattributes', '* text=auto eol=lf\n');
+    write(
+      '.github/workflows/unsafe.yml',
+      `steps:\n  - uses: actions/checkout@${'a'.repeat(40)}\n    with:\n      fetch-depth: 0\n`,
+    );
+    const { exit, stdout } = await captureCli(() =>
+      checkInvariants({ cwd: root, pretty: false }, { spawn: spawnMock }),
+    );
+    expect(exit).toBe(1);
+    const groups = lastReceipt(stdout)['groups'] as { name: string; violations: { file: string }[] }[];
+    expect(groups).toContainEqual(
+      expect.objectContaining({
+        name: 'IMMUTABLE_WORKFLOW_ACTIONS',
+        violations: [expect.objectContaining({ file: '.github/workflows/unsafe.yml' })],
+      }),
+    );
   });
 
   it('a line-ending policy violation fails the gate and prints the LINE_ENDINGS section (pretty)', async () => {

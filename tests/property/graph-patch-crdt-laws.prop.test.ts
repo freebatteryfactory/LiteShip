@@ -47,7 +47,7 @@
 // PROVES: INV-GRAPHPATCH-IDEMPOTENT, INV-GRAPHPATCH-COMMUTATIVE, INV-GRAPHPATCH-CONVERGENCE, INV-GRAPHPATCH-CONFLICT-BOUNDARY
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { GraphPatch, DAG, ContentAddress, sealNode, sealGraph } from '@liteship/core';
+import { GraphPatch, DAG, ContentAddress, SignalInput, sealNode, sealGraph } from '@liteship/core';
 import type {
   SignalNode,
   DocumentGraphNode,
@@ -85,7 +85,7 @@ function signal(input: string, range?: readonly [number, number]): SignalNode {
     family: 'signal',
     id: SENTINEL_ID,
     meta: META,
-    input,
+    input: SignalInput(input),
     ...(range !== undefined ? { range } : {}),
   };
   return sealNode(draft);
@@ -110,9 +110,7 @@ function graphOf(nodes: readonly DocumentGraphNode[]): DocumentGraphType {
 const arbAxis = fc.string({ minLength: 1, maxLength: 6 }).filter((s) => /^[a-z0-9_]+$/i.test(s));
 
 /** A small set of DISTINCT signal axes (1..4). The `.filter` over a Set guarantees uniqueness. */
-const arbDistinctAxes = fc
-  .uniqueArray(arbAxis, { minLength: 1, maxLength: 4 })
-  .map((axes) => [...new Set(axes)]);
+const arbDistinctAxes = fc.uniqueArray(arbAxis, { minLength: 1, maxLength: 4 }).map((axes) => [...new Set(axes)]);
 
 /** A small valid base DocumentGraph: distinct signal nodes, sealed. */
 const arbBaseGraph = arbDistinctAxes.map((axes) => graphOf(axes.map((a) => signal(a))));

@@ -100,7 +100,7 @@ Defined in: [command/src/checks/cure-packet.ts:60](https://github.com/freebatter
 
 ### finding
 
-> `readonly` **finding**: [`Finding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts)
+> `readonly` **finding**: [`Finding`](../../../liteship/src/evidence/interfaces/Finding.md)
 
 Defined in: [command/src/checks/cure-packet.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L48)
 

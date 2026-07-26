@@ -23,6 +23,8 @@ function fakeToolbar(): { eventTarget: { onToggled: (cb: ToggleHandler) => void 
 }
 
 afterEach(() => {
+  window.dispatchEvent(new Event('pagehide'));
+  delete (window as Window & { __LITESHIP_OFF__?: boolean }).__LITESHIP_OFF__;
   document.body.innerHTML = '';
 });
 
@@ -54,6 +56,29 @@ describe('inspector dev-toolbar app', () => {
 
     bar.toggle(false);
     expect(canvas.children.length).toBe(0);
+  });
+
+  test('never mounts on excluded routes and follows route scope across swaps', () => {
+    const runtimeWindow = window as Window & { __LITESHIP_OFF__?: boolean };
+    const canvas = document.createElement('div');
+    const bar = fakeToolbar();
+    app.init(canvas as never, bar.eventTarget as never, undefined as never);
+
+    runtimeWindow.__LITESHIP_OFF__ = true;
+    bar.toggle(true);
+    expect(canvas.children.length).toBe(0);
+
+    runtimeWindow.__LITESHIP_OFF__ = false;
+    document.dispatchEvent(new Event('astro:after-swap'));
+    expect(canvas.children.length).toBeGreaterThan(0);
+
+    runtimeWindow.__LITESHIP_OFF__ = true;
+    document.dispatchEvent(new Event('astro:after-swap'));
+    expect(canvas.children.length).toBe(0);
+
+    runtimeWindow.__LITESHIP_OFF__ = false;
+    document.dispatchEvent(new Event('astro:after-swap'));
+    expect(canvas.children.length).toBeGreaterThan(0);
   });
 
   test('is a default-exported DevToolbarApp with an init function', () => {

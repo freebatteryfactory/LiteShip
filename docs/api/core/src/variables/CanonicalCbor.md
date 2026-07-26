@@ -16,4 +16,4 @@ Canonical CBOR encoder namespace (ADR-0001 pattern).
 
 ### encode
 
-> `readonly` **encode**: *typeof* `_encode`
+> `readonly` **encode**: *typeof* `encode`

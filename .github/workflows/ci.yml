@@ -125,6 +125,7 @@ jobs:
           LITESHIP_AFFECTED_PLAN_PATH: .liteship/affected-plan.json
           LITESHIP_AFFECTED_JUNIT_PATH: reports/vitest-results-pr-affected.xml
       - name: Run benchmark authority selected by the affected plan
+        id: benchmark
         if: needs.plan.outputs.affected-benchmark-required == 'true'
         run: pnpm run bench
       - name: Record affected Linux execution state
@@ -132,9 +133,11 @@ jobs:
         run: pnpm exec tsx scripts/write-affected-result-evidence.ts
         env:
           LITESHIP_AFFECTED_LANE: pr-linux
-          LITESHIP_AFFECTED_STEPS: quick,vitest
+          LITESHIP_AFFECTED_STEPS: quick,vitest,benchmark
+          LITESHIP_AFFECTED_PLAN_ID: ${{ needs.plan.outputs.affected-plan-id }}
           LITESHIP_AFFECTED_OUTCOME_QUICK: ${{ steps.quick.outcome }}
           LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}
+          LITESHIP_AFFECTED_OUTCOME_BENCHMARK: ${{ steps.benchmark.outcome }}
           LITESHIP_AFFECTED_EVIDENCE_VITEST: reports/vitest-results-pr-affected.xml
           LITESHIP_AFFECTED_RESULT_PATH: reports/affected-result-pr-linux.json
       - name: Upload affected Linux test evidence
@@ -189,6 +192,7 @@ jobs:
         run: pnpm exec tsx scripts/write-affected-result-evidence.ts
         env:
           LITESHIP_AFFECTED_LANE: pr-browser
+          LITESHIP_AFFECTED_PLAN_ID: ${{ needs.plan.outputs.affected-plan-id }}
           LITESHIP_AFFECTED_STEPS: vitest,e2e
           LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}
           LITESHIP_AFFECTED_OUTCOME_E2E: ${{ steps.e2e.outcome }}
@@ -239,6 +243,7 @@ jobs:
         run: pnpm exec tsx scripts/write-affected-result-evidence.ts
         env:
           LITESHIP_AFFECTED_LANE: pr-windows
+          LITESHIP_AFFECTED_PLAN_ID: ${{ needs.plan.outputs.affected-plan-id }}
           LITESHIP_AFFECTED_STEPS: vitest
           LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}
           LITESHIP_AFFECTED_EVIDENCE_VITEST: reports/vitest-results-pr-windows-affected.xml
@@ -251,6 +256,54 @@ jobs:
           path: |
             reports/affected-result-pr-windows.json
             reports/vitest-results-pr-windows-affected.xml
+          if-no-files-found: error
+
+  pr-affected-evidence:
+    if: always() && github.event_name == 'pull_request' && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - plan
+      - pr-affected
+      - pr-browser-affected
+      - pr-windows-affected
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: affected-plan
+          path: .liteship
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: vitest-results-pr-affected
+          path: .liteship/affected-results/pr-linux
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: vitest-results-pr-windows-affected
+          path: .liteship/affected-results/pr-windows
+      - if: needs.plan.outputs.affected-browser-required == 'true'
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: test-results-pr-browser-affected
+          path: .liteship/affected-results/pr-browser
+      - name: Admit selected affected execution receipts
+        run: >-
+          pnpm exec tsx scripts/verify-affected-result-evidence.ts
+          .liteship/affected-plan.json
+          .liteship/affected-results
+          reports/affected-result-admission.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: affected-result-admission
+          path: reports/affected-result-admission.json
           if-no-files-found: error
 
   # Serial full gauntlet — nightly/manual exhaustive authority. Pull requests use
@@ -883,6 +936,8 @@ jobs:
     needs: plan
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # action implementation pinned
         with:
           # Projection of rust-toolchain.toml; check/devcontainer-pins rejects drift.
@@ -1185,6 +1240,7 @@ jobs:
       - pr-affected
       - pr-browser-affected
       - pr-windows-affected
+      - pr-affected-evidence
       - truth-linux
       - truth-linux-parallel
       - browser-e2e
@@ -1203,6 +1259,7 @@ jobs:
           PR_AFFECTED: ${{ needs.pr-affected.result }}
           PR_BROWSER: ${{ needs.pr-browser-affected.result }}
           PR_WINDOWS: ${{ needs.pr-windows-affected.result }}
+          PR_EVIDENCE: ${{ needs.pr-affected-evidence.result }}
           SERIAL: ${{ needs.truth-linux.result }}
           PARALLEL: ${{ needs.truth-linux-parallel.result }}
           BROWSER: ${{ needs.browser-e2e.result }}
@@ -1222,6 +1279,7 @@ jobs:
           if [ "$EVENT" = "pull_request" ]; then
             test "$PR_AFFECTED" = "success"
             test "$PR_WINDOWS" = "success"
+            test "$PR_EVIDENCE" = "success"
             test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
             if [ "$RUST_WASM_REQUIRED" = "true" ]; then
               test "$RUST_WASM" = "success"

@@ -8,7 +8,7 @@
 
 > `const` **PublicSymbolContextSchema**: `object`
 
-Defined in: [command/src/commands/public-surface-context.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L45)
+Defined in: [command/src/commands/public-surface-context.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L57)
 
 Structural schema reused by `explain` and `context`.
 
@@ -154,6 +154,86 @@ Structural schema reused by `explain` and `context`.
 
 > `readonly` **type**: `"string"` = `'string'`
 
+#### properties.failureProof
+
+> `readonly` **failureProof**: `object`
+
+#### properties.failureProof.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.failureProof.properties.importSource
+
+> `readonly` **importSource**: `object`
+
+#### properties.failureProof.properties.importSource.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.failureProof.properties.observation
+
+> `readonly` **observation**: `object`
+
+#### properties.failureProof.properties.observation.properties
+
+> `readonly` **properties**: `object`
+
+#### properties.failureProof.properties.observation.properties.code
+
+> `readonly` **code**: `object`
+
+#### properties.failureProof.properties.observation.properties.code.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.failureProof.properties.observation.properties.kind
+
+> `readonly` **kind**: `object`
+
+#### properties.failureProof.properties.observation.properties.kind.const
+
+> `readonly` **const**: `"diagnostic-and-output-omission"` = `'diagnostic-and-output-omission'`
+
+#### properties.failureProof.properties.observation.properties.outputField
+
+> `readonly` **outputField**: `object`
+
+#### properties.failureProof.properties.observation.properties.outputField.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.failureProof.properties.observation.required
+
+> `readonly` **required**: readonly \[`"kind"`, `"code"`, `"outputField"`\]
+
+#### properties.failureProof.properties.observation.type
+
+> `readonly` **type**: `"object"` = `'object'`
+
+#### properties.failureProof.properties.operation
+
+> `readonly` **operation**: `object`
+
+#### properties.failureProof.properties.operation.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.failureProof.properties.test
+
+> `readonly` **test**: `object`
+
+#### properties.failureProof.properties.test.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.failureProof.required
+
+> `readonly` **required**: readonly \[`"test"`, `"importSource"`, `"operation"`, `"observation"`\]
+
+#### properties.failureProof.type
+
+> `readonly` **type**: readonly \[`"object"`, `"null"`\]
+
 #### properties.lifecycle
 
 > `readonly` **lifecycle**: `object`
@@ -228,7 +308,7 @@ Structural schema reused by `explain` and `context`.
 
 ### required
 
-> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
+> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
 
 ### type
 

@@ -113,4 +113,22 @@ describe('tryParseGeneratedUIChunk', () => {
       ),
     ).toBeNull();
   });
+
+  it('refuses over-depth trees without recursion overflow', () => {
+    let node: Record<string, unknown> = { name: 'Text', props: { text: 'leaf' } };
+    for (let depth = 0; depth < 70; depth += 1) {
+      node = { name: 'Card', props: { title: String(depth) }, children: [node] };
+    }
+    expect(() => tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, ...node }))).not.toThrow();
+    expect(tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, ...node }))).toBeNull();
+  });
+
+  it('refuses over-width trees at the shared node budget', () => {
+    const children = Array.from({ length: 4096 }, (_, index) => ({ name: 'Text', props: { text: String(index) } }));
+    expect(
+      tryParseGeneratedUIChunk(
+        JSON.stringify({ _genui: true, name: 'Card', props: { title: 'wide' }, children }),
+      ),
+    ).toBeNull();
+  });
 });

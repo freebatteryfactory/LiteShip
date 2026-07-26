@@ -14,7 +14,7 @@ The parts [makeRepoIR](../functions/makeRepoIR.md) composes into a [RepoIR](Repo
 
 ### benchmarkSubjects?
 
-> `readonly` `optional` **benchmarkSubjects?**: `BenchmarkSubjectFacts`
+> `readonly` `optional` **benchmarkSubjects?**: [`BenchmarkSubjectFacts`](BenchmarkSubjectFacts.md)
 
 Defined in: [gauntlet/src/repo-ir.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L301)
 

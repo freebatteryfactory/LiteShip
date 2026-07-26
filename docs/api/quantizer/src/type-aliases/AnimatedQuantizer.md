@@ -8,7 +8,7 @@
 
 > **AnimatedQuantizer**\<`B`\> = [`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L477)
+Defined in: [quantizer/src/animated-quantizer.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L526)
 
 Public structural type for `AnimatedQuantizer`.
 
@@ -16,4 +16,4 @@ Public structural type for `AnimatedQuantizer`.
 
 ### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)

@@ -79,6 +79,211 @@ describe('transformCss (standalone, no plugin lifecycle)', () => {
     expect(resolveSpy).not.toHaveBeenCalled();
   });
 
+  test.each([
+    ['boundary-first', ['boundary', 'foreign']],
+    ['foreign-first', ['foreign', 'boundary']],
+  ] as const)('diagnoses boundary shadowing independent of transform order: %s', async (_name, order) => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({
+        input: 'viewport.width',
+        at: [
+          [0, 'mobile'],
+          [768, 'desktop'],
+        ] as const,
+      }),
+    );
+
+    const { ctx, warnings } = makeCtx(root);
+    for (const kind of order) {
+      if (kind === 'boundary') {
+        await transformCss(
+          '@quantize layout { mobile { .hero { color: red; } } desktop { .hero { color: blue; } } }',
+          join(srcDir, 'boundary.css'),
+          ctx,
+        );
+      } else {
+        await transformCss('.hero { color: green; }', join(srcDir, 'foreign.css'), ctx);
+      }
+    }
+
+    expect(warnings.filter((warning) => warning.includes('shadows boundary output'))).toHaveLength(1);
+    expect(warnings[0]).toContain(join(srcDir, 'foreign.css'));
+  });
+
+  test('keeps comment/string quantize decoys as foreign evidence', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({ input: 'viewport.width', at: [[0, 'mobile']] as const }),
+    );
+
+    const { ctx, warnings } = makeCtx(root);
+    await transformCss(
+      '.hero { color: green; } /* @quantize fake { } */ .note { content: "@quantize fake {"; }',
+      join(srcDir, 'foreign.css'),
+      ctx,
+    );
+    await transformCss(
+      '@quantize layout { mobile { .hero { color: red; } } }',
+      join(srcDir, 'boundary.css'),
+      ctx,
+    );
+
+    expect(warnings.some((warning) => warning.includes('shadows boundary output'))).toBe(true);
+  });
+
+  test('diagnoses ordinary rules beside quantize blocks in the same sheet', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({ input: 'viewport.width', at: [[0, 'mobile']] as const }),
+    );
+
+    const { ctx, warnings } = makeCtx(root);
+    await transformCss(
+      '.hero { color: green; }\n@quantize layout { mobile { .hero { color: red; } } }',
+      join(srcDir, 'mixed.css'),
+      ctx,
+    );
+
+    expect(warnings.some((warning) => warning.includes('mixed.css') && warning.includes('color'))).toBe(true);
+  });
+
+  test('retains last-good shadow evidence when a later transform throws', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({ input: 'viewport.width', at: [[0, 'mobile']] as const }),
+    );
+
+    const cache = createPrimitiveResolutionCache();
+    const moduleId = join(srcDir, 'boundary.css');
+    const first = makeCtx(root, { cache });
+    await transformCss('@quantize layout { mobile { .hero { color: red; } } }', moduleId, first.ctx);
+    const lastGood = cache.lastCompiledBoundaryCss.get(moduleId);
+
+    const failing = makeCtx(root, { cache, boundaryDefinitions: new Map() });
+    await expect(
+      transformCss('@quantize missing { mobile { .hero { color: blue; } } }', moduleId, failing.ctx),
+    ).rejects.toThrow('boundary "missing"');
+    expect(cache.lastCompiledBoundaryCss.get(moduleId)).toBe(lastGood);
+
+    const foreign = makeCtx(root, { cache });
+    await transformCss('.hero { color: green; }', join(srcDir, 'foreign.css'), foreign.ctx);
+    expect(foreign.warnings.some((warning) => warning.includes('shadows boundary output'))).toBe(true);
+  });
+
+  test('retains every repeated quantize block in module-level diagnostic evidence', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({ input: 'viewport.width', at: [[0, 'mobile']] as const }),
+    );
+
+    const { ctx, warnings } = makeCtx(root);
+    await transformCss(
+      '@quantize layout { mobile { .hero { color: red; } } }\n' +
+        '@quantize layout { mobile { .hero { display: grid; } } }',
+      join(srcDir, 'boundary.css'),
+      ctx,
+    );
+    await transformCss('.hero { color: green; display: block; }', join(srcDir, 'foreign.css'), ctx);
+
+    expect(warnings.some((warning) => warning.includes('color'))).toBe(true);
+    expect(warnings.some((warning) => warning.includes('display'))).toBe(true);
+    expect(ctx.cache.lastCompiledBoundaryCss).toHaveLength(1);
+  });
+
+  test('replaces retained foreign CSS on re-transform instead of reporting stale rules', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({
+        input: 'viewport.width',
+        at: [
+          [0, 'mobile'],
+          [768, 'desktop'],
+        ] as const,
+      }),
+    );
+
+    const sharedCache = createPrimitiveResolutionCache();
+    const first = makeCtx(root, { cache: sharedCache });
+    await transformCss('.hero { color: green; }', join(srcDir, 'foreign.css'), first.ctx);
+    await transformCss('.footer { color: green; }', join(srcDir, 'foreign.css'), first.ctx);
+
+    const second = makeCtx(root, { cache: sharedCache });
+    await transformCss(
+      '@quantize layout { mobile { .hero { color: red; } } desktop { .hero { color: blue; } } }',
+      join(srcDir, 'boundary.css'),
+      second.ctx,
+    );
+
+    expect(second.warnings).toEqual([]);
+    expect(sharedCache.lastForeignCss).toHaveLength(1);
+  });
+
+  test('removes historical boundary output when a module no longer contains quantize blocks', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      'layout',
+      defineBoundary({
+        input: 'viewport.width',
+        at: [
+          [0, 'mobile'],
+          [768, 'desktop'],
+        ] as const,
+      }),
+    );
+
+    const { ctx, cache } = makeCtx(root);
+    const moduleId = join(srcDir, 'boundary.css');
+    await transformCss(
+      '@quantize layout { mobile { .hero { color: red; } } desktop { .hero { color: blue; } } }',
+      moduleId,
+      ctx,
+    );
+    expect(cache.lastCompiledBoundaryCss.size).toBeGreaterThan(0);
+
+    await transformCss('.hero { color: green; }', moduleId, ctx);
+    expect(cache.lastCompiledBoundaryCss).toHaveLength(0);
+    expect(cache.lastForeignCss.get(moduleId)).toContain('.hero');
+
+    const afterRemoval = makeCtx(root, { cache });
+    await transformCss('.hero { color: blue; }', join(srcDir, 'other.css'), afterRemoval.ctx);
+    expect(afterRemoval.warnings).toEqual([]);
+  });
+
   test('compiles token, theme, and quantize blocks in one sheet and watches their sources', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

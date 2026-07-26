@@ -24,13 +24,13 @@
     "packages/command/src/index.ts",
     "packages/cli/src/index.ts",
     "packages/mcp-server/src/index.ts",
-    "packages/_spine/typedoc-entry.ts"
+    "packages/_spine/typedoc-entry.ts",
+    "packages/create-liteship/src/index.ts",
+    "packages/liteship/src"
   ],
   "entryPointStrategy": "expand",
   "out": "docs/api",
-  "plugin": [
-    "typedoc-plugin-markdown"
-  ],
+  "plugin": ["typedoc-plugin-markdown"],
   "readme": "TYPEDOC.md",
   "excludePrivate": true,
   "excludeInternal": true,
@@ -94,7 +94,25 @@
       "ReactiveQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts",
       "CompositorFactory.create": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts",
       "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
-      "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts"
+      "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts",
+      "wallClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts",
+      "Receipt": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts",
+      "Receipt.validateChainDetailed": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts",
+      "TypedRef": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/typed-ref.ts",
+      "applyTransition": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts",
+      "rawIndexF32": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/boundary-f32.ts",
+      "WASMDispatch.load": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts",
+      "TransitionNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-node.ts",
+      "GraphPatch.receipt": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts",
+      "GraphPatch.decode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts",
+      "SignalNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
+      "Plan": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts",
+      "createRuntimeCoordinator": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts",
+      "contentAddressOf": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/content-address.ts",
+      "ConfigInput": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts",
+      "BoundarySpec": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts",
+      "ArbitraryAnnotationId": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts",
+      "OptionalId": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts"
     },
     "@types/node": {
       "__global.AbortController": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController"
@@ -103,7 +121,9 @@
       "ValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "ParseError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "InvariantViolationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
-      "HostCapabilityError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts"
+      "HostCapabilityError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
+      "DiagnosticCode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts",
+      "DiagnosticEntry": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts"
     },
     "@liteship/gauntlet": {
       "RepoIR": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
@@ -118,7 +138,8 @@
       "McdcConditionOutcome": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
       "Finding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts",
       "GauntletResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts",
-      "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
+      "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts",
+      "CoverageClass": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts"
     },
     "@liteship/command": {
       "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts",
@@ -135,6 +156,15 @@
     "@liteship/vite": {
       "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts",
       "resolvePackagedWasm": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/wasm-package-resolve.ts"
+    },
+    "@liteship/astro": {
+      "createDOMLLMSessionHost": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/runtime/llm-session.ts",
+      "createLLMSessionWithHost": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/runtime/llm-session.ts"
+    },
+    "@liteship/quantizer": {
+      "DefineQuantizerOptions": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts",
+      "DefineQuantizerOptions.tier": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts",
+      "AnimatedQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts"
     },
     "@liteship/detect": {
       "ExtendedDeviceCapabilities": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",

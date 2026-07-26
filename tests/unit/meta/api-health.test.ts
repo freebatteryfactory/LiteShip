@@ -385,8 +385,7 @@ const STANDALONE_FUNCTIONS = [
   'proposalSubject',
   'proposalReceiptSubject',
   'defineCapsule',
-  'getCapsuleCatalog',
-  // `resetCapsuleCatalog` lives at `@liteship/core/testing` sub-path — see below.
+  'defineCapsuleCatalog',
   // ShipCapsule release-input addressing helpers (tarballManifestAddress,
   // lockfileAddress, workspaceManifestAddress, normalizedDryRunAddress,
   // normalizeDryRunOutput) live in @liteship/cli per ADR-0011 — they import
@@ -675,11 +674,6 @@ describe('API health canary', () => {
   });
 
   describe('sub-path exports', () => {
-    test('@liteship/core/testing exposes resetCapsuleCatalog', async () => {
-      const Testing = await import('@liteship/core/testing');
-      expect(typeof Testing.resetCapsuleCatalog).toBe('function');
-    });
-
     test('@liteship/core/harness exposes the harness generators', async () => {
       const Harness = await import('@liteship/core/harness');
       const expected = [
@@ -694,10 +688,6 @@ describe('API health canary', () => {
       for (const name of expected) {
         expect(typeof (Harness as Record<string, unknown>)[name]).toBe('function');
       }
-    });
-
-    test('resetCapsuleCatalog is NOT on the main entry (footgun gate)', () => {
-      expect((Core as Record<string, unknown>).resetCapsuleCatalog).toBeUndefined();
     });
 
     test('Harness namespace is NOT on the main entry (bundle-weight gate)', () => {

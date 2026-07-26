@@ -32,7 +32,7 @@ Defined in: [compiler/src/motion.ts:45](https://github.com/freebatteryfactory/Li
 
 ### plan
 
-> `readonly` **plan**: `CssMotionPlan`
+> `readonly` **plan**: [`CssMotionPlan`](../../../liteship/src/motion/interfaces/CssMotionPlan.md)
 
 Defined in: [compiler/src/motion.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L44)
 

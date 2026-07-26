@@ -8,7 +8,7 @@
 
 > **dualExportNode**(`graph`, `encode`): `Promise`\<[`DualExportNodeResult`](../interfaces/DualExportNodeResult.md)\>
 
-Defined in: [stage/src/dual-export.ts:682](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L682)
+Defined in: [stage/src/dual-export.ts:664](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L664)
 
 THE JEWEL, HEADLESS. Run the full [dualExport](dualExport.md) proof in node/CI AND run a
 REAL byte-encode through the injected [FrameEncoder](../type-aliases/FrameEncoder.md) so a node caller gets
@@ -25,13 +25,14 @@ headless, identical to the browser path.
 
 Stage's core imports no codec: `encode` is injected. In node, wire
 `ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
-`ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
+`ffmpegEncodeAvailable()` first); another host may provide the same explicit
+encoder contract.
 
 ## Parameters
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 ### encode
 

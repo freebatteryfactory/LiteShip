@@ -7,7 +7,7 @@
  *    (monorepo dev — a fresh `pnpm run build:wasm` output)
  * 3. The artifact shipped inside `@liteship/core`, located through the module graph
  *    (the default for an installed consumer, who has no Rust crate to build).
- *    See {@link resolvePackagedWasm}. This is the branch that makes
+ *    See `resolvePackagedWasm`. This is the branch that makes
  *    `liteship({ wasm: { enabled: true } })` "just work" off a plain npm install
  *    (0.2.1: before this, an installed consumer had nothing to resolve and
  *    silently ran the TS fallback).
@@ -35,7 +35,7 @@ export interface WASMResolution {
  * Render the conventional WASM search locations for diagnostics.
  *
  * `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
- * to the real {@link resolvePackagedWasm}; injectable so a test simulating a
+ * to the real `resolvePackagedWasm`; injectable so a test simulating a
  * consumer with no shipped binary can force that source absent (a synthetic temp
  * root cannot model the module-graph resolution the real resolver performs).
  */
@@ -67,7 +67,7 @@ export function formatWasmSearchPaths(
  * Resolve the liteship-compute WASM binary path.
  *
  * `resolvePackaged` is the packaged-`@liteship/core` binary resolver, defaulting
- * to the real {@link resolvePackagedWasm}; injectable so a test simulating a
+ * to the real `resolvePackagedWasm`; injectable so a test simulating a
  * consumer with no shipped binary can force the `'package'` source absent and
  * drive the config/crate/public ordering deterministically off a temp root.
  */

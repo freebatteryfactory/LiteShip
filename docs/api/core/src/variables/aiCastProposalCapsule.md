@@ -11,7 +11,7 @@
 Defined in: [core/src/authoring/capsules/ai-cast-proposal.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/ai-cast-proposal.ts#L157)
 
 Declared capsule for the AI cast proposal envelope. Registered in the
-module-level catalog at import time; walked by the factory compiler. The
+immutable exported declaration; walked by the factory compiler. The
 generated property test feeds schema-seeds, `run` seals a real graph, proposes
 + validates a real patch (the sole mint path), and probes the apply / tamper /
 determinism laws over the REAL minted envelope. The invariants assert those

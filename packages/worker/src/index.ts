@@ -41,6 +41,7 @@ export { CompositorWorker } from './compositor-worker.js';
 export type {
   CompositorWorkerShape,
   CompositorWorkerState,
+  ResolvedStateAckPayload,
   QuantizerBoundarySource,
   WorkerMetrics,
 } from './compositor-types.js';

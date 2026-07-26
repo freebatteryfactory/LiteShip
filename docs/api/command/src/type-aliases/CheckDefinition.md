@@ -8,6 +8,6 @@
 
 > **CheckDefinition** = `BlockingCheckDefinition` \| `AdvisoryCheckDefinition`
 
-Defined in: [command/src/checks/definition.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L176)
+Defined in: [command/src/checks/definition.ts:223](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/definition.ts#L223)
 
 One declared check. Blocking rows require a falsifying control at compile time.

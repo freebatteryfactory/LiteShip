@@ -20,6 +20,7 @@ const catalog = defineComponentCatalog({
     },
     Optional: { props: {}, children: 'optional', allowedChildNames: ['Leaf'] },
     Required: { props: {}, children: 'required', allowedChildNames: ['Leaf'] },
+    Link: { props: { href: { type: 'string', required: true } }, children: 'none' },
   },
 });
 
@@ -103,6 +104,21 @@ const cases: readonly DecisionCase[] = [
   {
     decision: 'slot-array-recursion/false',
     node: { name: 'Optional', props: {}, slots: { body: [leaf(), { name: 'Leaf', props: {} }] } },
+    expected: 'genui/invalid-prop',
+  },
+  {
+    decision: 'slot-child-containment/false',
+    node: { name: 'Optional', props: {}, slots: { body: { name: 'Button', props: { label: 'x' } } } },
+    expected: 'genui/invalid-children',
+  },
+  {
+    decision: 'href-scheme/true',
+    node: { name: 'Link', props: { href: '/docs' } },
+    expected: true,
+  },
+  {
+    decision: 'href-scheme/false',
+    node: { name: 'Link', props: { href: 'java\nscript:alert(1)' } },
     expected: 'genui/invalid-prop',
   },
 ];

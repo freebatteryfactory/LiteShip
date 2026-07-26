@@ -20,7 +20,7 @@ Product naming for surrounding docs: [GLOSSARY.md](./GLOSSARY.md).
 | `@liteship/_spine` | foundation | `.`, `./core`, `./design`, `./command`, `./genui` | shared-type-declarations |
 | `@liteship/error` | foundation | `.` | tagged-error-algebra, diagnostic-codes |
 | `@liteship/canonical` | foundation | `.` | canonical-cbor, content-digests |
-| `@liteship/core` | semantic | `.`, `./authoring`, `./reactive`, `./motion`, `./graph`, `./evidence`, `./schema`, `./media`, `./clock`, `./wasm`, `./testing`, `./harness`, `./simulation`, `./fs-walk` | adaptive-authoring, reactive-runtime, motion, document-graph, evidence |
+| `@liteship/core` | semantic | `.`, `./authoring`, `./reactive`, `./motion`, `./graph`, `./evidence`, `./schema`, `./media`, `./clock`, `./wasm`, `./harness`, `./simulation`, `./fs-walk` | adaptive-authoring, reactive-runtime, motion, document-graph, evidence |
 | `@liteship/genui` | semantic | `.` | trusted-component-catalog, generated-ui-validation |
 | `@liteship/quantizer` | semantic | `.`, `./testing` | signal-quantization, state-transition-runtime |
 | `@liteship/compiler` | semantic | `.`, `./parse`, `./migrate` | multi-target-compilation, source-parsing, migration-adapters |
@@ -31,7 +31,7 @@ Product naming for surrounding docs: [GLOSSARY.md](./GLOSSARY.md).
 | `@liteship/worker` | runtime | `.` | worker-runtime, offscreen-rendering, spsc-transport |
 | `@liteship/remotion` | runtime | `.` | remotion-integration, video-frame-runtime |
 | `@liteship/scene` | runtime | `.`, `./dev` | scene-authoring, timeline-runtime |
-| `@liteship/astro` | host-adapter | `.`, `./client-directives/adaptive`, `./client-directives/stream`, `./client-directives/llm`, `./client-directives/worker`, `./client-directives/gpu`, `./client-directives/wasm`, `./client-directives/graph`, `./client-directives/motion`, `./client-directives/svg`, `./middleware`, `./middleware-entry`, `./fetch-layer`, `./runtime`, `./runtime/inspector-toolbar-app`, `./Adaptive`, `./Adaptive.astro` | astro-integration, adaptive-directive, server-tier-resolution |
+| `@liteship/astro` | host-adapter | `.`, `./client-directives/adaptive`, `./client-directives/stream`, `./client-directives/llm`, `./client-directives/worker`, `./client-directives/gpu`, `./client-directives/wasm`, `./client-directives/graph`, `./client-directives/motion`, `./client-directives/svg`, `./middleware`, `./middleware-entry`, `./fetch-layer`, `./adaptive-runtime`, `./runtime`, `./runtime/inspector-toolbar-app`, `./Adaptive`, `./Adaptive.astro` | astro-integration, adaptive-directive, server-tier-resolution |
 | `@liteship/cloudflare` | host-adapter | `.`, `./testing`, `./cache-provider` | cloudflare-workers-adapter, kv-boundary-cache |
 | `@liteship/stage` | runtime | `.`, `./ffmpeg` | dual-export, ffmpeg-rendering |
 | `@liteship/assets` | runtime | `.` | asset-declarations, media-analysis |

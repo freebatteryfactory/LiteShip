@@ -54,7 +54,21 @@ describe('red-team runtime regressions', () => {
 
   test('rejects unsafe theme prefixes and CSS payloads', () => {
     expect(() => compileTheme({ prefix: 'brand bad', tokens: { primary: '#fff' } })).toThrow(/Invalid theme prefix/);
-    expect(() => compileTheme({ tokens: { primary: 'red;display:block' } })).toThrow(/Unsafe theme token "primary" value/);
+    for (const value of [
+      'red;display:block',
+      'red" onload="alert(1)',
+      "red' onmouseover='alert(1)",
+      'red/*comment',
+      'url(https://attacker.example/pixel)',
+      'red\\3c script',
+      'red\nblue',
+    ]) {
+      expect(() => compileTheme({ tokens: { primary: value } }), value).toThrow(/Unsafe theme token "primary"/);
+    }
+
+    const safe = compileTheme({ tokens: { primary: '#fff' } });
+    const parsed = new DOMParser().parseFromString(`<html style="${safe.inlineStyle}"></html>`, 'text/html');
+    expect(parsed.documentElement.getAttributeNames()).toEqual(['style']);
   });
 
   test('sanitized html strips privileged sinks while keeping safe markup', () => {

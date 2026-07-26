@@ -64,6 +64,19 @@ type _codecParseErrorParity = Assert<IsEqual<SpineCore.Codec.ParseError, RtParse
 void (0 as unknown as _codecResultParity);
 void (0 as unknown as _codecParseErrorParity);
 
+type _planTopoSortParity = Assert<
+  IsEqual<SpineCore.TopoSortResult, ReturnType<typeof CoreImpl.Plan.topoSort>>
+>;
+type _audioSignalParity = Assert<IsEqual<SpineCore.Signal.Audio, CoreImpl.Signal.Audio>>;
+void (0 as unknown as _planTopoSortParity);
+void (0 as unknown as _audioSignalParity);
+
+function __retiredSpineFactoryContract(): void {
+  // @ts-expect-error — Component is a type-only contract; createComponent owns construction.
+  void SpineCore.Component.make;
+}
+void __retiredSpineFactoryContract;
+
 // Factory runtime values satisfy the spine (a VALUE-satisfies-spine check via the
 // package index — the relation gate classifies TYPES, not that a factory's OUTPUT is
 // assignable to the spine surface): `defineConfig` / `defineConfig` outputs are

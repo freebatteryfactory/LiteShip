@@ -106,9 +106,9 @@ export type LspDiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof Dia
 
 /**
  * LSP `Diagnostic` (§Diagnostic). `code` carries the gate `ruleId`; `source` is
- * the fixed `'liteship-gauntlet'` provenance; `data` carries the assurance level +
- * coverage class (the rigor metadata an editor surfaces and a code-action reads
- * back). `message` is the finding's WHY (title + detail).
+ * the fixed `'liteship-gauntlet'` provenance; `data` carries the assurance level
+ * and rule identity that an editor surfaces and a code-action reads back.
+ * `message` is the finding's WHY (title + detail).
  */
 export interface LspDiagnostic {
   readonly range: LspRange;
@@ -153,17 +153,6 @@ export interface LogMessageParams {
   readonly message: string;
 }
 
-/** LSP `TextEdit` (§Text Documents) — replace `range` with `newText`. */
-export interface LspTextEdit {
-  readonly range: LspRange;
-  readonly newText: string;
-}
-
-/** LSP `WorkspaceEdit` (§WorkspaceEdit) — file-keyed text edits. */
-export interface LspWorkspaceEdit {
-  readonly changes: Readonly<Record<string, readonly LspTextEdit[]>>;
-}
-
 /** LSP `Command` (§Command) — a client-executed command carrying its arguments. */
 export interface LspCommand {
   readonly title: string;
@@ -177,17 +166,15 @@ export const CodeActionKind = {
 } as const;
 
 /**
- * LSP `CodeAction` (§textDocument/codeAction). A `patch` remediation projects to
- * an `edit` (a machine-applicable {@link LspWorkspaceEdit} carrying the diff for
- * the client to apply); an `instruction` remediation projects to a `command`
- * (the client surfaces the ordered steps). `diagnostics` links the action back
- * to the diagnostic it fixes (§CodeAction.diagnostics).
+ * LSP `CodeAction` (§textDocument/codeAction). Both patch and instruction
+ * remediations project to client-executed commands. The lean server has no
+ * document store and therefore does not advertise or model WorkspaceEdit.
+ * `diagnostics` links the action back to the diagnostic it fixes.
  */
 export interface LspCodeAction {
   readonly title: string;
   readonly kind: string;
   readonly diagnostics: readonly LspDiagnostic[];
-  readonly edit?: LspWorkspaceEdit;
   readonly command?: LspCommand;
 }
 

@@ -55,7 +55,7 @@ export interface ThemeDeclaration {
 }
 
 const SAFE_PREFIX_PATTERN = /^[a-z0-9-]+$/;
-const UNSAFE_CSS_VALUE_PATTERN = /[;{}<>]/;
+const UNSAFE_CSS_VALUE_PATTERN = /["'`;{}<>\\\u0000-\u001f\u007f]|\/\*|url\s*\(/iu;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -95,7 +95,7 @@ function formatValue(value: string | number, tokenName: string): string {
   if (UNSAFE_CSS_VALUE_PATTERN.test(formatted)) {
     throw ValidationError(
       'theme.compile',
-      `Unsafe theme token "${tokenName}" value "${formatted}" contains forbidden characters (;, {, }, <, >) and cannot be serialized into CSS safely. Fix: remove those characters from the token value.`,
+      `Unsafe theme token "${tokenName}" cannot be serialized into an HTML style attribute safely. Fix: remove quotes, control characters, CSS comments, URL functions, escapes, or declaration-breaking punctuation from the token value.`,
     );
   }
 

@@ -24,6 +24,17 @@ export interface PublicAllocationContext {
   readonly rationale: string;
 }
 
+export interface PublicFailureProofContext {
+  readonly test: string;
+  readonly importSource: string;
+  readonly operation: string;
+  readonly observation: {
+    readonly kind: 'diagnostic-and-output-omission';
+    readonly code: string;
+    readonly outputField: string;
+  };
+}
+
 /** Enough product context to use, verify, and recover one public symbol. */
 export interface PublicSymbolContext {
   readonly symbol: string;
@@ -32,6 +43,7 @@ export interface PublicSymbolContext {
   readonly userStory: string;
   readonly lifecycle: string;
   readonly failureContract: string;
+  readonly failureProof: PublicFailureProofContext | null;
   readonly example: string;
   readonly stability: PublicSurfaceStability;
   readonly expertRoutes: readonly string[];
@@ -51,6 +63,24 @@ export const PublicSymbolContextSchema = {
     userStory: { type: 'string' },
     lifecycle: { type: 'string' },
     failureContract: { type: 'string' },
+    failureProof: {
+      type: ['object', 'null'],
+      properties: {
+        test: { type: 'string' },
+        importSource: { type: 'string' },
+        operation: { type: 'string' },
+        observation: {
+          type: 'object',
+          properties: {
+            kind: { const: 'diagnostic-and-output-omission' },
+            code: { type: 'string' },
+            outputField: { type: 'string' },
+          },
+          required: ['kind', 'code', 'outputField'],
+        },
+      },
+      required: ['test', 'importSource', 'operation', 'observation'],
+    },
     example: { type: 'string' },
     stability: { enum: ['stable', 'experimental'] },
     expertRoutes: { type: 'array', items: { type: 'string' } },
@@ -90,6 +120,7 @@ export const PublicSymbolContextSchema = {
     'userStory',
     'lifecycle',
     'failureContract',
+    'failureProof',
     'example',
     'stability',
     'expertRoutes',
@@ -140,6 +171,7 @@ export function publicSurfaceForSymbol(query: string): PublicSymbolContext | nul
         allocation!.classification === 'active-owned'
           ? `Disposal is ${allocation!.postDispose}; sibling cleanup is ${allocation!.siblingCleanup}.`
           : 'No explicit disposal contract is required.',
+      failureProof: null,
       example: allocation!.operation,
       stability: 'stable',
       expertRoutes: [allocation!.specifier],
@@ -157,6 +189,7 @@ export function publicSurfaceForSymbol(query: string): PublicSymbolContext | nul
     userStory: anchor.userStory,
     lifecycle: anchor.lifecycle,
     failureContract: anchor.failureContract,
+    failureProof: anchor.failureProof,
     example: anchor.example,
     stability: anchor.stability,
     expertRoutes: anchor.expertRoutes,

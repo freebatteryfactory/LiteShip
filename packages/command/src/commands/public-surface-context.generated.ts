@@ -10,6 +10,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define the one immutable project configuration consumed by host integrations.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid configuration is rejected before host projection.",
+      "failureProof": null,
       "example": "defineConfig(input)",
       "stability": "stable",
       "expertRoutes": [
@@ -36,6 +37,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Partition a continuous input into named application states.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid thresholds or states are rejected at definition time.",
+      "failureProof": null,
       "example": "defineBoundary(input)",
       "stability": "stable",
       "expertRoutes": [
@@ -60,6 +62,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Attach target outputs to a boundary without starting a runtime.",
       "lifecycle": "immutable-definition",
       "failureContract": "Incomplete or invalid output maps are rejected before runtime allocation.",
+      "failureProof": null,
       "example": "defineQuantizer(boundary, options)",
       "stability": "stable",
       "expertRoutes": [
@@ -83,6 +86,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define one content-addressed design token.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid token identity or values are rejected at definition time.",
+      "failureProof": null,
       "example": "defineToken(input)",
       "stability": "stable",
       "expertRoutes": [
@@ -106,6 +110,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define named token variants as one immutable theme.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid variants or token references are rejected at definition time.",
+      "failureProof": null,
       "example": "defineTheme(input)",
       "stability": "stable",
       "expertRoutes": [
@@ -129,6 +134,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define base and state-layer declarations against one boundary.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid declarations or state ownership are rejected at definition time.",
+      "failureProof": null,
       "example": "defineStyle(input)",
       "stability": "stable",
       "expertRoutes": [
@@ -153,6 +159,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define adaptive behavior, apply its attributes, inspect state, and emit its compiled plan.",
       "lifecycle": "immutable-definition",
       "failureContract": "Lowering rejects invalid definitions and explanation follows the live quantizer contract.",
+      "failureProof": null,
       "example": "defineAdaptive(spec)",
       "stability": "stable",
       "expertRoutes": [
@@ -184,6 +191,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Describe and decode typed data at a semantic boundary.",
       "lifecycle": "immutable-definition",
       "failureContract": "Decode returns structured issues instead of accepting malformed data.",
+      "failureProof": null,
       "example": "schema.struct(fields)",
       "stability": "stable",
       "expertRoutes": [
@@ -206,6 +214,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Turn a stable diagnostic code into meaning and remediation.",
       "lifecycle": "pure-reader",
       "failureContract": "Unknown codes return no invented explanation.",
+      "failureProof": null,
       "example": "explainDiagnostic(code)",
       "stability": "stable",
       "expertRoutes": [
@@ -228,6 +237,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate an authored project configuration.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking rejects incompatible configuration shapes.",
+      "failureProof": null,
       "example": "Config",
       "stability": "stable",
       "expertRoutes": [
@@ -253,7 +263,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate a named-state boundary definition.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking preserves the input and state vocabulary.",
-      "example": "Boundary<Input, State>",
+      "failureProof": null,
+      "example": "Boundary<'viewport.width', readonly ['mobile', 'desktop']>",
       "stability": "stable",
       "expertRoutes": [
         "liteship/reactive",
@@ -266,7 +277,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "proofRefs": [
         "tests/unit/meta/api-surface.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/core/authoring, retry Boundary<Input, State>, then run check/typecheck and check/hermetic."
+      "remediation": "Correct the input at @liteship/core/authoring, retry Boundary<'viewport.width', readonly ['mobile', 'desktop']>, then run check/typecheck and check/hermetic."
     },
     {
       "kind": "root",
@@ -276,6 +287,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate the structural mapping from boundary states to outputs.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking rejects state or output mismatches.",
+      "failureProof": null,
       "example": "Quantizer<Boundary>",
       "stability": "stable",
       "expertRoutes": [
@@ -298,7 +310,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate a content-addressed token definition.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking preserves the token value contract.",
-      "example": "Token<Value>",
+      "failureProof": null,
+      "example": "Token<'brand-accent'>",
       "stability": "stable",
       "expertRoutes": [
         "liteship/reactive",
@@ -311,7 +324,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "proofRefs": [
         "tests/unit/meta/api-surface.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/core/authoring, retry Token<Value>, then run check/typecheck and check/hermetic."
+      "remediation": "Correct the input at @liteship/core/authoring, retry Token<'brand-accent'>, then run check/typecheck and check/hermetic."
     },
     {
       "kind": "root",
@@ -321,7 +334,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate named token variants.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking preserves variant names and token values.",
-      "example": "Theme",
+      "failureProof": null,
+      "example": "Theme<readonly ['default', 'dark']>",
       "stability": "stable",
       "expertRoutes": [
         "liteship/reactive",
@@ -334,7 +348,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "proofRefs": [
         "tests/unit/meta/api-surface.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/core/authoring, retry Theme, then run check/typecheck and check/hermetic."
+      "remediation": "Correct the input at @liteship/core/authoring, retry Theme<readonly ['default', 'dark']>, then run check/typecheck and check/hermetic."
     },
     {
       "kind": "root",
@@ -344,7 +358,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate state-aware style declarations.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking binds style states to the boundary vocabulary.",
-      "example": "Style<State>",
+      "failureProof": null,
+      "example": "Style<Boundary>",
       "stability": "stable",
       "expertRoutes": [
         "liteship/reactive",
@@ -357,7 +372,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "proofRefs": [
         "tests/unit/meta/api-surface.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/core/authoring, retry Style<State>, then run check/typecheck and check/hermetic."
+      "remediation": "Correct the input at @liteship/core/authoring, retry Style<Boundary>, then run check/typecheck and check/hermetic."
     },
     {
       "kind": "root",
@@ -367,7 +382,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate the flagship define, apply, and inspect aggregate.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking keeps attrs, explanation, and plan outputs coherent.",
-      "example": "Adaptive<State>",
+      "failureProof": null,
+      "example": "Adaptive",
       "stability": "stable",
       "expertRoutes": [
         "liteship/reactive",
@@ -387,7 +403,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "tests/property/adaptive-lowering-equivalence.prop.test.ts",
         "tests/e2e/astro-directives.e2e.ts"
       ],
-      "remediation": "Correct the input at liteship/authoring, retry Adaptive<State>, then run check/typecheck and check/hermetic and check/journey and check/test-e2e."
+      "remediation": "Correct the input at liteship/authoring, retry Adaptive, then run check/typecheck and check/hermetic and check/journey and check/test-e2e."
     },
     {
       "kind": "root",
@@ -397,6 +413,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Annotate a stable code accepted by diagnostic inspection.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking rejects unknown diagnostic identifiers.",
+      "failureProof": null,
       "example": "DiagnosticCode",
       "stability": "stable",
       "expertRoutes": [
@@ -422,6 +439,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define, decode, and project transport-agnostic schemas.",
       "lifecycle": "immutable definitions and pure decoders",
       "failureContract": "Malformed data returns structured decode issues.",
+      "failureProof": null,
       "example": "schema.struct(fields)",
       "stability": "stable",
       "dependencyCost": "pure core schema kernel",
@@ -448,6 +466,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Allocate and dispose cells, signals, stores, lifetimes, and live quantizers.",
       "lifecycle": "owned resources require disposal",
       "failureContract": "Disposed resources stop work and invalid state transitions fail loudly.",
+      "failureProof": null,
       "example": "createCell(initial)",
       "stability": "stable",
       "dependencyCost": "stateful core and quantizer runtime",
@@ -483,6 +502,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define and execute transitions, timelines, easing, reveal, and stagger behavior.",
       "lifecycle": "timeline resources require disposal",
       "failureContract": "Unsupported or invalid motion intent is refused before execution.",
+      "failureProof": null,
       "example": "createTimeline(boundary, options)",
       "stability": "stable",
       "dependencyCost": "motion kernels",
@@ -511,7 +531,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Seal, validate, patch, query, and replay the document graph.",
       "lifecycle": "immutable sealed graphs plus explicit clients",
       "failureContract": "Invalid nodes, patches, or receipts are rejected before application.",
-      "example": "DAG.create(input)",
+      "failureProof": null,
+      "example": "DAG.empty()",
       "stability": "stable",
       "dependencyCost": "graph and evidence kernels",
       "packedProof": "check/hermetic:runtime-import+node16+bundler",
@@ -528,7 +549,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "tests/unit/core/graph/graph-mutation-client.test.ts",
         "tests/unit/core/graph/graph-query.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/core/graph, retry DAG.create(input), then run check/hermetic and check/test."
+      "remediation": "Correct the input at @liteship/core/graph, retry DAG.empty(), then run check/hermetic and check/test."
     },
     {
       "kind": "subpath",
@@ -539,6 +560,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Resolve responsive media and run compositor, audio, video, and frame-budget paths.",
       "lifecycle": "owned buffers and renderers require disposal",
       "failureContract": "Invalid media inputs and exhausted budgets are surfaced explicitly.",
+      "failureProof": null,
       "example": "Compositor.create(options)",
       "stability": "stable",
       "dependencyCost": "media and compositor runtime",
@@ -569,6 +591,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Inspect receipts, diagnostics, quality tiers, capabilities, and addressed evidence.",
       "lifecycle": "pure readers and immutable receipts",
       "failureContract": "Invalid chains, addresses, and capability decisions are refused with structured evidence.",
+      "failureProof": null,
       "example": "inspectReceipt(receipt)",
       "stability": "stable",
       "dependencyCost": "pure evidence kernels",
@@ -594,8 +617,18 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "role": "projection-compiler",
       "userStory": "Compile definitions into CSS, shader, accessibility, AI, and motion targets.",
       "lifecycle": "pure compilation",
-      "failureContract": "Unsupported definitions produce structured compiler errors.",
-      "example": "CSSCompiler.compile(input)",
+      "failureContract": "CSS state keys outside the boundary are omitted and emit the registered compiler/css/unknown-state-key diagnostic.",
+      "failureProof": {
+        "test": "tests/unit/liteship/facade-failure-contract.test.ts::liteship/compiler failure contract > CSSCompiler.compile omits an unknown state and emits its registered diagnostic",
+        "importSource": "../../../packages/liteship/src/compiler.js",
+        "operation": "CSSCompiler.compile",
+        "observation": {
+          "kind": "diagnostic-and-output-omission",
+          "code": "compiler/css/unknown-state-key",
+          "outputField": "raw"
+        }
+      },
+      "example": "CSSCompiler.compile(boundary, input)",
       "stability": "stable",
       "dependencyCost": "compiler kernels",
       "packedProof": "check/hermetic:runtime-import+node16+bundler",
@@ -608,9 +641,10 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test"
       ],
       "proofRefs": [
-        "tests/unit/liteship/facade-subpaths.test.ts"
+        "tests/unit/liteship/facade-subpaths.test.ts",
+        "tests/unit/liteship/facade-failure-contract.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/compiler, retry CSSCompiler.compile(input), then run check/hermetic and check/test."
+      "remediation": "Correct the input at @liteship/compiler, retry CSSCompiler.compile(boundary, input), then run check/hermetic and check/test."
     },
     {
       "kind": "subpath",
@@ -621,7 +655,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Apply streaming, morphing, recovery, integrity, and browser runtime behavior.",
       "lifecycle": "connections and observers require disposal",
       "failureContract": "Unsafe URLs, invalid patches, and broken resumptions fail closed.",
-      "example": "Morph.apply(input)",
+      "failureProof": null,
+      "example": "Morph.morph(input, input)",
       "stability": "stable",
       "dependencyCost": "browser DOM runtime",
       "packedProof": "check/hermetic:runtime-import+node16+bundler",
@@ -638,10 +673,10 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/web/llm-adapter.test.ts",
         "tests/unit/liteship/facade-lifecycle-contract.test.ts",
-        "tests/unit/web/slot.test.ts",
-        "tests/unit/web/escape-html.test.ts"
+        "tests/unit/web/web-runtime-primitives.test.ts",
+        "tests/unit/web/runtime-security-helpers.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/web, retry Morph.apply(input), then run check/hermetic and check/test and check/test-e2e."
+      "remediation": "Correct the input at @liteship/web, retry Morph.morph(input, input), then run check/hermetic and check/test and check/test-e2e."
     },
     {
       "kind": "subpath",
@@ -652,7 +687,8 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Install LiteShip into Astro and apply Adaptive attributes and server projections.",
       "lifecycle": "host integration lifecycle",
       "failureContract": "Invalid host configuration fails during integration setup or build.",
-      "example": "integration(options)",
+      "failureProof": null,
+      "example": "adaptiveAttrs(input)",
       "stability": "stable",
       "dependencyCost": "optional Astro peer and host adapter",
       "packedProof": "check/hermetic:runtime-import+node16+bundler",
@@ -667,9 +703,9 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       ],
       "proofRefs": [
         "tests/unit/liteship/facade-subpaths.test.ts",
-        "tests/unit/astro/llm-session-lifecycle.test.ts"
+        "tests/unit/astro/astro-runtime.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/astro, retry integration(options), then run check/hermetic and check/test and check/test-astro."
+      "remediation": "Correct the input at @liteship/astro, retry adaptiveAttrs(input), then run check/hermetic and check/test and check/test-astro."
     },
     {
       "kind": "subpath",
@@ -680,6 +716,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Install LiteShip into Vite and compile directive and virtual-module projections.",
       "lifecycle": "host plugin lifecycle",
       "failureContract": "Invalid directives and configuration produce stable build diagnostics.",
+      "failureProof": null,
       "example": "plugin(options)",
       "stability": "stable",
       "dependencyCost": "optional Vite peer and host plugin",
@@ -700,18 +737,19 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
     },
     {
       "kind": "subpath",
-      "symbol": "resetCapsuleCatalog",
+      "symbol": "generatePureTransform",
       "specifier": "liteship/testing",
-      "owner": "@liteship/core/testing",
+      "owner": "@liteship/core/harness",
       "role": "test-tooling",
-      "userStory": "Generate proof harnesses, reset test registries, and inspect the installed fleet roster.",
+      "userStory": "Generate proof harnesses and inspect the installed fleet roster without exposing test tooling on the production root.",
       "lifecycle": "test process only",
       "failureContract": "Invalid harness declarations and stale fleet projections fail deterministically.",
+      "failureProof": null,
       "example": "generatePureTransform(spec)",
       "stability": "stable",
-      "dependencyCost": "test-only harness code",
+      "dependencyCost": "test-only harness code and fast-check peer",
       "packedProof": "check/hermetic:runtime-import+node16+bundler",
-      "reason": "Test-only operations and fleet metadata must not appear on production root.",
+      "reason": "Proof generators and fleet metadata are a public package-author contract that must remain isolated from production root imports.",
       "expertRoutes": [
         "liteship/testing"
       ],
@@ -723,7 +761,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "proofRefs": [
         "tests/unit/liteship/facade-subpaths.test.ts"
       ],
-      "remediation": "Correct the input at @liteship/core/testing, retry generatePureTransform(spec), then run check/hermetic and check/test and check/capsule-verify."
+      "remediation": "Correct the input at @liteship/core/harness, retry generatePureTransform(spec), then run check/hermetic and check/test and check/capsule-verify."
     },
     {
       "kind": "subpath",
@@ -734,6 +772,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Translate supported external syntax into ordinary LiteShip definitions.",
       "lifecycle": "pure migration",
       "failureContract": "Unrepresentable source is refused with stable diagnostics and no fabricated definition.",
+      "failureProof": null,
       "example": "fromMediaQueries(css)",
       "stability": "stable",
       "dependencyCost": "compiler parser adapters",
@@ -760,6 +799,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "userStory": "Define a trusted component catalog, validate generated UI, and render it without raw package discovery.",
       "lifecycle": "immutable catalog and pure validation/rendering",
       "failureContract": "Unknown components, props, or invalid generated trees are refused before rendering.",
+      "failureProof": null,
       "example": "defineComponentCatalog(input)",
       "stability": "stable",
       "dependencyCost": "pure generated-UI catalog and renderer",
@@ -1110,14 +1150,14 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "disposal": "none",
       "postDispose": "not-applicable",
       "siblingCleanup": "not-applicable",
-      "proof": "tests/unit/web/slot.test.ts",
+      "proof": "tests/unit/web/web-runtime-primitives.test.ts",
       "rationale": "The registry is inert storage; DOM observation is a separate operation returning its own disposer.",
       "checkIds": [
         "check/hermetic",
         "check/test",
         "check/test-e2e"
       ],
-      "remediation": "Do not add artificial disposal; The registry is inert storage; DOM observation is a separate operation returning its own disposer. Verify tests/unit/web/slot.test.ts."
+      "remediation": "Do not add artificial disposal; The registry is inert storage; DOM observation is a separate operation returning its own disposer. Verify tests/unit/web/web-runtime-primitives.test.ts."
     },
     {
       "operation": "createAudioProcessor",
@@ -1144,14 +1184,14 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "disposal": "none",
       "postDispose": "not-applicable",
       "siblingCleanup": "not-applicable",
-      "proof": "tests/unit/web/escape-html.test.ts",
+      "proof": "tests/unit/web/runtime-security-helpers.test.ts",
       "rationale": "The helper returns an inert document fragment and starts no observer or background work.",
       "checkIds": [
         "check/hermetic",
         "check/test",
         "check/test-e2e"
       ],
-      "remediation": "Do not add artificial disposal; The helper returns an inert document fragment and starts no observer or background work. Verify tests/unit/web/escape-html.test.ts."
+      "remediation": "Do not add artificial disposal; The helper returns an inert document fragment and starts no observer or background work. Verify tests/unit/web/runtime-security-helpers.test.ts."
     },
     {
       "operation": "createLLMSession",
@@ -1161,14 +1201,14 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "disposal": "dispose-sync",
       "postDispose": "inert",
       "siblingCleanup": "aggregate",
-      "proof": "tests/unit/astro/llm-session-lifecycle.test.ts",
+      "proof": "tests/unit/astro/astro-runtime.test.ts",
       "rationale": "The session owns pooled render runtime state and queued delivery work.",
       "checkIds": [
         "check/hermetic",
         "check/test",
         "check/test-astro"
       ],
-      "remediation": "Dispose through dispose-sync and verify tests/unit/astro/llm-session-lifecycle.test.ts; cleanup must remain idempotent, inert, and attempt-all."
+      "remediation": "Dispose through dispose-sync and verify tests/unit/astro/astro-runtime.test.ts; cleanup must remain idempotent, inert, and attempt-all."
     }
   ]
 } as const;

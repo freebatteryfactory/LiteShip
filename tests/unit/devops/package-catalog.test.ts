@@ -8,8 +8,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { LITESHIP_PACKAGE_ROSTER, packageTopology } from '@liteship/audit';
-import { PACKAGE_CATALOG, type PackageCatalogRecord } from '../../../scripts/package-catalog.js';
+import { defaultAnalyzableArtifacts, LITESHIP_PACKAGE_ROSTER, packageTopology } from '@liteship/audit';
+import {
+  DEFAULT_ANALYZABLE_ARTIFACTS,
+  PACKAGE_CATALOG,
+  type PackageCatalogRecord,
+} from '../../../scripts/package-catalog.js';
 import {
   validateProjectReferenceClosure,
   type ProjectReferenceConfig,
@@ -159,6 +163,24 @@ describe('PACKAGE_CATALOG negative controls', () => {
     );
   });
 
+  it('rejects empty analysis contracts and types-only packages without declarations', () => {
+    const empty = replaceRecord(PACKAGE_CATALOG, '@liteship/core', (record) => ({
+      ...record,
+      audit: { ...record.audit, analyzableArtifacts: [] },
+    }));
+    expect(details(empty)).toEqual(
+      expect.arrayContaining([expect.stringContaining('analyzableArtifacts must name at least one')]),
+    );
+
+    const noDeclarations = replaceRecord(PACKAGE_CATALOG, '@liteship/_spine', (record) => ({
+      ...record,
+      audit: { ...record.audit, analyzableArtifacts: ['src/**/*.ts', '!src/**/*.d.ts'] },
+    }));
+    expect(details(noDeclarations)).toEqual(
+      expect.arrayContaining([expect.stringContaining('must declare an analyzable declaration artifact')]),
+    );
+  });
+
   it('rejects duplicate projection order and a deferred package without an issue', () => {
     const duplicateOrder = replaceRecord(PACKAGE_CATALOG, '@liteship/error', (record) => ({
       ...record,
@@ -176,6 +198,30 @@ describe('PACKAGE_CATALOG negative controls', () => {
     expect(details(deferredWithoutIssue)).toEqual(
       expect.arrayContaining([expect.stringContaining('deferred plumb status requires plumbIssue')]),
     );
+  });
+
+  it('admits the curated facade to API and TypeDoc projection from the one package owner', () => {
+    const facade = PACKAGE_CATALOG.find((record) => record.name === 'liteship');
+    expect(facade).toEqual(
+      expect.objectContaining({
+        apiSurface: true,
+        apiSurfaceOrder: 23,
+        typedocEntry: 'packages/liteship/src',
+        typedocOrder: 24,
+      }),
+    );
+    expect(facade?.publicSubpaths).toContain('./testing');
+  });
+
+  it.each([
+    ['apiSurfaceOrder', 22, 'apiSurface orders must be unique and contiguous from zero'],
+    ['typedocOrder', 23, 'typedoc orders must be unique and contiguous from zero'],
+  ] as const)('rejects a duplicate %s projection slot', (field, value, expected) => {
+    const duplicate = replaceRecord(PACKAGE_CATALOG, 'liteship', (record) => ({
+      ...record,
+      [field]: value,
+    }));
+    expect(details(duplicate)).toEqual(expect.arrayContaining([expect.stringContaining(expected)]));
   });
 
   it('rejects one stale generated projection without touching the checkout', () => {
@@ -212,6 +258,10 @@ describe('PACKAGE_CATALOG negative controls', () => {
 });
 
 describe('generated audit topology', () => {
+  it('projects the one authored default artifact tuple byte-for-byte', () => {
+    expect(defaultAnalyzableArtifacts).toEqual(DEFAULT_ANALYZABLE_ARTIFACTS);
+  });
+
   it('preserves the public audit roster type while generating its exact values', () => {
     expectTypeOf(LITESHIP_PACKAGE_ROSTER).toEqualTypeOf<readonly string[]>();
     expect(LITESHIP_PACKAGE_ROSTER).toEqual(
@@ -225,8 +275,18 @@ describe('generated audit topology', () => {
       expect(packageTopology[record.name]).toEqual({
         kind: record.audit.kind,
         allowedInternalImports: record.audit.allowedInternalImports,
+        analyzableArtifacts: record.audit.analyzableArtifacts,
       });
     }
+  });
+
+  it('projects an explicit analyzable artifact contract for every package', () => {
+    for (const record of PACKAGE_CATALOG) {
+      expect(record.audit.analyzableArtifacts.length, record.name).toBeGreaterThan(0);
+    }
+    expect(PACKAGE_CATALOG.find((record) => record.name === '@liteship/_spine')?.audit.analyzableArtifacts).toEqual([
+      '*.d.ts',
+    ]);
   });
 
   it('keeps create-liteship allowed to import its real @liteship/core scaffold dependency', () => {

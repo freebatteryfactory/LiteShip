@@ -21,6 +21,8 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { runLspStdio } from '../../../packages/mcp-server/src/lsp/stdio.js';
 import {
@@ -169,6 +171,16 @@ describe('LSP — Finding → Diagnostic projection (pure)', () => {
     expect(fileToUri('packages/x/a#b.ts')).toBe('file:///packages/x/a%23b.ts');
   });
 
+  it('resolves repo-relative findings beneath POSIX and Windows workspace roots', () => {
+    expect(fileToUri('packages/x/src/a.ts', 'file:///home/eassa/LiteShip')).toBe(
+      'file:///home/eassa/LiteShip/packages/x/src/a.ts',
+    );
+    expect(fileToUri('packages/x/naïve file.ts', 'file:///C:/Users/Eassa/LiteShip/')).toBe(
+      'file:///C:/Users/Eassa/LiteShip/packages/x/na%C3%AFve%20file.ts',
+    );
+    expect(() => fileToUri('../outside.ts', 'file:///repo/')).toThrow(/escapes the initialized workspace/);
+  });
+
   it('groups diagnostics by URI deterministically, dropping unanchored findings', () => {
     const grouped = groupDiagnosticsByUri([ERR_FINDING, WARN_FINDING, ADVISORY_FINDING, UNANCHORED_FINDING]);
     expect(grouped.map((g) => g.uri)).toEqual(['file:///packages/x/src/a.ts', 'file:///packages/x/src/b.ts']); // sorted, unanchored dropped
@@ -229,7 +241,12 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
     const caps = (ok.result as { capabilities: typeof LSP_SERVER_CAPABILITIES }).capabilities;
     expect(caps.codeActionProvider.codeActionKinds).toContain('quickfix');
     expect(caps).toEqual(LSP_SERVER_CAPABILITIES);
-    expect((ok.result as { serverInfo: { name: string } }).serverInfo.name).toBe('liteship-gauntlet-lsp');
+    const info = (ok.result as { serverInfo: { name: string; version: string } }).serverInfo;
+    const manifest = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, '../../../packages/mcp-server/package.json'), 'utf8'),
+    ) as { version: string };
+    expect(info.name).toBe('liteship-gauntlet-lsp');
+    expect(info.version).toBe(manifest.version);
   });
 
   it('a request before initialize is a protocol violation (error, not silent)', async () => {
@@ -239,7 +256,7 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
       runner,
     );
     const err = result.response as JsonRpcErrorResponse;
-    expect(err.error.code).toBe(-32603); // InvariantViolationError → internal
+    expect(err.error.code).toBe(-32600);
     expect(err.error.message).toContain('before');
   });
 
@@ -272,6 +289,28 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
     const ex = await handle(JSON.stringify({ jsonrpc: '2.0', method: 'exit' }), s, runner);
     expect(ex.result.response).toBeNull();
     expect(ex.result.exit).toBe(true);
+  });
+
+  it('retains the initialized workspace root and rejects every post-shutdown request', async () => {
+    const init = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { rootUri: 'file:///C:/Users/Eassa/LiteShip' },
+      }),
+      initialLspState(),
+      runner,
+    );
+    expect(init.state.workspaceRootUri).toBe('file:///C:/Users/Eassa/LiteShip/');
+    const shutdown = await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'shutdown' }), init.state, runner);
+    const after = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'workspace/diagnostic' }),
+      shutdown.state,
+      runner,
+    );
+    expect((after.result.response as JsonRpcErrorResponse).error.code).toBe(-32600);
+    expect(after.state).toBe(shutdown.state);
   });
 
   it('a malformed JSON frame body yields a -32700 parse error (never a silent drop)', async () => {

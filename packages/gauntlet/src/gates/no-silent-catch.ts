@@ -88,6 +88,7 @@ export const noSilentCatchGate: Gate = defineGate({
   id: 'gauntlet/no-silent-catch',
   level: 'L2',
   describe: 'Flags empty `catch { }` blocks — a swallowed error must be rethrown, logged, or used.',
+  access: {},
   run: scan,
   fixtures: {
     red: {

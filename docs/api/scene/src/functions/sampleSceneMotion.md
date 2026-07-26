@@ -6,7 +6,7 @@
 
 # Function: sampleSceneMotion()
 
-> **sampleSceneMotion**(`plan`, `t`): `ReadonlyMap`\<`string`, `TypedValue`\>
+> **sampleSceneMotion**(`plan`, `t`): `ReadonlyMap`\<`string`, [`TypedValue`](../../../liteship/src/motion/type-aliases/TypedValue.md)\>
 
 Defined in: [scene/src/systems/motion.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L41)
 
@@ -19,7 +19,7 @@ the scene leg equals the `sampleProgram` reference within epsilon.
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### t
 
@@ -27,4 +27,4 @@ the scene leg equals the `sampleProgram` reference within epsilon.
 
 ## Returns
 
-`ReadonlyMap`\<`string`, `TypedValue`\>
+`ReadonlyMap`\<`string`, [`TypedValue`](../../../liteship/src/motion/type-aliases/TypedValue.md)\>

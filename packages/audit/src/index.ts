@@ -40,17 +40,47 @@ import type { DevopsProfile } from './devops-profile.js';
 import { runStructureAudit, type StructureSummary } from './structure.js';
 import { runIntegrityAudit, type IntegritySummary } from './integrity.js';
 import { runSurfaceAudit, type SurfaceSummary } from './surface.js';
-import { createCounts } from './shared.js';
-import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } from './types.js';
+import { collectProfileArtifactCoverage, createCounts } from './shared.js';
+import type {
+  AuditCounts,
+  AuditFinding,
+  AuditSectionResult,
+  AuditSuppression,
+  PackageArtifactCoverage,
+} from './types.js';
 
 /** The three audit passes plus their merged counts, run against one profile. */
 export interface AuditPassResult {
   readonly structure: AuditSectionResult<StructureSummary>;
   readonly integrity: AuditSectionResult<IntegritySummary>;
   readonly surface: AuditSectionResult<SurfaceSummary>;
+  /** Exact artifacts each discovered package did or did not contribute to analysis. */
+  readonly artifactCoverage: readonly PackageArtifactCoverage[];
   readonly counts: AuditCounts;
   readonly findings: readonly AuditFinding[];
   readonly suppressed: readonly AuditSuppression[];
+}
+
+function unverifiedPackageArtifactFindings(
+  coverage: readonly PackageArtifactCoverage[],
+  profile: DevopsProfile,
+): readonly AuditFinding[] {
+  return coverage
+    .filter((entry) => entry.coverage === 'unverified')
+    .map((entry): AuditFinding => ({
+      id: `support/package-artifacts/${entry.package}`,
+      section: 'support',
+      rule: 'package-artifacts-unverified',
+      severity: 'error',
+      title: 'Package analysis surface is unverified',
+      summary:
+        `${entry.package} was discovered under ${profile.repoRoot}, but ${entry.reason}. ` +
+        'A zero-file package cannot produce a clean audit verdict.',
+      metadata: {
+        packageName: entry.package,
+        expectedArtifacts: entry.expectedArtifacts,
+      },
+    }));
 }
 
 /**
@@ -116,16 +146,13 @@ function skippedConsumerStructureAudit(profile: DevopsProfile): AuditSectionResu
       coverageClassification: {
         topology: [],
         orphan: {
-          coverage: 'file-proxy-only',
-          candidateCount: 0,
-          note: 'Consumer aggregate mode skips the source-structure pass; run runStructureAudit(profile) explicitly to inspect installed-package source topology.',
+          coverage: 'not-checked',
+          reason:
+            'Consumer aggregate mode skips the source-structure pass; run runStructureAudit(profile) explicitly to inspect installed-package source topology.',
         },
         symbol: {
-          coverage: 'symbol-evidenced',
-          consumedCount: 0,
-          starCoveredCount: 0,
-          candidateCount: 0,
-          note: 'Consumer aggregate mode skips symbol-orphan structure evidence.',
+          coverage: 'not-checked',
+          reason: 'Consumer aggregate mode skips symbol-orphan structure evidence.',
         },
         allowlistUnexercised: [],
       },
@@ -146,6 +173,7 @@ function skippedConsumerStructureAudit(profile: DevopsProfile): AuditSectionResu
  */
 export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsProfile): AuditPassResult {
   const resolved = resolveDevopsProfile(profile);
+  const artifactCoverage = collectProfileArtifactCoverage(resolved);
   const structure = resolved.packageRoots ? skippedConsumerStructureAudit(resolved) : runStructureAudit(resolved);
   const integrity = runIntegrityAudit(resolved);
   const surface = runSurfaceAudit(resolved);
@@ -157,6 +185,7 @@ export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsP
     ...integrity.findings,
     ...surface.findings,
     ...(auditedPackageCount === 0 ? [nothingAuditedFinding(resolved)] : []),
+    ...unverifiedPackageArtifactFindings(artifactCoverage, resolved),
     ...consumerMissingFindings(resolved),
   ];
   const suppressed = [...structure.suppressed, ...integrity.suppressed, ...surface.suppressed];
@@ -164,6 +193,7 @@ export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsP
     structure,
     integrity,
     surface,
+    artifactCoverage,
     counts: createCounts(findings),
     findings,
     suppressed,

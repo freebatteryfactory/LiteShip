@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { bench } from 'vitest';
 import * as fc from 'fast-check';
-import { remotionAdapterCapsule } from '../../packages/remotion/src/capsules/remotion-adapter.js';
+import { remotionAdapterCapsule } from '../../packages/remotion/src/remotion-adapter-capsule.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import { CanonicalCbor } from '../../packages/core/src/schema/cbor.js';
 import { decode } from '../../packages/canonical/src/cbor-decode.js';

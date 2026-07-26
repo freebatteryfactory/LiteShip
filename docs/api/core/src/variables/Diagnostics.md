@@ -89,7 +89,7 @@ Convenience for `resetSink()` + `clearOnce()` — mostly for test teardown.
 
 > **resetClock**: () => `void`
 
-Restore the default [wallClock](wallClock.md) timestamp source.
+Restore the default `wallClock` timestamp source.
 
 #### Returns
 

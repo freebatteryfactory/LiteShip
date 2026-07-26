@@ -13,7 +13,7 @@ Defined in: [core/src/motion/timeline.ts:68](https://github.com/freebatteryfacto
 Create a [Timeline](../type-aliases/Timeline.md) — scheduler-driven advancement over a
 [Boundary](../variables/Boundary.md). Produces a plain reactive timeline that seeks or plays
 between boundary states; pluggable clock via [Scheduler](../variables/Scheduler.md), teardown via
-[Lifetime](../variables/Lifetime.md).
+`Lifetime`.
 
 ## Type Parameters
 

@@ -23,8 +23,6 @@ import type { ResponsiveMediaCapabilities } from '@liteship/core';
  * defaults during parsing.
  */
 export interface ClientHintsHeaders {
-  /** `Sec-CH-UA-Platform` (e.g. `"macOS"`, `"Windows"`). */
-  readonly 'sec-ch-ua-platform'?: string;
   /** `Sec-CH-Device-Memory` in GiB (one of the standard buckets). */
   readonly 'sec-ch-device-memory'?: string;
   /** `Sec-CH-DPR` — devicePixelRatio as a decimal string. */
@@ -39,16 +37,12 @@ export interface ClientHintsHeaders {
   readonly 'sec-ch-prefers-color-scheme'?: string;
   /** `Sec-CH-UA-Mobile` as a structured boolean (`?1` / `?0`). */
   readonly 'sec-ch-ua-mobile'?: string;
-  /** `Sec-CH-UA` — full user-agent brand list. */
-  readonly 'sec-ch-ua'?: string;
   /** `Save-Data` (`on`). */
   readonly 'save-data'?: string;
   /** `Downlink` estimate in Mb/s. */
   readonly downlink?: string;
   /** `ECT` effective connection type. */
   readonly ect?: string;
-  /** `RTT` round-trip-time estimate in ms. */
-  readonly rtt?: string;
   /** `User-Agent` fallback for GPU-tier heuristics. */
   readonly 'user-agent'?: string;
 }
@@ -147,13 +141,13 @@ const ALL_HINTS = [
   'Sec-CH-Prefers-Reduced-Motion',
   'Sec-CH-Prefers-Color-Scheme',
   'Sec-CH-UA-Mobile',
-  'Sec-CH-UA',
-  'Sec-CH-UA-Platform',
   'Save-Data',
   'Downlink',
   'ECT',
-  'RTT',
 ] as const;
+
+/** Inputs actually parsed into the host compile context or tier decision. */
+const RESPONSE_SHAPING_HEADERS = [...ALL_HINTS, 'User-Agent'] as const;
 
 // Boot-required hints: listed in `Critical-CH` so the browser RESENDS them before the
 // first render if they were absent (one retry, all at once). `Sec-CH-Viewport-Width` is
@@ -312,7 +306,7 @@ function criticalCHHeader(): string {
  * inputs or they can serve the wrong tier's representation (#122).
  */
 function varyCHHeader(): string {
-  return ALL_HINTS.join(', ');
+  return RESPONSE_SHAPING_HEADERS.join(', ');
 }
 
 /**

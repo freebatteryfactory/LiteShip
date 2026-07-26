@@ -49,6 +49,7 @@
     "@liteship/edge": "workspace:*",
     "@liteship/gauntlet": "workspace:*",
     "@liteship/error": "workspace:*",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
     "undici": ">=7.28.0 <8"
   },
   "engines": {

@@ -8,6 +8,6 @@
 
 > **SPSCRing** = [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md)
 
-Defined in: [worker/src/spsc-ring.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L404)
+Defined in: [worker/src/spsc-ring.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L411)
 
 Public structural type for `SPSCRing`.

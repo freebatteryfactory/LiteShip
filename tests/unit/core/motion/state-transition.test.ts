@@ -137,14 +137,19 @@ describe('decodeDiscreteStateTransition is fail-closed', () => {
 
   test('rejects a non-object', () => {
     expect(() => decodeDiscreteStateTransition(42)).toThrow(/expected an object/i);
+    expect(decodeErrorCode(42)).toBe('core/state-transition/not_an_object');
   });
 
   test('rejects the wrong _tag', () => {
-    expect(() => decodeDiscreteStateTransition({ ...mkTransition(), _tag: 'GraphPatch' })).toThrow(/_tag/i);
+    const invalid = { ...mkTransition(), _tag: 'GraphPatch' };
+    expect(() => decodeDiscreteStateTransition(invalid)).toThrow(/_tag/i);
+    expect(decodeErrorCode(invalid)).toBe('core/state-transition/wrong_tag');
   });
 
   test('rejects an unsupported _version', () => {
-    expect(() => decodeDiscreteStateTransition({ ...mkTransition(), _version: 2 })).toThrow(/_version/i);
+    const invalid = { ...mkTransition(), _version: 2 };
+    expect(() => decodeDiscreteStateTransition(invalid)).toThrow(/_version/i);
+    expect(decodeErrorCode(invalid)).toBe('core/state-transition/unsupported_version');
   });
 
   test('rejects a kind other than "discrete" (continuous cannot decode into a transition)', () => {

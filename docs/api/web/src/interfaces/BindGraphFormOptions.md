@@ -14,7 +14,7 @@ Wiring for [bindGraphForm](../functions/bindGraphForm.md): the channel client, t
 
 ### client
 
-> `readonly` **client**: `GraphMutationClient`
+> `readonly` **client**: [`GraphMutationClient`](../../../liteship/src/graph/interfaces/GraphMutationClient.md)
 
 Defined in: [web/src/mutation/graph-form.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L18)
 
@@ -32,7 +32,7 @@ Optional imperative hook; the `liteship:mutation` event fires regardless.
 
 ##### response
 
-`GraphMutationResponse`
+[`GraphMutationResponse`](../../../liteship/src/graph/type-aliases/GraphMutationResponse.md)
 
 #### Returns
 
@@ -42,7 +42,7 @@ Optional imperative hook; the `liteship:mutation` event fires regardless.
 
 ### toOps
 
-> `readonly` **toOps**: (`data`, `base`) => readonly `PatchOp`[]
+> `readonly` **toOps**: (`data`, `base`) => readonly [`PatchOp`](../../../liteship/src/graph/type-aliases/PatchOp.md)[]
 
 Defined in: [web/src/mutation/graph-form.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L20)
 
@@ -56,8 +56,8 @@ Project the submitted form into patch ops. Host-owned domain logic (nodes must b
 
 ##### base
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 #### Returns
 
-readonly `PatchOp`[]
+readonly [`PatchOp`](../../../liteship/src/graph/type-aliases/PatchOp.md)[]

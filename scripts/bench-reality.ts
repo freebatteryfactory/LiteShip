@@ -77,9 +77,34 @@ interface RawLLMRealityResult {
   readonly promoted: RawLLMStartupSummary;
 }
 
-interface RawStartupRealityBrowserResult {
+export interface RawStartupRealityBrowserResult {
   readonly worker: WorkerRealityResult;
   readonly llm: RawLLMRealityResult;
+}
+
+/** Reject a vacuous or non-finite browser measurement before minting evidence. */
+export function browserRealityFailures(result: RawStartupRealityBrowserResult): readonly string[] {
+  const failures: string[] = [];
+  if (!(Number.isInteger(result.worker.iterations) && result.worker.iterations > 0)) {
+    failures.push('worker iterations must be positive');
+  }
+  if (result.worker.rawSamples.length === 0) failures.push('worker raw samples must be non-empty');
+  if (!Number.isFinite(result.worker.summary.totalStartupMs.mean)) {
+    failures.push('worker startup mean must be finite');
+  }
+  for (const [label, summary] of [
+    ['simple', result.llm.simple],
+    ['promoted', result.llm.promoted],
+  ] as const) {
+    if (!(Number.isInteger(result.llm.iterations) && result.llm.iterations > 0)) {
+      failures.push(`llm ${label} iterations must be positive`);
+    }
+    if (summary.rawSamples.length === 0) failures.push(`llm ${label} raw samples must be non-empty`);
+    if (!Number.isFinite(summary.chunkToFirstTokenMs.mean)) {
+      failures.push(`llm ${label} first-token mean must be finite`);
+    }
+  }
+  return failures;
 }
 
 interface StartupRealityArtifact {
@@ -187,11 +212,7 @@ function browserWorkerSharedStartupMeanMs(browser: StartupRealityArtifact['brows
     'quantizer-bootstrap',
   ];
 
-  return Number(
-    sharedStages
-      .reduce((sum, stage) => sum + (browser.summary.stages[stage]?.mean ?? 0), 0)
-      .toFixed(4),
-  );
+  return Number(sharedStages.reduce((sum, stage) => sum + (browser.summary.stages[stage]?.mean ?? 0), 0).toFixed(4));
 }
 
 function withResolution(summary: RawLLMStartupSummary): LLMStartupSummary {
@@ -218,7 +239,7 @@ function findBenchPair(
 export function formatSharedStartupLine(
   label: string,
   summary: LLMStartupSummary,
-  pair: (ReturnType<typeof buildBenchFacts>['bench']['pairs'][number]) | undefined,
+  pair: ReturnType<typeof buildBenchFacts>['bench']['pairs'][number] | undefined,
   divergencePct: number | null,
 ): string {
   const prefix = `${label}: ${summary.chunkToFirstTokenMs.median.toFixed(4)}ms (p99 ${summary.chunkToFirstTokenMs.p99.toFixed(4)}ms`;
@@ -258,7 +279,10 @@ async function buildBrowserBenchBundle(): Promise<string> {
   });
 
   const output = Array.isArray(result) ? result[0] : result;
-  const chunk = output.output.find((entry): entry is typeof output.output[number] & { readonly type: 'chunk'; readonly code: string } => entry.type === 'chunk');
+  const chunk = output.output.find(
+    (entry): entry is (typeof output.output)[number] & { readonly type: 'chunk'; readonly code: string } =>
+      entry.type === 'chunk',
+  );
   if (!chunk || typeof chunk.code !== 'string') {
     throw new Error('Unable to build startup reality browser bundle.');
   }
@@ -302,20 +326,27 @@ export function buildStartupRealityArtifact(
   browserResult: RawStartupRealityBrowserResult,
   generatedAt = new Date().toISOString(),
 ): StartupRealityArtifact {
+  const measurementFailures = browserRealityFailures(browserResult);
+  if (measurementFailures.length > 0) {
+    throw new Error(`startup reality measurement is not admissible: ${measurementFailures.join('; ')}`);
+  }
   const benchWithResults = benchFacts.bench as typeof benchFacts.bench & {
     readonly replicates?: readonly BenchReplicateResults[];
   };
-  const llmRuntimeStartupMeanNs = medianTaskMeanNs(
-    benchWithResults.replicates,
-    '[BASELINE] llm-startup-shared -- node first token boundary',
-  ) ?? medianTaskMeanNs(benchWithResults.replicates, '[GATE] llm-startup-shared -- first token boundary');
-  const llmRuntimePromotedStartupMeanNs = medianTaskMeanNs(
-    benchWithResults.replicates,
-    '[BASELINE] llm-promoted-startup-shared -- node second token boundary',
-  ) ?? medianTaskMeanNs(benchWithResults.replicates, '[GATE] llm-promoted-startup-shared -- second token boundary');
+  const llmRuntimeStartupMeanNs =
+    medianTaskMeanNs(benchWithResults.replicates, '[BASELINE] llm-startup-shared -- node first token boundary') ??
+    medianTaskMeanNs(benchWithResults.replicates, '[GATE] llm-startup-shared -- first token boundary');
+  const llmRuntimePromotedStartupMeanNs =
+    medianTaskMeanNs(
+      benchWithResults.replicates,
+      '[BASELINE] llm-promoted-startup-shared -- node second token boundary',
+    ) ?? medianTaskMeanNs(benchWithResults.replicates, '[GATE] llm-promoted-startup-shared -- second token boundary');
   const workerSharedStartupMeanNs =
     medianWorkerSharedSupportMeanNs(benchWithResults.replicates) ??
-    medianTaskMeanNs(benchWithResults.replicates, '[DIAGNOSTIC] worker-runtime-startup -- host bootstrap + first compute');
+    medianTaskMeanNs(
+      benchWithResults.replicates,
+      '[DIAGNOSTIC] worker-runtime-startup -- host bootstrap + first compute',
+    );
   const normalizedBrowser = {
     worker: browserResult.worker,
     llm: {

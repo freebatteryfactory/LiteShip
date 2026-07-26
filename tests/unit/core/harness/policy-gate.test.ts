@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 describe('generatePolicyGate', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   /** A minimal, validly-declared policyGate (it MUST carry a `decide` core now). */
   const demoPolicyGate = () =>
     defineCapsule({

@@ -36,7 +36,7 @@ const VitestRunnerOutput = schema.struct({
 
 /**
  * Declared capsule for the no-shell vitest runner. Registered in the
- * module-level catalog at import time; walked by `scripts/capsule-compile.ts`.
+ * immutable exported declaration; walked by `scripts/capsule-compile.ts`.
  *
  * The `shell-disabled` invariant is enforced structurally — `spawnArgv`
  * never passes `shell: true` — so the check trivially holds. It exists in

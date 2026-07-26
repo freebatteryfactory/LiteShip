@@ -9,12 +9,12 @@
  *
  * @module
  */
-import type { AuditFinding } from './types.js';
+import type { AuditFinding, AuditRuleId } from './types.js';
 import type { SurfacePolicyShape } from './devops-profile.js';
-import { GENERATED_PACKAGE_TOPOLOGY } from './package-topology.generated.js';
+import { GENERATED_DEFAULT_ANALYZABLE_ARTIFACTS, GENERATED_PACKAGE_TOPOLOGY } from './package-topology.generated.js';
 
 export interface AuditAllowlistEntry {
-  readonly rule: string;
+  readonly rule: AuditRuleId;
   /**
    * npm package name owning the allowlisted file. When set, `filePrefix` is
    * PACKAGE-RELATIVE (e.g. `src/client-directives/adaptive.ts`) and matching
@@ -41,7 +41,16 @@ export type PackagePathResolver = (file: string) => PackagePathResolution | null
 export interface PackagePolicy {
   readonly allowedInternalImports: readonly string[];
   readonly kind: 'core' | 'layered' | 'host-adjacent' | 'standalone';
+  /**
+   * Package-relative source/declaration globs that constitute an analyzed
+   * package. Omission retains the reusable engine's standard TS/TSX default;
+   * LiteShip's generated catalog projection always emits this field exactly.
+   */
+  readonly analyzableArtifacts?: readonly string[];
 }
+
+/** Standard source-bearing package artifact contract, projected from the package catalog. */
+export const defaultAnalyzableArtifacts: readonly string[] = GENERATED_DEFAULT_ANALYZABLE_ARTIFACTS;
 
 export const auditSourceGlobs = ['packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'] as const;
 

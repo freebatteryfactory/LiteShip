@@ -41,7 +41,7 @@ function packageByName(root: string, name: string) {
 
 async function git(root: string, args: readonly string[]): Promise<string> {
   const result = await spawnArgvCapture('git', args, { cwd: root });
-  if (result.exitCode !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderrTail}`);
+  if (result.exitCode !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
   return result.stdout;
 }
 

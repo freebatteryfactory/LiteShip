@@ -8,7 +8,7 @@
 
 > **detect**(): [`ExtendedDetectionResult`](../interfaces/ExtendedDetectionResult.md)
 
-Defined in: [detect/src/detect.ts:625](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L625)
+Defined in: [detect/src/detect.ts:628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L628)
 
 Run a full device capability detection sweep.
 All probes are synchronous with internal error handling -- gracefully

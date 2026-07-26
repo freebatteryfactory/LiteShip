@@ -19,7 +19,6 @@ export function governedExceptionSources(): GovernedExceptionSources {
     ],
     standardsIntegrity: {
       _tag: 'active',
-      baseRef: 'fixture-base',
       facts: {
         unsignedWeakenings: [],
         signedWeakenings: [

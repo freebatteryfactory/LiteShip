@@ -29,7 +29,7 @@ describe('affected selector calibration properties', () => {
   it('is invariant to corpus and set-like field ordering', () => {
     fc.assert(
       fc.property(
-        fc.shuffledSubarray(CORPUS, { minLength: CORPUS.length, maxLength: CORPUS.length }),
+        fc.shuffledSubarray([...CORPUS], { minLength: CORPUS.length, maxLength: CORPUS.length }),
         fc.boolean(),
         (entries, reverseFields) => {
           const permuted = entries.map((entry) => ({

@@ -125,6 +125,21 @@ describe('BenchmarkEvidence', () => {
     expect(evidence.admission).toEqual({ disposition: 'unknown', reasons: ['unstable-variance'] });
   });
 
+  it('classifies a single replicate as unknown because uncertainty is unobservable', () => {
+    const evidence = createBenchmarkEvidence(
+      input({
+        measurement: {
+          mode: 'warm',
+          warmupIterations: 50,
+          repetitions: 1,
+          canaries: [{ id: 'boundary-quadratic-canary', verdict: 'pass' }],
+        },
+      }),
+    );
+    expect(evidence.admission).toEqual({ disposition: 'unknown', reasons: ['under-replicated'] });
+    expect(evidence.regressionDisposition).toBe('inconclusive');
+  });
+
   it('keeps deterministic complexity, allocation, leak, and canary violations blocking', () => {
     const evidence = createBenchmarkEvidence(
       input({

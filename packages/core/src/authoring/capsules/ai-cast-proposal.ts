@@ -148,7 +148,7 @@ interface AiCastProposalOutput {
 
 /**
  * Declared capsule for the AI cast proposal envelope. Registered in the
- * module-level catalog at import time; walked by the factory compiler. The
+ * immutable exported declaration; walked by the factory compiler. The
  * generated property test feeds schema-seeds, `run` seals a real graph, proposes
  * + validates a real patch (the sole mint path), and probes the apply / tamper /
  * determinism laws over the REAL minted envelope. The invariants assert those

@@ -8,7 +8,7 @@
 
 > **computeWaveform**(`audio`, `opts?`): readonly `number`[]
 
-Defined in: [assets/src/analysis/waveform.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L16)
+Defined in: [assets/src/analysis/waveform.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L22)
 
 Compute a normalized RMS-per-bin waveform.
 

@@ -269,7 +269,9 @@ function buildDeliveryHealth(
 
   const quickReports = input.reports.filter((report) => report.profile === 'quick');
   const quickResults = quickReports.flatMap((report) => report.results).filter((result) => result.verdict !== 'skipped');
-  const quickPacketIds = new Set(quickReports.flatMap((report) => report.curePackets.map((packet) => packet.packetId)));
+  const quickPacketIds = new Set<string>(
+    quickReports.flatMap((report) => report.curePackets.map((packet) => packet.packetId)),
+  );
   const resolvedQuickPackets = [...resolvedCurePackets].filter((packet) => quickPacketIds.has(packet)).length;
   const quickCacheHits = quickResults.filter((result) => result.cacheHit).length;
   const quickClassification: DeliveryHealth['quickCureCache']['classification'] =
@@ -748,7 +750,7 @@ export function buildDeliveryMetrics(input: DeliveryMetricsInput): DeliveryMetri
   const results = input.reports.flatMap((report) => report.results).filter((result) => result.verdict !== 'skipped');
   const cacheHitRate =
     results.length === 0 ? null : results.filter((result) => result.cacheHit).length / results.length;
-  const emittedCurePackets = new Set(
+  const emittedCurePackets = new Set<string>(
     input.reports.flatMap((report) => report.curePackets.map((packet) => packet.packetId)),
   );
   const resolved = new Set(input.resolvedCurePacketIds ?? []);

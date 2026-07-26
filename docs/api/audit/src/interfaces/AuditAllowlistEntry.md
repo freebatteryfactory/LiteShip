@@ -44,7 +44,7 @@ Defined in: [audit/src/policy.ts:30](https://github.com/freebatteryfactory/LiteS
 
 ### rule
 
-> `readonly` **rule**: `string`
+> `readonly` **rule**: `"console-call"` \| `"consumer-package-missing"` \| `"default-export"` \| `"export-target-missing"` \| `"fallback-laundering"` \| `"host-surface"` \| `"missing-manifest-dependency"` \| `"missing-manifest-dependency-dynamic"` \| `"missing-runtime-capability"` \| `"no-packages-discovered"` \| `"orphan-export-candidate"` \| `"package-export-surface"` \| `"package-artifacts-unverified"` \| `"package-topology"` \| `"placeholder-content"` \| `"stub-marker"` \| `"suspicious-reimplementation"` \| `"symbol-orphan-candidate"` \| `"unknown-internal-package"` \| `"unresolved-internal-import"` \| `"virtual-module-surface"`
 
 Defined in: [audit/src/policy.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L17)
 

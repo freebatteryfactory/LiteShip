@@ -8,12 +8,9 @@
 
 > `const` **Messages**: `object`
 
-Defined in: [worker/src/messages.ts:355](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L355)
+Defined in: [worker/src/messages.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L391)
 
-Runtime type guards and type aliases for the worker message protocol.
-Consumers typically use [Messages.isToWorker](#istoworker) /
-[Messages.isFromWorker](#isfromworker) inside a `message` handler to narrow
-`event.data` before switching on the `type` field.
+Runtime guards and type projections for the worker protocol vocabulary.
 
 ## Type Declaration
 
@@ -48,12 +45,3 @@ Type guard: is a ToWorkerMessage
 #### Returns
 
 `msg is ToWorkerMessage`
-
-## Example
-
-```ts
-worker.addEventListener('message', (e) => {
-  if (!Messages.isFromWorker(e.data)) return;
-  if (e.data.type === 'state') { /* ... */ }
-});
-```

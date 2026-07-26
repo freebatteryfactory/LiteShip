@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { makeRepoIR, type McdcFacts, type MutationFacts } from '@liteship/gauntlet';
 import {
   assuranceRegressions,
+  assuranceProgress,
   baselineFromInventory,
   buildAssuranceInventory,
   normalizedLogicalLoc,
@@ -15,6 +16,7 @@ import {
   buildSemanticAssuranceReceipt,
   writeSemanticAssuranceReceipt,
 } from '../../../packages/cli/src/lib/semantic-assurance-receipt.js';
+import { spawnArgv } from '../../../scripts/lib/spawn.js';
 
 const roots: string[] = [];
 afterEach(() => {
@@ -40,6 +42,18 @@ function fixture(): string {
 }
 
 describe('assurance inventory', () => {
+  it('measures the candidate worktree without reading deleted tracked source', async () => {
+    const root = fixture();
+    const retired = join(root, 'packages', 'core', 'src', 'retired.ts');
+    writeFileSync(retired, 'export const retired = true;\n');
+    expect((await spawnArgv('git', ['init'], { cwd: root, stdio: ['ignore', 'ignore', 'pipe'] })).exitCode).toBe(0);
+    expect((await spawnArgv('git', ['add', '.'], { cwd: root, stdio: ['ignore', 'ignore', 'pipe'] })).exitCode).toBe(0);
+    rmSync(retired);
+
+    const core = buildAssuranceInventory(root).packages.find((entry) => entry.name === '@liteship/core')!;
+    expect(core.sourceLoc).toBe(3);
+  });
+
   it('attributes authored evidence to the canonical package owner and keeps generated evidence separate', () => {
     const root = fixture();
     mkdirSync(join(root, 'tests', 'generated'), { recursive: true });
@@ -115,6 +129,42 @@ describe('assurance inventory', () => {
       },
     ]);
     expect(assuranceRegressions(inventory, baseline)).toEqual([]);
+  });
+
+  it('requires reviewed ratchet advancement when a proof class is earned, then catches its deletion', () => {
+    const root = fixture();
+    const before = buildAssuranceInventory(root);
+    const staleBaseline = baselineFromInventory(before);
+    const propertyPath = join(root, 'tests', 'property', 'core-law.prop.test.ts');
+    mkdirSync(join(root, 'tests', 'property'), { recursive: true });
+    writeFileSync(
+      propertyPath,
+      "import fc from 'fast-check';\nimport { value } from '@liteship/core';\ntest('generated law', () => fc.assert(fc.property(fc.integer(), (n) => { expect(value + n).toBe(n + 1); })));\n",
+    );
+
+    const strengthened = buildAssuranceInventory(root);
+    expect(assuranceProgress(strengthened, staleBaseline)).toContainEqual(
+      expect.objectContaining({
+        package: '@liteship/core',
+        authoredEvidenceLocDelta: expect.any(Number),
+        earnedEvidence: ['property'],
+        openedEvidence: [],
+      }),
+    );
+    expect(assuranceRegressions(strengthened, staleBaseline)).toContainEqual({
+      package: '@liteship/core',
+      kind: 'stale-strengthen',
+      evidenceGap: 'property',
+    });
+
+    const advanced = baselineFromInventory(strengthened);
+    expect(assuranceRegressions(strengthened, advanced)).toEqual([]);
+    rmSync(propertyPath);
+    expect(assuranceRegressions(buildAssuranceInventory(root), advanced)).toContainEqual({
+      package: '@liteship/core',
+      kind: 'evidence-gap',
+      evidenceGap: 'property',
+    });
   });
 
   it('keeps live mutation and MC/DC receipts out of quick authority and fail-closed in admission', () => {

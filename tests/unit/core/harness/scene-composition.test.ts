@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defineCapsule, schema } from '@liteship/core';
-import { resetCapsuleCatalog } from '@liteship/core/testing';
 import * as Harness from '@liteship/core/harness';
 
 /**
@@ -19,8 +18,6 @@ import * as Harness from '@liteship/core/harness';
  *    appears in either lane under any branch.
  */
 describe('generateSceneComposition (lane-aware)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   const sceneCap = (name: string, budgets: Record<string, unknown> = { p95Ms: 16 }) =>
     defineCapsule({
       _kind: 'sceneComposition',
@@ -127,6 +124,40 @@ describe('generateSceneComposition (lane-aware)', () => {
     expect(benchFile).toContain('expect(cap.tracks).toBeUndefined()');
     expect(benchFile).toContain('expect(cap.fps).toBeUndefined()');
     expect(benchFile).not.toContain(".toBe('string')");
+  });
+
+  it('pre-runtime transform: reuses the real property and benchmark harness', () => {
+    const transform = defineCapsule({
+      _kind: 'sceneComposition',
+      name: 'demo.transform',
+      input: schema.struct({ value: schema.number }),
+      output: schema.struct({ doubled: schema.number }),
+      capabilities: { reads: [], writes: [] },
+      invariants: [
+        {
+          name: 'doubles-input',
+          check: (input, output) => output.doubled === input.value * 2,
+          message: 'output must be the doubled input',
+        },
+      ],
+      budgets: { p95Ms: 1, allocClass: 'bounded' },
+      site: ['node'],
+      run: ({ value }) => ({ doubled: value * 2 }),
+    });
+
+    const { testFile, benchFile } = Harness.generateSceneComposition(transform, {
+      bindingImport: '../../packages/scene/src/demo-transform.js',
+      bindingName: 'demoTransform',
+      arbitraryDerivable: true,
+      handlersPresent: true,
+    });
+
+    expect(testFile).toContain('schemaToArbitrary');
+    expect(testFile).toContain('const run = cap.run!');
+    expect(testFile).toContain('invariant: ${inv.name}');
+    expect(testFile).not.toContain('not-applicable');
+    expect(benchFile).toContain('REAL bench');
+    expect(benchFile).toContain('cap.run!');
   });
 
   it('exposes the lane model: SCENE_CHECKS tags each check with its lane', () => {

@@ -88,6 +88,11 @@
       "import": "./dist/fetch-layer.js",
       "development": "./src/fetch-layer.ts"
     },
+    "./adaptive-runtime": {
+      "types": "./dist/adaptive-runtime.d.ts",
+      "import": "./dist/adaptive-runtime.js",
+      "development": "./src/adaptive-runtime.ts"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",

@@ -6,7 +6,7 @@
 
 # Interface: VideoEncodeConfig
 
-Defined in: [stage/src/dual-export.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L71)
+Defined in: [stage/src/dual-export.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L61)
 
 The deterministic spec a [FrameEncoder](../type-aliases/FrameEncoder.md) encodes the frames at.
 
@@ -16,7 +16,7 @@ The deterministic spec a [FrameEncoder](../type-aliases/FrameEncoder.md) encodes
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [stage/src/dual-export.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L75)
+Defined in: [stage/src/dual-export.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L65)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [stage/src/dual-export.ts:75](https://github.com/freebatteryfactory/
 
 > `readonly` **fps**: `number`
 
-Defined in: [stage/src/dual-export.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L72)
+Defined in: [stage/src/dual-export.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L62)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [stage/src/dual-export.ts:72](https://github.com/freebatteryfactory/
 
 > `readonly` **height**: `number`
 
-Defined in: [stage/src/dual-export.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L74)
+Defined in: [stage/src/dual-export.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L64)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [stage/src/dual-export.ts:74](https://github.com/freebatteryfactory/
 
 > `readonly` **width**: `number`
 
-Defined in: [stage/src/dual-export.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L73)
+Defined in: [stage/src/dual-export.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L63)

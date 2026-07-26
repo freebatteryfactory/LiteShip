@@ -149,7 +149,13 @@ function tryExtractKind(checker: ts.TypeChecker, type: ts.Type): string | undefi
   // base-type walk even though their resolved value still carries the complete
   // capsule shape. Requiring the companion contract fields avoids classifying an
   // unrelated object that merely happens to expose a `_kind` literal.
-  const structuralKind = checker.getTypeOfPropertyOfType(type, '_kind');
+  const structuralKindSymbol = checker.getPropertyOfType(type, '_kind');
+  const structuralKindDeclaration =
+    structuralKindSymbol?.valueDeclaration ?? structuralKindSymbol?.declarations?.[0];
+  const structuralKind =
+    structuralKindSymbol !== undefined && structuralKindDeclaration !== undefined
+      ? checker.getTypeOfSymbolAtLocation(structuralKindSymbol, structuralKindDeclaration)
+      : undefined;
   if (
     structuralKind?.isStringLiteral() === true &&
     ['name', 'site', 'invariants'].every((property) => checker.getPropertyOfType(type, property) !== undefined)

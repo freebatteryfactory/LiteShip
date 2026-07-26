@@ -66,6 +66,7 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [GLSLStates](type-aliases/GLSLStates.md)
 - [GLSLType](type-aliases/GLSLType.md)
 - [MotionEasing](type-aliases/MotionEasing.md)
+- [WGSLBindingType](type-aliases/WGSLBindingType.md)
 - [WGSLStates](type-aliases/WGSLStates.md)
 - [WGSLType](type-aliases/WGSLType.md)
 - [WGSLUniformValue](type-aliases/WGSLUniformValue.md)

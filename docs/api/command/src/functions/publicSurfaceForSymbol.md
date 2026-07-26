@@ -8,7 +8,7 @@
 
 > **publicSurfaceForSymbol**(`query`): [`PublicSymbolContext`](../interfaces/PublicSymbolContext.md) \| `null`
 
-Defined in: [command/src/commands/public-surface-context.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L107)
+Defined in: [command/src/commands/public-surface-context.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L138)
 
 Resolve a facade symbol or allocation operation without package archaeology.
 

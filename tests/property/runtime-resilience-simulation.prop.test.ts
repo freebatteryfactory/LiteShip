@@ -53,6 +53,7 @@ describe('runtime resilience simulation schedules', () => {
       const [finding] = simulationDeterminismGate.run(context([planted]));
       expect(finding?.ruleId).toBe('gauntlet/simulation-determinism/recovery-failed');
       expect(finding?.detail).toContain(`seed ${planted.seed}`);
+      expect(finding?.remediation).toBeDefined();
 
       const packet = createCurePacket({
         headSha: 'runtime-resilience-negative-control',
@@ -61,7 +62,7 @@ describe('runtime resilience simulation schedules', () => {
         title: finding!.title,
         claim: planted.invariant,
         owner: planted.owner,
-        remediation: finding!.remediation.description,
+        remediation: finding!.remediation!.description,
         command: `pnpm exec vitest run tests/property/runtime-resilience-simulation.prop.test.ts --maxWorkers=2`,
         findings: [finding!.detail],
         profile: 'full',
@@ -87,4 +88,3 @@ describe('runtime resilience simulation schedules', () => {
     }
   });
 });
-

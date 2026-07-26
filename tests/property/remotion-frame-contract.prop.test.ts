@@ -14,7 +14,7 @@ function frames(count: number): readonly VideoFrameOutput[] {
       discrete: { frame: String(frame) },
       blend: {},
       outputs: {
-        css: { '--frame': frame, '--truth': frame % 2 === 0 },
+        css: { '--frame': frame, '--parity': frame % 2 === 0 ? 'even' : 'odd' },
         glsl: {},
         wgsl: {},
         aria: {},
@@ -42,7 +42,7 @@ describe('@liteship/remotion frame contract', () => {
   });
 
   test('CSS projection is a fresh string-only value map and leaves the composite state untouched', () => {
-    const cssValueArb = fc.oneof(fc.string(), fc.integer(), fc.boolean());
+    const cssValueArb = fc.oneof(fc.string(), fc.integer());
     fc.assert(
       fc.property(fc.dictionary(fc.stringMatching(/^--[a-z][a-z0-9-]{0,12}$/), cssValueArb), (css) => {
         const state: CompositeState = {

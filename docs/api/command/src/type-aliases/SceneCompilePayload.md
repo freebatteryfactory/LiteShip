@@ -8,7 +8,7 @@
 
 > **SceneCompilePayload** = `object`
 
-Defined in: [command/src/commands/scene.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L63)
+Defined in: [command/src/commands/scene.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L65)
 
 Structured payload returned by `scene.compile` — the scene id, track count, and elapsed compile duration.
 
@@ -18,7 +18,7 @@ Structured payload returned by `scene.compile` — the scene id, track count, an
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [command/src/commands/scene.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L66)
+Defined in: [command/src/commands/scene.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L68)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [command/src/commands/scene.ts:66](https://github.com/freebatteryfac
 
 > `readonly` **sceneId**: `string`
 
-Defined in: [command/src/commands/scene.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L64)
+Defined in: [command/src/commands/scene.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L66)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [command/src/commands/scene.ts:64](https://github.com/freebatteryfac
 
 > `readonly` **trackCount**: `number`
 
-Defined in: [command/src/commands/scene.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L65)
+Defined in: [command/src/commands/scene.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/scene.ts#L67)

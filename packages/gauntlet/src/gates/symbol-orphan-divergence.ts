@@ -334,6 +334,7 @@ export const symbolOrphanDivergenceGate: Gate = defineGate({
   level: 'L1',
   describe:
     'Reports a divergence when the symbol-evidenced LanguageService oracle and the IR file-proxy refs graph disagree on whether an exported symbol is referenced across files (the file-proxy graph credits a name-only match the checker resolves as an orphan, or misses a re-export the checker resolves). Reports, never decides.',
+  access: { ir: ['facts', 'refs'] },
   run: fold,
   fixtures: {
     red: {

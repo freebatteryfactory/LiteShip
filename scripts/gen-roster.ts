@@ -22,7 +22,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectExecution, walkAllFiles, walkTrackedFiles } from './audit/shared.js';
-import { PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
+import { DEFAULT_ANALYZABLE_ARTIFACTS, PACKAGE_CATALOG, type PackageCatalogRecord } from './package-catalog.js';
 import { renderAgentRepositoryContext } from './lib/agent-context.js';
 import { PUBLIC_SURFACE_CONTEXT_TS, renderPublicSurfaceContext } from './gen-public-surface-context.js';
 import { spawnArgvCapture } from './lib/spawn.js';
@@ -257,10 +257,15 @@ export function renderCliAssuranceCampaigns(): string {
 export function renderAuditTopology(): string {
   const rows = PACKAGE_CATALOG.map((record) => {
     const imports = record.audit.allowedInternalImports.map((name) => quote(name)).join(', ');
+    const artifacts = record.audit.analyzableArtifacts.map((glob) => quote(glob)).join(', ');
     const reason = record.audit.reason == null ? '' : `  // ${record.audit.reason}\n`;
-    return `${reason}  ${quote(record.name)}: { kind: ${quote(record.audit.kind)}, allowedInternalImports: [${imports}] },`;
+    return `${reason}  ${quote(record.name)}: { kind: ${quote(record.audit.kind)}, allowedInternalImports: [${imports}], analyzableArtifacts: [${artifacts}] },`;
   }).join('\n');
-  return `${generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts')}// prettier-ignore\nexport const GENERATED_PACKAGE_TOPOLOGY = {\n${rows}\n} as const;\n`;
+  return (
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
+    `// prettier-ignore\nexport const GENERATED_DEFAULT_ANALYZABLE_ARTIFACTS = ${renderStringArray(DEFAULT_ANALYZABLE_ARTIFACTS)} as const;\n` +
+    `// prettier-ignore\nexport const GENERATED_PACKAGE_TOPOLOGY = {\n${rows}\n} as const;\n`
+  );
 }
 
 export function renderCommandPlumb(): string {
@@ -678,12 +683,28 @@ export function validatePackageCatalog(
         detail: 'module runtime surface requires at least one positive runtime smoke import',
       });
     }
+    if (record.audit.analyzableArtifacts.length === 0) {
+      drift.push({
+        copy: `PACKAGE_CATALOG:${record.name}`,
+        detail: 'audit.analyzableArtifacts must name at least one package-relative artifact glob',
+      });
+    }
+    if (
+      record.runtimeSurface === 'types-only' &&
+      !record.audit.analyzableArtifacts.some((glob) => !glob.startsWith('!') && glob.includes('.d.ts'))
+    ) {
+      drift.push({
+        copy: `PACKAGE_CATALOG:${record.name}`,
+        detail: 'types-only runtime surface must declare an analyzable declaration artifact',
+      });
+    }
     for (const [field, values] of [
       ['dependencies', record.dependencies],
       ['capabilities', record.capabilities],
       ['publicSubpaths', record.publicSubpaths],
       ['smokeImports', record.smokeImports],
       ['audit.allowedInternalImports', record.audit.allowedInternalImports],
+      ['audit.analyzableArtifacts', record.audit.analyzableArtifacts],
     ] as const) {
       if (new Set(values).size !== values.length) {
         drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: `${field} contains duplicate entries` });

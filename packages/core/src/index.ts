@@ -665,44 +665,35 @@ export type {
 
 export { TypeValidator } from './authoring/index.js';
 
-export { defineCapsule, getCapsuleCatalog } from './authoring/index.js';
-export type { CapsuleDef } from './authoring/index.js';
-// `resetCapsuleCatalog` is intentionally NOT re-exported here — it mutates
-// global registry state and ships from `@liteship/core/testing` only.
+export { defineCapsule, defineCapsuleCatalog } from './authoring/index.js';
+export type { CapsuleCatalog, CapsuleDef } from './authoring/index.js';
 
 // Capsule declarations — concrete instances of the 7-arm factory
 export { boundaryEvaluateCapsule } from './authoring/index.js';
 export { tokenBufferCapsule } from './authoring/index.js';
 export { canonicalCborCapsule } from './authoring/index.js';
-// The strict decoder capsule (P5a) — the encoder's round-trip peer. Exported
-// here so it registers in the live `getCapsuleCatalog()` alongside the encoder
-// (the reader the encoder's content-addressed bytes have lacked).
+// The strict decoder capsule (P5a) — the encoder's round-trip peer.
 export { canonicalCborDecodeCapsule } from './authoring/index.js';
 // The GraphPatch round-trip identity capsule (F) — locks `apply(a, diff(a, b))`
-// deep-equals `b` as a standing pureTransform contract. Exported here so it
-// registers in the live `getCapsuleCatalog()` (the contract the future graph
-// editor builds against).
+// deep-equals `b` as a standing pureTransform contract.
 export { graphPatchIdentityCapsule } from './authoring/index.js';
 // The escalation chooser capsule — locks `chooseTier`'s minimal-downgrade law
 // (never escalates above `requires`), the site gate, determinism, and the
-// fresh-Set memoization scar as a standing pureTransform contract. Exported here
-// so it registers in the live `getCapsuleCatalog()`.
+// fresh-Set memoization scar as a standing pureTransform contract.
 export { escalationChooseTierCapsule } from './authoring/index.js';
 // The DocumentGraph addressing capsule — locks `addressDocumentGraph`'s
 // determinism, fnv1a format, and order-independence (the CUT B1 code-unit
-// regression guard) as a standing pureTransform contract. Exported here so it
-// registers in the live `getCapsuleCatalog()`.
+// regression guard) as a standing pureTransform contract.
 export { documentGraphAddressCapsule } from './authoring/index.js';
 // The AI cast summarizer capsule — locks `summarizeGraph`'s determinism, budget
 // honesty (estimatedTokens ≤ budget), budget monotonicity (a smaller budget never
 // yields a larger summary), and node-count honesty as a standing pureTransform
-// contract. Exported here so it registers in the live `getCapsuleCatalog()`.
+// contract.
 export { aiCastSummarizeCapsule } from './authoring/index.js';
 // The AI cast proposal-envelope capsule — locks the LOAD-BEARING security laws:
 // no-bypass (a tampered proposal is refused at apply), apply-accepts-only-minted-
 // token, validated-proposal determinism (stable subject + result id), valid-applies-
 // and-re-addresses, and rejection-never-mints — as a standing pureTransform contract.
-// Exported here so it registers in the live `getCapsuleCatalog()`.
 export { aiCastProposalCapsule } from './authoring/index.js';
 
 // Harness lives at `@liteship/core/harness` — per-arm test + bench template

@@ -23,7 +23,7 @@ theme-to-CSS logic.
 
 ### theme
 
-[`Theme`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Theme.md)
+[`Theme`](../../../liteship/src/type-aliases/Theme.md)
 
 ## Returns
 

@@ -21,6 +21,7 @@ export type { GLSLType, GLSLUniform, GLSLDefine, GLSLCompileResult } from './gls
 export { WGSLCompiler } from './wgsl.js';
 export type {
   WGSLType,
+  WGSLBindingType,
   WGSLBinding,
   WGSLStruct,
   WGSLCompileResult,
@@ -107,9 +108,8 @@ export { compileResponsiveMedia } from './responsive-media-compile.js';
 export type { CompiledResponsiveMedia } from './responsive-media-compile.js';
 
 // ── Capsule declarations — cast-compiler hardening (property + bench + budget) ──
-// Concrete `pureTransform` instances of the 7-arm capsule factory, exported here
-// so they register in the live `getCapsuleCatalog()` and the type-directed
-// capsule detector (`scripts/lib/capsule-detector.ts`) walks them from
+// Concrete `pureTransform` instances of the 7-arm capsule factory. The
+// type-directed capsule detector (`scripts/lib/capsule-detector.ts`) walks them from
 // `@liteship/compiler`'s source root. Each pins the GLSL / WGSL / ARIA compiler's
 // LAWS over a seeded Boundary + per-state value domain.
 export { glslCompileCapsule } from './capsules/glsl-compile.js';

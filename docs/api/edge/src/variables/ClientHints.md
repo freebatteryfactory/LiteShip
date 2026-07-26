@@ -8,7 +8,7 @@
 
 > `const` **ClientHints**: `object`
 
-Defined in: [edge/src/client-hints.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L371)
+Defined in: [edge/src/client-hints.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L365)
 
 Client Hints namespace.
 
@@ -117,7 +117,7 @@ console.log(caps.prefersColorScheme);  // 'dark'
 
 ### responsiveMediaCapabilities
 
-> **responsiveMediaCapabilities**: (`headersOrCaps`) => `ResponsiveMediaCapabilities`
+> **responsiveMediaCapabilities**: (`headersOrCaps`) => [`ResponsiveMediaCapabilities`](../../../liteship/src/media/interfaces/ResponsiveMediaCapabilities.md)
 
 Derive Save-Data/DPR capabilities for responsive-media projection (#125).
 
@@ -133,7 +133,7 @@ Hosts that already parsed caps can also call this with the result of
 
 #### Returns
 
-`ResponsiveMediaCapabilities`
+[`ResponsiveMediaCapabilities`](../../../liteship/src/media/interfaces/ResponsiveMediaCapabilities.md)
 
 ### responsiveMediaVaryHeader
 

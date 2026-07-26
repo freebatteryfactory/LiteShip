@@ -48,6 +48,7 @@ import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
 import {
   rootTsconfigReferenceDirs,
   packageTsconfigInputs,
+  tsconfigTestsIncludeEntries,
   tsconfigTestsIncludeFiles,
   apiSurfaceSnapshot,
   lintGlobs,
@@ -124,6 +125,85 @@ describe('(a) typecheck canary — `tsc --build` detects an injected type error'
       const bad = await runTscBuild(join(injectedDir, 'tsconfig.json'));
       expect(bad.status, 'the build gate must fail on a type error — a green here means it checks nothing').not.toBe(0);
       expect(bad.output, `expected a TS2322 diagnostic, got:\n${bad.output}`).toMatch(/error TS2322/);
+    },
+    scaledTimeout(60_000),
+  );
+});
+
+describe('(a2) property evidence is type-admitted before execution', () => {
+  const propertySuites = fg
+    .sync(['tests/property/**/*.prop.test.ts'], { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedProperties = fg
+    .sync([...includeEntries], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/property/') && path.endsWith('.prop.test.ts'))
+    .sort();
+
+  it('the tests typecheck project admits every property suite, including future files', () => {
+    expect(propertySuites.length, 'the property-test corpus must be non-empty').toBeGreaterThan(0);
+    expect(admittedProperties).toEqual(propertySuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/property/') && entry.includes('*') && entry.endsWith('.prop.test.ts'),
+      ),
+      'property admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with the property admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/property/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(propertySuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(propertySuites);
+  });
+
+  it(
+    'an intentionally ill-typed future property suite fails the admitted compiler project before execution',
+    async () => {
+      const propertyPatterns = includeEntries.filter(
+        (entry) => entry.startsWith('tests/property/') && entry.includes('*'),
+      );
+      expect(propertyPatterns.length, 'no wildcard property admission found').toBeGreaterThan(0);
+
+      const seed = (dest: string, source: string): void => {
+        const suiteDir = join(dest, 'tests', 'property');
+        mkdirSync(suiteDir, { recursive: true });
+        writeFileSync(
+          join(dest, 'tsconfig.json'),
+          `${JSON.stringify(
+            {
+              compilerOptions: {
+                target: 'ES2022',
+                module: 'ESNext',
+                moduleResolution: 'bundler',
+                strict: true,
+                noEmit: true,
+              },
+              include: propertyPatterns,
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        writeFileSync(join(suiteDir, 'future-admission.prop.test.ts'), source);
+      };
+
+      const cleanDir = join(sandboxRoot, 'property-clean');
+      seed(cleanDir, 'export const admitted: number = 42;\n');
+      const clean = await runTscBuild(join(cleanDir, 'tsconfig.json'));
+      expect(clean.status, `clean property fixture failed to typecheck:\n${clean.output}`).toBe(0);
+
+      const invalidDir = join(sandboxRoot, 'property-invalid');
+      seed(invalidDir, 'export const admitted: string = 42;\n');
+      const invalid = await runTscBuild(join(invalidDir, 'tsconfig.json'));
+      expect(invalid.status, 'an ill-typed property suite must fail before its Vitest body can execute').not.toBe(0);
+      expect(invalid.output, `expected TS2322 from the ill-typed property fixture, got:\n${invalid.output}`).toMatch(
+        /error TS2322/,
+      );
     },
     scaledTimeout(60_000),
   );

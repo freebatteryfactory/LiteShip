@@ -16,7 +16,7 @@ export type {
   CommandJsonSchema,
 } from '@liteship/core';
 
-export { CommandRegistry, capabilityUnavailable, ok, failed, defineCommand } from './registry.js';
+export { createCommandRegistry, capabilityUnavailable, ok, failed, defineCommand } from './registry.js';
 export type {
   AuditEngineSummary,
   AuditFloorSummary,
@@ -33,8 +33,11 @@ export type {
   InvariantViolation,
   InvariantViolationGroup,
   RegisteredCommand,
+  CommandRegistry,
+  SceneCompilation,
 } from './registry.js';
-export { CommandDispatcher } from './dispatcher.js';
+export { createCommandDispatcher } from './dispatcher.js';
+export type { CommandDispatcher } from './dispatcher.js';
 
 // The canonical command catalog — the single source CLI/MCP surfaces project from.
 export { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from './catalog.js';
@@ -84,6 +87,7 @@ export {
 } from './commands/public-surface-context.js';
 export type {
   PublicAllocationContext,
+  PublicFailureProofContext,
   PublicSurfaceStability,
   PublicSymbolContext,
 } from './commands/public-surface-context.js';
@@ -102,7 +106,10 @@ export type {
   CheckCache,
   CheckAuthority,
   CliCheckExecution,
+  RootScriptCheckExecution,
+  CheckExecution,
 } from './checks/definition.js';
+export { parseRootScriptCheckExecution, renderRootScriptCheckExecution } from './checks/definition.js';
 export { planChecks, formatCheckPlan, CHECK_PROFILES, CHECK_CONTEXTS, CHECK_PLATFORMS } from './checks/plan.js';
 export type {
   CurePacket,
@@ -119,8 +126,8 @@ export type {
   CheckRunResult,
   CheckVerdict,
 } from './checks/plan.js';
-export { INVARIANTS } from './commands/check-invariants-registry.js';
-export type { CheckInvariantEntry } from './commands/check-invariants-registry.js';
+export { INVARIANTS, matchesInvariantExemption } from './commands/check-invariants-registry.js';
+export type { CheckInvariantEntry, CheckInvariantExemption } from './commands/check-invariants-registry.js';
 export {
   packageSlug,
   selectTargets,

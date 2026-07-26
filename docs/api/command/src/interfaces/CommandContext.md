@@ -52,7 +52,7 @@ Working directory for path resolution; defaults to `process.cwd()` at the adapte
 
 > `readonly` `optional` **decodeShipCapsule?**: (`bytes`) => `Promise`\<\{ `id`: `ContentAddress`; `ok`: `true`; `tarballManifestAddress`: \{ `display_id`: `string`; `integrity_digest`: `string`; \}; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
-Defined in: [command/src/registry.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L245)
+Defined in: [command/src/registry.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L247)
 
 Decode a ShipCapsule from CBOR bytes (adapter runs the Effect). Returns the
 capsule id + its claimed tarball-manifest address, or a decode error string.
@@ -188,7 +188,7 @@ Keeps path/env policy on the adapter side.
 
 > `readonly` `optional` **readFileBytes?**: (`path`) => `Uint8Array`\<`ArrayBufferLike`\> \| `null`
 
-Defined in: [command/src/registry.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L240)
+Defined in: [command/src/registry.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L242)
 
 Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable.
 
@@ -208,7 +208,7 @@ Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable.
 
 > `readonly` `optional` **recomputeTarballAddress?**: (`bytes`) => `Promise`\<\{ `display_id`: `string`; `integrity_digest`: `string`; `ok`: `true`; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
-Defined in: [command/src/registry.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L267)
+Defined in: [command/src/registry.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L269)
 
 Recompute a tarball's manifest address (adapter runs the Effect).
 
@@ -228,7 +228,7 @@ Recompute a tarball's manifest address (adapter runs the Effect).
 
 > `readonly` `optional` **renderScene?**: (`params`) => `Promise`\<\{ `elapsedMs`: `number`; `frameCount`: `number`; \}\>
 
-Defined in: [command/src/registry.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L230)
+Defined in: [command/src/registry.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L232)
 
 Render a scene to the output path via the host's compositor + ffmpeg
 pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
@@ -272,7 +272,7 @@ Render width in pixels; the host defaults to 1280 when absent.
 
 > `readonly` `optional` **resolveApiSymbol?**: (`symbol`) => [`ApiSymbolResolution`](ApiSymbolResolution.md) \| `null`
 
-Defined in: [command/src/registry.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L265)
+Defined in: [command/src/registry.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L267)
 
 Resolve an exported symbol → its owning package + source file + one-paragraph
 TSDoc summary — the CLI-side api-index the `explain` command uses for its
@@ -518,13 +518,15 @@ the MCP host — an agent can call `plumb` over MCP and read the work-list.
 
 ### runSceneCompile?
 
-> `readonly` `optional` **runSceneCompile?**: (`sceneModule`) => `Promise`\<`void`\>
+> `readonly` `optional` **runSceneCompile?**: (`sceneModule`) => `Promise`\<[`SceneCompilation`](SceneCompilation.md)\>
 
-Defined in: [command/src/registry.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L224)
+Defined in: [command/src/registry.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L226)
 
-Execute a loaded scene module's compile function (the adapter runs it,
-including any Effect). Keeps the `effect` runtime + arbitrary-user-code
-execution out of @liteship/command. Throws on compile failure.
+Execute a loaded scene module's compile function and project the small
+compiled contract that command handlers consume. The adapter owns arbitrary
+user-code execution and the scene implementation dependency; command owns
+only this structural result. Throws when the module has no valid compiler or
+compilation fails.
 
 #### Parameters
 
@@ -534,7 +536,7 @@ execution out of @liteship/command. Throws on compile failure.
 
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<[`SceneCompilation`](SceneCompilation.md)\>
 
 ***
 

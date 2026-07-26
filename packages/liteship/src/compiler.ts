@@ -23,6 +23,7 @@ export type { GLSLType, GLSLUniform, GLSLDefine, GLSLCompileResult } from '@lite
 export { WGSLCompiler } from '@liteship/compiler';
 export type {
   WGSLType,
+  WGSLBindingType,
   WGSLBinding,
   WGSLStruct,
   WGSLCompileResult,

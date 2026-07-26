@@ -73,13 +73,19 @@ invariants:
     level: L4
     category: content-address
   - id: INV-ADAPTIVE-CSS-BYTE-EQUAL
-    law: "The public liteship root adaptive plan compiles to BYTE-IDENTICAL state-marker CSS as the independently hand-lowered path: adaptive.plan().css equals StyleCSSCompiler.compileAdaptive(style), every selector is scoped by style identity, and browser-computed style follows the runtime data-liteship-state marker even through hysteresis."
+    law: 'The public liteship root adaptive plan compiles to BYTE-IDENTICAL state-marker CSS as the independently hand-lowered path: adaptive.plan().css equals StyleCSSCompiler.compileAdaptive(style), every selector is scoped by style identity, and browser-computed style follows the runtime data-liteship-state marker even through hysteresis.'
     level: L4
     category: content-address
   - id: INV-ADAPTIVE-TRACE-EQUAL
-    law: "A public-root adaptive is the SAME observable machine as the hand-lowered path: boundary/explanation traces agree over a below/at/above sweep, and live quantizer state, crossing receipts, and output delivery sequences are deep-equal under the same fixed clock."
+    law: 'A public-root adaptive is the SAME observable machine as the hand-lowered path: boundary/explanation traces agree over a below/at/above sweep, and live quantizer state, crossing receipts, and output delivery sequences are deep-equal under the same fixed clock.'
     level: L4
     category: determinism
+
+  # ── Beginner surface — the public route stays define → apply → inspect ──────
+  - id: INV-BEGINNER-SURFACE
+    law: 'The flagship beginner route exposes exactly the define, apply, and inspect concept families through one root authoring import plus one explicit host subpath; host setup is excluded from the authored-feature concept budget, and a fourth root concept or raw scoped-package import fails the contract.'
+    level: L4
+    category: assurance
 
   # ── Assurance propagation — AUTHORITY decides assurance, not folder names ───
   - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
@@ -139,11 +145,11 @@ invariants:
 
   # ── Zero-allocation hot paths — MEASURED, not asserted (the perf-claim spine) ─
   - id: INV-COMPOSITOR-ZERO-ALLOC
-    law: "The Compositor per-frame compose hot path is genuinely zero-allocation in BOTH senses, measured + enforced by the allocation gate: (1) RETAINED — its LIVE per-op heap growth surviving a forced GC stays at or below the proven near-zero budget (no retained per-op allocation); and (2) TRANSIENT — its reactive publish (a raw listener-set fan-out over a stable live reference, replacing the per-publish-allocating SubscriptionRef.set) CHURNS nothing per op with no `changes` subscriber (near-zero B/op), and only the bounded Stream.callback bridge enqueue cost with one. Safe because the compositor is the single synchronous writer of the live state, so the bypassed semaphore's atomicity guarantee is moot."
+    law: "The Compositor compose and no-subscriber publish hot paths stay at or below the allocation gate's platform-robust negligible ratio to a known-allocating reference, while the live-subscriber bridge stays below its separately bounded ratio; source wiring retains the raw CellKernel listener fan-out rather than SubscriptionRef.set."
     level: L3
     category: determinism
   - id: INV-TOKEN-BUFFER-ZERO-ALLOC
-    law: 'The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing.'
+    law: "The TokenBuffer push + drainInto hot path stays at or below the allocation gate's platform-robust negligible ratio to a known-allocating retained-heap reference; drainInto writes into a caller-owned sink and the qualified ratio is the blocking cross-platform verdict."
     level: L3
     category: determinism
 

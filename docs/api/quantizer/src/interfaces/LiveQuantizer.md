@@ -10,8 +10,8 @@ Defined in: [quantizer/src/quantizer.ts:297](https://github.com/freebatteryfacto
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
-Extends the core [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts) with a reactive outputs table: as
-boundary crossings are detected, the outputs [CellKernel](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) publishes the
+Extends the core [ReactiveQuantizer](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md) with a reactive outputs table: as
+boundary crossings are detected, the outputs [CellKernel](../../../liteship/src/reactive/variables/CellKernel.md) publishes the
 new per-target record, readable via `currentOutputs.read()` and observable via
 `outputChanges.subscribe(sink)` (replay-1: a new subscriber is replayed the
 current outputs on attach). Both views are the same underlying replay-1 kernel.
@@ -36,13 +36,13 @@ await live.dispose();
 
 ## Extends
 
-- [`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts)\<`B`\>
+- [`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md)\<`B`\>
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ### O
 
@@ -58,7 +58,7 @@ Defined in: core/dist/schema/quantizer-types.d.ts:35
 
 #### Inherited from
 
-`ReactiveQuantizer._tag`
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md).[`_tag`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md#_tag)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: core/dist/schema/quantizer-types.d.ts:36
 
 #### Inherited from
 
-`ReactiveQuantizer.boundary`
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md).[`boundary`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md#boundary)
 
 ***
 
@@ -84,7 +84,7 @@ No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<
 
 #### Inherited from
 
-`ReactiveQuantizer.changes`
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md).[`changes`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md#changes)
 
 ***
 
@@ -100,7 +100,7 @@ The config this quantizer was created from.
 
 ### currentOutputs
 
-> `readonly` **currentOutputs**: `Pick`\<`CellKernel.Replay`\<`OutputRecord`\>, `"read"` \| `"subscribe"` \| `"closed"` \| `"size"`\>
+> `readonly` **currentOutputs**: `Pick`\<[`Replay`](../../../liteship/src/reactive/namespaces/CellKernel/type-aliases/Replay.md)\<`OutputRecord`\>, `"read"` \| `"subscribe"` \| `"closed"` \| `"size"`\>
 
 Defined in: [quantizer/src/quantizer.ts:304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L304)
 
@@ -110,7 +110,7 @@ Read the currently-active per-target output record (replay-1 read side).
 
 ### outputChanges
 
-> `readonly` **outputChanges**: `Pick`\<`CellKernel.Replay`\<`OutputRecord`\>, `"subscribe"` \| `"read"` \| `"closed"` \| `"size"`\>
+> `readonly` **outputChanges**: `Pick`\<[`Replay`](../../../liteship/src/reactive/namespaces/CellKernel/type-aliases/Replay.md)\<`OutputRecord`\>, `"subscribe"` \| `"read"` \| `"closed"` \| `"size"`\>
 
 Defined in: [quantizer/src/quantizer.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L306)
 
@@ -120,7 +120,7 @@ Per-target output records emitted on each boundary crossing (replay-1 subscribe 
 
 ### state
 
-> `readonly` **state**: `QuantizerState`\<`B`\>
+> `readonly` **state**: [`QuantizerState`](../../../liteship/src/schema/type-aliases/QuantizerState.md)\<`B`\>
 
 Defined in: core/dist/schema/quantizer-types.d.ts:63
 
@@ -128,7 +128,7 @@ Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 #### Inherited from
 
-`ReactiveQuantizer.state`
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md).[`state`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md#state)
 
 ***
 
@@ -146,7 +146,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 #### Inherited from
 
-`ReactiveQuantizer.stateSync`
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md).[`stateSync`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md#statesync)
 
 ## Methods
 
@@ -168,4 +168,4 @@ Defined in: core/dist/schema/quantizer-types.d.ts:39
 
 #### Inherited from
 
-`ReactiveQuantizer.evaluate`
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md).[`evaluate`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md#evaluate)

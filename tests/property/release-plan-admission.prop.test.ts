@@ -67,12 +67,15 @@ describe('release plan admission properties', () => {
       ['admittedPlanId', PLAN.planId],
     ] as const;
     fc.assert(
-      fc.property(fc.shuffledSubarray(entries, { minLength: entries.length, maxLength: entries.length }), (order) => {
-        expect(admitReleasePlanBinding(Object.fromEntries(order))).toEqual({
-          sourceCommit: HEAD,
-          planId: PLAN.planId,
-        });
-      }),
+      fc.property(
+        fc.shuffledSubarray([...entries], { minLength: entries.length, maxLength: entries.length }),
+        (order) => {
+          expect(admitReleasePlanBinding(Object.fromEntries(order))).toEqual({
+            sourceCommit: HEAD,
+            planId: PLAN.planId,
+          });
+        },
+      ),
       { seed: 0xb1ad1, numRuns: 50 },
     );
   });

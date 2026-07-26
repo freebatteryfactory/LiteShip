@@ -257,7 +257,7 @@ function setupListener(
  * of updates, returning a {@link Disposer}); the owning {@link Lifetime} stays
  * reachable as `signal.lifetime` for advanced composition.
  *
- * `clock` (default {@link wallClock}) is the injected time source for the `time`
+ * `clock` (default `wallClock`) is the injected time source for the `time`
  * source family (elapsed/absolute) — pass a `manualClock`/`fixedClock` to drive an
  * elapsed/absolute signal deterministically without touching the ambient clock.
  *
@@ -436,5 +436,5 @@ export declare namespace Signal {
   /** Structural shape of a seekable, pausable signal — e.g. driven by Remotion or a scrub UI. */
   export type Controllable<T> = ControllableSignalShape<T>;
   /** Structural shape of an audio-sourced signal backed by an {@link AVBridge}. */
-  export type Audio = AudioSignalShape;
+  export type Audio = Signal<number> & AsyncOwnedResource & { poll(): number };
 }

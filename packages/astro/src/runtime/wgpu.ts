@@ -384,7 +384,7 @@ function createUniformBinding(
         code: 'astro/wgpu/wgsl-uniform-buffer-full',
         message:
           `WGSL uniform buffer holds ${UNIFORM_BUFFER_MAX_BYTES} bytes; field "${field.name}" overflows it. ` +
-          `Fix: reduce @wgsl fields or widen UNIFORM_BUFFER_MAX_BYTES in wgpu.ts.`,
+          'Fix: reduce the @wgsl uniform set or split it across smaller shader programs.',
       });
       continue;
     }

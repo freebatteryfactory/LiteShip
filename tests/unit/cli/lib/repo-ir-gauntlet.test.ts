@@ -45,6 +45,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { scaledTimeout, repoRoot } from '../../../../vitest.shared.js';
 import { isTaggedError } from '@liteship/error';
+import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
 import { INVARIANTS } from '@liteship/command/invariants';
 import { readFileSync } from 'node:fs';
 import {
@@ -141,11 +142,11 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
     expect(propertyFacts(facts, 'require-call')).toHaveLength(0);
   });
 
-  it('a NO_DEFAULT_EXPORT-EXCLUDED file emits the exclude marker, NOT a property fact (exclude-vs-miss seam)', () => {
-    // The canonical NO_DEFAULT_EXPORT rule excludes Astro client-directive files.
+  it('a NO_DEFAULT_EXPORT-exempt file emits the exemption marker, NOT a property fact', () => {
+    // The canonical NO_DEFAULT_EXPORT rule exempts Astro client-directive files.
     const excluded = 'packages/astro/src/client-directives/example.ts' as FileId;
     const facts = runOracle(excluded, 'export default function directive() {}\n');
-    // No property fact — the regex is silent BY DESIGN on an excluded file.
+    // No property fact — the regex is silent BY DESIGN on an exempt file.
     expect(propertyFacts(facts, 'is-default-export')).toHaveLength(0);
     // The self-describing marker IS emitted, naming WHICH rule excluded the file.
     const markers = facts.filter((f) => f.property === DEFAULT_EXPORT_CHECK_EXCLUDED);
@@ -155,7 +156,7 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
     expect(markers[0]!.oracleId).toBe('invariant-regex');
   });
 
-  it('the exclude marker reads the canonical rule name from the live INVARIANTS ledger, not a hardcoded string', () => {
+  it('the exemption marker reads the canonical rule name from the live INVARIANTS ledger, not a hardcoded string', () => {
     // The marker value must be the literal `name` the committed ledger carries — proving
     // the oracle references the source of truth, never a hand-copied fork.
     const canonical = INVARIANTS.find((r) => r.name === 'NO_DEFAULT_EXPORT');
@@ -212,6 +213,21 @@ function pkgManifest(name: string): string {
   return JSON.stringify({ name, version: '0.0.0', exports: { '.': { development: './src/index.ts' } } });
 }
 
+/**
+ * A hermetic LiteShip root still has to satisfy the production governance-host
+ * shape. Derive its script keys from the same registry/exemption partition the
+ * host reads; values are inert because this suite never executes them.
+ */
+function fixtureRootManifest(): string {
+  const registered = CHECK_REGISTRY.flatMap((check) =>
+    check.contexts.includes('repository') && check.execution.kind === 'root-script' ? [check.execution.script] : [],
+  );
+  const scripts = Object.fromEntries([...new Set([...registered, ...SCRIPT_EXEMPTIONS.map((entry) => entry.script)])].map(
+    (script) => [script, 'fixture-only'],
+  ));
+  return JSON.stringify({ name: 'liteship-fixture-root', private: true, type: 'module', scripts });
+}
+
 /** Lay a fixture tree under a fresh tmp root and return the absolute root path. */
 function makeFixture(files: Record<string, string>): string {
   const root = mkdtempSync(join(tmpdir(), 'liteship-rig-'));
@@ -252,7 +268,7 @@ function makeFixture(files: Record<string, string>): string {
 /** The single-package source fixture: one named export + an internal relative import. */
 function sourceFiles(): Record<string, string> {
   return {
-    'package.json': JSON.stringify({ name: 'liteship-fixture-root', private: true, type: 'module' }),
+    'package.json': fixtureRootManifest(),
     'packages/example/package.json': pkgManifest('@liteship/example'),
     'packages/example/src/index.ts': "import { helper } from './helper.js';\nexport const value = helper() + 1;\n",
     'packages/example/src/helper.ts': 'export function helper(): number {\n  return 41;\n}\n',

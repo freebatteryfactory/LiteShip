@@ -8,9 +8,9 @@
 
 > **validateGeneratedUITree**(`node`, `catalog`): [`ValidateGeneratedUIResult`](../type-aliases/ValidateGeneratedUIResult.md)
 
-Defined in: [genui/src/validate.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L218)
+Defined in: [genui/src/validate.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L129)
 
-Validate a generated UI tree against the host catalog. Unknown names / bad props → reject.
+Validate a generated UI tree against the host catalog. Unknown or unrepresentable input refuses.
 
 ## Parameters
 

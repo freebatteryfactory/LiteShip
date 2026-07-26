@@ -5,7 +5,7 @@
  * @module
  */
 
-import { runStdio } from './stdio.js';
+import { startStdio } from './stdio.js';
 
 /** Options for `start`. */
 export interface StartOpts {
@@ -30,8 +30,15 @@ export interface StartOpts {
  * from the package barrel: it stays an internal seam, off the public api surface.
  */
 export interface StartDeps {
-  readonly runStdio: () => Promise<void>;
-  readonly runHttp: (bind: number | string) => Promise<void>;
+  readonly startStdio: () => McpServerHandle | Promise<McpServerHandle>;
+  readonly startHttp: (bind: number | string) => McpServerHandle | Promise<McpServerHandle>;
+}
+
+/** Explicit lifecycle authority returned to every embedded MCP host. */
+export interface McpServerHandle {
+  readonly transport: 'stdio' | 'http';
+  readonly done: Promise<void>;
+  stop(): Promise<void>;
 }
 
 /**
@@ -40,18 +47,17 @@ export interface StartDeps {
  * the inline `await import('./http.js')` this dispatch used before the seam.
  */
 const nodeStartDeps: StartDeps = {
-  runStdio,
-  runHttp: async (bind) => {
-    const { runHttp } = await import('./http.js');
-    await runHttp(bind);
+  startStdio,
+  startHttp: async (bind) => {
+    const { runHttp } = await import('./http-server.js');
+    return runHttp(bind);
   },
 };
 
-/** Start the MCP server on the requested transport. */
-export async function start(opts: StartOpts = {}, deps: StartDeps = nodeStartDeps): Promise<void> {
+/** Start the requested MCP transport and return the authority required to stop it. */
+export async function start(opts: StartOpts = {}, deps: StartDeps = nodeStartDeps): Promise<McpServerHandle> {
   if (opts.http !== undefined) {
-    await deps.runHttp(opts.http);
-    return;
+    return deps.startHttp(opts.http);
   }
-  await deps.runStdio();
+  return deps.startStdio();
 }

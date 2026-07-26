@@ -35,4 +35,4 @@ export type { RemotionVideoConfig } from './composition.js';
 export { precomputeFrames, rendererFromRemotionConfig, Provider, useLiteshipState } from './composition.js';
 
 // Capsules
-export { remotionAdapterCapsule } from './capsules/remotion-adapter.js';
+export { remotionAdapterCapsule } from './remotion-adapter-capsule.js';

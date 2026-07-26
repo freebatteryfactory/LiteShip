@@ -164,6 +164,7 @@ export type VirtualModuleId =
   | 'virtual:liteship/tokens.css'
   | 'virtual:liteship/boundaries'
   | 'virtual:liteship/themes'
+  | 'virtual:liteship/hmr-client'
   | 'virtual:liteship/wasm-url'
   | 'virtual:liteship/config';
 

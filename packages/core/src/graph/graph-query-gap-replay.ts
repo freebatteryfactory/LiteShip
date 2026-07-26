@@ -220,11 +220,11 @@ export function chainPatchesBetween(
  * Replay missed discrete crossings from a transition/receipt chain.
  *
  * The selected branch's receipts are run through the structural floor
- * ({@link Receipt.validateChainDetailed}: hash self-consistency, chain
+ * (`Receipt.validateChainDetailed`: hash self-consistency, chain
  * continuity, HLC ordering) BEFORE anything applies — a reordered / truncated /
  * forked / HLC-regressed chain applies nothing (Law 15). Surviving transitions
  * are grouped per cell and the HIGHEST-generation one is applied via
- * {@link applyTransition}; the store's generation guard is the belt-and-suspenders.
+ * `applyTransition`; the store's generation guard is the belt-and-suspenders.
  */
 export async function replayDiscreteFromPatchReceipts(options: ReplayDiscreteFromPatchReceiptsOptions): Promise<{
   readonly replayedCells: readonly ReplayableRecoveryCell[];

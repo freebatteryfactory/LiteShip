@@ -14,7 +14,7 @@
  * @module
  */
 
-import { formatTypedValue, frameToT, sampleProgram, type RuntimeWritePlan, type TypedValue } from '@liteship/core';
+import { frameToT, sampleProgram, sampleProgramUniforms, type RuntimeWritePlan, type TypedValue } from '@liteship/core';
 
 /**
  * Sample the shared motion kernel at Remotion `frame` of a `durationInFrames`-long
@@ -37,9 +37,5 @@ export function sampleMotionFrame(
  * Remotion paints is byte-identical to the live runtime's.
  */
 export function motionCssVars(plan: RuntimeWritePlan, frame: number, durationInFrames: number): Record<string, string> {
-  const vars: Record<string, string> = {};
-  for (const [cssVar, value] of sampleMotionFrame(plan, frame, durationInFrames)) {
-    vars[cssVar] = formatTypedValue(value);
-  }
-  return vars;
+  return sampleProgramUniforms(plan, frameToT(frame, durationInFrames)).css;
 }

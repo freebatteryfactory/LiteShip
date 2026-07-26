@@ -249,7 +249,10 @@ describe('D3 stability — projection drift tripwire', () => {
     // P17 nautical glossary trim: the retired maritime entries (hull, keel, cast off, moored,
     // shake-down, quay) were dropped from GLOSSARY_ENTRIES — the JSON glossary resource embeds
     // the catalog, so the {resources, prompts} projection digest shifted.
-    expect(address).toBe('fnv1a:31826c71');
+    // The command registry now carries the catalog-owned CLI projection
+    // (invocation positionals, adapter-only flags, aliases, and output mode),
+    // so the registry resource changes while MCP tool inputSchema stays semantic.
+    expect(address).toBe('fnv1a:80e85f41');
   });
 });
 

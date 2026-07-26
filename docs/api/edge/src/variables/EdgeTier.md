@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L130)
+Defined in: [edge/src/edge-tier.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L127)
 
 Edge tier detection namespace.
 

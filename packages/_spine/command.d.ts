@@ -75,6 +75,27 @@ export interface CapsuleCommandDescriptor {
   readonly inputSchema: CommandJsonSchema;
   readonly outputSchema?: CommandJsonSchema;
   readonly annotations?: CommandAnnotations;
+  /**
+   * CLI projection metadata layered over the transport-neutral input schema.
+   *
+   * `inputSchema.properties` remains the semantic argument contract shared by
+   * the CLI and MCP. `adapterFlags` lists only CLI-host concerns that must never
+   * leak into MCP tools (for example `--json` pretty-output suppression or the
+   * package-smoke scratch-artifact directory). Positional property names are
+   * removed from the derived flag set; every other input property projects to a
+   * kebab-cased long flag. Dotted command identity always projects to a
+   * space-separated invocation and is therefore not repeated here.
+   */
+  readonly cli?: {
+    /** Default stdout contract for the invocation. */
+    readonly outputMode: 'json' | 'text' | 'process';
+    /** Names from `inputSchema.properties` consumed positionally by argv. */
+    readonly positionals?: readonly string[];
+    /** CLI-host-only long flags and their argv value shape. */
+    readonly adapterFlags?: Readonly<Record<`--${string}`, { readonly type: 'boolean' | 'string' }>>;
+    /** Optional short aliases keyed by the canonical long flag. */
+    readonly flagAliases?: Readonly<Record<`--${string}`, readonly `-${string}`[]>>;
+  };
   /** Execution shape — `handler` (structured) vs `cli-orchestration` (CLI-owned). */
   readonly executionKind?: CommandExecutionKind;
   /**
@@ -145,3 +166,13 @@ export interface CapsuleResultReceipt {
 
 /** Product-owned `_meta` key under which a {@link CapsuleResultReceipt} rides on an MCP result (no maintainer identity). */
 export type CapsuleResultMetaKey = 'liteship/result';
+
+/** Host-projected facts from one real scene compilation. */
+export interface SceneCompilation {
+  /** Resolved scene duration, including track-derived duration when authoring omitted it. */
+  readonly durationMs: number;
+  /** Validated output frame rate. */
+  readonly fps: number;
+  /** Number of compiled track spawns, not the unvalidated authoring-array length. */
+  readonly trackCount: number;
+}

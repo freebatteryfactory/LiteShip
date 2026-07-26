@@ -33,7 +33,7 @@ export const TYPESCRIPT_TOOLCHAIN_CONTRACT = Object.freeze({
   admittedDiagnosticCodes: Object.freeze([2322]),
   localWorkerCap: 2,
   ciWorkerCeiling: 8,
-}) as const;
+} as const);
 
 /** Which compiler produced one observation. */
 export type TypeScriptToolchainRole = 'compatibility' | 'native';

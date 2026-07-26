@@ -5,11 +5,13 @@
  * generated test/bench, a committed file that a fresh `capsule:compile` would
  * change (confirmed by regeneration, never by raw mtime), a lazy placeholder
  * bench (a `bench()` measuring nothing — the bench analogue of `it.skip`), a
- * marker↔manifest drift, or a generated test that runs red.
+ * marker↔manifest drift, a generated test that runs red, or a generated
+ * benchmark that fails to produce an execution-qualified distribution and
+ * uncertainty receipt.
  *
  * The engine (manifest read, mtime `fast-path`, regeneration confirmation via a
- * `capsule:compile` spawn, the bench classifier, and the final `vitest run` over
- * `tests/generated/`) is INJECTED via `context.runCapsuleGate`, never imported
+ * `capsule:compile` spawn, the bench classifier, and the separate generated
+ * test/benchmark execution lanes) is INJECTED via `context.runCapsuleGate`, never imported
  * here, so `@liteship/command` (and the MCP server that re-uses it) stays free of the
  * subprocess/child_process edge. Unlike `plumb`/`check-invariants` (pure
  * `node:fs` scans provisioned in the shared host factory), this gate is a
@@ -72,13 +74,13 @@ export const capsuleVerifyGateCommand: HandledCommand = {
   descriptor: {
     name: 'capsule-verify',
     summary:
-      'Capsule-corpus gate: assert every generated test+bench is present, fresh (regeneration-confirmed), bench-honest, and that the generated suite passes.',
+      'Capsule-corpus gate: assert every generated test+bench is fresh and honest, execute both lanes, and admit measured benchmark distributions with uncertainty.',
     requires: ['runCapsuleGate'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: CapsuleVerifyPayloadSchema,
     // NOT mcpExposed: the engine is a CLI-injected subprocess orchestrator
-    // (runCapsuleGate spawns `capsule:compile` to confirm freshness and `vitest
-    // run` over tests/generated/, mutating a scratch tree); terminal-streaming,
+    // (runCapsuleGate spawns `capsule:compile` to confirm freshness plus exact
+    // Vitest test/benchmark lanes, mutating a scratch tree); terminal-streaming,
     // like package-smoke/gauntlet/ship, so cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'setup' },
   },

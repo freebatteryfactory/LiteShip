@@ -45,6 +45,7 @@ separate worker entry files or bundler configuration.
 - [ProgramUniforms](interfaces/ProgramUniforms.md)
 - [QuantizerBoundarySource](interfaces/QuantizerBoundarySource.md)
 - [RenderWorkerShape](interfaces/RenderWorkerShape.md)
+- [ResolvedStateAckPayload](interfaces/ResolvedStateAckPayload.md)
 - [SPSCRingBufferShape](interfaces/SPSCRingBufferShape.md)
 - [SPSCRingPair](interfaces/SPSCRingPair.md)
 - [TransferableCanvas](interfaces/TransferableCanvas.md)

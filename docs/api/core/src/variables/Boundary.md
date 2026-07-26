@@ -28,7 +28,7 @@ gating).
 Evaluate which state a value falls into given a boundary.
 
 The cheap face of evaluation: returns just the resolved state name via the
-single f32-canonical [rawIndexF32](../functions/rawIndexF32.md) kernel (no hysteresis, no crossing
+single f32-canonical `rawIndexF32` kernel (no hysteresis, no crossing
 detection). For the rich `{state, index, value, crossed}` result — and for
 hysteresis — use [\_evaluateResult](#evaluateresult).
 
@@ -69,9 +69,9 @@ indices — the `i` such that `boundary.states[i]` is the state for that value.
 
 This is the WASM-accelerated face of [\_evaluate](#evaluate). It routes through
 `WASMDispatch.kernels().batchBoundaryEval`: the Rust `liteship-compute` kernel
-once [WASMDispatch.load](../interfaces/WASMDispatchAPI.md#load) has run, the pure-TS `fallbackKernels`
+once `WASMDispatch.load` has run, the pure-TS `fallbackKernels`
 otherwise. BOTH select the identical index — the fallback IS the
-[rawIndexF32](../functions/rawIndexF32.md) loop and the WASM kernel is locked to it by the
+`rawIndexF32` loop and the WASM kernel is locked to it by the
 wasm-parity property suite — so the output is bit-identical to mapping
 [\_evaluate](#evaluate) over `values`, loaded or not. The win is throughput on
 large value sets (offline frame precompute, scrub timelines, per-entity
@@ -119,7 +119,7 @@ This is the canonical home of `index` + `crossed` (consumed by the quantizer
 and, downstream, by Stage pose-lowering). It is also the single hysteresis
 implementation: `evaluateWithHysteresis` is its string projection.
 
-Raw state selection uses the f32-canonical [rawIndexF32](../functions/rawIndexF32.md) kernel; the
+Raw state selection uses the f32-canonical `rawIndexF32` kernel; the
 half-width dead-zone refinement (when a `previousState` and `hysteresis` are
 supplied) compares in f64 against the un-rounded thresholds, matching the
 prior `evaluateWithHysteresis` and quantizer semantics exactly.

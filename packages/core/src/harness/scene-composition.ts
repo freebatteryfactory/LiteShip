@@ -39,6 +39,7 @@
 import { InvariantViolationError } from '@liteship/error';
 import type { CapsuleDef } from '../authoring/assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
+import { generatePureTransform } from './pure-transform.js';
 import { benchNotApplicableMarker } from '../evidence/bench-marker.js';
 
 /**
@@ -111,6 +112,14 @@ export function generateSceneComposition(
   ctx: HarnessContext = {},
 ): HarnessOutput {
   const driver = ctx.sceneDriver;
+
+  // A sceneComposition may be a deterministic pre-runtime transform rather
+  // than a tickable scene (for example beat markers -> ECS spawn records).
+  // Reuse the existing pure-transform property + benchmark harness when the
+  // capsule exposes `run`; this is real execution, not a frame-stream waiver.
+  if (driver === undefined && cap.run !== undefined) {
+    return generatePureTransform(cap as unknown as CapsuleDef<'pureTransform', unknown, unknown, unknown>, ctx);
+  }
 
   // No driveable scene resolved for this capsule. The capsule is tagged
   // `sceneComposition` but the driver found no `compileScene`-able contract to

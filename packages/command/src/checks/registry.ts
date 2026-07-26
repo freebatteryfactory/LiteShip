@@ -14,7 +14,13 @@
  * @module
  */
 
-import type { CheckDefinition, CheckProfile, CheckPlatform } from './definition.js';
+import { ValidationError } from '@liteship/error';
+import {
+  parseRootScriptCheckExecution,
+  type CheckDefinition,
+  type CheckProfile,
+  type CheckPlatform,
+} from './definition.js';
 import { deriveCheckEvidenceRequirements } from './evidence-requirement-derivation.js';
 
 /** Package TypeScript source — the covered bytes of every source-reading check. */
@@ -25,6 +31,34 @@ const PACKAGE_TS_GLOB = 'packages/**/*.ts';
 const TESTS_GLOB = 'tests/**';
 /** Repo scripts — the covered bytes of the script-owned gates. */
 const SCRIPTS_GLOB = 'scripts/**/*.ts';
+
+/** Configuration files read transitively by Prettier for the root format script. */
+const FORMAT_CONFIG_INPUTS = ['.prettierrc', '.prettierignore', '.editorconfig'] as const;
+
+/** TypeScript project and host inputs consumed by the root native-compiler fold. */
+const TYPESCRIPT_CONFIG_INPUTS = [
+  'tsconfig*.json',
+  'packages/*/tsconfig*.json',
+  'packages/*/package.json',
+  'pnpm-workspace.yaml',
+  'scripts/native-tsc.ts',
+] as const;
+
+/**
+ * Authored configuration and generated receipt inputs read by the cheap
+ * TypeDoc-freshness authority. Keep this closure beside the check registry:
+ * it is the one cache-input owner, not a second tool configuration registry.
+ */
+const TYPEDOC_FAST_INPUTS = [
+  'typedoc.json',
+  'tsdoc.json',
+  'TYPEDOC.md',
+  'tsconfig*.json',
+  'packages/*/package.json',
+  'scripts/docs-input-fingerprint.ts',
+  'scripts/lib/typedoc-input-fingerprint.ts',
+  'docs/api/.typedoc-input-fingerprint.json',
+] as const;
 
 /** Fields shared by repository rows before the repository context is projected. */
 interface RepositoryCheckRowBase {
@@ -62,9 +96,17 @@ type RepositoryCheckRow = RepositoryCheckRowBase &
 
 /** Add the explicit repository context and close any former control hole. */
 function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
+  const execution = parseRootScriptCheckExecution(row.command);
+  if (execution === null) {
+    throw ValidationError(
+      'check-registry.execution',
+      `repository check "${row.id}" does not name one root package script: ${row.command}`,
+    );
+  }
   if (row.authority === 'blocking') {
     return {
       ...row,
+      execution,
       contexts: ['repository'],
       authority: 'blocking',
       evidenceRequirements: deriveCheckEvidenceRequirements(row.id),
@@ -73,6 +115,7 @@ function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   const { negativeControl: _unused, ...advisory } = row;
   return {
     ...advisory,
+    execution,
     contexts: ['repository'],
     authority: 'advisory',
     evidenceRequirements: deriveCheckEvidenceRequirements(row.id),
@@ -92,7 +135,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'Every package source file is Prettier-clean.',
     owner: '.prettierrc',
     command: 'pnpm run format:check',
-    inputs: [SRC_GLOB, '.prettierrc'],
+    inputs: [SRC_GLOB, ...FORMAT_CONFIG_INPUTS],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 60_000,
@@ -151,10 +194,8 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
       TESTS_GLOB,
       SCRIPTS_GLOB,
       'package.json',
-      'packages/*/package.json',
       'packages/_spine/**/*.d.ts',
-      'tsconfig*.json',
-      'packages/*/tsconfig.json',
+      ...TYPESCRIPT_CONFIG_INPUTS,
     ],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
@@ -195,12 +236,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     claim: 'The committed API documentation fingerprint matches every source input that can change TypeDoc output.',
     owner: 'scripts/docs-input-fingerprint.ts',
     command: 'pnpm run docs:check:fast',
-    inputs: [
-      SRC_GLOB,
-      'typedoc.json',
-      'scripts/lib/typedoc-input-fingerprint.ts',
-      'docs/api/.typedoc-input-fingerprint.json',
-    ],
+    inputs: [PACKAGE_TS_GLOB, ...TYPEDOC_FAST_INPUTS],
     profiles: ['quick', 'full', 'release'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 30_000,
@@ -221,7 +257,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 240_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/devops/typedoc-input-fingerprint.test.ts',
     remediation: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface.",
   },
   {
@@ -268,7 +304,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 180_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/cli/lib/repo-ir-gauntlet.test.ts',
+    negativeControl: 'tests/unit/cli/commands/check-gates-negative-control.test.ts',
     remediation: 'resolve the blocking gate findings, or file a signed waiver.',
   },
   {
@@ -328,7 +364,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 180_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/devops/runtime-gate-negative-control.test.ts',
     remediation: 'restore the runtime seam the gate flagged (inject the dependency, do not hard-couple).',
   },
   {
@@ -433,7 +469,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 120_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/devops/flex-policy-negative-control.test.ts',
     remediation: 'fix the flex-policy inconsistency the verifier reported.',
   },
   {
@@ -448,7 +484,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 60_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/devops/flex-policy-negative-control.test.ts',
     remediation: 'restore the devx policy invariant the check reported.',
   },
   {
@@ -728,7 +764,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/meta/bench-reality.test.ts',
     remediation: 'restore a real measured workload for the vacuous benchmark the gate flagged.',
   },
   {
@@ -775,7 +811,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 300_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/cli/commands/package-smoke-helpers.test.ts',
     remediation: 'fix the packed-package export/peer that failed to resolve in the consumer smoke.',
   },
   {
@@ -822,7 +858,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     timeoutMs: 420_000,
     cache: 'none',
     authority: 'blocking',
-    negativeControl: 'tests/unit/devops/blocking-check-negative-controls.test.ts',
+    negativeControl: 'tests/unit/cli/commands/package-smoke-helpers.test.ts',
     remediation:
       'fix the offline reinstall, public-subpath proof, or semantic package-content drift reported by the hermetic closure.',
   },

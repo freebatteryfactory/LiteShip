@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { buildLocalVerificationPlan, isTypeDocProofInput } from '../../../scripts/lib/local-verification-plan.js';
+import { CHECK_REGISTRY } from '@liteship/command';
+import {
+  buildLocalVerificationPlan,
+  isTypeDocProofInput,
+  projectRepositoryQuickSteps,
+} from '../../../scripts/lib/local-verification-plan.js';
 
 describe('local verification plan', () => {
   test.each([
@@ -24,10 +29,13 @@ describe('local verification plan', () => {
     const plan = buildLocalVerificationPlan({ staged: false });
     expect(plan.docsReason).toBe('workspace-authority');
     expect(plan.steps.map((step) => step.label)).toEqual([
-      'format:check',
-      'lint:structural',
+      'format',
+      'lint-structural',
       'lint',
       'typecheck',
+      'docs-fast',
+      'assurance-density',
+      'test-constitution',
       'check-invariants',
       'docs:check',
     ]);
@@ -41,6 +49,8 @@ describe('local verification plan', () => {
     expect(affected.steps.at(-1)?.argv).toEqual(['run', 'docs:check:local']);
     expect(unaffected.docsReason).toBe('not-affected');
     expect(unaffected.steps.some((step) => step.label === 'docs:check')).toBe(false);
+    expect(unaffected.steps.some((step) => step.label === 'assurance-density')).toBe(true);
+    expect(unaffected.steps.some((step) => step.label === 'test-constitution')).toBe(true);
     expect(unaffected.steps.some((step) => step.label === 'check-invariants')).toBe(true);
   });
 
@@ -53,8 +63,24 @@ describe('local verification plan', () => {
       ['run', 'lint:structural'],
       ['run', 'lint'],
       ['run', 'typecheck'],
+      ['run', 'docs:check:fast'],
+      ['run', 'assurance:gate'],
+      ['run', 'test:constitution'],
       ['exec', 'tsx'],
       ['run', 'docs:check:local'],
     ]);
+  });
+
+  test('is exactly the blocking repository quick projection and cannot silently omit a new blocker', () => {
+    const expected = CHECK_REGISTRY.filter(
+      (check) =>
+        check.authority === 'blocking' && check.profiles.includes('quick') && check.contexts.includes('repository'),
+    ).map((check) => check.id);
+    expect(projectRepositoryQuickSteps().map((step) => step.checkId)).toEqual(expected);
+    expect(
+      buildLocalVerificationPlan({ staged: true, changedPaths: [] })
+        .steps.map((step) => step.checkId)
+        .filter((checkId): checkId is string => checkId !== null),
+    ).toEqual(expected);
   });
 });

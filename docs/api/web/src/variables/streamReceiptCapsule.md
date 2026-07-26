@@ -11,4 +11,4 @@
 Defined in: [web/src/capsules/stream-receipt.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capsules/stream-receipt.ts#L35)
 
 Declared capsule for the SSE stream receipt flow. Registered in the
-module-level catalog at import time; walked by the factory compiler.
+immutable exported declaration; walked by the factory compiler.

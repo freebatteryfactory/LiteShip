@@ -69,7 +69,7 @@ function deterministicId(
  * Evaluate which state a value falls into given a boundary.
  *
  * The cheap face of evaluation: returns just the resolved state name via the
- * single f32-canonical {@link rawIndexF32} kernel (no hysteresis, no crossing
+ * single f32-canonical `rawIndexF32` kernel (no hysteresis, no crossing
  * detection). For the rich `{state, index, value, crossed}` result — and for
  * hysteresis — use {@link _evaluateResult}.
  *
@@ -90,9 +90,9 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
  *
  * This is the WASM-accelerated face of {@link _evaluate}. It routes through
  * `WASMDispatch.kernels().batchBoundaryEval`: the Rust `liteship-compute` kernel
- * once {@link WASMDispatch.load} has run, the pure-TS `fallbackKernels`
+ * once `WASMDispatch.load` has run, the pure-TS `fallbackKernels`
  * otherwise. BOTH select the identical index — the fallback IS the
- * {@link rawIndexF32} loop and the WASM kernel is locked to it by the
+ * `rawIndexF32` loop and the WASM kernel is locked to it by the
  * wasm-parity property suite — so the output is bit-identical to mapping
  * {@link _evaluate} over `values`, loaded or not. The win is throughput on
  * large value sets (offline frame precompute, scrub timelines, per-entity
@@ -134,7 +134,7 @@ function _evaluateBatch<B extends BoundaryDef>(boundary: B, values: ArrayLike<nu
  * and, downstream, by Stage pose-lowering). It is also the single hysteresis
  * implementation: `evaluateWithHysteresis` is its string projection.
  *
- * Raw state selection uses the f32-canonical {@link rawIndexF32} kernel; the
+ * Raw state selection uses the f32-canonical `rawIndexF32` kernel; the
  * half-width dead-zone refinement (when a `previousState` and `hysteresis` are
  * supplied) compares in f64 against the un-rounded thresholds, matching the
  * prior `evaluateWithHysteresis` and quantizer semantics exactly.

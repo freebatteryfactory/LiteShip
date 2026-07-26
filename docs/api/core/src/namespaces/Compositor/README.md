@@ -6,10 +6,10 @@
 
 # Compositor
 
-Compositor — the live merge point for every attached [Quantizer](../../interfaces/Quantizer.md).
+Compositor — the live merge point for every attached `Quantizer`.
 
 `Compositor.create` returns a live compositor bound to a fresh
-[RuntimeCoordinator](../../variables/RuntimeCoordinator.md), paired with the [Lifetime](../../variables/Lifetime.md) that owns its
+`RuntimeCoordinator`, paired with the `Lifetime` that owns its
 teardown. Adding quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA
 outputs all flow through the zero-allocation hot path backed by
 [CompositorStatePool](../../type-aliases/CompositorStatePool.md).

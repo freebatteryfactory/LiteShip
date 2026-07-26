@@ -20,10 +20,12 @@ import { CHECK_REGISTRY, type CheckDefinition } from '@liteship/command';
  * from the registry `id`) plus the executor-only phases the registry does NOT model:
  * `build` / `capsule:compile` / `invariants` and the `coverage:*` plumbing (the
  * coverage FLOOR is `check/coverage`, but the gauntlet runs the split node/browser/
- * merge sub-phases). `check/format`, `check/devx`, `check/bench-alloc`, and
- * `check/coverage` are release checks that are NOT gauntlet phases (the gauntlet runs
- * the coverage plumbing sub-phases instead, and format/devx/bench-alloc ride the
- * profile lanes but not the serial executor), so the projection omits them.
+ * merge sub-phases). This serial projection is intentionally not the complete CI
+ * ownership account. `scripts/ci-plan.ts` partitions every blocking release check
+ * exactly once between gauntlet lanes and named specialized jobs. That closed
+ * partition includes format, devx, bench allocation, coverage, journey, and
+ * hermetic consumer authority; none may disappear merely because it is absent
+ * from this local serial sequence.
  *
  * It lives in the CLI package because the CLI is a composite project (`rootDir:
  * ./src`) that cannot import out to `scripts/`; the proven direction is the

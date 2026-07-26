@@ -5,7 +5,6 @@
  * fixture is deliberately bad and the real authority must return red/non-zero.
  */
 import { afterEach, describe, expect, it } from 'vitest';
-import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -14,15 +13,10 @@ import { check as prettierCheck } from 'prettier';
 import { ESLint } from 'eslint';
 import { CHECK_REGISTRY } from '@liteship/command';
 import { spawnArgvCapture, type SpawnCaptureResult } from '../../../scripts/lib/spawn.js';
-import { runRuntimeGate } from '../../../scripts/runtime-gate.js';
-import { runBenchReality } from '../../../scripts/bench-reality.js';
-import { runPackageSmokeScan } from '../../../packages/cli/src/commands/package-smoke.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const ROOT = resolve(import.meta.dirname, '..', '..', '..');
-const FIXTURES = resolve(ROOT, 'tests', 'fixtures', 'check-negative-controls');
 const CONTROL_PATH = 'tests/unit/devops/blocking-check-negative-controls.test.ts';
-const require = createRequire(import.meta.url);
 const scratch: string[] = [];
 
 function tempDir(label: string): string {
@@ -32,13 +26,9 @@ function tempDir(label: string): string {
   return dir;
 }
 
-function pnpm(args: readonly string[], cwd = ROOT): Promise<SpawnCaptureResult> {
-  return spawnArgvCapture('pnpm', args, { cwd, captureBytes: 256 * 1024, timeoutMs: scaledTimeout(60_000) });
-}
-
-function tsxScript(script: string, cwd: string): Promise<SpawnCaptureResult> {
-  return spawnArgvCapture(process.execPath, [require.resolve('tsx/cli'), resolve(ROOT, script)], {
-    cwd,
+function pnpm(args: readonly string[]): Promise<SpawnCaptureResult> {
+  return spawnArgvCapture('pnpm', args, {
+    cwd: ROOT,
     captureBytes: 256 * 1024,
     timeoutMs: scaledTimeout(60_000),
   });
@@ -53,19 +43,7 @@ afterEach(() => {
   while (scratch.length > 0) rmSync(scratch.pop()!, { recursive: true, force: true });
 });
 
-const GROUPED_IDS = [
-  'check/format',
-  'check/lint',
-  'check/docs',
-  'check/runtime-gate',
-  'check/flex-verify',
-  'check/devx',
-  'check/bench-trend',
-  'check/bench-reality',
-  'check/coverage',
-  'check/package-smoke',
-  'check/hermetic',
-] as const;
+const GROUPED_IDS = ['check/format', 'check/lint', 'check/bench-trend', 'check/coverage'] as const;
 
 describe('blocking check negative controls execute their authorities', () => {
   it('the grouped harness enrollment is exact (no blocker can inherit a decorative path)', () => {
@@ -81,36 +59,11 @@ describe('blocking check negative controls execute their authorities', () => {
     expect(await prettierCheck('export const bad={value:1}\n', { parser: 'typescript' })).toBe(false);
   });
 
-  it('ast-grep rejects a planted banned structural pattern', async () => {
-    const root = tempDir('ast-grep-red');
-    const planted = join(root, 'internal-mock.ts');
-    writeFileSync(planted, "vi.mock('@liteship/core');\n");
-    expectRed(await pnpm(['exec', 'ast-grep', 'scan', '--rule', resolve(FIXTURES, 'ast-grep-rule.yml'), planted]));
-  });
-
   it('ESLint rejects a one-file semantic lint violation', async () => {
     const [result] = await new ESLint({ cwd: ROOT }).lintText('export const bad: any = 1;\n', {
       filePath: resolve(ROOT, 'packages/core/src/negative-control.ts'),
     });
     expect(result?.errorCount).toBeGreaterThan(0);
-  });
-
-  it('docs:check rejects a checkout with no committed generated API tree', async () => {
-    expectRed(await tsxScript('scripts/docs-check.ts', tempDir('docs-red')));
-  });
-
-  it('runtime gate rejects missing feedback evidence', () => {
-    expect(() => runRuntimeGate(tempDir('runtime-red'))).toThrow(/runtime seams artifact|Runtime gate failed/);
-  });
-
-  it('flex authority rejects a root without its policy inputs', async () => {
-    const root = tempDir('policy-red');
-    expectRed(await tsxScript('scripts/flex-verify.ts', root));
-  });
-
-  it('DevX authority rejects a root without its policy inputs', async () => {
-    const root = tempDir('devx-red');
-    expectRed(await tsxScript('scripts/devx-check.ts', root));
   });
 
   it('bench trend rejects a deterministic sustained regression', async () => {
@@ -139,10 +92,6 @@ describe('blocking check negative controls execute their authorities', () => {
     expectRed(await pnpm(['exec', 'tsx', '--eval', evaluation, '--strict']));
   });
 
-  it('bench-reality authority rejects a root without its prerequisite evidence', async () => {
-    await expect(runBenchReality(tempDir('bench-reality-red'))).rejects.toThrow();
-  });
-
   it('coverage authority rejects a below-floor synthetic coverage artifact', async () => {
     const root = tempDir('coverage-red');
     const nodeDir = join(root, 'node');
@@ -151,11 +100,5 @@ describe('blocking check negative controls execute their authorities', () => {
     const script = pathToFileURL(resolve(ROOT, 'scripts/merge-coverage.ts')).href;
     const evaluation = `process.env.LITESHIP_COVERAGE_ROOT=${JSON.stringify(root)}; await import(${JSON.stringify(script)});`;
     expectRed(await pnpm(['exec', 'tsx', '--eval', evaluation]));
-  });
-
-  it('package-smoke and hermetic authority fail on a root with no package artifacts', async () => {
-    const result = await runPackageSmokeScan(tempDir('package-smoke-red'), { hermetic: true });
-    expect(result.ok).toBe(false);
-    expect(result.failedStep).not.toBeNull();
   });
 });

@@ -6,7 +6,7 @@
 
 # Function: projectFinding()
 
-> **projectFinding**(`finding`): \{ `diagnostic`: [`LspDiagnostic`](../interfaces/LspDiagnostic.md); `uri`: `string`; \} \| `null`
+> **projectFinding**(`finding`, `workspaceRootUri?`): \{ `diagnostic`: [`LspDiagnostic`](../interfaces/LspDiagnostic.md); `uri`: `string`; \} \| `null`
 
 Defined in: [mcp-server/src/lsp/diagnostic.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L106)
 
@@ -21,6 +21,10 @@ PURE: no I/O, no clock, no host. Same finding → same diagnostic.
 ### finding
 
 [`FindingLike`](../interfaces/FindingLike.md)
+
+### workspaceRootUri?
+
+`string`
 
 ## Returns
 

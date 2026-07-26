@@ -14,7 +14,7 @@ A host-projected responsive image plus the `Vary` axis the caller must merge.
 
 ### projection
 
-> `readonly` **projection**: `ResponsiveMediaPictureProjection`
+> `readonly` **projection**: [`ResponsiveMediaPictureProjection`](../../../liteship/src/media/interfaces/ResponsiveMediaPictureProjection.md)
 
 Defined in: [astro/src/responsive-media.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/responsive-media.ts#L35)
 

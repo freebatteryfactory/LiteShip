@@ -11,6 +11,6 @@
 Defined in: [scene/src/contract.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L139)
 
 Pre-resolved beat marker on a [SceneContract](../interfaces/SceneContract.md). Aliased to
-`BeatBinding.Component` from `./capsules/beat-binding.ts` — single
+`BeatBinding.Component` from `./beat-binding-capsule.ts` — single
 source of truth so adding a field (e.g. `pitch`) doesn't require
 keeping two structurally-identical declarations in sync.

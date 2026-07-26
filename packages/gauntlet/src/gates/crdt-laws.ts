@@ -176,6 +176,7 @@ export const crdtLawsGate: Gate = defineGate({
   level: 'L4',
   describe:
     'Verifies the L4 CRDT / linearizability laws (HLC + GraphPatch) are PINNED by deterministic property tests — the coverage rail for the causal/CRDT trust spine.',
+  access: { outOfIrGlobs: REQUIRED_LAW_FAMILIES.map((family) => family.file) },
   run: fold,
   evidenceDigest: crdtLawsEvidenceDigest,
   fixtures: {

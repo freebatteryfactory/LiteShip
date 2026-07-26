@@ -11,7 +11,7 @@
 Defined in: [quantizer/src/quantizer.ts:591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L591)
 
 Allocate a live [LiveQuantizer](../interfaces/LiveQuantizer.md) from an immutable [QuantizerConfig](../interfaces/QuantizerConfig.md)
-definition, paired with the [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) that owns its teardown.
+definition, paired with the [Lifetime](../../../liteship/src/reactive/type-aliases/Lifetime.md) that owns its teardown.
 
 The instance evaluates numeric input values against the boundary's thresholds,
 dispatches state transitions, and routes per-state outputs (CSS, GLSL, WGSL,
@@ -28,7 +28,7 @@ identity.
 
 ### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ### O
 

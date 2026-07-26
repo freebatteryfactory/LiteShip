@@ -22,7 +22,7 @@ Defined in: [vite/src/project-config.ts:28](https://github.com/freebatteryfactor
 
 ### config
 
-> `readonly` **config**: `Config`
+> `readonly` **config**: [`Config`](../../../liteship/src/type-aliases/Config.md)
 
 Defined in: [vite/src/project-config.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/project-config.ts#L26)
 

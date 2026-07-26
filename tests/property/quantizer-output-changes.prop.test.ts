@@ -88,8 +88,9 @@ describe('quantizer outputChanges target dispatch properties', () => {
           const emitted = await emittedAfterCrossing(config, crossingValue);
 
           expect(Object.keys(emitted).sort()).toEqual(expectedTargets);
+          const outputTables: QuantizerOutputs<ShaderBoundary> = config.outputs;
           for (const target of expectedTargets) {
-            expect(emitted[target]).toEqual(config.outputs[target]?.[crossingState]);
+            expect(emitted[target]).toEqual(outputTables[target]?.[crossingState]);
           }
         },
       ),

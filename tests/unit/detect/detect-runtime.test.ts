@@ -93,7 +93,7 @@ function mockRenderer(renderer: string | null, useDebugRenderer = false): void {
     : null;
 
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) => {
-    if (kind === 'webgl' || kind === 'experimental-webgl') {
+    if (kind === 'webgl2' || kind === 'webgl' || kind === 'experimental-webgl') {
       return gl as never;
     }
     return null;
@@ -319,7 +319,7 @@ describe('device detection runtime', () => {
     };
 
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) => {
-      if (kind === 'webgl' || kind === 'experimental-webgl') {
+      if (kind === 'webgl2' || kind === 'webgl' || kind === 'experimental-webgl') {
         return gl as never;
       }
       return null;
@@ -353,6 +353,29 @@ describe('device detection runtime', () => {
 
     const result = detect();
     expect(result.capabilities.gpu).toBeGreaterThanOrEqual(1);
+  });
+
+  test('prefers the unmasked renderer when masked and unmasked sources disagree', () => {
+    installMatchMedia({});
+    const gl = {
+      RENDERER: 'RENDERER',
+      getParameter(key: unknown) {
+        if (key === 'UNMASKED_RENDERER_WEBGL') return 'NVIDIA GeForce RTX 4090';
+        if (key === 'RENDERER') return 'WebKit WebGL';
+        return '';
+      },
+      getExtension(name: string) {
+        if (name === 'WEBGL_debug_renderer_info') {
+          return { UNMASKED_RENDERER_WEBGL: 'UNMASKED_RENDERER_WEBGL' };
+        }
+        return null;
+      },
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) =>
+      kind === 'webgl2' ? (gl as never) : null,
+    );
+
+    expect(detect().capabilities.gpu).toBe(3);
   });
 
   test('treats experimental-webgl context without isContextLost as unavailable', () => {
@@ -770,7 +793,7 @@ describe('device detection runtime', () => {
       },
     };
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) => {
-      if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
+      if (kind === 'webgl2' || kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
       return null;
     });
 
@@ -802,7 +825,7 @@ describe('device detection runtime', () => {
       },
     };
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) => {
-      if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
+      if (kind === 'webgl2' || kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
       return null;
     });
 
@@ -820,7 +843,7 @@ describe('device detection runtime', () => {
     mockRenderer('Acme XG-9');
     expect(detectGPUTier()).toBe(1);
 
-    const events = buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer');
+    const events = buffer.events.filter((e) => e.code === 'detect/unrecognized-gpu-renderer');
     expect(events).toHaveLength(1);
     expect(events[0]?.source).toBe('liteship/detect');
     expect(events[0]?.message).toContain('"Acme XG-9"');
@@ -830,7 +853,7 @@ describe('device detection runtime', () => {
     // warn-once: re-classifying the same renderer stays silent.
     resetDetectionCaches();
     detectGPUTier();
-    expect(buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer')).toHaveLength(1);
+    expect(buffer.events.filter((e) => e.code === 'detect/unrecognized-gpu-renderer')).toHaveLength(1);
   });
 
   test('emits one grouped diagnostic naming each defaulted probe and whether it threw or was unavailable', () => {
@@ -845,7 +868,7 @@ describe('device detection runtime', () => {
 
     detect();
 
-    const events = buffer.events.filter((e) => e.code === 'probes-defaulted');
+    const events = buffer.events.filter((e) => e.code === 'detect/probes-defaulted');
     expect(events).toHaveLength(1);
     expect(events[0]?.source).toBe('liteship/detect');
     expect(events[0]?.message).toContain('renderer (threw: Error: SecurityError: fingerprinting protection)');
@@ -854,7 +877,7 @@ describe('device detection runtime', () => {
 
     // warn-once: a second identical sweep adds nothing.
     detect();
-    expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(1);
+    expect(buffer.events.filter((e) => e.code === 'detect/probes-defaulted')).toHaveLength(1);
   });
 
   test('stays silent when every probe succeeds', () => {
@@ -866,7 +889,7 @@ describe('device detection runtime', () => {
 
     detect();
 
-    expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(0);
+    expect(buffer.events.filter((e) => e.code === 'detect/probes-defaulted')).toHaveLength(0);
   });
 
   test('emits no degraded-probe diagnostics in non-browser environments (isomorphic contract)', () => {
@@ -879,7 +902,7 @@ describe('device detection runtime', () => {
 
     detect();
 
-    expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(0);
+    expect(buffer.events.filter((e) => e.code === 'detect/probes-defaulted')).toHaveLength(0);
   });
 
   test('resetDetectionCaches() clears the memoized renderer probe', () => {

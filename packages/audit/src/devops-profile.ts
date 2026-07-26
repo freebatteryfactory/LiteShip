@@ -81,6 +81,20 @@ export interface DevopsProfile {
 }
 
 /**
+ * Exact public key projection for operator/docs/tests. The interface remains
+ * the shape owner; the profile-boundary census proves this tuple is exhaustive.
+ */
+export const DEVOPS_PROFILE_KEYS = [
+  'repoRoot',
+  'internalPackagePrefix',
+  'packageTopology',
+  'foundationalPackages',
+  'dynamicImportExemptions',
+  'surfacePolicy',
+  'packageRoots',
+] as const satisfies readonly (keyof DevopsProfile)[];
+
+/**
  * LiteShip's own profile — the reference DEFAULT. It references this package's
  * policy consts verbatim; `repoRoot` defaults to the current working directory
  * (for in-repo `pnpm run audit`, run from the repo root). Tests and downstream

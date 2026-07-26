@@ -49,22 +49,12 @@ import {
 } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { CSSCompiler } from '@liteship/compiler';
-import { resolveInitialState, adaptiveAttrs } from '@liteship/astro';
+import { resolveInitialState, adaptiveAttrs } from '@liteship/astro/adaptive-runtime';
 import { snapshotDefinitionValue } from '@liteship/core/evidence';
-// `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
-// requires OffscreenCanvas / createImageBitmap, which are not present in a
-// headless Node test env (see packages/web/src/capture/pipeline.ts). We import
-// the type-level seam to keep the dependency honest and drive the SAME
-// `VideoRenderer.frames()` it consumes; the artifact digest below content-
-// addresses the real per-frame `CompositeState` snapshots that pipeline would
-// encode, so the digest is a true content address of the produced frames —
-// the byte-encode of the codec is the INJECTED seam (browser: WebCodecs via
-// `captureVideo`; node: the ffmpeg `FrameEncoder` adapter in `./ffmpeg-encoder`).
 import { escapeHtml } from '@liteship/web';
-import type { captureVideo } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
-// FrameEncoder — the injectable byte-encode seam (two real backends, one shape)
+// FrameEncoder — the injected CompositeState byte-encode seam
 // ---------------------------------------------------------------------------
 
 /** The deterministic spec a {@link FrameEncoder} encodes the frames at. */
@@ -90,10 +80,10 @@ export interface EncodedVideo {
  * snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
  * is INJECTED at the call site so the pure graph-walk never imports a codec:
  *
- *  - browser/worker: WebCodecs over an OffscreenCanvas (`@liteship/web` capture);
- *  - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
- *
- * Both are real backends of this one shape; neither lives in `dual-export.ts`.
+ * The shipped implementation is the node/headless ffmpeg child-process adapter
+ * in `./ffmpeg-encoder`. Other hosts may implement this exact
+ * CompositeState-to-bytes contract, but `@liteship/web`'s canvas capture API is
+ * a distinct renderer contract and is not presented as this type.
  */
 export type FrameEncoder = (frames: readonly CompositeState[], config: VideoEncodeConfig) => Promise<EncodedVideo>;
 
@@ -275,9 +265,9 @@ type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<s
  * `frames()` async generator computes synchronously) so this stays sync and
  * headless: each frame is the genuine compositor output VideoRenderer yields.
  *
- * This is the SAME frame stream both byte-encoders consume — the browser
- * WebCodecs `captureVideo` and the node ffmpeg {@link FrameEncoder}. They
- * change the BYTES, never WHAT the frames are.
+ * This is the canonical Stage video-carrier frame stream consumed by the
+ * injected {@link FrameEncoder}. It is intentionally distinct from the
+ * canvas-oriented `@liteship/web` capture contract.
  */
 function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   const projections = cssProjections(graph);
@@ -403,21 +393,11 @@ function videoFrameDigest(frames: readonly VideoFrame[], encodedBytes?: Addresse
  * Cast the graph's Pose/Projection-derived state to a deterministic video,
  * content-addressing the produced per-frame `CompositeState` snapshots (NOT the
  * encoded bytes). For the REAL byte-encode use {@link exportVideoEncoded} with
- * an injected {@link FrameEncoder} (headless: the ffmpeg adapter in
- * `./ffmpeg-encoder`; browser: WebCodecs `captureVideo`). This frame-level cast
+ * an injected {@link FrameEncoder} (the shipped implementation is the ffmpeg
+ * adapter in `./ffmpeg-encoder`). This frame-level cast
  * stays sync + codec-free so the dual-export proof never depends on a codec.
  */
-export function exportVideo(
-  graph: DocumentGraph,
-  // The codec byte-encode seam: in a browser/worker this is the real
-  // `captureVideo` (WebCodecs over an OffscreenCanvas). Left undefined here
-  // because OffscreenCanvas/WebCodecs are absent in a headless test env; the
-  // artifact digest content-addresses the produced frames regardless, so the
-  // proof does not depend on the codec running. Typed against the real
-  // `captureVideo` so a caller can wire it without a shape mismatch.
-  encode?: typeof captureVideo,
-): ExportNode {
-  void encode;
+export function exportVideo(graph: DocumentGraph): ExportNode {
   const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
   const frames = produceVideoFrames(graph);
   const artifactDigest = videoFrameDigest(frames);
@@ -449,7 +429,8 @@ export interface EncodedVideoExport {
 /**
  * Cast the graph to a video AND run a REAL byte-encode through the injected
  * {@link FrameEncoder}. Produces the same frame stream as {@link exportVideo},
- * hands it to the encoder (ffmpeg headless, or WebCodecs in a browser wrapper),
+ * hands it to the encoder (ffmpeg headless, or another host implementation of
+ * this exact CompositeState encoder contract),
  * and folds the encoded bytes' content address into the export node's
  * `artifactDigest`. Stage's core imports no codec — `encode` is injected.
  *
@@ -665,7 +646,8 @@ export interface DualExportNodeResult extends DualExportResult {
  *
  * Stage's core imports no codec: `encode` is injected. In node, wire
  * `ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
- * `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
+ * `ffmpegEncodeAvailable()` first); another host may provide the same explicit
+ * encoder contract.
  *
  * @example
  * ```ts

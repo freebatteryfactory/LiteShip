@@ -2,9 +2,10 @@ import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { AstroIntegration } from 'astro';
+import type { integration } from '@liteship/astro';
 
-type ConfigSetupHook = NonNullable<AstroIntegration['hooks']['astro:config:setup']>;
+type LiteShipAstroIntegration = ReturnType<typeof integration>;
+type ConfigSetupHook = NonNullable<LiteShipAstroIntegration['hooks']['astro:config:setup']>;
 type ConfigSetupOptions = Parameters<ConfigSetupHook>[0];
 
 /**
@@ -16,7 +17,7 @@ type ConfigSetupOptions = Parameters<ConfigSetupHook>[0];
  * project roots instead of this helper.
  */
 export async function runIsolatedAstroConfigSetup(
-  astroIntegration: AstroIntegration,
+  astroIntegration: LiteShipAstroIntegration,
   overrides: Partial<ConfigSetupOptions> = {},
 ): Promise<void> {
   const root = mkdtempSync(join(tmpdir(), 'liteship-astro-setup-'));
@@ -25,7 +26,9 @@ export async function runIsolatedAstroConfigSetup(
 
   try {
     const overrideConfig = (overrides.config ?? {}) as ConfigSetupOptions['config'];
-    const result = astroIntegration.hooks['astro:config:setup']({
+    const setup = astroIntegration.hooks['astro:config:setup'];
+    if (setup === undefined) throw new Error(`${astroIntegration.name} does not expose astro:config:setup`);
+    const result = setup({
       ...overrides,
       config: {
         ...overrideConfig,

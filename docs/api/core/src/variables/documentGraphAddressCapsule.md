@@ -11,7 +11,7 @@
 Defined in: [core/src/authoring/capsules/document-graph-address.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/document-graph-address.ts#L153)
 
 Declared capsule for the DocumentGraph addressing kernel. Registered in the
-module-level catalog at import time; walked by the factory compiler. The
+immutable exported declaration; walked by the factory compiler. The
 generated property test feeds schema-seeds, `run` seals a real graph and reads
 its address, and the invariants assert determinism / format / order-independence
 over the REAL sealed address. The bench measures real addressing latency

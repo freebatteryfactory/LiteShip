@@ -120,6 +120,18 @@ function _createBuffer(slotCount: number, slotSize: number): SharedArrayBuffer {
   return sab;
 }
 
+function assertRingGeometry(slotCount: number, slotSize: number): void {
+  if (slotCount <= 0 || !Number.isInteger(slotCount)) {
+    throw InvariantViolationError(
+      'spsc-ring',
+      `SPSCRingBuffer: slotCount must be a positive integer, got ${slotCount}`,
+    );
+  }
+  if (slotSize <= 0 || !Number.isInteger(slotSize)) {
+    throw InvariantViolationError('spsc-ring', `SPSCRingBuffer: slotSize must be a positive integer, got ${slotSize}`);
+  }
+}
+
 /**
  * Read the ring geometry from the buffer header, validating any
  * explicitly re-supplied values against it. Explicit args are accepted
@@ -165,15 +177,7 @@ function _makeRing(
   slotSize: number,
   role: 'producer' | 'consumer',
 ): SPSCRingBufferShape {
-  if (slotCount <= 0 || !Number.isInteger(slotCount)) {
-    throw InvariantViolationError(
-      'spsc-ring',
-      `SPSCRingBuffer: slotCount must be a positive integer, got ${slotCount}`,
-    );
-  }
-  if (slotSize <= 0 || !Number.isInteger(slotSize)) {
-    throw InvariantViolationError('spsc-ring', `SPSCRingBuffer: slotSize must be a positive integer, got ${slotSize}`);
-  }
+  assertRingGeometry(slotCount, slotSize);
   const control = new Int32Array(sab, 0, 2);
   const data = new Float64Array(sab, CONTROL_BYTES);
 
@@ -308,6 +312,9 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
       'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @liteship/astro sets these headers for you.',
     );
   }
+  // Validate before allocating: invalid geometry must report the stable
+  // LiteShip invariant instead of escaping as a V8 ArrayBuffer RangeError.
+  assertRingGeometry(slotCount, slotSize);
   const buffer = _createBuffer(slotCount, slotSize);
   return {
     buffer,

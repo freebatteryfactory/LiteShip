@@ -1,21 +1,7 @@
 import { readFileSync } from 'node:fs';
-import {
-  ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
-  LLM_STEADY_P99_TO_BASELINE_MAX,
-  LLM_STEADY_REPLICATE_EXCEEDANCE_MAX,
-} from './bench/flex-policy.js';
+import { BENCH_FLEX_POLICY, benchFlexPolicyFailures } from './bench/flex-policy.js';
 
-const failures: string[] = [];
-
-if (!(LLM_STEADY_REPLICATE_EXCEEDANCE_MAX > 0 && LLM_STEADY_REPLICATE_EXCEEDANCE_MAX < 1)) {
-  failures.push('LLM_STEADY_REPLICATE_EXCEEDANCE_MAX out of expected (0,1) range');
-}
-if (!(LLM_STEADY_P99_TO_BASELINE_MAX > 1 && LLM_STEADY_P99_TO_BASELINE_MAX < 5)) {
-  failures.push('LLM_STEADY_P99_TO_BASELINE_MAX out of expected range');
-}
-if (ACCEPTED_BENCH_STABILITY_NOISY_LABELS.length < 2) {
-  failures.push('ACCEPTED_BENCH_STABILITY_NOISY_LABELS unexpectedly short');
-}
+const failures: string[] = [...benchFlexPolicyFailures(BENCH_FLEX_POLICY)];
 
 const flexSrc = readFileSync('scripts/flex-verify.ts', 'utf8');
 if (!flexSrc.includes("from './bench/flex-policy.js'")) {

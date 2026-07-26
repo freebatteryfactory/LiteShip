@@ -23,7 +23,7 @@ export const canonicalCborCapsule = defineCapsule({
   // the `withArbitrary` thunk samples the encoder's own image — canonical CBOR
   // bytes — so any structural walk over the output stays in the valid domain.
   output: withArbitrary(schema.bytes(Uint8Array), (fc) =>
-    (fc as { anything(): Arbitrary<unknown> }).anything().map((value) => CanonicalCbor.encode(value)),
+    (fc as { jsonValue(): Arbitrary<unknown> }).jsonValue().map((value) => CanonicalCbor.encode(value)),
   ),
   capabilities: { reads: [], writes: [] },
   invariants: [

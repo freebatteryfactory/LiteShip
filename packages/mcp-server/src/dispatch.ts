@@ -17,7 +17,9 @@
  * @module
  */
 
-import { CommandDispatcher, commandRegistry, mcpExposedDescriptors } from '@liteship/command';
+import { commandRegistry, createCommandDispatcher, mcpExposedDescriptors } from '@liteship/command';
+import type { CapsuleCommandDescriptor } from '@liteship/command';
+import { canonicalJson } from '@liteship/canonical';
 import { fnv1a } from '@liteship/core';
 import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@liteship/core';
 import { createNodeCommandContext } from '@liteship/command/host';
@@ -27,6 +29,8 @@ import { listResources, readResource } from './resources.js';
 import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
 import { listManifestResources, readManifestResource } from './manifest-resource.js';
+import type { McpResource } from './resources.js';
+import type { McpUiResource } from './ui-resources.js';
 import { listPrompts, getPrompt } from './prompts.js';
 import type { LiteShipError } from '@liteship/error';
 import { ValidationError, isTaggedError, matchTagOr } from '@liteship/error';
@@ -48,7 +52,7 @@ import {
 const RECEIPT_META_KEY: CapsuleResultMetaKey = 'liteship/result';
 
 /** The single dispatcher over the canonical registry — same instance the CLI uses. */
-const dispatcher = CommandDispatcher.make(commandRegistry);
+const dispatcher = createCommandDispatcher(commandRegistry);
 
 /** Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP spec; omitted means `{}`. */
 export interface McpToolCall {
@@ -202,6 +206,23 @@ export function errorFromTagged(id: JsonRpcId, err: LiteShipError): JsonRpcRespo
 /** Internal: dispatch result shape. */
 type InvokeResult = { readonly kind: 'ok'; readonly value: unknown } | { readonly kind: 'method-not-found' };
 
+/** Every descriptor shape that can appear in the MCP `resources/list` projection. */
+export type McpListedResource = McpResource | McpUiResource;
+
+/**
+ * Flatten the ordered resource classes into the one MCP list projection. The
+ * inputs are explicit so relation/property tests can plant catalog drift
+ * without patching process globals; production passes the live registries.
+ */
+export function projectMcpResources(classes: readonly (readonly McpListedResource[])[]): readonly McpListedResource[] {
+  return classes.flatMap((resources) => resources);
+}
+
+/** The exact public MCP resource surface, derived from every live registry. */
+export function listMcpResources(): readonly McpListedResource[] {
+  return projectMcpResources([listResources(), listUiResources(), listAppResources(), listManifestResources()]);
+}
+
 function ok(value: unknown): InvokeResult {
   return { kind: 'ok', value };
 }
@@ -247,9 +268,7 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       // Single static page — D3 JSON resources (liteship://) + D4 static MCP Apps
       // UI resources (ui://liteship/…) + D5 live app resources (ui://liteship/app/…)
       // + the D6 MCP-app manifest (liteship://mcp-app/manifest). Fixed at process start.
-      return ok({
-        resources: [...listResources(), ...listUiResources(), ...listAppResources(), ...listManifestResources()],
-      });
+      return ok({ resources: listMcpResources() });
     case 'resources/read': {
       const params = msg.params as { uri?: unknown } | undefined;
       if (!params || typeof params.uri !== 'string') {
@@ -294,26 +313,6 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       // unregistered. (resources/read's unknown-uri case is -32002, handled above.)
       return { kind: 'method-not-found' };
   }
-}
-
-/**
- * Canonical JSON (recursively sorted keys) so field/key order never perturbs a
- * resultId. CUT B5a: this is the ONE deliberate exception to the CanonicalCbor
- * identity doctrine (ADR-0003 / B1). `resultId` is a JSON-PROTOCOL identity, not
- * an internal content address — the MCP tool-result payload is JSON-shaped (D1:
- * `structuredContent` = payload), the receipt rides the JSON wire, and B1's
- * float-width CBOR gremlin cannot occur over JSON text (`0.5` → `"0.5"` always).
- * It stays JSON on purpose; the single-canonicalizer guard pins it as the only
- * `canonicalJson` in the tree so a SECOND JSON identity scheme can't drift in.
- */
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-  const obj = value as Record<string, unknown>;
-  return `{${Object.keys(obj)
-    .sort()
-    .map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`)
-    .join(',')}}`;
 }
 
 /**
@@ -368,14 +367,17 @@ export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult
  * project, so MCP `tools/list` and `liteship describe --format=mcp` agree by
  * construction.
  */
-export function listTools(): ReadonlyArray<{
+export interface McpToolDescriptor {
   name: string;
   description: string;
   inputSchema: object;
   outputSchema?: object;
   _meta?: { ui: { resourceUri: string } };
-}> {
-  return mcpExposedDescriptors().map((descriptor) => ({
+}
+
+/** Pure MCP tool projection over an explicit command-descriptor catalog. */
+export function projectMcpTools(descriptors: readonly CapsuleCommandDescriptor[]): readonly McpToolDescriptor[] {
+  return descriptors.map((descriptor) => ({
     name: descriptor.name,
     description: descriptor.summary,
     inputSchema: descriptor.inputSchema,
@@ -384,4 +386,9 @@ export function listTools(): ReadonlyArray<{
     // D5: a tool with a linked live MCP Apps view projects _meta.ui.resourceUri.
     ...(descriptor.ui ? { _meta: { ui: { resourceUri: descriptor.ui.resourceUri } } } : {}),
   }));
+}
+
+/** The exact public MCP tool surface, derived from the canonical command catalog. */
+export function listTools(): readonly McpToolDescriptor[] {
+  return projectMcpTools(mcpExposedDescriptors());
 }

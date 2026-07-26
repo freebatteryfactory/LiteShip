@@ -14,7 +14,7 @@ import { LLMChunkNormalization, SSE, type LLMChunk } from '@liteship/web';
 import { WorkerHost } from '@liteship/worker';
 import { evaluateBoundary, parseBoundary } from '../../packages/astro/src/runtime/boundary.ts';
 import { parseLLMChunk } from '../../packages/astro/src/runtime/llm.ts';
-import { makeResolvedStateEnvelope } from '../../packages/worker/src/messages.ts';
+import { defineResolvedStateEnvelope } from '../../packages/worker/src/messages.ts';
 import {
   createLLMSessionWithHost,
   createSupportLLMSessionHost,
@@ -1101,7 +1101,11 @@ async function runWorkerRuntimeStartupParityBaseline(): Promise<void> {
 const sharedWorkerRuntimeCoordinator = RuntimeCoordinator.create({ capacity: 8, name: 'bench-worker-runtime-steady' });
 sharedWorkerRuntimeCoordinator.registerQuantizer('layout', adaptiveBoundary.states);
 const workerResolvedStatePayload = buildResolvedStatePayload(boundaryStateFromValue(800));
-const workerResolvedStateEnvelope = makeResolvedStateEnvelope('apply-resolved-state', workerResolvedStatePayload, true);
+const workerResolvedStateEnvelope = defineResolvedStateEnvelope(
+  'apply-resolved-state',
+  workerResolvedStatePayload,
+  true,
+);
 
 function runWorkerRuntimeCoordinatorSteady(): void {
   sharedWorkerRuntimeCoordinator.markDirty('layout');

@@ -12,7 +12,7 @@ Defined in: [core/src/reactive/live-cell.ts:215](https://github.com/freebatteryf
 
 Create a boundary-kind LiveCell that automatically publishes crossings when the
 numeric value transitions between boundary states. The live cell IS its own
-disposable ([AsyncOwnedResource](../interfaces/AsyncOwnedResource.md)). `clock` (default [wallClock](../variables/wallClock.md)) is
+disposable ([AsyncOwnedResource](../interfaces/AsyncOwnedResource.md)). `clock` (default `wallClock`) is
 the injected time source for the envelope HLC and crossing timestamps — pass a
 manual/fixed clock for determinism.
 

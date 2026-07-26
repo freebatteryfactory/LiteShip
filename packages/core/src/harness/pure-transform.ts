@@ -223,7 +223,7 @@ export interface HarnessContext {
      * Which of the adapter's schemas the round-trip samples (`'input'` when its
      * input schema is arbitrary-derivable and concrete, else `'output'`). The
      * round trip proves CanonicalCbor encode/decode preserves that schema's
-     * structure via the canonical {@link contentAddressOf}.
+     * structure via the canonical `contentAddressOf`.
      */
     readonly roundTripSchema: 'input' | 'output';
     /**

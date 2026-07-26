@@ -350,6 +350,18 @@ function themeFingerprint(theme: ThemeCompileResult): string {
     .slice(0, 12);
 }
 
+/**
+ * Every request-derived value exposed to `compile` is cache-key material. A
+ * callback is deliberately allowed to branch on any capability, so retaining
+ * only the visible tier triple would let one request reuse another request's
+ * viewport/network/accessibility-specific output.
+ */
+function compileContextFingerprint(context: EdgeHostContext): string {
+  return contentAddressOf({ capabilities: context.capabilities, tier: context.tier })
+    .replace(/^fnv1a:/, '')
+    .slice(0, 12);
+}
+
 function resolveBoundaryTags(
   tags: EdgeHostCacheTags | undefined,
   context: EdgeHostCompileContext,
@@ -375,7 +387,8 @@ async function resolveBoundaryOutputs(
   // The boundary NAME qualifies the KV key: two names can share one
   // ContentAddress (same defineBoundary definition) while their @quantize
   // CSS differs — id+tier alone would let the first compile serve both.
-  const qualifier = name ?? undefined;
+  const contextFp = compileContextFingerprint(context);
+  const qualifier = name === null ? `ctx-${contextFp}` : `${name}:ctx-${contextFp}`;
   // The resolved theme is a real input to a compiled output (compile may bake
   // theme tokens into the CSS), so its fingerprint joins the cache key — a
   // per-request theme can never serve another request's theme-baked CSS.

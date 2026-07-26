@@ -11,6 +11,8 @@
  */
 
 import type { ContentAddress } from '../schema/brands.js';
+import { isCanonicalCborValue, type CanonicalCborValue } from '@liteship/canonical';
+import { UnsupportedError } from '@liteship/error';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { fnv1aBytes } from './fnv.js';
 
@@ -20,7 +22,7 @@ import { fnv1aBytes } from './fnv.js';
  * authoring order never forks identity. Returns the canonical structure for
  * {@link CanonicalCbor.encode}.
  */
-export function canonicalizeForAddress(value: unknown): unknown {
+function canonicalizeAdmitted(value: CanonicalCborValue): unknown {
   if (value === undefined) {
     return undefined;
   }
@@ -29,7 +31,7 @@ export function canonicalizeForAddress(value: unknown): unknown {
   }
   if (Array.isArray(value)) {
     return value.map((entry) => {
-      const canonical = canonicalizeForAddress(entry);
+      const canonical = canonicalizeAdmitted(entry);
       return canonical === undefined ? null : canonical;
     });
   }
@@ -39,10 +41,26 @@ export function canonicalizeForAddress(value: unknown): unknown {
       // Deterministic UTF-16 code-unit order, NOT localeCompare — content
       // addresses must be byte-identical across machines/locales (CUT B1).
       .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-      .map(([key, entry]) => [key, canonicalizeForAddress(entry)]);
+      .map(([key, entry]) => [key, canonicalizeAdmitted(entry as CanonicalCborValue)]);
     return Object.fromEntries(entries);
   }
-  return String(value);
+  // The shared canonical-domain guard above makes this branch unreachable.
+  throw UnsupportedError('content-address value', 'value is outside the portable canonical domain');
+}
+
+/**
+ * Validate and normalize one value before it enters the canonical addressing
+ * domain. Undefined record fields are omitted and every other admitted value
+ * preserves its portable meaning.
+ */
+export function canonicalizeForAddress(value: unknown): unknown {
+  if (!isCanonicalCborValue(value)) {
+    throw UnsupportedError(
+      'content-address value',
+      'value must be portable data (primitives, byte strings, arrays, or plain records without cycles/accessors)',
+    );
+  }
+  return canonicalizeAdmitted(value);
 }
 
 /**

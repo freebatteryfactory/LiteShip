@@ -1,15 +1,20 @@
 /**
- * Structural validation for generated UI trees against a host catalog.
+ * Structural and catalog validation for hostile generated UI trees.
  *
  * @module
  */
 
-import type { ComponentCatalog, GeneratedUIValidationError, GeneratedUINode } from './types.js';
+import type { ComponentCatalog, ComponentDef, GeneratedUIValidationError, GeneratedUINode } from './types.js';
 import { isInteractionProp } from './interaction.js';
-import { isPlainObject } from './guards.js';
+import { inspectGeneratedUITreeShape } from './guards.js';
 
 export type ValidateGeneratedUIResult =
   { readonly ok: true } | { readonly ok: false; readonly error: GeneratedUIValidationError };
+
+interface ValidationFrame {
+  readonly node: GeneratedUINode;
+  readonly path: string;
+}
 
 const propMatches = (value: unknown, type: 'string' | 'number' | 'boolean'): boolean => {
   switch (type) {
@@ -22,199 +27,166 @@ const propMatches = (value: unknown, type: 'string' | 'number' | 'boolean'): boo
   }
 };
 
-const validateNode = (node: GeneratedUINode, catalog: ComponentCatalog, path: string): ValidateGeneratedUIResult => {
-  // LESSON #12/#26 (author-controlled keys → prototype poison): `node.name` is
-  // MODEL-controlled. A bare `catalog.components[node.name]` resolves INHERITED
-  // members for names like `constructor`/`toString`/`__proto__`/`valueOf`, so a
-  // model proposing such a component would either crash the validator (the
-  // inherited function has no `.props` → `Object.entries(undefined)` throws) or
-  // smuggle an UNREGISTERED name past the unknown-component gate — a real bypass
-  // of the AI-cast validation boundary. Look up OWN properties only: an inherited
-  // name is an unknown component, full stop.
-  const def = Object.prototype.hasOwnProperty.call(catalog.components, node.name)
-    ? catalog.components[node.name]
-    : undefined;
-  if (!def) {
-    return {
-      ok: false,
-      error: {
-        code: 'genui/unknown-component',
-        message: `Unknown generated UI component "${node.name}". Register it in the host catalog before rendering.`,
-        path,
-      },
-    };
-  }
+const own = <T>(record: Readonly<Record<string, T>>, key: string): T | undefined =>
+  Object.prototype.hasOwnProperty.call(record, key) ? record[key] : undefined;
 
-  if (!isPlainObject(node.props)) {
-    return {
-      ok: false,
-      error: {
-        code: 'genui/invalid-prop',
-        message: `Component "${node.name}" props must be a plain object.`,
-        path: `${path}.props`,
-      },
-    };
-  }
+const reject = (
+  code: GeneratedUIValidationError['code'],
+  message: string,
+  path: string,
+): ValidateGeneratedUIResult => ({ ok: false, error: { code, message, path } });
 
+/** Browser-safe href policy: relative references plus explicit web/contact schemes. */
+export function isSafeGeneratedUIHref(value: string): boolean {
+  if (/[\x00-]/u.test(value)) return false;
+  const href = value.trim();
+  if (href.startsWith('//')) return false;
+  const scheme = /^([a-z][a-z0-9+.-]*):/iu.exec(href)?.[1]?.toLowerCase();
+  return scheme === undefined || scheme === 'http' || scheme === 'https' || scheme === 'mailto' || scheme === 'tel';
+}
+
+function validateProps(node: GeneratedUINode, def: ComponentDef, path: string): ValidateGeneratedUIResult | undefined {
   for (const [key, schema] of Object.entries(def.props)) {
-    // Own-property read: a required prop named `toString`/`constructor` must NOT
-    // be satisfied by an inherited member of the model-controlled `node.props`.
-    const value = Object.prototype.hasOwnProperty.call(node.props, key) ? node.props[key] : undefined;
+    const value = own(node.props, key);
     if (value === undefined) {
       if (schema.required) {
-        return {
-          ok: false,
-          error: {
-            code: 'genui/invalid-prop',
-            message: `Missing required prop "${key}" on "${node.name}".`,
-            path: `${path}.props.${key}`,
-          },
-        };
+        return reject(
+          'genui/invalid-prop',
+          `Missing required prop "${key}" on "${node.name}".`,
+          `${path}.props.${key}`,
+        );
       }
       continue;
     }
-    // One-interaction contract (see ./interaction.ts): genui serves only
-    // `onClick` -> opaque string action-id. A registered handler-shaped prop that
-    // the node SUPPLIES is rejected LOUDLY here rather than silently dropped at
-    // render — either it isn't onClick, or its value isn't the required action-id
-    // string. Usage-gated: a registered-but-unused handler does not red.
     if (isInteractionProp(key)) {
       if (key !== 'onClick') {
-        return {
-          ok: false,
-          error: {
-            code: 'genui/invalid-prop',
-            message: `Handler "${key}" on "${node.name}" is not supported — genui serves a single interaction (onClick -> opaque action-id, dispatched as genui:interaction). Move the behavior onto onClick with an action-id the host resolves.`,
-            path: `${path}.props.${key}`,
-          },
-        };
+        return reject(
+          'genui/invalid-prop',
+          `Handler "${key}" on "${node.name}" is not supported — genui serves onClick with an opaque action id.`,
+          `${path}.props.${key}`,
+        );
       }
       if (typeof value !== 'string') {
-        return {
-          ok: false,
-          error: {
-            code: 'genui/invalid-prop',
-            message: `onClick on "${node.name}" must be a string action-id (the host resolves it via genui:interaction).`,
-            path: `${path}.props.${key}`,
-          },
-        };
+        return reject(
+          'genui/invalid-prop',
+          `onClick on "${node.name}" must be a string action id.`,
+          `${path}.props.${key}`,
+        );
       }
     }
     if (!propMatches(value, schema.type)) {
-      return {
-        ok: false,
-        error: {
-          code: 'genui/invalid-prop',
-          message: `Prop "${key}" on "${node.name}" must be ${schema.type}.`,
-          path: `${path}.props.${key}`,
-        },
-      };
+      return reject(
+        'genui/invalid-prop',
+        `Prop "${key}" on "${node.name}" must be ${schema.type}.`,
+        `${path}.props.${key}`,
+      );
+    }
+    if (key === 'href' && typeof value === 'string' && !isSafeGeneratedUIHref(value)) {
+      return reject(
+        'genui/invalid-prop',
+        `Prop "href" on "${node.name}" uses a refused URL scheme.`,
+        `${path}.props.href`,
+      );
     }
   }
 
   for (const key of Object.keys(node.props)) {
-    // Own-property check: a model prop named `constructor`/`toString` must be
-    // flagged UNKNOWN, never accepted because `in` walked `def.props`' prototype.
     if (!Object.prototype.hasOwnProperty.call(def.props, key)) {
-      return {
-        ok: false,
-        error: {
-          code: 'genui/invalid-prop',
-          message: `Unknown prop "${key}" on "${node.name}".`,
-          path: `${path}.props.${key}`,
-        },
-      };
+      return reject('genui/invalid-prop', `Unknown prop "${key}" on "${node.name}".`, `${path}.props.${key}`);
     }
   }
+  return undefined;
+}
 
-  const childPolicy = def.children ?? 'none';
-  // Children, when present, MUST be an array. A non-array `children` (e.g. a plain
-  // object from parsed model JSON) makes `.length` read as `undefined` and silently
-  // counts as "no children", accepting a malformed tree. Reject it at EVERY node — this
-  // validator recurses (below), so a malformed NESTED children is caught when that
-  // child is validated.
-  if (node.children !== undefined && !Array.isArray(node.children)) {
-    return {
-      ok: false,
-      error: {
-        code: 'genui/invalid-children',
-        message: `Component "${node.name}" has a non-array children value.`,
-        path: `${path}.children`,
-      },
-    };
+function structuralFailure(
+  node: unknown,
+  failure: ReturnType<typeof inspectGeneratedUITreeShape>,
+): ValidateGeneratedUIResult {
+  if (failure.ok) return { ok: true };
+  const nameDescriptor =
+    typeof node === 'object' && node !== null ? Object.getOwnPropertyDescriptor(node, 'name') : undefined;
+  const rootPath =
+    nameDescriptor !== undefined && 'value' in nameDescriptor && typeof nameDescriptor.value === 'string'
+      ? nameDescriptor.value
+      : '$';
+  const path = failure.path === '$' ? rootPath : failure.path.replace(/^\$/u, rootPath);
+  if (failure.failure === 'slots') {
+    return reject('genui/invalid-slots', 'Generated UI slots must be data records containing valid nodes.', path);
   }
-  const children = node.children ?? [];
-
-  if (childPolicy === 'none' && children.length > 0) {
-    return {
-      ok: false,
-      error: {
-        code: 'genui/invalid-children',
-        message: `Component "${node.name}" does not accept children.`,
-        path: `${path}.children`,
-      },
-    };
+  if (failure.failure === 'children' || failure.failure === 'budget' || failure.failure === 'node') {
+    return reject(
+      'genui/invalid-children',
+      failure.failure === 'budget'
+        ? 'Generated UI tree exceeds the bounded depth or node-count budget.'
+        : 'Generated UI children must form an acyclic bounded tree of data records.',
+      path,
+    );
   }
+  return reject('genui/invalid-prop', 'Generated UI node name and props must be plain data values.', path);
+}
 
-  if (childPolicy === 'required' && children.length === 0) {
-    return {
-      ok: false,
-      error: {
-        code: 'genui/invalid-children',
-        message: `Component "${node.name}" requires children.`,
-        path: `${path}.children`,
-      },
-    };
-  }
+/** Validate a generated UI tree against the host catalog. Unknown or unrepresentable input refuses. */
+export function validateGeneratedUITree(node: GeneratedUINode, catalog: ComponentCatalog): ValidateGeneratedUIResult {
+  const shape = inspectGeneratedUITreeShape(node);
+  if (!shape.ok) return structuralFailure(node, shape);
 
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i]!;
-    if (def.allowedChildNames && !def.allowedChildNames.includes(child.name)) {
-      return {
-        ok: false,
-        error: {
-          code: 'genui/invalid-children',
-          message: `Child "${child.name}" is not allowed under "${node.name}".`,
-          path: `${path}.children[${i}]`,
-        },
-      };
+  const rootPath = node.name;
+  const pending: ValidationFrame[] = [{ node, path: rootPath }];
+  while (pending.length > 0) {
+    const frame = pending.pop()!;
+    const current = frame.node;
+    const def = own(catalog.components, current.name);
+    if (def === undefined) {
+      return reject(
+        'genui/unknown-component',
+        `Unknown generated UI component "${current.name}". Register it in the host catalog before rendering.`,
+        frame.path,
+      );
     }
-    const childResult = validateNode(child, catalog, `${path}.children[${i}]`);
-    if (!childResult.ok) {
-      return childResult;
-    }
-  }
 
-  if (node.slots !== undefined) {
-    // slots, when present, MUST be a record (not null / array / primitive). The old truthy
-    // check skipped `null` and `Object.entries(1|[])` is `[]`, so a malformed slots value
-    // was silently treated as absent/empty. Reject it at every node (this recurses).
-    const slots = node.slots as unknown;
-    if (slots === null || typeof slots !== 'object' || Array.isArray(slots)) {
-      return {
-        ok: false,
-        error: {
-          code: 'genui/invalid-slots',
-          message: `Component "${node.name}" has a non-record slots value.`,
-          path: `${path}.slots`,
-        },
-      };
+    const propFailure = validateProps(current, def, frame.path);
+    if (propFailure !== undefined) return propFailure;
+
+    const children = current.children ?? [];
+    const slotted = Object.entries(current.slots ?? {}).flatMap(([slotName, value]) =>
+      (Array.isArray(value) ? value : [value]).map((child, index) => ({
+        child,
+        path: `${frame.path}.slots.${slotName}[${index}]`,
+      })),
+    );
+    const direct = [
+      ...children.map((child, index) => ({ child, path: `${frame.path}.children[${index}]` })),
+      ...slotted,
+    ];
+    const childPolicy = def.children ?? 'none';
+    if (childPolicy === 'none' && direct.length > 0) {
+      return reject(
+        'genui/invalid-children',
+        `Component "${current.name}" does not accept children or slotted descendants.`,
+        direct[0]!.path,
+      );
     }
-    for (const [slotName, slotValue] of Object.entries(node.slots)) {
-      const slotNodes = Array.isArray(slotValue) ? slotValue : [slotValue];
-      for (let i = 0; i < slotNodes.length; i++) {
-        const slotResult = validateNode(slotNodes[i]!, catalog, `${path}.slots.${slotName}[${i}]`);
-        if (!slotResult.ok) {
-          return slotResult;
-        }
+    if (childPolicy === 'required' && direct.length === 0) {
+      return reject(
+        'genui/invalid-children',
+        `Component "${current.name}" requires children (a child or slotted descendant).`,
+        `${frame.path}.children`,
+      );
+    }
+    for (const descendant of direct) {
+      if (def.allowedChildNames !== undefined && !def.allowedChildNames.includes(descendant.child.name)) {
+        return reject(
+          'genui/invalid-children',
+          `Child "${descendant.child.name}" is not allowed under "${current.name}".`,
+          descendant.path,
+        );
       }
+    }
+    for (let index = direct.length - 1; index >= 0; index -= 1) {
+      const descendant = direct[index]!;
+      pending.push({ node: descendant.child, path: descendant.path });
     }
   }
 
   return { ok: true };
-};
-
-/** Validate a generated UI tree against the host catalog. Unknown names / bad props → reject. */
-export function validateGeneratedUITree(node: GeneratedUINode, catalog: ComponentCatalog): ValidateGeneratedUIResult {
-  return validateNode(node, catalog, node.name);
 }

@@ -20,7 +20,7 @@ artifact (`src` / `srcset` / `<source>` / preload `imagesrcset`).
 
 ### intent
 
-`ResponsiveMediaIntent`
+[`ResponsiveMediaIntent`](../../../liteship/src/media/interfaces/ResponsiveMediaIntent.md)
 
 ### source
 

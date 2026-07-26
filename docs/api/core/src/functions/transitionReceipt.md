@@ -8,11 +8,11 @@
 
 > **transitionReceipt**(`transition`, `options?`): `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
-Defined in: [core/src/motion/state-transition.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L113)
+Defined in: [core/src/motion/state-transition.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L121)
 
 Mint a receipt for a [DiscreteStateTransition](../interfaces/DiscreteStateTransition.md), mirroring
-[GraphPatch.receipt](../variables/GraphPatch.md#receipt) byte-for-byte: a single genesis-or-linked envelope
-whose payload is a [TypedRef](../variables/TypedRef.md) over the transition, subject-keyed by the
+`GraphPatch.receipt` byte-for-byte: a single genesis-or-linked envelope
+whose payload is a `TypedRef` over the transition, subject-keyed by the
 `(base, cell)` law. Async (`Promise`-returning) because the receipt byte law
 hashes via `crypto.subtle` (SHA-256) — the same async kernel
 `Receipt.createEnvelope` rides on; folding it to a sync value would force a

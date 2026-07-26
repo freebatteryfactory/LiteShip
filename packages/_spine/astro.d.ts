@@ -14,7 +14,6 @@ export interface IntegrationConfig {
   readonly vite?: PluginConfig;
   readonly exclude?: readonly string[];
   readonly detect?: boolean;
-  readonly serverIslands?: boolean;
   readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
   readonly gpu?: { readonly enabled?: boolean; readonly preferWebGPU?: boolean };
   readonly workers?: { readonly enabled?: boolean; readonly coep?: CrossOriginEmbedderPolicy };

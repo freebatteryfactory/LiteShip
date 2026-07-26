@@ -95,11 +95,11 @@ describe('Receipt properties', () => {
     expect(chain).toHaveLength(3);
 
     // First should reference genesis
-    expect(chain[0].previous).toBe('genesis');
+    expect(chain[0]!.previous).toBe('genesis');
 
     // Each subsequent should reference previous hash
     for (let i = 1; i < chain.length; i++) {
-      expect(chain[i].previous).toBe(chain[i - 1].hash);
+      expect(chain[i]!.previous).toBe(chain[i - 1]!.hash);
     }
   });
 

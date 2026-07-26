@@ -9,7 +9,7 @@
  *  - **round-trip equality → UNIT lane** (`.test.ts`, `pnpm test`). The adapter's
  *    `native -> liteship -> native` transform is pure: liteship's canonical serialization
  *    (`CanonicalCbor.encode` → `decode`) is the round trip, and structure is
- *    preserved iff the canonical {@link contentAddressOf} of the decoded value
+ *    preserved iff the canonical `contentAddressOf` of the decoded value
  *    equals the original's. Inputs are sampled from the adapter's own schema via
  *    the canonical `schemaToArbitrary` walker — NOT a hand-rolled deep-equal, NOT
  *    a hand-built fixture. A real `it()` with a fast-check property.

@@ -8,9 +8,9 @@
 
 > **discreteTransitionPayload**(`transition`): `Promise`\<`TypedRefShape`\>
 
-Defined in: [core/src/motion/state-transition.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L90)
+Defined in: [core/src/motion/state-transition.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L98)
 
-The receipt PAYLOAD ref for a transition — a [TypedRef](../variables/TypedRef.md) over the crossing VALUE
+The receipt PAYLOAD ref for a transition — a `TypedRef` over the crossing VALUE
 (`cell`/`previous`/`next`/`generation`/`authority`/`base`/`resultId`/`kind`). The SINGLE
 source of the payload law (Law 6): both the mint ([transitionReceipt](transitionReceipt.md)) AND the
 client-side attestation-check (`recordStreamPatchReceipt`) derive the payload from HERE.

@@ -35,6 +35,10 @@ import type {
   CompositorWorkerShape as SpineCompositorShape,
   QuantizerBoundarySource as SpineBoundarySource,
   CompositorWorkerStartupTelemetry as SpineStartupTelemetry,
+  MotionSampleMessage as SpineMotionSampleMessage,
+  ProgramUniforms as SpineProgramUniforms,
+  RuntimeWritePlan as SpineRuntimeWritePlan,
+  WorkerLike as SpineWorkerLike,
 } from '@liteship/_spine';
 
 // Runtime truth — imported from the producing modules DIRECTLY (not the
@@ -55,6 +59,12 @@ import type {
   SPSCRingBufferShape as RtRingShape,
   SPSCRingPair as RtRingPair,
 } from '../../../packages/worker/src/spsc-ring.js';
+import type {
+  MotionSampleMessage as RtMotionSampleMessage,
+  ProgramUniforms as RtProgramUniforms,
+} from '../../../packages/worker/src/motion-sample.js';
+import type { RuntimeWritePlan as RtRuntimeWritePlan } from '../../../packages/core/src/motion/interpret-transition.js';
+import type { WorkerLike as RtWorkerLike } from '../../../packages/worker/src/messages.js';
 
 // Public re-export surface — the worker exposes these names from its index;
 // drift in the index re-export set also breaks the contract.
@@ -136,6 +146,14 @@ function __workerSpineTypeContract(
   bTel: RtStartupTelemetry,
   rtShape: WorkerOwnedShape<RtCompositorShape>,
   spShape: WorkerOwnedShape<SpineCompositorShape>,
+  aMotion: SpineMotionSampleMessage,
+  bMotion: RtMotionSampleMessage,
+  aUniforms: SpineProgramUniforms,
+  bUniforms: RtProgramUniforms,
+  aRuntimePlan: SpineRuntimeWritePlan,
+  bRuntimePlan: RtRuntimeWritePlan,
+  aWorkerLike: SpineWorkerLike,
+  bWorkerLike: RtWorkerLike,
 ): void {
   // Message unions (worker-owned members).
   const _toWorkerS2R: WorkerOwned<RtToWorker> = aToWorker;
@@ -181,6 +199,14 @@ function __workerSpineTypeContract(
   // Compositor control surface (worker-owned methods).
   const _shapeR2S: WorkerOwnedShape<SpineCompositorShape> = rtShape;
   const _shapeS2R: WorkerOwnedShape<RtCompositorShape> = spShape;
+  const _motionS2R: RtMotionSampleMessage = aMotion;
+  const _motionR2S: SpineMotionSampleMessage = bMotion;
+  const _uniformsS2R: RtProgramUniforms = aUniforms;
+  const _uniformsR2S: SpineProgramUniforms = bUniforms;
+  const _runtimePlanS2R: RtRuntimeWritePlan = aRuntimePlan;
+  const _runtimePlanR2S: SpineRuntimeWritePlan = bRuntimePlan;
+  const _workerLikeS2R: RtWorkerLike = aWorkerLike;
+  const _workerLikeR2S: SpineWorkerLike = bWorkerLike;
 
   void _toWorkerS2R;
   void _toWorkerR2S;
@@ -208,6 +234,14 @@ function __workerSpineTypeContract(
   void _telR2S;
   void _shapeR2S;
   void _shapeS2R;
+  void _motionS2R;
+  void _motionR2S;
+  void _uniformsS2R;
+  void _uniformsR2S;
+  void _runtimePlanS2R;
+  void _runtimePlanR2S;
+  void _workerLikeS2R;
+  void _workerLikeR2S;
 }
 void __workerSpineTypeContract;
 

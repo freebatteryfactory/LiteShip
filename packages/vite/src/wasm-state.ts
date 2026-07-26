@@ -47,7 +47,7 @@ export interface WasmState {
   readonly config: WasmConfig;
   /**
    * The packaged-`@liteship/core` binary resolver threaded into every re-resolve,
-   * defaulting to the real {@link resolvePackagedWasm}. Carried on the state so
+   * defaulting to the real `resolvePackagedWasm`. Carried on the state so
    * the transitions stay 2-arg while a test can still force the `'package'`
    * source absent by constructing the state with a stub.
    */

@@ -32,7 +32,6 @@ import { resolve } from 'node:path';
 export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
   '@liteship/canonical': ['packages/canonical/src/index.ts'],
   '@liteship/genui': ['packages/genui/src/index.ts'],
-  '@liteship/core/testing': ['packages/core/src/testing.ts'],
   '@liteship/core/harness': ['packages/core/src/harness/index.ts'],
   '@liteship/core/simulation': ['packages/core/src/simulation/index.ts'],
   '@liteship/core/fs-walk': ['packages/core/src/fs-walk.ts'],
@@ -56,6 +55,7 @@ export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
   '@liteship/detect': ['packages/detect/src/index.ts'],
   '@liteship/vite/html-transform': ['packages/vite/src/html-transform.ts'],
   '@liteship/vite': ['packages/vite/src/index.ts'],
+  '@liteship/astro/adaptive-runtime': ['packages/astro/src/adaptive-runtime.ts'],
   '@liteship/astro/runtime': ['packages/astro/src/runtime/index.ts'],
   '@liteship/astro': ['packages/astro/src/index.ts'],
   '@liteship/stage/ffmpeg': ['packages/stage/src/ffmpeg.ts'],

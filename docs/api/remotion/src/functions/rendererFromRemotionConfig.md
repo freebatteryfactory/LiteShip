@@ -35,7 +35,7 @@ The `Compositor` driving the liteship state pipeline.
 
 ### signal?
 
-`Controllable`\<`number`\>
+[`Controllable`](../../../liteship/src/reactive/namespaces/Signal/type-aliases/Controllable.md)\<`number`\>
 
 Optional controllable time signal, seeked per frame.
 

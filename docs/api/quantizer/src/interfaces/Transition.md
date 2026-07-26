@@ -17,7 +17,7 @@ during animation loop setup.
 
 ### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ## Properties
 

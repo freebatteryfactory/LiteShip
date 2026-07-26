@@ -36,7 +36,7 @@ Public asset URLs per boundary output-pool index.
 
 ### config?
 
-> `readonly` `optional` **config?**: `Config` \| `null`
+> `readonly` `optional` **config?**: [`Config`](../../../liteship/src/type-aliases/Config.md) \| `null`
 
 Defined in: [vite/src/virtual-modules.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L100)
 

@@ -34,7 +34,7 @@ describe('createBrowserCommandContext — local stubs', () => {
     expect(await context.runAudioProjection!('onset', new ArrayBuffer(0))).toBe(0);
     expect(context.hostVersion!()).toBe('browser');
     expect(await context.spawnCapture!('ls', [])).toEqual({ exitCode: 1, stdout: '' });
-    expect(await context.runSceneCompile!()).toBeUndefined();
+    expect(context.runSceneCompile).toBeUndefined();
   });
 
   it('browserSafeCommandNames lists the delegation-free registry subset', () => {

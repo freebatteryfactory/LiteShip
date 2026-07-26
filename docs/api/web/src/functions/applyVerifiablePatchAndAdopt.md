@@ -33,7 +33,7 @@ Refuses when `resultGraph.id` does not match `envelope.resultGraphId`.
 
 ### resultGraph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 ### capability?
 

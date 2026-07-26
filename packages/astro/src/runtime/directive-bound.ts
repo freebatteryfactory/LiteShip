@@ -13,7 +13,20 @@
  */
 
 /** Directive names the integration can register, in escalation order. */
-export type DirectiveName = 'adaptive' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'motion' | 'svg';
+export const DIRECTIVE_NAMES = [
+  'adaptive',
+  'stream',
+  'llm',
+  'worker',
+  'gpu',
+  'wasm',
+  'graph',
+  'motion',
+  'svg',
+] as const;
+
+/** One name from the canonical directive catalog. */
+export type DirectiveName = (typeof DIRECTIVE_NAMES)[number];
 
 /** A client-directive default export: `(load, opts, el)`. */
 export type DirectiveEntry = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement) => void;

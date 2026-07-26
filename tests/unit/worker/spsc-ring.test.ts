@@ -139,14 +139,14 @@ describe('SPSCRing', () => {
   });
 
   test('invalid slotCount throws', () => {
-    expect(() => SPSCRing.createPair(0, 1)).toThrow();
-    expect(() => SPSCRing.createPair(-1, 1)).toThrow();
-    expect(() => SPSCRing.createPair(1.5, 1)).toThrow();
+    expect(() => SPSCRing.createPair(0, 1)).toThrow('slotCount must be a positive integer, got 0');
+    expect(() => SPSCRing.createPair(-1, 1)).toThrow('slotCount must be a positive integer, got -1');
+    expect(() => SPSCRing.createPair(1.5, 1)).toThrow('slotCount must be a positive integer, got 1.5');
   });
 
   test('invalid slotSize throws', () => {
-    expect(() => SPSCRing.createPair(4, 0)).toThrow();
-    expect(() => SPSCRing.createPair(4, -2)).toThrow();
+    expect(() => SPSCRing.createPair(4, 0)).toThrow('slotSize must be a positive integer, got 0');
+    expect(() => SPSCRing.createPair(4, -2)).toThrow('slotSize must be a positive integer, got -2');
   });
 
   test('attachProducer creates producer from existing SAB', () => {

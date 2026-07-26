@@ -8,7 +8,7 @@
 
 > `const` **CanonicalCbor**: `object`
 
-Defined in: [canonical/src/cbor.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor.ts#L186)
+Defined in: [canonical/src/cbor.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor.ts#L204)
 
 Canonical CBOR encoder namespace (ADR-0001 pattern).
 
@@ -16,7 +16,7 @@ Canonical CBOR encoder namespace (ADR-0001 pattern).
 
 ### encode
 
-> `readonly` **encode**: (`value`) => `Uint8Array` = `_encode`
+> **encode**: (`value`) => `Uint8Array`
 
 #### Parameters
 

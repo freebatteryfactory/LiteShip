@@ -8,7 +8,7 @@
 
 > **DiagnosticCodeFor**\<`A`\> = `Extract`\<[`DiagnosticCode`](DiagnosticCode.md), `` `${A}/${string}` ``\>
 
-Defined in: [error/src/codes.ts:1338](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1338)
+Defined in: [error/src/codes.ts:1571](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L1571)
 
 The enrolled codes belonging to one diagnostic area.
 

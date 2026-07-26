@@ -22,7 +22,7 @@ content-addressed identity.
 
 ### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ### O
 
@@ -32,7 +32,7 @@ content-addressed identity.
 
 ### force?
 
-> `readonly` `optional` **force?**: readonly [`QualityTierTarget`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md)[]
+> `readonly` `optional` **force?**: readonly [`QualityTierTarget`](../../../liteship/src/evidence/type-aliases/QualityTierTarget.md)[]
 
 Defined in: [quantizer/src/quantizer.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L204)
 

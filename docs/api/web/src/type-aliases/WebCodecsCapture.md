@@ -6,7 +6,7 @@
 
 # Type Alias: WebCodecsCapture
 
-> **WebCodecsCapture** = `FrameCapture`
+> **WebCodecsCapture** = [`FrameCapture`](../../../liteship/src/evidence/interfaces/FrameCapture.md)
 
 Defined in: [web/src/capture/webcodecs.ts:277](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L277)
 

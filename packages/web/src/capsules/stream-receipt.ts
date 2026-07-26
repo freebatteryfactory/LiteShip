@@ -30,7 +30,7 @@ const ReceiptResultSchema = schema.struct({
 
 /**
  * Declared capsule for the SSE stream receipt flow. Registered in the
- * module-level catalog at import time; walked by the factory compiler.
+ * immutable exported declaration; walked by the factory compiler.
  */
 export const streamReceiptCapsule = defineCapsule({
   _kind: 'receiptedMutation',

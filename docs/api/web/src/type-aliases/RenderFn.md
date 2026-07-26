@@ -22,7 +22,7 @@ dimension reads).
 
 ### state
 
-[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts)
+[`CompositeState`](../../../liteship/src/media/interfaces/CompositeState.md)
 
 ### canvas
 

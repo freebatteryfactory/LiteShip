@@ -29,6 +29,7 @@ import {
 import { sourceProvenanceDigest, generatorVersionDigest } from '@liteship/command/host';
 import type { CommandContext } from '@liteship/command';
 import { emit, getCapsuleManifestPath, type WallClockTimestamp } from '../receipts.js';
+import { runGeneratedCorpus } from '../lib/generated-corpus-runner.js';
 
 /** Receipt emitted by `liteship capsule-verify`. */
 export interface CapsuleVerifyReceipt extends CapsuleVerifyPayload {
@@ -74,6 +75,7 @@ const NO_BENCHES: CapsuleBenchClassification = { total: 0, real: 0, placeholder:
 interface CapsuleProvenanceDeps {
   readonly sourceProvenanceDigest?: typeof sourceProvenanceDigest;
   readonly generatorVersionDigest?: typeof generatorVersionDigest;
+  readonly runGeneratedCorpus?: typeof runGeneratedCorpus;
 }
 
 /**
@@ -171,6 +173,7 @@ function confirmStaleByRegeneration(
 export async function runCapsuleGateScan(root: string, deps: CapsuleProvenanceDeps = {}): Promise<CapsuleGateSummary> {
   const srcDigest = deps.sourceProvenanceDigest ?? sourceProvenanceDigest;
   const genDigest = deps.generatorVersionDigest ?? generatorVersionDigest;
+  const executeGeneratedCorpus = deps.runGeneratedCorpus ?? runGeneratedCorpus;
   const errors: string[] = [];
   const manifestPath = getCapsuleManifestPath(root);
 
@@ -254,22 +257,29 @@ export async function runCapsuleGateScan(root: string, deps: CapsuleProvenanceDe
     return { status: 'stale', errors, capsuleCount: manifest.capsules.length, benches };
   }
 
-  // Only run vitest if there are generated tests present.
+  // Execute BOTH generated lanes. `vitest run` excludes `.bench.ts`; a corpus
+  // cannot be green until the exact manifest-derived benchmark files execute.
   if (manifest.capsules.length > 0) {
     try {
-      // Route nested vitest stdout to *our* stderr so a downstream JSON consumer
-      // never sees reporter output interleaved on this command's stdout.
-      execSync('pnpm exec vitest run tests/generated/', {
-        cwd: root,
-        stdio: ['ignore', process.stderr, process.stderr],
+      const generated = await executeGeneratedCorpus(root, {
+        testFiles: manifest.capsules.map((entry) => entry.generated.testFile),
+        benchFiles: manifest.capsules.map((entry) => entry.generated.benchFile),
       });
+      if (!generated.ok) {
+        const result = generated.failedLane === 'bench' ? generated.bench : generated.test;
+        return {
+          status: 'failed',
+          errors: [
+            `generated ${generated.failedLane ?? 'unknown'} lane failed with exit ${result?.exitCode ?? 1}: ${result?.stderrTail ?? ''}`,
+          ],
+          capsuleCount: manifest.capsules.length,
+          benches,
+        };
+      }
     } catch (err) {
-      // Surface the real failure context (consume the binding) — the nested
-      // vitest reporter already streamed to stderr; ride its error through
-      // rather than laundering it into a bare generic string.
       return {
         status: 'failed',
-        errors: [`generated tests failed: ${err instanceof Error ? err.message : String(err)}`],
+        errors: [`generated corpus execution failed: ${err instanceof Error ? err.message : String(err)}`],
         capsuleCount: manifest.capsules.length,
         benches,
       };

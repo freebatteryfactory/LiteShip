@@ -309,6 +309,8 @@ function makeAnimatedQuantizer<B extends Boundary>(
   // The in-flight animation's abort handle (was currentFiberRef) — one
   // AbortController per crossing; a new crossing aborts the prior.
   let currentAbort: AbortController | null = null;
+  const activeRuns = new Set<Promise<void>>();
+  const lifetime = Lifetime.make();
 
   /**
    * Run one crossing's animation to completion (or until `signal` aborts). The
@@ -351,8 +353,19 @@ function makeAnimatedQuantizer<B extends Boundary>(
     }
 
     if (duration <= 0) {
-      frames.publish({ state: to, progress: 1, outputs: toOutputs });
+      // Publish the terminal frame only after making its outputs the interruption
+      // origin. A frame subscriber may synchronously publish a newer crossing;
+      // that run must start from the frame it observed, and this older run must
+      // not resume afterward and overwrite the newer landed state.
+      const previousOutputs = currentOutputs;
       currentOutputs = toOutputs;
+      try {
+        frames.publish({ state: to, progress: 1, outputs: toOutputs });
+      } catch (cause) {
+        if (!signal.aborted) currentOutputs = previousOutputs;
+        throw cause;
+      }
+      if (signal.aborted) return;
       stateCell.publish(to);
       return;
     }
@@ -394,6 +407,7 @@ function makeAnimatedQuantizer<B extends Boundary>(
 
   /** Interrupt the prior animation and start a fresh one for `crossing`. */
   function startAnimation(crossing: BoundaryCrossing<StateUnion<B> & string>): void {
+    if (lifetime.disposed) return;
     // Interrupt-previous: abort the in-flight animation's controller.
     currentAbort?.abort();
     const controller = new AbortController();
@@ -410,10 +424,30 @@ function makeAnimatedQuantizer<B extends Boundary>(
     const fromOutputs = { ...currentOutputs };
     const toOutputs: Record<string, number | string> = effectiveOutputs?.[crossing.to as string] ?? {};
 
-    // Fire-and-forget: the animation drives itself off the scheduler/timers and
-    // publishes frames to the fan-out. Its own `signal` checks stop it on
-    // interrupt or dispose; failures are swallowed (there is no consumer to fail).
-    void runAnimation(controller.signal, to, duration, easing, delay, fromOutputs, toOutputs).catch(() => undefined);
+    // The animation drives itself off the scheduler/timers. Retain every task so
+    // disposal can abort and await quiescence before closing its public cells.
+    // A scheduler or subscriber failure is operator-visible rather than silently
+    // disappearing from a fire-and-forget promise.
+    const task = runAnimation(controller.signal, to, duration, easing, delay, fromOutputs, toOutputs).catch(
+      (cause: unknown) => {
+        if (controller.signal.aborted) return;
+        Diagnostics.error({
+          source: 'liteship/quantizer',
+          code: 'animation-runtime-failed',
+          message: `AnimatedQuantizer failed while transitioning to '${String(to)}'.`,
+          cause,
+        });
+      },
+    );
+    const forgetTask = (): void => {
+      activeRuns.delete(task);
+      if (currentAbort === controller) currentAbort = null;
+    };
+    activeRuns.add(task);
+    void task.then(
+      () => forgetTask(),
+      () => forgetTask(),
+    );
   }
 
   // Eagerly observe the wrapped quantizer's crossings (was the lazy
@@ -421,12 +455,23 @@ function makeAnimatedQuantizer<B extends Boundary>(
   // single frame fan-out.
   const unsubscribe = quantizer.changes.subscribe((crossing) => startAnimation(crossing));
 
-  const lifetime = Lifetime.make();
-  lifetime.add(() => {
+  lifetime.add(async () => {
     unsubscribe();
     currentAbort?.abort();
-    frames.close();
-    stateCell.close();
+    await Promise.allSettled([...activeRuns]);
+
+    // Teardown is completeness-oriented: a throwing `complete` callback on one
+    // public channel must not strand the sibling channel open. Close both, then
+    // rethrow the first fault so Lifetime folds it into its aggregate.
+    let firstFault: { readonly error: unknown } | undefined;
+    for (const closeChannel of [frames.close, stateCell.close]) {
+      try {
+        closeChannel();
+      } catch (error) {
+        if (firstFault === undefined) firstFault = { error };
+      }
+    }
+    if (firstFault !== undefined) throw firstFault.error;
   });
 
   const animated: AnimatedQuantizerShape<B> = {
@@ -434,9 +479,13 @@ function makeAnimatedQuantizer<B extends Boundary>(
     boundary,
     transition: transitionResolver,
     state: stateCell,
-    stateSync: quantizer.stateSync ? () => quantizer.stateSync!() : undefined,
+    // The wrapper's state is the last LANDED animation state. The wrapped
+    // quantizer may already report the target while interpolation is in-flight,
+    // so forwarding its stateSync would make the wrapper disagree with itself.
+    stateSync: () => stateCell.read(),
     changes: quantizer.changes,
     evaluate(value: number): StateUnion<B> {
+      if (lifetime.disposed) return stateCell.read();
       return quantizer.evaluate(value);
     },
     interpolated: frames,

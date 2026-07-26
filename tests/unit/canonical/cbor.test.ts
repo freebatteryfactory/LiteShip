@@ -7,7 +7,22 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { CanonicalCbor } from '@liteship/canonical';
+import { CanonicalCbor, decode } from '@liteship/canonical';
+import { hasTag } from '@liteship/error';
+
+function float64Bytes(high: number, low: number): Uint8Array {
+  const bytes = new Uint8Array(9);
+  bytes[0] = 0xfb;
+  const view = new DataView(bytes.buffer);
+  view.setUint32(1, high, false);
+  view.setUint32(5, low, false);
+  return bytes;
+}
+
+function numberFromBits(high: number, low: number): number {
+  const bytes = float64Bytes(high, low);
+  return new DataView(bytes.buffer).getFloat64(1, false);
+}
 
 describe('CanonicalCbor.encode — RFC 8949 Appendix A vectors', () => {
   it('encodes unsigned integers in shortest form', () => {
@@ -99,8 +114,7 @@ describe('CanonicalCbor.encode — canonical determinism', () => {
   it('encodes NaN and Infinity as float64 with pinned byte patterns', () => {
     // Lock current behavior so content-address payloads stay byte-stable.
     const nan = CanonicalCbor.encode(Number.NaN);
-    expect(nan[0]).toBe(0xfb);
-    expect(nan.length).toBe(9);
+    expect(nan).toEqual(float64Bytes(0x7ff80000, 0));
     const posInf = CanonicalCbor.encode(Number.POSITIVE_INFINITY);
     expect(posInf).toEqual(
       new Uint8Array([0xfb, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
@@ -109,6 +123,18 @@ describe('CanonicalCbor.encode — canonical determinism', () => {
     expect(negInf).toEqual(
       new Uint8Array([0xfb, 0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
     );
+  });
+
+  it('normalizes every JavaScript NaN payload to one portable byte sequence', () => {
+    const payloads = [
+      numberFromBits(0x7ff00000, 1),
+      numberFromBits(0x7fffffff, 0xffffffff),
+      numberFromBits(0xfff80000, 0x12345678),
+    ];
+    for (const value of payloads) {
+      expect(Number.isNaN(value)).toBe(true);
+      expect(CanonicalCbor.encode(value)).toEqual(float64Bytes(0x7ff80000, 0));
+    }
   });
 
   it('skips undefined values in objects (JSON-compatible)', () => {
@@ -121,5 +147,61 @@ describe('CanonicalCbor.encode — canonical determinism', () => {
     const a = CanonicalCbor.encode({ outer: { x: 1, y: 2 }, name: 'capsule' });
     const b = CanonicalCbor.encode({ name: 'capsule', outer: { y: 2, x: 1 } });
     expect(Array.from(a)).toEqual(Array.from(b));
+  });
+});
+
+describe('CanonicalCbor portable value domain', () => {
+  it.each([
+    ['Map', new Map([['a', 1]])],
+    ['Set', new Set([1])],
+    ['Date', new Date(0)],
+    ['RegExp', /x/],
+    ['Error', new Error('x')],
+    ['ArrayBuffer', new ArrayBuffer(4)],
+    ['custom prototype', Object.assign(Object.create({ inherited: true }) as object, { own: 1 })],
+  ])('refuses %s rather than collapsing it to a map', (_name, value) => {
+    expect(() => CanonicalCbor.encode(value)).toThrow();
+    try {
+      CanonicalCbor.encode(value);
+    } catch (error) {
+      expect(hasTag(error, 'UnsupportedError')).toBe(true);
+    }
+  });
+
+  it('refuses cycles, accessors, enumerable symbols, and extra array properties without invoking getters', () => {
+    const cycle: Record<string, unknown> = {};
+    cycle['self'] = cycle;
+    let getterCalls = 0;
+    const accessor = Object.defineProperty({}, 'value', {
+      enumerable: true,
+      get() {
+        getterCalls += 1;
+        return 1;
+      },
+    });
+    const symbolRecord = { ok: true } as Record<PropertyKey, unknown>;
+    symbolRecord[Symbol('hidden-semantics')] = 1;
+    const array = [1, 2] as number[] & { label?: string };
+    array.label = 'not-an-element';
+
+    for (const value of [cycle, accessor, symbolRecord, array]) {
+      expect(() => CanonicalCbor.encode(value)).toThrow();
+    }
+    expect(getterCalls).toBe(0);
+  });
+
+  it.each([
+    ['safe integer encoded as float64', float64Bytes(0x3ff00000, 0)],
+    ['negative zero encoded as float64', float64Bytes(0x80000000, 0)],
+    ['alternate positive NaN payload', float64Bytes(0x7ff00000, 1)],
+    ['negative NaN payload', float64Bytes(0xfff80000, 0)],
+  ])('decoder refuses %s because the encoder cannot emit those bytes', (_name, bytes) => {
+    expect(() => decode(bytes)).toThrow();
+    try {
+      decode(bytes);
+    } catch (error) {
+      expect(hasTag(error, 'ParseError')).toBe(true);
+      expect((error as { code: string }).code).toBe('non_canonical');
+    }
   });
 });

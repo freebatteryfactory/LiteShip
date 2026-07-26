@@ -29,7 +29,7 @@ export interface RuntimeCoordinatorConfig {
 }
 
 /**
- * Live coordinator surface: the immutable runtime {@link Plan}, ordered phase
+ * Live coordinator surface: the immutable runtime `Plan`, ordered phase
  * list, dense stores for state index + dirty epoch, and registration/mutation
  * APIs used by the compositor on the hot path.
  */
@@ -215,10 +215,10 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
 
 /**
  * Runtime coordinator namespace — single entry point for building the shared
- * {@link Plan} + ECS store bundle consumed by every host adapter.
+ * `Plan` + ECS store bundle consumed by every host adapter.
  */
 export const RuntimeCoordinator = {
-  /** Create a fresh coordinator. See {@link createRuntimeCoordinator}. */
+  /** Create a fresh coordinator. See `createRuntimeCoordinator`. */
   create: createRuntimeCoordinator,
 } as const;
 

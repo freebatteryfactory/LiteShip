@@ -182,8 +182,8 @@ readonly [`PatchOp`](../type-aliases/PatchOp.md)[]
 
 > **receipt**: (`patch`, `options?`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
-Compose the patch's `resultId` onto the [Receipt](Receipt.md) byte law: a single
-genesis-or-linked envelope whose payload is a [TypedRef](TypedRef.md) over the
+Compose the patch's `resultId` onto the `Receipt` byte law: a single
+genesis-or-linked envelope whose payload is a `TypedRef` over the
 mutation, subject-keyed by the patch identity. Async (`Promise`-returning)
 because the receipt byte law hashes via `crypto.subtle` (SHA-256) — the same
 async kernel `Receipt.createEnvelope` rides on; folding it to a sync value

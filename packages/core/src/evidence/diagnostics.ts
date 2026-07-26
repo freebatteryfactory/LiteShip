@@ -221,7 +221,7 @@ export const Diagnostics = {
    * deterministic, replayable diagnostic timestamps.
    */
   setClock,
-  /** Restore the default {@link wallClock} timestamp source. */
+  /** Restore the default `wallClock` timestamp source. */
   resetClock,
   /** Clear the deduplication set used by {@link Diagnostics.warnOnce}. */
   clearOnce,

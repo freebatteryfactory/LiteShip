@@ -8,7 +8,7 @@
 
 > **emitProvisionalDetectScript**(): `string`
 
-Defined in: [detect/src/head-probe.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/head-probe.ts#L146)
+Defined in: [detect/src/head-probe.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/head-probe.ts#L147)
 
 Build the head-inline PROVISIONAL detect script — the render-blocking script
 `@liteship/astro` injects via `injectScript('head-inline', ...)` BEFORE hydration.

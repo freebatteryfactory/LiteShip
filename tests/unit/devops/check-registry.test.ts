@@ -5,8 +5,9 @@
  * / `check-waiver-freshness`).
  *
  * The gates themselves are LEAN: they decide over an injected {@link CheckGovernanceFacts}
- * FactPack and, on the lean production path where no host injects it, fold an EMPTY
- * verdict. This meta-test is the HOST that builds the REAL facts — folding
+ * FactPack. The production host and this test both use the same fact builder;
+ * omitting the pack invalidates the execution plan before any gate runs. This
+ * meta-test folds
  * `@liteship/command`'s `CHECK_REGISTRY` / `SCRIPT_EXEMPTIONS`, the root `package.json`
  * scripts, the on-disk negative-control paths, `@liteship/gauntlet`'s `LITESHIP_WAIVERS`,
  * and the traceability ledger against an injected wall-clock date — and runs the SAME
@@ -26,9 +27,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
+import { buildCheckGovernanceFacts } from '@liteship/command/host';
 import { EXECUTION_PREREQUISITES } from '../../../scripts/lib/execution-prerequisites.js';
 import {
-  LITESHIP_WAIVERS,
   verifyGate,
   earnedAuthority,
   memoryContext,
@@ -51,62 +52,10 @@ const REPO = resolve(import.meta.dirname, '..', '..', '..');
  */
 const NOW = new Date('2026-07-20T00:00:00Z');
 
-/** Extract the root `package.json` script a check's `command` invokes (`pnpm run X` / `pnpm X` / `ENV=1 pnpm run X`). */
-function scriptOf(command: string): string {
-  const match = command.match(/(?:^|\s)pnpm(?:\s+run)?\s+([a-z][\w:-]*)/);
-  return match?.[1] ?? '';
-}
-
 /** The root `package.json` script names. */
 function rootScripts(): readonly string[] {
   const pkg = JSON.parse(readFileSync(resolve(REPO, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
   return Object.keys(pkg.scripts);
-}
-
-/** Fold the real registry / scripts / fs / waivers / ledger into the injected FactPack. */
-function buildGovernanceFacts(now: Date): CheckGovernanceFacts {
-  const scripts = rootScripts();
-  const scriptSet = new Set(scripts);
-  const registered = CHECK_REGISTRY.filter((check) => check.contexts.includes('repository')).map((check) => {
-    const script = scriptOf(check.command);
-    return { id: check.id, script, scriptExists: scriptSet.has(script) };
-  });
-  const exempted = SCRIPT_EXEMPTIONS.map((entry) => entry.script);
-
-  const negativeControls = CHECK_REGISTRY.filter((check) => check.authority === 'blocking').map((check) => {
-    const negativeControl = check.negativeControl ?? null;
-    return {
-      id: check.id,
-      blocking: true,
-      negativeControl,
-      exists: negativeControl !== null && existsSync(resolve(REPO, negativeControl)),
-    };
-  });
-
-  const gauntletWaivers = LITESHIP_WAIVERS.map((waiver) => ({
-    store: 'gauntlet' as const,
-    id: `${waiver.ruleId}@${waiver.file ?? ''}:${waiver.line ?? ''}`,
-    expires: waiver.expires,
-    expired: new Date(waiver.expires).getTime() < now.getTime(),
-  }));
-
-  const ledgerText = readFileSync(resolve(REPO, 'traceability/testing-ledger.yaml'), 'utf8');
-  // YAML permits either quote style (or none) around a scalar — accept `"…"`, `'…'`, or bare
-  // so a ledger re-serialization that flips the quote style can't silently drop the waiver.
-  const ledgerWaivers = [...ledgerText.matchAll(/^\s*expiry:\s*['"]?(\d{4}-\d{2}-\d{2})['"]?/gm)].map(
-    (match, index) => ({
-      store: 'ledger' as const,
-      id: `ledger-waiver-${index}`,
-      expires: match[1]!,
-      expired: new Date(match[1]!).getTime() < now.getTime(),
-    }),
-  );
-
-  return {
-    partition: { scripts, registered, exempted },
-    negativeControls,
-    waivers: [...gauntletWaivers, ...ledgerWaivers],
-  };
 }
 
 /** A GateContext carrying the injected check-governance facts (no fs, no clock — the gate is pure). */
@@ -114,7 +63,7 @@ function factContext(facts: CheckGovernanceFacts): GateContext {
   return { ...memoryContext({}), checkGovernance: facts };
 }
 
-const FACTS = buildGovernanceFacts(NOW);
+const FACTS = buildCheckGovernanceFacts(REPO, NOW);
 
 describe('the check-registry PARTITION is total + disjoint against the root scripts', () => {
   const scripts = FACTS.partition.scripts;
@@ -160,6 +109,16 @@ describe('execution prerequisites are real repository operations', () => {
       .filter(({ match }) => match !== null && !scripts.has(match[1]!))
       .map(({ entry }) => `${entry.id}→${entry.command}`);
     expect(missing).toEqual([]);
+  });
+});
+
+describe('the check registry is the only verification authority', () => {
+  it('does not retain the legacy parallel verify-all launcher or route a root script through it', () => {
+    const legacy = resolve(REPO, 'scripts/verify-all.sh');
+    const manifest = readFileSync(resolve(REPO, 'package.json'), 'utf8');
+    expect(existsSync(legacy)).toBe(false);
+    expect(manifest).not.toContain('verify-all.sh');
+    expect(manifest).not.toContain('ALL GATES PASSED');
   });
 });
 

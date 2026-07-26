@@ -3,10 +3,10 @@
  *
  * Before W9, `keyframesForRouting` collapsed `seq` / `par` / `choice_then` to the
  * SAME two endpoint frames (a routing LABEL, not an algebra). A single `EdgeType`
- * on one {@link TransitionNode} cannot express "A THEN B" vs "A WITH B" vs "A OR B"
+ * on one `TransitionNode` cannot express "A THEN B" vs "A WITH B" vs "A OR B"
  * — the composition is a TREE over transitions, not a flag on one.
  *
- * `TransitionProgram` is that tree. It composes {@link TransitionNode}s with REAL
+ * `TransitionProgram` is that tree. It composes `TransitionNode`s with REAL
  * duration composition and branch selection, then lowers to:
  *   - a deterministic `[0,1]` **timeline** of per-transition windows
  *     ({@link lowerTransitionProgram}) — seq total is `Σ`, par total is `max`,
@@ -63,7 +63,7 @@ export interface TransitionBranch {
 }
 
 /**
- * The composition tree over {@link TransitionNode}s.
+ * The composition tree over `TransitionNode`s.
  *
  * - `step` — one transition (Pose→Pose), optionally preceded by `delayMs` dead time.
  * - `seq` — deterministic duration composition: total is `Σ` children (+ delays),

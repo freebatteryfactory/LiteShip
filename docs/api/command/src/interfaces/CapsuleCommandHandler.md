@@ -6,7 +6,7 @@
 
 # Interface: CapsuleCommandHandler()\<Args, Payload\>
 
-Defined in: [command/src/registry.ts:565](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L565)
+Defined in: [command/src/registry.ts:579](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L579)
 
 A command handler: structured invocation in, structured result out. No stdout,
 no argv. Generic over the DECODED `Args` (what the dispatcher hands the handler
@@ -26,7 +26,7 @@ a legacy handler — reading loosely-typed `invocation.args` and returning an
 
 > **CapsuleCommandHandler**(`invocation`, `context`): `Promise`\<[`CapsuleCommandResult`](../type-aliases/CapsuleCommandResult.md)\<`Payload`\>\>
 
-Defined in: [command/src/registry.ts:569](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L569)
+Defined in: [command/src/registry.ts:583](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L583)
 
 A command handler: structured invocation in, structured result out. No stdout,
 no argv. Generic over the DECODED `Args` (what the dispatcher hands the handler

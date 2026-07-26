@@ -6,7 +6,7 @@
 
 # Interface: SourceFileRecord
 
-Defined in: [audit/src/shared.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L33)
+Defined in: [audit/src/shared.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L39)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/shared.ts:33](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **absolutePath**: `string`
 
-Defined in: [audit/src/shared.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L34)
+Defined in: [audit/src/shared.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L40)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/shared.ts:34](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **packageName**: `string` \| `null`
 
-Defined in: [audit/src/shared.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L38)
+Defined in: [audit/src/shared.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L44)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/shared.ts:38](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **relativePath**: `string`
 
-Defined in: [audit/src/shared.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L35)
+Defined in: [audit/src/shared.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L41)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/shared.ts:35](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **sourceFile**: `SourceFile`
 
-Defined in: [audit/src/shared.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L37)
+Defined in: [audit/src/shared.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L43)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [audit/src/shared.ts:37](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **text**: `string`
 
-Defined in: [audit/src/shared.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L36)
+Defined in: [audit/src/shared.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L42)

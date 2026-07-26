@@ -80,6 +80,19 @@ describe('validateGeneratedUITree', () => {
     }
   });
 
+  it('refuses cyclic hostile input without recursion or getter execution', () => {
+    const cycle: { name: string; props: Record<string, unknown>; children: unknown[] } = {
+      name: 'Card',
+      props: { title: 'cycle' },
+      children: [],
+    };
+    cycle.children.push(cycle);
+    expect(() => validateGeneratedUITree(cycle as unknown as GeneratedUINode, DEMO_COMPONENT_CATALOG)).not.toThrow();
+    const result = validateGeneratedUITree(cycle as unknown as GeneratedUINode, DEMO_COMPONENT_CATALOG);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('genui/invalid-children');
+  });
+
   it('rejects a missing required prop with genui/invalid-prop', () => {
     // Text requires `text`; omit it.
     const result = validateGeneratedUITree({ name: 'Text', props: {} }, DEMO_COMPONENT_CATALOG);

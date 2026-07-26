@@ -7,7 +7,7 @@
 # RuntimeCoordinator
 
 Runtime coordinator namespace — single entry point for building the shared
-[Plan](../../variables/Plan.md) + ECS store bundle consumed by every host adapter.
+`Plan` + ECS store bundle consumed by every host adapter.
 
 ## Type Aliases
 

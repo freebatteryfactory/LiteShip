@@ -8,7 +8,7 @@
 
 > **hasTag**\<`Tag`\>(`u`, `tag`): `u is TaggedError<Tag>`
 
-Defined in: [error/src/contract.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L127)
+Defined in: [error/src/contract.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L131)
 
 Narrowing guard for a specific tag — the data-oriented replacement for
 `instanceof SomeError`. `hasTag(e, 'ParseError')` narrows `e` to the

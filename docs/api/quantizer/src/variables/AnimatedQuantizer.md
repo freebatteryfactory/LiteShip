@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L477)
+Defined in: [quantizer/src/animated-quantizer.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L526)
 
 Animated quantizer namespace.
 
@@ -28,7 +28,7 @@ Wrap a quantizer with transition-aware output interpolation.
 
 Create an animated quantizer that interpolates outputs during transitions.
 
-Wraps an existing [ReactiveQuantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts) and applies easing/duration-based
+Wraps an existing [ReactiveQuantizer](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md) and applies easing/duration-based
 interpolation between old and new output values when a boundary crossing
 occurs. Publishes an `interpolated` fan-out of frames with progress and lerped
 numeric outputs — at ~60fps by default, or on the cadence of an injected
@@ -37,21 +37,21 @@ numeric outputs — at ~60fps by default, or on the cadence of an injected
 The wrapped quantizer's crossings are observed eagerly (one shared
 subscription): each crossing interrupts the prior animation via a per-crossing
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) — aborting breaks the `for await` over
-[Animation.run](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts), whose `finally` cancels the pending scheduler tick — and
-starts a fresh animation. Dispose the returned [Lifetime](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts) to detach the
+[Animation.run](../../../liteship/src/motion/variables/Animation.md#run), whose `finally` cancels the pending scheduler tick — and
+starts a fresh animation. Dispose the returned [Lifetime](../../../liteship/src/reactive/type-aliases/Lifetime.md) to detach the
 crossing subscription, abort the in-flight animation, and close the fan-out.
 
 #### Type Parameters
 
 ##### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 #### Parameters
 
 ##### quantizer
 
-[`ReactiveQuantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts)\<`B`\>
+[`ReactiveQuantizer`](../../../liteship/src/schema/interfaces/ReactiveQuantizer.md)\<`B`\>
 
 The reactive quantizer to wrap
 

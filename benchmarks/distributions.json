@@ -1908,6 +1908,84 @@
           "binding": "runGates"
         }
       ]
+    },
+    {
+      "name": "AnimatedQuantizer lifecycle -- 128 reentrant crossings + disposal",
+      "file": "tests/bench/quantizer.bench.ts",
+      "inputSize": 128,
+      "shape": "reentrant-terminal-crossings-per-owned-lifecycle",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/quantizer" },
+          "symbol": "AnimatedQuantizer.make",
+          "binding": "AnimatedQuantizer.make"
+        },
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/quantizer" },
+          "symbol": "AnimatedQuantizer.make.dispose",
+          "binding": "animated.dispose"
+        },
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/core" },
+          "symbol": "CellKernel.fanout",
+          "binding": "CellKernel.fanout"
+        },
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/core" },
+          "symbol": "CellKernel.replay1",
+          "binding": "CellKernel.replay1"
+        }
+      ]
+    },
+    {
+      "name": "command planChecks -- release profile",
+      "file": "tests/bench/command.bench.ts",
+      "inputSize": 46,
+      "shape": "release-profile-check-registry",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "file", "path": "packages/command/src/checks/plan.ts" },
+          "symbol": "planChecks",
+          "binding": "planChecks"
+        }
+      ]
+    },
+    {
+      "name": "command registry construction -- full catalog",
+      "file": "tests/bench/command.bench.ts",
+      "inputSize": 38,
+      "shape": "canonical-command-descriptors",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "file", "path": "packages/command/src/registry.ts" },
+          "symbol": "createCommandRegistry",
+          "binding": "createCommandRegistry"
+        }
+      ]
+    },
+    {
+      "name": "command cache identity -- structured inputs",
+      "file": "tests/bench/command.bench.ts",
+      "inputSize": 64,
+      "shape": "command-input-paths",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "file", "path": "packages/command/src/host/idempotency.ts" },
+          "symbol": "hashInputs",
+          "binding": "hashInputs"
+        }
+      ]
     }
   ]
 }

@@ -112,6 +112,28 @@ describe('asset audio laws', () => {
     );
   });
 
+  it('keeps detected pulse BPM inside the capsule invariant across supported sample rates', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(8_000, 11_025, 16_000, 22_050, 44_100, 48_000, 96_000),
+        fc.constantFrom(60, 90, 120, 180),
+        (sampleRate, targetBpm) => {
+          const spacing = Math.round((sampleRate * 60) / targetBpm);
+          const pulseWidth = Math.max(1, Math.floor(sampleRate * 0.04));
+          const samples = new Float32Array(sampleRate * 8);
+          for (let index = 0; index < samples.length; index += 1) {
+            samples[index] = index % spacing < pulseWidth ? 0.9 : 0.01;
+          }
+          const result = detectBeats({ sampleRate, samples });
+          expect(result.beats.length).toBeGreaterThan(0);
+          expect(result.bpm).toBeGreaterThanOrEqual(40);
+          expect(result.bpm).toBeLessThanOrEqual(240);
+        },
+      ),
+      { numRuns: 80, seed: 0x41535345 },
+    );
+  });
+
   it('interleaved identical channels preserve the mono frame-domain result', () => {
     fc.assert(
       fc.property(

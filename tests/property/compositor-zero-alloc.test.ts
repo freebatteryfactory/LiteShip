@@ -1,28 +1,26 @@
 // PROVES: INV-COMPOSITOR-ZERO-ALLOC
 /**
- * The MEASURED proof that `@liteship/core`'s Compositor per-frame compose hot path is
- * GENUINELY zero-allocation — zero RETAINED *and* zero TRANSIENT — the claim the
- * module + factory docs make ("zero-allocation hot path backed by
- * CompositorStatePool"), held to a real allocation measurement in BOTH senses.
+ * The MEASURED, cross-platform qualification of `@liteship/core`'s Compositor
+ * per-frame compose and publish hot paths. The blocking verdict is the ratio to a
+ * known-allocating reference, not a platform-specific absolute byte count.
  *
  * RETAINED: the compose body acquires a POOLED CompositeState, refills a REUSED
  * dirty-name scratch (no per-tick `Array.from`/`getDirty`/closure), and mutates the
- * pooled state in place — so the LIVE heap (the growth surviving a forced GC) stays
- * flat at ≈ 0 bytes/op.
+ * pooled state in place — so its retained growth stays a negligible fraction of a
+ * reference that intentionally retains one object per operation.
  *
  * TRANSIENT: the reactive publish that feeds `changes` is now a raw synchronous
  * fan-out over a compositor-owned listener set (replacing `SubscriptionRef.set`,
  * which minted a PubSub/replay-buffer node every publish — a ≈ 22 B/op TRANSIENT
  * floor even with no subscriber). With no `changes` subscriber the listener set is
- * empty and the publish CHURNS nothing (≈ 0 B/op); a live subscriber adds only the
- * bounded `Stream.callback` bridge enqueue (≈ 13 B/op). The live gate is structurally
- * blind to churn (it forces GC between batches), so the gate emits a SECOND, parseable
- * `TRANSIENT` line per fixture and this test asserts both publish budgets.
+ * empty and publish stays below the negligible-ratio ceiling; a live subscriber adds
+ * the separately bounded `Stream.callback` bridge enqueue. The live gate is
+ * structurally blind to churn (it forces GC between batches), so the gate emits a
+ * SECOND, parseable `TRANSIENT` line per fixture and this test asserts both ratios.
  *
  * Like its token-buffer sibling, the measurement needs a forced `global.gc()`, so
  * this test SPAWNS the committed `scripts/alloc-gate.ts` under `node --expose-gc`
- * and asserts the compositor `RESULT` (retained) + `TRANSIENT` (churn) lines are
- * within the proven budgets.
+ * and asserts the compositor `RELATIVE` retained + transient verdicts.
  *
  * @module
  */
@@ -42,11 +40,7 @@ const REPO_ROOT = resolve(here, '../..');
 const GATE = resolve(REPO_ROOT, 'scripts/alloc-gate.ts');
 
 async function runAllocGate(): Promise<{ stdout: string; status: number }> {
-  const result = await spawnArgvCapture(
-    process.execPath,
-    ['--expose-gc', '--import', 'tsx', GATE],
-    { cwd: REPO_ROOT },
-  );
+  const result = await spawnArgvCapture(process.execPath, ['--expose-gc', '--import', 'tsx', GATE], { cwd: REPO_ROOT });
   return { stdout: result.stdout, status: result.exitCode };
 }
 
@@ -65,12 +59,7 @@ function parseRelative(
   for (const line of stdout.split('\n')) {
     if (!line.startsWith('RELATIVE\t')) continue;
     const [, label, ratio, maxRatio, verdict] = line.split('\t');
-    if (
-      label !== undefined &&
-      ratio !== undefined &&
-      maxRatio !== undefined &&
-      verdict !== undefined
-    ) {
+    if (label !== undefined && ratio !== undefined && maxRatio !== undefined && verdict !== undefined) {
       out.push({ label, ratio: Number(ratio), maxRatio: Number(maxRatio), verdict });
     }
   }
@@ -100,10 +89,7 @@ describe('Compositor.add — CompositorQuantizer accepted-type contract (compile
     // (`quantizer.state.read()` on an absent `state`), which is exactly the failure the
     // type prevents — so the assertion lives in a closure that is only typechecked, not
     // run. If the `@ts-expect-error` stops biting, the tightening regressed to the cast.
-    const _rejectsBaseOnly = (
-      compositor: ReturnType<typeof Compositor.create>,
-      baseOnly: Quantizer<B>,
-    ): void => {
+    const _rejectsBaseOnly = (compositor: ReturnType<typeof Compositor.create>, baseOnly: Quantizer<B>): void => {
       // @ts-expect-error — Quantizer<B> carries no required stateSync and no reactive state.
       compositor.add('bad', baseOnly);
     };
@@ -131,47 +117,51 @@ describe('Compositor.add — CompositorQuantizer accepted-type contract (compile
 });
 
 describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-ALLOC)', () => {
-  it('the compositor compose hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)', async () => {
-    const { stdout, status } = await runAllocGate();
-    expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
+  it(
+    'the compositor compose hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)',
+    async () => {
+      const { stdout, status } = await runAllocGate();
+      expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
 
-    const relative = parseRelative(stdout);
-    const compositor = relative.find(
-      (r) => r.label.includes('compositor compute') && r.label.includes('retaining ref'),
-    );
-    expect(compositor, `no compositor-compute RELATIVE line in:\n${stdout}`).toBeDefined();
-    expect(compositor!.verdict).toBe('PASS');
-    // The compose path's per-op live growth is a small fraction (≤ RELATIVE_MAX_RATIO)
-    // of a path that genuinely RETAINS per op. A ratio cancels the platform's heap
-    // unit — true zero-alloc on every OS, where an absolute byte budget is not.
-    expect(compositor!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
-  }, scaledTimeout(120_000));
+      const relative = parseRelative(stdout);
+      const compositor = relative.find(
+        (r) => r.label.includes('compositor compute') && r.label.includes('retaining ref'),
+      );
+      expect(compositor, `no compositor-compute RELATIVE line in:\n${stdout}`).toBeDefined();
+      expect(compositor!.verdict).toBe('PASS');
+      // The compose path's per-op live growth is a small fraction (≤ RELATIVE_MAX_RATIO)
+      // of a path that genuinely RETAINS per op. A ratio cancels the platform's heap
+      // unit — true zero-alloc on every OS, where an absolute byte budget is not.
+      expect(compositor!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
+    },
+    scaledTimeout(120_000),
+  );
 
-  it('the compositor reactive publish is a NEGLIGIBLE fraction of churn with no subscriber, and a BOUNDED fraction with one (platform-robust transient ratios)', async () => {
-    const { stdout, status } = await runAllocGate();
-    expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
+  it(
+    'the compositor reactive publish is a NEGLIGIBLE fraction of churn with no subscriber, and a BOUNDED fraction with one (platform-robust transient ratios)',
+    async () => {
+      const { stdout, status } = await runAllocGate();
+      expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
 
-    const relative = parseRelative(stdout);
-    const noSub = relative.find(
-      (r) => r.label.includes('no subscriber') && r.label.includes('churning ref'),
-    );
-    expect(noSub, `no "no subscriber" RELATIVE line in:\n${stdout}`).toBeDefined();
-    expect(noSub!.verdict).toBe('PASS');
-    // The eliminated SubscriptionRef.set churned a PubSub/replay node every publish
-    // even with no subscriber; the raw listener-set publish churns a negligible
-    // fraction of one full object-allocation per op.
-    expect(noSub!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
+      const relative = parseRelative(stdout);
+      const noSub = relative.find((r) => r.label.includes('no subscriber') && r.label.includes('churning ref'));
+      expect(noSub, `no "no subscriber" RELATIVE line in:\n${stdout}`).toBeDefined();
+      expect(noSub!.verdict).toBe('PASS');
+      // The eliminated SubscriptionRef.set churned a PubSub/replay node every publish
+      // even with no subscriber; the raw listener-set publish churns a negligible
+      // fraction of one full object-allocation per op.
+      expect(noSub!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
 
-    const withSub = relative.find(
-      (r) => r.label.includes('live subscriber') && r.label.includes('churning ref'),
-    );
-    expect(withSub, `no "live subscriber" RELATIVE line in:\n${stdout}`).toBeDefined();
-    expect(withSub!.verdict).toBe('PASS');
-    // The live-subscriber publish DOES allocate the bridge enqueue (not claimed
-    // zero-alloc), but it stays cheaper than allocating a whole object per op — a
-    // bounded ceiling that catches a regression to the old PubSub-with-subscriber cost.
-    expect(withSub!.ratio).toBeLessThanOrEqual(RELATIVE_SUBSCRIBER_MAX_RATIO);
-  }, scaledTimeout(120_000));
+      const withSub = relative.find((r) => r.label.includes('live subscriber') && r.label.includes('churning ref'));
+      expect(withSub, `no "live subscriber" RELATIVE line in:\n${stdout}`).toBeDefined();
+      expect(withSub!.verdict).toBe('PASS');
+      // The live-subscriber publish DOES allocate the bridge enqueue (not claimed
+      // zero-alloc), but it stays cheaper than allocating a whole object per op — a
+      // bounded ceiling that catches a regression to the old PubSub-with-subscriber cost.
+      expect(withSub!.ratio).toBeLessThanOrEqual(RELATIVE_SUBSCRIBER_MAX_RATIO);
+    },
+    scaledTimeout(120_000),
+  );
 
   it('the compositor reactive publish is a raw listener-set fan-out, NOT the per-publish-allocating SubscriptionRef.set (source drift guard)', () => {
     // Pins the WIRING the transient gate measures: the publish primitive the gate's
@@ -183,9 +173,7 @@ describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-A
     // Strip line + block comments so the explanatory prose (which names the replaced
     // `SubscriptionRef.set` to document WHY) is not mistaken for a usage. We assert on
     // the CODE only.
-    const code = source
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
     // No `SubscriptionRef` import or call survives in code — the publish-allocating
     // primitive is fully gone (a revert reintroduces the ≈ 22 B/op TRANSIENT floor).
     expect(

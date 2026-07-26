@@ -493,6 +493,9 @@ importers:
       '@liteship/scene':
         specifier: workspace:*
         version: link:../scene
+      typescript:
+        specifier: npm:@typescript/typescript6@6.0.2
+        version: '@typescript/typescript6@npm:typescript@6.0.2'
       undici:
         specifier: '>=7.28.0 <8'
         version: 7.28.0
@@ -693,6 +696,9 @@ importers:
 
   packages/mcp-server:
     dependencies:
+      '@liteship/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@liteship/command':
         specifier: workspace:*
         version: link:../command

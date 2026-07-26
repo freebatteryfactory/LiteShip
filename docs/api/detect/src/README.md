@@ -16,6 +16,7 @@ network connection quality. Maps detected capabilities to the
 
 ## Interfaces
 
+- [CapabilityTierProjection](interfaces/CapabilityTierProjection.md)
 - [DetectionResult](interfaces/DetectionResult.md)
 - [DeviceCapabilities](interfaces/DeviceCapabilities.md)
 - [ExtendedDetectionResult](interfaces/ExtendedDetectionResult.md)
@@ -25,6 +26,7 @@ network connection quality. Maps detected capabilities to the
 
 ## Type Aliases
 
+- [CapabilityAxisValues](type-aliases/CapabilityAxisValues.md)
 - [CapAxis](type-aliases/CapAxis.md)
 - [DesignTier](type-aliases/DesignTier.md)
 - [DetectReadyDetail](type-aliases/DetectReadyDetail.md)
@@ -54,6 +56,7 @@ network connection quality. Maps detected capabilities to the
 - [headProbeMotionTier](functions/headProbeMotionTier.md)
 - [motionTierFromCapabilities](functions/motionTierFromCapabilities.md)
 - [onDetectReady](functions/onDetectReady.md)
+- [projectCapabilityAxisValues](functions/projectCapabilityAxisValues.md)
 - [resetDetectionCaches](functions/resetDetectionCaches.md)
 - [watchCapabilities](functions/watchCapabilities.md)
 

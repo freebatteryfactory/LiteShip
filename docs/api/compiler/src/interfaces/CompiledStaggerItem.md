@@ -30,7 +30,7 @@ Defined in: [compiler/src/stagger-compile.ts:26](https://github.com/freebatteryf
 
 ### motion
 
-> `readonly` **motion**: `LoweredMotionPlan`
+> `readonly` **motion**: [`LoweredMotionPlan`](../../../liteship/src/motion/interfaces/LoweredMotionPlan.md)
 
 Defined in: [compiler/src/stagger-compile.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/stagger-compile.ts#L28)
 

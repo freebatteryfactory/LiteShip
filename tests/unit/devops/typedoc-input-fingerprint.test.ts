@@ -4,8 +4,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
   assertTypeDocInputFingerprint,
+  buildTypeDocInputFingerprint,
   fingerprintTypeDocInputs,
   projectTypeDocSource,
+  writeTypeDocInputFingerprint,
 } from '../../../scripts/lib/typedoc-input-fingerprint.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -75,6 +77,40 @@ describe('TypeDoc input fingerprint', () => {
         '{"schemaVersion":1,"algorithm":"sha256","digest":"sha256:stale","inputCount":0}\n',
       );
       expect(() => assertTypeDocInputFingerprint(root)).toThrow(/is stale/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('addresses the TypeDoc, TSDoc, and configured README inputs that shape generated API docs', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-typedoc-config-'));
+    try {
+      mkdirSync(resolve(root, 'packages', 'demo', 'src'), { recursive: true });
+      writeFileSync(
+        resolve(root, 'typedoc.json'),
+        `${JSON.stringify({ entryPoints: ['packages/demo/src/index.ts'], readme: 'TYPEDOC.md' })}\n`,
+      );
+      writeFileSync(resolve(root, 'tsdoc.json'), '{"tagDefinitions":[]}\n');
+      writeFileSync(resolve(root, 'tsconfig.json'), '{"extends":"./tsconfig.base.json"}\n');
+      writeFileSync(resolve(root, 'tsconfig.base.json'), '{"compilerOptions":{"strict":true}}\n');
+      writeFileSync(resolve(root, 'TYPEDOC.md'), '# API\n');
+      writeFileSync(resolve(root, 'packages', 'demo', 'src', 'index.ts'), '/** Public. */\nexport const value = 1;\n');
+
+      const original = buildTypeDocInputFingerprint(root);
+      mkdirSync(resolve(root, 'docs', 'api'), { recursive: true });
+      writeTypeDocInputFingerprint(root);
+      expect(() => assertTypeDocInputFingerprint(root)).not.toThrow();
+      writeFileSync(resolve(root, 'tsdoc.json'), '{"tagDefinitions":[{"tagName":"@example"}]}\n');
+      expect(buildTypeDocInputFingerprint(root).digest).not.toBe(original.digest);
+      expect(() => assertTypeDocInputFingerprint(root)).toThrow(/is stale/);
+
+      writeFileSync(resolve(root, 'tsdoc.json'), '{"tagDefinitions":[]}\n');
+      writeFileSync(resolve(root, 'TYPEDOC.md'), '# Changed API\n');
+      expect(buildTypeDocInputFingerprint(root).digest).not.toBe(original.digest);
+
+      writeFileSync(resolve(root, 'TYPEDOC.md'), '# API\n');
+      writeFileSync(resolve(root, 'tsconfig.base.json'), '{"compilerOptions":{"strict":false}}\n');
+      expect(buildTypeDocInputFingerprint(root).digest).not.toBe(original.digest);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

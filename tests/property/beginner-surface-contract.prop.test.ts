@@ -40,7 +40,7 @@ describe('beginner surface adversarial properties', () => {
   it('is invariant to source order and harmless comment/string noise', () => {
     fc.assert(
       fc.property(
-        fc.shuffledSubarray(pavedRoad, {
+        fc.shuffledSubarray([...pavedRoad], {
           minLength: pavedRoad.length,
           maxLength: pavedRoad.length,
         }),

@@ -6,7 +6,7 @@
 
 # Interface: AuditLocation
 
-Defined in: [audit/src/types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L61)
+Defined in: [audit/src/types.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L104)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:61](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **column?**: `number`
 
-Defined in: [audit/src/types.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L64)
+Defined in: [audit/src/types.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L107)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:64](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/types.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L62)
+Defined in: [audit/src/types.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L105)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [audit/src/types.ts:62](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **line?**: `number`
 
-Defined in: [audit/src/types.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L63)
+Defined in: [audit/src/types.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L106)

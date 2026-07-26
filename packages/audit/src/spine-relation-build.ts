@@ -89,6 +89,14 @@ function moduleSpecifier(runtimeModule: string): string {
   return normalized.startsWith('.') ? normalized : `./${normalized}`;
 }
 
+/** Qualify a type expression against a namespace import, including value-member `typeof` probes. */
+function qualifyTypeExpression(namespace: string, expression: string): string {
+  const trimmed = expression.trim();
+  return trimmed.startsWith('typeof ')
+    ? `typeof ${namespace}.${trimmed.slice('typeof '.length)}`
+    : `${namespace}.${trimmed}`;
+}
+
 interface ProbeLines {
   readonly admission: SpineTypeAdmission;
   readonly spineDeclLine: number; // 0-based line of `declare const s_i`
@@ -127,8 +135,8 @@ function generateProbe(admissions: readonly SpineTypeAdmission[]): {
   const probes: ProbeLines[] = [];
   admissions.forEach((admission, i) => {
     const alias = moduleAlias.get(admission.runtimeModule)!;
-    const spineType = `Spine.${admission.spineExpr}`;
-    const runtimeType = `${alias}.${admission.runtimeExpr}`;
+    const spineType = qualifyTypeExpression('Spine', admission.spineExpr);
+    const runtimeType = qualifyTypeExpression(alias, admission.runtimeExpr);
     const spineDeclLine = lines.length;
     lines.push(`declare const s_${i}: ${spineType};`);
     const runtimeDeclLine = lines.length;

@@ -167,6 +167,7 @@ export type BenchmarkEvidenceReason =
   | 'complexity-regression'
   | 'allocation-budget-exceeded'
   | 'leak-slope-exceeded'
+  | 'under-replicated'
   | 'low-r2'
   | 'unstable-variance'
   | 'stale-source-sha'
@@ -363,6 +364,10 @@ function deriveBenchmarkAdmission(input: BenchmarkEvidenceInput): BenchmarkEvide
   if (input.complexity !== null && input.complexity.fittedR2 < input.confidence.minimumR2) {
     unknowns.push('low-r2');
   }
+  // One observation cannot establish variance or uncertainty. This is the
+  // mathematical floor, not a claim-class performance threshold; stronger
+  // minima remain an explicit benchmark-constitution policy decision.
+  if (input.measurement.repetitions < 2) unknowns.push('under-replicated');
   if (input.confidence.coefficientOfVariation > input.confidence.maximumCoefficientOfVariation) {
     unknowns.push('unstable-variance');
   }

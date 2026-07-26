@@ -13,7 +13,7 @@ Defined in: [core/src/reactive/live-cell.ts:174](https://github.com/freebatteryf
 Wrap an arbitrary value in a [LiveCell](../type-aliases/LiveCell.md) with freshly minted identity + HLC.
 The live cell IS its own disposable ([AsyncOwnedResource](../interfaces/AsyncOwnedResource.md)) — awaiting
 `lc.dispose()` closes the value kernel + crossings channel exactly once. `clock`
-(default [wallClock](../variables/wallClock.md)) is the injected time source for the envelope HLC —
+(default `wallClock`) is the injected time source for the envelope HLC —
 pass a `manualClock`/`fixedClock` for deterministic replay.
 
 ## Type Parameters

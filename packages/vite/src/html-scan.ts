@@ -1,9 +1,10 @@
 /**
  * Character-level HTML scanning helpers for the `data-liteship` macro transform.
  *
- * Mirrors the offset-preserving blanking idiom from {@link blankCssCommentsAndStrings}
- * in `css-scan.ts`: comments and code-sample contents are blanked to spaces while
- * newlines and every character offset stay 1:1 with the original source.
+ * Mirrors the offset-preserving blanking contract exported by
+ * `@liteship/compiler/parse`: comments and code-sample contents are blanked to
+ * spaces while newlines and every character offset stay 1:1 with the original
+ * source.
  *
  * @module
  */

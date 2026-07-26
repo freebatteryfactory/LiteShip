@@ -129,8 +129,10 @@ describe('Astro host contract properties', () => {
           };
           const registered: string[] = [];
           await runIsolatedAstroConfigSetup(integration(options), {
-            updateConfig() {},
-            addClientDirective(value) {
+            updateConfig() {
+              return {} as never;
+            },
+            addClientDirective(value: { readonly name: string }) {
               registered.push(value.name);
             },
             injectScript() {},

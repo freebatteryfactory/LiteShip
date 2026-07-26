@@ -24,7 +24,7 @@ implicit frame lookup over threading the `frames` array through props.
 
 #### frames
 
-readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
+readonly [`VideoFrameOutput`](../../../liteship/src/media/interfaces/VideoFrameOutput.md)[]
 
 ## Returns
 

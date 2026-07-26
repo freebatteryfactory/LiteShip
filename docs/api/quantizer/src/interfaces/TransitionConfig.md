@@ -13,7 +13,7 @@ Per-transition animation parameters.
 Used by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md) to drive interpolation between two
 state output records. `duration` of `0` produces an instantaneous snap.
 
-Plain `number` literals are accepted alongside branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md);
+Plain `number` literals are accepted alongside branded [Millis](../../../liteship/src/schema/variables/Millis.md);
 the resolver brands internally (the one sanctioned cast site lives in
 `@liteship/core` brands), so `{ duration: 300 }` needs no import.
 
@@ -25,7 +25,7 @@ the resolver brands internally (the one sanctioned cast site lives in
 
 Defined in: [quantizer/src/transition.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L27)
 
-Delay before the animation begins, in milliseconds (plain `number` or branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
+Delay before the animation begins, in milliseconds (plain `number` or branded [Millis](../../../liteship/src/schema/variables/Millis.md)).
 
 ***
 
@@ -35,7 +35,7 @@ Delay before the animation begins, in milliseconds (plain `number` or branded [M
 
 Defined in: [quantizer/src/transition.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L23)
 
-Animation duration in milliseconds (plain `number` or branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
+Animation duration in milliseconds (plain `number` or branded [Millis](../../../liteship/src/schema/variables/Millis.md)).
 
 ***
 

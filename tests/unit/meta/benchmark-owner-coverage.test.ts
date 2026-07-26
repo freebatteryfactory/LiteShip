@@ -43,7 +43,7 @@ describe('benchmark owner coverage projection', () => {
       ],
     });
 
-    expect(projectBenchmarkOwnerCoverage([core], [distribution('@liteship/core/testing')], [])[0]).toMatchObject({
+    expect(projectBenchmarkOwnerCoverage([core], [distribution('@liteship/core/harness')], [])[0]).toMatchObject({
       distributionCount: 1,
       status: 'covered',
     });

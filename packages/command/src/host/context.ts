@@ -23,6 +23,7 @@ import { VitestRunner } from './vitest-runner.js';
 import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
+import { buildCheckGovernanceFacts } from './check-governance.js';
 import { runPlumbScan } from './plumb-scan.js';
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
@@ -109,8 +110,19 @@ export function createNodeCommandContext(
     // performance.now (a monotonic DURATION reading whose value is not epoch ms —
     // feeding it into `new Date()` would land near 1970 and silently mis-expire
     // every waiver).
-    runGauntlet: async (globs) =>
-      litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector, opts.earlyReturnDetector),
+    runGauntlet: async (globs) => {
+      const now = new Date(wallClock.now());
+      return litelaunchGauntlet(
+        cwd,
+        now,
+        globs,
+        undefined,
+        opts.skipDetector,
+        opts.earlyReturnDetector,
+        undefined,
+        buildCheckGovernanceFacts(cwd, now),
+      );
+    },
     // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the
     // invariant scan needs `@liteship/audit`'s `normalizeRepoPath` (the one B5b
     // slash-normalize home), and `@liteship/command` must not import `@liteship/audit`
@@ -128,15 +140,51 @@ export function createNodeCommandContext(
       if (projection === 'onset') return detectOnsets(decoded).length;
       return computeWaveform(decoded, { bins: 512 }).length;
     },
-    loadSceneModule: async (scenePath) =>
-      (await import(/* @vite-ignore */ pathToFileURL(resolveFrom(scenePath)).href)) as Record<string, unknown>,
+    loadSceneModule: async (scenePath) => {
+      try {
+        return (await import(/* @vite-ignore */ pathToFileURL(resolveFrom(scenePath)).href)) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    },
     runSceneCompile: async (mod) => {
-      // Scene compile fns are sync (they return a CompiledScene descriptor); invoke
-      // for the compile side effect. The legacy `Effect.isEffect(result)` branch is
-      // retired — no compile fn returns an Effect anymore (Wave 8).
-      const compileFn = Object.values(mod).find((v): v is () => unknown => typeof v === 'function');
-      if (!compileFn) return;
-      compileFn();
+      // Scene modules expose an explicit compile* function. Execute it exactly
+      // once, then validate the structural projection consumed by command. This
+      // keeps scene semantics in @liteship/scene while preventing the command
+      // layer from re-deriving duration from raw authoring data.
+      const compileEntries = Object.entries(mod).filter(
+        ([name, value]) => /^compile(?:[A-Z_]|$)/.test(name) && typeof value === 'function',
+      );
+      if (compileEntries.length === 0) {
+        throw new Error('scene module exports no compile function');
+      }
+      if (compileEntries.length > 1) {
+        throw new Error(
+          `scene module exports multiple compile functions (${compileEntries.map(([name]) => name).join(', ')}); export exactly one`,
+        );
+      }
+      const compileEntry = compileEntries[0]!;
+      if (typeof compileEntry[1] !== 'function') throw new Error('scene compile export is not callable');
+      const compiled = compileEntry[1]();
+      if (typeof compiled !== 'object' || compiled === null) {
+        throw new Error(`scene compile function returned ${String(compiled)} instead of a CompiledScene descriptor`);
+      }
+      const candidate = compiled as Record<string, unknown>;
+      const durationMs = candidate['duration'];
+      const fps = candidate['fps'];
+      const trackSpawns = candidate['trackSpawns'];
+      if (
+        typeof durationMs !== 'number' ||
+        !Number.isFinite(durationMs) ||
+        durationMs < 0 ||
+        typeof fps !== 'number' ||
+        !Number.isFinite(fps) ||
+        fps <= 0 ||
+        !Array.isArray(trackSpawns)
+      ) {
+        throw new Error('scene compile function returned an invalid CompiledScene descriptor');
+      }
+      return { durationMs, fps, trackCount: trackSpawns.length };
     },
     renderScene: async ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) => {
       // Compositor.create is sync-first (Wave 2): it returns the live instance

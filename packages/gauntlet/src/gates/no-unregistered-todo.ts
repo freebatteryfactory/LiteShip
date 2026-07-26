@@ -119,6 +119,7 @@ export const noUnregisteredTodoGate: Gate = defineGate({
   level: 'L1',
   describe:
     'Flags a bare intent-debt directive comment (TODO / FIXME / HACK) in packages/*/src that names no registered obligation — a genuine deferral must be enrolled in traceability/obligations.yaml and cited by its OBL-<AREA>-<slug> id.',
+  access: {},
   run: scan,
   fixtures: {
     red: {

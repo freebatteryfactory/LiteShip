@@ -152,32 +152,62 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
  */
 export async function transformCss(code: string, id: string, ctx: TransformCssContext): Promise<string | null> {
   const { cache, projectRoot, dirs, quantizeContainer } = ctx;
-
-  // Quick check -- skip files with no @liteship at-rules
-  const hasToken = code.includes('@token');
-  const hasTheme = code.includes('@theme');
-  const hasStyle = code.includes('@style');
-  const hasQuantize = code.includes('@quantize');
-
-  // Boundary-shadowing diagnostic (#114): must run BEFORE the early return so a
-  // foreign app.css (no @liteship at-rules) still gets checked against compiled
-  // boundary output from other sheets in the same project.
-  if (!hasQuantize && cache.lastCompiledBoundaryCss.size > 0) {
-    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
-    const boundaryCss = [...cache.lastCompiledBoundaryCss.values()].join('\n');
-    for (const warning of diagnoseBoundaryShadowing(boundaryCss, normalizeCssLineEndings(code), id)) {
-      ctx.warn(warning);
-    }
-  }
-
-  if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) return null;
-
-  let transformed = normalizeCssLineEndings(code);
+  const normalizedCode = normalizeCssLineEndings(code);
   // Comment- and string-blanked copy of the original source for
   // parse-miss diagnostics: marker positions stay stable across
   // phases, and markers inside comments, string values, or data
   // URLs never trigger warnings.
-  const scanBlanked = blankCssCommentsAndStrings(transformed);
+  const scanBlanked = blankCssCommentsAndStrings(normalizedCode);
+
+  // Quick check -- use the parser's offset-preserving scan image so marker
+  // text in comments, strings, and url() values never changes transform or
+  // diagnostic classification.
+  const hasToken = scanBlanked.includes('@token');
+  const hasTheme = scanBlanked.includes('@theme');
+  const hasStyle = scanBlanked.includes('@style');
+  const hasQuantize = scanBlanked.includes('@quantize');
+  const sourceQuantizeBlocks = hasQuantize ? parseQuantizeBlocks(normalizedCode, id) : [];
+  const foreignCss = blankParsedAtRuleBlocks(
+    normalizedCode,
+    '@quantize',
+    sourceQuantizeBlocks,
+    (block) => block.boundaryName,
+  );
+  const nextBoundaryCss: string[] = [];
+
+  /** Commit shadow evidence only after the transform completes successfully. */
+  const commitShadowEvidence = async (): Promise<void> => {
+    cache.lastCompiledBoundaryCss.delete(id);
+    if (nextBoundaryCss.length > 0) {
+      cache.lastCompiledBoundaryCss.set(id, nextBoundaryCss.join('\n'));
+    }
+    if (foreignCss.trim().length > 0) cache.lastForeignCss.set(id, foreignCss);
+    else cache.lastForeignCss.delete(id);
+
+    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
+    const warnings = new Set<string>();
+    const currentForeign = cache.lastForeignCss.get(id);
+    if (currentForeign !== undefined && cache.lastCompiledBoundaryCss.size > 0) {
+      const allBoundaryCss = [...cache.lastCompiledBoundaryCss.values()].join('\n');
+      for (const warning of diagnoseBoundaryShadowing(allBoundaryCss, currentForeign, id)) warnings.add(warning);
+    }
+    const currentBoundary = cache.lastCompiledBoundaryCss.get(id);
+    if (currentBoundary !== undefined) {
+      for (const [foreignId, retainedForeignCss] of cache.lastForeignCss) {
+        for (const warning of diagnoseBoundaryShadowing(currentBoundary, retainedForeignCss, foreignId)) {
+          warnings.add(warning);
+        }
+      }
+    }
+    for (const warning of warnings) ctx.warn(warning);
+  };
+
+  if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) {
+    await commitShadowEvidence();
+    return null;
+  }
+
+  let transformed = normalizedCode;
 
   // ---- Phase 1: @token -> CSS custom properties + @property ----
   if (hasToken) {
@@ -338,9 +368,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       }
 
       const compiled = compileQuantizeBlock(block, boundary, { viewportContainerNames });
-      // Keyed overwrite — re-transforming this block replaces its own entry
-      // instead of appending forever across HMR edits.
-      cache.lastCompiledBoundaryCss.set(cacheKey, compiled);
+      nextBoundaryCss.push(compiled);
       const blockSpan = findAtRuleBlock(transformed, '@quantize', block.boundaryName);
 
       if (blockSpan) {
@@ -364,6 +392,8 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
     }
   }
 
+  await commitShadowEvidence();
+
   if (transformed === code) return null;
 
   return transformed;
@@ -372,6 +402,27 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Blank every parser-admitted at-rule block while preserving source offsets
+ * and line breaks. Repeated names are consumed one at a time because each
+ * accepted span is blanked before the next lookup.
+ */
+function blankParsedAtRuleBlocks<T>(
+  css: string,
+  marker: string,
+  blocks: readonly T[],
+  nameOf: (block: T) => string,
+): string {
+  let result = css;
+  for (const block of blocks) {
+    const span = findAtRuleBlock(result, marker, nameOf(block));
+    if (!span) continue;
+    const blank = result.slice(span.start, span.end).replace(/[^\n]/g, ' ');
+    result = result.slice(0, span.start) + blank + result.slice(span.end);
+  }
+  return result;
+}
 
 /**
  * Find the full span of an at-rule block in CSS source.

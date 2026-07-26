@@ -8,11 +8,12 @@
 
 > **exportVideoEncoded**(`graph`, `encode`): `Promise`\<[`EncodedVideoExport`](../interfaces/EncodedVideoExport.md)\>
 
-Defined in: [stage/src/dual-export.ts:460](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L460)
+Defined in: [stage/src/dual-export.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L441)
 
 Cast the graph to a video AND run a REAL byte-encode through the injected
 [FrameEncoder](../type-aliases/FrameEncoder.md). Produces the same frame stream as [exportVideo](exportVideo.md),
-hands it to the encoder (ffmpeg headless, or WebCodecs in a browser wrapper),
+hands it to the encoder (ffmpeg headless, or another host implementation of
+this exact CompositeState encoder contract),
 and folds the encoded bytes' content address into the export node's
 `artifactDigest`. Stage's core imports no codec — `encode` is injected.
 
@@ -24,7 +25,7 @@ node's digest is a content address OF those bytes, not just the frames.
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 ### encode
 

@@ -6,7 +6,7 @@
 
 # Interface: LspCommand
 
-Defined in: [mcp-server/src/lsp/types.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L168)
+Defined in: [mcp-server/src/lsp/types.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L157)
 
 LSP `Command` (§Command) — a client-executed command carrying its arguments.
 
@@ -16,7 +16,7 @@ LSP `Command` (§Command) — a client-executed command carrying its arguments.
 
 > `readonly` **arguments**: readonly `unknown`[]
 
-Defined in: [mcp-server/src/lsp/types.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L171)
+Defined in: [mcp-server/src/lsp/types.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L160)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/lsp/types.ts:171](https://github.com/freebatteryfact
 
 > `readonly` **command**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L170)
+Defined in: [mcp-server/src/lsp/types.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L159)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [mcp-server/src/lsp/types.ts:170](https://github.com/freebatteryfact
 
 > `readonly` **title**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L169)
+Defined in: [mcp-server/src/lsp/types.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L158)

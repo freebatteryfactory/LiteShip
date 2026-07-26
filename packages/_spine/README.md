@@ -13,23 +13,23 @@ pnpm add @liteship/core # brings @liteship/_spine with it
 ## 30 seconds
 
 ```ts
-import type { MotionTier, CapLevel } from '@liteship/_spine';
+import type { MotionTier, CapTier } from '@liteship/_spine';
 
 const motion: MotionTier = 'transitions'; // 'none' | 'transitions' | 'animations' | 'physics' | 'compute'
-const cap: CapLevel = 'animated';         // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+const cap: CapTier = 'animated';          // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 ```
 
-This compiles and nothing runs — the npm tarball contains no JavaScript, only `.d.ts` files. Type-checking without errors is the success criterion.
+This compiles and no runtime module is loaded. The npm tarball contains the declaration spine plus a small throwing JavaScript stub whose only job is to explain accidental value imports. Type-checking without errors is the success criterion.
 
 ## Where it sits
 
-This is the type-only layer under the foundation: `@liteship/core`, `@liteship/scene`, and `@liteship/assets` depend on it so their published `.d.ts` files can reference one shared set of contracts instead of duplicating them. It has no runtime dependencies and ships no JavaScript. The runtime implementations of every type declared here live in the corresponding `@liteship/*` package. See the
+This is the type-only layer under the foundation: `@liteship/core`, `@liteship/scene`, and `@liteship/assets` depend on it so their published `.d.ts` files can reference one shared set of contracts instead of duplicating them. It has no runtime dependencies and no usable JavaScript API. Runtime implementations of mirrored declarations live in the corresponding `@liteship/*` package. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
-for the full layout.
+for the full layout. Its shipped stub exists only to fail accidental value imports with a teaching error.
 
 ## If it does nothing
 
-A value import (`import { MotionTier } from '@liteship/_spine'`) fails at runtime or bundle time with a missing-module error: there is no JavaScript here. Use `import type`, or import the runtime value from the package that implements it.
+A value import (`import { MotionTier } from '@liteship/_spine'`) reaches the package's teaching stub and fails immediately with an error explaining that the package is type-only. Use `import type`, or import the runtime value from the package that implements it.
 
 ## Docs
 

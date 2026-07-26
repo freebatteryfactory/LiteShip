@@ -84,36 +84,47 @@ export interface BenchmarkSubjectFacts {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasExactKeys(
+  value: Record<string, unknown>,
+  required: readonly string[],
+  optional: readonly string[] = [],
+): boolean {
+  const allowed = new Set([...required, ...optional]);
+  return required.every((key) => Object.hasOwn(value, key)) && Object.keys(value).every((key) => allowed.has(key));
+}
+
+function isNonEmpty(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 function parseOrigin(value: unknown): BenchSubjectOrigin | null {
   if (!isRecord(value) || typeof value.kind !== 'string') return null;
-  if (value.kind === 'module' && typeof value.specifier === 'string') {
+  if (value.kind === 'module' && hasExactKeys(value, ['kind', 'specifier']) && isNonEmpty(value.specifier)) {
     return { kind: 'module', specifier: value.specifier };
   }
-  if (value.kind === 'file' && typeof value.path === 'string') {
+  if (value.kind === 'file' && hasExactKeys(value, ['kind', 'path']) && isNonEmpty(value.path)) {
     return { kind: 'file', path: value.path };
   }
-  if (value.kind === 'intrinsic' && typeof value.name === 'string') {
+  if (value.kind === 'intrinsic' && hasExactKeys(value, ['kind', 'name']) && isNonEmpty(value.name)) {
     return { kind: 'intrinsic', name: value.name };
   }
-  if (value.kind === 'wasm' && typeof value.crate === 'string') {
+  if (value.kind === 'wasm' && hasExactKeys(value, ['kind', 'crate']) && isNonEmpty(value.crate)) {
     return { kind: 'wasm', crate: value.crate };
   }
   return null;
 }
 
 function parseSubject(value: unknown): BenchSubject | null {
-  if (!isRecord(value)) return null;
+  if (!isRecord(value) || !hasExactKeys(value, ['role', 'origin', 'symbol', 'binding'])) return null;
   const origin = parseOrigin(value.origin);
   if (
     origin === null ||
     (value.role !== 'sut' && value.role !== 'baseline') ||
-    typeof value.symbol !== 'string' ||
-    typeof value.binding !== 'string' ||
-    value.symbol.length === 0 ||
-    value.binding.length === 0
+    !isNonEmpty(value.symbol) ||
+    !isNonEmpty(value.binding)
   ) {
     return null;
   }
@@ -122,12 +133,13 @@ function parseSubject(value: unknown): BenchSubject | null {
 
 function parseExecution(value: unknown): BenchExecution | null {
   if (!isRecord(value) || typeof value.kind !== 'string') return null;
-  if (value.kind === 'callback') return { kind: 'callback' };
+  if (value.kind === 'callback' && hasExactKeys(value, ['kind'])) return { kind: 'callback' };
   if (
     value.kind === 'collector' &&
-    typeof value.file === 'string' &&
-    typeof value.export === 'string' &&
-    typeof value.resultKey === 'string'
+    hasExactKeys(value, ['kind', 'file', 'export', 'resultKey']) &&
+    isNonEmpty(value.file) &&
+    isNonEmpty(value.export) &&
+    isNonEmpty(value.resultKey)
   ) {
     return { kind: 'collector', file: value.file, export: value.export, resultKey: value.resultKey };
   }
@@ -138,13 +150,16 @@ function parseExecution(value: unknown): BenchExecution | null {
 export function parseQualifiedBenchDistribution(value: unknown): QualifiedBenchDistribution | null {
   if (
     !isRecord(value) ||
-    typeof value.name !== 'string' ||
-    typeof value.file !== 'string' ||
+    !hasExactKeys(value, ['name', 'file', 'inputSize', 'shape', 'replicates', 'subjects'], ['execution']) ||
+    !isNonEmpty(value.name) ||
+    !isNonEmpty(value.file) ||
     typeof value.inputSize !== 'number' ||
     !Number.isFinite(value.inputSize) ||
-    typeof value.shape !== 'string' ||
+    value.inputSize <= 0 ||
+    !isNonEmpty(value.shape) ||
     typeof value.replicates !== 'number' ||
-    !Number.isFinite(value.replicates) ||
+    !Number.isInteger(value.replicates) ||
+    value.replicates <= 0 ||
     !Array.isArray(value.subjects)
   ) {
     return null;

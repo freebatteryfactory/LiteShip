@@ -14,9 +14,9 @@
  *   1. THE LIVE CATALOG — every capsule contract in the repo. Enumeration is the
  *      SINGLE OWNER `detectCapsuleCalls` (`scripts/lib/capsule-detector.ts`), the
  *      exact type-directed detector `scripts/capsule-compile.ts` uses; each detected
- *      source module is imported so it self-registers into the live
- *      `getCapsuleCatalog()`, and both its input and output schema are swept. No
- *      private capsule list is forked (scar S0.4).
+ *      source module is imported and its exported capsule declarations are
+ *      composed explicitly; both input and output schemas are swept. No private
+ *      capsule list or import-time registration side channel is forked (scar S0.4).
  *   2. THE KERNEL CORPUS — a hand-built set exercising every node kind and the
  *      EdgeSeed shape directly, so every mutator fires regardless of catalog drift.
  *
@@ -35,7 +35,8 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import fastGlob from 'fast-glob';
 import { hasTag } from '@liteship/error';
-import { getCapsuleCatalog } from '@liteship/core';
+import { defineCapsuleCatalog } from '@liteship/core';
+import type { AssemblyKind, CapsuleDef } from '@liteship/core';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { detectCapsuleCalls, FACTORY_HINTS } from '../../scripts/lib/capsule-detector.js';
 import { withArbitrary, decode, isSchema, schema } from '../../packages/core/src/schema/index.js';
@@ -107,11 +108,28 @@ const candidateFiles = (
 });
 
 const detectedSourceFiles = [...new Set(detectCapsuleCalls(candidateFiles).map((call) => call.file))].sort();
-// Import each detected module so it registers its capsule(s) into the live catalog.
-for (const file of detectedSourceFiles) {
-  await import(pathToFileURL(file).href);
+function isCapsuleDef(value: unknown): value is CapsuleDef<AssemblyKind, unknown, unknown, unknown> {
+  if (value === null || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate._kind === 'string' &&
+    candidate.input !== undefined &&
+    candidate.output !== undefined
+  );
 }
-const catalog = getCapsuleCatalog();
+
+// Import each detected source module and collect its explicit exported capsule
+// values. Re-export aliases are deduplicated by identity before catalog assembly.
+const discoveredCapsules = new Map<string, CapsuleDef<AssemblyKind, unknown, unknown, unknown>>();
+for (const file of detectedSourceFiles) {
+  const moduleExports = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
+  for (const value of Object.values(moduleExports)) {
+    if (isCapsuleDef(value)) discoveredCapsules.set(value.id, value);
+  }
+}
+const catalog = defineCapsuleCatalog([...discoveredCapsules.values()]);
 
 const catalogNamed: readonly Named[] = catalog.flatMap((cap): readonly Named[] => [
   { id: `${cap.name}#input`, schema: cap.input, origin: 'catalog' },

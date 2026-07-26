@@ -1,7 +1,7 @@
 /**
- * Assembly catalog — 7-arm closed vocabulary of capsule kinds.
- * `defineCapsule` validates a contract, computes its content address,
- * and registers it in the module-level catalog for the compiler to walk.
+ * Assembly declarations — 7-arm closed vocabulary of capsule kinds.
+ * `defineCapsule` validates and snapshots one declaration; catalog composition
+ * is explicit, immutable, and independent of module-evaluation order.
  *
  * @module
  */
@@ -14,11 +14,15 @@ import type { Infer } from '../schema/infer.js';
 import { fnv1aBytes } from '../evidence/fnv.js';
 import { CanonicalCbor } from '../schema/cbor.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
 
 /** A capsule declaration plus its content-addressed id. */
 export interface CapsuleDef<K extends AssemblyKind, In, Out, R> extends CapsuleContract<K, In, Out, R> {
   readonly id: ContentAddress;
 }
+
+/** An immutable, deterministically ordered set of capsule declarations. */
+export type CapsuleCatalog = readonly CapsuleDef<AssemblyKind, unknown, unknown, unknown>[];
 
 /**
  * The {@link defineCapsule} argument, generic over the schema VALUE types
@@ -44,10 +48,59 @@ export type CapsuleDecl<
   readonly output: OutS;
 };
 
-const catalog: CapsuleDef<AssemblyKind, unknown, unknown, unknown>[] = [];
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object';
+}
+
+function snapshotDecl<
+  K extends AssemblyKind,
+  InS extends SchemaPort<unknown, unknown>,
+  OutS extends SchemaPort<unknown, unknown>,
+  R,
+>(decl: CapsuleDecl<K, InS, OutS, R>): CapsuleDecl<K, InS, OutS, R> {
+  const capabilities = Object.freeze({
+    reads: Object.freeze([...decl.capabilities.reads]),
+    writes: Object.freeze([...decl.capabilities.writes]),
+    ...(decl.capabilities.effects === undefined ? {} : { effects: Object.freeze([...decl.capabilities.effects]) }),
+  });
+  const invariants = Object.freeze(
+    decl.invariants.map((invariant) =>
+      Object.freeze({ name: invariant.name, check: invariant.check, message: invariant.message }),
+    ),
+  );
+  const faults =
+    decl.faults === undefined
+      ? undefined
+      : Object.freeze(
+          decl.faults.map((fault) =>
+            Object.freeze({
+              name: fault.name,
+              trigger: fault.trigger,
+              surfaces: fault.surfaces,
+              ...(fault.status === undefined ? {} : { status: fault.status }),
+            }),
+          ),
+        );
+  const attribution =
+    decl.attribution === undefined
+      ? undefined
+      : Object.freeze({
+          license: decl.attribution.license,
+          author: decl.attribution.author,
+          ...(decl.attribution.url === undefined ? {} : { url: decl.attribution.url }),
+        });
+  const initialState = decl.initialState === undefined ? undefined : snapshotDefinitionValue(decl.initialState);
+
+  return Object.freeze({
+    ...decl,
+    capabilities,
+    invariants,
+    budgets: snapshotDefinitionValue(decl.budgets),
+    site: Object.freeze([...decl.site]),
+    ...(faults === undefined ? {} : { faults }),
+    ...(attribution === undefined ? {} : { attribution }),
+    ...(initialState === undefined ? {} : { initialState }),
+  }) as CapsuleDecl<K, InS, OutS, R>;
 }
 
 function validateReceiptedMutationFaults(
@@ -123,10 +176,9 @@ function computeId(contract: Omit<CapsuleContract<AssemblyKind, unknown, unknown
 }
 
 /**
- * Declare a capsule. Validates shape, computes content address,
- * registers in the module-level catalog, returns a typed def.
- * No runtime behavior beyond registration — behavior comes from
- * the harness/compiler walking the catalog.
+ * Declare a capsule. Validates shape, snapshots retained authored data, and
+ * computes its content address. This function is pure: importing a capsule
+ * module never mutates process-global state.
  */
 export function defineCapsule<
   K extends AssemblyKind,
@@ -207,18 +259,39 @@ export function defineCapsule<
     );
   }
 
-  const id = computeId(decl as Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>);
-  const def = { ...decl, id } as CapsuleDef<K, Infer<InS>, Infer<OutS>, R>;
-  catalog.push(def as CapsuleDef<AssemblyKind, unknown, unknown, unknown>);
-  return def;
+  const snapped = snapshotDecl(decl);
+  const id = computeId(snapped as Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>);
+  return Object.freeze({ ...snapped, id }) as CapsuleDef<K, Infer<InS>, Infer<OutS>, R>;
 }
 
-/** Read-only snapshot of all registered capsules. */
-export function getCapsuleCatalog(): readonly CapsuleDef<AssemblyKind, unknown, unknown, unknown>[] {
-  return catalog.slice();
-}
+/**
+ * Compose capsule declarations explicitly. The returned catalog is sorted by
+ * name then id, so import/discovery order cannot affect generated projections.
+ * Duplicate names or identities are refused rather than silently shadowed.
+ */
+export function defineCapsuleCatalog(capsules: CapsuleCatalog): CapsuleCatalog {
+  const byName = new Set<string>();
+  const byId = new Set<ContentAddress>();
+  const ordered = [...capsules].sort((left, right) =>
+    left.name === right.name ? left.id.localeCompare(right.id) : left.name.localeCompare(right.name),
+  );
 
-/** Clear the registry. Intended for tests and hot-reload only. */
-export function resetCapsuleCatalog(): void {
-  catalog.length = 0;
+  for (const capsule of ordered) {
+    if (byName.has(capsule.name)) {
+      throw InvariantViolationError(
+        'assembly.catalog',
+        `duplicate capsule name "${capsule.name}" — a catalog cannot choose between two declarations.`,
+      );
+    }
+    if (byId.has(capsule.id)) {
+      throw InvariantViolationError(
+        'assembly.catalog',
+        `duplicate capsule identity "${capsule.id}" — a catalog cannot contain the same declaration twice.`,
+      );
+    }
+    byName.add(capsule.name);
+    byId.add(capsule.id);
+  }
+
+  return Object.freeze(ordered);
 }

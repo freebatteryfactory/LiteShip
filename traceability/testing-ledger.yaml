@@ -8,7 +8,8 @@
 # Schema (per entry):
 #   id:      the invariant id from invariants.yaml (REQUIRED)
 #   tests:   a non-empty list of [file::test-name] proving refs    (the TRACED form)
-#     -- the file is repo-relative; the test-name is the exact it()/test() title.
+#     -- the file is repo-relative; test-name is an exact full nested Vitest title,
+#        or an exact leaf title only when that leaf is unique within the file.
 #   waiver:  { owner, justification, expiry }                       (the WAIVED form)
 #     -- expiry is an ISO yyyy-mm-dd; a past expiry re-reds (the waiver came due).
 # Exactly ONE of `tests` / `waiver` per entry (a trace OR a signed deferral).
@@ -54,6 +55,7 @@ traces:
     tests:
       - 'tests/property/content-address.prop.test.ts::same boundary config → same content address'
       - 'tests/property/content-address.prop.test.ts::different inputs → different content addresses'
+      - 'tests/property/canonical-value-domain.prop.test.ts::hashes strings through the same UTF-8 byte law as fnv1aBytes'
 
   # ── Adaptive lowering — tests/property/adaptive-lowering-equivalence.prop.test.ts ─
   - id: INV-ADAPTIVE-LOWERING-PURE
@@ -66,6 +68,12 @@ traces:
   - id: INV-ADAPTIVE-TRACE-EQUAL
     tests:
       - 'tests/property/adaptive-lowering-equivalence.prop.test.ts::INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep'
+
+  # ── Beginner surface ────────────────────────────────────────────────────────
+  - id: INV-BEGINNER-SURFACE
+    tests:
+      - 'tests/unit/devops/beginner-surface-contract.test.ts::derives define -> apply -> inspect from the flagship public contract'
+      - 'tests/property/beginner-surface-contract.prop.test.ts::rejects any fourth root concept even when the facade legitimately exports it'
 
   # ── Assurance propagation — tests/unit/gauntlet/assurance-propagation.test.ts ─
   - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
@@ -122,10 +130,12 @@ traces:
   # ── Zero-allocation hot paths — the allocation gate (node --expose-gc) ───────
   - id: INV-COMPOSITOR-ZERO-ALLOC
     tests:
-      - 'tests/property/compositor-zero-alloc.test.ts::the allocation gate reports the compositor compose hot path at ≈ 0 live bytes/op (within budget)'
+      - 'tests/property/compositor-zero-alloc.test.ts::the compositor compose hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)'
+      - 'tests/property/compositor-zero-alloc.test.ts::the compositor reactive publish is a NEGLIGIBLE fraction of churn with no subscriber, and a BOUNDED fraction with one (platform-robust transient ratios)'
+      - 'tests/property/compositor-zero-alloc.test.ts::the compositor reactive publish is a raw listener-set fan-out, NOT the per-publish-allocating SubscriptionRef.set (source drift guard)'
   - id: INV-TOKEN-BUFFER-ZERO-ALLOC
     tests:
-      - 'tests/property/token-buffer-zero-alloc.test.ts::the allocation gate reports the token-buffer hot path at ≈ 0 live bytes/op (within budget)'
+      - 'tests/property/token-buffer-zero-alloc.test.ts::the token-buffer hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)'
 
   # ── Security (shader content integrity — defense-in-depth content guard) ────
   - id: INV-SHADER-CONTENT-INTEGRITY
@@ -157,8 +167,11 @@ traces:
   # ── Assurance (negative-control partition) — tests/unit/devops/check-registry.test.ts ─
   - id: INV-CHECK-NEGATIVE-CONTROL
     tests:
-      - 'tests/unit/devops/check-registry.test.ts::every blocking check declares an existing negative control; no blocking exemption exists'
-      - 'tests/unit/devops/blocking-check-negative-controls.test.ts::every shared authority harness rejects deterministic bad input'
+      - 'tests/unit/devops/check-registry.test.ts::every blocking check declares an existing negative control'
+      - 'tests/unit/devops/blocking-check-negative-controls.test.ts::the grouped harness enrollment is exact (no blocker can inherit a decorative path)'
+      - 'tests/property/blocking-check-negative-control-relation.prop.test.ts::production execution binds every exact id and command to red/nonzero and green/zero'
+      - 'tests/unit/devops/runtime-gate-negative-control.test.ts::check/runtime-gate negative control > the runtime owner rejects every semantic warning/seam mutation and admits the neutralized evidence'
+      - 'tests/unit/devops/flex-policy-negative-control.test.ts::check/flex-verify + check/devx negative control > the shared policy owner rejects each malformed threshold/label class and admits the neutralized policy'
 
   # ── Meta (single-source roster) — one typed catalog; every consumer is a projection ─
   - id: INV-ROSTER-SINGLE-SOURCE
@@ -179,6 +192,8 @@ traces:
       - 'tests/unit/liteship/facade-subpaths.test.ts::self-proves (red caught, green clean, mutation killed)'
       - 'tests/unit/liteship/facade-subpaths.test.ts::an UNLISTED export reds (the sprawl direction)'
       - 'tests/unit/liteship/facade-subpaths.test.ts::a DROPPED listed export reds (the regression direction the old SUBSET gate was blind to)'
+      - 'tests/property/facade-export-budget.prop.test.ts::rejects missing, foreign, empty, and non-string contract fields atomically'
+      - 'tests/unit/liteship/facade-contract-parser.test.ts::rejects duplicate root and subpath identities'
 
   # ── Assurance (public subpath closure — node16 + bundler) — tests/unit/liteship/facade-subpaths.test.ts ─
   - id: INV-CONSUMER-SUBPATH-CLOSURE
@@ -193,6 +208,7 @@ traces:
       - 'tests/unit/error/diagnostic-registry-closure.test.ts::the exact union rejects invented registry and runtime identities at compile time'
       - 'tests/unit/command/explain.test.ts::explains schema/type with area schema and owner @liteship/core/schema'
       - 'tests/unit/gauntlet/gates-dogfood.test.ts::each gate self-proves (red caught, green clean, mutation killed)'
+      - 'tests/unit/devops/audit-diagnostic-enrollment.test.ts::audit diagnostic enrollment > is an exact bidirectional projection of every real audit emitter rule'
 
   # ── The owner-signed deferral (a real future law, no proving test YET) ──────
   # WAIVED, not UNTRACED — the waiver keeps the path honest. When the expiry passes

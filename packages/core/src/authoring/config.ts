@@ -78,11 +78,10 @@ export const Config = {
     const r = (sub: string) => `${normalizeRepoPath(repoRoot)}/${sub}`;
     // NOTE: longer prefixes MUST come before shorter ones — vitest's alias
     // resolver matches the first prefix in iteration order, so e.g.
-    // `@liteship/core/testing` would be intercepted by `@liteship/core` if listed first.
+    // Longer public subpaths would be intercepted by `@liteship/core` if listed first.
     return {
       '@liteship/canonical': r('packages/canonical/src/index.ts'),
       '@liteship/genui': r('packages/genui/src/index.ts'),
-      '@liteship/core/testing': r('packages/core/src/testing.ts'),
       '@liteship/core/harness': r('packages/core/src/harness/index.ts'),
       '@liteship/core/simulation': r('packages/core/src/simulation/index.ts'),
       '@liteship/core/fs-walk': r('packages/core/src/fs-walk.ts'),
@@ -106,6 +105,7 @@ export const Config = {
       '@liteship/detect': r('packages/detect/src/index.ts'),
       '@liteship/vite/html-transform': r('packages/vite/src/html-transform.ts'),
       '@liteship/vite': r('packages/vite/src/index.ts'),
+      '@liteship/astro/adaptive-runtime': r('packages/astro/src/adaptive-runtime.ts'),
       '@liteship/astro/runtime': r('packages/astro/src/runtime/index.ts'),
       '@liteship/astro': r('packages/astro/src/index.ts'),
       '@liteship/stage/ffmpeg': r('packages/stage/src/ffmpeg.ts'),

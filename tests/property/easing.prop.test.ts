@@ -120,7 +120,7 @@ describe('Easing properties', () => {
 function parseLinearPoints(css: string): number[] {
   const match = /^linear\((.*)\)$/.exec(css);
   if (!match) throw new Error(`not a linear() timing function: ${css}`);
-  return match[1].split(',').map((segment) => Number(segment.trim()));
+  return match[1]!.split(',').map((segment) => Number(segment.trim()));
 }
 
 const catalogEasings: Array<[string, (t: number) => number]> = [
@@ -149,7 +149,7 @@ describe('easingToLinearCSS — Law 4 point parity by construction', () => {
           for (let i = 0; i <= sampleCount; i++) {
             // Each emitted point is fn(i/n) rounded to 4 decimals — the SAME list the
             // JS floor will lerp. Rounding error is bounded by half an ulp of 1e-4.
-            if (Math.abs(points[i] - fn(i / sampleCount)) > 1e-4) return false;
+            if (Math.abs(points[i]! - fn(i / sampleCount)) > 1e-4) return false;
           }
           return true;
         }),

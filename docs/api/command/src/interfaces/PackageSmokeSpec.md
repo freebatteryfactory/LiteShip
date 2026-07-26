@@ -38,6 +38,6 @@ Defined in: [command/src/commands/package-smoke-registry.ts:22](https://github.c
 
 ### runtimeSurface
 
-> `readonly` **runtimeSurface**: `"types-only"` \| `"module"`
+> `readonly` **runtimeSurface**: `"module"` \| `"types-only"`
 
 Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L23)

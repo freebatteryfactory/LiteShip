@@ -8,7 +8,7 @@
 
 > **BeatMarkerProjection**(`registry`, `audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, `BeatMarkerSet`, `unknown`\>
 
-Defined in: [assets/src/analysis/beat-markers.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L93)
+Defined in: [assets/src/analysis/beat-markers.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L97)
 
 Build a BeatMarkerProjection cachedProjection capsule for a named audio
 asset, validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) the caller

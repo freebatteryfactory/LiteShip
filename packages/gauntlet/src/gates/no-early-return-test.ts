@@ -63,6 +63,7 @@ export const noEarlyReturnTestGate: Gate = defineGate({
   id: 'gauntlet/no-early-return-test',
   level: 'L2',
   describe: 'Flags bare `return;` in test bodies before the first `expect(...)` — a silent pass disguised as coverage.',
+  access: { allFiles: true },
   run: scan,
   evidenceDigest,
   fixtures: {

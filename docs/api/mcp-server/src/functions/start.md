@@ -6,11 +6,11 @@
 
 # Function: start()
 
-> **start**(`opts?`, `deps?`): `Promise`\<`void`\>
+> **start**(`opts?`, `deps?`): `Promise`\<[`McpServerHandle`](../interfaces/McpServerHandle.md)\>
 
-Defined in: [mcp-server/src/start.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L51)
+Defined in: [mcp-server/src/start.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L58)
 
-Start the MCP server on the requested transport.
+Start the requested MCP transport and return the authority required to stop it.
 
 ## Parameters
 
@@ -24,4 +24,4 @@ Start the MCP server on the requested transport.
 
 ## Returns
 
-`Promise`\<`void`\>
+`Promise`\<[`McpServerHandle`](../interfaces/McpServerHandle.md)\>

@@ -49,7 +49,7 @@ describe('Boundary properties', () => {
         const boundary = defineBoundary({ input: 'x', at: pairs as any });
         const thresholds = boundary.thresholds;
         for (let i = 1; i < thresholds.length; i++) {
-          if (thresholds[i] <= thresholds[i - 1]) return false;
+          if (thresholds[i]! <= thresholds[i - 1]!) return false;
         }
         return true;
       }),
@@ -130,7 +130,7 @@ describe('Boundary properties', () => {
         (from, duration, experimentId) => {
           const timeRange = { from, until: from + duration };
           const spec = { timeRange, experimentId };
-          const at: [number, 'low' | 'high'][] = [
+          const at: [[number, 'low' | 'high'], [number, 'low' | 'high']] = [
             [0, 'low'],
             [100, 'high'],
           ];

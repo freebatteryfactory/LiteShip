@@ -2,7 +2,16 @@
  * @liteship/worker type spine -- off-main-thread compositor and render workers.
  */
 
-import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.js';
+import type {
+  CompositeState,
+  VideoConfig,
+  VideoFrameOutput,
+  ContentAddress,
+  StateName,
+  RuntimeWritePlan,
+  ProgramUniforms,
+  RuntimeCoordinator,
+} from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. MESSAGES
@@ -244,6 +253,14 @@ export declare namespace Messages {
   export type ResolvedState = ResolvedStateEntry;
 }
 
+/** Structural worker boundary used by browser hosts and deterministic test doubles. */
+export interface WorkerLike {
+  postMessage(message: unknown, transfer?: Transferable[]): void;
+  terminate(): void;
+  addEventListener(type: string, listener: (event: MessageEvent) => void): void;
+  removeEventListener(type: string, listener: (event: MessageEvent) => void): void;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. SPSC RING BUFFER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -279,11 +296,7 @@ export declare const SPSCRing: {
   attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape;
 };
 
-export interface SPSCRing extends SPSCRingBufferShape {}
-
-export declare namespace SPSCRing {
-  export type Pair = SPSCRingPair;
-}
+export type SPSCRing = SPSCRingBufferShape;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 3. COMPOSITOR WORKER
@@ -337,8 +350,8 @@ export interface QuantizerBoundarySource {
 
 export interface CompositorWorkerShape {
   readonly worker: Worker;
-  /** Runtime coordination surface (internal shape, see @liteship/core RuntimeCoordinator). */
-  readonly runtime: unknown;
+  /** Shared runtime coordination surface reflecting host-side worker state. */
+  readonly runtime: RuntimeCoordinator;
   /** Register a quantizer from a defineBoundary result; name defaults to boundary.input. */
   addQuantizer(boundary: QuantizerBoundarySource): void;
   addQuantizer(
@@ -375,13 +388,9 @@ export declare const CompositorWorker: {
   create(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): CompositorWorkerShape;
 };
 
-export interface CompositorWorker extends CompositorWorkerShape {}
+export type CompositorWorker = CompositorWorkerShape;
 
 export declare namespace CompositorWorker {
-  export type State = CompositorWorkerState;
-  export type Metrics = WorkerMetrics;
-  export type BoundarySource = QuantizerBoundarySource;
-  export type ResolvedStateAck = ResolvedStateAckPayload;
   export type StartupStage = CompositorWorkerStartupStage;
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;
 }
@@ -434,7 +443,9 @@ export interface WorkerHostShape {
   attachCanvas(canvas: TransferableCanvas): void;
   startRender(config: WorkerHostRenderConfig): void;
   stopRender(): void;
-  onState(callback: (state: CompositeState) => void): () => void;
+  onState(
+    callback: (state: CompositeState & { readonly resolvedStateGenerations?: Record<string, number> }) => void,
+  ): () => void;
   dispose(): void;
 }
 
@@ -442,8 +453,22 @@ export declare const WorkerHost: {
   create(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): WorkerHostShape;
 };
 
-export interface WorkerHost extends WorkerHostShape {}
+export type WorkerHost = WorkerHostShape;
 
 export declare namespace WorkerHost {
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;
 }
+
+// ═════════════════════════════════════════════════════════════════════════════════
+// § 6. OFF-THREAD MOTION SAMPLER
+// ════════════════════════════════════════════════════════════════════════════════
+
+export interface MotionSampleMessage {
+  readonly type: 'motion-sample';
+  readonly t: number;
+  readonly css: Record<string, string>;
+  readonly wgsl: Record<string, number>;
+}
+
+export declare function sampleProgramUniforms(plan: RuntimeWritePlan, t: number): ProgramUniforms;
+export declare function motionSampleMessage(plan: RuntimeWritePlan, t: number): MotionSampleMessage;

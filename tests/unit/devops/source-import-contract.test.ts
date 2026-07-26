@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { forbiddenSourceImports } from '../../../scripts/lib/source-import-contract.js';
+import { forbiddenSourceImports, sourceRuntimeImports } from '../../../scripts/lib/source-import-contract.js';
 
 const roots: string[] = [];
 afterEach(() => {
@@ -52,5 +52,37 @@ describe('source import contract', () => {
     expect(forbiddenSourceImports(root, 'scripts/entry.ts', globalRule)).toEqual(
       forbiddenSourceImports(root, 'scripts/entry.ts', globalRule),
     );
+  });
+
+  it('projects only executable import edges in deterministic order', () => {
+    const root = fixture(`
+      import type { TypeOnly } from '@liteship/type-only';
+      import '@liteship/zeta';
+      export { value } from './value.js';
+      void import('@liteship/alpha');
+      type Local = TypeOnly;
+      void (0 as unknown as Local);
+    `);
+
+    expect(sourceRuntimeImports(root, 'scripts/entry.ts')).toEqual(['./value.js', '@liteship/alpha', '@liteship/zeta']);
+  });
+
+  it('ignores import-shaped comments and string data', () => {
+    const root = fixture(`
+      // import '@liteship/comment';
+      const sample = "export { value } from '@liteship/string'";
+      export type { TypeOnly } from '@liteship/type-only';
+      void sample;
+    `);
+
+    expect(sourceRuntimeImports(root, 'scripts/entry.ts')).toEqual([]);
+  });
+
+  it('returns the same structural projection across repeated parses', () => {
+    const root = fixture("import '@liteship/core';\nexport { value } from './value.js';\n");
+    const first = sourceRuntimeImports(root, 'scripts/entry.ts');
+    const second = sourceRuntimeImports(root, 'scripts/entry.ts');
+    expect(second).toEqual(first);
+    expect(first).toEqual(['./value.js', '@liteship/core']);
   });
 });

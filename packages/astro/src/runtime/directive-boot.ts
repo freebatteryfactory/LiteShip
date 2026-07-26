@@ -24,13 +24,14 @@
 
 import { Diagnostics } from '@liteship/core';
 import {
+  collectDirectiveRootsForName,
   DIRECTIVE_ATTRIBUTE_REGISTRY,
   DIRECTIVE_MARKER_ATTRIBUTE,
-  implicitDirectiveSelectors,
+  elementHasDirectiveRoot,
   isClaimedDirectiveDescendant,
 } from './slots.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
-import { boundNames, unmarkBound } from './directive-bound.js';
+import { boundNames, DIRECTIVE_NAMES, unmarkBound } from './directive-bound.js';
 import type { DirectiveName, DirectiveEntry } from './directive-bound.js';
 
 // The bound-marker primitives live in the dependency-free leaf `./directive-bound.js`
@@ -41,35 +42,24 @@ export type { DirectiveName } from './directive-bound.js';
 export { bootDirectiveEntry, markDirectiveBound } from './directive-bound.js';
 
 const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
+  adaptive: 'adaptive',
   stream: 'stream',
   llm: 'llm',
   worker: 'workers',
   gpu: 'gpu',
   wasm: 'wasm',
-  graph: 'graph',
   motion: 'motion',
 };
 
 function directiveEnableFix(name: DirectiveName): string {
   const configKey = DIRECTIVE_CONFIG_KEYS[name];
   if (!configKey) {
-    return 'Fix: ensure the directive is registered in liteship({ ... }).';
+    return `Fix: install the LiteShip Astro integration; ${name} is registered automatically, or remove its marker.`;
   }
   const coepNote = name === 'worker' ? ' COOP/COEP response headers are emitted automatically.' : '';
-  return `Fix: liteship({ ${configKey}: { enabled: true } }).${coepNote}`;
+  const value = name === 'adaptive' ? 'true' : '{ enabled: true }';
+  return `Fix: liteship({ ${configKey}: ${value} }).${coepNote}`;
 }
-
-const DIRECTIVE_NAMES: readonly DirectiveName[] = [
-  'adaptive',
-  'stream',
-  'llm',
-  'worker',
-  'gpu',
-  'wasm',
-  'graph',
-  'motion',
-  'svg',
-];
 
 /**
  * The dynamic-import map the scanner boots each directive through — each thunk
@@ -102,23 +92,8 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
-// CSS.escape is unnecessary: every selector is built from the fixed DirectiveName
-// union, never from page content.
-function directiveSelector(name: DirectiveName): string {
-  const canonical = `[data-liteship-directive~="${name}"]`;
-  const legacy = `[client\\:${name}]`;
-  return [canonical, legacy, ...implicitDirectiveSelectors(name)].join(',');
-}
-
 function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {
-  const selector = directiveSelector(name);
-  const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
-  // querySelectorAll only sees descendants; a marked element passed AS the
-  // scan root (e.g. a freshly swapped-in fragment) must activate too.
-  if (root instanceof HTMLElement && root.matches(selector)) {
-    matches.unshift(root);
-  }
-  return matches;
+  return [...collectDirectiveRootsForName(name, root)];
 }
 
 function collectElements(root: ParentNode, selector: string): HTMLElement[] {
@@ -221,7 +196,7 @@ export async function scanAndBootDirectives(
       // own tier/capability gate no-ops before it ever boots): if this element ALSO
       // carries a marker for another ENABLED directive, warn -- each directive takes
       // over the host, so two on one element silently fight and one loses.
-      const colliding = [...enabledSet].filter((other) => other !== name && element.matches(directiveSelector(other)));
+      const colliding = [...enabledSet].filter((other) => other !== name && elementHasDirectiveRoot(other, element));
       if (colliding.length > 0) {
         // Sort the conflicting names ONCE so the diagnostic detail and message are deterministic.
         const conflicting = [...colliding, name].sort();

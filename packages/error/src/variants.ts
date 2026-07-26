@@ -18,6 +18,7 @@
  */
 
 import { taggedError, type TaggedError } from './contract.js';
+import type { DiagnosticCodeFor } from './codes.js';
 
 /**
  * A precondition, argument, or factory-input check failed — the value was
@@ -145,11 +146,21 @@ export interface InvariantViolationError extends TaggedError<'InvariantViolation
   readonly invariant: string;
   /** What was observed, in human terms. */
   readonly detail: string;
+  /** Stable diagnostic identity when the invariant is part of a public failure contract. */
+  readonly code?: DiagnosticCodeFor<'error'>;
 }
 
 /** Build an {@link InvariantViolationError}. */
-export const InvariantViolationError = (invariant: string, detail: string): InvariantViolationError =>
-  taggedError('InvariantViolationError', `invariant ${invariant} violated: ${detail}`, { invariant, detail });
+export const InvariantViolationError = (
+  invariant: string,
+  detail: string,
+  opts: { readonly code?: DiagnosticCodeFor<'error'> } = {},
+): InvariantViolationError =>
+  taggedError('InvariantViolationError', `invariant ${invariant} violated: ${detail}`, {
+    invariant,
+    detail,
+    ...(opts.code !== undefined ? { code: opts.code } : {}),
+  });
 
 /**
  * A referenced resource or identifier was not found.

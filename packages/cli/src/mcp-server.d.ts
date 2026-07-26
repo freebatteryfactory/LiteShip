@@ -8,7 +8,13 @@
 // so `tsc --build` stays acyclic; this minimal subset keeps cli cold-compilable.
 // At runtime the real module resolves through the pnpm workspace symlink.
 declare module '@liteship/mcp-server' {
-  export function start(opts?: { http?: number | string }): Promise<void>;
+  export interface McpServerHandle {
+    readonly transport: 'stdio' | 'http';
+    readonly done: Promise<void>;
+    stop(): Promise<void>;
+  }
+
+  export function start(opts?: { http?: number | string }): Promise<McpServerHandle>;
 
   // The LSP rigor skin (Slice B/B3): `liteship lsp` launches this over stdio with a
   // CLI-host-built gauntlet runner injected. The engine + @liteship/audit stay in the

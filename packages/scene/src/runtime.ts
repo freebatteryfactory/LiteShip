@@ -27,7 +27,7 @@ import type { System, World as WorldNS, Entity } from '@liteship/core';
 import { defineCapsule, createWorld, schema } from '@liteship/core';
 import { InvariantViolationError, ValidationError } from '@liteship/error';
 import type { CompiledScene } from './compile.js';
-import { BeatBinding } from './capsules/beat-binding.js';
+import { BeatBinding } from './beat-binding-capsule.js';
 import { VideoSystem } from './systems/video.js';
 import { AudioSystem } from './systems/audio.js';
 import { TransitionSystem } from './systems/transition.js';

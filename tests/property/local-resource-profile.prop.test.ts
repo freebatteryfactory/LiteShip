@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
+import { buildLocalVerificationPlan } from '../../scripts/lib/local-verification-plan.js';
 import { selectLocalResourcePlan, type LocalResourceObservation } from '../../scripts/lib/local-resource-profile.js';
 
 const MIB = 1024 ** 2;
@@ -43,6 +44,18 @@ describe('local resource admission properties', () => {
         if (plan.docs.admitted) {
           expect(freeMiB).toBeGreaterThanOrEqual(plan.docs.heapMiB + plan.docs.reservedMemoryMiB);
         }
+      }),
+    );
+  });
+
+  test('resource pressure may change scheduling but never the blocking quick proof set', () => {
+    const required = buildLocalVerificationPlan({ staged: true, changedPaths: [] }).steps.map((step) => step.checkId);
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 32 * 1024 }), fc.integer({ min: 0, max: 100 }), (freeMiB, busy) => {
+        selectLocalResourcePlan(observation(freeMiB, busy));
+        expect(
+          buildLocalVerificationPlan({ staged: true, changedPaths: [] }).steps.map((step) => step.checkId),
+        ).toEqual(required);
       }),
     );
   });

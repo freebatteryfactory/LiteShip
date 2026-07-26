@@ -8,7 +8,7 @@
 
 > **sortSuppressions**\<`T`\>(`suppressions`): `T`[]
 
-Defined in: [audit/src/shared.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L220)
+Defined in: [audit/src/shared.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L255)
 
 ## Type Parameters
 

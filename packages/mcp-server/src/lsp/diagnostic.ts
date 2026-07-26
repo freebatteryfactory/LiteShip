@@ -103,11 +103,14 @@ function composeMessage(title: string, detail: string): string {
  *
  * PURE: no I/O, no clock, no host. Same finding → same diagnostic.
  */
-export function projectFinding(finding: FindingLike): { uri: string; diagnostic: LspDiagnostic } | null {
+export function projectFinding(
+  finding: FindingLike,
+  workspaceRootUri?: string,
+): { uri: string; diagnostic: LspDiagnostic } | null {
   const location = finding.location;
   if (location === undefined) return null;
   return {
-    uri: fileToUri(location.file),
+    uri: fileToUri(location.file, workspaceRootUri),
     diagnostic: {
       range: locationToRange(location.line, location.column),
       severity: severityToDiagnostic(finding.severity),
@@ -130,10 +133,11 @@ export function projectFinding(finding: FindingLike): { uri: string; diagnostic:
  */
 export function groupDiagnosticsByUri(
   findings: readonly FindingLike[],
+  workspaceRootUri?: string,
 ): ReadonlyArray<{ uri: string; diagnostics: readonly LspDiagnostic[] }> {
   const byUri = new Map<string, LspDiagnostic[]>();
   for (const finding of findings) {
-    const projected = projectFinding(finding);
+    const projected = projectFinding(finding, workspaceRootUri);
     if (projected === null) continue;
     const bucket = byUri.get(projected.uri);
     if (bucket === undefined) {
@@ -184,38 +188,36 @@ function encodePathSegment(segment: string): string {
 }
 
 /**
- * Convert a repo-relative (or absolute) POSIX file path to a `file://` URI — the
- * form LSP `publishDiagnostics` keys on. A path that is already a `file://` URI
- * (or any scheme URI) passes through unchanged.
+ * Normalize the initialized workspace authority before it is retained by the
+ * LSP state machine. Query and fragment data are not filesystem identity.
  *
- * The URI is the CANONICAL file→URI form: each path segment is percent-encoded
- * per the URI path grammar (a space → `%20`, a literal `%` → `%25`, a reserved
- * char → its octet) — byte-identical to node's `pathToFileURL` (the internal
- * `encodePathSegment` reconciles `encodeURIComponent` with the file-URL path
- * grammar). Encoding per SEGMENT (rather than handing the whole path to
- * `pathToFileURL`) makes the URI PLATFORM-DETERMINISTIC: `pathToFileURL`
- * interprets a `/`-leading path as a filesystem path and on Windows roots it at
- * the cwd DRIVE (`file:///C:/packages/...`), breaking the "content-addressable,
- * replayable" determinism this URI promises. The segment codec touches no
- * filesystem and injects no drive, so `packages/x/src/a.ts` maps to the SAME
- * `file:///packages/x/src/a.ts` on every OS.
- *
- * It is NOT a slash-normalizer (the b5 cage's concern): the inputs are already
- * repo-relative POSIX (the runner roots at the workspace and the audit layer
- * normalizes paths upstream), so the split on `/` only delimits segments to
- * encode — it never converts a backslash.
- *
- * The repo-relative path is made absolute with a leading `/`, yielding the
- * deterministic `file:///packages/...` form the LSP client keys on.
- *
- * PURE: a deterministic transform, no filesystem read (the server keys
- * diagnostics by the workspace-rooted path the CLI host already rooted at).
+ * PURE: a deterministic URI transform with no filesystem read.
  */
-export function fileToUri(file: string): string {
+export function normalizeWorkspaceRootUri(uri: string): string {
+  const parsed = new URL(uri);
+  if (parsed.protocol !== 'file:') throw new TypeError(`LSP workspace root must be a file URI: ${uri}`);
+  parsed.search = '';
+  parsed.hash = '';
+  if (!parsed.pathname.endsWith('/')) parsed.pathname += '/';
+  return parsed.href;
+}
+
+/**
+ * Convert a finding path to its document URI. Repo-relative paths resolve below
+ * the initialized workspace root; absolute paths and existing URIs retain their
+ * own authority. The default root preserves the historical pure projection for
+ * callers that intentionally operate without an LSP workspace.
+ */
+export function fileToUri(file: string, workspaceRootUri: string = 'file:///'): string {
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(file)) return file;
-  const absolute = file.startsWith('/') ? file : `/${file}`;
-  // Split on `/` to encode each segment, then rejoin with `/` — preserving the
-  // separators exactly (POSIX in, POSIX out). The leading `/` yields an empty
-  // first segment, reproducing the `file://` + `/...` authority boundary.
-  return `file://${absolute.split('/').map(encodePathSegment).join('/')}`;
+  const normalized = file.replaceAll('\\', '/');
+  const windowsAbsolute = /^[A-Za-z]:\//u.test(normalized);
+  if (normalized.startsWith('/') || windowsAbsolute) {
+    const absolute = windowsAbsolute ? `/${normalized}` : normalized;
+    return `file://${absolute.split('/').map(encodePathSegment).join('/')}`;
+  }
+  const segments = normalized.split('/').filter((segment) => segment !== '' && segment !== '.');
+  if (segments.includes('..')) throw new TypeError(`finding path escapes the initialized workspace: ${file}`);
+  const relative = segments.map(encodePathSegment).join('/');
+  return new URL(relative, normalizeWorkspaceRootUri(workspaceRootUri)).href;
 }

@@ -20,7 +20,7 @@ writes `_blend` — the two systems coexist on the same world.
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### frameIndex
 

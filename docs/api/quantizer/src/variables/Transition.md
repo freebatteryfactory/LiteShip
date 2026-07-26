@@ -41,13 +41,13 @@ Resolution order:
 
 ###### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ##### Parameters
 
 ###### quantizer
 
-[`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+[`Quantizer`](../../../liteship/src/interfaces/Quantizer.md)\<`B`\>
 
 ###### transitionConfig
 
@@ -73,7 +73,7 @@ Resolution order:
 
 ###### B
 
-`B` *extends* [`Boundary`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md)
+`B` *extends* [`Boundary`](../../../liteship/src/type-aliases/Boundary.md)
 
 ##### Parameters
 
