@@ -65,6 +65,30 @@ const DOCS_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   /^docs\/api(?:\/|$)/u,
 ]);
 
+/**
+ * Inputs to the CI contract: the workflow files, the plan projections, and the
+ * registry they project. Editing any of these without running the parity
+ * proof is how yml/registry drift reaches CI (the pr-affected reds of
+ * 2026-07-25 were exactly this: a workflow edit whose parity assertions first
+ * ran on the runner). Staged changes here append the parity test as a step.
+ */
+const CI_CONTRACT_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
+  /^\.github\/workflows\//u,
+  // CI projections deliberately compose repository scripts. Selecting the
+  // whole scripts ownership domain is conservative and cannot miss a newly
+  // extracted helper merely because a hand-maintained filename list drifted.
+  /^scripts\//u,
+  /^packages\/command\/src\/checks\//u,
+  /^tests\/unit\/meta\/ci-registry-parity\.test\.ts$/u,
+]);
+
+const CI_PARITY_STEP: LocalVerificationStep = Object.freeze({
+  checkId: null,
+  label: 'ci-registry-parity',
+  argv: Object.freeze(['exec', 'vitest', 'run', 'tests/unit/meta/ci-registry-parity.test.ts']),
+  remedy: 'reconcile .github/workflows with the registry projection (the parity test names the drifted block)',
+});
+
 function normalizeRepoPath(path: string): string {
   return path.replaceAll('\\', '/').replace(/^\.\//u, '');
 }
@@ -75,6 +99,12 @@ export function isTypeDocProofInput(path: string): boolean {
   return DOCS_INPUT_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
+/** Whether a changed path can drift the CI contract (workflows vs registry projection). */
+export function isCiContractInput(path: string): boolean {
+  const normalized = normalizeRepoPath(path);
+  return CI_CONTRACT_INPUT_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
 /** Build the exact fail-fast local plan without executing any command. */
 export function buildLocalVerificationPlan(input: {
   readonly staged: boolean;
@@ -82,10 +112,14 @@ export function buildLocalVerificationPlan(input: {
 }): LocalVerificationPlan {
   const quickSteps = projectRepositoryQuickSteps();
   const docsAffected = !input.staged || (input.changedPaths ?? []).some(isTypeDocProofInput);
+  const ciContractAffected = input.staged && (input.changedPaths ?? []).some(isCiContractInput);
+  const steps: LocalVerificationStep[] = [...quickSteps, INVARIANTS_STEP];
+  if (ciContractAffected) steps.push(CI_PARITY_STEP);
+  if (docsAffected) steps.push(DOCS_STEP);
   return Object.freeze({
     schema: 'liteship/local-verification-plan@1',
     mode: input.staged ? 'staged' : 'workspace',
     docsReason: !input.staged ? 'workspace-authority' : docsAffected ? 'staged-docs-input' : 'not-affected',
-    steps: Object.freeze(docsAffected ? [...quickSteps, INVARIANTS_STEP, DOCS_STEP] : [...quickSteps, INVARIANTS_STEP]),
+    steps: Object.freeze(steps),
   });
 }

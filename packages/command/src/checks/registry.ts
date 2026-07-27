@@ -14,7 +14,6 @@
  * @module
  */
 
-import { ValidationError } from '@liteship/error';
 import {
   parseRootScriptCheckExecution,
   type CheckDefinition,
@@ -98,9 +97,13 @@ type RepositoryCheckRow = RepositoryCheckRowBase &
 function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   const execution = parseRootScriptCheckExecution(row.command);
   if (execution === null) {
-    throw ValidationError(
-      'check-registry.execution',
-      `repository check "${row.id}" does not name one root package script: ${row.command}`,
+    // Registry rows are static literals, so this is an authoring-time invariant
+    // guard. It stays a locally-built TypeError because this module must load
+    // on a cold checkout (the CI plan projects it before any workspace dist
+    // exists) — a value-import of @liteship/error resolves into dist and is
+    // exactly the cold-start failure the prebuild-dist-free gate forbids.
+    throw new TypeError(
+      `check-registry.execution: repository check "${row.id}" does not name one root package script: ${row.command}`,
     );
   }
   if (row.authority === 'blocking') {
@@ -167,6 +170,88 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/lint-structural-negative-control.test.ts',
     remediation: "fix the ast-grep finding (or run 'pnpm run lint:structural' for the full report).",
+  },
+  // ── Cold-truth authorities: laws only a clean checkout can otherwise test ──
+  // Each closes a CI failure class observed on PR #161 (2026-07-24..27) that a
+  // warm local workspace structurally cannot reproduce. They remain explicit
+  // in quick, full, and release so no event tier can inherit a false green.
+  {
+    id: 'check/lockfile-frozen',
+    title: 'Frozen lockfile resolution',
+    claim: 'pnpm-lock.yaml resolves every workspace manifest exactly (what CI `--frozen-lockfile` will see).',
+    owner: 'pnpm-lock.yaml',
+    command: 'pnpm run lockfile:gate',
+    inputs: ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'package.json', 'packages/*/package.json'],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 60_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/meta/lockfile-freeze-control.test.ts',
+    remediation: "run 'pnpm install' to re-resolve, then commit the updated pnpm-lock.yaml.",
+  },
+  {
+    id: 'check/prebuild-dist-free',
+    title: 'Pre-build dist-free closure',
+    claim: 'No cold workflow/lifecycle tsx entrypoint transitively value-imports a workspace dist artifact.',
+    owner: 'scripts/lib/prebuild-closure-contract.ts',
+    command: 'pnpm run prebuild:gate',
+    inputs: [SCRIPTS_GLOB, SRC_GLOB, '.github/workflows/**', 'package.json', 'packages/*/package.json'],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 60_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/meta/prebuild-dist-free-closure.test.ts',
+    remediation:
+      'remove the dist-reaching value-import (construct locally or import type-only), or move the script after the build step.',
+  },
+  {
+    id: 'check/workflow-output-safety',
+    title: '$GITHUB_OUTPUT heredoc law',
+    claim: 'Every workflow $GITHUB_OUTPUT write is enumerated; multiline records contain no fallible interior command.',
+    owner: 'scripts/lib/workflow-output-contract.ts',
+    command: 'pnpm run workflow-output:gate',
+    inputs: ['.github/workflows/**', SCRIPTS_GLOB],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 30_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/meta/workflow-output-delimiter.test.ts',
+    remediation:
+      'compute into a shell variable first; open the heredoc only to echo/printf the already-computed value.',
+  },
+  {
+    id: 'check/workspace-deps',
+    title: 'Workspace dependency completeness',
+    claim: 'Every cross-package source import is declared, or is the one canonically exempt dynamic edge.',
+    owner: 'scripts/lib/workspace-dependency-contract.ts',
+    command: 'pnpm run workspace-deps:gate',
+    inputs: [SRC_GLOB, SCRIPTS_GLOB, 'packages/*/package.json'],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 60_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/meta/workspace-dependency-completeness.test.ts',
+    remediation: "declare the dependency (workspace:*) in the importing package's package.json.",
+  },
+  {
+    id: 'check/governed-exceptions',
+    title: 'Governed-exception liveness',
+    claim:
+      'Every prospective standards/testing/obligation exception record is active — none stale, expired, divergent, or unsigned.',
+    owner: 'scripts/lib/governed-exceptions.ts',
+    command: 'pnpm run governed-exceptions:gate',
+    inputs: ['traceability/**', SCRIPTS_GLOB, 'packages/cli/src/internal/standards-surface.ts'],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 120_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/governed-exceptions.test.ts',
+    remediation: 'fix or retire the stale/expired exception record; CI delivery-evidence evaluates this same view.',
   },
   {
     id: 'check/lint',

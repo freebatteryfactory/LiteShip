@@ -2,10 +2,11 @@
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import {
   committedSourceEffectiveDate,
+  buildProspectiveGovernedExceptionView,
   OBLIGATIONS_LEDGER_PATH,
   projectGovernedExceptions,
   TESTING_LEDGER_PATH,
@@ -14,8 +15,16 @@ import { STANDARDS_WAIVERS_PATH } from '../../../packages/cli/src/internal/stand
 import { GOVERNED_EFFECTIVE_DATE, GOVERNED_NOW, governedExceptionSources } from '../../support/governed-exceptions.js';
 
 const effectiveDateOf = (): string => GOVERNED_EFFECTIVE_DATE;
+const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
 describe('governed exception view', () => {
+  test('the prospective pre-commit view evaluates the current owners without borrowing committed provenance', () => {
+    const view = buildProspectiveGovernedExceptionView(REPO_ROOT, GOVERNED_NOW);
+    expect(view.length).toBeGreaterThan(0);
+    expect(view.every((record) => record.status === 'active')).toBe(true);
+    expect(view.every((record) => record.effectiveDate === GOVERNED_NOW.toISOString().slice(0, 10))).toBe(true);
+  });
+
   test('projects each canonical owner exactly without becoming a fourth policy owner', () => {
     const view = projectGovernedExceptions(governedExceptionSources(), GOVERNED_NOW, effectiveDateOf);
     expect(view).toHaveLength(3);

@@ -672,6 +672,31 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'Deterministic tests add no new real-time waits, ambient clocks, or source-byte coupling.',
     'inject a manual clock/scheduler or assert public behavior instead of source bytes.',
   ),
+  'check/lockfile-frozen': check(
+    'Frozen lockfile resolution',
+    'pnpm-lock.yaml resolves every workspace manifest exactly (what CI `--frozen-lockfile` will see).',
+    "run 'pnpm install' to re-resolve, then commit the updated pnpm-lock.yaml.",
+  ),
+  'check/prebuild-dist-free': check(
+    'Pre-build dist-free closure',
+    'No cold workflow/lifecycle tsx entrypoint transitively value-imports a workspace dist artifact.',
+    'remove the dist-reaching value-import (construct locally or import type-only), or move the script after the build step.',
+  ),
+  'check/workflow-output-safety': check(
+    '$GITHUB_OUTPUT heredoc law',
+    'Every workflow $GITHUB_OUTPUT write is enumerated; multiline records contain no fallible interior command.',
+    'compute into a shell variable first; open the heredoc only to echo/printf the already-computed value.',
+  ),
+  'check/workspace-deps': check(
+    'Workspace dependency completeness',
+    'Every cross-package source import is declared, or is the one canonically exempt dynamic edge.',
+    "declare the dependency (workspace:*) in the importing package's package.json.",
+  ),
+  'check/governed-exceptions': check(
+    'Governed-exception liveness',
+    'Every prospective standards/testing/obligation exception record is active — none stale, expired, divergent, or unsigned.',
+    'fix or retire the stale/expired exception record; CI delivery-evidence evaluates this same view.',
+  ),
   'check/gates': check(
     'Gauntlet gate fold (check:gates)',
     'The in-process gauntlet gate fold (self-proving gates) emits no blocking finding.',

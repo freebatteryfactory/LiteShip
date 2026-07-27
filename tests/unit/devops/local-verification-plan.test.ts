@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
 import {
   buildLocalVerificationPlan,
+  isCiContractInput,
   isTypeDocProofInput,
   projectRepositoryQuickSteps,
 } from '../../../scripts/lib/local-verification-plan.js';
@@ -32,6 +33,11 @@ describe('local verification plan', () => {
     expect(plan.steps.map((step) => step.label)).toEqual([
       'format',
       'lint-structural',
+      'lockfile-frozen',
+      'prebuild-dist-free',
+      'workflow-output-safety',
+      'workspace-deps',
+      'governed-exceptions',
       'lint',
       'typecheck',
       'docs-fast',
@@ -62,6 +68,11 @@ describe('local verification plan', () => {
     expect(plan.steps.map((step) => step.argv.slice(0, 2))).toEqual([
       ['run', 'format:check'],
       ['run', 'lint:structural'],
+      ['run', 'lockfile:gate'],
+      ['run', 'prebuild:gate'],
+      ['run', 'workflow-output:gate'],
+      ['run', 'workspace-deps:gate'],
+      ['run', 'governed-exceptions:gate'],
       ['run', 'lint'],
       ['run', 'typecheck'],
       ['run', 'docs:check:fast'],
@@ -70,6 +81,28 @@ describe('local verification plan', () => {
       ['exec', 'tsx'],
       ['run', 'docs:check:local'],
     ]);
+  });
+
+  test.each([
+    '.github/workflows/ci.yml',
+    'scripts/ci-plan.ts',
+    'scripts/affected-plan.ts',
+    'scripts/lib/new-ci-helper.ts',
+    'packages/command/src/checks/registry.ts',
+    'tests/unit/meta/ci-registry-parity.test.ts',
+  ])('classifies %s as a CI contract input', (path) => {
+    expect(isCiContractInput(path)).toBe(true);
+  });
+
+  test('staged CI-contract changes append the parity proof; unrelated changes do not', () => {
+    const touched = buildLocalVerificationPlan({ staged: true, changedPaths: ['.github/workflows/ci.yml'] });
+    const untouched = buildLocalVerificationPlan({ staged: true, changedPaths: ['README.md'] });
+    expect(touched.steps.some((step) => step.label === 'ci-registry-parity')).toBe(true);
+    expect(untouched.steps.some((step) => step.label === 'ci-registry-parity')).toBe(false);
+    // Workspace mode leaves parity to the full vitest authority it already runs under.
+    expect(
+      buildLocalVerificationPlan({ staged: false }).steps.some((step) => step.label === 'ci-registry-parity'),
+    ).toBe(false);
   });
 
   test('is exactly the blocking repository quick projection and cannot silently omit a new blocker', () => {

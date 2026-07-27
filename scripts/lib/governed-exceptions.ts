@@ -55,6 +55,15 @@ export type GitDateRunner = (
   cwd: string,
 ) => Promise<{ readonly exitCode: number; readonly stdout: string }>;
 
+function liveGovernedExceptionSources(repoRoot: string, now: Date): GovernedExceptionSources {
+  return {
+    standardsWaivers: readStandardsWaivers(repoRoot),
+    standardsIntegrity: buildStandardsIntegrityFacts(repoRoot, now),
+    traceability: buildTraceabilityFacts(repoRoot, now),
+    obligations: buildObligationLedger(repoRoot),
+  };
+}
+
 function requireText(value: string, field: string, sourceId: string): string {
   if (value.trim() === '') throw new Error(`governed exception ${sourceId} is missing ${field}`);
   return value;
@@ -249,14 +258,22 @@ export async function buildGovernedExceptionView(repoRoot: string, now: Date): P
     if (!existsSync(join(repoRoot, path))) throw new Error(`canonical exception source is missing: ${path}`);
   }
   const effectiveDateOf = await committedSourceEffectiveDate(repoRoot);
-  return projectGovernedExceptions(
-    {
-      standardsWaivers: readStandardsWaivers(repoRoot),
-      standardsIntegrity: buildStandardsIntegrityFacts(repoRoot, now),
-      traceability: buildTraceabilityFacts(repoRoot, now),
-      obligations: buildObligationLedger(repoRoot),
-    },
-    now,
-    effectiveDateOf,
-  );
+  return projectGovernedExceptions(liveGovernedExceptionSources(repoRoot, now), now, effectiveDateOf);
+}
+
+/**
+ * Pre-commit projection over the current working/index view.
+ *
+ * Final delivery evidence still uses {@link buildGovernedExceptionView} and
+ * therefore requires clean committed Git provenance. A commit hook cannot use
+ * that rule when the canonical exception source itself is staged: doing so
+ * would make a valid waiver/ledger edit impossible to commit. This prospective
+ * view uses the injected current UTC day as the would-be commit date, while
+ * retaining every semantic, liveness, expiry, divergence, and signed-partition
+ * refusal in the canonical projection.
+ */
+export function buildProspectiveGovernedExceptionView(repoRoot: string, now: Date): readonly GovernedException[] {
+  if (!Number.isFinite(now.getTime())) throw new Error('prospective governed exception view requires a valid date');
+  const prospectiveDate = now.toISOString().slice(0, 10);
+  return projectGovernedExceptions(liveGovernedExceptionSources(repoRoot, now), now, () => prospectiveDate);
 }

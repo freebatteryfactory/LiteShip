@@ -8,6 +8,6 @@
 
 > `const` **CHECK\_REGISTRY**: readonly [`CheckDefinition`](../type-aliases/CheckDefinition.md)[]
 
-Defined in: [command/src/checks/registry.ts:911](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/registry.ts#L911)
+Defined in: [command/src/checks/registry.ts:996](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/registry.ts#L996)
 
 The complete repository + application check catalog.
