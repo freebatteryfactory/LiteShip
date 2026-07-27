@@ -2,9 +2,10 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { expect } from 'vitest';
+import { expect, it } from 'vitest';
 import { CHECK_REGISTRY, type CheckPlan, type PlannedCheck } from '@liteship/command';
 import { createCheckPlanRunner } from '../../packages/cli/src/commands/check.js';
+import { scaledTimeout } from '../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
 
@@ -218,7 +219,7 @@ export interface RegisteredCheckFault {
  * only the report fold; this proof must reach the executable authority named by
  * `authorityScript` and preserve its bounded diagnostics in the real report.
  */
-export function proveRegisteredCheckFalsifies(fault: RegisteredCheckFault): void {
+function proveRegisteredCheckFalsifies(fault: RegisteredCheckFault): void {
   const check = plannedCheck(fault.id, fault.command, fault.control);
   const root = mkdtempSync(join(tmpdir(), 'liteship-check-fault-'));
   try {
@@ -259,4 +260,14 @@ export function proveRegisteredCheckFalsifies(fault: RegisteredCheckFault): void
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+}
+
+/**
+ * Register one real red/green authority proof with the budget owned by the
+ * shared subprocess harness. Individual callers cannot accidentally inherit
+ * Vitest's 10-second unit default for a proof that launches an executable
+ * owner twice.
+ */
+export function registerCheckNegativeControl(name: string, fault: RegisteredCheckFault): void {
+  it(name, () => proveRegisteredCheckFalsifies(fault), scaledTimeout(60_000));
 }

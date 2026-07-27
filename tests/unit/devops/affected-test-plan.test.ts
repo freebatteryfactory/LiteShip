@@ -172,6 +172,26 @@ describe('affected test planning', () => {
     },
   );
 
+  it('estimates a full run from the executable entrypoint census, including uncredited meta tests', () => {
+    const credited = 'tests/unit/core/credited.test.ts';
+    const meta = 'tests/unit/meta/uncredited.test.ts';
+    const plan = planAffectedTests(
+      ['.github/workflows/ci.yml'],
+      PACKAGE_CATALOG,
+      inventory(
+        { '@liteship/core': [credited] },
+        {
+          entrypoints: [credited, meta],
+          dependents: [
+            { path: credited, entrypoints: [credited] },
+            { path: meta, entrypoints: [meta] },
+          ],
+        },
+      ),
+    );
+    expect(plan).toMatchObject({ mode: 'full', estimatedCost: { selectedNodeTests: 2 } });
+  });
+
   it('runs only governance canaries for prose-only changes', () => {
     const plan = planAffectedTests(['README.md'], PACKAGE_CATALOG, inventory({}));
     expect(plan).toMatchObject({ mode: 'focused', affectedPackages: [], browserRequired: false });

@@ -220,5 +220,20 @@ export function scaledTimeout(baseMs: number): number {
   return coverageActive() ? Math.max(scaled, COVERAGE_TIMEOUT_FLOOR_MS) : scaled;
 }
 
+/**
+ * Base budget for deterministic proofs that census or compile the whole
+ * repository. These are not unit-speed assertions: they intentionally build a
+ * TypeScript program, render every generated projection, or execute a complete
+ * registry relation. Keeping the budget here prevents each proof from
+ * inventing a machine-specific timeout while preserving the scale/coverage
+ * laws above.
+ */
+export const REPOSITORY_PROOF_BASE_TIMEOUT_MS = 60_000;
+
+/** The canonical timeout for one repository-scale proof. */
+export function repositoryProofTimeout(): number {
+  return scaledTimeout(REPOSITORY_PROOF_BASE_TIMEOUT_MS);
+}
+
 /** One authored corpus root set drives Vitest and every assurance evidence scanner. */
 export const nodeTestInclude = TEST_CORPUS_ROOTS.map((root) => `${root}/**/*.test.ts`);

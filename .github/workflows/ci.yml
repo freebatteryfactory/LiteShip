@@ -182,7 +182,7 @@ jobs:
           LITESHIP_VITEST_BROWSERS: chromium
       - name: Run the declared browser E2E authority
         id: e2e
-        run: pnpm run test:e2e -- --reporter=line,junit
+        run: pnpm run test:e2e
         env:
           CI: true
           LITESHIP_PLAYWRIGHT_BROWSER: chromium

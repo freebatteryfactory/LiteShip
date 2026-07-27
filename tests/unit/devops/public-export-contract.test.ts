@@ -8,6 +8,7 @@ import {
   analyzeRepositoryPublicExports,
   assertPublicExportContracts,
 } from '../../../scripts/lib/public-export-contract.js';
+import { repositoryProofTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 const POLICY: PackagePublicSurfacePolicy = {
@@ -62,18 +63,22 @@ describe('public export ownership contract', () => {
     expect(() => assertPublicExportContracts(analysis)).toThrow(/undocumented @acme\/rumor:Rumor/u);
   });
 
-  test('the complete package graph has exact declared export contracts', () => {
-    const analysis = analyzeRepositoryPublicExports(REPO_ROOT, PACKAGE_CATALOG);
-    expect(() => assertPublicExportContracts(analysis)).not.toThrow();
-    expect(new Set(analysis.contracts.map((contract) => contract.packageName))).toEqual(
-      new Set(PACKAGE_CATALOG.map((record) => record.name)),
-    );
-    expect(analysis.contracts.length).toBeGreaterThan(3_000);
-    for (const contract of analysis.contracts) {
-      expect(contract.producer).not.toBe('(missing)');
-      expect(existsSync(resolve(REPO_ROOT, contract.producer))).toBe(true);
-      expect(contract.purpose).not.toBe('');
-      expect(existsSync(resolve(REPO_ROOT, contract.proof))).toBe(true);
-    }
-  });
+  test(
+    'the complete package graph has exact declared export contracts',
+    () => {
+      const analysis = analyzeRepositoryPublicExports(REPO_ROOT, PACKAGE_CATALOG);
+      expect(() => assertPublicExportContracts(analysis)).not.toThrow();
+      expect(new Set(analysis.contracts.map((contract) => contract.packageName))).toEqual(
+        new Set(PACKAGE_CATALOG.map((record) => record.name)),
+      );
+      expect(analysis.contracts.length).toBeGreaterThan(3_000);
+      for (const contract of analysis.contracts) {
+        expect(contract.producer).not.toBe('(missing)');
+        expect(existsSync(resolve(REPO_ROOT, contract.producer))).toBe(true);
+        expect(contract.purpose).not.toBe('');
+        expect(existsSync(resolve(REPO_ROOT, contract.proof))).toBe(true);
+      }
+    },
+    repositoryProofTimeout(),
+  );
 });

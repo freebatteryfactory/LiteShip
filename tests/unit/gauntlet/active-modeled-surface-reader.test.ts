@@ -5,10 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  activeModeledSurfaceReaderGate,
-  verifyGate,
-} from '@liteship/gauntlet';
+import { activeModeledSurfaceReaderGate, verifyGate } from '@liteship/gauntlet';
 import { buildActiveSurfaceFacts } from '@liteship/audit';
 import {
   LITESHIP_ACTIVE_SURFACES,
@@ -16,6 +13,7 @@ import {
 } from '../../../packages/cli/src/internal/active-surface-policy.js';
 import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/internal/liteship-typescript-aliases.js';
 import { resolve } from 'node:path';
+import { repositoryProofTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -44,51 +42,63 @@ describe('activeModeledSurfaceReaderGate — field-level orphan (#132)', () => {
 });
 
 describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', () => {
-  it('reads all four TransitionNode fields in enrolled reader paths', () => {
-    const facts = buildActiveSurfaceFacts({
-      repoRoot: REPO_ROOT,
-      promotion: 'blocking',
-      surfaces: LITESHIP_ACTIVE_SURFACES,
-      requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
-      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
-    });
-    const transition = facts.surfaces.find((s) => s.family === 'transition');
-    expect(transition).toBeDefined();
-    expect(transition?.active).toBe(true);
-    expect(transition?.readFields).toContain('fromPose');
-    expect(transition?.readFields).toContain('toPose');
-    expect(transition?.readFields).toContain('routing');
-    expect(transition?.readFields).toContain('durationMs');
-    expect(transition?.unreadFields).toHaveLength(0);
-  });
+  it(
+    'reads all four TransitionNode fields in enrolled reader paths',
+    () => {
+      const facts = buildActiveSurfaceFacts({
+        repoRoot: REPO_ROOT,
+        promotion: 'blocking',
+        surfaces: LITESHIP_ACTIVE_SURFACES,
+        requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
+        typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+      });
+      const transition = facts.surfaces.find((s) => s.family === 'transition');
+      expect(transition).toBeDefined();
+      expect(transition?.active).toBe(true);
+      expect(transition?.readFields).toContain('fromPose');
+      expect(transition?.readFields).toContain('toPose');
+      expect(transition?.readFields).toContain('routing');
+      expect(transition?.readFields).toContain('durationMs');
+      expect(transition?.unreadFields).toHaveLength(0);
+    },
+    repositoryProofTimeout(),
+  );
 
-  it('reads enrolled ExportNode fields in reader paths', () => {
-    const facts = buildActiveSurfaceFacts({
-      repoRoot: REPO_ROOT,
-      promotion: 'blocking',
-      surfaces: LITESHIP_ACTIVE_SURFACES,
-      requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
-      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
-    });
-    const exportSurface = facts.surfaces.find((s) => s.family === 'export');
-    expect(exportSurface).toBeDefined();
-    expect(exportSurface?.readFields).toContain('sourceRefs');
-    expect(exportSurface?.readFields).toContain('artifactDigest');
-    expect(exportSurface?.unreadFields).toHaveLength(0);
-  });
+  it(
+    'reads enrolled ExportNode fields in reader paths',
+    () => {
+      const facts = buildActiveSurfaceFacts({
+        repoRoot: REPO_ROOT,
+        promotion: 'blocking',
+        surfaces: LITESHIP_ACTIVE_SURFACES,
+        requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
+        typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+      });
+      const exportSurface = facts.surfaces.find((s) => s.family === 'export');
+      expect(exportSurface).toBeDefined();
+      expect(exportSurface?.readFields).toContain('sourceRefs');
+      expect(exportSurface?.readFields).toContain('artifactDigest');
+      expect(exportSurface?.unreadFields).toHaveLength(0);
+    },
+    repositoryProofTimeout(),
+  );
 
-  it('live repo emits no findings when all fields are read (blocking promotion)', () => {
-    const facts = buildActiveSurfaceFacts({
-      repoRoot: REPO_ROOT,
-      promotion: 'blocking',
-      surfaces: LITESHIP_ACTIVE_SURFACES.filter((surface) => surface.family === 'transition'),
-      requiredFields: {
-        transition: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS.transition,
-      },
-      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
-    });
-    const ctx = { repoRoot: REPO_ROOT, readFile: () => undefined, files: () => [], activeSurfaceFacts: facts };
-    const findings = activeModeledSurfaceReaderGate.run(ctx);
-    expect(findings).toHaveLength(0);
-  });
+  it(
+    'live repo emits no findings when all fields are read (blocking promotion)',
+    () => {
+      const facts = buildActiveSurfaceFacts({
+        repoRoot: REPO_ROOT,
+        promotion: 'blocking',
+        surfaces: LITESHIP_ACTIVE_SURFACES.filter((surface) => surface.family === 'transition'),
+        requiredFields: {
+          transition: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS.transition,
+        },
+        typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+      });
+      const ctx = { repoRoot: REPO_ROOT, readFile: () => undefined, files: () => [], activeSurfaceFacts: facts };
+      const findings = activeModeledSurfaceReaderGate.run(ctx);
+      expect(findings).toHaveLength(0);
+    },
+    repositoryProofTimeout(),
+  );
 });

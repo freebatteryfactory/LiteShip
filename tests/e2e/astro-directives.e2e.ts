@@ -6,9 +6,9 @@
  * matching CSS, two style identities cannot bleed, and hysteresis wins over a
  * stateless raw-width interpretation.
  *
- * Skips with a message when the astro example has not been built — the
- * gauntlet runs the integration build before the e2e lane, so CI always
- * exercises it.
+ * The canonical `test:e2e` command builds the Astro integration fixture first;
+ * the capability-linked skip remains a guard for intentionally narrow direct
+ * Playwright invocations that do not prepare the fixture.
  */
 import { test, expect } from '@playwright/test';
 import { astroExampleNotBuilt } from '../helpers/capabilities.js';

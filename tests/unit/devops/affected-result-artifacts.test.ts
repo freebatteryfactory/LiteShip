@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { repoRoot } from '../../../vitest.shared.js';
 import { buildWorkflowOutputReceipt } from '../../../scripts/lib/workflow-output-contract.js';
+import { reportersFor, shouldReuseE2EServer } from '../../e2e/playwright.config.js';
 
 const workflow = readFileSync(`${repoRoot}/.github/workflows/ci.yml`, 'utf8');
 
@@ -42,12 +43,31 @@ describe('affected PR result artifacts', () => {
     const body = job('pr-browser-affected', 'pr-windows-affected');
     expect(body).toContain('--outputFile.junit=reports/vitest-results-pr-browser-affected.xml');
     expect(body).toContain('PLAYWRIGHT_JUNIT_OUTPUT_FILE: reports/playwright-results-pr-browser-affected.xml');
+    expect(body).toContain('run: pnpm run test:e2e');
+    expect(body).not.toContain('test:e2e -- --reporter');
     expect(body).toContain('reports/affected-result-pr-browser.json');
     expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_E2E: ${{ steps.e2e.outcome }}');
     expect(body).toMatch(/name: Upload affected browser test evidence\s+if: always\(\)/u);
     expect(body).toContain('reports/vitest-results-pr-browser-affected.xml');
     expect(body).toContain('reports/playwright-results-pr-browser-affected.xml');
     expect(body).toContain('if-no-files-found: error');
+  });
+
+  it('lets the Playwright owner project JUnit from the evidence output contract', () => {
+    expect(reportersFor(undefined)).toEqual([['line']]);
+    expect(reportersFor('  ')).toEqual([['line']]);
+    expect(reportersFor('reports/playwright.xml')).toEqual([
+      ['line'],
+      ['junit', { outputFile: 'reports/playwright.xml' }],
+    ]);
+  });
+
+  it('refuses implicit server reuse and admits only an explicit debugging opt-in', () => {
+    expect(shouldReuseE2EServer(undefined)).toBe(false);
+    expect(shouldReuseE2EServer('')).toBe(false);
+    expect(shouldReuseE2EServer('0')).toBe(false);
+    expect(shouldReuseE2EServer('true')).toBe(false);
+    expect(shouldReuseE2EServer(' 1 ')).toBe(true);
   });
 
   it('treats a missing Windows JUnit file as failed proof rather than an advisory upload', () => {

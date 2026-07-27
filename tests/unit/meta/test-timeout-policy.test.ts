@@ -24,10 +24,42 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
+import ts from 'typescript';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
 const TEST_SOURCES = fg.sync('tests/**/*.test.ts', { cwd: REPO, absolute: false });
+
+/** Calls whose subject is the live repository rather than a bounded fixture. */
+const REPOSITORY_PROOF_CALLEES = new Set([
+  'analyzeRepositoryPublicExports',
+  'analyzeRepositorySpine',
+  'buildActiveSurfaceFacts',
+  'buildLiteShipFeatureEdgeFacts',
+  'collectRosterDrift',
+  'renderGeneratedProjections',
+]);
+
+function repositoryProofBudgetState(
+  file: string,
+  source: string,
+): {
+  readonly hasRepositoryProof: boolean;
+  readonly hasBudget: boolean;
+} {
+  const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  let hasRepositoryProof = false;
+  let hasBudget = false;
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      hasRepositoryProof ||= REPOSITORY_PROOF_CALLEES.has(node.expression.text);
+      hasBudget ||= node.expression.text === 'repositoryProofTimeout';
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return { hasRepositoryProof, hasBudget };
+}
 
 /** Raw numeric trailing-arg timeout: a line that closes a test callback and passes a >=1000ms literal. */
 const TRAILING_ARG_TIMEOUT = /^\s*\},\s*([0-9][0-9_]*)\s*\)\s*;/;
@@ -50,8 +82,10 @@ const asNumber = (literal: string): number => Number(literal.replace(/_/g, ''));
 describe('timeout policy — explicit test timeouts use scaledTimeout', () => {
   it('no test file passes a raw >=1000ms trailing-arg timeout literal', () => {
     const offenders: string[] = [];
+    const repositoryProofOffenders: string[] = [];
     for (const file of TEST_SOURCES) {
-      const lines = readFileSync(resolve(REPO, file), 'utf8').split('\n');
+      const source = readFileSync(resolve(REPO, file), 'utf8');
+      const lines = source.split('\n');
       const trimmed = lines.map((line) => line.trim());
       lines.forEach((line, i) => {
         const m = TRAILING_ARG_TIMEOUT.exec(line);
@@ -66,8 +100,16 @@ describe('timeout policy — explicit test timeouts use scaledTimeout', () => {
           }
         }
       });
+      const repositoryProof = repositoryProofBudgetState(file, source);
+      if (repositoryProof.hasRepositoryProof && !repositoryProof.hasBudget) {
+        repositoryProofOffenders.push(file);
+      }
     }
     expect(offenders, 'wrap the literal in scaledTimeout(...) from vitest.shared.ts').toEqual([]);
+    expect(
+      repositoryProofOffenders,
+      'live-repository census/compile proofs must use repositoryProofTimeout() from vitest.shared.ts',
+    ).toEqual([]);
   });
 
   it('no test file passes a raw >=1000ms vitest option-object timeout literal', () => {

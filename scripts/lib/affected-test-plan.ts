@@ -195,9 +195,7 @@ function finalizePlan(
     artifacts: ['affected-plan', 'test-results'],
     estimatedCost: {
       selectedNodeTests:
-        input.mode === 'full'
-          ? new Set(inventory.packages.flatMap((entry) => entry.evidenceFiles)).size
-          : input.testFiles.length,
+        input.mode === 'full' ? inventory.nodeTestSelection.entrypoints.length : input.testFiles.length,
       upperBoundMs: input.mode === 'full' ? 45 * 60_000 : Math.max(60_000, input.testFiles.length * 15_000),
     },
   };
@@ -515,10 +513,7 @@ export function parseAffectedTestPlan(value: unknown): AffectedTestPlan {
     throw new TypeError('affected plan references a foreign package');
   }
   const checkIds = new Set(CHECK_REGISTRY.map((check) => check.id));
-  if (
-    new Set(requiredChecks).size !== requiredChecks.length ||
-    requiredChecks.some((id) => !checkIds.has(id))
-  ) {
+  if (new Set(requiredChecks).size !== requiredChecks.length || requiredChecks.some((id) => !checkIds.has(id))) {
     throw new TypeError('affected plan references a duplicate or foreign check');
   }
   const expectedPlatforms = candidate['browserRequired'] ? ['linux', 'win32', 'browser'] : ['linux', 'win32'];

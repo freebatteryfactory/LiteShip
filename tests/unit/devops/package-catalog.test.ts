@@ -22,6 +22,7 @@ import {
   type ProjectReferenceSource,
 } from '../../../scripts/lib/project-reference-contract.js';
 import { walkTrackedFiles } from '../../../scripts/audit/shared.js';
+import { repositoryProofTimeout } from '../../../vitest.shared.js';
 import {
   collectGeneratedProjectionDrift,
   findAuthoredFleetLists,
@@ -252,21 +253,25 @@ describe('PACKAGE_CATALOG negative controls', () => {
     expect(details(duplicate)).toEqual(expect.arrayContaining([expect.stringContaining(expected)]));
   });
 
-  it('rejects one stale generated projection without touching the checkout', () => {
-    const source = new Map(renderGeneratedProjections());
-    for (const path of [
-      'ARCHITECTURE.md',
-      'PACKAGE-SURFACES.md',
-      'AGENTS.md',
-      'packages/liteship/src/package-roster.generated.ts',
-    ]) {
-      source.set(path, readFileSync(resolve(REPO, path), 'utf8'));
-    }
-    source.set('scripts/ci/publish-roster.json', '{"stale":true}\n');
-    expect(collectGeneratedProjectionDrift((path) => source.get(path))).toEqual([
-      expect.objectContaining({ copy: 'scripts/ci/publish-roster.json' }),
-    ]);
-  });
+  it(
+    'rejects one stale generated projection without touching the checkout',
+    () => {
+      const source = new Map(renderGeneratedProjections());
+      for (const path of [
+        'ARCHITECTURE.md',
+        'PACKAGE-SURFACES.md',
+        'AGENTS.md',
+        'packages/liteship/src/package-roster.generated.ts',
+      ]) {
+        source.set(path, readFileSync(resolve(REPO, path), 'utf8'));
+      }
+      source.set('scripts/ci/publish-roster.json', '{"stale":true}\n');
+      expect(collectGeneratedProjectionDrift((path) => source.get(path))).toEqual([
+        expect.objectContaining({ copy: 'scripts/ci/publish-roster.json' }),
+      ]);
+    },
+    repositoryProofTimeout(),
+  );
 
   it('projects every declaration-only spine subpath into focused test resolution', () => {
     const rendered = JSON.parse(renderTestPathsTsconfig()) as { compilerOptions: { paths: Record<string, string[]> } };

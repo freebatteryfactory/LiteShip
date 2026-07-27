@@ -13,6 +13,7 @@ import {
   type PlannedCheck,
 } from '@liteship/command';
 import { createCheckPlanRunner, invokedScriptName } from '../../packages/cli/src/commands/check.js';
+import { repositoryProofTimeout } from '../../vitest.shared.js';
 
 const ROOT = resolve(import.meta.dirname, '..', '..');
 const SHARED_EXTERNAL_AUTHORITY = 'shared:external-authority-red-fixtures';
@@ -389,19 +390,23 @@ describe('blocking-check negative-control relation properties', () => {
     }
   });
 
-  it('production execution binds every exact id and command to red/nonzero and green/zero', () => {
-    fc.assert(
-      fc.property(fc.constantFrom(...BLOCKING_CHECKS), fc.integer({ min: 1, max: 255 }), (check, nonzero) => {
-        const red = execute(check, nonzero);
-        expect(red.calls).toEqual([expectedSpawnCommand(check)]);
-        expect(red).toMatchObject({ ok: false, blocked: true, verdict: 'fail' });
-        const green = execute(check, 0);
-        expect(green.calls).toEqual([expectedSpawnCommand(check)]);
-        expect(green).toMatchObject({ ok: true, blocked: false, verdict: 'pass' });
-      }),
-      { seed: 0xb10c, numRuns: 84 },
-    );
-  });
+  it(
+    'production execution binds every exact id and command to red/nonzero and green/zero',
+    () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...BLOCKING_CHECKS), fc.integer({ min: 1, max: 255 }), (check, nonzero) => {
+          const red = execute(check, nonzero);
+          expect(red.calls).toEqual([expectedSpawnCommand(check)]);
+          expect(red).toMatchObject({ ok: false, blocked: true, verdict: 'fail' });
+          const green = execute(check, 0);
+          expect(green.calls).toEqual([expectedSpawnCommand(check)]);
+          expect(green).toMatchObject({ ok: true, blocked: false, verdict: 'pass' });
+        }),
+        { seed: 0xb10c, numRuns: 84 },
+      );
+    },
+    repositoryProofTimeout(),
+  );
 
   it('keeps pnpm test distinct from pnpm run and preserves quoted/forwarded command text', () => {
     expect(invokedScriptName('pnpm test')).toBe('test');

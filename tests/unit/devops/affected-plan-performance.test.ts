@@ -12,6 +12,6 @@ describe('affected-plan complexity contract', () => {
     const second = planAffectedTests([...paths].reverse(), PACKAGE_CATALOG, INVENTORY);
     expect(first).toEqual(second);
     expect(first.changedPaths).toHaveLength(250);
-    expect(first.estimatedCost.selectedNodeTests).toBeGreaterThanOrEqual(250);
+    expect(first.estimatedCost.selectedNodeTests).toBe(INVENTORY.nodeTestSelection.entrypoints.length);
   });
 });

@@ -18,6 +18,7 @@ import {
   LITESHIP_SPINE_PROTOCOL_DECLARATIONS,
 } from '../../../packages/cli/src/internal/spine-relation-policy.js';
 import { SPINE_PROTOCOL_PROJECTIONS, SPINE_RUNTIME_OWNER_OVERRIDES } from '../../../scripts/gen-spine-surface.js';
+import { repositoryProofTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 
@@ -60,47 +61,55 @@ describe('_spine explicit surface contract', () => {
     expect(() => renderSpineSymbolDocumentation(analysis)).toThrow(/undocumented missing\.d\.ts:MissingDocumentation/u);
   });
 
-  test('the repository root barrel and symbol index are exact projections of the live leaf census', () => {
-    const analysis = analyzeRepositorySpine(REPO_ROOT);
-    expect(analysis.collisions).toEqual([]);
-    expect(analysis.undocumented).toEqual([]);
-    expect(analysis.symbols.length).toBeGreaterThan(300);
-    expect(analysis.rejectedValues.length).toBeGreaterThan(100);
-    expect(readFileSync(resolve(REPO_ROOT, 'packages/_spine/index.d.ts'), 'utf8')).toBe(renderSpineBarrel(analysis));
-    expect(readFileSync(resolve(REPO_ROOT, 'packages/_spine/SYMBOLS.md'), 'utf8')).toBe(
-      renderSpineSymbolDocumentation(analysis),
-    );
-  });
+  test(
+    'the repository root barrel and symbol index are exact projections of the live leaf census',
+    () => {
+      const analysis = analyzeRepositorySpine(REPO_ROOT);
+      expect(analysis.collisions).toEqual([]);
+      expect(analysis.undocumented).toEqual([]);
+      expect(analysis.symbols.length).toBeGreaterThan(300);
+      expect(analysis.rejectedValues.length).toBeGreaterThan(100);
+      expect(readFileSync(resolve(REPO_ROOT, 'packages/_spine/index.d.ts'), 'utf8')).toBe(renderSpineBarrel(analysis));
+      expect(readFileSync(resolve(REPO_ROOT, 'packages/_spine/SYMBOLS.md'), 'utf8')).toBe(
+        renderSpineSymbolDocumentation(analysis),
+      );
+    },
+    repositoryProofTimeout(),
+  );
 
-  test('classifies every repository symbol exactly once as an admitted mirror or declaration-owned protocol', () => {
-    const spine = analyzeRepositorySpine(REPO_ROOT);
-    const runtime = analyzeRepositoryPublicExports(REPO_ROOT, PACKAGE_CATALOG);
-    const projection = classifySpineProvenance(
-      spine,
-      runtime.contracts,
-      LITESHIP_SPINE_AUTHORED_ADMISSIONS,
-      SPINE_RUNTIME_OWNER_OVERRIDES,
-      SPINE_PROTOCOL_PROJECTIONS,
-    );
-    expect(() => assertSpineProvenanceComplete(projection)).not.toThrow();
-    expect(projection.classifications).toHaveLength(spine.symbols.length);
-    expect(new Set(projection.classifications.map((row) => row.symbol)).size).toBe(spine.symbols.length);
-    expect(LITESHIP_SPINE_ADMISSIONS).toHaveLength(
-      LITESHIP_SPINE_AUTHORED_ADMISSIONS.length + projection.generatedAdmissions.length,
-    );
-    expect(LITESHIP_SPINE_PROTOCOL_DECLARATIONS).toEqual(
-      projection.classifications
-        .filter((row) => row.classification === 'spine-protocol' || row.classification === 'protocol-projection')
-        .map((row) => row),
-    );
-    const rendered = renderSpineProvenanceProjection(projection);
-    expect(rendered.match(/\/\/ prettier-ignore/gu)).toHaveLength(2);
-    expect(rendered).toBe(
-      readFileSync(resolve(REPO_ROOT, 'packages/cli/src/internal/spine-provenance.generated.ts'), 'utf8'),
-    );
-    expect(rendered.endsWith('\n')).toBe(true);
-    expect(rendered.endsWith('\n\n')).toBe(false);
-  });
+  test(
+    'classifies every repository symbol exactly once as an admitted mirror or declaration-owned protocol',
+    () => {
+      const spine = analyzeRepositorySpine(REPO_ROOT);
+      const runtime = analyzeRepositoryPublicExports(REPO_ROOT, PACKAGE_CATALOG);
+      const projection = classifySpineProvenance(
+        spine,
+        runtime.contracts,
+        LITESHIP_SPINE_AUTHORED_ADMISSIONS,
+        SPINE_RUNTIME_OWNER_OVERRIDES,
+        SPINE_PROTOCOL_PROJECTIONS,
+      );
+      expect(() => assertSpineProvenanceComplete(projection)).not.toThrow();
+      expect(projection.classifications).toHaveLength(spine.symbols.length);
+      expect(new Set(projection.classifications.map((row) => row.symbol)).size).toBe(spine.symbols.length);
+      expect(LITESHIP_SPINE_ADMISSIONS).toHaveLength(
+        LITESHIP_SPINE_AUTHORED_ADMISSIONS.length + projection.generatedAdmissions.length,
+      );
+      expect(LITESHIP_SPINE_PROTOCOL_DECLARATIONS).toEqual(
+        projection.classifications
+          .filter((row) => row.classification === 'spine-protocol' || row.classification === 'protocol-projection')
+          .map((row) => row),
+      );
+      const rendered = renderSpineProvenanceProjection(projection);
+      expect(rendered.match(/\/\/ prettier-ignore/gu)).toHaveLength(2);
+      expect(rendered).toBe(
+        readFileSync(resolve(REPO_ROOT, 'packages/cli/src/internal/spine-provenance.generated.ts'), 'utf8'),
+      );
+      expect(rendered.endsWith('\n')).toBe(true);
+      expect(rendered.endsWith('\n\n')).toBe(false);
+    },
+    repositoryProofTimeout(),
+  );
 
   test('derives protocols only from the absence of a runtime twin and never hides a same-name producer', () => {
     const analysis = analyzeSpineSources({
