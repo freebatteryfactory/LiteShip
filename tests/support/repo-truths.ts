@@ -13,7 +13,7 @@
  *   - `rootManifest()` / `workspaceVersion()` ....... root `package.json`
  *   - `packageManifests()` / `workspaceManifests()` . `packages/*` (+ `examples/*`) `package.json`
  *   - `publishablePackageDirs()` .................... `packages/<dir>/package.json` `publishConfig`
- *   - `packageRoster()` ............................. the canonical `@czap/*` fleet
+ *   - `packageRoster()` ............................. the canonical `@liteship/*` fleet
  *   - `rootTsconfigReferenceDirs()` ................. root `tsconfig.json` `references`
  *   - `catalogEntry()` .............................. `pnpm-workspace.yaml` `catalog:`
  *
@@ -27,6 +27,7 @@
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import ts from 'typescript';
 
 /** The monorepo root — this file lives at `tests/support/`, so up two. */
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
@@ -136,18 +137,14 @@ export function publishablePackageDirs(): readonly string[] {
 }
 
 /**
- * The canonical dependency-fleet roster: every non-private `@czap/*` package on
- * disk, sorted.
- *
- * The plan (T148 / duplication workstream) designates `@czap/audit`'s exported
- * `CZAP_PACKAGE_ROSTER` as the eventual single roster anchor; it does not exist
- * yet (grep of `packages/` finds no such export as of this wave), so the roster
- * is DERIVED here from the publishable set. When audit ships the export, this
- * accessor should delegate to it and the derivation drops out.
+ * The independent physical-packaging oracle: every non-private
+ * `@liteship/*` manifest on disk, sorted. Authored membership and dependency
+ * order live in `scripts/package-catalog.ts`; generator and roster tests compare
+ * that catalog with this disk-derived view so neither source can bless itself.
  */
 export function packageRoster(): readonly string[] {
   return packageManifests()
-    .filter((m) => m.private !== true && m.name != null && m.name.startsWith('@czap/'))
+    .filter((m) => m.private !== true && m.name != null && m.name.startsWith('@liteship/'))
     .map((m) => m.name as string)
     .sort();
 }
@@ -162,7 +159,7 @@ interface RootTsconfig {
 
 /**
  * The `./packages/<dir>` references declared in the root `tsconfig.json` —
- * the build topology (`build` is a bare `tsc --build`). Only `./packages/<dir>`
+ * the build topology (the native tsc owner runs build mode). Only `./packages/<dir>`
  * references are counted; nested or external paths are ignored.
  */
 export function rootTsconfigReferenceDirs(): readonly string[] {
@@ -224,7 +221,7 @@ export function lintGlobs(): readonly string[] {
 
 /**
  * The `&&`-chained legs of the root `typecheck` script, each trimmed. Leg 0 is
- * the build-mode `tsc --build` the S0.3 vacuity tripwire pins.
+ * the build-mode native tsc command the S0.3 vacuity tripwire pins.
  */
 export function typecheckLegs(): readonly string[] {
   return (rootManifest().scripts.typecheck ?? '').split('&&').map((leg) => leg.trim());
@@ -239,15 +236,14 @@ export function typecheckScript(): string {
 // Build config inputs — per-package tsconfig, tests project, api surface.
 // ---------------------------------------------------------------------------
 
-/** Tolerant JSONC reader: strips block + line comments before JSON.parse. */
+/** JSONC reader backed by TypeScript's grammar (glob syntax is not a comment). */
 function readJsonc<T>(absPath: string): T {
   const text = readFileSync(absPath, 'utf8');
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    const stripped = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-    return JSON.parse(stripped) as T;
+  const parsed = ts.parseConfigFileTextToJson(absPath, text);
+  if (parsed.error !== undefined) {
+    throw new Error(`cannot parse JSONC ${absPath}: TS${parsed.error.code}`);
   }
+  return parsed.config as T;
 }
 
 /** The `include` + `files` compile inputs of a tsconfig. */
@@ -269,10 +265,14 @@ export function packageTsconfigInputs(dir: string): TsconfigInputs | undefined {
   return { include: cfg.include, files: cfg.files };
 }
 
-/** The concrete (non-glob) `include` entries of `tsconfig.tests.json` (JSONC-tolerant). */
+/** Every authored `include` entry of `tsconfig.tests.json` (JSONC-tolerant). */
+export function tsconfigTestsIncludeEntries(): readonly string[] {
+  return readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
+}
+
+/** The concrete (non-glob) `include` entries of `tsconfig.tests.json`. */
 export function tsconfigTestsIncludeFiles(): readonly string[] {
-  const include = readJsonc<TsconfigInputs>(resolve(REPO_ROOT, 'tsconfig.tests.json')).include ?? [];
-  return include.filter((entry) => !entry.includes('*'));
+  return tsconfigTestsIncludeEntries().filter((entry) => !entry.includes('*'));
 }
 
 /** The parsed api-surface snapshot fixture (plain JSON). */

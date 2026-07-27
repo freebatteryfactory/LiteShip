@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Messages } from '@czap/worker';
-import { makeResolvedStateEnvelope } from '../../../packages/worker/src/messages.js';
+import { Messages } from '@liteship/worker';
+import { defineResolvedStateEnvelope } from '../../../packages/worker/src/messages.js';
 
 describe('Messages', () => {
   test('isToWorker returns true for valid ToWorkerMessage', () => {
@@ -25,6 +25,14 @@ describe('Messages', () => {
     expect(Messages.isToWorker({ name: 'test' })).toBe(false);
   });
 
+  test('direction and unknown discriminants are rejected', () => {
+    expect(Messages.isToWorker({ type: 'ready' })).toBe(false);
+    expect(Messages.isFromWorker({ type: 'compute' })).toBe(false);
+    expect(Messages.isToWorker({ type: 'not-a-message' })).toBe(false);
+    expect(Messages.isFromWorker({ type: 'not-a-message' })).toBe(false);
+    expect(Messages.isToWorker({ type: 42 })).toBe(false);
+  });
+
   test('isFromWorker returns true for valid FromWorkerMessage', () => {
     expect(Messages.isFromWorker({ type: 'ready' })).toBe(true);
     expect(Messages.isFromWorker({ type: 'state', state: {} })).toBe(true);
@@ -38,7 +46,7 @@ describe('Messages', () => {
 
   test('builds the resolved-state transport envelope with the current wire shape', () => {
     expect(
-      makeResolvedStateEnvelope(
+      defineResolvedStateEnvelope(
         'apply-resolved-state',
         [{ name: 'layout', state: 'tablet', generation: 2 }],
         true,

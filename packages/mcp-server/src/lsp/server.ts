@@ -1,7 +1,7 @@
 /**
  * The LSP rigor server — the THIRD JSON-RPC skin over the one gauntlet fold.
  *
- * CLI (`czap check`), MCP (`tools/call`), and this LSP server are three faces of
+ * CLI (`liteship check`), MCP (`tools/call`), and this LSP server are three faces of
  * the SAME `Finding`: the CLI prints it, the MCP server returns it as
  * `structuredContent`, and the LSP publishes it as a live `textDocument/
  * publishDiagnostics` Diagnostic + offers its remediation as a
@@ -13,19 +13,20 @@
  * exactly like `dispatch.ts` gets its findings via `context.runGauntlet`. The
  * engine fold (the `node:fs` glob, the waiver-expiry wall-clock, the heavy audit
  * IR build) lives in the CLI host that constructs the runner — NEVER in this
- * server. So `@czap/mcp-server` stays free of the gauntlet + audit engines, and the
+ * server. So `@liteship/mcp-server` stays free of the gauntlet + audit engines, and the
  * server is testable with a stub runner over a fixed finding list.
  *
  * SCOPE: the rigor projection, NOT the full LSP. Advertised capabilities are
  * exactly `codeActionProvider` + a (no-op) text sync; there is no hover,
  * completion, rename, or semantic-tokens surface. Diagnostics are PUSHED on a
- * `czap/check` request (a custom method an editor extension triggers) and on
- * `initialized`; the server also answers a pull-style `workspace/diagnostic`.
+ * `liteship/check` request (a custom method an editor extension triggers) and on
+ * `initialized`; the server also answers the LSP 3.17 pull-diagnostic pair:
+ * `textDocument/diagnostic` and `workspace/diagnostic`.
  *
  * @module
  */
 
-import { InvariantViolationError, ValidationError, isTaggedError } from '@czap/error';
+import { InvariantViolationError, ValidationError, isTaggedError } from '@liteship/error';
 import {
   convertPatternsToRe,
   convertToPositivePattern,
@@ -36,7 +37,8 @@ import {
 import { parse as parseJsonRpc, errorResponse, successResponse } from '../jsonrpc.js';
 import type { JsonRpcId, JsonRpcResponse } from '../jsonrpc.js';
 import { InvalidParams, InternalError, MethodNotFound } from '../jsonrpc.js';
-import { groupDiagnosticsByUri, projectFinding } from './diagnostic.js';
+import { serverInfo } from '../server-info.js';
+import { groupDiagnosticsByUri, normalizeWorkspaceRootUri, projectFinding } from './diagnostic.js';
 import { projectRemediation } from './code-action.js';
 import {
   CodeActionKind,
@@ -49,14 +51,73 @@ import {
   type PublishDiagnosticsParams,
 } from './types.js';
 
+const LSP_METHOD = {
+  initialize: 'initialize',
+  initialized: 'initialized',
+  check: 'liteship/check',
+  textDocumentDiagnostic: 'textDocument/diagnostic',
+  workspaceDiagnostic: 'workspace/diagnostic',
+  codeAction: 'textDocument/codeAction',
+  shutdown: 'shutdown',
+  exit: 'exit',
+  publishDiagnostics: 'textDocument/publishDiagnostics',
+  logMessage: 'window/logMessage',
+} as const;
+
+/** One exact method row in the LSP public protocol projection. */
+export interface LspMethodDescriptor {
+  readonly method: (typeof LSP_METHOD)[keyof typeof LSP_METHOD];
+  readonly direction: 'client-to-server' | 'server-to-client';
+  readonly messageKind: 'request' | 'notification' | 'either';
+  readonly phase: 'initial' | 'active' | 'shutdown' | 'outbound';
+}
+
+/**
+ * Exact LSP method projection consumed by dispatch and capability construction.
+ * This records the already-implemented push/pull model without selecting a new
+ * diagnostic model; changing that model remains an owner decision.
+ */
+const LSP_METHOD_DESCRIPTORS = [
+  { method: LSP_METHOD.initialize, direction: 'client-to-server', messageKind: 'request', phase: 'initial' },
+  { method: LSP_METHOD.initialized, direction: 'client-to-server', messageKind: 'notification', phase: 'active' },
+  { method: LSP_METHOD.check, direction: 'client-to-server', messageKind: 'either', phase: 'active' },
+  {
+    method: LSP_METHOD.textDocumentDiagnostic,
+    direction: 'client-to-server',
+    messageKind: 'request',
+    phase: 'active',
+  },
+  {
+    method: LSP_METHOD.workspaceDiagnostic,
+    direction: 'client-to-server',
+    messageKind: 'request',
+    phase: 'active',
+  },
+  { method: LSP_METHOD.codeAction, direction: 'client-to-server', messageKind: 'request', phase: 'active' },
+  { method: LSP_METHOD.shutdown, direction: 'client-to-server', messageKind: 'request', phase: 'active' },
+  { method: LSP_METHOD.exit, direction: 'client-to-server', messageKind: 'notification', phase: 'shutdown' },
+  {
+    method: LSP_METHOD.publishDiagnostics,
+    direction: 'server-to-client',
+    messageKind: 'notification',
+    phase: 'outbound',
+  },
+  { method: LSP_METHOD.logMessage, direction: 'server-to-client', messageKind: 'notification', phase: 'outbound' },
+] as const satisfies readonly LspMethodDescriptor[];
+
+/** Closed LSP method catalog that drives routing and advertised capabilities. */
+export const LSP_METHOD_CATALOG: readonly LspMethodDescriptor[] = Object.freeze(
+  LSP_METHOD_DESCRIPTORS.map((descriptor) => Object.freeze(descriptor)),
+);
+
 /** The custom request an editor extension sends to trigger a gauntlet run + diagnostic publish. */
-export const CZAP_CHECK_METHOD = 'czap/check' as const;
+export const LITESHIP_CHECK_METHOD = LSP_METHOD.check;
 
 /** The LSP protocol method the server pushes diagnostics over (§textDocument/publishDiagnostics). */
-const PUBLISH_DIAGNOSTICS_METHOD = 'textDocument/publishDiagnostics' as const;
+const PUBLISH_DIAGNOSTICS_METHOD = LSP_METHOD.publishDiagnostics;
 
 /** The LSP protocol method the server logs out-of-band over (§window/logMessage). */
-const LOG_MESSAGE_METHOD = 'window/logMessage' as const;
+const LOG_MESSAGE_METHOD = LSP_METHOD.logMessage;
 const FAST_GLOB_IGNORES = ['**/node_modules/**', '**/dist/**'] as const;
 const FAST_GLOB_POSITIVE_OPTIONS = { dot: false } as const;
 const FAST_GLOB_NEGATIVE_OPTIONS = { dot: true } as const;
@@ -69,15 +130,50 @@ const FAST_GLOB_NEGATIVE_OPTIONS = { dot: true } as const;
  * from in-editor edits). Honest minimalism: a capability is declared only
  * because its method is implemented (mirrors the MCP `capabilities.ts` law).
  */
-export const LSP_SERVER_CAPABILITIES = {
-  textDocumentSync: 0,
-  codeActionProvider: { codeActionKinds: [CodeActionKind.QuickFix] },
-  /** Pull-diagnostics are answered (workspace/diagnostic); push is the primary channel. */
-  diagnosticProvider: { interFileDependencies: true, workspaceDiagnostics: true },
-} as const;
+export interface LspServerCapabilities {
+  readonly textDocumentSync: 0;
+  readonly codeActionProvider: { readonly codeActionKinds: readonly [typeof CodeActionKind.QuickFix] };
+  readonly diagnosticProvider: { readonly interFileDependencies: true; readonly workspaceDiagnostics: true };
+}
+
+/**
+ * Derive the advertised capability projection from an explicit method catalog.
+ * Missing either backing handler is a construction error, so a catalog mutation
+ * cannot leave a stale capability green.
+ */
+export function projectLspCapabilities(catalog: readonly LspMethodDescriptor[]): LspServerCapabilities {
+  const handled = new Set(
+    catalog.filter((entry) => entry.direction === 'client-to-server').map((entry) => entry.method),
+  );
+  for (const required of [LSP_METHOD.codeAction, LSP_METHOD.textDocumentDiagnostic, LSP_METHOD.workspaceDiagnostic]) {
+    if (!handled.has(required)) {
+      throw InvariantViolationError('lsp-capability-projection', `capability has no registered handler: ${required}`);
+    }
+  }
+  return Object.freeze({
+    textDocumentSync: 0,
+    codeActionProvider: Object.freeze({ codeActionKinds: Object.freeze([CodeActionKind.QuickFix] as const) }),
+    diagnosticProvider: Object.freeze({ interFileDependencies: true, workspaceDiagnostics: true }),
+  });
+}
+
+/** Server capabilities projected from the same method catalog used for routing. */
+export const LSP_SERVER_CAPABILITIES = projectLspCapabilities(LSP_METHOD_CATALOG);
+
+/** Exact inbound route subjects; the exhaustive dispatch switch consumes this catalog union. */
+export function lspRoutedMethodNames(): readonly string[] {
+  return LSP_METHOD_CATALOG.filter((entry) => entry.direction === 'client-to-server').map((entry) => entry.method);
+}
+
+/** Exact outbound methods emitted by the two production notification builders. */
+export function lspNotificationProducerMethods(): readonly string[] {
+  return [PUBLISH_DIAGNOSTICS_METHOD, LOG_MESSAGE_METHOD];
+}
 
 /** Server identity in the `initialize` response (§InitializeResult.serverInfo). */
-const LSP_SERVER_INFO = { name: 'czap-gauntlet-lsp', version: '0.4.1' } as const;
+function lspServerInfo(): { readonly name: 'liteship-gauntlet-lsp'; readonly version: string } {
+  return { name: 'liteship-gauntlet-lsp', version: serverInfo().version };
+}
 
 /**
  * A message the server emits OUT-OF-BAND (a server→client notification, e.g.
@@ -94,7 +190,7 @@ export interface LspNotification {
 export interface LspHandleResult {
   /** The JSON-RPC response, or `null` for a notification / `exit` (which gets none). */
   readonly response: JsonRpcResponse | null;
-  /** Server→client notifications to emit (e.g. publishDiagnostics after czap/check). */
+  /** Server→client notifications to emit (e.g. publishDiagnostics after liteship/check). */
   readonly notifications: readonly LspNotification[];
   /** `true` once `exit` is received — the driver closes the loop. */
   readonly exit: boolean;
@@ -103,7 +199,7 @@ export interface LspHandleResult {
 /**
  * The server's mutable lifecycle state. Composition-over-inheritance: this is a
  * DATA record threaded through {@link handle}, not an object with methods. The
- * findings from the last `czap/check` are cached so a follow-up `codeAction`
+ * findings from the last `liteship/check` are cached so a follow-up `codeAction`
  * request resolves remediations against the same fold the diagnostics came from
  * (the §CodeAction.diagnostics back-link must reference the published squiggle).
  */
@@ -112,6 +208,8 @@ export interface LspServerState {
   readonly initialized: boolean;
   /** Set by `shutdown`; a non-`exit` request after it must error (§Lifecycle: -32600). */
   readonly shuttingDown: boolean;
+  /** File URI supplied by the initialize handshake; relative Findings resolve beneath it. */
+  readonly workspaceRootUri?: string;
   /** The findings from the most recent gauntlet run, keyed for codeAction resolution. */
   readonly lastFindings: readonly FindingLike[];
 }
@@ -218,69 +316,147 @@ async function route(
   state: LspServerState,
   runGauntlet: LspGauntletRunner,
 ): Promise<{ readonly state: LspServerState; readonly result: LspHandleResult }> {
+  // Lifecycle authority precedes method dispatch: before initialize (and after
+  // shutdown), even an unknown request is first a lifecycle violation.
+  if (!state.initialized && method !== LSP_METHOD.initialize && method !== LSP_METHOD.exit) {
+    return lifecycleViolation(state, id, isNotification, `'${method}' received before 'initialize' (§Lifecycle)`);
+  }
+  if (state.shuttingDown && method !== LSP_METHOD.exit) {
+    return lifecycleViolation(state, id, isNotification, `'${method}' received after 'shutdown' (§Lifecycle)`);
+  }
+  const descriptor = LSP_METHOD_CATALOG.find(
+    (entry) => entry.direction === 'client-to-server' && entry.method === method,
+  );
+  if (descriptor === undefined) {
+    if (isNotification) return { state, result: { response: null, notifications: [], exit: false } };
+    throw notImplemented(method);
+  }
+  const receivedKind = isNotification ? 'notification' : 'request';
+  if (descriptor.messageKind !== 'either' && descriptor.messageKind !== receivedKind) {
+    return lifecycleViolation(state, id, isNotification, `'${method}' must be a ${descriptor.messageKind}`);
+  }
   switch (method) {
-    case 'initialize': {
-      // §Lifecycle: the FIRST request. Idempotent re-initialize is a violation,
-      // but we tolerate it (return capabilities) — the spec only forbids OTHER
-      // requests before it, which the post-switch guard enforces.
+    case LSP_METHOD.initialize: {
+      if (state.initialized) {
+        return lifecycleViolation(state, id, isNotification, "'initialize' received more than once (§Lifecycle)");
+      }
+      const workspaceRootUri = readWorkspaceRootUri(params);
       const result: LspHandleResult = {
         response: successResponse(id, {
           capabilities: LSP_SERVER_CAPABILITIES,
-          serverInfo: LSP_SERVER_INFO,
+          serverInfo: lspServerInfo(),
         }),
         notifications: [],
         exit: false,
       };
-      return { state: { ...state, initialized: true }, result };
+      return {
+        state: {
+          ...state,
+          initialized: true,
+          ...(workspaceRootUri === undefined ? {} : { workspaceRootUri }),
+        },
+        result,
+      };
     }
-    case 'initialized':
+    case LSP_METHOD.initialized:
+      requireActive(state, method);
       // The client's post-initialize notification. No response (notification).
       return { state, result: { response: null, notifications: [], exit: false } };
-    case CZAP_CHECK_METHOD: {
-      requireInitialized(state, method);
+    case LITESHIP_CHECK_METHOD: {
+      requireActive(state, method);
       const globs = readGlobs(params);
       const { findings } = await runGauntlet(globs);
-      const notifications = publishNotificationsFor(findings, state.lastFindings, globs);
+      const notifications = publishNotificationsFor(findings, state.lastFindings, globs, state.workspaceRootUri);
       const lastFindings = mergeFindingsForScope(findings, state.lastFindings, globs);
       const response: JsonRpcResponse | null = isNotification
         ? null
         : successResponse(id, { findingCount: findings.length, publishedUris: notifications.length });
       return { state: { ...state, lastFindings }, result: { response, notifications, exit: false } };
     }
-    case 'workspace/diagnostic': {
+    case LSP_METHOD.workspaceDiagnostic: {
       // Pull-style diagnostics (§workspace/diagnostic): run the fold + return the
       // grouped report inline (also caching findings for codeAction resolution).
-      requireInitialized(state, method);
+      requireActive(state, method);
       const { findings } = await runGauntlet(undefined);
-      const grouped = groupDiagnosticsByUri(findings);
-      const items = grouped.map((g) => ({ uri: g.uri, kind: 'full', items: g.diagnostics }));
+      const grouped = groupDiagnosticsByUri(findings, state.workspaceRootUri);
+      const items = grouped.map((g) => ({ uri: g.uri, version: null, kind: 'full', items: g.diagnostics }));
       return {
         state: { ...state, lastFindings: findings },
         result: { response: successResponse(id, { items }), notifications: [], exit: false },
       };
     }
-    case 'textDocument/codeAction': {
-      requireInitialized(state, method);
-      const actions = resolveCodeActions(params, state.lastFindings);
+    case LSP_METHOD.textDocumentDiagnostic: {
+      // LSP 3.17 pull diagnostics for one document. The gauntlet remains the
+      // sole producer; this is only a URI-filtered projection of the same fold
+      // used by workspace/diagnostic and liteship/check.
+      requireActive(state, method);
+      const uri = readTextDocumentDiagnosticUri(params);
+      const { findings } = await runGauntlet(undefined);
+      const group = groupDiagnosticsByUri(findings, state.workspaceRootUri).find((candidate) => candidate.uri === uri);
+      return {
+        state: { ...state, lastFindings: findings },
+        result: {
+          response: successResponse(id, { kind: 'full', items: group?.diagnostics ?? [] }),
+          notifications: [],
+          exit: false,
+        },
+      };
+    }
+    case LSP_METHOD.codeAction: {
+      requireActive(state, method);
+      const actions = resolveCodeActions(params, state.lastFindings, state.workspaceRootUri);
       return { state, result: { response: successResponse(id, actions), notifications: [], exit: false } };
     }
-    case 'shutdown':
+    case LSP_METHOD.shutdown:
+      requireActive(state, method);
       // §Lifecycle: respond with null result; then only `exit` is valid.
       return {
         state: { ...state, shuttingDown: true },
         result: { response: successResponse(id, null), notifications: [], exit: false },
       };
-    case 'exit':
+    case LSP_METHOD.exit:
       // §Lifecycle: a notification; no response. The driver closes the loop.
       return { state, result: { response: null, notifications: [], exit: true } };
-    default: {
-      if (isNotification) {
-        // Unknown notifications are silently accepted (§baseProtocol: a server MAY
-        // ignore notifications it does not understand) — but NEVER errors swallowed.
-        return { state, result: { response: null, notifications: [], exit: false } };
-      }
-      throw notImplemented(method);
+    default:
+      throw InvariantViolationError('lsp-method-catalog', `registered method has no route: ${method}`);
+  }
+}
+
+function lifecycleViolation(
+  state: LspServerState,
+  id: JsonRpcId,
+  isNotification: boolean,
+  detail: string,
+): { readonly state: LspServerState; readonly result: LspHandleResult } {
+  const error = InvariantViolationError('lsp-lifecycle', detail);
+  return {
+    state,
+    result: {
+      response: isNotification ? null : errorResponse(id, -32600, error.message, { tag: error._tag }),
+      notifications: isNotification ? [logMessageNotification(error)] : [],
+      exit: false,
+    },
+  };
+}
+
+function readWorkspaceRootUri(params: unknown): string | undefined {
+  if (typeof params !== 'object' || params === null || Array.isArray(params)) return undefined;
+  const candidate = params as { rootUri?: unknown; workspaceFolders?: unknown };
+  let uri: unknown = candidate.rootUri;
+  if ((uri === undefined || uri === null) && Array.isArray(candidate.workspaceFolders)) {
+    const first = candidate.workspaceFolders[0];
+    if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+      uri = (first as { uri?: unknown }).uri;
     }
+  }
+  if (uri === undefined || uri === null) return undefined;
+  if (typeof uri !== 'string') throw ValidationError('lsp-initialize', 'workspace root URI must be a string or null');
+  try {
+    return normalizeWorkspaceRootUri(uri);
+  } catch (cause) {
+    throw Object.assign(ValidationError('lsp-initialize', `workspace root must be an absolute file URI: ${uri}`), {
+      cause,
+    });
   }
 }
 
@@ -312,8 +488,9 @@ function publishNotificationsFor(
   findings: readonly FindingLike[],
   previousFindings: readonly FindingLike[] = [],
   checkedGlobs?: readonly string[],
+  workspaceRootUri?: string,
 ): readonly LspNotification[] {
-  const groups = groupDiagnosticsByUri(findings);
+  const groups = groupDiagnosticsByUri(findings, workspaceRootUri);
   const currentUris = new Set(groups.map((group) => group.uri));
   const previousInScope =
     checkedGlobs === undefined
@@ -325,7 +502,7 @@ function publishNotificationsFor(
   }));
   // Clear every URI that was published last run and is now finding-free (an empty publish drops the
   // editor squiggles); a URI still in `currentUris` is republished above, never double-cleared.
-  for (const stale of groupDiagnosticsByUri(previousInScope)) {
+  for (const stale of groupDiagnosticsByUri(previousInScope, workspaceRootUri)) {
     if (!currentUris.has(stale.uri)) {
       notifications.push({
         method: PUBLISH_DIAGNOSTICS_METHOD,
@@ -370,11 +547,15 @@ function mergeFindingsForScope(
  * whole file). The §CodeAction.diagnostics back-link references the finding's
  * own projected diagnostic.
  */
-function resolveCodeActions(params: unknown, findings: readonly FindingLike[]): readonly LspCodeAction[] {
+function resolveCodeActions(
+  params: unknown,
+  findings: readonly FindingLike[],
+  workspaceRootUri?: string,
+): readonly LspCodeAction[] {
   const ctx = readCodeActionParams(params);
   const actions: LspCodeAction[] = [];
   for (const finding of findings) {
-    const projected = projectFinding(finding);
+    const projected = projectFinding(finding, workspaceRootUri);
     if (projected === null) continue;
     if (projected.uri !== ctx.uri) continue;
     if (!rangeOverlaps(projected.diagnostic, ctx.range)) continue;
@@ -392,9 +573,12 @@ function rangeOverlaps(diagnostic: LspDiagnostic, range: { start: { line: number
 }
 
 /** A request before `initialize` is a §Lifecycle violation (server-initialized state required). */
-function requireInitialized(state: LspServerState, method: string): void {
+function requireActive(state: LspServerState, method: string): void {
   if (!state.initialized) {
     throw InvariantViolationError('lsp-lifecycle', `'${method}' received before 'initialize' (§Lifecycle)`);
+  }
+  if (state.shuttingDown) {
+    throw InvariantViolationError('lsp-lifecycle', `'${method}' received after 'shutdown' (§Lifecycle)`);
   }
 }
 
@@ -413,13 +597,13 @@ function isMethodNotFound(err: unknown): boolean {
   );
 }
 
-/** Read the optional `globs` array from a `czap/check` params object (defaults to undefined → full scope). */
+/** Read the optional `globs` array from a `liteship/check` params object (defaults to undefined → full scope). */
 function readGlobs(params: unknown): readonly string[] | undefined {
   if (typeof params !== 'object' || params === null) return undefined;
   const raw = (params as { globs?: unknown }).globs;
   if (!Array.isArray(raw)) return undefined;
   if (!raw.every((g): g is string => typeof g === 'string')) {
-    throw ValidationError('czap/check', 'globs must be a string[] when provided');
+    throw ValidationError('liteship/check', 'globs must be a string[] when provided');
   }
   return raw;
 }
@@ -448,4 +632,16 @@ function readCodeActionParams(params: unknown): {
     throw ValidationError('textDocument/codeAction', 'range.start.line and range.end.line must be numbers');
   }
   return { uri, range: { start: { line: startLine }, end: { line: endLine } } };
+}
+
+/** Read the document URI required by LSP 3.17 `textDocument/diagnostic`. */
+function readTextDocumentDiagnosticUri(params: unknown): string {
+  if (typeof params !== 'object' || params === null || Array.isArray(params)) {
+    throw ValidationError('textDocument/diagnostic', 'params must be an object with textDocument.uri');
+  }
+  const uri = (params as { textDocument?: { uri?: unknown } }).textDocument?.uri;
+  if (typeof uri !== 'string' || uri.trim().length === 0) {
+    throw ValidationError('textDocument/diagnostic', 'textDocument.uri must be a non-empty string');
+  }
+  return uri;
 }

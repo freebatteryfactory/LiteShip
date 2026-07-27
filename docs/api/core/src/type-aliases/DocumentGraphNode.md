@@ -8,6 +8,6 @@
 
 > **DocumentGraphNode** = [`SignalNode`](../interfaces/SignalNode.md) \| [`EntityNode`](../interfaces/EntityNode.md) \| [`ComponentNode`](../interfaces/ComponentNode.md) \| [`PoseNode`](../interfaces/PoseNode.md) \| [`TransitionNode`](../interfaces/TransitionNode.md) \| [`ProjectionNode`](../interfaces/ProjectionNode.md) \| [`PolicyNode`](../interfaces/PolicyNode.md) \| [`ExportNode`](../interfaces/ExportNode.md)
 
-Defined in: [core/src/document-graph.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L150)
+Defined in: [core/src/graph/document-graph.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L150)
 
 The tagged union of all node families.

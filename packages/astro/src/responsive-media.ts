@@ -1,25 +1,25 @@
 /**
- * Responsive-media HOST projection for `@czap/astro` (#140).
+ * Responsive-media HOST projection for `@liteship/astro` (#140).
  *
  * The production wiring of the edge `ClientHints.responsiveMediaCapabilities` /
  * `responsiveMediaVaryHeader` helpers (correct but test-only before this): derive
  * Save-Data / DPR caps from a request's Client Hints, project the intent through the
- * ONE effective-candidate law (`selectCandidates` in `@czap/core`), and merge the
+ * ONE effective-candidate law (`selectCandidates` in `@liteship/core`), and merge the
  * responsive-media `Vary` axis into the response — unioning, never clobbering, any
  * pre-existing `Vary` (RFC 9110 §12.5.5, via the Wave-1 `mergeVaryHeader`).
  *
- * `czapMiddleware` exposes the per-request projector on `Astro.locals.czap.responsiveMedia`
- * and emits the merged `Vary`; `@czap/cloudflare`'s `cloudflareMiddleware` inherits both
- * because it wraps `czapMiddleware`, so the same law drives both host paths.
+ * `liteshipMiddleware` exposes the per-request projector on `Astro.locals.liteship.responsiveMedia`
+ * and emits the merged `Vary`; `@liteship/cloudflare`'s `cloudflareMiddleware` inherits both
+ * because it wraps `liteshipMiddleware`, so the same law drives both host paths.
  *
  * @module
  */
 
-import { projectResponsiveMediaPicture } from '@czap/core';
-import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@czap/core';
-import { ClientHints } from '@czap/edge';
-import type { ClientHintsHeaders } from '@czap/edge';
-import type { ExtendedDeviceCapabilities } from '@czap/detect';
+import { projectResponsiveMediaPicture } from '@liteship/core';
+import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
+import { ClientHints } from '@liteship/edge';
+import type { ClientHintsHeaders } from '@liteship/edge';
+import type { ExtendedDeviceCapabilities } from '@liteship/detect';
 import { mergeVaryHeader } from './headers.js';
 
 /**

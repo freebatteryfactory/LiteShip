@@ -6,9 +6,9 @@
 
 # Function: contentAddressOf()
 
-> **contentAddressOf**(`value`): `ContentAddress`
+> **contentAddressOf**(`value`): [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/content-address.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/content-address.ts#L63)
+Defined in: [core/src/evidence/content-address.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/content-address.ts#L81)
 
 Mint a [ContentAddress](../variables/ContentAddress.md) (fnv1a over canonical CBOR) — the one identity
 kernel (CUT B1). The mint expression is written explicitly (not via
@@ -23,4 +23,4 @@ that identity is paired with `CanonicalCbor`, never cborg / JSON.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)

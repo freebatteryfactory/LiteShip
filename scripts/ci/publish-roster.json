@@ -1,0 +1,31 @@
+{
+  "$generated": "by scripts/gen-roster.ts from scripts/package-catalog.ts — do not hand-edit; regenerate with: pnpm exec tsx scripts/gen-roster.ts --write",
+  "expectedPublishable": 25,
+  "packages": [
+    "@liteship/_spine",
+    "@liteship/error",
+    "@liteship/canonical",
+    "@liteship/core",
+    "@liteship/genui",
+    "@liteship/quantizer",
+    "@liteship/compiler",
+    "@liteship/web",
+    "@liteship/detect",
+    "@liteship/edge",
+    "@liteship/vite",
+    "@liteship/worker",
+    "@liteship/remotion",
+    "@liteship/scene",
+    "@liteship/astro",
+    "@liteship/cloudflare",
+    "@liteship/stage",
+    "@liteship/assets",
+    "@liteship/gauntlet",
+    "@liteship/audit",
+    "@liteship/command",
+    "@liteship/cli",
+    "@liteship/mcp-server",
+    "create-liteship",
+    "liteship"
+  ]
+}

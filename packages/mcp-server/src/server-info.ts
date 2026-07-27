@@ -1,6 +1,6 @@
 /**
- * serverInfo — the `serverInfo` block @czap/mcp-server returns from `initialize`
- * (CUT D1). Reads the real `@czap/mcp-server` package version (mirrors the CLI's
+ * serverInfo — the `serverInfo` block @liteship/mcp-server returns from `initialize`
+ * (CUT D1). Reads the real `@liteship/mcp-server` package version (mirrors the CLI's
  * `readCliVersion` pattern) rather than hardcoding a literal. Host-local: this is
  * the one spot the protocol skin touches the filesystem, and it is memoized so
  * the read happens once per process, not per handshake.
@@ -10,7 +10,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 
 /** Server identity advertised in the MCP initialize response. */
 export interface ServerInfo {
@@ -18,7 +18,7 @@ export interface ServerInfo {
   readonly version: string;
 }
 
-const PACKAGE_NAME = '@czap/mcp-server';
+const PACKAGE_NAME = '@liteship/mcp-server';
 
 function readServerVersion(cwd: string = process.cwd()): string {
   const candidates: string[] = [];

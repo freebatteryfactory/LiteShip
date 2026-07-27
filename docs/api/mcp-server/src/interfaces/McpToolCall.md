@@ -6,7 +6,7 @@
 
 # Interface: McpToolCall
 
-Defined in: [mcp-server/src/dispatch.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L54)
+Defined in: [mcp-server/src/dispatch.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L58)
 
 Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP spec; omitted means `{}`.
 
@@ -16,7 +16,7 @@ Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP
 
 > `readonly` `optional` **arguments?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [mcp-server/src/dispatch.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L56)
+Defined in: [mcp-server/src/dispatch.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L60)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/dispatch.ts:56](https://github.com/freebatteryfactor
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/dispatch.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L55)
+Defined in: [mcp-server/src/dispatch.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L59)

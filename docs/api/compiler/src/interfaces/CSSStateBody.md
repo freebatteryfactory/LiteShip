@@ -31,7 +31,7 @@ Nested `@supports` / `@media` groups inside the state (#110).
 
 Defined in: [compiler/src/css.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L71)
 
-Properties applied to the boundary selector (the `selector` param, default `.czap-boundary`).
+Properties applied to the boundary selector (the `selector` param, default `.liteship-boundary`).
 
 ***
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import {
   getDefaultWorkersEnv,
   loadWorkersEnvFromRuntime,
@@ -16,7 +16,7 @@ afterEach(() => {
   Diagnostics.reset();
 });
 
-describe('@czap/cloudflare/env-source', () => {
+describe('@liteship/cloudflare/env-source', () => {
   describe('resolveEnvSource', () => {
     // LAW (the byte-equivalent copies in middleware.ts + cache-provider.ts rely on this):
     // a function env is the getter, a value env is wrapped, an omitted env reads the default.
@@ -48,7 +48,7 @@ describe('@czap/cloudflare/env-source', () => {
 
   describe('priming (loadWorkersEnvFromRuntime)', () => {
     test('returns the already-primed cache without probing cloudflare:workers or warning', async () => {
-      const env = { CZAP_BOUNDARY_CACHE: {} };
+      const env = { LITESHIP_BOUNDARY_CACHE: {} };
       setWorkersEnvForTesting(env);
       const { sink, events } = Diagnostics.createBufferSink();
       Diagnostics.setSink(sink);
@@ -71,7 +71,7 @@ describe('@czap/cloudflare/env-source', () => {
       const warned = events.filter((event) => event.code === 'workers-env-unavailable');
       // warnOnce dedupes the repeated failed probe to a single diagnostic.
       expect(warned).toHaveLength(1);
-      expect(warned[0]).toMatchObject({ level: 'warn', source: 'czap/cloudflare.middleware' });
+      expect(warned[0]).toMatchObject({ level: 'warn', source: 'liteship/cloudflare.middleware' });
     });
   });
 });

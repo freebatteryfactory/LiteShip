@@ -4,7 +4,7 @@
  * Restores captured physical state after DOM morphing.
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { PhysicalState, ScrollPosition, SelectionState, IMEState, FocusState } from '../types.js';
 import { ATTR } from '../morph/semantic-id.js';
 import * as SemanticIdModule from '../morph/semantic-id.js';
@@ -67,7 +67,7 @@ function remapId(id: string, remap: Record<string, string>): string {
 }
 
 /**
- * Remap a path by replacing data-czap-id references.
+ * Remap a path by replacing data-liteship-id references.
  */
 function remapPath(path: string, remap: Record<string, string>): string {
   let remappedPath = path;
@@ -166,9 +166,9 @@ export const restoreFocusState = (focusState: FocusState, root?: Element): void 
           return;
         }
 
-        Diagnostics.warn({
-          source: 'czap/web.physical.restore',
-          code: 'restore-focus-selection-failed',
+        Diagnostics.warnRegistered({
+          source: 'liteship/web.physical.restore',
+          code: 'web/physical/restore-focus-selection-failed',
           message: `Failed to restore the focus selection range on ${describeRestoreTarget(element)} — the element type likely changed across the morph (selection APIs only apply to text-like inputs).`,
           cause: error,
         });
@@ -252,9 +252,9 @@ export const restoreSelection = (selection: SelectionState | null): void => {
         return;
       }
 
-      Diagnostics.warn({
-        source: 'czap/web.physical.restore',
-        code: 'restore-selection-range-failed',
+      Diagnostics.warnRegistered({
+        source: 'liteship/web.physical.restore',
+        code: 'web/physical/restore-selection-range-failed',
         message: `Failed to restore the text selection on ${describeRestoreTarget(element)} — the element type likely changed across the morph (selection APIs only apply to text-like inputs).`,
         cause: error,
       });
@@ -319,9 +319,9 @@ function createRangeFromOffsets(element: Element, start: number, end: number): R
       if (isRangeRestoreError(error)) {
         unsupportedRange = true;
       } else {
-        Diagnostics.warn({
-          source: 'czap/web.physical.restore',
-          code: 'restore-range-failed',
+        Diagnostics.warnRegistered({
+          source: 'liteship/web.physical.restore',
+          code: 'web/physical/restore-range-failed',
           message: 'Failed to construct a DOM range while restoring physical selection state.',
           cause: error,
         });
@@ -358,9 +358,9 @@ export const restoreIME = (ime: IMEState | null): void => {
         return;
       }
 
-      Diagnostics.warn({
-        source: 'czap/web.physical.restore',
-        code: 'restore-ime-selection-failed',
+      Diagnostics.warnRegistered({
+        source: 'liteship/web.physical.restore',
+        code: 'web/physical/restore-ime-selection-failed',
         message: `Failed to restore the IME selection range on ${describeRestoreTarget(element)} — the element type likely changed across the morph (selection APIs only apply to text-like inputs).`,
         cause: error,
       });
@@ -387,9 +387,9 @@ export const pathToElement = (path: string, root?: Element): Element | null => {
     if (isSelectorSyntaxError(error)) {
       invalidSelector = true;
     } else {
-      Diagnostics.warn({
-        source: 'czap/web.physical.restore',
-        code: 'restore-path-query-failed',
+      Diagnostics.warnRegistered({
+        source: 'liteship/web.physical.restore',
+        code: 'web/physical/restore-path-query-failed',
         message: 'Failed to resolve a persisted physical-state selector.',
         cause: error,
         detail: { path },

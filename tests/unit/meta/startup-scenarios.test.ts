@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { CompositeState } from '@czap/core';
-import type { WorkerHost } from '@czap/worker';
+import type { CompositeState } from '@liteship/core';
+import type { WorkerHost } from '@liteship/worker';
 import {
   buildWorkerStartupSplitMetrics,
   buildWorkerStartupComparisonAudit,
@@ -12,7 +12,7 @@ import {
 
 function createFakeWorkerHost(
   tickMs: (deltaMs: number) => void,
-): (startupTelemetry?: WorkerStartupScenarioTelemetry) => WorkerHost.Shape {
+): (startupTelemetry?: WorkerStartupScenarioTelemetry) => WorkerHost {
   return (startupTelemetry) => {
     const listeners = new Set<(state: CompositeState) => void>();
     const ackListeners = new Set<
@@ -39,7 +39,9 @@ function createFakeWorkerHost(
             tickMs(0.04);
             (
               startupTelemetry as WorkerStartupScenarioTelemetry & {
-                onResolvedStateSettled?: (states: readonly { name: string; state: string; generation: number }[]) => void;
+                onResolvedStateSettled?: (
+                  states: readonly { name: string; state: string; generation: number }[],
+                ) => void;
               }
             )?.onResolvedStateSettled?.(states);
             const ack = {
@@ -78,7 +80,7 @@ function createFakeWorkerHost(
       },
     };
 
-    return host as unknown as WorkerHost.Shape;
+    return host as unknown as WorkerHost;
   };
 }
 

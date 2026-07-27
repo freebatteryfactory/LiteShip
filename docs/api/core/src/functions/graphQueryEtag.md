@@ -8,7 +8,7 @@
 
 > **graphQueryEtag**(`graph`): `string`
 
-Defined in: [core/src/graph-query.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L57)
+Defined in: [core/src/graph/graph-query.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query.ts#L57)
 
 The cache validator for conditional reads — sha256 `integrity_digest`, NOT the
 fnv1a display `id`. The digest excludes mutable `meta` by construction, so a

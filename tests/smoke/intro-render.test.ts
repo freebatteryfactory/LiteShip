@@ -15,13 +15,13 @@
  * Why we drive the CLI in-process via `run([...])` rather than
  * `execSync('pnpm tsx ...')`:
  *   - In-process hits the same dispatch entry the bin.ts wrapper uses.
- *   - In-process honors vitest's @czap/* aliases so `examples/scenes/intro.ts`
- *     can resolve `@czap/scene` from a sibling-of-packages location.
+ *   - In-process honors vitest's @liteship/* aliases so `examples/scenes/intro.ts`
+ *     can resolve `@liteship/scene` from a sibling-of-packages location.
  *   - The compile/render/ffmpeg chain is unchanged either way.
  *
  * Skipped when the shared libx264 render probe fails (ffmpeg-free,
  * missing binary, etc.) so machines without a CI-capable ffmpeg don't
- * false-fail or hang — see `czap doctor` / tests/helpers/ffmpeg.ts.
+ * false-fail or hang — see `liteship doctor` / tests/helpers/ffmpeg.ts.
  *
  * @module
  */
@@ -38,7 +38,7 @@ import {
   unlinkSync,
 } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 
 const FFPROBE_AVAILABLE = (() => {
   try {
@@ -65,7 +65,7 @@ async function quiet<T>(fn: () => Promise<T>): Promise<T> {
 
 describe('Spec 1.1 E2E smoke — intro scene render', () => {
   if (!FFMPEG_RENDER_CAPABLE) {
-    it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});
+    it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});
   } else {
     it('renders examples/scenes/intro.ts to a non-empty mp4 via ffmpeg', async () => {
       const out = resolve('tests/smoke/.out-intro-smoke.mp4');

@@ -1,7 +1,7 @@
 /**
  * Safe read/write helpers for named `window` globals used as runtime
  * handshake points between inline detect scripts and the hydrated
- * runtime (e.g. `__CZAP_DETECT__`, `__CZAP_SLOTS__`). Works on both
+ * runtime (e.g. `__LITESHIP_DETECT__`, `__LITESHIP_SLOTS__`). Works on both
  * client and server entry paths -- returns `undefined` under SSR.
  *
  * @module
@@ -33,7 +33,7 @@ export function readRuntimeGlobal<T>(name: string, guard: (v: unknown) => v is T
  *
  * `options.writable` defaults to `false` so the value is lock-down by default.
  * `options.configurable` defaults to `true` so HMR and bootstrap re-runs can
- * replace the global; security-critical globals (e.g. `__CZAP_RUNTIME_POLICY__`)
+ * replace the global; security-critical globals (e.g. `__LITESHIP_RUNTIME_POLICY__`)
  * should pass `configurable: false` to prevent post-install redefinition by
  * any later script on the page.
  */

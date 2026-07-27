@@ -6,9 +6,9 @@
 
 # Function: VideoSystem()
 
-> **VideoSystem**(`frameIndex`): `SystemShape`
+> **VideoSystem**(`frameIndex`): `System`
 
-Defined in: [scene/src/systems/video.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/video.ts#L18)
+Defined in: [scene/src/systems/video.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/video.ts#L22)
 
 Build a VideoSystem keyed to a specific frame index.
 
@@ -16,8 +16,8 @@ Build a VideoSystem keyed to a specific frame index.
 
 ### frameIndex
 
-`number`
+`FrameSource`
 
 ## Returns
 
-`SystemShape`
+`System`

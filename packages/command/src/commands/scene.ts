@@ -7,7 +7,7 @@
  *
  * @module
  */
-import { S, systemClock, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { systemClock, type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -19,7 +19,7 @@ const SceneArgsSchema = {
 } as const satisfies CommandJsonSchema;
 
 /** Kernel argsSchema for the `<verb> <scene.ts>` verbs — decodes `scene` to a string. */
-const SceneVerbArgs = S.struct({ scene: S.string });
+const SceneVerbArgs = schema.struct({ scene: schema.string });
 
 /** scene.verify output — the scene id + count of generated tests run. */
 const SceneVerifyPayloadSchema = {
@@ -48,14 +48,68 @@ const SceneRenderPayloadSchema = {
     frameCount: { type: 'number' },
     elapsedMs: { type: 'number' },
     fps: { type: 'number' },
+    width: { type: 'number' },
+    height: { type: 'number' },
     cached: { type: 'boolean' },
   },
   required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
 } as const satisfies CommandJsonSchema;
 
+/** Structured payload returned by `scene.verify` — the scene id + count of generated tests run. */
+export type SceneVerifyPayload = {
+  readonly sceneId: string;
+  readonly generatedTests: number;
+};
+
+/** Structured payload returned by `scene.compile` — the scene id, track count, and elapsed compile duration. */
+export type SceneCompilePayload = {
+  readonly sceneId: string;
+  readonly trackCount: number;
+  readonly durationMs: number;
+};
+
+/**
+ * Structured payload returned by `scene.render` — mirrors SceneRenderPayloadSchema:
+ * the rendered scene id, output path, frame count, and elapsed render duration,
+ * plus the optional `fps`/`cached` echoes (pre-fps replayed receipts lack `fps`;
+ * `cached` rides the live/replay split).
+ */
+export type SceneRenderPayload = {
+  readonly sceneId: string;
+  readonly output: string;
+  readonly frameCount: number;
+  readonly elapsedMs: number;
+  readonly fps?: number;
+  readonly width?: number;
+  readonly height?: number;
+  readonly cached?: boolean;
+};
+
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return failed(command, { error }, exitCode);
+}
+
+type LoadedSceneModule =
+  | { readonly ok: true; readonly module: Record<string, unknown> }
+  | { readonly ok: false; readonly result: CapsuleCommandResult };
+
+/** Keep dynamic-import faults inside the command failure algebra. */
+async function loadSceneModule(
+  command: string,
+  scenePath: string,
+  context: { readonly loadSceneModule?: (path: string) => Promise<Record<string, unknown> | null> },
+): Promise<LoadedSceneModule> {
+  try {
+    const module = await context.loadSceneModule?.(scenePath);
+    if (module === null || module === undefined) {
+      return { ok: false, result: fail(command, `scene module could not be loaded: ${scenePath}`, 1) };
+    }
+    return { ok: true, module };
+  } catch (error) {
+    const cause = error instanceof Error ? error.message : String(error);
+    return { ok: false, result: fail(command, `scene module could not be loaded: ${scenePath}: ${cause}`, 1) };
+  }
 }
 
 interface SceneCapsule {
@@ -92,7 +146,7 @@ function missingSceneExports(scenePath: string, cap: unknown, contract: unknown)
   ]
     .filter((m): m is string => m !== null)
     .join(' or ');
-  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition`;
+  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: liteship glossary sceneComposition`;
 }
 
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
@@ -101,6 +155,7 @@ export const sceneVerifyCommand = defineCommand({
     name: 'scene.verify',
     summary: 'Run a scene capsule’s generated tests.',
     inputSchema: SceneArgsSchema,
+    cli: { outputMode: 'json', positionals: ['scene'] },
     requires: ['fileExists', 'loadSceneModule', 'runVitest'] satisfies readonly CommandCapability[],
     outputSchema: SceneVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
@@ -110,12 +165,14 @@ export const sceneVerifyCommand = defineCommand({
     const scenePath = invocation.args.scene;
     if (!context.fileExists?.(scenePath)) return fail('scene.verify', `scene not found: ${scenePath}`, 1);
 
-    const mod = await context.loadSceneModule?.(scenePath);
-    const cap = mod ? findSceneCapsule(mod) : undefined;
+    const loadedModule = await loadSceneModule('scene.verify', scenePath, context);
+    if (!loadedModule.ok) return loadedModule.result;
+    const mod = loadedModule.module;
+    const cap = findSceneCapsule(mod);
     if (!cap) {
       return fail(
         'scene.verify',
-        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (czap glossary capsule)`,
+        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (liteship glossary capsule)`,
         1,
       );
     }
@@ -141,7 +198,8 @@ export const sceneCompileCommand = defineCommand({
     name: 'scene.compile',
     summary: 'Compile a scene capsule.',
     inputSchema: SceneArgsSchema,
-    requires: ['fileExists', 'loadSceneModule'] satisfies readonly CommandCapability[],
+    cli: { outputMode: 'json', positionals: ['scene'] },
+    requires: ['fileExists', 'loadSceneModule', 'runSceneCompile'] satisfies readonly CommandCapability[],
     outputSchema: SceneCompilePayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
@@ -150,10 +208,13 @@ export const sceneCompileCommand = defineCommand({
     const scenePath = invocation.args.scene;
     if (!context.fileExists?.(scenePath)) return fail('scene.compile', `scene file not found: ${scenePath}`, 1);
 
-    const mod = await context.loadSceneModule?.(scenePath);
-    const cap = mod ? findSceneCapsule(mod) : undefined;
-    const contract = mod ? findContract(mod) : undefined;
+    const loadedModule = await loadSceneModule('scene.compile', scenePath, context);
+    if (!loadedModule.ok) return loadedModule.result;
+    const mod = loadedModule.module;
+    const cap = findSceneCapsule(mod);
+    const contract = findContract(mod);
     if (!cap || !contract) return fail('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
+    if (!context.runSceneCompile) return capabilityUnavailable('scene.compile', ['runSceneCompile']);
 
     // `durationMs` is an ELAPSED interval → MONOTONIC systemClock (a wall-clock
     // NTP/DST jump must never corrupt it). The receipt `timestamp` below is a
@@ -163,15 +224,15 @@ export const sceneCompileCommand = defineCommand({
     const clock = context.clock ?? systemClock;
     const start = clock.now();
     try {
-      if (context.runSceneCompile) await context.runSceneCompile(mod!);
+      const compiled = await context.runSceneCompile(mod);
+      return ok('scene.compile', {
+        sceneId: cap.id,
+        trackCount: compiled.trackCount,
+        durationMs: clock.now() - start,
+      });
     } catch (err) {
       return fail('scene.compile', String(err), 1);
     }
-    return ok('scene.compile', {
-      sceneId: cap.id,
-      trackCount: (contract.tracks as readonly unknown[]).length,
-      durationMs: clock.now() - start,
-    });
   },
 });
 
@@ -191,14 +252,28 @@ export const sceneRenderCommand = defineCommand({
     summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
     inputSchema: {
       type: 'object',
-      properties: { scene: { type: 'string' }, output: { type: 'string' } },
+      properties: { scene: { type: 'string' }, output: { type: 'string' }, force: { type: 'boolean' } },
       required: ['scene'],
     } as const satisfies CommandJsonSchema,
-    requires: ['fileExists', 'loadSceneModule', 'renderScene'] satisfies readonly CommandCapability[],
+    cli: {
+      outputMode: 'json',
+      positionals: ['scene'],
+      flagAliases: { '--output': ['-o'] },
+    },
+    requires: [
+      'fileExists',
+      'loadSceneModule',
+      'runSceneCompile',
+      'renderScene',
+    ] satisfies readonly CommandCapability[],
     outputSchema: SceneRenderPayloadSchema,
     annotations: { mcpExposed: true, group: 'compose' },
   },
-  argsSchema: S.struct({ scene: S.string, output: S.optional(S.string), force: S.optional(S.boolean) }),
+  argsSchema: schema.struct({
+    scene: schema.string,
+    output: schema.optional(schema.string),
+    force: schema.optional(schema.boolean),
+  }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = invocation.args.scene;
     // Omitted output derives <sceneBasename>.mp4 beside the scene file here
@@ -216,18 +291,14 @@ export const sceneRenderCommand = defineCommand({
       return ok('scene.render', { ...cached, cached: true });
     }
 
-    const mod = await context.loadSceneModule?.(scenePath);
-    const cap = mod ? findSceneCapsule(mod) : undefined;
-    const contract = mod ? findContract(mod) : undefined;
+    const loadedModule = await loadSceneModule('scene.render', scenePath, context);
+    if (!loadedModule.ok) return loadedModule.result;
+    const mod = loadedModule.module;
+    const cap = findSceneCapsule(mod);
+    const contract = findContract(mod);
     if (!cap || !contract) return fail('scene.render', missingSceneExports(scenePath, cap, contract), 1);
-    if (typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
-      return fail(
-        'scene.render',
-        `the scene contract exported by ${scenePath} must carry numeric fps and duration (got fps: ${String(contract.fps)}, duration: ${String(contract.duration)}). Compare a working example: examples/scenes/intro.ts`,
-        1,
-      );
-    }
     // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.runSceneCompile) return capabilityUnavailable('scene.render', ['runSceneCompile']);
     if (!context.renderScene) return capabilityUnavailable('scene.render', ['renderScene']);
 
     // Optional contract render dimensions thread through to the host backend
@@ -236,9 +307,13 @@ export const sceneRenderCommand = defineCommand({
     const height = typeof contract.height === 'number' ? contract.height : undefined;
 
     try {
+      // Compile exactly once and consume the compiler-owned fps/duration. In
+      // particular, an omitted authoring duration is resolved from track extents
+      // by @liteship/scene rather than rejected or reimplemented here.
+      const compiled = await context.runSceneCompile(mod);
       const { frameCount, elapsedMs } = await context.renderScene({
-        fps: contract.fps,
-        durationMs: contract.duration,
+        fps: compiled.fps,
+        durationMs: compiled.durationMs,
         output,
         ...(width !== undefined ? { width } : {}),
         ...(height !== undefined ? { height } : {}),
@@ -250,7 +325,7 @@ export const sceneRenderCommand = defineCommand({
         output,
         frameCount,
         elapsedMs,
-        fps: contract.fps,
+        fps: compiled.fps,
         ...(width !== undefined ? { width } : {}),
         ...(height !== undefined ? { height } : {}),
       };

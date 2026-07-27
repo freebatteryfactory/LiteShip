@@ -6,7 +6,7 @@
 
 # Type Alias: StreamRecoveryMutationClient
 
-> **StreamRecoveryMutationClient** = `Pick`\<`GraphMutationClient`, `"adopt"` \| `"base"`\> & `object`
+> **StreamRecoveryMutationClient** = `Pick`\<[`GraphMutationClient`](../../../liteship/src/graph/interfaces/GraphMutationClient.md), `"adopt"` \| `"base"`\> & `object`
 
 Defined in: [web/src/stream/recovery.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L25)
 
@@ -16,8 +16,8 @@ Optional graph-mutation substrate for `refreshBase`/`adopt` during recovery.
 
 ### refreshBase?
 
-> `readonly` `optional` **refreshBase?**: () => `Promise`\<[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)\>
+> `readonly` `optional` **refreshBase?**: () => `Promise`\<[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)\>
 
 #### Returns
 
-`Promise`\<[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)\>
+`Promise`\<[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)\>

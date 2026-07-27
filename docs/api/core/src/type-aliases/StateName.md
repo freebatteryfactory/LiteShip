@@ -6,9 +6,9 @@
 
 # Type Alias: StateName\<S\>
 
-> **StateName**\<`S`\> = `_StateName`\<`S`\>
+> **StateName**\<`S`\> = [`StateName`](../../../spine/type-aliases/StateName.md)\<`S`\>
 
-Defined in: [core/src/brands.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L36)
+Defined in: [core/src/schema/brands.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L36)
 
 Branded state name -- e.g. 'mobile', 'tablet', 'desktop'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SceneRuntime } from '@czap/scene';
+import { SceneRuntime, TrackIdPart } from '@liteship/scene';
 import { intro, introContract, compileIntro } from '../../examples/scenes/intro.js';
 
 describe('examples.intro scene capsule', () => {
@@ -17,13 +17,13 @@ describe('examples.intro scene capsule', () => {
     expect(compiled.trackSpawns.length).toBe(6);
   });
 
-  it('runtime spawns 6 entities and registers 7 systems', async () => {
+  it('runtime spawns 6 entities and registers 8 systems', async () => {
     const compiled = compileIntro();
     const handle = await SceneRuntime.build(compiled);
     try {
       expect(handle.entitySpawnCount).toBe(6);
-      expect(handle.systemsRegistered).toBe(7);
-      const entities = handle.world.query('trackId');
+      expect(handle.systemsRegistered).toBe(8);
+      const entities = handle.world.query(TrackIdPart);
       expect(entities.length).toBe(6);
     } finally {
       await handle.release();
@@ -39,7 +39,7 @@ describe('examples.intro scene capsule', () => {
           (t) =>
             String(t.trackId) +
             JSON.stringify(
-              Object.entries(t.components).sort(([a], [b]) => a.localeCompare(b)),
+              [...t.components].sort((a, b) => a.part.localeCompare(b.part)),
             ),
         )
         .sort()

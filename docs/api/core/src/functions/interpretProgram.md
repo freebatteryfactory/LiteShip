@@ -8,7 +8,7 @@
 
 > **interpretProgram**(`graph`, `program`, `env?`): [`LoweredMotionPlan`](../interfaces/LoweredMotionPlan.md)
 
-Defined in: [core/src/transition-program.ts:514](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L514)
+Defined in: [core/src/motion/transition-program.ts:514](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L514)
 
 Interpret a [TransitionProgram](../type-aliases/TransitionProgram.md) into a [LoweredMotionPlan](../interfaces/LoweredMotionPlan.md) whose
 `css.keyframes` are REAL multi-offset stops and whose `runtime.windows` are

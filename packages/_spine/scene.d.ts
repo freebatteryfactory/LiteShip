@@ -1,5 +1,5 @@
 /**
- * @czap/scene type spine -- phantom-kinded TrackId brand plus the
+ * @liteship/scene type spine -- phantom-kinded TrackId brand plus the
  * timeline-mark and authoring-sugar contract types (BeatHandle,
  * FrameMark, envelopes, ease tags) consumed by track from/to fields.
  *

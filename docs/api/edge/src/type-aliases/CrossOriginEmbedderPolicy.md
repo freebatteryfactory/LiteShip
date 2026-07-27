@@ -10,6 +10,6 @@
 
 Defined in: [edge/src/cross-origin.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/cross-origin.ts#L35)
 
-COEP values czap can emit. Both establish cross-origin isolation (required for
+COEP values liteship can emit. Both establish cross-origin isolation (required for
 `SharedArrayBuffer`); `credentialless` loads CORP-less third-party subresources
 without credentials instead of blocking them.

@@ -8,7 +8,7 @@
 
 > **symbolReferenceOracle**(`input?`): readonly [`Fact`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)[]
 
-Defined in: [audit/src/repo-ir-language-service.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L246)
+Defined in: [audit/src/repo-ir-language-service.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L252)
 
 The SYMBOL-EVIDENCED reference oracle. Builds a [ts.LanguageService](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) over
 the profile's source corpus and, for each exported symbol, resolves its TRUE

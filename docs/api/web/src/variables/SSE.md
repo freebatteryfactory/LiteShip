@@ -8,7 +8,7 @@
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:609](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L609)
+Defined in: [web/src/stream/sse.ts:607](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L607)
 
 SSE client namespace.
 
@@ -124,19 +124,19 @@ An [SSEClient](../interfaces/SSEClient.md)
 #### Examples
 
 ```ts
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 
 const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
 for await (const msg of client.messages) {
   console.log(msg);
 }
-client.close();
+await client.dispose();
 ```
 
 ```ts
 // Fully synchronous consumption (the live morph directives): pass callbacks
 // and skip the async buffer entirely.
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 
 const client = SSE.create({
   url: '/api/stream',
@@ -145,7 +145,7 @@ const client = SSE.create({
   onStateChange: (state) => updateBadge(state),
 });
 // Teardown owned by the host (e.g. a Lifetime finalizer):
-// lifetime.add(() => client.close());
+// lifetime.add(() => client.dispose());
 ```
 
 ### parseMessage
@@ -178,12 +178,12 @@ There is intentionally no opt-out — see red-team regression suite.
 ## Example
 
 ```ts
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 
 const client = SSE.create({ url: '/api/events' });
 const state = client.state; // 'connecting' | 'connected' | ...
 for await (const msg of client.messages) {
   console.log(msg.type);
 }
-client.close();
+await client.dispose();
 ```

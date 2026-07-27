@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { AVBridge } from '@czap/core';
-import { Detect } from '@czap/detect';
+import { AVBridge } from '@liteship/core';
+import { Detect } from '@liteship/detect';
 import { createAudioProcessor } from '../../packages/web/src/audio/processor.js';
 import { captureVideo } from '../../packages/web/src/capture/pipeline.js';
 import { renderToCanvas } from '../../packages/web/src/capture/render.js';
 import { Morph } from '../../packages/web/src/morph/diff.js';
-import { capture, captureIME } from '../../packages/web/src/physical/capture.js';
+import { createPhysicalStateTracker } from '../../packages/web/src/physical/capture.js';
 import { restore, restoreIME } from '../../packages/web/src/physical/restore.js';
 import { SlotRegistry } from '../../packages/web/src/slot/registry.js';
 
@@ -24,8 +24,8 @@ describe('browser web runtime coverage', () => {
     const registry = SlotRegistry.create();
     const root = document.createElement('section');
     root.innerHTML = `
-      <div data-czap-slot="/hero"></div>
-      <div data-czap-slot="/hero/sidebar" data-mode="replace"></div>
+      <div data-liteship-slot="/hero"></div>
+      <div data-liteship-slot="/hero/sidebar" data-mode="replace"></div>
     `;
     document.body.appendChild(root);
 
@@ -33,13 +33,13 @@ describe('browser web runtime coverage', () => {
 
     expect(registry.has('/hero' as never)).toBe(true);
     expect(registry.findByPrefix('/hero' as never)).toHaveLength(2);
-    expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-czap-slot="/hero"]'));
-    expect(SlotRegistry.getPath(root.querySelector('[data-czap-slot="/hero"]')!)).toBe('/hero');
+    expect(SlotRegistry.findElement('/hero' as never)).toBe(root.querySelector('[data-liteship-slot="/hero"]'));
+    expect(SlotRegistry.getPath(root.querySelector('[data-liteship-slot="/hero"]')!)).toBe('/hero');
 
     const dispose = SlotRegistry.observe(registry, document.body);
 
     const added = document.createElement('div');
-    added.setAttribute('data-czap-slot', '/hero/footer');
+    added.setAttribute('data-liteship-slot', '/hero/footer');
     document.body.appendChild(added);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -53,6 +53,7 @@ describe('browser web runtime coverage', () => {
   });
 
   test('captures and restores focused input state, scroll positions, and IME metadata', async () => {
+    const tracker = createPhysicalStateTracker(document);
     const root = document.createElement('div');
     const scrollBox = document.createElement('div');
     scrollBox.id = 'scroll-box';
@@ -74,10 +75,10 @@ describe('browser web runtime coverage', () => {
     input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
     input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'kana' }));
 
-    const state = capture(root);
+    const state = tracker.capture(root);
     expect(state.focusState?.elementId).toContain('focus-target');
     expect(state.scrollPositions['#scroll-box']?.top).toBeCloseTo(60, 0);
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#focus-target',
       text: 'kana',
       start: 1,
@@ -97,7 +98,8 @@ describe('browser web runtime coverage', () => {
     expect(scrollBox.scrollTop).toBeCloseTo(60, 0);
 
     input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
+    await tracker.dispose();
   });
 
   test('creates audio processors and video capture pipelines in the browser lane', async () => {
@@ -137,7 +139,7 @@ describe('browser web runtime coverage', () => {
 
     processor.start();
     processor.stop();
-    processor.dispose();
+    await processor.dispose();
 
     expect(addModule).toHaveBeenCalledWith('blob:audio-processor');
     expect(createObjectURL).toHaveBeenCalledOnce();
@@ -165,6 +167,7 @@ describe('browser web runtime coverage', () => {
         frames: 2,
         durationMs: 66 as never,
       })),
+      dispose: vi.fn(async () => {}),
     };
     const renderer = {
       config: { width: 16, height: 16, fps: 30 },
@@ -172,12 +175,12 @@ describe('browser web runtime coverage', () => {
         yield {
           frame: 0,
           timestamp: 0,
-          state: { discrete: {}, blend: {}, outputs: { css: { '--czap-bg': 'black' }, glsl: {}, aria: {} } },
+          state: { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, aria: {} } },
         };
         yield {
           frame: 1,
           timestamp: 33,
-          state: { discrete: {}, blend: {}, outputs: { css: { '--czap-bg': 'white' }, glsl: {}, aria: {} } },
+          state: { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'white' }, glsl: {}, aria: {} } },
         };
       },
     };
@@ -192,7 +195,7 @@ describe('browser web runtime coverage', () => {
             return canvas;
           })();
     renderToCanvas(
-      { discrete: {}, blend: {}, outputs: { css: { '--czap-bg': 'black' }, glsl: {}, aria: {} } },
+      { discrete: {}, blend: {}, outputs: { css: { '--liteship-bg': 'black' }, glsl: {}, aria: {} } },
       offscreen,
       renderFn,
     );
@@ -202,14 +205,15 @@ describe('browser web runtime coverage', () => {
     expect(renderFn).toHaveBeenCalled();
     expect(captureBackend.init).toHaveBeenCalledWith({ width: 16, height: 16, fps: 30 });
     expect(captureBackend.capture).toHaveBeenCalledTimes(2);
+    expect(captureBackend.dispose).toHaveBeenCalledOnce();
     expect(result.frames).toBe(2);
   });
 
   test('preserves semantic identity across reordered morphs and remapped ids', async () => {
     const root = document.createElement('section');
     root.innerHTML = `
-      <button data-czap-id="alpha" id="alpha">Alpha</button>
-      <button data-czap-id="beta" id="beta">Beta</button>
+      <button data-liteship-id="alpha" id="alpha">Alpha</button>
+      <button data-liteship-id="beta" id="beta">Beta</button>
     `;
     document.body.appendChild(root);
 
@@ -218,8 +222,8 @@ describe('browser web runtime coverage', () => {
     const result = Morph.morphWithState(
       root,
       `
-          <button data-czap-id="beta-renamed" id="beta">Beta updated</button>
-          <button data-czap-id="alpha" id="alpha">Alpha updated</button>
+          <button data-liteship-id="beta-renamed" id="beta">Beta updated</button>
+          <button data-liteship-id="alpha" id="alpha">Alpha updated</button>
         `,
       { morphStyle: 'innerHTML' },
       {
@@ -229,7 +233,7 @@ describe('browser web runtime coverage', () => {
 
     expect(result.type).toBe('success');
     expect(root.firstElementChild).toBe(beta);
-    expect(beta?.getAttribute('data-czap-id')).toBe('beta-renamed');
+    expect(beta?.getAttribute('data-liteship-id')).toBe('beta-renamed');
     expect(beta?.textContent).toBe('Beta updated');
   });
 
@@ -316,7 +320,9 @@ describe('browser web runtime coverage', () => {
     expect(result.capabilities.connection).toBeUndefined();
     expect(result.capabilities.prefersColorScheme).toBe('light');
     expect(result.capabilities.prefersReducedMotion).toBe(false);
-    expect(result.confidence).toBeLessThan(1);
+    expect(result.tierEvidence.tier.support).toBe('inferred');
+    expect(result.tierEvidence.motion.support).toBe('inferred');
+    expect(result.tierEvidence.design.support).toBe('inferred');
   });
 
   test('detect covers custom contrast and low-refresh browser branches in the browser lane', () => {
@@ -359,8 +365,8 @@ describe('browser web runtime coverage', () => {
     const root = document.createElement('section');
     root.innerHTML = `
       <article id="shell">
-        <div data-czap-slot="/hero">
-          <button data-czap-id="hero-action">First</button>
+        <div data-liteship-slot="/hero">
+          <button data-liteship-id="hero-action">First</button>
         </div>
       </article>
     `;
@@ -371,8 +377,8 @@ describe('browser web runtime coverage', () => {
       root.querySelector('#shell') as HTMLElement,
       `
           <article id="shell">
-            <div data-czap-slot="/hero">
-              <button data-czap-id="hero-action">Second</button>
+            <div data-liteship-slot="/hero">
+              <button data-liteship-id="hero-action">Second</button>
             </div>
           </article>
         `,
@@ -382,6 +388,6 @@ describe('browser web runtime coverage', () => {
     expect(result.type).toBe('success');
     SlotRegistry.scanDOM(registry, document.body);
     expect(SlotRegistry.findElement('/hero' as never)?.textContent).toContain('Second');
-    expect(document.querySelector('[data-czap-id="hero-action"]')?.textContent).toBe('Second');
+    expect(document.querySelector('[data-liteship-id="hero-action"]')?.textContent).toBe('Second');
   });
 });

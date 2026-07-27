@@ -6,13 +6,13 @@
 
 # Interface: DetectionResult
 
-Defined in: [detect/src/detect.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L107)
+Defined in: [detect/src/detect.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L114)
 
 Result of a single detection sweep.
 
-Bundles the probed capabilities together with the derived [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
-tier, its monotone [CapSet](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), and a confidence score reflecting how
-many probes returned real values (vs. defaults).
+Bundles the probed capabilities together with the derived [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md)
+tier, its monotone [CapSet](../../../liteship/src/evidence/interfaces/CapSet.md), and per-axis evidence that distinguishes
+observed inputs from conservative fallbacks.
 
 ## Extended by
 
@@ -24,7 +24,7 @@ many probes returned real values (vs. defaults).
 
 > `readonly` **capabilities**: [`DeviceCapabilities`](DeviceCapabilities.md)
 
-Defined in: [detect/src/detect.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L109)
+Defined in: [detect/src/detect.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L116)
 
 The probed capabilities.
 
@@ -32,28 +32,28 @@ The probed capabilities.
 
 ### capSet
 
-> `readonly` **capSet**: [`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
+> `readonly` **capSet**: [`CapSet`](../../../liteship/src/evidence/interfaces/CapSet.md)
 
-Defined in: [detect/src/detect.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
+Defined in: [detect/src/detect.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L120)
 
-Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
+Monotone set of every [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) at or below `capTier`.
 
 ***
 
 ### capTier
 
-> `readonly` **capTier**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> `readonly` **capTier**: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md)
 
-Defined in: [detect/src/detect.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
+Defined in: [detect/src/detect.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L118)
 
-Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
+Highest [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) the device qualifies for.
 
 ***
 
-### confidence
+### tierEvidence
 
-> `readonly` **confidence**: `number`
+> `readonly` **tierEvidence**: [`CapabilityTierEvidence`](../type-aliases/CapabilityTierEvidence.md)
 
-Defined in: [detect/src/detect.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L115)
+Defined in: [detect/src/detect.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L122)
 
-Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
+Per-axis provenance for the complete tier values.

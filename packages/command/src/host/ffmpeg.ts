@@ -1,8 +1,8 @@
 /**
  * Direct-ffmpeg render backend. Reads a {@link VideoFrameOutput} async iterable,
  * paints each frame's `CompositeState` to raw RGBA through the ONE deterministic
- * `compositeStateToRgba` painter from `@czap/core` (the SAME painter the
- * `@czap/stage` ffmpeg encoder uses), pipes the bytes through ffmpeg stdin, and
+ * `compositeStateToRgba` painter from `@liteship/core` (the SAME painter the
+ * `@liteship/stage` ffmpeg encoder uses), pipes the bytes through ffmpeg stdin, and
  * produces an mp4. The graph's per-frame poses therefore genuinely reach the
  * rendered video — distinct frame state yields distinct pixels, identical state
  * yields byte-identical pixels (content-addressable, replayable). No Revideo
@@ -13,9 +13,9 @@
 
 import { spawn } from 'node:child_process';
 import { statSync } from 'node:fs';
-import type { Clock, VideoFrameOutput } from '@czap/core';
-import { compositeStateToRgba, systemClock } from '@czap/core';
-import { HostCapabilityError, IoError } from '@czap/error';
+import type { Clock, VideoFrameOutput } from '@liteship/core';
+import { compositeStateToRgba, systemClock } from '@liteship/core';
+import { HostCapabilityError, IoError } from '@liteship/error';
 import { probeFfmpegRender } from './ffmpeg-probe.js';
 
 /** Options for `renderWithFfmpeg`. */
@@ -27,7 +27,7 @@ export interface RenderOpts {
   /**
    * MONOTONIC clock for the `elapsedMs` DURATION. Defaults to {@link systemClock}
    * (`performance.now`). Injected so a deterministic replay/test can thread a
-   * {@link import('@czap/core').manualClock}; this measures an ELAPSED interval,
+   * {@link import('@liteship/core').manualClock}; this measures an ELAPSED interval,
    * never a timestamp, so it MUST stay monotonic (an NTP/DST wall-clock jump would
    * corrupt the duration).
    */
@@ -78,7 +78,7 @@ export async function renderWithFfmpeg(
   try {
     for await (const frame of frames) {
       // Paint REAL pixels from the frame's CompositeState — the SAME
-      // deterministic `(state, w, h) → RGBA` painter the @czap/stage ffmpeg
+      // deterministic `(state, w, h) → RGBA` painter the @liteship/stage ffmpeg
       // encoder uses. The graph's per-frame poses genuinely reach the video.
       const buf = compositeStateToRgba(frame.state, opts.width, opts.height);
       await writeStdin(proc.stdin, buf);

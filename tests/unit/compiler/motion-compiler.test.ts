@@ -22,8 +22,8 @@ import {
   type SignalNode,
   type CssMotionPlan,
   type RuntimeEasing,
-} from '@czap/core';
-import { MotionCompiler, dispatch } from '@czap/compiler';
+} from '@liteship/core';
+import { MotionCompiler, dispatch } from '@liteship/compiler';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -76,7 +76,7 @@ function revealCssPlan(): CssMotionPlan {
     meta: META,
     entityRef: entity.id,
     state: 'before',
-    bindings: { opacity: 0, '--czap-hero-y': '24px' },
+    bindings: { opacity: 0, '--liteship-hero-y': '24px' },
   } as unknown as PoseNode);
 
   const toPose = sealNode({
@@ -87,7 +87,7 @@ function revealCssPlan(): CssMotionPlan {
     meta: META,
     entityRef: entity.id,
     state: 'after',
-    bindings: { opacity: 1, '--czap-hero-y': '0px' },
+    bindings: { opacity: 1, '--liteship-hero-y': '0px' },
   } as unknown as PoseNode);
 
   const transition = sealNode({
@@ -117,16 +117,16 @@ describe('MotionCompiler', () => {
     const plan = revealCssPlan();
     const result = MotionCompiler.compile({ plan });
 
-    expect(result.propertyRegistrations).toContain('@property --czap-hero-y');
+    expect(result.propertyRegistrations).toContain('@property --liteship-hero-y');
     expect(result.propertyRegistrations).toContain('syntax: "<length>"');
-    expect(result.keyframes).toContain('@keyframes czap-motion-hero-before-after');
+    expect(result.keyframes).toContain('@keyframes liteship-motion-hero-before-after');
     expect(result.keyframes).toContain('0% {');
     expect(result.keyframes).toContain('opacity: 0');
     expect(result.keyframes).toContain('100% {');
     expect(result.keyframes).toContain('opacity: 1');
     expect(result.startingStyle).toContain('@starting-style');
-    expect(result.startingStyle).toContain('[data-czap-boundary="hero"]');
-    expect(result.transition).toContain('[data-czap-state="after"]');
+    expect(result.startingStyle).toContain('[data-liteship-boundary="hero"]');
+    expect(result.transition).toContain('[data-liteship-state="after"]');
     expect(result.transition).toContain('opacity: 1');
     expect(result.transition).toContain('420ms');
     expect(result.raw).toContain(result.keyframes);
@@ -164,8 +164,8 @@ describe('MotionCompiler', () => {
     });
 
     expect(result.scrollTimeline).toContain('opacity 420ms ease');
-    expect(result.scrollTimeline).toContain('--czap-hero-y 420ms ease');
-    expect(result.scrollTimeline).not.toMatch(/opacity, --czap-hero-y 420ms/);
+    expect(result.scrollTimeline).toContain('--liteship-hero-y 420ms ease');
+    expect(result.scrollTimeline).not.toMatch(/opacity, --liteship-hero-y 420ms/);
   });
 
   test('view-timeline supported path declares explicit animation-duration (not iteration-count shorthand)', () => {
@@ -180,7 +180,7 @@ describe('MotionCompiler', () => {
     const supportedBlock = result.scrollTimeline.split('@supports not')[0] ?? '';
     expect(supportedBlock).toContain('animation-duration: auto');
     expect(supportedBlock).toContain('animation-timing-function:');
-    expect(supportedBlock).not.toMatch(/animation:\s*czap-motion/);
+    expect(supportedBlock).not.toMatch(/animation:\s*liteship-motion/);
     expect(supportedBlock).toMatch(/animation-timing-function:\s*linear\(/);
   });
 
@@ -190,7 +190,7 @@ describe('MotionCompiler', () => {
       ...base,
       properties: [
         {
-          property: '--czap-hero-y',
+          property: '--liteship-hero-y',
           from: { k: 'length', v: 0, unit: '%' },
           to: { k: 'length', v: 100, unit: '%' },
         },
@@ -204,9 +204,9 @@ describe('MotionCompiler', () => {
   test('from-state persists in base rule outside @starting-style only', () => {
     const plan = revealCssPlan();
     const result = MotionCompiler.compile({ plan });
-    expect(result.raw).toMatch(/\[data-czap-boundary="hero"\] \{[^}]*opacity: 0/);
+    expect(result.raw).toMatch(/\[data-liteship-boundary="hero"\] \{[^}]*opacity: 0/);
     expect(result.startingStyle).toContain('opacity: 0');
-    expect(result.transition).toContain('[data-czap-state="after"]');
+    expect(result.transition).toContain('[data-liteship-state="after"]');
     expect(result.transition).toContain('opacity: 1');
   });
 
@@ -224,15 +224,15 @@ describe('MotionCompiler', () => {
     const heroPlan = revealCssPlan();
     const footerPlan = {
       ...heroPlan,
-      selector: '[data-czap-boundary="footer"]',
+      selector: '[data-liteship-boundary="footer"]',
     };
 
     const hero = MotionCompiler.compile({ plan: heroPlan });
     const footer = MotionCompiler.compile({ plan: footerPlan });
 
-    expect(hero.keyframes).toContain('@keyframes czap-motion-hero-before-after');
-    expect(footer.keyframes).toContain('@keyframes czap-motion-footer-before-after');
-    expect(hero.keyframes).not.toContain('@keyframes czap-motion-footer-before-after');
+    expect(hero.keyframes).toContain('@keyframes liteship-motion-hero-before-after');
+    expect(footer.keyframes).toContain('@keyframes liteship-motion-footer-before-after');
+    expect(hero.keyframes).not.toContain('@keyframes liteship-motion-footer-before-after');
   });
 });
 
@@ -313,7 +313,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
       return Object.assign(tr, { fp, tp });
     };
     const a = mkStep({ opacity: 0 }, { opacity: 1 }, 200, easingA);
-    const b = mkStep({ '--czap-hero-x': '0px' }, { '--czap-hero-x': '100px' }, 600, easingB);
+    const b = mkStep({ '--liteship-hero-x': '0px' }, { '--liteship-hero-x': '100px' }, 600, easingB);
     const g = graph(
       [signal, component, entity, a.fp, a.tp, a, b.fp, b.tp, b],
       [{ from: signal.id, to: component.id, type: 'seq' }],
@@ -338,7 +338,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     // At the 25% seam: opacity fully 1 (A done), x still 0px (B not started).
     const seam = result.keyframes.slice(result.keyframes.indexOf('  25% {'));
     expect(seam).toContain('opacity: 1;');
-    expect(seam).toContain('--czap-hero-x: 0px;');
+    expect(seam).toContain('--liteship-hero-x: 0px;');
   });
 
   test('a par program compiles to distinct offsets from seq (max vs Σ duration)', () => {
@@ -372,7 +372,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     });
     const result = MotionCompiler.compile({ plan: par.css! });
     expect(result.transition).toContain('opacity 200ms ease');
-    expect(result.transition).toContain('--czap-hero-x 600ms ease');
+    expect(result.transition).toContain('--liteship-hero-x 600ms ease');
     // The bug animated opacity for the full composed duration.
     expect(result.transition).not.toContain('opacity 600ms');
   });
@@ -412,7 +412,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     });
     const result = MotionCompiler.compile({ plan: seq.css! });
     expect(result.transition).toContain('opacity 200ms ease');
-    expect(result.transition).toContain('--czap-hero-x 600ms ease 200ms');
+    expect(result.transition).toContain('--liteship-hero-x 600ms ease 200ms');
   });
 
   test('a UNIFORM DEFAULT-ease seq carries NO per-keyframe animation-timing-function (byte-identical keyframes)', () => {
@@ -569,15 +569,15 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     const out = MotionCompiler.compile({ plan: par.css!, scrollTimeline: SCROLL });
     // No native ownership: no `animation-name` binding and no `@supports (animation-timeline)`
     // OWNERSHIP block (distinct from the `@supports not (...)` fallback) — so getComputedStyle
-    // carries no czap-motion name.
-    expect(out.scrollTimeline).not.toContain('animation-name: czap-motion-');
+    // carries no liteship-motion name.
+    expect(out.scrollTimeline).not.toContain('animation-name: liteship-motion-');
     expect(out.scrollTimeline).not.toContain('animation-timeline: scroll();');
     expect(out.scrollTimeline).not.toContain('@supports (animation-timeline: scroll())');
     // The no-support transition fallback still ships (graceful degradation for JS-less clients).
     expect(out.scrollTimeline).toContain('@supports not (animation-timeline: scroll())');
     // Same denial under a view timeline.
     const view = MotionCompiler.compile({ plan: par.css!, viewTimeline: { range: ['entry 0%', 'cover 100%'] } });
-    expect(view.scrollTimeline).not.toContain('animation-name: czap-motion-');
+    expect(view.scrollTimeline).not.toContain('animation-name: liteship-motion-');
     expect(view.scrollTimeline).not.toContain('@supports (animation-timeline: view())');
     expect(view.scrollTimeline).toContain('@supports not (animation-timeline: view())');
   });
@@ -594,13 +594,13 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     });
     const uniform = MotionCompiler.compile({ plan: seq.css!, scrollTimeline: SCROLL });
     expect(uniform.scrollTimeline).toContain('@supports (animation-timeline: scroll())');
-    expect(uniform.scrollTimeline).toContain('animation-name: czap-motion-');
+    expect(uniform.scrollTimeline).toContain('animation-name: liteship-motion-');
     expect(uniform.scrollTimeline).toContain('animation-timeline: scroll()');
 
     // A single transition is unchanged (byte-identical native ownership path).
     const single = MotionCompiler.compile({ plan: revealCssPlan(), scrollTimeline: SCROLL });
     expect(single.scrollTimeline).toContain('@supports (animation-timeline: scroll())');
-    expect(single.scrollTimeline).toContain('animation-name: czap-motion-hero-before-after');
+    expect(single.scrollTimeline).toContain('animation-name: liteship-motion-hero-before-after');
   });
 });
 

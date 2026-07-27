@@ -1,15 +1,15 @@
 /**
- * Sync AddressedDigest tests for `@czap/canonical`.
+ * Sync AddressedDigest tests for `@liteship/canonical`.
  */
 
 import { describe, it, expect } from 'vitest';
-import { AddressedDigest } from '@czap/canonical';
+import { AddressedDigest } from '@liteship/canonical';
 
 const FNV_RE = /^fnv1a:[0-9a-f]{8}$/;
 const SHA_RE = /^sha256:[0-9a-f]{64}$/;
 const BLAKE3_RE = /^blake3:[0-9a-f]{64}$/;
 
-describe('@czap/canonical AddressedDigest.of', () => {
+describe('@liteship/canonical AddressedDigest.of', () => {
   it('produces a display_id matching fnv1a:XXXXXXXX', () => {
     const d = AddressedDigest.of(new Uint8Array([1, 2, 3, 4, 5]));
     expect(d.display_id).toMatch(FNV_RE);

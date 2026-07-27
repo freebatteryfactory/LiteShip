@@ -1,5 +1,5 @@
 /**
- * Smoke tests for `czap verify`. Lives alongside the other CLI verb tests
+ * Smoke tests for `liteship verify`. Lives alongside the other CLI verb tests
  * so the canonical layout matches the CLI verb table. Deep verdict
  * coverage (Verified / Mismatch / Incomplete / Unknown end-to-end with a
  * real packed tarball and synthesized capsules) lives in

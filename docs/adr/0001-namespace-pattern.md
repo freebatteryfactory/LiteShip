@@ -1,6 +1,6 @@
 # ADR-0001 — Namespace object pattern + branded types
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0046](./0046-direct-generic-types.md) (the `.Shape` type convention; the branded-types half remains law)
 **Date:** 2026-04-21
 **Audience:** Contributors adding a new primitive or surface module. Skip if you only consume the public API.
 

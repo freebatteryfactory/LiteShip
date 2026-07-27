@@ -10,13 +10,13 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { Boundary, Compositor, CompositorStatePool, FrameBudget } from '@czap/core';
+import { Boundary, Compositor, FrameBudget, defineBoundary, createCompositorStatePool } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const widthBoundary = Boundary.make({
+const widthBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -25,7 +25,7 @@ const widthBoundary = Boundary.make({
   ] as const,
 });
 
-const colorBoundary = Boundary.make({
+const colorBoundary = defineBoundary({
   input: 'prefers-color-scheme',
   at: [
     [0, 'light'],
@@ -34,7 +34,7 @@ const colorBoundary = Boundary.make({
 });
 
 /** Quantizer with a spy on state reads to count recomputations. */
-function makeSpiedQuantizer(boundary: Boundary.Shape, initialState?: string) {
+function makeSpiedQuantizer(boundary: Boundary, initialState?: string) {
   let currentState = initialState ?? (boundary.states[0] as string);
   let readCount = 0;
 
@@ -67,7 +67,7 @@ function makeSpiedQuantizer(boundary: Boundary.Shape, initialState?: string) {
 
 describe('Compositor pipeline integration', () => {
   test('dirty flags prevent recomputation of clean quantizers', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const q1 = makeSpiedQuantizer(widthBoundary, 'mobile');
     const q2 = makeSpiedQuantizer(colorBoundary, 'light');
 
@@ -90,8 +90,8 @@ describe('Compositor pipeline integration', () => {
 
     // But q2's state is still present (copied from previous)
     expect(state.discrete['theme']).toBe('light');
-    expect(state.outputs.css['--czap-theme']).toBe('light');
-    expect(state.outputs.aria['data-czap-theme']).toBe('light');
+    expect(state.outputs.css['--liteship-theme']).toBe('light');
+    expect(state.outputs.aria['data-liteship-theme']).toBe('light');
 
     // And q1 reflects the update
     expect(state.discrete['layout']).toBe('desktop');
@@ -103,7 +103,7 @@ describe('Compositor pipeline integration', () => {
 
   test('pool acquire is called in compute hot path', async () => {
     // Create a pool and spy on acquire
-    const pool = CompositorStatePool.make(4);
+    const pool = createCompositorStatePool(4);
     const originalAcquire = pool.acquire.bind(pool);
     let acquireCount = 0;
     pool.acquire = () => {
@@ -113,7 +113,7 @@ describe('Compositor pipeline integration', () => {
 
     // We can't inject a pool directly, but we CAN verify the pool contract
     // by checking that state objects are recycled (same shape, different identity)
-    const compositor = Compositor.create({ poolCapacity: 4 }).compositor;
+    const compositor = Compositor.create({ poolCapacity: 4 });
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
     compositor.add('layout', q);
 
@@ -126,16 +126,16 @@ describe('Compositor pipeline integration', () => {
 
     // And should be structurally equal but potentially the same recycled object
     // (pool reuses objects — this is the observable behavior)
-    expect(state1.outputs.css['--czap-layout']).toBe('mobile');
-    expect(state2.outputs.css['--czap-layout']).toBe('mobile');
+    expect(state1.outputs.css['--liteship-layout']).toBe('mobile');
+    expect(state2.outputs.css['--liteship-layout']).toBe('mobile');
   });
 
   test('full pipeline: signal change → dirty → selective recompute → output', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const layout = makeSpiedQuantizer(widthBoundary, 'mobile');
     const theme = makeSpiedQuantizer(colorBoundary, 'light');
     const density = makeSpiedQuantizer(
-      Boundary.make({
+      defineBoundary({
         input: 'dpr',
         at: [
           [0, '1x'],
@@ -172,9 +172,9 @@ describe('Compositor pipeline integration', () => {
     expect(state.discrete['density']).toBe('1x');
 
     // CSS vars are all present
-    expect(state.outputs.css['--czap-layout']).toBe('tablet');
-    expect(state.outputs.css['--czap-theme']).toBe('light');
-    expect(state.outputs.css['--czap-density']).toBe('1x');
+    expect(state.outputs.css['--liteship-layout']).toBe('tablet');
+    expect(state.outputs.css['--liteship-theme']).toBe('light');
+    expect(state.outputs.css['--liteship-density']).toBe('1x');
 
     // GLSL uniforms are present
     expect(state.outputs.glsl['u_layout']).toBe(1); // tablet is index 1
@@ -182,8 +182,8 @@ describe('Compositor pipeline integration', () => {
     expect(state.outputs.glsl['u_density']).toBe(0); // 1x is index 0
 
     // ARIA attributes present
-    expect(state.outputs.aria['data-czap-layout']).toBe('tablet');
-    expect(state.outputs.aria['data-czap-theme']).toBe('light');
+    expect(state.outputs.aria['data-liteship-layout']).toBe('tablet');
+    expect(state.outputs.aria['data-liteship-theme']).toBe('light');
     expect(compositor.runtime.phases).toEqual([
       'compute-discrete',
       'compute-blend',
@@ -198,7 +198,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('speculative: evaluateSpeculative prefetches state near threshold', async () => {
-    const compositor = Compositor.create({ speculative: true }).compositor;
+    const compositor = Compositor.create({ speculative: true });
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
     compositor.add('layout', q);
 
@@ -214,7 +214,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('speculative: evaluateSpeculative is no-op without speculative config', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const q = makeSpiedQuantizer(widthBoundary, 'mobile');
     compositor.add('layout', q);
 
@@ -226,7 +226,7 @@ describe('Compositor pipeline integration', () => {
   });
 
   test('31+ quantizers fall back to recompute-all (DirtyFlags limit)', async () => {
-    const compositor = Compositor.create().compositor;
+    const compositor = Compositor.create();
     const spies: ReturnType<typeof makeSpiedQuantizer>[] = [];
 
     for (let i = 0; i < 33; i++) {

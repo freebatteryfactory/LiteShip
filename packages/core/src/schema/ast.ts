@@ -48,10 +48,10 @@ export type SchemaAnnotations = Readonly<Record<symbol, unknown>>;
  * generator here and the harness walker honours it ahead of structural
  * derivation. The annotated value is a thunk so the arbitrary is built lazily.
  */
-export const ArbitraryAnnotationId: unique symbol = Symbol.for('@czap/core/schema/arbitrary');
+export const ArbitraryAnnotationId: unique symbol = Symbol.for('@liteship/core/schema/arbitrary');
 
-/** The runtime brand marking a schema as a struct-field optional (see `S.optional`). */
-export const OptionalId: unique symbol = Symbol('@czap/core/schema/optional');
+/** The runtime brand marking a schema as a struct-field optional (see `schema.optional`). */
+export const OptionalId: unique symbol = Symbol('@liteship/core/schema/optional');
 
 // ---------------------------------------------------------------------------
 // The node vocabulary — CLOSED. Adding a producer without a matching decode /
@@ -210,10 +210,10 @@ export interface Schema<out A, out I = A> {
   readonly Encoded: I;
 }
 
-/** A struct-field schema marked optional by `S.optional`; carries the {@link OptionalId} brand. */
+/** A struct-field schema marked optional by `schema.optional`; carries the {@link OptionalId} brand. */
 export type OptionalSchema<A, I> = Schema<A, I> & { readonly [OptionalId]: true };
 
-/** True iff `S` is an `OptionalSchema` — the presence law `S.struct` reads per field. */
+/** True iff `S` is an `OptionalSchema` — the presence law `schema.struct` reads per field. */
 export type IsOptional<S> = S extends { readonly [OptionalId]: true } ? true : false;
 
 // ---------------------------------------------------------------------------

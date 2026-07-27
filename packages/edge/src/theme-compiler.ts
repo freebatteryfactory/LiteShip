@@ -10,7 +10,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,7 +26,7 @@ import { ValidationError } from '@czap/error';
 export interface ThemeCompileConfig {
   /** Flat map of token name to value (string or numeric). */
   readonly tokens: Readonly<Record<string, string | number>>;
-  /** CSS custom property prefix. Defaults to `'czap'`. */
+  /** CSS custom property prefix. Defaults to `'liteship'`. */
   readonly prefix?: string;
 }
 
@@ -55,7 +55,7 @@ export interface ThemeDeclaration {
 }
 
 const SAFE_PREFIX_PATTERN = /^[a-z0-9-]+$/;
-const UNSAFE_CSS_VALUE_PATTERN = /[;{}<>]/;
+const UNSAFE_CSS_VALUE_PATTERN = /["'`;{}<>\\\u0000-\u001f\u007f]|\/\*|url\s*\(/iu;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -95,7 +95,7 @@ function formatValue(value: string | number, tokenName: string): string {
   if (UNSAFE_CSS_VALUE_PATTERN.test(formatted)) {
     throw ValidationError(
       'theme.compile',
-      `Unsafe theme token "${tokenName}" value "${formatted}" contains forbidden characters (;, {, }, <, >) and cannot be serialized into CSS safely. Fix: remove those characters from the token value.`,
+      `Unsafe theme token "${tokenName}" cannot be serialized into an HTML style attribute safely. Fix: remove quotes, control characters, CSS comments, URL functions, escapes, or declaration-breaking punctuation from the token value.`,
     );
   }
 
@@ -116,19 +116,19 @@ function formatValue(value: string | number, tokenName: string): string {
  * ```ts
  * const result = compileTheme({
  *   tokens: { 'color.primary': '#3b82f6', 'spacing.base': 16 },
- *   prefix: 'czap',
+ *   prefix: 'liteship',
  * });
  * // result.css =>
  * //   :root {
- * //     --czap-color-primary: #3b82f6;
- * //     --czap-spacing-base: 16;
+ * //     --liteship-color-primary: #3b82f6;
+ * //     --liteship-spacing-base: 16;
  * //   }
  * // result.inlineStyle =>
- * //   --czap-color-primary:#3b82f6;--czap-spacing-base:16
+ * //   --liteship-color-primary:#3b82f6;--liteship-spacing-base:16
  * ```
  */
 export function compileTheme(config: ThemeCompileConfig): ThemeCompileResult {
-  const prefix = normalizePrefix(config.prefix ?? 'czap');
+  const prefix = normalizePrefix(config.prefix ?? 'liteship');
   const entries = Object.entries(config.tokens);
 
   if (entries.length === 0) {

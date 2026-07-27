@@ -27,7 +27,7 @@ on FrameRange before applying the factor.
 
 ### env
 
-`ResolvedEnvelope`
+[`ResolvedEnvelope`](../../../spine/type-aliases/ResolvedEnvelope.md)
 
 ### frameIndex
 

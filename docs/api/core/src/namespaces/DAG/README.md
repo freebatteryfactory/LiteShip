@@ -15,7 +15,7 @@ and anti-fork rule enforcement.
 ## Example
 
 ```ts
-import { DAG } from '@czap/core';
+import { DAG } from '@liteship/core';
 
 const dag = DAG.fromReceipts(envelopes);
 const ordered = DAG.linearize(dag);

@@ -1,7 +1,38 @@
 import { describe, expect, test } from 'vitest';
-import { formatSharedStartupLine } from '../../../scripts/bench-reality.js';
+import {
+  browserRealityFailures,
+  formatSharedStartupLine,
+  type RawStartupRealityBrowserResult,
+} from '../../../scripts/bench-reality.js';
+import { measuredStartupRealityFixture } from '../../support/startup-reality-fixture.js';
+
+const SUMMARY = { min: 1, median: 1, p75: 1, p95: 1, p99: 1, max: 1, mean: 1 } as const;
 
 describe('bench reality formatting', () => {
+  test('rejects vacuous and non-finite browser measurements while admitting measured work', () => {
+    const measured = measuredStartupRealityFixture();
+    expect(browserRealityFailures(measured)).toEqual([]);
+    const vacuous: RawStartupRealityBrowserResult = {
+      ...measured,
+      worker: { ...measured.worker, iterations: 0, rawSamples: [] },
+      llm: {
+        ...measured.llm,
+        simple: {
+          ...measured.llm.simple,
+          rawSamples: [],
+          chunkToFirstTokenMs: { ...measured.llm.simple.chunkToFirstTokenMs, mean: Number.NaN },
+        },
+      },
+    };
+    expect(browserRealityFailures(vacuous)).toEqual(
+      expect.arrayContaining([
+        'worker iterations must be positive',
+        'worker raw samples must be non-empty',
+        'llm simple raw samples must be non-empty',
+        'llm simple first-token mean must be finite',
+      ]),
+    );
+  });
   test('uses timer-floor-limited wording for sub-resolution llm startup slices', () => {
     const line = formatSharedStartupLine(
       'Browser llm simple shared startup median',

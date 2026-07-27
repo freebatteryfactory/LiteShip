@@ -19,7 +19,7 @@ Remotion paints is byte-identical to the live runtime's.
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### frame
 

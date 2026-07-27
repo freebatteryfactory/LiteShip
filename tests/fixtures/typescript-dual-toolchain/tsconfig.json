@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "incremental": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmitOnError": false,
+    "rootDir": "src",
+    "strict": true,
+    "target": "ES2022"
+  },
+  "include": ["src/**/*.ts"]
+}

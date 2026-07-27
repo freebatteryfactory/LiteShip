@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { CapTier, CapSet, MotionTier } from '@czap/core';
+import type { CapTier, CapSet, MotionTier } from '@liteship/core';
 import type { DeviceCapabilities, ExtendedDeviceCapabilities } from './detect.js';
 import { headProbeCapTier, headProbeMotionTier } from './head-probe.js';
 
@@ -69,7 +69,7 @@ export function capSetFromCapabilities(caps: DeviceCapabilities): CapSet {
  * + HDR treatments. Used orthogonally to {@link MotionTier}.
  */
 export type DesignTier = 'minimal' | 'standard' | 'enhanced' | 'rich';
-export type { MotionTier } from '@czap/core';
+export type { MotionTier } from '@liteship/core';
 
 /**
  * Map extended device capabilities to a design fidelity tier.

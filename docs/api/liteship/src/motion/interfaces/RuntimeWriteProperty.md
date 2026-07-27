@@ -1,0 +1,35 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/motion](../README.md) / RuntimeWriteProperty
+
+# Interface: RuntimeWriteProperty
+
+Defined in: core/dist/motion/interpret-transition.d.ts:95
+
+One runtime leaf-write descriptor (typed CSS custom property floor).
+
+## Properties
+
+### cssVar
+
+> `readonly` **cssVar**: `string`
+
+Defined in: core/dist/motion/interpret-transition.d.ts:96
+
+***
+
+### from
+
+> `readonly` **from**: [`TypedValue`](../type-aliases/TypedValue.md)
+
+Defined in: core/dist/motion/interpret-transition.d.ts:97
+
+***
+
+### to
+
+> `readonly` **to**: [`TypedValue`](../type-aliases/TypedValue.md)
+
+Defined in: core/dist/motion/interpret-transition.d.ts:98

@@ -31,7 +31,7 @@ import {
   produceSkipSiteFactsFromContext,
   type SkipSiteFact,
   type SkipVerdict,
-} from '../skip-site-facts.js';
+} from '../facts/skip-site-facts.js';
 
 /** A human label for the detected skip form, for the finding detail (verbatim with the closure gate). */
 function formLabel(form: SkipForm): string {
@@ -134,7 +134,7 @@ export const noSkippedTestFactGate: FactGate = defineFactGate({
     green: {
       name: 'a SANCTIONED capability-gate skip passes + a prose mention of it.skip is clean',
       context: factContext({
-        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});\n",
+        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n",
         'tests/unit/widget/good.test.ts':
           "// This suite never uses it.skip — every test runs.\nit('asserts a real fact', () => {\n  const label = 'unlike an it.skip placeholder, this asserts';\n  expect(label.length).toBeGreaterThan(0);\n});\n",
       }),

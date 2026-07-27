@@ -6,7 +6,7 @@
 
 # Interface: DecodedImage
 
-Defined in: [assets/src/decoders/image.ts:9](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L9)
+Defined in: [assets/src/decoders/image.ts:6](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L6)
 
 Decoded image format + dimensions.
 
@@ -14,9 +14,9 @@ Decoded image format + dimensions.
 
 ### format
 
-> `readonly` **format**: `"unknown"` \| `"png"` \| `"jpeg"` \| `"webp"`
+> `readonly` **format**: `"png"` \| `"jpeg"` \| `"webp"` \| `"unknown"`
 
-Defined in: [assets/src/decoders/image.ts:10](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L10)
+Defined in: [assets/src/decoders/image.ts:7](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L7)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [assets/src/decoders/image.ts:10](https://github.com/freebatteryfact
 
 > `readonly` **height**: `number`
 
-Defined in: [assets/src/decoders/image.ts:12](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L12)
+Defined in: [assets/src/decoders/image.ts:9](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L9)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [assets/src/decoders/image.ts:12](https://github.com/freebatteryfact
 
 > `readonly` **width**: `number`
 
-Defined in: [assets/src/decoders/image.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L11)
+Defined in: [assets/src/decoders/image.ts:8](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/image.ts#L8)

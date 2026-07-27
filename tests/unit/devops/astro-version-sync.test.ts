@@ -9,16 +9,18 @@ import { join, resolve, relative } from 'node:path';
  * `pnpm.overrides.astro` resolution — that single override physically forces
  * every transitive `astro` to the same version. But the example/template/
  * fixture manifests carry their own caret pins (`astro: ^7.0.0`), and the
- * `@czap/astro` / `@czap/_spine` peers carry bounded ranges. Nothing stops one
+ * `@liteship/astro` / `@liteship/_spine` peers carry bounded ranges. Nothing stops one
  * of those from drifting to a different major than the override resolves to —
  * a published peer that advertises `>=6` while the workspace ships 7, or a
  * template that scaffolds `astro@^6` while `npm create liteship` users get a 7
  * runtime. That's a silent, install-time-only divergence.
  *
- * Pin the LAW (every Astro pin's major === the override's major), not the exact
- * version, so caret patch/minor bumps need no churn. The pin list is DERIVED
- * from the workspace, so a new Astro-using package joins the guard the moment
- * it declares an `astro` dependency.
+ * Pin the LAW (every Astro pin's major === the override's major AND no pin
+ * admits a version below the override's minimum supported floor), not the
+ * exact resolved patch. The pin list is DERIVED from the workspace, so a new
+ * Astro-using package joins the guard the moment it declares an `astro`
+ * dependency. This keeps security/compatibility floors load-bearing without
+ * turning the resolved lockfile patch into a second public compatibility law.
  */
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
@@ -37,6 +39,22 @@ function readJson(path: string): Record<string, unknown> {
 function majorOf(range: string): number | null {
   const match = range.match(/\d+/);
   return match ? Number(match[0]) : null;
+}
+
+type VersionTuple = readonly [major: number, minor: number, patch: number];
+
+/** First complete semver tuple in a supported range (`^7.1.0`, `>=7.1.0 <8`). */
+function minimumVersionOf(range: string): VersionTuple | null {
+  const match = range.match(/(\d+)\.(\d+)\.(\d+)/);
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+}
+
+function compareVersions(left: VersionTuple, right: VersionTuple): number {
+  for (let index = 0; index < left.length; index += 1) {
+    const delta = left[index]! - right[index]!;
+    if (delta !== 0) return delta;
+  }
+  return 0;
 }
 
 const DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies'] as const;
@@ -80,12 +98,14 @@ function collectManifests(): string[] {
 const root = readJson(join(REPO_ROOT, 'package.json'));
 const overrideRange = ((root.pnpm as Record<string, Record<string, string>> | undefined)?.overrides ?? {}).astro;
 const overrideMajor = overrideRange ? majorOf(overrideRange) : null;
+const overrideMinimum = overrideRange ? minimumVersionOf(overrideRange) : null;
 const pins = collectManifests().flatMap(astroPinsIn);
 
 describe('astro version sync', () => {
   it('the root pnpm.overrides.astro is the single source of truth', () => {
     expect(overrideRange, 'root package.json must pin pnpm.overrides.astro').toBeTypeOf('string');
     expect(overrideMajor, `overrides.astro ${overrideRange} must name a major`).not.toBeNull();
+    expect(overrideMinimum, `overrides.astro ${overrideRange} must name a complete minimum version`).not.toBeNull();
   });
 
   it('found the expected Astro pins (drift guard for the derived list)', () => {
@@ -105,6 +125,21 @@ describe('astro version sync', () => {
         pinMajor,
         `${pin.file} ${pin.field}.astro (${pin.range}) must track the workspace override astro (${overrideRange})`,
       ).toBe(overrideMajor);
+    }
+  });
+
+  it('no Astro manifest admits a host below the workspace compatibility and security floor', () => {
+    expect(overrideMinimum).not.toBeNull();
+    for (const pin of pins) {
+      const minimum = minimumVersionOf(pin.range);
+      expect(
+        minimum,
+        `${pin.file} ${pin.field}.astro = ${pin.range} must name a complete minimum version`,
+      ).not.toBeNull();
+      expect(
+        compareVersions(minimum!, overrideMinimum!),
+        `${pin.file} ${pin.field}.astro (${pin.range}) must not admit versions below workspace floor ${overrideRange}`,
+      ).toBeGreaterThanOrEqual(0);
     }
   });
 });

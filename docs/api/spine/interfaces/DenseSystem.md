@@ -1,0 +1,79 @@
+[**LiteShip**](../../README.md)
+
+***
+
+[LiteShip](../../modules.md) / [\_spine](../README.md) / DenseSystem
+
+# Interface: DenseSystem\<R, W\>
+
+Defined in: [\_spine/core.d.ts:854](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L854)
+
+ECS system that operates on dense-packed component stores.
+
+## Type Parameters
+
+### R
+
+`R` *extends* readonly [`Part`](Part.md)\<`number`\>[] = readonly [`Part`](Part.md)\<`number`\>[]
+
+### W
+
+`W` *extends* readonly [`Part`](Part.md)\<`number`\>[] = readonly [`Part`](Part.md)\<`number`\>[]
+
+## Properties
+
+### \_denseSystem
+
+> `readonly` **\_denseSystem**: `true`
+
+Defined in: [\_spine/core.d.ts:861](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L861)
+
+***
+
+### \[SpineDenseSystemWitness\]
+
+> `readonly` **\[SpineDenseSystemWitness\]**: `true`
+
+Defined in: [\_spine/core.d.ts:863](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L863)
+
+***
+
+### name
+
+> `readonly` **name**: `string`
+
+Defined in: [\_spine/core.d.ts:858](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L858)
+
+***
+
+### reads
+
+> `readonly` **reads**: `R`
+
+Defined in: [\_spine/core.d.ts:859](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L859)
+
+***
+
+### writes
+
+> `readonly` **writes**: `W`
+
+Defined in: [\_spine/core.d.ts:860](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L860)
+
+## Methods
+
+### execute()
+
+> **execute**(`context`): `void`
+
+Defined in: [\_spine/core.d.ts:862](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L862)
+
+#### Parameters
+
+##### context
+
+[`DenseSystemContext`](DenseSystemContext.md)\<`R`, `W`\>
+
+#### Returns
+
+`void`

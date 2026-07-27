@@ -10,8 +10,8 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { capsuleVerifyGateCommand } from '@czap/command';
-import type { CapsuleGateSummary, CommandContext } from '@czap/command';
+import { capsuleVerifyGateCommand } from '@liteship/command';
+import type { CapsuleGateSummary, CommandContext } from '@liteship/command';
 
 const ctxWith = (summary: CapsuleGateSummary): CommandContext => ({
   cwd: '/repo',

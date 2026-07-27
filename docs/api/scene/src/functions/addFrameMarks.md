@@ -6,9 +6,9 @@
 
 # Function: addFrameMarks()
 
-> **addFrameMarks**(`a`, `b`): `FrameMark`
+> **addFrameMarks**(`a`, `b`): [`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
-Defined in: [scene/src/sugar/beat.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L62)
+Defined in: [scene/src/sugar/beat.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L66)
 
 Add two [FrameMark](../type-aliases/FrameMark.md)s without resolving them — frame-space and
 beat-space portions accumulate independently so resolution can stay
@@ -21,12 +21,12 @@ frames are involved, and a [FrameMarkSum](../type-aliases/FrameMarkSum.md) only 
 
 ### a
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ### b
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ## Returns
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)

@@ -8,7 +8,7 @@
 
 > `const` **ScrollTimeline**: `object`
 
-Defined in: [core/src/scroll-timeline.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L263)
+Defined in: [core/src/motion/scroll-timeline.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L263)
 
 Authoring sugar namespace — data over intent, no behavior authority.
 

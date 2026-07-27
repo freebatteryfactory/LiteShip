@@ -5,34 +5,36 @@
 
 ## Context
 
-`packages/_spine/` contains 13 `.d.ts` files (~90K+ lines) with comprehensive branded-type contracts for every package. Until this ADR, `_spine` had zero runtime imports: 100% type duplication between `_spine` and each implementation package's `brands.ts`. Classic Island Syndrome.
+`packages/_spine/` contains 17 `.d.ts` files (4,776 lines at this revision) with shared declaration contracts for the package fleet. Before this ADR, branded types were duplicated between `_spine` and implementation packages. The package remains install-only: its only JavaScript is a throwing teaching stub for accidental value imports.
 
 The capsule factory needs a canonical type source. Declaring capsule contracts that themselves duplicate types across `_spine` and implementation packages would inherit the duplication.
 
 ## Decision
 
 - `_spine` becomes the single source of truth for branded types (`SignalInput`, `ThresholdValue`, `StateName`, `ContentAddress`, `TokenRef`, `Millis`, and future additions).
-- Implementation packages (starting with `packages/core/src/brands.ts`) re-export types FROM `_spine` via the `import type X as _X` + `export type X = _X` aliasing pattern (required to avoid `isolatedModules` conflicts with same-named const constructor exports) and keep only their runtime constructors.
-- `CapsuleContract` imports its structural types (e.g. `ContentAddress`) from `@czap/_spine`.
-- A `TypeValidator` helper in `packages/core/src/capsule.ts` uses `_spine`-derived schemas for runtime validation of capsule inputs via `Schema.decodeUnknownEffect`.
-- `_spine` is referenced from `tsconfig.json` project references (first entry, since it is a declaration-only dependency-free package) and `vitest.shared.ts` aliases (`'@czap/_spine'` → `packages/_spine/index.d.ts`).
-- `packages/core/tsconfig.json` carries a `paths` mapping for `@czap/_spine` so `tsc --build` resolves the import during composite builds.
+- Implementation packages (starting with `packages/core/src/schema/brands.ts`) re-anchor shared types from `_spine` via `import type` aliases and keep their runtime constructors locally.
+- `CapsuleContract` imports shared structural types such as `ContentAddress` from `@liteship/_spine/core`.
+- `TypeValidator` in `packages/core/src/authoring/capsule.ts` performs a synchronous strict kernel decode and returns the kernel `Result`; it does not depend on Effect.
+- `_spine` is referenced from the root project graph and `vitest.shared.ts` aliases (`'@liteship/_spine'` → `packages/_spine/index.d.ts`).
+- `packages/core/tsconfig.json` maps `@liteship/_spine` to the declaration barrel for composite builds.
+- The root barrel and `SYMBOLS.md` are generated from the 16 declaration leaves. Only documented symbols with type meaning and one unambiguous leaf owner are admitted; value-only leaf declarations cannot become a root runtime promise.
 
 ## Consequences
 
 - Eliminates 100% type duplication. Types change in one place.
 - Runtime validation bridges contracts to implementation. `_spine` stops being documentation-only.
 - Future contributors have one authoritative type location.
-- `_spine` participates in builds and tests, so drift is caught by the existing gauntlet.
+- `_spine` participates in builds, explicit surface generation, relation checks, and packed declaration tests, so drift is caught before release.
 - Branded-type additions now land in `_spine/core.d.ts` (or the appropriate `_spine/*.d.ts` file) BEFORE the implementation package re-exports them. The ADR enforces the order to keep the bridge honest.
 
 ## Supporting evidence
 
-- `packages/core/src/brands.ts`: re-export pattern for six branded types (`SignalInput`, `ThresholdValue`, `StateName`, `ContentAddress`, `TokenRef`, `Millis`).
-- `packages/core/src/capsule.ts`: `import type { ContentAddress } from '@czap/_spine'`; `TypeValidator.validate` uses `Schema.decodeUnknownEffect`.
+- `packages/core/src/schema/brands.ts`: re-anchor pattern for the shared branded types.
+- `packages/core/src/authoring/capsule.ts`: `ContentAddress` import from `@liteship/_spine/core`; `TypeValidator.validate` uses the synchronous schema kernel.
 - `tsconfig.json` references include `./packages/_spine` as the first entry.
-- `vitest.shared.ts` alias: `'@czap/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts')`.
+- `vitest.shared.ts` alias: `'@liteship/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts')`.
 - `packages/_spine/core.d.ts`: `Millis` added here (was absent before this ADR shipped) to unblock the `brands.ts` re-export.
+- `scripts/gen-spine-surface.ts`: exact named barrel and symbol-documentation projection with planted collision, value-leak, and missing-documentation controls.
 
 ## References
 

@@ -20,7 +20,8 @@
  * @module
  */
 
-import type { System, World } from '@czap/core';
+import { defineSystem, type System } from '@liteship/core/ecs';
+import { BlendPart, FrameRangePart, OpacityPart, SvgAttrsPart, VideoSourcePart, type SvgAttrs } from '../parts.js';
 
 /**
  * Composed SVG attribute struct written to the `_svgAttrs` output
@@ -28,13 +29,7 @@ import type { System, World } from '@czap/core';
  * renderer needs to emit are populated. `_tag` is the discriminator
  * (scene `_tag` convention) so consumers can pattern-match the struct.
  */
-export interface SvgAttrs {
-  readonly _tag: 'SvgAttrs';
-  readonly transform?: string;
-  readonly opacity?: number;
-  readonly mixBlendMode?: string;
-  readonly clipPath?: string;
-}
+export type { SvgAttrs } from '../parts.js';
 
 /**
  * Map a normalized blend factor [0,1] (as written by TransitionSystem)
@@ -58,17 +53,19 @@ function mixBlendModeFor(blend: number): string {
  */
 export function SVGSystem(frameIndex: number): System {
   void frameIndex;
-  return {
+  return defineSystem({
     name: 'SVGSystem',
-    query: ['VideoSource', 'FrameRange'],
-    execute: (entities, world?: World.Shape) => {
+    query: [VideoSourcePart, FrameRangePart],
+    reads: [OpacityPart, BlendPart],
+    writes: [SvgAttrsPart],
+    execute: (entities, context) => {
       for (const e of entities) {
         // READ the outputs prior systems already populated this tick —
         // do NOT recompute them. VideoSystem persisted `_opacity`;
         // TransitionSystem persisted `_blend` (absent on entities that
         // carry no transition).
-        const opacity = e.components.get('_opacity') as number | undefined;
-        const blend = e.components.get('_blend') as number | undefined;
+        const opacity = context.optional(e, OpacityPart);
+        const blend = context.optional(e, BlendPart);
 
         const attrs: SvgAttrs = {
           _tag: 'SvgAttrs',
@@ -76,13 +73,8 @@ export function SVGSystem(frameIndex: number): System {
           ...(blend !== undefined ? { mixBlendMode: mixBlendModeFor(blend) } : {}),
         };
 
-        // Dual-write: direct property for in-tick readers, plus the
-        // persisted output component for downstream queries.
-        (e as unknown as { _svgAttrs: SvgAttrs })._svgAttrs = attrs;
-        if (world !== undefined) {
-          world.setComponent(e.id, '_svgAttrs', attrs);
-        }
+        context.write(e, SvgAttrsPart, attrs);
       }
     },
-  };
+  });
 }

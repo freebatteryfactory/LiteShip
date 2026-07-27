@@ -10,12 +10,14 @@
  */
 
 import { runStdio } from './stdio.js';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-if (
-  import.meta.url === `file://${process.argv[1]}` ||
-  process.argv[1]?.endsWith('stdio-server.ts') ||
-  process.argv[1]?.endsWith('stdio.ts')
-) {
+function isDirectEntrypoint(moduleUrl: string, argvPath: string | undefined): boolean {
+  return argvPath !== undefined && pathToFileURL(resolve(argvPath)).href === moduleUrl;
+}
+
+if (isDirectEntrypoint(import.meta.url, process.argv[1])) {
   runStdio().catch((err: unknown) => {
     process.stderr.write(JSON.stringify({ error: String(err) }) + '\n');
     process.exit(1);

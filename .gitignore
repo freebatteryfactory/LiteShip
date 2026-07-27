@@ -6,7 +6,7 @@ dist/
 .env
 .env.*
 .idea/
-crates/czap-compute/target/
+crates/liteship-compute/target/
 
 # Generated release notes — extracted from CHANGELOG at release time, never committed
 RELEASE_NOTES_v*.md
@@ -28,20 +28,22 @@ examples/remotion-demo/node_modules/
 test-results/
 tests/_results/
 coverage/
-# Ignore benchmarks/ CONTENTS (regenerated run artifacts) but allow the two
+# Ignore benchmarks/ CONTENTS (regenerated run artifacts) but allow the three
 # COMMITTED performance CONTRACTS below to be re-included. `benchmarks/*` (not
 # `benchmarks/`) is required so git walks the dir and the negations can match —
 # a wholesale `benchmarks/` ignore cannot be un-ignored per-file.
 benchmarks/*
-# …except the two COMMITTED performance CONTRACTS (source of truth, not
+# …except the three COMMITTED performance CONTRACTS (source of truth, not
 # regenerated bench output): the declared-distribution registry (the headline
-# law's anchor) and the complexity-map baseline (the regression baseline). The
+# law's anchor), the latency complexity-map baseline, and the retained-allocation
+# growth baseline. The
 # performance-contracts gate folds over these committed bytes, so they must be
 # tracked — every other benchmarks/ file stays an ignored run artifact.
 !benchmarks/distributions.json
 !benchmarks/complexity-map.json
+!benchmarks/allocation-map.json
 # …and the mutation-score baseline (the avionics mutation-as-divergence ratchet
-# floor — `czap check --ir --mutate`'s committed per-file kill-score; the
+# floor — `liteship check gates --ir --mutate`'s committed per-file kill-score; the
 # mutationDivergenceGate folds it to flag a regression). A committed contract, not
 # a regenerated artifact — tracked so the ratchet can only ever rise.
 !benchmarks/mutation-score.json
@@ -59,6 +61,7 @@ benchmarks/*
 # it). A committed contract so the front-page numbers ship with the repo, not a
 # regenerated run artifact.
 !benchmarks/readme-snapshot.json
+!benchmarks/one-install-cost-baseline.json
 reports/
 .vitest-attachments/
 lint-report.json
@@ -72,8 +75,8 @@ examples/scenes/*.mp4
 *.tgz
 *.shipcapsule.cbor
 
-# czap capsule factory scratch (generated MCP manifests, content-addressed cache)
-.czap/
+# liteship capsule factory scratch (generated MCP manifests, content-addressed cache)
+.liteship/
 
 # Local Claude tooling state (per-machine working notes — NEVER in the repo)
 .claude/
@@ -110,7 +113,7 @@ scripts/**/*.d.ts.map
 
 # Scratch scripts from sibling projects (borrow this repo's Playwright install)
 .fbf-*.mjs
-tests/.czap-verify-fresh-*/
+tests/.liteship-verify-fresh-*/
 
 # Experimental sharded TypeDoc workspace (#136) — never commit
 .typedoc-shards/

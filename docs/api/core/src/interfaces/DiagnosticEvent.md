@@ -6,7 +6,7 @@
 
 # Interface: DiagnosticEvent
 
-Defined in: [core/src/diagnostics.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L30)
+Defined in: [core/src/evidence/diagnostics.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L37)
 
 A [DiagnosticPayload](DiagnosticPayload.md) enriched with severity and an emission timestamp.
 
@@ -20,7 +20,7 @@ A [DiagnosticPayload](DiagnosticPayload.md) enriched with severity and an emissi
 
 > `readonly` `optional` **cause?**: `unknown`
 
-Defined in: [core/src/diagnostics.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L25)
+Defined in: [core/src/evidence/diagnostics.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L27)
 
 #### Inherited from
 
@@ -32,7 +32,9 @@ Defined in: [core/src/diagnostics.ts:25](https://github.com/freebatteryfactory/L
 
 > `readonly` **code**: `string`
 
-Defined in: [core/src/diagnostics.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L23)
+Defined in: [core/src/evidence/diagnostics.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L25)
+
+Local operator code. Stable public identities use the registered-only methods below.
 
 #### Inherited from
 
@@ -44,7 +46,7 @@ Defined in: [core/src/diagnostics.ts:23](https://github.com/freebatteryfactory/L
 
 > `readonly` `optional` **detail?**: `unknown`
 
-Defined in: [core/src/diagnostics.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L26)
+Defined in: [core/src/evidence/diagnostics.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L28)
 
 #### Inherited from
 
@@ -56,7 +58,7 @@ Defined in: [core/src/diagnostics.ts:26](https://github.com/freebatteryfactory/L
 
 > `readonly` **level**: [`DiagnosticLevel`](../type-aliases/DiagnosticLevel.md)
 
-Defined in: [core/src/diagnostics.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L31)
+Defined in: [core/src/evidence/diagnostics.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L38)
 
 ***
 
@@ -64,7 +66,7 @@ Defined in: [core/src/diagnostics.ts:31](https://github.com/freebatteryfactory/L
 
 > `readonly` **message**: `string`
 
-Defined in: [core/src/diagnostics.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L24)
+Defined in: [core/src/evidence/diagnostics.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L26)
 
 #### Inherited from
 
@@ -76,7 +78,7 @@ Defined in: [core/src/diagnostics.ts:24](https://github.com/freebatteryfactory/L
 
 > `readonly` **source**: `string`
 
-Defined in: [core/src/diagnostics.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L22)
+Defined in: [core/src/evidence/diagnostics.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L23)
 
 #### Inherited from
 
@@ -88,4 +90,4 @@ Defined in: [core/src/diagnostics.ts:22](https://github.com/freebatteryfactory/L
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [core/src/diagnostics.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L32)
+Defined in: [core/src/evidence/diagnostics.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/diagnostics.ts#L39)

@@ -31,7 +31,7 @@
 | `tests/unit/core/invariants.test.ts` | invariant | `sha256:37ceb46cddd…` | Invariant 14 — the permanent tripwire: no .ts under packages/<pkg>/src imports from effect |
 | `tests/unit/devops/docs-effect-residue.test.ts` | acceptance-test | `sha256:cc034898cbe…` | the shipped-docs residue gate: no package README / root README / GETTING-STARTED carries an Effect install, version pin, import, or usage instruction (the ecosystem-zero claim now covers consumer docs, not just src) |
 | `docs/adr/0042-effect-shed.md` | adr | `sha256:29394335754…` | the shed decision + the per-responsibility migration bridge (Scope→Lifetime, SubscriptionRef/Stream→CellKernel, typed channel→Result) |
-| `packages/cli/src/lib/declared-dependency-closure.ts` | gate | `sha256:bfc6030721e…` | the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency |
+| `tests/support/declared-dependency-closure.ts` | gate | `sha256:bfc6030721e…` | the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency |
 | `tests/unit/devops/declared-dependency-closure.test.ts` | acceptance-test | `sha256:d9fd9b2fb6a…` | every publishable package is dependency-closed across EVERY public runtime export (not just `.`); the fast-check-via-./harness and vite-via-./dev leaks are declared as optional peers |
 
 ## #152 — audit: Effect shedding + god-file/reinvention sweep (operational baseline)
@@ -45,7 +45,7 @@
 | `tests/unit/core/invariants.test.ts` | invariant | `sha256:37ceb46cddd…` | Invariant 14 — the permanent tripwire: no .ts under packages/<pkg>/src imports from effect |
 | `tests/unit/devops/docs-effect-residue.test.ts` | acceptance-test | `sha256:cc034898cbe…` | the shipped-docs residue gate: no package README / root README / GETTING-STARTED carries an Effect install, version pin, import, or usage instruction (the ecosystem-zero claim now covers consumer docs, not just src) |
 | `docs/adr/0042-effect-shed.md` | adr | `sha256:29394335754…` | the shed decision + the per-responsibility migration bridge (Scope→Lifetime, SubscriptionRef/Stream→CellKernel, typed channel→Result) |
-| `packages/cli/src/lib/declared-dependency-closure.ts` | gate | `sha256:bfc6030721e…` | the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency |
+| `tests/support/declared-dependency-closure.ts` | gate | `sha256:bfc6030721e…` | the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency |
 | `tests/unit/devops/declared-dependency-closure.test.ts` | acceptance-test | `sha256:d9fd9b2fb6a…` | every publishable package is dependency-closed across EVERY public runtime export (not just `.`); the fast-check-via-./harness and vite-via-./dev leaks are declared as optional peers |
 
 ## #153 — reactive containment (Effect out of the reactive family)

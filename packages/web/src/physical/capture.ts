@@ -5,62 +5,108 @@
  * before morphing to restore afterward.
  */
 
+import { Lifetime, attachLifetime, type AsyncOwnedResource } from '@liteship/core';
 import type { PhysicalState, ScrollPosition, SelectionState, IMEState, FocusState } from '../types.js';
 import { ATTR } from '../morph/semantic-id.js';
 import * as SemanticIdModule from '../morph/semantic-id.js';
 
+interface ActiveIMEState {
+  readonly element: HTMLInputElement | HTMLTextAreaElement;
+  text: string;
+  readonly start: number;
+  readonly end: number;
+}
+
 /**
- * Track active IME composition state globally.
- * Updated by compositionstart/compositionupdate/compositionend listeners.
+ * Explicit host-owned IME and physical-state capture controller.
+ *
+ * Creating a tracker installs three capture-phase composition listeners on the
+ * supplied document. Awaiting {@link dispose} removes all three listeners and
+ * clears the tracked composition synchronously. Importing this module performs
+ * no active work.
  */
-let activeIMEState: { element: Element; text: string; start: number; end: number } | null = null;
+export interface PhysicalStateTracker extends AsyncOwnedResource {
+  /** Capture focus, selection, scroll, and this tracker's current IME state. */
+  capture(root: Element): PhysicalState;
+  /** Capture only this tracker's current IME composition, if one is active. */
+  captureIME(): IMEState | null;
+}
 
-if (typeof document !== 'undefined') {
-  document.addEventListener(
-    'compositionstart',
-    (e) => {
-      const target = e.target;
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-        activeIMEState = {
-          element: target,
-          text: '',
-          start: target.selectionStart ?? 0,
-          end: target.selectionEnd ?? 0,
-        };
-      }
-    },
-    true,
-  );
+function projectIME(active: ActiveIMEState | null): IMEState | null {
+  if (!active) return null;
+  return {
+    elementPath: elementToPath(active.element),
+    text: active.text,
+    start: active.start,
+    end: active.end,
+  };
+}
 
-  document.addEventListener(
-    'compositionupdate',
-    (e) => {
-      if (activeIMEState && e.data) {
-        activeIMEState.text = e.data;
-      }
-    },
-    true,
-  );
+/**
+ * Install document-level IME tracking under one explicit async-uniform owner.
+ * Separate trackers never share mutable state; disposing one cannot disable a
+ * sibling owned by another host.
+ */
+export function createPhysicalStateTracker(ownerDocument: Document): PhysicalStateTracker {
+  const lifetime = Lifetime.make();
+  const ownerWindow = ownerDocument.defaultView;
+  let active: ActiveIMEState | null = null;
 
-  document.addEventListener(
-    'compositionend',
-    () => {
-      activeIMEState = null;
+  const onCompositionStart = (event: CompositionEvent): void => {
+    const target = event.target;
+    const Input = ownerWindow?.HTMLInputElement;
+    const TextArea = ownerWindow?.HTMLTextAreaElement;
+    if ((Input && target instanceof Input) || (TextArea && target instanceof TextArea)) {
+      const editable = target as HTMLInputElement | HTMLTextAreaElement;
+      active = {
+        element: editable,
+        text: '',
+        start: editable.selectionStart ?? 0,
+        end: editable.selectionEnd ?? 0,
+      };
+    }
+  };
+
+  const onCompositionUpdate = (event: CompositionEvent): void => {
+    if (active && event.data) active.text = event.data;
+  };
+
+  const onCompositionEnd = (): void => {
+    active = null;
+  };
+
+  ownerDocument.addEventListener('compositionstart', onCompositionStart, true);
+  lifetime.add(() => ownerDocument.removeEventListener('compositionstart', onCompositionStart, true));
+  ownerDocument.addEventListener('compositionupdate', onCompositionUpdate, true);
+  lifetime.add(() => ownerDocument.removeEventListener('compositionupdate', onCompositionUpdate, true));
+  ownerDocument.addEventListener('compositionend', onCompositionEnd, true);
+  lifetime.add(() => ownerDocument.removeEventListener('compositionend', onCompositionEnd, true));
+  lifetime.add(() => {
+    active = null;
+  });
+
+  return attachLifetime(
+    {
+      capture(root: Element): PhysicalState {
+        return capture(root, projectIME(active));
+      },
+      captureIME(): IMEState | null {
+        return projectIME(active);
+      },
     },
-    true,
+    lifetime,
   );
 }
 
 /**
- * Capture full physical state of an element and its descendants.
+ * Capture passive physical state of an element and its descendants. Pass an
+ * IME snapshot supplied by a host-owned tracker to include composition state.
  */
-export const capture = (root: Element): PhysicalState => {
+export const capture = (root: Element, ime: IMEState | null = null): PhysicalState => {
   const activeElementPath = captureActiveElement();
   const focusState = captureFocusState();
   const scrollPositions = captureScrollPositionsSync(root);
   const selection = captureSelection();
-  const ime = captureIME();
-
   return {
     activeElementPath,
     focusState,
@@ -227,26 +273,10 @@ function getSelectionDirection(selection: Selection): string {
 }
 
 /**
- * Capture IME composition state if active.
- */
-export const captureIME = (): IMEState | null => {
-  if (!activeIMEState) {
-    return null;
-  }
-
-  return {
-    elementPath: elementToPath(activeIMEState.element),
-    text: activeIMEState.text,
-    start: activeIMEState.start,
-    end: activeIMEState.end,
-  };
-};
-
-/**
  * Generate a unique path selector for an element.
  *
  * Priority:
- * 1. data-czap-id attribute (semantic ID, stable across morphs)
+ * 1. data-liteship-id attribute (semantic ID, stable across morphs)
  * 2. id attribute (HTML id)
  * 3. Position-based path (nth-child selectors)
  */

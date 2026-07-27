@@ -8,12 +8,11 @@
  *
  * The helper deliberately does not pass an `env` field to `child_process.spawn`,
  * so children inherit `process.env` — including `NODE_V8_COVERAGE` set by
- * coverage:node:tracked. This is what makes subprocess coverage capture
- * automatic. A drift-guard test (tests/unit/meta/spawn-coverage-inheritance.test.ts)
- * fails CI if any future commit adds an env override.
+ * coverage:node:tracked. A drift-guard test
+ * (tests/unit/meta/spawn-coverage-inheritance.test.ts) pins this law.
  *
- * Lives in `@czap/command/host` (CUT A1 capstone-1) — the canonical home for
- * Node host execution shared by the CLI and MCP adapters. `@czap/cli`'s
+ * Lives in `@liteship/command/host` (CUT A1 capstone-1) — the canonical home for
+ * Node host execution shared by the CLI and MCP adapters. `@liteship/cli`'s
  * `lib/spawn.ts` / `spawn-helpers.ts` and `scripts/lib/spawn.ts` are thin
  * re-exports so existing import paths keep working; this is the one impl the
  * spawn drift-guard tests pin.
@@ -22,7 +21,11 @@
  */
 
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
+import { resolveLauncher, type SpawnResult } from './launcher.js';
+
+export { quoteWindowsArg, spawnArgvVisible } from './launcher.js';
+export type { SpawnResult } from './launcher.js';
 
 /**
  * Discriminate a "the process is already gone" kill failure (the designed
@@ -49,12 +52,6 @@ function isProcessGoneError(err: unknown): boolean {
   // process-not-found exit is 128 (our already-gone case).
   const status = (err as { status?: number }).status;
   return status === 128;
-}
-
-/** Result of a one-shot spawnArgv invocation. */
-export interface SpawnResult {
-  readonly exitCode: number;
-  readonly stderrTail: string;
 }
 
 /** Options for spawnArgv / withSpawned. */
@@ -88,7 +85,7 @@ export interface SpawnCaptureOpts {
   readonly captureBytes?: number;
   /**
    * If set, kill the child after this many ms and resolve with `timedOut: true`
-   * (never rejects on timeout). For bounding short external probes (e.g. `czap
+   * (never rejects on timeout). For bounding short external probes (e.g. `liteship
    * doctor`'s `pnpm --version`) so a slow/wedged tool can't hang the caller.
    * Omitted → existing behavior (resolve only on the child's `close`).
    */
@@ -130,36 +127,6 @@ function pushBoundedStderr(chunks: Buffer[], currentBytes: number, chunk: Buffer
 }
 
 /**
- * Quote a single argv token for safe inclusion in a Windows cmd.exe command
- * line. Tokens with no special characters round-trip as-is; everything else
- * is double-quoted with internal quotes backslash-escaped. Keeps shell
- * metacharacters (`;`, `&`, `|`, `<`, `>`, `^`, `(`, `)`) inside a quoted
- * string so cmd.exe treats them as literal bytes.
- *
- * Re-exported by packages/cli/src/spawn-helpers.ts and
- * scripts/support/pnpm-process.ts; tests/unit/spawn-quoting-drift.test.ts
- * enforces byte-equivalence across all three call sites.
- */
-export function quoteWindowsArg(arg: string): string {
-  if (arg.length === 0) return '""';
-  if (!/[\s"&|<>^();]/.test(arg)) return arg;
-  return `"${arg.replace(/"/g, '\\"')}"`;
-}
-
-/**
- * Resolve a (command, args) pair into a launcher invocation that does NOT
- * enable shell interpretation but still finds .cmd / .bat shims on Windows.
- * On POSIX this is identity.
- */
-function resolveLauncher(command: string, args: readonly string[]): { command: string; args: readonly string[] } {
-  if (process.platform !== 'win32') {
-    return { command, args };
-  }
-  const commandLine = [command, ...args].map(quoteWindowsArg).join(' ');
-  return { command: 'cmd.exe', args: ['/d', '/s', '/c', commandLine] };
-}
-
-/**
  * Run a subprocess with an argv array (`shell: false`). stderr is captured
  * with a bounded ring buffer; stdout inherits the parent. Resolves once the
  * subprocess exits — never throws on nonzero exit (callers branch on
@@ -176,7 +143,7 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
       cwd: opts.cwd,
       // On Windows the cmd.exe launcher needs verbatim args so Node doesn't
       // re-escape the command tail and break exit-code propagation.
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       // CRITICAL: do not set `env` — children must inherit NODE_V8_COVERAGE.
     });
     const stderrChunks: Buffer[] = [];
@@ -190,39 +157,6 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
         exitCode: code ?? 1,
         stderrTail: Buffer.concat(stderrChunks as unknown as Uint8Array[]).toString('utf8'),
       });
-    });
-  });
-}
-
-/**
- * Run a subprocess whose progress should remain visible to humans, but whose
- * stdout must NOT pollute our own stdout. Child stdout is piped to our
- * stderr; child stderr inherits to our stderr; child stdin is closed.
- *
- * Use this for commands like `czap doctor --fix` whose stdout contract is
- * JSON-only (the doctor receipt is written to stdout AFTER the fixes run,
- * and would otherwise be preceded by the build's tsc output line by line).
- *
- * The stderrTail field of the returned SpawnResult is empty — both streams
- * went through to the user, none of them are buffered for postmortem.
- */
-export function spawnArgvVisible(
-  command: string,
-  args: readonly string[],
-  opts: { readonly cwd?: string } = {},
-): Promise<SpawnResult> {
-  const launcher = resolveLauncher(command, args);
-  return new Promise((resolvePromise, rejectPromise) => {
-    const proc = spawn(launcher.command, launcher.args as string[], {
-      stdio: ['ignore', 'pipe', 'inherit'],
-      shell: false,
-      cwd: opts.cwd,
-      windowsVerbatimArguments: process.platform === 'win32',
-    });
-    proc.stdout?.pipe(process.stderr, { end: false });
-    proc.on('error', rejectPromise);
-    proc.on('close', (code) => {
-      resolvePromise({ exitCode: code ?? 1, stderrTail: '' });
     });
   });
 }
@@ -246,7 +180,7 @@ export function spawnArgvCapture(
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       cwd: opts.cwd,
-      windowsVerbatimArguments: process.platform === 'win32',
+      windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       // CRITICAL: do not set `env` — children must inherit NODE_V8_COVERAGE.
     });
     const stdoutChunks: Buffer[] = [];
@@ -358,7 +292,7 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
     shell: false,
     detached: process.platform !== 'win32',
     // On Windows the cmd.exe launcher needs verbatim args; see spawnArgv.
-    windowsVerbatimArguments: process.platform === 'win32',
+    windowsVerbatimArguments: launcher.windowsVerbatimArguments,
     // CRITICAL: do not set `env` — see comment in spawnArgv.
   });
   const stderrChunks: Buffer[] = [];

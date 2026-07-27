@@ -6,7 +6,7 @@
 
 # Interface: FactGateSpec
 
-Defined in: [gauntlet/src/gate.ts:679](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L679)
+Defined in: [gauntlet/src/gate.ts:1178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1178)
 
 The author surface of a [FactGate](FactGate.md) — context-free by construction (no `run`).
 
@@ -16,7 +16,7 @@ The author surface of a [FactGate](FactGate.md) — context-free by construction
 
 > `readonly` `optional` **coverage?**: (`ir`) => readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:683](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L683)
+Defined in: [gauntlet/src/gate.ts:1184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1184)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ readonly `string`[]
 
 > `readonly` **decide**: (`facts`) => readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/gate.ts:687](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L687)
+Defined in: [gauntlet/src/gate.ts:1188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1188)
 
 The bounded, data-only decision — no [GateContext](GateContext.md) parameter, by design.
 
@@ -54,7 +54,17 @@ readonly [`Finding`](Finding.md)[]
 
 > `readonly` **describe**: `string`
 
-Defined in: [gauntlet/src/gate.ts:682](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L682)
+Defined in: [gauntlet/src/gate.ts:1183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1183)
+
+***
+
+### extension?
+
+> `readonly` `optional` **extension?**: [`ExtensionGateIdentity`](ExtensionGateIdentity.md)
+
+Defined in: [gauntlet/src/gate.ts:1181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1181)
+
+Required when `id` uses a non-LiteShip namespace; absent on built-in gates.
 
 ***
 
@@ -62,7 +72,7 @@ Defined in: [gauntlet/src/gate.ts:682](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **fixtures**: [`GateFixtures`](GateFixtures.md)
 
-Defined in: [gauntlet/src/gate.ts:688](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L688)
+Defined in: [gauntlet/src/gate.ts:1191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1191)
 
 ***
 
@@ -70,7 +80,7 @@ Defined in: [gauntlet/src/gate.ts:688](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/gate.ts:680](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L680)
+Defined in: [gauntlet/src/gate.ts:1179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1179)
 
 ***
 
@@ -78,14 +88,34 @@ Defined in: [gauntlet/src/gate.ts:680](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/gate.ts:681](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L681)
+Defined in: [gauntlet/src/gate.ts:1182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1182)
 
 ***
 
 ### requires
 
-> `readonly` **requires**: readonly (`"skipSites"` \| `"activeSurfaceFacts"`)[]
+> `readonly` **requires**: readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"featureEdges"` \| `"checkGovernance"`)[]
 
-Defined in: [gauntlet/src/gate.ts:685](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L685)
+Defined in: [gauntlet/src/gate.ts:1186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1186)
 
 The fact channels the decision consumes (≥1). Folded into the cache key.
+
+***
+
+### subjectCoverage?
+
+> `readonly` `optional` **subjectCoverage?**: (`facts`) => [`GateSubjectCoverage`](../type-aliases/GateSubjectCoverage.md)
+
+Defined in: [gauntlet/src/gate.ts:1190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1190)
+
+Data-only subject census derived from the same declared facts as `decide`.
+
+#### Parameters
+
+##### facts
+
+[`FactBundle`](FactBundle.md)
+
+#### Returns
+
+[`GateSubjectCoverage`](../type-aliases/GateSubjectCoverage.md)

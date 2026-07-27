@@ -1,5 +1,5 @@
 /**
- * `@czap/web` — DOM runtime for **LiteShip**: stitches **CZAP** projections
+ * `@liteship/web` — DOM runtime for **LiteShip**: stitches **LiteShip** projections
  * (CSS, streamed HTML, LLM chunks, workers) into a live browser document.
  *
  * It ships:
@@ -57,8 +57,8 @@ export { Morph } from './morph/diff.js';
 export { SemanticId } from './morph/semantic-id.js';
 export { Hints } from './morph/hints.js';
 export { MorphOpaque } from './morph/opaque.js';
-export { bindGraphForm } from './mutation/graph-form.js';
-export type { BindGraphFormOptions } from './mutation/graph-form.js';
+export { bindGraphForm } from './graph-form.js';
+export type { BindGraphFormOptions } from './graph-form.js';
 export { createHtmlFragment, escapeHtml, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';
 export { isFetchableRuntimeUrl, isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
 export type { RuntimeUrlResolution } from './security/runtime-url.js';
@@ -88,9 +88,9 @@ export {
   DPU_BASE_ATTR,
   DPU_RESULT_ATTR,
   DPU_DIGEST_ATTR,
-} from './dpu/watch-and-prepare.js';
+} from './watch-and-prepare.js';
 export type {
-  DpuRung,
+  DpuTier,
   DpuCapability,
   VerifiablePatchEnvelope,
   VerifiablePatchVerification,
@@ -98,11 +98,10 @@ export type {
   ApplyVerifiablePatchAdoptResult,
   DpuAdoptClient,
   WatchAndPrepareHandle,
-} from './dpu/watch-and-prepare.js';
+} from './watch-and-prepare.js';
 
 // Slot
 export { SlotRegistry } from './slot/registry.js';
-export type { SlotRegistryShape } from './slot/registry.js';
 export { SlotAddressing } from './slot/addressing.js';
 
 // Stream
@@ -127,28 +126,33 @@ export {
 export type { StreamRecoverySubstrate, ResolvedStreamRecoverySubstrate } from './stream/recovery-substrate.js';
 
 // Physical State
-import { capture } from './physical/capture.js';
+import { capture, createPhysicalStateTracker } from './physical/capture.js';
 import { restore } from './physical/restore.js';
 
 /**
  * Physical DOM-state helpers for save/restore across morphs and hot
- * reloads. Captures focus, selection, scroll, and IME composition so a
- * subsequent {@link Morph.morph} preserves them.
+ * reloads. Passive capture covers focus, selection, and scroll. Allocate
+ * {@link Physical.createTracker} when a host also needs IME composition state;
+ * the tracker owns and removes its document listeners.
  */
 export const Physical = {
-  /** Snapshot focus/selection/scroll state on the document. */
+  /** Snapshot passive focus/selection/scroll state on the document. */
   capture,
+  /** Install host-owned IME tracking. Await disposal to remove its document listeners. */
+  createTracker: createPhysicalStateTracker,
   /** Re-apply a snapshot produced by {@link Physical.capture}. */
   restore,
 } as const;
+export { createPhysicalStateTracker } from './physical/capture.js';
+export type { PhysicalStateTracker } from './physical/capture.js';
 
 // Capture
-export { WebCodecsCapture, renderToCanvas, captureVideo } from './capture/index.js';
+export { createWebCodecsCapture, renderToCanvas, captureVideo } from './capture/index.js';
 export type { WebCodecsCaptureOptions, RenderFn } from './capture/index.js';
 
 // LLM Adapter
 export { LLMAdapter } from './stream/llm-adapter.js';
-export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig, LLMAdapterShape } from './stream/llm-adapter.js';
+export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig } from './stream/llm-adapter.js';
 export { LLMChunkNormalization } from './stream/llm-chunks.js';
 export type { ToolCallAccumulator } from './stream/llm-chunks.js';
 
@@ -157,27 +161,27 @@ export { createAudioProcessor } from './audio/processor.js';
 export type { AudioProcessor } from './audio/processor.js';
 
 // Capsules
-export { streamReceiptCapsule } from './capsules/stream-receipt.js';
+export { streamReceiptCapsule } from './stream-receipt-capsule.js';
 
-// Wire contract (typed czap:* events + stream data-czap-* attributes)
+// Wire contract (typed liteship:* events + stream data-liteship-* attributes)
 export type {
-  CzapEventDetailMap,
-  CzapEventDisposer,
-  CzapEventName,
-  CzapMorphRejectedDetail,
-  CzapStreamErrorDetail,
-  CzapUniformUpdateDetail,
+  LiteshipEventDetailMap,
+  LiteshipEventDisposer,
+  LiteshipEventName,
+  LiteshipMorphRejectedDetail,
+  LiteshipStreamErrorDetail,
+  LiteshipUniformUpdateDetail,
   StreamWireAttrKey,
   StreamWireAttribute,
 } from './wire/index.js';
 export {
-  CZAP_EVENT_DOCS,
-  CZAP_EVENT_NAMES,
+  LITESHIP_EVENT_DOCS,
+  LITESHIP_EVENT_NAMES,
   STREAM_WIRE_ATTRIBUTE_DOCS,
   STREAM_WIRE_ATTRIBUTES,
   STREAM_WIRE_ATTR_KEYS,
-  dispatchCzapEvent,
-  onCzap,
+  dispatchLiteshipEvent,
+  onLiteship,
   renderWireContractDoc,
   streamWireAttr,
 } from './wire/index.js';

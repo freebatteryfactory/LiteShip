@@ -4,7 +4,7 @@
  * returns the unchanged input.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { arrow, bearingGlyph, color, colorEnabled, header, label } from '../../../../packages/cli/src/lib/ansi.js';
+import { arrow, bearingGlyph, color, colorEnabled, header, label } from '../../../../packages/cli/src/internal/ansi.js';
 
 const ESC = '\x1b';
 

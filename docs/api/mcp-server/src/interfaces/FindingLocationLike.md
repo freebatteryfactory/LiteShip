@@ -8,7 +8,7 @@
 
 Defined in: [mcp-server/src/lsp/types.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L34)
 
-Where a finding points — structurally identical to `@czap/gauntlet`'s `SourceLocation`.
+Where a finding points — structurally identical to `@liteship/gauntlet`'s `SourceLocation`.
 
 ## Properties
 

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractWavMetadata, WavMetadataProjection, defineAsset, AssetRegistry } from '@czap/assets';
+import { extractWavMetadata, WavMetadataProjection, defineAsset, AssetRegistry } from '@liteship/assets';
 
 const registry = AssetRegistry.make([
   defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' }),
@@ -124,10 +124,20 @@ describe('extractWavMetadata', () => {
     expect(meta).toEqual({});
   });
 
-  it('discards an IBPM that fails to parse as a finite positive number', () => {
+  it('refuses an IBPM that fails to parse as a finite positive number', () => {
     const buf = makeWav([['IBPM', 'not-a-number']]);
-    const meta = extractWavMetadata(buf);
-    expect(meta.bpm).toBeUndefined();
+    expect(() => extractWavMetadata(buf)).toThrow(/IBPM must be a finite number/);
+  });
+
+  it.each(['0', '-1', '401', 'Infinity'])('refuses out-of-range IBPM %s', (value) => {
+    expect(() => extractWavMetadata(makeWav([['IBPM', value]]))).toThrow(/IBPM must be a finite number/);
+  });
+
+  it('refuses a LIST/INFO subchunk whose declared text extends beyond the wrapper', () => {
+    const bytes = makeWav([['INAM', 'bounded']]);
+    // RIFF(12) + fmt(24) + LIST header(8) + INFO(4) + subchunk id(4).
+    new DataView(bytes).setUint32(52, 0xffff_ffff, true);
+    expect(() => extractWavMetadata(bytes)).toThrow(/metadata extends beyond its LIST\/INFO chunk/);
   });
 
   it('handles an odd-length tag value (RIFF 2-byte alignment)', () => {

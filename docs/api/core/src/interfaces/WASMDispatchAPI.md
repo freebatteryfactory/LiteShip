@@ -6,7 +6,7 @@
 
 # Interface: WASMDispatchAPI
 
-Defined in: [core/src/wasm-dispatch.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L208)
+Defined in: [core/src/wasm/wasm-dispatch.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts#L208)
 
 Public API of the [WASMDispatch](../variables/WASMDispatch.md) singleton: probe for WebAssembly,
 asynchronously load the Rust compute module, and hand back either WASM or
@@ -18,7 +18,7 @@ asynchronously load the Rust compute module, and hand back either WASM or
 
 > **detect**(): `boolean`
 
-Defined in: [core/src/wasm-dispatch.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L209)
+Defined in: [core/src/wasm/wasm-dispatch.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts#L209)
 
 #### Returns
 
@@ -30,7 +30,7 @@ Defined in: [core/src/wasm-dispatch.ts:209](https://github.com/freebatteryfactor
 
 > **isLoaded**(): `boolean`
 
-Defined in: [core/src/wasm-dispatch.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L212)
+Defined in: [core/src/wasm/wasm-dispatch.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts#L212)
 
 #### Returns
 
@@ -42,7 +42,7 @@ Defined in: [core/src/wasm-dispatch.ts:212](https://github.com/freebatteryfactor
 
 > **kernels**(): [`WASMKernels`](WASMKernels.md)
 
-Defined in: [core/src/wasm-dispatch.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L211)
+Defined in: [core/src/wasm/wasm-dispatch.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts#L211)
 
 #### Returns
 
@@ -54,7 +54,7 @@ Defined in: [core/src/wasm-dispatch.ts:211](https://github.com/freebatteryfactor
 
 > **load**(`wasmUrl`): `Promise`\<[`WASMKernels`](WASMKernels.md)\>
 
-Defined in: [core/src/wasm-dispatch.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L210)
+Defined in: [core/src/wasm/wasm-dispatch.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts#L210)
 
 #### Parameters
 
@@ -72,7 +72,7 @@ Defined in: [core/src/wasm-dispatch.ts:210](https://github.com/freebatteryfactor
 
 > **unload**(): `void`
 
-Defined in: [core/src/wasm-dispatch.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L213)
+Defined in: [core/src/wasm/wasm-dispatch.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts#L213)
 
 #### Returns
 

@@ -1,21 +1,21 @@
 /**
  * Host route adapter for the client→server graph-mutation channel.
  *
- * Wraps `@czap/core`'s transport-agnostic `handleGraphMutation` into a plain
+ * Wraps `@liteship/core`'s transport-agnostic `handleGraphMutation` into a plain
  * `(request: Request) => Promise<Response>` — the same shape as
- * {@link czapFetchLayer}'s `FetchLayerNext`, so it drops into EITHER an Astro API
+ * {@link liteshipFetchLayer}'s `FetchLayerNext`, so it drops into EITHER an Astro API
  * route:
  *
  * ```ts
  * // src/pages/api/graph.ts
  * import type { APIRoute } from 'astro';
- * import { graphMutationRoute } from '@czap/astro';
+ * import { graphMutationRoute } from '@liteship/astro';
  * import { store } from '../../server/graph-store';   // host-owned authority
  * export const prerender = false;
  * export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request);
  * ```
  *
- * ...OR a `czapFetchLayer` branch. `@czap/astro` injects NO routes on purpose
+ * ...OR a `liteshipFetchLayer` branch. `@liteship/astro` injects NO routes on purpose
  * (ADR-0030): the host owns the endpoint, the graph store, and thus the authority.
  * This adapter is pure transport glue over the already-validated AI-cast seam — no
  * new validation, no persistence, no model or network code (fullsend-in-scope).
@@ -23,8 +23,8 @@
  * @module
  */
 
-import { handleGraphMutation } from '@czap/core';
-import type { GraphMutationRequest, GraphMutationResponse, GraphStore } from '@czap/core';
+import { handleGraphMutation } from '@liteship/core';
+import type { GraphMutationRequest, GraphMutationResponse, GraphStore } from '@liteship/core';
 
 /** JSON `Response` with the channel's content type; status maps the outcome. */
 function jsonResponse(body: GraphMutationResponse, status: number): Response {

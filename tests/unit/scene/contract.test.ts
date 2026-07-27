@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { SceneContract, VideoTrack } from '@czap/scene';
-import { Track } from '@czap/scene';
+import type { SceneContract, VideoTrack } from '@liteship/scene';
+import { Track } from '@liteship/scene';
 
 describe('SceneContract', () => {
   it('accepts a minimal scene with one video track', () => {

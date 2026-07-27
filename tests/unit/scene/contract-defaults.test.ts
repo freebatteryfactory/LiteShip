@@ -12,8 +12,8 @@
  * so authors stop re-minting ids at every reference site.
  */
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene, syncTo } from '@czap/scene';
-import type { ResolvedSceneContract, SceneContract } from '@czap/scene';
+import { Track, compileScene, syncTo } from '@liteship/scene';
+import type { ResolvedSceneContract, SceneContract } from '@liteship/scene';
 
 describe('compileScene contract defaults', () => {
   it('compiles a minimal contract — name, fps, bpm, tracks only', () => {
@@ -72,7 +72,7 @@ describe('compileScene contract defaults', () => {
       tracks: [Track.audio('bed', { from: 0, to: 60, source: 'bed' })],
     });
     const spawn = compiled.trackSpawns.find((s) => s.trackId === 'bed');
-    expect(spawn?.components['Volume']).toBe(1);
+    expect(spawn?.components.find((seed) => seed.part === 'Volume')?.value).toBe(1);
   });
 });
 

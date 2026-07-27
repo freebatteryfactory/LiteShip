@@ -8,7 +8,9 @@
 
 > **listPackageManifests**(`root?`): readonly [`PackageManifestInfo`](../interfaces/PackageManifestInfo.md)[]
 
-Defined in: [audit/src/shared.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L98)
+Defined in: [audit/src/shared.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L109)
+
+Discover publishable and private package manifests in stable path order.
 
 ## Parameters
 

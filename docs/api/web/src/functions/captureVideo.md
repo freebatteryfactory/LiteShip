@@ -6,7 +6,7 @@
 
 # Function: captureVideo()
 
-> **captureVideo**(`renderer`, `capture`, `renderFn?`): `Promise`\<`CaptureResult`\>
+> **captureVideo**(`renderer`, `capture`, `renderFn?`): `Promise`\<[`CaptureResult`](../../../liteship/src/evidence/interfaces/CaptureResult.md)\>
 
 Defined in: [web/src/capture/pipeline.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/pipeline.ts#L58)
 
@@ -22,9 +22,9 @@ The VideoRenderer producing deterministic frames
 
 ### capture
 
-`FrameCapture`
+[`FrameCapture`](../../../liteship/src/evidence/interfaces/FrameCapture.md)
 
-The FrameCapture implementation (WebCodecs, Remotion, etc.)
+The owned FrameCapture consumed and disposed by this operation
 
 ### renderFn?
 
@@ -34,6 +34,6 @@ Optional custom render function for canvas rendering
 
 ## Returns
 
-`Promise`\<`CaptureResult`\>
+`Promise`\<[`CaptureResult`](../../../liteship/src/evidence/interfaces/CaptureResult.md)\>
 
 The finalized CaptureResult with the encoded video blob

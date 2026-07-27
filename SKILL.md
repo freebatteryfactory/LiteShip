@@ -31,10 +31,10 @@ whole product thesis; the other laws are how you keep it.
 ### 2. Complete, don't nerf
 
 When a doc, type, or intent claims more than the code delivers, the default cure is to
-**build the behavior up to the claim** — it is almost always a few LOC of plumbing or
-types — _not_ to water the claim down to the code. Nerfing only looks easier because
-human best-practice optimizes for cognitive load; an agent isn't paying that tax.
-Connecting the things is usually less code than the retreat. Reserve doc-softening for
+**build the behavior up to the claim** — it is often a few LOC of plumbing or types —
+_not_ to water the claim down to the code. Agents still pay for unnecessary ontology
+through context, tokens, latency, and review opacity, so semantic compression matters.
+Connecting the things is usually less debt than the retreat. Reserve doc-softening for
 claims that are genuinely wrong in intent, not merely ahead of the wiring. Fix the doc
 when the doc is behind _safer_ code; build the code when the doc states the real target.
 
@@ -43,16 +43,21 @@ when the doc is behind _safer_ code; build the code when the doc states the real
 Measure the blast radius before you touch anything. A guard that fences a real bug and
 defers the cure is laundering — never offer "defer" as the recommended path. Corollary:
 when a newly-tightened contract exposes a flake, it **surfaced a real one** — sweep the
-whole affected surface locally, don't loosen the contract.
+affected ownership surface with the smallest deterministic proofs, then let the
+conservative affected selector fail broad when its closure is uncertain. Don't loosen
+the contract.
 
-### 4. Identity is a sha256 content-address, never a weak hash
+### 4. Definition labels and integrity witnesses are different laws
 
-Anything security- or cache-key-bearing keys on the canonical digest. `fnv1a` is fine
-for internal maps and dirty-tracking; it is a silent-stale / cache-poisoning vector the
-moment it becomes a wire validator or a cache key over attacker-influenced input. A
-content-address self-invalidates on payload change — that is a feature for cache keys and
-a bug for _stable_ names (marker names, logical keys derive from a stable key, not a
-content-address). Digests that gate a 304 must exclude mutable `meta`, or the 304 lies.
+`ContentAddress` is LiteShip's existing non-adversarial definition label: FNV-1a over
+canonical CBOR, used for local equality, memoization, drift detection, and compact
+provenance. It is deterministic, not cryptographic. `IntegrityDigest` (or the paired
+`AddressedDigest`) is mandatory when bytes cross a trust boundary: external artifacts,
+attacker-influenced caches, wire validation, security decisions, and release evidence.
+FNV alone must never authorize or validate hostile input. A content-derived label
+self-invalidates on payload change — that is a feature for definition caches and a bug
+for _stable_ names (marker names and logical keys derive from a stable key). Digests
+that gate a 304 must exclude mutable `meta`, or the 304 lies.
 
 ### 5. Clock substrate law
 
@@ -165,20 +170,69 @@ recorder, and symbol-level orphan detection. The gap is field-level — see #132
 gate proves **wired, not correct**: semantic correctness stays with red-green + a
 differential oracle, never the compiler alone.
 
+Qualification also covers the gate's **subjects**, not only its planted fixtures. A
+`GateProof` must report a deterministic complete census (enumerator, count, and digest)
+or explicitly report that its subject coverage is opaque. A required gate with opaque
+coverage is an unwaivable authority-integrity failure: a detector that cannot enumerate
+what it governs has not earned the right to claim the release is complete. Feature-edge
+families derive producers and consumers from their canonical executable catalogs (typed
+ECS Parts/systems, command and MCP registries, protocol event owners), then the shared
+connectivity gate checks the projection. Do not substitute a hand-maintained list or a
+string scan for a source-owned catalog merely because the scan is easier to write.
+
 **Lean on the compiler first — the gate is the backstop, not the front line.** Push each
 completeness obligation as high as it will go before it becomes a gauntlet fact: make it
 _unrepresentable_ (a node family you can't add to the union without its interpreter case;
 a signal typed `discrete | continuous` so a continuous value cannot type-pass into a
 replay path — which makes the old-brain "widen the SSE replay payload" fix _uncompilable_),
-then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchCzapEvent(name,
+then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchLiteshipEvent(name,
 detail)` over a source-derived event union, so a fabricated event name like
-`czap:stream-reconnecting` is a compile error, not a shipped bug), and only then
+`liteship:stream-reconnecting` is a compile error, not a shipped bug), and only then
 _unmergeable_ (#132 reachability, for the cross-module cases types can't see). **Generate**
 docs and wire-contracts from the typed source so drift is impossible by construction —
 never a prose mirror to police. Keep the types load-bearing and readable: a type-level
 metaprogramming cathedral is its own ceremony. The proof-brain asks not "did a test pass"
 but "is every active modeled surface completed by a reader/projection" — **projection must
 complete.**
+
+### 17. One vertical proof packet, not a pile of patches
+
+A risk-bearing change travels as one owner-sized packet: behavioral law, planted red
+control, root implementation, focused unit/integration proof, property/model/differential
+generalization where the law permits it, adversarial proof where the failure mode needs
+it, observable diagnostic/receipt, and refactor-proof assertion over public behavior or
+canonical bytes. Proof class follows risk; ceremony does not earn authority.
+
+### 18. Evidence is execution-qualified
+
+A file named `fuzz`, `chaos`, `property`, `mutation`, or `benchmark` proves nothing by
+existing. Its receipt must show that the subject ran and that the class had semantic
+teeth: generated diversity and shrinking, injected faults and observed steady-state,
+created and killed mutants, independent differential provenance, or measured benchmark
+work. A skipped or unexecuted authority remains visible and non-green.
+
+### 19. Every escaped red becomes a replayable CurePacket
+
+Read the exact failure before editing. Preserve the seed/input, minimized reproducer,
+platform and toolchain, failing obligation, owner, diagnostic tail, and evidence paths.
+Fix the root, then retain the smallest deterministic replay in the cheap lane. Never
+blind-rerun, relabel, waive, or loosen a gate merely because the cloud found the defect.
+
+### 20. Affected selection is an optimization, never an authority downgrade
+
+The selector maps changed implementation and support evidence to executable owners.
+Support files are not test entrypoints; they reverse-close to the suites that import
+them. Unknown paths, stale calibration, selector misses, and changes to global authority
+fail broad. Persist the selected plan and result evidence so another process can verify
+what ran, what skipped, and why.
+
+### 21. Final authority belongs to one frozen head
+
+During implementation, run focused deterministic proofs and caged generation at owner
+boundaries. At freeze, push one coherent SHA, let affected CI finish, cure exact failures,
+then run one complete cloud authority. Standards snapshots move only after functional
+green and explicit owner review; the post-snapshot SHA receives the complete authority
+again. Historical green never certifies a newer head.
 
 ---
 
@@ -189,23 +243,29 @@ machine:
 
 - **`gauntlet:full` is CI-grade.** It is the full ~40-min truth suite (browser lanes,
   coverage merge, stress). Do **not** run it casually on a workstation — it has crashed
-  boxes. Local-safe verification = `build` · `typecheck` · `lint` ·
-  `check-invariants` · the vitest suite · individual gates run one at a time.
-- **TypeDoc is memory-hungry.** `docs:build` _and_ `docs:check` both regenerate TypeDoc.
-  Memory-cage them (`systemd-run --user --scope -p MemoryMax=8G` +
-  `NODE_OPTIONS=--max-old-space-size=…`), run them alone, and only after the rest of
-  verification is green.
+  boxes. Use `pnpm preflight --staged` plus the packet's focused tests. Run individual
+  dependency-boundary checks once; reserve the complete gauntlet for cloud/frozen-head
+  authority.
+- **Use the resource planner before heavyweight local work.** `pnpm resources:plan`
+  samples the host and current load. `pnpm preflight --staged` applies the admitted
+  native-TypeScript worker cap and skips TypeDoc when staged inputs cannot affect it.
+- **TypeDoc is memory-hungry.** Prefer `pnpm run docs:check:local`; it reuses a current
+  local proof and otherwise invokes the caged docs authority. Run docs alone at the
+  projection boundary. Set `LITESHIP_DOCS_USE_SWAP=1` only to admit the explicit
+  swap-backed profile—the proof is delayed or caged, never skipped.
 - **Never SIGKILL the vitest suite.** `capsule-verify` mutates real source with a
-  `finally`-restore; killing it mid-run strands the mutant in your tree. If it happens,
-  recover with `git checkout` on the affected package and rebuild — don't debug the
-  mutant as if it were your code.
-- **Docs/asset-only changes burn zero CI.** Every push to `main` and every PR triggers
-  the full `ci.yml`. For docs-only work the sanctioned path is the direct-push recipe:
-  disable `ci.yml` → add the repo-admin ruleset bypass → commit on `main` (the local
-  pre-commit quick-verify still runs, and is free) → push → confirm no run was created
-  for the new sha → **restore the bypass and re-enable `ci.yml` immediately**. Never
-  leave the repo ungated. Ask before opening a docs _PR_ — the PR-open run is
-  unrecoverable.
+  `finally`-restore; killing it mid-run can strand the mutant in your tree. If it
+  happens, stop and inspect the exact diff and capsule receipt. Do not run a broad
+  restore over user work; recover only the proven mutated path with maintainer approval.
+- **Docs/asset-only changes use the affected PR authority; they never bypass it.** The
+  affected planner should select the cheap documentation and projection checks needed
+  by the changed surface, while changes to global CI authority deliberately fail broad.
+  Never disable the workflow, add a ruleset bypass, or direct-push around evidence to
+  save compute. If the selected plan is unexpectedly broad, fix or calibrate the
+  planner with a negative control instead of skipping the run.
+- **Do not run a CI watcher/rerun loop.** Observe state changes, wait for the authority to
+  finish, then read the exact logs and artifacts once. Intermediate yellow is research,
+  not permission to start speculative edits.
 
 ---
 

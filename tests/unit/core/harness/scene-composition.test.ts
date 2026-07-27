@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
 
 /**
  * Lane-aware sceneComposition harness contract (LAWS, not implementation
@@ -19,14 +18,12 @@ import * as Harness from '@czap/core/harness';
  *    appears in either lane under any branch.
  */
 describe('generateSceneComposition (lane-aware)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   const sceneCap = (name: string, budgets: Record<string, unknown> = { p95Ms: 16 }) =>
     defineCapsule({
       _kind: 'sceneComposition',
       name,
-      input: S.unknown,
-      output: S.unknown,
+      input: schema.unknown,
+      output: schema.unknown,
       capabilities: { reads: [], writes: [] },
       invariants: [],
       budgets,
@@ -39,6 +36,7 @@ describe('generateSceneComposition (lane-aware)', () => {
     capsuleName: 'demo',
     capsuleImport: '../../examples/scenes/demo.js',
     runtimeImport: '../../packages/scene/src/runtime.js',
+    partsImport: '../../packages/scene/src/parts.js',
     contentAddressImport: '../../packages/core/src/content-address.js',
     hasAudio: true,
     hasVideo: true,
@@ -70,6 +68,12 @@ describe('generateSceneComposition (lane-aware)', () => {
     expect(testFile).toContain('SceneRuntime.build');
     expect(testFile).toContain('contentAddressOf');
     expect(testFile).toContain("from '" + driver.compileImport + "'");
+    expect(testFile).toContain("import { SceneRuntime } from '" + driver.runtimeImport + "'");
+    expect(testFile).toContain("} from '" + driver.partsImport + "';");
+    expect(testFile).toContain('handle.world.query(FrameRangePart)');
+    expect(testFile).toContain('handle.world.query(AudioSourcePart, FrameRangePart, PhasePart)');
+    expect(testFile).not.toMatch(/world\.query\(['"]/);
+    expect(testFile).not.toContain('.components.get(');
     // Unit lane carries no bench — that is the bench lane's job.
     expect(testFile).not.toContain('bench(');
   });
@@ -127,6 +131,40 @@ describe('generateSceneComposition (lane-aware)', () => {
     expect(benchFile).toContain('expect(cap.tracks).toBeUndefined()');
     expect(benchFile).toContain('expect(cap.fps).toBeUndefined()');
     expect(benchFile).not.toContain(".toBe('string')");
+  });
+
+  it('pre-runtime transform: reuses the real property and benchmark harness', () => {
+    const transform = defineCapsule({
+      _kind: 'sceneComposition',
+      name: 'demo.transform',
+      input: schema.struct({ value: schema.number }),
+      output: schema.struct({ doubled: schema.number }),
+      capabilities: { reads: [], writes: [] },
+      invariants: [
+        {
+          name: 'doubles-input',
+          check: (input, output) => output.doubled === input.value * 2,
+          message: 'output must be the doubled input',
+        },
+      ],
+      budgets: { p95Ms: 1, allocClass: 'bounded' },
+      site: ['node'],
+      run: ({ value }) => ({ doubled: value * 2 }),
+    });
+
+    const { testFile, benchFile } = Harness.generateSceneComposition(transform, {
+      bindingImport: '../../packages/scene/src/demo-transform.js',
+      bindingName: 'demoTransform',
+      arbitraryDerivable: true,
+      handlersPresent: true,
+    });
+
+    expect(testFile).toContain('schemaToArbitrary');
+    expect(testFile).toContain('const run = cap.run!');
+    expect(testFile).toContain('invariant: ${inv.name}');
+    expect(testFile).not.toContain('not-applicable');
+    expect(benchFile).toContain('REAL bench');
+    expect(benchFile).toContain('cap.run!');
   });
 
   it('exposes the lane model: SCENE_CHECKS tags each check with its lane', () => {

@@ -10,8 +10,8 @@ import {
   stampVerifiablePatch,
   verifyVerifiablePatch,
   DPU_MARKER_ATTR,
-} from '../../../packages/web/src/dpu/watch-and-prepare.js';
-import type { ContentAddress, DocumentGraph } from '@czap/core';
+} from '../../../packages/web/src/watch-and-prepare.js';
+import type { ContentAddress, DocumentGraph } from '@liteship/core';
 
 function graphWithId(id: string): DocumentGraph {
   return {
@@ -46,7 +46,7 @@ describe('applyVerifiablePatchAndAdopt (#120)', () => {
 
     const outcome = applyVerifiablePatchAndAdopt(target, envelope, base.id, { adopt: (g) => adopted.push(g) }, result, {
       available: false,
-      rung: 'floor-morph',
+      tier: 'floor-morph',
     });
 
     expect(outcome._tag).toBe('applied');
@@ -81,7 +81,7 @@ describe('applyVerifiablePatchAndAdopt (#120)', () => {
 
     const outcome = applyVerifiablePatchAndAdopt(target, envelope, base.id, { adopt: (g) => adopted.push(g) }, wrong, {
       available: false,
-      rung: 'floor-morph',
+      tier: 'floor-morph',
     });
 
     expect(outcome._tag).toBe('refused');

@@ -12,11 +12,12 @@
  */
 
 import { describe, test, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
-import { Physical } from '@czap/web';
-import type { PhysicalState, FocusState, ScrollPosition, SelectionState, IMEState } from '@czap/web';
+import { Physical } from '@liteship/web';
+import type { PhysicalState, FocusState, ScrollPosition, SelectionState, IMEState } from '@liteship/web';
+import { Morph } from '../../../packages/web/src/morph/diff.js';
 import {
-  captureIME,
   captureSelection,
+  createPhysicalStateTracker,
   elementToPath,
   findScrollable,
 } from '../../../packages/web/src/physical/capture.js';
@@ -43,6 +44,101 @@ describe('Physical namespace', () => {
   test('exports restore function', () => {
     expect(typeof Physical.restore).toBe('function');
   });
+
+  test('exports the explicit host-owned tracker factory', () => {
+    expect(typeof Physical.createTracker).toBe('function');
+  });
+
+  test('imports passively and installs no ambient document listeners', async () => {
+    const addListener = vi.spyOn(document, 'addEventListener');
+    vi.resetModules();
+
+    await import('../../../packages/web/src/physical/capture.js');
+
+    expect(addListener).not.toHaveBeenCalled();
+    addListener.mockRestore();
+  });
+
+  test('an explicit tracker owns and removes all IME listeners exactly once', async () => {
+    const addListener = vi.spyOn(document, 'addEventListener');
+    const removeListener = vi.spyOn(document, 'removeEventListener');
+    const tracker = createPhysicalStateTracker(document);
+    const input = document.createElement('input');
+    input.id = 'owned-ime';
+    document.body.appendChild(input);
+
+    expect(addListener.mock.calls.map(([name]) => name)).toEqual([
+      'compositionstart',
+      'compositionupdate',
+      'compositionend',
+    ]);
+
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'owned' }));
+    expect(tracker.captureIME()?.text).toBe('owned');
+
+    const firstDisposal = tracker.dispose();
+    const secondDisposal = tracker.dispose();
+    expect(secondDisposal).toBe(firstDisposal);
+    await firstDisposal;
+
+    expect(removeListener.mock.calls.map(([name]) => name).sort()).toEqual([
+      'compositionend',
+      'compositionstart',
+      'compositionupdate',
+    ]);
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    expect(tracker.captureIME()).toBeNull();
+
+    input.remove();
+    addListener.mockRestore();
+    removeListener.mockRestore();
+  });
+
+  test('Morph consumes the host-owned tracker instead of consulting ambient state', async () => {
+    const tracker = createPhysicalStateTracker(document);
+    const root = document.createElement('div');
+    root.innerHTML = '<input id="morph-ime" value="abcdef">';
+    document.body.appendChild(root);
+    const input = root.querySelector('input')!;
+    input.focus();
+    input.setSelectionRange(1, 4);
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'kana' }));
+    const captureSpy = vi.spyOn(tracker, 'capture');
+
+    Morph.morphWithState(
+      root,
+      '<input id="morph-ime" value="updated">',
+      { preserveFocus: true, preserveScroll: true, preserveSelection: true },
+      undefined,
+      tracker,
+    );
+
+    expect(captureSpy).toHaveBeenCalledWith(root);
+    expect(tracker.captureIME()?.text).toBe('kana');
+    await tracker.dispose();
+    root.remove();
+  });
+
+  test('disposal aggregates listener-removal failures without skipping siblings', async () => {
+    const removed: string[] = [];
+    const ownerDocument = {
+      defaultView: window,
+      addEventListener() {},
+      removeEventListener(name: string) {
+        removed.push(name);
+        if (name !== 'compositionupdate') throw new Error(`remove ${name}`);
+      },
+    } as unknown as Document;
+    const tracker = createPhysicalStateTracker(ownerDocument);
+
+    await expect(tracker.dispose()).rejects.toMatchObject({
+      _tag: 'LifetimeDisposeError',
+      causes: [expect.any(Error), expect.any(Error)],
+    });
+    expect(removed.sort()).toEqual(['compositionend', 'compositionstart', 'compositionupdate']);
+  });
 });
 
 // ===========================================================================
@@ -52,7 +148,7 @@ describe('Physical namespace', () => {
 describe('PhysicalState shape', () => {
   test('a well-formed PhysicalState satisfies the type contract', () => {
     const state: PhysicalState = {
-      activeElementPath: '[data-czap-id="input-name"]',
+      activeElementPath: '[data-liteship-id="input-name"]',
       focusState: {
         elementId: 'input-name',
         cursorPosition: 5,
@@ -61,26 +157,26 @@ describe('PhysicalState shape', () => {
         selectionDirection: 'forward',
       },
       scrollPositions: {
-        '[data-czap-id="list"]': { top: 120, left: 0 },
+        '[data-liteship-id="list"]': { top: 120, left: 0 },
       },
       selection: {
-        elementPath: '[data-czap-id="editor"]',
+        elementPath: '[data-liteship-id="editor"]',
         start: 10,
         end: 25,
         direction: 'forward',
       },
       ime: {
-        elementPath: '[data-czap-id="input-name"]',
+        elementPath: '[data-liteship-id="input-name"]',
         text: 'composing',
         start: 5,
         end: 5,
       },
     };
 
-    expect(state.activeElementPath).toBe('[data-czap-id="input-name"]');
+    expect(state.activeElementPath).toBe('[data-liteship-id="input-name"]');
     expect(state.focusState?.elementId).toBe('input-name');
     expect(state.focusState?.cursorPosition).toBe(5);
-    expect(state.scrollPositions['[data-czap-id="list"]']?.top).toBe(120);
+    expect(state.scrollPositions['[data-liteship-id="list"]']?.top).toBe(120);
     expect(state.selection?.start).toBe(10);
     expect(state.ime?.text).toBe('composing');
   });
@@ -146,7 +242,7 @@ describe('SelectionState shape', () => {
 describe('IMEState shape', () => {
   test('records composition text and range', () => {
     const ime: IMEState = {
-      elementPath: '[data-czap-id="input"]',
+      elementPath: '[data-liteship-id="input"]',
       text: '\u304b\u306a',
       start: 0,
       end: 2,
@@ -241,9 +337,9 @@ describe('Physical.capture() behavioral', () => {
     expect(state.focusState!.selectionEnd).toBe(8);
   });
 
-  test('captures activeElementPath using data-czap-id when present', () => {
+  test('captures activeElementPath using data-liteship-id when present', () => {
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'semantic-input');
+    input.setAttribute('data-liteship-id', 'semantic-input');
     input.type = 'text';
     container.appendChild(input);
 
@@ -251,7 +347,7 @@ describe('Physical.capture() behavioral', () => {
 
     const state = Physical.capture(container);
 
-    expect(state.activeElementPath).toContain('data-czap-id="semantic-input"');
+    expect(state.activeElementPath).toContain('data-liteship-id="semantic-input"');
   });
 
   test('captures forward selection direction when anchor and focus share the same node', () => {
@@ -332,11 +428,12 @@ describe('Physical.capture() behavioral', () => {
     expect(state.focusState!.cursorPosition).toBe(0);
   });
 
-  test('captures IME state with null selection fallbacks and ignores non-text composition targets', () => {
+  test('captures IME state with null selection fallbacks and ignores non-text composition targets', async () => {
+    const tracker = createPhysicalStateTracker(document);
     const ignoredTarget = document.createElement('div');
     container.appendChild(ignoredTarget);
     ignoredTarget.dispatchEvent(new Event('compositionstart', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -360,7 +457,7 @@ describe('Physical.capture() behavioral', () => {
     });
     input.dispatchEvent(emptyUpdate);
 
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#test-root > input:nth-child(2)',
       text: '',
       start: 0,
@@ -374,7 +471,7 @@ describe('Physical.capture() behavioral', () => {
     });
     input.dispatchEvent(textUpdate);
 
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#test-root > input:nth-child(2)',
       text: 'kana',
       start: 0,
@@ -382,7 +479,8 @@ describe('Physical.capture() behavioral', () => {
     });
 
     input.dispatchEvent(new Event('compositionend', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
+    await tracker.dispose();
   });
 
   test('captures focus state fallback values when input selections are unavailable', () => {
@@ -436,7 +534,7 @@ describe('Physical.capture() behavioral', () => {
 
   test('capture records scroll positions keyed by semantic id and elementPath fallback', () => {
     const withSemanticId = document.createElement('div');
-    withSemanticId.setAttribute('data-czap-id', 'scroll-semantic');
+    withSemanticId.setAttribute('data-liteship-id', 'scroll-semantic');
     withSemanticId.style.overflowY = 'auto';
     Object.defineProperty(withSemanticId, 'clientWidth', { configurable: true, value: 20 });
     Object.defineProperty(withSemanticId, 'clientHeight', { configurable: true, value: 20 });
@@ -569,21 +667,21 @@ describe('Physical.restore() behavioral', () => {
 
   test('restore remaps semantic ids for scroll, focus, and ime state', () => {
     const scrollable = document.createElement('div');
-    scrollable.setAttribute('data-czap-id', 'scroll-new');
+    scrollable.setAttribute('data-liteship-id', 'scroll-new');
     scrollable.style.overflow = 'auto';
     scrollable.style.height = '20px';
     scrollable.style.width = '20px';
     scrollable.innerHTML = '<div style="height: 200px; width: 200px;"></div>';
 
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'input-new');
+    input.setAttribute('data-liteship-id', 'input-new');
     input.type = 'text';
     input.value = 'hello world';
 
     container.append(scrollable, input);
 
     const state: PhysicalState = {
-      activeElementPath: '[data-czap-id="input-old"]',
+      activeElementPath: '[data-liteship-id="input-old"]',
       focusState: {
         elementId: 'input-old',
         cursorPosition: 2,
@@ -592,11 +690,11 @@ describe('Physical.restore() behavioral', () => {
         selectionDirection: 'forward',
       },
       scrollPositions: {
-        '[data-czap-id="scroll-old"]': { top: 25, left: 8 },
+        '[data-liteship-id="scroll-old"]': { top: 25, left: 8 },
       },
       selection: null,
       ime: {
-        elementPath: '[data-czap-id="input-old"]',
+        elementPath: '[data-liteship-id="input-old"]',
         text: 'ello',
         start: 1,
         end: 4,
@@ -772,9 +870,9 @@ describe('Physical.restore() behavioral', () => {
     expect(() => Physical.restore(state, container)).not.toThrow();
   });
 
-  test('restores focus using data-czap-id semantic path', () => {
+  test('restores focus using data-liteship-id semantic path', () => {
     const input = document.createElement('input');
-    input.setAttribute('data-czap-id', 'semantic-field');
+    input.setAttribute('data-liteship-id', 'semantic-field');
     input.type = 'text';
     input.value = 'semantic';
     container.appendChild(input);
@@ -786,7 +884,7 @@ describe('Physical.restore() behavioral', () => {
     // Rebuild DOM with same semantic ID
     container.innerHTML = '';
     const newInput = document.createElement('input');
-    newInput.setAttribute('data-czap-id', 'semantic-field');
+    newInput.setAttribute('data-liteship-id', 'semantic-field');
     newInput.type = 'text';
     newInput.value = 'semantic';
     container.appendChild(newInput);

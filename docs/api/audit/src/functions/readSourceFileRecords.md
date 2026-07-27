@@ -8,7 +8,9 @@
 
 > **readSourceFileRecords**(`root?`): readonly [`SourceFileRecord`](../interfaces/SourceFileRecord.md)[]
 
-Defined in: [audit/src/shared.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L156)
+Defined in: [audit/src/shared.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L169)
+
+Materialize normalized source records for all discovered audit files.
 
 ## Parameters
 

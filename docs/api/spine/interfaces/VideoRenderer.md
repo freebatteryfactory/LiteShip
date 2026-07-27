@@ -1,0 +1,55 @@
+[**LiteShip**](../../README.md)
+
+***
+
+[LiteShip](../../modules.md) / [\_spine](../README.md) / VideoRenderer
+
+# Interface: VideoRenderer
+
+Defined in: [\_spine/core.d.ts:1586](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1586)
+
+Canonical frame scheduler over a compositor and video configuration.
+
+## Properties
+
+### config
+
+> `readonly` **config**: [`VideoConfig`](VideoConfig.md)
+
+Defined in: [\_spine/core.d.ts:1587](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1587)
+
+***
+
+### schedule
+
+> `readonly` **schedule**: [`FrameSchedule`](FrameSchedule.md)
+
+Defined in: [\_spine/core.d.ts:1588](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1588)
+
+***
+
+### scheduler
+
+> `readonly` **scheduler**: [`FixedStep`](../namespaces/Scheduler/interfaces/FixedStep.md)
+
+Defined in: [\_spine/core.d.ts:1590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1590)
+
+***
+
+### totalFrames
+
+> `readonly` **totalFrames**: `number`
+
+Defined in: [\_spine/core.d.ts:1589](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1589)
+
+## Methods
+
+### frames()
+
+> **frames**(): `AsyncGenerator`\<[`VideoFrameOutput`](VideoFrameOutput.md)\>
+
+Defined in: [\_spine/core.d.ts:1591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1591)
+
+#### Returns
+
+`AsyncGenerator`\<[`VideoFrameOutput`](VideoFrameOutput.md)\>

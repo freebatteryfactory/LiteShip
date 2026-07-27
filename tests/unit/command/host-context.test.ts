@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createNodeCommandContext, startSpawnHandle } from '@czap/command/host';
-import { detectSkipsAST } from '@czap/audit';
+import { createNodeCommandContext, startSpawnHandle } from '@liteship/command/host';
+import { detectSkipsAST } from '@liteship/audit';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
-/** Minimal mono 16-bit PCM WAV for @czap/assets decoders. */
+/** Minimal mono 16-bit PCM WAV for @liteship/assets decoders. */
 function minimalWav(sampleCount: number): ArrayBuffer {
   const data = new Uint8Array(sampleCount * 2);
   for (let i = 0; i < sampleCount; i++) {
@@ -55,7 +55,7 @@ describe('createNodeCommandContext', () => {
   let workDir: string;
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'czap-host-ctx-'));
+    workDir = mkdtempSync(join(tmpdir(), 'liteship-host-ctx-'));
   });
 
   afterEach(() => {
@@ -95,7 +95,7 @@ describe('createNodeCommandContext', () => {
     const ctx = createNodeCommandContext({ cwd: workDir });
     const ok = await ctx.spawnCapture?.('node', ['-e', 'process.stdout.write("ok")']);
     expect(ok).toEqual({ exitCode: 0, stdout: 'ok' });
-    const bad = await ctx.spawnCapture?.('czap-nonexistent-binary-xyz', ['--nope']);
+    const bad = await ctx.spawnCapture?.('liteship-nonexistent-binary-xyz', ['--nope']);
     expect(bad).toEqual({ exitCode: 1, stdout: '' });
   });
 
@@ -152,41 +152,60 @@ describe('createNodeCommandContext', () => {
     expect(waveform).toBe(512);
   });
 
-  it('runAudioProjection resolves every assetId to the audio built-in (empty host registry)', async () => {
-    // The host context assembles a FIXED, EMPTY AssetRegistry — no scene's
-    // asset module is imported in the host process, and `defineAsset` is pure
-    // (no module-global registration), so there is no seam through which a
-    // custom decoder could ever reach the host. `resolveDecoder` therefore
-    // returns the audio built-in for EVERY id. Empty bytes carry no RIFF
-    // header, so the built-in rejects regardless of the assetId supplied.
+  it('runAudioProjection is explicitly the raw-WAV built-in, not an asset-id decoder registry', async () => {
     const ctx = createNodeCommandContext({ cwd: workDir });
-    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'any-asset-id')).rejects.toThrow();
-    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'never-registered-id')).rejects.toThrow();
-    // A real WAV decodes through the same built-in path — proving the empty
-    // registry routes to a working decoder, not a broken one.
-    const waveform = await ctx.runAudioProjection?.(minimalWav(512), 'waveform', 'any-asset-id');
+    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform')).rejects.toThrow();
+    const waveform = await ctx.runAudioProjection?.(minimalWav(512), 'waveform');
     expect(waveform).toBe(512);
   });
 
-  it('loadSceneModule and runSceneCompile invoke the compile fn regardless of return type', async () => {
-    // Wave 8: the legacy Effect-returning compile path is retired — compile fns are
-    // sync and return a CompiledScene descriptor (or a bare value). runSceneCompile
-    // invokes the fn for its side effect and returns void either way.
+  it('loadSceneModule and runSceneCompile admit only a structural compiled descriptor', async () => {
     const plainPath = join(workDir, 'plain.mjs');
     writeFileSync(plainPath, 'export function compile() { return 1; }\n');
     const descriptorPath = join(workDir, 'descriptor.mjs');
-    writeFileSync(descriptorPath, 'export function compile() { return { _kind: "compiledScene", frames: 42 }; }\n');
+    writeFileSync(
+      descriptorPath,
+      'export function compileScene() { return { duration: 1400, fps: 24, trackSpawns: [{}, {}] }; }\n',
+    );
     const ctx = createNodeCommandContext({ cwd: workDir });
     const plainMod = await ctx.loadSceneModule?.(plainPath);
     expect(plainMod).toBeTruthy();
-    await expect(ctx.runSceneCompile?.(plainMod!)).resolves.toBeUndefined();
+    await expect(ctx.runSceneCompile?.(plainMod!)).rejects.toThrow(/instead of a CompiledScene descriptor/);
     const descriptorMod = await ctx.loadSceneModule?.(descriptorPath);
-    await expect(ctx.runSceneCompile?.(descriptorMod!)).resolves.toBeUndefined();
+    await expect(ctx.runSceneCompile?.(descriptorMod!)).resolves.toEqual({
+      durationMs: 1400,
+      fps: 24,
+      trackCount: 2,
+    });
   });
 
-  it('runSceneCompile is a no-op when the module exports no callable', async () => {
+  it('loadSceneModule preserves missing and malformed import failures for command diagnostics', async () => {
+    const malformedPath = join(workDir, 'malformed.mjs');
+    writeFileSync(malformedPath, 'export const = ;\n');
     const ctx = createNodeCommandContext({ cwd: workDir });
-    await expect(ctx.runSceneCompile?.({ marker: 1 })).resolves.toBeUndefined();
+    await expect(ctx.loadSceneModule?.('missing.mjs')).rejects.toMatchObject({
+      _tag: 'IoError',
+      operation: 'scene-module-import',
+      path: 'missing.mjs',
+    });
+    await expect(ctx.loadSceneModule?.('malformed.mjs')).rejects.toMatchObject({
+      _tag: 'IoError',
+      operation: 'scene-module-import',
+      path: 'malformed.mjs',
+    });
+  });
+
+  it('runSceneCompile refuses a module with no explicit compile function', async () => {
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    await expect(ctx.runSceneCompile?.({ marker: 1 })).rejects.toThrow(/exports no compile function/);
+  });
+
+  it('runSceneCompile refuses ambiguous modules instead of choosing by export order', async () => {
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    const descriptor = () => ({ duration: 1, fps: 1, trackSpawns: [] });
+    await expect(ctx.runSceneCompile?.({ compileAlpha: descriptor, compileBeta: descriptor })).rejects.toThrow(
+      /exports multiple compile functions \(compileAlpha, compileBeta\); export exactly one/,
+    );
   });
 
   it(
@@ -218,7 +237,7 @@ describe('createNodeCommandContext', () => {
   });
 
   // codex round-7 #3: the injected `skipDetector` reaches the in-process gauntlet surfaces. The CLI
-  // adapter passes `detectSkipsAST` (it deps `@czap/audit`); MCP omits it → the token fallback. We
+  // adapter passes `detectSkipsAST` (it deps `@liteship/audit`); MCP omits it → the token fallback. We
   // prove the injection CHANGES BEHAVIOUR with an ASI-alias skip (`const t = it⏎t.skip`) — a form the
   // token detector MISSES but the AST catches — in `tests/generated/`, the plumb gate's subtree.
   it('runPlumb uses the injected AST skipDetector (catches an alias the token detector misses)', () => {
@@ -267,7 +286,7 @@ describe('createNodeCommandContext capability overrides', () => {
     const ctx = createNodeCommandContext({
       overrides: {
         // A capability the shared factory does NOT provision — only a CLI adapter
-        // (which deps the heavy @czap/audit engine) injects it.
+        // (which deps the heavy @liteship/audit engine) injects it.
         runAuditFloor: async () => floorSummary,
         // Override a provisioned default; the adapter value must win.
         manifestSource: () => 'OVERRIDDEN',

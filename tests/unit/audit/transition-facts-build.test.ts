@@ -11,8 +11,8 @@
  */
 // PROVES: INV-TRANSITION-FACTS-DETERMINISTIC
 import { describe, it, expect } from 'vitest';
-import { buildTransitionFacts, type TransitionRun, type OracleOutcome } from '@czap/audit';
-import { transitionConformanceGate, memoryContext, type GateContext } from '@czap/gauntlet';
+import { buildTransitionFacts, type TransitionRun, type OracleOutcome } from '@liteship/audit';
+import { transitionConformanceGate, memoryContext, type GateContext } from '@liteship/gauntlet';
 
 /** An observed oracle outcome carrying a normalized observation (the builder addresses it, SHA-256). */
 const observed = (observation: unknown): OracleOutcome => ({ kind: 'observed', observation });

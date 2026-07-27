@@ -13,8 +13,8 @@
  *
  * @module
  */
-import { UnsupportedError } from '@czap/error';
-import type { CapsuleDef } from '../assembly.js';
+import { UnsupportedError } from '@liteship/error';
+import type { CapsuleDef } from '../authoring/assembly.js';
 
 /** Emitted file contents for a capsule harness (test + bench pair). */
 export interface HarnessOutput {
@@ -45,7 +45,7 @@ export interface HarnessContext {
   readonly arbitraryImport?: string;
   /**
    * Import specifier (with `.js` extension) for the canonical
-   * `contentAddressOf` primitive from `@czap/core`'s content-address kernel.
+   * `contentAddressOf` primitive from `@liteship/core`'s content-address kernel.
    * The `cachedProjection` harness uses it as the cache KEY function for the
    * content-addressed `cache-hit` / invalidation probes — never a hand-rolled
    * hash. Defaults to the repo-relative source path when the driver omits it.
@@ -162,6 +162,7 @@ export interface HarnessContext {
     readonly capsuleName: string;
     readonly capsuleImport: string;
     readonly runtimeImport: string;
+    readonly partsImport: string;
     readonly contentAddressImport: string;
     readonly hasAudio: boolean;
     readonly hasVideo: boolean;
@@ -223,7 +224,7 @@ export interface HarnessContext {
      * Which of the adapter's schemas the round-trip samples (`'input'` when its
      * input schema is arbitrary-derivable and concrete, else `'output'`). The
      * round trip proves CanonicalCbor encode/decode preserves that schema's
-     * structure via the canonical {@link contentAddressOf}.
+     * structure via the canonical `contentAddressOf`.
      */
     readonly roundTripSchema: 'input' | 'output';
     /**

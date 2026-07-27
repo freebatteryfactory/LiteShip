@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 import { captureCli } from './capture.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
 
-describe('czap asset analyze', () => {
+describe('liteship asset analyze', () => {
   // capsule:compile is type-directed and can run ~5s cold. Hoist it once for the
   // whole file: every test below needs the intro-bed capsule in the manifest.
   // Manifest-only + temp manifest (CUT T1) so this never writes — or races —
   // the shared reports/capsule-manifest.json or tests/generated/ dir.
   let iso: IsolatedCapsules;
   beforeAll(async () => {
-    iso = await compileManifestOnly('czap-asset-analyze');
+    iso = await compileManifestOnly('liteship-asset-analyze');
   }, scaledTimeout(120_000));
   afterAll(() => iso?.restore());
 

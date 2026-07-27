@@ -1,28 +1,34 @@
 /**
  * OnsetProjection — cachedProjection that detects note-attack onsets
- * in a decoded audio asset via spectral-flux peaks on the energy
- * envelope. Reference implementation.
+ * in a decoded audio asset via positive energy-envelope flux peaks.
+ * Reference implementation; this is deliberately not a spectral transform.
  *
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { CapsuleDef } from '@czap/core';
-import type { AssetRegistry } from '../contract.js';
+import { defineCapsule, schema } from '@liteship/core';
+import type { CapsuleDef } from '@liteship/core';
+import { AssetBytes, type AssetRegistry } from '../contract.js';
+import { analysisFrames } from './audio-input.js';
 
 /** Detect note-attack onsets as an ordered array of sample indices. */
-export function detectOnsets(audio: { sampleRate: number; samples: Float32Array | Int16Array }): readonly number[] {
+export function detectOnsets(audio: {
+  sampleRate: number;
+  channels?: number;
+  samples: Float32Array | Int16Array;
+}): readonly number[] {
+  const samples = analysisFrames(audio, 'detectOnsets');
   const frameSize = 1024;
   const hop = 256;
   // Clamp to zero for clips shorter than one frame.
-  const envLen = Math.max(0, Math.floor((audio.samples.length - frameSize) / hop));
+  const envLen = samples.length < frameSize ? 0 : Math.floor((samples.length - frameSize) / hop) + 1;
   if (envLen === 0) return [];
   const envelope = new Float32Array(envLen);
   for (let i = 0; i < envLen; i++) {
     let sum = 0;
     const off = i * hop;
     for (let j = 0; j < frameSize; j++) {
-      const v = typeof audio.samples[off + j] === 'number' ? Number(audio.samples[off + j]) : 0;
+      const v = Number(samples[off + j]);
       sum += v * v;
     }
     envelope[i] = Math.sqrt(sum / frameSize);
@@ -35,6 +41,7 @@ export function detectOnsets(audio: { sampleRate: number; samples: Float32Array 
 
   let maxFlux = 0;
   for (let i = 0; i < envLen; i++) if (flux[i]! > maxFlux) maxFlux = flux[i]!;
+  if (maxFlux <= 0) return [];
   const threshold = maxFlux * 0.3;
 
   const onsets: number[] = [];
@@ -56,13 +63,15 @@ export function detectOnsets(audio: { sampleRate: number; samples: Float32Array 
 export function OnsetProjection(
   registry: AssetRegistry,
   audioAssetId: string,
-): CapsuleDef<'cachedProjection', unknown, readonly number[], unknown> {
+): CapsuleDef<'cachedProjection', ArrayBuffer, readonly number[], unknown> {
   registry.assertAudioRegistered(audioAssetId, 'OnsetProjection');
+  const decode = registry.resolveAudioDecoder(audioAssetId);
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:onsets`,
-    input: S.unknown,
-    output: S.array(S.number),
+    input: AssetBytes,
+    output: schema.array(schema.number),
+    derive: async (bytes: ArrayBuffer): Promise<readonly number[]> => detectOnsets(await decode(bytes)),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {

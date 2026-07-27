@@ -1,11 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],

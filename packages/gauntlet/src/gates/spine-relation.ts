@@ -43,7 +43,11 @@ import { defineGate, requireSpineRelation, type GateContext, type Gate } from '.
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { factAccessEvidenceDigest } from '../verdict-cache.js';
-import { relationSatisfied, type SpineRelationFacts, type SpineRelationObservation } from '../spine-relation-facts.js';
+import {
+  relationSatisfied,
+  type SpineRelationFacts,
+  type SpineRelationObservation,
+} from '../facts/spine-relation-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/spine-relation';

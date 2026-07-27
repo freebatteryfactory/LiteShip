@@ -1,7 +1,7 @@
 /**
  * SVG egress — the **reader** that closes the `_svgAttrs` dual-write.
  *
- * {@link SVGSystem} (the 7th, last-registered ECS system) composes a typed
+ * {@link SVGSystem} (the 8th, last-registered ECS system) composes a typed
  * `_svgAttrs` struct per video entity each tick and persists it via
  * `world.setComponent`. That value is dead until something OUTSIDE
  * `scene/systems` consumes it. This module is that consumer: a render sink
@@ -22,8 +22,8 @@
  * @module
  */
 
-import type { World } from '@czap/core';
-import type { SvgAttrs } from './svg.js';
+import type { World } from '@liteship/core/ecs';
+import { SvgAttrsPart, VideoSourcePart, type SvgAttrs } from '../parts.js';
 
 /**
  * The serialized SVG egress frame: a snapshot mapping each video entity's
@@ -45,12 +45,11 @@ export type SvgAttrsFrame = ReadonlyMap<string, SvgAttrs>;
  * the result is keyed identically to the entities SVGSystem walked and only
  * contains entities the system has actually composed attrs for.
  */
-export function collectSvgAttrs(world: World.Shape): SvgAttrsFrame {
+export function collectSvgAttrs(world: World): SvgAttrsFrame {
   const frame = new Map<string, SvgAttrs>();
-  const entities = world.query('VideoSource', '_svgAttrs');
+  const entities = world.query(VideoSourcePart, SvgAttrsPart);
   for (const e of entities) {
-    const attrs = e.components.get('_svgAttrs') as SvgAttrs | undefined;
-    if (attrs !== undefined) frame.set(e.id, attrs);
+    frame.set(e.id, e.get(SvgAttrsPart));
   }
   return frame;
 }

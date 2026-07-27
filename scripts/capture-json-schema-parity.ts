@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * capture-json-schema-parity — freeze the byte-parity cage over the CURRENT
- * Effect-AST JSON-Schema deriver (packages/core/src/json-schema-from-schema.ts)
+ * Effect-AST JSON-Schema deriver (packages/core/src/schema/to-json-schema.ts)
  * BEFORE any schema producer changes.
  *
  * WHAT IS CAGED: every command descriptor slot whose JSON-Schema is derived via
@@ -21,9 +21,9 @@
  * the stableSerialize string of that slot's derived schema — the canonical bytes
  * the Wave-1 as-const rewrite must reproduce.
  *
- * RESOLUTION: run from the repo root via tsx. `@czap/command` and `@czap/gauntlet`
+ * RESOLUTION: run from the repo root via tsx. `@liteship/command` and `@liteship/gauntlet`
  * are not root workspace deps, so they are imported by RELATIVE source path (the
- * scripts/capsule-compile.ts idiom); their transitive `@czap/*` bare imports
+ * scripts/capsule-compile.ts idiom); their transitive `@liteship/*` bare imports
  * resolve to source through the built dist or a tsconfig-paths mapping.
  *
  * @module

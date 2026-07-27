@@ -6,7 +6,7 @@ import { compileCapsulesIsolated, type IsolatedCapsules } from '../setup/isolate
 describe('capsule-compile', () => {
   // This suite exercises the WRITER itself — it asserts the generated test/bench
   // files are produced — so it compiles into a fully isolated temp dir (both the
-  // manifest AND the generated dir via CZAP_CAPSULE_GENERATED_DIR, CUT T1). That
+  // manifest AND the generated dir via LITESHIP_CAPSULE_GENERATED_DIR, CUT T1). That
   // way it never mutates or races the shared reports/capsule-manifest.json or
   // tests/generated/.
   //
@@ -17,7 +17,7 @@ describe('capsule-compile', () => {
   let iso: IsolatedCapsules;
   let manifestPath: string;
   beforeAll(async () => {
-    iso = await compileCapsulesIsolated('czap-capcompile');
+    iso = await compileCapsulesIsolated('liteship-capcompile');
     manifestPath = iso.manifestPath;
   }, scaledTimeout(90_000));
 

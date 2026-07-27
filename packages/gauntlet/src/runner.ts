@@ -18,22 +18,26 @@
  * @module
  */
 
-import type { Gate } from './gate.js';
+import type { DiagnosticEmissionMatch, Gate } from './gate.js';
+import { ValidationError } from '@liteship/error';
 import type { SkipMatch } from './gates/skip-detect.js';
 import type { RepoIR } from './repo-ir.js';
-import type { SupplyChainFacts } from './supply-chain-facts.js';
-import type { MutationFacts } from './mutation-facts.js';
-import type { McdcFacts } from './mcdc-facts.js';
-import type { SimulationFacts } from './simulation-facts.js';
-import type { TaintFacts } from './taint-facts.js';
-import type { CapabilityLinkFacts } from './capability-link-facts.js';
-import type { TraceabilityFacts } from './traceability-facts.js';
-import type { StandardsIntegrityFacts } from './standards-facts.js';
-import type { FuzzCorpusFacts } from './fuzz-facts.js';
-import type { ProofFacts } from './proof-facts.js';
-import type { CompositionFacts } from './composition-facts.js';
-import type { SpineRelationFacts } from './spine-relation-facts.js';
-import type { ActiveSurfaceFacts } from './active-surface-facts.js';
+import type { SupplyChainFacts } from './facts/supply-chain-facts.js';
+import type { MutationFacts } from './facts/mutation-facts.js';
+import type { McdcFacts } from './facts/mcdc-facts.js';
+import type { SimulationFacts } from './facts/simulation-facts.js';
+import type { TaintFacts } from './facts/taint-facts.js';
+import type { CapabilityLinkFacts } from './facts/capability-link-facts.js';
+import type { TraceabilityFacts } from './facts/traceability-facts.js';
+import type { StandardsIntegrityFacts } from './facts/standards-facts.js';
+import type { FuzzCorpusFacts } from './facts/fuzz-facts.js';
+import type { ProofFacts } from './facts/proof-facts.js';
+import type { CompositionFacts } from './facts/composition-facts.js';
+import type { SpineRelationFacts } from './facts/spine-relation-facts.js';
+import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
+import type { FeatureEdgeFacts } from './facts/feature-edge-facts.js';
+import type { CheckGovernanceFacts } from './facts/check-governance-facts.js';
+import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -58,6 +62,13 @@ import { performanceContractsGate } from './gates/performance-contracts.js';
 import { perfClaimBenchGate } from './gates/perf-claim-bench.js';
 import { claimPropertyGate } from './gates/claim-property.js';
 import { activeModeledSurfaceReaderGate } from './gates/active-modeled-surface-reader.js';
+import { checkRegistryCompleteGate } from './gates/check-registry-complete.js';
+import { checkNegativeControlGate } from './gates/check-negative-control.js';
+import { checkWaiverFreshnessGate } from './gates/check-waiver-freshness.js';
+import { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
+import { facadeExportBudgetGate } from './gates/facade-export-budget.js';
+import { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
+import { featureEdgeConnectivityGate } from './gates/feature-edge-connectivity.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
@@ -67,7 +78,8 @@ import { activeModeledSurfaceReaderGate } from './gates/active-modeled-surface-r
  * forbidden floor now guards rules a REAL gate emits (no inert surface). A downstream
  * project composes its own gates onto this set.
  */
-export const LITESHIP_GATES: readonly Gate[] = [
+/** The dependency-free source scanners in the lean composition. */
+export const LITESHIP_TEXT_GATES: readonly Gate[] = [
   noBareThrowGate,
   noTsIgnoreGate,
   noNondeterminismGate,
@@ -76,6 +88,83 @@ export const LITESHIP_GATES: readonly Gate[] = [
   noPlaceholderGate,
   noEarlyReturnTestGate,
 ];
+
+/** The fact-hosted check-governance gates. */
+export const LITESHIP_GOVERNANCE_GATES: readonly Gate[] = [
+  // The three check-governance META-GATES — they guard the check registry itself: the
+  // root-script partition (registered XOR exempt, all resolving), the negative-control
+  // existence, and waiver freshness across both stores. As FactGates they read ONLY the
+  // injected CheckGovernanceFacts (a host folds `@liteship/command`'s CHECK_REGISTRY /
+  // SCRIPT_EXEMPTIONS / package.json / fs / LITESHIP_WAIVERS / the ledger vs a wall-clock
+  // date). A composition that includes these gates without that fact pack is rejected
+  // before execution; absence can never masquerade as a clean verdict.
+  checkRegistryCompleteGate,
+  checkNegativeControlGate,
+  checkWaiverFreshnessGate,
+];
+
+/** The source/projection guards that need no repository IR. */
+export const LITESHIP_PROJECTION_GATES: readonly Gate[] = [
+  // The DIAGNOSTIC-CODE REGISTRY guard — a lean source-scanner (no IR, no facts) that proves
+  // every emitted gauntlet ruleId + every check/<slug> id is enrolled in @liteship/error's
+  // DIAGNOSTIC_REGISTRY. It rides the lean set AND the IR-host set (it needs neither), so it
+  // runs on both the `liteship check gates` lean path and its IR-enriched composition.
+  diagnosticCodeRegisteredGate,
+  // The FACADE-EXPORT-BUDGET guard (P13) — a lean fold over the BUILT `liteship`
+  // root `dist/index.d.ts` + the reviewed allowlist DATA in
+  // `packages/liteship/src/export-budget.ts`: every root value/type export must be a
+  // listed budget entry (the SUBSET law) and neither kind may exceed 30. It rides
+  // the lean set ONLY (its dist read is out-of-IR, but the lean path is cache-free —
+  // no stale-verdict hazard, so no evidenceDigest obligation). Absent `dist` folds
+  // empty. Self-proves via its red/green/mutation fixtures.
+  facadeExportBudgetGate,
+  // The P17 OBLIGATIONS-LEDGER enforcement teeth — a lean source-scanner (no IR, no
+  // facts) that reds a bare intent-debt directive (TODO / FIXME / HACK) in
+  // `packages/*/src` that cites no registered `OBL-<AREA>-<slug>` obligation. It scans
+  // strings-blanked text (the guardrail-scanner code that carries the keyword as a
+  // STRING/REGEX literal — no-placeholder.ts, skip-allowlist.ts, codes.ts — is not
+  // tripped) and every path it reads is package source (no evidenceDigest obligation).
+  // Self-proves via its red/green/mutation fixtures.
+  noUnregisteredTodoGate,
+];
+
+/**
+ * Compose gate sets by identity, rejecting conflicting duplicate ids. The
+ * returned order is the first-seen order, so a projection is deterministic and
+ * additions cannot silently shadow an existing authority.
+ */
+export function composeGateSets(...sets: readonly (readonly Gate[])[]): readonly Gate[] {
+  const byId = new Map<string, Gate>();
+  for (const set of sets) {
+    for (const gate of set) {
+      const existing = byId.get(gate.id);
+      if (existing !== undefined && existing !== gate) {
+        throw ValidationError('composeGateSets', `conflicting gate definitions share id "${gate.id}"`);
+      }
+      if (existing === undefined) byId.set(gate.id, gate);
+    }
+  }
+  return Object.freeze([...byId.values()]);
+}
+
+/** Replace exactly one gate id without changing the composition's order. */
+export function replaceGate(set: readonly Gate[], replacement: Gate): readonly Gate[] {
+  const matches = set.filter((gate) => gate.id === replacement.id).length;
+  if (matches !== 1) {
+    throw ValidationError(
+      'replaceGate',
+      `replacement gate "${replacement.id}" must match exactly one gate in the source composition; matched ${matches}`,
+    );
+  }
+  return Object.freeze(set.map((gate) => (gate.id === replacement.id ? replacement : gate)));
+}
+
+/** The complete lean composition. */
+export const LITESHIP_GATES: readonly Gate[] = composeGateSets(
+  LITESHIP_TEXT_GATES,
+  LITESHIP_GOVERNANCE_GATES,
+  LITESHIP_PROJECTION_GATES,
+);
 
 /**
  * The HOST gate set — what the CLI runs WHEN it has built + injected the repo-IR
@@ -93,17 +182,11 @@ export const LITESHIP_GATES: readonly Gate[] = [
  *
  * These IR-fold gates {@link requireIR}, so they CANNOT run on the lean
  * MCP/command path (no IR) — they appear ONLY here, the IR-present composition. The
- * lean {@link LITESHIP_GATES} default is unchanged: `czap check` / MCP still runs
+ * lean {@link LITESHIP_GATES} default is unchanged: `liteship check gates` / MCP still runs
  * the seven regex gates IR-free.
  */
-export const LITESHIP_IR_GATES: readonly Gate[] = [
-  noBareThrowIRGate,
-  noTsIgnoreGate,
-  noNondeterminismGate,
-  noSilentCatchGate,
-  noSkippedTestGate,
-  noPlaceholderGate,
-  noEarlyReturnTestGate,
+/** Gates added only when the repository IR host is present. */
+export const LITESHIP_IR_ONLY_GATES: readonly Gate[] = [
   noDefaultExportDivergenceGate,
   noVarDivergenceGate,
   noRequireDivergenceGate,
@@ -125,7 +208,21 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   // perf-claim gate (no IR); rides the IR-host set alongside it, never the lean cut.
   claimPropertyGate,
   activeModeledSurfaceReaderGate,
+  // The fleet feature-edge census is host-built from typed runtime catalogs
+  // and TS semantic owners. It is required on the IR path; opaque/missing
+  // subject coverage is an authority-integrity failure, never an empty green.
+  featureEdgeConnectivityGate,
 ];
+
+/**
+ * The IR composition is the exact lean composition with the text bare-throw
+ * scanner replaced by its AST fact fold, unioned with IR-only authorities. It
+ * cannot silently drop a lean gate when either set changes.
+ */
+export const LITESHIP_IR_GATES: readonly Gate[] = composeGateSets(
+  replaceGate(LITESHIP_GATES, noBareThrowIRGate),
+  LITESHIP_IR_ONLY_GATES,
+);
 
 /** Options for {@link runGauntletOnRepo}. */
 export interface RunGauntletOnRepoOptions {
@@ -135,10 +232,10 @@ export interface RunGauntletOnRepoOptions {
   readonly globs: readonly string[];
   /**
    * The INJECTED SOUND skip detector (the AST detector) — OPTIONAL. The gauntlet is the lean
-   * engine and never deps `typescript`; a host (the CLI, which deps `@czap/audit`) builds
+   * engine and never deps `typescript`; a host (the CLI, which deps `@liteship/audit`) builds
    * `detectSkipsAST` and threads it here, where it lands on the {@link GateContext} for the
    * no-skipped-test gate to use via `(context.skipDetector ?? detectSkips)`. Omit it (the lean
-   * path: `czap check` / MCP) and the token `detectSkips` fallback runs unchanged.
+   * path: `liteship check` / MCP) and the token `detectSkips` fallback runs unchanged.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
@@ -148,22 +245,32 @@ export interface RunGauntletOnRepoOptions {
    */
   readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
-   * The INJECTED SOUND `codeOnly` floor (the @czap/audit scanner `codeOnlyAST`) — OPTIONAL, same
+   * The INJECTED SOUND `codeOnly` floor (the @liteship/audit scanner `codeOnlyAST`) — OPTIONAL, same
    * pattern as {@link skipDetector}. Lands on the {@link GateContext} for code-scanning gates to use
    * via `(context.codeOnly ?? codeOnly)`. Omit it (the lean path) and the char-machine fallback runs.
    */
   readonly codeOnly?: (source: string) => string;
+  /** Host-injected parser-backed Diagnostics-call census. */
+  readonly diagnosticEmitterDetector?: (source: string) => readonly DiagnosticEmissionMatch[];
+  /** Host-computed parser-backed benchmark subject reachability. */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
+  /** Required facts for every check-governance gate present in the composition. */
+  readonly checkGovernance?: CheckGovernanceFacts;
+  /** Required host-built reader facts for the active modeled-surface gate. */
+  readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /** Required host-built fleet feature-edge connectivity facts. */
+  readonly featureEdges?: FeatureEdgeFacts;
   /**
    * The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
-   * and never builds an IR; a host (the CLI, via `@czap/audit`'s `ts.Program`)
+   * and never builds an IR; a host (the CLI, via `@liteship/audit`'s `ts.Program`)
    * builds it and threads it here, where it lands on the {@link GateContext} for
-   * an IR-fold gate to read. Omit it (the lean path: `czap check` / MCP) and the
+   * an IR-fold gate to read. Omit it (the lean path: `liteship check` / MCP) and the
    * regex gates run unchanged.
    */
   readonly ir?: RepoIR;
   /**
    * The INJECTED supply-chain facts (Slice C, the avionics tier) — OPTIONAL. A
-   * host (the CLI's `@czap/cli` analyzer) parses the lockfile, builds the SBOM,
+   * host (the CLI's `@liteship/cli` analyzer) parses the lockfile, builds the SBOM,
    * and scans the workflows, then threads the decided {@link SupplyChainFacts}
    * here, where they land on the {@link GateContext} for `supplyChainGate` to
    * fold. Omit them (the default `--ir` run) and the gate is simply not in the
@@ -172,7 +279,7 @@ export interface RunGauntletOnRepoOptions {
   readonly supplyChain?: SupplyChainFacts;
   /**
    * The INJECTED mutation facts (Slice C, the avionics tier — mutation-as-divergence)
-   * — OPTIONAL. A host (`@czap/audit`'s mutation engine + the CLI's per-mutant vitest
+   * — OPTIONAL. A host (`@liteship/audit`'s mutation engine + the CLI's per-mutant vitest
    * runner) generates + evaluates the mutants, then threads the decided
    * {@link MutationFacts} here, where they land on the {@link GateContext} for
    * `mutationDivergenceGate` to fold. Omit them (the default `--ir` run) and the gate
@@ -181,7 +288,7 @@ export interface RunGauntletOnRepoOptions {
   readonly mutation?: MutationFacts;
   /**
    * The INJECTED MC/DC facts (the avionics tier — DO-178B Level A's coverage requirement,
-   * realized as condition-level mutation) — OPTIONAL. A host (`@czap/audit`'s
+   * realized as condition-level mutation) — OPTIONAL. A host (`@liteship/audit`'s
    * condition-mutation engine + the CLI's per-pin vitest runner) generates + evaluates
    * the force-true/force-false pins per atomic condition, folds the two pins per
    * condition, then threads the decided {@link McdcFacts} here, where they land on the
@@ -192,8 +299,8 @@ export interface RunGauntletOnRepoOptions {
   readonly mcdc?: McdcFacts;
   /**
    * The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
-   * determinism spine) — OPTIONAL. A host (the CLI's `czap check --ir --simulate`
-   * path) drives the scenario corpus through the `@czap/core/simulation` harness
+   * determinism spine) — OPTIONAL. A host (the CLI's `liteship check gates --ir --simulate`
+   * path) drives the scenario corpus through the `@liteship/core/simulation` harness
    * (replaying each seed twice, content-addressing the two byte-exact traces) and
    * threads the decided {@link SimulationFacts} here, where they land on the
    * {@link GateContext} for `simulationDeterminismGate` to fold. Omit them (the
@@ -204,7 +311,7 @@ export interface RunGauntletOnRepoOptions {
   /**
    * The INJECTED requirements-traceability facts (the avionics-tier ledger,
    * DO-178B-style) — OPTIONAL. A host (the CLI's
-   * `packages/cli/src/lib/traceability.ts` state machine) parses `traceability/*.yaml`,
+   * `packages/cli/src/internal/traceability.ts` state machine) parses `traceability/*.yaml`,
    * scans the corpus for `// PROVES:` headers, runs the lifecycle fold against the
    * injected wall-clock date, and threads the decided {@link TraceabilityFacts} here,
    * where they land on the {@link GateContext} for `traceabilityBridgeGate` to fold.
@@ -215,7 +322,7 @@ export interface RunGauntletOnRepoOptions {
   /**
    * The INJECTED standards-integrity facts (the AGENT-SAFETY META-GAUNTLET, the
    * "raccoon rule") — OPTIONAL. A host (the CLI's
-   * `packages/cli/src/lib/standards-surface.ts` extractor) reads the live standards
+   * `packages/cli/src/internal/standards-surface.ts` extractor) reads the live standards
    * surface, content-addresses it, diffs it against the committed snapshot, applies the
    * owner sign-offs against the injected wall-clock date, and threads the decided
    * {@link StandardsIntegrityFacts} here, where they land on the {@link GateContext} for
@@ -225,8 +332,8 @@ export interface RunGauntletOnRepoOptions {
   readonly standards?: StandardsIntegrityFacts;
   /**
    * The INJECTED taint-flow facts (the TAINT-ANALYSIS family) — OPTIONAL. A host (the
-   * CLI's `czap check --ir --taint` path) traces the source→sink dataflow via
-   * `@czap/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
+   * CLI's `liteship check gates --ir --taint` path) traces the source→sink dataflow via
+   * `@liteship/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
    * source/sink/sanitizer registry) and threads the decided {@link TaintFacts} here,
    * where they land on the {@link GateContext} for `taintFlowGate` to fold. Omit them
    * (the default `--ir` run) and the gate is simply not in the set — no dataflow trace,
@@ -235,8 +342,8 @@ export interface RunGauntletOnRepoOptions {
   readonly taint?: TaintFacts;
   /**
    * The INJECTED capability-link facts (codex round-8, #1b) — OPTIONAL. A host (the CLI's
-   * `czap check --ir --capability-gate` path) resolves each sanctioned skip's guard against the
-   * canonical capability symbol table via `@czap/audit`'s capability-link oracle and threads the
+   * `liteship check gates --ir --capability-gate` path) resolves each sanctioned skip's guard against the
+   * canonical capability symbol table via `@liteship/audit`'s capability-link oracle and threads the
    * decided {@link CapabilityLinkFacts} here for `capabilityGateLinkGate` to fold. Omit them ⇒ the
    * gate is not in the set.
    */
@@ -253,7 +360,7 @@ export interface RunGauntletOnRepoOptions {
   readonly fuzzCorpus?: FuzzCorpusFacts;
   /**
    * The INJECTED proof-strength facts (the LOCAL-VS-GLOBAL correctness family — the
-   * lax-functor) — OPTIONAL. A host (the CLI's `czap check --ir --proof` path) reads
+   * lax-functor) — OPTIONAL. A host (the CLI's `liteship check gates --ir --proof` path) reads
    * the proof signals (mutation score / coverage / property tests / enrolled
    * invariants), blends them into per-module scalars, and threads the decided
    * {@link ProofFacts} here, where they land on the {@link GateContext} for
@@ -264,7 +371,7 @@ export interface RunGauntletOnRepoOptions {
   /**
    * The INJECTED composition-coverage facts (the LOCAL-VS-GLOBAL correctness family —
    * "locally green, globally untested interaction") — OPTIONAL. A host (the CLI's
-   * `czap check --ir --composition` path) derives the interaction edges from the IR
+   * `liteship check gates --ir --composition` path) derives the interaction edges from the IR
    * call graph and classifies each integration-covered/uncovered, then threads the
    * decided {@link CompositionFacts} here, where they land on the {@link GateContext}
    * for `compositionCoverageGate` to fold. Omit them (the default `--ir` run) and the
@@ -273,8 +380,8 @@ export interface RunGauntletOnRepoOptions {
   readonly composition?: CompositionFacts;
   /**
    * The INJECTED two-axis spine-relation facts (Wave 8.5, the public constitution's
-   * STATIC-projection half) — OPTIONAL. A host (the CLI's `czap check --ir
-   * --spine-relation` path) probes each admitted `@czap/_spine` mirror type's bidirectional
+   * STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check gates --ir
+   * --spine-relation` path) probes each admitted `@liteship/_spine` mirror type's bidirectional
    * assignability against its runtime source, then threads the decided
    * {@link SpineRelationFacts} here, where they land on the {@link GateContext} for
    * `spineRelationGate` to fold. Omit them (the default `--ir` run) and the gate is simply
@@ -320,7 +427,12 @@ export function runGauntletOnRepo(
     opts.capabilityLink !== undefined ||
     opts.skipDetector !== undefined ||
     opts.earlyReturnDetector !== undefined ||
-    opts.codeOnly !== undefined
+    opts.codeOnly !== undefined ||
+    opts.diagnosticEmitterDetector !== undefined ||
+    opts.benchmarkSubjects !== undefined ||
+    opts.checkGovernance !== undefined ||
+    opts.activeSurfaceFacts !== undefined ||
+    opts.featureEdges !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
@@ -334,6 +446,13 @@ export function runGauntletOnRepo(
           ...(opts.earlyReturnDetector !== undefined ? { earlyReturnDetector: opts.earlyReturnDetector } : {}),
           // The SOUND scanner codeOnly floor (injected by the host); omitted ⇒ char-machine fallback.
           ...(opts.codeOnly !== undefined ? { codeOnly: opts.codeOnly } : {}),
+          ...(opts.diagnosticEmitterDetector !== undefined
+            ? { diagnosticEmitterDetector: opts.diagnosticEmitterDetector }
+            : {}),
+          ...(opts.benchmarkSubjects !== undefined ? { benchmarkSubjects: opts.benchmarkSubjects } : {}),
+          ...(opts.checkGovernance !== undefined ? { checkGovernance: opts.checkGovernance } : {}),
+          ...(opts.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: opts.activeSurfaceFacts } : {}),
+          ...(opts.featureEdges !== undefined ? { featureEdges: opts.featureEdges } : {}),
         }
       : baseContext;
   return runGates(gates, context, runOpts);
@@ -369,10 +488,10 @@ export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.t
  * per-gate by ruleId in {@link runGates}. A boundary waiver that matches nothing
  * goes stale (warning); one whose `expires` is past `now` re-reds and blocks.
  *
- * The optional `ir` is the INJECTED repo-IR (Slice B). The LEAN path (`czap
- * check` / MCP — `@czap/command/host`) calls this with NO `ir`: the regex gates
+ * The optional `ir` is the INJECTED repo-IR (Slice B). The LEAN path (`liteship
+ * check` / MCP — `@liteship/command/host`) calls this with NO `ir`: the regex gates
  * run unchanged and an IR-fold gate (Step 3) folds only when an IR is present.
- * The HOST path (the CLI/scripts, where `@czap/audit` is available) builds the
+ * The HOST path (the CLI/scripts, where `@liteship/audit` is available) builds the
  * IR via `buildRepoIR` and threads it here, landing it on every gate's context.
  *
  * @param repoRoot Absolute root the gates resolve against.
@@ -380,16 +499,16 @@ export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.t
  *                 caller owns the date so the verdict is reproducible).
  * @param globs    The file scope (defaults to every package's source).
  * @param ir       Optional pre-built repo-IR to inject (the host path).
- * @param skipDetector Optional host-built SOUND AST skip detector (`@czap/audit`'s
+ * @param skipDetector Optional host-built SOUND AST skip detector (`@liteship/audit`'s
  *                 `detectSkipsAST`). The no-skipped-test gate uses it via
  *                 `(context.skipDetector ?? detectSkips)` — so the LEAN path, when run
- *                 from a host that deps `@czap/audit` (the CLI's `czap check` / `czap
+ *                 from a host that deps `@liteship/audit` (the CLI's `liteship check` / `liteship
  *                 lsp`), gains the line-agnostic multi-line/ASI/inner-describe/alias
  *                 detection + the structural conditionality proof. Omitted on the
- *                 no-`@czap/audit` path (MCP) → the token fallback (the documented lean
+ *                 no-`@liteship/audit` path (MCP) → the token fallback (the documented lean
  *                 degradation, like `runCheckInvariants`).
  * @param earlyReturnDetector Optional host-built SOUND AST early-return detector
- *                 (`@czap/audit`'s `detectEarlyReturnBeforeExpectAST`). The
+ *                 (`@liteship/audit`'s `detectEarlyReturnBeforeExpectAST`). The
  *                 no-early-return-test gate uses it via
  *                 `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)`.
  */
@@ -401,6 +520,7 @@ export function litelaunchGauntlet(
   skipDetector?: (source: string) => readonly SkipMatch[],
   earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[],
   codeOnly?: (source: string) => string,
+  checkGovernance?: CheckGovernanceFacts,
 ): GauntletResult {
   return runGauntletOnRepo(
     LITESHIP_GATES,
@@ -411,6 +531,7 @@ export function litelaunchGauntlet(
       ...(skipDetector !== undefined ? { skipDetector } : {}),
       ...(earlyReturnDetector !== undefined ? { earlyReturnDetector } : {}),
       ...(codeOnly !== undefined ? { codeOnly } : {}),
+      ...(checkGovernance !== undefined ? { checkGovernance } : {}),
     },
     { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
   );
@@ -418,7 +539,7 @@ export function litelaunchGauntlet(
 
 /**
  * The HOST gauntlet run (Slice B, B1, step 3) — the IR-INJECTED composition the
- * CLI calls once it has built the repo-IR via `@czap/audit`. Binds
+ * CLI calls once it has built the repo-IR via `@liteship/audit`. Binds
  * {@link LITESHIP_IR_GATES} (the lean set with no-bare-throw re-expressed as an IR
  * fold + the oracle-divergence gate) and threads the REQUIRED `ir` onto every
  * gate's context, with the same committed assurance map + waivers + injected
@@ -484,6 +605,8 @@ export function litelaunchGauntletWithIR(
       // `capabilityGateLinkGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the set on the
       // default `--ir` run (capability-link is opt-in: `--capability-gate`).
       ...(cacheOpts.capabilityLink !== undefined ? { capabilityLink: cacheOpts.capabilityLink } : {}),
+      ...(cacheOpts.benchmarkSubjects !== undefined ? { benchmarkSubjects: cacheOpts.benchmarkSubjects } : {}),
+      ...(cacheOpts.checkGovernance !== undefined ? { checkGovernance: cacheOpts.checkGovernance } : {}),
       // Inject the host-computed requirements-traceability facts when supplied —
       // `traceabilityBridgeGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the
       // set at all. The CLI composes the gate + injects these always-on on the `--ir`
@@ -507,9 +630,10 @@ export function litelaunchGauntletWithIR(
       // default `--ir` run (spine-relation is opt-in: `--spine-relation`).
       ...(cacheOpts.spineRelation !== undefined ? { spineRelation: cacheOpts.spineRelation } : {}),
       // Inject the host-computed active-surface field-read facts (#132) when supplied —
-      // `activeModeledSurfaceReaderGate` folds them. Omitted ⇒ absent ⇒ the gate folds
-      // an empty verdict.
+      // `activeModeledSurfaceReaderGate` folds them. When that gate is selected,
+      // omission invalidates the plan before execution; it can never false-green.
       ...(cacheOpts.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: cacheOpts.activeSurfaceFacts } : {}),
+      ...(cacheOpts.featureEdges !== undefined ? { featureEdges: cacheOpts.featureEdges } : {}),
       // Inject the host-built SOUND AST skip detector (`detectSkipsAST`) when supplied — the
       // no-skipped-test gate uses it via `(context.skipDetector ?? detectSkips)`, gaining the
       // line-agnostic multi-line/ASI/inner-describe coverage + the structural F2 conditionality.
@@ -518,6 +642,9 @@ export function litelaunchGauntletWithIR(
       ...(cacheOpts.earlyReturnDetector !== undefined ? { earlyReturnDetector: cacheOpts.earlyReturnDetector } : {}),
       // The SOUND scanner codeOnly floor (host-injected `codeOnlyAST`); omitted ⇒ char-machine fallback.
       ...(cacheOpts.codeOnly !== undefined ? { codeOnly: cacheOpts.codeOnly } : {}),
+      ...(cacheOpts.diagnosticEmitterDetector !== undefined
+        ? { diagnosticEmitterDetector: cacheOpts.diagnosticEmitterDetector }
+        : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -556,6 +683,10 @@ export interface LitelaunchCacheOptions {
    * the avionics gate never appears (no `not-evidenced` noise on the default path).
    */
   readonly gates?: readonly Gate[];
+  /** Always-on host-computed benchmark subject reachability facts. */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
+  /** Required host-built governance facts for the default IR composition. */
+  readonly checkGovernance?: CheckGovernanceFacts;
   /**
    * OPTIONAL host-computed supply-chain facts (Slice C) threaded onto the
    * {@link GateContext} for `supplyChainGate` to fold. Supplied ONLY on the
@@ -565,7 +696,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed mutation facts (Slice C — mutation-as-divergence) threaded
    * onto the {@link GateContext} for `mutationDivergenceGate` to fold. Supplied ONLY
-   * on the `czap check --ir --mutate` run, alongside a `gates` override that includes
+   * on the `liteship check gates --ir --mutate` run, alongside a `gates` override that includes
    * the gate. The cache key is namespaced by the mutation mode (a mutation-run
    * verdict can never be served to a non-mutation run, or vice versa).
    */
@@ -573,7 +704,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed MC/DC facts (the avionics tier — DO-178B Level A coverage via
    * condition-level mutation) threaded onto the {@link GateContext} for
-   * `mcdcCoverageGate` to fold. Supplied ONLY on the `czap check --ir --mcdc` run,
+   * `mcdcCoverageGate` to fold. Supplied ONLY on the `liteship check gates --ir --mcdc` run,
    * alongside a `gates` override that includes the gate. The cache key is namespaced by
    * the MC/DC mode (an MC/DC verdict can never be served to a non-MC/DC run, or vice
    * versa) — exactly the `--mutate` cache-soundness lesson.
@@ -582,7 +713,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
    * spine) threaded onto the {@link GateContext} for `simulationDeterminismGate` to
-   * fold. Supplied ONLY on the `czap check --ir --simulate` run, alongside a `gates`
+   * fold. Supplied ONLY on the `liteship check gates --ir --simulate` run, alongside a `gates`
    * override that includes the gate. The cache key is namespaced by the simulation
    * mode (a simulation-run verdict can never be served to a non-simulation run, or
    * vice versa).
@@ -591,7 +722,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed taint-flow facts (the TAINT-ANALYSIS family) threaded onto
    * the {@link GateContext} for `taintFlowGate` to fold. Supplied ONLY on the
-   * `czap check --ir --taint` run, alongside a `gates` override that includes the gate.
+   * `liteship check gates --ir --taint` run, alongside a `gates` override that includes the gate.
    * The cache key is namespaced by the taint mode (a taint-run verdict can never be
    * served to a non-taint run, or vice versa) — exactly the `--mutate` cache-soundness
    * lesson.
@@ -600,7 +731,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed capability-link facts (codex round-8, #1b) threaded onto the
    * {@link GateContext} for `capabilityGateLinkGate` to fold. Supplied ONLY on the
-   * `czap check --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
+   * `liteship check gates --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
    * cache key is namespaced by the capability-gate mode (a capability-gate verdict never serves a
    * non-capability-gate run).
    */
@@ -627,7 +758,7 @@ export interface LitelaunchCacheOptions {
   /**
    * OPTIONAL host-computed proof-strength facts (the LOCAL-VS-GLOBAL correctness family
    * — the lax-functor) threaded onto the {@link GateContext} for `proofPropagationGate`
-   * to propagate along the dep DAG. Supplied ONLY on the `czap check --ir --proof` run,
+   * to propagate along the dep DAG. Supplied ONLY on the `liteship check gates --ir --proof` run,
    * alongside a `gates` override that includes the gate. The proof MODE namespaces the
    * verdict cache key (a proof-run verdict can never be served to a non-proof run, or
    * vice versa) — the same `--mutate` cache-soundness lesson.
@@ -637,14 +768,14 @@ export interface LitelaunchCacheOptions {
    * OPTIONAL host-computed composition-coverage facts (the LOCAL-VS-GLOBAL correctness
    * family — "locally green, globally untested interaction") threaded onto the
    * {@link GateContext} for `compositionCoverageGate` to fold. Supplied ONLY on the
-   * `czap check --ir --composition` run, alongside a `gates` override that includes the
+   * `liteship check gates --ir --composition` run, alongside a `gates` override that includes the
    * gate. The composition MODE namespaces the verdict cache key.
    */
   readonly composition?: CompositionFacts;
   /**
    * OPTIONAL host-computed two-axis spine-relation facts (Wave 8.5, the public
    * constitution's STATIC-projection half) threaded onto the {@link GateContext} for
-   * `spineRelationGate` to fold. Supplied ONLY on the `czap check --ir --spine-relation`
+   * `spineRelationGate` to fold. Supplied ONLY on the `liteship check gates --ir --spine-relation`
    * run, alongside a `gates` override that includes the gate. The spine-relation MODE
    * namespaces the verdict cache key (a spine-relation verdict never serves a
    * non-spine-relation run).
@@ -657,13 +788,15 @@ export interface LitelaunchCacheOptions {
    * orphan reports as advisory until #130.
    */
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /** Required host-built fleet feature-edge connectivity facts. */
+  readonly featureEdges?: FeatureEdgeFacts;
   /**
-   * OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s `detectSkipsAST`) threaded onto
+   * OPTIONAL host-built SOUND AST skip detector (`@liteship/audit`'s `detectSkipsAST`) threaded onto
    * the {@link GateContext} as `skipDetector`. The no-skipped-test gate uses it via
    * `(context.skipDetector ?? detectSkips)` — gaining line-agnostic multi-line/ASI/inner-describe
    * detection + the structural F2 conditionality the token scanner cannot produce. Supplied
-   * ALWAYS-ON on the `--ir` path (the host deps `@czap/audit`, the parse is cheap); omitted on the
-   * lean `czap check` / MCP path, where the token `detectSkips` fallback runs unchanged.
+   * ALWAYS-ON on the `--ir` path (the host deps `@liteship/audit`, the parse is cheap); omitted on the
+   * lean `liteship check` / MCP path, where the token `detectSkips` fallback runs unchanged.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
@@ -672,9 +805,11 @@ export interface LitelaunchCacheOptions {
    */
   readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
-   * OPTIONAL host-built SOUND scanner codeOnly floor (`@czap/audit`'s `codeOnlyAST`) threaded onto the
+   * OPTIONAL host-built SOUND scanner codeOnly floor (`@liteship/audit`'s `codeOnlyAST`) threaded onto the
    * {@link GateContext} as `codeOnly`. Code-scanning gates use it via `(context.codeOnly ?? codeOnly)`.
    * Supplied on the `--ir` path; omitted on the lean path (char-machine fallback, pinned equivalent).
    */
   readonly codeOnly?: (source: string) => string;
+  /** Host-built parser-backed Diagnostics-call census. */
+  readonly diagnosticEmitterDetector?: (source: string) => readonly DiagnosticEmissionMatch[];
 }

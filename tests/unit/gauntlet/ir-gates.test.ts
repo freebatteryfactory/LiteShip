@@ -29,7 +29,7 @@ import {
   type CoverageClass,
   type GateContext,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 const PLACEHOLDER = 'placeholder:no-content-address';
 const FILE = 'packages/x/src/a.ts';
@@ -194,7 +194,7 @@ describe('exclude-vs-miss — a sanctioned POLICY EXCLUDE is not a divergence (B
   }
 
   function excludedFileNode() {
-    return { id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/astro' };
+    return { id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/astro' };
   }
 
   it('emits NO divergence when the AST sees a default export but the file is POLICY-EXCLUDED (the ~9 → 0)', () => {

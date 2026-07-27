@@ -8,7 +8,9 @@
 
 > **normalizeRepoPath**(`value`): `string`
 
-Defined in: [audit/src/policy.ts:536](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L536)
+Defined in: [audit/src/policy.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L65)
+
+Normalize a repository path at the engine boundary.
 
 ## Parameters
 

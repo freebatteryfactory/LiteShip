@@ -6,7 +6,7 @@
 
 # Function: catalogHash()
 
-> **catalogHash**(`catalog`): `ContentAddress`
+> **catalogHash**(`catalog`): [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [genui/src/identity.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/identity.ts#L13)
 
@@ -20,4 +20,4 @@ Canonical hash of a host catalog definition (same bytes as [defineComponentCatal
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)

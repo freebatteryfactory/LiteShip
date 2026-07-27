@@ -1,7 +1,7 @@
 /**
  * Spine-relation FACTS builder — the heavy `ts.Program` host that computes the
  * two-axis `SpineRelationFacts` the lean `spineRelationGate` folds (Wave 8.5,
- * ADR-0023: the host produces the facts, the lean gate folds them; @czap/gauntlet
+ * ADR-0023: the host produces the facts, the lean gate folds them; @liteship/gauntlet
  * carries no `typescript` dependency, so this work lives here).
  *
  * HOW IT OBSERVES THE RELATION (the compiler is the oracle, never a hand-rolled
@@ -38,14 +38,15 @@
 
 import { resolve } from 'node:path';
 import ts from 'typescript';
-import type { SpineAuthority, SpineRelationFacts, SpineRelationObservation, SurfaceRelation } from '@czap/gauntlet';
-import { classifyStructuralRelation } from '@czap/gauntlet';
+import type { SpineAuthority, SpineRelationFacts, SpineRelationObservation, SurfaceRelation } from '@liteship/gauntlet';
+import { classifyStructuralRelation } from '@liteship/gauntlet';
 import { typeDirectedCompilerOptions } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /**
  * One admitted mirror type — the host-supplied seed row (frozen from the current
- * spine-conformance pins). `spineExpr` is the type expression under the `@czap/_spine`
- * namespace (e.g. `CompositeState`, `Codec.Shape<{ readonly a: 1 }, { readonly a: 1 }>`,
+ * spine-conformance pins). `spineExpr` is the type expression under the `@liteship/_spine`
+ * namespace (e.g. `CompositeState`, `Codec<{ readonly a: 1 }, { readonly a: 1 }>`,
  * `Millis`); `runtimeExpr` the expression under the runtime module's namespace;
  * `runtimeModule` the repo-relative `.ts` source path of the runtime producer.
  */
@@ -60,6 +61,10 @@ export interface SpineTypeAdmission {
 
 /** Options for {@link buildSpineRelationFacts}. */
 export interface SpineRelationBuildOptions {
+  /** Host-owned module specifier for the declaration spine under test. */
+  readonly spinePackageSpecifier: string;
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * In-memory content overrides, keyed by ABSOLUTE path — the seam the acceptance test
    * uses to inject a DRIFTED spine (e.g. CapSet `Set`→array) without touching disk. A
@@ -71,7 +76,7 @@ export interface SpineRelationBuildOptions {
 
 /** The synthetic probe file's absolute path (never written to disk — served by the overlay host). */
 function syntheticPath(repoRoot: string): string {
-  return resolve(repoRoot, '__czap_spine_relation_probe__.ts');
+  return resolve(repoRoot, '__liteship_spine_relation_probe__.ts');
 }
 
 /**
@@ -79,14 +84,20 @@ function syntheticPath(repoRoot: string): string {
  * `from '<spine>'` import literal never appears verbatim in THIS module's source. It is
  * a mention inside generated string data, not a real import of this module; the b5
  * package-graph law greps raw text and would otherwise false-positive on it (the audit
- * import graph itself only reaches the blessed @czap/gauntlet leaf).
+ * import graph itself only reaches the blessed @liteship/gauntlet leaf).
  */
-const SPINE_PACKAGE = `@czap/${'_spine'}`;
-
 /** The import specifier for a runtime module: repo-relative `.ts` → `./…/x.js`. */
 function moduleSpecifier(runtimeModule: string): string {
   const normalized = runtimeModule.replace(/\.tsx?$/, '.js');
   return normalized.startsWith('.') ? normalized : `./${normalized}`;
+}
+
+/** Qualify a type expression against a namespace import, including value-member `typeof` probes. */
+function qualifyTypeExpression(namespace: string, expression: string): string {
+  const trimmed = expression.trim();
+  return trimmed.startsWith('typeof ')
+    ? `typeof ${namespace}.${trimmed.slice('typeof '.length)}`
+    : `${namespace}.${trimmed}`;
 }
 
 interface ProbeLines {
@@ -101,12 +112,15 @@ interface ProbeLines {
 }
 
 /** Generate the synthetic probe source + the per-admission line map. */
-function generateProbe(admissions: readonly SpineTypeAdmission[]): {
+function generateProbe(
+  admissions: readonly SpineTypeAdmission[],
+  spinePackageSpecifier: string,
+): {
   readonly source: string;
   readonly probes: readonly ProbeLines[];
 } {
   const lines: string[] = [];
-  lines.push(`import type * as Spine from '${SPINE_PACKAGE}';`);
+  lines.push(`import type * as Spine from '${spinePackageSpecifier}';`);
   // The IS-ANY guard: `0 extends (1 & T)` is true ONLY when T is `any`. A per-admission
   // guard line `const _sAny_i: IsAny<Spine.X> = false;` therefore ERRORS iff the type
   // resolved to `any` — the exact silent hole an unaliased cross-package import or a
@@ -114,6 +128,21 @@ function generateProbe(admissions: readonly SpineTypeAdmission[]): {
   // a false `exact`). A diagnostic on the guard line downgrades the observation to
   // unresolved, so a collapse-to-`any` reds instead of laundering green.
   lines.push(`type IsAny<T> = 0 extends 1 & T ? true : false;`);
+  // Runtime-owned declarations may carry a module-private unique-symbol witness
+  // solely to make their constructor unforgeable (typed ECS Parts/Systems are the
+  // canonical example). A separately-authored declaration mirror cannot name that
+  // private symbol, so comparing the raw nominal shell makes an otherwise identical
+  // public contract permanently `opaque`. Compare the externally nameable contract:
+  // string/number keys plus the two public well-known lifecycle symbols. Primitive
+  // intersections are preserved verbatim so nested public brands such as Millis and
+  // ContentAddress retain their identity; only object-member witnesses are projected.
+  // Callable/constructable shapes are rebuilt recursively so private Part witnesses in
+  // method parameters cannot make the containing ECS contract permanently opaque.
+  // Spine-authority admissions remain raw below as an additional brand-owner guard.
+  lines.push(
+    `type PublicContract<T> = T extends string | number | boolean | bigint | symbol | null | undefined ? T : T extends (...args: any[]) => any ? (...args: PublicContractTuple<Parameters<T>>) => PublicContract<ReturnType<T>> : T extends abstract new (...args: any[]) => infer R ? abstract new (...args: PublicContractTuple<ConstructorParameters<T>>) => PublicContract<R> : T extends readonly unknown[] ? number extends T['length'] ? ReadonlyArray<PublicContract<T[number]>> : { readonly [K in keyof T]: PublicContract<T[K]> } : T extends object ? { [K in keyof T as K extends string | number | typeof Symbol.dispose | typeof Symbol.asyncDispose ? K : never]: PublicContract<T[K]> } : T;`,
+  );
+  lines.push(`type PublicContractTuple<T extends readonly unknown[]> = { [K in keyof T]: PublicContract<T[K]> };`);
   // One import per distinct runtime module (stable alias by first-seen order).
   const moduleAlias = new Map<string, string>();
   const moduleImportLine = new Map<string, number>();
@@ -127,8 +156,10 @@ function generateProbe(admissions: readonly SpineTypeAdmission[]): {
   const probes: ProbeLines[] = [];
   admissions.forEach((admission, i) => {
     const alias = moduleAlias.get(admission.runtimeModule)!;
-    const spineType = `Spine.${admission.spineExpr}`;
-    const runtimeType = `${alias}.${admission.runtimeExpr}`;
+    const rawSpineType = qualifyTypeExpression('Spine', admission.spineExpr);
+    const rawRuntimeType = qualifyTypeExpression(alias, admission.runtimeExpr);
+    const spineType = admission.authority === 'runtime' ? `PublicContract<${rawSpineType}>` : rawSpineType;
+    const runtimeType = admission.authority === 'runtime' ? `PublicContract<${rawRuntimeType}>` : rawRuntimeType;
     const spineDeclLine = lines.length;
     lines.push(`declare const s_${i}: ${spineType};`);
     const runtimeDeclLine = lines.length;
@@ -193,13 +224,43 @@ function overlayHost(
 export function buildSpineRelationFacts(
   admissions: readonly SpineTypeAdmission[],
   repoRoot: string,
-  options: SpineRelationBuildOptions = {},
+  options: SpineRelationBuildOptions,
 ): SpineRelationFacts {
   const virt = syntheticPath(repoRoot);
-  const { source, probes } = generateProbe(admissions);
-  const compilerOptions = { ...typeDirectedCompilerOptions(repoRoot), noEmit: true };
+  const { source, probes } = generateProbe(admissions, options.spinePackageSpecifier);
+  const compilerOptions = {
+    ...typeDirectedCompilerOptions(repoRoot, options.typeScriptPathAliases),
+    noEmit: true,
+  };
   const host = overlayHost(compilerOptions, virt, source, options.overlay ?? {});
   const program = ts.createProgram({ rootNames: [virt], options: compilerOptions, host });
+  const checker = program.getTypeChecker();
+  const syntheticFile = program.getSourceFile(virt);
+  const spineImport = syntheticFile?.statements.find(ts.isImportDeclaration);
+  const spineModuleSymbol =
+    spineImport !== undefined && ts.isStringLiteral(spineImport.moduleSpecifier)
+      ? checker.getSymbolAtLocation(spineImport.moduleSpecifier)
+      : undefined;
+  const spineExports = new Map(
+    (spineModuleSymbol === undefined ? [] : checker.getExportsOfModule(spineModuleSymbol)).map((symbol) => [
+      symbol.name,
+      symbol,
+    ]),
+  );
+  const unresolvedSpineRoots = new Set<string>();
+  for (const admission of admissions) {
+    const root = /^[A-Za-z_$][\w$]*/u.exec(admission.spineExpr.trim().replace(/^typeof\s+/u, ''))?.[0];
+    if (root === undefined) continue;
+    const exported = spineExports.get(root);
+    if (exported === undefined) {
+      unresolvedSpineRoots.add(root);
+      continue;
+    }
+    const target = (exported.flags & ts.SymbolFlags.Alias) === 0 ? exported : checker.getAliasedSymbol(exported);
+    if (target.name === 'unknown' || target.declarations === undefined || target.declarations.length === 0) {
+      unresolvedSpineRoots.add(root);
+    }
+  }
 
   // Diagnostics ON the synthetic file, bucketed by their 0-based line.
   const linesWithDiag = new Map<number, string>();
@@ -218,8 +279,9 @@ export function buildSpineRelationFacts(
       authority: admission.authority,
       admittedRelation: admission.admittedRelation,
     };
+    const surfaceName = /^[A-Za-z_$][\w$]*/u.exec(admission.typeName)?.[0] ?? admission.typeName;
     const moduleFailed = linesWithDiag.has(probe.moduleImportLine);
-    const spineUnresolved = linesWithDiag.has(probe.spineDeclLine);
+    const spineUnresolved = linesWithDiag.has(probe.spineDeclLine) || unresolvedSpineRoots.has(surfaceName);
     const runtimeUnresolved = moduleFailed || linesWithDiag.has(probe.runtimeDeclLine);
     // A fired is-any guard means the type silently resolved to `any` (an unaliased
     // cross-package import / a broken type) — an `any` makes both assignability probes
@@ -230,7 +292,7 @@ export function buildSpineRelationFacts(
       const detail = moduleFailed
         ? `runtime module ${admission.runtimeModule} did not resolve: ${linesWithDiag.get(probe.moduleImportLine)}`
         : spineUnresolved
-          ? `spine type Spine.${admission.spineExpr} did not resolve: ${linesWithDiag.get(probe.spineDeclLine)}`
+          ? `spine type Spine.${admission.spineExpr} did not resolve: ${linesWithDiag.get(probe.spineDeclLine) ?? `root export ${surfaceName} has no declaration target`}`
           : runtimeUnresolved
             ? `runtime type ${admission.runtimeExpr} (${admission.runtimeModule}) did not resolve: ${linesWithDiag.get(probe.runtimeDeclLine)}`
             : spineIsAny

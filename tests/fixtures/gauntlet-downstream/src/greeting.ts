@@ -11,9 +11,9 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 
-/** Greet a non-empty name; a bare empty name is a tagged @czap/error (no bare throw). */
+/** Greet a non-empty name; a bare empty name is a tagged @liteship/error (no bare throw). */
 export function greet(name: string): string {
   if (name.trim() === '') {
     throw ValidationError('greet', 'name must be non-empty');

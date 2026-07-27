@@ -2,7 +2,7 @@
  * VitestRunner runtime — shell-free spawn of `pnpm exec vitest run <files>`.
  * The host capability the verify commands (capsule/asset/scene) use to run a
  * capsule's generated tests. The capsule *declaration* (`cli.vitest-runner`,
- * walked into the manifest) stays in `@czap/cli`; this is just the callable.
+ * walked into the manifest) stays in `@liteship/cli`; this is just the callable.
  *
  * @module
  */

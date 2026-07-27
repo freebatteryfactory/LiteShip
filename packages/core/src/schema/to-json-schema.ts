@@ -21,7 +21,7 @@
  *                           JSON-Schema image beyond its base)
  *   - nested struct/array → recursed
  *
- * UNSUPPORTED — a tagged `UnsupportedError` (`@czap/error`), NEVER a silent
+ * UNSUPPORTED — a tagged `UnsupportedError` (`@liteship/error`), NEVER a silent
  * fallback: `bytes` and `hole` declaration nodes (the opaque family — no sound
  * JSON-Schema image), open `record` index signatures (the dialect has no
  * `additionalProperties`), `tuple` fixed-arity positional lists (the dialect has no
@@ -31,7 +31,7 @@
  *
  * @module
  */
-import { UnsupportedError } from '@czap/error';
+import { UnsupportedError } from '@liteship/error';
 import type { LiteralValue, Schema, SchemaNode, StructNode, UnionNode } from './ast.js';
 
 // The derived JSON-Schema dialect (the CommandJsonSchema / validateStructural

@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite-plus';
-import { Config } from './packages/core/src/config.js';
+import { Config, defineConfig as defineLiteshipConfig } from './packages/core/src/authoring/config.js';
 
 const repoRoot = __dirname;
-const alias = Config.toTestAliases(Config.make({}), repoRoot);
+const alias = Config.toTestAliases(defineLiteshipConfig({}), repoRoot);
 
 export default defineConfig({
   resolve: {

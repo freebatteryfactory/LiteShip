@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/transition-gate
 /**
  * The transition-conformance GATE RUNNER proof — the repo-local host
  * (`scripts/transition-conformance-gate.ts`) folds the SHARED pinned corpus
@@ -18,7 +19,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { transitionConformanceGate, memoryContext } from '@czap/gauntlet';
+import { transitionConformanceGate, memoryContext } from '@liteship/gauntlet';
 import { emissionPolicy } from '../../support/reactive-oracle.js';
 import {
   FAMILY_LAWS,

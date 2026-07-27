@@ -6,8 +6,8 @@
 
 # Variable: DIAGNOSTIC\_SOURCE
 
-> `const` **DIAGNOSTIC\_SOURCE**: `"czap-gauntlet"`
+> `const` **DIAGNOSTIC\_SOURCE**: `"liteship-gauntlet"`
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L42)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L44)
 
 The fixed provenance every gauntlet diagnostic carries (§Diagnostic.source).

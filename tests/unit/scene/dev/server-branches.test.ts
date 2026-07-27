@@ -46,7 +46,7 @@ function makeFakeServer(overrides: Partial<Pick<FakeViteServer, 'resolvedUrls' |
   };
 }
 
-/** Boot through the mock, wiring the czap-scene-watch plugin like Vite would. */
+/** Boot through the mock, wiring the liteship-scene-watch plugin like Vite would. */
 async function boot(scenePath: string, fake: FakeViteServer) {
   createServerMock.mockImplementation(async (config: { plugins: Array<{ configureServer(s: unknown): void }> }) => {
     for (const plugin of config.plugins) plugin.configureServer(fake);
@@ -66,7 +66,7 @@ afterEach(() => {
 });
 
 describe('scene watcher change filter', () => {
-  it('a change event for the watched scene (suffix match) emits czap:scene-update', async () => {
+  it('a change event for the watched scene (suffix match) emits liteship:scene-update', async () => {
     const fake = makeFakeServer();
     await boot('scenes/demo.ts', fake);
     expect(fake.watcher.add).toHaveBeenCalledWith(resolve('scenes/demo.ts'));
@@ -74,7 +74,7 @@ describe('scene watcher change filter', () => {
     fake.watcher.emit('change', '/abs/project/scenes/demo.ts');
     expect(fake.ws.send).toHaveBeenCalledWith({
       type: 'custom',
-      event: 'czap:scene-update',
+      event: 'liteship:scene-update',
       data: { sceneId: '/abs/project/scenes/demo.ts' },
     });
   });

@@ -6,14 +6,15 @@
  * @module
  */
 
-import { wallClock, type ContentAddress, type WallClockTimestamp } from '@czap/core';
+import { wallClock, type ContentAddress, type WallClockTimestamp } from '@liteship/core';
+import type { DiagnosticCodeFor } from '@liteship/error';
 
 /** Re-exported so CLI receipt structs share one wall-clock-timestamp vocabulary (CUT B2). */
-export type { WallClockTimestamp } from '@czap/core';
+export type { WallClockTimestamp } from '@liteship/core';
 
-// Manifest-path resolution moved to @czap/command/host (CUT A1 capstone-1);
+// Manifest-path resolution moved to @liteship/command/host (CUT A1 capstone-1);
 // re-exported here so CLI command import sites resolve unchanged.
-export { getCapsuleManifestPath } from '@czap/command/host';
+export { getCapsuleManifestPath } from '@liteship/command/host';
 
 /** Base shape carried by every CLI command receipt. */
 export interface BaseReceipt {
@@ -53,7 +54,7 @@ export interface AssetAnalyzeReceipt extends BaseReceipt {
   readonly markerCount: number;
 }
 
-/** Receipt emitted by `czap ship` for each package whose ShipCapsule was minted. */
+/** Receipt emitted by `liteship ship` for each package whose ShipCapsule was minted. */
 export interface ShipReceipt extends BaseReceipt {
   readonly command: 'ship';
   readonly package_name: string;
@@ -66,7 +67,7 @@ export interface ShipReceipt extends BaseReceipt {
 }
 
 /**
- * Receipt emitted by `czap ship` when a package's version is already on the
+ * Receipt emitted by `liteship ship` when a package's version is already on the
  * registry. Idempotent re-runs (a release workflow retried mid-batch) are
  * success, not failure — the package on npm already matches the canonical
  * state, so there is nothing to mint or publish.
@@ -78,7 +79,7 @@ export interface ShipSkippedReceipt extends BaseReceipt {
   readonly already_published: true;
 }
 
-/** Per-input check outcomes recorded by `czap verify`. Forward-compat fields stay `'skipped'` in v0.1.0. */
+/** Per-input check outcomes recorded by `liteship verify`. Forward-compat fields stay `'skipped'` in v0.1.0. */
 export interface ShipVerifyChecks {
   readonly tarball_manifest: 'match' | 'mismatch' | 'skipped';
   readonly lockfile: 'skipped';
@@ -86,7 +87,7 @@ export interface ShipVerifyChecks {
   readonly chain_link: 'skipped';
 }
 
-/** Receipt emitted by `czap verify` per ADR-0011. Verdict drives exit code. */
+/** Receipt emitted by `liteship verify` per ADR-0011. Verdict drives exit code. */
 export interface ShipVerifyReceipt extends BaseReceipt {
   readonly command: 'verify';
   readonly verdict: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
@@ -96,13 +97,18 @@ export interface ShipVerifyReceipt extends BaseReceipt {
   readonly mismatches: readonly string[];
 }
 
-/** Receipt emitted by `czap sbom` (Slice C — supply chain). */
+/** Receipt emitted by `liteship sbom` (Slice C — supply chain). */
 export interface SbomReceipt extends BaseReceipt {
   readonly command: 'sbom';
   /** Repo-relative path the deterministic SBOM was written to. */
   readonly artifact_path: string;
   /** Content address (AddressedDigest display id) of the emitted SBOM. */
   readonly content_address: ContentAddress;
+  /** CycloneDX VEX projection over the same component identities. */
+  readonly vex_artifact_path: string;
+  readonly vex_content_address: ContentAddress;
+  /** Zero means no assessments were supplied, not that no vulnerabilities exist. */
+  readonly vex_assessment_count: number;
   /** Total components (workspace + external) enumerated. */
   readonly component_count: number;
   /** Lockfile packages the SBOM covers. */
@@ -117,15 +123,17 @@ export function emit(receipt: unknown): void {
 }
 
 /**
- * Emit a structured error event to stderr as a single JSON line. `hint`
- * carries the literal next thing to type (the doctor-check convention,
- * generalized) — present in the envelope only when supplied.
+ * Emit a structured error event to stderr as a single JSON line. `code` is a
+ * closed, explainable CLI diagnostic identity; dynamic command/path data stays
+ * in `message`. `hint` carries the literal next thing to type (the doctor-check
+ * convention, generalized) — present in the envelope only when supplied.
  */
-export function emitError(command: string, message: string, hint?: string): void {
+export function emitError(command: string, code: DiagnosticCodeFor<'cli'>, message: string, hint?: string): void {
   process.stderr.write(
     JSON.stringify({
       status: 'failed',
       command,
+      code,
       error: message,
       ...(hint !== undefined ? { hint } : {}),
       timestamp: new Date(wallClock.now()).toISOString(),

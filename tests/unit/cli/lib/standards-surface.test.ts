@@ -1,5 +1,5 @@
 /**
- * The HOST standards-surface EXTRACTOR (`packages/cli/src/lib/standards-surface.ts`)
+ * The HOST standards-surface EXTRACTOR (`packages/cli/src/internal/standards-surface.ts`)
  * — the raccoon-rule phase-A backstop: read the LIVE standards surface, content-
  * address it, diff it against the committed snapshot, apply the owner sign-offs, and
  * produce the flat {@link StandardsIntegrityFacts} the lean engine folds.
@@ -7,7 +7,7 @@
  * These pins drive the extractor over an ISOLATED, fully-synthetic temp repo (a
  * controlled `benchmarks/` + `traceability/` on disk) so every branch is hermetic —
  * the real live-repo green path is proven separately in `tests/unit/meta/`. Pins:
- *  - SURFACE SHAPE: the live surface is a sorted, uniquely-keyed `snapshotFormat: 1`
+ *  - SURFACE SHAPE: the live surface is a sorted, uniquely-keyed `snapshotFormat: 2`
  *    record whose address is the verbatim `fnv1a:`-prefixed kernel output.
  *  - DETERMINISM (the two-clock law): the same repo + injected `now` → a byte-
  *    identical serialized surface + an identical address; a different `now` may
@@ -29,8 +29,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isTaggedError } from '@czap/error';
-import { contentAddressOf } from '@czap/core';
+import { isTaggedError } from '@liteship/error';
+import { contentAddressOf } from '@liteship/core';
 import {
   readLiveStandardsSurface,
   serializeStandardsSurface,
@@ -43,9 +43,9 @@ import {
   STANDARDS_BASE_PROBE_PATH,
   type GitShowReader,
   type GitIntroCommitReader,
-} from '../../../../packages/cli/src/lib/standards-surface.js';
-import type { StandardsElement, StandardsWaiver } from '@czap/gauntlet';
-import type { StandardsIntegrityResult } from '../../../../packages/cli/src/lib/standards-surface.js';
+} from '../../../../packages/cli/src/internal/standards-surface.js';
+import type { StandardsElement, StandardsWaiver } from '@liteship/gauntlet';
+import type { StandardsIntegrityResult } from '../../../../packages/cli/src/internal/standards-surface.js';
 
 /**
  * Assert the backstop is ACTIVE (the base carried the snapshot → the diff ran) and return
@@ -65,7 +65,7 @@ function activeFacts(result: StandardsIntegrityResult) {
  * so a same-commit weakening that regenerates the working snapshot still diffs vs the
  * base. These hermetic tests inject the base directly (no real git in a temp repo).
  */
-function baseGitShow(base: { snapshotFormat: 1; elements: readonly StandardsElement[]; address: string }): GitShowReader {
+function baseGitShow(base: { snapshotFormat: 1 | 2; elements: readonly StandardsElement[]; address: string }): GitShowReader {
   return (_root, _ref, path) => (path === STANDARDS_SNAPSHOT_PATH ? serializeStandardsSurface(base) : '{}');
 }
 
@@ -76,7 +76,7 @@ function baseGitShow(base: { snapshotFormat: 1; elements: readonly StandardsElem
  * INACTIVE (a loud pass). The probe path returns bytes; the snapshot path returns undefined.
  */
 const resolvableBaseNoSnapshot: GitShowReader = (_root, _ref, path) =>
-  path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+  path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
 
 /**
  * A {@link GitShowReader} modeling the CONFIG-ERROR side: the base ref is UNRESOLVABLE —
@@ -140,7 +140,7 @@ function writeFloors(): void {
 }
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-standards-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-standards-'));
   writeTraceability();
   writeFloors();
 });
@@ -149,9 +149,9 @@ afterEach(() => {
 });
 
 describe('readLiveStandardsSurface — the canonical, content-addressed surface', () => {
-  it('produces a sorted snapshotFormat-1 surface whose address is the verbatim fnv1a kernel output', () => {
+  it('produces a sorted snapshotFormat-2 surface whose address is the verbatim fnv1a kernel output', () => {
     const surface = readLiveStandardsSurface(root, NOW);
-    expect(surface.snapshotFormat).toBe(1);
+    expect(surface.snapshotFormat).toBe(2);
     expect(surface.elements.length).toBeGreaterThan(0);
     // The address is the EXACT kernel output over the sorted elements (no re-prefix).
     expect(surface.address).toBe(String(contentAddressOf(surface.elements)));
@@ -206,8 +206,8 @@ describe('readLiveStandardsSurface — the two-clock determinism law', () => {
     // determinism that bites: two reads at the SAME now are byte-equal.
     expect(readLiveStandardsSurface(root, NOW).address).toBe(readLiveStandardsSurface(root, NOW).address);
     // Both surfaces are well-formed regardless of which side of expiry now is.
-    expect(before.snapshotFormat).toBe(1);
-    expect(after.snapshotFormat).toBe(1);
+    expect(before.snapshotFormat).toBe(2);
+    expect(after.snapshotFormat).toBe(2);
   });
 
   it('omits the floor artifacts when the benchmark files are absent (an optional surface region)', () => {
@@ -268,7 +268,7 @@ describe('serializeStandardsSurface + readCommittedSnapshot — the canonical ro
     writeCommittedSnapshot(root, surface);
     expect(existsSync(join(root, STANDARDS_SNAPSHOT_PATH))).toBe(true);
     const recovered = readCommittedSnapshot(root);
-    expect(recovered.snapshotFormat).toBe(1);
+    expect(recovered.snapshotFormat).toBe(2);
     expect(recovered.address).toBe(surface.address);
     expect(serializeStandardsSurface(recovered)).toBe(serialized);
   });
@@ -294,7 +294,7 @@ describe('serializeStandardsSurface + readCommittedSnapshot — the canonical ro
 
   it('throws when the committed snapshot is malformed (wrong snapshotFormat / no elements[])', () => {
     mkdirSync(join(root, 'traceability'), { recursive: true });
-    writeFileSync(join(root, STANDARDS_SNAPSHOT_PATH), JSON.stringify({ snapshotFormat: 2, elements: [] }), 'utf8');
+    writeFileSync(join(root, STANDARDS_SNAPSHOT_PATH), JSON.stringify({ snapshotFormat: 3, elements: [] }), 'utf8');
     expect(() => readCommittedSnapshot(root)).toThrow();
   });
 
@@ -465,7 +465,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     const birthBytes = serializeStandardsSurface(readLiveStandardsSurface(root, NOW));
     const gitShow: GitShowReader = (_root, ref, path) => {
       if (path === STANDARDS_SNAPSHOT_PATH) return ref === INTRO ? birthBytes : undefined;
-      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"liteship"}';
       return undefined;
     };
     const gitIntroCommit: GitIntroCommitReader = () => INTRO;
@@ -492,7 +492,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     const birthBytes = serializeStandardsSurface(strongerBirth);
     const gitShow: GitShowReader = (_root, ref, path) => {
       if (path === STANDARDS_SNAPSHOT_PATH) return ref === INTRO ? birthBytes : undefined;
-      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"liteship"}';
       return undefined;
     };
     const result = buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => INTRO });
@@ -505,7 +505,7 @@ describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-b
     // A git inconsistency: the intro commit resolves, but `git show <intro>:<snapshot>` is
     // undefined. The backstop must refuse rather than pass without a baseline.
     const gitShow: GitShowReader = (_root, _ref, path) =>
-      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
     expect(() =>
       buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => 'c'.repeat(40) }),
     ).toThrow();

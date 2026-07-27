@@ -6,7 +6,7 @@
 
 # Interface: ProvenanceFacts
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L85)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L85)
 
 Provenance facts — the ShipCapsule evidence re-read + validated.
 
@@ -16,7 +16,7 @@ Provenance facts — the ShipCapsule evidence re-read + validated.
 
 > `readonly` **packageName**: `string`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L87)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L87)
 
 The package this capsule attests (`@scope/name`).
 
@@ -26,7 +26,7 @@ The package this capsule attests (`@scope/name`).
 
 > `readonly` **sourceCommit**: `string`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L89)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L89)
 
 The recorded `source_commit` (well-formedness is a violation if not).
 
@@ -36,7 +36,7 @@ The recorded `source_commit` (well-formedness is a violation if not).
 
 > `readonly` **sourceDirty**: `boolean`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L91)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L91)
 
 Whether the capsule recorded a dirty working tree at ship time.
 
@@ -46,7 +46,7 @@ Whether the capsule recorded a dirty working tree at ship time.
 
 > `readonly` **violations**: readonly [`SupplyChainViolation`](SupplyChainViolation.md)[]
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L98)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L98)
 
 Every decided provenance violation — chiefly `lockfile-address-drift` (the
 capsule's recorded `lockfile_address` ≠ the live pnpm-lock.yaml's address),

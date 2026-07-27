@@ -21,20 +21,20 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
   test('create spawns a real Worker that emits ready on init', async () => {
     const worker = RenderWorker.create();
     await waitForWorkerReady(worker);
-    worker.dispose();
+    await worker.dispose();
   });
 
   test('dispose terminates the worker without errors', async () => {
     const worker = RenderWorker.create();
     await waitForWorkerReady(worker);
-    expect(() => worker.dispose()).not.toThrow();
-    expect(() => worker.dispose()).not.toThrow();
+    await expect(worker.dispose()).resolves.toBeUndefined();
+    await expect(worker.dispose()).resolves.toBeUndefined();
   });
 
-  test('worker.worker exposes the real Worker instance', () => {
+  test('worker.worker exposes the real Worker instance', async () => {
     const rw = RenderWorker.create();
     expect(rw.worker).toBeInstanceOf(Worker);
-    rw.dispose();
+    await rw.dispose();
   });
 
   describe.skipIf(offscreenCanvasAbsent)('OffscreenCanvas-dependent flows', () => {
@@ -51,7 +51,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     // Should not throw -- canvas is transferred to worker
     expect(() => worker.transferCanvas(offscreen)).not.toThrow();
 
-    worker.dispose();
+    await worker.dispose();
   });
 
   test('startRender produces frame events and render-complete', async () => {
@@ -94,7 +94,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     expect(frames.length).toBeGreaterThan(0);
     expect(completedFrames).toBeGreaterThan(0);
 
-    worker.dispose();
+    await worker.dispose();
   });
 
   // Anchored on a frame event rather than wall clock: the worker yields
@@ -157,7 +157,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     expect(seen.length).toBeLessThan(TOTAL_FRAMES_REQUESTED);
     expect(seen.length).toBeGreaterThanOrEqual(STOP_AT_FRAME + 1);
 
-    worker.dispose();
+    await worker.dispose();
   });
 
   // Coarse wall-clock smoke for targetFps pacing: 10 frames at targetFps=40
@@ -204,7 +204,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     expect(frames.length).toBe(10);
     expect(elapsedMs).toBeGreaterThanOrEqual(200);
 
-    worker.dispose();
+    await worker.dispose();
   });
 
   test('onFrame returns an unsubscribe function that stops callbacks', async () => {
@@ -221,7 +221,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
 
     // Even if frames arrive, callback should not fire
     expect(callCount).toBe(0);
-    worker.dispose();
+    await worker.dispose();
   });
 
   test('onComplete returns an unsubscribe function', async () => {
@@ -236,7 +236,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
 
     unsub();
     expect(called).toBe(false);
-    worker.dispose();
+    await worker.dispose();
   });
 
   test('frame output includes frame number, timestamp, and state', async () => {
@@ -264,7 +264,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     expect(firstFrame).toHaveProperty('timestamp');
     expect(firstFrame).toHaveProperty('state');
 
-    worker.dispose();
+    await worker.dispose();
   });
   });
 });

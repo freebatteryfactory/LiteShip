@@ -22,8 +22,8 @@
  * WHY IT CANNOT BE BYPASSED (the token witness): a raw candidate becomes a graph
  * mutation ONLY through `AICast.validateGraphPatchProposal` → `applyValidatedPatch`.
  * `applyValidatedPatch`'s signature DEMANDS a `ValidatedProposal`, which only the
- * validators in `@czap/core`'s ai-cast can MINT (the mint site, `mintValidated`, is
- * NOT re-exported from `@czap/core` — see core's index: "the envelope stays
+ * validators in `@liteship/core`'s ai-cast can MINT (the mint site, `mintValidated`, is
+ * NOT re-exported from `@liteship/core` — see core's index: "the envelope stays
  * un-forgeable outside the validators"). This seam therefore CANNOT hand the
  * runtime a patch that skipped validation: it must run the validator first to get a
  * proposal, and the validator re-pins `base`, re-seals every node (defeating
@@ -43,7 +43,13 @@
  * @module
  */
 
-import { AICast, verifyAppliedGraph, type AIContext, type CastContextOptions, type DocumentGraph } from '@czap/core';
+import {
+  AICast,
+  verifyAppliedGraph,
+  type AIContext,
+  type CastContextOptions,
+  type DocumentGraph,
+} from '@liteship/core';
 import { graphRuntimeInternals, type GraphRuntimeHandle } from './graph-runtime.js';
 
 /**

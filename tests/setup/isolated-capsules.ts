@@ -4,8 +4,8 @@
  * Many CLI/manifest tests need a populated `reports/capsule-manifest.json`
  * (and, for capsule:verify, generated test/bench files) — so they spawn
  * `pnpm run capsule:compile` in `beforeAll`. That writer hits TWO shared
- * targets: the manifest (env-overridable via CZAP_CAPSULE_MANIFEST) and the
- * `tests/generated/` dir (env-overridable via CZAP_CAPSULE_GENERATED_DIR).
+ * targets: the manifest (env-overridable via LITESHIP_CAPSULE_MANIFEST) and the
+ * `tests/generated/` dir (env-overridable via LITESHIP_CAPSULE_GENERATED_DIR).
  * Run in parallel, those spawns `renameSync` over each other — and over the
  * committed generated files the parent vitest run is concurrently executing —
  * tripping Windows EPERM/EACCES.
@@ -23,7 +23,7 @@
  *     itself (it must produce real files). Redirects BOTH the manifest and the
  *     generated dir to a temp dir, so the writes are fully isolated.
  *
- * Both leave their CZAP_CAPSULE_* overrides set after the call (so a following
+ * Both leave their LITESHIP_CAPSULE_* overrides set after the call (so a following
  * in-process `run([...])` reads the temp manifest); call `restore()` in
  * `afterAll`.
  *
@@ -36,11 +36,11 @@ import { dirname, join } from 'node:path';
 
 /** Paths + teardown for an isolated capsule:compile run. */
 export interface IsolatedCapsules {
-  /** Absolute path to the isolated manifest (also exported as CZAP_CAPSULE_MANIFEST). */
+  /** Absolute path to the isolated manifest (also exported as LITESHIP_CAPSULE_MANIFEST). */
   readonly manifestPath: string;
   /** Absolute path to the isolated generated dir, or `null` in manifest-only mode. */
   readonly generatedDir: string | null;
-  /** Reset CZAP_CAPSULE_* env to its prior value and remove the temp dir. */
+  /** Reset LITESHIP_CAPSULE_* env to its prior value and remove the temp dir. */
   readonly restore: () => void;
 }
 
@@ -52,17 +52,17 @@ interface EnvSnapshot {
 
 function snapshotEnv(): EnvSnapshot {
   return {
-    manifest: process.env.CZAP_CAPSULE_MANIFEST,
-    generated: process.env.CZAP_CAPSULE_GENERATED_DIR,
-    manifestOnly: process.env.CZAP_CAPSULE_MANIFEST_ONLY,
+    manifest: process.env.LITESHIP_CAPSULE_MANIFEST,
+    generated: process.env.LITESHIP_CAPSULE_GENERATED_DIR,
+    manifestOnly: process.env.LITESHIP_CAPSULE_MANIFEST_ONLY,
   };
 }
 
 function restoreEnv(prior: EnvSnapshot): void {
   for (const [key, value] of [
-    ['CZAP_CAPSULE_MANIFEST', prior.manifest],
-    ['CZAP_CAPSULE_GENERATED_DIR', prior.generated],
-    ['CZAP_CAPSULE_MANIFEST_ONLY', prior.manifestOnly],
+    ['LITESHIP_CAPSULE_MANIFEST', prior.manifest],
+    ['LITESHIP_CAPSULE_GENERATED_DIR', prior.generated],
+    ['LITESHIP_CAPSULE_MANIFEST_ONLY', prior.manifestOnly],
   ] as const) {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
@@ -82,15 +82,15 @@ async function spawnCompile(): Promise<{ exitCode: number; stderrTail: string }>
  *
  * @throws if the compile exits non-zero (surfaces the captured stderr tail).
  */
-export async function compileManifestOnly(label = 'czap-manifest'): Promise<IsolatedCapsules> {
+export async function compileManifestOnly(label = 'liteship-manifest'): Promise<IsolatedCapsules> {
   const root = mkdtempSync(join(tmpdir(), `${label}-`));
   const manifestPath = join(root, 'reports', 'capsule-manifest.json');
   mkdirSync(dirname(manifestPath), { recursive: true });
 
   const prior = snapshotEnv();
-  process.env.CZAP_CAPSULE_MANIFEST = manifestPath;
-  process.env.CZAP_CAPSULE_MANIFEST_ONLY = '1';
-  // Leave CZAP_CAPSULE_GENERATED_DIR at its prior value (default = real
+  process.env.LITESHIP_CAPSULE_MANIFEST = manifestPath;
+  process.env.LITESHIP_CAPSULE_MANIFEST_ONLY = '1';
+  // Leave LITESHIP_CAPSULE_GENERATED_DIR at its prior value (default = real
   // tests/generated) so the manifest entries point at the committed files.
 
   const restore = (): void => {
@@ -115,7 +115,7 @@ export async function compileManifestOnly(label = 'czap-manifest'): Promise<Isol
  *
  * @throws if the compile exits non-zero (surfaces the captured stderr tail).
  */
-export async function compileCapsulesIsolated(label = 'czap-iso'): Promise<IsolatedCapsules> {
+export async function compileCapsulesIsolated(label = 'liteship-iso'): Promise<IsolatedCapsules> {
   const root = mkdtempSync(join(tmpdir(), `${label}-`));
   const manifestPath = join(root, 'reports', 'capsule-manifest.json');
   const generatedDir = join(root, 'generated');
@@ -123,9 +123,9 @@ export async function compileCapsulesIsolated(label = 'czap-iso'): Promise<Isola
   mkdirSync(generatedDir, { recursive: true });
 
   const prior = snapshotEnv();
-  process.env.CZAP_CAPSULE_MANIFEST = manifestPath;
-  process.env.CZAP_CAPSULE_GENERATED_DIR = generatedDir;
-  delete process.env.CZAP_CAPSULE_MANIFEST_ONLY;
+  process.env.LITESHIP_CAPSULE_MANIFEST = manifestPath;
+  process.env.LITESHIP_CAPSULE_GENERATED_DIR = generatedDir;
+  delete process.env.LITESHIP_CAPSULE_MANIFEST_ONLY;
 
   const restore = (): void => {
     restoreEnv(prior);

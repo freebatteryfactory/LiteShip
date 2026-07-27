@@ -12,8 +12,17 @@ import type {
   ReactiveQuantizer,
   Easing,
   Scheduler,
-} from '@czap/core';
-import { Diagnostics, systemClock, Animation, Millis as mkMillis, CellKernel, Lifetime } from '@czap/core';
+} from '@liteship/core';
+import {
+  Diagnostics,
+  systemClock,
+  Animation,
+  Millis as mkMillis,
+  CellKernel,
+  Lifetime,
+  attachLifetime,
+} from '@liteship/core';
+import type { AsyncOwnedResource } from '@liteship/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -22,7 +31,7 @@ import { Transition as TransitionFactory } from './transition.js';
 // ---------------------------------------------------------------------------
 
 /** An interpolated animation frame emitted during a crossing. */
-export interface InterpolatedFrame<B extends Boundary.Shape> {
+export interface InterpolatedFrame<B extends Boundary> {
   /** Target state of the in-flight transition. */
   readonly state: StateUnion<B>;
   /** Progress in `[0, 1]`, where `1` means the animation has landed. */
@@ -40,7 +49,7 @@ export interface InterpolatedFrame<B extends Boundary.Shape> {
  * Subscribe via `interpolated.subscribe(sink)`; a late subscriber never sees a
  * frame published before it attached.
  */
-export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends ReactiveQuantizer<B> {
+export interface AnimatedQuantizer<B extends Boundary> extends ReactiveQuantizer<B> {
   /** Resolver that maps `from -> to` crossings to {@link TransitionConfig}. */
   readonly transition: Transition<B>;
   /** No-replay subscription of interpolated animation frames during crossings. */
@@ -48,15 +57,14 @@ export interface AnimatedQuantizerShape<B extends Boundary.Shape> extends Reacti
 }
 
 /**
- * The pair {@link AnimatedQuantizer.make} returns: the live animated quantizer
- * plus the {@link Lifetime} that owns its teardown. Dispose the lifetime to stop
- * observing the wrapped quantizer's crossings, abort any in-flight animation, and
- * close the `interpolated` fan-out (completing subscribers, making publish inert).
+ * A live animated quantizer that owns its teardown directly
+ * ({@link AsyncOwnedResource}): `await animated.dispose()` stops observing the
+ * wrapped quantizer's crossings, aborts any in-flight animation, and closes the
+ * `interpolated` fan-out (completing subscribers, making publish inert). The
+ * owning {@link Lifetime} stays reachable as `animated.lifetime` for advanced
+ * composition.
  */
-export interface AnimatedQuantizerHandle<B extends Boundary.Shape> {
-  readonly animated: AnimatedQuantizerShape<B>;
-  readonly lifetime: Lifetime.Shape;
-}
+export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizer<B> & AsyncOwnedResource;
 
 // ---------------------------------------------------------------------------
 // Linear easing fallback
@@ -106,7 +114,7 @@ function nowMs(): number {
  * a restated copy. Finite-numeric strings (`'1'`, `'0.5'`) are coerced via
  * `Number()` so they lerp; other strings pass through and snap at 50%.
  */
-function deriveInterpolationOutputs<B extends Boundary.Shape>(
+function deriveInterpolationOutputs<B extends Boundary>(
   quantizer: Quantizer<B>,
 ): Record<string, Record<string, number | string>> | undefined {
   if (!('config' in quantizer)) return undefined;
@@ -175,7 +183,7 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
  * the abort-woken frame carries a placeholder timestamp but is always discarded
  * by the loop body's `signal.aborted` return before it is read.
  */
-function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Scheduler.Shape {
+function abortAwareScheduler(base: Scheduler, signal: AbortSignal): Scheduler {
   // At most one tick is outstanding (Animation.run is a single-consumer pull
   // clock), so a single-slot listener handle tracks the live tick's abort wake.
   let currentOnAbort: (() => void) | null = null;
@@ -232,20 +240,20 @@ function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Schedu
  *
  * @example
  * ```ts
- * import { Boundary, Millis } from '@czap/core';
- * import { Q, AnimatedQuantizer } from '@czap/quantizer';
+ * import { defineBoundary, Millis } from '@liteship/core';
+ * import { defineQuantizer, createQuantizer, AnimatedQuantizer } from '@liteship/quantizer';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'scroll',
  *   at: [[0, 'top'], [500, 'bottom']],
  * });
- * const config = Q.from(boundary).outputs({
- *   css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } },
+ * const config = defineQuantizer(boundary, {
+ *   outputs: { css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } } },
  * });
- * const { quantizer: live } = config.create();
+ * const live = createQuantizer(config);
  * // outputs omitted: derived from the LiveQuantizer's css output tables
- * const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
- * const dispose = animated.interpolated.subscribe((frame) => { ... });
+ * const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(300) } });
+ * const unsubscribe = animated.interpolated.subscribe((frame) => { ... });
  * live.evaluate(600); // triggers interpolation
  * ```
  *
@@ -256,19 +264,19 @@ function abortAwareScheduler(base: Scheduler.Shape, signal: AbortSignal): Schedu
  *                      `config.outputs.css` tables (finite-numeric strings are
  *                      coerced to numbers so they lerp)
  * @param options     - Optional injection bag. `options.scheduler` supplies a
- *                      `Scheduler.Shape` frame clock (e.g. `Scheduler.raf()`
+ *                      `Scheduler` frame clock (e.g. `Scheduler.raf()`
  *                      to align frames to the display, or `Scheduler.fixedStep(fps)`
  *                      for deterministic rendering/tests). Omitted, the animation
  *                      drives its own internal ~60fps loop via a fixed 16ms sleep
  *                      (the historical default — existing callers are unchanged).
- * @returns An {@link AnimatedQuantizerHandle} — the instance plus its {@link Lifetime}
+ * @returns An {@link OwnedAnimatedQuantizer} — the instance that owns its own teardown via `dispose()`
  */
-function makeAnimatedQuantizer<B extends Boundary.Shape>(
+function makeAnimatedQuantizer<B extends Boundary>(
   quantizer: ReactiveQuantizer<B>,
   transitions: TransitionMap<StateUnion<B> & string>,
   outputs?: Record<string, Record<string, number | string>>,
-  options?: { readonly scheduler?: Scheduler.Shape },
-): AnimatedQuantizerHandle<B> {
+  options?: { readonly scheduler?: Scheduler },
+): OwnedAnimatedQuantizer<B> {
   const boundary = quantizer.boundary;
   const scheduler = options?.scheduler;
   const transitionResolver = TransitionFactory.for(quantizer, transitions);
@@ -281,7 +289,7 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
     const uncovered = stateNames.filter((s) => effectiveOutputs[s] === undefined);
     if (uncovered.length > 0) {
       Diagnostics.warn({
-        source: 'czap/quantizer',
+        source: 'liteship/quantizer',
         code: 'uncovered-animation-states',
         message: `AnimatedQuantizer outputs cover [${Object.keys(effectiveOutputs).join(', ')}] but boundary "${boundary.input}" has states [${stateNames.join(', ')}]; transitions into ${uncovered.map((s) => `'${s}'`).join(', ')} will animate to empty outputs.`,
       });
@@ -301,6 +309,8 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
   // The in-flight animation's abort handle (was currentFiberRef) — one
   // AbortController per crossing; a new crossing aborts the prior.
   let currentAbort: AbortController | null = null;
+  const activeRuns = new Set<Promise<void>>();
+  const lifetime = Lifetime.make();
 
   /**
    * Run one crossing's animation to completion (or until `signal` aborts). The
@@ -343,8 +353,19 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
     }
 
     if (duration <= 0) {
-      frames.publish({ state: to, progress: 1, outputs: toOutputs });
+      // Publish the terminal frame only after making its outputs the interruption
+      // origin. A frame subscriber may synchronously publish a newer crossing;
+      // that run must start from the frame it observed, and this older run must
+      // not resume afterward and overwrite the newer landed state.
+      const previousOutputs = currentOutputs;
       currentOutputs = toOutputs;
+      try {
+        frames.publish({ state: to, progress: 1, outputs: toOutputs });
+      } catch (cause) {
+        if (!signal.aborted) currentOutputs = previousOutputs;
+        throw cause;
+      }
+      if (signal.aborted) return;
       stateCell.publish(to);
       return;
     }
@@ -386,6 +407,7 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
 
   /** Interrupt the prior animation and start a fresh one for `crossing`. */
   function startAnimation(crossing: BoundaryCrossing<StateUnion<B> & string>): void {
+    if (lifetime.disposed) return;
     // Interrupt-previous: abort the in-flight animation's controller.
     currentAbort?.abort();
     const controller = new AbortController();
@@ -402,10 +424,30 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
     const fromOutputs = { ...currentOutputs };
     const toOutputs: Record<string, number | string> = effectiveOutputs?.[crossing.to as string] ?? {};
 
-    // Fire-and-forget: the animation drives itself off the scheduler/timers and
-    // publishes frames to the fan-out. Its own `signal` checks stop it on
-    // interrupt or dispose; failures are swallowed (there is no consumer to fail).
-    void runAnimation(controller.signal, to, duration, easing, delay, fromOutputs, toOutputs).catch(() => undefined);
+    // The animation drives itself off the scheduler/timers. Retain every task so
+    // disposal can abort and await quiescence before closing its public cells.
+    // A scheduler or subscriber failure is operator-visible rather than silently
+    // disappearing from a fire-and-forget promise.
+    const task = runAnimation(controller.signal, to, duration, easing, delay, fromOutputs, toOutputs).catch(
+      (cause: unknown) => {
+        if (controller.signal.aborted) return;
+        Diagnostics.error({
+          source: 'liteship/quantizer',
+          code: 'animation-runtime-failed',
+          message: `AnimatedQuantizer failed while transitioning to '${String(to)}'.`,
+          cause,
+        });
+      },
+    );
+    const forgetTask = (): void => {
+      activeRuns.delete(task);
+      if (currentAbort === controller) currentAbort = null;
+    };
+    activeRuns.add(task);
+    void task.then(
+      () => forgetTask(),
+      () => forgetTask(),
+    );
   }
 
   // Eagerly observe the wrapped quantizer's crossings (was the lazy
@@ -413,28 +455,43 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
   // single frame fan-out.
   const unsubscribe = quantizer.changes.subscribe((crossing) => startAnimation(crossing));
 
-  const lifetime = Lifetime.make();
-  lifetime.add(() => {
+  lifetime.add(async () => {
     unsubscribe();
     currentAbort?.abort();
-    frames.close();
-    stateCell.close();
+    await Promise.allSettled([...activeRuns]);
+
+    // Teardown is completeness-oriented: a throwing `complete` callback on one
+    // public channel must not strand the sibling channel open. Close both, then
+    // rethrow the first fault so Lifetime folds it into its aggregate.
+    let firstFault: { readonly error: unknown } | undefined;
+    for (const closeChannel of [frames.close, stateCell.close]) {
+      try {
+        closeChannel();
+      } catch (error) {
+        if (firstFault === undefined) firstFault = { error };
+      }
+    }
+    if (firstFault !== undefined) throw firstFault.error;
   });
 
-  const animated: AnimatedQuantizerShape<B> = {
+  const animated: AnimatedQuantizer<B> = {
     _tag: 'Quantizer',
     boundary,
     transition: transitionResolver,
     state: stateCell,
-    stateSync: quantizer.stateSync ? () => quantizer.stateSync!() : undefined,
+    // The wrapper's state is the last LANDED animation state. The wrapped
+    // quantizer may already report the target while interpolation is in-flight,
+    // so forwarding its stateSync would make the wrapper disagree with itself.
+    stateSync: () => stateCell.read(),
     changes: quantizer.changes,
     evaluate(value: number): StateUnion<B> {
+      if (lifetime.disposed) return stateCell.read();
       return quantizer.evaluate(value);
     },
     interpolated: frames,
   };
 
-  return { animated, lifetime };
+  return attachLifetime(animated, lifetime);
 }
 
 // ---------------------------------------------------------------------------
@@ -452,18 +509,18 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { Boundary, Millis } from '@czap/core';
- * import { Q, AnimatedQuantizer } from '@czap/quantizer';
+ * import { defineBoundary, Millis } from '@liteship/core';
+ * import { defineQuantizer, createQuantizer, AnimatedQuantizer } from '@liteship/quantizer';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'scroll',
  *   at: [[0, 'top'], [500, 'bottom']],
  * });
- * const config = Q.from(boundary).outputs({});
- * const { quantizer: live } = config.create();
- * const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
+ * const config = defineQuantizer(boundary, { outputs: {} });
+ * const live = createQuantizer(config);
+ * const animated = AnimatedQuantizer.make(live, { '*': { duration: Millis(200) } });
  * animated.transition; // TransitionResolver
- * await lifetime.dispose();
+ * await animated.dispose();
  * ```
  */
 export const AnimatedQuantizer = {
@@ -471,7 +528,4 @@ export const AnimatedQuantizer = {
   make: makeAnimatedQuantizer,
 } as const;
 
-export declare namespace AnimatedQuantizer {
-  /** Shape of an animated quantizer parameterized by boundary `B`. */
-  export type Shape<B extends Boundary.Shape> = AnimatedQuantizerShape<B>;
-}
+/** Public structural type for `AnimatedQuantizer`. */

@@ -17,12 +17,13 @@ import {
   UnsupportedError,
   IntegrityError,
   assertNever,
+  explainDiagnostic,
   err,
   LITESHIP_ERROR_TAGS,
   type TaggedError,
   type LiteShipError,
   type Result,
-} from '@czap/error';
+} from '@liteship/error';
 
 // The error algebra is the spine of the gauntlet's Finding shape and of every
 // package's failure path, so these tests pin its LAWS — the guarantees callers
@@ -107,11 +108,11 @@ describe('taggedError — the composer', () => {
 
 describe('built-in variants', () => {
   it('ValidationError carries module + detail', () => {
-    const e = ValidationError('Boundary.make', 'state list is empty');
+    const e = ValidationError('defineBoundary', 'state list is empty');
     expect(e._tag).toBe('ValidationError');
-    expect(e.module).toBe('Boundary.make');
+    expect(e.module).toBe('defineBoundary');
     expect(e.detail).toBe('state list is empty');
-    expect(e.message).toBe('Boundary.make: state list is empty');
+    expect(e.message).toBe('defineBoundary: state list is empty');
   });
 
   it('ParseError preserves the machine code + byte offset a decoder branches on', () => {
@@ -210,6 +211,25 @@ describe('matchTag — exhaustive errors-as-values dispatch', () => {
     expect(render(IoError('readFile', 'd'))).toBe('io:readFile');
     expect(render(NotFoundError('profile', '/p'))).toBe('notfound:profile');
   });
+
+  it('LAW: an unhandled runtime tag fails with the registered tagged identity, never a bare TypeError', () => {
+    const rogue = taggedError('RogueError', 'from an untrusted wire value', {}) as unknown as LiteShipError;
+    let caught: unknown;
+    try {
+      render(rogue);
+    } catch (error) {
+      caught = error;
+    }
+    expect(hasTag(caught, 'InvariantViolationError')).toBe(true);
+    const failure = caught as InvariantViolationError;
+    expect(failure.invariant).toBe('matchTag.exhaustive');
+    expect(failure.code).toBe('error/match-tag/unhandled');
+    expect(failure.message).toContain('RogueError');
+    expect(explainDiagnostic(failure.code!)).toMatchObject({
+      area: 'error',
+      owner: '@liteship/error',
+    });
+  });
 });
 
 describe('assertNever — statement-level exhaustiveness guard', () => {
@@ -277,11 +297,11 @@ describe('raise — throw a tagged value with a stack trace', () => {
 describe('errors-as-values — one value, the typed-channel face', () => {
   it('is recovered by a tag-keyed matcher on _tag (the catchTag-shaped contract)', () => {
     const recovered = matchTagOr(
-      ValidationError('Boundary.make', 'empty'),
+      ValidationError('defineBoundary', 'empty'),
       { ValidationError: (e) => `recovered:${e.module}` },
       () => 'unrecovered',
     );
-    expect(recovered).toBe('recovered:Boundary.make');
+    expect(recovered).toBe('recovered:defineBoundary');
   });
 
   it('surfaces as a typed value via Result (errors-as-values, not thrown)', () => {

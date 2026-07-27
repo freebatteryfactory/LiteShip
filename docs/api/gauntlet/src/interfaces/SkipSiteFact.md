@@ -6,7 +6,7 @@
 
 # Interface: SkipSiteFact
 
-Defined in: [gauntlet/src/skip-site-facts.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L50)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L50)
 
 One detected skip site, with the three orthogonal floor inputs PRE-COMPUTED by the producer
 so the [kernel](../functions/decideSkipSite.md) composes them with no string / Map work of its own:
@@ -24,7 +24,7 @@ so the [kernel](../functions/decideSkipSite.md) composes them with no string / M
 
 > `readonly` **capabilityConsistent**: `boolean`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L57)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L57)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [gauntlet/src/skip-site-facts.ts:57](https://github.com/freebatteryf
 
 > `readonly` **carriesPlaceholder**: `boolean`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L55)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L55)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [gauntlet/src/skip-site-facts.ts:55](https://github.com/freebatteryf
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L51)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L51)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [gauntlet/src/skip-site-facts.ts:51](https://github.com/freebatteryf
 
 > `readonly` **form**: [`SkipForm`](../type-aliases/SkipForm.md)
 
-Defined in: [gauntlet/src/skip-site-facts.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L53)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L53)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [gauntlet/src/skip-site-facts.ts:53](https://github.com/freebatteryf
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L52)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L52)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [gauntlet/src/skip-site-facts.ts:52](https://github.com/freebatteryf
 
 > `readonly` **sanctionMatched**: `boolean`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L56)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L56)
 
 ***
 
@@ -72,4 +72,4 @@ Defined in: [gauntlet/src/skip-site-facts.ts:56](https://github.com/freebatteryf
 
 > `readonly` **token**: `string`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L54)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L54)

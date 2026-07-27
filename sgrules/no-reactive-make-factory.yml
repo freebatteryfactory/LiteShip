@@ -1,0 +1,20 @@
+# Verb-grammar drift guard (ADR-0051 — verb-grammar-sweep-2).
+#
+# The reactive-substrate factories were collapsed onto standalone `create<Name>`
+# functions (verb grammar, ADR-0046: `create` allocates a runtime resource). The
+# old `.make` / `.makeBoundary` namespace spellings DIED with no alias. This rule
+# reds if any of the retired reactive `.make` factory spellings is REINTRODUCED,
+# so the sweep cannot silently regress into the `create*`-next-to-`.make`
+# side-by-side surface it eliminated.
+#
+# Pinned to the SPECIFIC retired spellings so honest surviving factories keep
+# working: `Zap.make`, `Plan.make`, `HLC.makeClock`, `Codec.make`,
+# `VideoRenderer.make`, `AVBridge.make`, `Compositor.create`, `ComposableWorld.make`,
+# `DenseStore.make`, etc. are all untouched by this sweep and never trip here.
+id: no-reactive-make-factory
+language: typescript
+severity: error
+message: "Retired reactive `.make` factory spelling (ADR-0051): the reactive-substrate factories are standalone `create<Name>` functions now (createSignal / createWorld / createBlendTree / createTokenBuffer / createComponent / createComposable / createDirtyFlags / createFrameBudget / createCompositorStatePool / createLiveCell / createLiveCellBoundary). Old `.make` / `.makeBoundary` spellings died with no alias — use the `create*` verb."
+rule:
+  kind: member_expression
+  regex: "^(Signal|World|BlendTree|TokenBuffer|Component|Composable|DirtyFlags|FrameBudget|CompositorStatePool|LiveCell)\\.(make|makeBoundary)$"

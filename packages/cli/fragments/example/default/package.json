@@ -1,0 +1,16 @@
+{
+  "name": "liteship-default",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "liteship check --profile quick"
+  },
+  "dependencies": {
+    "astro": "^7.1.0",
+    "liteship": "0.23.0",
+    "typescript": "^5.7.0"
+  }
+}

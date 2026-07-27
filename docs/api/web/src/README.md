@@ -6,14 +6,14 @@
 
 # web/src
 
-`@czap/web` — DOM runtime for **LiteShip**: stitches **CZAP** projections
+`@liteship/web` — DOM runtime for **LiteShip**: stitches **LiteShip** projections
 (CSS, streamed HTML, LLM chunks, workers) into a live browser document.
 
 It ships:
 
 - [Morph](variables/Morph.md): idiomorph-style DOM diffing that preserves focus,
   scroll, and form state across re-renders.
-- [SlotRegistry](namespaces/SlotRegistry/README.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
+- [SlotRegistry](interfaces/SlotRegistry.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
   for server-rendered slots in streaming HTML.
 - [SSE](variables/SSE.md) / [Resumption](variables/Resumption.md): an Effect-scoped Server-Sent
   Events client with reconnect and cross-tab resumption.
@@ -26,22 +26,16 @@ It ships:
 ## Namespaces
 
 - [LLMAdapter](namespaces/LLMAdapter/README.md)
-- [SlotRegistry](namespaces/SlotRegistry/README.md)
-- [WebCodecsCapture](namespaces/WebCodecsCapture/README.md)
 
 ## Interfaces
 
 - [AudioProcessor](interfaces/AudioProcessor.md)
 - [BackpressureHint](interfaces/BackpressureHint.md)
 - [BindGraphFormOptions](interfaces/BindGraphFormOptions.md)
-- [CzapEventDetailMap](interfaces/CzapEventDetailMap.md)
-- [CzapMorphRejectedDetail](interfaces/CzapMorphRejectedDetail.md)
-- [CzapStreamErrorDetail](interfaces/CzapStreamErrorDetail.md)
-- [CzapUniformUpdateDetail](interfaces/CzapUniformUpdateDetail.md)
 - [DpuAdoptClient](interfaces/DpuAdoptClient.md)
 - [FocusState](interfaces/FocusState.md)
 - [IMEState](interfaces/IMEState.md)
-- [LLMAdapterShape](interfaces/LLMAdapterShape.md)
+- [LLMAdapter](interfaces/LLMAdapter.md)
 - [LLMChunk](interfaces/LLMChunk.md)
 - [LLMStreamConfig](interfaces/LLMStreamConfig.md)
 - [MatchResult](interfaces/MatchResult.md)
@@ -50,6 +44,7 @@ It ships:
 - [MorphHints](interfaces/MorphHints.md)
 - [MorphRejection](interfaces/MorphRejection.md)
 - [PhysicalState](interfaces/PhysicalState.md)
+- [PhysicalStateTracker](interfaces/PhysicalStateTracker.md)
 - [ReconnectConfig](interfaces/ReconnectConfig.md)
 - [ResolvedStreamRecoverySubstrate](interfaces/ResolvedStreamRecoverySubstrate.md)
 - [ResumptionConfig](interfaces/ResumptionConfig.md)
@@ -60,7 +55,7 @@ It ships:
 - [ShaderIntegrity](interfaces/ShaderIntegrity.md)
 - [SlotEntry](interfaces/SlotEntry.md)
 - [SlotEntryInput](interfaces/SlotEntryInput.md)
-- [SlotRegistryShape](interfaces/SlotRegistryShape.md)
+- [SlotRegistry](interfaces/SlotRegistry.md)
 - [SSEClient](interfaces/SSEClient.md)
 - [SSEConfig](interfaces/SSEConfig.md)
 - [SSEEventSource](interfaces/SSEEventSource.md)
@@ -76,14 +71,18 @@ It ships:
 - [ApplyVerifiablePatchAdoptResult](type-aliases/ApplyVerifiablePatchAdoptResult.md)
 - [ApplyVerifiablePatchResult](type-aliases/ApplyVerifiablePatchResult.md)
 - [ChunkParser](type-aliases/ChunkParser.md)
-- [CzapEventDisposer](type-aliases/CzapEventDisposer.md)
-- [CzapEventName](type-aliases/CzapEventName.md)
 - [DpuCapability](type-aliases/DpuCapability.md)
-- [DpuRung](type-aliases/DpuRung.md)
+- [DpuTier](type-aliases/DpuTier.md)
 - [HtmlPolicy](type-aliases/HtmlPolicy.md)
 - [IntegrityDecision](type-aliases/IntegrityDecision.md)
 - [IntegrityResult](type-aliases/IntegrityResult.md)
 - [IslandMode](type-aliases/IslandMode.md)
+- [LiteshipEventDetailMap](type-aliases/LiteshipEventDetailMap.md)
+- [LiteshipEventDisposer](type-aliases/LiteshipEventDisposer.md)
+- [LiteshipEventName](type-aliases/LiteshipEventName.md)
+- [LiteshipMorphRejectedDetail](type-aliases/LiteshipMorphRejectedDetail.md)
+- [LiteshipStreamErrorDetail](type-aliases/LiteshipStreamErrorDetail.md)
+- [LiteshipUniformUpdateDetail](type-aliases/LiteshipUniformUpdateDetail.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
@@ -106,14 +105,14 @@ It ships:
 
 ## Variables
 
-- [CZAP\_EVENT\_DOCS](variables/CZAP_EVENT_DOCS.md)
-- [CZAP\_EVENT\_NAMES](variables/CZAP_EVENT_NAMES.md)
 - [DEFAULT\_SHADER\_INTEGRITY\_MODE](variables/DEFAULT_SHADER_INTEGRITY_MODE.md)
 - [DPU\_BASE\_ATTR](variables/DPU_BASE_ATTR.md)
 - [DPU\_DIGEST\_ATTR](variables/DPU_DIGEST_ATTR.md)
 - [DPU\_MARKER\_ATTR](variables/DPU_MARKER_ATTR.md)
 - [DPU\_RESULT\_ATTR](variables/DPU_RESULT_ATTR.md)
 - [Hints](variables/Hints.md)
+- [LITESHIP\_EVENT\_DOCS](variables/LITESHIP_EVENT_DOCS.md)
+- [LITESHIP\_EVENT\_NAMES](variables/LITESHIP_EVENT_NAMES.md)
 - [LLMAdapter](variables/LLMAdapter.md)
 - [LLMChunkNormalization](variables/LLMChunkNormalization.md)
 - [Morph](variables/Morph.md)
@@ -128,7 +127,6 @@ It ships:
 - [STREAM\_WIRE\_ATTRIBUTE\_DOCS](variables/STREAM_WIRE_ATTRIBUTE_DOCS.md)
 - [STREAM\_WIRE\_ATTRIBUTES](variables/STREAM_WIRE_ATTRIBUTES.md)
 - [streamReceiptCapsule](variables/streamReceiptCapsule.md)
-- [WebCodecsCapture](variables/WebCodecsCapture.md)
 
 ## Functions
 
@@ -143,17 +141,19 @@ It ships:
 - [computeShaderIntegrity](functions/computeShaderIntegrity.md)
 - [createAudioProcessor](functions/createAudioProcessor.md)
 - [createHtmlFragment](functions/createHtmlFragment.md)
+- [createPhysicalStateTracker](functions/createPhysicalStateTracker.md)
+- [createWebCodecsCapture](functions/createWebCodecsCapture.md)
 - [decideShaderIntegrity](functions/decideShaderIntegrity.md)
 - [detectDpuCapability](functions/detectDpuCapability.md)
 - [digestHtmlFragment](functions/digestHtmlFragment.md)
-- [dispatchCzapEvent](functions/dispatchCzapEvent.md)
+- [dispatchLiteshipEvent](functions/dispatchLiteshipEvent.md)
 - [escapeHtml](functions/escapeHtml.md)
 - [fetchSnapshot](functions/fetchSnapshot.md)
 - [getStreamRecoverySubstrate](functions/getStreamRecoverySubstrate.md)
 - [isExternalShaderSource](functions/isExternalShaderSource.md)
 - [isFetchableRuntimeUrl](functions/isFetchableRuntimeUrl.md)
 - [isPrivateOrReservedIP](functions/isPrivateOrReservedIP.md)
-- [onCzap](functions/onCzap.md)
+- [onLiteship](functions/onLiteship.md)
 - [parseShaderIntegrity](functions/parseShaderIntegrity.md)
 - [recordStreamPatchReceipt](functions/recordStreamPatchReceipt.md)
 - [registerStreamRecoverySubstrate](functions/registerStreamRecoverySubstrate.md)

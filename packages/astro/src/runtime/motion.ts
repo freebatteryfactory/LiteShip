@@ -4,7 +4,7 @@
  *
  * The native-CSS path (`MotionCompiler`) owns motion wherever `animation-timeline`
  * is supported. This directive is the permanent FLOOR for everywhere it is not: it
- * reads an SSR-inlined, already-lowered motion program off `data-czap-motion-program`
+ * reads an SSR-inlined, already-lowered motion payload off `data-liteship-motion-payload`
  * and, when native is unavailable, scrubs the same signal→progress the CSS would,
  * writing typed leaf values through {@link writeContinuousMap} every frame. That
  * writer samples the program's OWN easing descriptor (`RuntimeWritePlan.easing`) —
@@ -12,16 +12,16 @@
  * native CSS read ONE identical kernel (Law 4).
  *
  * The split the runtime enforces (Law 15/16):
- *   - CONTINUOUS — the eased tween. A LEAF write every frame (`--czap-*` custom
- *     properties + a `czap:uniform-update`) and a continuous StateCell write. NEVER
+ *   - CONTINUOUS — the eased tween. A LEAF write every frame (`--liteship-*` custom
+ *     properties + a `liteship:uniform-update`) and a continuous StateCell write. NEVER
  *     a graph patch (patching per frame would re-seal the graph 60×/s).
- *   - DISCRETE — the state CROSSING at the threshold. `data-czap-state` flips and a
- *     `czap:graph-state` fires through the exact seam `scene-bridge.applyDiscreteState`
+ *   - DISCRETE — the state CROSSING at the threshold. `data-liteship-state` flips and a
+ *     `liteship:graph-state` fires through the exact seam `scene-bridge.applyDiscreteState`
  *     uses. Sparse — only on a real crossing.
  *
  * Lifecycle mirrors the other host drivers: reduced-motion + `settle` policy skips
- * the loop and pins the final endpoint once; `czap:reinit` disposes BEFORE
- * re-reading (never double-holds); `czap:teardown` stops the driver and frees the
+ * the loop and pins the final endpoint once; `liteship:reinit` disposes BEFORE
+ * re-reading (never double-holds); `liteship:teardown` stops the driver and frees the
  * store. SSR-safe: with no `window`/rAF the loop never starts.
  *
  * @module
@@ -35,19 +35,20 @@ import {
   startRafLoop,
   type RevealIntent,
   type RuntimeWritePlan,
-  type StateCellStoreShape,
-} from '@czap/core';
-import { dispatchCzapEvent } from '@czap/web';
+} from '@liteship/core';
+import { decodeRevealIntent, decodeRuntimeWritePlan } from '@liteship/core/motion';
+import { ValidationError } from '@liteship/error';
+import { dispatchLiteshipEvent } from '@liteship/web';
 import { writeContinuousMap } from './write-continuous-map.js';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
 import { bootDirectiveEntry } from './directive-bound.js';
 
 /**
  * The opt-in attribute carrying the SSR-inlined lowered motion program (JSON).
- * Presence GATES the directive — like `client:graph`'s `data-czap-graph`, it is
+ * Presence GATES the directive — like `client:graph`'s `data-liteship-graph`, it is
  * read directly off the host, not through a wire registry.
  */
-export const MOTION_PROGRAM_ATTR = 'data-czap-motion-program';
+export const MOTION_PAYLOAD_ATTR = 'data-liteship-motion-payload';
 
 /** The default discrete crossing point on RAW (un-eased) progress. */
 const DEFAULT_THRESHOLD = 0.5;
@@ -57,16 +58,16 @@ const DISCRETE_CELL = 'motion';
 const CONTINUOUS_CELL = 'motion.progress';
 
 /** The canonical discrete-crossing event, shared with the scene bridge. */
-const GRAPH_STATE_EVENT = 'czap:graph-state';
+const GRAPH_STATE_EVENT = 'liteship:graph-state';
 
 /**
- * The SSR-inlined, already-lowered motion program the directive drives. The
- * authority (see `examples/showcase/src/server/motion-program.ts`) lowers a
+ * The SSR-inlined motion directive envelope the directive drives. The
+ * authority (see `examples/showcase/src/server/motion-payload.ts`) lowers a
  * {@link RevealIntent} to a graph, interprets it, and serializes THIS: the reveal
  * intent (drives reduced-motion first paint) + the runtime leaf-write plan (the
  * floor, carrying its easing) + the resolved signal inputs.
  */
-export interface SerializedMotionProgram {
+export interface MotionDirectivePayload {
   /** The authoring intent — drives {@link resolveRevealInitialState} for first paint. */
   readonly intent: RevealIntent;
   /** The lowered leaf-write floor, including its self-describing easing descriptor. */
@@ -77,160 +78,92 @@ export interface SerializedMotionProgram {
   readonly threshold?: number;
 }
 
-/**
- * The widened authoring/easing vocabulary a serialized `RuntimeEasing`
- * descriptor may carry. Beyond the legacy `linear|ease|spring` the full Easing
- * catalog (bounce/elastic/back/cubicBezier) is now authorable; each catalog easing
- * is serialized as a sampled `points` arm the JS floor lerps — the IDENTICAL point
- * list the CSS `linear()` uses, so both floors read one curve (Law 4).
- */
-const RUNTIME_EASING_KINDS: ReadonlySet<string> = new Set([
-  'linear',
-  'ease',
-  'spring',
-  'points',
-  'bounce',
-  'elastic',
-  'back',
-  'cubicBezier',
-]);
+function invalidPayload(message: string): never {
+  throw ValidationError('MotionDirectivePayload', message);
+}
 
-/**
- * The kinds whose ONLY faithful JS-floor rendering is the sampled `points` arm.
- * `sampleRuntimeEasing` (core) lerps `points` when present, and for these kinds
- * has NO analytic fallback — `points`/`cubicBezier` silently collapse to
- * `Easing.linear` when the arm is missing (bounce/elastic/back keyword-approximate,
- * still a curve divergence from the CSS floor). So a descriptor carrying one of
- * these kinds WITHOUT a valid points list is a lowering bug, not a lean descriptor:
- * the guard must reject it LOUDLY here rather than let the JS floor draw a straight
- * line the CSS floor never would (Law 4: both floors read ONE curve).
- */
-const POINT_BASED_EASING_KINDS: ReadonlySet<string> = new Set(['points', 'bounce', 'elastic', 'back', 'cubicBezier']);
+function payloadData(record: Record<string, unknown>, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(record, key);
+  if (descriptor === undefined) return invalidPayload(`missing required field ${key}`);
+  if (!('value' in descriptor)) return invalidPayload(`accessor field ${key} is not valid wire data`);
+  return descriptor.value;
+}
 
-function isValidPointsArm(value: unknown): boolean {
-  if (!Array.isArray(value) || value.length < 2) return false;
-  for (const point of value) {
-    if (typeof point !== 'number' || !Number.isFinite(point)) return false;
+/** Strictly admit and immutably own one decoded directive payload. */
+export function decodeMotionDirectivePayload(value: unknown): MotionDirectivePayload {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return invalidPayload('expected an object containing { intent, runtime, signals }');
   }
-  return true;
-}
-
-/**
- * Structural guard for a serialized `RuntimeEasing` descriptor. Accepts the
- * widened kind vocabulary; the analytic kinds (`linear|ease|spring`) carry an
- * OPTIONAL points arm, but the point-based kinds ({@link POINT_BASED_EASING_KINDS})
- * REQUIRE a non-degenerate array of finite numbers — anything else (absent /
- * unknown `kind`, a malformed points list, or a point-based kind missing its arm)
- * fails LOUDLY upstream in {@link parseMotionProgram}, leaving the native/CSS floor
- * untouched (Law 1) rather than letting the JS floor silently lerp a straight line.
- */
-function isRuntimeEasingDescriptor(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return false;
-  const easing = value as Record<string, unknown>;
-  if (typeof easing.kind !== 'string' || !RUNTIME_EASING_KINDS.has(easing.kind)) return false;
-  if (POINT_BASED_EASING_KINDS.has(easing.kind)) {
-    if (!isValidPointsArm(easing.points)) return false;
-  } else if (easing.points !== undefined) {
-    if (!isValidPointsArm(easing.points)) return false;
+  const candidate = value as Record<string, unknown>;
+  const prototype = Object.getPrototypeOf(candidate) as object | null;
+  if (prototype !== Object.prototype && prototype !== null) {
+    return invalidPayload('custom prototypes are not valid wire data');
   }
-  if (easing.spring !== undefined && (easing.spring === null || typeof easing.spring !== 'object')) return false;
-  return true;
+  if (Object.getOwnPropertySymbols(candidate).some((symbol) => Object.propertyIsEnumerable.call(candidate, symbol))) {
+    return invalidPayload('enumerable symbol fields are not valid wire data');
+  }
+  const allowed = new Set(['intent', 'runtime', 'signals', 'threshold']);
+  const foreign = Object.keys(candidate).find((key) => !allowed.has(key));
+  if (foreign !== undefined) return invalidPayload(`unknown field ${foreign}`);
+  const intent = payloadData(candidate, 'intent');
+  const runtime = payloadData(candidate, 'runtime');
+  const signals = payloadData(candidate, 'signals');
+  const thresholdDescriptor = Object.getOwnPropertyDescriptor(candidate, 'threshold');
+  if (thresholdDescriptor !== undefined && !('value' in thresholdDescriptor)) {
+    return invalidPayload('accessor field threshold is not valid wire data');
+  }
+  const threshold = thresholdDescriptor === undefined ? undefined : thresholdDescriptor.value;
+  if (!Array.isArray(signals) || !signals.every((signal) => typeof signal === 'string' && signal.trim() !== '')) {
+    return invalidPayload('signals must be an array of non-empty strings');
+  }
+  if (
+    threshold !== undefined &&
+    (typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0 || threshold > 1)
+  ) {
+    return invalidPayload('threshold must be a finite number in [0,1]');
+  }
+  return Object.freeze({
+    intent: decodeRevealIntent(intent),
+    runtime: decodeRuntimeWritePlan(runtime),
+    signals: Object.freeze([...signals]),
+    ...(threshold !== undefined ? { threshold } : {}),
+  });
 }
 
-/** The serialized {@link TypedValue} kinds — the discriminant `k` the sampler reads. */
-const TYPED_VALUE_KINDS: ReadonlySet<string> = new Set(['number', 'opacity', 'length', 'angle', 'color', 'transform']);
-
-/** A typed endpoint the floor interpolates: an object whose `k` names a known kind. */
-function isTypedValue(value: unknown): boolean {
-  return value !== null && typeof value === 'object' && TYPED_VALUE_KINDS.has((value as { k?: unknown }).k as string);
-}
-
-/** One runtime leaf-write property: a `cssVar` string plus typed `from`/`to` endpoints. */
-function isRuntimeWriteProperty(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return false;
-  const property = value as Record<string, unknown>;
-  return typeof property.cssVar === 'string' && isTypedValue(property.from) && isTypedValue(property.to);
-}
-
-/** A properties array whose EVERY entry is a valid {@link RuntimeWriteProperty}. */
-function isRuntimeWritePropertyArray(value: unknown): boolean {
-  return Array.isArray(value) && value.every(isRuntimeWriteProperty);
-}
-
-/**
- * One per-window sub-sampler of a composed program: a local `[start,end]` slice, its
- * own properties, and its own easing descriptor. The floor's `sampleProgram` walks
- * `w.properties.map(...)`, so a window missing (or malforming) `properties`/`easing`
- * must be rejected HERE rather than throwing on the first sampled frame.
- */
-function isRuntimeWriteWindow(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return false;
-  const window = value as Record<string, unknown>;
-  return (
-    typeof window.windowStart === 'number' &&
-    typeof window.windowEnd === 'number' &&
-    isRuntimeWritePropertyArray(window.properties) &&
-    isRuntimeEasingDescriptor(window.easing)
-  );
-}
-
-/**
- * Structural guard for the serialized {@link RuntimeWritePlan}. Validates the leaf
- * entries the floor actually dereferences — every `properties` entry (cssVar + typed
- * `from`/`to`) and, when present, every composed `windows` entry (its own properties +
- * easing) — not merely that `properties` is an array. A single malformed tween or
- * `windows: [{}]` previously satisfied the shallow check, then crashed downstream in
- * `sampleProgram`'s `w.properties.map(...)` instead of leaving the JS floor inert
- * (Law 1) with the documented `motion-program-shape-invalid` diagnostic.
- */
-function isRuntimeWritePlan(value: unknown): value is RuntimeWritePlan {
-  if (value === null || typeof value !== 'object') return false;
-  const plan = value as Record<string, unknown>;
-  return (
-    isRuntimeWritePropertyArray(plan.properties) &&
-    typeof plan.fromState === 'string' &&
-    typeof plan.toState === 'string' &&
-    typeof plan.durationMs === 'number' &&
-    isRuntimeEasingDescriptor(plan.easing) &&
-    (plan.windows === undefined || (Array.isArray(plan.windows) && plan.windows.every(isRuntimeWriteWindow)))
-  );
+/** Serialize only a payload that satisfies the same admission law as the runtime reader. */
+export function serializeMotionDirectivePayload(value: unknown): string {
+  return JSON.stringify(decodeMotionDirectivePayload(value));
 }
 
 /**
  * Parse the inlined program, returning `null` LOUDLY on any malformed payload so
  * the directive stays inert and the native/CSS floor is unaffected (Law 1).
  */
-export function parseMotionProgram(raw: string): SerializedMotionProgram | null {
+export function parseMotionDirectivePayload(raw: string): MotionDirectivePayload | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (cause) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.motion',
-      code: 'motion-program-malformed',
-      message: `${MOTION_PROGRAM_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize with JSON.stringify(a lowered motion program).`,
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.motion',
+      code: 'astro/motion/motion-program-malformed',
+      message: `${MOTION_PAYLOAD_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize through serializeMotionDirectivePayload.`,
       cause,
     });
     return null;
   }
 
-  const program = parsed as Partial<SerializedMotionProgram>;
-  if (
-    program === null ||
-    typeof program !== 'object' ||
-    !isRuntimeWritePlan(program.runtime) ||
-    program.intent === null ||
-    typeof program.intent !== 'object' ||
-    !Array.isArray(program.signals)
-  ) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.motion',
-      code: 'motion-program-shape-invalid',
-      message: `${MOTION_PROGRAM_ATTR} is missing required fields ({ intent, runtime, signals }) — the client:motion floor stays inert; native CSS still applies.`,
+  try {
+    return decodeMotionDirectivePayload(parsed);
+  } catch (cause) {
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.motion',
+      code: 'astro/motion/motion-program-shape-invalid',
+      message: `${MOTION_PAYLOAD_ATTR} contains an invalid MotionDirectivePayload — the client:motion floor stays inert; native CSS still applies.`,
+      cause,
     });
     return null;
   }
-  return program as SerializedMotionProgram;
 }
 
 /**
@@ -249,24 +182,24 @@ export function nativeTimelineSupported(): boolean {
  * Whether native timeline CSS ACTUALLY drives THIS element — the only condition under
  * which the JS floor may stay idle. A global {@link nativeTimelineSupported} check is
  * NOT enough: a program surface (e.g. a `Reveal.chain`) that inlines
- * `data-czap-motion-program` but emits no `MotionCompiler` CSS would otherwise be
+ * `data-liteship-motion-payload` but emits no `MotionCompiler` CSS would otherwise be
  * stranded at first paint on a capable browser — floor skipped, no CSS to scrub it.
- * `MotionCompiler` binds its single `czap-motion-<target>-<from>-<to>` `@keyframes` (see its
+ * `MotionCompiler` binds its single `liteship-motion-<target>-<from>-<to>` `@keyframes` (see its
  * `keyframeName`) to a scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)`
  * block — but ONLY for a plan eligible to own a native timeline. A composed program whose
  * overlapping windows disagree on easing (`par` of differently-eased children, #148) is
  * `nativeTimeline: { eligible: false }`, so the compiler emits NO ownership block and no
  * `animation-name` binding — this scan then correctly returns false and the floor keeps
  * ownership (ADR-0041). `getComputedStyle().animationName` may still be a comma-separated list
- * (a single reveal can bind `czap-motion-*` ALONGSIDE an author `translate`/`opacity`
- * animation), hence the `.split(',').some(...)` scan: ANY `czap-motion-*` name in it means
+ * (a single reveal can bind `liteship-motion-*` ALONGSIDE an author `translate`/`opacity`
+ * animation), hence the `.split(',').some(...)` scan: ANY `liteship-motion-*` name in it means
  * native CSS is BOTH supported here AND emitted for this element. Absent it, the floor runs
  * (Law 1).
  */
 function nativeTimelineOwnsElement(element: HTMLElement): boolean {
   if (!nativeTimelineSupported() || typeof getComputedStyle !== 'function') return false;
   const animationName = getComputedStyle(element).animationName;
-  return animationName !== '' && animationName.split(',').some((name) => name.trim().startsWith('czap-motion-'));
+  return animationName !== '' && animationName.split(',').some((name) => name.trim().startsWith('liteship-motion-'));
 }
 
 /** Whether the user asked for reduced motion (SSR-safe; false off-DOM / without matchMedia). */
@@ -287,11 +220,11 @@ interface MotionDriver {
  * progress to `onTick`; the plan's easing is applied downstream in
  * {@link writeContinuousMap}. SSR-safe — with no rAF the loop never starts.
  */
-function startDriver(program: SerializedMotionProgram, onTick: (progress: number) => void): MotionDriver {
+function startDriver(program: MotionDirectivePayload, onTick: (progress: number) => void): MotionDriver {
   const signal = program.signals[0];
 
   if (signal !== undefined) {
-    warnIfSignalUnserved(signal, { source: 'czap/astro.motion', what: 'motion signal clock' });
+    warnIfSignalUnserved(signal, { source: 'liteship/astro.motion', what: 'motion signal clock' });
     const emit = (): void => {
       const value = readSignalValue(signal);
       if (value === undefined) return;
@@ -329,23 +262,23 @@ function startDriver(program: SerializedMotionProgram, onTick: (progress: number
 
 /**
  * Activate the `client:motion` directive on `element`. Reads the inlined lowered
- * program off {@link MOTION_PROGRAM_ATTR}, constructs a private
+ * payload off {@link MOTION_PAYLOAD_ATTR}, constructs a private
  * {@link StateCellStore} (one discrete pose cell + one continuous progress cell —
  * the FIRST production caller of `writeContinuous`), and runs the JS floor when
- * native timelines are unavailable. Honors `czap:reinit` (dispose-then-re-read)
- * and `czap:teardown` (stop + free the store).
+ * native timelines are unavailable. Honors `liteship:reinit` (dispose-then-re-read)
+ * and `liteship:teardown` (stop + free the store).
  */
 export function initMotionDirective(load: () => Promise<unknown>, element: HTMLElement): void {
   let driver: MotionDriver | null = null;
-  let store: StateCellStoreShape | null = null;
+  let store: StateCellStore | null = null;
 
   const applyDiscrete = (stateName: string): void => {
     if (!store) return;
     store.applyDiscrete(DISCRETE_CELL, stateName);
-    if (element.getAttribute('data-czap-state') !== stateName) {
-      element.setAttribute('data-czap-state', stateName);
+    if (element.getAttribute('data-liteship-state') !== stateName) {
+      element.setAttribute('data-liteship-state', stateName);
     }
-    dispatchCzapEvent(element, GRAPH_STATE_EVENT, { discrete: { [stateName]: stateName }, state: stateName });
+    dispatchLiteshipEvent(element, GRAPH_STATE_EVENT, { discrete: { [stateName]: stateName }, state: stateName });
   };
 
   const teardownDriver = (): void => {
@@ -365,16 +298,16 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
     // Dispose FIRST so a reinit re-reads fresh attributes without double-holding.
     teardownDriver();
 
-    const raw = element.getAttribute(MOTION_PROGRAM_ATTR);
+    const raw = element.getAttribute(MOTION_PAYLOAD_ATTR);
     if (raw === null) {
-      Diagnostics.warnOnce({
-        source: 'czap/astro.motion',
-        code: 'motion-program-missing',
-        message: `A client:motion host carries no ${MOTION_PROGRAM_ATTR} — nothing to drive; the directive no-ops. Inline the lowered program (JSON.stringify) on the element.`,
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.motion',
+        code: 'astro/motion/motion-program-missing',
+        message: `A client:motion host carries no ${MOTION_PAYLOAD_ATTR} — nothing to drive; the directive no-ops. Inline serializeMotionDirectivePayload(payload) on the element.`,
       });
       return;
     }
-    const program = parseMotionProgram(raw);
+    const program = parseMotionDirectivePayload(raw);
     if (!program) return;
 
     const { runtime } = program;
@@ -400,7 +333,7 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
 
     // Native scroll/view timeline CSS actually drives THIS element ⇒ CSS owns the
     // CONTINUOUS scrub, so the per-frame leaf writes stay idle. But CSS keyframes cannot
-    // flip the discrete `data-czap-state` or dispatch `czap:graph-state`, so the DISCRETE
+    // flip the discrete `data-liteship-state` or dispatch `liteship:graph-state`, so the DISCRETE
     // threshold crossing runs REGARDLESS — a lightweight observer — or the semantic state
     // would stall at the initial pose while the visual scrubs past (F-MOT). A capability
     // check alone is not enough here: a program surface with no emitted MotionCompiler CSS
@@ -427,8 +360,8 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
     });
   };
 
-  element.addEventListener('czap:reinit', setup);
-  element.addEventListener('czap:teardown', teardownDriver);
+  element.addEventListener('liteship:reinit', setup);
+  element.addEventListener('liteship:teardown', teardownDriver);
 
   setup();
   load();

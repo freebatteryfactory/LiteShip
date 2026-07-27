@@ -1,20 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
 
 describe('generatePolicyGate', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   /** A minimal, validly-declared policyGate (it MUST carry a `decide` core now). */
   const demoPolicyGate = () =>
     defineCapsule({
       _kind: 'policyGate',
       name: 'demo.canCreate',
-      input: S.struct({ role: S.string }),
-      output: S.struct({
-        effect: S.union(S.literal('allow'), S.literal('deny')),
-        reasons: S.array(S.struct({ code: S.string, message: S.string })),
+      input: schema.struct({ role: schema.string }),
+      output: schema.struct({
+        effect: schema.union(schema.literal('allow'), schema.literal('deny')),
+        reasons: schema.array(schema.struct({ code: schema.string, message: schema.string })),
       }),
       capabilities: { reads: [], writes: [] },
       invariants: [],

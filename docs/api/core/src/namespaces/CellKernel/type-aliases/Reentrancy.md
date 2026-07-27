@@ -6,8 +6,8 @@
 
 # Type Alias: Reentrancy
 
-> **Reentrancy** = [`ReentrancyPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)
+> **Reentrancy** = [`ReentrancyPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)
 
-Defined in: [core/src/cell-kernel.ts:493](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L493)
+Defined in: [core/src/reactive/cell-kernel.ts:493](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L493)
 
-The reentrancy policy (nested-write axis) — see [ReentrancyPolicy](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts).
+The reentrancy policy (nested-write axis) — see [ReentrancyPolicy](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts).

@@ -8,4 +8,6 @@
 
 > `const` **auditIgnoreGlobs**: readonly \[`"**/dist/**"`, `"**/node_modules/**"`, `"**/*.d.ts"`, `"coverage/**"`, `"reports/**"`, `"docs/**"`, `"examples/**"`, `"benchmarks/**"`, `"tests/e2e/fixtures/**"`\]
 
-Defined in: [audit/src/policy.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L47)
+Defined in: [audit/src/policy.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L52)
+
+Generated and fixture paths excluded from executable-source analysis.

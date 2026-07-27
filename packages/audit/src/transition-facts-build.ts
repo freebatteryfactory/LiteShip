@@ -3,7 +3,7 @@
  * that folds the single-oracle MODEL + the IMPLEMENTATION capture into the flat
  * {@link TransitionFacts} the lean {@link transitionConformanceGate} consumes).
  *
- * `@czap/gauntlet` DEFINES the {@link TransitionFacts} interface but constructs no
+ * `@liteship/gauntlet` DEFINES the {@link TransitionFacts} interface but constructs no
  * reactive primitive and forks no fiber — it is the lean engine and transition
  * conformance is an INJECTED capability (the same ADR-0012 boundary as the IR /
  * mutation facts). THIS module is the host half: the CALLER (the CLI, wiring the
@@ -16,9 +16,9 @@
  * per-case oracle outcomes + the histories).
  *
  * WHY THE OBSERVATIONS ARE INJECTED (not run here). Capturing a reactive primitive's
- * trace is an `Effect.runPromise` fiber walk over `@czap/core`, drained to quiescence —
+ * trace is an `Effect.runPromise` fiber walk over `@liteship/core`, drained to quiescence —
  * heavy, async, and dependent on the Foundation harnesses that live in the test tree.
- * The builder keeps `@czap/audit` free of that dependency exactly as
+ * The builder keeps `@liteship/audit` free of that dependency exactly as
  * {@link buildMutationFacts} keeps it free of a real vitest run: the heavy work is an
  * INJECTED capability (there, the {@link MutantTestRunner}; here, the pre-run oracle
  * outcomes), and the builder is the deterministic FOLD the gate then reports over. The
@@ -27,7 +27,7 @@
  * a re-derivation) lives here, in the host, not smuggled into the lean gate.
  *
  * DETERMINISM + IDENTITY CLASS. The builder OWNS the bisimulation comparison: it
- * canonical-encodes each side's observation through the ONE encoder (`@czap/canonical`'s
+ * canonical-encodes each side's observation through the ONE encoder (`@liteship/canonical`'s
  * `CanonicalCbor`) and decides `equivalent` by comparing the EXACT canonical bytes — never
  * a hash equality, so no digest collision can ever launder a real divergence into a false
  * `equivalent` green (SKILL.md §4: a weak hash may not be the sole witness of an L4
@@ -38,8 +38,8 @@
  *
  * @module
  */
-import { CanonicalCbor, sha256Hex } from '@czap/canonical';
-import type { TransitionFacts, TransitionCase, TransitionStatus } from '@czap/gauntlet';
+import { CanonicalCbor, sha256Hex } from '@liteship/canonical';
+import type { TransitionFacts, TransitionCase, TransitionStatus } from '@liteship/gauntlet';
 
 /** The canonical SHA-256 content address (`sha256:<64-hex>`) of a value's canonical CBOR bytes. */
 function sha256Address(value: unknown): string {

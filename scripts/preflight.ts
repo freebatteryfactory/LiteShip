@@ -25,51 +25,16 @@
  * @module
  */
 
-import { spawnArgv } from './lib/spawn.js';
+import { spawnArgv, spawnArgvCapture } from './lib/spawn.js';
 import { isDirectExecution } from './audit/shared.js';
+import { buildLocalVerificationPlan } from './lib/local-verification-plan.js';
+import {
+  formatLocalResourcePlan,
+  sampleLocalResources,
+  selectLocalResourcePlan,
+} from './lib/local-resource-profile.js';
 
 /** One preflight step: a label plus the `pnpm run` script it invokes. */
-interface PreflightStep {
-  readonly label: string;
-  readonly script: string;
-  /** Remediation printed when this step reds, so the fix is one copy away. */
-  readonly remedy: string;
-}
-
-/**
- * The fast pre-commit subset, ordered cheapest→heaviest so fail-fast pays the
- * least for the most common breakages. These are the exact checks that have
- * historically bitten at commit after a builder claimed green (S6.3): prettier
- * formatting, eslint, structural lint, the full typecheck, and docs freshness.
- */
-const STEPS: readonly PreflightStep[] = [
-  {
-    label: 'format:check',
-    script: 'format:check',
-    remedy: "run 'pnpm run format' to auto-fix, then re-run preflight",
-  },
-  {
-    label: 'lint:structural',
-    script: 'lint:structural',
-    remedy: "fix the ast-grep finding above (or run 'pnpm run lint:structural' for the full report)",
-  },
-  {
-    label: 'lint',
-    script: 'lint',
-    remedy: "run 'pnpm run fix' (format + eslint --fix), then re-run preflight",
-  },
-  {
-    label: 'typecheck',
-    script: 'typecheck',
-    remedy: 'fix the type errors above (tsc --build + scripts + tests projects)',
-  },
-  {
-    label: 'docs:check',
-    script: 'docs:check',
-    remedy: "run 'pnpm run docs:build' and commit docs/api/ if you touched a public TSDoc surface",
-  },
-];
-
 const RULE = '='.repeat(64);
 
 function formatDuration(ms: number): string {
@@ -83,7 +48,7 @@ async function runStep(label: string, args: readonly string[]): Promise<number> 
   console.log(`  preflight → ${label}`);
   console.log(RULE);
   const start = Date.now();
-  const result = await spawnArgv('pnpm', ['run', ...args], {
+  const result = await spawnArgv('pnpm', args, {
     stdio: ['ignore', 'inherit', 'inherit'],
   });
   const durationMs = Date.now() - start;
@@ -94,10 +59,11 @@ async function runStep(label: string, args: readonly string[]): Promise<number> 
 const HELP = `Builder preflight — the fast pre-commit self-verify (scar S6.3).
 
 Usage:
-  pnpm preflight [test-path...]
+  pnpm preflight [--staged] [--plan] [--json] [test-path...]
 
-Runs, fail-fast, cheapest→heaviest:
-  ${STEPS.map((s) => s.label).join(', ')}
+--staged limits the expensive TypeDoc proof to staged TypeDoc inputs. The
+remaining static authorities always run. --plan prints the exact execution plan
+without running it; combine with --json for an agent-readable receipt.
 
 With a trailing path (or several), also runs your OWN targeted test(s) as the
 final step, e.g.:
@@ -113,11 +79,47 @@ async function main(argv: readonly string[]): Promise<void> {
     process.exit(0);
   }
 
+  const staged = argv.includes('--staged');
+  const printPlan = argv.includes('--plan');
+  const json = argv.includes('--json');
+  let changedPaths: readonly string[] | undefined;
+  if (staged) {
+    const changed = await spawnArgvCapture('git', ['diff', '--cached', '--name-only', '--diff-filter=ACMRD']);
+    if (changed.exitCode !== 0) {
+      console.error(
+        `preflight — cannot inspect staged paths: ${changed.stderr.trim() || `git exit ${changed.exitCode}`}`,
+      );
+      process.exit(1);
+    }
+    changedPaths = changed.stdout.split(/\r?\n/u).filter(Boolean);
+  }
+  const plan = buildLocalVerificationPlan({ staged, ...(changedPaths === undefined ? {} : { changedPaths }) });
+  const resourcePlan = selectLocalResourcePlan(await sampleLocalResources(), {
+    ci: process.env.CI === 'true',
+    allowSwap: process.env.LITESHIP_DOCS_USE_SWAP === '1',
+  });
+  if (printPlan) {
+    if (json) console.log(JSON.stringify({ ...plan, resource: resourcePlan }, null, 2));
+    else {
+      console.log(`preflight plan (${plan.mode}; docs=${plan.docsReason})`);
+      console.log(formatLocalResourcePlan(resourcePlan));
+      for (const step of plan.steps) console.log(`- pnpm ${step.argv.join(' ')}`);
+    }
+    return;
+  }
+
   const testTargets = argv.filter((arg) => !arg.startsWith('-'));
   const overallStart = Date.now();
 
-  for (const step of STEPS) {
-    const exitCode = await runStep(step.label, [step.script]);
+  console.log(`[preflight] mode=${plan.mode} docs=${plan.docsReason}`);
+  console.log(formatLocalResourcePlan(resourcePlan));
+  const inheritedWorkers = process.env.LITESHIP_NATIVE_TSC_WORKERS;
+  if (inheritedWorkers === undefined) {
+    process.env.LITESHIP_NATIVE_TSC_WORKERS = String(resourcePlan.nativeTypeScriptWorkers);
+  }
+
+  for (const step of plan.steps) {
+    const exitCode = await runStep(step.label, step.argv);
     if (exitCode !== 0) {
       console.error(`\n${RULE}`);
       console.error('  PREFLIGHT FAILED');
@@ -130,7 +132,7 @@ async function main(argv: readonly string[]): Promise<void> {
   }
 
   if (testTargets.length > 0) {
-    const exitCode = await runStep(`test ${testTargets.join(' ')}`, ['test', ...testTargets]);
+    const exitCode = await runStep(`test ${testTargets.join(' ')}`, ['run', 'test', ...testTargets]);
     if (exitCode !== 0) {
       console.error(`\n${RULE}`);
       console.error('  PREFLIGHT FAILED');
@@ -145,8 +147,11 @@ async function main(argv: readonly string[]): Promise<void> {
   console.log(`\n${RULE}`);
   console.log('  PREFLIGHT PASSED');
   console.log(RULE);
-  console.log(`\n  ${STEPS.length} static checks${testTargets.length > 0 ? ' + targeted tests' : ''} green in ${formatDuration(totalMs)}.`);
+  console.log(
+    `\n  ${plan.steps.length} static checks${testTargets.length > 0 ? ' + targeted tests' : ''} green in ${formatDuration(totalMs)}.`,
+  );
   console.log('  Necessary, not sufficient — integration owns the global gates.\n');
+  if (inheritedWorkers === undefined) delete process.env.LITESHIP_NATIVE_TSC_WORKERS;
 }
 
 if (isDirectExecution(import.meta.url)) {

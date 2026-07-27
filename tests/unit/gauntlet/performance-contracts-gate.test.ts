@@ -15,26 +15,65 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { verifyGate, runGates, memoryContext } from '@czap/gauntlet';
+import { verifyGate, runGates, memoryContext as baseMemoryContext, type GateContext } from '@liteship/gauntlet';
+import {
+  parseQualifiedBenchDistribution,
+  type QualifiedBenchDistribution,
+} from '../../../packages/gauntlet/src/gates/bench-subjects.js';
+import { buildBenchmarkSubjectFacts } from '../../../packages/audit/src/benchmark-subject-facts.ts';
 import {
   performanceContractsGate,
   PERFORMANCE_CONTRACTS_RULE_ID,
+  ACCEPTED_ALLOCATION_CEILINGS,
   ACCEPTED_COMPLEXITY_CEILINGS,
 } from '../../../packages/gauntlet/src/gates/performance-contracts.js';
 
 const DISTRIBUTIONS = JSON.stringify({
-  schemaVersion: 1,
+  schemaVersion: 2,
   distributions: [
-    { name: 'Boundary.evaluate -- 3 thresholds', file: 'tests/bench/core.bench.ts', inputSize: 3, shape: 'boundary-thresholds', replicates: 1 },
+    {
+      name: 'Boundary.evaluate -- 3 thresholds',
+      file: 'tests/bench/core.bench.ts',
+      inputSize: 3,
+      shape: 'boundary-thresholds',
+      replicates: 1,
+      subjects: [
+        {
+          role: 'sut',
+          origin: { kind: 'module', specifier: '@liteship/core' },
+          symbol: 'Boundary.evaluate',
+          binding: 'Boundary.evaluate',
+        },
+      ],
+    },
   ],
 });
-const BENCH_FILE = "import { Bench } from 'tinybench';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => {});\n";
-const HEALTHY_MAP = JSON.stringify({
+const BENCH_FILE =
+  "import { Bench } from 'tinybench';\nimport { Boundary } from '@liteship/core';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 1));\n";
+function healthyComplexityEntries(
+  overrides: Readonly<Record<string, { readonly class: string; readonly fittedR2: number }>> = {},
+  omitted: ReadonlySet<string> = new Set(),
+) {
+  return Object.entries(ACCEPTED_COMPLEXITY_CEILINGS)
+    .filter(([path]) => !omitted.has(path))
+    .map(([path, ceiling], index) => ({
+      path,
+      class: overrides[path]?.class ?? ceiling,
+      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.002,
+      sizes: [16, 32, 64, 128, 256],
+      coefficientOfVariation: 0.05,
+      measurement: { replicates: 7 },
+    }));
+}
+
+const HEALTHY_MAP = JSON.stringify({ schemaVersion: 2, entries: healthyComplexityEntries() });
+const HEALTHY_ALLOCATION_MAP = JSON.stringify({
   schemaVersion: 1,
-  entries: [
-    { path: 'boundary.evaluateBatch', class: 'O(n)', fittedR2: 0.98 },
-    { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-  ],
+  entries: Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, klass], index) => ({
+    path,
+    class: klass,
+    fittedR2: 0.99 - index * 0.01,
+  })),
 });
 
 /** A green context: every bench declared, every hot path within its ceiling. */
@@ -44,6 +83,56 @@ function greenContext() {
     'tests/bench/core.bench.ts': BENCH_FILE,
     'benchmarks/complexity-map.json': HEALTHY_MAP,
   });
+}
+
+function subjectArtifact(subjects: readonly unknown[]): string {
+  return JSON.stringify({
+    schemaVersion: 2,
+    distributions: [
+      {
+        name: 'Boundary.evaluate -- 3 thresholds',
+        file: 'tests/bench/core.bench.ts',
+        inputSize: 3,
+        shape: 'boundary-thresholds',
+        replicates: 1,
+        subjects,
+      },
+    ],
+  });
+}
+
+const BOUNDARY_SUBJECT = {
+  role: 'sut',
+  origin: { kind: 'module', specifier: '@liteship/core' },
+  symbol: 'Boundary.evaluate',
+  binding: 'Boundary.evaluate',
+} as const;
+
+function withBenchmarkSubjects(context: GateContext): GateContext {
+  const text = context.readFile('benchmarks/distributions.json');
+  let distributions: QualifiedBenchDistribution[] = [];
+  if (text !== undefined) {
+    try {
+      const parsed = JSON.parse(text) as { distributions?: unknown };
+      if (Array.isArray(parsed.distributions)) {
+        distributions = parsed.distributions
+          .map(parseQualifiedBenchDistribution)
+          .filter((value): value is QualifiedBenchDistribution => value !== null);
+      }
+    } catch (cause) {
+      if (!(cause instanceof SyntaxError)) throw cause;
+    }
+  }
+  return {
+    ...context,
+    benchmarkSubjects: buildBenchmarkSubjectFacts(distributions, (path) => context.readFile(path)),
+  };
+}
+
+function memoryContext(files: Readonly<Record<string, string>>): GateContext {
+  return withBenchmarkSubjects(
+    baseMemoryContext({ 'benchmarks/allocation-map.json': HEALTHY_ALLOCATION_MAP, ...files }),
+  );
 }
 
 describe('performance-contracts gate — self-proof (the authority ratchet)', () => {
@@ -70,8 +159,7 @@ describe('THE HEADLINE LAW — a bench is invalid unless its distribution is dec
   it('FLAGS a registered bench with no declared input distribution (UNDECLARED)', () => {
     const ctx = memoryContext({
       'benchmarks/distributions.json': DISTRIBUTIONS,
-      'tests/bench/core.bench.ts':
-        BENCH_FILE + "bench.add('Undeclared -- no distribution', () => {});\n",
+      'tests/bench/core.bench.ts': BENCH_FILE + "bench.add('Undeclared -- no distribution', () => {});\n",
       'benchmarks/complexity-map.json': HEALTHY_MAP,
     });
     const findings = performanceContractsGate.run(ctx);
@@ -84,10 +172,38 @@ describe('THE HEADLINE LAW — a bench is invalid unless its distribution is dec
   it('FLAGS a declared distribution that maps to no bench (ORPHAN — drifted contract)', () => {
     const ctx = memoryContext({
       'benchmarks/distributions.json': JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         distributions: [
-          { name: 'Boundary.evaluate -- 3 thresholds', file: 'tests/bench/core.bench.ts', inputSize: 3, shape: 'boundary-thresholds', replicates: 1 },
-          { name: 'Renamed.bench -- stale', file: 'tests/bench/core.bench.ts', inputSize: 1, shape: 'single-call', replicates: 1 },
+          {
+            name: 'Boundary.evaluate -- 3 thresholds',
+            file: 'tests/bench/core.bench.ts',
+            inputSize: 3,
+            shape: 'boundary-thresholds',
+            replicates: 1,
+            subjects: [
+              {
+                role: 'sut',
+                origin: { kind: 'module', specifier: '@liteship/core' },
+                symbol: 'Boundary.evaluate',
+                binding: 'Boundary.evaluate',
+              },
+            ],
+          },
+          {
+            name: 'Renamed.bench -- stale',
+            file: 'tests/bench/core.bench.ts',
+            inputSize: 1,
+            shape: 'single-call',
+            replicates: 1,
+            subjects: [
+              {
+                role: 'sut',
+                origin: { kind: 'module', specifier: '@liteship/core' },
+                symbol: 'Boundary.evaluate',
+                binding: 'Boundary.evaluate',
+              },
+            ],
+          },
         ],
       }),
       'tests/bench/core.bench.ts': BENCH_FILE,
@@ -104,8 +220,7 @@ describe('THE HEADLINE LAW — a bench is invalid unless its distribution is dec
       'benchmarks/distributions.json': DISTRIBUTIONS,
       // A commented-out bench MUST NOT count as a registered bench needing a
       // declaration — commentsBlanked erases it, so no UNDECLARED finding fires.
-      'tests/bench/core.bench.ts':
-        BENCH_FILE + "// bench.add('Disabled -- commented out', () => {});\n",
+      'tests/bench/core.bench.ts': BENCH_FILE + "// bench.add('Disabled -- commented out', () => {});\n",
       'benchmarks/complexity-map.json': HEALTHY_MAP,
     });
     const findings = performanceContractsGate.run(ctx);
@@ -117,6 +232,66 @@ describe('THE HEADLINE LAW — a bench is invalid unless its distribution is dec
     const findings = performanceContractsGate.run(ctx);
     expect(findings.some((f) => f.title.includes('registry is missing'))).toBe(true);
   });
+
+  it('FLAGS a declared SUT whose benchmark callback is a no-op', () => {
+    const findings = performanceContractsGate.run(
+      memoryContext({
+        'benchmarks/distributions.json': subjectArtifact([BOUNDARY_SUBJECT]),
+        'tests/bench/core.bench.ts':
+          "import { Boundary } from '@liteship/core';\nbench.add('Boundary.evaluate -- 3 thresholds', () => {});\n",
+        'benchmarks/complexity-map.json': HEALTHY_MAP,
+      }),
+    );
+    expect(findings.some((finding) => finding.title.includes('uninvoked-subject'))).toBe(true);
+  });
+
+  it('FLAGS a missing subject declaration instead of granting evidence from the bench name', () => {
+    const findings = performanceContractsGate.run(
+      memoryContext({
+        'benchmarks/distributions.json': subjectArtifact([]),
+        'tests/bench/core.bench.ts': BENCH_FILE,
+        'benchmarks/complexity-map.json': HEALTHY_MAP,
+      }),
+    );
+    expect(findings.some((finding) => finding.title.includes('missing-subject'))).toBe(true);
+  });
+
+  it('FLAGS a subject that claims the wrong module origin', () => {
+    const findings = performanceContractsGate.run(
+      memoryContext({
+        'benchmarks/distributions.json': subjectArtifact([
+          { ...BOUNDARY_SUBJECT, origin: { kind: 'module', specifier: '@liteship/not-core' } },
+        ]),
+        'tests/bench/core.bench.ts': BENCH_FILE,
+        'benchmarks/complexity-map.json': HEALTHY_MAP,
+      }),
+    );
+    expect(findings.some((finding) => finding.title.includes('wrong-origin'))).toBe(true);
+  });
+
+  it('FLAGS a subject symbol that does not match the invoked module binding', () => {
+    const findings = performanceContractsGate.run(
+      memoryContext({
+        'benchmarks/distributions.json': subjectArtifact([
+          { ...BOUNDARY_SUBJECT, symbol: 'Boundary.notTheMeasuredMethod' },
+        ]),
+        'tests/bench/core.bench.ts': BENCH_FILE,
+        'benchmarks/complexity-map.json': HEALTHY_MAP,
+      }),
+    );
+    expect(findings.some((finding) => finding.title.includes('wrong-origin'))).toBe(true);
+  });
+
+  it('FLAGS duplicate registrations rather than choosing one callback ambiguously', () => {
+    const findings = performanceContractsGate.run(
+      memoryContext({
+        'benchmarks/distributions.json': subjectArtifact([BOUNDARY_SUBJECT]),
+        'tests/bench/core.bench.ts': `${BENCH_FILE}bench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 2));\n`,
+        'benchmarks/complexity-map.json': HEALTHY_MAP,
+      }),
+    );
+    expect(findings.some((finding) => finding.title.includes('ambiguous-registration'))).toBe(true);
+  });
 });
 
 describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', () => {
@@ -125,11 +300,10 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
-        entries: [
-          { path: 'boundary.evaluateBatch', class: 'O(n^2)', fittedR2: 0.99 },
-          { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-        ],
+        schemaVersion: 2,
+        entries: healthyComplexityEntries({
+          'boundary.evaluateBatch': { class: 'O(n^2)', fittedR2: 0.99 },
+        }),
       }),
     });
     const findings = performanceContractsGate.run(ctx);
@@ -144,11 +318,10 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
-        entries: [
-          { path: 'boundary.evaluateBatch', class: 'O(1)', fittedR2: 0.9 },
-          { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-        ],
+        schemaVersion: 2,
+        entries: healthyComplexityEntries({
+          'boundary.evaluateBatch': { class: 'O(1)', fittedR2: 0.9 },
+        }),
       }),
     });
     expect(performanceContractsGate.run(ctx)).toHaveLength(0);
@@ -159,8 +332,8 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
-        entries: [{ path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 }],
+        schemaVersion: 2,
+        entries: healthyComplexityEntries({}, new Set(['boundary.evaluateBatch'])),
       }),
     });
     const findings = performanceContractsGate.run(ctx);
@@ -172,15 +345,41 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
-        entries: [
-          { path: 'boundary.evaluateBatch', class: 'O(n)', fittedR2: 0.2 },
-          { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-        ],
+        schemaVersion: 2,
+        entries: healthyComplexityEntries({
+          'boundary.evaluateBatch': { class: 'O(n)', fittedR2: 0.2 },
+        }),
       }),
     });
     const findings = performanceContractsGate.run(ctx);
     expect(findings.some((f) => f.title.includes('too noisy'))).toBe(true);
+  });
+
+  it('FLAGS thin, clustered, under-replicated, and unstable claim evidence', () => {
+    const baseline = healthyComplexityEntries();
+    const target = baseline[0]!;
+    const defects = [
+      { ...target, sizes: [16, 32, 64, 128] },
+      { ...target, sizes: [16, 32, 48, 96, 192] },
+      { ...target, measurement: { replicates: 6 } },
+      { ...target, coefficientOfVariation: 0.26 },
+    ];
+    const expected = ['insufficient-size-sweep', 'invalid-size-sweep', 'under-replicated', 'unstable-variance'];
+
+    for (let index = 0; index < defects.length; index++) {
+      const entries = [defects[index]!, ...baseline.slice(1)];
+      const findings = performanceContractsGate.run(
+        memoryContext({
+          'benchmarks/distributions.json': DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': BENCH_FILE,
+          'benchmarks/complexity-map.json': JSON.stringify({ schemaVersion: 2, entries }),
+        }),
+      );
+      expect(
+        findings.some((finding) => finding.title.includes(expected[index]!)),
+        expected[index],
+      ).toBe(true);
+    }
   });
 
   it('FLAGS a missing complexity map entirely', () => {
@@ -192,9 +391,63 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
     expect(findings.some((f) => f.title.includes('Complexity map is missing'))).toBe(true);
   });
 
+  it('refuses a legacy complexity receipt that cannot prove its admission regime', () => {
+    expect(() =>
+      performanceContractsGate.run(
+        memoryContext({
+          'benchmarks/distributions.json': DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': BENCH_FILE,
+          'benchmarks/complexity-map.json': JSON.stringify({
+            schemaVersion: 1,
+            entries: healthyComplexityEntries(),
+          }),
+        }),
+      ),
+    ).toThrow(/schema-v2/u);
+  });
+
   it('pins the accepted ceilings to the trust-spine hot paths', () => {
     expect(ACCEPTED_COMPLEXITY_CEILINGS['boundary.evaluateBatch']).toBe('O(n)');
     expect(ACCEPTED_COMPLEXITY_CEILINGS['contentAddress.of']).toBe('O(n)');
+  });
+});
+
+describe('THE RETAINED-ALLOCATION LAW — output growth must remain bounded', () => {
+  it('accepts a complete allocation map at its ceilings', () => {
+    expect(performanceContractsGate.run(greenContext())).toHaveLength(0);
+  });
+
+  it('FLAGS a superlinear retained-allocation regression', () => {
+    const entries = Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, klass], index) => ({
+      path,
+      class: index === 0 ? 'O(n^2)' : klass,
+      fittedR2: 0.99,
+    }));
+    const findings = performanceContractsGate.run(
+      memoryContext({ 'benchmarks/allocation-map.json': JSON.stringify({ schemaVersion: 1, entries }) }),
+    );
+    expect(findings.some((finding) => finding.title.includes('Retained-allocation class regressed'))).toBe(true);
+  });
+
+  it('FLAGS a missing allocation map instead of silently dropping the contract', () => {
+    const findings = performanceContractsGate.run(
+      withBenchmarkSubjects(
+        baseMemoryContext({
+          'benchmarks/distributions.json': DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': BENCH_FILE,
+          'benchmarks/complexity-map.json': HEALTHY_MAP,
+        }),
+      ),
+    );
+    expect(findings.some((finding) => finding.title === 'Retained-allocation map is missing')).toBe(true);
+  });
+
+  it('pins canonical and asset retained-allocation paths to linear growth', () => {
+    expect(ACCEPTED_ALLOCATION_CEILINGS).toEqual({
+      'canonical.encode.retainedAllocation': 'O(n)',
+      'canonical.decode.retainedAllocation': 'O(n)',
+      'assets.computeWaveform.retainedAllocation': 'O(n)',
+    });
   });
 });
 

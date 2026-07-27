@@ -9,7 +9,7 @@
 Defined in: [audit/src/mutation-verdict.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L183)
 
 The injected verdict store — the B2 content-addressed cache for mutant verdicts,
-mirroring `@czap/gauntlet`'s `GateVerdictCache`. Keys on the mutant's content
+mirroring `@liteship/gauntlet`'s `GateVerdictCache`. Keys on the mutant's content
 address bound to its covering-tests digest + the toolchain digest. `read` returns
 `null` on any MISS (absent / unreadable / stale) — every uncertain case re-runs,
 never serves a stale verdict (a stale "killed" hiding a now-surviving mutant would

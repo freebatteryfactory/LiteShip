@@ -4,13 +4,19 @@
 
 [LiteShip](../../../modules.md) / [assets/src](../README.md) / AssetDecoder
 
-# Type Alias: AssetDecoder
+# Type Alias: AssetDecoder\<K\>
 
-> **AssetDecoder** = (`bytes`) => `Promise`\<`unknown`\>
+> **AssetDecoder**\<`K`\> = (`bytes`) => `Promise`\<[`DecodedAsset`](DecodedAsset.md)\<`K`\>\>
 
-Defined in: [assets/src/contract.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L81)
+Defined in: [assets/src/contract.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L98)
 
 Decode function shape shared by AssetDecl.decoder and the built-ins.
+
+## Type Parameters
+
+### K
+
+`K` *extends* [`AssetKind`](AssetKind.md) = [`AssetKind`](AssetKind.md)
 
 ## Parameters
 
@@ -20,4 +26,4 @@ Decode function shape shared by AssetDecl.decoder and the built-ins.
 
 ## Returns
 
-`Promise`\<`unknown`\>
+`Promise`\<[`DecodedAsset`](DecodedAsset.md)\<`K`\>\>

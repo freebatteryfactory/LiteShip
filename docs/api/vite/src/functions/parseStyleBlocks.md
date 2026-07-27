@@ -8,7 +8,7 @@
 
 > **parseStyleBlocks**(`css`, `sourceFile`): readonly [`StyleBlock`](../interfaces/StyleBlock.md)[]
 
-Defined in: [vite/src/style-transform.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/style-transform.ts#L71)
+Defined in: [vite/src/style-transform.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/style-transform.ts#L72)
 
 Parse every `@style` block from CSS source text.
 
@@ -22,8 +22,9 @@ Grammar:
 }
 ```
 
-Parsing is fully character-level via the shared `css-scan` helpers
-(same scanner as `@token` / `@theme` / `@quantize`): upstream
+Parsing is fully character-level via the scanner exported by
+`@liteship/compiler/parse` (the same scanner as `@token` / `@theme` /
+`@quantize`): upstream
 compilers (e.g. the Astro compiler re-serializing a `<style>` block)
 emit at-rules mid-line and collapse whole sheets onto a single line,
 so no line structure is assumed. At-rule markers are located on a

@@ -1,0 +1,29 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [\_spine](../../../README.md) / [CellKernel](../README.md) / replay1
+
+# Function: replay1()
+
+> **replay1**\<`T`\>(`initial`): [`Replay`](../interfaces/Replay.md)\<`T`\>
+
+Defined in: [\_spine/core.d.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L230)
+
+Build a replay-1 kernel seeded with `initial`.
+
+## Type Parameters
+
+### T
+
+`T`
+
+## Parameters
+
+### initial
+
+`T`
+
+## Returns
+
+[`Replay`](../interfaces/Replay.md)\<`T`\>

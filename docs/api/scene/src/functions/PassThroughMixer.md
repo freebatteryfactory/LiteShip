@@ -6,9 +6,9 @@
 
 # Function: PassThroughMixer()
 
-> **PassThroughMixer**(`frameIndex`, `sink`): `SystemShape`
+> **PassThroughMixer**(`frameIndex`, `sink`): `System`
 
-Defined in: [scene/src/systems/pass-through-mixer.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L21)
+Defined in: [scene/src/systems/pass-through-mixer.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/pass-through-mixer.ts#L25)
 
 Build a PassThroughMixer keyed to a frame index + receipt sink.
 
@@ -16,7 +16,7 @@ Build a PassThroughMixer keyed to a frame index + receipt sink.
 
 ### frameIndex
 
-`number`
+`FrameSource`
 
 ### sink
 
@@ -24,4 +24,4 @@ Build a PassThroughMixer keyed to a frame index + receipt sink.
 
 ## Returns
 
-`SystemShape`
+`System`

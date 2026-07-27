@@ -6,26 +6,26 @@
  * time via {@link envelopeFactor}. Authors write them declaratively:
  * `Track.video('hero', { ..., envelope: fade.in(Beat(1)) })`.
  *
- * Canonical type declarations live in `@czap/_spine` (ADR-0010); this
+ * Canonical type declarations live in `@liteship/_spine` (ADR-0010); this
  * module mirrors them and keeps the runtime constructors + evaluator.
  *
  * @module
  */
 
-import { clamp01 } from '@czap/core';
+import { clamp01 } from '@liteship/core';
 import type {
   FadeEnvelope as _FadeEnvelope,
   PulseEnvelope as _PulseEnvelope,
   ResolvedEnvelope as _ResolvedEnvelope,
   TrackEnvelope as _TrackEnvelope,
-} from '@czap/_spine';
+} from '@liteship/_spine';
 import type { BeatHandle } from './beat.js';
 import { resolveBeat } from './beat.js';
 
-/** Fade envelope (linear over a beat span). Mirror of the `@czap/_spine` declaration. */
+/** Fade envelope (linear over a beat span). Mirror of the `@liteship/_spine` declaration. */
 export type FadeEnvelope = _FadeEnvelope;
 
-/** Pulse envelope (periodic, amplitude-scaled). Mirror of the `@czap/_spine` declaration. */
+/** Pulse envelope (periodic, amplitude-scaled). Mirror of the `@liteship/_spine` declaration. */
 export type PulseEnvelope = _PulseEnvelope;
 
 /** Track envelope union — what a track's optional `envelope` field accepts. */
@@ -34,7 +34,7 @@ export type TrackEnvelope = _TrackEnvelope;
 /**
  * Compile-time-resolved envelope — the `Envelope` ECS component shape.
  * Beat spans are pre-resolved to frame counts so the per-tick read is
- * arithmetic-only (ADR-0002). Mirror of the `@czap/_spine` declaration.
+ * arithmetic-only (ADR-0002). Mirror of the `@liteship/_spine` declaration.
  */
 export type ResolvedEnvelope = _ResolvedEnvelope;
 

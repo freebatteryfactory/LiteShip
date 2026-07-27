@@ -6,7 +6,7 @@
 
 # Interface: RegisteredCommand
 
-Defined in: [command/src/registry.ts:511](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L511)
+Defined in: [command/src/registry.ts:666](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L666)
 
 A descriptor paired with its handler — the unit the registry indexes. The
 handler is optional: a descriptor-only entry declares a command's identity in
@@ -21,9 +21,9 @@ CLI's own dispatch) and pending migration into this package.
 
 ### argsSchema?
 
-> `readonly` `optional` **argsSchema?**: `Schema`\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
+> `readonly` `optional` **argsSchema?**: [`Schema`](../../../liteship/src/schema/interfaces/Schema.md)\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
 
-Defined in: [command/src/registry.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L522)
+Defined in: [command/src/registry.ts:677](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L677)
 
 The declared kernel schema for the command's args. When present, the
 dispatcher decodes `invocation.args` against it BEFORE invoking the handler
@@ -36,9 +36,9 @@ step is then a no-op passthrough).
 
 ### descriptor
 
-> `readonly` **descriptor**: `CapsuleCommandDescriptor`
+> `readonly` **descriptor**: [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)
 
-Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L512)
+Defined in: [command/src/registry.ts:667](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L667)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **handler?**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `unknown`\>
 
-Defined in: [command/src/registry.ts:513](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L513)
+Defined in: [command/src/registry.ts:668](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L668)

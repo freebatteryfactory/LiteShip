@@ -7,9 +7,9 @@
  * dangerous SINK call argument, observing any SANITIZER on the path. It emits
  * GENERIC taint FACTS — `{ source, sink, sanitizedBy?, path }` — and stays
  * LiteShip-AGNOSTIC: the SOURCE / SINK / SANITIZER classification is INJECTED as a
- * parameter ({@link TaintRegistry}), so `@czap/audit` references NO LiteShip
+ * parameter ({@link TaintRegistry}), so `@liteship/audit` references NO LiteShip
  * source/sink name. The LiteShip-LOCAL registry (the shader-source fetch, the
- * AI-cast graph-apply, the runtime-URL SSRF seam, …) lives with the `@czap/cli`
+ * AI-cast graph-apply, the runtime-URL SSRF seam, …) lives with the `@liteship/cli`
  * HOST and is injected here, exactly the ADR-0012 / D7b boundary the
  * `invariant-regex` FactOracle hook uses.
  *
@@ -88,12 +88,12 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import { InvariantViolationError } from '@czap/error';
-import type { TaintFacts, TaintFlow, TaintEndpoint, SanitizerSite, TaintPathStep } from '@czap/gauntlet';
-import { liteshipDevopsProfile } from './devops-profile.js';
-import type { DevopsProfile } from './devops-profile.js';
+import { InvariantViolationError } from '@liteship/error';
+import type { TaintFacts, TaintFlow, TaintEndpoint, SanitizerSite, TaintPathStep } from '@liteship/gauntlet';
+import { resolveDevopsProfile, type DevopsProfile } from './devops-profile.js';
 import { readProfileSourceFileRecords } from './shared.js';
 import { createTypeDirectedProgram } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /** The oracle id every taint fact this module emits is tagged with (traceability). */
 export const TAINT_ORACLE_ID = 'ts-taint';
@@ -118,7 +118,7 @@ export const DEFAULT_TAINT_INTERPROCEDURAL_DEPTH = 8;
 /**
  * The INJECTED source/sink/sanitizer classification — the host-supplied registry
  * (the ADR-0012 / D7b boundary). The oracle references NONE of these names itself;
- * the `@czap/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
+ * the `@liteship/cli` host supplies the LiteShip-LOCAL set. Each is matched against a
  * call expression's CALLEE NAME — the bare identifier (`fetch`, `eval`) OR the
  * member name (`shaderSource`, `createShaderModule`, `innerHTML` as an assignment
  * target, `validateGraphPatchProposal`). {@link memberSinks} adds a third channel:
@@ -170,8 +170,10 @@ export interface TaintRegistry {
 
 /** Options for {@link buildRepoIRTaint}. */
 export interface BuildRepoIRTaintOptions {
-  /** The audit profile (`profile.repoRoot` is the target). Defaults to LiteShip's. */
+  /** The audit profile. Omission uses generic current-workspace defaults only. */
   readonly profile?: DevopsProfile;
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * The bounded interprocedural hop depth (default
    * {@link DEFAULT_TAINT_INTERPROCEDURAL_DEPTH}). Reported in the facts so the
@@ -758,7 +760,7 @@ function buildCallerIndex(
  * @param options  The profile seam + the interprocedural depth bound.
  */
 export function buildRepoIRTaint(registry: TaintRegistry, options: BuildRepoIRTaintOptions = {}): TaintFacts {
-  const profile = options.profile ?? liteshipDevopsProfile;
+  const profile = options.profile ?? resolveDevopsProfile({});
   const maxHops = options.interproceduralDepth ?? DEFAULT_TAINT_INTERPROCEDURAL_DEPTH;
   if (!Number.isInteger(maxHops) || maxHops < 0) {
     throw InvariantViolationError(
@@ -773,6 +775,7 @@ export function buildRepoIRTaint(registry: TaintRegistry, options: BuildRepoIRTa
   const program = createTypeDirectedProgram(
     records.map((r) => r.absolutePath),
     profile.repoRoot,
+    options.typeScriptPathAliases,
   );
   const checker = program.getTypeChecker();
   // A non-empty corpus MUST yield source files; if the program is empty the trace

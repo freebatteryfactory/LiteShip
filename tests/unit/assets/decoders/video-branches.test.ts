@@ -1,39 +1,50 @@
-/**
- * Deterministic branch coverage for the video decoder (runtime-seams
- * hotspot: 47% branches). The peer suite (video.test.ts) runs against the
- * real machine, where ffprobe may or may not exist — so the ffprobe SUCCESS
- * arms (stream projection, duration, fps fraction) were only covered on
- * machines that happened to have it. This suite mocks spawnSync so every
- * arm is proven on every machine.
- *
- * @module
- */
-import { describe, it, expect, vi, afterEach } from 'vitest';
+/** Deterministic video probe success/fault simulation through the injected host seam. */
 
-const { spawnSyncMock } = vi.hoisted(() => ({ spawnSyncMock: vi.fn() }));
-vi.mock('node:child_process', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  spawnSync: spawnSyncMock,
-}));
-
-import { videoDecoder } from '../../../../packages/assets/src/decoders/video.js';
+import { describe, expect, it } from 'vitest';
+import { hasTag } from '@liteship/error';
+import {
+  decodeVideoWithHost,
+  type VideoDecodeHost,
+  type VideoProbeResult,
+} from '../../../../packages/assets/src/decoders/video.js';
 
 const MP4_HEADER = new Uint8Array([
-  0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0x00, 0x00, 0x02, 0x00,
+  0x00, 0x00, 0x00, 0x10, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0x00, 0x00, 0x02, 0x00,
 ]).buffer;
-
 const WEBM_HEADER = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0xa3, 0x42, 0x86, 0x81, 0x01, 0x42, 0xf7, 0x81]).buffer;
 
-const probeResult = (data: unknown) => ({ status: 0, stdout: JSON.stringify(data) });
+function hostFor(
+  probeResult: VideoProbeResult,
+  overrides: Partial<VideoDecodeHost> = {},
+): { readonly host: VideoDecodeHost; readonly events: string[] } {
+  const events: string[] = [];
+  return {
+    events,
+    host: {
+      createTempDir: () => {
+        events.push('create');
+        return '/tmp/video-probe';
+      },
+      probeFilePath: (directory) => `${directory}/input.bin`,
+      writeProbeFile: (_path, bytes) => events.push(`write:${bytes.byteLength}`),
+      probe: () => {
+        events.push('probe');
+        return probeResult;
+      },
+      cleanup: () => events.push('cleanup'),
+      ...overrides,
+    },
+  };
+}
 
-afterEach(() => {
-  spawnSyncMock.mockReset();
-});
+function success(data: unknown): VideoProbeResult {
+  return { kind: 'success', stdout: JSON.stringify(data) };
+}
 
-describe('videoDecoder — ffprobe success arms (spawn mocked)', () => {
-  it('projects container, codec, dimensions, duration, and fractional fps', async () => {
-    spawnSyncMock.mockReturnValue(
-      probeResult({
+describe('decodeVideoWithHost', () => {
+  it('projects bounded success metadata and always cleans up', () => {
+    const { host, events } = hostFor(
+      success({
         format: { format_name: 'mov,mp4,m4a', duration: '2.5' },
         streams: [
           { codec_type: 'audio', codec_name: 'aac' },
@@ -41,57 +52,93 @@ describe('videoDecoder — ffprobe success arms (spawn mocked)', () => {
         ],
       }),
     );
-    const decoded = await videoDecoder(MP4_HEADER);
-    expect(decoded.container).toBe('mov,mp4,m4a');
-    expect(decoded.codec).toBe('h264');
-    expect(decoded.width).toBe(1920);
-    expect(decoded.height).toBe(1080);
-    expect(decoded.durationSec).toBe(2.5);
-    expect(decoded.fps).toBeCloseTo(29.97, 2);
+    expect(decodeVideoWithHost(MP4_HEADER, undefined, host)).toEqual({
+      container: 'mov,mp4,m4a',
+      codec: 'h264',
+      width: 1920,
+      height: 1080,
+      durationSec: 2.5,
+      fps: expect.closeTo(29.97, 2),
+    });
+    expect(events).toEqual(['create', 'write:16', 'probe', 'cleanup']);
   });
 
-  it('an integer r_frame_rate (no denominator) is used as-is', async () => {
-    spawnSyncMock.mockReturnValue(
-      probeResult({
-        format: { format_name: 'matroska,webm' },
-        streams: [{ codec_type: 'video', codec_name: 'vp9', r_frame_rate: '25' }],
-      }),
-    );
-    const decoded = await videoDecoder(WEBM_HEADER);
-    expect(decoded.fps).toBe(25);
-  });
-
-  it('missing format_name falls back to the header sniff; no streams → undefined fields', async () => {
-    spawnSyncMock.mockReturnValue(probeResult({}));
-    const decoded = await videoDecoder(MP4_HEADER);
-    expect(decoded.container).toBe('mp4');
-    expect(decoded.codec).toBeUndefined();
-    expect(decoded.durationSec).toBeUndefined();
-    expect(decoded.fps).toBeUndefined();
-  });
-
-  it('audio-only streams leave the video projections undefined', async () => {
-    spawnSyncMock.mockReturnValue(
-      probeResult({
-        format: { format_name: 'mp3' },
-        streams: [{ codec_type: 'audio', codec_name: 'mp3' }],
-      }),
-    );
-    const decoded = await videoDecoder(WEBM_HEADER);
-    expect(decoded.container).toBe('mp3');
-    expect(decoded.codec).toBeUndefined();
-    expect(decoded.width).toBeUndefined();
-  });
-});
-
-describe('videoDecoder — ffprobe unavailable (nonzero status)', () => {
   it.each([
-    ['mp4 (ftyp signature)', MP4_HEADER, 'mp4'],
-    ['webm (EBML magic)', WEBM_HEADER, 'webm'],
-    ['unknown bytes', new Uint8Array([0xde, 0xad, 0xbe, 0xef, 0, 0, 0, 0, 0, 0, 0, 0]).buffer, 'unknown'],
-  ])('sniffs %s', async (_label, bytes, expected) => {
-    spawnSyncMock.mockReturnValue({ status: 1, stdout: '' });
-    const decoded = await videoDecoder(bytes);
-    expect(decoded.container).toBe(expected);
+    ['mp4', MP4_HEADER, 'mp4'],
+    ['webm', WEBM_HEADER, 'webm'],
+  ] as const)('uses structural %s sniffing only when the probe is unavailable', (_name, bytes, container) => {
+    const { host } = hostFor({ kind: 'unavailable', detail: 'ENOENT' });
+    expect(decodeVideoWithHost(bytes, undefined, host)).toEqual({ container });
+  });
+
+  it('refuses rejected media instead of laundering it through header sniffing', () => {
+    const { host } = hostFor({ kind: 'rejected', status: 1, stderr: 'invalid data' });
+    expect(() => decodeVideoWithHost(MP4_HEADER, undefined, host)).toThrow(/ffprobe rejected/);
+  });
+
+  it('classifies timeout separately and still cleans up', () => {
+    const { host, events } = hostFor({ kind: 'timeout', detail: '10s deadline' });
+    expect(() => decodeVideoWithHost(MP4_HEADER, undefined, host)).toThrow(/timed out/);
+    expect(events.at(-1)).toBe('cleanup');
+  });
+
+  it.each([
+    ['malformed JSON', '{', /malformed JSON/],
+    ['negative duration', JSON.stringify({ format: { duration: '-1' } }), /duration/],
+    [
+      'zero frame denominator',
+      JSON.stringify({ streams: [{ codec_type: 'video', r_frame_rate: '30/0' }] }),
+      /frame rate/,
+    ],
+    ['non-positive width', JSON.stringify({ streams: [{ codec_type: 'video', width: 0 }] }), /width/],
+  ] as const)('refuses %s from the probe', (_name, stdout, expected) => {
+    const { host } = hostFor({ kind: 'success', stdout });
+    expect(() => decodeVideoWithHost(MP4_HEADER, undefined, host)).toThrow(expected);
+  });
+
+  it('bounds probe output', () => {
+    const { host } = hostFor({ kind: 'success', stdout: 'x'.repeat(1_048_577) });
+    expect(() => decodeVideoWithHost(MP4_HEADER, undefined, host)).toThrow(/output exceeds/);
+  });
+
+  it('wraps write failure with source identity and still cleans up', () => {
+    const { host, events } = hostFor(success({}), {
+      writeProbeFile: () => {
+        events.push('write-failed');
+        throw new Error('disk full');
+      },
+    });
+    expect(() => decodeVideoWithHost(MP4_HEADER, 'clip.mp4', host)).toThrow(/clip\.mp4.*disk full/);
+    expect(events.at(-1)).toBe('cleanup');
+  });
+
+  it('surfaces cleanup failure after an otherwise successful probe', () => {
+    const { host } = hostFor(success({ format: { format_name: 'mp4' } }), {
+      cleanup: () => {
+        throw new Error('locked');
+      },
+    });
+    expect(() => decodeVideoWithHost(MP4_HEADER, undefined, host)).toThrow(/failed to remove probe directory/);
+  });
+
+  it('aggregates primary and cleanup failures so neither sibling is lost', () => {
+    const { host } = hostFor(
+      { kind: 'rejected', status: 1, stderr: 'bad media' },
+      {
+        cleanup: () => {
+          throw new Error('locked');
+        },
+      },
+    );
+    try {
+      decodeVideoWithHost(MP4_HEADER, undefined, host);
+      throw new Error('expected AggregateError');
+    } catch (error) {
+      expect(error).toBeInstanceOf(AggregateError);
+      if (error instanceof AggregateError) {
+        expect(error.errors.some((entry) => hasTag(entry, 'ValidationError'))).toBe(true);
+        expect(error.errors.some((entry) => hasTag(entry, 'IoError'))).toBe(true);
+      }
+    }
   });
 });

@@ -8,6 +8,8 @@
 
 Defined in: [audit/src/integrity.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L22)
 
+Aggregate integrity-pass evidence and coverage classification.
+
 ## Properties
 
 ### consoleCount

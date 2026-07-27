@@ -20,7 +20,7 @@
  *   • `symbol-reference-count` (number) — references OUTSIDE the declaration file.
  *   • `symbol-orphan` (boolean) — true iff that external count is zero.
  *
- * The `symbol-orphan-divergence` gate (in `@czap/gauntlet`) folds these against
+ * The `symbol-orphan-divergence` gate (in `@liteship/gauntlet`) folds these against
  * the IR's `file-proxy-only` `refs` reverse index. Where they DISAGREE — the
  * file-proxy graph credits a reference the LanguageService cannot resolve (a name
  * collision the weak graph launders), or the LanguageService resolves one the
@@ -45,14 +45,14 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import { InvariantViolationError } from '@czap/error';
-import type { Fact, FileId, SymbolId } from '@czap/gauntlet';
-import { liteshipDevopsProfile } from './devops-profile.js';
-import type { DevopsProfile } from './devops-profile.js';
+import { InvariantViolationError } from '@liteship/error';
+import type { Fact, FileId, SymbolId } from '@liteship/gauntlet';
+import { resolveDevopsProfile, type DevopsProfile } from './devops-profile.js';
 import { readProfileSourceFileRecords, listProfilePackageManifests } from './shared.js';
 import type { SourceFileRecord, PackageManifestInfo } from './shared.js';
 import { exportedNamesFromNode, hasModifier } from './structure.js';
 import { typeDirectedCompilerOptions } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /** The oracle id every fact this module emits is tagged with — the traceability key. */
 export const LANGUAGE_SERVICE_ORACLE_ID = 'ts-language-service';
@@ -91,11 +91,13 @@ export interface OrphanValue {
 /** Input to {@link symbolReferenceOracle} — the same profile/corpus seam `buildRepoIR` uses. */
 export interface SymbolReferenceOracleInput {
   /**
-   * The audit profile (`profile.repoRoot` is the authoritative target). Defaults
-   * to the LiteShip reference profile — the integrator passes the SAME profile it
-   * hands `buildRepoIR`, so the oracle's facts land on the same file nodes.
+   * The audit profile (`profile.repoRoot` is the authoritative target). A host
+   * should pass the SAME profile it hands `buildRepoIR`; omission uses only the
+   * generic current-workspace defaults and inherits no project policy.
    */
   readonly profile?: DevopsProfile;
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
 }
 
 /** A minimal in-memory {@link ts.IScriptSnapshot} over a fixed source string. */
@@ -118,10 +120,14 @@ function scriptSnapshot(text: string): ts.IScriptSnapshot {
  * {@link typeDirectedCompilerOptions}'s `paths`, so cross-package references
  * resolve to source.
  */
-function makeLanguageServiceHost(records: readonly SourceFileRecord[], baseUrl: string): ts.LanguageServiceHost {
+function makeLanguageServiceHost(
+  records: readonly SourceFileRecord[],
+  baseUrl: string,
+  aliases: TypeScriptPathAliases = {},
+): ts.LanguageServiceHost {
   // The script set is the absolute paths of the corpus, plus the lib files the
   // resolver pulls in transitively. The default compiler host supplies lib reads.
-  const options = typeDirectedCompilerOptions(baseUrl);
+  const options = typeDirectedCompilerOptions(baseUrl, aliases);
   const fileNames = records.map((record) => resolve(record.absolutePath));
   const textByPath = new Map<string, string>(records.map((record) => [resolve(record.absolutePath), record.text]));
 
@@ -244,7 +250,7 @@ function countExternalReferences(service: ts.LanguageService, site: ExportSite, 
  *   `buildRepoIR` so the facts land on the IR's file nodes.
  */
 export function symbolReferenceOracle(input: SymbolReferenceOracleInput = {}): readonly Fact[] {
-  const profile = input.profile ?? liteshipDevopsProfile;
+  const profile = input.profile ?? resolveDevopsProfile({});
   const records = readProfileSourceFileRecords(profile);
   if (records.length === 0) return [];
 
@@ -257,11 +263,11 @@ export function symbolReferenceOracle(input: SymbolReferenceOracleInput = {}): r
     // (every source record is discovered through a package) — fail loud.
     throw InvariantViolationError(
       'symbolReferenceOracle',
-      `read ${records.length} source records but discovered 0 packages under "${profile.repoRoot}" — the corpus and package discovery diverged`,
+      `read ${records.length} source records but discovered no packages under "${profile.repoRoot}" — the corpus and package discovery diverged`,
     );
   }
 
-  const host = makeLanguageServiceHost(records, profile.repoRoot);
+  const host = makeLanguageServiceHost(records, profile.repoRoot, input.typeScriptPathAliases);
   const service = ts.createLanguageService(host, ts.createDocumentRegistry());
 
   // A non-empty corpus MUST yield a program; if the LanguageService cannot build

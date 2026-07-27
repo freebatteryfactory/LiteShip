@@ -6,7 +6,7 @@
  * reverse-scan that compared a value to `thresholds[i]` in raw f64, selecting a
  * DIFFERENT state index than the deployed f32 WASM kernel within ~1 ULP of a
  * threshold (output-identity drift). The fix consolidated ONE f32-canonical
- * kernel in packages/core/src/boundary-f32.ts (`rawIndexF32` +
+ * kernel in packages/core/src/wasm/boundary-f32.ts (`rawIndexF32` +
  * `EVALUATE_THRESHOLDS_SOURCE`).
  *
  * The structural ast-grep rule `sgrules/float-determinism-boundary.yml` catches
@@ -32,7 +32,7 @@ const SGCONFIG = resolve(REPO, 'sgconfig.yml');
 
 /** Canonical f32 boundary kernels — the ONLY sanctioned reverse-scan / f32
  * comparison sites. Paths relative to packages/. */
-const CANONICAL_KERNEL_FILES = ['core/src/boundary-f32.ts'] as const;
+const CANONICAL_KERNEL_FILES = ['core/src/wasm/boundary-f32.ts'] as const;
 
 /** Recursively collect every `.ts` source file under `packages/**\/src`. */
 function allPackageSrcFiles(): string[] {

@@ -36,17 +36,17 @@ const VOLATILE_TYPE_FILES = [
   'scripts/audit/types.ts',
   'scripts/audit/report.ts',
   'scripts/report-runtime-seams.ts',
-  'scripts/report-satellite-scan.ts',
+  'scripts/report-adaptive-scan.ts',
 ];
 
 describe('generated-time — the causal clock (generated_at) stays HLC + identity-bearing', () => {
   it('ShipCapsule.generated_at is typed HLC (an object), not a wall-clock string', () => {
-    const src = read('packages/core/src/ship-capsule.ts');
+    const src = read('packages/core/src/authoring/ship-capsule.ts');
     expect(src).toMatch(/readonly generated_at:\s*HLC\b/);
   });
 
   it('generated_at participates in the identity-bearing capsule encoding (content address)', () => {
-    const src = read('packages/core/src/ship-capsule.ts');
+    const src = read('packages/core/src/authoring/ship-capsule.ts');
     // It is hashed into the content address inside encodeIdentityBearing — must not be dropped.
     expect(src).toMatch(/encodeIdentityBearing[\s\S]*?generated_at:\s*capsule\.generated_at/);
   });
@@ -67,7 +67,7 @@ describe('generated-time — volatile report/artifact fields are WallClockTimest
       const src = read(rel);
       // No bare `generatedAt: string` (or `?: string` / `: string | null`) remains.
       expect(src, `${rel} must not declare a bare generatedAt: string`).not.toMatch(/generatedAt\??:\s*string\b/);
-      // The alias is in use (type-only import from @czap/core, one vocabulary).
+      // The alias is in use (type-only import from @liteship/core, one vocabulary).
       expect(src, `${rel} must use WallClockTimestamp`).toMatch(/WallClockTimestamp/);
     });
   }
@@ -96,9 +96,9 @@ describe('generated-time — gauntletRunId is the coherence signal; wall-clock o
     expect(src).not.toMatch(/'runtime-seams-ordering'/);
   });
 
-  it('report-satellite-scan proves coherence via gauntletRunId, with no wall-clock ordering gate', () => {
-    const src = read('scripts/report-satellite-scan.ts');
-    expect(src).toMatch(/satellite-scan-run-coherence/); // gauntletRunId equality stays
-    expect(src).not.toMatch(/'satellite-scan-ordering'/); // the wall-clock gate is gone
+  it('report-adaptive-scan proves coherence via gauntletRunId, with no wall-clock ordering gate', () => {
+    const src = read('scripts/report-adaptive-scan.ts');
+    expect(src).toMatch(/adaptive-scan-run-coherence/); // gauntletRunId equality stays
+    expect(src).not.toMatch(/'adaptive-scan-ordering'/); // the wall-clock gate is gone
   });
 });

@@ -6,26 +6,26 @@ import { describe, expect, test } from 'vitest';
 import { blankHtmlCommentsAndCodeBlocks, lineOfOffset } from '../../../packages/vite/src/html-scan.js';
 
 describe('blankHtmlCommentsAndCodeBlocks', () => {
-  test('blanks data-czap macros inside HTML comments while preserving offsets', () => {
+  test('blanks data-liteship macros inside HTML comments while preserving offsets', () => {
     const source = [
-      '<!-- teaching: data-czap="viewport" is the macro label -->',
-      '<div data-czap="viewport"></div>',
+      '<!-- teaching: data-liteship="viewport" is the macro label -->',
+      '<div data-liteship="viewport"></div>',
     ].join('\n');
     const blanked = blankHtmlCommentsAndCodeBlocks(source);
     expect(blanked.length).toBe(source.length);
-    expect([...blanked.matchAll(/data-czap="/g)]).toHaveLength(1);
-    expect(source).toContain('<!-- teaching: data-czap="viewport"');
+    expect([...blanked.matchAll(/data-liteship="/g)]).toHaveLength(1);
+    expect(source).toContain('<!-- teaching: data-liteship="viewport"');
   });
 
-  test('blanks data-czap macros inside pre/code samples while preserving offsets', () => {
+  test('blanks data-liteship macros inside pre/code samples while preserving offsets', () => {
     const source = [
-      '<pre><code>&lt;div data-czap="viewport"&gt;</code></pre>',
-      '<section data-czap="hero"></section>',
+      '<pre><code>&lt;div data-liteship="viewport"&gt;</code></pre>',
+      '<section data-liteship="hero"></section>',
     ].join('\n');
     const blanked = blankHtmlCommentsAndCodeBlocks(source);
     expect(blanked.length).toBe(source.length);
-    expect([...blanked.matchAll(/data-czap="/g)]).toHaveLength(1);
-    expect(source).toContain('data-czap="viewport"');
+    expect([...blanked.matchAll(/data-liteship="/g)]).toHaveLength(1);
+    expect(source).toContain('data-liteship="viewport"');
   });
 });
 

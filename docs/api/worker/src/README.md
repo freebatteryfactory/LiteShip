@@ -6,17 +6,17 @@
 
 # worker/src
 
-`@czap/worker` — **LiteShip** off-deck crew: compositor and render workers
+`@liteship/worker` — **LiteShip** off-deck crew: compositor and render workers
 that keep the main thread trim while boundaries and media stay live.
 
 This package ships:
 
-- [SPSCRing](namespaces/SPSCRing/README.md): lock-free single-producer/single-consumer ring
+- [SPSCRing](interfaces/SPSCRing.md): lock-free single-producer/single-consumer ring
   backed by `SharedArrayBuffer`, used for real-time state streaming
   from a worker to the main thread.
-- [CompositorWorker](namespaces/CompositorWorker/README.md): a factory that spins up a worker which
+- [CompositorWorker](type-aliases/CompositorWorker.md): a factory that spins up a worker which
   evaluates quantizer boundaries and emits `CompositeState`.
-- [RenderWorker](namespaces/RenderWorker/README.md): a factory for a worker that renders
+- [RenderWorker](interfaces/RenderWorker.md): a factory for a worker that renders
   `VideoFrameOutput` into an `OffscreenCanvas`.
 - [WorkerHost](namespaces/WorkerHost/README.md): a thin lifecycle wrapper around `Worker` with
   typed message helpers.
@@ -34,29 +34,27 @@ separate worker entry files or bundler configuration.
 
 ## Namespaces
 
-- [CompositorWorker](namespaces/CompositorWorker/README.md)
 - [Messages](namespaces/Messages/README.md)
-- [RenderWorker](namespaces/RenderWorker/README.md)
-- [SPSCRing](namespaces/SPSCRing/README.md)
 - [WorkerHost](namespaces/WorkerHost/README.md)
 
 ## Interfaces
 
-- [CompositorWorkerShape](interfaces/CompositorWorkerShape.md)
 - [MotionSampleMessage](interfaces/MotionSampleMessage.md)
 - [ProgramUniforms](interfaces/ProgramUniforms.md)
 - [QuantizerBoundarySource](interfaces/QuantizerBoundarySource.md)
-- [RenderWorkerShape](interfaces/RenderWorkerShape.md)
-- [SPSCRingBufferShape](interfaces/SPSCRingBufferShape.md)
+- [RenderWorker](interfaces/RenderWorker.md)
+- [ResolvedStateAckPayload](interfaces/ResolvedStateAckPayload.md)
+- [SPSCRing](interfaces/SPSCRing.md)
 - [SPSCRingPair](interfaces/SPSCRingPair.md)
 - [TransferableCanvas](interfaces/TransferableCanvas.md)
 - [WorkerConfig](interfaces/WorkerConfig.md)
+- [WorkerHost](interfaces/WorkerHost.md)
 - [WorkerHostRenderConfig](interfaces/WorkerHostRenderConfig.md)
-- [WorkerHostShape](interfaces/WorkerHostShape.md)
 - [WorkerLike](interfaces/WorkerLike.md)
 
 ## Type Aliases
 
+- [CompositorWorker](type-aliases/CompositorWorker.md)
 - [CompositorWorkerState](type-aliases/CompositorWorkerState.md)
 - [FromWorkerMessage](type-aliases/FromWorkerMessage.md)
 - [ToWorkerMessage](type-aliases/ToWorkerMessage.md)

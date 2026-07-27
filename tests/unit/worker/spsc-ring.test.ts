@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 describe('SPSCRing', () => {
   test('createPair returns buffer, producer, and consumer', () => {
@@ -122,7 +122,7 @@ describe('SPSCRing', () => {
     Object.defineProperty(globalThis, 'crossOriginIsolated', { value: false, configurable: true });
     try {
       expect(() => SPSCRing.createPair(4, 2)).toThrow(
-        'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
+        'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @liteship/astro sets these headers for you.',
       );
     } finally {
       if (had) {
@@ -139,14 +139,14 @@ describe('SPSCRing', () => {
   });
 
   test('invalid slotCount throws', () => {
-    expect(() => SPSCRing.createPair(0, 1)).toThrow();
-    expect(() => SPSCRing.createPair(-1, 1)).toThrow();
-    expect(() => SPSCRing.createPair(1.5, 1)).toThrow();
+    expect(() => SPSCRing.createPair(0, 1)).toThrow('slotCount must be a positive integer, got 0');
+    expect(() => SPSCRing.createPair(-1, 1)).toThrow('slotCount must be a positive integer, got -1');
+    expect(() => SPSCRing.createPair(1.5, 1)).toThrow('slotCount must be a positive integer, got 1.5');
   });
 
   test('invalid slotSize throws', () => {
-    expect(() => SPSCRing.createPair(4, 0)).toThrow();
-    expect(() => SPSCRing.createPair(4, -2)).toThrow();
+    expect(() => SPSCRing.createPair(4, 0)).toThrow('slotSize must be a positive integer, got 0');
+    expect(() => SPSCRing.createPair(4, -2)).toThrow('slotSize must be a positive integer, got -2');
   });
 
   test('attachProducer creates producer from existing SAB', () => {

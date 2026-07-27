@@ -23,7 +23,7 @@ import fc from 'fast-check';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-// The oracle is NOT yet exported from @czap/audit's barrel — the integrator wires
+// The oracle is NOT yet exported from @liteship/audit's barrel — the integrator wires
 // that (this agent builds in NEW files only). Import it via its src path (the
 // "src-path import = no public surface" pattern) so the self-contained oracle is
 // fully tested before the ~10-line wire-in. `resolveDevopsProfile` IS already in
@@ -37,8 +37,8 @@ import {
   SYMBOL_REFERENCE_COUNT_PROPERTY,
   type OrphanValue,
 } from '../../../packages/audit/src/repo-ir-language-service.js';
-import { resolveDevopsProfile } from '@czap/audit';
-import type { Fact } from '@czap/gauntlet';
+import { resolveDevopsProfile } from '@liteship/audit';
+import type { Fact } from '@liteship/gauntlet';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -46,7 +46,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-ls-oracle-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-ls-oracle-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

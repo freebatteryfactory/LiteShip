@@ -7,7 +7,7 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { parseQuantizeBlocks } from '@czap/vite';
+import { parseQuantizeBlocks } from '@liteship/vite';
 
 const FILE = '/x.css';
 

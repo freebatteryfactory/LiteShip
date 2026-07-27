@@ -1,9 +1,9 @@
 # Drift guard (same idiom as the repo's vocabulary drift-guard tests).
 #
-# A docblock @example must not show `czap({ themes: [...] })` — `themes:` is a
+# A docblock @example must not show `liteship({ themes: [...] })` — `themes:` is a
 # plugin option PluginConfig/IntegrationConfig never had (generated scaffolds
 # hallucinated it; themes are convention-discovered via dirs.theme). Pinned to
-# the czap( call + themes:[ pair appearing together inside one comment.
+# the liteship( call + themes:[ pair appearing together inside one comment.
 id: hallucinated-themes-option
 language: typescript
 severity: error
@@ -11,5 +11,5 @@ message: "Doc example passes a 'themes:' plugin option that PluginConfig/Integra
 rule:
   kind: comment
   all:
-    - regex: "czap\\("
+    - regex: "liteship\\("
     - regex: "themes:\\s*\\["

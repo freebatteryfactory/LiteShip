@@ -1,5 +1,5 @@
 /**
- * End-to-end verdicts for `czap verify` (ADR-0011 §Decision item 5).
+ * End-to-end verdicts for `liteship verify` (ADR-0011 §Decision item 5).
  *
  *   - Verified (exit 0): tarball + matching capsule.
  *   - Mismatch (exit 2): capsule whose tarball_manifest_address differs from
@@ -15,7 +15,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gunzipSync, gzipSync } from 'node:zlib';
-import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
+import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@liteship/core';
 import { tarballManifestAddress } from '../../packages/cli/src/ship-manifest.js';
 import { verify } from '../../packages/cli/src/commands/ship-verify.js';
 
@@ -68,7 +68,7 @@ let tarballBytes: Uint8Array;
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'litesip-verify-'));
   // Pack from the IN-WORKSPACE package dir so pnpm resolves the package's
-  // `catalog:` peer spec to its concrete range (as `czap ship` / `pnpm publish`
+  // `catalog:` peer spec to its concrete range (as `liteship ship` / `pnpm publish`
   // do on the real release path); the shared owner (tests/support/pack.ts, scar
   // S0.5) lands the .tgz in the clean tmp workDir. The dir is freshly minted, so
   // there is no stray sibling capsule to flip the no-capsule test to Verified,
@@ -86,7 +86,7 @@ afterAll(() => {
 const buildCapsuleInput = (tarballManifest: AddressedDigest, wallMs = 1_715_500_000_000): ShipCapsule.Input => ({
   _kind: 'shipCapsule',
   schema_version: 1,
-  package_name: '@czap/_spine',
+  package_name: '@liteship/_spine',
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,
@@ -119,7 +119,7 @@ const buildCapsuleInput = (tarballManifest: AddressedDigest, wallMs = 1_715_500_
   previous_ship_capsule: null,
 });
 
-describe('czap verify verdicts', () => {
+describe('liteship verify verdicts', () => {
   it('Verified (exit 0) when tarball matches capsule.tarball_manifest_address', async () => {
     const tmAddr = tarballManifestAddress(tarballBytes);
     const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr));
@@ -224,7 +224,7 @@ describe('czap verify verdicts', () => {
   });
 });
 
-describe('czap verify error and edge paths', () => {
+describe('liteship verify error and edge paths', () => {
   it('parses --capsule=path equals form (Verified)', async () => {
     const tmAddr = tarballManifestAddress(tarballBytes);
     const capsule = ShipCapsule.make(buildCapsuleInput(tmAddr, 1_715_500_000_010));

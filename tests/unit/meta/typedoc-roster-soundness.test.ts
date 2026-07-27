@@ -1,85 +1,74 @@
 /**
- * TypeDoc roster soundness — the source-of-truth guard that closes the `docs:check` false-green.
+ * TypeDoc roster soundness — the package catalog owns admission and order.
  *
- * `docs:check` regenerates the API docs from `typedoc.json`'s `entryPoints` and diffs against the
- * committed `docs/api`. That makes it blind to OMISSION: a published package absent from the roster
- * has no generated page, so there is nothing to diff, so the gate stays green while the package is
- * undocumented (the exact hole that let new `@czap/gauntlet` exports "pass" docs:check — the package
- * was never in the roster). A gate that cannot see a gap is a gate giving false green.
- *
- * This guard makes the roster CHECKED-AGAINST-SOURCE: every non-private package in the workspace MUST
- * appear in `typedoc.json` (or be a VISIBLE, justified exemption). Adding a publishable package without
- * a TypeDoc entry reds HERE — at the source of truth — not silently in a far-downstream missing page.
+ * `docs:check` can only compare pages for entry points it was told to render.
+ * This proof closes that omission false-green by deriving the complete TypeDoc
+ * roster from PACKAGE_CATALOG and requiring typedoc.json to be its exact
+ * projection. There is no parallel exemption list.
  */
 
-import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(HERE, '..', '..', '..');
+const ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
-/**
- * Documented exemptions from the API-docs roster — a VISIBLE allowlist, never a silent skip.
- * `create-liteship` is a project SCAFFOLDER (a `bin` + template generator), not a library with an
- * importable API surface, so it has no meaningful TypeDoc page. Any OTHER publishable package must be
- * in the roster. An exemption that stops being a real published package reds (second test below).
- */
-const ROSTER_EXEMPT = new Set(['create-liteship']);
+function expectedEntryPoints(): readonly string[] {
+  return PACKAGE_CATALOG.filter((record) => record.typedocEntry !== null)
+    .toSorted((left, right) => left.typedocOrder! - right.typedocOrder!)
+    .map((record) => record.typedocEntry!);
+}
 
-function publishablePackages(): { name: string; dir: string }[] {
-  const out: { name: string; dir: string }[] = [];
-  for (const dir of readdirSync(resolve(ROOT, 'packages'))) {
-    let pkg: { name?: string; private?: boolean };
-    try {
-      pkg = JSON.parse(readFileSync(resolve(ROOT, 'packages', dir, 'package.json'), 'utf8')) as typeof pkg;
-    } catch {
-      continue; // not a package dir
+function actualEntryPoints(): readonly string[] {
+  const typedoc = JSON.parse(readFileSync(resolve(ROOT, 'typedoc.json'), 'utf8')) as {
+    readonly entryPoints: readonly string[];
+  };
+  return typedoc.entryPoints;
+}
+
+export function typedocRosterDrift(
+  actual: readonly string[],
+  expected: readonly string[],
+): { readonly missing: readonly string[]; readonly stray: readonly string[] } {
+  const actualSet = new Set(actual);
+  const expectedSet = new Set(expected);
+  return {
+    missing: expected.filter((entry) => !actualSet.has(entry)),
+    stray: actual.filter((entry) => !expectedSet.has(entry)),
+  };
+}
+
+describe('typedoc roster soundness — PACKAGE_CATALOG is the one admission owner', () => {
+  it('typedoc.json is the exact ordered projection of catalog admissions', () => {
+    expect(actualEntryPoints()).toEqual(expectedEntryPoints());
+  });
+
+  it('every admitted entry belongs to its package and exists', () => {
+    for (const record of PACKAGE_CATALOG) {
+      if (record.typedocEntry === null) continue;
+      expect(
+        record.typedocEntry === record.dir || record.typedocEntry.startsWith(`${record.dir}/`),
+        `${record.name} TypeDoc entry escaped its owner directory: ${record.typedocEntry}`,
+      ).toBe(true);
+      expect(existsSync(resolve(ROOT, record.typedocEntry)), `${record.name} TypeDoc entry does not exist`).toBe(true);
     }
-    if (pkg.private === true || pkg.name === undefined) continue;
-    out.push({ name: pkg.name, dir });
-  }
-  return out;
-}
+  });
 
-function rosterDirs(): Set<string> {
-  const typedoc = JSON.parse(readFileSync(resolve(ROOT, 'typedoc.json'), 'utf8')) as { entryPoints: string[] };
-  const dirs = new Set<string>();
-  for (const ep of typedoc.entryPoints) {
-    const m = /^packages\/([^/]+)\//.exec(ep);
-    if (m !== null) dirs.add(m[1]!);
-  }
-  return dirs;
-}
-
-describe('typedoc roster soundness — every publishable package has API docs (closes the docs:check false-green)', () => {
-  it('every non-private package (except a documented exemption) is in typedoc.json entryPoints', () => {
-    const roster = rosterDirs();
-    const missing = publishablePackages()
-      .filter((p) => !ROSTER_EXEMPT.has(p.name) && !roster.has(p.dir))
-      .map((p) => p.name)
-      .sort();
+  it('every publishable package is explicitly admitted instead of hidden by an exemption', () => {
     expect(
-      missing,
-      `published packages absent from typedoc.json — they have NO generated API docs, and docs:check cannot see the gap: ${missing.join(', ')}`,
+      PACKAGE_CATALOG.filter((record) => record.publishable && record.typedocEntry === null).map(
+        (record) => record.name,
+      ),
     ).toEqual([]);
   });
 
-  it('every roster exemption is still a real publishable package (a stale exemption reds)', () => {
-    const names = new Set(publishablePackages().map((p) => p.name));
-    for (const ex of ROSTER_EXEMPT) {
-      expect(names.has(ex), `roster exemption '${ex}' is not a current publishable package — remove it from ROSTER_EXEMPT`).toBe(
-        true,
-      );
-    }
-  });
-
-  it('every roster entryPoint resolves to a real, non-private package (no stale/typo/private entry sneaks IN)', () => {
-    const pubDirs = new Set(publishablePackages().map((p) => p.dir));
-    const stray = [...rosterDirs()].filter((dir) => !pubDirs.has(dir)).sort();
-    expect(stray, `typedoc.json entryPoints reference non-publishable/nonexistent package dirs: ${stray.join(', ')}`).toEqual(
-      [],
-    );
+  it('a missing or stray projection is caught before docs generation', () => {
+    const expected = ['packages/core/src/index.ts', 'packages/liteship/src'];
+    expect(typedocRosterDrift([expected[0]!], expected)).toEqual({ missing: [expected[1]], stray: [] });
+    expect(typedocRosterDrift([...expected, 'packages/not-real/src/index.ts'], expected)).toEqual({
+      missing: [],
+      stray: ['packages/not-real/src/index.ts'],
+    });
   });
 });

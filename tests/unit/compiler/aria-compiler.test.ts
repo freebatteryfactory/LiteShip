@@ -7,15 +7,15 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { Boundary } from '@czap/core';
-import { ARIACompiler } from '@czap/compiler';
+import { defineBoundary } from '@liteship/core';
+import { ARIACompiler } from '@liteship/compiler';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const navBoundary = Boundary.make({
+const navBoundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'collapsed'],
@@ -43,8 +43,8 @@ describe('ARIACompiler.compile', () => {
       expect(result.currentAttributes['data-test']).toBeUndefined();
       expect(result.currentAttributes['class']).toBeUndefined();
       expect(events).toEqual([
-        expect.objectContaining({ code: 'invalid-aria-key', source: 'czap/compiler.aria' }),
-        expect.objectContaining({ code: 'invalid-aria-key', source: 'czap/compiler.aria' }),
+        expect.objectContaining({ code: 'compiler/aria/invalid-aria-key', source: 'liteship/compiler.aria' }),
+        expect.objectContaining({ code: 'compiler/aria/invalid-aria-key', source: 'liteship/compiler.aria' }),
       ]);
       // The diagnostic names the state and the literal next thing to type.
       expect(events[0]!.message).toBe(
@@ -147,8 +147,8 @@ describe('ARIACompiler.compile', () => {
       expect(result.stateAttributes['expanded']).toEqual({ 'aria-hidden': 'false' });
       expect(events).toEqual([
         expect.objectContaining({
-          code: 'unknown-current-state',
-          source: 'czap/compiler.aria',
+          code: 'compiler/aria/unknown-current-state',
+          source: 'liteship/compiler.aria',
           message:
             'currentState "missing-state" is not one of [collapsed, expanded]; emitting no attributes. ' +
             "Pass one of the boundary's state names.",
@@ -171,7 +171,7 @@ describe('ARIACompiler.compile', () => {
       expect(result.currentAttributes).toEqual({});
       expect(result.stateAttributes['expanded']).toEqual({});
       expect(events).toHaveLength(4);
-      expect(events.every((event) => event.code === 'invalid-aria-key')).toBe(true);
+      expect(events.every((event) => event.code === 'compiler/aria/invalid-aria-key')).toBe(true);
     });
   });
 });
@@ -201,7 +201,7 @@ describe('ARIACompiler properties', () => {
 
           const expectedDropped = Object.keys(attrs).filter((key) => key !== 'role' && !key.startsWith('aria-')).length;
           expect(events).toHaveLength(expectedDropped);
-          expect(events.every((event) => event.code === 'invalid-aria-key')).toBe(true);
+          expect(events.every((event) => event.code === 'compiler/aria/invalid-aria-key')).toBe(true);
         }),
       );
     });

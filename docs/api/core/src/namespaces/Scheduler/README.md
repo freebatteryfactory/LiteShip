@@ -15,4 +15,3 @@ in lockstep with an [AVBridge](../../variables/AVBridge.md).
 
 - [AudioSync](type-aliases/AudioSync.md)
 - [FixedStep](type-aliases/FixedStep.md)
-- [Shape](type-aliases/Shape.md)

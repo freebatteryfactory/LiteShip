@@ -8,7 +8,7 @@
 
 Defined in: [worker/src/host.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/host.ts#L34)
 
-The canvas surface [WorkerHostShape.attachCanvas](WorkerHostShape.md#attachcanvas) actually needs:
+The canvas surface [WorkerHost.attachCanvas](WorkerHost.md#attachcanvas) actually needs:
 one transferable handoff. Structural rather than `HTMLCanvasElement` so
 the dependency is named — test doubles (tests/helpers/mock-dom.ts) conform
 to THIS type, and non-DOM canvas implementations work unchanged.

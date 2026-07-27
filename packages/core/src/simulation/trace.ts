@@ -22,8 +22,8 @@
  * @module
  */
 
-import type { ContentAddress } from '../brands.js';
-import { contentAddressOf } from '../content-address.js';
+import type { ContentAddress } from '../schema/brands.js';
+import { contentAddressOf } from '../evidence/content-address.js';
 import type { StepOutcome } from './scheduler.js';
 
 /**

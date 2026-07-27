@@ -6,7 +6,7 @@
 
 # Interface: CapabilityLinkResult
 
-Defined in: [gauntlet/src/capability-link-facts.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L20)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L20)
 
 One sanctioned-skip link result — the guard's resolved capability derivation vs what it declares.
 
@@ -16,7 +16,7 @@ One sanctioned-skip link result — the guard's resolved capability derivation v
 
 > `readonly` **declaredCapability**: `string`
 
-Defined in: [gauntlet/src/capability-link-facts.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L26)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L26)
 
 The capability id the skip's `SANCTIONED_SKIPS` entry DECLARES (e.g. `ffmpeg-absent`).
 
@@ -26,7 +26,7 @@ The capability id the skip's `SANCTIONED_SKIPS` entry DECLARES (e.g. `ffmpeg-abs
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/capability-link-facts.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L22)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L22)
 
 Repo-relative file of the sanctioned skip.
 
@@ -36,7 +36,7 @@ Repo-relative file of the sanctioned skip.
 
 > `readonly` **guardText**: `string`
 
-Defined in: [gauntlet/src/capability-link-facts.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L32)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L32)
 
 The guard source text (for the finding's self-explanation); empty when no guard was found.
 
@@ -46,7 +46,7 @@ The guard source text (for the finding's self-explanation); empty when no guard 
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/capability-link-facts.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L24)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L24)
 
 1-based line of the skip.
 
@@ -56,7 +56,7 @@ Defined in: [gauntlet/src/capability-link-facts.ts:24](https://github.com/freeba
 
 > `readonly` **linked**: `boolean`
 
-Defined in: [gauntlet/src/capability-link-facts.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L30)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L30)
 
 True iff the declared capability is among the derived ones — the guard genuinely gates on it.
 
@@ -66,6 +66,6 @@ True iff the declared capability is among the derived ones — the guard genuine
 
 > `readonly` **linkedCapabilities**: readonly `string`[]
 
-Defined in: [gauntlet/src/capability-link-facts.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L28)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L28)
 
 The capability ids the guard's dataflow actually DERIVES FROM (via the canonical probe symbols).

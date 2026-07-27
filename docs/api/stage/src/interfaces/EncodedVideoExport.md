@@ -6,7 +6,7 @@
 
 # Interface: EncodedVideoExport
 
-Defined in: [stage/src/dual-export.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L410)
+Defined in: [stage/src/dual-export.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L425)
 
 The result of a REAL byte-encoded video cast: the export node + its bytes.
 
@@ -14,9 +14,9 @@ The result of a REAL byte-encoded video cast: the export node + its bytes.
 
 ### bytesDigest
 
-> `readonly` **bytesDigest**: `AddressedDigest`
+> `readonly` **bytesDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: [stage/src/dual-export.ts:416](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L416)
+Defined in: [stage/src/dual-export.ts:431](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L431)
 
 Content address of the encoded container bytes (the mp4 byte stream).
 
@@ -26,7 +26,7 @@ Content address of the encoded container bytes (the mp4 byte stream).
 
 > `readonly` **encoded**: [`EncodedVideo`](EncodedVideo.md)
 
-Defined in: [stage/src/dual-export.ts:414](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L414)
+Defined in: [stage/src/dual-export.ts:429](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L429)
 
 The real encoded video the injected [FrameEncoder](../type-aliases/FrameEncoder.md) produced.
 
@@ -34,8 +34,18 @@ The real encoded video the injected [FrameEncoder](../type-aliases/FrameEncoder.
 
 ### node
 
-> `readonly` **node**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **node**: [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:412](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L412)
+Defined in: [stage/src/dual-export.ts:427](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L427)
 
-The sealed video [ExportNode](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts); its `artifactDigest` pins the byte digest.
+The sealed video [ExportNode](../../../liteship/src/graph/interfaces/ExportNode.md); its `artifactDigest` pins the byte digest.
+
+***
+
+### receipt
+
+> `readonly` **receipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
+
+Defined in: [stage/src/dual-export.ts:433](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L433)
+
+Genesis receipt binding the source graph, rendered frames, and encoded bytes.

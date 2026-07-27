@@ -46,7 +46,7 @@ import {
   type SkipMatch,
   type SkipConditionality,
   type SkipDetector,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── scaffolding ──────────────────────────────────────────────────────────────
 
@@ -148,7 +148,7 @@ function factCacheCtx(testBody: string): GateContext {
 
 // The SANCTIONED green site (must match the allowlist byte-for-byte) + its file.
 const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
-const SANCTIONED_LINE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});\n";
+const SANCTIONED_LINE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n";
 
 /** The adversarial corpus the shadow-diff runs both gates over — every hazard class. */
 const SHADOW_CORPORA: Record<string, Record<string, string>> = {
@@ -305,7 +305,14 @@ describe('FactGate #7 — self-proves through the SAME authority ratchet', () =>
 
 describe('FactGate #8 — defineFactGate validates the declaration', () => {
   const fixtures = noSkippedTestFactGate.fixtures;
-  const base = { id: 'x/probe', level: 'L2' as const, describe: 'd', decide: (_f: FactBundle): readonly Finding[] => [], fixtures };
+  const base = {
+    id: 'x/probe',
+    extension: { namespace: 'x', owner: 'LiteShip fact-gate test suite' },
+    level: 'L2' as const,
+    describe: 'd',
+    decide: (_f: FactBundle): readonly Finding[] => [],
+    fixtures,
+  };
 
   it('an empty requires throws (a fact gate must declare ≥1 channel)', () => {
     expect(() => defineFactGate({ ...base, requires: [] })).toThrow();
@@ -405,6 +412,7 @@ describe('FactGate #1b — isFactGate is a boundary, not an honor-system string 
     expect(() =>
       defineGate({
         id: 'x/forge',
+        extension: { namespace: 'x', owner: 'LiteShip fact-gate test suite' },
         level: 'L2',
         describe: 'a closure gate falsely claiming the data-only contract',
         form: 'fact',

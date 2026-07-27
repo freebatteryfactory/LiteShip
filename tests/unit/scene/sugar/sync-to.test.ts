@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Track, syncTo } from '@czap/scene';
+import { Track, syncTo } from '@liteship/scene';
 
 describe('syncTo', () => {
   const bed = Track.audioId('bed');

@@ -6,7 +6,7 @@
 
 # Interface: CompositeState
 
-Defined in: [core/src/compositor.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L78)
+Defined in: [core/src/media/compositor.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L79)
 
 Snapshot of the compositor's output per tick: discrete state names for each
 quantizer, their blend-weight vectors, and the compiled per-target output
@@ -16,7 +16,7 @@ maps (`css` / `glsl` / `wgsl` / `aria`).
 quantizer's bare snake_case projection key). D0 carries the channel through
 the state shape, the pool, and the worker emit; D1-WGSL adds the live
 `emit-wgsl` runtime phase (below) that populates it from the state index,
-escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
+escalation-gated on the `wgsl` target (admitted only at the `gpu` tier).
 
 ## Properties
 
@@ -24,7 +24,7 @@ escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
 
 > `readonly` **blend**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
 
-Defined in: [core/src/compositor.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L80)
+Defined in: [core/src/media/compositor.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L81)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/compositor.ts:80](https://github.com/freebatteryfactory/Li
 
 > `readonly` **discrete**: `Record`\<`string`, `string`\>
 
-Defined in: [core/src/compositor.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L79)
+Defined in: [core/src/media/compositor.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L80)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/compositor.ts:79](https://github.com/freebatteryfactory/Li
 
 > `readonly` **outputs**: `object`
 
-Defined in: [core/src/compositor.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L81)
+Defined in: [core/src/media/compositor.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts#L82)
 
 #### aria
 

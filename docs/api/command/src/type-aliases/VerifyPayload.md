@@ -16,7 +16,7 @@ Structured payload returned alongside a verdict.
 
 ### capsule\_id
 
-> `readonly` **capsule\_id**: [`ContentAddress`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md) \| `null`
+> `readonly` **capsule\_id**: [`ContentAddress`](../../../liteship/src/schema/type-aliases/ContentAddress.md) \| `null`
 
 Defined in: [command/src/commands/verify.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L51)
 

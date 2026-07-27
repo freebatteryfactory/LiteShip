@@ -11,7 +11,7 @@ Defined in: [web/src/stream/recovery.ts:57](https://github.com/freebatteryfactor
 Configuration for [bindRequestSnapshotRecovery](../functions/bindRequestSnapshotRecovery.md) and [runGraphNativeRecovery](../functions/runGraphNativeRecovery.md).
 
 When `graphQueryUrl`, `mutationClient`, `cellStore`, and `patchReceiptEntries` are all
-present, recovery prefers `runGraphNativeGapReplay` from `@czap/core` (#133-full)
+present, recovery prefers `runGraphNativeGapReplay` from `@liteship/core` (#133-full)
 over the interim HTML snapshot path. Snapshot remains the permanent floor when any
 of those are absent.
 
@@ -27,7 +27,7 @@ Defined in: [web/src/stream/recovery.ts:58](https://github.com/freebatteryfactor
 
 ### cellStore?
 
-> `readonly` `optional` **cellStore?**: `StateCellStoreShape`
+> `readonly` `optional` **cellStore?**: [`StateCellStore`](../../../liteship/src/reactive/interfaces/StateCellStore.md)
 
 Defined in: [web/src/stream/recovery.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L65)
 
@@ -109,7 +109,7 @@ Defined in: [web/src/stream/recovery.ts:62](https://github.com/freebatteryfactor
 
 ### patchReceiptEntries?
 
-> `readonly` `optional` **patchReceiptEntries?**: readonly `PatchReceiptEntry`[]
+> `readonly` `optional` **patchReceiptEntries?**: readonly [`PatchReceiptEntry`](../../../liteship/src/graph/interfaces/PatchReceiptEntry.md)[]
 
 Defined in: [web/src/stream/recovery.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L67)
 

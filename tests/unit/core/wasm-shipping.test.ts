@@ -1,14 +1,14 @@
 /**
- * The czap-compute WASM kernel must SHIP — and stay shipped.
+ * The liteship-compute WASM kernel must SHIP — and stay shipped.
  *
  * `WASMDispatch` could always `load()` a `.wasm`, but until 0.2.1 no published
- * package CARRIED one, so an installed consumer's `czap({ wasm: { enabled:
+ * package CARRIED one, so an installed consumer's `liteship({ wasm: { enabled:
  * true } })` resolved nothing and silently ran the f32 TS fallback forever (the
  * heyoub.dev dogfood finding). The fix is a chain of four facts that must move
- * together: `build:wasm` stages the binary → `@czap/core` exports it under
- * `./czap-compute.wasm` and includes `dist` in `files` → `release.yml` runs
+ * together: `build:wasm` stages the binary → `@liteship/core` exports it under
+ * `./liteship-compute.wasm` and includes `dist` in `files` → `release.yml` runs
  * `build:wasm` (with the wasm32 toolchain) BEFORE the ship loop packs the
- * tarball → `@czap/vite`'s resolver finds it in `node_modules`.
+ * tarball → `@liteship/vite`'s resolver finds it in `node_modules`.
  *
  * This guard pins each link STATICALLY (no Rust toolchain needed) so a refactor
  * that drops any one of them fails loud here instead of shipping a hollow
@@ -32,17 +32,17 @@ const rootPkg = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')) as 
   scripts: Record<string, string>;
 };
 
-describe('@czap/core ships the czap-compute WASM kernel', () => {
+describe('@liteship/core ships the liteship-compute WASM kernel', () => {
   it('ships the binary via the dist files allowlist (no export — it is a data file, not a module)', () => {
-    // The wasm is located by the @czap/vite resolver as a filesystem path, not
+    // The wasm is located by the @liteship/vite resolver as a filesystem path, not
     // imported as a module — so it must NOT be an `exports` subpath (a dangling
     // export of a build-on-demand artifact fails the package-export audit), but
-    // it MUST be in `files` so `npm pack` includes dist/czap-compute.wasm.
+    // it MUST be in `files` so `npm pack` includes dist/liteship-compute.wasm.
     expect(corePkg.files).toContain('dist');
     const exportsMap = (JSON.parse(readFileSync(join(REPO, 'packages/core/package.json'), 'utf8')) as {
       exports: Record<string, unknown>;
     }).exports;
-    expect('./czap-compute.wasm' in exportsMap).toBe(false);
+    expect('./liteship-compute.wasm' in exportsMap).toBe(false);
   });
 
   it('the root build:wasm script drives scripts/build-wasm.ts', () => {
@@ -50,18 +50,18 @@ describe('@czap/core ships the czap-compute WASM kernel', () => {
     expect(existsSync(join(REPO, 'scripts/build-wasm.ts'))).toBe(true);
   });
 
-  it('build-wasm.ts stages into @czap/core dist where the resolver expects it', () => {
+  it('build-wasm.ts stages into @liteship/core dist where the resolver expects it', () => {
     const src = readFileSync(join(REPO, 'scripts/build-wasm.ts'), 'utf8');
-    expect(src).toContain('packages/core/dist/czap-compute.wasm');
+    expect(src).toContain('packages/core/dist/liteship-compute.wasm');
   });
 
-  it('the @czap/vite resolver finds @czap/core through the module graph (pnpm-nesting-safe)', () => {
+  it('the @liteship/vite resolver finds @liteship/core through the module graph (pnpm-nesting-safe)', () => {
     // Resolution lives in its own module (so tests can mock it). It resolves
-    // @czap/core via THIS plugin's dep edge (import.meta.url) — NOT a top-level
-    // node_modules/@czap/core probe, which a nested pnpm install would miss.
+    // @liteship/core via THIS plugin's dep edge (import.meta.url) — NOT a top-level
+    // node_modules/@liteship/core probe, which a nested pnpm install would miss.
     const pkgResolve = readFileSync(join(REPO, 'packages/vite/src/wasm-package-resolve.ts'), 'utf8');
     expect(pkgResolve).toContain('import.meta.url');
-    expect(pkgResolve).toContain("resolve('@czap/core')");
+    expect(pkgResolve).toContain("resolve('@liteship/core')");
     const resolver = readFileSync(join(REPO, 'packages/vite/src/wasm-resolve.ts'), 'utf8');
     expect(resolver).toContain('resolvePackagedWasm');
     expect(resolver).toContain("source: 'package'");
@@ -82,16 +82,16 @@ describe('@czap/core ships the czap-compute WASM kernel', () => {
 // Functional: the resolver lands on the staged binary through the module graph.
 // Self-skips until `build:wasm` has staged it (cargo runs only in rust-wasm-parity).
 // The "absent → null" fall-through is exercised by the mocked plugin tests
-// (vite-dx-wave3 / vite-runtime), since in-workspace @czap/core is always
+// (vite-dx-wave3 / vite-runtime), since in-workspace @liteship/core is always
 // resolvable and can't be made genuinely absent here.
 // Single-sourced in the canonical capability symbol table (same dist artifact) so the
 // capability-gate linker can prove this guard derives from the `wasm-dist-staged` probe.
 const staged = wasmDistStaged;
 describe('resolvePackagedWasm', () => {
-  it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {
+  it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm via the module graph', () => {
     const resolved = resolvePackagedWasm();
     expect(resolved).not.toBeNull();
-    expect(resolved!.endsWith(join('dist', 'czap-compute.wasm'))).toBe(true);
+    expect(resolved!.endsWith(join('dist', 'liteship-compute.wasm'))).toBe(true);
     expect(existsSync(resolved!)).toBe(true);
   });
 });

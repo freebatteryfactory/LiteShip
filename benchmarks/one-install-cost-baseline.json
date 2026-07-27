@@ -1,0 +1,1399 @@
+{
+  "schemaVersion": 1,
+  "environmentPolicy": {
+    "platforms": ["darwin", "linux", "win32"],
+    "architectures": ["arm64", "x64"],
+    "minimumNodeMajor": 22,
+    "packageManager": "pnpm",
+    "packageManagerMajors": [10, 11]
+  },
+  "fleetPackageCount": 25,
+  "total": {
+    "compressedBytes": 4303637,
+    "unpackedBytes": 18055348,
+    "fileCount": 3821
+  },
+  "packages": [
+    {
+      "package": "@liteship/_spine",
+      "compressedBytes": 40142,
+      "unpackedBytes": 182477,
+      "fileCount": 22
+    },
+    {
+      "package": "@liteship/assets",
+      "compressedBytes": 38271,
+      "unpackedBytes": 151636,
+      "fileCount": 58
+    },
+    {
+      "package": "@liteship/astro",
+      "compressedBytes": 371738,
+      "unpackedBytes": 1527897,
+      "fileCount": 344
+    },
+    {
+      "package": "@liteship/audit",
+      "compressedBytes": 313008,
+      "unpackedBytes": 1306614,
+      "fileCount": 152
+    },
+    {
+      "package": "@liteship/canonical",
+      "compressedBytes": 20797,
+      "unpackedBytes": 78723,
+      "fileCount": 37
+    },
+    {
+      "package": "@liteship/cli",
+      "compressedBytes": 657621,
+      "unpackedBytes": 2704627,
+      "fileCount": 562
+    },
+    {
+      "package": "@liteship/cloudflare",
+      "compressedBytes": 24812,
+      "unpackedBytes": 96732,
+      "fileCount": 41
+    },
+    {
+      "package": "@liteship/command",
+      "compressedBytes": 218871,
+      "unpackedBytes": 935374,
+      "fileCount": 241
+    },
+    {
+      "package": "@liteship/compiler",
+      "compressedBytes": 226418,
+      "unpackedBytes": 1013288,
+      "fileCount": 202
+    },
+    {
+      "package": "@liteship/core",
+      "compressedBytes": 824674,
+      "unpackedBytes": 3500076,
+      "fileCount": 743
+    },
+    {
+      "package": "@liteship/detect",
+      "compressedBytes": 37724,
+      "unpackedBytes": 161014,
+      "fileCount": 38
+    },
+    {
+      "package": "@liteship/edge",
+      "compressedBytes": 60423,
+      "unpackedBytes": 262880,
+      "fileCount": 43
+    },
+    {
+      "package": "@liteship/error",
+      "compressedBytes": 69006,
+      "unpackedBytes": 270040,
+      "fileCount": 27
+    },
+    {
+      "package": "@liteship/gauntlet",
+      "compressedBytes": 650625,
+      "unpackedBytes": 2739237,
+      "fileCount": 392
+    },
+    {
+      "package": "@liteship/genui",
+      "compressedBytes": 19527,
+      "unpackedBytes": 75400,
+      "fileCount": 57
+    },
+    {
+      "package": "@liteship/mcp-server",
+      "compressedBytes": 100906,
+      "unpackedBytes": 380291,
+      "fileCount": 128
+    },
+    {
+      "package": "@liteship/quantizer",
+      "compressedBytes": 42313,
+      "unpackedBytes": 170749,
+      "fileCount": 42
+    },
+    {
+      "package": "@liteship/remotion",
+      "compressedBytes": 15660,
+      "unpackedBytes": 57895,
+      "fileCount": 29
+    },
+    {
+      "package": "@liteship/scene",
+      "compressedBytes": 77084,
+      "unpackedBytes": 303947,
+      "fileCount": 129
+    },
+    {
+      "package": "@liteship/stage",
+      "compressedBytes": 31293,
+      "unpackedBytes": 120279,
+      "fileCount": 27
+    },
+    {
+      "package": "@liteship/vite",
+      "compressedBytes": 129822,
+      "unpackedBytes": 547944,
+      "fileCount": 124
+    },
+    {
+      "package": "@liteship/web",
+      "compressedBytes": 192735,
+      "unpackedBytes": 819906,
+      "fileCount": 193
+    },
+    {
+      "package": "@liteship/worker",
+      "compressedBytes": 87653,
+      "unpackedBytes": 414025,
+      "fileCount": 78
+    },
+    {
+      "package": "create-liteship",
+      "compressedBytes": 12311,
+      "unpackedBytes": 36201,
+      "fileCount": 23
+    },
+    {
+      "package": "liteship",
+      "compressedBytes": 40203,
+      "unpackedBytes": 198096,
+      "fileCount": 89
+    }
+  ],
+  "facadeDependencies": [
+    {
+      "package": "@liteship/_spine",
+      "reason": "Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@liteship/core` and `@liteship/scene` reference from their published `.d.ts` — there is nothing to import at runtime."
+    },
+    {
+      "package": "@liteship/assets",
+      "reason": "Manage media assets for LiteShip: declare audio, video, and image assets and read cached analysis such as waveforms, beat markers, and onsets."
+    },
+    {
+      "package": "@liteship/astro",
+      "reason": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and resolve device tiers on the server for first paint."
+    },
+    {
+      "package": "@liteship/audit",
+      "reason": "Audit a LiteShip project's structure, integrity, and public surface: a downstream-installable engine that builds a model of the repository and runs configurable checks over it."
+    },
+    {
+      "package": "@liteship/canonical",
+      "reason": "The content-addressing kernel for LiteShip: canonical CBOR encoding and stable digests so the same definition always hashes to the same address."
+    },
+    {
+      "package": "@liteship/cli",
+      "reason": "The programmatic command dispatcher and terminal implementation behind the facade-owned `liteship` executable: JSON-in, JSON-out verbs with a human-friendly terminal mode."
+    },
+    {
+      "package": "@liteship/cloudflare",
+      "reason": "Run LiteShip on Cloudflare Workers: a site adapter with a KV-backed edge cache and the Astro middleware glue that caches boundaries at the edge."
+    },
+    {
+      "package": "@liteship/command",
+      "reason": "The shared command registry behind LiteShip's tooling: one source of command definitions that both the `liteship` CLI and the MCP server project from."
+    },
+    {
+      "package": "@liteship/compiler",
+      "reason": "Compile one LiteShip boundary definition into many outputs at once — CSS, GLSL, WGSL, ARIA, AI descriptions, and Tailwind — so every target stays in sync."
+    },
+    {
+      "package": "@liteship/core",
+      "reason": "The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync."
+    },
+    {
+      "package": "@liteship/detect",
+      "reason": "Detect device capabilities for LiteShip: probe GPU tier, CPU, memory, motion preference, and network, then map them to the tiers that select which UI state renders."
+    },
+    {
+      "package": "@liteship/edge",
+      "reason": "Choose the right UI state at the CDN edge for LiteShip: read Client Hints into a device tier, serve a content-addressed boundary cache, and compile the theme for first paint."
+    },
+    {
+      "package": "@liteship/error",
+      "reason": "The one error algebra for LiteShip: build tagged error values that work as thrown Errors and as errors-as-values (a Result err-arm), and compose your own variants on top with zero dependencies."
+    },
+    {
+      "package": "@liteship/gauntlet",
+      "reason": "The rigor engine behind LiteShip's release gates: define quality gates that report findings and earn blocking power only by proving themselves against their own fixtures."
+    },
+    {
+      "package": "@liteship/genui",
+      "reason": "Render AI-generated UI safely in LiteShip: validate a model's proposed component tree against a host-owned catalog and draw only trusted, whitelisted components."
+    },
+    {
+      "package": "@liteship/mcp-server",
+      "reason": "The Model Context Protocol server for LiteShip: exposes the `liteship` commands and capsule catalog as MCP tools that AI assistants can call."
+    },
+    {
+      "package": "@liteship/quantizer",
+      "reason": "Turn continuous signals into a few named UI states for LiteShip: evaluate boundaries, animate the transitions between states, and gate motion by device tier."
+    },
+    {
+      "package": "@liteship/remotion",
+      "reason": "Use LiteShip inside Remotion: React hooks and composition helpers that drive video frames and shader surfaces from the same boundary state used everywhere else."
+    },
+    {
+      "package": "@liteship/scene",
+      "reason": "Author video timelines for LiteShip: a typed scene and track model built on the entity-component substrate in `@liteship/core`."
+    },
+    {
+      "package": "@liteship/stage",
+      "reason": "Export one LiteShip document graph to many carriers: prove a single source renders to both a static Astro page and a video, joined under one receipt."
+    },
+    {
+      "package": "@liteship/vite",
+      "reason": "The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS and hot-reload boundary definitions as you edit."
+    },
+    {
+      "package": "@liteship/web",
+      "reason": "The browser runtime for LiteShip: apply CSS, streamed HTML, worker output, and LLM chunks to a live DOM with focus- and scroll-preserving morphing."
+    },
+    {
+      "package": "@liteship/worker",
+      "reason": "Move LiteShip's heavy work off the main thread: compositor and render workers plus a lock-free ring buffer that stream state and frames without janking the UI."
+    }
+  ],
+  "coldImports": [
+    {
+      "specifier": "liteship",
+      "moduleCount": 185,
+      "packageCount": 8,
+      "packages": [
+        "@liteship/canonical@0.19.0",
+        "@liteship/compiler@0.19.0",
+        "@liteship/core@0.19.0",
+        "@liteship/error@0.19.0",
+        "@liteship/quantizer@0.19.0",
+        "@noble/hashes@1.8.0",
+        "cborg@4.5.8",
+        "liteship@0.19.0"
+      ],
+      "modules": [
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/addressed-digest.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/brands.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/cbor-decode.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/cbor.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/compare-bytes.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/fnv.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/ai-manifest.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/aria.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/capsules/aria-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/capsules/glsl-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/capsules/wgsl-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/component-css.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/css-string.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/css-utils.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/css.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/dispatch.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/glsl.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/mcp-app-manifest.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/motion-utils.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/motion.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/responsive-media-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/reveal-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/scroll-timeline-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/stagger-compile.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/style-css.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/theme-css.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/token-css.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/token-js.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/token-tailwind.js"
+        },
+        {
+          "package": "@liteship/compiler",
+          "version": "0.19.0",
+          "path": "dist/wgsl.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/adaptive.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/ai-cast.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/assembly.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/boundary-attribute.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/boundary.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsule.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/ai-cast-proposal.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/ai-cast-summarize.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/boundary-evaluate.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/canonical-cbor-decode.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/canonical-cbor.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/document-graph-address.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/escalation-choose-tier.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/graph-patch-identity.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/capsules/token-buffer.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/component.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/composable.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/config.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/defaults.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/plan.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/ship-capsule.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/style.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/theme.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/token.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/authoring/tuple-map.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/clock/clock.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/clock/hlc.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/clock/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/clock/rng.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/clock/vector-clock.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/ecs.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/addressed-digest.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/bench-classify.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/bench-marker.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/caps.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/closest-match.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/content-address.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/definition-snapshot.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/diagnostics.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/escalation.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/fnv.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/quality-tiers.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/receipt.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/typed-ref.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/ui-quality.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/evidence/validated-output.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/dag.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/document-graph-address.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/document-graph-schema.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/graph-mutation-client.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/graph-mutation.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/graph-patch.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/graph-query-gap-replay.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/graph-query.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/graph/projection.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/av-bridge.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/av-renderer.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/compositor-pool.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/compositor.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/frame-budget.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/gen-frame.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/responsive-media.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/token-buffer.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/media/video.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/animation.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/blend.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/clamp.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/easing.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/interpolate.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/interpret-transition.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/reveal.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/scroll-timeline.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/stagger.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/state-transition.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/timeline.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/motion/transition-program.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/cell-kernel.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/cell.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/derived.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/dirty.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/lifetime.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/live-cell.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/primitive.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/runtime-coordinator.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/scheduler.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/signal-input.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/signal.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/speculative.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/state-cell.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/store.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/stream-recovery.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/reactive/zap.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/repository-path.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/ast.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/brands.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/cbor.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/codec.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/constructors.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/decode.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/schema-port.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/standard.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/schema/to-json-schema.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/wasm/boundary-f32.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/wasm/index.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/wasm/wasm-dispatch.js"
+        },
+        {
+          "package": "@liteship/core",
+          "version": "0.19.0",
+          "path": "dist/wasm/wasm-fallback.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/codes.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/contract.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/result.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/variants.js"
+        },
+        {
+          "package": "@liteship/quantizer",
+          "version": "0.19.0",
+          "path": "dist/animated-quantizer.js"
+        },
+        {
+          "package": "@liteship/quantizer",
+          "version": "0.19.0",
+          "path": "dist/evaluate.js"
+        },
+        {
+          "package": "@liteship/quantizer",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/quantizer",
+          "version": "0.19.0",
+          "path": "dist/memo-cache.js"
+        },
+        {
+          "package": "@liteship/quantizer",
+          "version": "0.19.0",
+          "path": "dist/quantizer.js"
+        },
+        {
+          "package": "@liteship/quantizer",
+          "version": "0.19.0",
+          "path": "dist/transition.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/_blake.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/_md.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/_u64.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/blake2.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/blake3.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/cryptoNode.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/sha2.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/sha256.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/utils.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "cborg.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/0uint.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/1negint.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/2bytes.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/3string.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/4array.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/5map.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/6tag.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/7float.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/bl.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/byte-utils.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/common.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/decode.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/encode.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/is.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/jump.js"
+        },
+        {
+          "package": "cborg",
+          "version": "4.5.8",
+          "path": "lib/token.js"
+        },
+        {
+          "package": "liteship",
+          "version": "0.19.0",
+          "path": "dist/authoring/adaptive.js"
+        },
+        {
+          "package": "liteship",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        }
+      ]
+    },
+    {
+      "specifier": "liteship/genui",
+      "moduleCount": 32,
+      "packageCount": 5,
+      "packages": [
+        "@liteship/canonical@0.19.0",
+        "@liteship/error@0.19.0",
+        "@liteship/genui@0.19.0",
+        "@noble/hashes@1.8.0",
+        "liteship@0.19.0"
+      ],
+      "modules": [
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/addressed-digest.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/brands.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/cbor-decode.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/cbor.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/compare-bytes.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/fnv.js"
+        },
+        {
+          "package": "@liteship/canonical",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/codes.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/contract.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/result.js"
+        },
+        {
+          "package": "@liteship/error",
+          "version": "0.19.0",
+          "path": "dist/variants.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/brands.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/catalog.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/demo-catalog.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/guards.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/identity.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/index.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/interaction.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/parse.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/render.js"
+        },
+        {
+          "package": "@liteship/genui",
+          "version": "0.19.0",
+          "path": "dist/validate.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/_blake.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/_md.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/_u64.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/blake2.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/blake3.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/cryptoNode.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/sha2.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/sha256.js"
+        },
+        {
+          "package": "@noble/hashes",
+          "version": "1.8.0",
+          "path": "esm/utils.js"
+        },
+        {
+          "package": "liteship",
+          "version": "0.19.0",
+          "path": "dist/genui.js"
+        }
+      ]
+    }
+  ],
+  "duplicateExternalVersions": [
+    {
+      "package": "css-tree",
+      "versions": ["2.2.1", "3.2.1"]
+    },
+    {
+      "package": "entities",
+      "versions": ["4.5.0", "6.0.1"]
+    },
+    {
+      "package": "mdn-data",
+      "versions": ["2.0.28", "2.27.1"]
+    },
+    {
+      "package": "picomatch",
+      "versions": ["2.3.2", "4.0.5"]
+    }
+  ],
+  "baselineId": "sha256:fb23e349f4754975ebe6a990a8d189f3b69d307b8f440a3300a046d04d405985"
+}

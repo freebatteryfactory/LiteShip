@@ -1,0 +1,13 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/runtime](../README.md) / SSEState
+
+# Type Alias: SSEState
+
+> **SSEState** = `"connecting"` \| `"connected"` \| `"reconnecting"` \| `"disconnected"` \| `"error"`
+
+Defined in: web/dist/types.d.ts:182
+
+SSE connection state.

@@ -1,5 +1,5 @@
 /**
- * The TEST-CORPUS read FAULT-DISCRIMINATION law (`packages/cli/src/lib/test-corpus.ts`),
+ * The TEST-CORPUS read FAULT-DISCRIMINATION law (`packages/cli/src/internal/test-corpus.ts`),
  * in an isolated module that mocks `node:fs` so a read fault can be INJECTED with a
  * chosen errno — platform-independent by construction.
  *
@@ -35,7 +35,7 @@ vi.mock('node:fs', async (importOriginal) => {
   return { ...orig, readdirSync: readdirSyncMock };
 });
 
-const { collectRepoTestFiles } = await import('../../../../packages/cli/src/lib/test-corpus.js');
+const { collectRepoTestFiles } = await import('../../../../packages/cli/src/internal/test-corpus.js');
 
 describe('test-corpus read fault discrimination — ENOENT is a tolerated skip, any other errno propagates', () => {
   // Each test sets a FRESH `mockImplementation`, fully overriding the prior one (no

@@ -6,12 +6,12 @@
  * subset of the Language Server Protocol the rigor projection needs — the
  * diagnostics + code-actions surface, NOT the full LSP (no hover, completion,
  * rename, semantic tokens). It is the third JSON-RPC skin over the one gauntlet
- * fold (CLI = `czap check`, MCP = tools/call, LSP = live diagnostics).
+ * fold (CLI = `liteship check`, MCP = tools/call, LSP = live diagnostics).
  *
- * LEAN-ENGINE BOUNDARY (the load-bearing decision): `@czap/mcp-server` does NOT
- * depend on `@czap/gauntlet` (and must not — that would drag the engine into the
+ * LEAN-ENGINE BOUNDARY (the load-bearing decision): `@liteship/mcp-server` does NOT
+ * depend on `@liteship/gauntlet` (and must not — that would drag the engine into the
  * thin server). So the Finding shape the projections consume is declared HERE as
- * a STRUCTURAL contract ({@link FindingLike}) that the real `@czap/gauntlet`
+ * a STRUCTURAL contract ({@link FindingLike}) that the real `@liteship/gauntlet`
  * `Finding` is assignable to. The gauntlet findings arrive over the INJECTED
  * runner ({@link LspGauntletRunner}), exactly like `dispatch.ts` gets its check
  * findings via `context.runGauntlet` — the engine stays in the CLI host.
@@ -22,31 +22,31 @@
  * @module
  */
 
-// ---------- The structural Finding contract (mirrors @czap/gauntlet) ----------
+// ---------- The structural Finding contract (mirrors @liteship/gauntlet) ----------
 
-/** Severity vocabulary — structurally identical to `@czap/gauntlet`'s `Severity`. */
+/** Severity vocabulary — structurally identical to `@liteship/gauntlet`'s `Severity`. */
 export type FindingSeverity = 'advisory' | 'warning' | 'error';
 
-/** Assurance level vocabulary — structurally identical to `@czap/gauntlet`'s `AssuranceLevel`. */
+/** Assurance level vocabulary — structurally identical to `@liteship/gauntlet`'s `AssuranceLevel`. */
 export type FindingLevel = 'L0' | 'L1' | 'L2' | 'L3' | 'L4';
 
-/** Where a finding points — structurally identical to `@czap/gauntlet`'s `SourceLocation`. */
+/** Where a finding points — structurally identical to `@liteship/gauntlet`'s `SourceLocation`. */
 export interface FindingLocationLike {
   readonly file: string;
   readonly line?: number;
   readonly column?: number;
 }
 
-/** How to fix a finding — structurally identical to `@czap/gauntlet`'s `Remediation`. */
+/** How to fix a finding — structurally identical to `@liteship/gauntlet`'s `Remediation`. */
 export type FindingRemediationLike =
   | { readonly kind: 'patch'; readonly description: string; readonly diff: string }
   | { readonly kind: 'instruction'; readonly description: string; readonly steps: readonly string[] };
 
 /**
- * The structural finding the projections read. The real `@czap/gauntlet`
+ * The structural finding the projections read. The real `@liteship/gauntlet`
  * `Finding` is assignable to this (same field names + types). Declaring it here
- * — instead of importing the engine type — keeps `@czap/mcp-server` free of a
- * `@czap/gauntlet` dependency (the lean-server invariant). The injected runner
+ * — instead of importing the engine type — keeps `@liteship/mcp-server` free of a
+ * `@liteship/gauntlet` dependency (the lean-server invariant). The injected runner
  * supplies values that satisfy this shape.
  */
 export interface FindingLike {
@@ -106,9 +106,9 @@ export type LspDiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof Dia
 
 /**
  * LSP `Diagnostic` (§Diagnostic). `code` carries the gate `ruleId`; `source` is
- * the fixed `'czap-gauntlet'` provenance; `data` carries the assurance level +
- * coverage class (the rigor metadata an editor surfaces and a code-action reads
- * back). `message` is the finding's WHY (title + detail).
+ * the fixed `'liteship-gauntlet'` provenance; `data` carries the assurance level
+ * and rule identity that an editor surfaces and a code-action reads back.
+ * `message` is the finding's WHY (title + detail).
  */
 export interface LspDiagnostic {
   readonly range: LspRange;
@@ -153,17 +153,6 @@ export interface LogMessageParams {
   readonly message: string;
 }
 
-/** LSP `TextEdit` (§Text Documents) — replace `range` with `newText`. */
-export interface LspTextEdit {
-  readonly range: LspRange;
-  readonly newText: string;
-}
-
-/** LSP `WorkspaceEdit` (§WorkspaceEdit) — file-keyed text edits. */
-export interface LspWorkspaceEdit {
-  readonly changes: Readonly<Record<string, readonly LspTextEdit[]>>;
-}
-
 /** LSP `Command` (§Command) — a client-executed command carrying its arguments. */
 export interface LspCommand {
   readonly title: string;
@@ -177,26 +166,24 @@ export const CodeActionKind = {
 } as const;
 
 /**
- * LSP `CodeAction` (§textDocument/codeAction). A `patch` remediation projects to
- * an `edit` (a machine-applicable {@link LspWorkspaceEdit} carrying the diff for
- * the client to apply); an `instruction` remediation projects to a `command`
- * (the client surfaces the ordered steps). `diagnostics` links the action back
- * to the diagnostic it fixes (§CodeAction.diagnostics).
+ * LSP `CodeAction` (§textDocument/codeAction). Both patch and instruction
+ * remediations project to client-executed commands. The lean server has no
+ * document store and therefore does not advertise or model WorkspaceEdit.
+ * `diagnostics` links the action back to the diagnostic it fixes.
  */
 export interface LspCodeAction {
   readonly title: string;
   readonly kind: string;
   readonly diagnostics: readonly LspDiagnostic[];
-  readonly edit?: LspWorkspaceEdit;
   readonly command?: LspCommand;
 }
 
 /**
  * The client command id a `patch` workspace-edit and an `instruction` step-list
- * carry, so an editor extension knows which czap action it is applying. Stable
+ * carry, so an editor extension knows which liteship action it is applying. Stable
  * (pinned by a test) so a downstream client can register handlers against it.
  */
-export const APPLY_PATCH_COMMAND = 'czap.gauntlet.applyPatch' as const;
+export const APPLY_PATCH_COMMAND = 'liteship.gauntlet.applyPatch' as const;
 
 /** The client command id an `instruction` code-action carries to surface its steps. */
-export const SHOW_INSTRUCTION_COMMAND = 'czap.gauntlet.showInstruction' as const;
+export const SHOW_INSTRUCTION_COMMAND = 'liteship.gauntlet.showInstruction' as const;

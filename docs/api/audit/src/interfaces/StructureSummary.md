@@ -8,6 +8,8 @@
 
 Defined in: [audit/src/structure.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L33)
 
+Aggregate repository-structure evidence and coverage classification.
+
 ## Properties
 
 ### coverageClassification

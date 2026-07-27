@@ -33,7 +33,7 @@
  * @module
  */
 
-import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
+import { defineGate, requireIR, type ExtensionGateIdentity, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import {
@@ -62,6 +62,8 @@ const REGEX_CLASS: CoverageClass = 'text-only';
 export interface OracleDivergenceSpec {
   /** The gate id; namespaces every finding (traceability). */
   readonly gateId: string;
+  /** Required when {@link gateId} belongs to a downstream namespace. */
+  readonly extension?: ExtensionGateIdentity;
   /** The property both oracles observe (e.g. `is-default-export`, `var-declaration`). */
   readonly property: string;
   /**
@@ -275,7 +277,7 @@ function buildFixtures(spec: OracleDivergenceSpec) {
         makeRepoIR({
           files: [
             { id: FIXTURE_FILE, contentDigest: PLACEHOLDER, packageName: null },
-            { id: FIXTURE_EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/x' },
+            { id: FIXTURE_EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@liteship/x' },
           ],
           facts: [
             propFact(spec, FIXTURE_FILE, 7, AST_ORACLE, AST_CLASS),
@@ -313,8 +315,10 @@ function buildFixtures(spec: OracleDivergenceSpec) {
 export function makeOracleDivergenceGate(spec: OracleDivergenceSpec): Gate {
   return defineGate({
     id: spec.gateId,
+    ...(spec.extension !== undefined ? { extension: spec.extension } : {}),
     level: spec.level,
     describe: spec.describe,
+    access: { ir: ['facts'] },
     run: (context: GateContext) => foldDivergences(spec, context),
     fixtures: buildFixtures(spec),
   });

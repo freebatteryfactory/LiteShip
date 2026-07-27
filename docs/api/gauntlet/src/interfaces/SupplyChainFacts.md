@@ -6,7 +6,7 @@
 
 # Interface: SupplyChainFacts
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L33)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L33)
 
 The four supply-chain fact families the host supplies. Every field is
 OPTIONAL: a host that computed only some families (e.g. lockfile policy but no
@@ -21,7 +21,7 @@ present. An ABSENT family is reported by the gate as an advisory
 
 > `readonly` `optional` **ci?**: [`CiAuthorityFacts`](CiAuthorityFacts.md)
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L41)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L41)
 
 No-ambient-CI-authority verdict over .github/workflows.
 
@@ -31,7 +31,7 @@ No-ambient-CI-authority verdict over .github/workflows.
 
 > `readonly` `optional` **lockfile?**: [`LockfilePolicyFacts`](LockfilePolicyFacts.md)
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L35)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L35)
 
 Lockfile-policy verdict over pnpm-lock.yaml + the workspace deps.
 
@@ -41,7 +41,7 @@ Lockfile-policy verdict over pnpm-lock.yaml + the workspace deps.
 
 > `readonly` `optional` **provenance?**: [`ProvenanceFacts`](ProvenanceFacts.md)
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L39)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L39)
 
 ShipCapsule provenance verdict (recorded addresses vs the live tree).
 
@@ -51,6 +51,6 @@ ShipCapsule provenance verdict (recorded addresses vs the live tree).
 
 > `readonly` `optional` **sbom?**: [`SbomFacts`](SbomFacts.md)
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L37)
+Defined in: [gauntlet/src/facts/supply-chain-facts.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/supply-chain-facts.ts#L37)
 
 SBOM completeness verdict (every package covered + lockfile-matched).

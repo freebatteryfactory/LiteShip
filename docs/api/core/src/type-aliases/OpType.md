@@ -8,7 +8,7 @@
 
 > **OpType** = \{ `fn?`: `string`; `type`: `"pure"`; \} \| \{ `fn?`: `string`; `type`: `"effect"`; \} \| \{ `key`: `string`; `spec`: `Record`\<`string`, `unknown`\>; `type`: `"spawn"`; \} \| \{ `domain`: `string`; `op`: `string`; `type`: `"domain"`; \} \| \{ `condition`: `unknown`; `type`: `"choice"`; \} \| \{ `type`: `"noop"`; \}
 
-Defined in: [core/src/plan.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L21)
+Defined in: [core/src/authoring/plan.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L21)
 
 Discriminated union describing the kind of work a `PlanStep` performs.
 

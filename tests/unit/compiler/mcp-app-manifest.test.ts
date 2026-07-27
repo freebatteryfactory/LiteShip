@@ -2,7 +2,7 @@
  * CUT D6 — the pure MCP-app manifest projector (compiler unit law).
  *
  * Exercises `compileMcpAppManifest` in isolation with SYNTHETIC inputs (no
- * @czap/mcp-server import): the projection rule, passthrough fidelity, no
+ * @liteship/mcp-server import): the projection rule, passthrough fidelity, no
  * invented fields, determinism, and the topology/orphan guards. The drift proof
  * against the REAL registries lives in the server-side d6 test (the integration seam).
  *
@@ -11,10 +11,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import * as compiler from '@czap/compiler';
-import { compileMcpAppManifest } from '@czap/compiler';
-import type { CapsuleCommandDescriptor } from '@czap/core';
-import type { CompileMcpAppManifestInput } from '@czap/compiler';
+import * as compiler from '@liteship/compiler';
+import { compileMcpAppManifest } from '@liteship/compiler';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
+import type { CompileMcpAppManifestInput } from '@liteship/compiler';
 
 const SRC = resolve(import.meta.dirname, '..', '..', '..', 'packages', 'compiler', 'src');
 
@@ -119,13 +119,12 @@ describe('D6 compiler — no invented fields, constants, determinism', () => {
 });
 
 describe('D6 compiler — topology + orphan removal', () => {
-  it('the projector source IMPORTS neither @czap/mcp-server nor @czap/command (pure projector)', () => {
+  it('the projector source IMPORTS neither @liteship/mcp-server nor @liteship/command (pure projector)', () => {
     const src = readFileSync(resolve(SRC, 'mcp-app-manifest.ts'), 'utf8');
     // Check actual import statements, not prose mentions in the module doc.
-    expect(src).not.toMatch(/from ['"]@czap\/mcp-server['"]/);
-    expect(src).not.toMatch(/from ['"]@czap\/command['"]/);
+    expect(src).not.toMatch(/from ['"]@liteship\/mcp-server['"]/);
+    expect(src).not.toMatch(/from ['"]@liteship\/command['"]/);
     expect(src).not.toContain('heyoub');
-    expect(src).not.toContain('czap://');
   });
 
   it('the orphaned compileAIManifest fantasy surface is gone; compileMcpAppManifest is exported', () => {

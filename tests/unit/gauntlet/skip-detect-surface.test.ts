@@ -10,17 +10,17 @@
  *  - `it.sequential.skip(...)`, `describe.concurrent.skip(...)`, `describe.each([...]).skip(...)`,
  *  - `it[cond ? "skip" : "only"](...)` — a COMPUTED member access on a runner root.
  * A regex cannot pair the chain / bracket / computed structure; the cure is a comprehensive
- * TOKEN-AWARE matcher (the lean `@czap/gauntlet` carries no `typescript` dep, so an injected
+ * TOKEN-AWARE matcher (the lean `@liteship/gauntlet` carries no `typescript` dep, so an injected
  * AST is unavailable to this dependency-free primitive — the token walk is the robust answer
  * within that contract). This suite pins the WHOLE surface so no spelling can regress.
  *
- * BOTH consumers — the always-blocking `no-skipped-test` gate AND `@czap/command`'s
+ * BOTH consumers — the always-blocking `no-skipped-test` gate AND `@liteship/command`'s
  * plumb-scan over `tests/generated/` — delegate to this one `detectSkips`, so every form here
  * is caught in BOTH the governed corpus and the generated handoff.
  */
 
 import { describe, it, expect } from 'vitest';
-import { detectSkips } from '@czap/gauntlet';
+import { detectSkips } from '@liteship/gauntlet';
 
 /** Convenience: does `detectSkips` flag `src` at all? */
 function detects(src: string): boolean {

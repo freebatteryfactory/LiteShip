@@ -6,7 +6,7 @@
 
 # Function: capSetFromCapabilities()
 
-> **capSetFromCapabilities**(`caps`): [`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
+> **capSetFromCapabilities**(`caps`): [`CapSet`](../../../liteship/src/evidence/interfaces/CapSet.md)
 
 Defined in: [detect/src/tiers.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/tiers.ts#L47)
 
@@ -25,4 +25,4 @@ from a `detect()` sweep (capsule/edge consumers).
 
 ## Returns
 
-[`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
+[`CapSet`](../../../liteship/src/evidence/interfaces/CapSet.md)

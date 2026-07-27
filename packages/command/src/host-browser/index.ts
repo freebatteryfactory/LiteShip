@@ -1,5 +1,5 @@
 /**
- * `@czap/command/host-browser` — browser host execution + WebMCP projection.
+ * `@liteship/command/host-browser` — browser host execution + WebMCP projection.
  *
  * @module
  */

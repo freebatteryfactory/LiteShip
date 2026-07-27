@@ -8,6 +8,6 @@
 
 > **AddressedDigest** = `_AddressedDigest`
 
-Defined in: [core/src/addressed-digest.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/addressed-digest.ts#L14)
+Defined in: [core/src/evidence/addressed-digest.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/addressed-digest.ts#L14)
 
 Re-exported [AddressedDigest](../variables/AddressedDigest.md) type anchored to spine brands.

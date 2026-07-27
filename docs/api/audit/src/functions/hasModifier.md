@@ -8,7 +8,9 @@
 
 > **hasModifier**(`node`, `kind`): `boolean`
 
-Defined in: [audit/src/structure.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L79)
+Defined in: [audit/src/structure.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L81)
+
+Test whether a TypeScript node carries one modifier kind.
 
 ## Parameters
 

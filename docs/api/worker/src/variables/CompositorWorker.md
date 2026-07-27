@@ -6,23 +6,23 @@
 
 # Variable: CompositorWorker
 
-> `const` **CompositorWorker**: `object`
+> **CompositorWorker**: `object`
 
-Defined in: [worker/src/compositor-worker.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L207)
+Defined in: [worker/src/compositor-worker.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L43)
 
 Factory namespace for the compositor worker.
 
 Call [CompositorWorker.create](#create) on the main thread to spin up a
 worker that evaluates quantizer boundaries and emits
 [CompositorWorkerState](../type-aliases/CompositorWorkerState.md) snapshots. The returned
-[CompositorWorkerShape](../interfaces/CompositorWorkerShape.md) owns the underlying `Worker` -- call
-`dispose()` (or park via the lease pool) when finished.
+CompositorWorker owns the underlying `Worker` -- call
+`await dispose()` (which may park via the lease pool) when finished.
 
 ## Type Declaration
 
 ### create
 
-> `readonly` **create**: (`config?`, `startupTelemetry?`) => [`CompositorWorkerShape`](../interfaces/CompositorWorkerShape.md) = `_createCompositorWorker`
+> `readonly` **create**: (`config?`, `startupTelemetry?`) => `CompositorWorker` = `_createCompositorWorker`
 
 Spin up a new compositor worker. Returns immediately; the worker
 posts `ready` asynchronously. Optionally provide startup telemetry
@@ -40,18 +40,18 @@ to capture per-stage timings.
 
 #### Returns
 
-[`CompositorWorkerShape`](../interfaces/CompositorWorkerShape.md)
+`CompositorWorker`
 
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
-import { CompositorWorker } from '@czap/worker';
+import { defineBoundary } from '@liteship/core';
+import { CompositorWorker } from '@liteship/worker';
 
 const compositor = CompositorWorker.create({ poolCapacity: 64 });
-// Boundary.make computes the content-addressed id; the quantizer
+// defineBoundary computes the content-addressed id; the quantizer
 // name defaults to the boundary's input name ('brightness').
-const brightness = Boundary.make({
+const brightness = defineBoundary({
   input: 'brightness',
   // at[i] is [lower bound, state]: 'dim' from 0, 'bright' from 0.5.
   at: [[0, 'dim'], [0.5, 'bright']],
@@ -64,5 +64,5 @@ compositor.evaluate('brightness', 0.7); // 0.7 >= 0.5 -> 'bright'
 compositor.requestCompute();
 // ...later:
 unsub();
-compositor.dispose();
+await compositor.dispose();
 ```

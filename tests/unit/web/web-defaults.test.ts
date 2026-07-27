@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Wave-2 default-widening tests for @czap/web:
+ * Wave-2 default-widening tests for @liteship/web:
  * - SSEConfig.reconnect accepts a partial merged over defaultReconnectConfig
  * - Resumption.saveState defaults timestamp to the injected clock's now() (systemClock by default)
  * - SlotRegistry.register normalizes mode/mounted defaults and is idempotent
@@ -9,8 +9,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { Diagnostics, Millis, fixedClock } from '@czap/core';
-import { SSE, Resumption, SlotRegistry, SlotAddressing, Hints } from '@czap/web';
+import { Diagnostics, Millis, fixedClock } from '@liteship/core';
+import { SSE, Resumption, SlotRegistry, SlotAddressing, Hints } from '@liteship/web';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 
 let uninstallEventSource: (() => void) | null = null;
@@ -32,7 +32,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('SSE.create reconnect defaults', () => {
-  test('a partial reconnect override merges over defaultReconnectConfig', () => {
+  test('a partial reconnect override merges over defaultReconnectConfig', async () => {
     uninstallEventSource = MockEventSource.install();
 
     // Only one knob supplied; maxAttempts must come from the defaults (10), so
@@ -45,7 +45,7 @@ describe('SSE.create reconnect defaults', () => {
     MockEventSource.instances.at(-1)!.simulateError();
 
     expect(client.state).toBe('reconnecting');
-    client.close();
+    await client.dispose();
   });
 });
 
@@ -91,14 +91,14 @@ describe('SlotRegistry.register defaults', () => {
     expect(entry!.mounted).toBe(true);
   });
 
-  test('re-registering the same path+element+mode does not re-dispatch czap:slot-mounted', () => {
+  test('re-registering the same path+element+mode does not re-dispatch liteship:slot-mounted', () => {
     const registry = SlotRegistry.create();
     const element = document.createElement('div');
     document.body.append(element);
     const path = SlotAddressing.parse('/hero');
 
     let mountedCount = 0;
-    document.addEventListener('czap:slot-mounted', () => {
+    document.addEventListener('liteship:slot-mounted', () => {
       mountedCount += 1;
     });
 
@@ -118,7 +118,7 @@ describe('SlotRegistry.register defaults', () => {
 describe('SlotRegistry.observe pre-existing DOM scan', () => {
   test('observe registers slots already in the DOM without a separate scanDOM call', () => {
     const element = document.createElement('div');
-    element.setAttribute('data-czap-slot', '/sidebar');
+    element.setAttribute('data-liteship-slot', '/sidebar');
     document.body.append(element);
 
     const registry = SlotRegistry.create();
@@ -130,11 +130,11 @@ describe('SlotRegistry.observe pre-existing DOM scan', () => {
 
   test('a prior scanDOM + observe sequence does not double-dispatch mounted events', () => {
     const element = document.createElement('div');
-    element.setAttribute('data-czap-slot', '/hero');
+    element.setAttribute('data-liteship-slot', '/hero');
     document.body.append(element);
 
     let mountedCount = 0;
-    document.addEventListener('czap:slot-mounted', () => {
+    document.addEventListener('liteship:slot-mounted', () => {
       mountedCount += 1;
     });
 
@@ -163,7 +163,7 @@ describe('Hints.fromElement invalid data-morph-id-map', () => {
     const hints = Hints.fromElement(element);
 
     expect(hints.idMap).toBeUndefined();
-    const warning = events.find((e) => e.code === 'invalid-morph-id-map');
+    const warning = events.find((e) => e.code === 'web/morph/invalid-id-map');
     expect(warning).toBeDefined();
     expect(warning!.message).toContain('{not json');
     expect(warning!.message).toContain('data-morph-id-map=\'{"old-id":"new-id"}\'');

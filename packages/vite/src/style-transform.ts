@@ -9,17 +9,17 @@
  * @module
  */
 
-import type { Style } from '@czap/core';
-import { StyleCSSCompiler } from '@czap/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
+import type { Style } from '@liteship/core';
+import { StyleCSSCompiler } from '@liteship/compiler';
 import {
+  normalizeCssLineEndings,
   blankCssCommentsAndStrings,
   braceDepthDelta,
   lineOfOffset,
   parseFlatDeclarations,
   skipSegment,
   skipWsAndComments,
-} from './css-scan.js';
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,8 +57,9 @@ export interface StyleBlock {
  * }
  * ```
  *
- * Parsing is fully character-level via the shared `css-scan` helpers
- * (same scanner as `@token` / `@theme` / `@quantize`): upstream
+ * Parsing is fully character-level via the scanner exported by
+ * `@liteship/compiler/parse` (the same scanner as `@token` / `@theme` /
+ * `@quantize`): upstream
  * compilers (e.g. the Astro compiler re-serializing a `<style>` block)
  * emit at-rules mid-line and collapse whole sheets onto a single line,
  * so no line structure is assumed. At-rule markers are located on a
@@ -134,7 +135,7 @@ export function parseStyleBlocks(css: string, sourceFile: string): readonly Styl
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler StyleCSSCompiler)
+// Compiler (delegates to @liteship/compiler StyleCSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**
@@ -143,7 +144,7 @@ export function parseStyleBlocks(css: string, sourceFile: string): readonly Styl
  * Delegates to the canonical `StyleCSSCompiler` to avoid duplicating
  * style-to-CSS logic.
  */
-export function compileStyleBlock(block: StyleBlock, style: Style.Shape): string {
+export function compileStyleBlock(block: StyleBlock, style: Style): string {
   const result = StyleCSSCompiler.compile(style, block.styleName);
   const parts = [result.layers, result.startingStyle].filter((part): part is string => part.length > 0);
 

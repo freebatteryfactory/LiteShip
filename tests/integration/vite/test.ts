@@ -1,11 +1,11 @@
 /**
- * Integration test for @czap/vite plugin.
+ * Integration test for @liteship/vite plugin.
  *
  * Validates that the Vite plugin bootstraps correctly by:
  *   1. Building the workspace packages (so dist/ exports resolve)
  *   2. Running `vite build` on a minimal project that uses plugin()
  *   3. Verifying the build exits cleanly and output files exist
- *   4. Verifying the JS bundle contains czap content
+ *   4. Verifying the JS bundle contains liteship content
  *
  * Run: pnpm exec tsx tests/integration/vite/test.ts
  */
@@ -39,7 +39,7 @@ function assert(condition: boolean, message: string): void {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  console.log('\n=== @czap/vite integration test ===\n');
+  console.log('\n=== @liteship/vite integration test ===\n');
 
   // Clean previous dist
   if (existsSync(DIST_DIR)) {
@@ -93,10 +93,10 @@ async function main(): Promise<void> {
   const cssFiles = readdirSync(assetsDir).filter((f) => f.endsWith('.css'));
   assert(cssFiles.length > 0, `CSS assets emitted (found ${cssFiles.length})`);
 
-  // Verify the JS bundle contains czap boundary content
+  // Verify the JS bundle contains liteship boundary content
   const jsContent = readFileSync(join(assetsDir, jsFiles[0]!), 'utf-8');
-  const hasCzapContent = jsContent.includes('czap-vite-test') || jsContent.includes('container-width');
-  assert(hasCzapContent, 'JS bundle contains czap boundary content');
+  const hasLiteshipContent = jsContent.includes('liteship-vite-test') || jsContent.includes('container-width');
+  assert(hasLiteshipContent, 'JS bundle contains liteship boundary content');
 
   console.log('\n=== ALL CHECKS PASSED ===\n');
 }

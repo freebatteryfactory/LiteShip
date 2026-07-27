@@ -7,13 +7,15 @@
 
 import { createInterface } from 'node:readline/promises';
 import { relative } from 'node:path';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import { scaffold } from './scaffold.js';
 
 export {
   scaffold,
   defaultTemplateDir,
   projectNameFromDir,
+  type ScaffoldError,
+  type ScaffoldFailureReason,
   type ScaffoldOptions,
   type ScaffoldResult,
 } from './scaffold.js';
@@ -21,7 +23,7 @@ export {
 /** Directory suggested when the user does not name one. */
 export const DEFAULT_DIR = 'my-liteship-app';
 
-const HELP = `create-liteship — scaffold a minimal Astro + @czap project
+const HELP = `create-liteship — scaffold a minimal Astro + @liteship project
 
 Usage:
   npm create liteship [dir]
@@ -88,8 +90,10 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
         `  cd ${cdPath}\n` +
         `  pnpm install   (or npm install)\n` +
         `  pnpm dev       (or npm run dev)\n\n` +
-        `Then edit src/pages/index.astro — the @quantize block and the\n` +
-        `satelliteAttrs() element share one boundary (src/boundaries/).\n`,
+        `Verify the project any time with:\n` +
+        `  pnpm check     (or npm run check)\n\n` +
+        `Then edit src/adaptive.ts — one defineAdaptive value owns the\n` +
+        `definition, attrs, explanation, and compiled plan.\n`,
     );
     return 0;
   } catch (error) {

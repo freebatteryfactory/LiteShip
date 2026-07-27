@@ -6,8 +6,8 @@
  * or any published package missing a `PACKAGE_PLUMB` classification.
  *
  * The scan engine (`node:fs` directory walk + the `PACKAGE_PLUMB` ledger) is
- * INJECTED via `context.runPlumb`, never imported here, so `@czap/command` stays
- * free of `node:fs`. Unlike `audit` (whose `@czap/audit` engine is heavy and
+ * INJECTED via `context.runPlumb`, never imported here, so `@liteship/command` stays
+ * free of `node:fs`. Unlike `audit` (whose `@liteship/audit` engine is heavy and
  * CLI-only), `runPlumb` is provisioned in the shared host factory
  * (`createNodeCommandContext`), so the MCP host has it too — the command is
  * `mcpExposed` because it returns a STRUCTURED verdict (skip-list + unclassified
@@ -15,7 +15,7 @@
  *
  * @module
  */
-import { type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema } from '@liteship/core';
 import {
   capabilityUnavailable,
   failed,
@@ -31,7 +31,7 @@ import {
  * plain-TS mirror.
  *
  * The `skips` element `kind` mirrors {@link PlumbSkip.kind} — the detected skip
- * TOKEN from the UNIFIED alias-aware detector (`@czap/gauntlet`'s `detectSkips`),
+ * TOKEN from the UNIFIED alias-aware detector (`@liteship/gauntlet`'s `detectSkips`),
  * which covers every form a generated test can carry (`it.skip` / `test.skip` /
  * `describe.skip` / `bench.skip` / `it.todo` / `xit` / the runtime-conditional
  * `it.skipIf` / `it.runIf` / the `COND ? it : it.skip` alias). It is a free
@@ -80,7 +80,7 @@ export const plumbCommand: HandledCommand = {
     requires: ['runPlumb'] satisfies readonly CommandCapability[],
     inputSchema: { type: 'object', properties: {} } as const satisfies CommandJsonSchema,
     outputSchema: PlumbPayloadSchema,
-    annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
+    annotations: { readOnly: true, mcpExposed: true, group: 'setup' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

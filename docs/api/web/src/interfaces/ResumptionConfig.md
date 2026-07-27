@@ -51,6 +51,6 @@ Defined in: [web/src/types.ts:339](https://github.com/freebatteryfactory/LiteShi
 
 ### timeout?
 
-> `readonly` `optional` **timeout?**: `Millis`
+> `readonly` `optional` **timeout?**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [web/src/types.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L341)

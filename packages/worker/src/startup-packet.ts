@@ -12,7 +12,7 @@
  * @module
  */
 
-import { StateName } from '@czap/core';
+import { StateName } from '@liteship/core';
 import type { WorkerUpdate, BootstrapQuantizerRegistration, StartupComputePacket } from './messages.js';
 import type { StartupPacketState, RuntimeSeedEntry } from './compositor-types.js';
 

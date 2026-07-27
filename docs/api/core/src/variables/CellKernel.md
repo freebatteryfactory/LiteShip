@@ -8,7 +8,7 @@
 
 > `const` **CellKernel**: `object`
 
-Defined in: [core/src/cell-kernel.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L470)
+Defined in: [core/src/reactive/cell-kernel.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L470)
 
 CellKernel — the replay-current / fan-out reactive substrate. `replay1` mirrors
 the compositor's replay-1 seam (current slot + replay-on-subscribe); `fanout`
@@ -18,7 +18,7 @@ is the strictly-simpler no-replay channel.
 
 ### fanout
 
-> **fanout**: \<`T`\>(`policy`) => [`CellFanoutShape`](../interfaces/CellFanoutShape.md)\<`T`\>
+> **fanout**: \<`T`\>(`policy`) => [`CellFanout`](../interfaces/CellFanout.md)\<`T`\>
 
 Build a no-replay fan-out kernel. `policy` defaults to `{all}` (no dedup).
 
@@ -32,15 +32,15 @@ Build a no-replay fan-out kernel. `policy` defaults to `{all}` (no dedup).
 
 ##### policy?
 
-[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
+[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
 
 #### Returns
 
-[`CellFanoutShape`](../interfaces/CellFanoutShape.md)\<`T`\>
+[`CellFanout`](../interfaces/CellFanout.md)\<`T`\>
 
 ### replay1
 
-> **replay1**: \<`T`\>(`initial`, `policy`, `reentrancy`) => [`CellReplayShape`](../interfaces/CellReplayShape.md)\<`T`\>
+> **replay1**: \<`T`\>(`initial`, `policy`, `reentrancy`) => [`CellReplay`](../interfaces/CellReplay.md)\<`T`\>
 
 Build a replay-1 kernel seeded with `initial`. `policy` defaults to `{all}`
 (no dedup) and `reentrancy` to `'synchronous'` (the pinned I5 nested fan-out),
@@ -60,12 +60,12 @@ so `replay1(initial)` is byte-for-byte the compositor extraction target.
 
 ##### policy?
 
-[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
+[`EmissionPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts)\<`T`\> = `EMIT_ALL`
 
 ##### reentrancy?
 
-[`ReentrancyPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts) = `'synchronous'`
+[`ReentrancyPolicy`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts) = `'synchronous'`
 
 #### Returns
 
-[`CellReplayShape`](../interfaces/CellReplayShape.md)\<`T`\>
+[`CellReplay`](../interfaces/CellReplay.md)\<`T`\>

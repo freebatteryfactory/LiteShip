@@ -5,8 +5,8 @@
  * Runs the full capture pipeline: Compositor -> VideoRenderer -> WebCodecsCapture -> MP4 blob.
  */
 
-import { Compositor, VideoRenderer, Millis } from '@czap/core';
-import { WebCodecsCapture, renderToCanvas } from '@czap/web';
+import { Compositor, createVideoRenderer, Millis } from '@liteship/core';
+import { createWebCodecsCapture, renderToCanvas } from '@liteship/web';
 
 declare global {
   interface Window {
@@ -24,10 +24,10 @@ declare global {
 }
 
 async function run() {
-  const { compositor } = Compositor.create();
-  const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: Millis(500) }, compositor);
+  const compositor = Compositor.create();
+  const renderer = createVideoRenderer({ fps: 10, width: 640, height: 480, durationMs: Millis(500) }, compositor);
 
-  const capture = WebCodecsCapture.make({
+  const capture = createWebCodecsCapture({
     codec: 'avc1.42001E',
     bitrate: 1_000_000,
     keyframeInterval: 5,

@@ -8,7 +8,7 @@
 
 > `const` **TypeValidator**: `object`
 
-Defined in: [core/src/capsule.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L266)
+Defined in: [core/src/authoring/capsule.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L271)
 
 Runtime validator that verifies values against kernel schemas.
 

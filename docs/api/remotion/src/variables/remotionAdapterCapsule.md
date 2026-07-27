@@ -6,9 +6,9 @@
 
 # Variable: remotionAdapterCapsule
 
-> `const` **remotionAdapterCapsule**: `CapsuleDef`\<`"siteAdapter"`, `unknown`, readonly `object`[], `unknown`\>
+> `const` **remotionAdapterCapsule**: `CapsuleDef`\<`"siteAdapter"`, \{ `totalFrames`: `number`; \}, readonly `object`[], `unknown`\>
 
-Defined in: [remotion/src/capsules/remotion-adapter.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/capsules/remotion-adapter.ts#L24)
+Defined in: [remotion/src/remotion-adapter-capsule.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/remotion-adapter-capsule.ts#L26)
 
-Declared capsule for `@czap/remotion`. Registered in the module-level
-catalog at import time; walked by the factory compiler.
+Declared capsule for `@liteship/remotion`. The immutable declaration is
+discovered by the factory compiler without import-time registration.

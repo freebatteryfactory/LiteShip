@@ -8,7 +8,7 @@
 
 > **CapAxis** = *typeof* [`CAP_AXES`](../variables/CAP_AXES.md)\[`number`\]
 
-Defined in: [detect/src/cap-axes.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L26)
+Defined in: [detect/src/cap-axes.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L30)
 
-A capability axis — simultaneously the `Astro.locals.czap.tiers` field name
-and the `data-czap-<axis>` attribute suffix.
+A capability axis — simultaneously the `Astro.locals.liteship.tiers` field name
+and the `data-liteship-<axis>` attribute suffix.

@@ -1,7 +1,7 @@
 /**
  * Defaults on the worker host surfaces:
  *
- * - CompositorWorker.addQuantizer accepts a Boundary.make result directly,
+ * - CompositorWorker.addQuantizer accepts a defineBoundary result directly,
  *   deriving the registration (name defaults to boundary.input) instead of
  *   demanding a hand-assembled { id, states, thresholds } with a hand-typed
  *   ContentAddress.
@@ -11,8 +11,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { Boundary } from '@czap/core';
-import { CompositorWorker, WorkerHost } from '@czap/worker';
+import { defineBoundary } from '@liteship/core';
+import { CompositorWorker, WorkerHost } from '@liteship/worker';
 import { MockWorker } from '../../helpers/mock-worker.js';
 import { mockCanvas } from '../../helpers/mock-dom.js';
 
@@ -42,9 +42,9 @@ afterEach(() => {
 });
 
 describe('CompositorWorker.addQuantizer boundary-first form', () => {
-  test('registers under boundary.input with derived states', () => {
+  test('registers under boundary.input with derived states', async () => {
     const cw = CompositorWorker.create();
-    const brightness = Boundary.make({
+    const brightness = defineBoundary({
       input: 'brightness',
       at: [
         [0, 'dim'],
@@ -55,12 +55,12 @@ describe('CompositorWorker.addQuantizer boundary-first form', () => {
     cw.addQuantizer(brightness);
 
     expect(cw.runtime.hasQuantizer('brightness')).toBe(true);
-    cw.dispose();
+    await cw.dispose();
   });
 
-  test('explicit-name form still registers under the given name', () => {
+  test('explicit-name form still registers under the given name', async () => {
     const cw = CompositorWorker.create();
-    const brightness = Boundary.make({
+    const brightness = defineBoundary({
       input: 'brightness',
       at: [
         [0, 'dim'],
@@ -72,12 +72,12 @@ describe('CompositorWorker.addQuantizer boundary-first form', () => {
 
     expect(cw.runtime.hasQuantizer('custom-name')).toBe(true);
     expect(cw.runtime.hasQuantizer('brightness')).toBe(false);
-    cw.dispose();
+    await cw.dispose();
   });
 });
 
 describe('WorkerHost.startRender defaults', () => {
-  test('width/height default to the attached canvas dimensions, fps to 60', () => {
+  test('width/height default to the attached canvas dimensions, fps to 60', async () => {
     const host = WorkerHost.create();
     host.attachCanvas(mockCanvas(1280, 720));
 
@@ -88,10 +88,10 @@ describe('WorkerHost.startRender defaults', () => {
       .map((m) => m.data as { type: string; config?: unknown })
       .find((m) => m.type === 'start-render');
     expect(startRender?.config).toEqual({ durationMs: 1234, fps: 60, width: 1280, height: 720 });
-    host.dispose();
+    await host.dispose();
   });
 
-  test('explicit fields win over the defaults', () => {
+  test('explicit fields win over the defaults', async () => {
     const host = WorkerHost.create();
     host.attachCanvas(mockCanvas(1280, 720));
 
@@ -102,6 +102,6 @@ describe('WorkerHost.startRender defaults', () => {
       .map((m) => m.data as { type: string; config?: unknown })
       .find((m) => m.type === 'start-render');
     expect(startRender?.config).toEqual({ durationMs: 1000, fps: 30, width: 320, height: 240 });
-    host.dispose();
+    await host.dispose();
   });
 });

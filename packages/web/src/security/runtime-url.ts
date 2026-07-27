@@ -348,7 +348,7 @@ function isInlineShaderBody(value: string): boolean {
  * Pure + deterministic: no clock, no network — the resolution is a syntactic
  * classification only. Never throws ({@link resolveRuntimeUrl} never throws).
  *
- * @param rawUrl - the candidate token (e.g. a `data-czap-shader-src` value).
+ * @param rawUrl - the candidate token (e.g. a `data-liteship-shader-src` value).
  */
 export function isFetchableRuntimeUrl(rawUrl: string | null | undefined): boolean {
   if (rawUrl === null || rawUrl === undefined) return false;

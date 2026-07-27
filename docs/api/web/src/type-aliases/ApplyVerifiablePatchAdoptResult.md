@@ -6,8 +6,8 @@
 
 # Type Alias: ApplyVerifiablePatchAdoptResult
 
-> **ApplyVerifiablePatchAdoptResult** = `Extract`\<[`ApplyVerifiablePatchResult`](ApplyVerifiablePatchResult.md), \{ `_tag`: `"applied"`; \}\> \| `Exclude`\<[`ApplyVerifiablePatchResult`](ApplyVerifiablePatchResult.md), \{ `_tag`: `"applied"`; \}\> \| \{ `_tag`: `"refused"`; `verification`: \{ `_tag`: `"resultGraphMismatch"`; `expected`: [`ContentAddress`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md); `received`: [`ContentAddress`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md); \}; \}
+> **ApplyVerifiablePatchAdoptResult** = `Extract`\<[`ApplyVerifiablePatchResult`](ApplyVerifiablePatchResult.md), \{ `_tag`: `"applied"`; \}\> \| `Exclude`\<[`ApplyVerifiablePatchResult`](ApplyVerifiablePatchResult.md), \{ `_tag`: `"applied"`; \}\> \| \{ `_tag`: `"refused"`; `verification`: \{ `_tag`: `"resultGraphMismatch"`; `expected`: [`ContentAddress`](../../../liteship/src/schema/type-aliases/ContentAddress.md); `received`: [`ContentAddress`](../../../liteship/src/schema/type-aliases/ContentAddress.md); \}; \}
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L219)
+Defined in: [web/src/watch-and-prepare.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L217)
 
 Outcome of [applyVerifiablePatchAndAdopt](../functions/applyVerifiablePatchAndAdopt.md) — patch apply plus graph adoption.

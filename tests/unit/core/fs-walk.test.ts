@@ -4,7 +4,7 @@
  * filters, deterministic name-sorted ordering, absolute returns, and
  * symlink-cycle safety (a self-referencing link must terminate, never loop).
  *
- * Imports through the NEW `@czap/core/fs-walk` subpath — the Node-only leaf is
+ * Imports through the NEW `@liteship/core/fs-walk` subpath — the Node-only leaf is
  * deliberately absent from the browser-safe main index.
  *
  * @module
@@ -14,12 +14,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative } from 'node:path';
-import { walkFiles } from '@czap/core/fs-walk';
+import { walkFiles } from '@liteship/core/fs-walk';
 
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'czap-fs-walk-'));
+  root = mkdtempSync(join(tmpdir(), 'liteship-fs-walk-'));
 });
 
 afterEach(() => {

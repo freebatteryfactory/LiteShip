@@ -8,7 +8,7 @@
 
 > `const` **Cap**: `object`
 
-Defined in: [core/src/caps.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/caps.ts#L96)
+Defined in: [core/src/evidence/caps.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/caps.ts#L96)
 
 Cap — algebra over [CapSet](../interfaces/CapSet.md).
 Pure, immutable helpers for building, combining, and comparing capability

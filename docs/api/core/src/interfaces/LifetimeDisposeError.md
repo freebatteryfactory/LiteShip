@@ -6,7 +6,7 @@
 
 # Interface: LifetimeDisposeError
 
-Defined in: [core/src/lifetime.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts#L75)
+Defined in: [core/src/reactive/lifetime.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L77)
 
 The aggregate raised when one or more finalizers fail during `dispose()`.
 `causes` holds every failure in LIFO invocation order; the first is chained
@@ -36,7 +36,7 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` **causes**: readonly `unknown`[]
 
-Defined in: [core/src/lifetime.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts#L77)
+Defined in: [core/src/reactive/lifetime.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L79)
 
 The finalizer failures, in LIFO invocation order.
 

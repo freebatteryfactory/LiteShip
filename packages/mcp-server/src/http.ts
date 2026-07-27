@@ -1,9 +1,7 @@
 /**
  * MCP HTTP transport — POST /, body is a JSON-RPC 2.0 request.
  * Pure JSON-RPC handler logic lives here. The Node `createServer` +
- * `listen` + `SIGINT`-await bootstrap lives in `./http-server.ts`,
- * excluded from coverage because Windows can't deliver SIGINT to
- * spawned subprocesses cleanly.
+ * `listen` lifecycle lives in `./http-server.ts`; this module is import-pure.
  *
  * Routes incoming bodies through `JsonRpcServer.parse` for the same
  * conformance properties as the stdio transport: parse errors → -32700,
@@ -64,11 +62,3 @@ export async function handleRequest(body: string): Promise<JsonRpcResponse | rea
   const outcome = JsonRpcServer.parse(body);
   return respond(outcome);
 }
-
-// Re-export the bootstrap so callers (start.ts) can keep using `import { runHttp } from './http.js'`.
-// The bootstrap module also installs a top-level direct-invoke guard for
-// the integration spawn entrypoint (`tsx packages/mcp-server/src/http.ts ...`).
-// We import that module for its side effect so the spawn keeps working.
-import './http-server.js';
-
-export { runHttp } from './http-server.js';

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { existsSync, unlinkSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -26,7 +26,7 @@ function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; st
     });
 }
 
-describe('czap scene render', () => {
+describe('liteship scene render', () => {
   const out = resolve('tests/integration/cli/.out-intro.mp4');
 
   const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;

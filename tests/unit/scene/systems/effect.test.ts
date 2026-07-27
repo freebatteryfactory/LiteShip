@@ -1,25 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { World } from '@czap/core';
-import { EffectSystem } from '@czap/scene';
+import { createWorld } from '@liteship/core/ecs';
+import { EffectKindPart, EffectSystem, IntensityPart } from '@liteship/scene';
+import { spawnSceneEntity } from '../../../support/scene-world.js';
 
 describe('EffectSystem', () => {
   it('produces intensity for effect entities in range', () => {
-    const { world } = World.make();
-    world.spawn({
-      EffectKind: 'pulse', TargetEntity: 'hero', FrameRange: { from: 0, to: 60 },
+    const world = createWorld();
+    spawnSceneEntity(world, {
+      EffectKind: 'pulse',
+      TargetEntity: 'hero',
+      FrameRange: { from: 0, to: 60 },
     });
     world.addSystem(EffectSystem(30));
     world.tick();
-    const fx = world.query('EffectKind');
-    const ent = fx[0] as unknown as { _intensity: number };
-    expect(ent._intensity).toBeGreaterThan(0);
-    expect(ent._intensity).toBeLessThanOrEqual(1);
+    const fx = world.query(EffectKindPart, IntensityPart);
+    expect(fx[0]!.get(IntensityPart)).toBeGreaterThan(0);
+    expect(fx[0]!.get(IntensityPart)).toBeLessThanOrEqual(1);
   });
 
   it('multiplies the linear ramp by a pulse Envelope component (overdrive at period start)', () => {
     const intensityAt = (frameIndex: number): number => {
-      const { world } = World.make();
-      world.spawn({
+      const world = createWorld();
+      spawnSceneEntity(world, {
         EffectKind: 'pulse',
         TargetEntity: 'hero',
         FrameRange: { from: 0, to: 60 },
@@ -27,8 +29,8 @@ describe('EffectSystem', () => {
       });
       world.addSystem(EffectSystem(frameIndex));
       world.tick();
-      const fx = world.query('EffectKind');
-      return (fx[0] as unknown as { _intensity: number })._intensity;
+      const fx = world.query(EffectKindPart, IntensityPart);
+      return fx[0]!.get(IntensityPart);
     };
     // ramp(30/60) = 0.5; pulse factor at a period boundary = 1.3
     expect(intensityAt(30)).toBeCloseTo(0.5 * 1.3, 6);
@@ -37,12 +39,11 @@ describe('EffectSystem', () => {
   });
 
   it('emits zero intensity for out-of-range effects', () => {
-    const { world } = World.make();
-    world.spawn({ EffectKind: 'pulse', TargetEntity: 'hero', FrameRange: { from: 60, to: 120 } });
+    const world = createWorld();
+    spawnSceneEntity(world, { EffectKind: 'pulse', TargetEntity: 'hero', FrameRange: { from: 60, to: 120 } });
     world.addSystem(EffectSystem(0));
     world.tick();
-    const fx = world.query('EffectKind');
-    const ent = fx[0] as unknown as { _intensity: number };
-    expect(ent._intensity).toBe(0);
+    const fx = world.query(EffectKindPart, IntensityPart);
+    expect(fx[0]!.get(IntensityPart)).toBe(0);
   });
 });

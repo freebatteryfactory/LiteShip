@@ -7,8 +7,8 @@
  * @module
  */
 
-import { wallClock } from '@czap/core';
-import { spawnArgvCapture } from '../lib/spawn.js';
+import { wallClock } from '@liteship/core';
+import { spawnArgvCapture } from '../internal/spawn.js';
 import { emit } from '../receipts.js';
 
 export type AstroDevAction = 'dev' | 'status' | 'stop';

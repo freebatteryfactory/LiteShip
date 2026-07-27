@@ -1,5 +1,5 @@
 /**
- * `@czap/worker` — **LiteShip** off-deck crew: compositor and render workers
+ * `@liteship/worker` — **LiteShip** off-deck crew: compositor and render workers
  * that keep the main thread trim while boundaries and media stay live.
  *
  * This package ships:
@@ -34,26 +34,25 @@ export type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } fro
 
 // SPSC Ring Buffer
 export { SPSCRing } from './spsc-ring.js';
-export type { SPSCRingBufferShape, SPSCRingPair } from './spsc-ring.js';
+export type { SPSCRingPair } from './spsc-ring.js';
 
 // Compositor Worker
 export { CompositorWorker } from './compositor-worker.js';
 export type {
-  CompositorWorkerShape,
   CompositorWorkerState,
+  ResolvedStateAckPayload,
   QuantizerBoundarySource,
   WorkerMetrics,
 } from './compositor-types.js';
 
 // Render Worker
 export { RenderWorker } from './render-worker.js';
-export type { RenderWorkerShape } from './render-worker.js';
 
 // Host
 export { WorkerHost } from './host.js';
-export type { WorkerHostShape, TransferableCanvas, WorkerHostRenderConfig } from './host.js';
+export type { TransferableCanvas, WorkerHostRenderConfig } from './host.js';
 
 // Off-thread motion sampler (#130) — the MINIMAL authored-motion adapter: run the ONE
-// shared `sampleProgram` kernel off-thread and post its uniforms on `czap:uniform-update`.
+// shared `sampleProgram` kernel off-thread and post its uniforms on `liteship:uniform-update`.
 export { motionSampleMessage, sampleProgramUniforms } from './motion-sample.js';
 export type { MotionSampleMessage, ProgramUniforms } from './motion-sample.js';

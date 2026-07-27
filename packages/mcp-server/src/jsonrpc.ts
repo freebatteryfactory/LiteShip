@@ -21,7 +21,7 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
 
 // ---------- JSON-RPC 2.0 types (wire-shape) ----------
 
@@ -62,10 +62,15 @@ export type JsonRpcResponse = JsonRpcSuccess | JsonRpcErrorResponse;
 
 // ---------- Standard error codes (§5.1) ----------
 
+/** JSON-RPC standard parse-error code. */
 export const ParseError = -32700 as const;
+/** JSON-RPC standard invalid-request code. */
 export const InvalidRequest = -32600 as const;
+/** JSON-RPC standard method-not-found code. */
 export const MethodNotFound = -32601 as const;
+/** JSON-RPC standard invalid-params code. */
 export const InvalidParams = -32602 as const;
+/** JSON-RPC standard internal-error code. */
 export const InternalError = -32603 as const;
 
 // ---------- Parser output classification ----------
@@ -111,12 +116,19 @@ function _classify(raw: unknown): ParseOutcome {
     return { kind: 'invalid-request', id: null };
   }
   const obj = raw as Record<string, unknown>;
-  if (obj.jsonrpc !== '2.0' || typeof obj.method !== 'string') {
+  const hasId = 'id' in obj && obj.id !== undefined;
+  const validId = !hasId || typeof obj.id === 'string' || typeof obj.id === 'number' || obj.id === null;
+  const validParams =
+    !('params' in obj) ||
+    obj.params === undefined ||
+    Array.isArray(obj.params) ||
+    (typeof obj.params === 'object' && obj.params !== null);
+  if (obj.jsonrpc !== '2.0' || typeof obj.method !== 'string' || !validId || !validParams) {
     const id =
       typeof obj.id === 'string' || typeof obj.id === 'number' || obj.id === null ? (obj.id as JsonRpcId) : null;
     return { kind: 'invalid-request', id };
   }
-  if (!('id' in obj) || obj.id === undefined) {
+  if (!hasId) {
     return { kind: 'notification', message: obj as unknown as JsonRpcNotification };
   }
   return { kind: 'request', message: obj as unknown as JsonRpcRequest };
@@ -134,9 +146,11 @@ function _successResponse(id: JsonRpcId, result: unknown): JsonRpcSuccess {
   return { jsonrpc: '2.0', id, result };
 }
 
-// Re-export pure functions for direct import sites.
+/** Parse one JSON-RPC wire line into its exact protocol outcome. */
 export const parse = _parse;
+/** Construct one JSON-RPC error response. */
 export const errorResponse = _errorResponse;
+/** Construct one JSON-RPC success response. */
 export const successResponse = _successResponse;
 
 // ---------- Capsule declaration (pureTransform arm) ----------
@@ -145,15 +159,72 @@ export const successResponse = _successResponse;
 // over the kernel AST) to sample inputs and strict-`decode`s `fc.anything()`
 // values against them, so we only need enough shape for it to filter the
 // property test.
-const JsonRpcInputSchema = S.string;
-const ParseOutcomeKindSchema = S.union(
-  S.literal('request'),
-  S.literal('notification'),
-  S.literal('batch'),
-  S.literal('parse-error'),
-  S.literal('invalid-request'),
+const MALFORMED_WITNESS = '{"jsonrpc":"2.0",';
+const REQUEST_ID_WITNESS = '{"jsonrpc":"2.0","id":"request-7","method":"ping"}';
+const NOTIFICATION_WITNESS = '{"jsonrpc":"2.0","method":"ping"}';
+const INVALID_REQUEST_WITNESS = '42';
+
+/**
+ * Deterministic protocol witnesses driven by the generated capsule test and
+ * benchmark. The general parser remains open to every string; this finite
+ * declaration corpus guarantees that every invariant premise is exercised
+ * instead of hoping an unconstrained random string happens to be a valid
+ * request or notification.
+ */
+export const JSON_RPC_CAPSULE_WITNESSES = Object.freeze([
+  MALFORMED_WITNESS,
+  REQUEST_ID_WITNESS,
+  NOTIFICATION_WITNESS,
+  INVALID_REQUEST_WITNESS,
+] as const);
+
+const JsonRpcInputSchema = schema.string;
+const ParseOutcomeKindSchema = schema.union(
+  schema.literal('request'),
+  schema.literal('notification'),
+  schema.literal('batch'),
+  schema.literal('parse-error'),
+  schema.literal('invalid-request'),
 );
-const ParseOutcomeSchema = S.struct({ kind: ParseOutcomeKindSchema });
+const JsonRpcProtocolObservationSchema = schema.struct({
+  inputKind: ParseOutcomeKindSchema,
+  malformedKind: ParseOutcomeKindSchema,
+  notificationKind: ParseOutcomeKindSchema,
+  requestCorrelationId: schema.union(schema.string, schema.number, schema.literal(null)),
+});
+
+/** Minimal observable protocol result carried by the generated capsule oracle. */
+export interface JsonRpcProtocolObservation {
+  readonly inputKind: ParseOutcome['kind'];
+  readonly malformedKind: ParseOutcome['kind'];
+  readonly notificationKind: ParseOutcome['kind'];
+  readonly requestCorrelationId: JsonRpcId;
+}
+
+type JsonRpcParser = (input: string) => ParseOutcome;
+
+/**
+ * Drive one parser subject over both an arbitrary input and the deterministic
+ * conformance witnesses. The injected subject exists so mutation controls can
+ * prove the generated invariants reject a broken implementation.
+ */
+export function observeJsonRpcProtocolWith(parser: JsonRpcParser, input: string): JsonRpcProtocolObservation {
+  const inputOutcome = parser(input);
+  const malformed = parser(MALFORMED_WITNESS);
+  const notification = parser(NOTIFICATION_WITNESS);
+  const request = parser(REQUEST_ID_WITNESS);
+  return {
+    inputKind: inputOutcome.kind,
+    malformedKind: malformed.kind,
+    notificationKind: notification.kind,
+    requestCorrelationId: request.kind === 'request' ? request.message.id : null,
+  };
+}
+
+/** Project the live parser into the capsule's fully described observation. */
+export function observeJsonRpcProtocol(input: string): JsonRpcProtocolObservation {
+  return observeJsonRpcProtocolWith(_parse, input);
+}
 
 /**
  * Capsule definition for the kernel — placed in the catalog under the
@@ -166,47 +237,26 @@ export const jsonRpcServerCapsule = defineCapsule({
   site: ['node', 'browser'],
   capabilities: { reads: [], writes: [] },
   input: JsonRpcInputSchema,
-  output: ParseOutcomeSchema,
+  output: JsonRpcProtocolObservationSchema,
   budgets: { p95Ms: 1, allocClass: 'bounded' },
   invariants: [
     {
       name: 'malformed-json-yields-parse-error',
-      check: (input: string, _output): boolean => {
-        // Behavioral invariant: an input that is NOT valid JSON MUST be
-        // classified as parse-error. The TS union proves syntactic
-        // shape; this proves the parser actually rejects bad input.
-        try {
-          JSON.parse(input);
-          return true; // valid JSON — not the negative case we're testing
-        } catch {
-          return _parse(input).kind === 'parse-error';
-        }
-      },
+      check: (_input: string, output): boolean => output.malformedKind === 'parse-error',
       message: 'inputs that JSON.parse rejects must yield kind: parse-error',
     },
     {
       name: 'absent-id-classifies-as-notification',
-      check: (input: string, _output): boolean => {
-        // Behavioral invariant: a well-formed object with jsonrpc:'2.0'
-        // and method:string but NO id field MUST be a notification, not
-        // a request. This is the §4.1 distinction the strike force flagged.
-        let obj: unknown;
-        try {
-          obj = JSON.parse(input);
-        } catch {
-          const skipAbsentIdCase = true;
-          return skipAbsentIdCase;
-        }
-        if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return true;
-        const o = obj as Record<string, unknown>;
-        if (o.jsonrpc !== '2.0' || typeof o.method !== 'string') return true;
-        if ('id' in o && o.id !== undefined) return true; // request, not the test case
-        return _parse(input).kind === 'notification';
-      },
+      check: (_input: string, output): boolean => output.notificationKind === 'notification',
       message: 'well-formed messages without an id field must classify as notifications (§4.1)',
     },
+    {
+      name: 'request-id-round-trips',
+      check: (_input: string, output): boolean => output.requestCorrelationId === 'request-7',
+      message: 'a valid request must preserve its exact correlation id',
+    },
   ],
-  run: (input: string): ParseOutcome => _parse(input),
+  run: observeJsonRpcProtocol,
 });
 
 // ---------- Namespace surface (ADR-0001) ----------

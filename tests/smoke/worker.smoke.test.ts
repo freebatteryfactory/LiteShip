@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { SPSCRing, Messages } from '@czap/worker';
+import { SPSCRing, Messages } from '@liteship/worker';
 
 describe('worker smoke', () => {
   test('SPSCRing exports are defined', () => {

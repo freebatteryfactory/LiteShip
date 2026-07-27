@@ -12,9 +12,9 @@ Defined in: [edge/src/cross-origin.ts:82](https://github.com/freebatteryfactory/
 
 Cross-origin isolation header vocabulary.
 
-The single source of truth for the COOP/COEP pair czap emits so
+The single source of truth for the COOP/COEP pair liteship emits so
 `SharedArrayBuffer`-backed workers get cross-origin isolation. Both the emitter
-(`@czap/astro`) and the deployed-header validator (`czap doctor --deployed`)
+(`@liteship/astro`) and the deployed-header validator (`liteship doctor --deployed`)
 derive from here.
 
 ## Type Declaration
@@ -35,11 +35,11 @@ readonly (`"require-corp"` \| `"credentialless"`)[]
 
 > **isolationHeaders**: (`coep`) => `Record`\<`string`, `string`\>
 
-The COOP/COEP header pair czap emits, in emit order.
+The COOP/COEP header pair liteship emits, in emit order.
 
-The COOP/COEP header pair czap emits for cross-origin isolation, in emit order
+The COOP/COEP header pair liteship emits for cross-origin isolation, in emit order
 (COOP then COEP). `coep` selects the embedder policy; it defaults to
-`require-corp`. Consumed by `@czap/astro`'s `CROSS_ORIGIN_HEADERS` so the emitted
+`require-corp`. Consumed by `@liteship/astro`'s `CROSS_ORIGIN_HEADERS` so the emitted
 values derive from this one source.
 
 #### Parameters
@@ -67,7 +67,7 @@ The COOP value that establishes cross-origin isolation (`same-origin`).
 ## Example
 
 ```ts
-import { CrossOriginIsolation } from '@czap/edge';
+import { CrossOriginIsolation } from '@liteship/edge';
 
 const response = new Response(body, { headers: CrossOriginIsolation.isolationHeaders() });
 // → Cross-Origin-Opener-Policy: same-origin

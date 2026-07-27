@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
 
 const audioDecode = (name = 'demo.audioDecode', budgets: { p95Ms?: number } = { p95Ms: 50 }) =>
   defineCapsule({
     _kind: 'cachedProjection',
     name,
-    input: S.unknown,
-    output: S.unknown,
+    input: schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: [],
     budgets,
@@ -16,8 +15,6 @@ const audioDecode = (name = 'demo.audioDecode', budgets: { p95Ms?: number } = { 
   });
 
 describe('generateCachedProjection (compile-time-resolved)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   it('THROWS UnsupportedError without a binding context (wire-or-fail, never a skip)', () => {
     expect(() => Harness.generateCachedProjection(audioDecode())).toThrow(/no importable binding/i);
   });
@@ -66,8 +63,8 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     const cap = defineCapsule({
       _kind: 'cachedProjection',
       name: 'intro-bed',
-      input: S.unknown,
-      output: S.unknown,
+      input: schema.unknown,
+      output: schema.unknown,
       capabilities: { reads: ['fs.read'], writes: [] },
       invariants: [{ name: 'positive duration', check: () => true, message: 'durations must be > 0' }],
       budgets: { p95Ms: 50 },
@@ -88,6 +85,8 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     expect(testFile).toContain('cache hit: identical source yields the same derived output');
     expect(testFile).toContain('invalidation: source change produces new cache entry');
     expect(testFile).toContain('contentAddressOf');
+    expect(testFile).toContain('Only the portable source bytes are the');
+    expect(testFile).not.toContain('contentAddressOf(cached)');
     expect(testFile).toContain('exactArrayBuffer(readFileSync(fixtureAbs))');
     expect(testFile).toContain('sourceKey(exactArrayBuffer(mutated))');
     expect(testFile).not.toContain('readFileSync(fixtureAbs).buffer as ArrayBuffer');

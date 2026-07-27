@@ -8,21 +8,21 @@
  */
 
 import { describe, test, expect, afterEach } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
-import { createBoundaryCache, EdgeTier, type KVNamespace } from '@czap/edge';
+import { Diagnostics, defineBoundary } from '@liteship/core';
+import { createBoundaryCache, EdgeTier, type KVNamespace } from '@liteship/edge';
 
 afterEach(() => {
   Diagnostics.reset();
 });
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'compact'],
     [768, 'wide'],
   ],
 });
-const siblingBoundary = Boundary.make({
+const siblingBoundary = defineBoundary({
   input: 'scroll.progress',
   at: [
     [0, 'intro'],
@@ -127,10 +127,10 @@ describe('invalidateByPath (active purge by content address)', () => {
     const cache = createBoundaryCache(kv);
 
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
-    expect([...store.keys()].some((key) => key.startsWith('czap:tag:'))).toBe(true);
+    expect([...store.keys()].some((key) => key.startsWith('liteship:tag:'))).toBe(true);
 
     expect(await cache.invalidateByPath(boundary.id)).toBe(1);
-    expect([...store.keys()].some((key) => key.startsWith('czap:tag:'))).toBe(false);
+    expect([...store.keys()].some((key) => key.startsWith('liteship:tag:'))).toBe(false);
   });
 
   test('rewrites legacy JSON tag indexes without orphaning surviving live keys', async () => {
@@ -141,12 +141,12 @@ describe('invalidateByPath (active purge by content address)', () => {
     await cache.putCompiledOutputs(siblingBoundary.id, tier, outputs);
     const purgedKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
     const survivorKey = [...store.keys()].find((key) => key.includes(String(siblingBoundary.id)))!;
-    store.set('czap:tag:legacy', JSON.stringify([purgedKey, survivorKey]));
+    store.set('liteship:tag:legacy', JSON.stringify([purgedKey, survivorKey]));
 
     expect(await cache.invalidateByPath(boundary.id)).toBe(1);
     expect(store.has(purgedKey)).toBe(false);
     expect(store.has(survivorKey)).toBe(true);
-    expect(JSON.parse(store.get('czap:tag:legacy')!)).toEqual([survivorKey]);
+    expect(JSON.parse(store.get('liteship:tag:legacy')!)).toEqual([survivorKey]);
   });
 
   test('preserves configured TTL when rewriting surviving legacy JSON tag indexes', async () => {
@@ -157,13 +157,13 @@ describe('invalidateByPath (active purge by content address)', () => {
     await cache.putCompiledOutputs(siblingBoundary.id, tier, outputs);
     const purgedKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
     const survivorKey = [...store.keys()].find((key) => key.includes(String(siblingBoundary.id)))!;
-    store.set('czap:tag:legacy', JSON.stringify([purgedKey, survivorKey]));
+    store.set('liteship:tag:legacy', JSON.stringify([purgedKey, survivorKey]));
     putCalls.length = 0;
 
     expect(await cache.invalidateByPath(boundary.id)).toBe(1);
-    expect(JSON.parse(store.get('czap:tag:legacy')!)).toEqual([survivorKey]);
+    expect(JSON.parse(store.get('liteship:tag:legacy')!)).toEqual([survivorKey]);
     expect(putCalls).toContainEqual({
-      key: 'czap:tag:legacy',
+      key: 'liteship:tag:legacy',
       value: JSON.stringify([survivorKey]),
       options: { expirationTtl: 60 },
     });
@@ -227,11 +227,11 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
 
     const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
-    expect(JSON.parse(store.get('czap:tag:products')!)).toEqual([dataKey]);
+    expect(JSON.parse(store.get('liteship:tag:products')!)).toEqual([dataKey]);
 
     expect(await cache.invalidateByTag('products')).toBe(1);
     expect(store.has(dataKey)).toBe(false);
-    expect(store.has('czap:tag:products')).toBe(false);
+    expect(store.has('liteship:tag:products')).toBe(false);
   });
 
   test('purges legacy JSON tag indexes for existing deployments', async () => {
@@ -239,11 +239,11 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
     const cache = createBoundaryCache(kv);
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA');
     const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
-    store.set('czap:tag:legacy', JSON.stringify([dataKey]));
+    store.set('liteship:tag:legacy', JSON.stringify([dataKey]));
 
     expect(await cache.invalidateByTag('legacy')).toBe(1);
     expect(store.has(dataKey)).toBe(false);
-    expect(store.has('czap:tag:legacy')).toBe(false);
+    expect(store.has('liteship:tag:legacy')).toBe(false);
   });
 
   test('degrades to a diagnostic + 0 when the KV cannot delete', async () => {

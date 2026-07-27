@@ -8,35 +8,61 @@
  * The authority ratchet is encoded in the TYPE: a {@link Gate} cannot be
  * constructed without {@link GateFixtures} (a red that must fail it, a green
  * that must pass, a mutation its own fixtures must kill). A gate that has not
- * self-proven against those fixtures can only ever be `advisory` — it earns
- * blocking authority, it is not granted it. (See `authority.ts`.)
+ * self-proven against those fixtures can only emit semantic findings at
+ * `advisory` authority — it earns blocking authority, it is not granted it.
+ * The engine also emits a separate blocking authority-integrity finding, so a
+ * required but unqualified gate can never make the enclosing run green. (See
+ * `authority.ts`.)
  *
  * @module
  */
 
-import { ValidationError, HostCapabilityError } from '@czap/error';
+import { DIAGNOSTIC_AREAS, ValidationError, HostCapabilityError } from '@liteship/error';
 import type { AssuranceLevel } from './assurance.js';
 import type { EarlyReturnMatch } from './gates/early-return-detect.js';
 import type { Finding } from './finding.js';
 import type { FileId, RepoIR } from './repo-ir.js';
-import type { SupplyChainFacts } from './supply-chain-facts.js';
-import type { MutationFacts } from './mutation-facts.js';
-import type { TransitionFacts } from './transition-facts.js';
-import type { SpineRelationFacts } from './spine-relation-facts.js';
-import type { McdcFacts } from './mcdc-facts.js';
-import type { SimulationFacts } from './simulation-facts.js';
-import type { TraceabilityFacts } from './traceability-facts.js';
-import type { StandardsIntegrityFacts } from './standards-facts.js';
+import type { SupplyChainFacts } from './facts/supply-chain-facts.js';
+import type { MutationFacts } from './facts/mutation-facts.js';
+import type { TransitionFacts } from './facts/transition-facts.js';
+import type { SpineRelationFacts } from './facts/spine-relation-facts.js';
+import type { McdcFacts } from './facts/mcdc-facts.js';
+import type { SimulationFacts } from './facts/simulation-facts.js';
+import type { TraceabilityFacts } from './facts/traceability-facts.js';
+import type { StandardsIntegrityFacts } from './facts/standards-facts.js';
 import type { DeclaredFixFacts } from './declared-fix.js';
-import type { TaintFacts } from './taint-facts.js';
-import type { CapabilityLinkFacts } from './capability-link-facts.js';
-import type { FuzzCorpusFacts } from './fuzz-facts.js';
-import type { ProofFacts } from './proof-facts.js';
-import type { CompositionFacts } from './composition-facts.js';
+import type { TaintFacts } from './facts/taint-facts.js';
+import type { CapabilityLinkFacts } from './facts/capability-link-facts.js';
+import type { FuzzCorpusFacts } from './facts/fuzz-facts.js';
+import type { ProofFacts } from './facts/proof-facts.js';
+import type { CompositionFacts } from './facts/composition-facts.js';
 import type { SkipMatch } from './gates/skip-detect.js';
-import type { SkipSiteFacts } from './skip-site-facts.js';
-import type { ActiveSurfaceFacts } from './active-surface-facts.js';
+import type { SkipSiteFacts } from './facts/skip-site-facts.js';
+import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
+import { FEATURE_EDGE_ENUMERATORS, FEATURE_EDGE_FAMILIES } from './facts/feature-edge-facts.js';
+import type {
+  FeatureEdgeFacts,
+  FeatureEdgeFamily,
+  FeatureEdgeFamilyFacts,
+  FeatureEdgeMechanism,
+  FeatureEdgeObservation,
+  FeatureEdgeSubjectCoverage,
+  OpaqueFeatureEdgeSite,
+} from './facts/feature-edge-facts.js';
+import type { CheckGovernanceFacts, WaiverFreshnessFact } from './facts/check-governance-facts.js';
+import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
+
+/** Runtime Diagnostics facade methods recognized by the diagnostic-emission authority. */
+export type DiagnosticEmitterMethod =
+  'warn' | 'error' | 'warnOnce' | 'warnRegistered' | 'errorRegistered' | 'warnOnceRegistered';
+
+/** One parser-proven Diagnostics call and its statically resolved code, when available. */
+export interface DiagnosticEmissionMatch {
+  readonly method: DiagnosticEmitterMethod;
+  readonly code?: string;
+  readonly line: number;
+}
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -72,27 +98,27 @@ export interface GateContext {
   /**
    * The SOUND skip detector — an INJECTED capability (the AST detector, the cure that ends the
    * token-scanner whack-a-mole). OPTIONAL by design, the SAME lean-engine pattern as {@link ir}:
-   * `@czap/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
-   * FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `detectSkipsAST` (a real
+   * `@liteship/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
+   * FALLBACK; the host (the CLI, which deps `@liteship/audit`) builds `detectSkipsAST` (a real
    * `ts.createSourceFile` AST walk + local binding analysis + conditionality classification) and
    * injects it here. A skip-reading gate / scan calls `(context.skipDetector ?? detectSkips)(text)`
    * — the AST detector when injected (line-agnostic, catches every multi-line/ASI/inner-describe
    * spelling, and produces the `conditional` F2 discriminant), the token fallback otherwise. When
-   * ABSENT the token detector runs unchanged (back-compat; the lean `czap check` path). See
+   * ABSENT the token detector runs unchanged (back-compat; the lean `liteship check` path). See
    * {@link SkipMatch}.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
-   * The SOUND early-return detector — an INJECTED capability. `@czap/gauntlet` carries NO
+   * The SOUND early-return detector — an INJECTED capability. `@liteship/gauntlet` carries NO
    * `typescript` dep; the token `detectEarlyReturnBeforeExpect` is its fallback. The host injects
-   * `detectEarlyReturnBeforeExpectAST` from `@czap/audit`. The no-early-return-test gate calls
+   * `detectEarlyReturnBeforeExpectAST` from `@liteship/audit`. The no-early-return-test gate calls
    * `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)(text)`.
    */
   readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
   /**
    * The sound, parser-backed `codeOnly` floor — an INJECTED capability, the same shape as
    * {@link skipDetector}. The lean char-state-machine `codeOnly` (gates/code-only.ts) is the
-   * no-typescript FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `codeOnlyAST` (a real
+   * no-typescript FALLBACK; the host (the CLI, which deps `@liteship/audit`) builds `codeOnlyAST` (a real
    * `ts.createSourceFile` token walk that the parser disambiguates — regex-vs-division, nested
    * templates, comments) and injects it here. A code-scanning gate calls `(context.codeOnly ?? codeOnly)(text)`
    * — the scanner when injected, the char-machine otherwise. The two are pinned equivalent by the
@@ -100,9 +126,20 @@ export interface GateContext {
    */
   readonly codeOnly?: (source: string) => string;
   /**
+   * Parser-backed Diagnostics-call census injected by a TypeScript-owning host.
+   * The lean engine keeps a literal fallback; the injected detector proves call
+   * ownership, ignores prose/fixtures, and resolves local constant aliases.
+   */
+  readonly diagnosticEmitterDetector?: (source: string) => readonly DiagnosticEmissionMatch[];
+  /**
+   * Parser-backed benchmark reachability facts produced by a repository host.
+   * The gauntlet folds these flat facts and never imports the TypeScript compiler.
+   */
+  readonly benchmarkSubjects?: BenchmarkSubjectFacts;
+  /**
    * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
-   * design: `@czap/gauntlet` is the lean engine and the IR is built+injected by
-   * a host (the CLI, via `@czap/audit`'s `ts.Program`), so the gauntlet never
+   * design: `@liteship/gauntlet` is the lean engine and the IR is built+injected by
+   * a host (the CLI, via `@liteship/audit`'s `ts.Program`), so the gauntlet never
    * carries the heavy `typescript` dep. An existing regex gate ignores it
    * entirely; a new IR-fold gate that REQUIRES it must guard `ir === undefined`
    * (or use {@link requireIR}, which throws a clear tagged error when no IR was
@@ -114,7 +151,7 @@ export interface GateContext {
    * Pre-computed supply-chain evidence — an INJECTED capability (Slice C, the
    * avionics tier), the same lean-engine pattern as {@link ir}. OPTIONAL: the
    * heavy lockfile parse / SBOM build / ShipCapsule decode / CI scan all live in
-   * a HOST (the CLI's `@czap/cli` supply-chain analyzer), which folds them into
+   * a HOST (the CLI's `@liteship/cli` supply-chain analyzer), which folds them into
    * flat {@link SupplyChainFacts} and lands them here. The
    * {@link supplyChainGate} reads ONLY through this; in-memory fixtures supply a
    * literal facts record (no I/O, no YAML). When ABSENT the supply-chain gate
@@ -126,12 +163,12 @@ export interface GateContext {
    * Pre-computed mutation evidence — an INJECTED capability (Slice C, the avionics
    * tier — mutation-as-divergence), the same lean-engine pattern as {@link ir} and
    * {@link supplyChain}. OPTIONAL: the heavy AST mutation + the per-mutant vitest
-   * runs all live in a HOST (`@czap/audit`'s mutation engine + the CLI's vitest
+   * runs all live in a HOST (`@liteship/audit`'s mutation engine + the CLI's vitest
    * runner), which folds them into flat {@link MutationFacts} (every mutant's
    * kill/survive verdict + the committed score baseline) and lands them here. The
    * {@link mutationDivergenceGate} reads ONLY through this; in-memory fixtures
    * supply a literal facts record (no parse, no test run). When ABSENT the gate is
-   * simply not in the set (mutation is opt-in: `czap check --ir --mutate`), so
+   * simply not in the set (mutation is opt-in: `liteship check gates --ir --mutate`), so
    * there is no per-mutant cost and no noise on a default run. See
    * {@link MutationFacts}.
    */
@@ -143,7 +180,7 @@ export interface GateContext {
    * {@link mutation}. OPTIONAL: the heavy work (unfolding each seeded op history over
    * BOTH the single-oracle model AND the live implementation over the native transport,
    * content-addressing each observed trace, deciding the per-case bisimulation verdict)
-   * all lives in a HOST (`@czap/audit`'s `buildTransitionFacts` + the LiteShip-local
+   * all lives in a HOST (`@liteship/audit`'s `buildTransitionFacts` + the LiteShip-local
    * reactive capture/model runner `tests/support/reactive-conformance.ts`), which folds the
    * verdicts into flat {@link TransitionFacts} (every case's model/impl observation digests +
    * status + the committed unevidenced baseline) and lands them here. The
@@ -152,7 +189,7 @@ export interface GateContext {
    * the set. The reactive model + native-transport oracle are LiteShip-local (product
    * machinery in the test tree), so — per ADR-0012/0023 — the gate is HOSTED by the repo-local
    * `transition:gate` phase (`scripts/transition-conformance-gate.ts`, run every PR), NOT the
-   * shipped `czap check` CLI, so there is no per-case cost and no noise on a default run. A
+   * shipped `liteship check` CLI, so there is no per-case cost and no noise on a default run. A
    * `divergent` case carries its SEED, so the behavior change it folds replays
    * byte-for-byte. See {@link TransitionFacts}.
    */
@@ -161,7 +198,7 @@ export interface GateContext {
    * Pre-computed TWO-AXIS spine-relation classification — an INJECTED capability (the
    * constitution's static-projection half, Wave 8.5), the same lean-engine pattern as
    * {@link transition}. OPTIONAL: the heavy work (a `ts.Program` per build, one
-   * bidirectional-assignability probe per admitted mirror type) runs in `@czap/audit`'s
+   * bidirectional-assignability probe per admitted mirror type) runs in `@liteship/audit`'s
    * `buildSpineRelationFacts`; when the host did not run it this capability is ABSENT and
    * the {@link spineRelationGate} is simply not in the set (no cost, no noise). Each
    * observation carries its two axes so a drift finding names WHICH relation changed.
@@ -174,12 +211,12 @@ export interface GateContext {
    * CONDITION-LEVEL MUTATION), the same lean-engine pattern as {@link mutation}.
    * OPTIONAL: the heavy work (decomposing every L4 decision into its atomic conditions,
    * minting the force-true/force-false pin per condition, running the covering tests per
-   * pin) all lives in a HOST (`@czap/audit`'s condition-mutation engine + the CLI's
+   * pin) all lives in a HOST (`@liteship/audit`'s condition-mutation engine + the CLI's
    * per-mutant vitest runner), which folds the two pins per condition into flat
    * {@link McdcFacts} (each condition MC/DC-covered iff BOTH pins were KILLED) and lands
    * them here. The {@link mcdcCoverageGate} reads ONLY through this; in-memory fixtures
    * supply a literal facts record (no parse, no test run). When ABSENT the gate is simply
-   * not in the set (MC/DC is opt-in: `czap check --ir --mcdc`), so there is no per-pin
+   * not in the set (MC/DC is opt-in: `liteship check gates --ir --mcdc`), so there is no per-pin
    * cost and no noise on a default run. See {@link McdcFacts}.
    */
   readonly mcdc?: McdcFacts;
@@ -189,7 +226,7 @@ export interface GateContext {
    * {@link supplyChain}, and {@link mutation}. OPTIONAL: the heavy work (minting a
    * seeded world, running the scenario corpus, replaying each seed twice, and
    * content-addressing the byte-exact traces) all lives in a HOST (the CLI's
-   * `czap check --ir --simulate` path, driving the `@czap/core/simulation`
+   * `liteship check gates --ir --simulate` path, driving the `@liteship/core/simulation`
    * harness), which folds the verdicts into flat {@link SimulationFacts} (every
    * scenario's two replay digests + any divergence) and lands them here. The
    * {@link simulationDeterminismGate} reads ONLY through this; in-memory fixtures
@@ -206,7 +243,7 @@ export interface GateContext {
    * work (parsing `traceability/*.yaml`, scanning the test corpus for `// PROVES:`
    * headers, running the lifecycle state machine against the injected wall-clock date,
    * content-addressing the resolved ledger) all lives in a HOST (the CLI's
-   * `packages/cli/src/lib/traceability.ts` state machine), which folds the verdicts
+   * `packages/cli/src/internal/traceability.ts` state machine), which folds the verdicts
    * into flat {@link TraceabilityFacts} (every invariant's resolved state + any
    * ledger⇔header divergence + the resolved-ledger content address) and lands them
    * here. The {@link traceabilityBridgeGate} reads ONLY through this; in-memory
@@ -224,7 +261,7 @@ export interface GateContext {
    * artifacts, content-addressing the surface via the ONE `contentAddressOf` kernel,
    * diffing it against the committed snapshot, applying the owner sign-offs against the
    * injected wall-clock date) all lives in a HOST (the CLI's
-   * `packages/cli/src/lib/standards-surface.ts` extractor), which folds the decided
+   * `packages/cli/src/internal/standards-surface.ts` extractor), which folds the decided
    * verdicts into flat {@link StandardsIntegrityFacts} (the unsigned/signed/forbidden/
    * expired weakenings + the stale strengthens) and lands them here. The
    * {@link standardsIntegrityGate} reads ONLY through this; in-memory fixtures supply a
@@ -260,14 +297,14 @@ export interface GateContext {
    * and {@link standards}. OPTIONAL: the heavy work (a whole-corpus `ts.Program` +
    * a type-checker dataflow trace from each untrusted SOURCE call to each dangerous
    * SINK call argument, observing the SANITIZER on the path) lives in a HOST
-   * (`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
-   * sanitizer registry the `@czap/cli` host injects — the audit engine itself
+   * (`@liteship/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
+   * sanitizer registry the `@liteship/cli` host injects — the audit engine itself
    * references NO LiteShip policy, ADR-0012/D7b), which folds the traced flows into
    * flat {@link TaintFacts} (every source→sink flow + its sanitizer, if any + the
    * honest interprocedural depth the trace covered) and lands them here. The
    * {@link taintFlowGate} reads ONLY through this; in-memory fixtures supply a
    * literal facts record (no program, no checker). When ABSENT the gate is simply
-   * not in the set (taint is opt-in: `czap check --ir --taint`). An UNSANITIZED
+   * not in the set (taint is opt-in: `liteship check gates --ir --taint`). An UNSANITIZED
    * source→sink flow folds to a Finding at the sink's (propagated) level — L4 for a
    * trust-spine sink. See {@link TaintFacts}.
    */
@@ -275,11 +312,11 @@ export interface GateContext {
   /**
    * The host-supplied {@link CapabilityLinkFacts} (codex round-8, #1b) — the dataflow proof that every
    * sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's probe. The heavy
-   * `ts.Program`/checker `linker` lives in a HOST (`@czap/audit`'s capability-link oracle, fed the
-   * canonical capability-module SET + the sanctioned sites the `@czap/cli` host injects — the audit
+   * `ts.Program`/checker `linker` lives in a HOST (`@liteship/audit`'s capability-link oracle, fed the
+   * canonical capability-module SET + the sanctioned sites the `@liteship/cli` host injects — the audit
    * engine names no LiteShip capability, ADR-0012/D7b). The {@link capabilityGateLinkGate} reads ONLY
    * through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
-   * (capability-link is opt-in: `czap check --ir --capability-gate`). A skip whose guard derives from
+   * (capability-link is opt-in: `liteship check gates --ir --capability-gate`). A skip whose guard derives from
    * NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.
    */
   readonly capabilityLink?: CapabilityLinkFacts;
@@ -310,7 +347,7 @@ export interface GateContext {
    * {@link simulation}. OPTIONAL: the heavy work (reading the proof signals —
    * mutation-score baseline, coverage report, property-test presence, the enrolled
    * invariants ledger — and blending them into a per-module proof scalar) lives in a
-   * HOST (the CLI's `czap check --ir --proof` path), which folds them into flat
+   * HOST (the CLI's `liteship check gates --ir --proof` path), which folds them into flat
    * {@link ProofFacts} and lands them here. The {@link proofPropagationGate}
    * PROPAGATES the scalar along the IR's dep DAG (the `min`-fixpoint dual of
    * assurance propagation) and reads ONLY through this; in-memory fixtures supply a
@@ -327,7 +364,7 @@ export interface GateContext {
    * OPTIONAL: the heavy work (deriving the interaction edges from the IR call graph,
    * deciding which units are individually tested, and deciding which edges an
    * integration test exercises TOGETHER — by a per-test execution-coverage probe or
-   * the sound static-reference proxy) lives in a HOST (the CLI's `czap check --ir
+   * the sound static-reference proxy) lives in a HOST (the CLI's `liteship check gates --ir
    * --composition` path), which folds the classified edges into flat
    * {@link CompositionFacts} and lands them here. The {@link compositionCoverageGate}
    * reads ONLY through this; in-memory fixtures supply a literal facts record (no
@@ -354,12 +391,26 @@ export interface GateContext {
   readonly skipSites?: SkipSiteFacts;
   /**
    * Pre-computed ACTIVE-SURFACE field-read evidence — an INJECTED FactPack (#132).
-   * The HOST (`@czap/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
+   * The HOST (`@liteship/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
    * TS-AST and lands flat {@link ActiveSurfaceFacts}; the
    * {@link activeModeledSurfaceReaderGate} decides over them. When ABSENT the gate
    * folds an empty verdict. See {@link ActiveSurfaceFacts}.
    */
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /** Checker-produced feature producer/consumer connectivity facts. */
+  readonly featureEdges?: FeatureEdgeFacts;
+  /**
+   * Pre-computed CHECK-GOVERNANCE evidence — an INJECTED FactPack the three
+   * check-governance meta-gates (`check-registry-complete` / `check-negative-control` /
+   * `check-waiver-freshness`) decide over. The HOST (the `tests/unit/devops` meta-test,
+   * or a future CLI host) reads `@liteship/command`'s `CHECK_REGISTRY` / `SCRIPT_EXEMPTIONS`
+   * / `package.json` / the filesystem / `LITESHIP_WAIVERS` / the traceability ledger
+   * against an injected wall-clock date and folds the decided {@link CheckGovernanceFacts}
+   * — the gauntlet never imports `@liteship/command` (the dependency arrow points the other
+   * way) nor reads a clock. When ABSENT (the lean production path) every meta-gate folds an
+   * empty verdict. See {@link CheckGovernanceFacts}.
+   */
+  readonly checkGovernance?: CheckGovernanceFacts;
 }
 
 /**
@@ -388,6 +439,113 @@ export interface GateFixtures {
   readonly mutation: GateMutation;
 }
 
+/**
+ * A gate's current-head account of the discrete subjects it claims to govern.
+ *
+ * This is deliberately a receipt, not a historical score. A gate either names
+ * the complete population it judged or reports why that population is opaque.
+ * Gates that are predicates over their entire covered corpus rather than a
+ * discrete subject registry omit the resolver entirely; the authority layer
+ * records that distinction as `not-applicable`.
+ */
+export type GateSubjectCoverage =
+  | {
+      readonly status: 'complete';
+      readonly enumerator: string;
+      readonly enumeratedCount: number;
+      readonly censusDigest: `sha256:${string}`;
+    }
+  | {
+      readonly status: 'opaque';
+      readonly enumerator: string;
+      readonly enumeratedCount: number;
+      readonly censusDigest: `sha256:${string}`;
+      readonly reason: string;
+    };
+
+/**
+ * Host-injected parser capabilities that refine lean gate fallbacks. These are
+ * executable toolchain inputs, not per-run fact channels. The tuple exists so
+ * scoping, recording, and adversarial tests share one vocabulary.
+ */
+export const GATE_CONTEXT_CAPABILITIES = [
+  'skipDetector',
+  'earlyReturnDetector',
+  'codeOnly',
+  'diagnosticEmitterDetector',
+] as const;
+
+/** One host-injected parser capability carried by {@link GateContext}. */
+export type GateContextCapability = (typeof GATE_CONTEXT_CAPABILITIES)[number];
+
+type OptionalFunctionKeys = {
+  [K in keyof GateContext]-?: undefined extends GateContext[K]
+    ? NonNullable<GateContext[K]> extends (...args: never[]) => unknown
+      ? K
+      : never
+    : never;
+}[keyof GateContext];
+type OptionalCapabilityKeys = Exclude<OptionalFunctionKeys, 'allFiles'>;
+type _capabilitiesCoverContext = GateContextCapability extends OptionalCapabilityKeys ? true : never;
+type _contextCapabilitiesAreListed = OptionalCapabilityKeys extends GateContextCapability ? true : never;
+const _gateContextCapabilitiesExhaustive: _capabilitiesCoverContext & _contextCapabilitiesAreListed = true;
+void _gateContextCapabilitiesExhaustive;
+
+/**
+ * Runtime fact channels a hosted gate may consume. This tuple is the canonical
+ * runtime vocabulary used by gate access manifests and by the instrumented
+ * evidence recorder. It is kept distinct from {@link FACT_KINDS}: FactGate is
+ * the deliberately smaller, data-only subset currently admitted by that
+ * constructor, while hosted gates can consume the remaining host-produced fact
+ * families through explicit access declarations.
+ */
+export const GATE_FACT_CHANNELS = [
+  'supplyChain',
+  'mutation',
+  'transition',
+  'spineRelation',
+  'mcdc',
+  'simulation',
+  'traceability',
+  'standards',
+  'declaredFix',
+  'taint',
+  'capabilityLink',
+  'fuzzCorpus',
+  'proof',
+  'composition',
+  'skipSites',
+  'activeSurfaceFacts',
+  'featureEdges',
+  'checkGovernance',
+  'benchmarkSubjects',
+] as const;
+
+/** One host-produced fact channel a gate may declare. */
+export type GateFactChannel = (typeof GATE_FACT_CHANNELS)[number];
+
+/** A declared fact read and whether composition without that fact is invalid. */
+export interface GateFactAccess {
+  readonly channel: GateFactChannel;
+  readonly presence: 'required' | 'optional';
+}
+
+/**
+ * Machine-readable description of the GateContext surfaces a hosted gate reads.
+ * Covered IR files need no per-file declaration: their bytes are already folded
+ * by the coverage digest. Everything outside that domain must be named here.
+ */
+export interface GateAccessManifest {
+  /** The gate enumerates the unscoped confirmer corpus. */
+  readonly allFiles?: true;
+  /** Repo-relative globs for files read outside the IR coverage domain. */
+  readonly outOfIrGlobs?: readonly string[];
+  /** Host-oracle-computed RepoIR tables the gate reads. */
+  readonly ir?: readonly ('facts' | 'refs')[];
+  /** Host-produced fact channels the gate reads. */
+  readonly facts?: readonly GateFactAccess[];
+}
+
 /** A mutation of a gate's own logic + the reason it should be caught. */
 export interface GateMutation {
   readonly describe: string;
@@ -395,16 +553,37 @@ export interface GateMutation {
   readonly mutate: (gate: Gate) => Gate;
 }
 
+/** Ownership metadata required for a downstream gate namespace. */
+export interface ExtensionGateIdentity {
+  /** First path segment of the gate id (for example `acme` in `acme/no-todo`). */
+  readonly namespace: string;
+  /** Stable package, team, or project identity responsible for the extension. */
+  readonly owner: string;
+}
+
 /** A gate — the registered fitness function. */
 export interface Gate {
   /** Stable id; namespaces every {@link Finding} it emits (traceability). */
   readonly id: string;
+  /** Required when `id` uses a non-LiteShip namespace; absent on built-in gates. */
+  readonly extension?: ExtensionGateIdentity;
   /** The assurance level this gate operates at — aims its rigor. */
   readonly level: AssuranceLevel;
   /** One-line human description of what it checks. */
   readonly describe: string;
   /** The fold: produce findings for `context`. Pure w.r.t. the context. */
   readonly run: (context: GateContext) => readonly Finding[];
+  /**
+   * Enumerate the complete current-head subject population for a gate whose
+   * claim is about discrete subjects (symbols, protocol methods, registry rows,
+   * feature edges, ...). An opaque receipt is a qualification failure: a gate
+   * cannot earn release authority over subjects it cannot enumerate.
+   *
+   * Omit only when the gate is a predicate over its complete covered corpus and
+   * therefore has no separate subject registry. This callback reads through the
+   * same declared evidence surfaces as {@link run}; it is not a second oracle.
+   */
+  readonly subjectCoverage?: (context: GateContext) => GateSubjectCoverage;
   /**
    * OPTIONAL coverage declaration (Slice B, B2 — the content-addressed cache).
    * Returns the {@link FileId}s whose CONTENT this gate's verdict depends on, so
@@ -456,6 +635,12 @@ export interface Gate {
    * the evidence the digest folds matches the evidence `run` reads.
    */
   readonly evidenceDigest?: (context: GateContext) => string | undefined;
+  /**
+   * Declared GateContext access. Built-in compositions require this manifest;
+   * downstream legacy gates may omit it and remain uncached/conservatively
+   * covered, but cannot enter a manifest-qualified composition unnoticed.
+   */
+  readonly access?: GateAccessManifest;
   /** The self-proof evidence — required, by construction. */
   readonly fixtures: GateFixtures;
   /**
@@ -489,7 +674,7 @@ export interface Gate {
  * host-produced FactPack channel — a field on {@link FactBundle} and an optional key on
  * {@link GateContext}.
  */
-export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts'] as const;
+export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts', 'featureEdges', 'checkGovernance'] as const;
 
 /** One FactKind — derived from {@link FACT_KINDS}, never re-typed. */
 export type FactKind = (typeof FACT_KINDS)[number];
@@ -502,6 +687,8 @@ export type FactKind = (typeof FACT_KINDS)[number];
 export interface FactBundle {
   readonly skipSites?: SkipSiteFacts;
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  readonly featureEdges?: FeatureEdgeFacts;
+  readonly checkGovernance?: CheckGovernanceFacts;
 }
 
 const SKIP_SITE_FORMS = new Set(['call', 'conditional', 'alias', 'computed', 'aliased']);
@@ -612,6 +799,273 @@ function normalizeActiveSurfaceFacts(value: ActiveSurfaceFacts | undefined): Act
   return Object.freeze({ surfaces: Object.freeze(normalized) });
 }
 
+const FEATURE_EDGE_ROLES = new Set(['consumer', 'producer']);
+const FEATURE_EDGE_MECHANISMS = new Set([
+  'system-query',
+  'world-query',
+  'world-spawn',
+  'world-set-component',
+  'world-add-component',
+  'dense-store',
+  'protocol-declaration',
+  'request-route',
+  'notification-emitter',
+  'capability-advertisement',
+  'rpc-handler',
+  'context-declaration',
+  'command-requirement',
+  'host-provider',
+  'modeled-degradation',
+  'registry-entry',
+  'command-handler',
+  'cli-executor',
+  'resource-reader',
+  'prompt-resolver',
+  'capsule-validator',
+  'capsule-compiler',
+  'event-dispatch',
+  'event-listener',
+]);
+
+const FEATURE_EDGE_ENUMERATOR_BY_FAMILY = FEATURE_EDGE_ENUMERATORS;
+
+const FEATURE_EDGE_FAMILY_SET = new Set<string>(FEATURE_EDGE_FAMILIES);
+const SHA256_FACT = /^sha256:[0-9a-f]{64}$/u;
+
+function normalizeFeatureEdgeFacts(value: FeatureEdgeFacts | undefined): FeatureEdgeFacts | undefined {
+  if (value === undefined) return undefined;
+  assertPlainFactRecord(value, 'featureEdges');
+  if (ownDataField(value, '_tag') !== 'feature-edge-facts') {
+    throw ValidationError('FactGate', 'featureEdges._tag must be feature-edge-facts');
+  }
+  const familiesRaw = ownDataField(value, 'families');
+  const aggregateRaw = ownDataField(value, 'aggregate');
+  if (!Array.isArray(familiesRaw)) throw ValidationError('FactGate', 'featureEdges.families must be an array');
+
+  const families: FeatureEdgeFamilyFacts[] = familiesRaw.map((familyEntry, familyIndex) => {
+    const familyLabel = `featureEdges.families[${familyIndex}]`;
+    assertPlainFactRecord(familyEntry, familyLabel);
+    const family = ownDataField(familyEntry, 'family');
+    const observationsRaw = ownDataField(familyEntry, 'observations');
+    const coverageRaw = ownDataField(familyEntry, 'subjectCoverage');
+    if (typeof family !== 'string' || !FEATURE_EDGE_FAMILY_SET.has(family) || !Array.isArray(observationsRaw)) {
+      throw ValidationError('FactGate', `${familyLabel} is malformed`);
+    }
+    const typedFamily = family as FeatureEdgeFamily;
+    const observations: FeatureEdgeObservation[] = observationsRaw.map((entry, index) => {
+      assertPlainFactRecord(entry, `${familyLabel}.observations[${index}]`);
+      const observationFamily = ownDataField(entry, 'family');
+      const subject = ownDataField(entry, 'subject');
+      const role = ownDataField(entry, 'role');
+      const mechanism = ownDataField(entry, 'mechanism');
+      const file = ownDataField(entry, 'file');
+      const line = ownDataField(entry, 'line');
+      if (
+        typeof observationFamily !== 'string' ||
+        !FEATURE_EDGE_FAMILY_SET.has(observationFamily) ||
+        typeof subject !== 'string' ||
+        subject.trim() === '' ||
+        typeof role !== 'string' ||
+        !FEATURE_EDGE_ROLES.has(role) ||
+        typeof mechanism !== 'string' ||
+        !FEATURE_EDGE_MECHANISMS.has(mechanism) ||
+        typeof file !== 'string' ||
+        typeof line !== 'number' ||
+        !Number.isInteger(line) ||
+        line < 1
+      ) {
+        throw ValidationError('FactGate', `${familyLabel}.observations[${index}] is malformed`);
+      }
+      return Object.freeze({
+        family: observationFamily as FeatureEdgeFamily,
+        subject,
+        role: role as FeatureEdgeObservation['role'],
+        mechanism: mechanism as FeatureEdgeMechanism,
+        file,
+        line,
+      });
+    });
+
+    assertPlainFactRecord(coverageRaw, `${familyLabel}.subjectCoverage`);
+    const status = ownDataField(coverageRaw, 'status');
+    const enumerator = ownDataField(coverageRaw, 'enumerator');
+    const enumeratedCount = ownDataField(coverageRaw, 'enumeratedCount');
+    const censusDigest = ownDataField(coverageRaw, 'censusDigest');
+    if (
+      (status !== 'complete' && status !== 'unknown') ||
+      enumerator !== FEATURE_EDGE_ENUMERATOR_BY_FAMILY[typedFamily] ||
+      typeof enumeratedCount !== 'number' ||
+      !Number.isSafeInteger(enumeratedCount) ||
+      enumeratedCount < 0 ||
+      typeof censusDigest !== 'string' ||
+      !SHA256_FACT.test(censusDigest)
+    ) {
+      throw ValidationError('FactGate', `${familyLabel}.subjectCoverage is malformed`);
+    }
+    const typedEnumerator = enumerator as FeatureEdgeSubjectCoverage['enumerator'];
+    let subjectCoverage: FeatureEdgeSubjectCoverage;
+    if (status === 'complete') {
+      subjectCoverage = Object.freeze({
+        status,
+        enumerator: typedEnumerator,
+        enumeratedCount,
+        censusDigest: censusDigest as `sha256:${string}`,
+      });
+    } else {
+      const opaqueRaw = ownDataField(coverageRaw, 'opaqueSites');
+      if (!Array.isArray(opaqueRaw)) {
+        throw ValidationError('FactGate', `${familyLabel}.subjectCoverage.opaqueSites must be an array`);
+      }
+      const opaqueSites: OpaqueFeatureEdgeSite[] = opaqueRaw.map((entry, index) => {
+        assertPlainFactRecord(entry, `${familyLabel}.subjectCoverage.opaqueSites[${index}]`);
+        const opaqueFamily = ownDataField(entry, 'family');
+        const role = ownDataField(entry, 'role');
+        const mechanism = ownDataField(entry, 'mechanism');
+        const file = ownDataField(entry, 'file');
+        const line = ownDataField(entry, 'line');
+        const reason = ownDataField(entry, 'reason');
+        if (
+          typeof opaqueFamily !== 'string' ||
+          !FEATURE_EDGE_FAMILY_SET.has(opaqueFamily) ||
+          typeof role !== 'string' ||
+          !FEATURE_EDGE_ROLES.has(role) ||
+          typeof mechanism !== 'string' ||
+          !FEATURE_EDGE_MECHANISMS.has(mechanism) ||
+          typeof file !== 'string' ||
+          typeof line !== 'number' ||
+          !Number.isInteger(line) ||
+          line < 1 ||
+          typeof reason !== 'string' ||
+          reason.trim() === ''
+        ) {
+          throw ValidationError('FactGate', `${familyLabel}.subjectCoverage.opaqueSites[${index}] is malformed`);
+        }
+        return Object.freeze({
+          family: opaqueFamily as FeatureEdgeFamily,
+          role: role as OpaqueFeatureEdgeSite['role'],
+          mechanism: mechanism as FeatureEdgeMechanism,
+          file,
+          line,
+          reason,
+        });
+      });
+      subjectCoverage = Object.freeze({
+        status,
+        enumerator: typedEnumerator,
+        enumeratedCount,
+        censusDigest: censusDigest as `sha256:${string}`,
+        opaqueSites: Object.freeze(opaqueSites),
+      });
+    }
+    return Object.freeze({ family: typedFamily, observations: Object.freeze(observations), subjectCoverage });
+  });
+
+  assertPlainFactRecord(aggregateRaw, 'featureEdges.aggregate');
+  const aggregateEnumerator = ownDataField(aggregateRaw, 'enumerator');
+  const aggregateCount = ownDataField(aggregateRaw, 'enumeratedCount');
+  const aggregateDigest = ownDataField(aggregateRaw, 'censusDigest');
+  if (
+    aggregateEnumerator !== 'feature-edge/family-set-v1' ||
+    typeof aggregateCount !== 'number' ||
+    !Number.isSafeInteger(aggregateCount) ||
+    aggregateCount < 0 ||
+    typeof aggregateDigest !== 'string' ||
+    !SHA256_FACT.test(aggregateDigest)
+  ) {
+    throw ValidationError('FactGate', 'featureEdges.aggregate is malformed');
+  }
+  return Object.freeze({
+    _tag: 'feature-edge-facts',
+    families: Object.freeze(families),
+    aggregate: Object.freeze({
+      enumerator: aggregateEnumerator,
+      enumeratedCount: aggregateCount,
+      censusDigest: aggregateDigest as `sha256:${string}`,
+    }),
+  });
+}
+
+const WAIVER_STORES = new Set(['gauntlet', 'ledger']);
+
+function normalizeStringArray(value: unknown, label: string): readonly string[] {
+  if (!Array.isArray(value) || !value.every((s) => typeof s === 'string')) {
+    throw ValidationError('FactGate', `${label} must be an array of strings`);
+  }
+  return Object.freeze([...(value as string[])]);
+}
+
+function normalizeCheckGovernanceFacts(value: CheckGovernanceFacts | undefined): CheckGovernanceFacts | undefined {
+  if (value === undefined) return undefined;
+  assertPlainFactRecord(value, 'checkGovernance');
+  const partition = ownDataField(value, 'partition');
+  const negativeControls = ownDataField(value, 'negativeControls');
+  const waivers = ownDataField(value, 'waivers');
+  assertPlainFactRecord(partition, 'checkGovernance.partition');
+  const registeredRaw = ownDataField(partition, 'registered');
+  if (!Array.isArray(registeredRaw)) {
+    throw ValidationError('FactGate', 'checkGovernance.partition.registered must be an array');
+  }
+  const registered = registeredRaw.map((entry, index) => {
+    assertPlainFactRecord(entry, `checkGovernance.partition.registered[${index}]`);
+    const id = ownDataField(entry, 'id');
+    const script = ownDataField(entry, 'script');
+    const scriptExists = ownDataField(entry, 'scriptExists');
+    if (typeof id !== 'string' || typeof script !== 'string' || typeof scriptExists !== 'boolean') {
+      throw ValidationError('FactGate', `checkGovernance.partition.registered[${index}] is malformed`);
+    }
+    return Object.freeze({ id, script, scriptExists });
+  });
+  const normalizedPartition = Object.freeze({
+    scripts: normalizeStringArray(ownDataField(partition, 'scripts'), 'checkGovernance.partition.scripts'),
+    registered: Object.freeze(registered),
+    exempted: normalizeStringArray(ownDataField(partition, 'exempted'), 'checkGovernance.partition.exempted'),
+  });
+  if (!Array.isArray(negativeControls)) {
+    throw ValidationError('FactGate', 'checkGovernance.negativeControls must be an array');
+  }
+  const normalizedControls = negativeControls.map((entry, index) => {
+    assertPlainFactRecord(entry, `checkGovernance.negativeControls[${index}]`);
+    const id = ownDataField(entry, 'id');
+    const blocking = ownDataField(entry, 'blocking');
+    const negativeControl = ownDataField(entry, 'negativeControl');
+    const exists = ownDataField(entry, 'exists');
+    if (
+      typeof id !== 'string' ||
+      typeof blocking !== 'boolean' ||
+      !(negativeControl === null || typeof negativeControl === 'string') ||
+      typeof exists !== 'boolean'
+    ) {
+      throw ValidationError('FactGate', `checkGovernance.negativeControls[${index}] is malformed`);
+    }
+    return Object.freeze({ id, blocking, negativeControl, exists });
+  });
+  if (!Array.isArray(waivers)) {
+    throw ValidationError('FactGate', 'checkGovernance.waivers must be an array');
+  }
+  const normalizedWaivers = waivers.map((entry, index) => {
+    assertPlainFactRecord(entry, `checkGovernance.waivers[${index}]`);
+    const store = ownDataField(entry, 'store');
+    const id = ownDataField(entry, 'id');
+    const expires = ownDataField(entry, 'expires');
+    const expired = ownDataField(entry, 'expired');
+    if (
+      typeof store !== 'string' ||
+      !WAIVER_STORES.has(store) ||
+      typeof id !== 'string' ||
+      typeof expires !== 'string' ||
+      typeof expired !== 'boolean'
+    ) {
+      throw ValidationError('FactGate', `checkGovernance.waivers[${index}] is malformed`);
+    }
+    return Object.freeze({ store: store as WaiverFreshnessFact['store'], id, expires, expired });
+  });
+  return Object.freeze({
+    partition: normalizedPartition,
+    negativeControls: Object.freeze(normalizedControls),
+    waivers: Object.freeze(normalizedWaivers),
+  });
+}
+
 /**
  * A FACT GATE — the "gate-as-data" variant (the FactGate PoC). It replaces the arbitrary
  * {@link Gate.run} closure with two data-shaped halves: a DECLARATION of which host-produced
@@ -625,6 +1079,7 @@ export interface FactGate extends Gate {
   readonly form: 'fact';
   readonly requires: readonly FactKind[];
   readonly decide: (facts: FactBundle) => readonly Finding[];
+  readonly access: GateAccessManifest;
 }
 
 /**
@@ -632,12 +1087,56 @@ export interface FactGate extends Gate {
  * an empty id, or missing any of red/green/mutation, is a malformed plugin and
  * throws {@link ValidationError} at registration, not at run time).
  */
+const RESERVED_GATE_NAMESPACES = new Set<string>(DIAGNOSTIC_AREAS);
+const GATE_NAMESPACE = /^[a-z][a-z0-9.-]*$/u;
+
+function validateGateIdentity(
+  constructor: 'defineGate' | 'defineFactGate',
+  id: string,
+  extension: ExtensionGateIdentity | undefined,
+): void {
+  const separator = id.indexOf('/');
+  if (separator <= 0 || separator === id.length - 1) {
+    throw ValidationError(constructor, `gate id "${id}" must be namespaced as <namespace>/<rule>`);
+  }
+  const namespace = id.slice(0, separator);
+  if (!GATE_NAMESPACE.test(namespace)) {
+    throw ValidationError(constructor, `gate id "${id}" has an invalid namespace "${namespace}"`);
+  }
+  if (RESERVED_GATE_NAMESPACES.has(namespace) || namespace === 'liteship') {
+    if (extension !== undefined) {
+      throw ValidationError(
+        constructor,
+        `gate "${id}" squats on reserved LiteShip namespace "${namespace}" while declaring downstream ownership`,
+      );
+    }
+    return;
+  }
+  if (extension === undefined) {
+    throw ValidationError(
+      constructor,
+      `downstream gate "${id}" must declare extension metadata { namespace: "${namespace}", owner }`,
+    );
+  }
+  if (extension.namespace !== namespace || extension.owner.trim() === '') {
+    throw ValidationError(
+      constructor,
+      `downstream gate "${id}" must declare its exact namespace and a non-empty owner`,
+    );
+  }
+}
+
+/** Validate and freeze one pure gate definition. */
 export function defineGate(spec: Gate): Gate {
   if (spec.id.trim() === '') {
     throw ValidationError('defineGate', 'gate id must be a non-empty string');
   }
+  validateGateIdentity('defineGate', spec.id, spec.extension);
   if (typeof spec.run !== 'function') {
     throw ValidationError('defineGate', `gate "${spec.id}" must supply a run function`);
+  }
+  if (spec.subjectCoverage !== undefined && typeof spec.subjectCoverage !== 'function') {
+    throw ValidationError('defineGate', `gate "${spec.id}" subjectCoverage must be a function when supplied`);
   }
   // A fact gate is the SMUGGLING-FREE form; its discriminant is unforgeable (the module-private
   // `FACT_GATES` WeakSet). A gate built with `defineGate` that hand-sets `form: 'fact'` is a
@@ -678,6 +1177,8 @@ const FACT_GATES = new WeakSet<Gate>();
 /** The author surface of a {@link FactGate} — context-free by construction (no `run`). */
 export interface FactGateSpec {
   readonly id: string;
+  /** Required when `id` uses a non-LiteShip namespace; absent on built-in gates. */
+  readonly extension?: ExtensionGateIdentity;
   readonly level: AssuranceLevel;
   readonly describe: string;
   readonly coverage?: (ir: RepoIR) => readonly FileId[];
@@ -685,6 +1186,8 @@ export interface FactGateSpec {
   readonly requires: readonly FactKind[];
   /** The bounded, data-only decision — no {@link GateContext} parameter, by design. */
   readonly decide: (facts: FactBundle) => readonly Finding[];
+  /** Data-only subject census derived from the same declared facts as `decide`. */
+  readonly subjectCoverage?: (facts: FactBundle) => GateSubjectCoverage;
   readonly fixtures: GateFixtures;
 }
 
@@ -696,7 +1199,12 @@ export interface FactGateSpec {
  * boundary: `decide` sees this bundle, never the context.
  */
 export function pickFacts(context: GateContext, requires: readonly FactKind[]): FactBundle {
-  const bundle: { skipSites?: SkipSiteFacts; activeSurfaceFacts?: ActiveSurfaceFacts } = {};
+  const bundle: {
+    skipSites?: SkipSiteFacts;
+    activeSurfaceFacts?: ActiveSurfaceFacts;
+    featureEdges?: FeatureEdgeFacts;
+    checkGovernance?: CheckGovernanceFacts;
+  } = {};
   for (const kind of requires) {
     switch (kind) {
       case 'skipSites':
@@ -704,6 +1212,12 @@ export function pickFacts(context: GateContext, requires: readonly FactKind[]): 
         break;
       case 'activeSurfaceFacts':
         bundle.activeSurfaceFacts = normalizeActiveSurfaceFacts(context.activeSurfaceFacts);
+        break;
+      case 'featureEdges':
+        bundle.featureEdges = normalizeFeatureEdgeFacts(context.featureEdges);
+        break;
+      case 'checkGovernance':
+        bundle.checkGovernance = normalizeCheckGovernanceFacts(context.checkGovernance);
         break;
       default: {
         // Exhaustiveness: adding a FactKind without teaching this pick fails to compile here
@@ -735,6 +1249,14 @@ export function factBundleDigest(context: GateContext, requires: readonly FactKi
         // evidence-law perturbation salt) that must still flip the digest.
         fact = context.activeSurfaceFacts;
         break;
+      case 'featureEdges':
+        fact = context.featureEdges;
+        break;
+      case 'checkGovernance':
+        // Raw fold (same rationale as activeSurfaceFacts) — the perturbation salt must
+        // flip the digest even though normalization would strip it from the decision.
+        fact = context.checkGovernance;
+        break;
       default: {
         // Exhaustiveness: a new FactKind must be folded here, or the build fails — never a
         // silent `undefined` fold (which would key a PRESENT channel as absent: a stale-serve bug).
@@ -761,6 +1283,7 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   if (spec.id.trim() === '') {
     throw ValidationError('defineFactGate', 'gate id must be a non-empty string');
   }
+  validateGateIdentity('defineFactGate', spec.id, spec.extension);
   if (!Array.isArray(spec.requires) || spec.requires.length === 0) {
     throw ValidationError('defineFactGate', `fact gate "${spec.id}" must declare at least one required fact kind`);
   }
@@ -778,6 +1301,9 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   if (typeof spec.decide !== 'function') {
     throw ValidationError('defineFactGate', `fact gate "${spec.id}" must supply a decide(facts) function`);
   }
+  if (spec.subjectCoverage !== undefined && typeof spec.subjectCoverage !== 'function') {
+    throw ValidationError('defineFactGate', `fact gate "${spec.id}" subjectCoverage must be a function when supplied`);
+  }
   const f = spec.fixtures;
   if (f === undefined || f.red === undefined || f.green === undefined || f.mutation === undefined) {
     throw ValidationError(
@@ -791,9 +1317,14 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   const requires = spec.requires;
   const decide = spec.decide;
   const run = (context: GateContext): readonly Finding[] => decide(pickFacts(context, requires));
+  const subjectCoverage =
+    spec.subjectCoverage === undefined
+      ? undefined
+      : (context: GateContext): GateSubjectCoverage => spec.subjectCoverage!(pickFacts(context, requires));
   const evidenceDigest = (context: GateContext): string => factBundleDigest(context, requires);
   const gate: FactGate = {
     id: spec.id,
+    ...(spec.extension !== undefined ? { extension: Object.freeze({ ...spec.extension }) } : {}),
     level: spec.level,
     describe: spec.describe,
     ...(spec.coverage !== undefined ? { coverage: spec.coverage } : {}),
@@ -801,7 +1332,11 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
     requires,
     decide,
     run,
+    ...(subjectCoverage !== undefined ? { subjectCoverage } : {}),
     evidenceDigest,
+    access: Object.freeze({
+      facts: Object.freeze(requires.map((channel) => Object.freeze({ channel, presence: 'required' as const }))),
+    }),
     fixtures: spec.fixtures,
   };
   // FREEZE before branding (codex P1): the WeakSet brands the object IDENTITY, but an unfrozen
@@ -842,7 +1377,7 @@ export function requireIR(context: GateContext, gateId: string): RepoIR {
   if (context.ir === undefined) {
     throw HostCapabilityError(
       'repo-IR',
-      `gate "${gateId}" requires the injected repo-IR, but none was supplied on the GateContext — a host (the CLI) must build it via @czap/audit's ts.Program and inject it as context.ir`,
+      `gate "${gateId}" requires the injected repo-IR, but none was supplied on the GateContext — a host (the CLI) must build it via @liteship/audit's ts.Program and inject it as context.ir`,
     );
   }
   return context.ir;
@@ -860,7 +1395,7 @@ export function requireMutation(context: GateContext, gateId: string): MutationF
   if (context.mutation === undefined) {
     throw HostCapabilityError(
       'mutation-facts',
-      `gate "${gateId}" requires the injected mutation facts, but none were supplied on the GateContext — a host (the CLI) must generate mutants via @czap/audit's mutation engine, run the covering tests, and inject the decided MutationFacts as context.mutation (the opt-in \`czap check --ir --mutate\` path)`,
+      `gate "${gateId}" requires the injected mutation facts, but none were supplied on the GateContext — a host (the CLI) must generate mutants via @liteship/audit's mutation engine, run the covering tests, and inject the decided MutationFacts as context.mutation (the opt-in \`liteship check gates --ir --mutate\` path)`,
     );
   }
   return context.mutation;
@@ -878,7 +1413,7 @@ export function requireTransition(context: GateContext, gateId: string): Transit
   if (context.transition === undefined) {
     throw HostCapabilityError(
       'transition-facts',
-      `gate "${gateId}" requires the injected transition-conformance facts, but none were supplied on the GateContext — a host must unfold the seeded op-history corpus over BOTH the single-oracle model and the native transport via @czap/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner (tests/support/reactive-conformance.ts), and inject the decided TransitionFacts as context.transition. The repo-local host is the \`transition:gate\` phase (scripts/transition-conformance-gate.ts), run on every PR`,
+      `gate "${gateId}" requires the injected transition-conformance facts, but none were supplied on the GateContext — a host must unfold the seeded op-history corpus over BOTH the single-oracle model and the native transport via @liteship/audit's buildTransitionFacts + the LiteShip-local reactive capture/model runner (tests/support/reactive-conformance.ts), and inject the decided TransitionFacts as context.transition. The repo-local host is the \`transition:gate\` phase (scripts/transition-conformance-gate.ts), run on every PR`,
     );
   }
   return context.transition;
@@ -896,7 +1431,7 @@ export function requireSpineRelation(context: GateContext, gateId: string): Spin
   if (context.spineRelation === undefined) {
     throw HostCapabilityError(
       'spine-relation-facts',
-      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @czap/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`czap check --ir --spine-relation\` path)`,
+      `gate "${gateId}" requires the injected two-axis spine-relation facts, but none were supplied on the GateContext — a host (the CLI) must probe each admitted mirror type's bidirectional assignability via @liteship/audit's buildSpineRelationFacts and inject the observed SpineRelationFacts as context.spineRelation (the opt-in \`liteship check gates --ir --spine-relation\` path)`,
     );
   }
   return context.spineRelation;
@@ -913,7 +1448,7 @@ export function requireMcdc(context: GateContext, gateId: string): McdcFacts {
   if (context.mcdc === undefined) {
     throw HostCapabilityError(
       'mcdc-facts',
-      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @czap/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`czap check --ir --mcdc\` path)`,
+      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @liteship/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`liteship check gates --ir --mcdc\` path)`,
     );
   }
   return context.mcdc;
@@ -931,7 +1466,7 @@ export function requireTaint(context: GateContext, gateId: string): TaintFacts {
   if (context.taint === undefined) {
     throw HostCapabilityError(
       'taint-facts',
-      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @czap/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`czap check --ir --taint\` path)`,
+      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @liteship/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`liteship check gates --ir --taint\` path)`,
     );
   }
   return context.taint;
@@ -946,7 +1481,7 @@ export function requireCapabilityLink(context: GateContext, gateId: string): Cap
   if (context.capabilityLink === undefined) {
     throw HostCapabilityError(
       'capability-link-facts',
-      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @czap/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`czap check --ir --capability-gate\` path)`,
+      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @liteship/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`liteship check gates --ir --capability-gate\` path)`,
     );
   }
   return context.capabilityLink;

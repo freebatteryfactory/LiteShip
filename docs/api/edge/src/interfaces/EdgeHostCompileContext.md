@@ -25,7 +25,7 @@ under every boundary's content address.
 
 ### boundaryId
 
-> `readonly` **boundaryId**: `ContentAddress`
+> `readonly` **boundaryId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [edge/src/host-adapter.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L53)
 

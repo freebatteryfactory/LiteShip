@@ -2,7 +2,7 @@
  * Shared detect/workers/coep toggle resolution for integration + middleware.
  *
  * {@link integration} publishes the toggles it computed from
- * {@link IntegrationConfig}; {@link czapMiddleware} consumes them when
+ * {@link IntegrationConfig}; {@link liteshipMiddleware} consumes them when
  * middleware config omits explicit overrides.
  *
  * @module
@@ -12,16 +12,16 @@ import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { IntegrationConfig } from './integration.js';
 
 /** Resolved runtime header toggles shared between integration and middleware. */
-export interface CzapRuntimeToggles {
+export interface LiteshipRuntimeToggles {
   readonly detectEnabled: boolean;
   readonly workersEnabled: boolean;
   readonly coep: CrossOriginEmbedderPolicy | undefined;
 }
 
-let publishedToggles: CzapRuntimeToggles | null = null;
+let publishedToggles: LiteshipRuntimeToggles | null = null;
 
 /** Compute toggles from integration config (single source of truth). */
-export function resolveIntegrationToggles(config?: IntegrationConfig): CzapRuntimeToggles {
+export function resolveIntegrationToggles(config?: IntegrationConfig): LiteshipRuntimeToggles {
   return {
     detectEnabled: config?.detect !== false,
     workersEnabled: config?.workers?.enabled === true,
@@ -30,7 +30,7 @@ export function resolveIntegrationToggles(config?: IntegrationConfig): CzapRunti
 }
 
 /** Called once per integration factory — middleware reads via {@link consumeIntegrationToggles}. */
-export function publishIntegrationToggles(toggles: CzapRuntimeToggles): void {
+export function publishIntegrationToggles(toggles: LiteshipRuntimeToggles): void {
   publishedToggles = toggles;
 }
 
@@ -46,7 +46,7 @@ export function resetIntegrationTogglesForTesting(): void {
 export function consumeIntegrationToggles(middleware?: {
   readonly detect?: boolean;
   readonly workers?: { readonly enabled?: boolean; readonly coep?: CrossOriginEmbedderPolicy };
-}): CzapRuntimeToggles {
+}): LiteshipRuntimeToggles {
   const base = publishedToggles ?? resolveIntegrationToggles(undefined);
   return {
     detectEnabled: middleware?.detect ?? base.detectEnabled,

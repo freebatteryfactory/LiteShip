@@ -1,5 +1,5 @@
 /**
- * @czap/web/lite tests -- verify Effect-free exports work without
+ * @liteship/web/lite tests -- verify Effect-free exports work without
  * importing the Effect runtime.
  *
  * These tests validate the pure function extractions: morph helpers,
@@ -14,8 +14,8 @@ import {
   defaultReconnectConfig,
   parseEventId,
   canResume,
-} from '@czap/web/lite';
-import type { ReconnectConfig } from '@czap/web/lite';
+} from '@liteship/web/lite';
+import type { ReconnectConfig } from '@liteship/web/lite';
 
 // ===========================================================================
 // SSE Pure: parseMessage

@@ -2,12 +2,12 @@
  * Single-source-of-truth drift guard for the Astro head-inline GPU probe.
  *
  * The probe runs in the document `<head>` before any module graph exists, so
- * it cannot `import { classifyGPURenderer } from '@czap/detect'`. The 0.2.3
+ * it cannot `import { classifyGPURenderer } from '@liteship/detect'`. The 0.2.3
  * "detect-ladder" release shipped a real drift bug when an inline HAND-COPY of
  * the classifier + tier ladders silently diverged from canonical.
  *
  * The cure makes drift structurally impossible: `emitDetectUpgradeScript`
- * GENERATES the probe script from canonical `@czap/detect` — folding the
+ * GENERATES the probe script from canonical `@liteship/detect` — folding the
  * classifier from the one `GPU_TIER_PATTERNS` datum and emitting the canonical
  * `headProbeCapTier` / `headProbeMotionTier` ladders verbatim. This guard is
  * defence in depth: it executes the REAL emitted script and asserts it
@@ -24,7 +24,10 @@ import * as fc from 'fast-check';
 import {
   capTierFromCapabilities,
   motionTierFromCapabilities,
+  CAP_AXES,
+  capAxisAttr,
   emitDetectUpgradeScript,
+  emitProvisionalDetectScript,
   headProbeCapTier,
   headProbeMotionTier,
   GPU_TIER_PATTERNS,
@@ -40,12 +43,13 @@ const SCRIPT = emitDetectUpgradeScript();
 
 /**
  * Drive the REAL emitted probe in jsdom with a fixed renderer + navigator +
- * matchMedia, and return the `data-czap-*` attributes it writes. This is the
+ * matchMedia, and return the `data-liteship-*` attributes it writes. This is the
  * shipped script — not a reimplementation — so any divergence between the
  * emitted classifier/ladders and canonical surfaces here.
  */
 function runEmittedProbe(input: {
   renderer: string;
+  maskedRenderer?: string;
   cores: number;
   memory: number;
   webgpu: boolean;
@@ -60,19 +64,23 @@ function runEmittedProbe(input: {
   Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, value: input.cores });
   Object.defineProperty(navigator, 'deviceMemory', { configurable: true, value: input.memory });
   Object.defineProperty(navigator, 'gpu', { configurable: true, value: input.webgpu ? {} : undefined });
-  HTMLCanvasElement.prototype.getContext = (() =>
-    ({
+  HTMLCanvasElement.prototype.getContext = (() => {
+    const RENDERER = 7937;
+    const UNMASKED_RENDERER_WEBGL = 37446;
+    return {
+      RENDERER,
       getExtension: (name: string) =>
-        name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null,
-      getParameter: () => input.renderer,
-    })) as never;
+        name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL } : null,
+      getParameter: (key: number) => (key === UNMASKED_RENDERER_WEBGL ? input.renderer : input.maskedRenderer ?? input.renderer),
+    };
+  }) as never;
 
   try {
     // new Function over eval: same IIFE execution, no eval lint violation.
     new Function(SCRIPT)();
     return {
-      tier: document.documentElement.getAttribute('data-czap-tier'),
-      motion: document.documentElement.getAttribute('data-czap-motion'),
+      tier: document.documentElement.getAttribute('data-liteship-tier'),
+      motion: document.documentElement.getAttribute('data-liteship-motion'),
     };
   } finally {
     HTMLCanvasElement.prototype.getContext = realGetContext;
@@ -81,12 +89,38 @@ function runEmittedProbe(input: {
 }
 
 afterEach(() => {
-  document.documentElement.removeAttribute('data-czap-tier');
-  document.documentElement.removeAttribute('data-czap-motion');
-  document.documentElement.removeAttribute('data-czap-tier-provisional');
+  document.documentElement.removeAttribute('data-liteship-tier');
+  document.documentElement.removeAttribute('data-liteship-motion');
+  document.documentElement.removeAttribute('data-liteship-tier-provisional');
 });
 
-describe('head-probe is a derived artifact of canonical @czap/detect', () => {
+describe('head-probe is a derived artifact of canonical @liteship/detect', () => {
+  test('capability-axis attributes are projected from the canonical axis vocabulary', () => {
+    const known = new Set(CAP_AXES.map(capAxisAttr));
+    for (const script of [emitProvisionalDetectScript(), SCRIPT]) {
+      const capabilityAttrs = script.match(/data-liteship-(?:tier|motion|design)/gu) ?? [];
+      expect(capabilityAttrs.length).toBeGreaterThan(0);
+      for (const attr of capabilityAttrs) expect(known.has(attr as ReturnType<typeof capAxisAttr>)).toBe(true);
+      expect(script).toContain(capAxisAttr('tier'));
+    }
+    expect(SCRIPT).toContain(capAxisAttr('motion'));
+  });
+
+  test('renderer acquisition prefers the same unmasked source when masked and unmasked values differ', () => {
+    const renderer = 'NVIDIA GeForce RTX 4090';
+    const result = runEmittedProbe({
+      renderer,
+      maskedRenderer: 'WebKit WebGL',
+      cores: 8,
+      memory: 8,
+      webgpu: true,
+      reducedMotion: false,
+    });
+    const gpu = classifyGPURenderer(renderer);
+    expect(result.tier).toBe(
+      headProbeCapTier({ gpu, cores: 8, memory: 8, webgpu: true, prefersReducedMotion: false }),
+    );
+  });
   // ── Structural: the emitted classifier embeds EVERY canonical pattern ──
   // A pattern added to the canonical GPU_TIER_PATTERNS datum that did NOT flow
   // into the emitted script (impossible by construction — they share the datum)

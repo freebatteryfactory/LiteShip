@@ -1,6 +1,6 @@
 /**
- * Worker spine conformance — the `@czap/_spine/worker.d.ts` mirror IS the
- * `@czap/worker` runtime contract.
+ * Worker spine conformance — the `@liteship/_spine/worker.d.ts` mirror IS the
+ * `@liteship/worker` runtime contract.
  *
  * `packages/_spine/worker.d.ts` is a hand-authored type mirror that
  * published packages treat as the canonical worker type contract (ADR-0010).
@@ -30,12 +30,16 @@ import type {
   WorkerConfig as SpineWorkerConfig,
   WorkerUpdate as SpineWorkerUpdate,
   WorkerMetrics as SpineWorkerMetrics,
-  SPSCRingBufferShape as SpineRingShape,
+  SPSCRing as SpineRingShape,
   SPSCRingPair as SpineRingPair,
-  CompositorWorkerShape as SpineCompositorShape,
+  CompositorWorker as SpineCompositorShape,
   QuantizerBoundarySource as SpineBoundarySource,
   CompositorWorkerStartupTelemetry as SpineStartupTelemetry,
-} from '@czap/_spine';
+  MotionSampleMessage as SpineMotionSampleMessage,
+  ProgramUniforms as SpineProgramUniforms,
+  RuntimeWritePlan as SpineRuntimeWritePlan,
+  WorkerLike as SpineWorkerLike,
+} from '@liteship/_spine';
 
 // Runtime truth — imported from the producing modules DIRECTLY (not the
 // package index) so the guarded surface is exactly the runtime types.
@@ -47,18 +51,24 @@ import type {
 } from '../../../packages/worker/src/messages.js';
 import type {
   WorkerMetrics as RtWorkerMetrics,
-  CompositorWorkerShape as RtCompositorShape,
+  CompositorWorker as RtCompositorShape,
   QuantizerBoundarySource as RtBoundarySource,
   CompositorWorkerStartupTelemetry as RtStartupTelemetry,
 } from '../../../packages/worker/src/compositor-types.js';
 import type {
-  SPSCRingBufferShape as RtRingShape,
+  SPSCRing as RtRingShape,
   SPSCRingPair as RtRingPair,
 } from '../../../packages/worker/src/spsc-ring.js';
+import type {
+  MotionSampleMessage as RtMotionSampleMessage,
+  ProgramUniforms as RtProgramUniforms,
+} from '../../../packages/worker/src/motion-sample.js';
+import type { RuntimeWritePlan as RtRuntimeWritePlan } from '../../../packages/core/src/motion/interpret-transition.js';
+import type { WorkerLike as RtWorkerLike } from '../../../packages/worker/src/messages.js';
 
 // Public re-export surface — the worker exposes these names from its index;
 // drift in the index re-export set also breaks the contract.
-import { Messages, SPSCRing, CompositorWorker } from '@czap/worker';
+import { Messages, SPSCRing, CompositorWorker } from '@liteship/worker';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-level bidirectional assignability (spine ⇔ runtime). If a member, field,
@@ -77,10 +87,10 @@ import { Messages, SPSCRing, CompositorWorker } from '@czap/worker';
 //   the resolved-state family (`bootstrap-resolved-state`, `apply-resolved-state`,
 //   `resolved-state-ack`) that had silently drifted out of the spine.
 //
-//   SCOPING: three message members re-use @czap/core types as their payload —
+//   SCOPING: three message members re-use @liteship/core types as their payload —
 //   `start-render` carries a `VideoConfig`, `state` carries a `CompositeState`,
 //   `frame` carries a `VideoFrameOutput` (which embeds a `CompositeState`).
-//   Those payloads are owned by the @czap/core SPINE (core.d.ts), NOT the
+//   Those payloads are owned by the @liteship/core SPINE (core.d.ts), NOT the
 //   worker spine — the worker mirror merely imports them. A bidirectional union
 //   assertion would drag any core-spine-vs-core-runtime drift (which is real
 //   and pre-existing — `VideoConfig.durationMs` branding, the `wgsl` output —
@@ -94,12 +104,12 @@ type StartRenderOf<U> = Extract<U, { readonly type: 'start-render' }>;
 type StateMsgOf<U> = Extract<U, { readonly type: 'state' }>;
 type FrameOf<U> = Extract<U, { readonly type: 'frame' }>;
 
-// § CompositorWorkerShape — the host-facing control surface. Two fields are
+// § CompositorWorker — the host-facing control surface. Two fields are
 //   intentionally NOT bidirectionally equal and are excluded from the structural
 //   assertion:
 //     - `runtime`: the spine declares `unknown` (RuntimeCoordinator is out of
 //       worker-spine scope) — a deliberate loosening, not drift.
-//     - `onState`: its `CompositorWorkerState` payload extends the @czap/core
+//     - `onState`: its `CompositorWorkerState` payload extends the @liteship/core
 //       `CompositeState` whose core-spine mirror is independently guarded.
 //   Every other method — including the previously-drifted `onMetrics` (now a
 //   single `WorkerMetrics` record, not `(fps, budgetUsed)`), the new
@@ -136,6 +146,14 @@ function __workerSpineTypeContract(
   bTel: RtStartupTelemetry,
   rtShape: WorkerOwnedShape<RtCompositorShape>,
   spShape: WorkerOwnedShape<SpineCompositorShape>,
+  aMotion: SpineMotionSampleMessage,
+  bMotion: RtMotionSampleMessage,
+  aUniforms: SpineProgramUniforms,
+  bUniforms: RtProgramUniforms,
+  aRuntimePlan: SpineRuntimeWritePlan,
+  bRuntimePlan: RtRuntimeWritePlan,
+  aWorkerLike: SpineWorkerLike,
+  bWorkerLike: RtWorkerLike,
 ): void {
   // Message unions (worker-owned members).
   const _toWorkerS2R: WorkerOwned<RtToWorker> = aToWorker;
@@ -181,6 +199,14 @@ function __workerSpineTypeContract(
   // Compositor control surface (worker-owned methods).
   const _shapeR2S: WorkerOwnedShape<SpineCompositorShape> = rtShape;
   const _shapeS2R: WorkerOwnedShape<RtCompositorShape> = spShape;
+  const _motionS2R: RtMotionSampleMessage = aMotion;
+  const _motionR2S: SpineMotionSampleMessage = bMotion;
+  const _uniformsS2R: RtProgramUniforms = aUniforms;
+  const _uniformsR2S: SpineProgramUniforms = bUniforms;
+  const _runtimePlanS2R: RtRuntimeWritePlan = aRuntimePlan;
+  const _runtimePlanR2S: SpineRuntimeWritePlan = bRuntimePlan;
+  const _workerLikeS2R: RtWorkerLike = aWorkerLike;
+  const _workerLikeR2S: SpineWorkerLike = bWorkerLike;
 
   void _toWorkerS2R;
   void _toWorkerR2S;
@@ -208,10 +234,18 @@ function __workerSpineTypeContract(
   void _telR2S;
   void _shapeR2S;
   void _shapeS2R;
+  void _motionS2R;
+  void _motionR2S;
+  void _uniformsS2R;
+  void _uniformsR2S;
+  void _runtimePlanS2R;
+  void _runtimePlanR2S;
+  void _workerLikeS2R;
+  void _workerLikeR2S;
 }
 void __workerSpineTypeContract;
 
-describe('worker spine conformance — @czap/_spine/worker.d.ts mirrors @czap/worker', () => {
+describe('worker spine conformance — @liteship/_spine/worker.d.ts mirrors @liteship/worker', () => {
   it('exposes the message-protocol guards (runtime surface backing the compile-time mirror)', () => {
     expect(typeof Messages.isToWorker).toBe('function');
     expect(typeof Messages.isFromWorker).toBe('function');

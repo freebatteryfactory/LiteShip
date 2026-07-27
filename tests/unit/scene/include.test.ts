@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Scene, Track, Beat } from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
+import { Scene, Track, Beat } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
 
 describe('Scene.include', () => {
   const sub: SceneContract = {

@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { AIManifestCompiler } from '@czap/compiler';
-import type { AIManifest } from '@czap/compiler';
+import { AIManifestCompiler } from '@liteship/compiler';
+import type { AIManifest } from '@liteship/compiler';
 
 const manifest: AIManifest = {
   version: '1.0',

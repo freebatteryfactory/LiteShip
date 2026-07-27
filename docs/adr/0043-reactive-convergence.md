@@ -6,8 +6,8 @@
 ## Context
 
 ADR-0042 shed `effect` and named `CellKernel` (`replay1` / `fanout`) the native
-owner of reactive state and streams. That was the *substrate* decision. This ADR
-records the *convergence* decisions the reactive family made onto that substrate
+owner of reactive state and streams. That was the _substrate_ decision. This ADR
+records the _convergence_ decisions the reactive family made onto that substrate
 across Waves 5.5–8.5, and elevates the convergence constitution
 (`docs/plan/convergence-constitution.md`) from a planning doctrine to an accepted
 architectural record — the public statement of how LiteShip proves that every
@@ -27,7 +27,7 @@ S8.5-1.
   `fanout` for fan-out events). There is no second reactive kingdom.
 - **A deliberate EmissionPolicy, corrected against empirical capture.** The kernel
   dispatch is **generation-bounded**: a subscriber added mid-dispatch observes the
-  *current* generation's value, and compaction is deferred to dispatch boundaries.
+  _current_ generation's value, and compaction is deferred to dispatch boundaries.
   This MEMBERSHIP + REPLAY law was chosen deliberately (Wave 6.5.1), not inherited:
   the Wave 5.5 transition cage captured the Effect-backed primitives' observable
   traces first, so the native policy is pinned against real recorded behavior, and
@@ -66,7 +66,7 @@ BOTH dimensions of the packed artifact:
   its declared deps alone.
 
 A projection that declares no conformance relation, or whose evidence is absent or
-stale, is *unadmitted behavior* — it does not ship.
+stale, is _unadmitted behavior_ — it does not ship.
 
 ## Consequences
 
@@ -109,7 +109,7 @@ stale, is *unadmitted behavior* — it does not ship.
   three historical drift fixtures + a removed-type case; self-proving).
 - Type-export surface: `packages/audit/src/type-export-surface.ts` +
   `tests/fixtures/type-export-surface.json`.
-- Dependency closure (deps): `packages/cli/src/lib/declared-dependency-closure.ts` +
+- Dependency closure (deps): `tests/support/declared-dependency-closure.ts` +
   `tests/unit/devops/declared-dependency-closure.test.ts`.
 - Effect shed receipt: `traceability/effect-shed-receipt.json` (all counts 0).
 

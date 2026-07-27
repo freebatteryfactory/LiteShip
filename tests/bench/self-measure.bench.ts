@@ -2,7 +2,7 @@
  * Self-measuring benchmark infrastructure.
  *
  * Implements the "benchmarks eat their own product" philosophy:
- * - Uses Boundary.make() for performance threshold classification
+ * - Uses defineBoundary() for performance threshold classification
  * - Competing implementations run on identical inputs
  * - Diagnostic output teaches, not just reports
  *
@@ -10,9 +10,17 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Compositor, TokenBuffer, SpeculativeEvaluator } from '@czap/core';
-import { evaluate } from '@czap/quantizer';
-import { SPSCRing } from '@czap/worker';
+import {
+  Boundary,
+  Compositor,
+  SpeculativeEvaluator,
+  defineBoundary,
+  type TokenBuffer,
+  createTokenBuffer,
+} from '@liteship/core';
+import { evaluate } from '@liteship/quantizer';
+import { parseBoundary } from '@liteship/astro/runtime';
+import { SPSCRing } from '@liteship/worker';
 import { classifyThroughputTier, throughputTierBadge } from '../../scripts/bench-format.ts';
 
 const bench = new Bench({ warmupIterations: 200, iterations: 1000 });
@@ -21,7 +29,7 @@ const bench = new Bench({ warmupIterations: 200, iterations: 1000 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary3 = Boundary.make({
+const boundary3 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -30,7 +38,7 @@ const boundary3 = Boundary.make({
   ] as const,
 });
 
-const boundary5 = Boundary.make({
+const boundary5 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'xs'],
@@ -41,7 +49,7 @@ const boundary5 = Boundary.make({
   ] as const,
 });
 
-const boundaryHyst = Boundary.make({
+const boundaryHyst = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -79,7 +87,7 @@ bench.add('[COMPETE] quantizer evaluate() -- 5 thresholds', () => {
 // Competing implementations: TokenBuffer vs SPSCRing (push throughput)
 // ---------------------------------------------------------------------------
 
-const tokenBuf = TokenBuffer.make<number>({ capacity: 256 });
+const tokenBuf = createTokenBuffer<number>({ capacity: 256 });
 const { producer, consumer } = SPSCRing.createPair(256, 1);
 
 bench.add('[COMPETE] TokenBuffer.push -- single token', () => {
@@ -110,25 +118,25 @@ bench.add('[OVERHEAD] SpeculativeEvaluator.evaluate -- far from threshold', () =
 // Compositor empty vs with quantizers
 // ---------------------------------------------------------------------------
 
-const { compositor: emptyCompositor } = Compositor.create();
+const emptyCompositor = Compositor.create();
 
 bench.add('[SCALE] Compositor.compute -- empty', () => {
   emptyCompositor.compute();
 });
 
 // ---------------------------------------------------------------------------
-// Satellite directive: inline evaluate vs core Boundary.evaluate
+// Adaptive directive: inline evaluate vs core Boundary.evaluate
 // ---------------------------------------------------------------------------
 
-// Inline satellite evaluation (matches packages/astro/src/client-directives/satellite.ts)
-function satelliteEvaluate(thresholds: number[], states: string[], value: number): string {
+// Inline adaptive evaluation (matches packages/astro/src/client-directives/adaptive.ts)
+function adaptiveEvaluate(thresholds: number[], states: string[], value: number): string {
   for (let i = thresholds.length - 1; i >= 0; i--) {
     if (value >= thresholds[i]!) return states[i]!;
   }
   return states[0] ?? '';
 }
 
-function satelliteEvaluateWithHysteresis(
+function adaptiveEvaluateWithHysteresis(
   thresholds: number[],
   states: string[],
   hysteresis: number,
@@ -137,8 +145,8 @@ function satelliteEvaluateWithHysteresis(
 ): string {
   const half = hysteresis / 2;
   const prevIdx = states.indexOf(previousState);
-  if (prevIdx === -1) return satelliteEvaluate(thresholds, states, value);
-  const rawState = satelliteEvaluate(thresholds, states, value);
+  if (prevIdx === -1) return adaptiveEvaluate(thresholds, states, value);
+  const rawState = adaptiveEvaluate(thresholds, states, value);
   const rawIdx = states.indexOf(rawState);
   if (rawIdx === prevIdx) return states[rawIdx]!;
   if (rawIdx > prevIdx) {
@@ -156,19 +164,19 @@ function satelliteEvaluateWithHysteresis(
 const satThresholds = [0, 768, 1280];
 const satStates = ['mobile', 'tablet', 'desktop'];
 
-bench.add('[COMPETE] satellite inline evaluate -- 3 thresholds', () => {
-  satelliteEvaluate(satThresholds, satStates, 800);
+bench.add('[COMPETE] adaptive inline evaluate -- 3 thresholds', () => {
+  adaptiveEvaluate(satThresholds, satStates, 800);
 });
 
-bench.add('[COMPETE] core Boundary.evaluate (for satellite) -- 3 thresholds', () => {
+bench.add('[COMPETE] core Boundary.evaluate (for adaptive) -- 3 thresholds', () => {
   Boundary.evaluate(boundary3, 800);
 });
 
-bench.add('[COMPETE] satellite inline hysteresis -- near threshold', () => {
-  satelliteEvaluateWithHysteresis(satThresholds, satStates, 50, 760, 'tablet');
+bench.add('[COMPETE] adaptive inline hysteresis -- near threshold', () => {
+  adaptiveEvaluateWithHysteresis(satThresholds, satStates, 50, 760, 'tablet');
 });
 
-bench.add('[COMPETE] core evaluateWithHysteresis (for satellite) -- near threshold', () => {
+bench.add('[COMPETE] core evaluateWithHysteresis (for adaptive) -- near threshold', () => {
   Boundary.evaluateWithHysteresis(boundaryHyst, 760, 'tablet');
 });
 
@@ -201,7 +209,7 @@ bench.add('[DIRECTIVE] stream inline parseMessage -- patch', () => {
 
 // Worker: inline boundary eval (fallback path when no SharedArrayBuffer)
 bench.add('[DIRECTIVE] worker fallback evaluate -- 3 thresholds', () => {
-  satelliteEvaluate(satThresholds, satStates, 800);
+  adaptiveEvaluate(satThresholds, satStates, 800);
 });
 
 // LLM: chunk parse overhead
@@ -218,7 +226,7 @@ bench.add('[DIRECTIVE] llm inline chunk parse -- tool-call-delta', () => {
   void data.type;
 });
 
-// Satellite: full cycle (parse boundary JSON + evaluate + string concat for setAttribute)
+// Adaptive: full cycle (parse boundary JSON + evaluate + string concat for setAttribute)
 const boundaryJSON = JSON.stringify({
   id: 'hero',
   input: 'viewport.width',
@@ -227,18 +235,22 @@ const boundaryJSON = JSON.stringify({
   hysteresis: 40,
 });
 
-bench.add('[DIRECTIVE] satellite full cycle -- parse + evaluate', () => {
+bench.add('[DIRECTIVE] adaptive full cycle -- parse + evaluate', () => {
   const b = JSON.parse(boundaryJSON);
-  satelliteEvaluate(b.thresholds, b.states, 800);
+  adaptiveEvaluate(b.thresholds, b.states, 800);
+});
+
+bench.add('[DIRECTIVE] astro parseBoundary -- validated payload', () => {
+  parseBoundary(boundaryJSON);
 });
 
 // Worker: full composite state build (inline, no Effect)
 bench.add('[DIRECTIVE] worker inline composite build -- 1 quantizer', () => {
-  const state = satelliteEvaluate(satThresholds, satStates, 800);
+  const state = adaptiveEvaluate(satThresholds, satStates, 800);
   const discrete: Record<string, string> = { layout: state };
-  const css: Record<string, string> = { '--czap-layout': state };
+  const css: Record<string, string> = { '--liteship-layout': state };
   const glsl: Record<string, number> = { u_layout: satStates.indexOf(state) };
-  const aria: Record<string, string> = { 'data-czap-layout': state };
+  const aria: Record<string, string> = { 'data-liteship-layout': state };
   void discrete;
   void css;
   void glsl;
@@ -304,18 +316,18 @@ const pairs = [
   ['[COMPETE] core Boundary.evaluate -- 5 thresholds', '[COMPETE] quantizer evaluate() -- 5 thresholds'],
   ['[COMPETE] TokenBuffer.push -- single token', '[COMPETE] SPSCRing.push -- single slot'],
   [
-    '[COMPETE] satellite inline evaluate -- 3 thresholds',
-    '[COMPETE] core Boundary.evaluate (for satellite) -- 3 thresholds',
+    '[COMPETE] adaptive inline evaluate -- 3 thresholds',
+    '[COMPETE] core Boundary.evaluate (for adaptive) -- 3 thresholds',
   ],
   [
-    '[COMPETE] satellite inline hysteresis -- near threshold',
-    '[COMPETE] core evaluateWithHysteresis (for satellite) -- near threshold',
+    '[COMPETE] adaptive inline hysteresis -- near threshold',
+    '[COMPETE] core evaluateWithHysteresis (for adaptive) -- near threshold',
   ],
   // Directive vs overhead pairs
   ['[DIRECTIVE] stream inline parseMessage -- patch', '[OVERHEAD] SSE parseMessage -- valid patch'],
   [
     '[DIRECTIVE] worker fallback evaluate -- 3 thresholds',
-    '[COMPETE] core Boundary.evaluate (for satellite) -- 3 thresholds',
+    '[COMPETE] core Boundary.evaluate (for adaptive) -- 3 thresholds',
   ],
 ];
 

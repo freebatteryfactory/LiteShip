@@ -1,0 +1,13 @@
+{
+  "_comment": "RECORDED baseline (pre-projection) of the byte-exact commands each CI parallel merge-gate lane runs in .github/workflows/ci.yml. tests/unit/meta/ci-registry-parity.test.ts asserts (a) buildCiPlan()'s projected lane commands equal this fixture and (b) every command here appears verbatim as a `run:` in ci.yml — together proving the projection reproduces the lanes byte-for-byte and the workflow was not rewritten/interpolated.",
+  "lanes": {
+    "preflight": ["pnpm run gauntlet:full -- --profile ci-parallel-preflight --skip-build"],
+    "shardedTest": ["pnpm run test:shard"],
+    "bench": ["pnpm run gauntlet:full -- --profile ci-parallel-bench --skip-build"],
+    "mutating": ["pnpm run gauntlet:full -- --profile ci-parallel-mutating --skip-build"],
+    "integration": ["pnpm run gauntlet:full -- --profile ci-parallel-integration --skip-build"],
+    "mid": ["pnpm run gauntlet:full -- --profile ci-parallel-mid --skip-build"],
+    "coverage": ["pnpm run coverage:browser", "pnpm run coverage:merge-shards"],
+    "final": ["pnpm run gauntlet:full -- --profile ci-parallel-final --skip-build"]
+  }
+}

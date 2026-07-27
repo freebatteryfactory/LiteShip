@@ -12,15 +12,15 @@
  *     policy for `text/html;profile=mcp-app` is not yet confirmed, so we ship
  *     semantic markup that renders readably without a style mechanism. A safe
  *     style channel can be added in a later cut once proven against the spec;
- *   - never routed through `@czap/web`'s `sanitizeHTML` (that is an ingest
+ *   - never routed through `@liteship/web`'s `sanitizeHTML` (that is an ingest
  *     sanitizer for live DOM, not this emitter).
  *
  * @module
  */
-import type { CapsuleCommandDescriptor } from '@czap/core';
-import type { GlossaryEntry } from '@czap/command';
-import type { ComponentCatalog } from '@czap/genui';
-import { escapeHtml } from '@czap/web';
+import type { CapsuleCommandDescriptor } from '@liteship/core';
+import type { GlossaryEntry } from '@liteship/command';
+import type { ComponentCatalog } from '@liteship/genui';
+import { escapeHtml } from '@liteship/web';
 
 /** Wrap body markup in a minimal self-contained HTML document (no external head resources). */
 function htmlDocument(title: string, body: string): string {

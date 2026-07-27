@@ -39,7 +39,7 @@
  * Composition over inheritance: each entry is a flat `_tag`-free DATA record (file +
  * capability + the site discriminator + reason); the matcher is a standalone function
  * over the union. No classes. The {@link normalizeSiteLine} normalizer is pure with NO
- * dependency (the lean engine never reaches for `@czap/core`).
+ * dependency (the lean engine never reaches for `@liteship/core`).
  *
  * @module
  */
@@ -52,8 +52,8 @@
  */
 export const SKIP_CAPABILITIES = [
   'ffmpeg-absent', // an ffmpeg + libx264 render/encode probe failed (the codec is not on PATH)
-  'wasm-absent', // the compiled Rust kernel (czap-compute.wasm) is not present in this run
-  'wasm-dist-staged', // the built @czap/core dist wasm artifact is not staged (a publish-shape probe)
+  'wasm-absent', // the compiled Rust kernel (liteship-compute.wasm) is not present in this run
+  'wasm-dist-staged', // the built @liteship/core dist wasm artifact is not staged (a publish-shape probe)
   'shared-array-buffer-absent', // SharedArrayBuffer / cross-origin isolation is unavailable
   'coverage-instrumentation', // the test is REDUNDANT (and crash-prone) under v8 coverage; the in-process unit covers the same path
   'astro-example-not-built', // the built Astro example dist is absent (the integration build runs before the e2e lane)
@@ -105,7 +105,7 @@ export interface SanctionedSkip {
 /**
  * NORMALIZE a source line into the stable SITE discriminator: collapse every run of
  * whitespace to a single space, then trim. Pure, dependency-free (the lean engine never
- * imports `@czap/core`). The same normalization is applied to BOTH the enumerated `site`
+ * imports `@liteship/core`). The same normalization is applied to BOTH the enumerated `site`
  * values below AND the live skip line at scan time, so the comparison is exact and
  * indentation/reflow-tolerant while preserving the surviving code tokens (the guard
  * expression, the runner verb) that identify the site.
@@ -127,7 +127,7 @@ export function normalizeSiteLine(line: string): string {
  * Re-derived here (NOT imported from `no-placeholder.ts`, which keeps its detector private +
  * comment-anchored): the matcher below is WHOLE-WORD for the single-token markers (so
  * `SwiPe` / `stubbornly` never false-trip) and a substring for the multi-word phrase
- * `not implemented`. Case-insensitive. The lean engine stays `@czap/core`-free — pure regex.
+ * `not implemented`. Case-insensitive. The lean engine stays `@liteship/core`-free — pure regex.
  */
 export const PLACEHOLDER_SKIP_MARKERS: readonly string[] = [
   'TODO',
@@ -226,7 +226,7 @@ function siteIsConditionalForm(site: string): boolean {
 
 /**
  * The CONDITIONALITY classification an AST detector attaches to a skip — the SOUND F2 discriminant
- * (mirrors `@czap/gauntlet`'s `SkipConditionality`). Re-declared here (the lean engine keeps the
+ * (mirrors `@liteship/gauntlet`'s `SkipConditionality`). Re-declared here (the lean engine keeps the
  * type local; the gauntlet's public `SkipConditionality` is the same string union) so the allowlist
  * matcher can accept it WITHOUT a circular import. `undefined` ⇒ the TOKEN fallback (no AST).
  */
@@ -320,9 +320,9 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
   },
   {
     file: 'tests/smoke/intro-render.test.ts',
-    site: "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+    site: "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
     capability: 'ffmpeg-absent',
-    why: 'the end-to-end intro-scene smoke render needs ffmpeg+libx264; absent the codec it skips (see `czap doctor`).',
+    why: 'the end-to-end intro-scene smoke render needs ffmpeg+libx264; absent the codec it skips (see `liteship doctor`).',
   },
   {
     file: 'tests/unit/command/error-contract.test.ts',
@@ -350,9 +350,9 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
   },
   {
     file: 'tests/unit/core/wasm-parity.test.ts',
-    site: "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+    site: "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
     capability: 'wasm-absent',
-    why: 'the WASM/TS kernel parity suite — the arm that runs when the Rust kernel IS loaded (compares czap-compute against fallbackKernels).',
+    why: 'the WASM/TS kernel parity suite — the arm that runs when the Rust kernel IS loaded (compares liteship-compute against fallbackKernels).',
   },
   {
     file: 'tests/unit/core/wasm-parity.test.ts',
@@ -362,9 +362,9 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
   },
   {
     file: 'tests/unit/core/wasm-shipping.test.ts',
-    site: "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
+    site: "it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm via the module graph', () => {",
     capability: 'wasm-dist-staged',
-    why: 'the module-graph resolution of @czap/core dist/czap-compute.wasm runs only when the built artifact is staged (a publish-shape probe).',
+    why: 'the module-graph resolution of @liteship/core dist/liteship-compute.wasm runs only when the built artifact is staged (a publish-shape probe).',
   },
   {
     file: 'tests/unit/meta/generated-bench-execution.test.ts',

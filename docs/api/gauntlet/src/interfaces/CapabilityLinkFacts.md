@@ -6,7 +6,7 @@
 
 # Interface: CapabilityLinkFacts
 
-Defined in: [gauntlet/src/capability-link-facts.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L36)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L36)
 
 The flat facts the `capabilityGateLinkGate` folds — one result per sanctioned skip site.
 
@@ -16,7 +16,7 @@ The flat facts the `capabilityGateLinkGate` folds — one result per sanctioned 
 
 > `readonly` **\_tag**: `"capability-link-facts"`
 
-Defined in: [gauntlet/src/capability-link-facts.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L37)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L37)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/capability-link-facts.ts:37](https://github.com/freeba
 
 > `readonly` **definedCapabilities**: readonly `string`[]
 
-Defined in: [gauntlet/src/capability-link-facts.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L39)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L39)
 
 The canonical capability ids the symbol table defines (export-name-derived) — for self-description.
 
@@ -34,6 +34,6 @@ The canonical capability ids the symbol table defines (export-name-derived) — 
 
 > `readonly` **results**: readonly [`CapabilityLinkResult`](CapabilityLinkResult.md)[]
 
-Defined in: [gauntlet/src/capability-link-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts#L41)
+Defined in: [gauntlet/src/facts/capability-link-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/capability-link-facts.ts#L41)
 
 Per sanctioned-skip link results.

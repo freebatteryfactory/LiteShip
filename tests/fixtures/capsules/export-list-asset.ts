@@ -8,7 +8,7 @@
  * @module
  */
 
-import { defineAsset } from '@czap/assets';
+import { defineAsset } from '@liteship/assets';
 
 const listExported = defineAsset({
   id: 'fixture-list-exported',

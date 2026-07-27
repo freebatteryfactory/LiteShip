@@ -6,7 +6,7 @@
 
 # Interface: MutantOutcome
 
-Defined in: [gauntlet/src/mutation-facts.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L74)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L109)
 
 One evaluated mutant's flat, decided outcome — the host's verdict plus the data
 the gate needs to write a self-explaining Finding. A `killed` outcome is adequate
@@ -19,9 +19,39 @@ divergence the gate reports.
 
 > `readonly` **column**: `number`
 
-Defined in: [gauntlet/src/mutation-facts.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L84)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L119)
 
 1-based column of the mutated span.
+
+***
+
+### coveringTests
+
+> `readonly` **coveringTests**: readonly `string`[]
+
+Defined in: [gauntlet/src/facts/mutation-facts.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L127)
+
+Sorted tests mapped to this site, even when an equivalent registry bypasses execution.
+
+***
+
+### equivalentJustification
+
+> `readonly` **equivalentJustification**: `string` \| `null`
+
+Defined in: [gauntlet/src/facts/mutation-facts.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L129)
+
+Human proof for an equivalent mutant; null for every executable verdict.
+
+***
+
+### equivalentJustificationDigest
+
+> `readonly` **equivalentJustificationDigest**: `string` \| `null`
+
+Defined in: [gauntlet/src/facts/mutation-facts.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L131)
+
+Content address of the mutant-bound equivalent proof; null for non-equivalents.
 
 ***
 
@@ -29,7 +59,7 @@ Defined in: [gauntlet/src/mutation-facts.ts:84](https://github.com/freebatteryfa
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L80)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L115)
 
 The repo-relative file the mutant lives in — MUST be an IR file (the gate aims its level).
 
@@ -39,7 +69,7 @@ The repo-relative file the mutant lives in — MUST be an IR file (the gate aims
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/mutation-facts.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L82)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L117)
 
 1-based line of the mutated span (the finding's location).
 
@@ -49,7 +79,7 @@ Defined in: [gauntlet/src/mutation-facts.ts:82](https://github.com/freebatteryfa
 
 > `readonly` **mutantId**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L76)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L111)
 
 The mutant's stable content address (the host's blake3 id) — traceability.
 
@@ -59,7 +89,7 @@ The mutant's stable content address (the host's blake3 id) — traceability.
 
 > `readonly` **mutatedText**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L90)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L125)
 
 The text the span was replaced with — the `original → mutated` the reader sees.
 
@@ -69,7 +99,7 @@ The text the span was replaced with — the `original → mutated` the reader se
 
 > `readonly` **operator**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L86)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L121)
 
 The mutation operator id (e.g. `conditional-boundary`) — names WHAT was mutated.
 
@@ -79,9 +109,19 @@ The mutation operator id (e.g. `conditional-boundary`) — names WHAT was mutate
 
 > `readonly` **originalText**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L88)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L123)
 
 The exact original source text of the mutated span.
+
+***
+
+### subsumedBy
+
+> `readonly` **subsumedBy**: readonly `string`[]
+
+Defined in: [gauntlet/src/facts/mutation-facts.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L133)
+
+Proven mutation-subsumption parents. Empty means no subsumption is claimed.
 
 ***
 
@@ -89,6 +129,6 @@ The exact original source text of the mutated span.
 
 > `readonly` **verdict**: [`MutantVerdictTag`](../type-aliases/MutantVerdictTag.md)
 
-Defined in: [gauntlet/src/mutation-facts.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L78)
+Defined in: [gauntlet/src/facts/mutation-facts.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/mutation-facts.ts#L113)
 
 The verdict — `killed` (adequate) / `survived` / `no-coverage` (both findings).

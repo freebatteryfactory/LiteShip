@@ -23,7 +23,7 @@ import {
   type FileNode,
   type ImportEdge,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── small in-memory IR builders ──────────────────────────────────────────────
 
@@ -166,7 +166,7 @@ describe('propagateAssuranceLevels — levels only RISE, never fall', () => {
 
 describe('propagateAssuranceLevels — external edges do not propagate', () => {
   it('an external edge (no targetFile) carries no level (the target is not ours)', () => {
-    const r = ir(['a.ts'], [externalEdge('a.ts', '@czap/core'), edge('a.ts', 'a.ts')]);
+    const r = ir(['a.ts'], [externalEdge('a.ts', '@liteship/core'), edge('a.ts', 'a.ts')]);
     const levels = propagateAssuranceLevels(r, baseFrom({ 'a.ts': 'L4' }));
     expect(levels.size).toBe(1);
     expect(levels.get('a.ts')).toBe('L4');

@@ -26,11 +26,11 @@ import { resolve, join, dirname } from 'node:path';
 import {
   buildRepoIR,
   withRepoRoot,
-  liteshipDevopsProfile,
   resolveDevopsProfile,
   type DevopsProfile,
-} from '@czap/audit';
-import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
+} from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
+import { liteshipRegexOracle } from '../../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import {
   noBareThrowGate,
   noBareThrowIRGate,
@@ -38,7 +38,7 @@ import {
   memoryContext,
   type GateContext,
   type RepoIR,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 /**
  * Build the IR the way the CLI HOST does — audit's structural AST oracle PLUS the
@@ -57,7 +57,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-ir-parity-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-ir-parity-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

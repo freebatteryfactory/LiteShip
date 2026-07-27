@@ -13,10 +13,13 @@
  *
  * This gate extends the tripwire to the shipped, consumer-facing docs: no package
  * README (including `_`-prefixed packages), the root README, or GETTING-STARTED.md
- * may carry an Effect INSTALL / version-PIN / IMPORT / runtime-USAGE instruction. The
- * patterns are deliberately instruction-shaped, so NEGATION prose — "the `effect`
- * peer was shed in v0.18", "no `effect` import here", "Effect-free" — never matches
- * and stays legal.
+ * may carry an Effect INSTALL / version-PIN / IMPORT / runtime-USAGE instruction, nor
+ * a live PEER-DEPENDENCY / beta-version-range claim (the P1 support-matrix regression:
+ * the root README asserted `Effect is currently >=4.0.0-beta.0 … dev-pins 4.0.0-beta.32`
+ * long after the runtime was shed). The patterns are deliberately instruction/claim-
+ * shaped, so NEGATION prose — "the `effect` peer was shed in v0.18", "no `effect` import
+ * here", "Effect-free", "the `effect` runtime … was fully removed" — never matches and
+ * stays legal (removal prose carries no concrete prerelease pin).
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -51,6 +54,14 @@ const RESIDUE_PATTERNS: readonly { readonly label: string; readonly re: RegExp }
   { label: 'effect@ version pin', re: /\beffect@(?:beta|latest|next|\d)/ },
   { label: "import from 'effect'", re: /from ['"]effect['"]/ },
   { label: 'Effect runtime usage', re: /\bEffect\.(?:runSync|runPromise|gen|scoped|all|succeed|fail|promise|sync|forEach)\s*\(/ },
+  {
+    // Live peer-dependency / version-range claim: Effect adjacent to a concrete
+    // prerelease pin (`4.0.0-beta.0`, `4.0.0-beta.32`) on the same line, in either
+    // order. Removal prose ("Effect was fully removed", "Effect-free") carries no
+    // such pin and stays legal.
+    label: 'effect peer-dependency / beta-version-range claim',
+    re: /\beffect\b[^\n]*?\d+\.\d+\.\d+-(?:beta|alpha|rc|next)|\d+\.\d+\.\d+-(?:beta|alpha|rc|next)[^\n]*?\beffect\b/i,
+  },
 ];
 
 describe('shipped docs are Effect-free (consumer install/usage residue gate)', () => {

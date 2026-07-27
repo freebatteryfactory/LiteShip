@@ -409,7 +409,7 @@ Format: `S<wave>.<n>` — scar → root class → disposition (guard, status).
 
 - **S5.4 — the ceremony plan named an owner file that never landed
   (`cli/lib/run-effect.ts`).** The master-plan ceremony wave (Wave 5) scheduled
-  `packages/cli/src/lib/run-effect.ts` as the interim `runEffectResult` owner, to be
+  `packages/cli/src/internal/run-effect.ts` as the interim `runEffectResult` owner, to be
   "deleted when ShipCapsule.make/decode go Promise-first." Wave 5 instead **inlined**
   the Effect→Result adapters directly into `cli/src/commands/ship.ts`,
   `ship-verify.ts`, and `lib/supply-chain.ts` — the extract-an-owner step was skipped

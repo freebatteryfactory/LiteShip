@@ -8,4 +8,6 @@
 
 > `const` **InvalidRequest**: `-32600`
 
-Defined in: [mcp-server/src/jsonrpc.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L66)
+Defined in: [mcp-server/src/jsonrpc.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L68)
+
+JSON-RPC standard invalid-request code.

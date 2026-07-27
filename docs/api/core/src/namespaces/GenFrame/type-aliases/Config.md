@@ -8,6 +8,6 @@
 
 > **Config** = `GenFrameConfig`
 
-Defined in: [core/src/gen-frame.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L245)
+Defined in: [core/src/media/gen-frame.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L246)
 
 Configuration accepted by [GenFrame.make](../../../variables/GenFrame.md#make).

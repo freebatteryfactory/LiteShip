@@ -1,14 +1,14 @@
-import type { ContentAddress, Receipt, UIFrame } from '@czap/core';
-import { Diagnostics } from '@czap/core';
-import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
+import type { AsyncOwnedResource, ContentAddress, Receipt, UIFrame } from '@liteship/core';
+import { Diagnostics, Lifetime } from '@liteship/core';
+import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '@liteship/genui';
 import {
   LLMChunkNormalization,
   createHtmlFragment,
-  dispatchCzapEvent,
+  dispatchLiteshipEvent,
   type HtmlPolicy,
   type LLMChunk,
   type ToolCallAccumulator,
-} from '@czap/web';
+} from '@liteship/web';
 import { createLLMRenderPipeline, type LLMRenderPipeline } from './llm-render-pipeline.js';
 import { createLLMReceiptTracker, type LLMReceiptTracker } from './llm-receipt-tracker.js';
 import type { RuntimeSessionState } from './runtime-session.js';
@@ -22,7 +22,7 @@ type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
  * strategy.
  */
 export interface LLMSessionConfig {
-  /** Host element (directive root). Receives `czap:llm-*` events. */
+  /** Host element (directive root). Receives `liteship:llm-*` events. */
   readonly element: HTMLElement;
   /** Text-sink element (typically a child of `element`). */
   readonly target: HTMLElement;
@@ -41,9 +41,9 @@ export interface LLMSessionConfig {
 /**
  * Controller surface of an LLM session. Tracks runtime state, ingests
  * chunks from a stream adapter, and releases resources on
- * {@link LLMSessionShape.dispose}.
+ * {@link LLMSession.dispose}.
  */
-export interface LLMSessionShape {
+export interface LLMSession extends AsyncOwnedResource {
   /** Current session state (`idle` / `active` / `reconnecting` / `disposed`). */
   readonly state: RuntimeSessionState;
   /** Transition from idle to active. */
@@ -58,8 +58,6 @@ export interface LLMSessionShape {
   rememberEnvelope(envelope: Receipt.Envelope): void;
   /** Reset accumulated state; optionally re-bind the target element. */
   reset(target?: HTMLElement): void;
-  /** Terminate the session and release pooled runtimes. */
-  dispose(): void;
 }
 
 /**
@@ -130,7 +128,7 @@ function writeHtml(target: HTMLElement, html: string, htmlPolicy: HtmlPolicy, al
 
 /**
  * Build an {@link LLMSessionHost} that writes text/frames directly to
- * the DOM and dispatches `czap:llm-*` custom events on `element`.
+ * the DOM and dispatches `liteship:llm-*` custom events on `element`.
  * Default host used by {@link createLLMSession}.
  */
 export function createDOMLLMSessionHost(
@@ -190,23 +188,23 @@ export function createDOMLLMSessionHost(
     },
 
     emitToken(text, accumulated) {
-      dispatchCzapEvent(element, 'czap:llm-token', { text, accumulated });
+      dispatchLiteshipEvent(element, 'liteship:llm-token', { text, accumulated });
     },
 
     emitFrame(frame) {
-      dispatchCzapEvent(element, 'czap:llm-frame', frame);
+      dispatchLiteshipEvent(element, 'liteship:llm-frame', frame);
     },
 
     emitToolStart(name) {
-      dispatchCzapEvent(element, 'czap:llm-tool-start', { name });
+      dispatchLiteshipEvent(element, 'liteship:llm-tool-start', { name });
     },
 
     emitToolEnd(name, args) {
-      dispatchCzapEvent(element, 'czap:llm-tool-end', { name, args });
+      dispatchLiteshipEvent(element, 'liteship:llm-tool-end', { name, args });
     },
 
     emitDone(accumulated) {
-      dispatchCzapEvent(element, 'czap:llm-done', { accumulated });
+      dispatchLiteshipEvent(element, 'liteship:llm-done', { accumulated });
     },
 
     renderGeneratedUI(node, renderId) {
@@ -221,22 +219,22 @@ export function createDOMLLMSessionHost(
       if (!result.ok) {
         // Surface the validation rejection through the existing Diagnostics
         // channel instead of dropping a bare boolean (genui itself stays
-        // @czap/core-free; the astro layer does the emission). The host contract
+        // @liteship/core-free; the astro layer does the emission). The host contract
         // stays boolean.
-        Diagnostics.warnOnce({
-          source: 'czap/astro.llm-session',
-          code: 'genui-render-rejected',
+        Diagnostics.warnOnceRegistered({
+          source: 'liteship/astro.llm-session',
+          code: 'astro/llm-session/genui-render-rejected',
           message: `Generated UI tree rejected before render: ${result.error.message}`,
           detail: { code: result.error.code, path: result.error.path, renderId: String(renderId) },
         });
         return false;
       }
-      currentTarget.dataset.czapGenuiRenderHash = String(renderId);
+      currentTarget.dataset.liteshipGenuiRenderHash = String(renderId);
       return true;
     },
 
     emitGeneratedUI(node, renderId) {
-      dispatchCzapEvent(element, 'czap:llm-genui', { node, renderHash: renderId });
+      dispatchLiteshipEvent(element, 'liteship:llm-genui', { node, renderHash: renderId });
     },
   };
 }
@@ -370,7 +368,8 @@ export function createSupportLLMTokenBoundaryHost(
   };
 }
 
-class LLMSessionController implements LLMSessionShape {
+class LLMSessionController implements LLMSession {
+  readonly lifetime = Lifetime.make();
   private runtimeState: RuntimeSessionState = 'idle';
   private currentTarget: HTMLElement | undefined;
   private toolCallBuffer: ToolCallAccumulator = null;
@@ -386,6 +385,7 @@ class LLMSessionController implements LLMSessionShape {
     this.currentTarget = config.target;
     this.pipeline = createLLMRenderPipeline({ mode: config.mode, getDeviceTier: config.getDeviceTier });
     this.receiptTracker = createLLMReceiptTracker();
+    this.lifetime.add(() => this.releaseOwnedState());
   }
 
   get state(): RuntimeSessionState {
@@ -521,14 +521,39 @@ class LLMSessionController implements LLMSessionShape {
     this.resetSession(target);
   }
 
-  dispose(): void {
-    this.resetSession(this.currentTarget);
-    this.pipeline.releaseRuntime();
+  dispose(): Promise<void> {
+    return this.lifetime.dispose();
+  }
+
+  [Symbol.asyncDispose](): Promise<void> {
+    return this.dispose();
+  }
+
+  private releaseOwnedState(): void {
+    // Claim disposal before crossing any host boundary. A hostile host callback
+    // cannot leave the session callable or cause a second release attempt.
     this.runtimeState = 'disposed';
+
+    const errors: unknown[] = [];
+    const attempt = (operation: () => void): void => {
+      try {
+        operation();
+      } catch (error) {
+        errors.push(error);
+      }
+    };
+    this.toolCallBuffer = null;
+    attempt(() => this.host.setTarget(this.currentTarget));
+    attempt(() => this.pipeline.resetPipelineState());
+    attempt(() => this.receiptTracker.reset());
+    attempt(() => this.pipeline.releaseRuntime());
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'LLM session disposal failed after attempting every teardown step');
+    }
   }
 
   private isDisposed(): boolean {
-    return this.runtimeState === 'disposed';
+    return this.lifetime.disposed;
   }
 
   private resetSession(target = this.currentTarget): void {
@@ -541,7 +566,7 @@ class LLMSessionController implements LLMSessionShape {
 }
 
 /**
- * Build an {@link LLMSessionShape} backed by a caller-supplied
+ * Build an {@link LLMSession} backed by a caller-supplied
  * {@link LLMSessionHost}. Tests and bench harnesses prefer this
  * variant over {@link createLLMSession} so they can observe output
  * without a DOM.
@@ -549,7 +574,7 @@ class LLMSessionController implements LLMSessionShape {
 export function createLLMSessionWithHost(
   config: Pick<LLMSessionConfig, 'mode' | 'getDeviceTier' | 'genuiCatalog'> & { readonly target?: HTMLElement },
   host: LLMSessionHost,
-): LLMSessionShape {
+): LLMSession {
   return new LLMSessionController(config, host);
 }
 
@@ -558,7 +583,7 @@ export function createLLMSessionWithHost(
  * Equivalent to composing {@link createDOMLLMSessionHost} with
  * {@link createLLMSessionWithHost}.
  */
-export function createLLMSession(config: LLMSessionConfig): LLMSessionShape {
+export function createLLMSession(config: LLMSessionConfig): LLMSession {
   const domHost = createDOMLLMSessionHost(config.element, config.target, {
     htmlPolicy: config.htmlPolicy,
     allowTrustedHtml: config.allowTrustedHtml,

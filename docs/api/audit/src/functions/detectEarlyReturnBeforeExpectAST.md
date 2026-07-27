@@ -8,7 +8,9 @@
 
 > **detectEarlyReturnBeforeExpectAST**(`source`): readonly [`EarlyReturnMatch`](../interfaces/EarlyReturnMatch.md)[]
 
-Defined in: [audit/src/skip-detect-ast.ts:1302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1302)
+Defined in: [audit/src/skip-detect-ast.ts:1303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1303)
+
+Find test branches that can return before reaching an assertion.
 
 ## Parameters
 

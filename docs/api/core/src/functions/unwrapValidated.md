@@ -8,7 +8,7 @@
 
 > **unwrapValidated**\<`T`\>(`proposal`): `T`
 
-Defined in: [core/src/validated-output.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/validated-output.ts#L199)
+Defined in: [core/src/evidence/validated-output.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/validated-output.ts#L199)
 
 RESOLVED (open question #1 — the generated-UI apply seam). The graph-patch
 target has a host-authorized framework step (`AICast.applyValidatedPatch`): the

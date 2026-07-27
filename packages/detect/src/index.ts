@@ -1,11 +1,11 @@
 /**
- * `@czap/detect` — **LiteShip** capability probes: device signals mapped to
- * the `CapTier` lattice and motion/design tiers in `@czap/core`.
+ * `@liteship/detect` — **LiteShip** capability probes: device signals mapped to
+ * the `CapTier` lattice and motion/design tiers in `@liteship/core`.
  *
  * Probes browser APIs for GPU tier, CPU cores, memory, input modality,
  * motion preferences, color scheme, viewport dimensions, DPR, and
  * network connection quality. Maps detected capabilities to the
- * `CapTier` lattice from `@czap/core`.
+ * `CapTier` lattice from `@liteship/core`.
  *
  * @module
  */
@@ -26,8 +26,26 @@ export {
   designTierFromCapabilities,
   motionTierFromCapabilities,
 } from './tiers.js';
-export { CAP_AXES, capAxisAttr } from './cap-axes.js';
-export type { CapAxis } from './cap-axes.js';
+export {
+  CAP_AXES,
+  CAPABILITY_EVIDENCE_INPUTS,
+  capAxisAttr,
+  projectCapabilityAxisValues,
+  projectCapabilityTierEvidence,
+  requireObserved,
+} from './cap-axes.js';
+export type {
+  CapAxis,
+  CapabilityAxisEvidence,
+  CapabilityAxisValues,
+  CapabilityEvidenceInput,
+  CapabilityEvidenceInputs,
+  CapabilityEvidenceSupport,
+  CapabilityInputEvidence,
+  CapabilityTierEvidence,
+  CapabilityTierProjection,
+  ObservedCapabilityAxisValues,
+} from './cap-axes.js';
 export { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
 export {
   emitDetectUpgradeScript,

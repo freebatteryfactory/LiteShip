@@ -6,9 +6,9 @@
 
 # Function: TransitionSystem()
 
-> **TransitionSystem**(`frameIndex`): `SystemShape`
+> **TransitionSystem**(`frameIndex`): `System`
 
-Defined in: [scene/src/systems/transition.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/transition.ts#L18)
+Defined in: [scene/src/systems/transition.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/transition.ts#L23)
 
 Build a TransitionSystem keyed to a frame index.
 
@@ -16,8 +16,8 @@ Build a TransitionSystem keyed to a frame index.
 
 ### frameIndex
 
-`number`
+`FrameSource`
 
 ## Returns
 
-`SystemShape`
+`System`

@@ -8,7 +8,7 @@
 
 > **resolveScrollTimelineInitialState**(`intent`, `opts`): `"before"` \| `"after"`
 
-Defined in: [core/src/scroll-timeline.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scroll-timeline.ts#L252)
+Defined in: [core/src/motion/scroll-timeline.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L252)
 
 Resolve the discrete state for SSR / reduced-motion first paint (#126).
 When `reducedMotion: 'settle'` and the user prefers reduced motion, settle

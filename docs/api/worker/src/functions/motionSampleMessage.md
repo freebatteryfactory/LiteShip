@@ -18,7 +18,7 @@ safe envelope. A worker's `message` handler calls this and `self.postMessage(msg
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### t
 

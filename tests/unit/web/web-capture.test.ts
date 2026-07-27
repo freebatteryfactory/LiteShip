@@ -1,6 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const mediabunnyState = vi.hoisted(() => ({
+import { renderToCanvas } from '../../../packages/web/src/capture/render.js';
+import * as MediabunnyBridge from '../../../packages/web/src/capture/mediabunny.js';
+import { createWebCodecsCapture } from '../../../packages/web/src/capture/webcodecs.js';
+
+// The `./mediabunny.js` shim re-exports the third-party mediabunny muxer classes.
+// Rather than interaction-mock our own wrapper, we script the muxer boundary with
+// fake classes and inject them through the implementation's encoder seam. The
+// public createWebCodecsCapture type intentionally exposes only authored options;
+// this source-level test capability must not pull Mediabunny declarations into
+// the package's public type graph.
+const mediabunnyState = {
   codecNames: [] as string[],
   packets: [] as Array<{ packet: unknown; metadata?: unknown }>,
   tracks: [] as Array<{ source: unknown; options: Record<string, unknown> }>,
@@ -8,67 +18,85 @@ const mediabunnyState = vi.hoisted(() => ({
   packetInputs: [] as unknown[],
   startCalls: 0,
   finalizeCalls: 0,
+  cancelCalls: 0,
+  cancelError: null as Error | null,
   buffer: new Uint8Array([1, 2, 3, 4]) as Uint8Array | null,
-}));
+};
 
-vi.mock('../../../packages/web/src/capture/mediabunny.js', () => {
-  class BufferTarget {
-    get buffer(): Uint8Array | null {
-      return mediabunnyState.buffer;
-    }
+class BufferTargetFake {
+  get buffer(): Uint8Array | null {
+    return mediabunnyState.buffer;
+  }
+}
+
+class EncodedVideoPacketSourceFake {
+  constructor(codec: string) {
+    mediabunnyState.codecNames.push(codec);
   }
 
-  class EncodedVideoPacketSource {
-    constructor(codec: string) {
-      mediabunnyState.codecNames.push(codec);
-    }
+  async add(packet: unknown, metadata?: unknown): Promise<void> {
+    mediabunnyState.packets.push({ packet, metadata });
+  }
+}
 
-    async add(packet: unknown, metadata?: unknown): Promise<void> {
-      mediabunnyState.packets.push({ packet, metadata });
-    }
+class OutputFake {
+  state = 'pending';
+
+  constructor(_config: Record<string, unknown>) {}
+
+  addVideoTrack(source: unknown, options: Record<string, unknown>): void {
+    mediabunnyState.tracks.push({ source, options });
   }
 
-  class Output {
-    constructor(_config: Record<string, unknown>) {}
-
-    addVideoTrack(source: unknown, options: Record<string, unknown>): void {
-      mediabunnyState.tracks.push({ source, options });
-    }
-
-    async start(): Promise<void> {
-      mediabunnyState.startCalls++;
-    }
-
-    async finalize(): Promise<void> {
-      mediabunnyState.finalizeCalls++;
-    }
+  async start(): Promise<void> {
+    mediabunnyState.startCalls++;
+    this.state = 'started';
   }
 
-  class Mp4OutputFormat {
-    constructor(options: Record<string, unknown>) {
-      mediabunnyState.formatOptions.push(options);
-    }
+  async finalize(): Promise<void> {
+    mediabunnyState.finalizeCalls++;
+    this.state = 'finalized';
   }
 
-  const EncodedPacket = {
-    fromEncodedChunk(chunk: unknown) {
-      mediabunnyState.packetInputs.push(chunk);
-      return { chunk };
-    },
-  };
+  async cancel(): Promise<void> {
+    mediabunnyState.cancelCalls++;
+    if (mediabunnyState.cancelError) throw mediabunnyState.cancelError;
+    this.state = 'canceled';
+  }
+}
 
-  return {
-    BufferTarget,
-    EncodedPacket,
-    EncodedVideoPacketSource,
-    Mp4OutputFormat,
-    Output,
-  };
-});
+class Mp4OutputFormatFake {
+  constructor(options: Record<string, unknown>) {
+    mediabunnyState.formatOptions.push(options);
+  }
+}
 
-import { renderToCanvas } from '../../../packages/web/src/capture/render.js';
-import * as MediabunnyBridge from '../../../packages/web/src/capture/mediabunny.js';
-import { WebCodecsCapture } from '../../../packages/web/src/capture/webcodecs.js';
+const EncodedPacketFake = {
+  fromEncodedChunk(chunk: unknown) {
+    mediabunnyState.packetInputs.push(chunk);
+    return { chunk };
+  },
+};
+
+/** The scripted mediabunny encoder bundle injected into `createWebCodecsCapture`. */
+const mediabunny = {
+  BufferTarget: BufferTargetFake,
+  EncodedPacket: EncodedPacketFake,
+  EncodedVideoPacketSource: EncodedVideoPacketSourceFake,
+  Mp4OutputFormat: Mp4OutputFormatFake,
+  Output: OutputFake,
+};
+
+const makeWebCodecsCapture = createWebCodecsCapture as unknown as (
+  options: Parameters<typeof createWebCodecsCapture>[0],
+  codecs: unknown,
+) => ReturnType<typeof createWebCodecsCapture>;
+
+if (false) {
+  // @ts-expect-error The third-party injection seam is source-test capability,
+  // not part of the public createWebCodecsCapture factory contract.
+  createWebCodecsCapture(undefined, mediabunny);
+}
 
 type VideoEncoderInit = {
   output: (chunk: unknown, metadata?: unknown) => void;
@@ -190,6 +218,8 @@ describe('web capture runtime', () => {
     mediabunnyState.packetInputs.length = 0;
     mediabunnyState.startCalls = 0;
     mediabunnyState.finalizeCalls = 0;
+    mediabunnyState.cancelCalls = 0;
+    mediabunnyState.cancelError = null;
     mediabunnyState.buffer = new Uint8Array([1, 2, 3, 4]);
 
     encoderState.instances.length = 0;
@@ -210,6 +240,13 @@ describe('web capture runtime', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  test('the public factory allocates an explicitly disposable inert capture', async () => {
+    const capture = createWebCodecsCapture();
+    expect(capture.lifetime.disposed).toBe(false);
+    await capture.dispose();
+    expect(capture.lifetime.disposed).toBe(true);
   });
 
   test('renders default CSS-derived fills on OffscreenCanvas and HTMLCanvasElement targets', () => {
@@ -235,8 +272,8 @@ describe('web capture runtime', () => {
         blend: {},
         outputs: {
           css: {
-            '--czap-background': 'black',
-            '--czap-foreground': 'white',
+            '--liteship-background': 'black',
+            '--liteship-foreground': 'white',
           },
           glsl: {},
           aria: {},
@@ -250,8 +287,8 @@ describe('web capture runtime', () => {
         blend: {},
         outputs: {
           css: {
-            '--czap-bg': 'navy',
-            '--czap-color': 'gold',
+            '--liteship-bg': 'navy',
+            '--liteship-color': 'gold',
           },
           glsl: {},
           aria: {},
@@ -289,7 +326,7 @@ describe('web capture runtime', () => {
   });
 
   test('covers support probing, timestamp normalization, packet draining, and codec mapping', async () => {
-    const avcCapture = WebCodecsCapture.make();
+    const avcCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       avcCapture.init({
         width: 641,
@@ -297,13 +334,18 @@ describe('web capture runtime', () => {
         fps: 30,
       } as never),
       // Teaching contract: codec family, the offending size, and both ways out.
-    ).rejects.toThrow(/\(H\.264\/HEVC\) requires even width and height\. Got 641x480 — round to 640x480, or use a VP9\/AV1 codec string/);
+    ).rejects.toThrow(
+      /\(H\.264\/HEVC\) requires even width and height\. Got 641x480 — round to 640x480, or use a VP9\/AV1 codec string/,
+    );
 
-    const capture = WebCodecsCapture.make({
-      codec: 'vp09.00.10.08',
-      bitrate: 2_000_000,
-      keyframeInterval: 2,
-    });
+    const capture = makeWebCodecsCapture(
+      {
+        codec: 'vp09.00.10.08',
+        bitrate: 2_000_000,
+        keyframeInterval: 2,
+      },
+      mediabunny,
+    );
 
     await capture.init({
       width: 641,
@@ -367,9 +409,12 @@ describe('web capture runtime', () => {
   });
 
   test('rejects unsupported codec mappings and support probe failures', async () => {
-    const unsupportedCapture = WebCodecsCapture.make({
-      codec: 'weird-codec',
-    });
+    const unsupportedCapture = makeWebCodecsCapture(
+      {
+        codec: 'weird-codec',
+      },
+      mediabunny,
+    );
     await expect(
       unsupportedCapture.init({
         width: 640,
@@ -379,7 +424,7 @@ describe('web capture runtime', () => {
     ).rejects.toThrow('Unsupported WebCodecs codec');
 
     encoderState.supportResult = false;
-    const unsupportedConfigCapture = WebCodecsCapture.make();
+    const unsupportedConfigCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       unsupportedConfigCapture.init({
         width: 640,
@@ -390,7 +435,7 @@ describe('web capture runtime', () => {
 
     encoderState.supportResult = true;
     encoderState.supportError = new Error('probe boom');
-    const probeErrorCapture = WebCodecsCapture.make();
+    const probeErrorCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       probeErrorCapture.init({
         width: 640,
@@ -402,9 +447,12 @@ describe('web capture runtime', () => {
 
   test('maps HEVC and AV1 codec aliases and stringifies non-Error support probe failures', async () => {
     encoderState.supportError = 'probe string boom' as never;
-    const stringProbeCapture = WebCodecsCapture.make({
-      codec: 'hev1.1.6.L93.B0',
-    });
+    const stringProbeCapture = makeWebCodecsCapture(
+      {
+        codec: 'hev1.1.6.L93.B0',
+      },
+      mediabunny,
+    );
     await expect(
       stringProbeCapture.init({
         width: 640,
@@ -415,9 +463,12 @@ describe('web capture runtime', () => {
 
     encoderState.supportError = null;
 
-    const hevcCapture = WebCodecsCapture.make({
-      codec: 'hvc1.1.6.L93.B0',
-    });
+    const hevcCapture = makeWebCodecsCapture(
+      {
+        codec: 'hvc1.1.6.L93.B0',
+      },
+      mediabunny,
+    );
     await hevcCapture.init({
       width: 640,
       height: 480,
@@ -426,9 +477,12 @@ describe('web capture runtime', () => {
     await hevcCapture.capture({ bitmap: { close() {} }, timestamp: 0 } as never);
     await hevcCapture.finalize();
 
-    const av1Capture = WebCodecsCapture.make({
-      codec: 'av1',
-    });
+    const av1Capture = makeWebCodecsCapture(
+      {
+        codec: 'av1',
+      },
+      mediabunny,
+    );
     await av1Capture.init({
       width: 641,
       height: 481,
@@ -444,7 +498,7 @@ describe('web capture runtime', () => {
     const originalVideoEncoder = VideoEncoderMock as unknown as typeof VideoEncoder;
     vi.stubGlobal('VideoEncoder', undefined);
 
-    const unavailableCapture = WebCodecsCapture.make();
+    const unavailableCapture = makeWebCodecsCapture(undefined, mediabunny);
     await expect(
       unavailableCapture.init({
         width: 640,
@@ -462,9 +516,12 @@ describe('web capture runtime', () => {
         value: undefined,
       });
 
-      const capture = WebCodecsCapture.make({
-        codec: 'vp09.00.10.08',
-      });
+      const capture = makeWebCodecsCapture(
+        {
+          codec: 'vp09.00.10.08',
+        },
+        mediabunny,
+      );
       await capture.init({
         width: 641,
         height: 481,
@@ -488,7 +545,7 @@ describe('web capture runtime', () => {
   });
 
   test('surfaces encoder errors, missing packets, and empty muxer output deterministically', async () => {
-    const errorCapture = WebCodecsCapture.make();
+    const errorCapture = makeWebCodecsCapture(undefined, mediabunny);
     await errorCapture.init({
       width: 640,
       height: 480,
@@ -505,7 +562,7 @@ describe('web capture runtime', () => {
 
     encoderState.pendingError = null;
     encoderState.emitChunks = false;
-    const noPacketsCapture = WebCodecsCapture.make();
+    const noPacketsCapture = makeWebCodecsCapture(undefined, mediabunny);
     await noPacketsCapture.init({
       width: 640,
       height: 480,
@@ -520,7 +577,7 @@ describe('web capture runtime', () => {
 
     encoderState.emitChunks = true;
     mediabunnyState.buffer = null;
-    const noOutputCapture = WebCodecsCapture.make();
+    const noOutputCapture = makeWebCodecsCapture(undefined, mediabunny);
     await noOutputCapture.init({
       width: 640,
       height: 480,
@@ -535,9 +592,12 @@ describe('web capture runtime', () => {
   });
 
   test('rejects capture and finalize before initialization and rejects empty finalize runs', async () => {
-    const capture = WebCodecsCapture.make({
-      codec: 'vp09.00.10.08',
-    });
+    const capture = makeWebCodecsCapture(
+      {
+        codec: 'vp09.00.10.08',
+      },
+      mediabunny,
+    );
 
     await expect(
       capture.capture({
@@ -546,7 +606,8 @@ describe('web capture runtime', () => {
         bitmap: {} as never,
       }),
     ).rejects.toThrow('FrameCapture not initialized');
-    await expect(capture.finalize()).rejects.toThrow('FrameCapture not initialized');
+    const uninitializedFinalize = makeWebCodecsCapture(undefined, mediabunny);
+    await expect(uninitializedFinalize.finalize()).rejects.toThrow('FrameCapture not initialized');
 
     await capture.init({
       width: 640,
@@ -554,6 +615,51 @@ describe('web capture runtime', () => {
       fps: 30,
     } as never);
     await expect(capture.finalize()).rejects.toThrow('FrameCapture has no frames to finalize');
+  });
+
+  test('explicit disposal is idempotent, closes the encoder, cancels the muxer, and makes the capture inert', async () => {
+    const capture = makeWebCodecsCapture(undefined, mediabunny);
+    await capture.init({ width: 640, height: 480, fps: 30 } as never);
+    const encoder = encoderState.instances[0]!;
+
+    const first = capture.dispose();
+    const second = capture.dispose();
+    expect(second).toBe(first);
+    await first;
+
+    expect(encoder.close).toHaveBeenCalledOnce();
+    expect(mediabunnyState.cancelCalls).toBe(1);
+    await expect(capture.init({ width: 640, height: 480, fps: 30 } as never)).rejects.toThrow(
+      'FrameCapture is disposed',
+    );
+    await expect(capture.capture({ bitmap: {} as never, timestamp: 0 } as never)).rejects.toThrow(
+      'FrameCapture not initialized',
+    );
+    await expect(capture.finalize()).rejects.toThrow('FrameCapture not initialized');
+  });
+
+  test('disposal attempts encoder and muxer cleanup and aggregates both failures', async () => {
+    const capture = makeWebCodecsCapture(undefined, mediabunny);
+    await capture.init({ width: 640, height: 480, fps: 30 } as never);
+    const encoder = encoderState.instances[0]!;
+    encoder.close.mockImplementation(() => {
+      throw new Error('encoder close failed');
+    });
+    mediabunnyState.cancelError = new Error('muxer cancel failed');
+
+    await expect(capture.dispose()).rejects.toMatchObject({
+      _tag: 'LifetimeDisposeError',
+      causes: [
+        expect.objectContaining({
+          errors: [
+            expect.objectContaining({ message: 'encoder close failed' }),
+            expect.objectContaining({ message: 'muxer cancel failed' }),
+          ],
+        }),
+      ],
+    });
+    expect(encoder.close).toHaveBeenCalledOnce();
+    expect(mediabunnyState.cancelCalls).toBe(1);
   });
 });
 
@@ -590,6 +696,7 @@ describe('captureVideo pipeline', () => {
       init: initSpy,
       capture: captureSpy,
       finalize: finalizeSpy,
+      dispose: vi.fn(async () => {}),
     };
 
     // Mock OffscreenCanvas globally for this test
@@ -646,6 +753,7 @@ describe('captureVideo pipeline', () => {
       init: initSpy,
       capture: captureSpy,
       finalize: finalizeSpy,
+      dispose: vi.fn(async () => {}),
     };
 
     const originalOffscreenCanvas = globalThis.OffscreenCanvas;
@@ -727,6 +835,7 @@ describe('captureVideo pipeline', () => {
       init: initSpy,
       capture: vi.fn(),
       finalize: finalizeSpy,
+      dispose: vi.fn(async () => {}),
     };
 
     const originalOffscreenCanvas = globalThis.OffscreenCanvas;
@@ -768,6 +877,7 @@ describe('captureVideo pipeline', () => {
       init: vi.fn(async () => {}),
       capture: vi.fn(),
       finalize: vi.fn(),
+      dispose: vi.fn(async () => {}),
     };
 
     const originalOffscreenCanvas = globalThis.OffscreenCanvas;
@@ -783,12 +893,9 @@ describe('captureVideo pipeline', () => {
       })),
     };
 
-    vi.stubGlobal(
-      'document',
-      {
-        createElement: vi.fn(() => mockCanvas),
-      } as unknown as Document,
-    );
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => mockCanvas),
+    } as unknown as Document);
     delete (globalThis as Record<string, unknown>).OffscreenCanvas;
     delete (globalThis as Record<string, unknown>).createImageBitmap;
 
@@ -815,5 +922,74 @@ describe('captureVideo pipeline', () => {
         delete (globalThis as Record<string, unknown>).createImageBitmap;
       }
     }
+  });
+
+  test.each([
+    ['init', 'init failed'],
+    ['capture', 'capture failed'],
+    ['finalize', 'finalize failed'],
+  ] as const)('disposes the owned capture when %s fails', async (failedStep, message) => {
+    const { captureVideo } = await import('../../../packages/web/src/capture/pipeline.js');
+    const originalOffscreenCanvas = globalThis.OffscreenCanvas;
+    globalThis.OffscreenCanvas = class {
+      constructor(
+        readonly width: number,
+        readonly height: number,
+      ) {}
+      getContext() {
+        return { clearRect() {}, fillRect() {}, fillStyle: '' };
+      }
+    } as never;
+    const renderer = {
+      config: { width: 16, height: 16, fps: 30 },
+      async *frames() {
+        yield { frame: 0, timestamp: 0, state: { outputs: { css: {} } } };
+      },
+    };
+    const dispose = vi.fn(async () => {});
+    const mockCapture = {
+      init: vi.fn(async () => {
+        if (failedStep === 'init') throw new Error(message);
+      }),
+      capture: vi.fn(async () => {
+        if (failedStep === 'capture') throw new Error(message);
+      }),
+      finalize: vi.fn(async () => {
+        if (failedStep === 'finalize') throw new Error(message);
+        return { codec: 'mock', frames: 1, durationMs: 1, blob: new Blob() };
+      }),
+      dispose,
+    };
+
+    try {
+      await expect(captureVideo(renderer as never, mockCapture as never)).rejects.toThrow(message);
+      expect(dispose).toHaveBeenCalledOnce();
+    } finally {
+      if (originalOffscreenCanvas) globalThis.OffscreenCanvas = originalOffscreenCanvas;
+      else delete (globalThis as Record<string, unknown>).OffscreenCanvas;
+    }
+  });
+
+  test('preserves the operation and disposal failures in one aggregate', async () => {
+    const { captureVideo } = await import('../../../packages/web/src/capture/pipeline.js');
+    const primary = new Error('init failed');
+    const teardown = new Error('dispose failed');
+    const mockCapture = {
+      init: vi.fn(async () => {
+        throw primary;
+      }),
+      capture: vi.fn(),
+      finalize: vi.fn(),
+      dispose: vi.fn(async () => {
+        throw teardown;
+      }),
+    };
+    const renderer = { config: { width: 1, height: 1, fps: 1 }, frames: vi.fn() };
+
+    await expect(captureVideo(renderer as never, mockCapture as never)).rejects.toMatchObject({
+      errors: [primary, teardown],
+      message: 'captureVideo failed and its FrameCapture also failed during disposal',
+    });
+    expect(mockCapture.dispose).toHaveBeenCalledOnce();
   });
 });

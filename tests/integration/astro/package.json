@@ -1,9 +1,10 @@
 {
-  "name": "czap-astro-integration-test",
+  "name": "liteship-astro-integration-test",
   "private": true,
   "type": "module",
   "dependencies": {
-    "astro": "^7.0.0",
-    "@czap/astro": "workspace:*"
+    "astro": "^7.1.0",
+    "@liteship/astro": "workspace:*",
+    "liteship": "workspace:*"
   }
 }

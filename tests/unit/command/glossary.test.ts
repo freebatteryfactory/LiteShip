@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { glossaryCommand, GLOSSARY_ENTRIES } from '@czap/command';
+import { glossaryCommand, GLOSSARY_ENTRIES } from '@liteship/command';
 
-describe('@czap/command glossary command', () => {
+describe('@liteship/command glossary command', () => {
   it('returns the full catalog as a structured ok result when no term is given', async () => {
     const result = await glossaryCommand.handler({ name: 'glossary', args: {} }, {});
     expect(result.status).toBe('ok');

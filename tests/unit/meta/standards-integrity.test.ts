@@ -1,3 +1,4 @@
+// PROVES-CHECK: check/standards-gate
 /**
  * The AGENT-SAFETY META-GAUNTLET (the "raccoon rule"), phase A — the standards
  * backstop's BITE proofs + the committed-snapshot drift gate.
@@ -7,7 +8,7 @@
  *
  *  1. DRIFT — the committed `traceability/standards-snapshot.json` matches the LIVE
  *     standards surface (every change is reviewed; an accidental weakening cannot
- *     pass silently). Regenerate intentionally with `CZAP_UPDATE_STANDARDS_SNAPSHOT=1`.
+ *     pass silently). Regenerate intentionally with `LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1`.
  *  2. REAL-REPO GREEN — the live standards have NOT been weakened: zero unsigned
  *     weakenings, and the `standardsIntegrityGate` does not block.
  *  3. BITE — a simulated weakening of EACH class (a removed gate, a removed red
@@ -23,6 +24,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
+import fc from 'fast-check';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -45,7 +47,7 @@ import {
   type StandardsElement,
   type StandardsWaiver,
   type SiteConditionalityResolver,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 import {
   readLiveStandardsSurface,
   readCommittedSnapshot,
@@ -63,7 +65,7 @@ import {
   type GitShowReader,
   type GitIntroCommitReader,
   type StandardsIntegrityResult,
-} from '../../../packages/cli/src/lib/standards-surface.js';
+} from '../../../packages/cli/src/internal/standards-surface.js';
 
 /** Assert the backstop ran (ACTIVE — the base carried the snapshot) and return the facts. */
 function activeFacts(result: StandardsIntegrityResult) {
@@ -103,18 +105,18 @@ function simulate(
 
 describe('standards-snapshot drift gate', () => {
   test(
-    'the committed snapshot matches the live standards surface (regenerate with CZAP_UPDATE_STANDARDS_SNAPSHOT=1)',
+    'the committed snapshot matches the live standards surface (regenerate with LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1)',
     { timeout: scaledTimeout(30_000) },
     () => {
       const live = readLiveStandardsSurface(REPO_ROOT, NOW);
       const serialized = serializeStandardsSurface(live);
-      if (process.env.CZAP_UPDATE_STANDARDS_SNAPSHOT === '1') {
+      if (process.env.LITESHIP_UPDATE_STANDARDS_SNAPSHOT === '1') {
         writeCommittedSnapshot(REPO_ROOT, live);
       } else {
         const committed = serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
         expect(
           serialized === committed,
-          'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
+          'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (LITESHIP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
         ).toBe(true);
       }
     },
@@ -267,6 +269,116 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
   });
 });
 
+describe('assurance-map changes are judged by live effective coverage, not stale glob spelling', () => {
+  const subjects = ['packages/example/src/a.ts', 'packages/example/src/b.ts', 'packages/example/src/c.ts'];
+  const coverage = (levels: readonly ('L1' | 'L3' | 'L4')[]): StandardsElement[] =>
+    subjects.map((file, index) => ({ _tag: 'assurance-coverage', file, level: levels[index] ?? 'L1' }));
+
+  test('removing a dead pre-refactor glob is neutral', () => {
+    const prior: StandardsElement[] = [{ _tag: 'assurance', glob: 'packages/example/src/retired.ts', level: 'L3' }];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/runtime/**', level: 'L3', order: 0 },
+      ...coverage(['L1', 'L1', 'L1']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes.find((change) => change.elementKey.includes('retired.ts'))).toMatchObject({
+      changeClass: 'neutral',
+    });
+  });
+
+  test('removing a narrower glob is neutral when the ordered live map keeps every matching path at the same level', () => {
+    const prior: StandardsElement[] = [{ _tag: 'assurance', glob: 'packages/example/src/{a,b}.ts', level: 'L3' }];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/{a,b,c}.ts', level: 'L3', order: 0 },
+      ...coverage(['L3', 'L3', 'L3']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes.find((change) => change.elementKey.includes('{a,b}.ts'))).toMatchObject({ changeClass: 'neutral' });
+    expect(changes.some((change) => change.weakening === 'assurance-level-lowered')).toBe(false);
+  });
+
+  test('removing a live glob remains a blocking weakening when any governed path is demoted', () => {
+    const prior: StandardsElement[] = [{ _tag: 'assurance', glob: 'packages/example/src/{a,b}.ts', level: 'L3' }];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L3', order: 0 },
+      ...coverage(['L3', 'L1', 'L1']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes.find((change) => change.elementKey.includes('{a,b}.ts'))).toMatchObject({
+      changeClass: 'weaken',
+      weakening: 'assurance-level-lowered',
+    });
+  });
+
+  test('reordering overlapping format-2 rules reds when first-match semantics demote a live path', () => {
+    const prior: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L4', order: 0 },
+      { _tag: 'assurance', glob: 'packages/example/src/**', level: 'L1', order: 1 },
+      ...coverage(['L4', 'L1', 'L1']),
+    ];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L4', order: 1 },
+      { _tag: 'assurance', glob: 'packages/example/src/**', level: 'L1', order: 0 },
+      ...coverage(['L1', 'L1', 'L1']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes).toContainEqual(
+      expect.objectContaining({
+        elementKey: 'assurance-coverage::packages/example/src/a.ts',
+        changeClass: 'weaken',
+        weakening: 'assurance-level-lowered',
+      }),
+    );
+  });
+
+  test('a reordered map with identical effective coverage is neutral drift', () => {
+    const prior: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L3', order: 0 },
+      { _tag: 'assurance', glob: 'packages/example/src/b.ts', level: 'L3', order: 1 },
+      ...coverage(['L3', 'L3', 'L1']),
+    ];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L3', order: 1 },
+      { _tag: 'assurance', glob: 'packages/example/src/b.ts', level: 'L3', order: 0 },
+      ...coverage(['L3', 'L3', 'L1']),
+    ];
+    expect(diffStandardsSurface(prior, current)).toEqual([
+      expect.objectContaining({ elementKey: 'assurance::packages/example/src/a.ts', changeClass: 'neutral' }),
+      expect.objectContaining({ elementKey: 'assurance::packages/example/src/b.ts', changeClass: 'neutral' }),
+    ]);
+  });
+
+  test('property: removal classification is monotone over the projected live levels', () => {
+    fc.assert(
+      fc.property(
+        fc.uniqueArray(fc.stringMatching(/^[a-z][a-z0-9]{0,7}$/), { minLength: 1, maxLength: 12 }),
+        (names) => {
+          const files = names.map((name) => `packages/example/src/legacy/${name}.ts`);
+          const prior: StandardsElement[] = [
+            { _tag: 'assurance', glob: 'packages/example/src/legacy/**', level: 'L3' },
+          ];
+          const projected = (levels: readonly ('L1' | 'L3')[]): StandardsElement[] => [
+            { _tag: 'assurance', glob: 'packages/example/src/**', level: 'L3', order: 0 },
+            ...files.map((file, index): StandardsElement => ({
+              _tag: 'assurance-coverage',
+              file,
+              level: levels[index] ?? 'L3',
+            })),
+          ];
+
+          const preserved = diffStandardsSurface(prior, projected(files.map(() => 'L3')));
+          expect(preserved.some((change) => change.changeClass === 'weaken')).toBe(false);
+
+          const oneDemoted = files.map((_, index): 'L1' | 'L3' => (index === 0 ? 'L1' : 'L3'));
+          const demoted = diffStandardsSurface(prior, projected(oneDemoted));
+          expect(demoted.some((change) => change.weakening === 'assurance-level-lowered')).toBe(true);
+        },
+      ),
+      { seed: 0x5a17da7a, numRuns: 80 },
+    );
+  });
+});
+
 describe('codex round-7 — the SOUND conditionality proof is threaded into the standards backstop', () => {
   // A capability-NAMING title: the title-keyword heuristic alone calls this "consistent" and would let
   // a sign-off cover it. The injected AST proof is what distinguishes a genuine `if (!CAP)` gate from an
@@ -393,7 +505,7 @@ describe('BITE — a STRENGTHEN never blocks', () => {
 
 // ───────────────────────── the base-ref resolution (deterministic) ────────────
 describe('the base ref is resolved deterministically (CI override → PR base → main)', () => {
-  test('CZAP_STANDARDS_BASE_REF wins (the explicit override has highest authority)', () => {
+  test('LITESHIP_STANDARDS_BASE_REF wins (the explicit override has highest authority)', () => {
     expect(
       resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: 'origin/release-1.2', GITHUB_BASE_REF: 'develop' }),
     ).toBe('origin/release-1.2');
@@ -459,7 +571,7 @@ describe('the base snapshot read is FAIL-CLOSED (refuse, never fall back to the 
     // (Without the explicit gitIntroCommit override, the REAL repo WOULD resolve the birth
     // commit and run ACTIVE — proven in the next test.)
     const resolvableBaseNoSnapshot: GitShowReader = (_root, _ref, path) =>
-      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined;
     const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
       gitShow: resolvableBaseNoSnapshot,
       gitIntroCommit: () => undefined,
@@ -620,7 +732,7 @@ describe('DRILL SERGEANT — the same-commit code+snapshot bypass is CLOSED', ()
 
 // ──────────────── THE MULTI-COMMIT PUSH GAP — HEAD~1 misses earlier weakenings ──
 //
-// THE FINDING (codex round-4): the push path set CZAP_STANDARDS_BASE_REF=HEAD~1, which
+// THE FINDING (codex round-4): the push path set LITESHIP_STANDARDS_BASE_REF=HEAD~1, which
 // only diffs the LAST commit of a push. When a branch is pushed with N commits, a
 // weakening introduced in an EARLIER commit is ALREADY PRESENT at HEAD~1 — so the diff
 // live-vs-HEAD~1 sees no change and the weakening sails through. The base for a push must
@@ -646,7 +758,7 @@ describe('MULTI-COMMIT PUSH GAP — the push base must be github.event.before, n
 
   /** Initialize a temp repo with a deterministic, in-repo git identity (no ambient env). */
   async function initRepo(branch: string): Promise<string> {
-    const repo = mkdtempSync(join(tmpdir(), 'czap-mc-'));
+    const repo = mkdtempSync(join(tmpdir(), 'liteship-mc-'));
     mkdirSync(join(repo, 'traceability'), { recursive: true });
     await git(repo, ['init', '-q', '-b', branch]);
     await git(repo, ['config', 'user.name', 't']);
@@ -769,9 +881,9 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
     const legit = [
       "describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
       'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;',
-      "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       "it.skip('ffmpeg+libx264 render (skipped — codec not on PATH)', () => {",
-      "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
     ];
     for (const s of legit) expect(siteCarriesPlaceholderMarker(s)).toBe(false);
     // The whole-word floor: a banned token EMBEDDED in an identifier never false-trips.
@@ -882,7 +994,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     // Capability-named titles on UNCONDITIONAL skips — the title references the capability domain.
     expect(
       siteConsistentWithCapability(
-        "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+        "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
         'ffmpeg-absent',
       ),
     ).toBe(true);
@@ -894,7 +1006,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     ).toBe(true);
     expect(
       siteConsistentWithCapability(
-        "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm', () => {",
+        "it.skipIf(!staged)('resolves @liteship/core dist/liteship-compute.wasm', () => {",
         'wasm-dist-staged',
       ),
     ).toBe(true);
@@ -933,7 +1045,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     expect(
       sanctionedSkipFor(
         'tests/smoke/intro-render.test.ts',
-        "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+        "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
       )?.capability,
     ).toBe('ffmpeg-absent');
     // Even a real sanctioned FILE cannot launder a marker-free placeholder at a DIFFERENT site —
@@ -986,7 +1098,7 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
 
 // ───────────── FINDING 3 — the BIRTH BASELINE (genesis resolves to the intro commit) ─────
 //
-// THE ATTACK (codex round-5): CI sets CZAP_STANDARDS_BASE_REF=origin/main; origin/main
+// THE ATTACK (codex round-5): CI sets LITESHIP_STANDARDS_BASE_REF=origin/main; origin/main
 // predates the snapshot (born on the branch), so the OLD bootstrap path went INACTIVE and
 // the script passed WITHOUT diffing — a window where a branch-local weakening was unguarded.
 // THE FIX: when the base resolves but lacks the snapshot, diff vs the snapshot's BIRTH
@@ -1001,7 +1113,7 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
         return ref === introCommit ? birthBytes : undefined;
       }
       // The known-stable probe reads at the base (the base resolves).
-      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"liteship"}';
       return undefined;
     };
   }
@@ -1067,7 +1179,7 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
     // this never fires; the birth baseline applies.
     const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
       env: { [STANDARDS_BASE_REF_ENV]: 'origin/main' },
-      gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined),
+      gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined),
       gitIntroCommit: () => undefined,
     });
     expect(result._tag).toBe('inactive');
@@ -1093,98 +1205,50 @@ describe('FINDING 3 — the bootstrap base resolves to the snapshot BIRTH commit
     expect(() =>
       buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
         env: { [STANDARDS_BASE_REF_ENV]: 'origin/main' },
-        gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined),
+        gitShow: (_root, _ref, path) => (path === STANDARDS_BASE_PROBE_PATH ? '{"name":"liteship"}' : undefined),
         gitIntroCommit: () => 'd'.repeat(40),
       }),
     ).toThrow();
   });
 });
 
-// ───────────── FINDING 3 — the LIVE 17 sign-offs convert vs the snapshot birth ───────────
+// ───────────── CURRENT BASE AUTHORITY — no historical sign-off genealogy ─────────────
 //
-// The ground-truth proof: diffing the LIVE surface vs the snapshot's REAL birth commit
-// (the intro commit, resolved by the REAL git seam) yields EXACTLY 17 weakenings, and the
-// committed 17 owner sign-offs convert ALL of them to signed (zero unsigned). An 18th,
-// unsigned fake skip BLOCKS. This is the real-repo cut-gate proof, not a hermetic stub.
-describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth weakenings (and an 18th blocks)', () => {
-  /**
-   * Resolve the snapshot's real introduction commit over the LIVE git history (via the
-   * canonical spawn helper — no `node:child_process` import), then read the birth snapshot's
-   * elements at it. Returns undefined if the birth commit is not reachable in this checkout.
-   */
-  async function realBirthElements(): Promise<readonly StandardsElement[] | undefined> {
-    // A SHALLOW checkout (the platform smoke runners use a default depth-1 clone) cannot
-    // reach the snapshot's real introduction commit: `git log --diff-filter=A` mis-reports
-    // the shallow BOUNDARY commit as the "birth" (git cannot see before the boundary, so the
-    // file looks newly-added there) — a wrong, recent baseline, not undefined. This real-repo
-    // invariant is OS-independent, so it runs authoritatively on the full-history runner
-    // (truth-linux, fetch-depth:0) and skips cleanly when the clone is shallow.
-    const shallow = await spawnArgvCapture('git', ['rev-parse', '--is-shallow-repository'], {
-      cwd: REPO_ROOT,
+// Birth is a bootstrap fallback only when the selected base predates the snapshot. Once
+// the base carries a snapshot, that exact base is the review authority. Sign-offs therefore
+// govern live-vs-base changes, not every change since the file's first-ever commit. The
+// hermetic bootstrap and same-commit attack suites above retain the no-laundering proof.
+describe('current base authority supersedes bootstrap history', () => {
+  test('a present base snapshot is selected without consulting snapshot-birth history', () => {
+    let introLookupCount = 0;
+    const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
+      gitShow: committedBaseGitShow,
+      gitIntroCommit: () => {
+        introLookupCount += 1;
+        return 'a'.repeat(40);
+      },
     });
-    if (shallow.exitCode !== 0 || shallow.stdout.trim() === 'true') return undefined;
-    const res = await spawnArgvCapture(
-      'git',
-      ['log', '--diff-filter=A', '--format=%H', '--reverse', '--', STANDARDS_SNAPSHOT_PATH],
-      { cwd: REPO_ROOT },
-    );
-    if (res.exitCode !== 0) return undefined;
-    const introCommit =
-      res.stdout
-        .split('\n')
-        .map((l) => l.trim())
-        .find((l) => l !== '') ?? '';
-    if (introCommit === '') return undefined;
-    const birthRaw = defaultGitShow(REPO_ROOT, introCommit, STANDARDS_SNAPSHOT_PATH);
-    if (birthRaw === undefined) return undefined;
-    return JSON.parse(birthRaw).elements as readonly StandardsElement[];
-  }
-
-  test('the 17 committed sign-offs convert every live-vs-birth weakening to signed (zero unsigned)', async () => {
-    const birth = await realBirthElements();
-    if (birth === undefined) {
-      expect(birth, 'the birth commit is not reachable in this checkout').toBeUndefined();
-    } else {
-      const live = readLiveStandardsSurface(REPO_ROOT, NOW);
-      const signoffs = readStandardsWaivers(REPO_ROOT);
-      const changes = diffStandardsSurface(birth, live.elements);
-      const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
-      // THE portable safety property — every live-vs-birth weakening is signed (the test's namesake),
-      // and no sign-off is forbidden or expired. Holds on a feature branch (17 weakenings, all signed) AND
-      // on post-squash main (0 weakenings — birth == live — vacuously zero unsigned).
-      expect(part.unsignedWeakenings).toEqual([]);
-      expect(part.forbiddenSignoffs).toEqual([]);
-      expect(part.expiredSignoffs).toEqual([]);
-      // We deliberately do NOT assert `signedWeakenings.length === signoffs.length` ("every sign-off is
-      // load-bearing"). That equality only holds against a PRE-erosion baseline (a feature branch where
-      // birth predates the skips); after a squash to main the snapshot's birth already CONTAINS the skips,
-      // so the bootstrap sign-offs are legitimately orphaned vs birth (birth == live → 0 weakenings), and
-      // a later VALID standards change (a strengthening gate, a newly-signed weakening) would re-red it
-      // though nothing is wrong (codex PR#58 review — my first `changes.length > 0` guard was too broad).
-      // And `signedWeakenings ⊆ signoffs` ALWAYS, so the equality can never CATCH a bug, only false-red —
-      // orphan sign-offs are the standards:gate base-ref diff's job, not this birth test's.
-    }
+    const facts = activeFacts(result);
+    expect(introLookupCount).toBe(0);
+    expect(facts.unsignedWeakenings).toEqual([]);
+    expect(facts.forbiddenSignoffs).toEqual([]);
+    expect(facts.expiredSignoffs).toEqual([]);
   });
 
-  test('an 18th UNSIGNED fake skip (a probe) BLOCKS vs the birth baseline (the no-grandfather floor)', async () => {
-    const birth = await realBirthElements();
-    if (birth === undefined) {
-      expect(birth, 'the birth commit is not reachable in this checkout').toBeUndefined();
-    } else {
-      const live = [...readLiveStandardsSurface(REPO_ROOT, NOW).elements];
-      const fake18th: StandardsElement = {
-        _tag: 'skip-allowlist',
-        file: 'tests/unit/fake/an-eighteenth-unsigned-skip.test.ts',
-        site: "it.skip('an unsigned capability gate probe', () => {});",
-        capability: 'ffmpeg-absent',
-      };
-      const signoffs = readStandardsWaivers(REPO_ROOT); // the committed 17 — NOT covering the 18th.
-      const changes = diffStandardsSurface(birth, [...live, fake18th]);
-      const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
-      // The 18th is unsigned → blocking; the original 17 are still signed.
-      expect(part.unsignedWeakenings.some((c) => c.elementKey.includes('an-eighteenth-unsigned-skip'))).toBe(true);
-      const ctx = { ...memoryContext({}), standards: { ...part, committedAddress: 'x', liveAddress: 'y' } };
-      expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
-    }
+  test('one new unsigned capability skip still blocks against the selected base snapshot', () => {
+    const committed = readCommittedSnapshot(REPO_ROOT);
+    const fakeSkip: StandardsElement = {
+      _tag: 'skip-allowlist',
+      file: 'tests/unit/fake/new-unsigned-skip.test.ts',
+      site: "it.skip('an unsigned capability gate probe', () => {});",
+      capability: 'ffmpeg-absent',
+    };
+    const changes = diffStandardsSurface(committed.elements, [...committed.elements, fakeSkip]);
+    const part = applyStandardsWaivers(changes, readStandardsWaivers(REPO_ROOT), NOW, ALWAYS_BLOCKING);
+    expect(part.unsignedWeakenings.map((change) => change.elementKey)).toContain(
+      "skip-allowlist::tests/unit/fake/new-unsigned-skip.test.ts::it.skip('an unsigned capability gate probe', () => {});",
+    );
+    const ctx = { ...memoryContext({}), standards: { ...part, committedAddress: 'x', liveAddress: 'y' } };
+    expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
   });
 });

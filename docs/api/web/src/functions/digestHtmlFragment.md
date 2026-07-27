@@ -6,9 +6,9 @@
 
 # Function: digestHtmlFragment()
 
-> **digestHtmlFragment**(`html`): `AddressedDigest`
+> **digestHtmlFragment**(`html`): [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L114)
+Defined in: [web/src/watch-and-prepare.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L112)
 
 Mint the sha256 digest for an HTML fragment (UTF-8 bytes, content-address kernel).
 
@@ -20,4 +20,4 @@ Mint the sha256 digest for an HTML fragment (UTF-8 bytes, content-address kernel
 
 ## Returns
 
-`AddressedDigest`
+[`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)

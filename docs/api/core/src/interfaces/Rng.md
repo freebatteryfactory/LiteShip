@@ -6,7 +6,7 @@
 
 # Interface: Rng
 
-Defined in: [core/src/rng.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/rng.ts#L28)
+Defined in: [core/src/clock/rng.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/rng.ts#L28)
 
 A uniform random source in `[0, 1)` — the one shape randomness is read through.
 Mirrors `Math.random()`'s contract so it is a drop-in at every call site.
@@ -17,7 +17,7 @@ Mirrors `Math.random()`'s contract so it is a drop-in at every call site.
 
 > `readonly` **next**: () => `number`
 
-Defined in: [core/src/rng.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/rng.ts#L30)
+Defined in: [core/src/clock/rng.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/rng.ts#L30)
 
 The next uniform draw in `[0, 1)`.
 

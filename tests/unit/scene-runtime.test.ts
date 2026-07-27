@@ -2,14 +2,32 @@
  * SceneRuntime — bug-#3 regression suite.
  *
  * Asserts that compileScene + SceneRuntime.build produces a tickable
- * ECS world with all 7 canonical systems registered, that ticking
+ * ECS world with all 8 canonical systems registered, that ticking
  * advances the systems' computed component outputs, and that
  * `release()` cleanly disposes the world's scope.
  */
 
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene, SceneRuntime, sceneRuntimeCapsule, Beat, pulse, syncTo } from '@czap/scene';
-import type { SceneContract, MixReceipt, TrackId } from '@czap/scene';
+import {
+  Beat,
+  BetweenPart,
+  BlendPart,
+  EffectKindPart,
+  FrameRangePart,
+  IntensityPart,
+  OpacityPart,
+  SceneRuntime,
+  SyncAnchorPart,
+  Track,
+  TrackIdPart,
+  TransitionKindPart,
+  VideoSourcePart,
+  compileScene,
+  pulse,
+  sceneRuntimeCapsule,
+  syncTo,
+} from '@liteship/scene';
+import type { MixReceipt, SceneContract } from '@liteship/scene';
 
 function buildScene(): SceneContract {
   const hero = Track.videoId('hero');
@@ -55,12 +73,12 @@ describe('SceneRuntime', () => {
     expect(sceneRuntimeCapsule.invariants.length).toBeGreaterThan(0);
   });
 
-  it('registers all 7 canonical systems in topological order', async () => {
+  it('registers all 8 canonical systems in topological order', async () => {
     const compiled = compileScene(buildScene());
     const handle = await SceneRuntime.build(compiled);
     try {
       expect(handle.systemsRegistered).toBe(SceneRuntime.systemCount);
-      expect(handle.systemsRegistered).toBe(7);
+      expect(handle.systemsRegistered).toBe(8);
     } finally {
       await handle.release();
     }
@@ -71,7 +89,7 @@ describe('SceneRuntime', () => {
     const handle = await SceneRuntime.build(compiled);
     try {
       expect(handle.entitySpawnCount).toBe(compiled.trackSpawns.length);
-      const spawned = handle.world.query('trackId');
+      const spawned = handle.world.query(TrackIdPart);
       expect(spawned.length).toBe(compiled.trackSpawns.length);
     } finally {
       await handle.release();
@@ -87,9 +105,9 @@ describe('SceneRuntime', () => {
       expect(handle.currentTimeMs()).toBeCloseTo(16.67, 5);
       expect(handle.currentFrame()).toBe(1);
 
-      const videos = handle.world.query('VideoSource');
+      const videos = handle.world.query(VideoSourcePart, OpacityPart);
       expect(videos.length).toBe(1);
-      const opacity = videos[0]?.components.get('_opacity');
+      const opacity = videos[0]?.get(OpacityPart);
       // FrameRange is 0..60 and frame 1 is in-range → opacity 1.
       expect(opacity).toBe(1);
     } finally {
@@ -105,17 +123,17 @@ describe('SceneRuntime', () => {
       await handle.tick((15 / 60) * 1000);
       expect(handle.currentFrame()).toBe(15);
 
-      const transitions = handle.world.query('TransitionKind', 'FrameRange', 'Between');
+      const transitions = handle.world.query(TransitionKindPart, FrameRangePart, BetweenPart, BlendPart);
       expect(transitions.length).toBe(1);
-      const blend = transitions[0]?.components.get('_blend');
+      const blend = transitions[0]?.get(BlendPart);
       expect(typeof blend).toBe('number');
       expect(blend as number).toBeGreaterThan(0);
       expect(blend as number).toBeLessThan(1);
 
-      const effects = handle.world.query('EffectKind', 'FrameRange');
+      const effects = handle.world.query(EffectKindPart, FrameRangePart, IntensityPart);
       expect(effects.length).toBe(2);
       for (const e of effects) {
-        const intensity = e.components.get('_intensity');
+        const intensity = e.get(IntensityPart);
         expect(typeof intensity).toBe('number');
       }
     } finally {
@@ -153,35 +171,17 @@ describe('SceneRuntime', () => {
     // SyncSystem queries 'SyncAnchor' entities and writes a beat-decay intensity.
     // The canonical order Video → Audio → Transition → Effect → Sync → Mixer
     // means Sync's write overrides Effect's on entities matching both queries.
-    const scene = {
-      ...buildScene(),
-      tracks: [
-        ...buildScene().tracks,
-        // An entity that is BOTH an effect and a sync anchor — Effect writes
-        // first, Sync writes second; final value should be Sync's decay output.
-        {
-          _tag: 'effect' as const,
-          id: 'effect-with-sync' as TrackId<'effect'>,
-          from: 0,
-          to: 30,
-          effectKind: 'pulse' as const,
-          target: 'sync-target' as TrackId<'video'>,
-          // The 'SyncAnchor' tag makes SyncSystem also query this entity.
-          syncAnchor: true,
-        } as unknown as never, // shape extension is intentional — runtime tolerates extra components
-      ],
-    };
-    const compiled = compileScene(scene as never);
+    const compiled = compileScene(buildScene());
     const handle = await SceneRuntime.build(compiled);
     try {
       await handle.tick((10 / 60) * 1000); // frame 10 — Effect would write 10/30 ≈ 0.333
-      const synced = handle.world.query('SyncAnchor');
+      const synced = handle.world.query(SyncAnchorPart, IntensityPart);
       // If Sync ran AFTER Effect, intensity should be Sync's decay value
       // (e^0 = 1 since no past beats means lastBeat = -Infinity → decay = 0
       // OR Math.exp(-Infinity) = 0). Either way, the value is the Sync
       // output (0), distinct from Effect's 0.333.
       for (const e of synced) {
-        const intensity = e.components.get('_intensity');
+        const intensity = e.get(IntensityPart);
         // Sync overwrites — final intensity is Sync's, not Effect's 10/30.
         expect(intensity).not.toBeCloseTo(10 / 30, 5);
       }
@@ -229,9 +229,9 @@ describe('SceneRuntime', () => {
     try {
       await handle.tick(500); // frame 30
       expect(handle.currentFrame()).toBe(30);
-      const synced = handle.world.query('SyncAnchor');
+      const synced = handle.world.query(SyncAnchorPart, IntensityPart);
       expect(synced.length).toBe(1);
-      const intensity = synced[0]?.components.get('_intensity');
+      const intensity = synced[0]?.get(IntensityPart);
       expect(typeof intensity).toBe('number');
       expect(intensity as number).toBeCloseTo(1.5, 5);
     } finally {
@@ -249,13 +249,13 @@ describe('SceneRuntime', () => {
     expect(allCanonical).toBeDefined();
     expect(nonNeg).toBeDefined();
 
-    expect(allCanonical!.check({}, { systemsRegistered: 7, entitySpawnCount: 4 })).toBe(true);
-    expect(allCanonical!.check({}, { systemsRegistered: 6, entitySpawnCount: 4 })).toBe(false);
+    expect(allCanonical!.check({}, { systemsRegistered: 8, entitySpawnCount: 4 })).toBe(true);
+    expect(allCanonical!.check({}, { systemsRegistered: 7, entitySpawnCount: 4 })).toBe(false);
     expect(allCanonical!.check({}, {})).toBe(false);
 
-    expect(nonNeg!.check({}, { systemsRegistered: 7, entitySpawnCount: 0 })).toBe(true);
-    expect(nonNeg!.check({}, { systemsRegistered: 7, entitySpawnCount: 4 })).toBe(true);
-    expect(nonNeg!.check({}, { systemsRegistered: 7, entitySpawnCount: -1 })).toBe(false);
-    expect(nonNeg!.check({}, { systemsRegistered: 7 })).toBe(false);
+    expect(nonNeg!.check({}, { systemsRegistered: 8, entitySpawnCount: 0 })).toBe(true);
+    expect(nonNeg!.check({}, { systemsRegistered: 8, entitySpawnCount: 4 })).toBe(true);
+    expect(nonNeg!.check({}, { systemsRegistered: 8, entitySpawnCount: -1 })).toBe(false);
+    expect(nonNeg!.check({}, { systemsRegistered: 8 })).toBe(false);
   });
 });

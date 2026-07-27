@@ -40,7 +40,7 @@ describe('D1 lifecycle floor — initialize / initialized / honest absence', () 
     // The exact capability shape is pinned in the D3 capabilities test.
     expect(result.capabilities.resources).toBeDefined();
     expect(result.capabilities.prompts).toBeDefined();
-    // serverInfo.version is the real @czap/mcp-server package version, not a literal.
+    // serverInfo.version is the real @liteship/mcp-server package version, not a literal.
     const pkgVersion = (JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as { version: string }).version;
     expect(result.serverInfo.name).toBeTypeOf('string');
     expect(result.serverInfo.version).toBe(pkgVersion);

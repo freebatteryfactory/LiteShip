@@ -8,10 +8,10 @@
 
 > **Provider**(`props`): `ReactElement`
 
-Defined in: [remotion/src/composition.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L124)
+Defined in: [remotion/src/composition.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L125)
 
 React context provider that makes precomputed frames available to
-[useCzapState](useCzapState.md) anywhere in the subtree. Use this when you prefer
+[useLiteshipState](useLiteshipState.md) anywhere in the subtree. Use this when you prefer
 implicit frame lookup over threading the `frames` array through props.
 
 ## Parameters
@@ -24,7 +24,7 @@ implicit frame lookup over threading the `frames` array through props.
 
 #### frames
 
-readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
+readonly [`VideoFrameOutput`](../../../liteship/src/media/interfaces/VideoFrameOutput.md)[]
 
 ## Returns
 

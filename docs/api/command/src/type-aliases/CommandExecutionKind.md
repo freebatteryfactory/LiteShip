@@ -6,8 +6,8 @@
 
 # Type Alias: CommandExecutionKind
 
-> **CommandExecutionKind** = `_CommandExecutionKind`
+> **CommandExecutionKind** = [`CommandExecutionKind`](../../../spine/type-aliases/CommandExecutionKind.md)
 
-Defined in: core/dist/command.d.ts:14
+Defined in: core/dist/authoring/command.d.ts:14
 
 Execution shape: `handler` (finite structured) vs `cli-orchestration` (CLI-owned).

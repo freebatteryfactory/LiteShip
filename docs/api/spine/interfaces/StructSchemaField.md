@@ -1,0 +1,35 @@
+[**LiteShip**](../../README.md)
+
+***
+
+[LiteShip](../../modules.md) / [\_spine](../README.md) / StructSchemaField
+
+# Interface: StructSchemaField
+
+Defined in: [\_spine/core.d.ts:636](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L636)
+
+One named field in a struct schema node.
+
+## Properties
+
+### key
+
+> `readonly` **key**: `string`
+
+Defined in: [\_spine/core.d.ts:637](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L637)
+
+***
+
+### node
+
+> `readonly` **node**: [`SchemaNode`](../type-aliases/SchemaNode.md)
+
+Defined in: [\_spine/core.d.ts:638](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L638)
+
+***
+
+### optional
+
+> `readonly` **optional**: `boolean`
+
+Defined in: [\_spine/core.d.ts:639](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L639)

@@ -10,7 +10,7 @@
  * - canvas.getContext('webgl'|'webgl2') probing used by GPU/detect paths
  *
  * The connection override is typed against {@link NavigatorConnectionInfo} —
- * the structural shape @czap/detect's connection probe actually reads — so
+ * the structural shape @liteship/detect's connection probe actually reads — so
  * probe/double drift breaks the build.
  */
 import type { NavigatorConnectionInfo } from '../../packages/detect/src/detect.js';

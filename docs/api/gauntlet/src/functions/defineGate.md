@@ -8,11 +8,9 @@
 
 > **defineGate**(`spec`): [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gate.ts:635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L635)
+Defined in: [gauntlet/src/gate.ts:1130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1130)
 
-Define a gate — the one constructor. Validates the spec eagerly (a gate with
-an empty id, or missing any of red/green/mutation, is a malformed plugin and
-throws [ValidationError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) at registration, not at run time).
+Validate and freeze one pure gate definition.
 
 ## Parameters
 

@@ -8,11 +8,11 @@
 
 > **loadVirtualModule**(`id`, `data?`): `string` \| `undefined`
 
-Defined in: [vite/src/virtual-modules.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L135)
+Defined in: [vite/src/virtual-modules.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L138)
 
 Return the source for a resolved virtual module ID.
 
-`virtual:czap/boundaries` exports the build-derived boundary manifest
+`virtual:liteship/boundaries` exports the build-derived boundary manifest
 when the plugin passes one via `data.boundaries`; without data it
 degrades to an empty-object stub (valid JS for type-checkers and
 bundlers running outside the plugin).

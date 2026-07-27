@@ -6,8 +6,8 @@
 
 # Type Alias: PulseEnvelope
 
-> **PulseEnvelope** = `_PulseEnvelope`
+> **PulseEnvelope** = [`PulseEnvelope`](../../../spine/interfaces/PulseEnvelope.md)
 
 Defined in: [scene/src/sugar/envelope.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L29)
 
-Pulse envelope (periodic, amplitude-scaled). Mirror of the `@czap/_spine` declaration.
+Pulse envelope (periodic, amplitude-scaled). Mirror of the `@liteship/_spine` declaration.

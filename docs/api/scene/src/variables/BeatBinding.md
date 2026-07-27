@@ -8,7 +8,7 @@
 
 > `const` **BeatBinding**: `object`
 
-Defined in: [scene/src/capsules/beat-binding.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L117)
+Defined in: [scene/src/beat-binding-capsule.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-binding-capsule.ts#L118)
 
 BeatBinding namespace — pure transforms over beat markers.
 Companion type namespace exposes Spawn and Component shapes (ADR-0001).
@@ -17,13 +17,13 @@ Companion type namespace exposes Spawn and Component shapes (ADR-0001).
 
 ### bind
 
-> `readonly` **bind**: (`beats`) => readonly `BeatSpawn`[] = `bindBeats`
+> `readonly` **bind**: (`beats`) => readonly [`BeatSpawn`](../../../spine/interfaces/BeatSpawn.md)[] = `bindBeats`
 
 Bind a list of beat markers into spawn descriptors.
 
 Pure transform: BeatComponent[] → BeatSpawn[]. Each input beat becomes
-one spawn descriptor whose `components` field is suitable for direct
-use as the `Beat` component bag in `world.spawn({ Beat: ... })`.
+one spawn descriptor whose `components` field is admitted through the
+canonical `BeatPart` before entering a SceneRuntime world.
 
 Defensive copy of each beat — callers may freeze, mutate, or hand off
 the input array; the output is a fresh, owned-by-runtime sequence.
@@ -32,8 +32,8 @@ the input array; the output is a fresh, owned-by-runtime sequence.
 
 ##### beats
 
-readonly `BeatComponent`[]
+readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 #### Returns
 
-readonly `BeatSpawn`[]
+readonly [`BeatSpawn`](../../../spine/interfaces/BeatSpawn.md)[]

@@ -1,14 +1,21 @@
-/** `@czap/mcp-server` — MCP bridge for **LiteShip**; forwards tools to the `czap` CLI + capsule factory. */
+/** `@liteship/mcp-server` — MCP bridge for **LiteShip**; forwards tools to the `liteship` CLI + capsule factory. */
 
 export { start } from './start.js';
-export type { StartOpts } from './start.js';
-export { listTools, dispatchToolCall, dispatch } from './dispatch.js';
-export type { McpToolCall, McpToolResult } from './dispatch.js';
+export type { McpServerHandle, StartOpts } from './start.js';
+export { listTools, listMcpResources, mcpResourceReaderUris, dispatchToolCall, dispatch } from './dispatch.js';
+export {
+  MCP_METHOD_CATALOG,
+  SERVER_CAPABILITIES,
+  projectServerCapabilities,
+  type McpMethodDescriptor,
+  type McpServerCapabilities,
+} from './capabilities.js';
+export type { McpToolCall, McpToolResult, McpToolDescriptor, McpListedResource } from './dispatch.js';
 
 // Resource + prompt projections (CUT D3) — same registry the CLI/tools surfaces project.
 export { listResources, readResource } from './resources.js';
 export type { McpResource, McpResourceContents } from './resources.js';
-export { listPrompts, getPrompt } from './prompts.js';
+export { listPrompts, getPrompt, promptResolverNames } from './prompts.js';
 export type { McpPrompt, McpPromptArgument, GetPromptResult } from './prompts.js';
 
 // Static MCP Apps UI resources (CUT D4) — the `ui://` visible twins of the D3 JSON resources.
@@ -21,7 +28,7 @@ export { listAppResources, readAppResource } from './app-resources.js';
 // MCP-app manifest (CUT D6) — the reachable `liteship://mcp-app/manifest` projection over all surfaces.
 export { mcpAppManifest, listManifestResources, readManifestResource } from './manifest-resource.js';
 export { runStdio } from './stdio.js';
-export { runHttp } from './http.js';
+export { runHttp } from './http-server.js';
 
 // LSP rigor skin (Slice B/B3) — the THIRD JSON-RPC face over the one gauntlet
 // fold: gauntlet Findings projected to live LSP Diagnostics + their remediations
@@ -39,8 +46,12 @@ export {
   fileToUri,
   makeFrameReader,
   encodeFrame,
-  CZAP_CHECK_METHOD,
+  LITESHIP_CHECK_METHOD,
+  LSP_METHOD_CATALOG,
   LSP_SERVER_CAPABILITIES,
+  lspRoutedMethodNames,
+  lspNotificationProducerMethods,
+  projectLspCapabilities,
   DiagnosticSeverity,
   CodeActionKind,
   APPLY_PATCH_COMMAND,
@@ -52,6 +63,8 @@ export type {
   LspServerState,
   LspHandleResult,
   LspNotification,
+  LspMethodDescriptor,
+  LspServerCapabilities,
   FrameReader,
   FindingLike,
   FindingSeverity,
@@ -63,8 +76,6 @@ export type {
   LspDiagnostic,
   LspDiagnosticSeverity,
   PublishDiagnosticsParams,
-  LspTextEdit,
-  LspWorkspaceEdit,
   LspCommand,
   LspCodeAction,
 } from './lsp/index.js';

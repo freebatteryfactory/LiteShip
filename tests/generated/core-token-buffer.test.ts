@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { tokenBufferCapsule } from '../../packages/core/src/capsules/token-buffer.js';
+import { tokenBufferCapsule } from '../../packages/core/src/authoring/capsules/token-buffer.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 describe('core.token-buffer', () => {

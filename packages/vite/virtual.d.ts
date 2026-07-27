@@ -1,46 +1,46 @@
 /**
- * Ambient module declarations for `virtual:czap/*` modules served by the
- * `@czap/vite` plugin.
+ * Ambient module declarations for `virtual:liteship/*` modules served by the
+ * `@liteship/vite` plugin.
  *
  * Reference from an app's env declarations:
  *
  * ```ts
- * /// <reference types="@czap/vite/virtual" />
+ * /// <reference types="@liteship/vite/virtual" />
  * ```
  */
 
-declare module 'virtual:czap/boundaries' {
+declare module 'virtual:liteship/boundaries' {
   /**
    * Build-derived boundary manifest: boundary export name to
    * `{ id, outputs, outputsByTier, assetUrls? }` (see
-   * `collectBoundaryManifest` in `@czap/vite` and `BoundaryManifest` in
-   * `@czap/edge`). Empty when the project defines no boundaries.
+   * `collectBoundaryManifest` in `@liteship/vite` and `BoundaryManifest` in
+   * `@liteship/edge`). Empty when the project defines no boundaries.
    */
-  export const boundaries: import('@czap/edge').BoundaryManifest;
+  export const boundaries: import('@liteship/edge').BoundaryManifest;
 }
 
-declare module 'virtual:czap/tokens' {
-  /** Build-collected token definitions (see `collectTokenManifest` in `@czap/vite`). */
-  export const tokens: import('@czap/vite').TokenManifest;
+declare module 'virtual:liteship/tokens' {
+  /** Build-collected token definitions (see `collectTokenManifest` in `@liteship/vite`). */
+  export const tokens: import('@liteship/vite').TokenManifest;
 }
 
-declare module 'virtual:czap/tokens.css' {
+declare module 'virtual:liteship/tokens.css' {
   /** Compiled `:root` custom properties for all collected tokens. */
   const css: string;
   export default css;
 }
 
-declare module 'virtual:czap/themes' {
-  /** Build-collected theme definitions (see `collectThemeManifest` in `@czap/vite`). */
-  export const themes: import('@czap/vite').ThemeManifest;
+declare module 'virtual:liteship/themes' {
+  /** Build-collected theme definitions (see `collectThemeManifest` in `@liteship/vite`). */
+  export const themes: import('@liteship/vite').ThemeManifest;
 }
 
-declare module 'virtual:czap/wasm-url' {
-  /** Resolved czap-compute WASM URL, or `null` when WASM is disabled. */
+declare module 'virtual:liteship/wasm-url' {
+  /** Resolved liteship-compute WASM URL, or `null` when WASM is disabled. */
   export const wasmUrl: string | null;
 }
 
-declare module 'virtual:czap/config' {
-  /** Typed handle for the workspace `czap.config.ts` hub (stub). */
-  export const config: unknown;
+declare module 'virtual:liteship/config' {
+  /** Validated root `liteship.config.ts` value, or null in convention-only projects. */
+  export const config: import('@liteship/core').Config | null;
 }

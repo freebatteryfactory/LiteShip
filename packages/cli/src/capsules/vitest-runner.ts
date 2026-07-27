@@ -17,26 +17,26 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
 
-// The runtime callable now lives in @czap/command/host (CUT A1 capstone-1); this
+// The runtime callable now lives in @liteship/command/host (CUT A1 capstone-1); this
 // module keeps only the capsule DECLARATION (walked into the manifest as
 // `cli.vitest-runner`) and re-exports the runtime for stable import sites.
-export { VitestRunner } from '@czap/command/host';
+export { VitestRunner } from '@liteship/command/host';
 
-const VitestRunnerInput = S.struct({
-  testFiles: S.array(S.string),
+const VitestRunnerInput = schema.struct({
+  testFiles: schema.array(schema.string),
 });
 
-const VitestRunnerOutput = S.struct({
-  exitCode: S.number,
-  testFiles: S.array(S.string),
-  stderrTail: S.string,
+const VitestRunnerOutput = schema.struct({
+  exitCode: schema.number,
+  testFiles: schema.array(schema.string),
+  stderrTail: schema.string,
 });
 
 /**
  * Declared capsule for the no-shell vitest runner. Registered in the
- * module-level catalog at import time; walked by `scripts/capsule-compile.ts`.
+ * immutable exported declaration; walked by `scripts/capsule-compile.ts`.
  *
  * The `shell-disabled` invariant is enforced structurally — `spawnArgv`
  * never passes `shell: true` — so the check trivially holds. It exists in

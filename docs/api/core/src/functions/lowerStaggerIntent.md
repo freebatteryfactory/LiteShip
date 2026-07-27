@@ -8,7 +8,7 @@
 
 > **lowerStaggerIntent**(`intent`): [`LoweredStagger`](../interfaces/LoweredStagger.md)
 
-Defined in: [core/src/stagger.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L135)
+Defined in: [core/src/motion/stagger.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L135)
 
 Lower a [StaggerIntent](../interfaces/StaggerIntent.md) into parallel TransitionNodes sharing one signal.
 

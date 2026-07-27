@@ -1,10 +1,11 @@
-import { DAG, Diagnostics } from '@czap/core';
-import type { Receipt, UIFrame } from '@czap/core';
+import { DAG, Diagnostics } from '@liteship/core';
+import type { Receipt, UIFrame } from '@liteship/core';
 
 type ReceiptEnvelope = Receipt.Envelope;
 type ReceiptTrustMode = 'advisory-unverified';
 
-interface ReceiptChainShape {
+/** Mutable receipt-DAG projection used to replay, compact, and inspect streamed UI frames. */
+export interface ReceiptChain {
   rememberFrame(frame: UIFrame): void;
   ingestEnvelope(envelope: ReceiptEnvelope): boolean;
   hasFramesAfter(receiptId: string | null): boolean;
@@ -27,7 +28,7 @@ interface ReceiptChainShape {
  * The chain currently treats signatures as advisory; a diagnostic is
  * emitted when signed envelopes arrive without a configured verifier.
  */
-export function createReceiptChain(): ReceiptChainShape {
+export function createReceiptChain(): ReceiptChain {
   let dag = DAG.empty();
   let lastCheckpoint: ReceiptEnvelope | null = null;
   const framesByReceipt = new Map<string, UIFrame>();
@@ -56,9 +57,9 @@ export function createReceiptChain(): ReceiptChainShape {
 
     ingestEnvelope(envelope) {
       if (envelope.signature) {
-        Diagnostics.warnOnce({
-          source: 'czap/astro.receipt-chain',
-          code: 'receipt-signature-unverified',
+        Diagnostics.warnOnceRegistered({
+          source: 'liteship/astro.receipt-chain',
+          code: 'astro/receipt-chain/receipt-signature-unverified',
           message:
             'Receipt signatures are present but runtime ingestion treats them as advisory metadata until verification is configured.',
         });

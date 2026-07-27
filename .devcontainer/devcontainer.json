@@ -1,6 +1,6 @@
 {
   "name": "LiteShip",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
   "remoteUser": "node",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {

@@ -6,9 +6,9 @@
 
 # Function: buildSpineRelationFacts()
 
-> **buildSpineRelationFacts**(`admissions`, `repoRoot`, `options?`): `SpineRelationFacts`
+> **buildSpineRelationFacts**(`admissions`, `repoRoot`, `options`): `SpineRelationFacts`
 
-Defined in: [audit/src/spine-relation-build.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L193)
+Defined in: [audit/src/spine-relation-build.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L224)
 
 Probe every admitted mirror type's bidirectional assignability against its runtime
 source and classify the observed two-axis relation. Returns flat, already-observed
@@ -25,9 +25,9 @@ readonly [`SpineTypeAdmission`](../interfaces/SpineTypeAdmission.md)[]
 
 `string`
 
-### options?
+### options
 
-[`SpineRelationBuildOptions`](../interfaces/SpineRelationBuildOptions.md) = `{}`
+[`SpineRelationBuildOptions`](../interfaces/SpineRelationBuildOptions.md)
 
 ## Returns
 

@@ -4,7 +4,7 @@
 > requirements artifact — NOT loose repo-root junk and NOT under `docs/` (docs are
 > owner-gated). It holds exactly two human-editable YAML files that a deterministic
 > state machine consumes. If you want it moved, this README is the one place that
-> names the location; redline here and the host reader (`packages/cli/src/lib/traceability.ts`)
+> names the location; redline here and the host reader (`packages/cli/src/internal/traceability.ts`)
 > follows.
 
 Every **system INVARIANT** the avionics tier upholds (a LAW — determinism, CRDT
@@ -18,7 +18,7 @@ a LAW with no proof is a hole in the safety case.
 
 - **`invariants.yaml`** — the requirements register. Each entry DECLARES one
   invariant: `{ id, law, level, category }`. These are SYSTEM LAWS, distinct from the
-  code-style banned-pattern rules in `@czap/command`'s `INVARIANTS` (`NO_DEFAULT_EXPORT`
+  code-style banned-pattern rules in `@liteship/command`'s `INVARIANTS` (`NO_DEFAULT_EXPORT`
   &c.). Only enroll an invariant that has a REAL proving test — never fabricate a law.
 
 - **`testing-ledger.yaml`** — the trace. Each entry maps an invariant `id` to EITHER
@@ -30,7 +30,7 @@ a LAW with no proof is a hole in the safety case.
 
 The trace is **computed from the LIVE test headers, not hardcoded**. Each proving
 test carries a `// PROVES: INV-X[, INV-Y]` header near the top. The deterministic
-state machine (`packages/cli/src/lib/traceability.ts`) scans the test corpus for
+state machine (`packages/cli/src/internal/traceability.ts`) scans the test corpus for
 these headers and folds the lifecycle:
 
 ```
@@ -49,5 +49,5 @@ detectable, and the **wall-clock** date for expiry is INJECTED (the two-clock la
 expiry is a calendar comparison, never `systemClock`).
 
 The host computes these `TraceabilityFacts` and injects them into the lean
-`@czap/gauntlet` engine; the `traceability-bridge` gate only FOLDS them — the same
+`@liteship/gauntlet` engine; the `traceability-bridge` gate only FOLDS them — the same
 host-injection pattern as the IR / supply-chain / mutation / simulation facts.

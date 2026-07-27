@@ -6,7 +6,7 @@
 
 # Interface: ResponsiveMediaCandidateSet
 
-Defined in: [core/src/responsive-media.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L58)
+Defined in: [core/src/media/responsive-media.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L58)
 
 The EFFECTIVE candidate set — the single law every responsive-media output derives
 from ([selectCandidates](../functions/selectCandidates.md)). Under `caps.saveData` the set is capped to the ONE
@@ -20,7 +20,7 @@ browser cannot re-fetch what no output lists (F-RM-1a..e).
 
 > `readonly` **candidates**: readonly [`ResponsiveMediaVariant`](ResponsiveMediaVariant.md)[]
 
-Defined in: [core/src/responsive-media.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L64)
+Defined in: [core/src/media/responsive-media.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L64)
 
 The candidates safe to advertise under `caps`. Save-Data caps this to a single
 light/floor variant; otherwise it is the full authored set. `srcset`, the general
@@ -32,7 +32,7 @@ light/floor variant; otherwise it is the full authored set. `srcset`, the genera
 
 > `readonly` **reason**: [`ResponsiveMediaResolutionReason`](../type-aliases/ResponsiveMediaResolutionReason.md)
 
-Defined in: [core/src/responsive-media.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L68)
+Defined in: [core/src/media/responsive-media.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L68)
 
 Why `resolved` was chosen and how `candidates` was capped.
 
@@ -42,6 +42,6 @@ Why `resolved` was chosen and how `candidates` was capped.
 
 > `readonly` **resolved**: [`ResponsiveMediaVariant`](ResponsiveMediaVariant.md)
 
-Defined in: [core/src/responsive-media.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L66)
+Defined in: [core/src/media/responsive-media.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L66)
 
 The single best variant for `<img src>` — the DPR pick WITHIN `candidates`.

@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
 
 const demoBuffer = () =>
   defineCapsule({
     _kind: 'stateMachine',
     name: 'demo.tokenBuffer',
-    input: S.unknown,
-    output: S.unknown,
+    input: schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: [], writes: [] },
     invariants: [],
     budgets: { p95Ms: 1 },
@@ -16,8 +15,6 @@ const demoBuffer = () =>
   });
 
 describe('generateStateMachine', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   it('THROWS UnsupportedError without a binding context (wire-or-fail, never a skip)', () => {
     expect(() => Harness.generateStateMachine(demoBuffer())).toThrow(
       /neither a runtime tick driver nor an importable field binding/i,

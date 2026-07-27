@@ -7,14 +7,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  CommandDispatcher,
-  CommandRegistry,
+  createCommandDispatcher,
+  createCommandRegistry,
   commandRegistry,
   capsuleVerifyCommand,
   sceneRenderCommand,
   assetAnalyzeCommand,
-} from '@czap/command';
-import type { RegisteredCommand } from '@czap/command';
+} from '@liteship/command';
+import type { RegisteredCommand } from '@liteship/command';
 
 const probeCommand: RegisteredCommand = {
   descriptor: {
@@ -33,7 +33,7 @@ const probeCommand: RegisteredCommand = {
 
 describe('dispatcher-level requires enforcement', () => {
   it('unmet requires → ONE structured failure naming the missing capabilities, exit 2', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([probeCommand]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([probeCommand]));
     const result = await dispatcher.dispatch({ name: 'probe.cmd', args: {} }, { runVitest: async () => ({ exitCode: 0, stderrTail: '' }) });
     expect(result.status).toBe('failed');
     expect(result.exitCode).toBe(2);
@@ -44,7 +44,7 @@ describe('dispatcher-level requires enforcement', () => {
   });
 
   it('met requires → the handler runs', async () => {
-    const dispatcher = CommandDispatcher.make(CommandRegistry.make([probeCommand]));
+    const dispatcher = createCommandDispatcher(createCommandRegistry([probeCommand]));
     const result = await dispatcher.dispatch(
       { name: 'probe.cmd', args: {} },
       {
@@ -58,7 +58,12 @@ describe('dispatcher-level requires enforcement', () => {
 
   it('catalog handlers declare their unconditional capabilities as data', () => {
     expect(capsuleVerifyCommand.descriptor.requires).toEqual(['runVitest']);
-    expect(sceneRenderCommand.descriptor.requires).toEqual(['fileExists', 'loadSceneModule', 'renderScene']);
+    expect(sceneRenderCommand.descriptor.requires).toEqual([
+      'fileExists',
+      'loadSceneModule',
+      'runSceneCompile',
+      'renderScene',
+    ]);
     expect(assetAnalyzeCommand.descriptor.requires).toEqual(['loadAssetBytes', 'runAudioProjection']);
     expect(commandRegistry.get('audit')?.descriptor.requires).toEqual(['runAudit']);
     expect(commandRegistry.get('scene.verify')?.descriptor.requires).toEqual([

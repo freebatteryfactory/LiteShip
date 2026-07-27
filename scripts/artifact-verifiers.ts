@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-// CUT B5b — slash normalization routes through the one @czap/audit home (aliased).
-import { normalizeRepoPath as normalizePath } from '@czap/audit';
+// CUT B5b — slash normalization routes through the one @liteship/audit home (aliased).
+import { normalizeRepoPath as normalizePath } from '@liteship/audit';
 import { repoRoot } from '../vitest.shared.js';
 import { buildCurrentArtifactContext } from './artifact-context.js';
 import {
@@ -12,7 +12,7 @@ import {
   hasCodebaseAuditRuntimeSeamsStatus,
   type CodebaseAuditArtifactEnvelope,
 } from './audit/artifact-contract.js';
-import { verifySatelliteScanReport, type SatelliteScanReport } from './report-satellite-scan.js';
+import { verifyAdaptiveScanReport, type AdaptiveScanReport } from './report-adaptive-scan.js';
 import {
   buildBenchFacts,
   buildCoverageFacts,
@@ -804,7 +804,7 @@ export function verifyFeedbackArtifacts(root = repoRoot): FeedbackVerification {
   const runtimeSeams = readJson<RuntimeSeamsReportArtifact>(runtimeSeamsPath);
   const runtimeSeamsVerification = verifyRuntimeSeamsReport(runtimeSeams, root);
   const auditChecks: RuntimeSeamsIntegrityCheck[] = [];
-  const satelliteScanChecks: RuntimeSeamsIntegrityCheck[] = [];
+  const adaptiveScanChecks: RuntimeSeamsIntegrityCheck[] = [];
 
   const auditPath = resolve(root, 'reports', 'codebase-audit.json');
   if (existsSync(auditPath)) {
@@ -885,27 +885,27 @@ export function verifyFeedbackArtifacts(root = repoRoot): FeedbackVerification {
     }
   }
 
-  const satelliteScanPath = resolve(root, 'reports', 'satellite-scan.json');
-  if (!existsSync(satelliteScanPath)) {
-    satelliteScanChecks.push(
+  const adaptiveScanPath = resolve(root, 'reports', 'adaptive-scan.json');
+  if (!existsSync(adaptiveScanPath)) {
+    adaptiveScanChecks.push(
       buildCheck(
-        'satellite-scan-present',
+        'adaptive-scan-present',
         false,
-        'Satellite scan artifact is missing. Run pnpm run report:satellite-scan after audit before feedback:verify.',
+        'Adaptive scan artifact is missing. Run pnpm run report:adaptive-scan after audit before feedback:verify.',
       ),
     );
   } else {
-    const satelliteScan = readJson<SatelliteScanReport>(satelliteScanPath);
-    const verification = verifySatelliteScanReport(satelliteScan, root);
-    satelliteScanChecks.push(...verification.checks);
+    const adaptiveScan = readJson<AdaptiveScanReport>(adaptiveScanPath);
+    const verification = verifyAdaptiveScanReport(adaptiveScan, root);
+    adaptiveScanChecks.push(...verification.checks);
   }
 
-  const checks = [...runtimeSeamsVerification.checks, ...auditChecks, ...satelliteScanChecks];
+  const checks = [...runtimeSeamsVerification.checks, ...auditChecks, ...adaptiveScanChecks];
   return {
     passed: checks.every((check) => check.passed),
     runtimeSeams: runtimeSeamsVerification,
     auditChecks,
-    satelliteScanChecks,
+    adaptiveScanChecks,
     checks,
   };
 }

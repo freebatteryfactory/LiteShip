@@ -8,9 +8,9 @@
 
 > **Prettify**\<`T`\> = `{ [K in keyof T]: T[K] }` & `object`
 
-Defined in: [core/src/type-utils.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L14)
+Defined in: [core/src/schema/types.ts:4](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/types.ts#L4)
 
-Flatten branded intersections for clean IDE hints
+Flatten branded intersections for clean IDE hints.
 
 ## Type Parameters
 

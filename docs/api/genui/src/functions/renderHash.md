@@ -6,7 +6,7 @@
 
 # Function: renderHash()
 
-> **renderHash**(`node`, `catalog`): `ContentAddress`
+> **renderHash**(`node`, `catalog`): [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [genui/src/identity.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/identity.ts#L18)
 
@@ -16,7 +16,7 @@ Stable identity for a validated tree under a catalog — cache/replay/tests.
 
 ### node
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
 ### catalog
 
@@ -24,4 +24,4 @@ Stable identity for a validated tree under a catalog — cache/replay/tests.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)

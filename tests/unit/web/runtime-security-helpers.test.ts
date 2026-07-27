@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import { allowRuntimeEndpointUrl, allowSameOriginRuntimeUrl, isSameOriginRuntimeUrl } from '../../../packages/astro/src/runtime/url-policy.js';
 import { isPrivateOrReservedIP, resolveRuntimeUrl } from '../../../packages/web/src/security/runtime-url.js';
 import {
@@ -31,7 +31,11 @@ describe('runtime security helpers', () => {
 
     expect(allowRuntimeEndpointUrl(null, 'stream', 'test')).toBeNull();
     expect(allowRuntimeEndpointUrl('/stream', 'stream', 'test')).toBe('/stream');
-    expect(allowRuntimeEndpointUrl('http://%', 'stream', 'test', { malformedUrl: 'bad-url' })).toBeNull();
+    expect(
+      allowRuntimeEndpointUrl('http://%', 'stream', 'test', {
+        malformedUrl: 'astro/url-policy/malformed-url-rejected',
+      }),
+    ).toBeNull();
 
     expect(
       allowRuntimeEndpointUrl(
@@ -61,17 +65,23 @@ describe('runtime security helpers', () => {
       ),
     ).toBeNull();
 
-    expect(allowSameOriginRuntimeUrl('/feed', 'test', 'same-origin')).toBe('/feed');
-    expect(allowSameOriginRuntimeUrl('https://evil.example/feed', 'test', 'cross-origin')).toBeNull();
+    expect(allowSameOriginRuntimeUrl('/feed', 'test', 'astro/url-policy/cross-origin-url-rejected')).toBe('/feed');
+    expect(
+      allowSameOriginRuntimeUrl(
+        'https://evil.example/feed',
+        'test',
+        'astro/url-policy/cross-origin-url-rejected',
+      ),
+    ).toBeNull();
     expect(isSameOriginRuntimeUrl('/feed')).toBe(true);
     expect(isSameOriginRuntimeUrl('https://evil.example/feed')).toBe(false);
 
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ code: 'bad-url' }),
-        expect.objectContaining({ code: 'llm-origin-not-allowed' }),
-        expect.objectContaining({ code: 'gpu-shader-endpoint-kind-not-permitted' }),
-        expect.objectContaining({ code: 'cross-origin' }),
+        expect.objectContaining({ code: 'astro/url-policy/malformed-url-rejected' }),
+        expect.objectContaining({ code: 'astro/url-policy/origin-not-allowed' }),
+        expect.objectContaining({ code: 'astro/url-policy/endpoint-kind-not-permitted' }),
+        expect.objectContaining({ code: 'astro/url-policy/cross-origin-url-rejected' }),
       ]),
     );
   });
@@ -532,7 +542,7 @@ describe('runtime security helpers', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         source: 'test',
-        code: 'stream-private-ip-rejected',
+        code: 'astro/url-policy/private-ip-rejected',
       }),
     );
   });

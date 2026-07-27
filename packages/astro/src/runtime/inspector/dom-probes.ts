@@ -8,7 +8,9 @@
  * @module
  */
 
-const DIRECTIVE_ATTR = 'data-czap-directive';
+import { isClaimedDirectiveDescendant } from '../slots.js';
+
+const DIRECTIVE_ATTR = 'data-liteship-directive';
 const LEGACY_DIRECTIVE_PREFIX = 'client:';
 
 /** Whether any stylesheet declares the given container name. */
@@ -58,7 +60,7 @@ export function containerNotDeclaredMessage(input: string, containerName: string
 }
 
 /** Whether an element carries a (canonical or legacy) directive marker the runtime evaluates. */
-export function isDirectiveActive(element: HTMLElement): boolean {
+export function isDirectiveActive(element: Element): boolean {
   if (element.hasAttribute(DIRECTIVE_ATTR)) {
     return true;
   }
@@ -67,5 +69,5 @@ export function isDirectiveActive(element: HTMLElement): boolean {
       return true;
     }
   }
-  return element.hasAttribute('data-czap-directive-bound');
+  return element.hasAttribute('data-liteship-directive-bound') || isClaimedDirectiveDescendant(element);
 }

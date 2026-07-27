@@ -52,6 +52,7 @@ const video = (
     from: FrameMark;
     to: FrameMark;
     source: unknown;
+    motion?: VideoTrack['motion'];
     layer?: number;
     envelope?: VideoTrack['envelope'];
   },
@@ -61,6 +62,7 @@ const video = (
   from: opts.from,
   to: opts.to,
   source: opts.source,
+  ...(opts.motion !== undefined ? { motion: opts.motion } : {}),
   layer: opts.layer ?? 0,
   ...(opts.envelope !== undefined ? { envelope: opts.envelope } : {}),
 });

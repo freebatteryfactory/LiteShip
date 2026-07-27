@@ -4,14 +4,14 @@
  * each chunk is [fourCC id] [uint32 size] [size bytes payload]
  * with 2-byte alignment padding between chunks.
  *
- * Supports the WAV subset used by @czap/assets: 'fmt ', 'data', 'LIST'
+ * Supports the WAV subset used by @liteship/assets: 'fmt ', 'data', 'LIST'
  * (typed by listType), and unknown passthrough chunks that we preserve
  * for metadata projections.
  *
  * @module
  */
 
-import { ParseError } from '@czap/error';
+import { ParseError } from '@liteship/error';
 
 /** Four-character code, e.g. 'RIFF', 'fmt ', 'data', 'LIST', 'INFO'. */
 export type FourCC = string;
@@ -81,17 +81,31 @@ export function* walkRiff(buffer: ArrayBuffer): Generator<WavChunk> {
   }
   const riffSize = view.getUint32(4, true);
   const formType = dec.decode(new Uint8Array(buffer, 8, 4));
+  if (riffSize < 4) {
+    throw ParseError('riff', `RIFF size ${riffSize} cannot contain the required four-byte form type.`, {
+      code: 'malformed',
+      offset: 4,
+    });
+  }
+  const declaredEnd = 8 + riffSize;
+  if (declaredEnd > buffer.byteLength) {
+    throw ParseError(
+      'riff',
+      `RIFF declares ${riffSize} bytes but the buffer ends ${declaredEnd - buffer.byteLength} bytes early.`,
+      { code: 'malformed', offset: 4 },
+    );
+  }
   yield { id: 'RIFF', size: riffSize, formType, offset: 0 };
 
   let pos = 12;
-  while (pos + 8 <= buffer.byteLength) {
+  while (pos + 8 <= declaredEnd) {
     const id = dec.decode(new Uint8Array(buffer, pos, 4));
     const size = view.getUint32(pos + 4, true);
     const dataOffset = pos + 8;
-    if (dataOffset + size > buffer.byteLength) {
+    if (dataOffset + size > declaredEnd) {
       throw ParseError(
         'riff',
-        `RIFF chunk ${id} claims ${size} bytes but buffer only has ${buffer.byteLength - dataOffset} remaining ` +
+        `RIFF chunk ${id} claims ${size} bytes but the declared RIFF body only has ${declaredEnd - dataOffset} remaining ` +
           `(truncated-chunk) — re-fetch the asset source or re-export the file.`,
         { code: 'malformed', offset: pos },
       );
@@ -102,12 +116,31 @@ export function* walkRiff(buffer: ArrayBuffer): Generator<WavChunk> {
       // (e.g. 'INFO', 'adtl'). We yield the full data view so callers
       // can iterate sub-chunks; convention is to skip the first 4
       // bytes (already captured here as listType).
-      const listType = size >= 4 ? dec.decode(new Uint8Array(buffer, dataOffset, 4)) : '';
+      if (size < 4) {
+        throw ParseError('riff', `LIST chunk must contain a four-byte list type, got ${size} byte(s).`, {
+          code: 'malformed',
+          offset: pos,
+        });
+      }
+      const listType = dec.decode(new Uint8Array(buffer, dataOffset, 4));
       yield { id: 'LIST', size, offset: pos, listType, data };
     } else {
       yield { id, size, offset: pos, data };
     }
     // RIFF chunks are 2-byte aligned: pad if size is odd
-    pos += 8 + size + (size % 2);
+    const next = dataOffset + size + (size % 2);
+    if (next > declaredEnd) {
+      throw ParseError('riff', `RIFF chunk ${id} is missing its required alignment byte.`, {
+        code: 'malformed',
+        offset: pos,
+      });
+    }
+    pos = next;
+  }
+  if (pos !== declaredEnd) {
+    throw ParseError('riff', `RIFF body ends with ${declaredEnd - pos} byte(s) of an incomplete chunk header.`, {
+      code: 'malformed',
+      offset: pos,
+    });
   }
 }

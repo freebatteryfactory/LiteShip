@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { CssMotionPlan } from '@czap/core';
+import type { CssMotionPlan } from '@liteship/core';
 import type { MotionCompileResult } from './motion.js';
 
 /**
@@ -17,7 +17,7 @@ import type { MotionCompileResult } from './motion.js';
  * for a better first paint, but a default/cached/no-hint compile must still
  * respect the user's OS preference in the browser; that is the whole point of
  * the media query. Targets the plan's real selector (the stamped
- * `data-czap-boundary` attribute), and applies the end-state declarations so a
+ * `data-liteship-boundary` attribute), and applies the end-state declarations so a
  * `from { opacity: 0 }` boundary settles VISIBLE instead of freezing hidden.
  */
 export function appendReducedMotionGuard(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
@@ -44,22 +44,22 @@ export function appendReducedMotionGuard(css: MotionCompileResult, plan: CssMoti
 /**
  * Emit an INDIVIDUAL-transform consumer so `@property`-interpolated translate axes
  * actually move the element (Wave-4, #148): the CSS `translate:` property reads the
- * per-axis `--czap-<target>-{x,y,z}` custom props directly — NOT a composite
+ * per-axis `--liteship-<target>-{x,y,z}` custom props directly — NOT a composite
  * `transform: translate3d(...)`. The individual `translate` property composes
  * independently of `rotate`/`scale` and any authored `transform`, so a boundary can carry
  * a translate track alongside other transforms without one clobbering the other; the
- * runtime floor keeps writing the SAME `--czap-<target>-*` vars, so both legs read one
+ * runtime floor keeps writing the SAME `--liteship-<target>-*` vars, so both legs read one
  * source (cross-target parity). Absent unless the plan actually tweens a translate axis.
  */
 export function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotionPlan): MotionCompileResult {
-  const target = plan.selector.match(/data-czap-boundary="([^"]+)"/)?.[1];
+  const target = plan.selector.match(/data-liteship-boundary="([^"]+)"/)?.[1];
   if (target === undefined) return css;
 
   const hasTranslateAxis = plan.properties.some(
-    (prop) => prop.property.startsWith(`--czap-${target}-`) && /-[xyz]$/.test(prop.property),
+    (prop) => prop.property.startsWith(`--liteship-${target}-`) && /-[xyz]$/.test(prop.property),
   );
   if (!hasTranslateAxis) return css;
 
-  const rule = `${plan.selector} {\n  translate: var(--czap-${target}-x,0px) var(--czap-${target}-y,0px) var(--czap-${target}-z,0px);\n}`;
+  const rule = `${plan.selector} {\n  translate: var(--liteship-${target}-x,0px) var(--liteship-${target}-y,0px) var(--liteship-${target}-z,0px);\n}`;
   return { ...css, raw: `${css.raw}\n\n${rule}` };
 }

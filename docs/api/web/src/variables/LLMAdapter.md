@@ -6,14 +6,14 @@
 
 # Variable: LLMAdapter
 
-> `const` **LLMAdapter**: `object`
+> **LLMAdapter**: `object`
 
-Defined in: [web/src/stream/llm-adapter.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L180)
+Defined in: [web/src/stream/llm-adapter.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L57)
 
 LLM adapter namespace.
 
 Provider-agnostic LLM stream adapter. Normalizes any LLM streaming API
-(OpenAI, Anthropic, etc.) into czap's typed chunk buffer via a user-provided
+(OpenAI, Anthropic, etc.) into liteship's typed chunk buffer via a user-provided
 [ChunkParser](../type-aliases/ChunkParser.md). Handles tool-call accumulation, JSON argument parsing,
 and produces a convenience `textTokens` stream for feeding into a
 token buffer.
@@ -42,7 +42,7 @@ readonly [`LLMChunk`](../interfaces/LLMChunk.md)[]
 
 ### create
 
-> **create**: (`config`) => [`LLMAdapterShape`](../interfaces/LLMAdapterShape.md) = `_create`
+> **create**: (`config`) => [`LLMAdapter`](../interfaces/LLMAdapter.md) = `_create`
 
 Create an LLM adapter that normalizes any LLM streaming API into typed
 chunk and text-token streams.
@@ -61,14 +61,14 @@ Stream source and parser configuration
 
 #### Returns
 
-[`LLMAdapterShape`](../interfaces/LLMAdapterShape.md)
+[`LLMAdapter`](../interfaces/LLMAdapter.md)
 
-An [LLMAdapterShape](../interfaces/LLMAdapterShape.md) with `chunks` and `textTokens` AsyncIterables
+An LLMAdapter with `chunks` and `textTokens` AsyncIterables
 
 #### Example
 
 ```ts
-import { LLMAdapter } from '@czap/web';
+import { LLMAdapter } from '@liteship/web';
 
 const adapter = LLMAdapter.create({
   source: sseMessageStream,
@@ -89,7 +89,7 @@ for await (const token of adapter.textTokens) process.stdout.write(token);
 ## Example
 
 ```ts
-import { LLMAdapter, SSE } from '@czap/web';
+import { LLMAdapter, SSE } from '@liteship/web';
 
 const client = SSE.create({ url: '/api/llm/stream' });
 const adapter = LLMAdapter.create({

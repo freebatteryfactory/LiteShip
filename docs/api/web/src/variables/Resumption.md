@@ -61,7 +61,7 @@ The artifact ID whose state should be cleared
 #### Example
 
 ```ts
-import { Resumption } from '@czap/web';
+import { Resumption } from '@liteship/web';
 
 Resumption.clearState('article-123');
 ```
@@ -109,7 +109,7 @@ The saved state, or null if none exists
 #### Example
 
 ```ts
-import { Resumption } from '@czap/web';
+import { Resumption } from '@liteship/web';
 
 const state = Resumption.loadState('article-123');
 if (state) {
@@ -191,7 +191,7 @@ A promise of a [ResumeResponse](../type-aliases/ResumeResponse.md); rejects with
 #### Example
 
 ```ts
-import { Resumption } from '@czap/web';
+import { Resumption } from '@liteship/web';
 
 const response = await Resumption.resume('article-123', 'evt-50', { maxGapSize: 100 });
 // response.type => 'replay' | 'snapshot'
@@ -227,7 +227,7 @@ Time source for the default timestamp; defaults to `wallClock`
 #### Example
 
 ```ts
-import { Resumption } from '@czap/web';
+import { Resumption } from '@liteship/web';
 
 Resumption.saveState({
   artifactId: 'article-123',
@@ -239,7 +239,7 @@ Resumption.saveState({
 ## Example
 
 ```ts
-import { Resumption } from '@czap/web';
+import { Resumption } from '@liteship/web';
 
 // Save state on each SSE message (timestamp defaults to systemClock.now())
 Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99 });

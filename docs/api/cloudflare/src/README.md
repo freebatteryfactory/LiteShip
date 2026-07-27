@@ -6,13 +6,15 @@
 
 # cloudflare/src
 
-@czap/cloudflare — Cloudflare Workers siteAdapter and Astro middleware glue.
+@liteship/cloudflare — Cloudflare Workers siteAdapter and Astro middleware glue.
 
 ## Interfaces
 
 - [CloudflareCacheApi](interfaces/CloudflareCacheApi.md)
 - [CloudflareEdgeCacheOptions](interfaces/CloudflareEdgeCacheOptions.md)
+- [CloudflareExecutionContext](interfaces/CloudflareExecutionContext.md)
 - [CloudflareMiddlewareConfig](interfaces/CloudflareMiddlewareConfig.md)
+- [CloudflareRequestContext](interfaces/CloudflareRequestContext.md)
 
 ## Type Aliases
 

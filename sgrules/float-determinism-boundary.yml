@@ -6,7 +6,7 @@
 # DIFFERENT state index than the deployed f32 WASM kernel within ~1 ULP of a
 # threshold (output-identity drift). The fix consolidated ONE f32-canonical
 # kernel — `rawIndexF32` / `EVALUATE_THRESHOLDS_SOURCE` in
-# packages/core/src/boundary-f32.ts — and pinned every surface to it via
+# packages/core/src/wasm/boundary-f32.ts — and pinned every surface to it via
 # tests/property/boundary-evaluator-parity.prop.test.ts.
 #
 # This rule bans the regression: a NEW inline boundary reverse-scan — a `for`
@@ -39,7 +39,7 @@
 id: float-determinism-boundary
 language: typescript
 severity: error
-message: "Inline boundary reverse-scan (downward for-loop comparing a value to thresholds[i]) re-implements the f32-canonical kernel — route through rawIndexF32 / EVALUATE_THRESHOLDS_SOURCE (packages/core/src/boundary-f32.ts). The 'f32-canonical CUT' scar: a raw-f64 twin selects a different state index than the deployed WASM within ~1 ULP."
+message: "Inline boundary reverse-scan (downward for-loop comparing a value to thresholds[i]) re-implements the f32-canonical kernel — route through rawIndexF32 / EVALUATE_THRESHOLDS_SOURCE (packages/core/src/wasm/boundary-f32.ts). The 'f32-canonical CUT' scar: a raw-f64 twin selects a different state index than the deployed WASM within ~1 ULP."
 files:
   - '**/packages/**/src/**'
 rule:

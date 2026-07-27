@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { verifyCommand } from '@czap/command';
-import type { ContentAddress } from '@czap/core';
+import { verifyCommand } from '@liteship/command';
+import type { ContentAddress } from '@liteship/core';
 
 const ID = 'fnv1a:abcd1234' as unknown as ContentAddress;
 const okDecode = {
@@ -9,7 +9,7 @@ const okDecode = {
   tarballManifestAddress: { display_id: 'd1', integrity_digest: 'i1' },
 };
 
-describe('@czap/command verify', () => {
+describe('@liteship/command verify', () => {
   it('no capsule → Unknown verdict, exit 4', async () => {
     const r = await verifyCommand.handler({ name: 'verify', args: { tarball: 'x.tgz' } }, {});
     expect(r.verdict).toBe('Unknown');
@@ -24,7 +24,7 @@ describe('@czap/command verify', () => {
   it('no --capsule but the .shipcapsule.cbor sibling exists → derived capsule verifies', async () => {
     const read: string[] = [];
     const r = await verifyCommand.handler(
-      { name: 'verify', args: { tarball: 'pkg/czap-command-0.1.4.tgz' } },
+      { name: 'verify', args: { tarball: 'pkg/liteship-command-0.1.4.tgz' } },
       {
         fileExists: () => true,
         readFileBytes: (path) => {
@@ -35,15 +35,15 @@ describe('@czap/command verify', () => {
         recomputeTarballAddress: async () => ({ ok: true, display_id: 'd1', integrity_digest: 'i1' }),
       },
     );
-    expect(read).toContain('pkg/czap-command-0.1.4.shipcapsule.cbor');
+    expect(read).toContain('pkg/liteship-command-0.1.4.shipcapsule.cbor');
     expect(r.verdict).toBe('Verified');
     expect(r.exitCode).toBe(0);
   });
 
   it('no --capsule and the sibling is absent → Unknown verdict, exit 4', async () => {
     const r = await verifyCommand.handler(
-      { name: 'verify', args: { tarball: 'pkg/czap-command-0.1.4.tgz' } },
-      { fileExists: (path) => path === 'pkg/czap-command-0.1.4.tgz' },
+      { name: 'verify', args: { tarball: 'pkg/liteship-command-0.1.4.tgz' } },
+      { fileExists: (path) => path === 'pkg/liteship-command-0.1.4.tgz' },
     );
     expect(r.verdict).toBe('Unknown');
     expect(r.exitCode).toBe(4);

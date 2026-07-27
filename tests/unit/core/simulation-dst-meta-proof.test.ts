@@ -1,7 +1,7 @@
 /**
  * THE RECURSIVE META-PROOF — "test the test that tests the tests".
  *
- * This file QUALIFIES the DST harness (`@czap/core/simulation`) to
+ * This file QUALIFIES the DST harness (`@liteship/core/simulation`) to
  * tool-qualification grade. A harness that claims to detect nondeterminism is
  * worthless unless it is PROVEN to (a) be deterministic itself, (b) actually
  * CATCH a real nondeterminism leak (not falsely pass), and (c) go RED the moment
@@ -54,8 +54,8 @@ import {
   type SchedulerWorld,
   type FaultTable,
   type SimTrace,
-} from '@czap/core/simulation';
-import { rawIndexF32 } from '@czap/core';
+} from '@liteship/core/simulation';
+import { rawIndexF32 } from '@liteship/core';
 import {
   simulationDeterminismGate,
   verifyGate,
@@ -63,7 +63,7 @@ import {
   type ScenarioReplayFact,
   type SimulationFacts,
   type GateContext,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ───────────────────────── shared real SUT scenarios ─────────────────────────
 
@@ -172,10 +172,18 @@ const leakyRandomScenario: SimScenario = {
 };
 
 /** Project a determinism result into the host SimulationFacts the gate folds. */
-function factFromResult(scenarioId: string, r: { seed: number; firstDigest: string; secondDigest: string; deterministic: boolean }): ScenarioReplayFact {
+function factFromResult(
+  scenarioId: string,
+  r: { seed: number; firstDigest: string; secondDigest: string; deterministic: boolean },
+): ScenarioReplayFact {
   return {
     scenarioId,
+    owner: '@liteship/core',
+    invariant: 'the same seed produces the same observable trace',
     seed: r.seed,
+    faultSchedule: [],
+    recoveryExpectation: null,
+    recoveryObservation: null,
     firstDigest: r.firstDigest,
     secondDigest: r.secondDigest,
     ...(r.deterministic
@@ -190,7 +198,12 @@ function factFromResult(scenarioId: string, r: { seed: number; firstDigest: stri
 }
 
 function factsContext(facts: SimulationFacts): GateContext {
-  return { repoRoot: '/sim', readFile: (): undefined => undefined, files: (): readonly string[] => [], simulation: facts };
+  return {
+    repoRoot: '/sim',
+    readFile: (): undefined => undefined,
+    files: (): readonly string[] => [],
+    simulation: facts,
+  };
 }
 
 describe('LEVEL 2 — an injected-nondeterminism SUT DIVERGES and the DST gate CATCHES it', () => {
@@ -422,7 +435,7 @@ describe('the harness works on REAL production code (not toy fixtures)', () => {
     }
   });
 
-  it('makeWorld rejects a non-integer seed (parse-don\'t-validate at the boundary)', () => {
+  it("makeWorld rejects a non-integer seed (parse-don't-validate at the boundary)", () => {
     expect(() => makeWorld(1.5)).toThrow();
     expect(() => makeWorld(Number.NaN)).toThrow();
   });

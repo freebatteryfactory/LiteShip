@@ -2,7 +2,7 @@
  * createNodeCommandContext — the ONE shared host CommandContext factory. Both
  * the CLI and MCP adapters build their injected I/O from this, so a command
  * runs identically whichever protocol skin invoked it. This is the Node host
- * execution surface; the pure `@czap/command` main entry never imports it.
+ * execution surface; the pure `@liteship/command` main entry never imports it.
  *
  * It provides every host capability the finite handlers need EXCEPT the ones
  * that are genuinely adapter-specific (e.g. the CLI's own `hostVersion`, or
@@ -14,22 +14,18 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { Compositor, VideoRenderer, wallClock, type Millis } from '@czap/core';
-import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
-import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@czap/gauntlet';
+import { Compositor, createVideoRenderer, wallClock, type Millis } from '@liteship/core';
+import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@liteship/assets';
+import { IoError, ValidationError } from '@liteship/error';
+import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@liteship/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
 import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
+import { buildCheckGovernanceFacts } from './check-governance.js';
 import { runPlumbScan } from './plumb-scan.js';
-
-// Host audio decode resolves by asset id, falling back to the built-in audio
-// decoder for any id not in a registry. An EMPTY immutable registry preserves
-// the prior global `resolveAssetDecoder` behavior (no scene is imported in the
-// host, so nothing was ever registered) without the order-dependent global.
-const HOST_ASSET_REGISTRY = AssetRegistry.make([]);
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
 const DEFAULT_WIDTH = 1280;
@@ -38,16 +34,16 @@ const DEFAULT_HEIGHT = 720;
 /**
  * Build the shared Node host context. Pass the adapter's `cwd` so EVERY path
  * capability resolves against it (manifest, cache, file reads, asset/scene
- * loading, CZAP_CAPSULE_MANIFEST) — not just manifest + cache.
+ * loading, LITESHIP_CAPSULE_MANIFEST) — not just manifest + cache.
  *
  * `skipDetector` and `earlyReturnDetector` are OPTIONAL host-built SOUND AST detectors
- * (`@czap/audit`'s `detectSkipsAST` / `detectEarlyReturnBeforeExpectAST`). They are
- * injected by the ADAPTER, not imported here: `@czap/command` must NOT depend on
- * `@czap/audit` (it would drag the TS compiler into `@czap/mcp-server`). So the CLI
- * adapter — which already deps `@czap/audit` — passes them, and the in-process
- * `runGauntlet` (`czap check`) gains parser-backed skip and early-return detection. The
+ * (`@liteship/audit`'s `detectSkipsAST` / `detectEarlyReturnBeforeExpectAST`). They are
+ * injected by the ADAPTER, not imported here: `@liteship/command` must NOT depend on
+ * `@liteship/audit` (it would drag the TS compiler into `@liteship/mcp-server`). So the CLI
+ * adapter — which already deps `@liteship/audit` — passes them, and the in-process
+ * `runGauntlet` (`liteship check`) gains parser-backed skip and early-return detection. The
  * MCP adapter omits them → the lean token fallback (the documented degradation, exactly
- * like `runCheckInvariants`, which is likewise CLI-only because it needs `@czap/audit`).
+ * like `runCheckInvariants`, which is likewise CLI-only because it needs `@liteship/audit`).
  */
 export function createNodeCommandContext(
   opts: {
@@ -59,7 +55,7 @@ export function createNodeCommandContext(
      * CLI adapter builds its context purely as `createNodeCommandContext({ …overrides })`
      * instead of hand-writing an inline `CommandContext` literal. Every provided
      * key wins over the default of the same name; keys absent here keep the shared
-     * host implementation. This is how the CLI injects the heavy `@czap/audit`-backed
+     * host implementation. This is how the CLI injects the heavy `@liteship/audit`-backed
      * gates (`runAuditFloor`, `runPackageSmoke`, `runCapsuleGate`, `runCheckInvariants`)
      * and the vitest runner (`runVitest`) that are NOT provisioned in the shared
      * factory — over MCP those stay absent and the handlers degrade structurally.
@@ -115,48 +111,97 @@ export function createNodeCommandContext(
     // performance.now (a monotonic DURATION reading whose value is not epoch ms —
     // feeding it into `new Date()` would land near 1970 and silently mis-expire
     // every waiver).
-    runGauntlet: async (globs) =>
-      litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector, opts.earlyReturnDetector),
+    runGauntlet: async (globs) => {
+      const now = new Date(wallClock.now());
+      return litelaunchGauntlet(
+        cwd,
+        now,
+        globs,
+        undefined,
+        opts.skipDetector,
+        opts.earlyReturnDetector,
+        undefined,
+        buildCheckGovernanceFacts(cwd, now),
+      );
+    },
     // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the
-    // invariant scan needs `@czap/audit`'s `normalizeRepoPath` (the one B5b
-    // slash-normalize home), and `@czap/command` must not import `@czap/audit`
-    // (it would drag the heavy TS-compiler/glob engine into `@czap/mcp-server`).
-    // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@czap/cli`
+    // invariant scan needs `@liteship/audit`'s `normalizeRepoPath` (the one B5b
+    // slash-normalize home), and `@liteship/command` must not import `@liteship/audit`
+    // (it would drag the heavy TS-compiler/glob engine into `@liteship/mcp-server`).
+    // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@liteship/cli`
     // injects `runCheckInvariants`, and over MCP it degrades to capabilityUnavailable.
     loadAssetBytes,
-    runAudioProjection: async (bytes, projection, assetId) => {
-      // The asset's OWN decoder (AssetDecl.decoder override or the kind
-      // built-in, via its capsule's derive handler) — not a hardwired
-      // audioDecoder. Falls back to the audio built-in when the asset isn't
-      // registered in this process. The three projections are audio
-      // analyses, so the decoded shape must be DecodedAudio (enforced on
-      // AssetDecl.decoder for kind 'audio').
-      const decoded = (await HOST_ASSET_REGISTRY.resolveDecoder(assetId ?? '')(bytes)) as DecodedAudio;
+    runAudioProjection: async (bytes, projection) => {
+      // This host command consumes a compiled manifest and raw WAV bytes; it
+      // does not import the authored scene registry. Keep that explicit host
+      // adapter separate from AssetRegistry, whose authority is registered
+      // identity/kind/decoder ownership and therefore never falls back.
+      const decoded = await audioDecoder(bytes);
       if (projection === 'beat') return detectBeats(decoded).beats.length;
       if (projection === 'onset') return detectOnsets(decoded).length;
       return computeWaveform(decoded, { bins: 512 }).length;
     },
-    loadSceneModule: async (scenePath) =>
-      (await import(/* @vite-ignore */ pathToFileURL(resolveFrom(scenePath)).href)) as Record<string, unknown>,
+    loadSceneModule: async (scenePath) => {
+      try {
+        return (await import(/* @vite-ignore */ pathToFileURL(resolveFrom(scenePath)).href)) as Record<string, unknown>;
+      } catch (cause) {
+        throw IoError('scene-module-import', 'could not import scene module', { path: scenePath, cause });
+      }
+    },
     runSceneCompile: async (mod) => {
-      // Scene compile fns are sync (they return a CompiledScene descriptor); invoke
-      // for the compile side effect. The legacy `Effect.isEffect(result)` branch is
-      // retired — no compile fn returns an Effect anymore (Wave 8).
-      const compileFn = Object.values(mod).find((v): v is () => unknown => typeof v === 'function');
-      if (!compileFn) return;
-      compileFn();
+      // Scene modules expose an explicit compile* function. Execute it exactly
+      // once, then validate the structural projection consumed by command. This
+      // keeps scene semantics in @liteship/scene while preventing the command
+      // layer from re-deriving duration from raw authoring data.
+      const compileEntries = Object.entries(mod).filter(
+        ([name, value]) => /^compile(?:[A-Z_]|$)/.test(name) && typeof value === 'function',
+      );
+      if (compileEntries.length === 0) {
+        throw ValidationError('scene.compile', 'module exports no compile function');
+      }
+      if (compileEntries.length > 1) {
+        throw ValidationError(
+          'scene.compile',
+          `module exports multiple compile functions (${compileEntries.map(([name]) => name).join(', ')}); export exactly one`,
+        );
+      }
+      const compileEntry = compileEntries[0]!;
+      if (typeof compileEntry[1] !== 'function') throw ValidationError('scene.compile', 'export is not callable');
+      const compiled = compileEntry[1]();
+      if (typeof compiled !== 'object' || compiled === null) {
+        throw ValidationError(
+          'scene.compile',
+          `function returned ${String(compiled)} instead of a CompiledScene descriptor`,
+        );
+      }
+      const candidate = compiled as Record<string, unknown>;
+      const durationMs = candidate['duration'];
+      const fps = candidate['fps'];
+      const trackSpawns = candidate['trackSpawns'];
+      if (
+        typeof durationMs !== 'number' ||
+        !Number.isFinite(durationMs) ||
+        durationMs < 0 ||
+        typeof fps !== 'number' ||
+        !Number.isFinite(fps) ||
+        fps <= 0 ||
+        !Array.isArray(trackSpawns)
+      ) {
+        throw ValidationError('scene.compile', 'function returned an invalid CompiledScene descriptor');
+      }
+      return { durationMs, fps, trackCount: trackSpawns.length };
     },
     renderScene: async ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) => {
       // Compositor.create is sync-first (Wave 2): it returns the live instance
-      // plus the Lifetime that owns its teardown. The render collapses to a
-      // plain await; the scope's sole finalizer (closing the reactive `changes`
-      // kernel) runs on the way out, preserving the old `Effect.scoped` cleanup.
-      const { compositor, lifetime } = Compositor.create();
+      // that owns its own teardown. The render collapses to a plain await; the
+      // compositor's sole finalizer (closing the reactive `changes` kernel) runs
+      // on the way out, preserving the old `Effect.scoped` cleanup.
+      const compositor = Compositor.create();
       try {
-        const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
+        const renderer = createVideoRenderer({ fps, width, height, durationMs: durationMs as Millis }, compositor);
         return await renderWithFfmpeg(renderer.frames(), { output, width, height, fps });
       } finally {
-        await lifetime.dispose();
+        await compositor.dispose();
       }
     },
     cache: {

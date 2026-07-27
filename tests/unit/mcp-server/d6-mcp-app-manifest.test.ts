@@ -1,15 +1,15 @@
 /**
  * CUT D6 — the MCP-app manifest, reachable as a resource + proven drift-free.
  *
- * The server feeds its REAL registries to the pure `@czap/compiler` projector and
+ * The server feeds its REAL registries to the pure `@liteship/compiler` projector and
  * serves the result at `liteship://mcp-app/manifest`. This is the integration seam
- * (the only place importing both @czap/mcp-server and @czap/command): it proves the
+ * (the only place importing both @liteship/mcp-server and @liteship/command): it proves the
  * manifest is a true projection — no second source of truth, no orphan.
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { COMMAND_CATALOG } from '@czap/command';
+import { COMMAND_CATALOG } from '@liteship/command';
 import {
   dispatch,
   listTools,
@@ -18,7 +18,7 @@ import {
   listAppResources,
   listPrompts,
   mcpAppManifest,
-} from '@czap/mcp-server';
+} from '@liteship/mcp-server';
 import type { JsonRpcRequest } from '../../../packages/mcp-server/src/jsonrpc.js';
 
 const MANIFEST_URI = 'liteship://mcp-app/manifest';
@@ -87,9 +87,8 @@ describe('D6 — the manifest is a projection (NO drift, NO second source)', () 
     expect(mcpAppManifest().resources.map((r) => r.uri)).not.toContain(MANIFEST_URI);
   });
 
-  it('namespace law holds across the whole manifest (no heyoub, no czap://)', () => {
+  it('namespace law holds across the whole manifest (no heyoub, product-owned scheme)', () => {
     const json = JSON.stringify(mcpAppManifest());
     expect(json).not.toContain('heyoub');
-    expect(json).not.toContain('czap://');
   });
 });

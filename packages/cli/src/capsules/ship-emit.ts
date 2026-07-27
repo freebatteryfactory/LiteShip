@@ -13,7 +13,7 @@
  *    is derivable PURELY from inputs, so idempotency + audit-receipt +
  *    fault-injection are real tests.
  *  - the EFFECT ({@link ShipEmit.run}): canonicalizes the fully-assembled
- *    {@link ShipCapsule.Shape} and writes `<pkg>-<version>.shipcapsule.cbor`
+ *    {@link ShipCapsule} and writes `<pkg>-<version>.shipcapsule.cbor`
  *    next to a freshly-produced npm tarball. The publish itself is downstream.
  *
  * Re-uses the seven-arm closure (ADR-0008): emission is a
@@ -25,21 +25,21 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { CanonicalCbor, defineCapsule, S, ShipCapsule, type ContentAddress } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { CanonicalCbor, defineCapsule, ShipCapsule, type ContentAddress, schema } from '@liteship/core';
+import type { Infer } from '@liteship/core';
 
 /**
  * The publishable workspace snapshot the emission receipt is PURELY derived
  * from. Every field is a plain scalar / array (arbitrary-derivable), so the
  * harness can sample it for the contract round-trip AND drive `mutate` twice.
  */
-const ShipEmitInput = S.struct({
-  capsule_path: S.string,
-  capsule_id: S.string,
-  package_name: S.string,
-  package_version: S.string,
-  source_commit: S.string,
-  lifecycle_scripts_observed: S.array(S.string),
+const ShipEmitInput = schema.struct({
+  capsule_path: schema.string,
+  capsule_id: schema.string,
+  package_name: schema.string,
+  package_version: schema.string,
+  source_commit: schema.string,
+  lifecycle_scripts_observed: schema.array(schema.string),
 });
 
 /**
@@ -47,20 +47,20 @@ const ShipEmitInput = S.struct({
  * to (`emitted` on the happy path, `rejected` when the snapshot is unshippable),
  * which is what makes the fault-injection check real.
  */
-const ShipEmitOutput = S.struct({
-  status: S.union(S.literal('emitted'), S.literal('rejected')),
-  bytes_written: S.number,
-  capsule_path: S.string,
-  capsule_id: S.string,
-  package_name: S.string,
-  package_version: S.string,
+const ShipEmitOutput = schema.struct({
+  status: schema.union(schema.literal('emitted'), schema.literal('rejected')),
+  bytes_written: schema.number,
+  capsule_path: schema.string,
+  capsule_id: schema.string,
+  package_name: schema.string,
+  package_version: schema.string,
 });
 
 type ShipEmitDecodedInput = Infer<typeof ShipEmitInput>;
 type ShipEmitDecodedOutput = Infer<typeof ShipEmitOutput>;
 
 interface ShipEmitRunInput {
-  readonly capsule: ShipCapsule.Shape;
+  readonly capsule: ShipCapsule;
   readonly capsule_path: string;
 }
 
@@ -137,7 +137,7 @@ export const shipEmitCapsule = defineCapsule({
       trigger: (): ShipEmitDecodedInput => ({
         capsule_path: '',
         capsule_id: 'fnv1a:deadbeef',
-        package_name: '@czap/_spine',
+        package_name: '@liteship/_spine',
         package_version: '0.1.0',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],
@@ -150,7 +150,7 @@ export const shipEmitCapsule = defineCapsule({
       trigger: (): ShipEmitDecodedInput => ({
         capsule_path: '/tmp/x.shipcapsule.cbor',
         capsule_id: 'fnv1a:deadbeef',
-        package_name: '@czap/_spine',
+        package_name: '@liteship/_spine',
         package_version: '',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],
@@ -163,7 +163,7 @@ export const shipEmitCapsule = defineCapsule({
       trigger: (): ShipEmitDecodedInput => ({
         capsule_path: '/tmp/x.shipcapsule.cbor',
         capsule_id: '',
-        package_name: '@czap/_spine',
+        package_name: '@liteship/_spine',
         package_version: '0.1.0',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],

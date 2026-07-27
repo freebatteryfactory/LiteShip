@@ -4,13 +4,45 @@ import { repoRoot } from '../vitest.shared.js';
 import { verifyFeedbackArtifacts, type RuntimeSeamsReportArtifact } from './artifact-integrity.js';
 import { isDirectExecution } from './audit/shared.js';
 
-interface SatelliteScanSummary {
+interface AdaptiveScanSummary {
   readonly runtimeWarnings?: readonly string[];
 }
 
-interface SatelliteScanArtifact {
+interface AdaptiveScanArtifact {
   readonly schemaVersion?: number;
-  readonly summary?: SatelliteScanSummary;
+  readonly summary?: AdaptiveScanSummary;
+}
+
+export interface RuntimeGateEvidence {
+  readonly feedbackPassed: boolean;
+  readonly hardGatesPassed: boolean;
+  readonly pairedTruth: readonly { readonly id: string; readonly status: string }[];
+  readonly runtimeWarnings: readonly string[];
+  readonly runtimeSeamsSchemaVersion: number | undefined;
+  readonly adaptiveScanSchemaVersion: number | undefined;
+}
+
+/** Pure semantic fold used by the executable gate and its planted controls. */
+export function runtimeGateFailures(evidence: RuntimeGateEvidence): readonly string[] {
+  const failures: string[] = [];
+  if (!evidence.feedbackPassed) failures.push('feedback artifact verification is not passing');
+  if (!evidence.hardGatesPassed) failures.push('runtime seams hard gates are not passing');
+  const nonPassingPairedTruth = evidence.pairedTruth.filter((entry) => entry.status !== 'pass');
+  if (nonPassingPairedTruth.length > 0) {
+    failures.push(
+      `runtime seams paired truth contains non-pass entries: ${nonPassingPairedTruth.map((entry) => `${entry.id}:${entry.status}`).join(', ')}`,
+    );
+  }
+  if (evidence.runtimeWarnings.length > 0) {
+    failures.push(`adaptive scan still reports runtime warnings: ${evidence.runtimeWarnings.join(', ')}`);
+  }
+  if (evidence.runtimeSeamsSchemaVersion !== 7) {
+    failures.push(`runtime seams schema version ${evidence.runtimeSeamsSchemaVersion ?? 'missing'} is not current`);
+  }
+  if (evidence.adaptiveScanSchemaVersion !== 6) {
+    failures.push(`adaptive scan schema version ${evidence.adaptiveScanSchemaVersion ?? 'missing'} is not current`);
+  }
+  return failures;
 }
 
 function readJson<T>(path: string): T {
@@ -20,37 +52,16 @@ function readJson<T>(path: string): T {
 export function runRuntimeGate(root = repoRoot): void {
   const verification = verifyFeedbackArtifacts(root);
   const runtimeSeams = readJson<RuntimeSeamsReportArtifact>(resolve(root, 'reports', 'runtime-seams.json'));
-  const satelliteScan = readJson<SatelliteScanArtifact>(resolve(root, 'reports', 'satellite-scan.json'));
+  const adaptiveScan = readJson<AdaptiveScanArtifact>(resolve(root, 'reports', 'adaptive-scan.json'));
 
-  const failures: string[] = [];
-
-  if (!verification.passed) {
-    failures.push('feedback artifact verification is not passing');
-  }
-
-  if (!runtimeSeams.hardGates?.passed) {
-    failures.push('runtime seams hard gates are not passing');
-  }
-
-  const nonPassingPairedTruth = (runtimeSeams.pairedTruth ?? []).filter((entry) => entry.status !== 'pass');
-  if (nonPassingPairedTruth.length > 0) {
-    failures.push(
-      `runtime seams paired truth contains non-pass entries: ${nonPassingPairedTruth.map((entry) => `${entry.id}:${entry.status}`).join(', ')}`,
-    );
-  }
-
-  const runtimeWarnings = satelliteScan.summary?.runtimeWarnings ?? [];
-  if (runtimeWarnings.length > 0) {
-    failures.push(`satellite scan still reports runtime warnings: ${runtimeWarnings.join(', ')}`);
-  }
-
-  if (runtimeSeams.schemaVersion !== 7) {
-    failures.push(`runtime seams schema version ${runtimeSeams.schemaVersion ?? 'missing'} is not current`);
-  }
-
-  if (satelliteScan.schemaVersion !== 6) {
-    failures.push(`satellite scan schema version ${satelliteScan.schemaVersion ?? 'missing'} is not current`);
-  }
+  const failures = runtimeGateFailures({
+    feedbackPassed: verification.passed,
+    hardGatesPassed: runtimeSeams.hardGates?.passed === true,
+    pairedTruth: runtimeSeams.pairedTruth ?? [],
+    runtimeWarnings: adaptiveScan.summary?.runtimeWarnings ?? [],
+    runtimeSeamsSchemaVersion: runtimeSeams.schemaVersion,
+    adaptiveScanSchemaVersion: adaptiveScan.schemaVersion,
+  });
 
   if (failures.length > 0) {
     for (const failure of failures) {

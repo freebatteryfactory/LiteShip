@@ -25,8 +25,8 @@ import fc from 'fast-check';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { buildRepoIR, resolveDevopsProfile, type DevopsProfile } from '@czap/audit';
-import { coverageDigestOf, type RepoIR, type FileId } from '@czap/gauntlet';
+import { buildRepoIR, resolveDevopsProfile, type DevopsProfile } from '@liteship/audit';
+import { coverageDigestOf, type RepoIR, type FileId } from '@liteship/gauntlet';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-ir-determinism-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-ir-determinism-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

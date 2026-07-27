@@ -8,7 +8,7 @@
 
 > **fixedClock**(`ms`): [`Clock`](../interfaces/Clock.md)
 
-Defined in: [core/src/clock.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L86)
+Defined in: [core/src/clock/clock.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L86)
 
 A frozen clock that always returns `ms` — for deterministic tests and replay.
 

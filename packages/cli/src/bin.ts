@@ -1,4 +1,4 @@
-/** tsx-runnable CLI entrypoint. Used by integration tests and by the bin/czap.mjs wrapper. */
+/** tsx-runnable CLI entrypoint. Used by integration tests and by the bin/liteship.mjs wrapper. */
 
 import { run } from './index.js';
 

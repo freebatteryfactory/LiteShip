@@ -9,7 +9,7 @@
 Defined in: [worker/src/motion-sample.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/motion-sample.ts#L28)
 
 The message a worker posts for one sampled motion frame. The host relays `css`/`wgsl`
-onto a bound element via `dispatchCzapEvent(el, 'czap:uniform-update', { css, wgsl })`.
+onto a bound element via `dispatchLiteshipEvent(el, 'liteship:uniform-update', { css, wgsl })`.
 Kept OUTSIDE the compositor/render `FromWorkerMessage` union on purpose — the motion
 sampler is a self-contained adapter, not an extension of the render protocol.
 
@@ -21,7 +21,7 @@ sampler is a self-contained adapter, not an extension of the render protocol.
 
 Defined in: [worker/src/motion-sample.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/motion-sample.ts#L33)
 
-Formatted leaf values → `czap:uniform-update` `detail.css`.
+Formatted leaf values → `liteship:uniform-update` `detail.css`.
 
 ***
 
@@ -49,4 +49,4 @@ Defined in: [worker/src/motion-sample.ts:29](https://github.com/freebatteryfacto
 
 Defined in: [worker/src/motion-sample.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/motion-sample.ts#L35)
 
-GPU-bound numeric leaves → `czap:uniform-update` `detail.wgsl`.
+GPU-bound numeric leaves → `liteship:uniform-update` `detail.wgsl`.

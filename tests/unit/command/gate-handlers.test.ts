@@ -1,5 +1,5 @@
 /**
- * Handler-level contract tests for gate commands whose bodies live in @czap/command.
+ * Handler-level contract tests for gate commands whose bodies live in @liteship/command.
  * Subprocess orchestration stays integration-only; these pin pure projection logic.
  *
  * @module
@@ -11,7 +11,7 @@ import {
   auditFloorCommand,
   packageSmokeCommand,
   type CommandContext,
-} from '@czap/command';
+} from '@liteship/command';
 
 describe('plumb command — handler contract', () => {
   it('projects a passing scan to status ok / exit 0', async () => {
@@ -42,7 +42,7 @@ describe('plumb command — handler contract', () => {
         runPlumb: async () => ({
           ok: false,
           skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }],
-          unclassified: ['@czap/mystery'],
+          unclassified: ['@liteship/mystery'],
           generatedPresent: true,
           generatedCorpusMessage: null,
         }),
@@ -52,7 +52,7 @@ describe('plumb command — handler contract', () => {
     expect(result.exitCode).toBe(1);
     const payload = result.payload as { skips: unknown[]; unclassified: string[] };
     expect(payload.skips).toHaveLength(1);
-    expect(payload.unclassified).toEqual(['@czap/mystery']);
+    expect(payload.unclassified).toEqual(['@liteship/mystery']);
   });
 
   it('capability absent → structured capability_unavailable', async () => {

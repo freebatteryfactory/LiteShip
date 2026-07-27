@@ -8,20 +8,20 @@
 
 Defined in: [worker/src/compositor-types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L59)
 
-The boundary surface [CompositorWorkerShape.addQuantizer](CompositorWorkerShape.md#addquantizer) derives
-a registration from — structurally satisfied by a `Boundary.make`
-result from `@czap/core`, whose content-addressed `id` and `input`
+The boundary surface `CompositorWorker.addQuantizer` derives
+a registration from — structurally satisfied by a `defineBoundary`
+result from `@liteship/core`, whose content-addressed `id` and `input`
 name make hand-assembled registrations unnecessary.
 
 ## Properties
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [worker/src/compositor-types.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L61)
 
-Content address computed by `Boundary.make` (ADR-0003).
+Content address computed by `defineBoundary` (ADR-0003).
 
 ***
 

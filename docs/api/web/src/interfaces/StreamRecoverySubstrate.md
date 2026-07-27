@@ -18,7 +18,7 @@ Host-supplied gap-replay substrate for one streamed artifact.
 
 ### cellStore
 
-> `readonly` **cellStore**: `StateCellStoreShape`
+> `readonly` **cellStore**: [`StateCellStore`](../../../liteship/src/reactive/interfaces/StateCellStore.md)
 
 Defined in: [web/src/stream/recovery-substrate.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery-substrate.ts#L39)
 

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { decode } from '../../packages/core/src/schema/index.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
-import { streamReceiptCapsule } from '../../packages/web/src/capsules/stream-receipt.js';
+import { streamReceiptCapsule } from '../../packages/web/src/stream-receipt-capsule.js';
 
 describe('web.stream.receipt', () => {
   const cap = streamReceiptCapsule;

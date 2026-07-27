@@ -4,7 +4,7 @@
  * path is in an L4 gate's band even though its glob would exclude it) AND the
  * finding-level ELEVATION (a finding on such a file is reported at L4). And the
  * load-bearing back-compat proof: WITHOUT `effectiveLevels` the engine is
- * byte-identical to before B3.4 (the lean `czap check` / MCP path is untouched).
+ * byte-identical to before B3.4 (the lean `liteship check` / MCP path is untouched).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -21,13 +21,13 @@ import {
   type Finding,
   type Gate,
   type GateContext,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // A file that the GLOB map scores L1 (cosmetic CLI lib) but that — on the --ir
 // path — was pulled into an L4 path by an import edge.
-const PULLED_FILE = 'packages/cli/src/lib/ansi.ts'; // glob → L1
+const PULLED_FILE = 'packages/cli/src/internal/ansi.ts'; // glob → L1
 const TRUE_L4_FILE = 'packages/canonical/src/x.ts'; // glob → L4
-const PLAIN_L1_FILE = 'packages/cli/src/lib/other.ts'; // glob → L1, NOT pulled
+const PLAIN_L1_FILE = 'packages/cli/src/internal/other.ts'; // glob → L1, NOT pulled
 
 const ctx: GateContext = memoryContext({
   [PULLED_FILE]: 'pulled-into-L4',
@@ -66,7 +66,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     // REGRESSION GUARD: scoping narrows files(), NEVER the injected facts. An L4 gate
     // is ALWAYS scoped, so if scopeContextByLevel dropped `mutation` the
     // mutationDivergenceGate would throw `mutation-facts unavailable` on the real
-    // `czap check --ir --mutate` path even though the host injected the facts. The
+    // `liteship check gates --ir --mutate` path even though the host injected the facts. The
     // facts carry each mutant's own `file`; the gate scopes itself, so the context
     // must hand the WHOLE facts set to every scope (exactly like `ir` / `supplyChain`).
     const withFacts: GateContext = {
@@ -82,8 +82,14 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
             operator: 'equality',
             originalText: '===',
             mutatedText: '!==',
+            coveringTests: ['tests/fixture.test.ts'],
+            equivalentJustification: null,
+            equivalentJustificationDigest: null,
+            subsumedBy: [],
           },
         ],
+        targetCensus: [{ file: TRUE_L4_FILE, applicableMutants: 1, reasons: [] }],
+        operatorApplicability: [{ file: TRUE_L4_FILE, operator: 'equality', applicableMutants: 1 }],
         scoreBaseline: {},
       },
     };
@@ -95,7 +101,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     // REGRESSION GUARD (codex round-8, #1b): scopeContextByLevel HAND-LISTS the fact channels it
     // carries forward, and that list can DRIFT from FACT_CHANNELS. It did: `capabilityLink` was added
     // to GateContext + FACT_CHANNELS but NOT to the scoping carry-list, so the L4 capabilityGateLinkGate
-    // (always scoped) saw NO facts and threw on the real `czap check --ir --capability-gate` path —
+    // (always scoped) saw NO facts and threw on the real `liteship check gates --ir --capability-gate` path —
     // invisible to the unit gate tests, which inject facts into an UNSCOPED context. Pin the whole
     // class: a sentinel on EVERY channel must survive L4 scoping, so adding a channel to FACT_CHANNELS
     // without teaching the scoper reds HERE, not in a far-downstream `--ir` run.
@@ -110,18 +116,28 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     }
   });
 
-  it('preserves the injected CAPABILITY functions (skipDetector, codeOnly) through L4 scoping', () => {
+  it('preserves every injected parser capability through L4 scoping', () => {
     // Capabilities are EXCLUDED from FACT_CHANNELS, so the class guard above does NOT cover them — yet
     // scopeContextByLevel must carry them or a scoped (assurance-map) run silently falls back to the
     // lean implementations. `codeOnly` was dropped exactly this way (codex review, PR #60), making the
-    // injected sound scanner inert on the production `litelaunchGauntlet*` path; `skipDetector` would
-    // re-open the whack-a-mole. Pin both — adding a capability without teaching the scoper reds HERE.
+    // injected sound scanner inert on the production `litelaunchGauntlet*` path. The property suite
+    // pins every presence/absence combination; this focused test keeps the original incident legible.
     const skipSentinel = ((): readonly never[] => []) as GateContext['skipDetector'];
     const codeSentinel = ((source: string): string => source) as GateContext['codeOnly'];
-    const withCaps = { ...ctx, skipDetector: skipSentinel, codeOnly: codeSentinel } as GateContext;
+    const earlyReturnSentinel = ((): readonly never[] => []) as GateContext['earlyReturnDetector'];
+    const diagnosticSentinel = ((): readonly never[] => []) as GateContext['diagnosticEmitterDetector'];
+    const withCaps = {
+      ...ctx,
+      skipDetector: skipSentinel,
+      earlyReturnDetector: earlyReturnSentinel,
+      codeOnly: codeSentinel,
+      diagnosticEmitterDetector: diagnosticSentinel,
+    } as GateContext;
     const scoped = scopeContextByLevel(withCaps, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
     expect(scoped.skipDetector).toBe(skipSentinel);
+    expect(scoped.earlyReturnDetector).toBe(earlyReturnSentinel);
     expect(scoped.codeOnly).toBe(codeSentinel);
+    expect(scoped.diagnosticEmitterDetector).toBe(diagnosticSentinel);
   });
 });
 
@@ -131,6 +147,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
 function probeGate(id: string, level: AssuranceLevel): Gate {
   return defineGate({
     id,
+    extension: { namespace: id.slice(0, id.indexOf('/')), owner: 'LiteShip test suite' },
     level,
     describe: 'flags every file it sees',
     run: (c: GateContext): readonly Finding[] =>
@@ -142,7 +159,10 @@ function probeGate(id: string, level: AssuranceLevel): Gate {
         ),
     fixtures: {
       red: { name: 'red', context: memoryContext({ 'packages/x/src/bad.ts': 'x' }) },
-      green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
+      // The probe flags every packages/* file, so the green fixture must live
+      // outside that judged surface. Keeping a package file here made the gate
+      // silently unqualified under the former advisory false-green behavior.
+      green: { name: 'green', context: memoryContext({ 'fixtures/good.ts': '' }) },
       mutation: { describe: 'noop', mutate: (g): Gate => ({ ...g, run: (): readonly Finding[] => [] }) },
     },
   });
@@ -173,6 +193,7 @@ describe('runGates — a finding on a pulled-in file is elevated to its effectiv
   function l1FlagGate(): Gate {
     return defineGate({
       id: 'test/l1-flagger',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L1',
       describe: 'flags the pulled-in file at L1',
       run: (c: GateContext): readonly Finding[] =>
@@ -214,6 +235,7 @@ describe('runGates — a finding on a pulled-in file is elevated to its effectiv
     // A gate emitting at L4 a finding on a file whose effective level is L1.
     const gate = defineGate({
       id: 'test/l4-emit',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L1',
       describe: 'emits an L4 finding on the plain-L1 file',
       run: (c: GateContext): readonly Finding[] =>

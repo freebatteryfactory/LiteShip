@@ -14,7 +14,7 @@ receipt / detect concurrent forks.
 ## Example
 
 ```ts
-import { GraphPatch } from '@czap/core';
+import { GraphPatch } from '@liteship/core';
 
 const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node }]);
 const next = GraphPatch.apply(base, patch);          // re-addressed: next.id !== base.id

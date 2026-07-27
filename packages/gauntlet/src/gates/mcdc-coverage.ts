@@ -6,7 +6,7 @@
  *
  * THE BIG IDEA, restated as a gate. MC/DC requires each ATOMIC boolean CONDITION in a
  * decision to be shown to INDEPENDENTLY affect the decision's outcome. The
- * condition-mutation realization (see `@czap/audit`'s `mcdc-engine.ts`): for each atomic
+ * condition-mutation realization (see `@liteship/audit`'s `mcdc-engine.ts`): for each atomic
  * condition the host mints two pins — force the condition TRUE, and separately FALSE —
  * and runs the covering tests on each. A condition's independent effect is OBSERVED iff
  * BOTH pins are KILLED ({@link isMcdcCovered}); a SURVIVING or NO-COVERAGE pin is an
@@ -34,7 +34,7 @@
  * hardcoded level beside the file.
  *
  * It {@link requireMcdc} (and reads the IR for level propagation), so it runs ONLY on the
- * opt-in host path (`czap check --ir --mcdc` — the CLI generates the condition-mutants +
+ * opt-in host path (`liteship check gates --ir --mcdc` — the CLI generates the condition-mutants +
  * runs the per-pin suites + injects the facts); the lean MCP/command path does not run
  * it. Composition over inheritance: a `_tag`-free fold over the folded outcomes +
  * standalone functions, no class.
@@ -50,7 +50,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import { isMcdcCovered, type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict } from '../mcdc-facts.js';
+import { isMcdcCovered, type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict } from '../facts/mcdc-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/mcdc-coverage';
@@ -131,10 +131,22 @@ function pinWord(verdict: McdcPinVerdict): string {
  * than a partial gap at the same level). REPORT-not-DECIDE: the remediation is "write the
  * distinguishing test", the reader acts.
  */
-function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel): Finding {
+function requiredCampaigns(facts: McdcFacts, file: string): readonly string[] {
+  const row = facts.targetCensus.find((target) => target.file === file);
+  return (row?.reasons ?? [])
+    .filter((reason) => reason.kind === 'semantic-campaign' && reason.required.includes('mcdc'))
+    .map((reason) => (reason.kind === 'semantic-campaign' ? reason.campaignId : ''))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function uncoveredFinding(
+  outcome: McdcConditionOutcome,
+  level: AssuranceLevel,
+  campaignIds: readonly string[] = [],
+): Finding {
   const noCoverage = isNoCoverage(outcome);
   const base = MCDC_SEVERITY_BY_LEVEL[level];
-  const severity = noCoverage ? louder(base) : base;
+  const severity = campaignIds.length > 0 ? 'error' : noCoverage ? louder(base) : base;
   const loc = `${outcome.file}:${outcome.line}:${outcome.column}`;
   const gaps = gapDescription(outcome);
   const what = noCoverage
@@ -145,7 +157,7 @@ function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel):
     severity,
     level,
     title: `Condition not MC/DC-covered at ${loc} (${level})`,
-    detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` ${what}. MC/DC (DO-178B Level A) requires each condition's independent effect to be observed — both its force-true and force-false condition-mutant must be KILLED by a covering test. Here ${gaps} survived, an MC/DC gap at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}). The engine reports the gap; you decide whether to add the missing distinguishing test.`,
+    detail: `The atomic condition \`${outcome.condition}\` in the decision \`${outcome.decision}\` ${what}. MC/DC (DO-178B Level A) requires each condition's independent effect to be observed — both its force-true and force-false condition-mutant must be KILLED by a covering test. Here ${gaps} survived, an MC/DC gap at the file's effective ${level} level (MC/DC floor ${MCDC_FLOOR_BY_LEVEL[level]}).${campaignIds.length > 0 ? ` Semantic campaign(s) ${campaignIds.join(', ')} independently require MC/DC closure for this public runtime path, so this finding blocks without relabeling the file's actual assurance level.` : ''} The engine reports the gap; you decide whether to add the missing distinguishing test.`,
     location: { file: outcome.file, line: outcome.line, column: outcome.column },
     remediation: {
       kind: 'instruction',
@@ -155,7 +167,7 @@ function uncoveredFinding(outcome: McdcConditionOutcome, level: AssuranceLevel):
         noCoverage
           ? `This decision has NO covering test — write one that exercises it (the worst signal: nothing observes the branch).`
           : `Add a test pair that holds the other conditions fixed and flips ONLY \`${outcome.condition}\`, asserting the decision's outcome flips with it (so pinning it to ${gaps} would make a test fail).`,
-        `Re-run \`czap check --ir --mcdc\`: both the force-true and force-false pins of \`${outcome.condition}\` must be killed for the condition to be MC/DC-covered.`,
+        `Re-run \`liteship check gates --ir --mcdc\`: both the force-true and force-false pins of \`${outcome.condition}\` must be killed for the condition to be MC/DC-covered.`,
       ],
     },
   });
@@ -174,7 +186,9 @@ function foldMcdc(context: GateContext): readonly Finding[] {
   const findings: Finding[] = [];
   for (const outcome of facts.conditions) {
     if (isMcdcCovered(outcome)) continue; // both pins killed — the independent effect is observed
-    findings.push(uncoveredFinding(outcome, levelForFile(outcome.file, levels)));
+    findings.push(
+      uncoveredFinding(outcome, levelForFile(outcome.file, levels), requiredCampaigns(facts, outcome.file)),
+    );
   }
   findings.sort(
     (a, b) =>
@@ -193,12 +207,12 @@ function mcdcContext(ir: RepoIR, mcdc: McdcFacts): GateContext {
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 
 /** A literal IR carrying just the L4 fixture file (no imports → glob levels stand). */
 function fixtureIR(): RepoIR {
   return makeRepoIR({
-    files: [{ id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' }],
+    files: [{ id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' }],
   });
 }
 
@@ -213,6 +227,7 @@ function coveredCondition(): McdcConditionOutcome {
     condition: 'a',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'killed',
+    coveringTests: ['tests/fixture.test.ts'],
   };
 }
 
@@ -227,6 +242,7 @@ function uncoveredCondition(): McdcConditionOutcome {
     condition: 'x <= hi',
     forceTrueVerdict: 'killed',
     forceFalseVerdict: 'survived',
+    coveringTests: ['tests/fixture.test.ts'],
   };
 }
 
@@ -244,11 +260,17 @@ function uncoveredCondition(): McdcConditionOutcome {
 const FIXTURES = {
   red: {
     name: 'MC/DC facts with an UNCOVERED L4 condition (a surviving pin — the unobserved effect the gate must flag)',
-    context: mcdcContext(fixtureIR(), { conditions: [uncoveredCondition()] }),
+    context: mcdcContext(fixtureIR(), {
+      conditions: [uncoveredCondition()],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1, reasons: [] }],
+    }),
   },
   green: {
     name: 'MC/DC facts with only a fully-COVERED L4 condition (both pins killed — full MC/DC, clean)',
-    context: mcdcContext(fixtureIR(), { conditions: [coveredCondition()] }),
+    context: mcdcContext(fixtureIR(), {
+      conditions: [coveredCondition()],
+      targetCensus: [{ file: L4_FILE, applicableConditions: 1, reasons: [] }],
+    }),
   },
   mutation: {
     describe:

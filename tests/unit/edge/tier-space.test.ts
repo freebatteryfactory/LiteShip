@@ -2,16 +2,16 @@
  * Tier-space drift guard.
  *
  * The boundary manifest precompiles outputs for every (motion x design)
- * tier; the runtime tier detectors in @czap/detect must never be able to
+ * tier; the runtime tier detectors in @liteship/detect must never be able to
  * produce a tier the manifest grid does not cover. These tests pin the
- * enumeration in @czap/edge to the detector vocabularies (the type-level
+ * enumeration in @liteship/edge to the detector vocabularies (the type-level
  * `satisfies` + exhaustiveness checks live in packages/edge/src/manifest.ts).
  */
 
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
-import { ClientHints, DESIGN_TIERS, MOTION_TIERS, enumerateTierKeys, tierKey } from '@czap/edge';
-import { designTierFromCapabilities, motionTierFromCapabilities } from '@czap/detect';
+import { ClientHints, DESIGN_TIERS, MOTION_TIERS, enumerateTierKeys, tierKey } from '@liteship/edge';
+import { designTierFromCapabilities, motionTierFromCapabilities } from '@liteship/detect';
 
 describe('tier space enumeration', () => {
   test('tier grid is the full motion x design cross product, keyed like the KV cache', () => {

@@ -9,6 +9,7 @@
 ## Interfaces
 
 - [AssetDecl](interfaces/AssetDecl.md)
+- [AssetDescriptor](interfaces/AssetDescriptor.md)
 - [AssetRegistry](interfaces/AssetRegistry.md)
 - [DecodedAudio](interfaces/DecodedAudio.md)
 - [DecodedImage](interfaces/DecodedImage.md)
@@ -17,6 +18,7 @@
 
 ## Type Aliases
 
+- [AnyAssetCapsule](type-aliases/AnyAssetCapsule.md)
 - [AssetCapsule](type-aliases/AssetCapsule.md)
 - [AssetDecoder](type-aliases/AssetDecoder.md)
 - [AssetKind](type-aliases/AssetKind.md)

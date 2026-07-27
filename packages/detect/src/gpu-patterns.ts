@@ -4,8 +4,8 @@
  * These regex groups are consumed in two places that MUST never diverge:
  *
  *   1. {@link classifyGPURenderer} (`detect.ts`) — the runtime classifier the
- *      `@czap/detect` sweep and capsule/edge consumers call.
- *   2. The `@czap/astro` head-inline GPU probe — which cannot `import` at
+ *      `@liteship/detect` sweep and capsule/edge consumers call.
+ *   2. The `@liteship/astro` head-inline GPU probe — which cannot `import` at
  *      runtime (it runs in the document `<head>` before any module graph
  *      exists), so its classifier script is GENERATED from these same patterns
  *      by {@link emitDetectUpgradeScript} (`head-probe.ts`).

@@ -14,7 +14,7 @@ Options for [renderFromCatalog](../functions/renderFromCatalog.md).
 
 ### catalog
 
-> `readonly` **catalog**: `ComponentCatalog`
+> `readonly` **catalog**: [`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: [genui/src/render.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L20)
 

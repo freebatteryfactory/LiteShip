@@ -10,12 +10,12 @@
  * test is absent, empty, or missing a representative law marker.
  *
  * It is a PURE `(context) => Finding[]` fold over the {@link GateContext} file map —
- * no `@czap/core` import (that would add a heavy dep edge + risk a cycle into the lean
+ * no `@liteship/core` import (that would add a heavy dep edge + risk a cycle into the lean
  * engine), no `typescript` dep, no I/O of its own. It reads ONLY through the context,
  * so the same gate runs against the real repo and against an in-memory fixture
  * unchanged. The laws themselves are proven IN the property tests (deterministic
  * fast-check); this gate proves those proofs EXIST and stay wired — the coverage rail
- * that keeps the L4 ladder's "CRDT laws" rung from silently rotting away.
+ * that keeps the L4 ladder's "CRDT laws" tier from silently rotting away.
  *
  * @module
  */
@@ -176,6 +176,7 @@ export const crdtLawsGate: Gate = defineGate({
   level: 'L4',
   describe:
     'Verifies the L4 CRDT / linearizability laws (HLC + GraphPatch) are PINNED by deterministic property tests — the coverage rail for the causal/CRDT trust spine.',
+  access: { outOfIrGlobs: REQUIRED_LAW_FAMILIES.map((family) => family.file) },
   run: fold,
   evidenceDigest: crdtLawsEvidenceDigest,
   fixtures: {

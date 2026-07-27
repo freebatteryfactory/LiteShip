@@ -57,6 +57,28 @@ function collectDocs(): string[] {
 
 const LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 const BLOB = /^https?:\/\/github\.com\/[^/]+\/[^/]+\/blob\/main\/(.+)$/;
+const INLINE_REPOSITORY_PATH = /`((?:packages|scripts|tests|docs|examples|crates|\.github)\/[^`\s,)]+)/g;
+const CURRENT_AUTHORITY_DOCS = [
+  'AGENTS.md',
+  'ARCHITECTURE.md',
+  'ASTRO-RUNTIME-MODEL.md',
+  'ASTRO-STATIC-MENTAL-MODEL.md',
+  'AUDIT.md',
+  'AUTHORING-MODEL.md',
+  'CAPSULE-FACTORY.md',
+  'CONTRIBUTING.md',
+  'DOCS.md',
+  'GETTING-STARTED.md',
+  'GLOSSARY.md',
+  'HOSTING.md',
+  'PACKAGE-SURFACES.md',
+  'README.md',
+  'RELEASING.md',
+  'SECURITY.md',
+  'SKILL.md',
+  'STATUS.md',
+  'TYPEDOC.md',
+] as const;
 
 describe('doc link integrity', () => {
   test('every relative markdown link (and blob/main link) resolves to a real file', () => {
@@ -76,5 +98,19 @@ describe('doc link integrity', () => {
       }
     }
     expect(broken, `broken doc links (${broken.length}):\n${broken.join('\n')}`).toEqual([]);
+  });
+
+  test('current-authority inline repository paths resolve to live files', () => {
+    const broken: string[] = [];
+    for (const rel of CURRENT_AUTHORITY_DOCS) {
+      const source = readFileSync(resolve(REPO, rel), 'utf8');
+      for (const match of source.matchAll(INLINE_REPOSITORY_PATH)) {
+        const raw = match[1]!;
+        if (/[{*<>…]/.test(raw)) continue;
+        const target = raw.replace(/:\d+(?:-\d+)?$/, '').replace(/[.;:]$/, '');
+        if (!existsSync(resolve(REPO, target))) broken.push(`${rel} → ${raw}`);
+      }
+    }
+    expect(broken, `stale inline repository paths (${broken.length}):\n${broken.join('\n')}`).toEqual([]);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Unit tests for the cli idempotency helpers. The integration test at
  * tests/integration/cli/idempotency.test.ts exercises the round-trip
- * end-to-end via `czap scene render`, but it's gated on ffmpeg being
+ * end-to-end via `liteship scene render`, but it's gated on ffmpeg being
  * on $PATH and skips on bare CI images — leaving tryReadCache's force
  * arm and the file-present arm un-covered in the merged report. These
  * unit tests close that gap with a tmpdir-via-ctx-cwd fixture so they
@@ -32,7 +32,7 @@ describe('cli idempotency helpers', () => {
   });
 
   beforeEach(() => {
-    workDir = mkdtempSync(join(tmpdir(), 'czap-idem-'));
+    workDir = mkdtempSync(join(tmpdir(), 'liteship-idem-'));
   });
 
   afterEach(() => {
@@ -46,14 +46,14 @@ describe('cli idempotency helpers', () => {
     expect(h1).toMatch(/^[0-9a-f]{16}$/);
   });
 
-  it('cachePath joins under <cwd>/.czap/cache/<hash>.json', () => {
+  it('cachePath joins under <cwd>/.liteship/cache/<hash>.json', () => {
     const p = cachePath('deadbeefdeadbeef', workDir);
-    expect(p).toBe(join(workDir, '.czap', 'cache', 'deadbeefdeadbeef.json'));
+    expect(p).toBe(join(workDir, '.liteship', 'cache', 'deadbeefdeadbeef.json'));
   });
 
   it('cachePath defaults to process.cwd() when no cwd is given (back-compat)', () => {
     const p = cachePath('deadbeefdeadbeef');
-    expect(p).toBe(join(process.cwd(), '.czap', 'cache', 'deadbeefdeadbeef.json'));
+    expect(p).toBe(join(process.cwd(), '.liteship', 'cache', 'deadbeefdeadbeef.json'));
   });
 
   it('tryReadCache returns null when force=true even if a cached receipt exists', () => {
@@ -80,10 +80,10 @@ describe('cli idempotency helpers', () => {
     expect(tryReadCache(baseCtx())).toBeNull();
   });
 
-  it('writeCache creates the .czap/cache directory tree if it is missing', () => {
-    expect(existsSync(join(workDir, '.czap'))).toBe(false);
+  it('writeCache creates the .liteship/cache directory tree if it is missing', () => {
+    expect(existsSync(join(workDir, '.liteship'))).toBe(false);
     writeCache(baseCtx(), { ok: true });
-    expect(existsSync(join(workDir, '.czap', 'cache'))).toBe(true);
+    expect(existsSync(join(workDir, '.liteship', 'cache'))).toBe(true);
   });
 
   it('different command names produce different hashes even with identical inputs', () => {
@@ -105,7 +105,7 @@ describe('cli idempotency helpers', () => {
   it('manually-placed cache file (no writeCache) is still picked up by tryReadCache', () => {
     const ctx = baseCtx({ inputs: { z: 99 } });
     const path = cachePath(hashInputs(ctx), workDir);
-    mkdirSync(join(workDir, '.czap', 'cache'), { recursive: true });
+    mkdirSync(join(workDir, '.liteship', 'cache'), { recursive: true });
     writeFileSync(path, JSON.stringify({ manual: true }), 'utf8');
     expect(tryReadCache(ctx)).toEqual({ manual: true });
   });

@@ -12,11 +12,11 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { hasTag } from '@czap/error';
-import { S } from '../../../../packages/core/src/schema/constructors.js';
+import { hasTag } from '@liteship/error';
+import { schema } from '../../../../packages/core/src/schema/constructors.js';
 import { decode, decodeLenient, parseErrorFromIssues } from '../../../../packages/core/src/schema/decode.js';
-import type { DecodeIssue, DecodeResult } from '../../../../packages/core/src/schema/decode.js';
-import { ContentAddress } from '../../../../packages/core/src/brands.js';
+import type { DecodeIssue, DecodeIssueCode, DecodeResult } from '../../../../packages/core/src/schema/decode.js';
+import { ContentAddress } from '../../../../packages/core/src/schema/brands.js';
 
 function issuesOf(result: DecodeResult<unknown>): readonly DecodeIssue[] {
   if (result.ok) throw new Error('expected a failed decode');
@@ -27,53 +27,73 @@ function valueOf<A>(result: DecodeResult<A>): A {
   return result.value;
 }
 
-describe('literal construction — non-finite numbers rejected', () => {
-  it('S.literal(NaN) throws at construction (=== matching can never decode NaN)', () => {
-    expect(() => S.literal(NaN)).toThrow(/finite/);
+const SCHEMA_ISSUE_CODES = [
+  'schema/type',
+  'schema/literal',
+  'schema/missing',
+  'schema/union',
+  'schema/brand',
+  'schema/hole',
+  'schema/poison-key',
+] as const satisfies readonly DecodeIssueCode[];
+
+type MissingSchemaIssueCode = Exclude<DecodeIssueCode, (typeof SCHEMA_ISSUE_CODES)[number]>;
+const SCHEMA_ISSUE_CODES_ARE_EXHAUSTIVE: MissingSchemaIssueCode extends never ? true : false = true;
+
+describe('schema diagnostic identities', () => {
+  it('stays the exact seven-code registry-derived issue family', () => {
+    expect(SCHEMA_ISSUE_CODES_ARE_EXHAUSTIVE).toBe(true);
+    expect(SCHEMA_ISSUE_CODES).toHaveLength(7);
   });
-  it('S.literal(±Infinity) throws (they serialize to null in the generated JSON Schema)', () => {
-    expect(() => S.literal(Infinity)).toThrow(/finite/);
-    expect(() => S.literal(-Infinity)).toThrow(/finite/);
+});
+
+describe('literal construction — non-finite numbers rejected', () => {
+  it('schema.literal(NaN) throws at construction (=== matching can never decode NaN)', () => {
+    expect(() => schema.literal(NaN)).toThrow(/finite/);
+  });
+  it('schema.literal(±Infinity) throws (they serialize to null in the generated JSON Schema)', () => {
+    expect(() => schema.literal(Infinity)).toThrow(/finite/);
+    expect(() => schema.literal(-Infinity)).toThrow(/finite/);
   });
   it('a finite numeric literal still constructs and decodes', () => {
-    const schema = S.literal(42);
-    expect(valueOf(decode(schema, 42))).toBe(42);
-    expect(issuesOf(decode(schema, 43)).length).toBeGreaterThan(0);
+    const sch = schema.literal(42);
+    expect(valueOf(decode(sch, 42))).toBe(42);
+    expect(issuesOf(decode(sch, 43)).length).toBeGreaterThan(0);
   });
 });
 
 describe('strict decode — scalars', () => {
   it('accepts matching primitives and reports the value verbatim', () => {
-    expect(valueOf(decode(S.string, 'hi'))).toBe('hi');
-    expect(valueOf(decode(S.number, 42))).toBe(42);
-    expect(valueOf(decode(S.boolean, false))).toBe(false);
-    // NaN is a number: S.number accepts it (finiteness is a brand concern).
-    expect(Number.isNaN(valueOf<number>(decode(S.number, Number.NaN)))).toBe(true);
+    expect(valueOf(decode(schema.string, 'hi'))).toBe('hi');
+    expect(valueOf(decode(schema.number, 42))).toBe(42);
+    expect(valueOf(decode(schema.boolean, false))).toBe(false);
+    // NaN is a number: schema.number accepts it (finiteness is a brand concern).
+    expect(Number.isNaN(valueOf<number>(decode(schema.number, Number.NaN)))).toBe(true);
   });
 
   it('rejects a type mismatch with a schema/type issue at the root path', () => {
-    const issues = issuesOf(decode(S.number, 'not-a-number'));
+    const issues = issuesOf(decode(schema.number, 'not-a-number'));
     expect(issues).toHaveLength(1);
     expect(issues[0]?.code).toBe('schema/type');
     expect(issues[0]?.path).toEqual([]);
   });
 
   it('pins a literal by identity', () => {
-    expect(valueOf(decode(S.literal('go'), 'go'))).toBe('go');
-    const issues = issuesOf(decode(S.literal('go'), 'stop'));
+    expect(valueOf(decode(schema.literal('go'), 'go'))).toBe('go');
+    const issues = issuesOf(decode(schema.literal('go'), 'stop'));
     expect(issues[0]?.code).toBe('schema/literal');
   });
 
   it('unknown and any accept anything', () => {
     const wild = { a: [1, null, 'x'] };
-    expect(valueOf(decode(S.unknown, wild))).toBe(wild);
-    expect(valueOf(decode(S.any, wild))).toBe(wild);
-    expect(valueOf(decode(S.unknown, undefined))).toBe(undefined);
+    expect(valueOf(decode(schema.unknown, wild))).toBe(wild);
+    expect(valueOf(decode(schema.any, wild))).toBe(wild);
+    expect(valueOf(decode(schema.unknown, undefined))).toBe(undefined);
   });
 });
 
 describe('strict decode — union', () => {
-  const u = S.union(S.literal('a'), S.literal('b'), S.number);
+  const u = schema.union(schema.literal('a'), schema.literal('b'), schema.number);
 
   it('accepts the first matching member', () => {
     expect(valueOf(decode(u, 'b'))).toBe('b');
@@ -89,7 +109,7 @@ describe('strict decode — union', () => {
 });
 
 describe('strict decode — struct', () => {
-  const point = S.struct({ x: S.number, y: S.number, label: S.optional(S.string) });
+  const point = schema.struct({ x: schema.number, y: schema.number, label: schema.optional(schema.string) });
 
   it('decodes required fields and omits an absent optional', () => {
     expect(valueOf(decode(point, { x: 1, y: 2 }))).toEqual({ x: 1, y: 2 });
@@ -110,7 +130,7 @@ describe('strict decode — struct', () => {
   });
 
   it('nests the path through composed structs', () => {
-    const outer = S.struct({ inner: point });
+    const outer = schema.struct({ inner: point });
     const issues = issuesOf(decode(outer, { inner: { x: 1, y: 'bad' } }));
     expect(issues[0]?.path).toEqual(['inner', 'y']);
   });
@@ -131,14 +151,14 @@ describe('strict decode — struct', () => {
 
 describe('strict decode — array & record', () => {
   it('array: prunes nothing, reports the failing index', () => {
-    expect(valueOf(decode(S.array(S.number), [1, 2, 3]))).toEqual([1, 2, 3]);
-    const issues = issuesOf(decode(S.array(S.number), [1, 'x', 3]));
+    expect(valueOf(decode(schema.array(schema.number), [1, 2, 3]))).toEqual([1, 2, 3]);
+    const issues = issuesOf(decode(schema.array(schema.number), [1, 'x', 3]));
     expect(issues[0]?.path).toEqual([1]);
     expect(issues[0]?.code).toBe('schema/type');
   });
 
   it('array: a non-array is a root schema/type issue', () => {
-    expect(issuesOf(decode(S.array(S.number), { length: 0 }))[0]?.code).toBe('schema/type');
+    expect(issuesOf(decode(schema.array(schema.number), { length: 0 }))[0]?.code).toBe('schema/type');
   });
 
   it('array/tuple: NEVER invokes an element getter — own-data read, not input[i] (round-11)', () => {
@@ -157,12 +177,12 @@ describe('strict decode — array & record', () => {
       },
     });
     // strict array: slot 1 reads `undefined` → a clean per-element type issue, never a throw.
-    expect(() => decode(S.array(S.number), evil)).not.toThrow();
-    expect(decode(S.array(S.number), evil).ok).toBe(false);
+    expect(() => decode(schema.array(schema.number), evil)).not.toThrow();
+    expect(decode(schema.array(schema.number), evil).ok).toBe(false);
     // lenient array: the accessor slot prunes (undefined ≠ number), never invoking the getter.
-    expect(() => decodeLenient(S.array(S.number), evil)).not.toThrow();
+    expect(() => decodeLenient(schema.array(schema.number), evil)).not.toThrow();
     // strict + lenient tuple: same own-data read on the fixed positions.
-    const pair = S.tuple(S.number, S.number);
+    const pair = schema.tuple(schema.number, schema.number);
     expect(() => decode(pair, evil)).not.toThrow();
     expect(decode(pair, evil).ok).toBe(false);
     expect(decodeLenient(pair, evil)).toBeNull();
@@ -183,28 +203,28 @@ describe('strict decode — array & record', () => {
         throw new Error('record value getter must not run during decode');
       },
     });
-    const strict = decode(S.record(S.number), rec);
+    const strict = decode(schema.record(schema.number), rec);
     expect(strict.ok).toBe(true); // 'evil' skipped, not a bogus type error
     expect(valueOf(strict)).toEqual({ a: 1 });
     expect(Object.prototype.hasOwnProperty.call(valueOf(strict), 'evil')).toBe(false);
-    expect(decodeLenient(S.record(S.number), rec)).toEqual({ a: 1 });
+    expect(decodeLenient(schema.record(schema.number), rec)).toEqual({ a: 1 });
     expect(invoked).toBe(0);
   });
 
   it('record: decodes string-keyed values', () => {
-    expect(valueOf(decode(S.record(S.number), { a: 1, b: 2 }))).toEqual({ a: 1, b: 2 });
+    expect(valueOf(decode(schema.record(schema.number), { a: 1, b: 2 }))).toEqual({ a: 1, b: 2 });
   });
 });
 
 describe('strict decode — tuple (fixed arity)', () => {
-  const pair = S.tuple(S.number, S.number);
+  const pair = schema.tuple(schema.number, schema.number);
 
   it('decodes an exact-arity tuple, preserving positions', () => {
     expect(valueOf(decode(pair, [1, 2]))).toEqual([1, 2]);
   });
 
   it('rejects a wrong-arity array with a root schema/type issue (arity is part of the type)', () => {
-    // RED-first cage: a shorter OR longer array must FAIL decode — an `S.array`
+    // RED-first cage: a shorter OR longer array must FAIL decode — an `schema.array`
     // would have accepted both, so this is exactly the fidelity the tuple restores.
     const short = issuesOf(decode(pair, [1]));
     expect(short).toHaveLength(1);
@@ -221,7 +241,7 @@ describe('strict decode — tuple (fixed arity)', () => {
   });
 
   it('reports the failing position at its index path; decodes mixed element types', () => {
-    const mixed = S.tuple(S.string, S.number);
+    const mixed = schema.tuple(schema.string, schema.number);
     expect(valueOf(decode(mixed, ['a', 1]))).toEqual(['a', 1]);
     const issues = issuesOf(decode(mixed, ['a', 'no']));
     expect(issues[0]?.path).toEqual([1]);
@@ -229,14 +249,14 @@ describe('strict decode — tuple (fixed arity)', () => {
   });
 
   it('nests the path through a tuple inside a struct', () => {
-    const schema = S.struct({ edge: S.tuple(S.number, S.number) });
-    const issues = issuesOf(decode(schema, { edge: [1, 'no'] }));
+    const sch = schema.struct({ edge: schema.tuple(schema.number, schema.number) });
+    const issues = issuesOf(decode(sch, { edge: [1, 'no'] }));
     expect(issues[0]?.path).toEqual(['edge', 1]);
   });
 });
 
 describe('strict decode — brand', () => {
-  const addr = S.brand(S.string, ContentAddress);
+  const addr = schema.brand(schema.string, ContentAddress);
 
   it('runs the smart constructor and returns the branded value', () => {
     expect(valueOf(decode(addr, 'fnv1a:0a1b2c3d'))).toBe('fnv1a:0a1b2c3d');
@@ -255,7 +275,7 @@ describe('strict decode — brand', () => {
 });
 
 describe('strict decode — bytes', () => {
-  const bytes = S.bytes(Uint8Array);
+  const bytes = schema.bytes(Uint8Array);
 
   it('accepts an instance of the carrier', () => {
     const b = new Uint8Array([1, 2, 3]);
@@ -268,7 +288,7 @@ describe('strict decode — bytes', () => {
 });
 
 describe('strict decode — hole always blocks', () => {
-  const withHole = S.struct({ ready: S.boolean, todo: S.hole<{ shape: string }>('todo') });
+  const withHole = schema.struct({ ready: schema.boolean, todo: schema.hole<{ shape: string }>('todo') });
 
   it('emits a blocking schema/hole issue and never passes data', () => {
     const issues = issuesOf(decode(withHole, { ready: true, todo: { shape: 'x' } }));
@@ -279,21 +299,21 @@ describe('strict decode — hole always blocks', () => {
 describe('prototype-poison safety', () => {
   it('strict record: a __proto__ key is a schema/poison-key issue, prototype untouched', () => {
     const poisoned = JSON.parse('{"__proto__": {"polluted": true}, "a": 5}') as unknown;
-    const issues = issuesOf(decode(S.record(S.number), poisoned));
+    const issues = issuesOf(decode(schema.record(schema.number), poisoned));
     expect(issues.some((i) => i.code === 'schema/poison-key' && i.path[0] === '__proto__')).toBe(true);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 
   it('strict record: constructor and prototype keys are poison too', () => {
     const codes = (s: string): readonly string[] =>
-      issuesOf(decode(S.record(S.number), JSON.parse(s) as unknown)).map((i) => i.code);
+      issuesOf(decode(schema.record(schema.number), JSON.parse(s) as unknown)).map((i) => i.code);
     expect(codes('{"constructor": 1}')).toContain('schema/poison-key');
     expect(codes('{"prototype": 1}')).toContain('schema/poison-key');
   });
 
   it('lenient record: poison keys are pruned, real leaves survive, no pollution', () => {
     const poisoned = JSON.parse('{"__proto__": {"polluted": true}, "a": 5, "b": "drop"}') as unknown;
-    const out = decodeLenient(S.record(S.number), poisoned);
+    const out = decodeLenient(schema.record(schema.number), poisoned);
     expect(out).toEqual({ a: 5 });
     expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -302,31 +322,31 @@ describe('prototype-poison safety', () => {
 
 describe('lenient decode — coerce-or-null / prune', () => {
   it('scalars: value-or-null, never throwing', () => {
-    expect(decodeLenient(S.string, 'ok')).toBe('ok');
-    expect(decodeLenient(S.string, 5)).toBeNull();
-    expect(decodeLenient(S.number, 'x')).toBeNull();
+    expect(decodeLenient(schema.string, 'ok')).toBe('ok');
+    expect(decodeLenient(schema.string, 5)).toBeNull();
+    expect(decodeLenient(schema.number, 'x')).toBeNull();
   });
 
   it('struct: a malformed required leaf collapses the struct to null', () => {
-    const point = S.struct({ x: S.number, y: S.number });
+    const point = schema.struct({ x: schema.number, y: schema.number });
     expect(decodeLenient(point, { x: 1, y: 2 })).toEqual({ x: 1, y: 2 });
     expect(decodeLenient(point, { x: 1, y: 'bad' })).toBeNull();
     expect(decodeLenient(point, { x: 1 })).toBeNull();
   });
 
   it('struct: a malformed optional leaf is omitted, not fatal', () => {
-    const s = S.struct({ x: S.number, note: S.optional(S.string) });
+    const s = schema.struct({ x: schema.number, note: schema.optional(schema.string) });
     expect(decodeLenient(s, { x: 1, note: 99 })).toEqual({ x: 1 });
     expect(decodeLenient(s, { x: 1, note: 'k' })).toEqual({ x: 1, note: 'k' });
   });
 
   it('array: malformed items are pruned', () => {
-    expect(decodeLenient(S.array(S.number), [1, 'x', 3, null])).toEqual([1, 3]);
-    expect(decodeLenient(S.array(S.number), 'not-array')).toBeNull();
+    expect(decodeLenient(schema.array(schema.number), [1, 'x', 3, null])).toEqual([1, 3]);
+    expect(decodeLenient(schema.array(schema.number), 'not-array')).toBeNull();
   });
 
   it('tuple: wrong arity or any malformed position collapses to null (never pruned like an array)', () => {
-    const pair = S.tuple(S.number, S.number);
+    const pair = schema.tuple(schema.number, schema.number);
     expect(decodeLenient(pair, [1, 2])).toEqual([1, 2]);
     expect(decodeLenient(pair, [1])).toBeNull(); // short → null
     expect(decodeLenient(pair, [1, 2, 3])).toBeNull(); // long → null
@@ -337,35 +357,39 @@ describe('lenient decode — coerce-or-null / prune', () => {
   });
 
   it('record: malformed leaves are pruned to a plain object', () => {
-    expect(decodeLenient(S.record(S.number), { a: 1, b: 'x', c: 3 })).toEqual({ a: 1, c: 3 });
+    expect(decodeLenient(schema.record(schema.number), { a: 1, b: 'x', c: 3 })).toEqual({ a: 1, c: 3 });
   });
 
   it('brand: an invalid value coerces to null', () => {
-    const addr = S.brand(S.string, ContentAddress);
+    const addr = schema.brand(schema.string, ContentAddress);
     expect(decodeLenient(addr, 'fnv1a:0a1b2c3d')).toBe('fnv1a:0a1b2c3d');
     expect(decodeLenient(addr, 'nope')).toBeNull();
   });
 
   it('hole never passes data, even leniently', () => {
-    expect(decodeLenient(S.hole('todo'), { anything: 1 })).toBeNull();
+    expect(decodeLenient(schema.hole('todo'), { anything: 1 })).toBeNull();
   });
 
   it('unknown leniently keeps a genuine null leaf inside a record', () => {
-    expect(decodeLenient(S.record(S.unknown), { a: null, b: 1 })).toEqual({ a: null, b: 1 });
+    expect(decodeLenient(schema.record(schema.unknown), { a: null, b: 1 })).toEqual({ a: null, b: 1 });
   });
 });
 
 describe('determinism', () => {
   it('produces byte-identical issues across repeated strict decodes', () => {
-    const schema = S.struct({ a: S.number, b: S.array(S.string) });
+    const sch = schema.struct({ a: schema.number, b: schema.array(schema.string) });
     const input = { a: 'bad', b: [1, 'ok'] };
-    const first = issuesOf(decode(schema, input));
-    const second = issuesOf(decode(schema, input));
+    const first = issuesOf(decode(sch, input));
+    const second = issuesOf(decode(sch, input));
     expect(second).toEqual(first);
   });
 
   it('round-trips generated valid struct values (seeded)', () => {
-    const schema = S.struct({ a: S.string, b: S.optional(S.number), tags: S.array(S.string) });
+    const sch = schema.struct({
+      a: schema.string,
+      b: schema.optional(schema.number),
+      tags: schema.array(schema.string),
+    });
     const arb = fc.record(
       { a: fc.string(), b: fc.option(fc.integer(), { nil: undefined }), tags: fc.array(fc.string()) },
       { requiredKeys: ['a', 'tags'] },
@@ -373,7 +397,7 @@ describe('determinism', () => {
     fc.assert(
       fc.property(arb, (sample) => {
         const withoutUndefined = sample.b === undefined ? { a: sample.a, tags: sample.tags } : sample;
-        const result = decode(schema, withoutUndefined);
+        const result = decode(sch, withoutUndefined);
         expect(result.ok).toBe(true);
         expect(valueOf(result)).toEqual(withoutUndefined);
       }),
@@ -384,7 +408,7 @@ describe('determinism', () => {
 
 describe('parseErrorFromIssues', () => {
   it('folds an issue list into a tagged ParseError carrying the first code', () => {
-    const issues = issuesOf(decode(S.struct({ a: S.number }), { a: 'x' }));
+    const issues = issuesOf(decode(schema.struct({ a: schema.number }), { a: 'x' }));
     const error = parseErrorFromIssues(issues, 'MyContract');
     expect(hasTag(error, 'ParseError')).toBe(true);
     expect(error.code).toBe('schema/type');

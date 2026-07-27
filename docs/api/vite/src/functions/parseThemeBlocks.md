@@ -8,7 +8,7 @@
 
 > **parseThemeBlocks**(`css`, `sourceFile`): readonly [`ThemeBlock`](../interfaces/ThemeBlock.md)[]
 
-Defined in: [vite/src/theme-transform.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/theme-transform.ts#L58)
+Defined in: [vite/src/theme-transform.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/theme-transform.ts#L62)
 
 Parse every `@theme` block from CSS source text.
 

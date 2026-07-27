@@ -6,8 +6,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
-import { RenderWorker } from '@czap/worker';
+import { Boundary, Diagnostics, defineBoundary } from '@liteship/core';
+import { RenderWorker } from '@liteship/worker';
 import { MockWorker } from '../helpers/mock-worker.js';
 
 // ---------------------------------------------------------------------------
@@ -141,27 +141,27 @@ describe('RenderWorker', () => {
     expect(completions).toEqual([10]);
   });
 
-  test('routes worker and message errors through diagnostics and disposes cleanly', () => {
+  test('routes worker and message errors through diagnostics and disposes through one async protocol', async () => {
     const renderWorker = RenderWorker.create();
     const worker = MockWorker.instances[0]!;
 
     worker.simulateMessage({ type: 'error', message: 'render failed' });
     worker.simulateError('boom');
 
-    renderWorker.dispose();
+    const first = renderWorker.dispose();
 
     expect(diagnosticEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           level: 'error',
-          source: 'czap/worker.render-worker',
+          source: 'liteship/worker.render-worker',
           code: 'worker-message-error',
           message: 'Render worker reported an error.',
           detail: { message: 'render failed' },
         }),
         expect.objectContaining({
           level: 'error',
-          source: 'czap/worker.render-worker',
+          source: 'liteship/worker.render-worker',
           code: 'worker-unhandled-error',
           message: 'Render worker raised an unhandled error.',
           detail: 'boom',
@@ -170,6 +170,10 @@ describe('RenderWorker', () => {
     );
     expect(worker.postedMessages.some((entry) => (entry.data as { type: string }).type === 'dispose')).toBe(true);
     expect(worker.terminated).toBe(true);
+    const second = renderWorker.dispose();
+    expect(second).toBe(first);
+    expect(renderWorker[Symbol.asyncDispose]()).toBe(first);
+    await first;
   });
 
   test('ignores malformed worker messages that do not carry a string type', () => {
@@ -204,13 +208,9 @@ describe('evaluateThresholds (render-worker inline logic)', () => {
   });
 
   test('agrees with Boundary.evaluate across a range of values', () => {
-    const bp = Boundary.make({
+    const bp = defineBoundary({
       input: 'viewport.width',
-      at: [
-        [0, 'mobile'] as const,
-        [768, 'tablet'] as const,
-        [1024, 'desktop'] as const,
-      ],
+      at: [[0, 'mobile'] as const, [768, 'tablet'] as const, [1024, 'desktop'] as const],
     });
 
     const thresholds = [0, 768, 1024];

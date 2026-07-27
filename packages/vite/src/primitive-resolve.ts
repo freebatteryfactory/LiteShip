@@ -16,8 +16,8 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import type { PrimitiveKind } from '@czap/core';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import type { PrimitiveKind } from '@liteship/core';
 import * as path from 'node:path';
 import { fileExists, findConventionFiles } from './resolve-fs.js';
 import { tryImportNamed } from './resolve-utils.js';
@@ -26,22 +26,22 @@ export type { PrimitiveKind };
 
 /**
  * Map a {@link PrimitiveKind} to the structural type of the primitive
- * it resolves (`Boundary.Shape`, `Token.Shape`, ...).
+ * it resolves (`Boundary`, `Token`, ...).
  */
-export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
-  ? Boundary.Shape
+export type Primitive<K extends PrimitiveKind> = K extends 'boundary'
+  ? Boundary
   : K extends 'token'
-    ? Token.Shape
+    ? Token
     : K extends 'theme'
-      ? Theme.Shape
-      : Style.Shape;
+      ? Theme
+      : Style;
 
 /**
  * A successful primitive resolution: the loaded primitive plus the
  * absolute path of the module it came from (surfaced in diagnostics).
  */
 export interface PrimitiveResolution<K extends PrimitiveKind> {
-  readonly primitive: PrimitiveShape<K>;
+  readonly primitive: Primitive<K>;
   readonly source: string;
 }
 
@@ -95,12 +95,12 @@ export function primitiveSearchPatterns(
   ]);
 }
 
-/** Factory namespace users type to produce each primitive kind. */
+/** Factory function users call to produce each primitive kind. */
 const KIND_FACTORY: Record<PrimitiveKind, string> = {
-  boundary: 'Boundary',
-  token: 'Token',
-  theme: 'Theme',
-  style: 'Style',
+  boundary: 'defineBoundary',
+  token: 'defineToken',
+  theme: 'defineTheme',
+  style: 'defineStyle',
 };
 
 /**
@@ -126,8 +126,8 @@ export function unresolvedPrimitiveWarning(
   return (
     `Could not resolve ${kind} "${name}" referenced in ${id}:${line}. ` +
     `Searched for an export named "${name}" in: ${searched} (none matched). ` +
-    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
-    `or point the plugin at your ${kind} definitions: czap({ dirs: { ${kind}: './path/to/dir' } }).`
+    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}({ ... })\` to one of those files, ` +
+    `or point the plugin at your ${kind} definitions: liteship({ dirs: { ${kind}: './path/to/dir' } }).`
   );
 }
 
@@ -150,7 +150,7 @@ export async function resolvePrimitive<K extends PrimitiveKind>(
   userDir?: string,
 ): Promise<PrimitiveResolution<K> | null> {
   const { file, suffix, tag } = KIND_META[kind];
-  const diagnosticSource = `czap/vite.${kind}-resolve`;
+  const diagnosticSource = `liteship/vite.${kind}-resolve`;
 
   const searchDirs = buildSearchDirs(fromFile, projectRoot, userDir);
 
@@ -158,14 +158,14 @@ export async function resolvePrimitive<K extends PrimitiveKind>(
     // Try direct convention file: boundaries.ts / tokens.ts / etc.
     const directFile = path.join(dir, file);
     if (fileExists(directFile, diagnosticSource)) {
-      const result = await tryImportNamed<PrimitiveShape<K>>(directFile, name, tag, diagnosticSource, kind);
+      const result = await tryImportNamed<Primitive<K>>(directFile, name, tag, diagnosticSource, kind);
       if (result !== undefined) return { primitive: result, source: directFile };
     }
 
     // Try wildcard files: *.boundaries.ts / *.tokens.ts / etc.
     const wildcardFiles = findConventionFiles(dir, suffix, diagnosticSource);
     for (const wildcardFile of wildcardFiles) {
-      const result = await tryImportNamed<PrimitiveShape<K>>(wildcardFile, name, tag, diagnosticSource, kind);
+      const result = await tryImportNamed<Primitive<K>>(wildcardFile, name, tag, diagnosticSource, kind);
       if (result !== undefined) return { primitive: result, source: wildcardFile };
     }
   }

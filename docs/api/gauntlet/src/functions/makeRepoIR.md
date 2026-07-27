@@ -8,7 +8,7 @@
 
 > **makeRepoIR**(`parts`): [`RepoIR`](../interfaces/RepoIR.md)
 
-Defined in: [gauntlet/src/repo-ir.ts:319](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L319)
+Defined in: [gauntlet/src/repo-ir.ts:323](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L323)
 
 Build a [RepoIR](../interfaces/RepoIR.md) from flat parts — the one pure constructor (the
 `AssetRegistry.make` / `memoryContext` composition style). Frozen, immutable,

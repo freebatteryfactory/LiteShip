@@ -8,7 +8,7 @@
 
 > `const` **SpeculativeEvaluator**: `object`
 
-Defined in: [core/src/speculative.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/speculative.ts#L180)
+Defined in: [core/src/reactive/speculative.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/speculative.ts#L180)
 
 SpeculativeEvaluator -- threshold proximity prefetching for boundaries.
 Pre-computes the next discrete state when a signal is near a threshold,
@@ -27,7 +27,7 @@ when the signal value is near a threshold and moving toward it.
 
 ##### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Boundary`](../type-aliases/Boundary.md)
 
 #### Parameters
 
@@ -46,7 +46,7 @@ when the signal value is near a threshold and moving toward it.
 #### Example
 
 ```ts
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   thresholds: [768, 1024],
   states: ['mobile', 'tablet', 'desktop'] as const,
   hysteresis: 20,
@@ -61,7 +61,7 @@ result.confidence;  // 0.0-1.0 likelihood of crossing
 ## Example
 
 ```ts
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   thresholds: [600],
   states: ['small', 'large'] as const,
 });

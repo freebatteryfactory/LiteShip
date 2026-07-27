@@ -8,7 +8,7 @@
 
 > **buildResponsiveSrcset**(`variants`, `baseWidth?`): `string`
 
-Defined in: [core/src/responsive-media.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/responsive-media.ts#L127)
+Defined in: [core/src/media/responsive-media.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/responsive-media.ts#L127)
 
 Build a `srcset` string from variants with `w` or `x` descriptors.
 

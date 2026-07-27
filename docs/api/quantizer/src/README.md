@@ -6,25 +6,18 @@
 
 # quantizer/src
 
-`@czap/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
+`@liteship/quantizer` — **LiteShip** quantizer: **rigged** boundary evaluation,
 live state, animated transitions between bearings, and motion-tier gating on
 the working line.
 
-## Namespaces
-
-- [AnimatedQuantizer](namespaces/AnimatedQuantizer/README.md)
-
 ## Interfaces
 
-- [AnimatedQuantizerHandle](interfaces/AnimatedQuantizerHandle.md)
-- [AnimatedQuantizerShape](interfaces/AnimatedQuantizerShape.md)
+- [AnimatedQuantizer](interfaces/AnimatedQuantizer.md)
+- [DefineQuantizerOptions](interfaces/DefineQuantizerOptions.md)
 - [EvaluateResult](interfaces/EvaluateResult.md)
 - [InterpolatedFrame](interfaces/InterpolatedFrame.md)
 - [LiveQuantizer](interfaces/LiveQuantizer.md)
-- [LiveQuantizerHandle](interfaces/LiveQuantizerHandle.md)
-- [QuantizerBuilder](interfaces/QuantizerBuilder.md)
 - [QuantizerConfig](interfaces/QuantizerConfig.md)
-- [QuantizerFromOptions](interfaces/QuantizerFromOptions.md)
 - [QuantizerOutputs](interfaces/QuantizerOutputs.md)
 - [QuantizerRuntime](interfaces/QuantizerRuntime.md)
 - [SpringConfig](interfaces/SpringConfig.md)
@@ -35,18 +28,22 @@ the working line.
 
 - [MotionTier](type-aliases/MotionTier.md)
 - [OutputTarget](type-aliases/OutputTarget.md)
+- [OwnedAnimatedQuantizer](type-aliases/OwnedAnimatedQuantizer.md)
+- [OwnedQuantizer](type-aliases/OwnedQuantizer.md)
 - [TransitionMap](type-aliases/TransitionMap.md)
 
 ## Variables
 
 - [AnimatedQuantizer](variables/AnimatedQuantizer.md)
 - [Evaluate](variables/Evaluate.md)
-- [Q](variables/Q.md)
 - [Transition](variables/Transition.md)
 
 ## Functions
 
+- [createQuantizer](functions/createQuantizer.md)
+- [defineQuantizer](functions/defineQuantizer.md)
 - [evaluate](functions/evaluate.md)
+- [resolveQuantizerTargets](functions/resolveQuantizerTargets.md)
 
 ## References
 

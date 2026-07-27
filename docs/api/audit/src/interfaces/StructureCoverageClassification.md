@@ -6,7 +6,9 @@
 
 # Interface: StructureCoverageClassification
 
-Defined in: [audit/src/types.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L53)
+Defined in: [audit/src/types.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L83)
+
+Complete coverage receipt for structure-analysis subchecks.
 
 ## Properties
 
@@ -14,23 +16,23 @@ Defined in: [audit/src/types.ts:53](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **allowlistUnexercised**: readonly [`AllowlistUnexercisedEntry`](AllowlistUnexercisedEntry.md)[]
 
-Defined in: [audit/src/types.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L58)
+Defined in: [audit/src/types.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L88)
 
 ***
 
 ### orphan
 
-> `readonly` **orphan**: [`OrphanCoverage`](OrphanCoverage.md)
+> `readonly` **orphan**: [`OrphanCoverage`](OrphanCoverage.md) \| [`AuditCoverageNotChecked`](AuditCoverageNotChecked.md)
 
-Defined in: [audit/src/types.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L55)
+Defined in: [audit/src/types.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L85)
 
 ***
 
 ### symbol
 
-> `readonly` **symbol**: [`SymbolOrphanCoverage`](SymbolOrphanCoverage.md)
+> `readonly` **symbol**: [`AuditCoverageNotChecked`](AuditCoverageNotChecked.md) \| [`SymbolOrphanCoverage`](SymbolOrphanCoverage.md)
 
-Defined in: [audit/src/types.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L57)
+Defined in: [audit/src/types.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L87)
 
 Symbol-level orphan evidence layered on top of the file-level proxy (CUT A6).
 
@@ -40,4 +42,4 @@ Symbol-level orphan evidence layered on top of the file-level proxy (CUT A6).
 
 > `readonly` **topology**: readonly [`TopologyCoverageEntry`](TopologyCoverageEntry.md)[]
 
-Defined in: [audit/src/types.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L54)
+Defined in: [audit/src/types.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L84)

@@ -6,8 +6,8 @@
  * @module
  */
 
-import { Millis, SSE_BUFFER_SIZE, systemRng, type Rng } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { Millis, SSE_BUFFER_SIZE, systemRng, type Rng } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { ATTR as SEMANTIC_ID_ATTR } from '../morph/semantic-id.js';
 import type { SSEMessage, ReconnectConfig, OverflowPolicy } from '../types.js';
 
@@ -51,8 +51,8 @@ const firstStartTagAttr = (html: string, attr: string): string | null => {
  *
  * Ambiguity ALWAYS yields `null` (fail-safe: a message we cannot positively
  * key is treated as order-significant and never coalesced). An object
- * payload is keyed by a non-empty string `id`/`czapId`; a string payload is
- * keyed by its first `data-czap-id` attribute.
+ * payload is keyed by a non-empty string `id`/`liteshipId`; a string payload is
+ * keyed by its first `data-liteship-id` attribute.
  */
 export const extractCoalesceKey = (message: SSEMessage): string | null => {
   if (message.type !== 'patch') {
@@ -63,7 +63,7 @@ export const extractCoalesceKey = (message: SSEMessage): string | null => {
 
   if (data !== null && typeof data === 'object') {
     const record = data as Record<string, unknown>;
-    const id = record['id'] ?? record['czapId'];
+    const id = record['id'] ?? record['liteshipId'];
     return typeof id === 'string' && id.length > 0 ? `patch:${id}` : null;
   }
 

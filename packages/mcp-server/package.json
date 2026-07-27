@@ -1,7 +1,7 @@
 {
-  "name": "@czap/mcp-server",
-  "version": "0.18.0",
-  "description": "The Model Context Protocol server for LiteShip: exposes the `czap` commands and capsule catalog as MCP tools that AI assistants can call.",
+  "name": "@liteship/mcp-server",
+  "version": "0.23.0",
+  "description": "The Model Context Protocol server for LiteShip: exposes the `liteship` commands and capsule catalog as MCP tools that AI assistants can call.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -14,7 +14,6 @@
   "type": "module",
   "sideEffects": false,
   "keywords": [
-    "czap",
     "liteship",
     "mcp",
     "model-context-protocol",
@@ -26,8 +25,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     }
   },
   "files": [
@@ -46,12 +44,13 @@
     "access": "public"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/command": "workspace:*",
-    "@czap/compiler": "workspace:*",
-    "@czap/genui": "workspace:*",
-    "@czap/web": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/core": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/command": "workspace:*",
+    "@liteship/compiler": "workspace:*",
+    "@liteship/genui": "workspace:*",
+    "@liteship/web": "workspace:*",
     "fast-glob": "^3.3.3"
   }
 }

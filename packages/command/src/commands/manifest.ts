@@ -7,7 +7,7 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import type { CapsuleCommandResult } from '@liteship/core';
 import { failed, type CommandContext } from '../registry.js';
 
 /** One capsule-manifest entry (fields vary by capsule kind). */
@@ -70,5 +70,5 @@ export function manifestUnavailable(
  */
 export function manifestMissing(context: CommandContext): string {
   const looked = context.manifestPath?.();
-  return `capsule manifest missing${looked ? ` (looked at ${looked})` : ''}. In the LiteShip repo, generate it: pnpm run capsule:compile. In your own project, set CZAP_CAPSULE_MANIFEST to your manifest path.`;
+  return `capsule manifest missing${looked ? ` (looked at ${looked})` : ''}. In the LiteShip repo, generate it: pnpm run capsule:compile. In your own project, set LITESHIP_CAPSULE_MANIFEST to your manifest path.`;
 }

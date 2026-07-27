@@ -2,18 +2,24 @@
  * The downstream runner — composes LiteShip's built-in gate set with the project's
  * OWN custom gate and runs them over the project's source tree.
  *
- * This is the exact shape a downstream integrator writes after `npm i @czap/gauntlet`:
+ * This is the exact shape a downstream integrator writes after `npm i @liteship/gauntlet`:
  * import the built-in {@link LITESHIP_GATES}, append your own {@link noConsoleLogGate},
  * and hand the combined set to {@link runGauntletOnRepo}. The engine qualifies every
  * gate — theirs and ours — through the one authority ratchet. No fork, no rebuild,
  * no reach into the engine internals: every gauntlet import below is from the
- * package barrel `@czap/gauntlet`, and the custom gate is a sibling module that is
+ * package barrel `@liteship/gauntlet`, and the custom gate is a sibling module that is
  * ALSO authored only against that barrel.
  *
  * @module
  */
 
-import { runGauntletOnRepo, LITESHIP_GATES, type Gate, type GauntletResult } from '@czap/gauntlet';
+import {
+  runGauntletOnRepo,
+  LITESHIP_GATES,
+  type CheckGovernanceFacts,
+  type Gate,
+  type GauntletResult,
+} from '@liteship/gauntlet';
 import { noConsoleLogGate } from './no-console-log.gate.js';
 
 /**
@@ -22,6 +28,17 @@ import { noConsoleLogGate } from './no-console-log.gate.js';
  * alongside the built-ins as a peer; the engine treats them identically.
  */
 export const DOWNSTREAM_GATES: readonly Gate[] = [...LITESHIP_GATES, noConsoleLogGate];
+
+/**
+ * This fixture owns no package scripts, registered checks, or waivers. Supplying
+ * the explicit empty fact pack proves that fact-requiring gates never infer a
+ * green verdict from absent host evidence.
+ */
+export const DOWNSTREAM_CHECK_GOVERNANCE: CheckGovernanceFacts = Object.freeze({
+  partition: Object.freeze({ scripts: Object.freeze([]), registered: Object.freeze([]), exempted: Object.freeze([]) }),
+  negativeControls: Object.freeze([]),
+  waivers: Object.freeze([]),
+});
 
 /**
  * Run the composed gauntlet over the downstream project rooted at `repoRoot`,
@@ -35,5 +52,6 @@ export function runDownstreamGauntlet(repoRoot: string): GauntletResult {
   return runGauntletOnRepo(DOWNSTREAM_GATES, {
     repoRoot,
     globs: ['src/**/*.ts'],
+    checkGovernance: DOWNSTREAM_CHECK_GOVERNANCE,
   });
 }

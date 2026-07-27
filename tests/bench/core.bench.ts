@@ -3,7 +3,24 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Token, Compositor, BlendTree, World, Part, Config } from '@czap/core';
+import {
+  Boundary,
+  Compositor,
+  Config,
+  defineBoundary,
+  defineToken,
+  defineConfig,
+  createBlendTree,
+  schema,
+} from '@liteship/core';
+import {
+  admitPart,
+  createDenseStore,
+  createWorld,
+  defineDenseSystem,
+  definePart,
+  defineSystem,
+} from '@liteship/core/ecs';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -11,7 +28,7 @@ const bench = new Bench({ warmupIterations: 100 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary3 = Boundary.make({
+const boundary3 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -20,7 +37,7 @@ const boundary3 = Boundary.make({
   ] as const,
 });
 
-const boundary5 = Boundary.make({
+const boundary5 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'xs'],
@@ -31,7 +48,7 @@ const boundary5 = Boundary.make({
   ] as const,
 });
 
-const boundary10 = Boundary.make({
+const boundary10 = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 's0'],
@@ -47,7 +64,7 @@ const boundary10 = Boundary.make({
   ] as const,
 });
 
-const boundaryHyst = Boundary.make({
+const boundaryHyst = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -61,8 +78,8 @@ const boundaryHyst = Boundary.make({
 // Benchmarks
 // ---------------------------------------------------------------------------
 
-bench.add('Boundary.make() -- 3 thresholds', () => {
-  Boundary.make({
+bench.add('defineBoundary() -- 3 thresholds', () => {
+  defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -88,8 +105,8 @@ bench.add('Boundary.evaluateWithHysteresis -- 3 thresholds', () => {
   Boundary.evaluateWithHysteresis(boundaryHyst, 780, 'mobile');
 });
 
-bench.add('Token.make() + FNV-1a', () => {
-  Token.make({
+bench.add('defineToken() + FNV-1a', () => {
+  defineToken({
     name: 'primary',
     category: 'color',
     axes: ['theme'] as const,
@@ -99,7 +116,7 @@ bench.add('Token.make() + FNV-1a', () => {
 });
 
 bench.add('BlendTree.compute() -- 4 nodes', () => {
-  const { tree } = BlendTree.make<{ x: number; y: number }>();
+  const tree = createBlendTree<{ x: number; y: number }>();
   tree.add('a', { x: 0, y: 0 }, 1);
   tree.add('b', { x: 100, y: 100 }, 1);
   tree.add('c', { x: 50, y: 50 }, 0.5);
@@ -108,21 +125,28 @@ bench.add('BlendTree.compute() -- 4 nodes', () => {
 });
 
 bench.add('Compositor.compute() -- empty', () => {
-  const compositor = Compositor.create().compositor;
+  const compositor = Compositor.create();
   compositor.compute();
 });
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration
 {
-  const world100 = World.make().world;
+  const Position = definePart('bench-position', schema.struct({ x: schema.number, y: schema.number }));
+  const world100 = createWorld();
   for (let i = 0; i < 100; i++) {
-    world100.spawn({ position: { x: i, y: i * 2 } });
+    const admitted = admitPart(Position, { x: i, y: i * 2 });
+    if (!admitted.ok) throw new Error('benchmark fixture failed Position admission');
+    world100.spawn(admitted.value);
   }
-  world100.addSystem({
-    name: 'mover',
-    query: ['position'],
-    execute: () => {},
-  });
+  world100.addSystem(
+    defineSystem({
+      name: 'mover',
+      query: [Position],
+      reads: [],
+      writes: [],
+      execute: () => {},
+    }),
+  );
 
   bench.add('ECS World tick -- 100 entities, 1 system', () => {
     world100.tick();
@@ -130,52 +154,60 @@ bench.add('Compositor.compute() -- empty', () => {
 }
 
 {
-  const world100Dense = World.make().world;
-  const posX = Part.dense('posX', 128);
-  const posY = Part.dense('posY', 128);
+  const world100Dense = createWorld();
+  const PosX = definePart('bench-pos-x', schema.number);
+  const PosY = definePart('bench-pos-y', schema.number);
+  const posX = createDenseStore(PosX, 128);
+  const posY = createDenseStore(PosY, 128);
 
   world100Dense.addDenseStore(posX);
   world100Dense.addDenseStore(posY);
 
   for (let i = 0; i < 100; i++) {
     const id = world100Dense.spawn();
-    posX.set(id, i);
-    posY.set(id, i * 2);
+    posX.writer.set(id, i);
+    posY.writer.set(id, i * 2);
   }
 
-  world100Dense.addSystem({
-    name: 'mover',
-    query: ['posX', 'posY'],
-    _denseSystem: true as const,
-    execute(stores) {
-      const pxStore = stores.get('posX')!;
-      const pyStore = stores.get('posY')!;
-      const xData = pxStore.data;
-      const yData = pyStore.data;
-      const len = pxStore.count;
-      for (let i = 0; i < len; i++) {
-        xData[i] = xData[i]! + 1;
-        yData[i] = yData[i]! + 1;
-      }
-    },
-  });
+  world100Dense.addSystem(
+    defineDenseSystem({
+      name: 'mover',
+      reads: [PosY],
+      writes: [PosX, PosY],
+      execute(context) {
+        const xData = context.write(PosX).view();
+        const yData = context.write(PosY).view();
+        for (let i = 0; i < yData.length; i++) {
+          xData[i] = xData[i]! + 1;
+          yData[i] = yData[i]! + 1;
+        }
+      },
+    }),
+  );
 
   bench.add('ECS World tick -- 100 entities, 1 system (dense)', () => {
     world100Dense.tick();
+  });
+
+  const publicReadView = posX.store.view();
+  bench.add('ECS DenseStore read view -- 100 values', () => {
+    let sum = 0;
+    for (let i = 0; i < publicReadView.length; i++) sum += publicReadView.at(i)!;
+    return sum;
   });
 }
 
 // Config -- make() mints a CanonicalCbor + FNV-1a content address; the
 // projections (toViteConfig) are pure structural folds. Both are on the
-// adapter-config hot path every czap project pays once at startup.
-const testCfg = Config.make({ boundaries: { viewport: boundary3 } });
+// adapter-config hot path every liteship project pays once at startup.
+const testCfg = defineConfig({ boundaries: { viewport: boundary3 } });
 
-bench.add('Config.make() -- empty config', () => {
-  Config.make({});
+bench.add('defineConfig() -- empty config', () => {
+  defineConfig({});
 });
 
-bench.add('Config.make() -- with boundaries', () => {
-  Config.make({ boundaries: { viewport: boundary3, layout: boundary5 } });
+bench.add('defineConfig() -- with boundaries', () => {
+  defineConfig({ boundaries: { viewport: boundary3, layout: boundary5 } });
 });
 
 bench.add('Config.toViteConfig() -- projection', () => {

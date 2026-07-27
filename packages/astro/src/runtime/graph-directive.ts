@@ -1,26 +1,26 @@
 /**
  * Entry point for the `client:graph` directive: read a serialized
- * {@link DocumentGraph} off `data-czap-graph` and lower it onto the live cast
+ * {@link DocumentGraph} off `data-liteship-graph` and lower it onto the live cast
  * pipeline via {@link loadGraphRuntime}, resolving each entity to the
- * `[data-czap-entity="<id>"]` element within the directive root's subtree.
+ * `[data-liteship-entity="<id>"]` element within the directive root's subtree.
  *
  * The directive owns only the default DOM element-discovery policy (entities are
- * marked with `data-czap-entity`); programmatic hosts call `loadGraphRuntime`
- * directly with their own resolver. Honors `czap:teardown` to release observers.
+ * marked with `data-liteship-entity`); programmatic hosts call `loadGraphRuntime`
+ * directly with their own resolver. Honors `liteship:teardown` to release observers.
  *
  * @module
  */
 
-import type { ContentAddress } from '@czap/core';
+import type { ContentAddress } from '@liteship/core';
 import { loadGraphRuntime, type GraphRuntimeHandle } from './graph-runtime.js';
 import { bootDirectiveEntry } from './directive-bound.js';
 
-/** Resolve an entity id to the `[data-czap-entity]` element in (or at) the directive root. */
+/** Resolve an entity id to the `[data-liteship-entity]` element in (or at) the directive root. */
 function entityResolver(root: HTMLElement): (entityId: ContentAddress) => HTMLElement | null {
   return (entityId) => {
     // CSS.escape: the id is a content address (hex-ish), but escape defensively —
     // it is graph-supplied, not a fixed literal.
-    const selector = `[data-czap-entity="${CSS.escape(String(entityId))}"]`;
+    const selector = `[data-liteship-entity="${CSS.escape(String(entityId))}"]`;
     if (root.matches(selector)) return root;
     return root.querySelector<HTMLElement>(selector);
   };
@@ -32,7 +32,7 @@ function entityResolver(root: HTMLElement): (entityId: ContentAddress) => HTMLEl
  * inert (the loader returns `null`).
  */
 export function initGraphDirective(load: () => Promise<unknown>, element: HTMLElement): void {
-  const serialized = element.getAttribute('data-czap-graph');
+  const serialized = element.getAttribute('data-liteship-graph');
   if (!serialized) return;
 
   let handle: GraphRuntimeHandle | null = loadGraphRuntime(serialized, entityResolver(element));
@@ -41,7 +41,7 @@ export function initGraphDirective(load: () => Promise<unknown>, element: HTMLEl
   // do NOT wire dispose or call load() for a graph that never cast.
   if (!handle) return;
 
-  element.addEventListener('czap:teardown', () => {
+  element.addEventListener('liteship:teardown', () => {
     handle?.release();
     handle = null;
   });

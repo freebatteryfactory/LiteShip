@@ -86,9 +86,13 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   // inert until the avionics gates exist). `ai-cast` moved OUT of L4 → L3 per the
   // owner: it is a deterministic PROPOSER, not a trusted-artifact emitter.
   {
-    glob: 'packages/core/src/{receipt,hlc,plan,dag,validated-output,assembly,brands}.ts',
+    glob: 'packages/core/src/evidence/{receipt,validated-output}.ts',
     level: 'L4',
   },
+  { glob: 'packages/core/src/clock/hlc.ts', level: 'L4' },
+  { glob: 'packages/core/src/authoring/{plan,assembly}.ts', level: 'L4' },
+  { glob: 'packages/core/src/graph/dag.ts', level: 'L4' },
+  { glob: 'packages/core/src/schema/brands.ts', level: 'L4' },
   // The REACTIVE KERNELS (Wave 6 — S5.5.1 activation). Post-migration they ARE the
   // real reactive runtime on `CellKernel`: the replay-1 slot, the emission policy
   // ({all}/{distinct}) dedup, the reentrancy ordering (async-append/'deferred'), and
@@ -100,40 +104,70 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   // ordering/replay mutant here is a MODEL HOLE). `signal` moves L4 from its former
   // L3 (below) — it is now a CellKernel-backed value channel, not a bespoke source.
   {
-    glob: 'packages/core/src/{cell-kernel,cell,derived,store,signal,timeline,live-cell}.ts',
+    glob: 'packages/core/src/reactive/{cell-kernel,cell,derived,store,signal,live-cell}.ts',
     level: 'L4',
   },
+  { glob: 'packages/core/src/motion/timeline.ts', level: 'L4' },
   // The gauntlet's judgment core: it decides whether the cut may ship, so it is
   // itself part of the safety case and must clear the bar it enforces.
   {
     glob: 'packages/gauntlet/src/{engine,authority,waiver,gate,assurance-map,finding,assurance}.ts',
     level: 'L4',
   },
+  { glob: 'packages/gauntlet/src/facts/standards-facts.ts', level: 'L4' },
 
   // ── L3: deterministic runtime/projection/cache + authority-bearing tooling ────
+  // Definition/artifact addressing owners. A source-derived census in
+  // `assurance-map.test.ts` independently requires every non-canonical caller of
+  // `CanonicalCbor.encode` / `AddressedDigest.of` to land at L3 or above.
   {
-    glob: 'packages/core/src/{boundary,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts',
+    glob: 'packages/core/src/authoring/{adaptive,boundary,component,config,ship-capsule,style,theme,token,ai-cast}.ts',
     level: 'L3',
   },
+  { glob: 'packages/core/src/authoring/capsules/{canonical-cbor,canonical-cbor-decode}.ts', level: 'L3' },
+  { glob: 'packages/core/src/ecs/**', level: 'L3' },
+  { glob: 'packages/core/src/evidence/content-address.ts', level: 'L3' },
+  { glob: 'packages/core/src/harness/site-adapter.ts', level: 'L3' },
+  { glob: 'packages/core/src/reactive/{zap,speculative}.ts', level: 'L3' },
+  { glob: 'packages/core/src/media/{gen-frame,token-buffer}.ts', level: 'L3' },
+  { glob: 'packages/core/src/motion/{blend,animation}.ts', level: 'L3' },
+  { glob: 'packages/core/src/clock/clock.ts', level: 'L3' },
+  { glob: 'packages/core/src/clock/rng.ts', level: 'L3' },
   { glob: 'packages/quantizer/src/**', level: 'L3' },
   { glob: 'packages/web/src/capture/**', level: 'L3' },
   { glob: 'packages/web/src/stream/**', level: 'L3' },
   { glob: 'packages/worker/src/**', level: 'L3' },
   { glob: 'packages/astro/src/runtime/**', level: 'L3' },
   // Artifact-producing cores — deterministic frame/media bytes downstream trusts.
-  { glob: 'packages/stage/src/{dual-export,ffmpeg-encoder}.ts', level: 'L3' },
-  { glob: 'packages/remotion/src/composition.ts', level: 'L3' },
+  { glob: 'packages/stage/src/{dual-export,ffmpeg-encoder,motion-export}.ts', level: 'L3' },
+  { glob: 'packages/remotion/src/{composition,motion}.ts', level: 'L3' },
+  {
+    glob: 'packages/compiler/src/{responsive-media-compile,reveal-compile,scroll-timeline-compile,stagger-compile}.ts',
+    level: 'L3',
+  },
+  { glob: 'packages/genui/src/{catalog,identity}.ts', level: 'L3' },
+  { glob: 'packages/web/src/security/shader-integrity.ts', level: 'L3' },
   // The gauntlet's I/O glue + its gates (the rules ARE the standard).
   { glob: 'packages/gauntlet/src/{runner,node-context}.ts', level: 'L3' },
   { glob: 'packages/gauntlet/src/gates/**', level: 'L3' },
   // The audit authority — these four files gate topology/policy/profile/integrity.
-  { glob: 'packages/audit/src/{structure,policy,devops-profile,integrity}.ts', level: 'L3' },
+  {
+    glob: 'packages/audit/src/{structure,policy,devops-profile,integrity,catalog-feature-edge-census,feature-edge-census,mcdc-engine,mcdc-facts-build,mutation-engine,mutation-facts-build,mutation-verdict,transition-facts-build}.ts',
+    level: 'L3',
+  },
   // External-input + tool-dispatch + state-mutating boundaries.
   { glob: 'packages/mcp-server/src/{http,stdio,dispatch}.ts', level: 'L3' },
   { glob: 'packages/command/src/dispatcher.ts', level: 'L3' },
+  { glob: 'packages/command/src/host/{capsule-provenance,idempotency}.ts', level: 'L3' },
   { glob: 'packages/cli/src/dispatch.ts', level: 'L3' },
+  { glob: 'packages/cli/src/{ship-manifest}.ts', level: 'L3' },
+  { glob: 'packages/cli/src/capsules/ship-emit.ts', level: 'L3' },
   {
-    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
+    glob: 'packages/cli/src/internal/{cure-packet,sbom,seam-execution-coverage,standards-surface,supply-chain}.ts',
+    level: 'L3',
+  },
+  {
+    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,check,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
     level: 'L3',
   },
   // The migrated gates' authority ENGINE. The command DESCRIPTORS for the migrated

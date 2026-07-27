@@ -34,15 +34,22 @@ import {
   IntegrityDigest,
   type AddressedDigest as AD,
   type HLC,
-} from '@czap/core';
-import { parseLockfile, type ParsedLockfile } from '../../../packages/cli/src/lib/lockfile.js';
+} from '@liteship/core';
+import { parseLockfile, type ParsedLockfile } from '../../../packages/cli/src/internal/lockfile.js';
 import {
   evaluateLockfilePolicy,
   LITESHIP_LOCKFILE_POLICY,
   type LockfilePolicy,
   type PublishedImporters,
-} from '../../../packages/cli/src/lib/supply-chain-policy.js';
-import { generateSbom, serializeSbom, sbomAddress } from '../../../packages/cli/src/lib/sbom.js';
+} from '../../../packages/cli/src/internal/supply-chain-policy.js';
+import {
+  generateSbom,
+  generateVex,
+  serializeSbom,
+  serializeVex,
+  sbomAddress,
+  vexAddress,
+} from '../../../packages/cli/src/internal/sbom.js';
 import {
   analyzeLockfile,
   buildSbom,
@@ -55,7 +62,7 @@ import {
   SBOM_ARTIFACT_PATH,
   type WorkspacePkg,
   type AnalyzeInput,
-} from '../../../packages/cli/src/lib/supply-chain.js';
+} from '../../../packages/cli/src/internal/supply-chain.js';
 
 // ── synthetic fixtures (no live-tree reads) ──────────────────────────────────
 
@@ -70,7 +77,7 @@ const VALID_LOCK = [
   `        version: 1.3.0`,
   `  packages/cli:`,
   `    dependencies:`,
-  `      '@czap/core':`,
+  `      '@liteship/core':`,
   `        specifier: workspace:*`,
   `        version: link:../core`,
   `    devDependencies:`,
@@ -80,14 +87,14 @@ const VALID_LOCK = [
   `packages:`,
   `  'left-pad@1.3.0':`,
   `    resolution: {integrity: sha512-leftpadbase64}`,
-  `  '@czap/core@0.4.0':`,
+  `  '@liteship/core@0.4.0':`,
   `    resolution: {integrity: sha256-coreba64}`,
   ``,
 ].join('\n');
 
 const WORKSPACE: readonly WorkspacePkg[] = [
-  { name: '@czap/cli', version: '0.4.0', private: false, importerPath: 'packages/cli' },
-  { name: '@czap/private-tool', version: '0.4.0', private: true, importerPath: 'packages/private-tool' },
+  { name: '@liteship/cli', version: '0.4.0', private: false, importerPath: 'packages/cli' },
+  { name: '@liteship/private-tool', version: '0.4.0', private: true, importerPath: 'packages/private-tool' },
 ];
 
 // ── lockfile parser ──────────────────────────────────────────────────────────
@@ -183,7 +190,7 @@ describe('lockfile parser — synthetic shape coverage', () => {
   });
 
   it('FAILS LOUD (ParseError, offset pointed at the line) when a version has no specifier', async () => {
-    const { hasTag } = await import('@czap/error');
+    const { hasTag } = await import('@liteship/error');
     let caught: unknown;
     try {
       parseLockfile(
@@ -204,7 +211,7 @@ describe('lockfile parser — synthetic shape coverage', () => {
   });
 
   it('FAILS LOUD when no lockfileVersion is present (not a pnpm lockfile)', async () => {
-    const { hasTag } = await import('@czap/error');
+    const { hasTag } = await import('@liteship/error');
     let caught: unknown;
     try {
       parseLockfile('packages:\n  x:\n');
@@ -246,7 +253,7 @@ describe('lockfile parser — synthetic shape coverage', () => {
 // ── lockfile policy — synthetic bite + short-circuit ─────────────────────────
 
 describe('lockfile policy — synthetic decisions', () => {
-  const published: PublishedImporters = { byPath: new Map([['packages/cli', '@czap/cli']]) };
+  const published: PublishedImporters = { byPath: new Map([['packages/cli', '@liteship/cli']]) };
 
   it('a clean synthetic lockfile passes (registry + integrity + recognized version)', () => {
     const lf = parseLockfile(VALID_LOCK);
@@ -317,7 +324,7 @@ describe('lockfile policy — synthetic decisions', () => {
         `importers:`,
         `  packages/cli:`,
         `    dependencies:`,
-        `      '@czap/core':`,
+        `      '@liteship/core':`,
         `        specifier: workspace:*`,
         `        version: link:../core`,
         `packages:`,
@@ -424,11 +431,17 @@ describe('SBOM — synthetic build coverage', () => {
       lockfileVersion: '9.0',
       importers: [],
       packages: [
-        { key: '@czap/cli@0.4.0', name: '@czap/cli', version: '0.4.0', integrity: 'sha512-X', resolutionKind: null },
+        {
+          key: '@liteship/cli@0.4.0',
+          name: '@liteship/cli',
+          version: '0.4.0',
+          integrity: 'sha512-X',
+          resolutionKind: null,
+        },
       ],
     };
-    const sbom = generateSbom(lf, [{ name: '@czap/cli', version: '0.4.0' }]);
-    const comp = sbom.components.filter((c) => c.purl === 'pkg:npm/@czap/cli@0.4.0');
+    const sbom = generateSbom(lf, [{ name: '@liteship/cli', version: '0.4.0' }]);
+    const comp = sbom.components.filter((c) => c.purl === 'pkg:npm/@liteship/cli@0.4.0');
     expect(comp).toHaveLength(1); // deduped by purl
     expect(comp[0]?.type).toBe('application');
     expect(comp[0]?.hashes).toBeUndefined(); // application carries no registry integrity
@@ -459,6 +472,32 @@ describe('SBOM — synthetic build coverage', () => {
     expect(purls).toEqual([...purls].sort());
   });
 
+  it('gives every component one unique VEX-resolvable CycloneDX bom-ref', () => {
+    const sbom = generateSbom(
+      {
+        lockfileVersion: '9.0',
+        importers: [],
+        packages: [
+          { key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null },
+          { key: 'b@2.0.0', name: 'b', version: '2.0.0', integrity: 'sha512-Y', resolutionKind: null },
+        ],
+      },
+      [],
+    );
+    const refs = sbom.components.map((component) => component['bom-ref']);
+    expect(new Set(refs).size).toBe(sbom.components.length);
+    expect(refs).toEqual(sbom.components.map((component) => component.purl));
+    expect(() =>
+      generateVex(sbom, [
+        {
+          id: 'CVE-2099-0002',
+          affects: [{ ref: refs[0]! }],
+          analysis: { state: 'in_triage' },
+        },
+      ]),
+    ).not.toThrow();
+  });
+
   it('serializeSbom is key-sorted, 2-space, newline-terminated JSON that round-trips', () => {
     const sbom = generateSbom(
       {
@@ -487,6 +526,47 @@ describe('SBOM — synthetic build coverage', () => {
     );
     expect(sbomAddress(sbom)).toBe(sbomAddress(sbom));
     expect(sbomAddress(sbom)).toMatch(/^fnv1a:[0-9a-f]+$/);
+  });
+
+  it('projects deterministic CycloneDX VEX without inventing vulnerability conclusions', () => {
+    const sbom = generateSbom(
+      {
+        lockfileVersion: '9.0',
+        importers: [],
+        packages: [{ key: 'a@1.0.0', name: 'a', version: '1.0.0', integrity: 'sha512-X', resolutionKind: null }],
+      },
+      [],
+    );
+    const vex = generateVex(sbom);
+    expect(vex.vulnerabilities).toEqual([]);
+    expect(serializeVex(vex)).toBe(serializeVex(vex));
+    expect(vexAddress(vex)).toMatch(/^fnv1a:[0-9a-f]+$/);
+  });
+
+  it('refuses a VEX assessment aimed at a component absent from the SBOM', () => {
+    const sbom = generateSbom({ lockfileVersion: '9.0', importers: [], packages: [] }, []);
+    expect(() =>
+      generateVex(sbom, [
+        {
+          id: 'CVE-2099-0001',
+          affects: [{ ref: 'pkg:npm/ghost@1.0.0' }],
+          analysis: { state: 'not_affected', justification: 'code_not_present' },
+        },
+      ]),
+    ).toThrow(/absent SBOM component/);
+  });
+
+  it('refuses an SBOM whose CycloneDX component references are ambiguous', () => {
+    const duplicateRef = 'pkg:npm/shared@1.0.0';
+    const sbom = {
+      bomFormat: 'CycloneDX' as const,
+      specVersion: '1.5' as const,
+      components: [
+        { type: 'library' as const, name: 'a', version: '1.0.0', purl: 'pkg:npm/a@1.0.0', 'bom-ref': duplicateRef },
+        { type: 'library' as const, name: 'b', version: '1.0.0', purl: 'pkg:npm/b@1.0.0', 'bom-ref': duplicateRef },
+      ],
+    };
+    expect(() => generateVex(sbom)).toThrow(/bom-ref values must be unique/u);
   });
 
   it('LAW (property): same package set in ANY input order ⇒ byte-identical SBOM + address', () => {
@@ -551,7 +631,13 @@ describe('checkSbomCompleteness — synthetic gaps + phantoms', () => {
       ...sbom,
       components: [
         ...sbom.components,
-        { type: 'library' as const, name: 'ghost', version: '9.9.9', purl: 'pkg:npm/ghost@9.9.9' },
+        {
+          type: 'library' as const,
+          name: 'ghost',
+          version: '9.9.9',
+          purl: 'pkg:npm/ghost@9.9.9',
+          'bom-ref': 'pkg:npm/ghost@9.9.9',
+        },
       ],
     };
     const facts = checkSbomCompleteness(phantom, lf, WORKSPACE, address);
@@ -589,7 +675,7 @@ describe('analyzeLockfile — facts assembly', () => {
 const baseInput = (lockAddr: AD): ShipCapsule.Input => ({
   _kind: 'shipCapsule',
   schema_version: 1,
-  package_name: '@czap/x',
+  package_name: '@liteship/x',
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,
@@ -625,7 +711,7 @@ describe('validateProvenance — absent build-env', () => {
     const capsule = ShipCapsule.make(baseInput(liveAddr));
     const facts = validateProvenance(capsule, liveBytes);
     expect(facts.violations).toEqual([]);
-    expect(facts.packageName).toBe('@czap/x');
+    expect(facts.packageName).toBe('@liteship/x');
     expect(facts.sourceCommit).toBe('0123456789abcdef0123456789abcdef01234567');
     expect(facts.sourceDirty).toBe(false);
   });
@@ -658,7 +744,7 @@ describe('decodeCapsule — tagged round-trip', () => {
     const bytes = ShipCapsule.canonicalize(capsule);
     const result = decodeCapsule(bytes);
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.capsule.package_name).toBe('@czap/x');
+    if (result.ok) expect(result.capsule.package_name).toBe('@liteship/x');
   });
 
   it('returns ok:false with a descriptive error on garbage bytes (never throws)', () => {
@@ -710,7 +796,7 @@ describe('scanCiAuthority — synthetic token classes', () => {
 
 describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)', () => {
   it('readWorkflows returns [] when .github/workflows is absent', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-sc-empty-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-sc-empty-'));
     try {
       expect(readWorkflows(dir)).toEqual([]);
     } finally {
@@ -719,7 +805,7 @@ describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)
   });
 
   it('readWorkflows reads only *.yml / *.yaml, sorted, with the repo-relative path', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-sc-wf-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-sc-wf-'));
     try {
       const wfDir = join(dir, '.github', 'workflows');
       mkdirSync(wfDir, { recursive: true });
@@ -735,7 +821,7 @@ describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)
   });
 
   it('analyzeSupplyChain folds lockfile + sbom + ci facts; OMITS provenance with no capsule', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-sc-fold-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-sc-fold-'));
     try {
       const input: AnalyzeInput = {
         repoRoot: dir, // no .github/workflows ⇒ empty CI scan
@@ -759,7 +845,7 @@ describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)
   });
 
   it('analyzeSupplyChain INCLUDES provenance when a capsule is supplied (and bites address drift)', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-sc-prov-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-sc-prov-'));
     try {
       const liveBytes = new Uint8Array(Buffer.from(VALID_LOCK, 'utf8'));
       // capsule records a DIFFERENT lockfile address ⇒ drift violation.
@@ -785,7 +871,7 @@ describe('readWorkflows + analyzeSupplyChain — full fold (synthetic temp repo)
   });
 
   it('analyzeSupplyChain honors a host-injected permissive policy (DATA, not code)', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-sc-policy-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-sc-policy-'));
     try {
       const lock = [
         `lockfileVersion: '9.0'`,

@@ -17,6 +17,7 @@ defaults, so `runAuditPasses({ repoRoot })` just works:
   • `packageTopology`          → `{}` (coverage classifies as policy-absent)
   • `dynamicImportExemptions`  → empty set (no sanctioned dynamic edges)
   • `surfacePolicy`            → `{}` (no host-surface assumptions)
+  • `allowlist`                → `[]` (no hidden project suppression)
   • `internalPackagePrefix`    → derived from the single common npm scope of
     the discovered package manifests; ambiguous or unscoped trees throw a
     teaching error instead of guessing.

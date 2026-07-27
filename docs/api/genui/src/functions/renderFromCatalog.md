@@ -18,7 +18,7 @@ unless `clear` already ran), `{ ok: true }` on success.
 
 ### node
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
 ### options
 

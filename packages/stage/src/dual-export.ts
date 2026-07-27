@@ -4,10 +4,11 @@
  *
  * This is the verb/orchestration layer. It owns no identity kernel of its own:
  * every content address is minted through `CanonicalCbor.encode` →
- * `AddressedDigest.of` (the `@czap/core` kernel, ADR-0003/0011), and every
- * caster it drives already EXISTS — `CSSCompiler.compile` (`@czap/compiler`),
- * `resolveInitialState`/`satelliteAttrs` (`@czap/astro`), `VideoRenderer.make`
- * over a `Compositor` (`@czap/core`). Stage reinvents none of them; it only
+ * `AddressedDigest.of` (the `@liteship/core` kernel, ADR-0003/0011), and every
+ * caster it drives already EXISTS — `CSSCompiler.compile` (`@liteship/compiler`),
+ * `resolveInitialState`/`adaptiveAttrs` (`@liteship/astro`), and the shared
+ * `FrameSchedule` over a `Compositor` (`@liteship/core`). Stage reinvents none
+ * of them; it only
  * walks the graph and binds the casters' outputs back to the graph's source.
  *
  * The shared-source hash is the **DocumentGraph.digest** itself — not a hash of
@@ -33,36 +34,29 @@ import type {
   ReceiptEnvelope,
   ContentAddress,
   Millis,
-} from '@czap/core';
-import type { AddressedDigest } from '@czap/core';
+} from '@liteship/core';
+import type { AddressedDigest } from '@liteship/core';
 import {
   CanonicalCbor,
   AddressedDigest as AddressedDigestNS,
   sealNode,
   Boundary,
   Compositor,
-  VideoRenderer,
+  createFrameSchedule,
   Receipt,
   TypedRef,
   HLC,
-} from '@czap/core';
-import { ValidationError } from '@czap/error';
-import { CSSCompiler } from '@czap/compiler';
-import { resolveInitialState, satelliteAttrs } from '@czap/astro';
-// `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
-// requires OffscreenCanvas / createImageBitmap, which are not present in a
-// headless Node test env (see packages/web/src/capture/pipeline.ts). We import
-// the type-level seam to keep the dependency honest and drive the SAME
-// `VideoRenderer.frames()` it consumes; the artifact digest below content-
-// addresses the real per-frame `CompositeState` snapshots that pipeline would
-// encode, so the digest is a true content address of the produced frames —
-// the byte-encode of the codec is the INJECTED seam (browser: WebCodecs via
-// `captureVideo`; node: the ffmpeg `FrameEncoder` adapter in `./ffmpeg-encoder`).
-import { escapeHtml } from '@czap/web';
-import type { captureVideo } from '@czap/web';
+  defineBoundary,
+  Diagnostics,
+} from '@liteship/core';
+import { ValidationError } from '@liteship/error';
+import { CSSCompiler } from '@liteship/compiler';
+import { resolveInitialState, adaptiveAttrs } from '@liteship/astro/adaptive-runtime';
+import { snapshotDefinitionValue } from '@liteship/core/evidence';
+import { escapeHtml } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
-// FrameEncoder — the injectable byte-encode seam (two real backends, one shape)
+// FrameEncoder — the injected CompositeState byte-encode seam
 // ---------------------------------------------------------------------------
 
 /** The deterministic spec a {@link FrameEncoder} encodes the frames at. */
@@ -88,10 +82,10 @@ export interface EncodedVideo {
  * snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
  * is INJECTED at the call site so the pure graph-walk never imports a codec:
  *
- *  - browser/worker: WebCodecs over an OffscreenCanvas (`@czap/web` capture);
- *  - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
- *
- * Both are real backends of this one shape; neither lives in `dual-export.ts`.
+ * The shipped implementation is the node/headless ffmpeg child-process adapter
+ * in `./ffmpeg-encoder`. Other hosts may implement this exact
+ * CompositeState-to-bytes contract, but `@liteship/web`'s canvas capture API is
+ * a distinct renderer contract and is not presented as this type.
  */
 export type FrameEncoder = (frames: readonly CompositeState[], config: VideoEncodeConfig) => Promise<EncodedVideo>;
 
@@ -121,11 +115,6 @@ function posesForEntity(graph: DocumentGraph, entityId: ContentAddress): readonl
   return graph.nodes.filter((node): node is PoseNode => node.family === 'pose' && node.entityRef === entityId);
 }
 
-/** All pose nodes — the video cast sweeps every authored pose track. */
-function poses(graph: DocumentGraph): readonly PoseNode[] {
-  return graph.nodes.filter((node): node is PoseNode => node.family === 'pose');
-}
-
 /**
  * Reconstruct the live {@link Boundary} a component encodes from its inline
  * `thresholds` + `states` (carried on {@link ComponentNode} precisely so eval
@@ -133,11 +122,11 @@ function poses(graph: DocumentGraph): readonly PoseNode[] {
  * the existing casters need: both `CSSCompiler.compile` and `Compositor` take a
  * boundary, and the graph node is the authoritative source for it.
  */
-function boundaryOf(component: ComponentNode): Boundary.Shape {
+function boundaryOf(component: ComponentNode): Boundary {
   const states = (component.states ?? []) as readonly string[];
   const thresholds = (component.thresholds ?? []) as readonly number[];
   const at = states.map((state, i) => [thresholds[i] ?? 0, state] as const);
-  // Boundary.make requires a non-empty tuple — validate before the cast lies,
+  // defineBoundary requires a non-empty tuple — validate before the cast lies,
   // so an empty ComponentNode fails with a clear message, not a cryptic one.
   if (at.length === 0) {
     throw ValidationError(
@@ -145,10 +134,10 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
       `ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
     );
   }
-  return Boundary.make({
+  return defineBoundary({
     input: component.name,
     at: at as unknown as readonly [readonly [number, string], ...(readonly [number, string])[]],
-  }) as Boundary.Shape;
+  }) as Boundary;
 }
 
 // ---------------------------------------------------------------------------
@@ -160,8 +149,8 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
  *
  * Walks each `css` {@link ProjectionNode} → its source {@link ComponentNode} →
  * `CSSCompiler.compile` (the existing compiler) for the `<style>` block, then
- * `resolveInitialState` + `satelliteAttrs` (the existing astro helpers) for the
- * satellite shell. The page bytes are content-addressed via
+ * `resolveInitialState` + `adaptiveAttrs` (the existing astro helpers) for the
+ * adaptive shell. The page bytes are content-addressed via
  * `AddressedDigest.of(CanonicalCbor.encode(...))` — the core kernel, never
  * JSON/cborg — and returned as a sealed `ExportNode{carrier:'astro-page'}`
  * whose `sourceRefs` are exactly the projection ids it consumed.
@@ -194,7 +183,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
     styleBlocks.push(compiled.raw);
 
     const initialState = resolveInitialState(boundary);
-    const attrs = satelliteAttrs({ boundary, initialState, directive: false });
+    const attrs = adaptiveAttrs({ boundary, initialState, directive: false });
     const attrStr = Object.entries(attrs)
       .map(([k, v]) => `${k}="${escapeHtml(String(v))}"`)
       .join(' ');
@@ -245,7 +234,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
  * them). The `CompositorQuantizer` return type is what `Compositor.add` requires —
  * the required `stateSync` proves at compile time this quantizer can produce a state.
  */
-function poseQuantizer(boundary: Boundary.Shape, initialState: string): CompositorQuantizer<Boundary.Shape> {
+function poseQuantizer(boundary: Boundary, initialState: string): CompositorQuantizer<Boundary> {
   let current = initialState;
   return {
     _tag: 'Quantizer',
@@ -273,24 +262,23 @@ type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<s
 /**
  * Produce the REAL per-frame {@link CompositeState} snapshots for the graph's
  * video cast. Builds the REAL Compositor (one pose-parked quantizer per pose)
- * and the REAL VideoRenderer over it; the renderer owns the fixed-step
- * schedule/total-frame count. We drive its compositor + clock directly (its
- * `frames()` async generator computes synchronously) so this stays sync and
- * headless: each frame is the genuine compositor output VideoRenderer yields.
+ * and the shared FrameSchedule over it. Stage consumes the common timing
+ * coordinates while retaining its graph-specific pose projection, so this
+ * stays synchronous and headless without pretending every host shares one
+ * state renderer.
  *
- * This is the SAME frame stream both byte-encoders consume — the browser
- * WebCodecs `captureVideo` and the node ffmpeg {@link FrameEncoder}. They
- * change the BYTES, never WHAT the frames are.
+ * This is the canonical Stage video-carrier frame stream consumed by the
+ * injected {@link FrameEncoder}. It is intentionally distinct from the
+ * canvas-oriented `@liteship/web` capture contract.
  */
 function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   const projections = cssProjections(graph);
-  // Compositor.create is now sync-first: it returns the live instance plus the
-  // Lifetime that owns its teardown (was `yield* Compositor.create()` in an
-  // Effect scope). `add`/`compute` are plain sync calls; the loop body was
-  // already fully synchronous, so the whole cast collapses to straight-line JS.
-  const { compositor, lifetime } = Compositor.create();
+  // Compositor.create is now sync-first: it returns the live instance that owns
+  // its own teardown (was `yield* Compositor.create()` in an Effect scope).
+  // `add`/`compute` are plain sync calls; the loop body was already fully
+  // synchronous, so the whole cast collapses to straight-line JS.
+  const compositor = Compositor.create();
   try {
-    const posed = poses(graph);
     // Keep each added quantizer + its boundary so the per-frame schedule can
     // drive `evaluate` over a swept input. A pose-parked quantizer that is
     // never evaluated yields a frozen frame stream — a degenerate "video";
@@ -301,7 +289,13 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
     // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
     // a non-empty thresholds tuple (it throws otherwise), so the endpoints
     // are always present — no defensive fallback branch to leave uncovered.
-    const driven: { key: string; quantizer: Quantizer<Boundary.Shape>; lo: number; hi: number }[] = [];
+    const driven: {
+      key: string;
+      quantizer: Quantizer<Boundary>;
+      lo: number;
+      hi: number;
+      bindingsByState: ReadonlyMap<string, Readonly<Record<string, number | string>>>;
+    }[] = [];
     for (const projection of projections) {
       const component = componentFor(graph, projection.sourceRef);
       if (!component) continue;
@@ -309,20 +303,19 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
       const thresholds = boundary.thresholds as readonly number[];
       const lo = thresholds[0]!;
       const hi = thresholds[thresholds.length - 1]!;
-      for (const pose of posed) {
+      const entity = entityForComponent(graph, component.id);
+      const componentPoses = entity === undefined ? [] : posesForEntity(graph, entity.id);
+      const bindingsByState = new Map(componentPoses.map((pose) => [pose.state as string, pose.bindings] as const));
+      for (const pose of componentPoses) {
         const key = `${component.name}:${pose.state}`;
         const quantizer = poseQuantizer(boundary, pose.state as string);
         compositor.add(key, quantizer);
-        driven.push({ key, quantizer, lo, hi });
+        driven.push({ key, quantizer, lo, hi, bindingsByState });
       }
     }
-    const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
-    // `denom` is the number of inter-frame steps; clamped to ≥1 so the sweep
-    // is well-defined for any frame count without a dead conditional branch.
-    const denom = Math.max(1, renderer.totalFrames - 1);
+    const schedule = createFrameSchedule(VIDEO_CONFIG);
     const collected: VideoFrame[] = [];
-    for (let i = 0; i < renderer.totalFrames; i++) {
-      renderer.scheduler.step();
+    for (const { progress } of schedule) {
       // Sweep the input across the boundary's threshold span as the clock
       // advances so each quantizer's `evaluate` re-derives its state per frame
       // (a real boundary crossing over the video's timeline). Marking each
@@ -330,19 +323,51 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
       // of carrying forward the previous composite — the same evaluate→mark-
       // dirty contract the worker compositor uses. The crossing is also
       // captured in `posed` so the artifact digest records it explicitly.
-      const progress = i / denom;
       const posedFrame: Record<string, string> = {};
       for (const { key, quantizer, lo, hi } of driven) {
         posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;
         compositor.runtime.markDirty(key);
       }
-      collected.push({ composite: compositor.compute(), posed: posedFrame });
+      const computed = compositor.compute();
+      const css = { ...computed.outputs.css };
+      // A state-only compositor marker is not the complete visual frame. Fold the
+      // active PoseNode bindings into the frame snapshot before addressing or
+      // encoding it so changing authored visual bytes cannot leave video evidence
+      // unchanged. The Astro carrier uses the same `--<binding>` projection.
+      for (const { key, bindingsByState } of driven) {
+        const active = posedFrame[key];
+        if (active === undefined) continue;
+        for (const [binding, value] of Object.entries(bindingsByState.get(active) ?? {})) {
+          css[`--${binding}`] = value;
+        }
+      }
+      const composite: CompositeState = {
+        discrete: { ...computed.discrete },
+        blend: Object.fromEntries(Object.entries(computed.blend).map(([name, weights]) => [name, { ...weights }])),
+        outputs: {
+          css,
+          glsl: { ...computed.outputs.glsl },
+          wgsl: { ...computed.outputs.wgsl },
+          aria: { ...computed.outputs.aria },
+        },
+      };
+      collected.push({ composite, posed: posedFrame });
     }
     return collected;
   } finally {
     // The compositor's one disposable resource is its reactive `changes` kernel;
     // dispose closes it synchronously (its finalizer is sync) once the cast ends.
-    void lifetime.dispose();
+    // `exportVideo` remains deliberately synchronous, so observe the Promise's
+    // error channel explicitly instead of creating a fire-and-forget rejection.
+    const disposal = compositor.dispose();
+    void disposal.catch((cause: unknown) => {
+      Diagnostics.error({
+        source: 'liteship/stage.dual-export',
+        code: 'owned-resource-dispose-failed',
+        message: 'Stage compositor disposal failed after producing video frames.',
+        cause,
+      });
+    });
   }
 }
 
@@ -375,21 +400,11 @@ function videoFrameDigest(frames: readonly VideoFrame[], encodedBytes?: Addresse
  * Cast the graph's Pose/Projection-derived state to a deterministic video,
  * content-addressing the produced per-frame `CompositeState` snapshots (NOT the
  * encoded bytes). For the REAL byte-encode use {@link exportVideoEncoded} with
- * an injected {@link FrameEncoder} (headless: the ffmpeg adapter in
- * `./ffmpeg-encoder`; browser: WebCodecs `captureVideo`). This frame-level cast
+ * an injected {@link FrameEncoder} (the shipped implementation is the ffmpeg
+ * adapter in `./ffmpeg-encoder`). This frame-level cast
  * stays sync + codec-free so the dual-export proof never depends on a codec.
  */
-export function exportVideo(
-  graph: DocumentGraph,
-  // The codec byte-encode seam: in a browser/worker this is the real
-  // `captureVideo` (WebCodecs over an OffscreenCanvas). Left undefined here
-  // because OffscreenCanvas/WebCodecs are absent in a headless test env; the
-  // artifact digest content-addresses the produced frames regardless, so the
-  // proof does not depend on the codec running. Typed against the real
-  // `captureVideo` so a caller can wire it without a shape mismatch.
-  encode?: typeof captureVideo,
-): ExportNode {
-  void encode;
+export function exportVideo(graph: DocumentGraph): ExportNode {
   const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
   const frames = produceVideoFrames(graph);
   const artifactDigest = videoFrameDigest(frames);
@@ -414,12 +429,15 @@ export interface EncodedVideoExport {
   readonly encoded: EncodedVideo;
   /** Content address of the encoded container bytes (the mp4 byte stream). */
   readonly bytesDigest: AddressedDigest;
+  /** Genesis receipt binding the source graph, rendered frames, and encoded bytes. */
+  readonly receipt: ReceiptEnvelope;
 }
 
 /**
  * Cast the graph to a video AND run a REAL byte-encode through the injected
  * {@link FrameEncoder}. Produces the same frame stream as {@link exportVideo},
- * hands it to the encoder (ffmpeg headless, or WebCodecs in a browser wrapper),
+ * hands it to the encoder (ffmpeg headless, or another host implementation of
+ * this exact CompositeState encoder contract),
  * and folds the encoded bytes' content address into the export node's
  * `artifactDigest`. Stage's core imports no codec — `encode` is injected.
  *
@@ -431,15 +449,18 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
   const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
   const frames = produceVideoFrames(graph);
 
-  const encoded = await encode(
-    frames.map((frame) => frame.composite),
-    {
-      fps: VIDEO_CONFIG.fps,
-      width: VIDEO_CONFIG.width,
-      height: VIDEO_CONFIG.height,
-      durationMs: VIDEO_CONFIG.durationMs,
-    },
-  );
+  // The injected process receives an immutable snapshot, not Stage's mutable
+  // working records. Otherwise a hostile/buggy encoder could rewrite a pose
+  // after rendering and make the artifact digest describe encoder mutation
+  // instead of the authored graph that actually produced the frame.
+  const encoderFrames = snapshotDefinitionValue(frames.map((frame) => frame.composite));
+  const encodeConfig = Object.freeze({
+    fps: VIDEO_CONFIG.fps,
+    width: VIDEO_CONFIG.width,
+    height: VIDEO_CONFIG.height,
+    durationMs: VIDEO_CONFIG.durationMs,
+  });
+  const encoded = await encode(encoderFrames, encodeConfig);
 
   // Content-address the REAL encoded bytes, then pin that into the node digest.
   const bytesDigest = AddressedDigestNS.of(encoded.bytes);
@@ -456,7 +477,41 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
     artifactDigest,
   });
 
-  return { node, encoded, bytesDigest };
+  // The frame-only cast has its own proof receipt in `dualExport`. A byte encode
+  // is a distinct externally-observable artifact and therefore needs its own
+  // receipt: returning bytes + a digest without a receipt left the injected
+  // process outside the evidence chain. This payload binds the exact source,
+  // frame-derived export node, codec metadata, and encoded bytes under the same
+  // receipt kernel used by every other Stage carrier.
+  const receiptPayload = await TypedRef.create('liteship/stage.export.video.encoded', {
+    graphId: graph.id,
+    sourceDigest: graph.digest.display_id,
+    sourceIntegrity: graph.digest.integrity_digest,
+    sourceRefs,
+    exportId: node.id,
+    artifactDigest: node.artifactDigest.display_id,
+    artifactIntegrity: node.artifactDigest.integrity_digest,
+    bytesDigest: bytesDigest.display_id,
+    bytesIntegrity: bytesDigest.integrity_digest,
+    codec: encoded.codec,
+    container: encoded.container,
+    frameCount: frames.length,
+    config: {
+      fps: VIDEO_CONFIG.fps,
+      width: VIDEO_CONFIG.width,
+      height: VIDEO_CONFIG.height,
+      durationMs: VIDEO_CONFIG.durationMs,
+    },
+  });
+  const receipt = await Receipt.createEnvelope(
+    'stage.export.video.encoded',
+    { type: 'artifact', id: node.id },
+    receiptPayload,
+    HLC.increment(HLC.create('liteship-stage-encoded'), 1),
+    Receipt.GENESIS,
+  );
+
+  return { node, encoded, bytesDigest, receipt };
 }
 
 // ---------------------------------------------------------------------------
@@ -489,9 +544,9 @@ async function childReceipt(
   graph: DocumentGraph,
 ): Promise<ReceiptEnvelope> {
   // TypedRef.create / Receipt.createEnvelope are now Promise-first (throwing
-  // tagged @czap/error), so this is a plain async function — the Effect.gen +
+  // tagged @liteship/error), so this is a plain async function — the Effect.gen +
   // yield* harness is gone, the receipt kernel identical.
-  const payload: TypedRef.Shape = await TypedRef.create(`czap/stage.export.${carrier}`, {
+  const payload: TypedRef = await TypedRef.create(`liteship/stage.export.${carrier}`, {
     carrier,
     exportId: exportNode.id,
     artifactDigest: exportNode.artifactDigest.display_id,
@@ -503,7 +558,7 @@ async function childReceipt(
     `stage.export.${carrier}`,
     { type: 'artifact', id: exportNode.id },
     payload,
-    HLC.increment(HLC.create('czap-stage'), 1),
+    HLC.increment(HLC.create('liteship-stage'), 1),
     Receipt.GENESIS,
   );
 }
@@ -541,7 +596,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
   const astroReceipt = await childReceipt('astro-page', astro, graph);
   const videoReceipt = await childReceipt('video', video, graph);
 
-  const mergePayload: TypedRef.Shape = await TypedRef.create('czap/stage.dual-export.merge', {
+  const mergePayload: TypedRef = await TypedRef.create('liteship/stage.dual-export.merge', {
     sharedSourceDigest: sharedSourceDigest.display_id,
     sharedSourceIntegrity: sharedSourceDigest.integrity_digest,
     graphId: graph.id,
@@ -553,7 +608,7 @@ export async function dualExport(graph: DocumentGraph): Promise<DualExportResult
     'stage.dual-export',
     { type: 'artifact', id: graph.id },
     mergePayload,
-    HLC.increment(HLC.create('czap-stage'), 2),
+    HLC.increment(HLC.create('liteship-stage'), 2),
     [astroReceipt.hash, videoReceipt.hash],
   );
 
@@ -578,6 +633,8 @@ export interface DualExportNodeResult extends DualExportResult {
   readonly encoded: EncodedVideo;
   /** Content address of the encoded container bytes (the mp4 byte stream). */
   readonly bytesDigest: AddressedDigest;
+  /** Receipt for the real encoded-byte artifact (separate from the frame proof). */
+  readonly encodedReceipt: ReceiptEnvelope;
 }
 
 /**
@@ -595,13 +652,14 @@ export interface DualExportNodeResult extends DualExportResult {
  * headless, identical to the browser path.
  *
  * Stage's core imports no codec: `encode` is injected. In node, wire
- * `ffmpegFrameEncoder()` from `@czap/stage/ffmpeg` (env-gate with
- * `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
+ * `ffmpegFrameEncoder()` from `@liteship/stage/ffmpeg` (env-gate with
+ * `ffmpegEncodeAvailable()` first); another host may provide the same explicit
+ * encoder contract.
  *
  * @example
  * ```ts
- * import { dualExportNode } from '@czap/stage';
- * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+ * import { dualExportNode } from '@liteship/stage';
+ * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@liteship/stage/ffmpeg';
  *
  * if (ffmpegEncodeAvailable()) {
  *   const r = await dualExportNode(graph, ffmpegFrameEncoder());
@@ -615,6 +673,6 @@ export async function dualExportNode(graph: DocumentGraph, encode: FrameEncoder)
   // Untouched by the byte-encode, so the invariant is byte-for-byte `dualExport`.
   const proof = await dualExport(graph);
   // The real injected byte-encode over the SAME deterministic frame stream.
-  const { encoded, bytesDigest } = await exportVideoEncoded(graph, encode);
-  return { ...proof, encoded, bytesDigest };
+  const { encoded, bytesDigest, receipt: encodedReceipt } = await exportVideoEncoded(graph, encode);
+  return { ...proof, encoded, bytesDigest, encodedReceipt };
 }

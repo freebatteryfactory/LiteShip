@@ -4,7 +4,7 @@ import fg from 'fast-glob';
 import libCoverage from 'istanbul-lib-coverage';
 import libReport from 'istanbul-lib-report';
 import reports from 'istanbul-reports';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
 import { buildCoverageFacts, buildCoverageMetaArtifact } from './artifact-integrity.js';
 import { ensureArtifactContext } from './artifact-context.js';
 import { writeTextFile } from './audit/shared.js';
@@ -24,7 +24,7 @@ type MetricSummary = {
 
 type FileSummary = Record<MetricKey, MetricSummary>;
 
-const coverageRoot = resolve(repoRoot, 'coverage');
+const coverageRoot = process.env['LITESHIP_COVERAGE_ROOT'] ?? resolve(repoRoot, 'coverage');
 const nodeCoveragePath = resolve(coverageRoot, 'node', 'coverage-final.json');
 const browserCoveragePath = resolve(coverageRoot, 'browser', 'coverage-final.json');
 const mergedCoveragePath = resolve(coverageRoot, 'coverage-final.json');
@@ -61,7 +61,7 @@ const PACKAGE_THRESHOLD_OVERRIDES: Record<string, Partial<Record<MetricKey, numb
 };
 
 const FILE_THRESHOLDS: Record<string, Partial<Record<MetricKey, number>>> = {
-  'packages/core/src/composable.ts': {
+  'packages/core/src/authoring/composable.ts': {
     lines: 95,
     statements: 95,
     functions: 95,
@@ -138,7 +138,7 @@ if (!existsSync(nodeCoveragePath)) {
 // remove their node entries before the merge so the browser entry survives.
 // Matched by repo-relative suffix against the absolute coverage keys.
 const BROWSER_AUTHORITATIVE_FILES: readonly string[] = [
-  // @czap/astro browser-boot surfaces — driven by tests/browser/astro-*.test.ts,
+  // @liteship/astro browser-boot surfaces — driven by tests/browser/astro-*.test.ts,
   // never executable in the node (jsdom) pass.
   'packages/astro/src/runtime/directive-boot.ts',
   'packages/astro/src/runtime/inspector.ts',
@@ -266,9 +266,7 @@ for (const file of coverageMap.files()) {
     for (const key of Object.keys(fileThresholds) as MetricKey[]) {
       const threshold = fileThresholds[key];
       if (threshold !== undefined && fileSummary[key].pct < threshold) {
-        errors.push(
-          `File ${relativePath} ${key} coverage ${fileSummary[key].pct.toFixed(2)}% is below ${threshold}%.`,
-        );
+        errors.push(`File ${relativePath} ${key} coverage ${fileSummary[key].pct.toFixed(2)}% is below ${threshold}%.`);
       }
     }
   }
@@ -276,9 +274,7 @@ for (const file of coverageMap.files()) {
 
 for (const key of Object.keys(TOTAL_THRESHOLDS) as MetricKey[]) {
   if (totalSummary[key].pct < TOTAL_THRESHOLDS[key]) {
-    errors.push(
-      `Merged ${key} coverage ${totalSummary[key].pct.toFixed(2)}% is below ${TOTAL_THRESHOLDS[key]}%.`,
-    );
+    errors.push(`Merged ${key} coverage ${totalSummary[key].pct.toFixed(2)}% is below ${TOTAL_THRESHOLDS[key]}%.`);
   }
 }
 
@@ -286,9 +282,7 @@ for (const [packageName, summary] of [...packageSummaries.entries()].sort(([a], 
   for (const key of Object.keys(PACKAGE_THRESHOLDS) as MetricKey[]) {
     const threshold = PACKAGE_THRESHOLD_OVERRIDES[packageName]?.[key] ?? PACKAGE_THRESHOLDS[key];
     if (summary[key].pct < threshold) {
-      errors.push(
-        `Package ${packageName} ${key} coverage ${summary[key].pct.toFixed(2)}% is below ${threshold}%.`,
-      );
+      errors.push(`Package ${packageName} ${key} coverage ${summary[key].pct.toFixed(2)}% is below ${threshold}%.`);
     }
   }
 }

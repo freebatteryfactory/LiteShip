@@ -6,9 +6,9 @@
 
 # Variable: ThresholdValue
 
-> **ThresholdValue**: (`value`) => `ThresholdValue`
+> **ThresholdValue**: (`value`) => [`ThresholdValue`](../../../spine/type-aliases/ThresholdValue.md)
 
-Defined in: [core/src/brands.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L33)
+Defined in: [core/src/schema/brands.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L33)
 
 Wrap a plain number as a ThresholdValue.
 
@@ -25,7 +25,7 @@ is the real generic invariant.
 
 ## Returns
 
-`ThresholdValue`
+[`ThresholdValue`](../../../spine/type-aliases/ThresholdValue.md)
 
 ## Throws
 

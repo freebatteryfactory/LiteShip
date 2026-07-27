@@ -2,19 +2,20 @@
  * DOM Diff Algorithm
  *
  * Idiomorph-inspired DOM diffing that:
- * - Matches nodes by semantic ID (data-czap-id)
+ * - Matches nodes by semantic ID (data-liteship-id)
  * - Minimizes DOM mutations
  * - Preserves element identity where possible
  * - Captures and restores physical state
  * - Validates preserve constraints and emits rejections
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { MorphConfig, MorphHints, MorphResult } from '../types.js';
-import { dispatchCzapEvent } from '../wire/dispatch.js';
+import { dispatchLiteshipEvent } from '../wire/dispatch.js';
 import * as SemanticIdModule from './semantic-id.js';
 import * as HintsModule from './hints.js';
 import * as Physical from '../physical/capture.js';
+import type { PhysicalStateTracker } from '../physical/capture.js';
 import * as PhysicalRestore from '../physical/restore.js';
 // Import pure functions from diff-pure.ts (Effect-free)
 import {
@@ -50,21 +51,24 @@ export const morph = (oldNode: Element, newHTML: string, config?: Partial<MorphC
  * Morph with physical state capture and restore — the default entry point.
  *
  * Captures focus/scroll/selection before the morph (gated on config flags),
- * validates preserve hints afterwards (dispatching `czap:morph-rejected` and
- * `czap:request-snapshot` on violation), and restores physical state. When no
- * flags or hints apply it degrades to a plain {@link morph}.
+ * validates preserve hints afterwards (dispatching `liteship:morph-rejected` and
+ * `liteship:request-snapshot` on violation), and restores physical state. A host
+ * may supply an owned physical-state tracker to preserve active IME composition
+ * without installing ambient import-time listeners. When no flags or hints apply
+ * it degrades to a plain {@link morph}.
  */
 export const morphWithState = (
   oldNode: Element,
   newHTML: string,
   config?: Partial<MorphConfig>,
   hints?: MorphHints,
+  physicalStateTracker?: Pick<PhysicalStateTracker, 'capture'>,
 ): MorphResult => {
   const finalConfig = { ...defaultConfig, ...config };
 
   const state =
     finalConfig.preserveFocus || finalConfig.preserveScroll || finalConfig.preserveSelection
-      ? Physical.capture(oldNode)
+      ? (physicalStateTracker?.capture(oldNode) ?? Physical.capture(oldNode))
       : null;
 
   const preserveIds = hints?.preserve ?? hints?.preserveIds ?? [];
@@ -72,37 +76,54 @@ export const morphWithState = (
     const preserveIndex = SemanticIdModule.buildIndex(oldNode);
     for (const id of preserveIds) {
       if (!preserveIndex.has(id)) {
-        Diagnostics.warn({
-          source: 'czap/web.morph',
-          code: 'preserve-id-missing',
-          message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-czap-id attributes — check for a typo, or add data-czap-id="${id}" to the element you want preserved.`,
+        Diagnostics.warnRegistered({
+          source: 'liteship/web.morph',
+          code: 'web/morph/preserve-id-missing',
+          message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-liteship-id attributes — check for a typo, or add data-liteship-id="${id}" to the element you want preserved.`,
         });
       }
     }
   }
 
-  morph(oldNode, newHTML, finalConfig, hints);
+  const remapIds = hints?.remap;
+  const incomingIdMap = new Map(hints?.idMap ?? []);
+  if (remapIds) {
+    // `remap` is authored old -> new, while the pure diff kernel's `idMap`
+    // translates incoming -> current before matching. Reverse only for the
+    // matching projection, then apply the authored direction to the retained
+    // live nodes after the morph.
+    for (const [oldId, newId] of Object.entries(remapIds)) incomingIdMap.set(newId, oldId);
+  }
+  const morphHints = incomingIdMap.size === 0 ? hints : { ...hints, idMap: incomingIdMap };
+
+  morph(oldNode, newHTML, finalConfig, morphHints);
 
   const rejection = HintsModule.rejectIfMissing(hints ?? {}, oldNode);
   if (rejection) {
-    dispatchCzapEvent(oldNode, 'czap:morph-rejected', {
+    dispatchLiteshipEvent(oldNode, 'liteship:morph-rejected', {
       ...rejection,
-      recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
+      recovery: 'A liteship:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
     });
 
-    dispatchCzapEvent(oldNode, 'czap:request-snapshot', { reason: rejection.reason });
+    dispatchLiteshipEvent(oldNode, 'liteship:request-snapshot', { reason: rejection.reason });
 
     return { type: 'rejected' as const, rejection };
   }
 
-  const remapIds = hints?.remap ?? (hints?.idMap ? Object.fromEntries(hints.idMap) : undefined);
   if (remapIds) {
     SemanticIdModule.applyIdMap(oldNode, remapIds);
   }
 
   if (state) {
-    const remappedState = remapIds ? HintsModule.applyRemap(state, remapIds) : state;
-    PhysicalRestore.restore(remappedState, oldNode, remapIds);
+    // `idMap` has historically also served as an old -> new physical-state
+    // restore hint. Keep that public contract while the pure morph kernel uses
+    // the same map only for its incoming-node normalization. Explicit `remap`
+    // wins when both spell a mapping for the same retained identity.
+    const restoreRemap = {
+      ...Object.fromEntries(hints?.idMap ?? []),
+      ...remapIds,
+    };
+    PhysicalRestore.restore(state, oldNode, Object.keys(restoreRemap).length === 0 ? undefined : restoreRemap);
   }
 
   return { type: 'success' as const };

@@ -31,7 +31,7 @@ import {
   normalizeSiteLine,
   SANCTIONED_SKIPS,
   type Finding,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 /** Findings for one gate over an in-memory `{ path: body }` world. */
 function run(gate: { run: (c: ReturnType<typeof memoryContext>) => readonly Finding[] }, files: Record<string, string>): readonly Finding[] {
@@ -126,7 +126,7 @@ describe('no-skipped-test — scope widened to the tests/ tree, with teeth', () 
 
   it('(c) a SANCTIONED capability-gate skip AT ITS EXACT SITE (in the allowlist) PASSES', () => {
     // tests/smoke/intro-render.test.ts is enumerated (ffmpeg-absent) at this exact line.
-    const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});";
+    const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});";
     expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', SITE)?.capability).toBe('ffmpeg-absent');
     const findings = run(noSkippedTestGate, {
       'tests/smoke/intro-render.test.ts': `${SITE}\n`,
@@ -225,7 +225,7 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
     expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
     // The real ffmpeg-named site at the same file IS sanctioned (the floor passes a genuine gate).
     expect(
-      sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});")?.capability,
+      sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});")?.capability,
     ).toBe('ffmpeg-absent');
   });
 });
@@ -237,7 +237,7 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
 // ───────────────────────────────────────────────────────────────────────────
 describe('per-site sanctioning — a sanctioned file is NOT a blind spot (FORTIFY A)', () => {
   const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
-  const SANCTIONED_SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});";
+  const SANCTIONED_SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});";
 
   it('the EXACT sanctioned site passes (baseline)', () => {
     expect(run(noSkippedTestGate, { [SANCTIONED_FILE]: `${SANCTIONED_SITE}\n` })).toEqual([]);
@@ -273,7 +273,7 @@ describe('per-site sanctioning — a sanctioned file is NOT a blind spot (FORTIF
 
   it('a re-WORDED sanctioned line is NO LONGER sanctioned (re-opens the question — the strengthening posture)', () => {
     const findings = run(noSkippedTestGate, {
-      [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg render probe failed', () => {});\n", // dropped `(see czap doctor)`
+      [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg render probe failed', () => {});\n", // dropped `(see liteship doctor)`
     });
     expect(findings.length).toBe(1);
   });

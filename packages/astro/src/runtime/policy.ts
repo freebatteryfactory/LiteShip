@@ -1,11 +1,11 @@
 /**
- * Runtime security-policy data model: how `@czap/astro`'s client
+ * Runtime security-policy data model: how `@liteship/astro`'s client
  * directives decide which endpoints they may fetch and how to treat
  * HTML returned from those endpoints.
  *
  * @module
  */
-import type { HtmlPolicy, RuntimeEndpointKind, RuntimeEndpointPolicy } from '@czap/web';
+import type { HtmlPolicy, RuntimeEndpointKind, RuntimeEndpointPolicy } from '@liteship/web';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 /**
@@ -168,7 +168,7 @@ let _windowGlobalPublished = false;
  * Normalise `policy` and install it as the active runtime configuration.
  *
  * The first call in a given realm publishes the value to
- * `window.__CZAP_RUNTIME_POLICY__` with `configurable: false` and
+ * `window.__LITESHIP_RUNTIME_POLICY__` with `configurable: false` and
  * `writable: false`, so an attacker cannot redefine the global via
  * `Object.defineProperty` to install a permissive policy. Subsequent
  * calls (HMR, test re-initialisation) update the module-private store
@@ -184,7 +184,7 @@ export function configureRuntimePolicy(policy?: RuntimeSecurityPolicy): Normaliz
   _currentPolicy = normalized;
 
   if (!_windowGlobalPublished) {
-    writeRuntimeGlobal('__CZAP_RUNTIME_POLICY__', normalized, { configurable: false });
+    writeRuntimeGlobal('__LITESHIP_RUNTIME_POLICY__', normalized, { configurable: false });
     _windowGlobalPublished = true;
   }
 
@@ -218,7 +218,7 @@ export interface RuntimePolicyReadout {
  */
 export function readRuntimePolicyWithSource(): RuntimePolicyReadout {
   if (_currentPolicy) return { policy: _currentPolicy, source: 'store' };
-  const broadcast = readRuntimeGlobal('__CZAP_RUNTIME_POLICY__', isNormalizedRuntimeSecurityPolicy);
+  const broadcast = readRuntimeGlobal('__LITESHIP_RUNTIME_POLICY__', isNormalizedRuntimeSecurityPolicy);
   if (broadcast) return { policy: broadcast, source: 'window' };
   return { policy: normalizeRuntimeSecurityPolicy(), source: 'default' };
 }

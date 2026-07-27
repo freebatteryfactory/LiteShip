@@ -16,11 +16,11 @@ Namespace bundle for the morph-opaque marker (house pattern, like `SemanticId`).
 
 ### ATTR
 
-> **ATTR**: `"data-czap-morph-opaque"`
+> **ATTR**: `"data-liteship-morph-opaque"`
 
 Morph-opaque subtrees — structural isolation for self-owned islands.
 
-An element marked `data-czap-morph-opaque` is OWNED BY THE CLIENT (CodeMirror, a canvas,
+An element marked `data-liteship-morph-opaque` is OWNED BY THE CLIENT (CodeMirror, a canvas,
 a chart lib): the morph engine never syncs its attributes, never descends into its
 children, and never removes it — even when the server HTML omits it entirely. The
 attribute is presence-based (any value). Sanitization is NOT skipped: new opaque content

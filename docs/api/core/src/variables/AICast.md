@@ -8,7 +8,7 @@
 
 > `const` **AICast**: `object`
 
-Defined in: [core/src/ai-cast.ts:1007](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L1007)
+Defined in: [core/src/authoring/ai-cast.ts:1007](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ai-cast.ts#L1007)
 
 The AI cast namespace — the framework PRIMITIVE that casts a [DocumentGraph](../interfaces/DocumentGraph.md)
 OUT to a model-facing [AIContext](../interfaces/AIContext.md), validates the patch / UI tree the model
@@ -98,7 +98,7 @@ discipline.
 
 ##### catalog
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 #### Returns
 
@@ -121,7 +121,7 @@ the graph it was shown.
 
 ##### base
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### Returns
 
@@ -155,26 +155,26 @@ summary ⇒ same content address.
 
 ### validateGeneratedUIProposal
 
-> **validateGeneratedUIProposal**: (`node`, `catalog`, `validate`) => [`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)\>
+> **validateGeneratedUIProposal**: (`node`, `catalog`, `validate`) => [`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)\>
 
-Validate a model-proposed [GeneratedUINode](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts) against a host catalog using
+Validate a model-proposed [GeneratedUINode](../../../spine/interfaces/GeneratedUINode.md) against a host catalog using
 the host's genui validator, then MINT a [ValidatedProposal](../interfaces/ValidatedProposal.md). The genui
 instance of the SAME envelope discipline — same gate, same minting, same
 unforgeable token — so a UI tree cannot reach a host renderer un-validated any
 more than a GraphPatch can reach a host mutator un-validated.
 
 The validator is injected (not imported) to keep the cast core free of the
-genui renderer dependency; pass `validateGeneratedUITree` from `@czap/genui`.
+genui renderer dependency; pass `validateGeneratedUITree` from `@liteship/genui`.
 
 #### Parameters
 
 ##### node
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
 ##### catalog
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 ##### validate
 
@@ -182,7 +182,7 @@ genui renderer dependency; pass `validateGeneratedUITree` from `@czap/genui`.
 
 #### Returns
 
-[`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)\>
+[`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)\>
 
 ### validateGraphPatchProposal
 
@@ -215,7 +215,7 @@ never become a `ValidatedProposal`.
 ## Example
 
 ```ts
-import { AICast, GraphPatch } from '@czap/core';
+import { AICast, GraphPatch } from '@liteship/core';
 
 const ctx = AICast.castContext(graph, { tokenBudget: 512 }); // cast OUT
 // ... a producer feeds ctx.systemPrompt + ctx.proposalSchemas to a model,

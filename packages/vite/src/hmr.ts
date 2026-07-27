@@ -1,123 +1,163 @@
 /**
- * HMR handler for `czap:update` messages.
+ * Browser-side application of canonical LiteShip boundary HMR payloads.
  *
- * Performs surgical DOM updates when `@quantize` CSS or shader
- * uniforms change during development, avoiding full page reloads.
+ * Targets are selected by the content address inside the JSON
+ * `data-liteship-boundary` contract. A boundary export name is diagnostic only;
+ * it is never interpolated into a selector or treated as runtime identity.
  *
  * @module
  */
 
-import { dispatchCzapEvent } from '@czap/web';
+import type { ContentAddress } from '@liteship/core';
+import type { BoundaryManifestEntry, CompiledOutputs, TierKey } from '@liteship/edge';
+import { dispatchLiteshipEvent } from '@liteship/web';
 
-declare global {
-  interface HTMLCanvasElement {
-    /**
-     * czap runtime-attached WebGL program for HMR uniform updates.
-     * Set by the shader directive when a program is linked.
-     */
-    __czapProgram?: WebGLProgram;
-  }
+/** JSON-safe boundary identity emitted by Core and consumed by Astro. */
+export interface HMRBoundaryIdentity {
+  readonly id: ContentAddress;
+  readonly input: string;
+  readonly thresholds: readonly number[];
+  readonly states: readonly [string, ...string[]];
+  readonly hysteresis?: number;
+  readonly spec?: {
+    readonly timeRange?: { readonly from?: number; readonly until?: number };
+    readonly experimentId?: string;
+  };
 }
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 /**
- * Shape of the HMR payload the czap Vite plugin ships over the Vite
- * dev-server WebSocket. Handled by {@link handleHMR} on the client.
+ * Canonical Vite HMR payload. `previousBoundaryId` finds the currently rendered
+ * hosts; `boundary` and `manifest` are the newly compiled definition/projection.
  */
 export interface HMRPayload {
-  /** Message discriminator. Always `'czap:update'`. */
-  readonly type: 'czap:update';
-  /** Boundary id whose compiled output changed. */
-  readonly boundary: string;
-  /** New compiled CSS (omitted when only uniforms changed). */
-  readonly css?: string;
-  /** New shader-uniform values (omitted when only CSS changed). */
-  readonly uniforms?: Record<string, number>;
+  readonly type: 'liteship:update';
+  readonly boundaryName: string;
+  readonly previousBoundaryId: ContentAddress;
+  readonly boundary: HMRBoundaryIdentity;
+  readonly manifest: Pick<BoundaryManifestEntry, 'id' | 'outputs' | 'outputsByTier'>;
 }
 
-// ---------------------------------------------------------------------------
-// CSS Hot Update
-// ---------------------------------------------------------------------------
-
-/**
- * Find or create a <style> element for a specific boundary's compiled CSS.
- * Uses a data attribute for identification across HMR cycles.
- */
-function getOrCreateStyleElement(boundaryId: string): HTMLStyleElement {
-  const selector = `style[data-czap-boundary="${boundaryId}"]`;
-  const existing = document.querySelector(selector);
-  if (existing instanceof HTMLStyleElement) return existing;
-
-  const el = document.createElement('style');
-  el.setAttribute('data-czap-boundary', boundaryId);
-  document.head.appendChild(el);
-  return el;
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/**
- * Apply CSS updates by replacing the boundary's style element content.
- */
-function applyCSSUpdate(boundary: string, css: string): void {
-  const el = getOrCreateStyleElement(boundary);
-  el.textContent = css;
+function isBoundaryIdentity(value: unknown): value is HMRBoundaryIdentity {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value['id'] === 'string' &&
+    value['id'].startsWith('fnv1a:') &&
+    typeof value['input'] === 'string' &&
+    Array.isArray(value['thresholds']) &&
+    value['thresholds'].length > 0 &&
+    value['thresholds'].every((entry) => typeof entry === 'number' && Number.isFinite(entry)) &&
+    Array.isArray(value['states']) &&
+    value['states'].length > 0 &&
+    value['states'].every((entry) => typeof entry === 'string')
+  );
 }
 
-// ---------------------------------------------------------------------------
-// Shader Uniform Hot Update
-// ---------------------------------------------------------------------------
-
-/**
- * Update shader uniform values on all canvases that have a czap-boundary
- * attribute matching the boundary name.
- *
- * This works by dispatching a custom event that the czap runtime shader
- * system listens for, passing the uniform map for in-place updates.
- */
-function applyUniformUpdate(boundary: string, uniforms: Record<string, number>): void {
-  const boundaryRoots = Array.from(document.querySelectorAll<HTMLElement>(`[data-czap-boundary="${boundary}"]`));
-
-  for (const root of boundaryRoots) {
-    dispatchCzapEvent(root, 'czap:uniform-update', { glsl: uniforms });
+function isCompiledOutput(value: unknown): value is CompiledOutputs {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value['css'] !== 'string' ||
+    typeof value['propertyRegistrations'] !== 'string' ||
+    typeof value['containerQueries'] !== 'string'
+  ) {
+    return false;
   }
+  const glsl = value['glsl'];
+  const wgsl = value['wgsl'];
+  return (
+    (glsl === undefined ||
+      (isRecord(glsl) && typeof glsl['declarations'] === 'string' && isRecord(glsl['uniformValues']))) &&
+    (wgsl === undefined ||
+      (isRecord(wgsl) && typeof wgsl['declarations'] === 'string' && isRecord(wgsl['bindingValues'])))
+  );
+}
 
-  // Direct update: find canvas elements with matching boundary data attribute
-  const canvases = Array.from(document.querySelectorAll<HTMLCanvasElement>(`canvas[data-czap-boundary="${boundary}"]`));
-  for (const canvas of canvases) {
-    const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
-    if (!gl) continue;
+/** Runtime admission for the custom Vite channel. Foreign payloads stay inert. */
+export function isHMRPayload(value: unknown): value is HMRPayload {
+  if (!isRecord(value) || value['type'] !== 'liteship:update') return false;
+  if (typeof value['boundaryName'] !== 'string' || typeof value['previousBoundaryId'] !== 'string') return false;
+  if (!isBoundaryIdentity(value['boundary']) || !isRecord(value['manifest'])) return false;
+  const manifest = value['manifest'];
+  if (
+    manifest['id'] !== value['boundary'].id ||
+    !Array.isArray(manifest['outputs']) ||
+    !manifest['outputs'].every(isCompiledOutput) ||
+    !isRecord(manifest['outputsByTier'])
+  ) {
+    return false;
+  }
+  const outputs = manifest['outputs'] as readonly CompiledOutputs[];
+  return Object.values(manifest['outputsByTier']).every(
+    (index) => typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < outputs.length,
+  );
+}
 
-    // Look up the program stored on the canvas element via a custom property
-    const program = canvas.__czapProgram;
-    if (!program) continue;
+function parseBoundaryAttribute(value: string | null): Readonly<Record<string, unknown>> | null {
+  if (value === null) return null;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return isRecord(parsed) && typeof parsed['id'] === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
 
-    for (const [name, value] of Object.entries(uniforms)) {
-      const location = gl.getUniformLocation(program, name);
-      if (location !== null) {
-        gl.uniform1f(location, value);
-      }
+function selectedOutput(payload: HMRPayload, documentRoot: HTMLElement): CompiledOutputs | undefined {
+  const motion = documentRoot.getAttribute('data-liteship-motion');
+  const design = documentRoot.getAttribute('data-liteship-design');
+  if (motion === null || design === null) return undefined;
+  const key = `${motion}:${design}` as TierKey;
+  const index = payload.manifest.outputsByTier[key];
+  return typeof index === 'number' && Number.isInteger(index) && index >= 0
+    ? payload.manifest.outputs[index]
+    : undefined;
+}
+
+function hmrStyle(documentRef: Document, previousId: string, nextId: string): HTMLStyleElement {
+  const styles = documentRef.querySelectorAll<HTMLStyleElement>('style[data-liteship-hmr-boundary]');
+  let element = [...styles].find((candidate) => {
+    const id = candidate.getAttribute('data-liteship-hmr-boundary');
+    return id === previousId || id === nextId;
+  });
+  if (element === undefined) {
+    element = documentRef.createElement('style');
+    documentRef.head.appendChild(element);
+  }
+  element.setAttribute('data-liteship-hmr-boundary', nextId);
+  return element;
+}
+
+/**
+ * Apply one admitted HMR payload. Returns the number of canonical boundary
+ * hosts updated; zero means malformed/foreign/stale and leaves the DOM intact.
+ */
+export function handleHMR(input: unknown): number {
+  if (typeof document === 'undefined' || !isHMRPayload(input)) return 0;
+  const payload = input;
+  const targets = [...document.querySelectorAll<HTMLElement>('[data-liteship-boundary]')].filter(
+    (element) =>
+      parseBoundaryAttribute(element.getAttribute('data-liteship-boundary'))?.['id'] === payload.previousBoundaryId,
+  );
+  if (targets.length === 0) return 0;
+
+  const output = selectedOutput(payload, document.documentElement);
+  if (payload.manifest.outputs.length > 0 && output === undefined) return 0;
+  if (output !== undefined)
+    hmrStyle(document, payload.previousBoundaryId, payload.boundary.id).textContent = output.css;
+
+  for (const target of targets) {
+    const current = parseBoundaryAttribute(target.getAttribute('data-liteship-boundary'))!;
+    target.setAttribute('data-liteship-boundary', JSON.stringify({ ...current, ...payload.boundary }));
+    if (output?.glsl !== undefined || output?.wgsl !== undefined) {
+      dispatchLiteshipEvent(target, 'liteship:uniform-update', {
+        ...(output.glsl !== undefined ? { glsl: output.glsl.uniformValues } : {}),
+        ...(output.wgsl !== undefined ? { wgsl: output.wgsl.bindingValues } : {}),
+      });
     }
+    dispatchLiteshipEvent(target, 'liteship:reinit');
   }
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Handle a czap:update HMR payload.
- * Dispatches to CSS replacement or shader uniform updates based on payload content.
- */
-export function handleHMR(payload: HMRPayload): void {
-  if (typeof document === 'undefined') return;
-
-  if (payload.css !== undefined) {
-    applyCSSUpdate(payload.boundary, payload.css);
-  }
-
-  if (payload.uniforms !== undefined) {
-    applyUniformUpdate(payload.boundary, payload.uniforms);
-  }
+  return targets.length;
 }

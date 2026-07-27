@@ -1,7 +1,7 @@
 /**
  * Standalone `@token` / `@theme` / `@style` / `@quantize` CSS transform.
  *
- * This is the 4-phase CSS walk lifted out of the Vite plugin's `transform`
+ * This is the staged CSS walk lifted out of the Vite plugin's `transform`
  * hook into a pure function over an explicit {@link TransformCssContext}, so
  * it is testable without the Vite plugin lifecycle: pass a `warn` sink, a
  * {@link PrimitiveResolutionCache}, the project root + dirs, and you exercise
@@ -17,15 +17,19 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
-import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
+import {
+  blankCssCommentsAndStrings,
+  braceDepthDelta,
+  cssPrologueEnd,
+  normalizeCssLineEndings,
+} from '@liteship/compiler/parse';
 import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
 import { parseThemeBlocks, compileThemeBlock } from './theme-transform.js';
 import { parseStyleBlocks, compileStyleBlock } from './style-transform.js';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import type { PrimitiveResolutionCache } from './primitive-resolution-cache.js';
 import type { BoundaryDefinitionMap } from './boundary-manifest.js';
 
@@ -66,9 +70,9 @@ export interface TransformCssContext {
 
 /** Supported authoring grammar per at-rule, quoted verbatim in parse-miss warnings. */
 const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
-  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a Token.make() export',
+  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a defineToken() export',
   '@quantize':
-    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a Boundary.make() export and each <stateName> is one of its states',
+    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a defineBoundary() export and each <stateName> is one of its states',
 };
 
 /**
@@ -136,8 +140,8 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
 // ---------------------------------------------------------------------------
 
 /**
- * Run the 4-phase CSS transform on a single sheet. Returns the rewritten CSS,
- * or `null` when nothing changed (no `@czap` at-rules, or every block was
+ * Run the staged CSS transform on a single sheet. Returns the rewritten CSS,
+ * or `null` when nothing changed (no `@liteship` at-rules, or every block was
  * left untransformed). Emits doctor-style warnings through `ctx.warn`, and
  * re-registers resolved convention files through `ctx.addWatchFile`.
  *
@@ -148,32 +152,62 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
  */
 export async function transformCss(code: string, id: string, ctx: TransformCssContext): Promise<string | null> {
   const { cache, projectRoot, dirs, quantizeContainer } = ctx;
-
-  // Quick check -- skip files with no @czap at-rules
-  const hasToken = code.includes('@token');
-  const hasTheme = code.includes('@theme');
-  const hasStyle = code.includes('@style');
-  const hasQuantize = code.includes('@quantize');
-
-  // Boundary-shadowing diagnostic (#114): must run BEFORE the early return so a
-  // foreign app.css (no @czap at-rules) still gets checked against compiled
-  // boundary output from other sheets in the same project.
-  if (!hasQuantize && cache.lastCompiledBoundaryCss.size > 0) {
-    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
-    const boundaryCss = [...cache.lastCompiledBoundaryCss.values()].join('\n');
-    for (const warning of diagnoseBoundaryShadowing(boundaryCss, normalizeCssLineEndings(code), id)) {
-      ctx.warn(warning);
-    }
-  }
-
-  if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) return null;
-
-  let transformed = normalizeCssLineEndings(code);
+  const normalizedCode = normalizeCssLineEndings(code);
   // Comment- and string-blanked copy of the original source for
   // parse-miss diagnostics: marker positions stay stable across
   // phases, and markers inside comments, string values, or data
   // URLs never trigger warnings.
-  const scanBlanked = blankCssCommentsAndStrings(transformed);
+  const scanBlanked = blankCssCommentsAndStrings(normalizedCode);
+
+  // Quick check -- use the parser's offset-preserving scan image so marker
+  // text in comments, strings, and url() values never changes transform or
+  // diagnostic classification.
+  const hasToken = scanBlanked.includes('@token');
+  const hasTheme = scanBlanked.includes('@theme');
+  const hasStyle = scanBlanked.includes('@style');
+  const hasQuantize = scanBlanked.includes('@quantize');
+  const sourceQuantizeBlocks = hasQuantize ? parseQuantizeBlocks(normalizedCode, id) : [];
+  const foreignCss = blankParsedAtRuleBlocks(
+    normalizedCode,
+    '@quantize',
+    sourceQuantizeBlocks,
+    (block) => block.boundaryName,
+  );
+  const nextBoundaryCss: string[] = [];
+
+  /** Commit shadow evidence only after the transform completes successfully. */
+  const commitShadowEvidence = async (): Promise<void> => {
+    cache.lastCompiledBoundaryCss.delete(id);
+    if (nextBoundaryCss.length > 0) {
+      cache.lastCompiledBoundaryCss.set(id, nextBoundaryCss.join('\n'));
+    }
+    if (foreignCss.trim().length > 0) cache.lastForeignCss.set(id, foreignCss);
+    else cache.lastForeignCss.delete(id);
+
+    const { diagnoseBoundaryShadowing } = await import('./boundary-shadowing.js');
+    const warnings = new Set<string>();
+    const currentForeign = cache.lastForeignCss.get(id);
+    if (currentForeign !== undefined && cache.lastCompiledBoundaryCss.size > 0) {
+      const allBoundaryCss = [...cache.lastCompiledBoundaryCss.values()].join('\n');
+      for (const warning of diagnoseBoundaryShadowing(allBoundaryCss, currentForeign, id)) warnings.add(warning);
+    }
+    const currentBoundary = cache.lastCompiledBoundaryCss.get(id);
+    if (currentBoundary !== undefined) {
+      for (const [foreignId, retainedForeignCss] of cache.lastForeignCss) {
+        for (const warning of diagnoseBoundaryShadowing(currentBoundary, retainedForeignCss, foreignId)) {
+          warnings.add(warning);
+        }
+      }
+    }
+    for (const warning of warnings) ctx.warn(warning);
+  };
+
+  if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) {
+    await commitShadowEvidence();
+    return null;
+  }
+
+  let transformed = normalizedCode;
 
   // ---- Phase 1: @token -> CSS custom properties + @property ----
   if (hasToken) {
@@ -188,7 +222,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of tokenBlocks) {
       const cacheKey = `${block.tokenName}:${id}`;
-      let token: Token.Shape | null | undefined = cache.token.get(cacheKey);
+      let token: Token | null | undefined = cache.token.get(cacheKey);
 
       if (token === undefined) {
         const resolution = await resolvePrimitive('token', block.tokenName, id, projectRoot, dirs?.token);
@@ -218,7 +252,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of themeBlocks) {
       const cacheKey = `${block.themeName}:${id}`;
-      let theme: Theme.Shape | null | undefined = cache.theme.get(cacheKey);
+      let theme: Theme | null | undefined = cache.theme.get(cacheKey);
 
       if (theme === undefined) {
         const resolution = await resolvePrimitive('theme', block.themeName, id, projectRoot, dirs?.theme);
@@ -248,7 +282,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of styleBlocks) {
       const cacheKey = `${block.styleName}:${id}`;
-      let style: Style.Shape | null | undefined = cache.style.get(cacheKey);
+      let style: Style | null | undefined = cache.style.get(cacheKey);
 
       if (style === undefined) {
         const resolution = await resolvePrimitive('style', block.styleName, id, projectRoot, dirs?.style);
@@ -310,12 +344,12 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       if (ctx.boundaryDefinitions && !discovered) {
         throw ValidationError(
           'vite-plugin',
-          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with Boundary.make). ` +
+          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with defineBoundary). ` +
             `Source: ${id}:${block.line}. ` +
-            `Fix: export \`const ${block.boundaryName} = Boundary.make({ ... })\` from a boundary module in this project.`,
+            `Fix: export \`const ${block.boundaryName} = defineBoundary({ ... })\` from a boundary module in this project.`,
         );
       }
-      let boundary: Boundary.Shape | null | undefined = cache.boundary.get(cacheKey);
+      let boundary: Boundary | null | undefined = cache.boundary.get(cacheKey);
 
       if (boundary === undefined) {
         const resolution =
@@ -334,9 +368,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       }
 
       const compiled = compileQuantizeBlock(block, boundary, { viewportContainerNames });
-      // Keyed overwrite — re-transforming this block replaces its own entry
-      // instead of appending forever across HMR edits.
-      cache.lastCompiledBoundaryCss.set(cacheKey, compiled);
+      nextBoundaryCss.push(compiled);
       const blockSpan = findAtRuleBlock(transformed, '@quantize', block.boundaryName);
 
       if (blockSpan) {
@@ -360,6 +392,8 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
     }
   }
 
+  await commitShadowEvidence();
+
   if (transformed === code) return null;
 
   return transformed;
@@ -368,6 +402,27 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Blank every parser-admitted at-rule block while preserving source offsets
+ * and line breaks. Repeated names are consumed one at a time because each
+ * accepted span is blanked before the next lookup.
+ */
+function blankParsedAtRuleBlocks<T>(
+  css: string,
+  marker: string,
+  blocks: readonly T[],
+  nameOf: (block: T) => string,
+): string {
+  let result = css;
+  for (const block of blocks) {
+    const span = findAtRuleBlock(result, marker, nameOf(block));
+    if (!span) continue;
+    const blank = result.slice(span.start, span.end).replace(/[^\n]/g, ' ');
+    result = result.slice(0, span.start) + blank + result.slice(span.end);
+  }
+  return result;
+}
 
 /**
  * Find the full span of an at-rule block in CSS source.

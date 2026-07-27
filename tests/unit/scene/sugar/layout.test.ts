@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Layout, Track } from '@czap/scene';
+import { Layout, Track } from '@liteship/scene';
 
 describe('Layout', () => {
   const tracks = [

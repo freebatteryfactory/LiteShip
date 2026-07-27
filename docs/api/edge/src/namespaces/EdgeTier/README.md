@@ -9,17 +9,17 @@
 Edge tier detection namespace.
 
 Pairs [ClientHints.parseClientHints](../../variables/ClientHints.md#parseclienthints) with the pure tier-mapping
-functions from `@czap/detect` so the edge and the browser produce the
+functions from `@liteship/detect` so the edge and the browser produce the
 same `capTier`/`motionTier`/`designTier` triple for a given device.
 
 ## Example
 
 ```ts
-import { EdgeTier } from '@czap/edge';
+import { EdgeTier } from '@liteship/edge';
 
 const result = EdgeTier.detectTier(request.headers);
 const html = `<html ${EdgeTier.tierDataAttributes(result)}>`;
-// `<html data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
+// `<html data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced">`
 ```
 
 ## Type Aliases

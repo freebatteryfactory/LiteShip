@@ -8,10 +8,10 @@
 
 > **CoverageClass** = `"symbol-evidenced"` \| `"file-proxy-only"` \| `"text-only"` \| `"runtime-evidenced"`
 
-Defined in: [gauntlet/src/repo-ir.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L70)
+Defined in: [gauntlet/src/repo-ir.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L71)
 
 How a fact was evidenced — the provenance-honesty model carried forward from
-`@czap/audit`'s `coverageClassification`, so "0 findings" can never be read as
+`@liteship/audit`'s `coverageClassification`, so "0 findings" can never be read as
 "checked and clean" when it was only ever a weak proxy. This is DATA the
 divergence layer reads (design §2): a same-class disagreement is a real
 contradiction; a cross-class one is a coverage gap + a retire-the-weak-oracle

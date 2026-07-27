@@ -1,5 +1,5 @@
 /**
- * `@czap/web/lite` -- Effect-free entry point.
+ * `@liteship/web/lite` -- Effect-free entry point.
  *
  * Provides pure DOM morph, SSE utilities, and resumption helpers
  * without any Effect runtime dependency. Used by Astro client

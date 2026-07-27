@@ -1,0 +1,17 @@
+[**LiteShip**](../../../README.md)
+
+***
+
+[LiteShip](../../../modules.md) / [mcp-server/src](../README.md) / lspNotificationProducerMethods
+
+# Function: lspNotificationProducerMethods()
+
+> **lspNotificationProducerMethods**(): readonly `string`[]
+
+Defined in: [mcp-server/src/lsp/server.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L169)
+
+Exact outbound methods emitted by the two production notification builders.
+
+## Returns
+
+readonly `string`[]

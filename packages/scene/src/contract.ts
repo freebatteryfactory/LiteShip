@@ -11,15 +11,16 @@
  * @module
  */
 
-import type { Site } from '@czap/core';
+import type { Site } from '@liteship/core';
+import type { RuntimeWritePlan } from '@liteship/core/motion';
 import type {
   TrackId as _TrackId,
   TrackKind as _TrackKind,
   FrameMark as _FrameMark,
   TrackEnvelope,
   EaseTag,
-} from '@czap/_spine';
-import type { BeatBinding } from './capsules/beat-binding.js';
+} from '@liteship/_spine';
+import type { BeatBinding } from './beat-binding-capsule.js';
 
 /** Closed set of track kinds. */
 export type TrackKind = _TrackKind;
@@ -55,6 +56,8 @@ export interface VideoTrack<M extends FrameMark = FrameMark> {
    * Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer', id: 'hero-boundary' } })
    */
   readonly source: unknown;
+  /** Optional executable motion floor sampled per entity over this track's frame range. */
+  readonly motion?: RuntimeWritePlan;
   readonly layer?: number;
   /** Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelope` component VideoSystem reads each tick. */
   readonly envelope?: TrackEnvelope;
@@ -132,7 +135,7 @@ export interface SceneInvariant {
 
 /**
  * Pre-resolved beat marker on a {@link SceneContract}. Aliased to
- * `BeatBinding.Component` from `./capsules/beat-binding.ts` — single
+ * `BeatBinding.Component` from `./beat-binding-capsule.ts` — single
  * source of truth so adding a field (e.g. `pitch`) doesn't require
  * keeping two structurally-identical declarations in sync.
  */

@@ -6,9 +6,9 @@
 
 # Variable: Millis
 
-> **Millis**: (`value`) => `Millis`
+> **Millis**: (`value`) => [`Millis`](../../../spine/type-aliases/Millis.md)
 
-Defined in: [core/src/brands.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L60)
+Defined in: [core/src/schema/brands.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L60)
 
 Wrap a plain number as a Millis.
 
@@ -24,7 +24,7 @@ are allowed (sub-millisecond timing). Use `Millis(0)` for immediate.
 
 ## Returns
 
-`Millis`
+[`Millis`](../../../spine/type-aliases/Millis.md)
 
 ## Throws
 

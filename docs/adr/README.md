@@ -10,7 +10,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 
 | ADR                                                    | Title                                                                       | Status   |
 | ------------------------------------------------------ | --------------------------------------------------------------------------- | -------- |
-| [0001](./0001-namespace-pattern.md)                    | Namespace object pattern + branded types                                    | Accepted |
+| [0001](./0001-namespace-pattern.md)                    | Namespace object pattern + branded types                                    | Superseded by 0046 |
 | [0002](./0002-zero-alloc.md)                           | Zero-allocation hot path discipline                                         | Accepted |
 | [0003](./0003-content-addressing.md)                   | Content addressing via FNV-1a + CBOR                                        | Accepted |
 | [0004](./0004-plan-coordinator.md)                     | Plan IR vs RuntimeCoordinator split                                         | Accepted |
@@ -53,6 +53,11 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0041](./0041-per-property-motion-tracks.md)           | Individual transforms, a generalized `linear()` easing vocabulary, retired mixed-easing diagnostic | Accepted |
 | [0042](./0042-effect-shed.md)                          | Effect shed (LiteShip-native substrate)                                     | Accepted |
 | [0043](./0043-reactive-convergence.md)                 | Reactive convergence + the public constitution                             | Accepted |
+| [0044](./0044-liteship-brand-consolidation.md)         | LiteShip brand consolidation (one brand, `@czap` retired)                  | Accepted |
+| [0045](./0045-source-grammar.md)                       | Source grammar: package boundary, domain directory, and the facade law      | Accepted |
+| [0046](./0046-direct-generic-types.md)                 | Direct generic types: the `.Shape` convention retired                       | Accepted |
+| [0047](./0047-check-registry.md)                       | Data-driven check registry: gauntlet and CI as projections                  | Accepted |
+| [0048](./0048-facade-export-budget.md)                 | The `liteship` curated facade + enforced root export budget                  | Accepted |
 
 ## Template
 

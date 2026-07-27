@@ -2,7 +2,7 @@
  * Unit tests for the create-liteship scaffolder. Everything runs against
  * temp dirs and the real embedded template (packages/create-liteship/
  * templates/default) — no network, no published packages. A full
- * `astro build` e2e of the scaffolded app needs the published @czap/*
+ * `astro build` e2e of the scaffolded app needs the published @liteship/*
  * tarballs and is the post-publish smoke, not a unit concern.
  */
 
@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { hasTag } from '@czap/error';
+import { hasTag } from '@liteship/error';
 import {
   scaffold,
   defaultTemplateDir,
@@ -18,22 +18,25 @@ import {
   run,
   DEFAULT_DIR,
   type RunIo,
+  type ScaffoldError,
 } from '../../../packages/create-liteship/src/index.js';
 // The workspace version is a shared repo truth owned by
 // tests/support/repo-truths.ts (scar S0.4). The scaffold drift guards below read
 // it through the single owner. (Wave 8: the effect catalog-range truth was
 // retired with effect itself — the template no longer ships effect.)
 import { workspaceVersion } from '../../support/repo-truths.js';
+import { authoredLineCount } from '../../support/beginner-surface.js';
+import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 
 const EXPECTED_TREE = [
   '.gitignore',
   'README.md',
   'astro.config.ts',
+  'liteship.config.ts',
   'package.json',
-  'src/boundaries/layout.boundaries.ts',
+  'src/adaptive.ts',
   'src/layouts/Base.astro',
   'src/pages/index.astro',
-  'src/tokens/base.tokens.ts',
   'tsconfig.json',
 ];
 
@@ -74,28 +77,144 @@ describe('create-liteship scaffold', () => {
     expect(manifest.type).toBe('module');
     expect(manifest.scripts['dev']).toBe('astro dev');
     expect(manifest.scripts['build']).toBe('astro build');
-    // Every dependency must be a plain published range — workspace:/file:/link:
+    expect(manifest.scripts['check']).toBe('liteship check --profile quick');
+    // The curated facade (P13): the scaffold depends on `liteship` (one package, one
+    // import path) plus its `astro` host peer — never `@liteship/core` / `@liteship/astro`
+    // directly. Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
-    expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'typescript']),
-    );
+    expect(Object.keys(manifest.dependencies)).toEqual(expect.arrayContaining(['astro', 'liteship', 'typescript']));
+    // The individual scopes must NOT leak back into the scaffold — the whole point of
+    // the facade is that app authors meet ONE package, not the 23-package fleet.
+    expect(Object.keys(manifest.dependencies).some((dep) => dep.startsWith('@liteship/'))).toBe(false);
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).toMatch(/^\^\d+\.\d+\.\d+/);
     }
   });
 
-  it('scaffolds the working first-5-minutes idioms (boundary + satellite + @quantize)', () => {
+  it('scaffolds the paved define -> apply -> inspect route within the authoring budget', () => {
     const result = scaffold(join(workDir, 'idioms'));
+    // One Adaptive owns the definition, compiled plan, attrs, and explanation.
+    const adaptive = readFileSync(join(result.projectDir, 'src/adaptive.ts'), 'utf8');
+    expect(adaptive).toContain("import { defineAdaptive } from 'liteship'");
+    expect(adaptive).toContain('export const layout = defineAdaptive(');
+    const authoredLines = authoredLineCount(adaptive);
+    expect(authoredLines, 'first adaptive definition must stay at or below 20 authored lines').toBeLessThanOrEqual(20);
+
     const index = readFileSync(join(result.projectDir, 'src/pages/index.astro'), 'utf8');
-    expect(index).toContain('satelliteAttrs({ boundary: layout');
-    expect(index).toContain('@quantize layout {');
-    const boundary = readFileSync(join(result.projectDir, 'src/boundaries/layout.boundaries.ts'), 'utf8');
-    expect(boundary).toContain('Boundary.make(');
-    expect(boundary).toContain("import { Boundary } from '@czap/core'");
+    expect(index).toContain('{...layout.attrs()}');
+    expect(index).toContain('const plan = layout.plan()');
+    expect(index).toContain('const preview = layout.explain(940)');
+    expect(index).toContain('set:html={plan.css}');
+    expect(index).not.toContain('@quantize');
+    expect(index).not.toContain('@style');
+    const base = readFileSync(join(result.projectDir, 'src/layouts/Base.astro'), 'utf8');
+    expect(base).not.toContain('container-name');
+    expect(base).not.toContain('container-type');
+    // The astro.config wires the integration from the liteship/astro subpath.
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
-    expect(config).toContain("import { integration } from '@czap/astro'");
-    expect(index).toContain('@czap/genui');
-    expect(readFileSync(join(result.projectDir, 'README.md'), 'utf8')).toContain('@czap/genui');
+    expect(config).toContain("import { integration } from 'liteship/astro'");
+    // The README teaches the author model (define -> apply -> inspect) and the verify hint.
+    const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
+    expect(readme).toContain('define → apply → inspect');
+    expect(readme).toContain('pnpm check');
+    expect(readme).toContain('npm run check');
+    const publishedReadme = readFileSync(join(defaultTemplateDir(), '..', '..', 'README.md'), 'utf8');
+    for (const [owner, text] of [
+      ['scaffolded README', readme],
+      ['published README', publishedReadme],
+    ] as const) {
+      const claims = [...text.matchAll(/\b(\d+)-line Adaptive definition|\b(\d+)-line definition/g)].map((match) =>
+        Number(match[1] ?? match[2]),
+      );
+      expect(claims.length, `${owner} must carry a measured first-feature claim`).toBeGreaterThan(0);
+      expect(claims, `${owner} must derive its claim from src/adaptive.ts`).toEqual(
+        Array.from({ length: claims.length }, () => authoredLines),
+      );
+    }
+  });
+
+  it('scaffolds a complete custom template relative to the declared cwd', () => {
+    const fixture = join(workDir, 'fixtures', 'custom');
+    mkdirSync(fixture, { recursive: true });
+    writeFileSync(join(fixture, 'package.json'), '{"name":"fixture","private":true}\n');
+    writeFileSync(join(fixture, 'gitignore'), 'dist/\n');
+    writeFileSync(join(fixture, 'custom.txt'), 'custom bytes');
+
+    const result = scaffold('apps/custom-app', { cwd: workDir, templateDir: 'fixtures/custom' });
+    expect(result.projectName).toBe('custom-app');
+    expect(result.files).toEqual(['.gitignore', 'custom.txt', 'package.json']);
+    expect(readFileSync(join(result.projectDir, '.gitignore'), 'utf8')).toBe('dist/\n');
+    expect(readFileSync(join(result.projectDir, 'custom.txt'), 'utf8')).toBe('custom bytes');
+  });
+
+  it.each([
+    ['missing template', 'template-missing', 'missing-template'],
+    ['template path is a file', 'template-not-directory', 'template-file'],
+    ['template without package.json', 'template-missing-manifest', 'partial-template'],
+    ['template with malformed package.json', 'template-invalid-manifest', 'malformed-template'],
+  ] as const)('refuses a %s with a typed reason before touching the target', (_label, reason, fixtureName) => {
+    const fixture = join(workDir, fixtureName);
+    if (reason === 'template-not-directory') writeFileSync(fixture, 'not a directory');
+    if (reason === 'template-missing-manifest') {
+      mkdirSync(fixture);
+      writeFileSync(join(fixture, 'only.txt'), 'partial');
+    }
+    if (reason === 'template-invalid-manifest') {
+      mkdirSync(fixture);
+      writeFileSync(join(fixture, 'package.json'), '{ nope');
+    }
+
+    const target = join(workDir, `target-${fixtureName}`);
+    let thrown: unknown;
+    try {
+      scaffold(target, { templateDir: fixture });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as ScaffoldError).reason).toBe(reason);
+    expect((thrown as ScaffoldError).path).toContain(fixtureName);
+    expect(existsSync(target), 'invalid templates must be rejected before destination creation').toBe(false);
+  });
+
+  it('refuses an ambiguous dotfile restoration instead of overwriting either source', () => {
+    const fixture = join(workDir, 'dotfile-conflict');
+    mkdirSync(fixture);
+    writeFileSync(join(fixture, 'package.json'), '{}\n');
+    writeFileSync(join(fixture, 'gitignore'), 'placeholder\n');
+    writeFileSync(join(fixture, '.gitignore'), 'authored\n');
+    const target = join(workDir, 'dotfile-target');
+
+    let thrown: unknown;
+    try {
+      scaffold(target, { templateDir: fixture });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as ScaffoldError).reason).toBe('template-dotfile-conflict');
+    expect(existsSync(target)).toBe(false);
+    expect(readFileSync(join(fixture, 'gitignore'), 'utf8')).toBe('placeholder\n');
+    expect(readFileSync(join(fixture, '.gitignore'), 'utf8')).toBe('authored\n');
+  });
+
+  it('refuses a target nested inside its template before recursive copying begins', () => {
+    const fixture = join(workDir, 'overlap-template');
+    mkdirSync(fixture);
+    writeFileSync(join(fixture, 'package.json'), '{}\n');
+    writeFileSync(join(fixture, 'source.txt'), 'source remains');
+    const target = join(fixture, 'generated-app');
+
+    let thrown: unknown;
+    try {
+      scaffold(target, { templateDir: fixture });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as ScaffoldError).reason).toBe('template-target-overlap');
+    expect(existsSync(target)).toBe(false);
+    expect(readFileSync(join(fixture, 'source.txt'), 'utf8')).toBe('source remains');
   });
 
   it('accepts an existing but empty directory', () => {
@@ -143,21 +262,37 @@ describe('create-liteship scaffold', () => {
     }
   });
 
+  it('admits its reusable package entry to API and TypeDoc ownership', () => {
+    const owner = PACKAGE_CATALOG.find((record) => record.name === 'create-liteship');
+    expect(owner).toMatchObject({
+      runtimeSurface: 'module',
+      apiSurface: true,
+      typedocEntry: 'packages/create-liteship/src/index.ts',
+      publicSubpaths: ['.'],
+      smokeImports: ['create-liteship'],
+    });
+  });
+
   // Drift guard: a scaffolded app must pull the SAME release line the workspace
   // is publishing, not a stale one. `^0.1.5` once survived into a 0.2.0 cut
-  // because nothing pinned the template's @czap/* ranges to the release version
+  // because nothing pinned the template's liteship range to the release version
   // — `npm create liteship@latest` would then hand users a previous-minor app.
   // Pin the LAW (major.minor must match the workspace version), not the exact
-  // patch, so caret-compatible patch releases need no template churn.
-  it('template @czap/* ranges track the workspace release line (no stale-minor drift)', () => {
+  // patch, so caret-compatible patch releases need no template churn. Post-P13 the
+  // template depends on the `liteship` facade (the umbrella tracks the workspace
+  // version like every other publishable package), so the guard covers the bare
+  // `liteship` package plus any `@liteship/*` should one ever return.
+  it('the template liteship range tracks the workspace release line (no stale-minor drift)', () => {
     const rootVersion = workspaceVersion();
     const [rootMajor, rootMinor] = rootVersion.split('.');
     const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
-    const czapDeps = Object.entries(manifest.dependencies).filter(([dep]) => dep.startsWith('@czap/'));
-    expect(czapDeps.length, 'template should depend on at least one @czap/* package').toBeGreaterThan(0);
-    for (const [dep, spec] of czapDeps) {
+    const liteshipDeps = Object.entries(manifest.dependencies).filter(
+      ([dep]) => dep === 'liteship' || dep.startsWith('@liteship/'),
+    );
+    expect(liteshipDeps.length, 'template should depend on the liteship facade').toBeGreaterThan(0);
+    for (const [dep, spec] of liteshipDeps) {
       const match = spec.match(/^\^(\d+)\.(\d+)\.\d+/);
       expect(match, `${dep} spec ${spec} should be a caret range`).not.toBeNull();
       const [, major, minor] = match!;
@@ -167,7 +302,7 @@ describe('create-liteship scaffold', () => {
     }
   });
 
-  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @czap/core's one
+  // A2 gate (Wave 8): the scaffold must NOT ship `effect`. It was @liteship/core's one
   // peer; the shed moved every behavior effect carried to a LiteShip-native owner,
   // so a fresh `npm create liteship` must land with zero effect footprint — no
   // stale peer to install, no prerelease range to resolve.
@@ -213,6 +348,10 @@ describe('create-liteship run (CLI surface)', () => {
     expect(text).toContain('pnpm install');
     expect(text).toContain('pnpm dev');
     expect(text).toContain('cd ');
+    // The post-install verify hint teaches the package-script-owned quick check,
+    // which resolves the facade binary under both npm and pnpm.
+    expect(text).toContain('pnpm check');
+    expect(text).toContain('npm run check');
   });
 
   it('prompts when no dir is given and uses the answer', async () => {

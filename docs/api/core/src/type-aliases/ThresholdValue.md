@@ -6,8 +6,8 @@
 
 # Type Alias: ThresholdValue
 
-> **ThresholdValue** = `_ThresholdValue`
+> **ThresholdValue** = [`ThresholdValue`](../../../spine/type-aliases/ThresholdValue.md)
 
-Defined in: [core/src/brands.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L33)
+Defined in: [core/src/schema/brands.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L33)
 
 Branded threshold number on a boundary. Finite number on the signal's continuous range.

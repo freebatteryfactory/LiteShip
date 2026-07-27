@@ -5,11 +5,11 @@
  * declared duration) warns through Diagnostics instead of failing.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { Track, compileScene, SceneRuntime, SyncSystem, resolveBeatProjectionToSceneBeats } from '@czap/scene';
-import type { SceneContract } from '@czap/scene';
-import { Diagnostics } from '@czap/core';
-import { hasTag } from '@czap/error';
-import type { ValidationError } from '@czap/error';
+import { Track, compileScene, SceneRuntime, SyncSystem, resolveBeatProjectionToSceneBeats } from '@liteship/scene';
+import type { SceneContract } from '@liteship/scene';
+import { Diagnostics } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import type { ValidationError } from '@liteship/error';
 
 afterEach(() => {
   Diagnostics.reset();
@@ -143,16 +143,7 @@ describe('scene runtime/bridge error contract', () => {
     );
   });
 
-  it('SyncSystem warns once when executed without a world', () => {
-    const { sink, events } = Diagnostics.createBufferSink();
-    Diagnostics.setSink(sink);
-
-    SyncSystem(0, 60).execute([], undefined);
-    SyncSystem(1, 60).execute([], undefined);
-
-    const warns = events.filter((e) => e.code === 'worldless-degrade');
-    expect(warns.length).toBe(1); // warnOnce dedupes
-    expect(warns[0]?.message).toContain('no world supplied, so no Beat entities are visible');
-    expect(warns[0]?.message).toContain('pass the world as the second execute argument');
+  it('SyncSystem fails closed when invoked outside its world-minted context', () => {
+    expect(() => SyncSystem(0, 60).execute([], undefined as never)).toThrow(/query/);
   });
 });

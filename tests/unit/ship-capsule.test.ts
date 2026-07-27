@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
+import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@liteship/core';
 import { encode as cborEncode } from 'cborg';
 
 const fakeDigest = (label: string): AddressedDigest => ({
@@ -16,7 +16,7 @@ const fakeDigest = (label: string): AddressedDigest => ({
 const sampleInput = (overrides: Partial<ShipCapsule.Input> = {}): ShipCapsule.Input => ({
   _kind: 'shipCapsule',
   schema_version: 1,
-  package_name: '@czap/_spine',
+  package_name: '@liteship/_spine',
   package_version: '0.1.0',
   source_commit: '0123456789abcdef0123456789abcdef01234567',
   source_dirty: false,

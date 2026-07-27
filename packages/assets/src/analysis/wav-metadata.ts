@@ -16,8 +16,9 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { CapsuleDef } from '@czap/core';
+import { defineCapsule, schema } from '@liteship/core';
+import type { CapsuleDef } from '@liteship/core';
+import { ParseError } from '@liteship/error';
 import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { walkRiff } from '../decoders/riff.js';
 
@@ -50,25 +51,46 @@ export function extractWavMetadata(bytes: ArrayBuffer): WavMetadata {
       const subId = dec.decode(new Uint8Array(view.buffer, view.byteOffset + p, 4));
       const subSize = view.getUint32(p + 4, true);
       const textOffset = p + 8;
-      if (textOffset + subSize > view.byteLength) break; // malformed; bail
+      if (textOffset + subSize > view.byteLength) {
+        throw ParseError('wav-metadata', `${subId} metadata extends beyond its LIST/INFO chunk.`, {
+          code: 'malformed',
+          offset: chunk.offset + 8 + p,
+        });
+      }
       const textBytes = new Uint8Array(view.buffer, view.byteOffset + textOffset, subSize);
       const text = dec.decode(textBytes).replace(/\0+$/, '');
       if (subId === 'INAM') meta.title = text;
       else if (subId === 'IART') meta.artist = text;
       else if (subId === 'IBPM') {
         const n = Number(text);
-        if (Number.isFinite(n) && n > 0) meta.bpm = n;
+        if (!Number.isFinite(n) || n <= 0 || n > 400) {
+          throw ParseError('wav-metadata', `IBPM must be a finite number in (0, 400], got ${JSON.stringify(text)}.`, {
+            code: 'malformed',
+            offset: chunk.offset + 8 + textOffset,
+          });
+        }
+        meta.bpm = n;
       }
       p += 8 + subSize + (subSize % 2);
+    }
+    if (p !== view.byteLength) {
+      throw ParseError(
+        'wav-metadata',
+        `LIST/INFO ends with ${view.byteLength - p} byte(s) of an incomplete subchunk.`,
+        {
+          code: 'malformed',
+          offset: chunk.offset + 8 + p,
+        },
+      );
     }
   }
   return meta;
 }
 
-const WavMetadataSchema = S.struct({
-  title: S.optional(S.string),
-  artist: S.optional(S.string),
-  bpm: S.optional(S.number),
+const WavMetadataSchema = schema.struct({
+  title: schema.optional(schema.string),
+  artist: schema.optional(schema.string),
+  bpm: schema.optional(schema.number),
 });
 
 /**

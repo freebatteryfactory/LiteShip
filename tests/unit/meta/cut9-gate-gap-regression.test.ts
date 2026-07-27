@@ -8,8 +8,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { detectSkipsAST } from '@czap/audit';
-import { sanctionedSkipFor } from '@czap/gauntlet';
+import { detectSkipsAST } from '@liteship/audit';
+import { CHECK_REGISTRY } from '@liteship/command';
+import { sanctionedSkipFor } from '@liteship/gauntlet';
+import { projectRepositoryQuickSteps } from '../../../scripts/lib/local-verification-plan.js';
 import {
   CI_PARALLEL_PREFLIGHT_LABELS,
   CI_PARALLEL_FINAL_LABELS,
@@ -20,9 +22,12 @@ import {
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
 describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
-  test('pre-commit omits check:gates but CI parallel preflight includes it', () => {
-    const preCommit = readFileSync(resolve(REPO, 'scripts/pre-commit.sh'), 'utf8');
-    expect(preCommit).not.toContain('check:gates');
+  test('pre-commit projects the complete blocking quick profile while CI adds release-only gates', () => {
+    const expected = CHECK_REGISTRY.filter(
+      (check) =>
+        check.authority === 'blocking' && check.profiles.includes('quick') && check.contexts.includes('repository'),
+    ).map((check) => check.id);
+    expect(projectRepositoryQuickSteps().map((step) => step.checkId)).toEqual(expected);
     expect(CI_PARALLEL_PREFLIGHT_LABELS).toContain('check:gates');
     expect(CI_PARALLEL_PREFLIGHT_LABELS).toContain('docs:check');
   });
@@ -30,7 +35,9 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
   test('local-safe profile exists and runs capsule:compile before test', () => {
     expect(gauntletPhaseProfiles['local-safe']).toEqual(LOCAL_SAFE_LABELS);
     const labels = LOCAL_SAFE_LABELS;
-    expect(labels.indexOf('capsule:compile')).toBeLessThan(labels.indexOf('test (unit + component + property + integration)'));
+    expect(labels.indexOf('capsule:compile')).toBeLessThan(
+      labels.indexOf('test (unit + component + property + integration)'),
+    );
     expect(labels).not.toContain('docs:check');
     expect(labels).toContain('standards:gate');
     expect(labels).toContain('capability:gate');
@@ -38,13 +45,20 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
     expect(CI_PARALLEL_FINAL_LABELS).toContain('capability:gate');
   });
 
-  test('docs:build uses the monolith typedoc generator (same family as docs:check)', () => {
+  test('docs:build and docs:check route through resource-admitted TypeDoc owners', () => {
     const pkg = JSON.parse(readFileSync(resolve(REPO, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
-    expect(pkg.scripts['docs:build']).toContain('typedoc');
+    const buildOwner = readFileSync(resolve(REPO, 'scripts/docs-build.ts'), 'utf8');
+    const checkOwner = readFileSync(resolve(REPO, 'scripts/docs-check.ts'), 'utf8');
+    expect(pkg.scripts['docs:build']).toContain('scripts/docs-build.ts');
+    expect(pkg.scripts['docs:check']).toContain('scripts/docs-check.ts');
     expect(pkg.scripts['docs:build']).not.toContain('build-api-docs');
     expect(pkg.scripts['docs:build:sharded']).toContain('build-api-docs');
+    for (const owner of [buildOwner, checkOwner]) {
+      expect(owner).toContain('awaitLocalDocsAdmission');
+      expect(owner).toContain("['exec', 'typedoc'");
+    }
   });
 
   test('doctor consumer-app fs test injects EACCES via mock — no unsanctioned skipIf', () => {
@@ -75,7 +89,7 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
   });
 
   test('consumer-app-audit normalizes CRLF and repo paths before sink scan (Windows-smoke law)', () => {
-    const text = readFileSync(resolve(REPO, 'packages/cli/src/lib/consumer-app-audit.ts'), 'utf8');
+    const text = readFileSync(resolve(REPO, 'packages/cli/src/internal/consumer-app-audit.ts'), 'utf8');
     expect(text).toContain('normalizeSourceLines');
     expect(text).toContain('normalizeRepoPath');
   });

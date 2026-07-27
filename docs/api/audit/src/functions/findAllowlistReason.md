@@ -6,21 +6,23 @@
 
 # Function: findAllowlistReason()
 
-> **findAllowlistReason**(`finding`, `resolvePackagePath?`): `string` \| `null`
+> **findAllowlistReason**(`finding`, `allowlist`, `resolvePackagePath?`): `string` \| `null`
 
-Defined in: [audit/src/policy.ts:547](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L547)
+Defined in: [audit/src/policy.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L86)
 
-Match a finding against the allowlist. Entries carrying `package` need
-`resolvePackagePath` to map the finding's repo-relative file to its owning
-package — without a resolver those entries can never match (consumer-mode
-findings live under node_modules paths the repo-relative prefixes can't
-reach, which is exactly the bug package-relative entries fix).
+Match one finding against an explicitly injected allowlist. Package-scoped
+entries require the profile's resolver. Repository-relative entries refuse
+absolute and traversal paths so a suppression cannot escape its profile.
 
 ## Parameters
 
 ### finding
 
 [`AuditFinding`](../interfaces/AuditFinding.md)
+
+### allowlist
+
+readonly [`AuditAllowlistEntry`](../interfaces/AuditAllowlistEntry.md)[]
 
 ### resolvePackagePath?
 

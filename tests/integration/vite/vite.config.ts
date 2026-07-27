@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { plugin } from '@czap/vite';
+import { plugin } from '@liteship/vite';
 
 export default defineConfig({
   root: import.meta.dirname,

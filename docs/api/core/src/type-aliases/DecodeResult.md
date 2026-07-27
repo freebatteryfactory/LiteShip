@@ -8,7 +8,7 @@
 
 > **DecodeResult**\<`A`\> = `Result`\<`A`, readonly [`DecodeIssue`](../interfaces/DecodeIssue.md)[]\>
 
-Defined in: [core/src/schema/decode.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L51)
+Defined in: [core/src/schema/decode.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/decode.ts#L44)
 
 The strict-decode result: an `A`, or the accumulated issue list.
 

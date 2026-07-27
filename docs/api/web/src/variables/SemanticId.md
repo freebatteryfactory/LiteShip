@@ -16,7 +16,7 @@ Consolidated namespace export matching the spine contract.
 
 ### ATTR
 
-> **ATTR**: `"data-czap-id"`
+> **ATTR**: `"data-liteship-id"`
 
 The attribute name for semantic IDs.
 

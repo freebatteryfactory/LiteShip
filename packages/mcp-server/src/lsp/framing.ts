@@ -18,7 +18,7 @@
  */
 
 import { Buffer } from 'node:buffer';
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 
 /** The header that carries the payload byte-length (§baseProtocol). */
 const CONTENT_LENGTH_HEADER = 'content-length';

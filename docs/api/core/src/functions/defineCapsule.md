@@ -8,18 +8,17 @@
 
 > **defineCapsule**\<`K`, `InS`, `OutS`, `R`\>(`decl`): [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, [`Infer`](../type-aliases/Infer.md)\<`InS`\>, [`Infer`](../type-aliases/Infer.md)\<`OutS`\>, `R`\>
 
-Defined in: [core/src/assembly.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L131)
+Defined in: [core/src/authoring/assembly.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/assembly.ts#L183)
 
-Declare a capsule. Validates shape, computes content address,
-registers in the module-level catalog, returns a typed def.
-No runtime behavior beyond registration — behavior comes from
-the harness/compiler walking the catalog.
+Declare a capsule. Validates shape, snapshots retained authored data, and
+computes its content address. This function is pure: importing a capsule
+module never mutates process-global state.
 
 ## Type Parameters
 
 ### K
 
-`K` *extends* [`AssemblyKind`](../type-aliases/AssemblyKind.md)
+`K` *extends* `"pureTransform"` \| `"receiptedMutation"` \| `"stateMachine"` \| `"siteAdapter"` \| `"policyGate"` \| `"cachedProjection"` \| `"sceneComposition"`
 
 ### InS
 

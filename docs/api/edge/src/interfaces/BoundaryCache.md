@@ -21,7 +21,7 @@ Defined in: [edge/src/kv-cache.ts:140](https://github.com/freebatteryfactory/Lit
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
-`Boundary.make` definition referenced by two `@quantize` blocks) —
+`defineBoundary` definition referenced by two `@quantize` blocks) —
 without it, the first name's compile result would serve every name.
 `themeFp` likewise segregates outputs compiled under different resolved
 themes (a per-request theme is a real input to the cached CSS).
@@ -30,11 +30,11 @@ themes (a per-request theme is a real input to the cached CSS).
 
 ##### boundaryId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ##### tierResult
 
-[`EdgeTierResult`](EdgeTierResult.md)
+`Pick`\<[`EdgeTierResult`](EdgeTierResult.md), `"motionTier"` \| `"designTier"`\>
 
 ##### qualifier?
 
@@ -65,7 +65,7 @@ it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
 
 ##### boundaryId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### Returns
 
@@ -108,11 +108,11 @@ Defined in: [edge/src/kv-cache.ts:147](https://github.com/freebatteryfactory/Lit
 
 ##### boundaryId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ##### tierResult
 
-[`EdgeTierResult`](EdgeTierResult.md)
+`Pick`\<[`EdgeTierResult`](EdgeTierResult.md), `"motionTier"` \| `"designTier"`\>
 
 ##### outputs
 

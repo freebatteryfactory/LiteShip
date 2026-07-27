@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
 
 describe('generateReceiptedMutation', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   // A constructible base: under the mandatory-`mutate` rule a receiptedMutation
   // must expose a pure `mutate` core OR a typed `effect-outcome` exemption, so
   // `base` carries a trivial pure `mutate` to satisfy `defineCapsule`. The
@@ -14,8 +11,8 @@ describe('generateReceiptedMutation', () => {
   const base = {
     _kind: 'receiptedMutation' as const,
     name: 'demo.issueReceipt',
-    input: S.struct({ token: S.string }),
-    output: S.struct({ status: S.string }),
+    input: schema.struct({ token: schema.string }),
+    output: schema.struct({ status: schema.string }),
     capabilities: { reads: [], writes: ['ledger.entries'] },
     invariants: [],
     budgets: { p95Ms: 5 },

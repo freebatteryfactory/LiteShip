@@ -46,7 +46,7 @@ describe('astro dev inspector', () => {
 
     const body = shadow.querySelector<HTMLElement>('[data-role="inspector-body"]');
     expect(body).not.toBeNull();
-    expect(body!.textContent).toContain('No [data-czap-boundary] elements');
+    expect(body!.textContent).toContain('No [data-liteship-boundary] elements');
 
     handle.dispose();
   });
@@ -54,7 +54,7 @@ describe('astro dev inspector', () => {
   test('full panels render: active casts, escalation, and the DocumentGraph peek', () => {
     const el = document.createElement('div');
     el.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
@@ -63,9 +63,9 @@ describe('astro dev inspector', () => {
         glslStateUniforms: { compact: { u_blur: 1 }, wide: { u_blur: 4 } },
       }),
     );
-    el.setAttribute('data-czap-directive', 'satellite');
-    el.setAttribute('data-czap-shader-type', 'glsl');
-    el.setAttribute('data-czap-state', 'compact');
+    el.setAttribute('data-liteship-directive', 'adaptive');
+    el.setAttribute('data-liteship-shader-type', 'glsl');
+    el.setAttribute('data-liteship-state', 'compact');
     document.body.appendChild(el);
 
     const { shadow } = makeShadowRoot();
@@ -76,7 +76,7 @@ describe('astro dev inspector', () => {
     expect(casts.textContent).toContain('shader-type');
 
     const escalation = shadow.querySelector('[data-role="escalation"]')!;
-    expect(escalation.textContent).toContain('animated'); // glsl → animated rung
+    expect(escalation.textContent).toContain('animated'); // glsl → animated tier
 
     const graphSummary = Array.from(shadow.querySelectorAll('summary')).find((s) =>
       s.textContent?.includes('DocumentGraph'),
@@ -88,7 +88,7 @@ describe('astro dev inspector', () => {
 
     // Live update: dispatching a uniform-update re-renders the cast values.
     el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { discrete: { hero: 'wide' }, css: {}, glsl: { u_blur: 4 }, wgsl: {}, aria: {} },
         bubbles: true,
       }),
@@ -102,17 +102,17 @@ describe('astro dev inspector', () => {
     const { shadow } = makeShadowRoot();
     const first = mountInspectorPanel(shadow);
     let body = shadow.querySelector<HTMLElement>('[data-role="inspector-body"]')!;
-    expect(body.textContent).toContain('No [data-czap-boundary] elements');
+    expect(body.textContent).toContain('No [data-liteship-boundary] elements');
     first.dispose();
 
     // Add a boundary, then re-mount fresh into a new render target (the
     // toolbar app's open-after-close lifecycle).
     const el = document.createElement('div');
     el.setAttribute(
-      'data-czap-boundary',
+      'data-liteship-boundary',
       JSON.stringify({ id: 'b', input: 'viewport.width', thresholds: [0, 600], states: ['s', 'l'] }),
     );
-    el.setAttribute('data-czap-directive', 'satellite');
+    el.setAttribute('data-liteship-directive', 'adaptive');
     document.body.appendChild(el);
 
     const { shadow: shadow2 } = makeShadowRoot();

@@ -6,8 +6,8 @@
 
 # Type Alias: CapsuleCommandDescriptor
 
-> **CapsuleCommandDescriptor** = `_CapsuleCommandDescriptor`
+> **CapsuleCommandDescriptor** = [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)
 
-Defined in: [core/src/command.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/command.ts#L27)
+Defined in: [core/src/authoring/command.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L27)
 
 Identity + contract driving CLI listing AND MCP tools/list from one source.

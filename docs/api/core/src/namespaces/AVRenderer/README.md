@@ -16,4 +16,3 @@ math — no wall-clock input, reproducible across runs.
 
 - [Config](type-aliases/Config.md)
 - [FrameOutput](type-aliases/FrameOutput.md)
-- [Shape](type-aliases/Shape.md)

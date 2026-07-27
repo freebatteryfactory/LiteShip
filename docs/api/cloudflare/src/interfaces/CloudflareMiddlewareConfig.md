@@ -6,7 +6,9 @@
 
 # Interface: CloudflareMiddlewareConfig
 
-Defined in: [cloudflare/src/middleware.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L24)
+Defined in: [cloudflare/src/middleware.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L25)
+
+Configuration for the request-scoped Cloudflare middleware adapter.
 
 ## Properties
 
@@ -14,9 +16,9 @@ Defined in: [cloudflare/src/middleware.ts:24](https://github.com/freebatteryfact
 
 > `readonly` `optional` **binding?**: `string`
 
-Defined in: [cloudflare/src/middleware.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L26)
+Defined in: [cloudflare/src/middleware.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L27)
 
-KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`.
+KV namespace binding name in wrangler.jsonc. Defaults to `LITESHIP_BOUNDARY_CACHE`.
 
 ***
 
@@ -24,7 +26,7 @@ KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`.
 
 > `readonly` `optional` **boundary?**: `string` \| readonly `string`[]
 
-Defined in: [cloudflare/src/middleware.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L40)
+Defined in: [cloudflare/src/middleware.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L41)
 
 Which manifest boundaries to serve: a single name, a list of names,
 or omitted to serve every boundary in the manifest. Each served
@@ -35,15 +37,25 @@ boundaries on the same page cannot poison each other's cached CSS.
 
 ### boundaryId?
 
-> `readonly` `optional` **boundaryId?**: `ContentAddress`
+> `readonly` `optional` **boundaryId?**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [cloudflare/src/middleware.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L48)
+Defined in: [cloudflare/src/middleware.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L49)
 
 Escape hatch for custom hosts without a manifest: the boundary's
-content address. Must be a real minted id (`Boundary.make(...).id`,
+content address. Must be a real minted id (`defineBoundary(...).id`,
 `fnv1a:xxxxxxxx`) -- the KV keyspace is content-addressed, so a
 fabricated id breaks content-addressing (the cache could then serve a
 different boundary's compiled CSS).
+
+***
+
+### cacheTtl?
+
+> `readonly` `optional` **cacheTtl?**: `number`
+
+Defined in: [cloudflare/src/middleware.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L72)
+
+Cloudflare KV edge-cache TTL passed to `KV.get`; distinct from write expiration.
 
 ***
 
@@ -51,7 +63,7 @@ different boundary's compiled CSS).
 
 > `readonly` `optional` **compile?**: (`context`) => `CompiledOutputs` \| `Promise`\<`CompiledOutputs`\>
 
-Defined in: [cloudflare/src/middleware.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L55)
+Defined in: [cloudflare/src/middleware.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L56)
 
 Escape hatch / fallback: compile function invoked when neither the
 manifest nor KV covers the request's tier. With multiple boundaries
@@ -74,7 +86,7 @@ the callback is shared -- branch on `context.boundaryName` /
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [cloudflare/src/middleware.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L80)
+Defined in: [cloudflare/src/middleware.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L83)
 
 Whether to parse Client Hints (default `true`).
 
@@ -84,64 +96,18 @@ Whether to parse Client Hints (default `true`).
 
 > `readonly` `optional` **env?**: [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md) \| (() => [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md))
 
-Defined in: [cloudflare/src/middleware.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L87)
+Defined in: [cloudflare/src/middleware.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L90)
 
 Override the Workers env source. Default reads `env` from `cloudflare:workers`.
 Pass a getter in tests or when env is injected by the host framework.
 
 ***
 
-### manifest?
+### expirationTtl?
 
-> `readonly` `optional` **manifest?**: `Readonly`\<`Record`\<`string`, `BoundaryManifestEntry`\>\> \| `BoundaryManifestFile`
+> `readonly` `optional` **expirationTtl?**: `number`
 
-Defined in: [cloudflare/src/middleware.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L33)
-
-Build-derived boundary manifest -- import it from
-`virtual:czap/boundaries` or read the emitted
-`czap-boundary-manifest.json`. The middleware derives `boundaryId`
-and per-tier precompiled outputs from it, so nothing is hand-typed.
-
-***
-
-### prefix?
-
-> `readonly` `optional` **prefix?**: `string`
-
-Defined in: [cloudflare/src/middleware.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L71)
-
-Optional KV key prefix.
-
-***
-
-### tags?
-
-> `readonly` `optional` **tags?**: `EdgeHostCacheTags` \| `Readonly`\<`Record`\<`string`, `EdgeHostCacheTags`\>\>
-
-Defined in: [cloudflare/src/middleware.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L78)
-
-Tags written with boundary cache entries when a compile fallback fills KV.
-Pass the same values as Astro `routeRules.tags` so `cache.invalidate({ tags })`
-can purge CZAP boundary variants. A manifest config may use a boundary-name
-map; a resolver can branch on `context.boundaryName` / `context.boundaryId`.
-
-***
-
-### theme?
-
-> `readonly` `optional` **theme?**: `ThemeCompileConfig` \| ((`context`) => `ThemeCompileConfig` \| `null` \| `undefined`)
-
-Defined in: [cloudflare/src/middleware.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L57)
-
-Optional theme config or per-request resolver.
-
-***
-
-### ttl?
-
-> `readonly` `optional` **ttl?**: `number`
-
-Defined in: [cloudflare/src/middleware.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L69)
+Defined in: [cloudflare/src/middleware.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L70)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
 knob. An entry is keyed by boundary content address, tier, name, and
@@ -155,24 +121,70 @@ keys for superseded builds. Omit to cache indefinitely.
 
 ***
 
-### waitUntil?
+### manifest?
 
-> `readonly` `optional` **waitUntil?**: (`promise`) => `void`
+> `readonly` `optional` **manifest?**: `Readonly`\<`Record`\<`string`, `BoundaryManifestEntry`\>\> \| `BoundaryManifestFile`
 
-Defined in: [cloudflare/src/middleware.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L92)
+Defined in: [cloudflare/src/middleware.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L34)
 
-Workers `ExecutionContext.waitUntil` for deferring KV write-back (#122).
-When omitted, boundary-cache writes block the response path.
+Build-derived boundary manifest -- import it from
+`virtual:liteship/boundaries` or read the emitted
+`liteship-boundary-manifest.json`. The middleware derives `boundaryId`
+and per-tier precompiled outputs from it, so nothing is hand-typed.
+
+***
+
+### prefix?
+
+> `readonly` `optional` **prefix?**: `string`
+
+Defined in: [cloudflare/src/middleware.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L74)
+
+Optional KV key prefix.
+
+***
+
+### resolveExecutionContext?
+
+> `readonly` `optional` **resolveExecutionContext?**: (`context`) => [`CloudflareExecutionContext`](CloudflareExecutionContext.md) \| `undefined`
+
+Defined in: [cloudflare/src/middleware.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L95)
+
+Resolve the per-request Workers execution context for tests or custom
+hosts. Astro Cloudflare uses `context.locals.cfContext` automatically.
 
 #### Parameters
 
-##### promise
+##### context
 
-`Promise`\<`unknown`\>
+[`CloudflareRequestContext`](CloudflareRequestContext.md)
 
 #### Returns
 
-`void`
+[`CloudflareExecutionContext`](CloudflareExecutionContext.md) \| `undefined`
+
+***
+
+### tags?
+
+> `readonly` `optional` **tags?**: `EdgeHostCacheTags` \| `Readonly`\<`Record`\<`string`, `EdgeHostCacheTags`\>\>
+
+Defined in: [cloudflare/src/middleware.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L81)
+
+Tags written with boundary cache entries when a compile fallback fills KV.
+Pass the same values as Astro `routeRules.tags` so `cache.invalidate({ tags })`
+can purge LiteShip boundary variants. A manifest config may use a boundary-name
+map; a resolver can branch on `context.boundaryName` / `context.boundaryId`.
+
+***
+
+### theme?
+
+> `readonly` `optional` **theme?**: `ThemeCompileConfig` \| ((`context`) => `ThemeCompileConfig` \| `null` \| `undefined`)
+
+Defined in: [cloudflare/src/middleware.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L58)
+
+Optional theme config or per-request resolver.
 
 ***
 
@@ -180,7 +192,7 @@ When omitted, boundary-cache writes block the response path.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [cloudflare/src/middleware.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L82)
+Defined in: [cloudflare/src/middleware.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L85)
 
 Whether to emit COOP/COEP for `client:worker`.
 

@@ -6,8 +6,8 @@
 
 # Type Alias: TrackKind
 
-> **TrackKind** = `_TrackKind`
+> **TrackKind** = [`TrackKind`](../../../spine/type-aliases/TrackKind.md)
 
-Defined in: [scene/src/contract.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L25)
+Defined in: [scene/src/contract.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L26)
 
 Closed set of track kinds.

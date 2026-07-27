@@ -38,10 +38,10 @@ import {
   type ProofFacts,
   type ModuleProof,
   type ProofSignals,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
-const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
+const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
 const L1_FILE = 'packages/x/src/a.ts'; // an ordinary L1 file
 const DEP = 'packages/core/src/dep.ts'; // a dependency the L4 file imports
 
@@ -60,8 +60,8 @@ function ctx(ir: RepoIR, proof: ProofFacts): GateContext {
 function depIR(from: string, to: string): RepoIR {
   return makeRepoIR({
     files: [
-      { id: from, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-      { id: to, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: from, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: to, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     imports: [{ fromFile: from, specifier: './dep.js', kind: 'relative', targetFile: to }],
   });
@@ -99,8 +99,8 @@ describe('propagateProofStrength — the lax-functor (min over the dep DAG)', ()
     const B = 'packages/core/src/b.ts';
     const ir = makeRepoIR({
       files: [
-        { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-        { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+        { id: A, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+        { id: B, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
       ],
       imports: [
         { fromFile: A, specifier: './b.js', kind: 'relative', targetFile: B },

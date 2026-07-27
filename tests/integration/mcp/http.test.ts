@@ -39,7 +39,7 @@ describe('MCP http transport (spawned)', () => {
   it('handles tools/list, tools/call, parse-error, batch, and non-POST 405', async () => {
     await withSpawned(
       'pnpm',
-      ['exec', 'tsx', 'packages/mcp-server/src/http.ts', ':0'],
+      ['exec', 'tsx', 'packages/mcp-server/src/http-server.ts', ':0'],
       async (handle) => {
         const url = await readUrl(handle);
 

@@ -14,11 +14,13 @@ import {
   type RuntimeSeamsReportArtifact,
 } from '../../../scripts/artifact-integrity.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
-import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import { withRepoRoot } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
+import { measuredStartupRealityFixture } from '../../support/startup-reality-fixture.js';
 import { buildRuntimeSeamsReport, renderRuntimeSeamsMarkdown } from '../../../scripts/report-runtime-seams.js';
-import { buildSatelliteScanReport, renderSatelliteScanMarkdown } from '../../../scripts/report-satellite-scan.js';
+import { buildAdaptiveScanReport, renderAdaptiveScanMarkdown } from '../../../scripts/report-adaptive-scan.js';
 
 const tempRoots: string[] = [];
 
@@ -32,7 +34,7 @@ afterEach(() => {
 });
 
 function createRepo(files: Record<string, string>): string {
-  const root = mkdtempSync(join(os.tmpdir(), 'czap-feedback-'));
+  const root = mkdtempSync(join(os.tmpdir(), 'liteship-feedback-'));
   tempRoots.push(root);
 
   for (const [relativePath, content] of Object.entries(files)) {
@@ -48,7 +50,7 @@ function baseRepoFiles(): Record<string, string> {
   return {
     'package.json': JSON.stringify(
       {
-        name: 'czap-feedback-fixture',
+        name: 'liteship-feedback-fixture',
         private: true,
         type: 'module',
         packageManager: 'pnpm@10.32.1',
@@ -66,7 +68,7 @@ function baseRepoFiles(): Record<string, string> {
     ),
     'packages/core/package.json': JSON.stringify(
       {
-        name: '@czap/core',
+        name: '@liteship/core',
         type: 'module',
         exports: {
           '.': { development: './src/index.ts' },
@@ -79,7 +81,7 @@ function baseRepoFiles(): Record<string, string> {
     'packages/core/src/runtime-helper.ts': 'export const runtimeHelper = true;\n',
     'packages/web/package.json': JSON.stringify(
       {
-        name: '@czap/web',
+        name: '@liteship/web',
         type: 'module',
         exports: {
           '.': { development: './src/index.ts' },
@@ -139,7 +141,7 @@ function writeBenchArtifact(root: string, generatedAt = '2026-03-28T05:31:00.000
     canaries: [],
     pairs: [
       {
-        label: 'satellite',
+        label: 'adaptive',
         gate: true,
         pass: true,
         runtimeClass: 'hot-path',
@@ -326,38 +328,7 @@ function writeStartupRealityArtifact(root: string, generatedAt = '2026-03-28T05:
   const artifact = buildStartupRealityArtifact(
     context,
     benchFacts,
-    {
-      worker: {
-        iterations: 30,
-        frameBudgetMs: 16,
-        exceededFrameBudgetCount: 0,
-        summary: {
-          totalStartupMs: { min: 0.5, median: 0.6, p75: 0.62, p95: 0.64, p99: 0.65, max: 0.65, mean: 0.6 },
-          stages: {
-            'claim-or-create': { min: 0.1, median: 0.12, p75: 0.13, p95: 0.14, p99: 0.15, max: 0.15, mean: 0.12 },
-            'coordinator-reset-or-create': { min: 0.14, median: 0.16, p75: 0.17, p95: 0.18, p99: 0.19, max: 0.19, mean: 0.16 },
-            'listener-bind': { min: 0.02, median: 0.03, p75: 0.03, p95: 0.04, p99: 0.04, max: 0.04, mean: 0.03 },
-            'quantizer-bootstrap': { min: 0.03, median: 0.05, p75: 0.05, p95: 0.06, p99: 0.06, max: 0.06, mean: 0.05 },
-            'request-compute': { min: 0.04, median: 0.06, p75: 0.07, p95: 0.08, p99: 0.08, max: 0.08, mean: 0.06 },
-            'state-delivery': { min: 0.1, median: 0.12, p75: 0.13, p95: 0.14, p99: 0.15, max: 0.15, mean: 0.12 },
-            'dispose': { min: 0.03, median: 0.04, p75: 0.05, p95: 0.05, p99: 0.06, max: 0.06, mean: 0.04 },
-          },
-        },
-      },
-      llm: {
-        iterations: 30,
-        simple: {
-          initToFirstTokenMs: { min: 0.2, median: 0.3, p75: 0.32, p95: 0.34, p99: 0.35, max: 0.35, mean: 0.3 },
-          openToFirstTokenMs: { min: 0.1, median: 0.15, p75: 0.16, p95: 0.17, p99: 0.18, max: 0.18, mean: 0.15 },
-          chunkToFirstTokenMs: { min: 0.05, median: 0.08, p75: 0.09, p95: 0.1, p99: 0.11, max: 0.11, mean: 0.08 },
-        },
-        promoted: {
-          initToFirstTokenMs: { min: 0.5, median: 0.7, p75: 0.72, p95: 0.74, p99: 0.75, max: 0.75, mean: 0.7 },
-          openToFirstTokenMs: { min: 0.2, median: 0.25, p75: 0.26, p95: 0.27, p99: 0.28, max: 0.28, mean: 0.25 },
-          chunkToFirstTokenMs: { min: 0.1, median: 0.12, p75: 0.13, p95: 0.14, p99: 0.15, max: 0.15, mean: 0.12 },
-        },
-      },
-    },
+    measuredStartupRealityFixture(),
     generatedAt,
   );
 
@@ -385,11 +356,11 @@ function writeAuditArtifact(root: string, generatedAt = '2099-01-01T00:01:00.000
   writeFileSync(join(root, 'reports/codebase-audit.json'), JSON.stringify(audit, null, 2));
 }
 
-function writeSatelliteScanArtifact(root: string, generatedAt = '2099-01-01T00:02:00.000Z'): void {
+function writeAdaptiveScanArtifact(root: string, generatedAt = '2099-01-01T00:02:00.000Z'): void {
   mkdirSync(join(root, 'reports'), { recursive: true });
-  const report = buildSatelliteScanReport(root, generatedAt);
-  writeFileSync(join(root, 'reports/satellite-scan.json'), JSON.stringify(report, null, 2));
-  writeFileSync(join(root, 'reports/satellite-scan.md'), renderSatelliteScanMarkdown(report));
+  const report = buildAdaptiveScanReport(root, generatedAt);
+  writeFileSync(join(root, 'reports/adaptive-scan.json'), JSON.stringify(report, null, 2));
+  writeFileSync(join(root, 'reports/adaptive-scan.md'), renderAdaptiveScanMarkdown(report));
 }
 
 // Heavy audit + artifact verification; default 5s is too tight under parallel gauntlet workers.
@@ -438,7 +409,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     expect(codes).not.toContain('runtime-seams-ordering'); // the wall-clock ordering gate is gone
   });
 
-  test('feedback verifier fails when the satellite scan is missing', () => {
+  test('feedback verifier fails when the adaptive scan is missing', () => {
     const root = createRepo(baseRepoFiles());
     writeCoverageArtifacts(root);
     writeBenchArtifact(root);
@@ -449,7 +420,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     const verification = verifyFeedbackArtifacts(root);
 
     expect(verification.passed).toBe(false);
-    expect(verification.checks.find((check) => check.code === 'satellite-scan-present')?.passed).toBe(false);
+    expect(verification.checks.find((check) => check.code === 'adaptive-scan-present')?.passed).toBe(false);
   });
 
   test('feedback verifier catches runtime seams drift, audit lies, and stale scan truth', () => {
@@ -459,7 +430,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     writeStartupRealityArtifact(root);
     writeRuntimeSeamsArtifacts(root);
     writeAuditArtifact(root);
-    writeSatelliteScanArtifact(root);
+    writeAdaptiveScanArtifact(root);
 
     const runtimeSeamsPath = join(root, 'reports/runtime-seams.json');
     const runtimeSeams = JSON.parse(readFileSync(runtimeSeamsPath, 'utf8')) as RuntimeSeamsReportArtifact;
@@ -478,7 +449,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
           },
           hardGates: {
             ...runtimeSeams.hardGates!,
-            failed: ['satellite'],
+            failed: ['adaptive'],
           },
         },
         null,
@@ -523,9 +494,9 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
         'runtime-seams-source-coverage-fingerprint',
         'runtime-seams-hard-gates',
         'audit-runtime-seams-status',
-        'satellite-scan-runtime-seams-integrity',
-        'satellite-scan-runtime-seams-source',
-        'satellite-scan-audit-source',
+        'adaptive-scan-runtime-seams-integrity',
+        'adaptive-scan-runtime-seams-source',
+        'adaptive-scan-audit-source',
       ]),
     );
   });
@@ -537,7 +508,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     writeStartupRealityArtifact(root);
     writeRuntimeSeamsArtifacts(root);
     writeAuditArtifact(root);
-    writeSatelliteScanArtifact(root);
+    writeAdaptiveScanArtifact(root);
 
     const coverageMetaPath = join(root, 'coverage/coverage-meta.json');
     const coverageMeta = JSON.parse(readFileSync(coverageMetaPath, 'utf8')) as {
@@ -567,7 +538,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     writeStartupRealityArtifact(root);
     writeRuntimeSeamsArtifacts(root);
     writeAuditArtifact(root);
-    writeSatelliteScanArtifact(root);
+    writeAdaptiveScanArtifact(root);
 
     writeFileSync(
       join(root, 'benchmarks/directive-gate.json'),
@@ -598,7 +569,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     writeStartupRealityArtifact(root);
     writeRuntimeSeamsArtifacts(root);
     writeAuditArtifact(root);
-    writeSatelliteScanArtifact(root);
+    writeAdaptiveScanArtifact(root);
 
     writeFileSync(
       join(root, 'reports/codebase-audit.json'),
@@ -624,7 +595,7 @@ describe('feedback integrity', { timeout: scaledTimeout(30_000) }, () => {
     writeStartupRealityArtifact(root);
     writeRuntimeSeamsArtifacts(root);
     writeAuditArtifact(root);
-    writeSatelliteScanArtifact(root);
+    writeAdaptiveScanArtifact(root);
 
     const startupRealityPath = join(root, 'benchmarks/startup-reality.json');
     const startupReality = JSON.parse(readFileSync(startupRealityPath, 'utf8')) as Record<string, unknown>;

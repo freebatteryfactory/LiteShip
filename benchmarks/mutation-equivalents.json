@@ -3,7 +3,7 @@
   "entries": [
     {
       "mutantId": "blake3:6cd160ff1b020cef91063dded46f39d718e57f40b1352db8bb9f6d6a349d5547",
-      "file": "packages/core/src/content-address.ts",
+      "file": "packages/core/src/evidence/content-address.ts",
       "line": 41,
       "column": 40,
       "operator": "conditional-boundary",
@@ -13,7 +13,7 @@
     },
     {
       "mutantId": "blake3:808f531676a684a72c73259025514a234015a36002c3d170f5b00489ff05f80c",
-      "file": "packages/core/src/content-address.ts",
+      "file": "packages/core/src/evidence/content-address.ts",
       "line": 41,
       "column": 60,
       "operator": "conditional-boundary",
@@ -23,7 +23,7 @@
     },
     {
       "mutantId": "blake3:6b6a63f5dff1e0b2bd5d5e1839e65c553ee4d2985dae777c3b34d08000aadea8",
-      "file": "packages/core/src/content-address.ts",
+      "file": "packages/core/src/evidence/content-address.ts",
       "line": 27,
       "column": 42,
       "operator": "string-literal",
@@ -43,7 +43,7 @@
     },
     {
       "mutantId": "blake3:48cbe5502a103dca7642e21d6d84debdb2d7ab6b48634d3960631670f4997c9a",
-      "file": "packages/core/src/cell-kernel.ts",
+      "file": "packages/core/src/reactive/cell-kernel.ts",
       "line": 111,
       "column": 26,
       "operator": "string-literal",
@@ -53,7 +53,7 @@
     },
     {
       "mutantId": "blake3:cde10abe1ad9fdf2dd4a038be3bd5bd7e3e9f326a9ef0ca11162ed450a770822",
-      "file": "packages/core/src/cell-kernel.ts",
+      "file": "packages/core/src/reactive/cell-kernel.ts",
       "line": 284,
       "column": 34,
       "operator": "string-literal",
@@ -63,7 +63,7 @@
     },
     {
       "mutantId": "blake3:01535fe21adb27e383ec937a5455fcedb0f5e1022c2ce01a2a47fba23d2bd695",
-      "file": "packages/core/src/signal.ts",
+      "file": "packages/core/src/reactive/signal.ts",
       "line": 248,
       "column": 62,
       "operator": "string-literal",
@@ -73,7 +73,7 @@
     },
     {
       "mutantId": "blake3:a58485a829fc58d1864383d86227a81436cc44db533834aa8d9807c3b3da0c3f",
-      "file": "packages/core/src/signal.ts",
+      "file": "packages/core/src/reactive/signal.ts",
       "line": 283,
       "column": 56,
       "operator": "string-literal",
@@ -83,7 +83,7 @@
     },
     {
       "mutantId": "blake3:9b55a45cb6e5f60ee337c5fadb3aea624eb6bce9ed4a52ac6de4433f16d8399c",
-      "file": "packages/core/src/signal.ts",
+      "file": "packages/core/src/reactive/signal.ts",
       "line": 344,
       "column": 56,
       "operator": "string-literal",
@@ -93,7 +93,7 @@
     },
     {
       "mutantId": "blake3:8abcae7a9e24a8777d5ecec621cfe8ca4d6acf41400b39aff30a58111cb7bec5",
-      "file": "packages/core/src/signal.ts",
+      "file": "packages/core/src/reactive/signal.ts",
       "line": 213,
       "column": 10,
       "operator": "string-literal",
@@ -103,7 +103,7 @@
     },
     {
       "mutantId": "blake3:8dbd25edd96b2c575b7cf66f1d355bcf9b62b683a17a1f0a58f07a1d02f3a91f",
-      "file": "packages/core/src/timeline.ts",
+      "file": "packages/core/src/motion/timeline.ts",
       "line": 119,
       "column": 37,
       "operator": "arithmetic",

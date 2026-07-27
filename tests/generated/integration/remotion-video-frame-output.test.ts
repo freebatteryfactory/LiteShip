@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { remotionAdapterCapsule } from '../../../packages/remotion/src/capsules/remotion-adapter.js';
+import { remotionAdapterCapsule } from '../../../packages/remotion/src/remotion-adapter-capsule.js';
 
 // DECLARED-INTEGRATION host-capability matrix for 'remotion.video-frame-output'. NO MOCKS ON THE HOST
 // PATH: each declared site is proved by a REAL-host lane that already exists (the
@@ -32,7 +32,7 @@ const coverage: ReadonlyArray<{
 const gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }> = [
     {
       "site": "browser",
-      "reason": "no real-browser render lane exercises the adapter Provider + useCzapState hook — only jsdom (tests/unit/remotion/remotion.test.ts) covers the React-host surface, and jsdom is a simulated host. A real-browser lane (vitest browser-mode under tests/browser/ or a Playwright e2e rendering the Remotion <Provider>) is missing."
+      "reason": "no real-browser render lane exercises the adapter Provider + useLiteshipState hook — only jsdom (tests/unit/remotion/remotion.test.ts) covers the React-host surface, and jsdom is a simulated host. A real-browser lane (vitest browser-mode under tests/browser/ or a Playwright e2e rendering the Remotion <Provider>) is missing."
     }
   ];
 

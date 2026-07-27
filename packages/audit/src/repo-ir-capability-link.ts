@@ -5,7 +5,7 @@
  * and the sanctioned skip files, and for each skip resolves its guard condition's symbols to prove the
  * guard reaches the capability it claims. It emits GENERIC {@link CapabilityLinkFacts} and stays
  * LiteShip-AGNOSTIC: the capability-module SET, the capability id set, and the sanctioned sites are
- * INJECTED ({@link CapabilityLinkOptions}) — `@czap/audit` names no LiteShip capability.
+ * INJECTED ({@link CapabilityLinkOptions}) — `@liteship/audit` names no LiteShip capability.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * THE LINKER MODEL (why this is sound, and self-assembling — no hand registry).
@@ -47,9 +47,10 @@
  */
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import type { CapabilityLinkFacts, CapabilityLinkResult } from '@czap/gauntlet';
+import type { CapabilityLinkFacts, CapabilityLinkResult } from '@liteship/gauntlet';
 import { guardExpressionsOf, constTruthiness } from './skip-detect-ast.js';
 import { createTypeDirectedProgram } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /** The oracle id every capability-link fact is tagged with (traceability). */
 export const CAPABILITY_LINK_ORACLE_ID = 'ts-capability-link';
@@ -74,6 +75,8 @@ export interface CapabilityLinkOptions {
   readonly capabilityIds: readonly string[];
   /** The sanctioned skip sites to prove. */
   readonly sites: readonly CapabilitySkipSite[];
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
 }
 
 /** `camelCase`/`PascalCase` → `kebab-case` (the export-name ↔ capability-id mapping). */
@@ -90,7 +93,7 @@ export function buildCapabilityLinkFacts(opts: CapabilityLinkOptions): Capabilit
   const capIds = new Set(opts.capabilityIds);
   const moduleAbs = opts.capabilityModules.map((f) => resolve(opts.repoRoot, f));
   const siteFilesAbs = [...new Set(opts.sites.map((s) => resolve(opts.repoRoot, s.file)))];
-  const program = createTypeDirectedProgram([...moduleAbs, ...siteFilesAbs], opts.repoRoot);
+  const program = createTypeDirectedProgram([...moduleAbs, ...siteFilesAbs], opts.repoRoot, opts.typeScriptPathAliases);
   const checker = program.getTypeChecker();
 
   const deAlias = (s: ts.Symbol): ts.Symbol =>

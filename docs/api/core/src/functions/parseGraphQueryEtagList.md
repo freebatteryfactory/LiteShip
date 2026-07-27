@@ -8,7 +8,7 @@
 
 > **parseGraphQueryEtagList**(`value`): [`GraphQueryEtagCandidates`](../interfaces/GraphQueryEtagCandidates.md) \| \{ `errors`: readonly `string`[]; \}
 
-Defined in: [core/src/graph-query.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-query.ts#L77)
+Defined in: [core/src/graph/graph-query.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query.ts#L77)
 
 Parse a full `If-None-Match` header into ALL comma-separated members
 (RFC 9110 §13.1.2 — a compliant cache may list several stored validators;

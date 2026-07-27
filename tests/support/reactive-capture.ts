@@ -57,21 +57,21 @@
  */
 
 import {
-  Cell,
   Derived,
-  Store,
   Signal,
-  Timeline,
-  LiveCell,
-  Boundary,
   Scheduler,
   HLC,
   Millis,
   StateName,
   fixedClock,
-} from '@czap/core';
-import type { BoundaryCrossing } from '@czap/core';
-import type { Disposer } from '@czap/core';
+  defineBoundary,
+  createCell,
+  createStore,
+  createTimeline,
+  createLiveCellBoundary,
+} from '@liteship/core';
+import type { BoundaryCrossing, Boundary } from '@liteship/core';
+import type { Disposer } from '@liteship/core';
 import type {
   ReactiveOp,
   ReactiveOpTag,
@@ -95,7 +95,7 @@ import { applyTransform, op } from './reactive-trace.js';
 interface MetaSnapshot {
   readonly version: number;
   readonly id: string;
-  readonly hlc: HLC.Shape;
+  readonly hlc: HLC;
 }
 
 /** A no-replay crossings channel folded to {@link CrossingObservation}. */
@@ -171,7 +171,7 @@ interface SubState {
   completed: boolean;
 }
 
-const hlcMonotonic = (trail: readonly HLC.Shape[]): boolean => {
+const hlcMonotonic = (trail: readonly HLC[]): boolean => {
   for (let i = 1; i < trail.length; i++) {
     if (HLC.compare(trail[i - 1]!, trail[i]!) > 0) return false;
   }
@@ -199,7 +199,7 @@ const runCapture = (adapter: PrimitiveAdapter, history: OpHistory): Observation 
   const reads: ReadObservation[] = [];
   const crossings: CrossingObservation[] = [];
   const metaTrail: MetaObservation[] = [];
-  const hlcTrail: HLC.Shape[] = [];
+  const hlcTrail: HLC[] = [];
   let historyDisposed = false;
   let lifetimeDisposed = false;
 
@@ -359,8 +359,8 @@ export const captureHistory = (adapter: PrimitiveAdapter, history: OpHistory): P
 // Adapters
 // ---------------------------------------------------------------------------
 
-const captureBoundary = (): Boundary.Shape =>
-  Boundary.make({
+const captureBoundary = (): Boundary =>
+  defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'idle'],
@@ -374,7 +374,7 @@ export const cellAdapter: PrimitiveAdapter = {
   primitive: 'cell',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'update', 'dispose']),
   build: (): CaptureHandle => {
-    const cell = Cell.make(0);
+    const cell = createCell(0);
     return {
       read: (): TraceValue => cell.read(),
       subscribe: (sink) => cell.subscribe(sink),
@@ -395,7 +395,7 @@ export const storeAdapter: PrimitiveAdapter = {
   primitive: 'store',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'dispose']),
   build: (): CaptureHandle => {
-    const store = Store.make<number, number>(0, (_state, msg) => msg);
+    const store = createStore<number, number>(0, (_state, msg) => msg);
     return {
       read: (): TraceValue => store.read(),
       subscribe: (sink) => store.subscribe(sink),
@@ -416,7 +416,7 @@ export const derivedAdapter: PrimitiveAdapter = {
   primitive: 'derived',
   supports: new Set<ReactiveOpTag>(['subscribe', 'unsubscribe', 'read', 'set', 'dispose']),
   build: (): CaptureHandle => {
-    const base = Cell.make(0);
+    const base = createCell(0);
     const derived = Derived.combine([base] as const, (x: number): number => x + 100);
     return {
       read: (): TraceValue => derived.read(),
@@ -470,7 +470,7 @@ export const timelineAdapter: PrimitiveAdapter = {
   ]),
   build: (): CaptureHandle => {
     const scheduler = Scheduler.fixedStep(10); // dt = 100ms per step
-    const timeline = Timeline.from(captureBoundary(), { duration: Millis(200), loop: false, scheduler });
+    const timeline = createTimeline(captureBoundary(), { duration: Millis(200), loop: false, scheduler });
     return {
       read: (): TraceValue => timeline.state(),
       subscribe: (sink) => timeline.subscribe(sink),
@@ -501,7 +501,7 @@ export const liveCellAdapter: PrimitiveAdapter = {
     // Drive the envelope HLC with a fixed clock so `wall_ms`/`counter` are a pure
     // function of the op-sequence — the raw bytes are pinned in the golden (no
     // ambient Date.now(), no monotonicity-boolean workaround).
-    const cell = LiveCell.makeBoundary(captureBoundary(), 0, fixedClock(0));
+    const cell = createLiveCellBoundary(captureBoundary(), 0, fixedClock(0));
     const syntheticStamp = HLC.increment(HLC.create('capture'), 0);
     return {
       read: (): TraceValue => cell.read(),

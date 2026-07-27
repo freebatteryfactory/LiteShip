@@ -6,11 +6,11 @@
 
 # Type Alias: Fanout\<T\>
 
-> **Fanout**\<`T`\> = [`CellFanoutShape`](../../../interfaces/CellFanoutShape.md)\<`T`\>
+> **Fanout**\<`T`\> = [`CellFanout`](../../../interfaces/CellFanout.md)\<`T`\>
 
-Defined in: [core/src/cell-kernel.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts#L485)
+Defined in: [core/src/reactive/cell-kernel.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L485)
 
-Live no-replay fan-out kernel — see [CellFanoutShape](../../../interfaces/CellFanoutShape.md).
+Live no-replay fan-out kernel — see [CellFanout](../../../interfaces/CellFanout.md).
 
 ## Type Parameters
 

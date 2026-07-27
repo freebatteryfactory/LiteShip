@@ -1,7 +1,7 @@
 /**
- * asset analyze (CLI adapter) — thin projection over `@czap/command`'s
+ * asset analyze (CLI adapter) — thin projection over `@liteship/command`'s
  * asset.analyze command, routed through {@link runCliCommand}. The manifest
- * read, the @czap/assets audio projection, and the content-addressed receipt
+ * read, the @liteship/assets audio projection, and the content-addressed receipt
  * cache come from the shared host context (`createNodeCommandContext`); this
  * adapter only overrides `loadAssetBytes` (its byte-load ordering is
  * convention-first: `examples/scenes/<id>.wav` BEFORE the manifest-declared
@@ -13,7 +13,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { runCliCommand } from '../lib/run-command.js';
+import { runCliCommand } from '../internal/run-command.js';
 import { emit } from '../receipts.js';
 
 type Projection = 'beat' | 'onset' | 'waveform';

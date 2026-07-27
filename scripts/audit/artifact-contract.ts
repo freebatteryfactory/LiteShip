@@ -1,5 +1,5 @@
 import type { CodebaseAuditReport } from './types.js';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 
 export const CODEBASE_AUDIT_SCHEMA_VERSION = 2;
 

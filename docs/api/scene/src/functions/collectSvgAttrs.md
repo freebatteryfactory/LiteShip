@@ -24,7 +24,7 @@ contains entities the system has actually composed attrs for.
 
 ### world
 
-`WorldShape`
+`World`
 
 ## Returns
 

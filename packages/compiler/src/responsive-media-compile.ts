@@ -12,7 +12,7 @@ import {
   type ResponsiveMediaCapabilities,
   type ResponsiveMediaIntent,
   type ResponsiveMediaPictureProjection,
-} from '@czap/core';
+} from '@liteship/core';
 
 /** Compiled responsive-media artifacts. */
 export interface CompiledResponsiveMedia {

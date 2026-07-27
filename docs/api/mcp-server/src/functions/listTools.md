@@ -6,16 +6,12 @@
 
 # Function: listTools()
 
-> **listTools**(): readonly `object`[]
+> **listTools**(): readonly [`McpToolDescriptor`](../interfaces/McpToolDescriptor.md)[]
 
-Defined in: [mcp-server/src/dispatch.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L371)
+Defined in: [mcp-server/src/dispatch.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L410)
 
-MCP tool catalog — projected from the ONE canonical command catalog in
-@czap/command (the mcpExposed subset). No hand-maintained parallel table:
-this is the same descriptor source the CLI's `describe`/`completion`/`help`
-project, so MCP `tools/list` and `czap describe --format=mcp` agree by
-construction.
+The exact public MCP tool surface, derived from the canonical command catalog.
 
 ## Returns
 
-readonly `object`[]
+readonly [`McpToolDescriptor`](../interfaces/McpToolDescriptor.md)[]

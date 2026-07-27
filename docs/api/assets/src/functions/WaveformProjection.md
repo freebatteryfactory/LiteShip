@@ -6,9 +6,9 @@
 
 # Function: WaveformProjection()
 
-> **WaveformProjection**(`registry`, `audioAssetId`, `opts?`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
+> **WaveformProjection**(`registry`, `audioAssetId`, `opts?`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, readonly `number`[], `unknown`\>
 
-Defined in: [assets/src/analysis/waveform.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L44)
+Defined in: [assets/src/analysis/waveform.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L53)
 
 Build a WaveformProjection cachedProjection capsule for a named audio asset,
 validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) the caller assembled.
@@ -31,4 +31,4 @@ validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) th
 
 ## Returns
 
-`CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
+`CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, readonly `number`[], `unknown`\>

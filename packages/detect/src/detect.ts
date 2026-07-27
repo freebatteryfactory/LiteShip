@@ -7,8 +7,15 @@
  * restricted contexts, etc.).
  */
 
-import type { CapTier, CapSet } from '@czap/core';
-import { Diagnostics } from '@czap/core';
+import type { CapTier, CapSet } from '@liteship/core';
+import { Diagnostics } from '@liteship/core';
+import { projectCapabilityTierEvidence } from './cap-axes.js';
+import type {
+  CapabilityEvidenceInput,
+  CapabilityEvidenceInputs,
+  CapabilityInputEvidence,
+  CapabilityTierEvidence,
+} from './cap-axes.js';
 
 // ---------------------------------------------------------------------------
 // Navigator augmentation -- non-standard but widely-shipped APIs
@@ -101,8 +108,8 @@ export interface DeviceCapabilities {
  * Result of a single detection sweep.
  *
  * Bundles the probed capabilities together with the derived {@link CapTier}
- * tier, its monotone {@link CapSet}, and a confidence score reflecting how
- * many probes returned real values (vs. defaults).
+ * tier, its monotone {@link CapSet}, and per-axis evidence that distinguishes
+ * observed inputs from conservative fallbacks.
  */
 export interface DetectionResult {
   /** The probed capabilities. */
@@ -111,8 +118,8 @@ export interface DetectionResult {
   readonly capTier: CapTier;
   /** Monotone set of every {@link CapTier} at or below `capTier`. */
   readonly capSet: CapSet;
-  /** Heuristic confidence in `[0.5, 1]` based on how many probes succeeded. */
-  readonly confidence: number;
+  /** Per-axis provenance for the complete tier values. */
+  readonly tierEvidence: CapabilityTierEvidence;
 }
 
 /**
@@ -206,7 +213,7 @@ function hasProbeValue<T>(result: ProbeResult<T>): result is Extract<ProbeResult
  * Pure and side-effect-free apart from a one-time diagnostic on an unrecognized
  * string (which still classifies conservatively as tier 1).
  *
- * Both this runtime classifier AND the `@czap/astro` head-inline probe derive
+ * Both this runtime classifier AND the `@liteship/astro` head-inline probe derive
  * from the SAME {@link GPU_TIER_PATTERNS} datum — the probe's script is
  * generated from it by `emitDetectUpgradeScript` — so the two can never be
  * hand-copies that drift. There is one list of patterns, consumed here and
@@ -221,11 +228,11 @@ export function classifyGPURenderer(renderer: string): GPUTier {
       if (pattern.test(renderer)) return tier;
     }
   }
-  // Unmatched renderers (e.g. next year's GPU) classify conservatively, but
-  // silently: confidence still gets the renderer bonus, so make it audible.
-  Diagnostics.warnOnce({
-    source: 'czap/detect',
-    code: 'unrecognized-gpu-renderer',
+  // Unmatched renderers (e.g. next year's GPU) classify conservatively. The
+  // probe remains observed, but its heuristic fallback must still be audible.
+  Diagnostics.warnOnceRegistered({
+    source: 'liteship/detect',
+    code: 'detect/unrecognized-gpu-renderer',
     message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/freebatteryfactory/LiteShip/issues so a pattern can be added.`,
     detail: { renderer },
   });
@@ -242,6 +249,8 @@ export function classifyGPURenderer(renderer: string): GPUTier {
  * The cast is contained here; callers receive a typed context or null.
  */
 function getWebGLContext(canvas: HTMLCanvasElement): WebGLRenderingContext | null {
+  const modern = canvas.getContext('webgl2');
+  if (modern !== null) return modern;
   const standard = canvas.getContext('webgl');
   if (standard !== null) return standard;
   // 'experimental-webgl' returns RenderingContext | null; we validate it is a
@@ -275,12 +284,13 @@ function probeWebGLRendererUncached(): ProbeResult<string> {
     const gl = getWebGLContext(canvas);
     if (!gl) return probeUnavailable();
     try {
-      const direct = gl.getParameter(gl.RENDERER) as string | null;
-      if (direct && direct.length > 0) return probeOk(direct);
       const ext = gl.getExtension('WEBGL_debug_renderer_info');
-      if (!ext) return probeUnavailable();
-      const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string | null;
-      return renderer && renderer.length > 0 ? probeOk(renderer) : probeUnavailable();
+      if (ext) {
+        const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string | null;
+        if (renderer && renderer.length > 0) return probeOk(renderer);
+      }
+      const direct = gl.getParameter(gl.RENDERER) as string | null;
+      return direct && direct.length > 0 ? probeOk(direct) : probeUnavailable();
     } finally {
       // Release the throwaway context so repeated probes never exhaust the
       // browser's live-context budget.
@@ -312,7 +322,8 @@ function probeWebGPU(): ProbeResult<boolean> {
 function probeCores(): ProbeResult<number> {
   try {
     if (typeof navigator === 'undefined') return probeUnavailable();
-    return probeOk(navigator.hardwareConcurrency ?? 2);
+    const cores = navigator.hardwareConcurrency;
+    return Number.isFinite(cores) && cores > 0 ? probeOk(cores) : probeUnavailable();
   } catch (error) {
     return probeError(error);
   }
@@ -520,13 +531,53 @@ function buildCapabilitiesFromProbes(probes: DetectionProbes): ExtendedDeviceCap
   };
 }
 
-function computeConfidenceFromProbes(probes: DetectionProbes): number {
-  let confidence = 0.5;
-  if (hasProbeValue(probes.renderer)) confidence += 0.2;
-  if (hasProbeValue(probes.memory)) confidence += 0.1;
-  if (hasProbeValue(probes.connection)) confidence += 0.1;
-  if (hasProbeValue(probes.cores) && probes.cores.value > 0) confidence += 0.1;
-  return Math.min(confidence, 1);
+function probeEvidence<const Input extends CapabilityEvidenceInput>(
+  input: Input,
+  result: ProbeResult<unknown>,
+  observedSource: string,
+  inferredSource: string,
+): CapabilityInputEvidence & { readonly input: Input } {
+  return Object.freeze({
+    input,
+    support: hasProbeValue(result) ? 'observed' : 'inferred',
+    source: hasProbeValue(result) ? observedSource : inferredSource,
+  });
+}
+
+function buildCapabilityEvidenceInputs(probes: DetectionProbes): CapabilityEvidenceInputs {
+  return Object.freeze({
+    gpu: probeEvidence('gpu', probes.renderer, 'webgl-renderer', 'integrated-gpu-fallback'),
+    cores: probeEvidence('cores', probes.cores, 'navigator.hardwareConcurrency', 'two-core-fallback'),
+    memory: probeEvidence('memory', probes.memory, 'navigator.deviceMemory', 'four-gib-fallback'),
+    webgpu: probeEvidence('webgpu', probes.webgpu, 'navigator.gpu-presence', 'webgpu-unavailable-fallback'),
+    prefersReducedMotion: probeEvidence(
+      'prefersReducedMotion',
+      probes.reducedMotion,
+      'matchMedia(prefers-reduced-motion)',
+      'no-preference-fallback',
+    ),
+    prefersContrast: probeEvidence(
+      'prefersContrast',
+      probes.contrast,
+      'matchMedia(prefers-contrast)',
+      'no-preference-fallback',
+    ),
+    forcedColors: probeEvidence('forcedColors', probes.forcedColors, 'matchMedia(forced-colors)', 'inactive-fallback'),
+    prefersReducedTransparency: probeEvidence(
+      'prefersReducedTransparency',
+      probes.reducedTransparency,
+      'matchMedia(prefers-reduced-transparency)',
+      'no-preference-fallback',
+    ),
+    dynamicRange: probeEvidence(
+      'dynamicRange',
+      probes.dynamicRange,
+      'matchMedia(dynamic-range)',
+      'standard-range-fallback',
+    ),
+    colorGamut: probeEvidence('colorGamut', probes.colorGamut, 'matchMedia(color-gamut)', 'srgb-fallback'),
+    updateRate: probeEvidence('updateRate', probes.updateRate, 'matchMedia(update)', 'fast-update-fallback'),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -537,12 +588,12 @@ function computeConfidenceFromProbes(probes: DetectionProbes): number {
  * Detect GPU tier from WebGL renderer string heuristics.
  * Falls back to tier 1 (integrated) when WebGL is unavailable.
  *
- * You usually never call this yourself: the `@czap/astro` boundary runs the
+ * You usually never call this yourself: the `@liteship/astro` boundary runs the
  * same classification automatically and publishes it for the runtime to read.
  *
  * Advanced — direct invocation (all probes are synchronous):
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const tier = Detect.detectGPUTier();
  * // tier => 0 (software) | 1 (integrated) | 2 (mid) | 3 (high-end)
@@ -564,11 +615,11 @@ function describeProbeFailure(result: ProbeResult<unknown>): string | null {
 /**
  * Probes never throw (the right contract), but an errored probe was
  * previously indistinguishable from an unavailable one — the caught error was
- * stored and discarded, leaving only an opaque lower confidence number. One
+ * stored and discarded, leaving no axis-specific explanation. One
  * grouped warn-once names each defaulted probe and why. SSR is exempt: every
  * probe defaulting there is the documented isomorphic contract, not a signal.
  */
-function reportDegradedProbes(probes: DetectionProbes, confidence: number): void {
+function reportDegradedProbes(probes: DetectionProbes): void {
   if (typeof window === 'undefined') return;
   const degraded: string[] = [];
   for (const [name, result] of Object.entries(probes)) {
@@ -576,11 +627,11 @@ function reportDegradedProbes(probes: DetectionProbes, confidence: number): void
     if (why !== null) degraded.push(`${name} (${why})`);
   }
   if (degraded.length === 0) return;
-  Diagnostics.warnOnce({
-    source: 'czap/detect',
-    code: 'probes-defaulted',
-    message: `${degraded.length} probe(s) defaulted: ${degraded.join(', ')} — conservative fallback values were used; confidence ${confidence}.`,
-    detail: { degraded, confidence },
+  Diagnostics.warnOnceRegistered({
+    source: 'liteship/detect',
+    code: 'detect/probes-defaulted',
+    message: `${degraded.length} probe(s) defaulted: ${degraded.join(', ')} — conservative fallback values were used; every tier axis that depends on a defaulted input is marked inferred.`,
+    detail: { degraded },
   });
 }
 
@@ -591,11 +642,14 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
   const capSet = capSetFromCapabilities(capabilities);
   const designTier = designTierFromCapabilities(capabilities);
   const motionTier = motionTierFromCapabilities(capabilities);
-  const confidence = computeConfidenceFromProbes(probes);
+  const tierEvidence = projectCapabilityTierEvidence(
+    { capTier, motionTier, designTier },
+    buildCapabilityEvidenceInputs(probes),
+  );
 
-  reportDegradedProbes(probes, confidence);
+  reportDegradedProbes(probes);
 
-  return { capabilities, capTier, capSet, confidence, designTier, motionTier };
+  return { capabilities, capTier, capSet, tierEvidence, designTier, motionTier };
 }
 
 /**
@@ -603,21 +657,21 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
  * All probes are synchronous with internal error handling -- gracefully
  * falls back to conservative defaults when APIs are unavailable.
  *
- * You usually never call this yourself: in an Astro project the `@czap/astro`
+ * You usually never call this yourself: in an Astro project the `@liteship/astro`
  * boundary runs detection after DOMContentLoaded and publishes the result as
- * `window.__CZAP_DETECT__`, so satellites and the directive runtime read it
+ * `window.__LITESHIP_DETECT__`, so adaptives and the directive runtime read it
  * for free.
  *
  * Advanced — direct invocation (all probes are synchronous):
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const result = Detect.detect();
  * console.log(result.capabilities.gpu);       // 0-3
  * console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
  * console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
  * console.log(result.motionTier);             // 'none' | 'transitions' | ...
- * console.log(result.confidence);             // 0.5 - 1.0
+ * console.log(result.tierEvidence.motion.support); // 'observed' | 'inferred'
  * ```
  *
  * @returns The {@link ExtendedDetectionResult}
@@ -634,13 +688,13 @@ export function detect(): ExtendedDetectionResult {
  * {@link CapTier}, {@link CapSet}, {@link DesignTier}, and {@link MotionTier}.
  * Supports live watching for preference and viewport changes.
  *
- * You usually never call these yourself — the `@czap/astro` boundary runs
- * detection automatically and publishes `window.__CZAP_DETECT__` for the
+ * You usually never call these yourself — the `@liteship/astro` boundary runs
+ * detection automatically and publishes `window.__LITESHIP_DETECT__` for the
  * runtime to read.
  *
  * Advanced — direct invocation:
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const result = Detect.detect();
  * console.log(result.capabilities.prefersColorScheme); // 'light' | 'dark'
@@ -672,7 +726,7 @@ export const Detect = {
  *
  * @example
  * ```ts
- * import { Detect } from '@czap/detect';
+ * import { Detect } from '@liteship/detect';
  *
  * const dispose = Detect.watchCapabilities((result) => {
  *   console.log('Capabilities changed:', result.capTier);

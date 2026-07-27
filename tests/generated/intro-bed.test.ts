@@ -2,8 +2,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ValidationError } from '@czap/error';
-import { contentAddressOf } from '../../packages/core/src/content-address.js';
+import { ValidationError } from '@liteship/error';
+import { contentAddressOf } from '../../packages/core/src/evidence/content-address.js';
 import { introBed } from '../../examples/scenes/assets.js';
 
 describe('intro-bed', () => {
@@ -30,7 +30,7 @@ describe('intro-bed', () => {
 
   // Content-addressed cache model: a cachedProjection's cache is keyed on the
   // CONTENT ADDRESS of its source bytes (contentAddressOf — the canonical
-  // @czap/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
+  // @liteship/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
   // derived output. We drive a Map<ContentAddress, Out> through the REAL derive
   // to prove the two cache laws over real fixture bytes — not a hand-rolled
   // hash, not a vacuous placeholder.
@@ -49,11 +49,11 @@ describe('intro-bed', () => {
     cache.set(keyA, await derive(a as never));
     expect(cache.has(keyB)).toBe(true); // 2nd identical source is a cache HIT
     const cached = cache.get(keyB);
-    // The derive is deterministic, so the cached value equals a fresh derive.
+    // Derived outputs may deliberately be rich host values (typed arrays,
+    // AudioBuffer-like records, or other non-portable structures), so output
+    // equality is the projection's law. Only the portable source bytes are the
+    // content-addressed cache key; never pretend every output is canonical.
     expect(cached).toEqual(await derive(b as never));
-    // And the derived OUTPUTS are content-address-identical (the property a
-    // content-addressed cache relies on to serve a stored value).
-    expect(contentAddressOf(cached)).toBe(contentAddressOf(await derive(b as never)));
   });
 
   it('invalidation: source change produces new cache entry', async () => {

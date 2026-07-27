@@ -1,5 +1,5 @@
 /**
- * Shader CONTENT-integrity verifier (`@czap/web` security) — the content-side
+ * Shader CONTENT-integrity verifier (`@liteship/web` security) — the content-side
  * sibling of the runtime-URL SSRF guard. The URL guard vets the ORIGIN; this
  * verifies the fetched BYTES against an author-pinned SRI `sha256-<base64>` hash
  * BEFORE they reach `gl.shaderSource` / `device.createShaderModule`.
@@ -13,7 +13,7 @@
  *   • the SRI parse rejects a malformed / wrong-algorithm / wrong-length pin.
  *
  * The expected SRI is COMPUTED in-test from the canonical `AddressedDigest`
- * (`@czap/core`) — never a hardcoded digest beside the verifier (a hand-typed
+ * (`@liteship/core`) — never a hardcoded digest beside the verifier (a hand-typed
  * mirror would drift). So a matching-hash test proves the verifier and the SRI
  * producer agree on one kernel.
  *

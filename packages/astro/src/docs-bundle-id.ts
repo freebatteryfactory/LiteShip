@@ -4,7 +4,7 @@
  * @module
  */
 
-import { sha256Hex } from '@czap/canonical';
+import { sha256Hex } from '@liteship/canonical';
 
 /** One hashed file entry inside a docs-bundle manifest. */
 export interface DocsBundleIdEntry {

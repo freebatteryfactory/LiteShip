@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { walkRiff, type WavChunk } from '@czap/assets';
+import { walkRiff, type WavChunk } from '@liteship/assets';
 import { fixtureAbsent } from '../helpers/capabilities.js';
 
 /** Encode an ASCII fourCC into a 4-byte slice at `dst[off..off+4]`. */

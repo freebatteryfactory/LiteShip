@@ -8,6 +8,6 @@
 
 > **Builder** = `PlanBuilder`
 
-Defined in: [core/src/plan.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L322)
+Defined in: [core/src/authoring/plan.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L322)
 
 Fluent builder interface returned by `Plan.make`.

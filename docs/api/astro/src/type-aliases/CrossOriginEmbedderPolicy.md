@@ -10,6 +10,6 @@
 
 Defined in: edge/dist/cross-origin.d.ts:30
 
-COEP values czap can emit. Both establish cross-origin isolation (required for
+COEP values liteship can emit. Both establish cross-origin isolation (required for
 `SharedArrayBuffer`); `credentialless` loads CORP-less third-party subresources
 without credentials instead of blocking them.

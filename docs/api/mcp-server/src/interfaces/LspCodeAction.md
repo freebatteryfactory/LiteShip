@@ -6,13 +6,12 @@
 
 # Interface: LspCodeAction
 
-Defined in: [mcp-server/src/lsp/types.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L186)
+Defined in: [mcp-server/src/lsp/types.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L174)
 
-LSP `CodeAction` (§textDocument/codeAction). A `patch` remediation projects to
-an `edit` (a machine-applicable [LspWorkspaceEdit](LspWorkspaceEdit.md) carrying the diff for
-the client to apply); an `instruction` remediation projects to a `command`
-(the client surfaces the ordered steps). `diagnostics` links the action back
-to the diagnostic it fixes (§CodeAction.diagnostics).
+LSP `CodeAction` (§textDocument/codeAction). Both patch and instruction
+remediations project to client-executed commands. The lean server has no
+document store and therefore does not advertise or model WorkspaceEdit.
+`diagnostics` links the action back to the diagnostic it fixes.
 
 ## Properties
 
@@ -20,7 +19,7 @@ to the diagnostic it fixes (§CodeAction.diagnostics).
 
 > `readonly` `optional` **command?**: [`LspCommand`](LspCommand.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L191)
+Defined in: [mcp-server/src/lsp/types.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L178)
 
 ***
 
@@ -28,15 +27,7 @@ Defined in: [mcp-server/src/lsp/types.ts:191](https://github.com/freebatteryfact
 
 > `readonly` **diagnostics**: readonly [`LspDiagnostic`](LspDiagnostic.md)[]
 
-Defined in: [mcp-server/src/lsp/types.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L189)
-
-***
-
-### edit?
-
-> `readonly` `optional` **edit?**: [`LspWorkspaceEdit`](LspWorkspaceEdit.md)
-
-Defined in: [mcp-server/src/lsp/types.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L190)
+Defined in: [mcp-server/src/lsp/types.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L177)
 
 ***
 
@@ -44,7 +35,7 @@ Defined in: [mcp-server/src/lsp/types.ts:190](https://github.com/freebatteryfact
 
 > `readonly` **kind**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L188)
+Defined in: [mcp-server/src/lsp/types.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L176)
 
 ***
 
@@ -52,4 +43,4 @@ Defined in: [mcp-server/src/lsp/types.ts:188](https://github.com/freebatteryfact
 
 > `readonly` **title**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L187)
+Defined in: [mcp-server/src/lsp/types.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L175)

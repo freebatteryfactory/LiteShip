@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { bench } from 'vitest';
 import * as fc from 'fast-check';
-import { aiCastSummarizeCapsule } from '../../packages/core/src/capsules/ai-cast-summarize.js';
+import { aiCastSummarizeCapsule } from '../../packages/core/src/authoring/capsules/ai-cast-summarize.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 // REAL bench: drive the capsule's `run` over presampled inputs — the SAME

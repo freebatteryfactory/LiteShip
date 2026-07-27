@@ -1,9 +1,17 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
-import { Boundary, Millis, Part, S, SpeculativeEvaluator, Style, World } from '@czap/core';
-import { evaluate as evaluateQuantizer } from '@czap/quantizer';
-import { GLSLCompiler } from '@czap/compiler';
+import { Millis, SpeculativeEvaluator, Style, defineBoundary, defineStyle, schema } from '@liteship/core';
+import {
+  admitPart,
+  createDenseStore,
+  createWorld,
+  defineDenseSystem,
+  definePart,
+  defineSystem,
+} from '@liteship/core/ecs';
+import { evaluate as evaluateQuantizer } from '@liteship/quantizer';
+import { GLSLCompiler } from '@liteship/compiler';
 import { captureSelection, findScrollable } from '../../../packages/web/src/physical/capture.js';
 import {
   restoreActiveElement,
@@ -13,57 +21,66 @@ import {
 
 describe('runtime hotspot coverage', () => {
   test('World regular systems handle empty queries, component add/remove, and missing dense stores', () => {
-    // World is a synchronous API as of the core-seams wave: make() returns
-    // { world, lifetime }, every method returns directly, and System.execute
-    // returns void (no Effect wrapper).
-    const { world } = World.make();
-    const hpPart = { name: 'hp', schema: S.number };
-    const labelPart = { name: 'label', schema: S.string };
-    const presentStore = Part.dense('present', 8);
+    const world = createWorld();
+    const Ghost = definePart('ghost', schema.boolean);
+    const Hp = definePart('hp', schema.number);
+    const Label = definePart('label', schema.string);
+    const Present = definePart('present', schema.number);
+    const Missing = definePart('missing', schema.number);
+    const presentStore = createDenseStore(Present, 8);
     world.addDenseStore(presentStore);
 
-    const id = world.spawn({ label: 'player' });
-    world.addComponent(id, hpPart, 100);
-    world.addComponent('missing-entity' as never, hpPart, 50);
+    const label = admitPart(Label, 'player');
+    const hp = admitPart(Hp, 100);
+    if (!label.ok || !hp.ok) throw new Error('typed ECS hotspot fixture failed admission');
+    const id = world.spawn(label.value);
+    world.set(id, hp.value);
+    world.set('missing-entity' as never, hp.value);
 
     let emptyExecutions = 0;
     let denseExecuted = false;
     let regularSeen: string[] = [];
 
-    world.addSystem({
-      name: 'empty-query',
-      query: ['ghost'],
-      execute(entities) {
-        emptyExecutions += 1;
-        expect(entities).toEqual([]);
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'empty-query',
+        query: [Ghost],
+        reads: [],
+        writes: [],
+        execute(entities) {
+          emptyExecutions += 1;
+          expect(entities).toEqual([]);
+        },
+      }),
+    );
 
-    world.addSystem({
-      name: 'label-and-hp',
-      query: ['label', 'hp'],
-      execute(entities) {
-        regularSeen = entities.map((entity) => {
-          const label = entity.components.get(labelPart.name);
-          const hp = entity.components.get(hpPart.name);
-          return `${label}:${hp}`;
-        });
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'label-and-hp',
+        query: [Label, Hp],
+        reads: [],
+        writes: [],
+        execute(entities, context) {
+          regularSeen = entities.map((entity) => `${context.read(entity, Label)}:${context.read(entity, Hp)}`);
+        },
+      }),
+    );
 
-    world.addSystem({
-      name: 'missing-dense-store',
-      query: ['present', 'missing'],
-      _denseSystem: true as const,
-      execute() {
-        denseExecuted = true;
-      },
-    });
+    world.addSystem(
+      defineDenseSystem({
+        name: 'missing-dense-store',
+        reads: [Present, Missing],
+        writes: [],
+        execute() {
+          denseExecuted = true;
+        },
+      }),
+    );
 
     world.tick();
-    world.removeComponent(id, hpPart.name);
-    world.removeComponent('missing-entity' as never, hpPart.name);
-    const matchedAfterRemoval = world.query('label', 'hp');
+    world.remove(id, Hp);
+    world.remove('missing-entity' as never, Hp);
+    const matchedAfterRemoval = world.query(Label, Hp);
 
     expect(emptyExecutions).toBe(1);
     expect(denseExecuted).toBe(false);
@@ -85,7 +102,7 @@ describe('runtime hotspot coverage', () => {
       crossed: false,
     });
 
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'small'],
@@ -101,7 +118,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('SpeculativeEvaluator handles zero velocity, reverse movement, and confidence clamping', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'small'],
@@ -132,7 +149,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('SpeculativeEvaluator skips low-confidence speculation and ignores prefetched states identical to current', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'small'],
@@ -144,7 +161,7 @@ describe('runtime hotspot coverage', () => {
     lowConfidence.evaluate(400);
     const slowApproach = lowConfidence.evaluate(401, 0.01);
 
-    const singleState = Boundary.make({
+    const singleState = defineBoundary({
       input: 'viewport.width',
       at: [[0, 'only']] as const,
     });
@@ -160,14 +177,14 @@ describe('runtime hotspot coverage', () => {
 
   test('Style merge/tap keeps empty layers tidy and falls back to base for unknown states', () => {
     const emptyMerge = Style.mergeLayers({ properties: {} }, { properties: {} });
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'base'],
         [768, 'wide'],
       ] as const,
     });
-    const adaptiveStyle = Style.make({
+    const adaptiveStyle = defineStyle({
       boundary,
       base: {
         properties: { color: 'red' },
@@ -249,7 +266,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('GLSLCompiler normalizes unusual names and missing state maps deterministically', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'ready-go'],
@@ -269,7 +286,7 @@ describe('runtime hotspot coverage', () => {
   });
 
   test('GLSLCompiler skips undefined state maps and preserves int fallback declarations', () => {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],

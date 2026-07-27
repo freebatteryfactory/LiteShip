@@ -26,7 +26,7 @@ Immutable static-asset URL for this request's resolved tier, when emitted by the
 
 ### boundaryId
 
-> `readonly` **boundaryId**: `ContentAddress`
+> `readonly` **boundaryId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [edge/src/host-adapter.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L195)
 

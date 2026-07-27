@@ -6,7 +6,7 @@
 
 # Interface: StaggerIntentInput
 
-Defined in: [core/src/stagger.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L43)
+Defined in: [core/src/motion/stagger.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L43)
 
 Authoring input to [Stagger.intent](../variables/Stagger.md#intent).
 
@@ -20,7 +20,7 @@ Authoring input to [Stagger.intent](../variables/Stagger.md#intent).
 
 > `readonly` **children**: readonly [`StaggerChild`](StaggerChild.md)[]
 
-Defined in: [core/src/stagger.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L45)
+Defined in: [core/src/motion/stagger.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L45)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/stagger.ts:45](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: [core/src/stagger.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L48)
+Defined in: [core/src/motion/stagger.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L48)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [core/src/stagger.ts:48](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **stepMs**: `number`
 
-Defined in: [core/src/stagger.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L46)
+Defined in: [core/src/motion/stagger.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L46)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [core/src/stagger.ts:46](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: [core/src/stagger.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L47)
+Defined in: [core/src/motion/stagger.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L47)
 
 ***
 
@@ -52,4 +52,4 @@ Defined in: [core/src/stagger.ts:47](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **trigger**: [`RevealTrigger`](../type-aliases/RevealTrigger.md)
 
-Defined in: [core/src/stagger.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L44)
+Defined in: [core/src/motion/stagger.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L44)

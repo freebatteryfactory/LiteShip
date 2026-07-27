@@ -6,7 +6,7 @@
 
 # Interface: CaptureResult
 
-Defined in: [core/src/capture.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L43)
+Defined in: [core/src/evidence/capture.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L45)
 
 Encoder output returned from [FrameCapture](FrameCapture.md).`finalize`: the encoded blob plus codec metadata.
 
@@ -16,7 +16,7 @@ Encoder output returned from [FrameCapture](FrameCapture.md).`finalize`: the enc
 
 > `readonly` **blob**: `Blob`
 
-Defined in: [core/src/capture.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L44)
+Defined in: [core/src/evidence/capture.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L46)
 
 ***
 
@@ -24,15 +24,15 @@ Defined in: [core/src/capture.ts:44](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **codec**: `string`
 
-Defined in: [core/src/capture.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L45)
+Defined in: [core/src/evidence/capture.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L47)
 
 ***
 
 ### durationMs
 
-> `readonly` **durationMs**: `Millis`
+> `readonly` **durationMs**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
-Defined in: [core/src/capture.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L47)
+Defined in: [core/src/evidence/capture.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L49)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [core/src/capture.ts:47](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **frames**: `number`
 
-Defined in: [core/src/capture.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capture.ts#L46)
+Defined in: [core/src/evidence/capture.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L48)

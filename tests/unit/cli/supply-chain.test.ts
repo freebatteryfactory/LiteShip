@@ -1,5 +1,5 @@
 /**
- * Supply-chain analyzer (host, @czap/cli) — Slice C, the avionics tier.
+ * Supply-chain analyzer (host, @liteship/cli) — Slice C, the avionics tier.
  *
  * Pins the heavy host work the lean gauntlet gate refuses to do:
  *  - the pnpm-lock.yaml parser (importers + packages + integrity).
@@ -25,13 +25,13 @@ import {
   IntegrityDigest,
   type AddressedDigest as AD,
   type HLC,
-} from '@czap/core';
-import { parseLockfile } from '../../../packages/cli/src/lib/lockfile.js';
+} from '@liteship/core';
+import { parseLockfile } from '../../../packages/cli/src/internal/lockfile.js';
 import {
   evaluateLockfilePolicy,
   LITESHIP_LOCKFILE_POLICY,
   type PublishedImporters,
-} from '../../../packages/cli/src/lib/supply-chain-policy.js';
+} from '../../../packages/cli/src/internal/supply-chain-policy.js';
 import {
   analyzeLockfile,
   buildSbom,
@@ -40,8 +40,8 @@ import {
   scanCiAuthority,
   readWorkflows,
   type WorkspacePkg,
-} from '../../../packages/cli/src/lib/supply-chain.js';
-import { readWorkspacePackages } from '../../../packages/cli/src/lib/workspace.js';
+} from '../../../packages/cli/src/internal/supply-chain.js';
+import { readWorkspacePackages } from '../../../packages/cli/src/internal/workspace.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');
@@ -77,7 +77,7 @@ describe('pnpm-lock.yaml parser', () => {
   });
 
   it('fails LOUD (ParseError) on a lockfile with no version', async () => {
-    const { hasTag } = await import('@czap/error');
+    const { hasTag } = await import('@liteship/error');
     let caught: unknown;
     try {
       parseLockfile('importers:\n  .:\n');
@@ -140,7 +140,7 @@ describe('lockfile policy — BITE proofs', () => {
         ``,
       ].join('\n'),
     );
-    const pub: PublishedImporters = { byPath: new Map([['packages/pub', '@czap/pub']]) };
+    const pub: PublishedImporters = { byPath: new Map([['packages/pub', '@liteship/pub']]) };
     const v = evaluateLockfilePolicy(lf, LITESHIP_LOCKFILE_POLICY, pub);
     expect(v.some((x) => x.code === 'prerelease-range')).toBe(true);
   });
@@ -181,7 +181,7 @@ describe('provenance validation', () => {
   const baseInput = (lockAddr: AD): ShipCapsule.Input => ({
     _kind: 'shipCapsule',
     schema_version: 1,
-    package_name: '@czap/x',
+    package_name: '@liteship/x',
     package_version: '0.1.0',
     source_commit: '0123456789abcdef0123456789abcdef01234567',
     source_dirty: false,

@@ -1,0 +1,34 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/compiler](../README.md) / ARIAStates
+
+# Interface: ARIAStates
+
+Defined in: compiler/dist/dispatch.d.ts:34
+
+ARIA compile input — per-state attribute map plus the currently-active state.
+
+The compiler emits the attributes for `currentState` (not all states) to
+avoid flooding the DOM with unused `aria-*` values.
+
+## Properties
+
+### currentState?
+
+> `readonly` `optional` **currentState?**: `string`
+
+Defined in: compiler/dist/dispatch.d.ts:38
+
+Name of the state whose ARIA attributes should be emitted; defaults to the boundary's first state.
+
+***
+
+### states
+
+> `readonly` **states**: `Record`\<`string`, `Record`\<`string`, `string`\>\>
+
+Defined in: compiler/dist/dispatch.d.ts:36
+
+Per-state ARIA attribute maps keyed by state name.

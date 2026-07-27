@@ -1,13 +1,13 @@
 /**
  * The HOST-SIDE repo-IR builder (Slice B, phase B1 — step 2).
  *
- * `@czap/gauntlet` DEFINES the {@link RepoIR} interface but carries no
+ * `@liteship/gauntlet` DEFINES the {@link RepoIR} interface but carries no
  * `typescript` dep — it is the lean, downstream-installable engine and the IR is
  * an INJECTED capability (owner-ratified ⚑ decision 1). THIS module is the host
- * half: `@czap/audit` (which already deps `typescript`) materializes a real
+ * half: `@liteship/audit` (which already deps `typescript`) materializes a real
  * {@link RepoIR} from a {@link DevopsProfile}'s source corpus and a CLI host
  * injects it into the gauntlet run. The dependency direction is `audit →
- * gauntlet` (gauntlet stays a leaf; no cycle — gauntlet deps only @czap/error +
+ * gauntlet` (gauntlet stays a leaf; no cycle — gauntlet deps only @liteship/error +
  * fast-glob) and `audit → canonical` (the blake3 content-address kernel).
  *
  * What it builds (design §1, ECS-shaped, immutable, content-addressed):
@@ -29,7 +29,7 @@
  *         host-injected `invariant-regex` (`text-only`) oracle for the same
  *         property is supplied by the CLI host through {@link buildRepoIR}'s
  *         `extraFactOracles` hook (the LiteShip-local `NO_DEFAULT_EXPORT` regex
- *         rule lives with the host, which deps `@czap/command`; the audit engine
+ *         rule lives with the host, which deps `@liteship/command`; the audit engine
  *         stays LiteShip-agnostic — ADR-0012). Where the two disagree at a
  *         `(file, line)` the Step-3 divergence gate reports it (the text oracle
  *         fired on a comment the AST correctly ignores).
@@ -50,8 +50,11 @@
  *
  * @module
  */
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import ts from 'typescript';
-import { addressedDigestOf } from '@czap/canonical';
+import { addressedDigestOf } from '@liteship/canonical';
+import { InvariantViolationError } from '@liteship/error';
 import {
   makeRepoIR,
   type RepoIR,
@@ -67,20 +70,21 @@ import {
   type PkgName,
   type Fact,
   type CoverageClass,
-} from '@czap/gauntlet';
-import { liteshipDevopsProfile } from './devops-profile.js';
+} from '@liteship/gauntlet';
 import type { DevopsProfile } from './devops-profile.js';
 import { listProfilePackageManifests, readProfileSourceFileRecords } from './shared.js';
 import type { SourceFileRecord } from './shared.js';
 import { buildPackageExportTargets, hasModifier, resolveImport } from './structure.js';
 import { createTypeDirectedProgram } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 import { symbolReferenceOracle } from './repo-ir-language-service.js';
+import { buildBenchmarkSubjectFacts, parseBenchmarkSubjectDistribution } from './benchmark-subject-facts.js';
 
 /** UTF-8 encoder reused across files (stateless, deterministic). */
 const UTF8 = new TextEncoder();
 
 /**
- * A host-supplied fact oracle — the injection hook that keeps `@czap/audit`
+ * A host-supplied fact oracle — the injection hook that keeps `@liteship/audit`
  * LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to
  * {@link buildRepoIR}: given one source file's raw text + path + owning package,
  * it returns the {@link Fact}s it observes. `buildRepoIR` invokes each injected
@@ -89,9 +93,9 @@ const UTF8 = new TextEncoder();
  *
  * This is where a repo-LOCAL rule set enters the IR WITHOUT the engine importing
  * it. The canonical example is the host's `invariant-regex` oracle: the CLI (which
- * deps `@czap/command`) constructs an oracle that runs LiteShip's
+ * deps `@liteship/command`) constructs an oracle that runs LiteShip's
  * `NO_DEFAULT_EXPORT` rule over the file text and emits `is-default-export`
- * `text-only` facts — the audit engine never sees `@czap/command`. The generic
+ * `text-only` facts — the audit engine never sees `@liteship/command`. The generic
  * structural facts (`is-default-export` via AST, `bare-throw`) STAY in audit
  * because they are facts EVERY TS repo has, not LiteShip config.
  *
@@ -110,6 +114,8 @@ export type FactOracle = (input: {
 
 /** Options for {@link buildRepoIR} — the host-injection surface. */
 export interface BuildRepoIROptions {
+  /** Host-owned source aliases used by type-directed analysis. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * Host-supplied extra oracles (e.g. the LiteShip `invariant-regex` oracle the
    * CLI injects). Each is invoked per source file and its facts merged into the
@@ -121,11 +127,16 @@ export interface BuildRepoIROptions {
    * symbol references via a `ts.LanguageService`, cross-checked against the
    * file-proxy-only `refs` graph by the symbol-orphan divergence gate. OFF by
    * default: it is the heaviest oracle in the set (a whole-repo LanguageService +
-   * a reference query per exported symbol), so it is opt-in (`czap check --ir
+   * a reference query per exported symbol), so it is opt-in (`liteship check gates --ir
    * --symbols`) and amortized by the B2 verdict cache. Without it, the gate finds
    * nothing (no symbol-evidenced facts) — harmless.
    */
   readonly withSymbolReferences?: boolean;
+  /**
+   * Optional raw benchmark registry rows. When present, audit validates and
+   * qualifies their measured SUT reachability into the same immutable RepoIR.
+   */
+  readonly benchmarkDistributions?: readonly unknown[];
 }
 
 /**
@@ -331,20 +342,22 @@ interface Tables {
  *   facts merge into the IR alongside audit's own structural AST facts. The audit
  *   engine itself imports no repo-local rule set — the boundary is the hook.
  */
-export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, options: BuildRepoIROptions = {}): RepoIR {
+export function buildRepoIR(profile: DevopsProfile, options: BuildRepoIROptions = {}): RepoIR {
   const extraFactOracles = options.extraFactOracles ?? [];
   const records = readProfileSourceFileRecords(profile);
   const packageInfos = listProfilePackageManifests(profile);
-  const packageExportTargets = buildPackageExportTargets(packageInfos);
+  const packageExportTargets = buildPackageExportTargets(packageInfos, profile);
 
-  // ONE type-directed program over the whole corpus (reuses the shared config +
-  // WORKSPACE_ALIASES so cross-package types resolve, never collapsing to `any`).
+  // ONE type-directed program over the whole corpus. Project-shaped source aliases
+  // are injected by the host so cross-package types resolve without coupling the
+  // reusable engine to one workspace.
   // The checker is available for later symbol-evidenced oracles; B1's facts are
   // AST-precise (file-proxy-only), so the program is built for the seam + future
   // oracles, and its source files give a canonical parse.
   const program = createTypeDirectedProgram(
     records.map((r) => r.absolutePath),
     profile.repoRoot,
+    options.typeScriptPathAliases,
   );
   void program.getTypeChecker();
 
@@ -523,7 +536,11 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, opti
   // the same table; the symbol-orphan divergence gate cross-checks them against the
   // file-proxy-only `refs` graph. Heaviest oracle → opt-in (default off).
   if (options.withSymbolReferences === true) {
-    for (const fact of symbolReferenceOracle({ profile })) tables.facts.push(fact);
+    for (const fact of symbolReferenceOracle({
+      profile,
+      typeScriptPathAliases: options.typeScriptPathAliases,
+    }))
+      tables.facts.push(fact);
   }
 
   // Deterministic ordering — sort every table so the IR is byte-stable.
@@ -562,6 +579,25 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, opti
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const benchmarkSubjects = (() => {
+    if (options.benchmarkDistributions === undefined) return undefined;
+    const distributions = options.benchmarkDistributions.map(parseBenchmarkSubjectDistribution);
+    const invalid = distributions.findIndex((distribution) => distribution === null);
+    if (invalid >= 0) {
+      throw InvariantViolationError(
+        'buildRepoIR',
+        `benchmark distribution at index ${invalid} has an invalid subject/execution contract`,
+      );
+    }
+    return buildBenchmarkSubjectFacts(
+      distributions.filter((distribution) => distribution !== null),
+      (path) => {
+        const absolutePath = resolve(profile.repoRoot, path);
+        return existsSync(absolutePath) ? readFileSync(absolutePath, 'utf8') : undefined;
+      },
+    );
+  })();
+
   // Drop a symbol whose file is, by some profile quirk, not in the file table —
   // makeRepoIR would (correctly) reject it; the records loop guarantees the file
   // is present, so this is belt-and-braces consistency, not a silent skip path.
@@ -591,6 +627,7 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, opti
     packages,
     refs,
     facts: tables.facts,
+    ...(benchmarkSubjects !== undefined ? { benchmarkSubjects } : {}),
   });
 }
 

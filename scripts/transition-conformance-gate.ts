@@ -6,7 +6,7 @@
  * the CONSTITUTION / conformance INTEGRITY family. The lean `transitionConformanceGate` fold
  * is exercised in unit tests with INJECTED facts (`tests/unit/gauntlet/transition-conformance.test.ts`)
  * — that proves the fold; but a gate nothing runs over the real transports is a hole. This
- * script is the repo-local HOST (ADR-0043 layering: `@czap/gauntlet` owns only the lean fact
+ * script is the repo-local HOST (ADR-0043 layering: `@liteship/gauntlet` owns only the lean fact
  * FOLD; the reference model + native-transport oracle stay LiteShip-local): it drives the SAME
  * pinned corpus the property test exercises (the SHARED runner
  * `tests/support/reactive-conformance.ts` — one model, one corpus, one law table) over BOTH the
@@ -21,9 +21,9 @@
  * The one above-kernel delta (Derived's recompute-teardown on dispose) is a RECORDED delta the
  * property test pins — it is deliberately NOT in the must-hold corpus.
  *
- * WHY A STANDALONE PHASE (not the published `czap check` CLI): the model + native-transport
+ * WHY A STANDALONE PHASE (not the published `liteship check` CLI): the model + native-transport
  * oracle are LiteShip-specific product machinery living in the test tree (a reactive-history
- * capture over `@czap/core`). Per ADR-0012 / ADR-0023 that laboratory stays repo-local rather
+ * capture over `@liteship/core`). Per ADR-0012 / ADR-0023 that laboratory stays repo-local rather
  * than being inflated into a shipped consumer CLI feature; the gate is HOSTED here, next to the
  * other constitution-integrity phases (`spine-relation:gate` / `capability:gate`), guaranteeing
  * the L4 bisimulation proof runs on every PR (reachable, never fixture-only).
@@ -40,7 +40,7 @@ import {
   GATE_CORPUS,
   type FamilyLaw,
 } from '../tests/support/reactive-conformance.js';
-import { transitionConformanceGate, memoryContext, type Finding, type TransitionFacts } from '@czap/gauntlet';
+import { transitionConformanceGate, memoryContext, type Finding, type TransitionFacts } from '@liteship/gauntlet';
 import { isDirectExecution } from './audit/shared.js';
 
 /** One family's decided facts + the gate's fold over them. */

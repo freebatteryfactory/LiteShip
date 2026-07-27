@@ -2,7 +2,7 @@
  * Merge subprocess v8 coverage dumps into coverage/node/coverage-final.json.
  *
  * Runs after `pnpm coverage:node` exits. Walks the directory pointed to by
- * CZAP_SUBPROCESS_COVERAGE_DIR (set by the coverage:merge wrapper script
+ * LITESHIP_SUBPROCESS_COVERAGE_DIR (set by the coverage:merge wrapper script
  * before running vitest), converts each raw v8 dump via v8-to-istanbul, and
  * unions the result into coverage-final.json using istanbul-lib-coverage's
  * CoverageMap.merge.
@@ -17,7 +17,7 @@
 import { appendFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { normalizeRepoPath } from '@czap/core';
+import { normalizeRepoPath } from '@liteship/core';
 import libCoverage from 'istanbul-lib-coverage';
 import V8ToIstanbul from 'v8-to-istanbul';
 import { coverageInclude, coverageExclude, repoRoot } from '../vitest.shared.js';

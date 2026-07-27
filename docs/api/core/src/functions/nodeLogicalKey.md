@@ -8,7 +8,7 @@
 
 > **nodeLogicalKey**(`node`): `string`
 
-Defined in: [core/src/graph-patch.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L219)
+Defined in: [core/src/graph/graph-patch.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L219)
 
 Stable logical identity for a node — marker names for DPU patches, diff collapse keys.
 

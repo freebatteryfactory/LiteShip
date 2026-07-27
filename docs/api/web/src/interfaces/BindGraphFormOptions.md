@@ -6,7 +6,7 @@
 
 # Interface: BindGraphFormOptions
 
-Defined in: [web/src/mutation/graph-form.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L17)
+Defined in: [web/src/graph-form.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/graph-form.ts#L17)
 
 Wiring for [bindGraphForm](../functions/bindGraphForm.md): the channel client, the host's ops projection, and an optional outcome hook.
 
@@ -14,9 +14,9 @@ Wiring for [bindGraphForm](../functions/bindGraphForm.md): the channel client, t
 
 ### client
 
-> `readonly` **client**: `GraphMutationClient`
+> `readonly` **client**: [`GraphMutationClient`](../../../liteship/src/graph/interfaces/GraphMutationClient.md)
 
-Defined in: [web/src/mutation/graph-form.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L18)
+Defined in: [web/src/graph-form.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/graph-form.ts#L18)
 
 ***
 
@@ -24,15 +24,15 @@ Defined in: [web/src/mutation/graph-form.ts:18](https://github.com/freebatteryfa
 
 > `readonly` `optional` **onOutcome?**: (`response`) => `void`
 
-Defined in: [web/src/mutation/graph-form.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L22)
+Defined in: [web/src/graph-form.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/graph-form.ts#L22)
 
-Optional imperative hook; the `czap:mutation` event fires regardless.
+Optional imperative hook; the `liteship:mutation` event fires regardless.
 
 #### Parameters
 
 ##### response
 
-`GraphMutationResponse`
+[`GraphMutationResponse`](../../../liteship/src/graph/type-aliases/GraphMutationResponse.md)
 
 #### Returns
 
@@ -42,9 +42,9 @@ Optional imperative hook; the `czap:mutation` event fires regardless.
 
 ### toOps
 
-> `readonly` **toOps**: (`data`, `base`) => readonly `PatchOp`[]
+> `readonly` **toOps**: (`data`, `base`) => readonly [`PatchOp`](../../../liteship/src/graph/type-aliases/PatchOp.md)[]
 
-Defined in: [web/src/mutation/graph-form.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L20)
+Defined in: [web/src/graph-form.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/graph-form.ts#L20)
 
 Project the submitted form into patch ops. Host-owned domain logic (nodes must be sealed by the host via sealNode).
 
@@ -56,8 +56,8 @@ Project the submitted form into patch ops. Host-owned domain logic (nodes must b
 
 ##### base
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 #### Returns
 
-readonly `PatchOp`[]
+readonly [`PatchOp`](../../../liteship/src/graph/type-aliases/PatchOp.md)[]

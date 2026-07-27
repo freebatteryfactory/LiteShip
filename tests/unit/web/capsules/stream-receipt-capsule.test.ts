@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { streamReceiptCapsule } from '@czap/web';
+import { streamReceiptCapsule } from '@liteship/web';
 
 describe('streamReceiptCapsule', () => {
   it('declares a receiptedMutation for the SSE morph+receipt path', () => {

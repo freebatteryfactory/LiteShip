@@ -8,6 +8,6 @@
 
 > `const` **capsuleVerifyGateCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/capsule-verify.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L71)
+Defined in: [command/src/commands/capsule-verify.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L73)
 
 `capsule-verify` — freshness + bench-honesty + green-suite gate over the committed capsule corpus.

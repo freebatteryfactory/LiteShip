@@ -8,6 +8,6 @@
 
 > **DecodeError** = `ShipCapsuleDecodeError`
 
-Defined in: [core/src/ship-capsule.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L224)
+Defined in: [core/src/authoring/ship-capsule.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ship-capsule.ts#L225)
 
 Tagged failure variants [ShipCapsule.decode](../../../variables/ShipCapsule.md#decode) can produce.

@@ -6,7 +6,7 @@
 
 # Type Alias: ContentAddress
 
-> **ContentAddress** = `_ContentAddress`
+> **ContentAddress** = [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [genui/src/brands.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/brands.ts#L15)
 

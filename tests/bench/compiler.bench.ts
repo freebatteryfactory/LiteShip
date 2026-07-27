@@ -3,7 +3,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Boundary, Token, Theme, Style } from '@czap/core';
+import { defineBoundary, defineToken, defineTheme, defineStyle } from '@liteship/core';
 import {
   CSSCompiler,
   GLSLCompiler,
@@ -12,7 +12,7 @@ import {
   ThemeCSSCompiler,
   StyleCSSCompiler,
   dispatch,
-} from '@czap/compiler';
+} from '@liteship/compiler';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -20,7 +20,7 @@ const bench = new Bench({ warmupIterations: 100 });
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
@@ -29,7 +29,7 @@ const boundary = Boundary.make({
   ] as const,
 });
 
-const token = Token.make({
+const token = defineToken({
   name: 'primary',
   category: 'color',
   axes: ['theme'] as const,
@@ -37,7 +37,7 @@ const token = Token.make({
   fallback: '#00e5ff',
 });
 
-const theme = Theme.make({
+const theme = defineTheme({
   name: 'brand',
   variants: ['light', 'dark'] as const,
   tokens: {
@@ -50,13 +50,13 @@ const theme = Theme.make({
   },
 });
 
-const style = Style.make({
+const style = defineStyle({
   boundary,
   base: {
     properties: {
       'font-size': '16px',
       padding: '8px',
-      color: 'var(--czap-primary)',
+      color: 'var(--liteship-primary)',
     },
   },
   states: {

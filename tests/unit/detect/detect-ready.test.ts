@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 /**
- * `onDetectReady` — the typed `czap:detect-ready` subscription `@czap/detect`
- * owns (event name + dual-dispatch invariant), consumed by `@czap/astro`'s GPU
+ * `onDetectReady` — the typed `liteship:detect-ready` subscription `@liteship/detect`
+ * owns (event name + dual-dispatch invariant), consumed by `@liteship/astro`'s GPU
  * directive instead of a raw string literal (F-4).
  */
 
@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe('onDetectReady', () => {
   test('exposes the canonical event name', () => {
-    expect(DETECT_READY_EVENT).toBe('czap:detect-ready');
+    expect(DETECT_READY_EVENT).toBe('liteship:detect-ready');
   });
 
   test('invokes the callback once with the resolved detail (success path)', () => {

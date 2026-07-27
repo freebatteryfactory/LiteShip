@@ -1,5 +1,5 @@
 /**
- * @czap/genui guards — isPlainObject structural predicate (parse/validate owner).
+ * @liteship/genui guards — isPlainObject structural predicate (parse/validate owner).
  *
  * @module
  */
@@ -23,13 +23,9 @@ describe('isPlainObject', () => {
     expect(isPlainObject([1, 2, 3])).toBe(false);
   });
 
-  it('is STRUCTURAL, not nominal — a class instance (non-null, non-array object) is true', () => {
-    // The copies parse/validate lean on are `typeof === 'object' && !== null &&
-    // !isArray` — a purely structural check. A class instance IS a non-null,
-    // non-array object, so it passes. (In practice the copies only see
-    // JSON.parse output, which never yields class instances.)
+  it('rejects class instances so model-controlled input stays portable data', () => {
     class Widget {}
-    expect(isPlainObject(new Widget())).toBe(true);
+    expect(isPlainObject(new Widget())).toBe(false);
   });
 
   it('is false for a function', () => {

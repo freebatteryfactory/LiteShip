@@ -8,7 +8,7 @@
 
 > **Result**\<`B`\> = `SpeculativeResult`\<`B`\>
 
-Defined in: [core/src/speculative.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/speculative.ts#L186)
+Defined in: [core/src/reactive/speculative.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/speculative.ts#L187)
 
 Prediction result from `evaluate()` — current state, optional prefetched next state, and confidence.
 
@@ -16,4 +16,4 @@ Prediction result from `evaluate()` — current state, optional prefetched next 
 
 ### B
 
-`B` *extends* [`Shape`](../../Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](../../../type-aliases/Boundary.md)

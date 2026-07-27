@@ -1,6 +1,7 @@
+// PROVES-CHECK: check/gates
 /**
- * The HOST injection path (`packages/cli/src/lib/repo-ir-gauntlet.ts`, Slice B/C) —
- * the CLI-only wiring that builds the repo-IR via `@czap/audit`, host-injects the
+ * The HOST injection path (`packages/cli/src/internal/repo-ir-gauntlet.ts`, Slice B/C) —
+ * the CLI-only wiring that builds the repo-IR via `@liteship/audit`, host-injects the
  * LiteShip `invariant-regex` oracle, composes the avionics opt-in gates, and runs
  * the gauntlet with the IR threaded in.
  *
@@ -15,7 +16,7 @@
  *    PURE + DETERMINISTIC (a property over arbitrary text).
  *
  *  - THE IR BUILD: `buildRepoIRForRepo` materializes a real `RepoIR` over a tiny but
- *    REAL `@czap/`-scoped fixture, carrying BOTH the audit AST oracle's facts AND the
+ *    REAL `@liteship/`-scoped fixture, carrying BOTH the audit AST oracle's facts AND the
  *    host regex oracle's `invariant-regex` facts (the triangulation substrate), and is
  *    deterministic over the source bytes (the same bytes → an identical IR).
  *
@@ -30,7 +31,7 @@
  *    mutation-score baseline, and a corrupt equivalent-mutant registry are TAGGED
  *    throws (a corrupt artifact must be visible, never a silent green).
  *
- * The fixture is a hermetic tmp repo (a single `@czap/` package + the committed
+ * The fixture is a hermetic tmp repo (a single `@liteship/` package + the committed
  * traceability ledger + a standards snapshot generated from the live surface so the
  * always-on raccoon-rule gate has matching ground truth). No network; the injected
  * clock makes every run byte-reproducible.
@@ -43,26 +44,54 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { scaledTimeout, repoRoot } from '../../../../vitest.shared.js';
-import { isTaggedError } from '@czap/error';
-import { INVARIANTS } from '@czap/command/invariants';
+import { isTaggedError } from '@liteship/error';
+import { CHECK_REGISTRY, SCRIPT_EXEMPTIONS } from '@liteship/command';
+import { INVARIANTS } from '@liteship/command/invariants';
 import { readFileSync } from 'node:fs';
 import {
   readLiveStandardsSurface,
   serializeStandardsSurface,
   STANDARDS_SNAPSHOT_PATH,
   type GitShowReader,
-} from '../../../../packages/cli/src/lib/standards-surface.js';
-import type { Fact, FileId } from '@czap/gauntlet';
+} from '../../../../packages/cli/src/internal/standards-surface.js';
+import {
+  FEATURE_EDGE_ENUMERATORS,
+  FEATURE_EDGE_FAMILIES,
+  type Fact,
+  type FeatureEdgeFacts,
+  type FileId,
+} from '@liteship/gauntlet';
 import {
   liteshipRegexOracle,
   buildRepoIRForRepo,
   runGauntletWithRepoIR as runGauntletWithRepoIRRaw,
   DEFAULT_EXPORT_CHECK_EXCLUDED,
   type RepoIRGauntletCacheOptions,
-} from '../../../../packages/cli/src/lib/repo-ir-gauntlet.js';
+} from '../../../../packages/cli/src/internal/repo-ir-gauntlet.js';
+import { parseSemanticAssuranceReceipt } from '../../../../packages/cli/src/internal/semantic-assurance-receipt.js';
+import { GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS } from '../../../../packages/cli/src/internal/semantic-assurance-campaigns.generated.js';
 
 /** The injected wall-clock — every run is reproducible against THIS date (two-clock law). */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
+const FEATURE_EDGE_DIGEST = `sha256:${'0'.repeat(64)}` as const;
+const FIXTURE_FEATURE_EDGES: FeatureEdgeFacts = {
+  _tag: 'feature-edge-facts',
+  families: FEATURE_EDGE_FAMILIES.map((family) => ({
+    family,
+    observations: [],
+    subjectCoverage: {
+      status: 'complete',
+      enumerator: FEATURE_EDGE_ENUMERATORS[family],
+      enumeratedCount: 0,
+      censusDigest: FEATURE_EDGE_DIGEST,
+    },
+  })),
+  aggregate: {
+    enumerator: 'feature-edge/family-set-v1',
+    enumeratedCount: 0,
+    censusDigest: FEATURE_EDGE_DIGEST,
+  },
+};
 
 /**
  * The raccoon-rule backstop now diffs the LIVE surface against a PRIOR, INDEPENDENT
@@ -85,6 +114,7 @@ function runGauntletWithRepoIR(
 ): ReturnType<typeof runGauntletWithRepoIRRaw> {
   return runGauntletWithRepoIRRaw(repoRoot, now, globs, {
     standards: { gitShow: fixtureBaseGitShow },
+    featureEdges: FIXTURE_FEATURE_EDGES,
     ...cacheOpts,
   });
 }
@@ -99,7 +129,7 @@ const HEAVY = scaledTimeout(120_000);
 
 /** Invoke the host oracle the way `buildRepoIR` does, over an in-memory file. */
 function runOracle(file: FileId, text: string): readonly Fact[] {
-  return liteshipRegexOracle({ file, text, packageName: '@czap/example', sourceFile: undefined });
+  return liteshipRegexOracle({ file, text, packageName: '@liteship/example', sourceFile: undefined });
 }
 
 /** The per-line property facts emitted under a given oracle property (the regex fired). */
@@ -139,11 +169,11 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
     expect(propertyFacts(facts, 'require-call')).toHaveLength(0);
   });
 
-  it('a NO_DEFAULT_EXPORT-EXCLUDED file emits the exclude marker, NOT a property fact (exclude-vs-miss seam)', () => {
-    // The canonical NO_DEFAULT_EXPORT rule excludes Astro client-directive files.
+  it('a NO_DEFAULT_EXPORT-exempt file emits the exemption marker, NOT a property fact', () => {
+    // The canonical NO_DEFAULT_EXPORT rule exempts Astro client-directive files.
     const excluded = 'packages/astro/src/client-directives/example.ts' as FileId;
     const facts = runOracle(excluded, 'export default function directive() {}\n');
-    // No property fact — the regex is silent BY DESIGN on an excluded file.
+    // No property fact — the regex is silent BY DESIGN on an exempt file.
     expect(propertyFacts(facts, 'is-default-export')).toHaveLength(0);
     // The self-describing marker IS emitted, naming WHICH rule excluded the file.
     const markers = facts.filter((f) => f.property === DEFAULT_EXPORT_CHECK_EXCLUDED);
@@ -153,7 +183,7 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
     expect(markers[0]!.oracleId).toBe('invariant-regex');
   });
 
-  it('the exclude marker reads the canonical rule name from the live INVARIANTS ledger, not a hardcoded string', () => {
+  it('the exemption marker reads the canonical rule name from the live INVARIANTS ledger, not a hardcoded string', () => {
     // The marker value must be the literal `name` the committed ledger carries — proving
     // the oracle references the source of truth, never a hand-copied fork.
     const canonical = INVARIANTS.find((r) => r.name === 'NO_DEFAULT_EXPORT');
@@ -205,14 +235,32 @@ describe('liteshipRegexOracle — the host-injected invariant-regex oracle', () 
 // 2 + 3. THE IR BUILD + THE RUN — over a hermetic real fixture
 // ───────────────────────────────────────────────────────────────────────────
 
-/** A minimal `@czap/`-scoped package manifest (the profile globs `packages/*`). */
+/** A minimal `@liteship/`-scoped package manifest (the profile globs `packages/*`). */
 function pkgManifest(name: string): string {
   return JSON.stringify({ name, version: '0.0.0', exports: { '.': { development: './src/index.ts' } } });
 }
 
+/**
+ * A hermetic LiteShip root still has to satisfy the production governance-host
+ * shape. Derive its script keys from the same registry/exemption partition the
+ * host reads; values are inert because this suite never executes them.
+ */
+function fixtureRootManifest(): string {
+  const registered = CHECK_REGISTRY.flatMap((check) =>
+    check.contexts.includes('repository') && check.execution.kind === 'root-script' ? [check.execution.script] : [],
+  );
+  const scripts = Object.fromEntries(
+    [...new Set([...registered, ...SCRIPT_EXEMPTIONS.map((entry) => entry.script)])].map((script) => [
+      script,
+      'fixture-only',
+    ]),
+  );
+  return JSON.stringify({ name: 'liteship-fixture-root', private: true, type: 'module', scripts });
+}
+
 /** Lay a fixture tree under a fresh tmp root and return the absolute root path. */
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-rig-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-rig-'));
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
     mkdirSync(resolve(abs, '..'), { recursive: true });
@@ -236,6 +284,12 @@ function makeFixture(files: Record<string, string>): string {
     'traces:\n  - id: INV-EX-LAW\n    waiver:\n      owner: fixture\n      justification: "hermetic test fixture"\n      expiry: "2999-01-01"\n',
     'utf8',
   );
+  mkdirSync(join(root, 'benchmarks'), { recursive: true });
+  writeFileSync(
+    join(root, 'benchmarks', 'distributions.json'),
+    JSON.stringify({ schemaVersion: 2, distributions: [] }),
+    'utf8',
+  );
   const liveSurface = readLiveStandardsSurface(root, NOW);
   writeFileSync(join(root, 'traceability', 'standards-snapshot.json'), serializeStandardsSurface(liveSurface), 'utf8');
   return root;
@@ -244,8 +298,8 @@ function makeFixture(files: Record<string, string>): string {
 /** The single-package source fixture: one named export + an internal relative import. */
 function sourceFiles(): Record<string, string> {
   return {
-    'package.json': JSON.stringify({ name: 'czap-fixture-root', private: true, type: 'module' }),
-    'packages/example/package.json': pkgManifest('@czap/example'),
+    'package.json': fixtureRootManifest(),
+    'packages/example/package.json': pkgManifest('@liteship/example'),
     'packages/example/src/index.ts': "import { helper } from './helper.js';\nexport const value = helper() + 1;\n",
     'packages/example/src/helper.ts': 'export function helper(): number {\n  return 41;\n}\n',
   };
@@ -444,7 +498,7 @@ describe('runGauntletWithRepoIR — build IR + always-on facts + run + receipt',
         'pnpm-workspace.yaml': "packages:\n  - 'packages/*'\n",
         'pnpm-lock.yaml': "lockfileVersion: '9.0'\nimporters:\n  .:\npackages:\n",
         'packages/example/package.json': JSON.stringify({
-          name: '@czap/example',
+          name: '@liteship/example',
           version: '0.0.0',
           private: true,
           exports: { '.': { development: './src/index.ts' } },
@@ -463,16 +517,33 @@ describe('runGauntletWithRepoIR — build IR + always-on facts + run + receipt',
 // ───────────────────────────────────────────────────────────────────────────
 
 describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seams present)', () => {
+  const campaignEntrypointFixtures = Object.fromEntries(
+    GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS.flatMap((campaign) => [
+      [
+        `${campaign.packageDir}/package.json`,
+        JSON.stringify({ name: campaign.owner, version: '0.0.0', private: true, type: 'module' }),
+      ],
+      ...campaign.entrypoints.map(
+        (entrypoint, index) =>
+          [entrypoint, `export type SemanticCampaignFixture${index} = ${JSON.stringify(campaign.id)};\n`] as const,
+      ),
+    ]),
+  );
+
   it(
     '--mutate composes the mutation gate; an absent baseline/registry yields an empty (no-floor) run',
     async () => {
-      // The fixture has NONE of the real LiteShip L4 seam files, so `l4SeamTargets`
-      // produces zero targets (every candidate recorded as unreadable → no per-mutant
-      // subprocess), exercising the host's mutation-fact assembly + the absent-artifact
-      // branches of readMutationScoreBaseline / readEquivalentMutantRegistry.
-      const root = freshFixture();
+      // The fixture has the generated campaign entrypoints but no applicable runtime
+      // mutants. The run must record that zero-applicability census rather than silently
+      // disappearing, while also exercising the absent-artifact baseline/registry paths.
+      const root = freshFixture(campaignEntrypointFixtures);
       const result = await runGauntletWithRepoIR(root, NOW, undefined, { cacheCwd: root, withMutate: true });
       expect(Array.isArray(result.findings)).toBe(true);
+      expect(
+        parseSemanticAssuranceReceipt(
+          JSON.parse(readFileSync(join(root, 'reports', 'semantic-assurance-mutation.json'), 'utf8')),
+        ),
+      ).toMatchObject({ mode: 'mutation', verdict: 'pass' });
     },
     HEAVY,
   );
@@ -480,9 +551,14 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
   it(
     '--mcdc composes the MC/DC gate over the same empty-seam path',
     async () => {
-      const root = freshFixture();
+      const root = freshFixture(campaignEntrypointFixtures);
       const result = await runGauntletWithRepoIR(root, NOW, undefined, { cacheCwd: root, withMcdc: true });
       expect(Array.isArray(result.findings)).toBe(true);
+      expect(
+        parseSemanticAssuranceReceipt(
+          JSON.parse(readFileSync(join(root, 'reports', 'semantic-assurance-mcdc.json'), 'utf8')),
+        ),
+      ).toMatchObject({ mode: 'mcdc', verdict: 'pass' });
     },
     HEAVY,
   );
@@ -494,6 +570,7 @@ describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seam
       // READERS' success path (each finite-number entry accepted, the registry built) — the
       // ratchet floor is armed even though this fixture has no live L4 seams to score.
       const root = freshFixture({
+        ...campaignEntrypointFixtures,
         'benchmarks/mutation-score.json': JSON.stringify({ 'packages/example/src/index.ts': 0.9 }),
         'benchmarks/mutation-equivalents.json': JSON.stringify({ entries: [] }),
       });
@@ -572,7 +649,7 @@ describe('runGauntletWithRepoIR — fail-loud edges (tagged throws, never a sile
 
 // ───────────────────────────────────────────────────────────────────────────
 // 5. THE --spine-relation HOST PATH — over the REAL repo (needs the real _spine
-//    mirror + runtime surface; a hermetic @czap/example fixture has neither).
+//    mirror + runtime surface; a hermetic @liteship/example fixture has neither).
 // ───────────────────────────────────────────────────────────────────────────
 
 describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a planted drift (#156)', () => {
@@ -584,7 +661,7 @@ describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a p
   const realSnapshotBase: GitShowReader = (r) => readFileSync(join(r, STANDARDS_SNAPSHOT_PATH), 'utf8');
 
   it(
-    'a planted Millis-brand-loss drift reds the spine-relation gate → `czap check --ir --spine-relation` BLOCKS',
+    'a planted Millis-brand-loss drift reds the spine-relation gate → `liteship check gates --ir --spine-relation` BLOCKS',
     async () => {
       const drifted = readFileSync(CORE_DTS, 'utf8').replace(
         'readonly durationMs: Millis;',
@@ -595,6 +672,7 @@ describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a p
         noCache: true,
         withSpineRelation: true,
         spineRelation: { overlay: { [CORE_DTS]: drifted } },
+        featureEdges: FIXTURE_FEATURE_EDGES,
         standards: { gitShow: realSnapshotBase },
       });
       // The host COMPOSED the gate and INJECTED the facts: the VideoConfig mirror (durationMs

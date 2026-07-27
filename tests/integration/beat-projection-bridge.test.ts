@@ -13,10 +13,10 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { Track, compileScene, SceneRuntime, resolveBeatProjectionToSceneBeats } from '@czap/scene';
-import type { SceneContract, BeatComponent } from '@czap/scene';
-import type { BeatMarkerSet } from '@czap/_spine';
-import { detectBeats } from '@czap/assets';
+import { BeatPart, Track, compileScene, SceneRuntime, resolveBeatProjectionToSceneBeats } from '@liteship/scene';
+import type { SceneContract, BeatComponent } from '@liteship/scene';
+import type { BeatMarkerSet } from '@liteship/_spine';
+import { detectBeats } from '@liteship/assets';
 
 function sceneWith(beats: readonly BeatComponent[]): SceneContract {
   const heroId = Track.videoId('hero');
@@ -60,10 +60,10 @@ describe('beat-projection bridge — raw projection to scene-ready markers', () 
     const compiled = compileScene(sceneWith(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
-      const beatEntities = handle.world.query('Beat');
+      const beatEntities = handle.world.query(BeatPart);
       expect(beatEntities.length).toBe(3);
       const times = beatEntities
-        .map((e) => (e.components.get('Beat') as { timeMs: number }).timeMs)
+        .map((e) => e.get(BeatPart).timeMs)
         .sort((a, b) => a - b);
       expect(times).toEqual([0, 500, 1000]);
     } finally {
@@ -90,7 +90,7 @@ describe('beat-projection bridge — raw projection to scene-ready markers', () 
     const compiled = compileScene(sceneWith(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
-      const beatEntities = handle.world.query('Beat');
+      const beatEntities = handle.world.query(BeatPart);
       expect(beatEntities.length).toBe(beats.length);
     } finally {
       await handle.release();

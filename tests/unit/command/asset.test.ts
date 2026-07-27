@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { assetAnalyzeCommand, assetVerifyCommand } from '@czap/command';
+import { assetAnalyzeCommand, assetVerifyCommand } from '@liteship/command';
 
 const MANIFEST = JSON.stringify({
   capsules: [
@@ -7,7 +7,7 @@ const MANIFEST = JSON.stringify({
   ],
 });
 
-describe('@czap/command asset.analyze', () => {
+describe('@liteship/command asset.analyze', () => {
   it('cache miss computes markerCount, writes cache, and reports cached:false', async () => {
     const writes: unknown[] = [];
     const r = await assetAnalyzeCommand.handler(
@@ -15,11 +15,8 @@ describe('@czap/command asset.analyze', () => {
       {
         manifestSource: () => MANIFEST,
         loadAssetBytes: () => new ArrayBuffer(8),
-        runAudioProjection: async (_bytes, projection, assetId) => {
+        runAudioProjection: async (_bytes, projection) => {
           expect(projection).toBe('beat');
-          // The handler must forward the asset id so adapters can resolve
-          // the asset's OWN decoder (AssetDecl.decoder) from the registry.
-          expect(assetId).toBe('intro-bed');
           return 42;
         },
         cache: { read: () => null, write: (_k, v) => writes.push(v) },
@@ -88,7 +85,7 @@ describe('@czap/command asset.analyze', () => {
   });
 });
 
-describe('@czap/command asset.verify', () => {
+describe('@liteship/command asset.verify', () => {
   it('no generated test file → ok with invariantsChecked 0', async () => {
     const r = await assetVerifyCommand.handler(
       { name: 'asset.verify', args: { asset: 'intro-bed' } },

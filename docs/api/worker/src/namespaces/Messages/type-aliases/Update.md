@@ -8,6 +8,6 @@
 
 > **Update** = `WorkerUpdate`
 
-Defined in: [worker/src/messages.ts:375](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L375)
+Defined in: [worker/src/messages.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L411)
 
 Incremental update applied post-bootstrap.

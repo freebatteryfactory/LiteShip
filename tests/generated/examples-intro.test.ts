@@ -1,8 +1,17 @@
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
-import { contentAddressOf } from '../../packages/core/src/content-address.js';
+import { contentAddressOf } from '../../packages/core/src/evidence/content-address.js';
 import { compileIntro } from '../../examples/scenes/intro.js';
 import { SceneRuntime } from '../../packages/scene/src/runtime.js';
+import {
+  AudioSourcePart,
+  BlendPart,
+  FrameRangePart,
+  GainPart,
+  IntensityPart,
+  OpacityPart,
+  PhasePart,
+} from '../../packages/scene/src/parts.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('examples.intro', () => {
@@ -17,7 +26,13 @@ describe('examples.intro', () => {
   // The DURABLE per-entity outputs the scene systems persist via setComponent
   // (VideoSystem _opacity, AudioSystem _phase/_gain, SyncSystem _intensity,
   // TransitionSystem _blend). Reading these is the observable frame state.
-  const FRAME_COMPONENTS = ['_opacity', '_phase', '_gain', '_intensity', '_blend'];
+  const FRAME_COMPONENTS = [
+    ['_opacity', OpacityPart],
+    ['_phase', PhasePart],
+    ['_gain', GainPart],
+    ['_intensity', IntensityPart],
+    ['_blend', BlendPart],
+  ];
 
   // Snapshot one frame to a plain, ordered, content-addressable structure:
   // every entity's id + the durable output components present on it, plus the
@@ -25,16 +40,16 @@ describe('examples.intro', () => {
   // forks the address.
   const snapshotFrame = async (handle) => {
     // World.query is synchronous — read the ticked FrameRange entities directly.
-    const entities = handle.world.query('FrameRange');
-    const rows = entities
-      .map((e) => {
-        const out = {};
-        for (const key of FRAME_COMPONENTS) {
-          const v = e.components.get(key);
-          if (v !== undefined) out[key] = v;
-        }
-        return { id: String(e.id), out };
-      })
+    const rowsById = new Map(
+      handle.world.query(FrameRangePart).map((e) => [String(e.id), { id: String(e.id), out: {} }]),
+    );
+    for (const [key, part] of FRAME_COMPONENTS) {
+      for (const e of handle.world.query(part)) {
+        const row = rowsById.get(String(e.id));
+        if (row !== undefined) row.out[key] = e.get(part);
+      }
+    }
+    const rows = [...rowsById.values()]
       .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     const svg = Array.from(handle.svgAttrs().entries())
       .map(([id, attrs]) => ({ id: String(id), attrs }))
@@ -88,10 +103,10 @@ describe('examples.intro', () => {
         const videoMs = (frame / fps) * 1000;
         // Audio entities in range carry a non-zero _phase relative to their
         // FrameRange.from; reconstruct absolute audio ms and compare to videoMs.
-        const audioEntities = handle.world.query('AudioSource', 'FrameRange', '_phase');
+        const audioEntities = handle.world.query(AudioSourcePart, FrameRangePart, PhasePart);
         for (const e of audioEntities) {
-          const range = e.components.get('FrameRange');
-          const phase = e.components.get('_phase');
+          const range = e.get(FrameRangePart);
+          const phase = e.get(PhasePart);
           if (frame < range.from || frame >= range.to) continue; // not playing this frame
           const audioMs = (phase / samplesPerFrame) * (1000 / fps) + (range.from / fps) * 1000;
           expect(Math.abs(audioMs - videoMs)).toBeLessThanOrEqual(1);

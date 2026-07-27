@@ -1,31 +1,37 @@
 /**
- * Directive boot scanner -- activates czap client directives on plain
+ * Directive boot scanner -- activates liteship client directives on plain
  * HTML elements and `.astro` component output.
  *
  * Astro's `addClientDirective` API only fires custom `client:*`
  * directives on framework-component islands; on plain elements the
  * attribute serializes verbatim into the HTML and nothing runs, and on
- * `.astro` components it vanishes entirely. czap's island primitive is
- * a plain annotated div (see `Satellite.astro`), so the integration
+ * `.astro` components it vanishes entirely. liteship's island primitive is
+ * a plain annotated div (see `Adaptive.astro`), so the integration
  * injects this scanner on every page to activate directive markers the
  * Astro runtime never sees.
  *
  * Two marker forms are scanned (both first-class per ADR-0028):
  *
- * - `data-czap-directive="satellite"` -- explicit marker, emitted by
- *   `satelliteAttrs()`; space-separated tokens allowed.
- * - literal `client:satellite`-style attributes -- compiled to runtime
- *   `data-czap-*` roots and booted on plain elements. Astro strips
+ * - `data-liteship-directive="adaptive"` -- explicit marker, emitted by
+ *   `adaptiveAttrs()`; space-separated tokens allowed.
+ * - literal `client:adaptive`-style attributes -- compiled to runtime
+ *   `data-liteship-*` roots and booted on plain elements. Astro strips
  *   `client:*` from real framework islands at render time, so the
  *   scanner cannot double-activate an island.
  *
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import { DIRECTIVE_ATTRIBUTE_REGISTRY, DIRECTIVE_MARKER_ATTRIBUTE, implicitDirectiveSelectors } from './slots.js';
+import { Diagnostics } from '@liteship/core';
+import {
+  collectDirectiveRootsForName,
+  DIRECTIVE_ATTRIBUTE_REGISTRY,
+  DIRECTIVE_MARKER_ATTRIBUTE,
+  elementHasDirectiveRoot,
+  isClaimedDirectiveDescendant,
+} from './slots.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
-import { boundNames, unmarkBound } from './directive-bound.js';
+import { boundNames, DIRECTIVE_NAMES, unmarkBound } from './directive-bound.js';
 import type { DirectiveName, DirectiveEntry } from './directive-bound.js';
 
 // The bound-marker primitives live in the dependency-free leaf `./directive-bound.js`
@@ -36,40 +42,38 @@ export type { DirectiveName } from './directive-bound.js';
 export { bootDirectiveEntry, markDirectiveBound } from './directive-bound.js';
 
 const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
+  adaptive: 'adaptive',
   stream: 'stream',
   llm: 'llm',
   worker: 'workers',
   gpu: 'gpu',
   wasm: 'wasm',
-  graph: 'graph',
   motion: 'motion',
 };
 
 function directiveEnableFix(name: DirectiveName): string {
   const configKey = DIRECTIVE_CONFIG_KEYS[name];
   if (!configKey) {
-    return 'Fix: ensure the directive is registered in czap({ ... }).';
+    return `Fix: install the LiteShip Astro integration; ${name} is registered automatically, or remove its marker.`;
   }
   const coepNote = name === 'worker' ? ' COOP/COEP response headers are emitted automatically.' : '';
-  return `Fix: czap({ ${configKey}: { enabled: true } }).${coepNote}`;
+  const value = name === 'adaptive' ? 'true' : '{ enabled: true }';
+  return `Fix: liteship({ ${configKey}: ${value} }).${coepNote}`;
 }
 
-const DIRECTIVE_NAMES: readonly DirectiveName[] = [
-  'satellite',
-  'stream',
-  'llm',
-  'worker',
-  'gpu',
-  'wasm',
-  'graph',
-  'motion',
-  'svg',
-];
+/**
+ * The dynamic-import map the scanner boots each directive through — each thunk
+ * resolves to a client-directive module's `{ default }` entry. Unexported: a
+ * `Partial` of it is the injectable seam on {@link scanAndBootDirectives}, so a
+ * test scripts a specific directive (a throwing entry, a no-op) without
+ * interaction-mocking the `../client-directives/*.js` modules.
+ */
+type DirectiveLoaders = Record<DirectiveName, () => Promise<{ readonly default: DirectiveEntry }>>;
 
 // Static thunk map so the bundler code-splits each directive into the
 // same chunk Astro's island path would load.
-const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: DirectiveEntry }>> = {
-  satellite: () => import('../client-directives/satellite.js'),
+const LOADERS: DirectiveLoaders = {
+  adaptive: () => import('../client-directives/adaptive.js'),
   stream: () => import('../client-directives/stream.js'),
   llm: () => import('../client-directives/llm.js'),
   worker: () => import('../client-directives/worker.js'),
@@ -88,23 +92,8 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
-// CSS.escape is unnecessary: every selector is built from the fixed DirectiveName
-// union, never from page content.
-function directiveSelector(name: DirectiveName): string {
-  const canonical = `[data-czap-directive~="${name}"]`;
-  const legacy = `[client\\:${name}]`;
-  return [canonical, legacy, ...implicitDirectiveSelectors(name)].join(',');
-}
-
 function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {
-  const selector = directiveSelector(name);
-  const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
-  // querySelectorAll only sees descendants; a marked element passed AS the
-  // scan root (e.g. a freshly swapped-in fragment) must activate too.
-  if (root instanceof HTMLElement && root.matches(selector)) {
-    matches.unshift(root);
-  }
-  return matches;
+  return [...collectDirectiveRootsForName(name, root)];
 }
 
 function collectElements(root: ParentNode, selector: string): HTMLElement[] {
@@ -126,25 +115,28 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
   const explicitAttributes = new Set(
     Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
       .flat()
-      .filter((entry) => !entry.implicitBoot)
+      .filter((entry) => entry.scope === 'root' && !entry.implicitBoot)
       .map((entry) => entry.attribute),
   );
 
   for (const attribute of explicitAttributes) {
     for (const element of collectElements(root, `[${attribute}]`)) {
-      // Suppress ONLY when an explicit directive marker is present. An implicit peer
-      // attribute (e.g. `data-czap-shader-src` for gpu) does NOT consume the boundary
-      // payload -- only satellite/worker evaluate it -- so a bare boundary sitting next
-      // to a gpu shader still needs its marker warning, not silence.
+      // Suppress when an explicit marker owns this element or when the registry proves
+      // it is a complete descendant-owned payload (SVG). An unrelated implicit peer
+      // attribute (e.g. `data-liteship-shader-src`) does not consume the boundary.
       if (hasDirectiveMarker(element)) {
         continue;
       }
-      Diagnostics.warnOnce({
-        source: 'czap/astro.directive-boot',
-        code: `directive-attribute-requires-marker:${attribute}`,
+      if (isClaimedDirectiveDescendant(element, attribute)) {
+        continue;
+      }
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.directive-boot',
+        code: 'astro/directive-boot/directive-attribute-requires-marker',
         message:
-          `Found ${attribute} without a czap directive marker, so the runtime will not infer which directive to boot. ` +
-          `Fix: spread satelliteAttrs({ boundary }) / <Satellite>, or add data-czap-directive="satellite" or "worker".`,
+          `Found ${attribute} without a liteship directive marker, so the runtime will not infer which directive to boot. ` +
+          `Fix: spread adaptiveAttrs({ boundary }) / <Adaptive>, add data-liteship-directive="adaptive" or "worker", ` +
+          `or, for SVG state, place the boundary on a data-liteship-entity + data-liteship-svg child inside a marked SVG root.`,
         detail: { attribute },
       });
     }
@@ -159,13 +151,21 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
  *
  * The no-op `load` thunk passed to each directive entry is correct:
  * every runtime init does its real work synchronously off the element's
- * `data-czap-*` attributes and only calls `load()` for parity with
+ * `data-liteship-*` attributes and only calls `load()` for parity with
  * Astro's directive contract.
+ *
+ * `loaders` overrides specific directive entries (merged over the real
+ * code-split {@link LOADERS}); it defaults to `{}`, so production boots the
+ * real client-directive modules unchanged. Tests pass scripted entries to
+ * exercise the scanner's collision / transient-failure handling without
+ * interaction-mocking the client-directive modules.
  */
 export async function scanAndBootDirectives(
   enabled: readonly DirectiveName[],
   root: ParentNode = document,
+  loaders: Partial<DirectiveLoaders> = {},
 ): Promise<void> {
+  const activeLoaders: DirectiveLoaders = { ...LOADERS, ...loaders };
   warnExplicitOnlyDirectiveAttributes(root);
 
   const enabledSet = new Set(enabled.filter(isDirectiveName));
@@ -179,10 +179,11 @@ export async function scanAndBootDirectives(
     }
 
     if (!enabledSet.has(name)) {
-      Diagnostics.warnOnce({
-        source: 'czap/astro.directive-boot',
-        code: `directive-not-enabled:${name}`,
-        message: `Found ${name} directive markers but the ${name} directive is not enabled in the czap integration config. ${directiveEnableFix(name)}`,
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/astro.directive-boot',
+        code: 'astro/directive-boot/directive-not-enabled',
+        message: `Found ${name} directive markers but the ${name} directive is not enabled in the liteship integration config. ${directiveEnableFix(name)}`,
+        detail: { name },
       });
       continue;
     }
@@ -195,18 +196,19 @@ export async function scanAndBootDirectives(
       // own tier/capability gate no-ops before it ever boots): if this element ALSO
       // carries a marker for another ENABLED directive, warn -- each directive takes
       // over the host, so two on one element silently fight and one loses.
-      const colliding = [...enabledSet].filter((other) => other !== name && element.matches(directiveSelector(other)));
+      const colliding = [...enabledSet].filter((other) => other !== name && elementHasDirectiveRoot(other, element));
       if (colliding.length > 0) {
-        // Sort the conflicting names ONCE so the dedup `code` is order-independent.
+        // Sort the conflicting names ONCE so the diagnostic detail and message are deterministic.
         const conflicting = [...colliding, name].sort();
-        Diagnostics.warnOnce({
-          source: 'czap/astro.directive-boot',
-          code: `directive-collision:${conflicting.join('+')}`,
+        Diagnostics.warnOnceRegistered({
+          source: 'liteship/astro.directive-boot',
+          code: 'astro/directive-boot/directive-collision',
           message:
-            `Element carries conflicting czap directives (${conflicting.join(', ')}) -- ` +
+            `Element carries conflicting liteship directives (${conflicting.join(', ')}) -- ` +
             `each directive takes over the element, so they collide and one silently loses ` +
-            `(e.g. a satellite consumes the node a GPU shader needs). ` +
+            `(e.g. an adaptive consumes the node a GPU shader needs). ` +
             `Fix: put each directive on its own element.`,
+          detail: { conflicting },
         });
       }
       // Boot through the shared directive entry, which owns the idempotence guard
@@ -214,17 +216,17 @@ export async function scanAndBootDirectives(
       // failed activation unmarks below so a later re-scan (astro:after-swap) can
       // retry after a transient chunk-load error.
       activations.push(
-        LOADERS[name]()
+        activeLoaders[name]()
           .then((mod) => {
             mod.default(() => Promise.resolve(), {}, element);
           })
           .catch((error: unknown) => {
             unmarkBound(element, name);
-            Diagnostics.warn({
-              source: 'czap/astro.directive-boot',
-              code: 'directive-activation-failed',
+            Diagnostics.warnRegistered({
+              source: 'liteship/astro.directive-boot',
+              code: 'astro/directive-boot/directive-activation-failed',
               message: `Failed to activate ${name} directive.`,
-              detail: error instanceof Error ? error.message : String(error),
+              detail: { name, cause: error instanceof Error ? error.message : String(error) },
             });
           }),
       );
@@ -244,17 +246,17 @@ export async function scanAndBootDirectives(
  * single ordered swap pipeline (`./swap-pipeline.ts`, F-1). On a swap, fresh
  * server HTML never carries the bound attribute, so new elements activate while
  * `transition:persist` elements are skipped (their directives re-read attributes
- * via the `czap:reinit` step of the same pipeline).
+ * via the `liteship:reinit` step of the same pipeline).
  */
 export function bootstrapDirectives(enabled: readonly DirectiveName[]): void {
   if (typeof window === 'undefined') {
     return;
   }
 
-  if (readRuntimeGlobal('__CZAP_DIRECTIVE_BOOTSTRAPPED__', isBoolean)) {
+  if (readRuntimeGlobal('__LITESHIP_DIRECTIVE_BOOTSTRAPPED__', isBoolean)) {
     return;
   }
-  writeRuntimeGlobal('__CZAP_DIRECTIVE_BOOTSTRAPPED__', true);
+  writeRuntimeGlobal('__LITESHIP_DIRECTIVE_BOOTSTRAPPED__', true);
 
   const scan = (): void => {
     void scanAndBootDirectives(enabled);

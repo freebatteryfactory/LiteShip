@@ -2,7 +2,7 @@
  * Filesystem walk — the single recursive `readdirSync` file walker (the [DUP]
  * owner for the ~15 hand-rolled walkers across astro / cli / command / vite /
  * scripts). NODE-ONLY: it imports `node:fs`/`node:path`, so it rides a dedicated
- * `@czap/core/fs-walk` subpath export and is DELIBERATELY absent from the
+ * `@liteship/core/fs-walk` subpath export and is DELIBERATELY absent from the
  * browser-safe main index (the bundle boundary).
  *
  * The design folds the divergent copies into one option surface: a skip-dirs set,

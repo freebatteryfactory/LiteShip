@@ -8,12 +8,12 @@
 
 > **cloudflareMiddleware**(`config`): (`context`, `next`) => `Promise`\<`Response`\>
 
-Defined in: [cloudflare/src/middleware.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L251)
+Defined in: [cloudflare/src/middleware.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L273)
 
 Astro middleware factory wired for Cloudflare Workers KV boundary caching.
 
 Boundary identities and precompiled outputs come from the
-build-derived manifest (`virtual:czap/boundaries`), so no id is ever
+build-derived manifest (`virtual:liteship/boundaries`), so no id is ever
 hand-typed. Every manifest boundary is served by default (each under
 its own content-addressed cache key); pass `boundary` to narrow.
 `boundaryId` + `compile` remain as an escape hatch for custom hosts.
@@ -32,11 +32,11 @@ its own content-addressed cache key); pass `boundary` to narrow.
 
 ```ts
 // src/middleware.ts
-import { cloudflareMiddleware } from '@czap/cloudflare';
-import { boundaries } from 'virtual:czap/boundaries';
+import { cloudflareMiddleware } from '@liteship/cloudflare';
+import { boundaries } from 'virtual:liteship/boundaries';
 
 export const onRequest = cloudflareMiddleware({
-  binding: 'CZAP_BOUNDARY_CACHE',
+  binding: 'LITESHIP_BOUNDARY_CACHE',
   manifest: boundaries, // serves every boundary; `boundary: 'viewport'` narrows
 });
 ```

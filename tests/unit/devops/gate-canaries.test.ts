@@ -20,8 +20,8 @@
  *       snapshot. Each floor sits far below the current tree with margin, so it
  *       reds only on a genuine collapse (references emptied, globs narrowed,
  *       snapshot gutted), not on ordinary churn.
- *   (c) VACUITY TRIPWIRE — the typecheck script's first leg must be exactly
- *       `tsc --build` (the exact form the S0.3 fix installed). A revert to a
+ *   (c) VACUITY TRIPWIRE — the typecheck script's first leg must invoke the
+ *       bounded native tsc owner in build mode. A revert to a
  *       `-p tsconfig.json` / `--noEmit` solution-file invocation reds here.
  *
  * Deviations from a literal reading of the disposition, and why:
@@ -42,13 +42,13 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { createRequire } from 'node:module';
 import fg from 'fast-glob';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import { scaledTimeout, nodeTestInclude } from '../../../vitest.shared.js';
 import {
   rootTsconfigReferenceDirs,
   packageTsconfigInputs,
+  tsconfigTestsIncludeEntries,
   tsconfigTestsIncludeFiles,
   apiSurfaceSnapshot,
   lintGlobs,
@@ -57,8 +57,7 @@ import {
 } from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const localRequire = createRequire(import.meta.url);
-const TSC = localRequire.resolve('typescript/bin/tsc');
+const TSC = resolve(REPO, 'node_modules', '.bin', process.platform === 'win32' ? 'tsc.cmd' : 'tsc');
 
 // Every repo TRUTH this canary asserts against — root tsconfig references, each
 // package's compile inputs, the tests project's include, the api-surface
@@ -87,7 +86,7 @@ interface TscResult {
  * to stdout, so the combined stream is scanned for the diagnostic code.
  */
 async function runTscBuild(projectPath: string): Promise<TscResult> {
-  const result = await spawnArgvCapture(process.execPath, [TSC, '--build', projectPath]);
+  const result = await spawnArgvCapture(TSC, ['--build', projectPath]);
   return { status: result.exitCode, output: result.stdout + result.stderr };
 }
 
@@ -126,6 +125,85 @@ describe('(a) typecheck canary — `tsc --build` detects an injected type error'
       const bad = await runTscBuild(join(injectedDir, 'tsconfig.json'));
       expect(bad.status, 'the build gate must fail on a type error — a green here means it checks nothing').not.toBe(0);
       expect(bad.output, `expected a TS2322 diagnostic, got:\n${bad.output}`).toMatch(/error TS2322/);
+    },
+    scaledTimeout(60_000),
+  );
+});
+
+describe('(a2) property evidence is type-admitted before execution', () => {
+  const propertySuites = fg
+    .sync(['tests/property/**/*.prop.test.ts'], { cwd: REPO })
+    .map((path) => path.replaceAll('\\', '/'))
+    .sort();
+  const includeEntries = tsconfigTestsIncludeEntries();
+  const admittedProperties = fg
+    .sync([...includeEntries], { cwd: REPO, ignore: ['**/node_modules/**', '**/dist/**'] })
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => path.startsWith('tests/property/') && path.endsWith('.prop.test.ts'))
+    .sort();
+
+  it('the tests typecheck project admits every property suite, including future files', () => {
+    expect(propertySuites.length, 'the property-test corpus must be non-empty').toBeGreaterThan(0);
+    expect(admittedProperties).toEqual(propertySuites);
+    expect(
+      includeEntries.some(
+        (entry) => entry.startsWith('tests/property/') && entry.includes('*') && entry.endsWith('.prop.test.ts'),
+      ),
+      'property admission must be future-proof rather than an authored filename roster',
+    ).toBe(true);
+  });
+
+  it('a counterfeit config with the property admission removed exposes the complete missing corpus', () => {
+    const counterfeitEntries = includeEntries.filter((entry) => !entry.startsWith('tests/property/'));
+    const counterfeitAdmission = new Set(
+      fg.sync([...counterfeitEntries], { cwd: REPO }).map((path) => path.replaceAll('\\', '/')),
+    );
+    expect(propertySuites.filter((path) => !counterfeitAdmission.has(path))).toEqual(propertySuites);
+  });
+
+  it(
+    'an intentionally ill-typed future property suite fails the admitted compiler project before execution',
+    async () => {
+      const propertyPatterns = includeEntries.filter(
+        (entry) => entry.startsWith('tests/property/') && entry.includes('*'),
+      );
+      expect(propertyPatterns.length, 'no wildcard property admission found').toBeGreaterThan(0);
+
+      const seed = (dest: string, source: string): void => {
+        const suiteDir = join(dest, 'tests', 'property');
+        mkdirSync(suiteDir, { recursive: true });
+        writeFileSync(
+          join(dest, 'tsconfig.json'),
+          `${JSON.stringify(
+            {
+              compilerOptions: {
+                target: 'ES2022',
+                module: 'ESNext',
+                moduleResolution: 'bundler',
+                strict: true,
+                noEmit: true,
+              },
+              include: propertyPatterns,
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        writeFileSync(join(suiteDir, 'future-admission.prop.test.ts'), source);
+      };
+
+      const cleanDir = join(sandboxRoot, 'property-clean');
+      seed(cleanDir, 'export const admitted: number = 42;\n');
+      const clean = await runTscBuild(join(cleanDir, 'tsconfig.json'));
+      expect(clean.status, `clean property fixture failed to typecheck:\n${clean.output}`).toBe(0);
+
+      const invalidDir = join(sandboxRoot, 'property-invalid');
+      seed(invalidDir, 'export const admitted: string = 42;\n');
+      const invalid = await runTscBuild(join(invalidDir, 'tsconfig.json'));
+      expect(invalid.status, 'an ill-typed property suite must fail before its Vitest body can execute').not.toBe(0);
+      expect(invalid.output, `expected TS2322 from the ill-typed property fixture, got:\n${invalid.output}`).toMatch(
+        /error TS2322/,
+      );
     },
     scaledTimeout(60_000),
   );
@@ -213,12 +291,12 @@ describe('(b) coverage floors — gates cover a non-trivial surface', () => {
 // (c) Vacuity tripwire — the exact S0.3 regression shape reds here.
 // --------------------------------------------------------------------------
 
-describe('(c) vacuity tripwire — typecheck leg 1 is `tsc --build`', () => {
+describe('(c) vacuity tripwire — typecheck leg 1 is native tsc build mode', () => {
   const legs = typecheckLegs();
   const leg1 = legs[0] ?? '';
 
-  it('leg 1 is exactly `tsc --build` (build-mode, references-driven)', () => {
-    expect(leg1).toBe('tsc --build');
+  it('leg 1 is exactly the bounded native tsc owner in build mode', () => {
+    expect(leg1).toBe('pnpm exec tsx scripts/native-tsc.ts -- --build');
   });
 
   it('leg 1 is not a solution-file `-p` / `--noEmit` invocation (the S0.3 vacuous form)', () => {

@@ -10,7 +10,7 @@
  * - add/removeEventListener and onmessage/onerror fanout used by worker hosts
  *
  * Conformance is compile-checked against {@link WorkerLike} — the structural
- * surface czap's worker hosts (packages/worker/src) actually drive — so
+ * surface liteship's worker hosts (packages/worker/src) actually drive — so
  * host/double drift breaks the build.
  */
 import type { WorkerLike } from '../../packages/worker/src/messages.js';

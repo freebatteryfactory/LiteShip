@@ -6,16 +6,16 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Config } from '@czap/core';
-import { hasTag } from '@czap/error';
-import { dispatch } from '@czap/compiler';
-import type { AIManifest, CompilerDef } from '@czap/compiler';
+import { defineBoundary, defineConfig } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import { compileViewTransition, dispatch } from '@liteship/compiler';
+import type { AIManifest, CompilerDef } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const boundary = Boundary.make({
+const boundary = defineBoundary({
   input: 'width',
   at: [
     [0, 'small'],
@@ -89,11 +89,18 @@ describe('dispatch()', () => {
   });
 
   test('ConfigCompiler def returns json string', () => {
-    const cfg = Config.make({});
+    const cfg = defineConfig({});
     const def: CompilerDef = { _tag: 'ConfigCompiler', config: cfg };
     const result = dispatch(def);
     expect(result.target).toBe('config');
     expect((result as { target: string; result: { json: string } }).result.json).toContain('ConfigDef');
+  });
+
+  test('ViewTransitionCompiler is an explicit opt-in arm and reuses the existing compiler', () => {
+    const input = { boundary: 'hero', durationMs: 420, easing: 'ease' } as const;
+    const result = dispatch({ _tag: 'ViewTransitionCompiler', input });
+    expect(result).toEqual({ target: 'view-transition', result: compileViewTransition(input) });
+    expect(result.result.raw).toContain('view-transition-name: liteship-vt-hero');
   });
 });
 
@@ -110,10 +117,10 @@ describe('dispatch() arm defaults', () => {
     }
   });
 
-  test('CSSCompiler def without selector uses the documented .czap-boundary default', () => {
+  test('CSSCompiler def without selector uses the documented .liteship-boundary default', () => {
     const result = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates });
     if (result.target === 'css') {
-      expect(result.result.raw).toContain('.czap-boundary {');
+      expect(result.result.raw).toContain('.liteship-boundary {');
     }
   });
 
@@ -121,7 +128,7 @@ describe('dispatch() arm defaults', () => {
     const result = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates, selector: '.card' });
     if (result.target === 'css') {
       expect(result.result.raw).toContain('.card {');
-      expect(result.result.raw).not.toContain('.czap-boundary');
+      expect(result.result.raw).not.toContain('.liteship-boundary');
     }
   });
 

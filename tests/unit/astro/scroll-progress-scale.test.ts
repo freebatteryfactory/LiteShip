@@ -3,7 +3,7 @@
  * Drift guard: the `scroll.progress` SCALE agrees across every reader.
  *
  * CANONICAL SCALE: 0..1 (window.scrollY / max), matching `Signal` — the
- * `SignalSource` source of truth in `core/src/signal.ts`. A boundary authored
+ * `SignalSource` source of truth in `core/src/reactive/signal.ts`. A boundary authored
  * at `0.5` must mean "half scrolled" everywhere.
  *
  * Before 0.3.0 the Astro runtime (`readSignalValue`) returned 0..100 while
@@ -13,14 +13,14 @@
  *     the same scrollY (computed from the source of truth, not hardcoded).
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Signal } from '@czap/core';
+import { createSignal } from '@liteship/core';
 import { readSignalValue } from '../../../packages/astro/src/runtime/boundary.js';
 
 /** Read `scroll.progress` from the Signal source of truth (Wave 6: plain, sync). */
 function signalScrollProgress(): number {
-  const sig = Signal.make({ type: 'scroll', axis: 'progress' });
+  const sig = createSignal({ type: 'scroll', axis: 'progress' });
   const value = sig.read();
-  void sig.lifetime.dispose();
+  void sig.dispose();
   return value;
 }
 

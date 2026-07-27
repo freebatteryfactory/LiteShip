@@ -6,7 +6,7 @@
 
 # compiler/src
 
-`@czap/compiler` — **CZAP** projection targets: turns boundary definitions
+`@liteship/compiler` — **LiteShip** projection targets: turns boundary definitions
 and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 
 ## Interfaces
@@ -53,6 +53,8 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [TokenCSSResult](interfaces/TokenCSSResult.md)
 - [TokenJSResult](interfaces/TokenJSResult.md)
 - [TokenTailwindResult](interfaces/TokenTailwindResult.md)
+- [ViewTransitionCompileInput](interfaces/ViewTransitionCompileInput.md)
+- [ViewTransitionCompileResult](interfaces/ViewTransitionCompileResult.md)
 - [WGSLBinding](interfaces/WGSLBinding.md)
 - [WGSLCompileResult](interfaces/WGSLCompileResult.md)
 - [WGSLStruct](interfaces/WGSLStruct.md)
@@ -66,6 +68,7 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [GLSLStates](type-aliases/GLSLStates.md)
 - [GLSLType](type-aliases/GLSLType.md)
 - [MotionEasing](type-aliases/MotionEasing.md)
+- [WGSLBindingType](type-aliases/WGSLBindingType.md)
 - [WGSLStates](type-aliases/WGSLStates.md)
 - [WGSLType](type-aliases/WGSLType.md)
 - [WGSLUniformValue](type-aliases/WGSLUniformValue.md)
@@ -96,5 +99,6 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [compileReveal](functions/compileReveal.md)
 - [compileScrollTimeline](functions/compileScrollTimeline.md)
 - [compileStagger](functions/compileStagger.md)
+- [compileViewTransition](functions/compileViewTransition.md)
 - [dispatch](functions/dispatch.md)
 - [generatePropertyRegistrations](functions/generatePropertyRegistrations.md)

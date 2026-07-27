@@ -6,7 +6,43 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@czap/gauntlet';
+import { readFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { atLeast, levelOf, matchesGlob, LITESHIP_ASSURANCE_MAP, type LevelRule } from '@liteship/gauntlet';
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+/** Independent syntax classifier for the two operations that mint portable trust witnesses. */
+export function trustBearingOperations(sourceText: string): readonly string[] {
+  const source = ts.createSourceFile('candidate.ts', sourceText, ts.ScriptTarget.Latest, true);
+  const operations = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.name.text === 'of' &&
+      node.expression.expression.text === 'AddressedDigest'
+    ) {
+      operations.add('AddressedDigest.of');
+    }
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === 'CanonicalCbor' &&
+      node.expression.name.text === 'encode'
+    ) {
+      operations.add('CanonicalCbor.encode');
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return [...operations].sort();
+}
 
 describe('matchesGlob — the small dialect (** / * / {a,b})', () => {
   it('* matches within a single segment only (not across a slash)', () => {
@@ -53,34 +89,36 @@ describe('levelOf — first matching rule wins, default L1', () => {
     // L4 — the trust spine: identity/integrity + the grader's own judgment core
     ['packages/canonical/src/whatever.ts', 'L4'],
     ['packages/canonical/src/deep/nested.ts', 'L4'],
-    ['packages/core/src/receipt.ts', 'L4'],
-    ['packages/core/src/hlc.ts', 'L4'],
-    ['packages/core/src/brands.ts', 'L4'],
+    ['packages/core/src/evidence/receipt.ts', 'L4'],
+    ['packages/core/src/clock/hlc.ts', 'L4'],
+    ['packages/core/src/schema/brands.ts', 'L4'],
     ['packages/assets/src/brands.ts', 'L4'], // identity brand (AssetRefId)
     ['packages/genui/src/brands.ts', 'L4'], // identity brand (ContentAddress kernel)
     // L4 — the reactive kernels (Wave 6, S5.5.1 activation): the CellKernel value
     // spine (replay/emission/ordering). `signal` moved L3→L4 here.
-    ['packages/core/src/cell-kernel.ts', 'L4'],
-    ['packages/core/src/cell.ts', 'L4'],
-    ['packages/core/src/derived.ts', 'L4'],
-    ['packages/core/src/store.ts', 'L4'],
-    ['packages/core/src/signal.ts', 'L4'],
-    ['packages/core/src/timeline.ts', 'L4'],
-    ['packages/core/src/live-cell.ts', 'L4'],
+    ['packages/core/src/reactive/cell-kernel.ts', 'L4'],
+    ['packages/core/src/reactive/cell.ts', 'L4'],
+    ['packages/core/src/reactive/derived.ts', 'L4'],
+    ['packages/core/src/reactive/store.ts', 'L4'],
+    ['packages/core/src/reactive/signal.ts', 'L4'],
+    ['packages/core/src/motion/timeline.ts', 'L4'],
+    ['packages/core/src/reactive/live-cell.ts', 'L4'],
     // L3 — the deterministic runtime / projection / cache paths
-    ['packages/core/src/zap.ts', 'L3'],
-    ['packages/core/src/gen-frame.ts', 'L3'],
-    ['packages/core/src/token-buffer.ts', 'L3'],
-    ['packages/core/src/boundary.ts', 'L3'],
-    ['packages/core/src/clock.ts', 'L3'], // the determinism substrate, visible to the gate
-    ['packages/core/src/rng.ts', 'L3'],
-    ['packages/core/src/ai-cast.ts', 'L3'], // moved L4→L3: deterministic proposer, not a trusted-artifact emitter
+    ['packages/core/src/reactive/zap.ts', 'L3'],
+    ['packages/core/src/media/gen-frame.ts', 'L3'],
+    ['packages/core/src/media/token-buffer.ts', 'L3'],
+    ['packages/core/src/authoring/boundary.ts', 'L3'],
+    ['packages/core/src/clock/clock.ts', 'L3'], // the determinism substrate, visible to the gate
+    ['packages/core/src/clock/rng.ts', 'L3'],
+    ['packages/core/src/authoring/ai-cast.ts', 'L3'], // moved L4→L3: deterministic proposer, not a trusted-artifact emitter
     ['packages/quantizer/src/quantizer.ts', 'L3'],
     ['packages/web/src/capture/probe.ts', 'L3'],
     ['packages/web/src/stream/sse-pure.ts', 'L3'],
     ['packages/worker/src/compositor-startup.ts', 'L3'],
     ['packages/astro/src/runtime/boundary.ts', 'L3'],
     ['packages/stage/src/dual-export.ts', 'L3'], // artifact-producing core
+    ['packages/stage/src/motion-export.ts', 'L3'], // content-addressed motion oracle
+    ['packages/remotion/src/motion.ts', 'L3'], // cross-target frame oracle
     // L2 — public API + serialized contracts + typed external boundaries
     ['packages/scene/src/index.ts', 'L2'],
     ['packages/edge/src/contract.ts', 'L2'],
@@ -91,11 +129,11 @@ describe('levelOf — first matching rule wins, default L1', () => {
     ['packages/mcp-server/src/jsonrpc.ts', 'L2'], // protocol kernel
     // L0/L1 — COSMETIC tooling only, where ambient nondeterminism is legit
     ['packages/mcp-server/src/server-info.ts', 'L1'], // version helper
-    ['packages/cli/src/lib/ansi.ts', 'L1'], // formatting
-    ['scripts/report-satellite-scan.ts', 'L1'], // a report
+    ['packages/cli/src/internal/ansi.ts', 'L1'], // formatting
+    ['scripts/report-adaptive-scan.ts', 'L1'], // a report
     ['scripts/anything.mjs', 'L1'],
     // default
-    ['packages/core/src/diagnostics.ts', 'L1'],
+    ['packages/core/src/evidence/diagnostics.ts', 'L1'],
     ['packages/some-new-pkg/src/lib.ts', 'L1'],
   ];
 
@@ -125,5 +163,34 @@ describe('levelOf — first matching rule wins, default L1', () => {
     expect(LITESHIP_ASSURANCE_MAP.length).toBeGreaterThan(0);
     // The very first rule is the most specific spine (canonical), not the default.
     expect(LITESHIP_ASSURANCE_MAP[0]?.level).toBe('L4');
+  });
+
+  it('classifies trust calls structurally rather than matching comments or strings', () => {
+    expect(
+      trustBearingOperations(
+        "// AddressedDigest.of(bytes)\nconst decoy = 'CanonicalCbor.encode(value)';\nconst live = AddressedDigest.of(CanonicalCbor.encode(value));",
+      ),
+    ).toEqual(['AddressedDigest.of', 'CanonicalCbor.encode']);
+    expect(trustBearingOperations("const decoy = 'AddressedDigest.of(bytes)';")).toEqual([]);
+  });
+
+  it('every non-canonical source that mints a portable trust witness is L3 or higher', () => {
+    const packageRoot = resolve(REPO_ROOT, 'packages');
+    const underclassified = walkFiles(packageRoot, {
+      skipDirs: ['dist', 'node_modules'],
+      suffixes: ['.ts'],
+    })
+      .map((path) => relative(REPO_ROOT, path).replace(/\\/g, '/'))
+      .filter((path) => !path.startsWith('packages/canonical/'))
+      .filter((path) => trustBearingOperations(readFileSync(resolve(REPO_ROOT, path), 'utf8')).length > 0)
+      .filter((path) => !atLeast(levelOf(path), 'L3'));
+
+    expect(underclassified).toEqual([]);
+  });
+
+  it('the classifier mutation catches a trust-bearing owner left at the default level', () => {
+    const source = 'export const mint = (bytes: Uint8Array) => AddressedDigest.of(bytes);';
+    expect(trustBearingOperations(source)).toContain('AddressedDigest.of');
+    expect(atLeast(levelOf('packages/example/src/mint.ts'), 'L3')).toBe(false);
   });
 });

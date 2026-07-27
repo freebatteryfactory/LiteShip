@@ -8,7 +8,7 @@
 
 Defined in: [web/src/types.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L52)
 
-Input accepted by `SlotRegistryShape.register`. Registered entries are
+Input accepted by `SlotRegistry.register`. Registered entries are
 normalized to a full [SlotEntry](SlotEntry.md): `mode` defaults to `'partial'`
 and `mounted` defaults to `true`.
 

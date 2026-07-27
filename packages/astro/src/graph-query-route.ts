@@ -1,9 +1,9 @@
 /**
  * Host route adapter for the HTTP QUERY graph read-leg (#119).
  *
- * Wraps `@czap/core`'s transport-agnostic `handleGraphQuery` into a plain
+ * Wraps `@liteship/core`'s transport-agnostic `handleGraphQuery` into a plain
  * `(request: Request) => Promise<Response>` — the same shape as
- * {@link czapFetchLayer}'s `FetchLayerNext` and {@link graphMutationRoute}.
+ * {@link liteshipFetchLayer}'s `FetchLayerNext` and {@link graphMutationRoute}.
  *
  * The factory injects only `Pick<GraphStore, 'loadGraph'>` — write-freedom is
  * proven at the type level (the read leg cannot persist).
@@ -17,8 +17,8 @@ import {
   normalizeGraphQueryEtag,
   type GraphQueryRequest,
   type GraphQueryResponse,
-} from '@czap/core';
-import type { GraphStore } from '@czap/core';
+} from '@liteship/core';
+import type { GraphStore } from '@liteship/core';
 
 /** Methods this route serves — advertised on 405 (`Allow`) and OPTIONS. */
 const GRAPH_QUERY_ALLOW = 'QUERY, POST, OPTIONS';
@@ -78,7 +78,7 @@ function isGraphQueryMethod(request: Request): boolean {
 }
 
 /**
- * Build a QUERY (or POST+`X-Czap-Query` fallback) handler that returns the host's
+ * Build a QUERY (or POST+`X-Liteship-Query` fallback) handler that returns the host's
  * current sealed graph:
  *   - **200** on hit — body is `{ status: 'ok', graph, etag }` (sha256 digest);
  *   - **304** on conditional match (any `If-None-Match` member, or `*`);

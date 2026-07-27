@@ -1,63 +1,60 @@
 /**
- * MotionSampleSystem — the `@czap/scene` MOTION ADAPTER for authored motion.
+ * Scene motion projection over the one core sampling kernel.
  *
- * This is ADDITIVE to (never a merge with) {@link TransitionSystem}. The two model
- * DIFFERENT concepts:
- *   - `TransitionSystem` computes a video-CROSSFADE `_blend` factor between two
- *     `Between` entities (a compositor mix). Untouched by W10.
- *   - `MotionSampleSystem` samples an AUTHORED motion program — the ONE shared kernel
- *     `sampleProgram` (`@czap/core`, Law 4) — at the entity's current frame and writes
- *     each typed leaf value as a scene component. This is the SAME reader the browser
- *     runtime floor, the stage/remotion video legs, and the worker off-thread sampler
- *     call; the differential oracle proves they all agree.
- *
- * A frame index maps to normalized program time `t = frameIndex / max(1, totalFrames-1)`,
- * exactly as the video export legs sample their `FrameRange`, so a scene rendered offline
- * and a browser scrubbing the floor render one identical curve.
+ * Every selected entity owns its own admitted RuntimeWritePlan and FrameRange.
+ * The system samples that plan at the entity-local frame and writes one
+ * aggregate MotionSample Part. There are no dynamic `motion:<cssVar>` component
+ * identities and no closure-global plan that can bleed between entities.
  *
  * @module
  */
 
-import { frameToT, sampleProgram, type RuntimeWritePlan, type System, type TypedValue, type World } from '@czap/core';
+import { frameToT, sampleProgram, type RuntimeWritePlan } from '@liteship/core/motion';
+import { defineSystem, type System } from '@liteship/core/ecs';
+import {
+  FrameRangePart,
+  MotionSamplePart,
+  RuntimeWritePlanPart,
+  type FrameRange,
+  type MotionSample,
+} from '../parts.js';
 
-/** The component name a `MotionSampleSystem` writes each sampled leaf under (`motion:<cssVar>`). */
-export function motionComponentName(cssVar: string): string {
-  return `motion:${cssVar}`;
+type FrameSource = number | (() => number);
+const readFrame = (source: FrameSource): number => (typeof source === 'function' ? source() : source);
+
+/** Map a Scene frame to normalized entity-local motion time. */
+export function sceneMotionTime(frameIndex: number, range: FrameRange): number {
+  const firstFrame = Math.ceil(range.from);
+  const endFrameExclusive = Math.ceil(range.to);
+  const totalFrames = Math.max(1, endFrameExclusive - firstFrame);
+  return frameToT(frameIndex - firstFrame, totalFrames);
+}
+
+/** Pure aggregate projection of one RuntimeWritePlan sample. */
+export function sampleSceneMotion(plan: RuntimeWritePlan, t: number): MotionSample {
+  const sample: Record<string, MotionSample[string]> = {};
+  for (const leaf of sampleProgram(plan, t)) sample[leaf.cssVar] = leaf.value;
+  return Object.freeze(sample);
 }
 
 /**
- * Sample the shared motion kernel at normalized time `t`, projected to the scene's
- * component representation: a `cssVar → TypedValue` map, exactly the leaves a
- * {@link MotionSampleSystem} writes. Pure — the differential oracle reads THIS to prove
- * the scene leg equals the `sampleProgram` reference within epsilon.
+ * Build the typed motion system for a fixed frame or a live frame source.
+ * Runtime registration supplies a function so the same system instance reads
+ * the current frame each tick; focused tests may pass a number directly.
  */
-export function sampleSceneMotion(plan: RuntimeWritePlan, t: number): ReadonlyMap<string, TypedValue> {
-  return new Map(sampleProgram(plan, t).map((s) => [s.cssVar, s.value]));
-}
-
-/**
- * Build a `MotionSampleSystem` keyed to a frame index. It queries entities carrying a
- * `MotionProgram` marker component and, per tick, samples {@link sampleSceneMotion} at
- * the frame's normalized `t`, writing each leaf as a `motion:<cssVar>` component (via the
- * same `world.setComponent` seam `TransitionSystem` uses for `_blend`). It NEVER reads or
- * writes `_blend` — the two systems coexist on the same world.
- */
-export function MotionSampleSystem(plan: RuntimeWritePlan, frameIndex: number, totalFrames: number): System {
-  const t = frameToT(frameIndex, totalFrames);
-  const sampled = sampleSceneMotion(plan, t);
-  return {
+export function MotionSampleSystem(frameIndex: FrameSource): System {
+  return defineSystem({
     name: 'MotionSampleSystem',
-    query: ['MotionProgram'],
-    execute: (entities, world?: World.Shape) => {
-      for (const e of entities) {
-        for (const [cssVar, value] of sampled) {
-          const name = motionComponentName(cssVar);
-          (e as unknown as Record<string, unknown>)[name] = value;
-          if (world !== undefined) {
-            world.setComponent(e.id, name, value);
-          }
-        }
+    query: [RuntimeWritePlanPart, FrameRangePart],
+    reads: [],
+    writes: [MotionSamplePart],
+    execute: (entities, context) => {
+      const frame = readFrame(frameIndex);
+      for (const entity of entities) {
+        const plan = context.read(entity, RuntimeWritePlanPart);
+        const range = context.read(entity, FrameRangePart);
+        context.write(entity, MotionSamplePart, sampleSceneMotion(plan, sceneMotionTime(frame, range)));
       }
     },
-  };
+  });
 }

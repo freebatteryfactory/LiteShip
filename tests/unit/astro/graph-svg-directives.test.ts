@@ -4,10 +4,10 @@
  * wrappers + the init that reads the payload off the element and drives the
  * runtime). Items B/E test the runtime functions directly; this drives the
  * directive boot path the wrappers own — discover the payload, lower/apply it,
- * wire `czap:teardown`.
+ * wire `liteship:teardown`.
  */
 import { describe, test, expect, vi, beforeAll } from 'vitest';
-import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@czap/core';
+import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@liteship/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -17,7 +17,7 @@ import type {
   PoseNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
+} from '@liteship/core';
 import graphDirective from '../../../packages/astro/src/client-directives/graph.js';
 import svgDirective from '../../../packages/astro/src/client-directives/svg.js';
 
@@ -70,7 +70,7 @@ function minimalGraph(): { graph: DocumentGraph; entId: ContentAddress } {
     meta,
     entityRef: ent.id,
     state: 'mobile' as PoseNode['state'],
-    bindings: { '--czap-card': '14px' },
+    bindings: { '--liteship-card': '14px' },
   });
   const desktop = sealNode<PoseNode>({
     _tag: 'DocGraphPoseNode',
@@ -80,7 +80,7 @@ function minimalGraph(): { graph: DocumentGraph; entId: ContentAddress } {
     meta,
     entityRef: ent.id,
     state: 'desktop' as PoseNode['state'],
-    bindings: { '--czap-card': '18px' },
+    bindings: { '--liteship-card': '18px' },
   });
   const graph = sealGraph({
     _tag: 'DocumentGraph',
@@ -105,12 +105,12 @@ beforeAll(() => {
 });
 
 describe('client:graph + client:svg directive entrypoints', () => {
-  test('client:graph lowers the data-czap-graph payload onto the entity element + releases on dispose', () => {
+  test('client:graph lowers the data-liteship-graph payload onto the entity element + releases on dispose', () => {
     const { graph, entId } = minimalGraph();
     const root = document.createElement('div');
-    root.setAttribute('data-czap-graph', JSON.stringify(graph));
+    root.setAttribute('data-liteship-graph', JSON.stringify(graph));
     const entityEl = document.createElement('div');
-    entityEl.setAttribute('data-czap-entity', String(entId));
+    entityEl.setAttribute('data-liteship-entity', String(entId));
     root.appendChild(entityEl);
     document.body.appendChild(root);
     const load = vi.fn(async () => {});
@@ -118,20 +118,20 @@ describe('client:graph + client:svg directive entrypoints', () => {
     graphDirective(load, {}, root);
 
     // The entity was cast: a boundary state was seeded onto the element.
-    const state = entityEl.getAttribute('data-czap-state');
+    const state = entityEl.getAttribute('data-liteship-state');
     expect(state === 'mobile' || state === 'desktop').toBe(true);
     expect(load).toHaveBeenCalled();
     // Dispose releases the runtime without throwing.
-    expect(() => root.dispatchEvent(new CustomEvent('czap:teardown'))).not.toThrow();
+    expect(() => root.dispatchEvent(new CustomEvent('liteship:teardown'))).not.toThrow();
     document.body.innerHTML = '';
   });
 
   test('client:graph is inert for a missing or malformed payload (no throw)', () => {
     const root = document.createElement('div');
     const load = vi.fn(async () => {});
-    expect(() => graphDirective(load, {}, root)).not.toThrow(); // no data-czap-graph → early return
+    expect(() => graphDirective(load, {}, root)).not.toThrow(); // no data-liteship-graph → early return
     expect(load).not.toHaveBeenCalled();
-    root.setAttribute('data-czap-graph', '{bad json');
+    root.setAttribute('data-liteship-graph', '{bad json');
     expect(() => graphDirective(load, {}, root)).not.toThrow(); // malformed → loader returns null
     // FINDING 4 [Minor]: a malformed payload (loader → null) must stay fully inert
     // — consistent with the missing-payload early return, `load()` is NOT called.
@@ -141,14 +141,14 @@ describe('client:graph + client:svg directive entrypoints', () => {
   test('client:svg activates on an SVG root carrying authored per-state attrs', () => {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rect.setAttribute('data-czap-entity', 'hero');
-    rect.setAttribute('data-czap-svg', JSON.stringify({ a: { opacity: '0.3' }, b: { opacity: '1' } }));
+    rect.setAttribute('data-liteship-entity', 'hero');
+    rect.setAttribute('data-liteship-svg', JSON.stringify({ a: { opacity: '0.3' }, b: { opacity: '1' } }));
     svg.appendChild(rect);
     document.body.appendChild(svg);
     const load = vi.fn(async () => {});
 
     expect(() => svgDirective(load, {}, svg as unknown as HTMLElement)).not.toThrow();
-    expect(() => svg.dispatchEvent(new CustomEvent('czap:teardown'))).not.toThrow();
+    expect(() => svg.dispatchEvent(new CustomEvent('liteship:teardown'))).not.toThrow();
     document.body.innerHTML = '';
   });
 });

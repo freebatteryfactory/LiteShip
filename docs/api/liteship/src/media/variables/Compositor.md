@@ -1,0 +1,32 @@
+[**LiteShip**](../../../../README.md)
+
+***
+
+[LiteShip](../../../../modules.md) / [liteship/src/media](../README.md) / Compositor
+
+# Variable: Compositor
+
+> `const` **Compositor**: `CompositorFactory`
+
+Defined in: core/dist/media/compositor.d.ts:161
+
+Compositor — the live merge point for every attached `Quantizer`.
+
+`Compositor.create` returns a live compositor bound to a fresh
+`RuntimeCoordinator`, paired with the `Lifetime` that owns its
+teardown. Adding quantizers, marking dirty flags, and emitting CSS/GLSL/ARIA
+outputs all flow through the zero-allocation hot path backed by
+[CompositorStatePool](../type-aliases/CompositorStatePool.md).
+
+## Example
+
+```ts
+import { Compositor } from '@liteship/core';
+
+const compositor = Compositor.create({ poolCapacity: 64, speculative: true });
+compositor.add('viewport', viewportQuantizer);
+const state = compositor.compute();
+// state.discrete.viewport === 'tablet'
+// state.outputs.css['--liteship-viewport'] === 'tablet'
+await compositor.dispose();
+```

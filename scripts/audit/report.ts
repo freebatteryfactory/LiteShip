@@ -1,15 +1,15 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 import libCoverage from 'istanbul-lib-coverage';
 import { verifyRuntimeSeamsReport, type RuntimeSeamsReportArtifact } from '../artifact-integrity.js';
 import { ensureArtifactContext } from '../artifact-context.js';
-// CUT A3 — the invariant rule set is now `@czap/command` data; the scan engine is
-// the CLI-only adapter (B5b: it imports @czap/audit's normalizeRepoPath, so it
-// cannot live in @czap/command/@czap/mcp-server — see check-invariants CLI-only).
-// Imported via the source path (not the `@czap/command` package name): this script
-// runs under tsx, which resolves through node_modules, and @czap/command is NOT a
-// root devDep / linked there (app-layer, like @czap/cli on the next line) — only the
+// CUT A3 — the invariant rule set is now `@liteship/command` data; the scan engine is
+// the CLI-only adapter (B5b: it imports @liteship/audit's normalizeRepoPath, so it
+// cannot live in @liteship/command/@liteship/mcp-server — see check-invariants CLI-only).
+// Imported via the source path (not the `@liteship/command` package name): this script
+// runs under tsx, which resolves through node_modules, and @liteship/command is NOT a
+// root devDep / linked there (app-layer, like @liteship/cli on the next line) — only the
 // vitest alias resolves the package name, which a plain tsx script does not have.
 import { INVARIANTS } from '../../packages/command/src/commands/check-invariants-registry.js';
 import { findViolations } from '../../packages/cli/src/commands/check-invariants.js';
@@ -40,8 +40,8 @@ import {
 } from './shared.js';
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
-import { liteshipDevopsProfile } from '@czap/audit';
-import type { DevopsProfile } from '@czap/audit';
+import type { DevopsProfile } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../packages/cli/src/internal/liteship-audit-profile.js';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,
@@ -356,9 +356,10 @@ function supportingFindings(
         rule: 'runtime-seam-transport-note',
         severity: 'info',
         title: 'Runtime seam transport note',
-        summary: diagnostic.medianOverheadPct === null
-          ? `${diagnostic.label} has no median overhead reading in the latest runtime seams report.`
-          : `${diagnostic.label} transport overhead is ${diagnostic.medianOverheadPct.toFixed(2)}% against a ${diagnostic.thresholdPct.toFixed(2)}% threshold.`,
+        summary:
+          diagnostic.medianOverheadPct === null
+            ? `${diagnostic.label} has no median overhead reading in the latest runtime seams report.`
+            : `${diagnostic.label} transport overhead is ${diagnostic.medianOverheadPct.toFixed(2)}% against a ${diagnostic.thresholdPct.toFixed(2)}% threshold.`,
         metadata: {
           runtimeClass: diagnostic.runtimeClass,
         },
@@ -416,7 +417,9 @@ function hasHardcodedSecret(text: string): boolean {
 }
 
 function hasSuppression(text: string): boolean {
-  return /(@ts-ignore|@ts-expect-error|@ts-nocheck|eslint-disable|biome-ignore|noinspection|allow\((dead_code|unused))/u.test(text);
+  return /(@ts-ignore|@ts-expect-error|@ts-nocheck|eslint-disable|biome-ignore|noinspection|allow\((dead_code|unused))/u.test(
+    text,
+  );
 }
 
 function hasTypeErasure(relativePath: string, text: string): boolean {
@@ -427,7 +430,9 @@ function hasTypeErasure(relativePath: string, text: string): boolean {
 }
 
 function hasFallback(text: string): boolean {
-  return /catch\s*(\([^)]*\))?\s*\{[\s\S]{0,200}return\s+(?:null|undefined|false|true|0|\[\]|\{\}|["'`][^"'`\n]*["'`])/u.test(text);
+  return /catch\s*(\([^)]*\))?\s*\{[\s\S]{0,200}return\s+(?:null|undefined|false|true|0|\[\]|\{\}|["'`][^"'`\n]*["'`])/u.test(
+    text,
+  );
 }
 
 function hasStub(text: string): boolean {
@@ -460,22 +465,32 @@ function hasFakeSuccessRisk(text: string): boolean {
   return /return\s+\{\s*(?:ok|success|passed)\s*:\s*true\b/u.test(text);
 }
 
-function hasProductionImport(relativePath: string, importSpecifiers: readonly string[], internalPrefix: string): boolean {
+function hasProductionImport(
+  relativePath: string,
+  importSpecifiers: readonly string[],
+  internalPrefix: string,
+): boolean {
   if (sectionForInventoryPath(relativePath) !== 'tests') {
     return importSpecifiers.length > 0;
   }
 
-  return importSpecifiers.some((specifier) =>
-    specifier.startsWith(internalPrefix) ||
-    specifier.includes('/scripts/') ||
-    specifier.includes('../scripts/') ||
-    specifier.includes('../../scripts/') ||
-    specifier.includes('../packages/') ||
-    specifier.includes('../../packages/'),
+  return importSpecifiers.some(
+    (specifier) =>
+      specifier.startsWith(internalPrefix) ||
+      specifier.includes('/scripts/') ||
+      specifier.includes('../scripts/') ||
+      specifier.includes('../../scripts/') ||
+      specifier.includes('../packages/') ||
+      specifier.includes('../../packages/'),
   );
 }
 
-function hasShadowTestRisk(relativePath: string, text: string, importSpecifiers: readonly string[], internalPrefix: string): boolean {
+function hasShadowTestRisk(
+  relativePath: string,
+  text: string,
+  importSpecifiers: readonly string[],
+  internalPrefix: string,
+): boolean {
   if (sectionForInventoryPath(relativePath) !== 'tests') {
     return false;
   }
@@ -528,8 +543,11 @@ function buildSignals(
       text,
       /\bto(Be(?:Truthy|Falsy|Defined|Undefined|Null|true|false)|HaveLength|MatchSnapshot|BeGreaterThan(?:OrEqual)?|BeLessThan(?:OrEqual)?)\b/g,
     ),
-    hasConcurrencySignal: /\b(worker|scheduler|concurr|race|lock|retry|queue|channel|idempot|lineariz|replay|stream)\b/iu.test(text),
-    hasDeterminismSignal: /\b(determin|seed|fingerprint|canonical|snapshot|hash|content[- ]address|replay)\b/iu.test(text),
+    hasConcurrencySignal:
+      /\b(worker|scheduler|concurr|race|lock|retry|queue|channel|idempot|lineariz|replay|stream)\b/iu.test(text),
+    hasDeterminismSignal: /\b(determin|seed|fingerprint|canonical|snapshot|hash|content[- ]address|replay)\b/iu.test(
+      text,
+    ),
     hasTraceSignal: /\b(trace|audit|receipt|invariant|coverage|diagnostic|telemetry|report)\b/iu.test(text),
     hasDocsSignal: /\b(architecture|status|runtime|surface|protocol|spec|contract|gate|artifact)\b/iu.test(text),
     hasDecisionSignal: /\b(decision|tradeoff|consequence|supersede|adr)\b/iu.test(text),
@@ -555,7 +573,9 @@ function uniqueSorted(values: readonly string[]): readonly string[] {
 
 function namedOffensesForFile(signals: FileSignals): readonly string[] {
   const offenses = [
-    ...signals.relatedFindings.map((finding) => hicpNamedOffenseRules[finding.rule]).filter((value): value is string => Boolean(value)),
+    ...signals.relatedFindings
+      .map((finding) => hicpNamedOffenseRules[finding.rule])
+      .filter((value): value is string => Boolean(value)),
   ];
 
   if (signals.hasShadowTestRisk) {
@@ -602,50 +622,121 @@ function forbiddenRemediesForFile(signals: FileSignals): readonly string[] {
   return uniqueSorted(remedies);
 }
 
-function makeEvaluation(
-  family: string,
-  weight: number,
-  score: 0 | 0.5 | 1,
-  note: string,
-): AuditControlEvaluation {
+function makeEvaluation(family: string, weight: number, score: 0 | 0.5 | 1, note: string): AuditControlEvaluation {
   return { family, weight, score, note };
 }
 
-function runtimeEvaluations(signals: FileSignals, forbiddenRemedies: readonly string[]): readonly AuditControlEvaluation[] {
+function runtimeEvaluations(
+  signals: FileSignals,
+  forbiddenRemedies: readonly string[],
+): readonly AuditControlEvaluation[] {
   return hicpFileClassWeights['runtime/library source'].map(({ family, weight }) => {
     switch (family) {
       case 'Laws + forbidden remedies':
         return signals.hasHardcodedSecret || signals.hasWrongLanguage || forbiddenRemedies.length > 0
-          ? makeEvaluation(family, weight, 0, 'Detected a forbidden remedy or critical integrity risk in runtime/library code.')
+          ? makeEvaluation(
+              family,
+              weight,
+              0,
+              'Detected a forbidden remedy or critical integrity risk in runtime/library code.',
+            )
           : signals.hasErrorFinding || signals.hasWarningFinding
             ? makeEvaluation(family, weight, 0.5, 'Active audit findings are present in this runtime/library file.')
-            : makeEvaluation(family, weight, 1, 'No active law-level or forbidden-remedy violations detected for this runtime/library file.');
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'No active law-level or forbidden-remedy violations detected for this runtime/library file.',
+              );
       case 'Architecture/wiring':
-        return ['package-topology', 'missing-manifest-dependency', 'unresolved-internal-import', 'unknown-internal-package', 'host-surface', 'virtual-module-surface', 'package-export-surface'].some((rule) => signals.ruleSet.has(rule))
-          ? makeEvaluation(family, weight, 0, 'Wiring or package-surface breakage is present in the active audit findings.')
+        return [
+          'package-topology',
+          'missing-manifest-dependency',
+          'unresolved-internal-import',
+          'unknown-internal-package',
+          'host-surface',
+          'virtual-module-surface',
+          'package-export-surface',
+        ].some((rule) => signals.ruleSet.has(rule))
+          ? makeEvaluation(
+              family,
+              weight,
+              0,
+              'Wiring or package-surface breakage is present in the active audit findings.',
+            )
           : signals.ruleSet.has('orphan-export-candidate')
-            ? makeEvaluation(family, weight, 0.5, 'The file exports symbols with no in-repo consumers, which is an island/orphan risk.')
-            : makeEvaluation(family, weight, 1, 'No active topology or wiring faults were found for this runtime/library file.');
+            ? makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file exports symbols with no in-repo consumers, which is an island/orphan risk.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'No active topology or wiring faults were found for this runtime/library file.',
+              );
       case 'Failure honesty':
         return signals.hasStub || signals.hasFallback || signals.hasConstantReturn || signals.hasFakeSuccessRisk
-          ? makeEvaluation(family, weight, 0, 'The file shows downgrade, stub, fallback, or fake-success risk instead of explicit failure.')
+          ? makeEvaluation(
+              family,
+              weight,
+              0,
+              'The file shows downgrade, stub, fallback, or fake-success risk instead of explicit failure.',
+            )
           : signals.hasPlaceholder || signals.hasConsole
-            ? makeEvaluation(family, weight, 0.5, 'The file contains placeholder or raw-console paths that weaken fail-loud behavior.')
-            : makeEvaluation(family, weight, 1, 'No stub, fake-success, or fallback-laundering pattern was detected in the runtime path.');
+            ? makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file contains placeholder or raw-console paths that weaken fail-loud behavior.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'No stub, fake-success, or fallback-laundering pattern was detected in the runtime path.',
+              );
       case 'Surface/traceability':
         return signals.hasCoverage || signals.hasTraceSignal
           ? makeEvaluation(family, weight, 1, 'Coverage or audit/trace evidence exists for this runtime/library file.')
-          : makeEvaluation(family, weight, 0.5, 'No direct coverage or trace signal was found for this runtime/library file.');
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'No direct coverage or trace signal was found for this runtime/library file.',
+            );
       case 'Semantic fidelity':
         return signals.ruleSet.has('suspicious-reimplementation') || signals.hasConstantReturn || signals.hasTypeErasure
-          ? makeEvaluation(family, weight, 0, 'Local reimplementation, constant-return, or type-erasure risk undermines semantic fidelity.')
+          ? makeEvaluation(
+              family,
+              weight,
+              0,
+              'Local reimplementation, constant-return, or type-erasure risk undermines semantic fidelity.',
+            )
           : signals.hasInfoFinding
             ? makeEvaluation(family, weight, 0.5, 'Advisory findings suggest semantic follow-up is still warranted.')
-            : makeEvaluation(family, weight, 1, 'No semantic downgrade signals were detected in this runtime/library file.');
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'No semantic downgrade signals were detected in this runtime/library file.',
+              );
       case 'Self-accusation/observability':
         return signals.hasCoverage || signals.hasTraceSignal || signals.hasDeterminismSignal
-          ? makeEvaluation(family, weight, 1, 'The file participates in coverage, diagnostics, replay, or other self-accusing machinery.')
-          : makeEvaluation(family, weight, 0.5, 'The file lacks direct observability or replay signals in the current audit evidence.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The file participates in coverage, diagnostics, replay, or other self-accusing machinery.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The file lacks direct observability or replay signals in the current audit evidence.',
+            );
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
     }
@@ -659,28 +750,70 @@ function metaEvaluations(relativePath: string, text: string, signals: FileSignal
         return signals.ruleSet.has('missing-manifest-dependency')
           ? makeEvaluation(family, weight, 0, 'Manifest/dependency drift is present in the active audit findings.')
           : /"latest"|"workspace:\*"|\^\d/u.test(text)
-            ? makeEvaluation(family, weight, 0.5, 'The file contains floating or broad dependency constraints that soften dependency control.')
-            : makeEvaluation(family, weight, 1, 'Dependencies appear pinned or repo-local, with no active dependency-fidelity findings.');
+            ? makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file contains floating or broad dependency constraints that soften dependency control.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'Dependencies appear pinned or repo-local, with no active dependency-fidelity findings.',
+              );
       case 'Surface/export fidelity':
-        return ['package-export-surface', 'host-surface', 'virtual-module-surface'].some((rule) => signals.ruleSet.has(rule))
+        return ['package-export-surface', 'host-surface', 'virtual-module-surface'].some((rule) =>
+          signals.ruleSet.has(rule),
+        )
           ? makeEvaluation(family, weight, 0, 'Declared surface paths do not match the current implementation surface.')
           : /package\.json$/u.test(relativePath) && !/"exports"/u.test(text)
-            ? makeEvaluation(family, weight, 0.5, 'Manifest lacks an explicit exports map, so surface intent is less rigid.')
-            : makeEvaluation(family, weight, 1, 'Package/crate surface declarations line up with the current audit evidence.');
+            ? makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'Manifest lacks an explicit exports map, so surface intent is less rigid.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'Package/crate surface declarations line up with the current audit evidence.',
+              );
       case 'Determinism/tooling':
         return /packageManager|allowBuilds|noEmit|max-warnings/u.test(text) || /pnpm-lock\.yaml$/u.test(relativePath)
-          ? makeEvaluation(family, weight, 1, 'Tooling or lock configuration contributes explicit determinism constraints.')
-          : makeEvaluation(family, weight, 0.5, 'The file is meta/configuration but carries fewer explicit determinism guardrails.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'Tooling or lock configuration contributes explicit determinism constraints.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The file is meta/configuration but carries fewer explicit determinism guardrails.',
+            );
       case 'Traceability/docs alignment':
         return signals.hasDocsSignal || signals.hasDecisionSignal
           ? makeEvaluation(family, weight, 1, 'The file includes traceability, docs, or decision-oriented signals.')
-          : makeEvaluation(family, weight, 0.5, 'The file has limited direct traceability or rationale context in-band.');
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The file has limited direct traceability or rationale context in-band.',
+            );
       case 'Security/supply chain':
         return signals.hasHardcodedSecret
           ? makeEvaluation(family, weight, 0, 'Potential secret material appears in repo metadata/config.')
           : /allowBuilds|overrides|private/u.test(text)
             ? makeEvaluation(family, weight, 1, 'The file contains explicit supply-chain or package-scope controls.')
-            : makeEvaluation(family, weight, 0.5, 'No direct secret was found, but supply-chain controls are only partially explicit here.');
+            : makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'No direct secret was found, but supply-chain controls are only partially explicit here.',
+              );
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
     }
@@ -692,30 +825,90 @@ function testEvaluations(signals: FileSignals): readonly AuditControlEvaluation[
     switch (family) {
       case 'Production coupling':
         return signals.hasShadowTestRisk
-          ? makeEvaluation(family, weight, 0, 'The file defines local test-only types without production imports, which is a shadow-test risk.')
+          ? makeEvaluation(
+              family,
+              weight,
+              0,
+              'The file defines local test-only types without production imports, which is a shadow-test risk.',
+            )
           : signals.hasProductionImport
-            ? makeEvaluation(family, weight, 1, 'The test/benchmark file imports production code or production-adjacent scripts directly.')
-            : makeEvaluation(family, weight, 0.5, 'The file has limited visible production coupling in the current import graph.');
+            ? makeEvaluation(
+                family,
+                weight,
+                1,
+                'The test/benchmark file imports production code or production-adjacent scripts directly.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file has limited visible production coupling in the current import graph.',
+              );
       case 'Assertion strength':
         return !signals.hasExpectation
           ? makeEvaluation(family, weight, 0, 'No assertion shape was detected in this test file.')
           : signals.weakExpectationCount > 3
-            ? makeEvaluation(family, weight, 0.5, 'The file leans on multiple weak assertion forms that deserve stronger content checks.')
-            : makeEvaluation(family, weight, 1, 'The file contains explicit assertions and does not appear dominated by weak assertion patterns.');
+            ? makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file leans on multiple weak assertion forms that deserve stronger content checks.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                1,
+                'The file contains explicit assertions and does not appear dominated by weak assertion patterns.',
+              );
       case 'Edge/error/concurrency coverage':
         return signals.hasConcurrencySignal
-          ? makeEvaluation(family, weight, 1, 'The file exercises concurrency, retries, scheduling, or replay-sensitive behavior.')
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The file exercises concurrency, retries, scheduling, or replay-sensitive behavior.',
+            )
           : signals.hasProductionImport
-            ? makeEvaluation(family, weight, 0.5, 'The file covers real code paths but shows fewer explicit edge/concurrency markers.')
-            : makeEvaluation(family, weight, 0.5, 'The file needs stronger evidence of error-path or concurrency coverage.');
+            ? makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file covers real code paths but shows fewer explicit edge/concurrency markers.',
+              )
+            : makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'The file needs stronger evidence of error-path or concurrency coverage.',
+              );
       case 'Determinism/fixtures':
         return signals.hasDeterminismSignal
-          ? makeEvaluation(family, weight, 1, 'Replay, snapshot, fingerprint, or deterministic signals are present in the test/bench file.')
-          : makeEvaluation(family, weight, 0.5, 'Determinism or representative-fixture intent is only partially visible in this file.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'Replay, snapshot, fingerprint, or deterministic signals are present in the test/bench file.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Determinism or representative-fixture intent is only partially visible in this file.',
+            );
       case 'Investigation value':
         return signals.hasTraceSignal || signals.hasDocsSignal
-          ? makeEvaluation(family, weight, 1, 'The file contains diagnostics, invariant, or investigation-oriented context.')
-          : makeEvaluation(family, weight, 0.5, 'The file could provide stronger investigation breadcrumbs when it fails.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The file contains diagnostics, invariant, or investigation-oriented context.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The file could provide stronger investigation breadcrumbs when it fails.',
+            );
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
     }
@@ -727,24 +920,67 @@ function scriptEvaluations(signals: FileSignals): readonly AuditControlEvaluatio
     switch (family) {
       case 'Deterministic automation':
         return signals.hasDeterminismSignal || signals.hasToolingSignal
-          ? makeEvaluation(family, weight, 1, 'The script encodes deterministic automation or explicit toolchain handling.')
-          : makeEvaluation(family, weight, 0.5, 'Deterministic automation intent is only partially explicit in this script.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The script encodes deterministic automation or explicit toolchain handling.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Deterministic automation intent is only partially explicit in this script.',
+            );
       case 'Detectors/gates':
-        return signals.hasTraceSignal || /\b(audit|verify|gate|invariant|coverage|bench)\b/iu.test(signals.relatedFindings.map((finding) => finding.rule).join(' '))
-          ? makeEvaluation(family, weight, 1, 'The script participates in detectors, gates, or self-accusing verification paths.')
-          : makeEvaluation(family, weight, 0.5, 'The script looks operational, but not strongly gate- or detector-oriented.');
+        return signals.hasTraceSignal ||
+          /\b(audit|verify|gate|invariant|coverage|bench)\b/iu.test(
+            signals.relatedFindings.map((finding) => finding.rule).join(' '),
+          )
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The script participates in detectors, gates, or self-accusing verification paths.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The script looks operational, but not strongly gate- or detector-oriented.',
+            );
       case 'Thin orchestration':
         return signals.hasLargeFile && signals.hasProductionImport
-          ? makeEvaluation(family, weight, 0.5, 'The script is relatively large and likely carries more orchestration logic than a thin wrapper.')
+          ? makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The script is relatively large and likely carries more orchestration logic than a thin wrapper.',
+            )
           : makeEvaluation(family, weight, 1, 'The script appears to stay within an automation/orchestration role.');
       case 'Security hygiene':
         return signals.hasHardcodedSecret || signals.hasSuppression
-          ? makeEvaluation(family, weight, 0, 'The script contains secret or suppression risk that weakens automation hygiene.')
-          : makeEvaluation(family, weight, 1, 'No hardcoded secret or suppression pattern was detected in this script.');
+          ? makeEvaluation(
+              family,
+              weight,
+              0,
+              'The script contains secret or suppression risk that weakens automation hygiene.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              1,
+              'No hardcoded secret or suppression pattern was detected in this script.',
+            );
       case 'Traceability/reporting':
         return signals.hasTraceSignal || signals.hasDocsSignal
           ? makeEvaluation(family, weight, 1, 'The script contains reporting, traceability, or audit-oriented output.')
-          : makeEvaluation(family, weight, 0.5, 'Traceability/reporting intent is only lightly visible in this script.');
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Traceability/reporting intent is only lightly visible in this script.',
+            );
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
     }
@@ -756,20 +992,63 @@ function docsEvaluations(signals: FileSignals): readonly AuditControlEvaluation[
     switch (family) {
       case 'Freeze/semantic contract quality':
         return signals.hasDocsSignal
-          ? makeEvaluation(family, weight, 1, 'The document carries explicit architecture, spec, runtime, or contract language.')
-          : makeEvaluation(family, weight, 0.5, 'The document is authored but lighter on architectural/semantic-contract detail.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The document carries explicit architecture, spec, runtime, or contract language.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The document is authored but lighter on architectural/semantic-contract detail.',
+            );
       case 'Artifact alignment':
         return signals.hasTraceSignal
-          ? makeEvaluation(family, weight, 1, 'The document references artifacts, audit, or verification outputs directly.')
-          : makeEvaluation(family, weight, 0.5, 'Artifact alignment is present but not strongly explicit in this document.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The document references artifacts, audit, or verification outputs directly.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Artifact alignment is present but not strongly explicit in this document.',
+            );
       case 'Traceability/decision capture':
-        return signals.hasDecisionSignal || /\b(trace|requirement|decision|record|change|roadmap)\b/iu.test(signals.relatedFindings.map((finding) => finding.summary).join('\n'))
-          ? makeEvaluation(family, weight, 1, 'The document provides traceability or explicit decision/rationale capture.')
-          : makeEvaluation(family, weight, 0.5, 'Decision capture and bidirectional traceability are only partially explicit here.');
+        return signals.hasDecisionSignal ||
+          /\b(trace|requirement|decision|record|change|roadmap)\b/iu.test(
+            signals.relatedFindings.map((finding) => finding.summary).join('\n'),
+          )
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The document provides traceability or explicit decision/rationale capture.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Decision capture and bidirectional traceability are only partially explicit here.',
+            );
       case 'Operational usefulness':
         return signals.hasToolingSignal || signals.hasTraceSignal
-          ? makeEvaluation(family, weight, 1, 'The document appears directly useful to operation, verification, or contributor workflow.')
-          : makeEvaluation(family, weight, 0.5, 'The document is informative, but operational guidance is lighter than ideal.');
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The document appears directly useful to operation, verification, or contributor workflow.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The document is informative, but operational guidance is lighter than ideal.',
+            );
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
     }
@@ -782,22 +1061,42 @@ function exampleEvaluations(signals: FileSignals): readonly AuditControlEvaluati
       case 'Honest API usage':
         return signals.hasProductionImport
           ? makeEvaluation(family, weight, 1, 'The example/integration file appears to exercise real package surfaces.')
-          : makeEvaluation(family, weight, 0.5, 'The example is authored, but production coupling is not strongly visible in-file.');
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'The example is authored, but production coupling is not strongly visible in-file.',
+            );
       case 'Wiring realism':
         return signals.hasConcurrencySignal || signals.hasDocsSignal
-          ? makeEvaluation(family, weight, 1, 'The example shows concrete runtime wiring, flow, or integration concerns.')
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The example shows concrete runtime wiring, flow, or integration concerns.',
+            )
           : makeEvaluation(family, weight, 0.5, 'The example looks compositional, with less explicit wiring realism.');
       case 'Downgrade resistance':
         return signals.hasStub || signals.hasConstantReturn || signals.hasFakeSuccessRisk
           ? makeEvaluation(family, weight, 0, 'The example contains downgrade or fake-success/stub risk.')
-          : makeEvaluation(family, weight, 1, 'No obvious downgrade path was detected in this example/integration file.');
+          : makeEvaluation(
+              family,
+              weight,
+              1,
+              'No obvious downgrade path was detected in this example/integration file.',
+            );
       case 'Deterministic setup':
         return signals.hasDeterminismSignal || signals.hasToolingSignal
           ? makeEvaluation(family, weight, 1, 'The example includes deterministic setup or toolchain framing.')
           : makeEvaluation(family, weight, 0.5, 'Deterministic setup signals are limited in this example file.');
       case 'Teaching/diagnostic value':
         return signals.hasTraceSignal || signals.hasDocsSignal
-          ? makeEvaluation(family, weight, 1, 'The example appears to carry explanatory or diagnostic value for operators/users.')
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The example appears to carry explanatory or diagnostic value for operators/users.',
+            )
           : makeEvaluation(family, weight, 0.5, 'The example is runnable but lighter on diagnostic/teaching context.');
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
@@ -814,26 +1113,66 @@ function repoEvaluations(
   return hicpFileClassWeights['repo/system/devops'].map(({ family, weight }) => {
     switch (family) {
       case 'Hermetic workspace/toolchain':
-        return /packageManager|allowBuilds|workspace|lock|engine|pnpm/u.test(text) || /^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.npmrc|\.nvmrc|\.editorconfig|\.prettierrc|tsconfig\.json)$/u.test(basename(relativePath))
-          ? makeEvaluation(family, weight, 1, 'This repo/devops file encodes workspace or toolchain determinism directly.')
-          : makeEvaluation(family, weight, 0.5, 'Hermetic toolchain intent is only partially visible in this repo/devops file.');
+        return /packageManager|allowBuilds|workspace|lock|engine|pnpm/u.test(text) ||
+          /^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.npmrc|\.nvmrc|\.editorconfig|\.prettierrc|tsconfig\.json)$/u.test(
+            basename(relativePath),
+          )
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'This repo/devops file encodes workspace or toolchain determinism directly.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Hermetic toolchain intent is only partially visible in this repo/devops file.',
+            );
       case 'CI gate completeness':
-        return /^\.github\/workflows\//u.test(relativePath) || /\b(build|typecheck|lint|test|audit|coverage|bench|feedback:verify)\b/u.test(text)
+        return /^\.github\/workflows\//u.test(relativePath) ||
+          /\b(build|typecheck|lint|test|audit|coverage|bench|feedback:verify)\b/u.test(text)
           ? makeEvaluation(family, weight, 1, 'The file contributes to the repo gate sequence or CI execution surface.')
-          : makeEvaluation(family, weight, 0.5, 'CI/gate completeness is relevant to this file but not strongly explicit.');
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'CI/gate completeness is relevant to this file but not strongly explicit.',
+            );
       case 'Supply chain/security':
         return signals.hasHardcodedSecret
           ? makeEvaluation(family, weight, 0, 'Potential secret material appears in repo/system/devops scope.')
           : /allowBuilds|overrides|private/u.test(text)
             ? makeEvaluation(family, weight, 1, 'The file contains explicit supply-chain or scope-limiting controls.')
-            : makeEvaluation(family, weight, 0.5, 'No secret was found, but supply-chain controls are only partially explicit here.');
+            : makeEvaluation(
+                family,
+                weight,
+                0.5,
+                'No secret was found, but supply-chain controls are only partially explicit here.',
+              );
       case 'Architecture conformance':
-        return /ARCHITECTURE|STATUS|AUDIT|adr\/|gauntlet|invariant/u.test(text) || Object.values(supportingArtifacts).every((artifact) => artifact.status === 'present')
-          ? makeEvaluation(family, weight, 1, 'The file aligns with architecture/gate governance or sits next to fully present support artifacts.')
-          : makeEvaluation(family, weight, 0.5, 'Architecture conformance is present but not strongly encoded in this file.');
+        return /ARCHITECTURE|STATUS|AUDIT|adr\/|gauntlet|invariant/u.test(text) ||
+          Object.values(supportingArtifacts).every((artifact) => artifact.status === 'present')
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The file aligns with architecture/gate governance or sits next to fully present support artifacts.',
+            )
+          : makeEvaluation(
+              family,
+              weight,
+              0.5,
+              'Architecture conformance is present but not strongly encoded in this file.',
+            );
       case 'Contributor/decision guidance':
         return signals.hasDecisionSignal || signals.hasDocsSignal
-          ? makeEvaluation(family, weight, 1, 'The file gives contributor-facing guidance, decision context, or operational instructions.')
+          ? makeEvaluation(
+              family,
+              weight,
+              1,
+              'The file gives contributor-facing guidance, decision context, or operational instructions.',
+            )
           : makeEvaluation(family, weight, 0.5, 'Contributor/decision guidance is limited in this repo/devops file.');
       default:
         return makeEvaluation(family, weight, 1, 'No penalty applied.');
@@ -885,7 +1224,10 @@ function protocolCoverageForFile(
   const traceability = (() => {
     if (fileClass === 'docs/specs') {
       return {
-        status: coverageStatus(signals.hasDocsSignal && (signals.hasTraceSignal || signals.hasDecisionSignal), signals.hasDocsSignal),
+        status: coverageStatus(
+          signals.hasDocsSignal && (signals.hasTraceSignal || signals.hasDecisionSignal),
+          signals.hasDocsSignal,
+        ),
         summary:
           signals.hasDocsSignal && (signals.hasTraceSignal || signals.hasDecisionSignal)
             ? 'Document carries both semantic-contract language and artifact/decision breadcrumbs.'
@@ -913,14 +1255,18 @@ function protocolCoverageForFile(
     if (fileClass === 'docs/specs' || fileClass === 'package/crate meta') {
       return {
         status: 'not_applicable' as const,
-        summary: 'Flow verification is assessed on executable source, tests, and integration surfaces rather than on this file class.',
+        summary:
+          'Flow verification is assessed on executable source, tests, and integration surfaces rather than on this file class.',
       };
     }
 
-    const hasFlowBreak =
-      ['package-topology', 'missing-manifest-dependency', 'unresolved-internal-import', 'unknown-internal-package', 'orphan-export-candidate'].some((rule) =>
-        signals.ruleSet.has(rule),
-      );
+    const hasFlowBreak = [
+      'package-topology',
+      'missing-manifest-dependency',
+      'unresolved-internal-import',
+      'unknown-internal-package',
+      'orphan-export-candidate',
+    ].some((rule) => signals.ruleSet.has(rule));
     return {
       status: hasFlowBreak
         ? ('missing' as const)
@@ -944,11 +1290,12 @@ function protocolCoverageForFile(
     }
 
     return {
-      status: signals.hasShadowTestRisk || !signals.hasExpectation
-        ? ('missing' as const)
-        : signals.weakExpectationCount > 3 || !signals.hasProductionImport
-          ? ('partial' as const)
-          : ('present' as const),
+      status:
+        signals.hasShadowTestRisk || !signals.hasExpectation
+          ? ('missing' as const)
+          : signals.weakExpectationCount > 3 || !signals.hasProductionImport
+            ? ('partial' as const)
+            : ('present' as const),
       summary: signals.hasShadowTestRisk
         ? 'Local test-only models appear without production imports.'
         : !signals.hasExpectation
@@ -985,7 +1332,10 @@ function protocolCoverageForFile(
   const proofInventory = (() => {
     if (fileClass === 'runtime/library source') {
       return {
-        status: coverageStatus(signals.hasCoverage && signals.hasTraceSignal, signals.hasCoverage || signals.hasTraceSignal),
+        status: coverageStatus(
+          signals.hasCoverage && signals.hasTraceSignal,
+          signals.hasCoverage || signals.hasTraceSignal,
+        ),
         summary:
           signals.hasCoverage && signals.hasTraceSignal
             ? 'Runtime file is represented in proving artifacts and diagnostics.'
@@ -997,11 +1347,13 @@ function protocolCoverageForFile(
 
     return {
       status: coverageStatus(
-        signals.hasTraceSignal && (signals.hasDeterminismSignal || signals.hasToolingSignal || signals.hasConcurrencySignal),
+        signals.hasTraceSignal &&
+          (signals.hasDeterminismSignal || signals.hasToolingSignal || signals.hasConcurrencySignal),
         signals.hasTraceSignal || signals.hasDeterminismSignal || signals.hasToolingSignal,
       ),
       summary:
-        signals.hasTraceSignal && (signals.hasDeterminismSignal || signals.hasToolingSignal || signals.hasConcurrencySignal)
+        signals.hasTraceSignal &&
+        (signals.hasDeterminismSignal || signals.hasToolingSignal || signals.hasConcurrencySignal)
           ? 'File contributes to repeatable proof, diagnostics, or gate machinery.'
           : signals.hasTraceSignal || signals.hasDeterminismSignal || signals.hasToolingSignal
             ? 'File contributes partial proof or gate machinery.'
@@ -1143,10 +1495,14 @@ function roadTo100ForFile(
   }
 
   for (const evaluation of controlEvaluations.filter((entry) => entry.score < 1)) {
-    actions.push(`Lift ${evaluation.family.toLowerCase()} from ${evaluation.score} to 1 by resolving: ${evaluation.note}`);
+    actions.push(
+      `Lift ${evaluation.family.toLowerCase()} from ${evaluation.score} to 1 by resolving: ${evaluation.note}`,
+    );
   }
 
-  for (const protocolEntry of protocolCoverage.filter((entry) => entry.status === 'missing' || entry.status === 'partial')) {
+  for (const protocolEntry of protocolCoverage.filter(
+    (entry) => entry.status === 'missing' || entry.status === 'partial',
+  )) {
     actions.push(
       protocolEntry.status === 'missing'
         ? `Add ${PROTOCOL_AREA_TITLES[protocolEntry.area].toLowerCase()} evidence: ${protocolEntry.summary}`
@@ -1161,7 +1517,9 @@ function roadTo100ForFile(
   }
 
   if (!relativePath.startsWith('docs/') && score < 87.5) {
-    actions.push(`Document the intended invariant or contract for ${relativePath} where the current evidence chain is thin.`);
+    actions.push(
+      `Document the intended invariant or contract for ${relativePath} where the current evidence chain is thin.`,
+    );
   }
 
   return uniqueSorted(actions).slice(0, 6);
@@ -1217,7 +1575,9 @@ function notesForFile(
         notes.push('Meta scoring emphasizes manifest fidelity, determinism, and supply-chain hygiene.');
         break;
       case 'tests/benchmarks':
-        notes.push('Test scoring emphasizes production coupling, assertion quality, and concurrency/edge-path evidence.');
+        notes.push(
+          'Test scoring emphasizes production coupling, assertion quality, and concurrency/edge-path evidence.',
+        );
         break;
       case 'scripts/audit tooling':
         notes.push('Script scoring emphasizes deterministic automation, detectors, and thin orchestration.');
@@ -1251,7 +1611,14 @@ function buildFileEntry(
   const signals = buildSignals(relativePath, text, relatedFindings, coverageFiles, internalPrefix);
   const namedOffenses = namedOffensesForFile(signals);
   const forbiddenRemedies = forbiddenRemediesForFile(signals);
-  const controlEvaluations = evaluateControls(relativePath, fileClass, text, signals, forbiddenRemedies, supportingArtifacts);
+  const controlEvaluations = evaluateControls(
+    relativePath,
+    fileClass,
+    text,
+    signals,
+    forbiddenRemedies,
+    supportingArtifacts,
+  );
   const rawScore = scoreFile(controlEvaluations);
   const criticalEscalation = signals.hasHardcodedSecret || signals.hasWrongLanguage || signals.hasFakeSuccessRisk;
   const cappedScore = criticalEscalation
@@ -1265,7 +1632,15 @@ function buildFileEntry(
   const protocolCoverage = protocolCoverageForFile(relativePath, fileClass, signals, namedOffenses, forbiddenRemedies);
   const blockingSignals = blockingSignalsForFile(signals, namedOffenses, forbiddenRemedies);
   const evidenceRefs = evidenceRefsForFile(relativePath, signals, supportingArtifacts);
-  const roadTo100 = roadTo100ForFile(relativePath, fileClass, controlEvaluations, protocolCoverage, namedOffenses, forbiddenRemedies, score);
+  const roadTo100 = roadTo100ForFile(
+    relativePath,
+    fileClass,
+    controlEvaluations,
+    protocolCoverage,
+    namedOffenses,
+    forbiddenRemedies,
+    score,
+  );
 
   return {
     path: relativePath,
@@ -1313,7 +1688,9 @@ function sectionNotes(section: FullAuditSection): readonly string[] {
     if (file.namedOffenses.length > 0 || file.forbiddenRemedies.length > 0) {
       filesWithFindings += 1;
     }
-    file.namedOffenses.forEach((offense) => namedOffenseCounts.set(offense, (namedOffenseCounts.get(offense) ?? 0) + 1));
+    file.namedOffenses.forEach((offense) =>
+      namedOffenseCounts.set(offense, (namedOffenseCounts.get(offense) ?? 0) + 1),
+    );
     file.forbiddenRemedies.forEach((remedy) => forbiddenCounts.set(remedy, (forbiddenCounts.get(remedy) ?? 0) + 1));
   }
 
@@ -1326,7 +1703,9 @@ function sectionNotes(section: FullAuditSection): readonly string[] {
     .slice(0, 2)
     .map(([remedy, count]) => `${remedy} x${count}`);
 
-  const notes = [`${section.files.length} file(s) audited in this section with a weighted mean score of ${section.score.toFixed(2)}.`];
+  const notes = [
+    `${section.files.length} file(s) audited in this section with a weighted mean score of ${section.score.toFixed(2)}.`,
+  ];
   if (filesWithFindings > 0) {
     notes.push(`${filesWithFindings} file(s) carry named offense or forbidden-remedy pressure.`);
   } else {
@@ -1358,7 +1737,14 @@ function buildFullAuditSections(
   }
 
   const inventory = readInventoryFileRecords(root).map((record) =>
-    buildFileEntry(record.relativePath, record.text, findingsByFile, coverageFiles, supportingArtifacts, internalPrefix),
+    buildFileEntry(
+      record.relativePath,
+      record.text,
+      findingsByFile,
+      coverageFiles,
+      supportingArtifacts,
+      internalPrefix,
+    ),
   );
 
   return hicpSectionOrder.map<FullAuditSection>((sectionId) => {
@@ -1422,7 +1808,10 @@ function classifyFullTreePath(
     };
   }
 
-  if (/^(test-results|\.vitest-attachments)\//u.test(relativePath) || /^tests\/browser\/__screenshots__\//u.test(relativePath)) {
+  if (
+    /^(test-results|\.vitest-attachments)\//u.test(relativePath) ||
+    /^tests\/browser\/__screenshots__\//u.test(relativePath)
+  ) {
     return {
       path: relativePath,
       tracked: trackedFiles.has(relativePath),
@@ -1473,9 +1862,7 @@ function buildFullTreeAccountingReport(root: string, scoredPaths: readonly strin
       countsByClassification['excluded-runtime-artifact'] +
       countsByClassification['excluded-binary-or-large'],
     countsByClassification,
-    reconciled:
-      entries.length ===
-      Object.values(countsByClassification).reduce((sum, value) => sum + value, 0),
+    reconciled: entries.length === Object.values(countsByClassification).reduce((sum, value) => sum + value, 0),
   };
 
   return {
@@ -1487,10 +1874,7 @@ function buildFullTreeAccountingReport(root: string, scoredPaths: readonly strin
   };
 }
 
-function protocolAreaStatus(
-  entries: readonly FileProtocolCoverage[],
-  area: ProtocolAreaId,
-): AuditCoverageStatus {
+function protocolAreaStatus(entries: readonly FileProtocolCoverage[], area: ProtocolAreaId): AuditCoverageStatus {
   const statuses = entries.filter((entry) => entry.area === area).map((entry) => entry.status);
   if (statuses.some((status) => status === 'missing')) return 'missing';
   if (statuses.some((status) => status === 'partial')) return 'partial';
@@ -1505,7 +1889,8 @@ function buildProtocolGapReport(
 ): ProtocolGapReport {
   const files = sections.flatMap((section) => section.files);
   const protocolEntries = files.flatMap((file) => file.protocolCoverage);
-  const counts = (status: AuditCoverageStatus): number => protocolEntries.filter((entry) => entry.status === status).length;
+  const counts = (status: AuditCoverageStatus): number =>
+    protocolEntries.filter((entry) => entry.status === status).length;
   const hasRule = (rule: string): boolean => findings.some((finding) => finding.rule === rule);
   const hasPattern = (pattern: RegExp): boolean =>
     readInventoryFileRecords(root).some((record) => pattern.test(record.text));
@@ -1514,18 +1899,15 @@ function buildProtocolGapReport(
     {
       id: 'bidirectional-traceability',
       title: PROTOCOL_AREA_TITLES['bidirectional-traceability'],
-      status: protocolAreaStatus(protocolEntries, 'bidirectional-traceability') === 'present' && hasPattern(/\b(REQ-|INV-|ADR-)\b/u)
-        ? 'present'
-        : 'partial',
+      status:
+        protocolAreaStatus(protocolEntries, 'bidirectional-traceability') === 'present' &&
+        hasPattern(/\b(REQ-|INV-|ADR-)\b/u)
+          ? 'present'
+          : 'partial',
       summary: hasPattern(/\b(REQ-|INV-|ADR-)\b/u)
         ? 'Requirement/invariant/decision identifiers exist in-band, but the repo still leans on advisory linkage rather than a full explicit traceability graph.'
         : 'Status docs, invariant checks, and audit artifacts exist, but stable requirement IDs and backward links remain mostly implicit.',
-      evidence: [
-        'STATUS.md',
-        'AUDIT.md',
-        'scripts/check-invariants.ts',
-        'reports/codebase-audit.json',
-      ],
+      evidence: ['STATUS.md', 'AUDIT.md', 'scripts/check-invariants.ts', 'reports/codebase-audit.json'],
       recommendations: [
         'Add stable requirement/invariant identifiers and link them to proving artifacts.',
         'Extend docs and audit output with explicit backward links from artifact to requirement.',
@@ -1534,9 +1916,11 @@ function buildProtocolGapReport(
     {
       id: 'flow-verification',
       title: PROTOCOL_AREA_TITLES['flow-verification'],
-      status: !hasRule('orphan-export-candidate') && hasPattern(/\b(astro-edge-pipeline|runtime-wiring-invariants|compositor-pipeline)\b/u)
-        ? 'partial'
-        : 'missing',
+      status:
+        !hasRule('orphan-export-candidate') &&
+        hasPattern(/\b(astro-edge-pipeline|runtime-wiring-invariants|compositor-pipeline)\b/u)
+          ? 'partial'
+          : 'missing',
       summary: !hasRule('orphan-export-candidate')
         ? 'The repo has integration wiring tests and zero active orphan findings, but it still lacks a named flow registry with explicit step-by-step contract traces.'
         : 'Active orphan/wiring signals still weaken confidence in end-to-end flow verification.',
@@ -1553,7 +1937,11 @@ function buildProtocolGapReport(
     {
       id: 'test-honesty',
       title: PROTOCOL_AREA_TITLES['test-honesty'],
-      status: files.some((file) => file.blockingSignals.includes('shadow-test-risk')) ? 'missing' : counts('partial') > 0 ? 'partial' : 'present',
+      status: files.some((file) => file.blockingSignals.includes('shadow-test-risk'))
+        ? 'missing'
+        : counts('partial') > 0
+          ? 'partial'
+          : 'present',
       summary: files.some((file) => file.blockingSignals.includes('shadow-test-risk'))
         ? 'One or more tests still show shadow-test risk.'
         : counts('partial') > 0
@@ -1572,19 +1960,15 @@ function buildProtocolGapReport(
     {
       id: 'semantic-consistency',
       title: PROTOCOL_AREA_TITLES['semantic-consistency'],
-      status:
-        files.some((file) => file.forbiddenRemedies.length > 0 || file.namedOffenses.includes('Polite Downgrade'))
-          ? 'partial'
-          : 'present',
-      summary:
-        files.some((file) => file.forbiddenRemedies.length > 0 || file.namedOffenses.includes('Polite Downgrade'))
-          ? 'The audit now surfaces downgrade, fallback, and type-erasure risk per file, but the repo still has concrete semantic debt to retire.'
-          : 'No active downgrade or semantic-regression signals remain in the scored inventory.',
-      evidence: [
-        'reports/codebase-audit.json',
-        'scripts/audit/integrity.ts',
-        'scripts/audit/report.ts',
-      ],
+      status: files.some((file) => file.forbiddenRemedies.length > 0 || file.namedOffenses.includes('Polite Downgrade'))
+        ? 'partial'
+        : 'present',
+      summary: files.some(
+        (file) => file.forbiddenRemedies.length > 0 || file.namedOffenses.includes('Polite Downgrade'),
+      )
+        ? 'The audit now surfaces downgrade, fallback, and type-erasure risk per file, but the repo still has concrete semantic debt to retire.'
+        : 'No active downgrade or semantic-regression signals remain in the scored inventory.',
+      evidence: ['reports/codebase-audit.json', 'scripts/audit/integrity.ts', 'scripts/audit/report.ts'],
       recommendations: [
         'Retire files carrying type erasure, fallback laundering, and constant-return pressure.',
         'Continue promoting semantic checks from advisory signals into explicit proving artifacts.',
@@ -1594,19 +1978,14 @@ function buildProtocolGapReport(
       id: 'proof-inventory',
       title: PROTOCOL_AREA_TITLES['proof-inventory'],
       status:
-        hasPattern(/\b(metamorphic|mutation|compile-fail)\b/iu) && hasPattern(/\b(lineariz|retry|replay|scheduler|security)\b/iu)
+        hasPattern(/\b(metamorphic|mutation|compile-fail)\b/iu) &&
+        hasPattern(/\b(lineariz|retry|replay|scheduler|security)\b/iu)
           ? 'partial'
           : 'missing',
-      summary:
-        hasPattern(/\b(lineariz|retry|replay|scheduler|security)\b/iu)
-          ? 'The repo has concurrency, replay, telemetry, and integrity proof surfaces, but mutation/metamorphic/compile-fail evidence is still thin.'
-          : 'Proof inventory is missing several explicit evidence classes called for by the protocol.',
-      evidence: [
-        'tests/property/',
-        'tests/e2e/',
-        'scripts/feedback-verify.ts',
-        'scripts/check-invariants.ts',
-      ],
+      summary: hasPattern(/\b(lineariz|retry|replay|scheduler|security)\b/iu)
+        ? 'The repo has concurrency, replay, telemetry, and integrity proof surfaces, but mutation/metamorphic/compile-fail evidence is still thin.'
+        : 'Proof inventory is missing several explicit evidence classes called for by the protocol.',
+      evidence: ['tests/property/', 'tests/e2e/', 'scripts/feedback-verify.ts', 'scripts/check-invariants.ts'],
       recommendations: [
         'Add explicit mutation/metamorphic/compile-fail inventory rows, even when coverage is currently absent.',
         'Track proof-class presence by subsystem so missing evidence stays visible.',
@@ -1629,7 +2008,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'runtime',
       title: 'Vite-centered delivery model',
       status: 'present',
-      summary: 'czap already ships as a Vite plugin plus Astro integration rather than as a monolithic standalone CLI runtime.',
+      summary:
+        'liteship already ships as a Vite plugin plus Astro integration rather than as a monolithic standalone CLI runtime.',
       evidence: ['packages/vite/src/plugin.ts', 'packages/astro/src/integration.ts', 'README.md'],
       recommendation: 'no_action',
     },
@@ -1638,7 +2018,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'runtime',
       title: 'Backend-agnostic full-stack unifier',
       status: 'absent',
-      summary: 'The repo is a rendering/runtime framework, not a Hono-style full-stack app framework spanning multiple UI libraries and backend adapters.',
+      summary:
+        'The repo is a rendering/runtime framework, not a Hono-style full-stack app framework spanning multiple UI libraries and backend adapters.',
       evidence: ['README.md', 'ARCHITECTURE.md'],
       recommendation: 'documentation_clarification',
     },
@@ -1647,7 +2028,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'runtime',
       title: 'Plugin-as-a-framework sidecar adoption',
       status: 'partial',
-      summary: 'The Vite/Astro packages support sidecar-style adoption for rendering concerns, but not the full application/backend framework surface envisioned in the blueprint.',
+      summary:
+        'The Vite/Astro packages support sidecar-style adoption for rendering concerns, but not the full application/backend framework surface envisioned in the blueprint.',
       evidence: ['packages/vite/src/index.ts', 'packages/astro/src/index.ts'],
       recommendation: 'architecture_hardening',
     },
@@ -1656,7 +2038,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'web',
       title: 'Native Request/Response surface',
       status: 'present',
-      summary: 'The edge and Astro middleware path already operates on standard Request/Response and Headers primitives.',
+      summary:
+        'The edge and Astro middleware path already operates on standard Request/Response and Headers primitives.',
       evidence: ['packages/astro/src/middleware.ts', 'packages/edge/src/host-adapter.ts'],
       recommendation: 'no_action',
     },
@@ -1683,7 +2066,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'edge',
       title: 'Integrated ORM/storage/queue stack',
       status: 'absent',
-      summary: 'The repo does not currently ship Drizzle/D1, blob storage, queues, or cron abstractions as built-in runtime surfaces.',
+      summary:
+        'The repo does not currently ship Drizzle/D1, blob storage, queues, or cron abstractions as built-in runtime surfaces.',
       evidence: ['package.json', 'packages/edge/src/index.ts'],
       recommendation: 'new_runtime_work',
     },
@@ -1692,7 +2076,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'component',
       title: 'Component-local data loading',
       status: 'partial',
-      summary: 'Streaming/session runtimes exist, but there is no general component-loader abstraction comparable to Suspense loaders across the framework.',
+      summary:
+        'Streaming/session runtimes exist, but there is no general component-loader abstraction comparable to Suspense loaders across the framework.',
       evidence: ['packages/astro/src/runtime/stream.ts', 'packages/astro/src/runtime/llm-session.ts'],
       recommendation: 'architecture_hardening',
     },
@@ -1710,7 +2095,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'platform',
       title: 'Intentional platform/runtime coupling',
       status: 'partial',
-      summary: 'The docs discuss Cloudflare-style edge execution, but the actual interfaces stay intentionally generic rather than locking into one vendor runtime.',
+      summary:
+        'The docs discuss Cloudflare-style edge execution, but the actual interfaces stay intentionally generic rather than locking into one vendor runtime.',
       evidence: ['ARCHITECTURE.md', 'packages/edge/src/kv-cache.ts', 'packages/astro/src/middleware.ts'],
       recommendation: 'documentation_clarification',
     },
@@ -1728,7 +2114,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'features',
       title: 'Workerd/edge-first optimization',
       status: 'partial',
-      summary: '@czap/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
+      summary:
+        '@liteship/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
       evidence: ['HOSTING.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
       recommendation: 'architecture_hardening',
     },
@@ -1737,8 +2124,13 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'features',
       title: 'Stateful edge AI bindings',
       status: 'partial',
-      summary: 'AI manifests and LLM streaming runtimes exist, but there is no durable-object-style stateful edge AI substrate.',
-      evidence: ['packages/compiler/src/ai-manifest.ts', 'packages/astro/src/runtime/llm.ts', 'packages/web/src/stream/llm-adapter.ts'],
+      summary:
+        'AI manifests and LLM streaming runtimes exist, but there is no durable-object-style stateful edge AI substrate.',
+      evidence: [
+        'packages/compiler/src/ai-manifest.ts',
+        'packages/astro/src/runtime/llm.ts',
+        'packages/web/src/stream/llm-adapter.ts',
+      ],
       recommendation: 'architecture_hardening',
     },
     {
@@ -1781,8 +2173,7 @@ function buildAuditStrikeBoardReport(
       title: file.path,
       score: file.score,
       rationale:
-        file.roadTo100[0] ??
-        (file.notes[0] ?? 'File sits below 100 and still carries measurable remediation debt.'),
+        file.roadTo100[0] ?? file.notes[0] ?? 'File sits below 100 and still carries measurable remediation debt.',
       evidence: [
         ...file.blockingSignals.slice(0, 3),
         ...file.evidenceRefs.slice(0, 3).map((ref) => `${ref.kind}:${ref.ref}`),
@@ -1813,7 +2204,9 @@ function buildAuditStrikeBoardReport(
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     root: relativeToRoot(root, root) || '.',
-    items: [...fileItems, ...architectureItems].sort((left, right) => left.score - right.score || left.title.localeCompare(right.title)),
+    items: [...fileItems, ...architectureItems].sort(
+      (left, right) => left.score - right.score || left.title.localeCompare(right.title),
+    ),
   };
 }
 
@@ -1838,10 +2231,18 @@ function renderFullTreeAccountingMarkdown(report: FullTreeAccountingReport): str
     lines.push(`| ${classification} | ${count} |`);
   }
 
-  lines.push('', '## Sample Entries', '', '| path | classification | tracked | scored | reason |', '| --- | --- | --- | --- | --- |');
+  lines.push(
+    '',
+    '## Sample Entries',
+    '',
+    '| path | classification | tracked | scored | reason |',
+    '| --- | --- | --- | --- | --- |',
+  );
 
   for (const entry of report.entries.slice(0, 40)) {
-    lines.push(`| ${escapeCell(entry.path)} | ${entry.classification} | ${entry.tracked ? 'yes' : 'no'} | ${entry.scored ? 'yes' : 'no'} | ${escapeCell(entry.reason)} |`);
+    lines.push(
+      `| ${escapeCell(entry.path)} | ${entry.classification} | ${entry.tracked ? 'yes' : 'no'} | ${entry.scored ? 'yes' : 'no'} | ${escapeCell(entry.reason)} |`,
+    );
   }
 
   return lines.join('\n');
@@ -1943,7 +2344,10 @@ export function buildAuditArtifactBundle(options: BuildReportOptions = {}): Audi
     ...support.suppressed,
   ]);
   const sections = buildFullAuditSections(root, profile.internalPackagePrefix, findings, supportingArtifacts);
-  const fullTreeAccounting = buildFullTreeAccountingReport(root, sections.flatMap((section) => section.files.map((file) => file.path)));
+  const fullTreeAccounting = buildFullTreeAccountingReport(
+    root,
+    sections.flatMap((section) => section.files.map((file) => file.path)),
+  );
   const protocolGap = buildProtocolGapReport(root, sections, findings);
   const frameworkBlueprintDelta = buildFrameworkBlueprintReport(root);
   const strikeBoard = buildAuditStrikeBoardReport(root, sections, frameworkBlueprintDelta);
@@ -1973,7 +2377,8 @@ export function buildAuditArtifactBundle(options: BuildReportOptions = {}): Audi
       present: frameworkBlueprintDelta.capabilities.filter((capability) => capability.status === 'present').length,
       partial: frameworkBlueprintDelta.capabilities.filter((capability) => capability.status === 'partial').length,
       absent: frameworkBlueprintDelta.capabilities.filter((capability) => capability.status === 'absent').length,
-      outOfScope: frameworkBlueprintDelta.capabilities.filter((capability) => capability.status === 'out_of_scope').length,
+      outOfScope: frameworkBlueprintDelta.capabilities.filter((capability) => capability.status === 'out_of_scope')
+        .length,
     },
     strikeBoard: {
       totalItems: strikeBoard.items.length,
@@ -2043,9 +2448,12 @@ export function renderCodebaseAuditMarkdown(report: CodebaseAuditReport): string
     '',
   ];
 
-  const coverage = (report.structure.summary as { coverageClassification?: StructureCoverageClassification }).coverageClassification;
+  const coverage = (report.structure.summary as { coverageClassification?: StructureCoverageClassification })
+    .coverageClassification;
   if (coverage) {
-    const policyAbsent = coverage.topology.filter((entry) => entry.coverage === 'policy-absent').map((entry) => entry.package);
+    const policyAbsent = coverage.topology
+      .filter((entry) => entry.coverage === 'policy-absent')
+      .map((entry) => entry.package);
     const unexercised = coverage.allowlistUnexercised.map((entry) => `${entry.package} -> ${entry.permitted}`);
     lines.push(
       '## Audit Self-Trust',
@@ -2053,8 +2461,12 @@ export function renderCodebaseAuditMarkdown(report: CodebaseAuditReport): string
       'Coverage classes distinguish a checked-clean result from an unchecked one (CUT A0). A zero here is not proof where coverage is `policy-absent` or `file-proxy-only`.',
       '',
       `- Topology policy-absent packages (no layering law evaluated): ${policyAbsent.length === 0 ? 'none' : policyAbsent.join(', ')}`,
-      `- Orphan-export check coverage: \`${coverage.orphan.coverage}\` (${coverage.orphan.candidateCount} candidate(s)). ${coverage.orphan.note}`,
-      `- Symbol-level orphan evidence: \`${coverage.symbol.coverage}\` — ${coverage.symbol.consumedCount} consumed, ${coverage.symbol.starCoveredCount} star-import-covered, ${coverage.symbol.candidateCount} exported-but-unconsumed. ${coverage.symbol.note}`,
+      coverage.orphan.coverage === 'not-checked'
+        ? `- Orphan-export check coverage: \`not-checked\`. ${coverage.orphan.reason}`
+        : `- Orphan-export check coverage: \`${coverage.orphan.coverage}\` (${coverage.orphan.candidateCount} candidate(s)). ${coverage.orphan.note}`,
+      coverage.symbol.coverage === 'not-checked'
+        ? `- Symbol-level orphan evidence: \`not-checked\`. ${coverage.symbol.reason}`
+        : `- Symbol-level orphan evidence: \`${coverage.symbol.coverage}\` — ${coverage.symbol.consumedCount} consumed, ${coverage.symbol.starCoveredCount} star-import-covered, ${coverage.symbol.candidateCount} exported-but-unconsumed. ${coverage.symbol.note}`,
       `- Allowlisted-but-unexercised internal imports: ${unexercised.length === 0 ? 'none' : unexercised.join(', ')}`,
       '',
     );
@@ -2064,7 +2476,10 @@ export function renderCodebaseAuditMarkdown(report: CodebaseAuditReport): string
     lines.push(`## ${section.title}`, '');
     lines.push(`Section score: ${section.score.toFixed(2)}`, '');
     section.notes.forEach((note) => lines.push(`- ${note}`));
-    lines.push('', '| path | file class | applicable control families | score | manual review | blocking signals | road to 100 | named offenses | forbidden remedies | notes |');
+    lines.push(
+      '',
+      '| path | file class | applicable control families | score | manual review | blocking signals | road to 100 | named offenses | forbidden remedies | notes |',
+    );
     lines.push('| --- | --- | --- | ---: | --- | --- | --- | --- | --- | --- |');
 
     for (const file of section.files) {
@@ -2134,7 +2549,9 @@ function main(): void {
   console.log(`wrote ${relativeToRoot(strikeBoardJsonPath)}`);
   console.log(`wrote ${relativeToRoot(strikeBoardMarkdownPath)}`);
 
-  const hasFailedSupportingArtifact = Object.values(report.supportingArtifacts).some((artifact) => artifact.status === 'failed');
+  const hasFailedSupportingArtifact = Object.values(report.supportingArtifacts).some(
+    (artifact) => artifact.status === 'failed',
+  );
   if (hasFailedSupportingArtifact) {
     process.exitCode = 1;
   }

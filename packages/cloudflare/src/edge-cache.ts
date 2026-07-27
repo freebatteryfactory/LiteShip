@@ -1,30 +1,46 @@
 /**
- * Maps a Cloudflare Workers env binding to the {@link @czap/edge} KVNamespace shape.
+ * Maps a Cloudflare Workers env binding to the {@link @liteship/edge} KVNamespace shape.
  *
  * @module
  */
 
-import type { KVNamespace } from '@czap/edge';
-import { Diagnostics } from '@czap/core';
+import type { KVNamespace } from '@liteship/edge';
+import { Diagnostics } from '@liteship/core';
 
 /** Cloudflare Workers execution environment (bindings bag). */
 export type CloudflareWorkersEnv = Record<string, unknown>;
 
+/** Per-request Cloudflare Workers lifetime authority. */
+export interface CloudflareExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+/** Request-scoped options for constructing a Cloudflare edge cache. */
 export interface CloudflareEdgeCacheOptions {
-  /** KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`). */
+  /** KV namespace binding name (e.g. `LITESHIP_BOUNDARY_CACHE`). */
   readonly binding: string;
-  /** Workers ExecutionContext; enables background Cache API population on KV hits. */
-  readonly ctx?: { waitUntil(promise: Promise<unknown>): void };
   /** Cloudflare KV edge-cache TTL, passed through to `kv.get(key, { cacheTtl })`. */
   readonly cacheTtl?: number;
   /** Cache API implementation. Defaults to `globalThis.caches.default` when present. */
   readonly cache?: CloudflareCacheApi | null;
 }
 
+/** Minimal Cloudflare Cache API capability consumed by the edge cache. */
 export interface CloudflareCacheApi {
   match(request: Request): Promise<Response | undefined>;
   put(request: Request, response: Response): Promise<void>;
   delete?(request: Request): Promise<boolean>;
+}
+
+function warnInvalidBinding(binding: string, cause: unknown): void {
+  Diagnostics.warnOnce({
+    source: 'liteship/cloudflare.edge-cache',
+    code: 'kv-binding-invalid',
+    message:
+      `KV binding "${binding}" could not be inspected and was refused. ` +
+      'Workers KV bindings must expose callable get() and put() methods; inspect the attached host error.',
+    cause,
+  });
 }
 
 /**
@@ -32,24 +48,23 @@ export interface CloudflareCacheApi {
  */
 export function resolveKvBinding(env: CloudflareWorkersEnv, binding: string): KVNamespace | null {
   const candidate = env[binding];
-  if (
-    candidate !== null &&
-    candidate !== undefined &&
-    typeof candidate === 'object' &&
-    'get' in candidate &&
-    'put' in candidate &&
-    typeof (candidate as KVNamespace).get === 'function' &&
-    typeof (candidate as KVNamespace).put === 'function'
-  ) {
-    return candidate as KVNamespace;
+  if (candidate !== null && candidate !== undefined && typeof candidate === 'object') {
+    try {
+      if (typeof Reflect.get(candidate, 'get') === 'function' && typeof Reflect.get(candidate, 'put') === 'function') {
+        return candidate as KVNamespace;
+      }
+    } catch (cause) {
+      warnInvalidBinding(binding, cause);
+      return null;
+    }
   }
   return null;
 }
 
-function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: string): void {
-  const available = Object.keys(envSource());
+function warnMissingBinding(env: CloudflareWorkersEnv, binding: string): void {
+  const available = Object.keys(env);
   Diagnostics.warnOnce({
-    source: 'czap/cloudflare.edge-cache',
+    source: 'liteship/cloudflare.edge-cache',
     code: 'kv-binding-missing',
     message:
       `KV binding "${binding}" is not present in the Workers env` +
@@ -58,9 +73,20 @@ function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: stri
   });
 }
 
+function warnCacheApiFailure(operation: 'read' | 'write', binding: string, cause: unknown): void {
+  Diagnostics.warnOnce({
+    source: 'liteship/cloudflare.edge-cache',
+    code: `cache-api-${operation}-failed`,
+    message:
+      `Cloudflare Cache API ${operation} failed for KV binding "${binding}" and was bypassed. ` +
+      'Workers KV remains the authoritative cache source; inspect the attached cause and the host Cache API implementation.',
+    cause,
+  });
+}
+
 function warnMissingCapability(binding: string, capability: 'delete' | 'list'): void {
   Diagnostics.warnOnce({
-    source: 'czap/cloudflare.edge-cache',
+    source: 'liteship/cloudflare.edge-cache',
     code: 'kv-binding-capability-missing',
     message:
       `KV binding "${binding}" does not implement ${capability}(), so active cache invalidation cannot use it. ` +
@@ -74,7 +100,7 @@ function resolveDefaultCache(): CloudflareCacheApi | null {
 }
 
 function cacheRequest(binding: string, key: string): Request {
-  return new Request(`https://czap.invalid/${encodeURIComponent(binding)}/${encodeURIComponent(key)}`);
+  return new Request(`https://liteship.invalid/${encodeURIComponent(binding)}/${encodeURIComponent(key)}`);
 }
 
 function kvGetOptions(cacheTtl: number | undefined): { cacheTtl: number } | undefined {
@@ -90,42 +116,60 @@ function kvGetOptions(cacheTtl: number | undefined): { cacheTtl: number } | unde
 export function createCloudflareEdgeCache(
   envSource: () => CloudflareWorkersEnv,
   options: CloudflareEdgeCacheOptions,
+  requestContext?: CloudflareExecutionContext,
 ): KVNamespace {
   const edgeCache = options.cache === undefined ? resolveDefaultCache() : options.cache;
   return {
     async get(key: string): Promise<string | null> {
       const request = edgeCache ? cacheRequest(options.binding, key) : null;
       if (edgeCache && request) {
-        const matched = await edgeCache.match(request);
-        if (matched) return matched.text();
+        try {
+          const matched = await edgeCache.match(request);
+          if (matched) return await matched.text();
+        } catch (cause) {
+          warnCacheApiFailure('read', options.binding, cause);
+        }
       }
 
-      const kv = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const kv = resolveKvBinding(env, options.binding);
       if (!kv) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return null;
       }
       const value = await kv.get(key, kvGetOptions(options.cacheTtl));
-      if (value !== null && edgeCache && request && options.ctx) {
-        options.ctx.waitUntil(edgeCache.put(request, new Response(value)));
+      if (value !== null && edgeCache && request && requestContext) {
+        requestContext.waitUntil(
+          edgeCache.put(request, new Response(value)).catch((cause: unknown) => {
+            warnCacheApiFailure('write', options.binding, cause);
+          }),
+        );
       }
       return value;
     },
     async put(key: string, value: string, putOptions?: { expirationTtl?: number }): Promise<void> {
-      const kv = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const kv = resolveKvBinding(env, options.binding);
       if (!kv) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return;
       }
       await kv.put(key, value, putOptions);
+      // Cache API is a read-through projection, never a second authority. A KV
+      // mutation invalidates the matching L1 entry before any subsequent read,
+      // preventing stale tag-index read/modify/write and under-purge.
+      if (edgeCache && typeof edgeCache.delete === 'function') {
+        await edgeCache.delete(cacheRequest(options.binding, key));
+      }
     },
     // Workers KV implements delete/list, so expose them only when the live
-    // binding really has them. This keeps @czap/edge's capability checks honest
+    // binding really has them. This keeps @liteship/edge's capability checks honest
     // for tests/custom adapters while still allowing late-bound workerd env.
     get delete() {
-      const current = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const current = resolveKvBinding(env, options.binding);
       if (!current) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return undefined;
       }
       if (typeof current.delete !== 'function') {
@@ -133,9 +177,10 @@ export function createCloudflareEdgeCache(
         return undefined;
       }
       return async (key: string): Promise<void> => {
-        const kv = resolveKvBinding(envSource(), options.binding);
+        const env = envSource();
+        const kv = resolveKvBinding(env, options.binding);
         if (!kv) {
-          warnMissingBinding(envSource, options.binding);
+          warnMissingBinding(env, options.binding);
           return;
         }
         if (typeof kv.delete !== 'function') {
@@ -149,9 +194,10 @@ export function createCloudflareEdgeCache(
       };
     },
     get list() {
-      const current = resolveKvBinding(envSource(), options.binding);
+      const env = envSource();
+      const current = resolveKvBinding(env, options.binding);
       if (!current) {
-        warnMissingBinding(envSource, options.binding);
+        warnMissingBinding(env, options.binding);
         return undefined;
       }
       if (typeof current.list !== 'function') {
@@ -159,9 +205,10 @@ export function createCloudflareEdgeCache(
         return undefined;
       }
       return async (listOptions: { prefix: string; cursor?: string }) => {
-        const kv = resolveKvBinding(envSource(), options.binding);
+        const env = envSource();
+        const kv = resolveKvBinding(env, options.binding);
         if (!kv) {
-          warnMissingBinding(envSource, options.binding);
+          warnMissingBinding(env, options.binding);
           return { keys: [], list_complete: true };
         }
         if (typeof kv.list !== 'function') {

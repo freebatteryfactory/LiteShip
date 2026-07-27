@@ -6,7 +6,7 @@
 
 # Interface: StandardsSurface
 
-Defined in: [gauntlet/src/standards-facts.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L214)
+Defined in: [gauntlet/src/facts/standards-facts.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L233)
 
 The full content-addressed STANDARDS SURFACE — a sorted, deterministic list of
 elements + the address of the resolved surface (the drift keystone). The HOST
@@ -19,7 +19,7 @@ same live config produce a byte-identical surface and the same address.
 
 > `readonly` **address**: `string`
 
-Defined in: [gauntlet/src/standards-facts.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L220)
+Defined in: [gauntlet/src/facts/standards-facts.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L239)
 
 The content address (fnv1a over the canonical elements) — host-minted; drift detector.
 
@@ -29,7 +29,7 @@ The content address (fnv1a over the canonical elements) — host-minted; drift d
 
 > `readonly` **elements**: readonly [`StandardsElement`](../type-aliases/StandardsElement.md)[]
 
-Defined in: [gauntlet/src/standards-facts.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L218)
+Defined in: [gauntlet/src/facts/standards-facts.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L237)
 
 Every standards element, in canonical order (sorted by [surfaceElementKey](../functions/surfaceElementKey.md)).
 
@@ -37,8 +37,8 @@ Every standards element, in canonical order (sorted by [surfaceElementKey](../fu
 
 ### snapshotFormat
 
-> `readonly` **snapshotFormat**: `1`
+> `readonly` **snapshotFormat**: `1` \| `2`
 
-Defined in: [gauntlet/src/standards-facts.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L216)
+Defined in: [gauntlet/src/facts/standards-facts.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/standards-facts.ts#L235)
 
 Snapshot format version — bumped if the element schema itself changes.

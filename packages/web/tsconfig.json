@@ -4,10 +4,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/_spine/events": ["../_spine/events.generated.d.ts"],
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }, { "path": "../genui" }, { "path": "../error" }]
+  "references": [{ "path": "../canonical" }, { "path": "../core" }, { "path": "../genui" }, { "path": "../error" }]
 }

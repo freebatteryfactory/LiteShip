@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
-import type { Messages } from '@czap/worker';
+import type { Messages } from '@liteship/worker';
 import { COMPOSITOR_WORKER_SCRIPT } from '../../../packages/worker/src/compositor-script.js';
 
 type ErrorMessage = Extract<Messages.FromWorker, { type: 'error' }>;

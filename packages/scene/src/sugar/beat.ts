@@ -5,27 +5,31 @@
  * normalizes every {@link FrameMark} to a numeric frame index before
  * invariants run (see `../compile.ts`).
  *
- * Canonical type declarations live in `@czap/_spine` (ADR-0010); this
+ * Canonical type declarations live in `@liteship/_spine` (ADR-0010); this
  * module mirrors them and keeps the runtime constructors.
  *
  * @module
  */
 
-import type { BeatHandle as _BeatHandle, FrameMark as _FrameMark, FrameMarkSum as _FrameMarkSum } from '@czap/_spine';
+import type {
+  BeatHandle as _BeatHandle,
+  FrameMark as _FrameMark,
+  FrameMarkSum as _FrameMarkSum,
+} from '@liteship/_spine';
 
-/** Beat handle produced by `Beat(count)`. Mirror of the `@czap/_spine` declaration. */
+/** Beat handle produced by `Beat(count)`. Mirror of the `@liteship/_spine` declaration. */
 export type BeatHandle = _BeatHandle;
 
 /**
  * Timeline mark accepted by track `from` / `to` and `Scene.include`
  * offsets — a raw frame index, a beat handle, or a deferred frame+beat
- * sum. Mirror of the `@czap/_spine` declaration.
+ * sum. Mirror of the `@liteship/_spine` declaration.
  */
 export type FrameMark = _FrameMark;
 
 /**
  * Deferred frame+beat sum produced by {@link addFrameMarks} when marks
- * of mixed units combine. Mirror of the `@czap/_spine` declaration.
+ * of mixed units combine. Mirror of the `@liteship/_spine` declaration.
  */
 export type FrameMarkSum = _FrameMarkSum;
 

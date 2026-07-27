@@ -44,7 +44,7 @@ describe('browser stream and llm directives', () => {
   beforeEach(() => {
     EventSourceMock.instances.length = 0;
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     vi.stubGlobal('EventSource', EventSourceMock as never);
   });
 
@@ -60,15 +60,15 @@ describe('browser stream and llm directives', () => {
     const signals: unknown[] = [];
 
     const inner = document.createElement('div');
-    inner.setAttribute('data-czap-stream-url', '/stream');
+    inner.setAttribute('data-liteship-stream-url', '/stream');
     inner.style.height = '80px';
     inner.style.width = '80px';
     inner.style.overflow = 'auto';
     inner.innerHTML = `${tallHtml('initial')}<button type="button">keep</button>`;
     document.body.appendChild(inner);
     inner.scrollTop = 48;
-    inner.addEventListener('czap:stream-morph', () => morphEvents.push('morph'));
-    inner.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    inner.addEventListener('liteship:stream-morph', () => morphEvents.push('morph'));
+    inner.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
 
     streamDirective(noop, {}, inner);
     let source = latestSource();
@@ -104,8 +104,8 @@ describe('browser stream and llm directives', () => {
 
     const outer = document.createElement('article');
     outer.id = 'outer-stream';
-    outer.setAttribute('data-czap-stream-url', '/stream');
-    outer.setAttribute('data-czap-stream-morph', 'outerHTML');
+    outer.setAttribute('data-liteship-stream-url', '/stream');
+    outer.setAttribute('data-liteship-stream-morph', 'outerHTML');
     document.body.appendChild(outer);
 
     streamDirective(noop, {}, outer);
@@ -140,12 +140,12 @@ describe('browser stream and llm directives', () => {
     );
     vi.stubGlobal('clearTimeout', clearTimeoutMock as never);
 
-    document.body.addEventListener('czap:stream-disconnected', () => disconnects.push('disconnect'));
-    document.body.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    document.body.addEventListener('liteship:stream-disconnected', () => disconnects.push('disconnect'));
+    document.body.addEventListener('liteship:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     const el = document.createElement('section');
-    el.setAttribute('data-czap-stream-url', '/stream');
-    el.setAttribute('data-czap-stream-artifact', 'doc-1');
+    el.setAttribute('data-liteship-stream-url', '/stream');
+    el.setAttribute('data-liteship-stream-artifact', 'doc-1');
     document.body.appendChild(el);
 
     streamDirective(noop, {}, el);
@@ -160,7 +160,7 @@ describe('browser stream and llm directives', () => {
       ),
     );
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(source.closed).toBe(true);
     // The directive runs on `SSE.create`, whose heartbeat watchdog resets its own
     // timer per message (clearTimeout + setTimeout) and clears it on teardown — so
@@ -185,7 +185,7 @@ describe('browser stream and llm directives', () => {
     source.onerror?.(new Event('error'));
 
     // The SSE.create model coalesces consecutive `reconnecting` transitions, so
-    // czap:stream-disconnected fires per disconnection episode rather than once
+    // liteship:stream-disconnected fires per disconnection episode rather than once
     // per failed attempt (the old hand-rolled behavior). The contract is that the
     // loss is surfaced and the retry budget terminates in a single
     // max-reconnect-attempts error — also pinned at the node level in
@@ -203,33 +203,33 @@ describe('browser stream and llm directives', () => {
     const errors: unknown[] = [];
 
     const el = document.createElement('section');
-    el.setAttribute('data-czap-llm-url', '/llm');
-    el.setAttribute('data-czap-llm-mode', 'morph');
+    el.setAttribute('data-liteship-llm-url', '/llm');
+    el.setAttribute('data-liteship-llm-mode', 'morph');
     el.innerHTML = '<div class="target"></div>';
-    el.setAttribute('data-czap-llm-target', '.target');
+    el.setAttribute('data-liteship-llm-target', '.target');
     document.body.appendChild(el);
 
-    el.addEventListener('czap:llm-start', () => starts.push('start'));
-    el.addEventListener('czap:llm-token', ((event: CustomEvent) => tokens.push(event.detail)) as EventListener);
-    el.addEventListener('czap:llm-tool-start', ((event: CustomEvent) => toolStarts.push(event.detail)) as EventListener);
-    el.addEventListener('czap:llm-tool-end', ((event: CustomEvent) => toolEnds.push(event.detail)) as EventListener);
-    el.addEventListener('czap:llm-done', ((event: CustomEvent) => dones.push(event.detail)) as EventListener);
-    el.addEventListener('czap:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-start', () => starts.push('start'));
+    el.addEventListener('liteship:llm-token', ((event: CustomEvent) => tokens.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-tool-start', ((event: CustomEvent) => toolStarts.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-tool-end', ((event: CustomEvent) => toolEnds.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-done', ((event: CustomEvent) => dones.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     llmDirective(noop, {}, el);
     let source = latestSource();
     source.onopen?.(new Event('open'));
 
-    document.documentElement.setAttribute('data-czap-tier', 'static');
+    document.documentElement.setAttribute('data-liteship-tier', 'static');
     source.onmessage?.(messageEvent(JSON.stringify({ type: 'text', content: 'hidden' })));
     expect(el.querySelector('.target')?.innerHTML).toBe('');
 
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     source.onmessage?.(messageEvent(JSON.stringify({ type: 'unknown', content: 'ignored' })));
     source.onmessage?.(messageEvent('Hello'));
     source.onmessage?.(messageEvent(JSON.stringify({ type: 'text', content: ' world' })));
     source.onmessage?.(messageEvent(JSON.stringify({ type: 'tool-call-start', toolName: 'search' })));
-    source.onmessage?.(messageEvent(JSON.stringify({ type: 'tool-call-delta', toolArgs: '{"query":"czap"}' })));
+    source.onmessage?.(messageEvent(JSON.stringify({ type: 'tool-call-delta', toolArgs: '{"query":"liteship"}' })));
     source.onmessage?.(messageEvent(JSON.stringify({ type: 'tool-call-end' })));
     source.onmessage?.(messageEvent(JSON.stringify({ type: 'done' })));
 
@@ -240,11 +240,11 @@ describe('browser stream and llm directives', () => {
       { text: ' world', accumulated: 'Hello world' },
     ]);
     expect(toolStarts).toEqual([{ name: 'search' }]);
-    expect(toolEnds).toEqual([{ name: 'search', args: { query: 'czap' } }]);
+    expect(toolEnds).toEqual([{ name: 'search', args: { query: 'liteship' } }]);
     expect(dones).toEqual([{ accumulated: 'Hello world' }]);
     expect(source.closed).toBe(true);
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     source = latestSource();
     source.onerror?.(new Event('error'));
 
@@ -255,9 +255,9 @@ describe('browser stream and llm directives', () => {
     const errors: unknown[] = [];
 
     const el = document.createElement('section');
-    el.setAttribute('data-czap-llm-url', '/llm');
+    el.setAttribute('data-liteship-llm-url', '/llm');
     document.body.appendChild(el);
-    el.addEventListener('czap:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     llmDirective(noop, {}, el);
     const source = latestSource();

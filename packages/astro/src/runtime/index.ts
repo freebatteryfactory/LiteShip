@@ -16,7 +16,7 @@ export { driveUniformFromSignal } from './uniform-signal.js';
 // element/target with a host-owned genui catalog; the directive runtime composes the
 // same factory internally (`runtime/llm.ts`).
 export { createLLMSession } from './llm-session.js';
-export type { LLMSessionConfig, LLMSessionShape } from './llm-session.js';
+export type { LLMSessionConfig, LLMSession } from './llm-session.js';
 export { bootstrapSlots, getSlotRegistry, reinitializeDirectives, teardownDirectives, rescanSlots } from './slots.js';
 export { bootstrapDirectives, scanAndBootDirectives } from './directive-boot.js';
 export type { DirectiveName } from './directive-boot.js';
@@ -39,15 +39,22 @@ export type { LoweredBinding, LoweredTarget } from './graph-lower.js';
 export { castGraphContext, admitGraphPatchProposal, adoptAppliedGraph } from './graph-ai-apply.js';
 export type { AdmitPatchResult } from './graph-ai-apply.js';
 // Scene → live-runtime bridge (0.4.0 item C): drive the live graph runtime from a
-// signal-indexed `@czap/scene`, splitting DISCRETE crossings (→ recast) from the
+// signal-indexed `@liteship/scene`, splitting DISCRETE crossings (→ recast) from the
 // CONTINUOUS tween (→ leaf CSS var / GPU uniform). Continuous motion never recasts.
 export { bridgeSceneToGraph } from './scene-bridge.js';
 export { writeContinuousMap } from './write-continuous-map.js';
 // Continuous-motion FLOOR (client:motion): the production driver of writeContinuousMap.
 // Native `animation-timeline` owns motion where supported; this scrubs the SSR-inlined
-// lowered program (sampling the SAME easing kernel as the CSS linear()) everywhere else.
-export { initMotionDirective, parseMotionProgram, nativeTimelineSupported, MOTION_PROGRAM_ATTR } from './motion.js';
-export type { SerializedMotionProgram } from './motion.js';
+// directive payload (sampling the SAME easing kernel as the CSS linear()) everywhere else.
+export {
+  initMotionDirective,
+  decodeMotionDirectivePayload,
+  parseMotionDirectivePayload,
+  serializeMotionDirectivePayload,
+  nativeTimelineSupported,
+  MOTION_PAYLOAD_ATTR,
+} from './motion.js';
+export type { MotionDirectivePayload } from './motion.js';
 export type {
   BridgeableScene,
   BridgeClock,
@@ -57,7 +64,7 @@ export type {
   SceneQueryEffect,
 } from './scene-bridge.js';
 // Scene-stage REFERENCE CONSUMER: the in-repo caller that drives a REAL compiled
-// `@czap/scene` runtime through `bridgeSceneToGraph` onto a live graph (item C),
+// `@liteship/scene` runtime through `bridgeSceneToGraph` onto a live graph (item C),
 // and composes `castGraphContext` → `admitGraphPatchProposal` for the AI seam
 // (item D). This is the real producer→consumer wiring the seams' exports stop at.
 export { driveSceneStage, castStageContext, applyGraphSuggestion, sceneStageRunQuery } from './scene-stage.js';
@@ -72,7 +79,7 @@ export {
   readRuntimePolicy,
   readRuntimePolicyWithSource,
 } from './policy.js';
-export type { RuntimeEndpointKind, RuntimeEndpointPolicy, HtmlPolicy } from '@czap/web';
+export type { RuntimeEndpointKind, RuntimeEndpointPolicy, HtmlPolicy } from '@liteship/web';
 export type {
   RuntimeHtmlPolicy,
   RuntimeSecurityPolicy,
@@ -80,6 +87,6 @@ export type {
   RuntimePolicySource,
   RuntimePolicyReadout,
 } from './policy.js';
-// SVG last-mile: live DOM applicator around @czap/scene's pure svg-egress.
+// SVG last-mile: live DOM applicator around @liteship/scene's pure svg-egress.
 export { attachSvgRuntime, initSvgDirective, buildEntityElementResolver, parseSvgStateAttrs } from './svg.js';
 export type { SvgStateAttrs, SvgEntityElementResolver } from './svg.js';

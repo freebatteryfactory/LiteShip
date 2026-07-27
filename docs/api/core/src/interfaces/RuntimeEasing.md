@@ -6,7 +6,7 @@
 
 # Interface: RuntimeEasing
 
-Defined in: [core/src/easing.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L387)
+Defined in: [core/src/motion/easing.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L387)
 
 Self-describing easing descriptor carried in the runtime motion plan
 (`RuntimeWritePlan.easing`) so the JS floor is driver-independent: it reads its
@@ -20,7 +20,7 @@ config for the spring arm (defaulting to [DEFAULT\_MOTION\_SPRING](../variables/
 
 > `readonly` **kind**: `"linear"` \| `"ease"` \| `"spring"` \| `"points"` \| `"bounce"` \| `"elastic"` \| `"back"` \| `"cubicBezier"`
 
-Defined in: [core/src/easing.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L388)
+Defined in: [core/src/motion/easing.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L388)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/easing.ts:388](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **points?**: readonly `number`[]
 
-Defined in: [core/src/easing.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L399)
+Defined in: [core/src/motion/easing.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L399)
 
 Serialized sampled point list (Law 4, the byte-law): the IDENTICAL `linear()` stops
 the native CSS path emits via `Easing.easingToLinearCSS`. When present the floor lerps
@@ -44,4 +44,4 @@ serialized. The legacy `linear`/`ease`/`spring` kinds sample analytically (no ar
 
 > `readonly` `optional` **spring?**: `SpringConfigShape`
 
-Defined in: [core/src/easing.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L389)
+Defined in: [core/src/motion/easing.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L389)

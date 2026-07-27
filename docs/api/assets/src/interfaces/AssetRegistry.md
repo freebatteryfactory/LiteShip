@@ -6,7 +6,7 @@
 
 # Interface: AssetRegistry
 
-Defined in: [assets/src/contract.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L263)
+Defined in: [assets/src/contract.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L322)
 
 An immutable, explicitly-assembled index of asset capsules. Replaces the
 old mutable module-global registry: there is no import-time mutation, so
@@ -23,7 +23,7 @@ resolve an id (`ref`, `resolveDecoder`, the projection factories).
 
 > **assertAudioRegistered**(`audioAssetId`, `factory`): `void`
 
-Defined in: [assets/src/contract.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L280)
+Defined in: [assets/src/contract.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L339)
 
 Validate that an audio asset id is registered before constructing a
 projection capsule for it. Throws a registry-miss teaching error naming
@@ -47,9 +47,9 @@ projection capsule for it. Throws a registry-miss teaching error naming
 
 ### capsule()
 
-> **capsule**(`id`): [`AssetCapsule`](../type-aliases/AssetCapsule.md) \| `undefined`
+> **capsule**(`id`): [`AnyAssetCapsule`](../type-aliases/AnyAssetCapsule.md) \| `undefined`
 
-Defined in: [assets/src/contract.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L269)
+Defined in: [assets/src/contract.ts:328](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L328)
 
 The capsule registered under `id`, or `undefined`.
 
@@ -61,7 +61,7 @@ The capsule registered under `id`, or `undefined`.
 
 #### Returns
 
-[`AssetCapsule`](../type-aliases/AssetCapsule.md) \| `undefined`
+[`AnyAssetCapsule`](../type-aliases/AnyAssetCapsule.md) \| `undefined`
 
 ***
 
@@ -69,7 +69,7 @@ The capsule registered under `id`, or `undefined`.
 
 > **has**(`id`): `boolean`
 
-Defined in: [assets/src/contract.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L265)
+Defined in: [assets/src/contract.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L324)
 
 True when `id` names a capsule in this registry.
 
@@ -89,7 +89,7 @@ True when `id` names a capsule in this registry.
 
 > **ids**(): readonly `string`[]
 
-Defined in: [assets/src/contract.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L267)
+Defined in: [assets/src/contract.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L326)
 
 Sorted ids of every capsule in this registry (for teaching errors / listing).
 
@@ -103,7 +103,7 @@ readonly `string`[]
 
 > **ref**(`id`): [`AssetRefId`](../type-aliases/AssetRefId.md)
 
-Defined in: [assets/src/contract.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L274)
+Defined in: [assets/src/contract.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L333)
 
 Validate `id` is registered and return it as a branded [AssetRefId](../type-aliases/AssetRefId.md).
 Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
@@ -120,19 +120,35 @@ Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
 
 ***
 
+### resolveAudioDecoder()
+
+> **resolveAudioDecoder**(`assetId`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)\<`"audio"`\>
+
+Defined in: [assets/src/contract.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L347)
+
+Resolve a registered audio decoder and reject unknown or non-audio assets.
+
+#### Parameters
+
+##### assetId
+
+`string`
+
+#### Returns
+
+[`AssetDecoder`](../type-aliases/AssetDecoder.md)\<`"audio"`\>
+
+***
+
 ### resolveDecoder()
 
 > **resolveDecoder**(`assetId`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)
 
-Defined in: [assets/src/contract.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L290)
+Defined in: [assets/src/contract.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L345)
 
-Resolve the decode function for an asset id: the registered capsule's
-`derive` handler (which carries the asset's own decoder, custom or
-built-in) when present, else the audio built-in — host processes that
-build a registry without the scene's asset module (e.g. the CLI reading
-only the compiled manifest) keep the audio-decode fallback. The audio
-fallback matches the only consumers (beat/onset/waveform are audio
-projections).
+Resolve the registered byte decoder for an asset id. Unknown ids and
+assets without a decoder fail closed; hosts that only have a manifest
+must select an explicit decoder rather than manufacture registry truth.
 
 #### Parameters
 

@@ -8,22 +8,22 @@
 
 > `const` **Detect**: `object`
 
-Defined in: [detect/src/detect.ts:654](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L654)
+Defined in: [detect/src/detect.ts:708](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L708)
 
 Device capability detection namespace.
 
 Probes browser APIs for GPU tier, CPU cores, memory, input modality,
 user preferences, and network info. Maps detected capabilities to
-[CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md), [CapSet](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
+[CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md), [CapSet](../../../liteship/src/evidence/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
 Supports live watching for preference and viewport changes.
 
-You usually never call these yourself — the `@czap/astro` boundary runs
-detection automatically and publishes `window.__CZAP_DETECT__` for the
+You usually never call these yourself — the `@liteship/astro` boundary runs
+detection automatically and publishes `window.__LITESHIP_DETECT__` for the
 runtime to read.
 
 Advanced — direct invocation:
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const result = Detect.detect();
 console.log(result.capabilities.prefersColorScheme); // 'light' | 'dark'
@@ -44,21 +44,21 @@ Run a full device capability detection sweep.
 All probes are synchronous with internal error handling -- gracefully
 falls back to conservative defaults when APIs are unavailable.
 
-You usually never call this yourself: in an Astro project the `@czap/astro`
+You usually never call this yourself: in an Astro project the `@liteship/astro`
 boundary runs detection after DOMContentLoaded and publishes the result as
-`window.__CZAP_DETECT__`, so satellites and the directive runtime read it
+`window.__LITESHIP_DETECT__`, so adaptives and the directive runtime read it
 for free.
 
 Advanced — direct invocation (all probes are synchronous):
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const result = Detect.detect();
 console.log(result.capabilities.gpu);       // 0-3
 console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
-console.log(result.confidence);             // 0.5 - 1.0
+console.log(result.tierEvidence.motion.support); // 'observed' | 'inferred'
 ```
 
 #### Returns
@@ -74,12 +74,12 @@ The [ExtendedDetectionResult](../interfaces/ExtendedDetectionResult.md)
 Detect GPU tier from WebGL renderer string heuristics.
 Falls back to tier 1 (integrated) when WebGL is unavailable.
 
-You usually never call this yourself: the `@czap/astro` boundary runs the
+You usually never call this yourself: the `@liteship/astro` boundary runs the
 same classification automatically and publishes it for the runtime to read.
 
 Advanced — direct invocation (all probes are synchronous):
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const tier = Detect.detectGPUTier();
 // tier => 0 (software) | 1 (integrated) | 2 (mid) | 3 (high-end)
@@ -135,7 +135,7 @@ A [Disposer](../type-aliases/Disposer.md) that removes the listeners it added
 #### Example
 
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const dispose = Detect.watchCapabilities((result) => {
   console.log('Capabilities changed:', result.capTier);

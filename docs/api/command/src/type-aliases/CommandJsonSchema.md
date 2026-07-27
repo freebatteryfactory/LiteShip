@@ -6,8 +6,8 @@
 
 # Type Alias: CommandJsonSchema
 
-> **CommandJsonSchema** = `_CommandJsonSchema`
+> **CommandJsonSchema** = [`CommandJsonSchema`](../../../spine/interfaces/CommandJsonSchema.md)
 
-Defined in: core/dist/command.d.ts:10
+Defined in: core/dist/authoring/command.d.ts:10
 
 Minimal JSON-Schema object shape for a command's input/output contract.

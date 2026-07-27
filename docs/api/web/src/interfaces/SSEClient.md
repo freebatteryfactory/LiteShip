@@ -6,9 +6,13 @@
 
 # Interface: SSEClient
 
-Defined in: [web/src/stream/sse.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L34)
+Defined in: [web/src/stream/sse.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L42)
 
 SSE client instance.
+
+## Extends
+
+- [`AsyncOwnedResource`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md)
 
 ## Properties
 
@@ -16,7 +20,7 @@ SSE client instance.
 
 > `readonly` **backpressure**: [`BackpressureHint`](BackpressureHint.md)
 
-Defined in: [web/src/stream/sse.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L55)
+Defined in: [web/src/stream/sse.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L63)
 
 Backpressure snapshot for the current buffer occupancy (plain accessor).
 
@@ -26,9 +30,23 @@ Backpressure snapshot for the current buffer occupancy (plain accessor).
 
 > `readonly` **lastEventId**: `string` \| `null`
 
-Defined in: [web/src/stream/sse.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L53)
+Defined in: [web/src/stream/sse.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L61)
 
 Cursor from the most recent message, or `null` (plain accessor).
+
+***
+
+### lifetime
+
+> `readonly` **lifetime**: [`Lifetime`](../../../liteship/src/reactive/type-aliases/Lifetime.md)
+
+Defined in: core/dist/reactive/lifetime.d.ts:108
+
+The owning disposal handle — for advanced/debug composition only.
+
+#### Inherited from
+
+[`AsyncOwnedResource`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md).[`lifetime`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md#lifetime)
 
 ***
 
@@ -36,7 +54,7 @@ Cursor from the most recent message, or `null` (plain accessor).
 
 > `readonly` **messages**: `AsyncIterable`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
 
-Defined in: [web/src/stream/sse.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L41)
+Defined in: [web/src/stream/sse.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L49)
 
 Live async stream of parsed messages. Iterating drains the sse-pure
 overflow buffer (so [backpressure](#backpressure) `bufferSize` drops as messages are
@@ -49,7 +67,7 @@ bounded-`Queue` semantics.
 
 > `readonly` **state**: [`SSEState`](../type-aliases/SSEState.md)
 
-Defined in: [web/src/stream/sse.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L51)
+Defined in: [web/src/stream/sse.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L59)
 
 Current connection state (plain accessor).
 
@@ -59,7 +77,7 @@ Current connection state (plain accessor).
 
 > `readonly` **stateChanges**: `AsyncIterable`\<[`SSEState`](../type-aliases/SSEState.md)\>
 
-Defined in: [web/src/stream/sse.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L49)
+Defined in: [web/src/stream/sse.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L57)
 
 Edge stream of connection-state *transitions* (one emission per
 `connecting`/`reconnecting`/`connected`/`error`/`disconnected` change,
@@ -69,19 +87,39 @@ deduplicated). Directive bridges drive resumption off the
 
 ## Methods
 
-### close()
+### \[asyncDispose\]()
 
-> **close**(): `void`
+> **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [web/src/stream/sse.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L61)
+Defined in: core/dist/reactive/lifetime.d.ts:112
 
-Synchronous teardown: cancel the reconnect/heartbeat timers, detach and
-close the live EventSource, drop the buffer, and complete the
-`messages`/`stateChanges` streams. Idempotent — a second call is a no-op.
+Well-known disposer so the resource works with an `await using` declaration.
 
 #### Returns
 
-`void`
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`AsyncOwnedResource`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md).[`[asyncDispose]`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md#asyncdispose)
+
+***
+
+### dispose()
+
+> **dispose**(): `Promise`\<`void`\>
+
+Defined in: core/dist/reactive/lifetime.d.ts:110
+
+Tear down exactly once; the returned promise settles when async finalizers settle. Idempotent.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`AsyncOwnedResource`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md).[`dispose`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md#dispose)
 
 ***
 
@@ -89,7 +127,7 @@ close the live EventSource, drop the buffer, and complete the
 
 > **reconnect**(): `void`
 
-Defined in: [web/src/stream/sse.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L63)
+Defined in: [web/src/stream/sse.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L65)
 
 Manual reconnect: cancel timers, close the source, reset backoff, re-open.
 

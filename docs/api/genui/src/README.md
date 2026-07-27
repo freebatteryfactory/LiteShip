@@ -6,7 +6,7 @@
 
 # genui/src
 
-`@czap/genui` — host-owned generated UI catalog renderer.
+`@liteship/genui` — host-owned generated UI catalog renderer.
 
 ## Interfaces
 

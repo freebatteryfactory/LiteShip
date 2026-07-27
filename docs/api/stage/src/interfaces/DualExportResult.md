@@ -6,7 +6,7 @@
 
 # Interface: DualExportResult
 
-Defined in: [stage/src/dual-export.ts:467](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L467)
+Defined in: [stage/src/dual-export.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L522)
 
 The provable result of casting one graph to two carriers from one source.
 
@@ -18,9 +18,9 @@ The provable result of casting one graph to two carriers from one source.
 
 ### astro
 
-> `readonly` **astro**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **astro**: [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:471](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L471)
+Defined in: [stage/src/dual-export.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L526)
 
 The static-page carrier (`carrier: 'astro-page'`).
 
@@ -28,9 +28,9 @@ The static-page carrier (`carrier: 'astro-page'`).
 
 ### astroReceipt
 
-> `readonly` **astroReceipt**: `ReceiptEnvelope`
+> `readonly` **astroReceipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: [stage/src/dual-export.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L475)
+Defined in: [stage/src/dual-export.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L530)
 
 Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
@@ -38,9 +38,9 @@ Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
 ### receipt
 
-> `readonly` **receipt**: `ReceiptEnvelope`
+> `readonly` **receipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: [stage/src/dual-export.ts:482](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L482)
+Defined in: [stage/src/dual-export.ts:537](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L537)
 
 The single assertable head: a parent MERGE envelope whose
 `previous = [astroReceipt.hash, videoReceipt.hash]` and whose payload pins
@@ -50,9 +50,9 @@ The single assertable head: a parent MERGE envelope whose
 
 ### sharedSourceDigest
 
-> `readonly` **sharedSourceDigest**: `AddressedDigest`
+> `readonly` **sharedSourceDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: [stage/src/dual-export.ts:469](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L469)
+Defined in: [stage/src/dual-export.ts:524](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L524)
 
 The ONE source digest both casts derive from — `=== graph.digest`.
 
@@ -60,9 +60,9 @@ The ONE source digest both casts derive from — `=== graph.digest`.
 
 ### video
 
-> `readonly` **video**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **video**: [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L473)
+Defined in: [stage/src/dual-export.ts:528](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L528)
 
 The video carrier (`carrier: 'video'`).
 
@@ -70,6 +70,6 @@ The video carrier (`carrier: 'video'`).
 
 ### videoReceipt
 
-> `readonly` **videoReceipt**: `ReceiptEnvelope`
+> `readonly` **videoReceipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: [stage/src/dual-export.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L476)
+Defined in: [stage/src/dual-export.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L531)

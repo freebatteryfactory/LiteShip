@@ -8,7 +8,7 @@
 
 > `const` **SceneRuntime**: `object`
 
-Defined in: [scene/src/runtime.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L305)
+Defined in: [scene/src/runtime.ts:294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L294)
 
 SceneRuntime namespace — build a live, tickable handle from a
 compiled scene. The companion type namespace exposes
@@ -24,7 +24,7 @@ Build a live runtime handle.
 
 Build a live SceneRuntime handle from a [CompiledScene](../interfaces/CompiledScene.md).
 
-Holds the world's [WorldNS.Handle](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts) lifetime so the caller
+Holds the world (which owns its own teardown) so the caller
 controls when finalizers run. Systems are registered in the
 canonical topological order — this matches ADR-0009's
 ECS-as-scene-substrate discipline.
@@ -45,6 +45,6 @@ ECS-as-scene-substrate discipline.
 
 ### systemCount
 
-> `readonly` **systemCount**: `7` = `CANONICAL_SYSTEM_COUNT`
+> `readonly` **systemCount**: `8` = `CANONICAL_SYSTEM_COUNT`
 
 Number of canonical scene systems the runtime always registers.

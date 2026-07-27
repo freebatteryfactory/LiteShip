@@ -6,7 +6,7 @@
 
 # Interface: ActiveSurfaceFacts
 
-Defined in: [gauntlet/src/active-surface-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/active-surface-facts.ts#L41)
+Defined in: [gauntlet/src/facts/active-surface-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/active-surface-facts.ts#L41)
 
 The injected FactPack — one row per enrolled active surface.
 
@@ -16,4 +16,4 @@ The injected FactPack — one row per enrolled active surface.
 
 > `readonly` **surfaces**: readonly [`ActiveSurfaceEntry`](ActiveSurfaceEntry.md)[]
 
-Defined in: [gauntlet/src/active-surface-facts.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/active-surface-facts.ts#L42)
+Defined in: [gauntlet/src/facts/active-surface-facts.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/active-surface-facts.ts#L42)

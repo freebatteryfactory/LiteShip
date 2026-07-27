@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { WorkerHost } from '@czap/worker';
+import { WorkerHost } from '@liteship/worker';
 import { MockWorker } from '../helpers/mock-worker.js';
 import { mockCanvas } from '../helpers/mock-dom.js';
 
@@ -206,19 +206,19 @@ describe('WorkerHost', () => {
     expect(received).toHaveLength(1); // No additional
   });
 
-  test('manual unsubscribe is idempotent and dispose does not re-run removed listeners', () => {
+  test('manual unsubscribe is idempotent and dispose does not re-run removed listeners', async () => {
     const host = WorkerHost.create();
     const baseUnsub = host.onState(() => undefined);
     const unsub = vi.fn(() => baseUnsub());
 
     unsub();
     unsub();
-    host.dispose();
+    await host.dispose();
 
     expect(unsub).toHaveBeenCalledTimes(2);
   });
 
-  test('dispose terminates the render worker and parks the compositor worker for reuse', () => {
+  test('dispose terminates the render worker and parks the compositor worker for reuse', async () => {
     const host = WorkerHost.create();
     const canvas = mockCanvas();
     host.attachCanvas(canvas as any);
@@ -226,20 +226,23 @@ describe('WorkerHost', () => {
     const compositorWorker = MockWorker.instances[0]!;
     const renderWorker = MockWorker.instances[1]!;
 
-    host.dispose();
+    const disposal = host.dispose();
 
     expect(compositorWorker.terminated).toBe(false);
     expect(renderWorker.terminated).toBe(true);
+    expect(host.dispose()).toBe(disposal);
+    expect(host[Symbol.asyncDispose]()).toBe(disposal);
+    await disposal;
   });
 
-  test('dispose clears state listeners', () => {
+  test('dispose clears state listeners', async () => {
     const host = WorkerHost.create();
     const compositorWorker = MockWorker.instances[0]!;
 
     const received: any[] = [];
     host.onState((state) => received.push(state));
 
-    host.dispose();
+    await host.dispose();
 
     // After dispose, state messages should not trigger callback
     const mockState = { discrete: {}, blend: {}, outputs: { css: {}, glsl: {}, aria: {} } };
@@ -247,17 +250,17 @@ describe('WorkerHost', () => {
     expect(received).toHaveLength(0);
   });
 
-  test('dispose without a renderer parks the compositor worker for warm reuse', () => {
+  test('dispose without a renderer parks the compositor worker for warm reuse', async () => {
     const host = WorkerHost.create();
     const compositorWorker = MockWorker.instances[0]!;
 
-    host.dispose();
+    await host.dispose();
 
     expect(compositorWorker.terminated).toBe(false);
     expect(host.renderer).toBeNull();
   });
 
-  test('recreating a host reuses the parked compositor worker without leaking listeners or quantizers', () => {
+  test('recreating a host reuses the parked compositor worker without leaking listeners or quantizers', async () => {
     const firstHost = WorkerHost.create();
     const compositorWorker = markCompositorReady();
     const firstReceived: any[] = [];
@@ -270,7 +273,7 @@ describe('WorkerHost', () => {
 
     expect(firstHost.compositor.runtime.hasQuantizer('layout')).toBe(true);
 
-    firstHost.dispose();
+    await firstHost.dispose();
     expect(compositorWorker.terminated).toBe(false);
 
     const secondHost = WorkerHost.create();
@@ -312,7 +315,9 @@ describe('WorkerHost', () => {
     });
     host.compositor.evaluate('layout', 800);
 
-    expect(compositorWorker.postedMessages.map((message) => (message.data as { type?: string }).type)).toEqual(['init']);
+    expect(compositorWorker.postedMessages.map((message) => (message.data as { type?: string }).type)).toEqual([
+      'init',
+    ]);
 
     host.compositor.requestCompute();
 

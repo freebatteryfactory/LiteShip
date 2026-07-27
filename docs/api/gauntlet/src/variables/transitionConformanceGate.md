@@ -15,5 +15,5 @@ self-explaining, REPLAYABLE Finding at the family's assurance level (severity by
 level deciding blocking); each `unevidenced` case is a coverage gap floored by the
 committed ratchet. REPORT-not-DECIDE. It [requireTransition](../functions/requireTransition.md), so it runs only when a
 host injects the facts — the repo-local `transition:gate` phase
-(`scripts/transition-conformance-gate.ts`), NOT the shipped `czap check` CLI. Earns
+(`scripts/transition-conformance-gate.ts`), NOT the shipped `liteship check` CLI. Earns
 blocking authority via the shipped ratchet.

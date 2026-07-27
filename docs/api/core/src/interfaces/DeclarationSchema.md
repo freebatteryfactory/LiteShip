@@ -6,7 +6,7 @@
 
 # Interface: DeclarationSchema\<T\>
 
-Defined in: [core/src/schema-port.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L34)
+Defined in: [core/src/schema/schema-port.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L34)
 
 A [SchemaPort](SchemaPort.md) tagged as a DECLARATION: a schema whose value domain is
 asserted, not structurally walkable (raw bytes, opaque carriers), so the
@@ -30,7 +30,7 @@ plain schema is never mistaken for a declaration.
 
 > `readonly` **\[DeclarationTypeId\]**: `T`
 
-Defined in: [core/src/schema-port.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L35)
+Defined in: [core/src/schema/schema-port.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L35)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [core/src/schema-port.ts:35](https://github.com/freebatteryfactory/L
 
 > `readonly` **Encoded**: `T`
 
-Defined in: [core/src/schema-port.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L22)
+Defined in: [core/src/schema/schema-port.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L22)
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: [core/src/schema-port.ts:22](https://github.com/freebatteryfactory/L
 
 > `readonly` **Type**: `T`
 
-Defined in: [core/src/schema-port.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema-port.ts#L21)
+Defined in: [core/src/schema/schema-port.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/schema-port.ts#L21)
 
 #### Inherited from
 

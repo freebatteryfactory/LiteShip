@@ -21,13 +21,22 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import fg from 'fast-glob';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
+import { ASSEMBLY_KINDS } from '../packages/core/src/authoring/capsule.js';
 import {
   ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
+  BENCH_FLEX_POLICY,
   LLM_STEADY_DIRECTIVE_P99_MAX_NS,
   LLM_STEADY_P99_TO_BASELINE_MAX,
   LLM_STEADY_REPLICATE_EXCEEDANCE_MAX,
+  benchFlexPolicyFailures,
 } from './bench/flex-policy.js';
+
+const FLEX_POLICY_FAILURES = benchFlexPolicyFailures(BENCH_FLEX_POLICY);
+if (FLEX_POLICY_FAILURES.length > 0) {
+  for (const failure of FLEX_POLICY_FAILURES) console.error(`FAIL flex-policy: ${failure}`);
+  process.exit(1);
+}
 
 interface CheckResult {
   pass: boolean;
@@ -60,31 +69,30 @@ const sh = (cmd: string): { ok: boolean; out: string } => {
 // block in eslint.config.js.
 const SANCTIONED_CAST_FILES = new Set([
   // Brand factories
-  'packages/core/src/brands.ts',
-  'packages/core/src/ecs.ts',
+  'packages/core/src/schema/brands.ts',
+  'packages/core/src/ecs/runtime.ts',
   'packages/web/src/types.ts',
 
   // Tuple + generic-preservation helpers
-  'packages/core/src/tuple.ts',
-  'packages/core/src/cell.ts',
-  'packages/core/src/boundary.ts',
-  'packages/core/src/composable.ts',
-  'packages/core/src/blend.ts',
-  'packages/core/src/interpolate.ts',
-  'packages/core/src/op.ts',
+  'packages/core/src/authoring/tuple-map.ts',
+  'packages/core/src/reactive/cell.ts',
+  'packages/core/src/authoring/boundary.ts',
+  'packages/core/src/authoring/composable.ts',
+  'packages/core/src/motion/blend.ts',
+  'packages/core/src/motion/interpolate.ts',
 
   // Compositor / quantizer state bridges
-  'packages/core/src/compositor.ts',
-  'packages/core/src/compositor-pool.ts',
+  'packages/core/src/media/compositor.ts',
+  'packages/core/src/media/compositor-pool.ts',
   'packages/quantizer/src/quantizer.ts',
   'packages/quantizer/src/evaluate.ts',
 
   // FFI / hash primitives
-  'packages/core/src/typed-ref.ts',
-  'packages/core/src/wasm-dispatch.ts',
+  'packages/core/src/evidence/typed-ref.ts',
+  'packages/core/src/wasm/wasm-dispatch.ts',
 
   // Environment / runtime introspection helpers
-  'packages/core/src/diagnostics.ts',
+  'packages/core/src/evidence/diagnostics.ts',
   'packages/worker/src/compositor-startup.ts',
   'packages/detect/src/detect.ts',
   'packages/detect/src/tiers.ts',
@@ -112,11 +120,7 @@ interface MatchHit {
   text: string;
 }
 
-const scanFiles = (
-  patterns: string[],
-  matcher: RegExp,
-  excludeSanctioned = false,
-): MatchHit[] => {
+const scanFiles = (patterns: string[], matcher: RegExp, excludeSanctioned = false): MatchHit[] => {
   const files = fg.sync(patterns, { cwd: process.cwd() });
   const hits: MatchHit[] = [];
   for (const file of files) {
@@ -178,11 +182,7 @@ const checks: Check[] = [
       // text, and red-fixture string. That gate is the fine-grained BLOCKING authority
       // (it strips comments/strings before judging); this roll-up matches the same
       // intent coarsely so it agrees with it (a prose mention is never a violation).
-      const tsHits = scanFiles(
-        ['packages/*/src/**/*.ts'],
-        /^\s*\/(?:\/|\*)\s*@ts-(ignore|nocheck)\b/,
-        false,
-      );
+      const tsHits = scanFiles(['packages/*/src/**/*.ts'], /^\s*\/(?:\/|\*)\s*@ts-(ignore|nocheck)\b/, false);
       const lint = sh('pnpm run lint');
 
       const anyOk = anyHits.length === 0;
@@ -219,9 +219,7 @@ const checks: Check[] = [
       const gatePassed = /BENCH GATE PASSED/.test(gate.out) && gate.ok;
 
       const sseSrc = readFileSync('packages/web/src/stream/sse.ts', 'utf8');
-      const preflightMandatory =
-        !/preflight\s*[?:].*false/.test(sseSrc) &&
-        !/disablePreflight/.test(sseSrc);
+      const preflightMandatory = !/preflight\s*[?:].*false/.test(sseSrc) && !/disablePreflight/.test(sseSrc);
 
       // Signal cover for the diagnostic pairs that have been calibrated with
       // structural-floor thresholds (worker-runtime-startup at 100%, llm-runtime-
@@ -252,14 +250,14 @@ const checks: Check[] = [
       // - worker-runtime-startup-shared: transport overhead includes non-shared
       //   seams (state-delivery:message-receipt) that vary per-replicate by
       //   design; see ADR-0002 worker transport cost floor.
-      // - satellite: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
+      // - adaptive: 2μs hot-path measurement; OS-level timer jitter (~0.5μs on
       //   Node+Windows) produces 15-30% replicate-spread swings on each of two
       //   independent 2μs measurements (directive vs manual). Verified across
       //   3 consecutive gauntlet runs on unchanged code: spreads of 5.5%,
       //   49.7%, 25.7% with median always under the 15% hard-gate threshold
       //   (8.9%, 14.4%, 10.4%). The hard gate is the actual regression signal.
       // - worker: 3μs hot-path measurement of normalized worker fallback evaluation
-      //   vs canonical Boundary.evaluate. Same shape as satellite — sub-5μs
+      //   vs canonical Boundary.evaluate. Same shape as adaptive — sub-5μs
       //   measurement on Windows produces the occasional one-replicate outlier
       //   (e.g. 4/5 reps within ±6%, one rep at 18%) that crosses the
       //   threshold-based bucket detector even though the median overhead is
@@ -289,8 +287,7 @@ const checks: Check[] = [
           const postureOk = rs.workerStartupAudit?.posture === 'accept-honest-residual';
           const llmSignals = rs.llmRuntimeSteadySignals;
           const llmExceedancesOk =
-            llmSignals != null &&
-            llmSignals.replicateExceedanceRate <= LLM_STEADY_REPLICATE_EXCEEDANCE_MAX;
+            llmSignals != null && llmSignals.replicateExceedanceRate <= LLM_STEADY_REPLICATE_EXCEEDANCE_MAX;
           const llmP99TailOk =
             rs.llmRuntimeSteadySignals != null &&
             rs.llmRuntimeSteadySignals.directiveP99ToBaselineP99 <= LLM_STEADY_P99_TO_BASELINE_MAX;
@@ -299,9 +296,7 @@ const checks: Check[] = [
             typeof rs.llmRuntimeSteadySignals.directiveP99Ns === 'number' &&
             rs.llmRuntimeSteadySignals.directiveP99Ns <=
               (rs.llmRuntimeSteadySignals.absoluteP99BudgetNs ?? LLM_STEADY_DIRECTIVE_P99_MAX_NS);
-          const unexpectedNoisy = (rs.benchStability ?? []).filter(
-            (p) => p.noisy && !acceptedNoisyPairs.has(p.label),
-          );
+          const unexpectedNoisy = (rs.benchStability ?? []).filter((p) => p.noisy && !acceptedNoisyPairs.has(p.label));
           const stabilityOk = unexpectedNoisy.length === 0;
 
           const llmSteadyOk = (llmExceedancesOk && llmP99TailOk) || llmAbsoluteTailOk;
@@ -339,7 +334,7 @@ const checks: Check[] = [
       // benign source-fingerprint drift from intermediate phases — which is
       // exactly the noise the previous "fingerprint-drift(non-blocking)"
       // label was papering over. Trust the gauntlet's prior pass instead.
-      if (process.env.CZAP_GAUNTLET === '1') {
+      if (process.env.LITESHIP_GAUNTLET === '1') {
         return {
           pass: docsCheck.ok,
           detail: `feedback-verify=trusted-from-gauntlet-phase docs-check=${docsCheck.ok}`,
@@ -371,9 +366,7 @@ const checks: Check[] = [
   {
     dim: 'Docs',
     check: () => {
-      const adrCount = existsSync('docs/adr')
-        ? readdirSync('docs/adr').filter((f) => f.endsWith('.md')).length
-        : 0;
+      const adrCount = existsSync('docs/adr') ? readdirSync('docs/adr').filter((f) => f.endsWith('.md')).length : 0;
       const renderRuntimeGone = !existsSync('docs/RENDER-RUNTIME.md');
       const archExists = existsSync('ARCHITECTURE.md');
       // ARCHITECTURE.md must be SELF-SUFFICIENT — it explains the system on its own,
@@ -383,10 +376,8 @@ const checks: Check[] = [
       // old 4KB cap is now the FLOOR) AND actually describe the keystone IR in prose.
       const archBytes = archExists ? statSync('ARCHITECTURE.md').size : 0;
       const archText = archExists ? readFileSync('ARCHITECTURE.md', 'utf8') : '';
-      const archIsSelfSufficient =
-        archExists && archBytes >= 4096 && /document graph/i.test(archText);
-      const apiExists =
-        existsSync('docs/api') && readdirSync('docs/api').length > 0;
+      const archIsSelfSufficient = archExists && archBytes >= 4096 && /document graph/i.test(archText);
+      const apiExists = existsSync('docs/api') && readdirSync('docs/api').length > 0;
       const pass = adrCount >= 8 && renderRuntimeGone && archIsSelfSufficient && apiExists;
       return {
         pass,
@@ -410,15 +401,7 @@ const checks: Check[] = [
           return { pass: false, detail: 'manifest malformed: capsules is not an array' };
         }
         const kinds = new Set(manifest.capsules.map((c) => c.kind));
-        const allArms = [
-          'pureTransform',
-          'receiptedMutation',
-          'stateMachine',
-          'siteAdapter',
-          'policyGate',
-          'cachedProjection',
-          'sceneComposition',
-        ];
+        const allArms = ASSEMBLY_KINDS;
         const armsWithInstances = allArms.filter((a) => kinds.has(a)).length;
         // Spec 1.1 promotes the CapsuleFactory dimension from a presence check
         // to a real instance gate. The type-directed AST walker (Task 2) made
@@ -433,7 +416,7 @@ const checks: Check[] = [
         //   cachedProjection  — defineAsset / BeatMarkerProjection / WavMetadataProjection
         //   sceneComposition  — examples.intro, scene.beat-binding
         //   siteAdapter       — Remotion + Cloudflare host adapters
-        //   policyGate        — core.escalation.choose-rung (the permission/authz check)
+        //   policyGate        — core.escalation.choose-tier (the permission/authz check)
         const requiredArms = allArms;
         const missing = requiredArms.filter((a) => !kinds.has(a));
         if (missing.length > 0) {

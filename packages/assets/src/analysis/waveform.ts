@@ -6,26 +6,35 @@
  * @module
  */
 
-import { defineCapsule, S } from '@czap/core';
-import type { CapsuleDef } from '@czap/core';
-import type { AssetRegistry } from '../contract.js';
+import { defineCapsule, schema } from '@liteship/core';
+import type { CapsuleDef } from '@liteship/core';
+import { AssetBytes, type AssetRegistry } from '../contract.js';
+import { ValidationError } from '@liteship/error';
+import { analysisFrames } from './audio-input.js';
+
+function validateWaveformBins(bins: number, source: string): void {
+  if (!Number.isSafeInteger(bins) || bins <= 0) {
+    throw ValidationError(source, `bins must be a positive safe integer, got ${String(bins)}`);
+  }
+}
 
 /** Compute a normalized RMS-per-bin waveform. */
 export function computeWaveform(
-  audio: { sampleRate: number; samples: Float32Array | Int16Array },
+  audio: { sampleRate: number; channels?: number; samples: Float32Array | Int16Array },
   opts: { bins?: number } = {},
 ): readonly number[] {
   const bins = opts.bins ?? 512;
+  validateWaveformBins(bins, 'computeWaveform');
+  const samples = analysisFrames(audio, 'computeWaveform');
   const out: number[] = new Array(bins).fill(0);
-  const stride = Math.max(1, Math.floor(audio.samples.length / bins));
   let maxRms = 0;
   for (let b = 0; b < bins; b++) {
     let sum = 0;
     let count = 0;
-    const start = b * stride;
-    const end = Math.min(audio.samples.length, start + stride);
+    const start = Math.floor((b * samples.length) / bins);
+    const end = Math.floor(((b + 1) * samples.length) / bins);
     for (let i = start; i < end; i++) {
-      const v = typeof audio.samples[i] === 'number' ? Number(audio.samples[i]) : 0;
+      const v = Number(samples[i]);
       sum += v * v;
       count++;
     }
@@ -45,14 +54,17 @@ export function WaveformProjection(
   registry: AssetRegistry,
   audioAssetId: string,
   opts: { bins?: number } = {},
-): CapsuleDef<'cachedProjection', unknown, readonly number[], unknown> {
-  registry.assertAudioRegistered(audioAssetId, 'WaveformProjection');
+): CapsuleDef<'cachedProjection', ArrayBuffer, readonly number[], unknown> {
   const bins = opts.bins ?? 512;
+  validateWaveformBins(bins, 'WaveformProjection');
+  registry.assertAudioRegistered(audioAssetId, 'WaveformProjection');
+  const decode = registry.resolveAudioDecoder(audioAssetId);
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:waveform:${bins}`,
-    input: S.unknown,
-    output: S.array(S.number),
+    input: AssetBytes,
+    output: schema.array(schema.number),
+    derive: async (bytes: ArrayBuffer): Promise<readonly number[]> => computeWaveform(await decode(bytes), { bins }),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {

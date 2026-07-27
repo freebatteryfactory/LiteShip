@@ -6,9 +6,9 @@
 
 # Function: SyncSystem()
 
-> **SyncSystem**(`frameIndex`, `fps?`): `SystemShape`
+> **SyncSystem**(`frameIndex`, `fps?`): `System`
 
-Defined in: [scene/src/systems/sync.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L55)
+Defined in: [scene/src/systems/sync.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L58)
 
 Build a SyncSystem keyed to a frame index. Resolves the current scene
 time from `frameIndex / fps`, queries the world for `Beat`-tagged
@@ -25,7 +25,7 @@ envelope factor — sync sets the base, the envelope modulates it
 
 ### frameIndex
 
-`number`
+`FrameSource`
 
 — current frame number, supplied by the runtime per tick
 
@@ -37,4 +37,4 @@ envelope factor — sync sets the base, the envelope modulates it
 
 ## Returns
 
-`SystemShape`
+`System`

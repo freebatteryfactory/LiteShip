@@ -30,7 +30,7 @@ The wire refusal now carries structured stale-base information: `GraphMutationRe
 ## Evidence
 
 - `packages/core/src/graph-mutation-client.ts` — serialized client state machine, stale retry, never-throw contract.
-- `packages/web/src/mutation/graph-form.ts` — form submit binding, state attribute, `czap:mutation` event, loud ops-builder failures.
+- `packages/web/src/graph-form.ts` — form submit binding, state attribute, `czap:mutation` event, loud ops-builder failures.
 - `packages/core/src/graph-mutation.ts` — `staleBase` response shape and shared `verifyAppliedGraph` guard.
 - `packages/astro/src/graph-mutation-route.ts` — 409 for stale-base refusals.
 - `packages/astro/src/runtime/graph-ai-apply.ts` — `adoptAppliedGraph` advancing the live runtime.

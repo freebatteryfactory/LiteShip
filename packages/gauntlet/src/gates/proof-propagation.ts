@@ -95,7 +95,7 @@ import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import { propagateProofStrength, weakestLinkPath } from '../proof-propagation.js';
 import type { AssuranceLevel } from '../assurance.js';
-import { UNMEASURED_PROOF, type ProofFacts, type ModuleProof } from '../proof-facts.js';
+import { UNMEASURED_PROOF, type ProofFacts, type ModuleProof } from '../facts/proof-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/proof-propagation';
@@ -243,11 +243,11 @@ function notEvidencedFinding(): Finding {
     level: 'L4',
     title: 'Proof-propagation not evidenced',
     detail:
-      'No proof facts were injected, so the lax-functor proof-propagation could not run — the gate reports this honestly rather than passing silently. A host (the CLI `czap check --ir --proof` path) reads the proof signals (mutation score, coverage, property tests, enrolled invariants), blends them into per-module scalars, and injects ProofFacts for this gate to propagate along the dep DAG.',
+      'No proof facts were injected, so the lax-functor proof-propagation could not run — the gate reports this honestly rather than passing silently. A host (the CLI `liteship check gates --ir --proof` path) reads the proof signals (mutation score, coverage, property tests, enrolled invariants), blends them into per-module scalars, and injects ProofFacts for this gate to propagate along the dep DAG.',
     remediation: {
       kind: 'instruction',
       description: 'Run the proof-propagation analysis so the global-proof composition is evidenced.',
-      steps: ['Run `czap check --ir --proof` so the host builds + injects ProofFacts.'],
+      steps: ['Run `liteship check gates --ir --proof` so the host builds + injects ProofFacts.'],
     },
   });
 }
@@ -310,8 +310,8 @@ function proofContext(ir: RepoIR, proof: ProofFacts): GateContext {
   return { ...memoryContext({}), ir, proof };
 }
 
-/** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+/** A fixtures-only L4 file id (matches the `core/schema/brands.ts` L4 glob in the map). */
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 /** A fixtures-only weak dependency the L4 file imports. */
 const WEAK_DEP = 'packages/core/src/weak-helper.ts';
 
@@ -323,8 +323,8 @@ const WEAK_DEP = 'packages/core/src/weak-helper.ts';
 function redIR(): RepoIR {
   return makeRepoIR({
     files: [
-      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-      { id: WEAK_DEP, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: WEAK_DEP, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     imports: [{ fromFile: L4_FILE, specifier: './weak-helper.js', kind: 'relative', targetFile: WEAK_DEP }],
   });

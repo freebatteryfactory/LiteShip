@@ -6,7 +6,7 @@
 
 # edge/src
 
-`@czap/edge` — **LiteShip** edge-station: server-side tier detection,
+`@liteship/edge` — **LiteShip** edge-station: server-side tier detection,
 content-addressed boundary cache, and theme **casting** for first paint.
 
 Parses HTTP Client Hints headers into device capabilities, maps them
@@ -25,10 +25,15 @@ compilation.
 - [BoundaryCache](interfaces/BoundaryCache.md)
 - [BoundaryManifestEntry](interfaces/BoundaryManifestEntry.md)
 - [BoundaryManifestFile](interfaces/BoundaryManifestFile.md)
+- [CacheOptions](interfaces/CacheOptions.md)
+- [ClientHintsEvidence](interfaces/ClientHintsEvidence.md)
 - [ClientHintsHeaders](interfaces/ClientHintsHeaders.md)
+- [CompiledGLSLOutput](interfaces/CompiledGLSLOutput.md)
 - [CompiledOutputs](interfaces/CompiledOutputs.md)
+- [CompiledWGSLOutput](interfaces/CompiledWGSLOutput.md)
 - [EdgeHostAdapter](interfaces/EdgeHostAdapter.md)
 - [EdgeHostAdapterConfig](interfaces/EdgeHostAdapterConfig.md)
+- [EdgeHostBackground](interfaces/EdgeHostBackground.md)
 - [EdgeHostBoundaryConfig](interfaces/EdgeHostBoundaryConfig.md)
 - [EdgeHostBoundaryResolution](interfaces/EdgeHostBoundaryResolution.md)
 - [EdgeHostCacheConfig](interfaces/EdgeHostCacheConfig.md)
@@ -39,6 +44,7 @@ compilation.
 - [KVNamespace](interfaces/KVNamespace.md)
 - [ThemeCompileConfig](interfaces/ThemeCompileConfig.md)
 - [ThemeCompileResult](interfaces/ThemeCompileResult.md)
+- [ThemeDeclaration](interfaces/ThemeDeclaration.md)
 
 ## Type Aliases
 

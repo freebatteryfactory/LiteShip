@@ -9,7 +9,7 @@
  * kernel deriver {@link toJsonSchema}).
  *
  * The `@standard-schema/spec` import is TYPE-ONLY — the package ships an empty
- * runtime `index.js` (verified) — so this module names the dependency `@czap/core`
+ * runtime `index.js` (verified) — so this module names the dependency `@liteship/core`
  * already declares (T017) without a runtime edge.
  *
  * DECODE is passed in, not imported: the kernel strict `decode` (schema/decode.ts,
@@ -21,7 +21,7 @@
  * @module
  */
 import type { StandardSchemaV1, StandardJSONSchemaV1 } from '@standard-schema/spec';
-import type { Result } from '@czap/error';
+import type { Result } from '@liteship/error';
 import type { Schema } from './ast.js';
 import { toJsonSchema } from './to-json-schema.js';
 

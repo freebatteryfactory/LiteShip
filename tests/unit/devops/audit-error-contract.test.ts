@@ -16,14 +16,15 @@ import { resolve, join } from 'node:path';
 import {
   consumerDevopsProfile,
   discoverInstalledPackageRoots,
+  findAllowlistReason,
   readJsonFile,
   runAuditPasses,
   runIntegrityAudit,
   runStructureAudit,
   runSurfaceAudit,
   type DevopsProfile,
-} from '@czap/audit';
-import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
+} from '@liteship/audit';
+import { loadProfile } from '../../../packages/cli/src/internal/load-profile.js';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -31,7 +32,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-errcontract-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-errcontract-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);
@@ -99,7 +100,7 @@ describe('surface pass — host/virtual-module errors name the profile field and
       'packages/core/src/index.ts': 'export const coreThing = 1;\n',
     });
     const result = runSurfaceAudit(
-      acmeProfile(root, { surfacePolicy: { astroPackage: '@acme/astro', astroClientDirectives: ['satellite'] } }),
+      acmeProfile(root, { surfacePolicy: { astroPackage: '@acme/astro', astroClientDirectives: ['adaptive'] } }),
     );
     const finding = result.findings.find((f) => f.id === 'surface/astro-package-missing');
     expect(finding).toBeDefined();
@@ -177,7 +178,15 @@ describe('structure pass — topology and resolution errors say where the law li
     expect(finding!.summary).not.toContain('repo-native');
   });
 
-  it('unresolved relative imports enumerate the real candidate set and the .js→.ts rule', () => {
+  it('resolves declaration-owned .js specifiers and teaches the complete source mapping on failure', () => {
+    const declarationRoot = makeFixture({
+      'packages/core/package.json': PKG('@acme/core'),
+      'packages/core/src/index.d.ts': "export { CoreThing } from './core.js';\n",
+      'packages/core/src/core.d.ts': 'export interface CoreThing { readonly value: string }\n',
+    });
+    const declarationResult = runStructureAudit(acmeProfile(declarationRoot));
+    expect(declarationResult.findings.filter((finding) => finding.rule === 'unresolved-internal-import')).toEqual([]);
+
     const root = makeFixture({
       'packages/core/package.json': PKG('@acme/core'),
       'packages/core/src/index.ts': "import { gone } from './missing.js';\nexport const coreThing = gone;\n",
@@ -187,7 +196,8 @@ describe('structure pass — topology and resolution errors say where the law li
     expect(finding).toBeDefined();
     expect(finding!.summary).toContain('"./missing.js"');
     expect(finding!.summary).toContain('index.ts/index.tsx');
-    expect(finding!.summary).toContain('a .js specifier needs a matching .ts source');
+    expect(finding!.summary).toContain('.js→(.ts|.d.ts)');
+    expect(finding!.summary).toContain('matching source or declaration owner');
   });
 });
 
@@ -203,6 +213,24 @@ describe('integrity pass — findings teach the allowlist way out', () => {
     expect(finding!.summary).toContain('console-call allowlist entry');
     expect(finding!.summary).toContain('diagnostics');
     expect(finding!.summary).not.toContain('Diagnostics rather than');
+
+    const entry = {
+      rule: 'console-call' as const,
+      filePrefix: 'packages/core/src/index.ts',
+      reason: 'Fixture proves profile-owned suppression.',
+    };
+    const suppressed = runIntegrityAudit(acmeProfile(root, { allowlist: [entry] }));
+    expect(suppressed.findings.some((candidate) => candidate.rule === 'console-call')).toBe(false);
+    expect(suppressed.suppressed).toContainEqual(
+      expect.objectContaining({ rule: 'console-call', reason: entry.reason }),
+    );
+
+    expect(
+      findAllowlistReason(
+        { ...finding!, location: { file: '../foreign/packages/core/src/index.ts', line: 1 } },
+        [entry],
+      ),
+    ).toBeNull();
   });
 
   it('fallback-laundering keeps the load-bearing "returns <expr>" phrase and teaches consumption', () => {

@@ -11,5 +11,5 @@
 Defined in: [edge/src/manifest.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L41)
 
 Every `DesignTier`, in escalation order. Kept in lockstep with the
-`DesignTier` union in `@czap/detect` -- the `satisfies` clause plus the
+`DesignTier` union in `@liteship/detect` -- the `satisfies` clause plus the
 exhaustiveness check below fail compilation if the vocabulary drifts.

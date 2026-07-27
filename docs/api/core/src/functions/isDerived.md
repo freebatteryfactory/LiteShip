@@ -6,11 +6,11 @@
 
 # Function: isDerived()
 
-> **isDerived**\<`T`\>(`p`): `p is Shape<T>`
+> **isDerived**\<`T`\>(`p`): `p is Derived<T>`
 
-Defined in: [core/src/index.ts:618](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L618)
+Defined in: [core/src/reactive/primitive.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/primitive.ts#L22)
 
-Narrow a [Primitive](../type-aliases/Primitive.md) to a [Derived](../namespaces/Derived/README.md).
+Narrow a [Primitive](../type-aliases/Primitive.md) to a [Derived](../variables/Derived.md).
 
 ## Type Parameters
 
@@ -26,4 +26,4 @@ Narrow a [Primitive](../type-aliases/Primitive.md) to a [Derived](../namespaces/
 
 ## Returns
 
-`p is Shape<T>`
+`p is Derived<T>`

@@ -7,18 +7,19 @@
  * @module
  */
 
-import { ClientHints, createEdgeHostAdapter, EdgeTier } from '@czap/edge';
+import { ClientHints, createEdgeHostAdapter, EdgeTier } from '@liteship/edge';
 import type {
   CompiledOutputs,
   EdgeHostAdapterConfig,
   EdgeHostBoundaryResolution,
   EdgeHostCacheStatus,
   ThemeCompileResult,
-} from '@czap/edge';
-import { projectResponsiveMediaPicture } from '@czap/core';
-import type { CapTier, ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@czap/core';
-import type { DesignTier, ExtendedDeviceCapabilities, MotionTier } from '@czap/detect';
-import { applyCzapHeaders } from './headers.js';
+} from '@liteship/edge';
+import { projectResponsiveMediaPicture } from '@liteship/core';
+import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
+import { projectCapabilityAxisValues } from '@liteship/detect';
+import type { CapabilityAxisValues, CapabilityTierEvidence, ExtendedDeviceCapabilities } from '@liteship/detect';
+import { applyLiteshipHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import { applyResponsiveMediaVary } from './responsive-media.js';
 import { consumeIntegrationToggles } from './integration-toggles.js';
@@ -28,22 +29,20 @@ import { consumeIntegrationToggles } from './integration-toggles.js';
 // ---------------------------------------------------------------------------
 
 /**
- * Shape of `context.locals.czap` injected by {@link czapMiddleware}.
+ * Shape of `context.locals.liteship` injected by {@link liteshipMiddleware}.
  * Astro components (and downstream middleware) read this to drive
  * adaptive rendering decisions.
  */
-export interface CzapLocals {
+export interface LiteshipLocals {
   /**
    * Resolved capability tiers keyed by axis. Each field projects to the
-   * matching `data-czap-<axis>` attribute on `<html>` — the field name and the
+   * matching `data-liteship-<axis>` attribute on `<html>` — the field name and the
    * attribute name are the same CapAxis key (one source: `CAP_AXES` from
-   * `@czap/detect`), so they can never disagree.
+   * `@liteship/detect`), so they can never disagree.
    */
-  readonly tiers: Readonly<{
-    readonly tier: CapTier;
-    readonly motion: MotionTier;
-    readonly design: DesignTier;
-  }>;
+  readonly tiers: CapabilityAxisValues;
+  /** Per-axis observed/inferred provenance behind {@link tiers}. */
+  readonly tierEvidence: CapabilityTierEvidence;
   /** Parsed device capabilities. */
   readonly capabilities: ExtendedDeviceCapabilities;
   /**
@@ -66,7 +65,7 @@ export interface CzapLocals {
     /** Per-boundary outcomes, keyed by name (multi-boundary cache form). */
     readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
     readonly htmlAttributes: string;
-    /** Spreadable `data-czap-<axis>` map for `<html {...htmlAttributesMap}>`. */
+    /** Spreadable `data-liteship-<axis>` map for `<html {...htmlAttributesMap}>`. */
     readonly htmlAttributesMap: Readonly<Record<string, string>>;
     readonly cacheStatus: EdgeHostCacheStatus;
   };
@@ -76,22 +75,22 @@ declare global {
   namespace App {
     interface Locals {
       /**
-       * Capability detection injected by `czapMiddleware`. Importing
-       * `@czap/astro` pulls in this `App.Locals` augmentation, so
-       * `Astro.locals.czap` is typed end-to-end (no cast needed).
+       * Capability detection injected by `liteshipMiddleware`. Importing
+       * `@liteship/astro` pulls in this `App.Locals` augmentation, so
+       * `Astro.locals.liteship` is typed end-to-end (no cast needed).
        */
-      czap?: CzapLocals;
+      liteship?: LiteshipLocals;
     }
   }
 }
 
 /**
- * Options accepted by {@link czapMiddleware}.
+ * Options accepted by {@link liteshipMiddleware}.
  *
  * Omit `edge` to run in pure Client-Hints mode. Pass `edge` when you
- * have an `@czap/edge` host adapter (KV cache, theme compilation).
+ * have an `@liteship/edge` host adapter (KV cache, theme compilation).
  */
-export interface CzapMiddlewareConfig {
+export interface LiteshipMiddlewareConfig {
   /** Edge host adapter configuration (KV cache, theme compilation). */
   readonly edge?: EdgeHostAdapterConfig;
   /** Whether to include the Client Hints request headers (default `true`). */
@@ -115,21 +114,21 @@ interface MiddlewareContext {
 // ---------------------------------------------------------------------------
 
 /**
- * Create the czap edge middleware.
+ * Create the liteship edge middleware.
  *
  * Parses Client Hints from request headers, computes tier detection,
- * injects results into `context.locals.czap`, and sets Client Hints
+ * injects results into `context.locals.liteship`, and sets Client Hints
  * response headers (`Accept-CH`, `Critical-CH`).
  *
  * @example
  * ```ts
  * // Astro middleware (src/middleware.ts)
- * import { czapMiddleware } from '@czap/astro';
- * export const onRequest = czapMiddleware();
+ * import { liteshipMiddleware } from '@liteship/astro';
+ * export const onRequest = liteshipMiddleware();
  * ```
  */
-export function czapMiddleware(
-  config?: CzapMiddlewareConfig,
+export function liteshipMiddleware(
+  config?: LiteshipMiddlewareConfig,
 ): (context: MiddlewareContext, next: () => Promise<Response>) => Promise<Response> {
   const edgeConfig = config?.edge;
   let edgeAdapter: ReturnType<typeof createEdgeHostAdapter> | null = null;
@@ -143,20 +142,18 @@ export function czapMiddleware(
 
   return async (context: MiddlewareContext, next: () => Promise<Response>): Promise<Response> => {
     const edgeResolution = edgeAdapter ? await edgeAdapter.resolve(context.request.headers) : null;
-    const capabilities = edgeResolution?.capabilities ?? ClientHints.parseClientHints(context.request.headers);
-    const tier = edgeResolution?.tier ?? EdgeTier.detectTier(context.request.headers);
+    const parsed = edgeResolution ? null : ClientHints.parseEvidence(context.request.headers);
+    const capabilities = edgeResolution?.capabilities ?? parsed!.capabilities;
+    const tier = edgeResolution?.tier ?? EdgeTier.tierFromEvidence(parsed!);
 
     // Save-Data / DPR caps for the responsive-media projector, derived ONCE from the
     // request's real Client Hints (the production wiring of responsiveMediaCapabilities).
     const responsiveMediaCaps = ClientHints.responsiveMediaCapabilities(capabilities);
 
     // Inject into locals for component access
-    context.locals.czap = {
-      tiers: {
-        tier: tier.capTier,
-        motion: tier.motionTier,
-        design: tier.designTier,
-      },
+    context.locals.liteship = {
+      tiers: projectCapabilityAxisValues(tier),
+      tierEvidence: tier.tierEvidence,
       capabilities,
       responsiveMedia: (intent: ResponsiveMediaIntent): ResponsiveMediaPictureProjection =>
         projectResponsiveMediaPicture(intent, responsiveMediaCaps),
@@ -173,13 +170,13 @@ export function czapMiddleware(
             },
           }
         : {}),
-    } satisfies CzapLocals;
+    } satisfies LiteshipLocals;
 
     // Continue to the route handler
     const response = await next();
 
     // Add Client Hints request headers to the response
-    const headers = applyCzapHeaders(new Headers(response.headers), {
+    const headers = applyLiteshipHeaders(new Headers(response.headers), {
       detectEnabled,
       workersEnabled,
       ...(coep ? { coep } : {}),
@@ -195,7 +192,7 @@ export function czapMiddleware(
     // EVERY request and projects from `responsiveMediaCaps`, which is parsed from the
     // request's real Client Hints regardless of detection (Save-Data is sent by
     // data-saver browsers unprompted, never behind Accept-CH). So any page that renders
-    // through `Astro.locals.czap.responsiveMedia(intent)` can emit a Save-Data/DPR-
+    // through `Astro.locals.liteship.responsiveMedia(intent)` can emit a Save-Data/DPR-
     // specific srcset even with detect off — the Vary MUST advertise that axis or a CDN
     // serves one variant under a shared cache key (F-RM-3).
     applyResponsiveMediaVary(headers);

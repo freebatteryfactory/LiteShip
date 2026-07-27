@@ -6,7 +6,7 @@
 
 # Interface: McpToolResult
 
-Defined in: [mcp-server/src/dispatch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L65)
+Defined in: [mcp-server/src/dispatch.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L69)
 
 MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 (what a D2 `outputSchema` will describe); LiteShip result identity rides in
@@ -19,7 +19,7 @@ MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 
 > `readonly` `optional` **\_meta?**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [mcp-server/src/dispatch.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L70)
+Defined in: [mcp-server/src/dispatch.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L74)
 
 MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key.
 
@@ -29,7 +29,7 @@ MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key.
 
 > `readonly` **content**: readonly `object`[]
 
-Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L66)
+Defined in: [mcp-server/src/dispatch.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L70)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/freebatteryfactor
 
 > `readonly` **isError**: `boolean`
 
-Defined in: [mcp-server/src/dispatch.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L68)
+Defined in: [mcp-server/src/dispatch.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L72)
 
 ***
 
@@ -45,4 +45,4 @@ Defined in: [mcp-server/src/dispatch.ts:68](https://github.com/freebatteryfactor
 
 > `readonly` **structuredContent**: `unknown`
 
-Defined in: [mcp-server/src/dispatch.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L67)
+Defined in: [mcp-server/src/dispatch.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L71)

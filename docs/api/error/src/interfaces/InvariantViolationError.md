@@ -6,7 +6,7 @@
 
 # Interface: InvariantViolationError
 
-Defined in: [error/src/variants.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L143)
+Defined in: [error/src/variants.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L144)
 
 An internal invariant was violated — a state the program's own logic should
 make impossible (counter overflow, ring-buffer state machine breach,
@@ -26,7 +26,7 @@ Migration target for: the state-machine/contract throws across `worker`,
 
 > `readonly` **\_tag**: `"InvariantViolationError"`
 
-Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L33)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -36,11 +36,21 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 ***
 
+### code?
+
+> `readonly` `optional` **code?**: `"error/match-tag/unhandled"`
+
+Defined in: [error/src/variants.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L150)
+
+Stable diagnostic identity when the invariant is part of a public failure contract.
+
+***
+
 ### detail
 
 > `readonly` **detail**: `string`
 
-Defined in: [error/src/variants.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L147)
+Defined in: [error/src/variants.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L148)
 
 What was observed, in human terms.
 
@@ -50,7 +60,7 @@ What was observed, in human terms.
 
 > `readonly` **invariant**: `string`
 
-Defined in: [error/src/variants.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L145)
+Defined in: [error/src/variants.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L146)
 
 The invariant that broke, e.g. `'spsc-ring.capacity'`.
 
@@ -60,7 +70,7 @@ The invariant that broke, e.g. `'spsc-ring.capacity'`.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L35)
 
 Human-readable summary. Doubles as the transport `Error.message`.
 

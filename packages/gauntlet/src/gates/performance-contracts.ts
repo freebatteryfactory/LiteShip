@@ -1,10 +1,10 @@
 /**
  * Gate: performance contracts — the avionics-tier (Slice C) gate that enforces
- * the two performance CONTRACTS as a DETERMINISTIC fold over committed data.
+ * three performance CONTRACTS as a DETERMINISTIC fold over committed data.
  *
  * This gate runs NO benchmark and reads NO clock. The measurement lives in the
  * bench harness + `scripts/bench-contracts.ts` (the producer); this gate is the
- * pure VERIFIER that the committed contract artifacts hold their law. Two
+ * pure VERIFIER that the committed contract artifacts hold their law. Three
  * contracts, both folds over committed bytes:
  *
  * 1. THE HEADLINE LAW — a benchmark result is INVALID unless its input
@@ -26,26 +26,37 @@
  *    comparison (not an absolute-ns pin) it is load-robust: the producer's
  *    best-of-k + wide class bands keep the recorded class stable across hardware.
  *
- * It is LEAN (no `typescript`, no IR requirement — a pure fold over GateContext
- * bytes) and ships red/green/mutation fixtures, so it self-proves via the ratchet.
+ * 3. RETAINED-ALLOCATION GROWTH. `benchmarks/allocation-map.json` records forced-GC
+ *    retained-output curves. A public kernel whose retained bytes grow faster than
+ *    its accepted class blocks, independently of absolute machine-specific bytes.
+ *
+ * It is a deterministic AST fold over GateContext bytes (no benchmark execution,
+ * no IR requirement) and ships red/green/mutation fixtures, so it self-proves via the ratchet.
  * It does NOT {@link requireIR}, but it ships in `LITESHIP_IR_GATES` (the IR-host
- * composition the CLI runs on `czap check --ir`) alongside the other Slice B/C
+ * composition the CLI runs on `liteship check gates --ir`) alongside the other Slice B/C
  * gates — NOT the lean cut `LITESHIP_GATES` the MCP/command path runs.
  *
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import { stableEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest, stableEvidenceDigest } from '../verdict-cache.js';
 import { commentsBlanked } from './code-only.js';
+import {
+  benchmarkSubjectFactFor,
+  parseQualifiedBenchDistribution,
+  type BenchmarkSubjectFacts,
+  type QualifiedBenchDistribution,
+} from './bench-subjects.js';
 
 export const PERFORMANCE_CONTRACTS_RULE_ID = 'gauntlet/performance-contracts';
 
 const DISTRIBUTIONS_PATH = 'benchmarks/distributions.json';
 const COMPLEXITY_MAP_PATH = 'benchmarks/complexity-map.json';
+const ALLOCATION_MAP_PATH = 'benchmarks/allocation-map.json';
 
 /**
  * The accepted complexity-class ceiling per hot path — the regression law. A
@@ -58,14 +69,90 @@ const COMPLEXITY_MAP_PATH = 'benchmarks/complexity-map.json';
 export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityClass>> = {
   'boundary.evaluateBatch': 'O(n)',
   'contentAddress.of': 'O(n)',
+  'canonical.encode': 'O(n)',
+  'canonical.decode': 'O(n)',
+  'genui.validate': 'O(n)',
+  'genui.renderHash': 'O(n)',
+  'assets.walkRiff': 'O(n)',
+  'assets.computeWaveform': 'O(n)',
+  'assets.detectOnsets': 'O(n)',
+  'assets.detectBeats': 'O(n)',
+  'gauntlet.runGates': 'O(n)',
 };
 
-/** The R² floor below which a complexity fit is too noisy to trust as a verdict. */
-const MIN_FIT_R2 = 0.5;
+/** Accepted retained-allocation growth for public semantic kernels. */
+export const ACCEPTED_ALLOCATION_CEILINGS: Readonly<Record<string, ComplexityClass>> = {
+  'canonical.encode.retainedAllocation': 'O(n)',
+  'canonical.decode.retainedAllocation': 'O(n)',
+  'assets.computeWaveform.retainedAllocation': 'O(n)',
+};
+
+/**
+ * One authority policy for every claim-bearing complexity curve. The policy is
+ * owned beside the deterministic gate and consumed by the measurement producer;
+ * callers cannot grant themselves a weaker evidentiary floor.
+ *
+ * Five geometrically spaced sizes produce a real curve rather than a local
+ * tangent. Seven best-of-k replicates expose variance while remaining practical
+ * on shared CI hosts. R² and coefficient-of-variation then decide whether the
+ * measured class is admissible rather than merely present.
+ */
+export const COMPLEXITY_ADMISSION_POLICY = Object.freeze({
+  minimumR2: 0.9,
+  minimumSizes: 5,
+  minimumReplicatesPerSize: 7,
+  minimumSizeGrowthFactor: 2,
+  maximumCoefficientOfVariation: 0.25,
+});
+
+export type ComplexityAdmissionReason =
+  'insufficient-size-sweep' | 'invalid-size-sweep' | 'under-replicated' | 'low-r2' | 'unstable-variance';
+
+export interface ComplexityAdmissionCandidate {
+  readonly sizes: readonly number[];
+  readonly replicates: number;
+  readonly fittedR2: number;
+  readonly coefficientOfVariation: number;
+}
+
+/** Pure admission fold shared by the live producer and deterministic gate. */
+export function complexityAdmissionReasons(
+  candidate: ComplexityAdmissionCandidate,
+): readonly ComplexityAdmissionReason[] {
+  const reasons: ComplexityAdmissionReason[] = [];
+  if (candidate.sizes.length < COMPLEXITY_ADMISSION_POLICY.minimumSizes) {
+    reasons.push('insufficient-size-sweep');
+  }
+  const validSweep = candidate.sizes.every((size, index) => {
+    if (!Number.isFinite(size) || size <= 0) return false;
+    const previous = candidate.sizes[index - 1];
+    return (
+      index === 0 || (previous !== undefined && size / previous >= COMPLEXITY_ADMISSION_POLICY.minimumSizeGrowthFactor)
+    );
+  });
+  if (!validSweep) reasons.push('invalid-size-sweep');
+  if (
+    !Number.isInteger(candidate.replicates) ||
+    candidate.replicates < COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize
+  ) {
+    reasons.push('under-replicated');
+  }
+  if (!Number.isFinite(candidate.fittedR2) || candidate.fittedR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) {
+    reasons.push('low-r2');
+  }
+  if (
+    !Number.isFinite(candidate.coefficientOfVariation) ||
+    candidate.coefficientOfVariation < 0 ||
+    candidate.coefficientOfVariation > COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation
+  ) {
+    reasons.push('unstable-variance');
+  }
+  return reasons;
+}
 
 // The complexity-class ladder, ordered ascending by growth — DUPLICATED here as
 // the gate's own closed constant (the gauntlet is lean and must NOT import the
-// scripts/bench contract library, which pulls @czap/core). The gate only needs
+// scripts/bench contract library, which pulls @liteship/core). The gate only needs
 // the ORDERING to rank a committed class against its ceiling; the ranks must
 // match scripts/bench/contracts.ts COMPLEXITY_CLASSES, pinned by a guard test.
 const COMPLEXITY_LADDER = ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n^2)'] as const;
@@ -80,19 +167,15 @@ function rankOfClass(klass: string): number {
 // schema dep — a hand-rolled guard so the lean engine stays lean).
 // ---------------------------------------------------------------------------
 
-interface BenchDistributionRecord {
-  readonly name: string;
-  readonly file: string;
-  readonly inputSize: number;
-  readonly shape: string;
-  readonly replicates: number;
-}
+type BenchDistributionRecord = QualifiedBenchDistribution;
 
-interface ComplexityMapEntryRecord {
+interface GrowthMapEntryRecord {
   readonly path: string;
   readonly class: string;
   readonly fittedR2: number;
 }
+
+interface ComplexityMapEntryRecord extends GrowthMapEntryRecord, ComplexityAdmissionCandidate {}
 
 const BENCH_REGISTRATION = /\bbench(?:\.add)?\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
 
@@ -117,27 +200,78 @@ function readDistributions(context: GateContext): readonly BenchDistributionReco
     return [];
   }
   const parsed = parseJson(text, DISTRIBUTIONS_PATH);
-  if (!isRecord(parsed) || !Array.isArray(parsed.distributions)) {
-    throw ValidationError(PERFORMANCE_CONTRACTS_RULE_ID, `${DISTRIBUTIONS_PATH} is missing a distributions array`);
+  if (!isRecord(parsed) || parsed.schemaVersion !== 2 || !Array.isArray(parsed.distributions)) {
+    throw ValidationError(
+      PERFORMANCE_CONTRACTS_RULE_ID,
+      `${DISTRIBUTIONS_PATH} must be a schema-v2 artifact with a distributions array`,
+    );
   }
-  return parsed.distributions.filter(
-    (d): d is BenchDistributionRecord => isRecord(d) && typeof d.name === 'string' && typeof d.file === 'string',
+  const distributions = parsed.distributions.map(parseQualifiedBenchDistribution);
+  const invalid = distributions.findIndex((distribution) => distribution === null);
+  if (invalid >= 0) {
+    throw ValidationError(
+      PERFORMANCE_CONTRACTS_RULE_ID,
+      `${DISTRIBUTIONS_PATH} distribution at index ${invalid} has an invalid subject/execution contract`,
+    );
+  }
+  return distributions as readonly BenchDistributionRecord[];
+}
+
+function readGrowthEntries(context: GateContext, artifactPath: string): readonly GrowthMapEntryRecord[] | null {
+  const text = context.readFile(artifactPath);
+  if (text === undefined) {
+    return null;
+  }
+  const parsed = parseJson(text, artifactPath);
+  if (!isRecord(parsed) || !Array.isArray(parsed.entries)) {
+    throw ValidationError(PERFORMANCE_CONTRACTS_RULE_ID, `${artifactPath} is missing an entries array`);
+  }
+  return parsed.entries.filter(
+    (e): e is GrowthMapEntryRecord =>
+      isRecord(e) && typeof e.path === 'string' && typeof e.class === 'string' && typeof e.fittedR2 === 'number',
   );
 }
 
 function readComplexityEntries(context: GateContext): readonly ComplexityMapEntryRecord[] | null {
   const text = context.readFile(COMPLEXITY_MAP_PATH);
-  if (text === undefined) {
-    return null;
-  }
+  if (text === undefined) return null;
   const parsed = parseJson(text, COMPLEXITY_MAP_PATH);
-  if (!isRecord(parsed) || !Array.isArray(parsed.entries)) {
-    throw ValidationError(PERFORMANCE_CONTRACTS_RULE_ID, `${COMPLEXITY_MAP_PATH} is missing an entries array`);
+  if (!isRecord(parsed) || parsed.schemaVersion !== 2 || !Array.isArray(parsed.entries)) {
+    throw ValidationError(
+      PERFORMANCE_CONTRACTS_RULE_ID,
+      `${COMPLEXITY_MAP_PATH} must be a schema-v2 artifact with an entries array`,
+    );
   }
-  return parsed.entries.filter(
-    (e): e is ComplexityMapEntryRecord =>
-      isRecord(e) && typeof e.path === 'string' && typeof e.class === 'string' && typeof e.fittedR2 === 'number',
-  );
+  return parsed.entries.map((entry, index) => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.path !== 'string' ||
+      typeof entry.class !== 'string' ||
+      typeof entry.fittedR2 !== 'number' ||
+      typeof entry.coefficientOfVariation !== 'number' ||
+      !Array.isArray(entry.sizes) ||
+      !entry.sizes.every((size) => typeof size === 'number') ||
+      !isRecord(entry.measurement) ||
+      typeof entry.measurement.replicates !== 'number'
+    ) {
+      throw ValidationError(
+        PERFORMANCE_CONTRACTS_RULE_ID,
+        `${COMPLEXITY_MAP_PATH} entry ${index} is missing claim-bearing measurement evidence`,
+      );
+    }
+    return {
+      path: entry.path,
+      class: entry.class,
+      fittedR2: entry.fittedR2,
+      sizes: entry.sizes,
+      coefficientOfVariation: entry.coefficientOfVariation,
+      replicates: entry.measurement.replicates,
+    };
+  });
+}
+
+function readAllocationEntries(context: GateContext): readonly GrowthMapEntryRecord[] | null {
+  return readGrowthEntries(context, ALLOCATION_MAP_PATH);
 }
 
 /** The registered bench names in one comment-stripped bench file, with lines. */
@@ -244,28 +378,72 @@ function checkDeclaredDistributions(context: GateContext, declared: readonly Ben
           },
         }),
       );
+      continue;
+    }
+
+    const fact = benchmarkSubjectFactFor(context.benchmarkSubjects, d);
+    if (fact === undefined) {
+      if (context.benchmarkSubjects !== undefined) {
+        findings.push(
+          finding({
+            ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
+            severity: 'error',
+            level: 'L3',
+            title: 'Benchmark subject fact missing from host pack',
+            detail: `the host fact pack has no exact name+file fact for "${d.name}" in ${d.file}; a partial or stale fact pack cannot grant assurance`,
+            location: { file: DISTRIBUTIONS_PATH },
+          }),
+        );
+      }
+      continue;
+    }
+    const qualification = fact.qualification;
+    for (const issue of qualification.issues) {
+      findings.push(
+        finding({
+          ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
+          severity: 'error',
+          level: 'L3',
+          title: `Benchmark subject contract failed: ${issue.kind}`,
+          detail: issue.detail,
+          location: { file: issue.file },
+          remediation: {
+            kind: 'instruction',
+            description: 'Bind the declared benchmark to the implementation it actually measures.',
+            steps: [
+              `Repair the subjects/execution declaration for "${d.name}" in ${DISTRIBUTIONS_PATH}.`,
+              'A subject must be invoked by the measured callback or its bounded same-file call graph; names and comments are not evidence.',
+            ],
+          },
+        }),
+      );
     }
   }
 
   return findings;
 }
 
-function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null): Finding[] {
+interface GrowthContract {
+  readonly artifactPath: string;
+  readonly label: string;
+  readonly ceilings: Readonly<Record<string, ComplexityClass>>;
+  readonly producer: string;
+}
+
+function checkGrowthMap(entries: readonly GrowthMapEntryRecord[] | null, contract: GrowthContract): Finding[] {
   if (entries === null) {
     return [
       finding({
         ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
         severity: 'error',
         level: 'L3',
-        title: 'Complexity map is missing',
-        detail: `${COMPLEXITY_MAP_PATH} is absent. The complexity-class contract pins each hot path's measured class against regression; without the committed map there is no baseline to compare against.`,
-        location: { file: COMPLEXITY_MAP_PATH },
+        title: `${contract.label} map is missing`,
+        detail: `${contract.artifactPath} is absent. The ${contract.label.toLowerCase()} contract pins each measured growth class against regression; without the committed map there is no baseline to compare against.`,
+        location: { file: contract.artifactPath },
         remediation: {
           kind: 'instruction',
-          description: 'Generate the committed complexity map.',
-          steps: [
-            'Run `tsx scripts/bench-contracts.ts` to fit the hot-path complexity curves and write benchmarks/complexity-map.json.',
-          ],
+          description: `Generate the committed ${contract.label.toLowerCase()} map.`,
+          steps: [`Run ${contract.producer}.`],
         },
       }),
     ];
@@ -281,43 +459,43 @@ function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null)
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
           severity: 'error',
           level: 'L3',
-          title: 'Complexity map records an unrecognized class',
-          detail: `${COMPLEXITY_MAP_PATH} records path "${entry.path}" with class "${entry.class}", which is not one of ${COMPLEXITY_LADDER.join(', ')}. An unrecognized class cannot be ranked against its regression ceiling.`,
-          location: { file: COMPLEXITY_MAP_PATH },
+          title: `${contract.label} map records an unrecognized class`,
+          detail: `${contract.artifactPath} records path "${entry.path}" with class "${entry.class}", which is not one of ${COMPLEXITY_LADDER.join(', ')}. An unrecognized class cannot be ranked against its regression ceiling.`,
+          location: { file: contract.artifactPath },
         }),
       );
       continue;
     }
 
-    if (entry.fittedR2 < MIN_FIT_R2) {
+    if (entry.fittedR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) {
       findings.push(
         finding({
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
           severity: 'error',
           level: 'L3',
-          title: 'Complexity fit too noisy to trust',
-          detail: `${COMPLEXITY_MAP_PATH} records path "${entry.path}" with R² ${entry.fittedR2} (below the ${MIN_FIT_R2} floor). A fit this noisy gives no trustworthy class verdict — re-measure with more replicates/sizes.`,
-          location: { file: COMPLEXITY_MAP_PATH },
+          title: `${contract.label} fit too noisy to trust`,
+          detail: `${contract.artifactPath} records path "${entry.path}" with R² ${entry.fittedR2} (below the ${COMPLEXITY_ADMISSION_POLICY.minimumR2} floor). A fit this noisy gives no trustworthy class verdict — re-measure with more replicates/sizes.`,
+          location: { file: contract.artifactPath },
         }),
       );
     }
 
-    const ceiling = ACCEPTED_COMPLEXITY_CEILINGS[entry.path];
+    const ceiling = contract.ceilings[entry.path];
     if (ceiling !== undefined && rankOfClass(entry.class) > rankOfClass(ceiling)) {
       findings.push(
         finding({
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
           severity: 'error',
           level: 'L3',
-          title: 'Complexity class regressed past its accepted ceiling',
-          detail: `Hot path "${entry.path}" is recorded as ${entry.class}, WORSE than its accepted ceiling ${ceiling}. This is a complexity-class regression — if this lies, the perf contract is broken. A path that was ${ceiling} now grows faster; investigate the change that raised its class before accepting it.`,
-          location: { file: COMPLEXITY_MAP_PATH },
+          title: `${contract.label} class regressed past its accepted ceiling`,
+          detail: `Path "${entry.path}" is recorded as ${entry.class}, WORSE than its accepted ceiling ${ceiling}. This is a ${contract.label.toLowerCase()} regression. A path that was ${ceiling} now grows faster; investigate the change that raised its class before accepting it.`,
+          location: { file: contract.artifactPath },
           remediation: {
             kind: 'instruction',
             description: 'Restore the path to its accepted complexity class.',
             steps: [
               `Find the change that raised "${entry.path}" above ${ceiling} (e.g. a linear scan turned into a nested loop).`,
-              'If the new class is genuinely correct + intended, update ACCEPTED_COMPLEXITY_CEILINGS deliberately — never silently widen the ceiling to launder a real regression.',
+              `If the new class is genuinely correct and intended, update the ${contract.label.toLowerCase()} ceiling deliberately — never silently widen it to launder a real regression.`,
             ],
           },
         }),
@@ -327,22 +505,72 @@ function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null)
 
   // Every ceiling-pinned path MUST be present in the committed map — a pinned path
   // silently dropped from the map would slip its regression check.
-  for (const path of Object.keys(ACCEPTED_COMPLEXITY_CEILINGS)) {
+  for (const path of Object.keys(contract.ceilings)) {
     if (!seen.has(path)) {
       findings.push(
         finding({
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
           severity: 'error',
           level: 'L3',
-          title: 'Ceiling-pinned hot path missing from the complexity map',
-          detail: `Hot path "${path}" has an accepted complexity ceiling but is absent from ${COMPLEXITY_MAP_PATH}. A pinned path dropped from the map escapes its regression check — re-run scripts/bench-contracts.ts to restore it.`,
-          location: { file: COMPLEXITY_MAP_PATH },
+          title: `Ceiling-pinned path missing from the ${contract.label.toLowerCase()} map`,
+          detail: `Path "${path}" has an accepted ceiling but is absent from ${contract.artifactPath}. A pinned path dropped from the map escapes its regression check — re-run ${contract.producer} to restore it.`,
+          location: { file: contract.artifactPath },
         }),
       );
     }
   }
 
   return findings;
+}
+
+function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null): Finding[] {
+  const findings = checkGrowthMap(entries, {
+    artifactPath: COMPLEXITY_MAP_PATH,
+    label: 'Complexity',
+    ceilings: ACCEPTED_COMPLEXITY_CEILINGS,
+    producer: '`tsx scripts/bench-contracts.ts`',
+  });
+  if (entries === null) return findings;
+
+  for (const entry of entries) {
+    for (const reason of complexityAdmissionReasons(entry)) {
+      // Low R² is already rendered by the shared growth-class fold above.
+      if (reason === 'low-r2') continue;
+      const detail =
+        reason === 'insufficient-size-sweep'
+          ? `${entry.path} records ${entry.sizes.length} size(s); claim-bearing complexity evidence requires at least ${COMPLEXITY_ADMISSION_POLICY.minimumSizes}.`
+          : reason === 'invalid-size-sweep'
+            ? `${entry.path} sizes must be positive and grow geometrically by at least ${COMPLEXITY_ADMISSION_POLICY.minimumSizeGrowthFactor}× at each step; recorded [${entry.sizes.join(', ')}].`
+            : reason === 'under-replicated'
+              ? `${entry.path} records ${entry.replicates} replicate(s) per size; claim-bearing complexity evidence requires at least ${COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize}.`
+              : `${entry.path} records coefficient of variation ${entry.coefficientOfVariation}; claim-bearing complexity evidence requires a finite value no greater than ${COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation}.`;
+      findings.push(
+        finding({
+          ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
+          severity: 'error',
+          level: 'L3',
+          title: `Complexity evidence is not admissible: ${reason}`,
+          detail,
+          location: { file: COMPLEXITY_MAP_PATH },
+          remediation: {
+            kind: 'instruction',
+            description: 'Re-measure the complete complexity curve under the uniform admission policy.',
+            steps: ['Run `pnpm run bench:contracts` once on a suitable host and inspect the resulting curve.'],
+          },
+        }),
+      );
+    }
+  }
+  return findings;
+}
+
+function checkAllocationMap(entries: readonly GrowthMapEntryRecord[] | null): Finding[] {
+  return checkGrowthMap(entries, {
+    artifactPath: ALLOCATION_MAP_PATH,
+    label: 'Retained-allocation',
+    ceilings: ACCEPTED_ALLOCATION_CEILINGS,
+    producer: '`node --expose-gc --import tsx scripts/allocation-contracts.ts`',
+  });
 }
 
 function scan(context: GateContext): readonly Finding[] {
@@ -367,10 +595,34 @@ function scan(context: GateContext): readonly Finding[] {
         },
       }),
       ...checkComplexityMap(readComplexityEntries(context)),
+      ...checkAllocationMap(readAllocationEntries(context)),
     ];
   }
 
-  return [...checkDeclaredDistributions(context, declared), ...checkComplexityMap(readComplexityEntries(context))];
+  const findings = [
+    ...checkDeclaredDistributions(context, declared),
+    ...checkComplexityMap(readComplexityEntries(context)),
+    ...checkAllocationMap(readAllocationEntries(context)),
+  ];
+  if (context.benchmarkSubjects === undefined) {
+    findings.push(
+      finding({
+        ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
+        severity: 'warning',
+        level: 'L3',
+        title: 'Benchmark subject facts unavailable',
+        detail:
+          'the lean gate host supplied no parser-backed benchmark reachability facts; registration and complexity contracts ran, but this run cannot grant benchmark-subject assurance',
+        location: { file: DISTRIBUTIONS_PATH },
+        remediation: {
+          kind: 'instruction',
+          description: 'Run the repository-hosted parser-backed gate path.',
+          steps: ['Run `liteship check gates --ir`.'],
+        },
+      }),
+    );
+  }
+  return findings;
 }
 
 /**
@@ -389,6 +641,7 @@ function performanceContractsEvidenceDigest(context: GateContext): string {
   const entries: [string, string][] = [
     [DISTRIBUTIONS_PATH, tag(context.readFile(DISTRIBUTIONS_PATH))],
     [COMPLEXITY_MAP_PATH, tag(context.readFile(COMPLEXITY_MAP_PATH))],
+    [ALLOCATION_MAP_PATH, tag(context.readFile(ALLOCATION_MAP_PATH))],
   ];
   // The governed bench files are exactly those the distributions registry references —
   // the same set the fold reads (no glob dependence). Fold each file's bytes so editing
@@ -396,7 +649,13 @@ function performanceContractsEvidenceDigest(context: GateContext): string {
   for (const file of new Set(readDistributions(context).map((d) => d.file))) {
     entries.push([file, tag(context.readFile(file))]);
   }
-  return stableEvidenceDigest(entries);
+  for (const execution of readDistributions(context).map((distribution) => distribution.execution)) {
+    if (execution?.kind === 'collector') entries.push([execution.file, tag(context.readFile(execution.file))]);
+  }
+  return stableEvidenceDigest([
+    ['sources', stableEvidenceDigest(entries)],
+    ['benchmarkSubjects', factAccessEvidenceDigest('benchmarkSubjects', context.benchmarkSubjects) ?? 'absent'],
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +664,7 @@ function performanceContractsEvidenceDigest(context: GateContext): string {
 // ---------------------------------------------------------------------------
 
 const GREEN_DISTRIBUTIONS = JSON.stringify({
-  schemaVersion: 1,
+  schemaVersion: 2,
   distributions: [
     {
       name: 'Boundary.evaluate -- 3 thresholds',
@@ -413,30 +672,88 @@ const GREEN_DISTRIBUTIONS = JSON.stringify({
       inputSize: 3,
       shape: 'boundary-thresholds',
       replicates: 1,
+      subjects: [
+        {
+          role: 'sut',
+          origin: { kind: 'module', specifier: '@liteship/core' },
+          symbol: 'Boundary.evaluate',
+          binding: 'Boundary.evaluate',
+        },
+      ],
     },
   ],
 });
 const GREEN_BENCH_FILE =
-  "import { Bench } from 'tinybench';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => {});\n";
-const GREEN_COMPLEXITY_MAP = JSON.stringify({
+  "import { Bench } from 'tinybench';\nimport { Boundary } from '@liteship/core';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 1));\n";
+function fixtureComplexityMap(
+  overrides: Readonly<Record<string, { readonly class: ComplexityClass; readonly fittedR2: number }>> = {},
+): string {
+  return JSON.stringify({
+    schemaVersion: 2,
+    entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, ceiling], index) => ({
+      path,
+      class: overrides[path]?.class ?? ceiling,
+      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.002,
+      sizes: [16, 32, 64, 128, 256],
+      coefficientOfVariation: 0.05,
+      measurement: { replicates: 7 },
+    })),
+  });
+}
+
+const GREEN_COMPLEXITY_MAP = fixtureComplexityMap();
+const GREEN_ALLOCATION_MAP = JSON.stringify({
   schemaVersion: 1,
-  entries: [
-    { path: 'boundary.evaluateBatch', class: 'O(n)', fittedR2: 0.98 },
-    { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-  ],
+  entries: Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, ceiling], index) => ({
+    path,
+    class: ceiling,
+    fittedR2: 0.99 - index * 0.01,
+  })),
 });
+const GREEN_BENCHMARK_SUBJECTS: BenchmarkSubjectFacts = {
+  schemaVersion: 1,
+  distributions: [
+    {
+      name: 'Boundary.evaluate -- 3 thresholds',
+      file: 'tests/bench/core.bench.ts',
+      qualification: {
+        issues: [],
+        reachableSubjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/core' },
+            symbol: 'Boundary.evaluate',
+            binding: 'Boundary.evaluate',
+          },
+        ],
+        qualifyingSutSubjects: [
+          {
+            role: 'sut',
+            origin: { kind: 'module', specifier: '@liteship/core' },
+            symbol: 'Boundary.evaluate',
+            binding: 'Boundary.evaluate',
+          },
+        ],
+      },
+    },
+  ],
+};
 
 // RED: a bench registered with NO declared distribution (an extra bench the
 // registry does not cover) AND a complexity map that regressed
 // boundary.evaluateBatch (a ceiling-pinned path) to O(n^2). Both contracts fire.
 const RED_BENCH_FILE =
-  "import { Bench } from 'tinybench';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => {});\nbench.add('Undeclared.bench -- no distribution', () => {});\n";
-const RED_COMPLEXITY_MAP = JSON.stringify({
+  "import { Bench } from 'tinybench';\nimport { Boundary } from '@liteship/core';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => Boundary.evaluate({} as never, 1));\nbench.add('Undeclared.bench -- no distribution', () => {});\n";
+const RED_COMPLEXITY_MAP = fixtureComplexityMap({
+  'boundary.evaluateBatch': { class: 'O(n^2)', fittedR2: 0.99 },
+});
+const RED_ALLOCATION_MAP = JSON.stringify({
   schemaVersion: 1,
-  entries: [
-    { path: 'boundary.evaluateBatch', class: 'O(n^2)', fittedR2: 0.99 },
-    { path: 'contentAddress.of', class: 'O(n)', fittedR2: 0.97 },
-  ],
+  entries: Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, ceiling], index) => ({
+    path,
+    class: index === 0 ? 'O(n^2)' : ceiling,
+    fittedR2: 0.99,
+  })),
 });
 
 /** The qualified gate — fixtures included, so it self-proves via the ratchet. */
@@ -445,24 +762,36 @@ export const performanceContractsGate: Gate = defineGate({
   level: 'L3',
   describe:
     'Performance contracts — a bench result is invalid unless its input distribution is declared; a hot path must not regress its complexity class.',
+  access: {
+    outOfIrGlobs: ['benchmarks/**', 'tests/bench/**', 'scripts/bench/**'],
+    facts: [{ channel: 'benchmarkSubjects', presence: 'required' }],
+  },
   run: scan,
   evidenceDigest: performanceContractsEvidenceDigest,
   fixtures: {
     red: {
       name: 'an undeclared bench + a complexity-class regression to O(n^2)',
-      context: memoryContext({
-        'benchmarks/distributions.json': GREEN_DISTRIBUTIONS,
-        'tests/bench/core.bench.ts': RED_BENCH_FILE,
-        'benchmarks/complexity-map.json': RED_COMPLEXITY_MAP,
-      }),
+      context: {
+        ...memoryContext({
+          'benchmarks/distributions.json': GREEN_DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': RED_BENCH_FILE,
+          'benchmarks/complexity-map.json': RED_COMPLEXITY_MAP,
+          'benchmarks/allocation-map.json': RED_ALLOCATION_MAP,
+        }),
+        benchmarkSubjects: GREEN_BENCHMARK_SUBJECTS,
+      },
     },
     green: {
       name: 'every bench declared + every hot path within its complexity ceiling',
-      context: memoryContext({
-        'benchmarks/distributions.json': GREEN_DISTRIBUTIONS,
-        'tests/bench/core.bench.ts': GREEN_BENCH_FILE,
-        'benchmarks/complexity-map.json': GREEN_COMPLEXITY_MAP,
-      }),
+      context: {
+        ...memoryContext({
+          'benchmarks/distributions.json': GREEN_DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': GREEN_BENCH_FILE,
+          'benchmarks/complexity-map.json': GREEN_COMPLEXITY_MAP,
+          'benchmarks/allocation-map.json': GREEN_ALLOCATION_MAP,
+        }),
+        benchmarkSubjects: GREEN_BENCHMARK_SUBJECTS,
+      },
     },
     mutation: {
       describe:

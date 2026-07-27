@@ -4,7 +4,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { SSE } from '@czap/web';
+import { SSE } from '@liteship/web';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 
 describe('SSE.create reconnect partial override', () => {
@@ -34,16 +34,16 @@ describe('SSE.create reconnect partial override', () => {
     await vi.advanceTimersByTimeAsync(1300);
     expect(MockEventSource.instances.length).toBe(2);
 
-    client.close();
+    await client.dispose();
   });
 
-  test('an explicit maxAttempts: 0 still disables reconnection', () => {
+  test('an explicit maxAttempts: 0 still disables reconnection', async () => {
     const client = SSE.create({ url: '/api/stream', reconnect: { maxAttempts: 0 } });
 
     MockEventSource.instances[0]!.simulateError();
     expect(client.state).toBe('error');
     expect(MockEventSource.instances.length).toBe(1);
 
-    client.close();
+    await client.dispose();
   });
 });

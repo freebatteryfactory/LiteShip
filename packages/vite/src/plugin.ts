@@ -1,5 +1,5 @@
 /**
- * Main Vite 8 plugin for czap -- processes `@token`, `@theme`,
+ * Main Vite 8 plugin for liteship -- processes `@token`, `@theme`,
  * `@style`, and `@quantize` CSS blocks, handles HMR, serves virtual
  * modules, and configures build environments.
  *
@@ -10,7 +10,7 @@
  * The factory is thin: it builds the explicit per-instance state — a
  * {@link PrimitiveResolutionCache} (the resolution + watch caches) and a
  * {@link WasmState} (the compute-binary state machine) — then wires the
- * standalone hook logic over it. The 4-phase CSS walk lives in
+ * standalone hook logic over it. The staged CSS walk lives in
  * {@link transformCss} (testable without the Vite lifecycle), and the WASM
  * transitions live in `wasm-state.ts`; no hook communicates through hidden
  * closure `let`s.
@@ -18,11 +18,13 @@
  * @module
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import type { Config as LiteshipConfig } from '@liteship/core';
 import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin, UserConfig } from 'vite';
-import { ValidationError } from '@czap/error';
-import { contentAddressOf, normalizeRepoPath } from '@czap/core';
-import type { BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from '@czap/edge';
+import { ValidationError } from '@liteship/error';
+import { contentAddressOf, normalizeRepoPath } from '@liteship/core';
+import type { BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from '@liteship/edge';
 import {
   collectBoundaryDefinitionsFromScan,
   collectBoundaryManifestFromScan,
@@ -33,13 +35,15 @@ import {
 } from './boundary-manifest.js';
 import { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 import { resolveVirtualId, loadVirtualModule, type BoundaryAssetUrlMap } from './virtual-modules.js';
-import { buildEnvironments, type CzapEnvironmentName } from './environments.js';
+import { buildEnvironments, type LiteshipEnvironmentName } from './environments.js';
 import { formatWasmSearchPaths } from './wasm-resolve.js';
+import { resolvePackagedWasm } from './wasm-package-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { transformCss } from './transform-css.js';
 import {
   createPrimitiveResolutionCache,
   invalidateAllPrimitives,
+  purgeModuleEvidence,
   type TokenThemeManifest,
 } from './primitive-resolution-cache.js';
 import {
@@ -49,6 +53,14 @@ import {
   refreshWasmAtBuildStart,
   setEmittedWasmRef,
 } from './wasm-state.js';
+import {
+  loadProjectConfig,
+  mergePluginConfig,
+  PROJECT_CONFIG_FILE,
+  type LoadedProjectConfig,
+  type ProjectConfigLoader,
+} from './project-config.js';
+import { createBoundaryHMRPayloads } from './hmr-producer.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,7 +80,7 @@ export interface PluginConfig {
    *
    * `container` is the selector the auto-emitted viewport `@container`
    * containment is declared on — `:root` by default. Set it to a named
-   * selector (e.g. `'.czap-vp'`) when `:root` can't be a container in your
+   * selector (e.g. `'.liteship-vp'`) when `:root` can't be a container in your
    * layout (size containment removes `:root` from its parent's size calc,
    * which a fixed/absolute viewport-locked wrapper conflicts with); you then
    * own sizing that element to the viewport. Applies to both the CSS
@@ -79,7 +91,7 @@ export interface PluginConfig {
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
   /**
    * Emit each deduplicated boundary CSS output as an immutable build asset and
-   * add `assetUrls` to `virtual:czap/boundaries`. Default `false`: manifests
+   * add `assetUrls` to `virtual:liteship/boundaries`. Default `false`: manifests
    * still carry compiled strings only.
    */
   readonly emitBoundaryAssets?: boolean;
@@ -95,10 +107,10 @@ export interface PluginConfig {
 }
 
 /** Default Vite environments when {@link PluginConfig.environments} is omitted. */
-const DEFAULT_ENVIRONMENTS: readonly CzapEnvironmentName[] = ['browser'];
+const DEFAULT_ENVIRONMENTS: readonly LiteshipEnvironmentName[] = ['browser'];
 
 /** The environment names {@link buildEnvironments} knows how to configure. */
-const VALID_ENVIRONMENTS: readonly CzapEnvironmentName[] = ['browser', 'server', 'shader'];
+const VALID_ENVIRONMENTS: readonly LiteshipEnvironmentName[] = ['browser', 'server', 'shader'];
 
 /**
  * Resolve the requested environment names, defaulting to `['browser']` when
@@ -107,18 +119,18 @@ const VALID_ENVIRONMENTS: readonly CzapEnvironmentName[] = ['browser', 'server',
  * environment map that no-ops at build time, so it throws a clear early error
  * instead — naming the bad value and the supported set.
  */
-function resolveEnvironmentNames(configured?: readonly string[]): readonly CzapEnvironmentName[] {
+function resolveEnvironmentNames(configured?: readonly string[]): readonly LiteshipEnvironmentName[] {
   if (configured === undefined) return DEFAULT_ENVIRONMENTS;
-  const unknown = configured.filter((name) => !VALID_ENVIRONMENTS.includes(name as CzapEnvironmentName));
+  const unknown = configured.filter((name) => !VALID_ENVIRONMENTS.includes(name as LiteshipEnvironmentName));
   if (unknown.length > 0) {
     throw ValidationError(
       'vite-plugin',
-      `[@czap/vite] Unknown environment ${unknown.map((n) => `"${n}"`).join(', ')} in czap({ environments }). ` +
+      `[@liteship/vite] Unknown environment ${unknown.map((n) => `"${n}"`).join(', ')} in liteship({ environments }). ` +
         `Supported environments are: ${VALID_ENVIRONMENTS.map((n) => `'${n}'`).join(', ')}. ` +
         `Omit the option to default to ['browser'].`,
     );
   }
-  return configured as readonly CzapEnvironmentName[];
+  return configured as readonly LiteshipEnvironmentName[];
 }
 
 type EmitAssetFile = (asset: { readonly type: 'asset'; readonly fileName: string; readonly source: string }) => string;
@@ -134,7 +146,7 @@ function boundaryIdShort(id: string): string {
 
 function boundaryAssetFileName(boundaryId: string, index: number, source: string): string {
   const hash = contentAddressOf({ css: source }).replace(/^fnv1a:/, '');
-  return `_czap/${boundaryIdShort(boundaryId)}/${index}.${hash}.css`;
+  return `_liteship/${boundaryIdShort(boundaryId)}/${index}.${hash}.css`;
 }
 
 function publicAssetUrl(fileName: string, base: string): string {
@@ -163,7 +175,7 @@ function attachAssetUrls(
 // ---------------------------------------------------------------------------
 
 /**
- * Create the czap Vite plugin.
+ * Create the liteship Vite plugin.
  *
  * Transforms CSS files containing `@token`, `@theme`, `@style`, and
  * `@quantize` blocks into native CSS custom properties,
@@ -175,25 +187,38 @@ function attachAssetUrls(
  * @example
  * ```ts
  * // vite.config.ts
- * import { czap } from '@czap/vite';
- * const config = { plugins: [czap()] };
+ * import { liteship } from '@liteship/vite';
+ * const config = { plugins: [liteship()] };
  * ```
+ *
+ * `resolvePackaged` is an internal seam: the packaged-`@liteship/core` binary
+ * resolver, defaulting to the real `resolvePackagedWasm`. Production leaves
+ * it defaulted (call sites are `plugin(config)`, byte-identical); a test injects a
+ * stub to force the `'package'` WASM source absent against a synthetic project root.
  */
-export function plugin(config?: PluginConfig): Plugin {
-  const hmrEnabled = config?.hmr !== false;
-  const emitBoundaryAssets = config?.emitBoundaryAssets === true;
+export function plugin(
+  config?: PluginConfig,
+  resolvePackaged?: () => string | null,
+  projectConfigLoader?: ProjectConfigLoader,
+): Plugin {
+  const resolvePackagedBinary = resolvePackaged ?? resolvePackagedWasm;
+  let effectiveConfig = config ?? {};
+  let hmrEnabled = effectiveConfig.hmr !== false;
+  let emitBoundaryAssets = effectiveConfig.emitBoundaryAssets === true;
+  let loadedProjectConfig: LiteshipConfig | null = null;
 
   // Per-instance state, lifted out of the closure into explicit records:
   //  - `cache`     : resolution + watch caches shared across transform/HMR.
   //  - `wasmState` : the compute-binary state machine (resolve/enable/emit).
   const cache = createPrimitiveResolutionCache();
-  const wasmState = createWasmState(normalizeWasmConfig(config?.wasm), process.cwd());
+  let wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), process.cwd(), resolvePackagedBinary);
 
   let projectRoot = process.cwd();
   let isBuild = false;
   let publicBase = '/';
   let boundaryAssetState: Promise<BoundaryAssetState> | null = null;
   let boundaryDefinitions: Promise<BoundaryDefinitionMap> | null = null;
+  let previousBoundaryManifest: BoundaryManifest | null = null;
   // One project tree-walk shared across the manifest + definitions derivations. The
   // scan is a FILE LIST, so it survives content edits and is only invalidated when a
   // scannable file is created/deleted (see hotUpdate) -- no re-scan on every save.
@@ -207,8 +232,8 @@ export function plugin(config?: PluginConfig): Plugin {
   function ensureBoundaryManifest(): Promise<BoundaryManifest> {
     if (!cache.boundaryManifest.value) {
       cache.boundaryManifest.value = collectBoundaryManifestFromScan(projectRoot, ensureProjectScan(), {
-        boundaryDir: config?.dirs?.boundary,
-        container: config?.quantize?.container,
+        boundaryDir: effectiveConfig.dirs?.boundary,
+        container: effectiveConfig.quantize?.container,
       });
     }
     return cache.boundaryManifest.value;
@@ -217,7 +242,7 @@ export function plugin(config?: PluginConfig): Plugin {
   function ensureBoundaryDefinitions(): Promise<BoundaryDefinitionMap> {
     if (!boundaryDefinitions) {
       boundaryDefinitions = collectBoundaryDefinitionsFromScan(projectRoot, ensureProjectScan(), {
-        boundaryDir: config?.dirs?.boundary,
+        boundaryDir: effectiveConfig.dirs?.boundary,
       });
     }
     return boundaryDefinitions;
@@ -252,7 +277,11 @@ export function plugin(config?: PluginConfig): Plugin {
     moduleGraph: EnvironmentModuleGraph,
     affected: EnvironmentModuleNode[],
   ): void {
-    for (const virtualId of ['\0virtual:czap/tokens', '\0virtual:czap/tokens.css', '\0virtual:czap/themes'] as const) {
+    for (const virtualId of [
+      '\0virtual:liteship/tokens',
+      '\0virtual:liteship/tokens.css',
+      '\0virtual:liteship/themes',
+    ] as const) {
       const mod = moduleGraph.getModuleById(virtualId);
       if (mod) {
         moduleGraph.invalidateModule(mod);
@@ -262,7 +291,7 @@ export function plugin(config?: PluginConfig): Plugin {
   }
 
   return {
-    name: '@czap/vite',
+    name: '@liteship/vite',
     enforce: 'pre' as const,
 
     configResolved(resolvedConfig) {
@@ -276,14 +305,14 @@ export function plugin(config?: PluginConfig): Plugin {
       boundaryAssetState = null;
       const resolved = refreshWasmAtBuildStart(wasmState, projectRoot);
       if (wasmState.config.mode !== 'off' && !resolved && wasmState.config.mode === 'on') {
-        const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path);
+        const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path, resolvePackagedBinary);
         this.warn(
-          `WASM support was enabled, but no czap-compute binary could be resolved. Searched: ${searched}. ` +
-            'Fix: the binary ships inside @czap/core (>=0.2.1) — ensure it is installed so it resolves from ' +
+          `WASM support was enabled, but no liteship-compute binary could be resolved. Searched: ${searched}. ` +
+            'Fix: the binary ships inside @liteship/core (>=0.2.1) — ensure it is installed so it resolves from ' +
             'node_modules automatically. In the monorepo, build the crate (`cargo build --target ' +
-            'wasm32-unknown-unknown --release` in crates/czap-compute) or run `pnpm run build:wasm`. ' +
-            'Otherwise copy the binary to public/czap-compute.wasm, or point the plugin at it explicitly ' +
-            "via czap({ wasm: { path: './path/to.wasm' } }). Runtime will fall back to TypeScript kernels.",
+            'wasm32-unknown-unknown --release` in crates/liteship-compute) or run `pnpm run build:wasm`. ' +
+            'Otherwise copy the binary to public/liteship-compute.wasm, or point the plugin at it explicitly ' +
+            "via liteship({ wasm: { path: './path/to.wasm' } }). Runtime will fall back to TypeScript kernels.",
         );
       }
 
@@ -292,7 +321,7 @@ export function plugin(config?: PluginConfig): Plugin {
           wasmState,
           this.emitFile({
             type: 'asset',
-            name: 'czap-compute.wasm',
+            name: 'liteship-compute.wasm',
             source: readFileSync(resolved.filePath),
           }),
         );
@@ -301,6 +330,14 @@ export function plugin(config?: PluginConfig): Plugin {
       if (isBuild && emitBoundaryAssets) {
         return ensureBoundaryAssets((asset) => this.emitFile(asset)).then(() => undefined);
       }
+
+      // HMR diffs require an admitted before-image. Prime it once at server
+      // startup; subsequent updates always compare two canonical manifests.
+      if (!isBuild && hmrEnabled) {
+        return ensureBoundaryManifest().then((manifest) => {
+          previousBoundaryManifest = manifest;
+        });
+      }
     },
 
     // -----------------------------------------------------------------------
@@ -308,12 +345,12 @@ export function plugin(config?: PluginConfig): Plugin {
     // -----------------------------------------------------------------------
 
     transformIndexHtml() {
-      if (!hmrEnabled) return [];
+      if (!hmrEnabled || isBuild) return [];
       return [
         {
           tag: 'script' as const,
           attrs: { type: 'module' },
-          children: `import 'virtual:czap/hmr-client';`,
+          children: `import 'virtual:liteship/hmr-client';`,
           injectTo: 'head' as const,
         },
       ];
@@ -328,7 +365,7 @@ export function plugin(config?: PluginConfig): Plugin {
     },
 
     load(id: string) {
-      if (id === '\0virtual:czap/boundaries') {
+      if (id === '\0virtual:liteship/boundaries') {
         // Async only on this branch: the manifest scan imports definition
         // modules. Other virtual modules stay synchronous.
         if (isBuild && emitBoundaryAssets) {
@@ -339,17 +376,21 @@ export function plugin(config?: PluginConfig): Plugin {
         return ensureBoundaryManifest().then((boundaries) => loadVirtualModule(id, { boundaries }));
       }
 
-      if (id === '\0virtual:czap/tokens' || id === '\0virtual:czap/tokens.css' || id === '\0virtual:czap/themes') {
+      if (
+        id === '\0virtual:liteship/tokens' ||
+        id === '\0virtual:liteship/tokens.css' ||
+        id === '\0virtual:liteship/themes'
+      ) {
         if (!cache.tokenThemeManifest.value) {
           cache.tokenThemeManifest.value = Promise.all([
-            collectTokenManifest(projectRoot, { tokenDir: config?.dirs?.token }),
-            collectThemeManifest(projectRoot, { themeDir: config?.dirs?.theme }),
+            collectTokenManifest(projectRoot, { tokenDir: effectiveConfig.dirs?.token }),
+            collectThemeManifest(projectRoot, { themeDir: effectiveConfig.dirs?.theme }),
           ]).then(([tokens, themes]): TokenThemeManifest => ({ tokens, themes }));
         }
         return cache.tokenThemeManifest.value.then(({ tokens, themes }) => loadVirtualModule(id, { tokens, themes }));
       }
 
-      if (id === '\0virtual:czap/wasm-url') {
+      if (id === '\0virtual:liteship/wasm-url') {
         if (!wasmState.resolution.enabled) {
           return 'export const wasmUrl = null;';
         }
@@ -366,9 +407,13 @@ export function plugin(config?: PluginConfig): Plugin {
         // The `/@fs/` prefix makes this a Vite dev-server browser URL rather than a repo
         // id, but the separator canonicalization is the same backslash→slash rewrite.
         const browserUrl =
-          resolved.source === 'public' ? '/czap-compute.wasm' : `/@fs/${normalizeRepoPath(resolved.filePath)}`;
+          resolved.source === 'public' ? '/liteship-compute.wasm' : `/@fs/${normalizeRepoPath(resolved.filePath)}`;
 
         return `export const wasmUrl = ${JSON.stringify(browserUrl)};`;
+      }
+
+      if (id === '\0virtual:liteship/config') {
+        return loadVirtualModule(id, { config: loadedProjectConfig });
       }
 
       return loadVirtualModule(id);
@@ -380,13 +425,13 @@ export function plugin(config?: PluginConfig): Plugin {
       if (Object.keys(manifest).length === 0) return;
 
       const manifestFile: BoundaryManifestFile = {
-        _tag: 'CzapBoundaryManifest',
+        _tag: 'LiteshipBoundaryManifest',
         _version: 2,
         boundaries: attachAssetUrls(manifest, urls),
       };
       this.emitFile({
         type: 'asset',
-        fileName: 'czap-boundary-manifest.json',
+        fileName: 'liteship-boundary-manifest.json',
         source: JSON.stringify(manifestFile, null, 2),
       });
     },
@@ -397,7 +442,7 @@ export function plugin(config?: PluginConfig): Plugin {
 
     async transform(code: string, id: string) {
       if (id.endsWith('.html') || id.endsWith('.astro')) {
-        const transformed = await transformHTML(code, id, projectRoot, config?.dirs?.boundary);
+        const transformed = await transformHTML(code, id, projectRoot, effectiveConfig.dirs?.boundary);
         if (transformed === code) {
           return null;
         }
@@ -417,9 +462,9 @@ export function plugin(config?: PluginConfig): Plugin {
         addWatchFile: typeof this.addWatchFile === 'function' ? (file) => this.addWatchFile(file) : undefined,
         cache,
         projectRoot,
-        dirs: config?.dirs,
+        dirs: effectiveConfig.dirs,
         boundaryDefinitions: discoveredBoundaries,
-        quantizeContainer: config?.quantize?.container,
+        quantizeContainer: effectiveConfig.quantize?.container,
       });
 
       if (transformed === null) return null;
@@ -449,6 +494,7 @@ export function plugin(config?: PluginConfig): Plugin {
           file.endsWith('.css') ||
           file.endsWith('.astro');
         if (scannable) projectScan = null;
+        if (options.type === 'delete') purgeModuleEvidence(cache, file);
       }
 
       // Invalidate definition caches when source files change
@@ -462,6 +508,7 @@ export function plugin(config?: PluginConfig): Plugin {
         file.endsWith('.styles.ts') ||
         file.endsWith('/styles.ts');
 
+      let affectedModules: EnvironmentModuleNode[] | undefined;
       if (isDefFile) {
         // Clear all caches since definitions may cross-reference
         invalidateAllPrimitives(cache);
@@ -477,8 +524,8 @@ export function plugin(config?: PluginConfig): Plugin {
         });
 
         // Definitions feed the boundary manifest; re-load the virtual module
-        // so `import { boundaries } from 'virtual:czap/boundaries'` stays fresh.
-        const manifestModule = moduleGraph.getModuleById('\0virtual:czap/boundaries');
+        // so `import { boundaries } from 'virtual:liteship/boundaries'` stays fresh.
+        const manifestModule = moduleGraph.getModuleById('\0virtual:liteship/boundaries');
         if (manifestModule) {
           moduleGraph.invalidateModule(manifestModule);
           transformModules.push(manifestModule);
@@ -486,9 +533,7 @@ export function plugin(config?: PluginConfig): Plugin {
 
         invalidateDesignVirtualModules(moduleGraph, transformModules);
 
-        if (transformModules.length > 0) {
-          return transformModules;
-        }
+        if (transformModules.length > 0) affectedModules = transformModules;
       }
 
       if (file.endsWith('.css') || file.endsWith('.astro') || file.endsWith('.html')) {
@@ -498,40 +543,71 @@ export function plugin(config?: PluginConfig): Plugin {
         // covers query-bearing ids like `Page.astro?astro&type=style`
         // that an exact getModuleById(file) lookup would miss) so the
         // edited file's own HMR is never suppressed.
-        const affectedModules: EnvironmentModuleNode[] = [...options.modules];
+        const transformedModules: EnvironmentModuleNode[] = [...options.modules];
 
         // @quantize states contribute to the boundary manifest, so a CSS
-        // or .astro-style edit must re-load `virtual:czap/boundaries` too
+        // or .astro-style edit must re-load `virtual:liteship/boundaries` too
         // (same as the definition-file path above) -- otherwise importers
         // keep the stale module even though the cached manifest was
         // dropped. (.astro components carry @quantize in <style> blocks
         // and feed the manifest scan since the .astro-scan fix.)
         if (file.endsWith('.css') || file.endsWith('.astro')) {
           cache.boundaryManifest.value = null;
-          const manifestModule = moduleGraph.getModuleById('\0virtual:czap/boundaries');
+          const manifestModule = moduleGraph.getModuleById('\0virtual:liteship/boundaries');
           if (manifestModule) {
             moduleGraph.invalidateModule(manifestModule);
-            affectedModules.push(manifestModule);
+            transformedModules.push(manifestModule);
           }
         }
 
-        if (affectedModules.length > 0) {
-          return affectedModules;
-        }
+        if (transformedModules.length > 0) affectedModules = transformedModules;
       }
 
-      return;
+      const changesBoundaryProjection = isDefFile || file.endsWith('.css') || file.endsWith('.astro');
+      if (changesBoundaryProjection) {
+        const before = previousBoundaryManifest;
+        // Vite runs buildStart before hotUpdate. Focused hook consumers that do
+        // not run that lifecycle have no admitted before-image, so preserve the
+        // synchronous affected-module behavior and never invent a diff.
+        if (before === null) return affectedModules;
+        // Definition invalidation already clears both caches. CSS/Astro edits
+        // only clear the manifest above; definitions remain their admitted
+        // source values.
+        return Promise.all([ensureBoundaryManifest(), ensureBoundaryDefinitions()]).then(([current, definitions]) => {
+          previousBoundaryManifest = current;
+          for (const payload of createBoundaryHMRPayloads(before, current, definitions)) {
+            options.server.ws.send({ type: 'custom', event: 'liteship:update', data: payload });
+          }
+          return affectedModules;
+        });
+      }
+
+      return affectedModules;
     },
 
-    config(): UserConfig {
-      const envNames = resolveEnvironmentNames(config?.environments);
-      const next: UserConfig = {};
+    config(
+      userConfig: UserConfig = {},
+      env = { command: 'serve' as const, mode: 'development' },
+    ): UserConfig | Promise<UserConfig> {
+      projectRoot = resolve(String(userConfig.root ?? process.cwd()));
+      const project = (loaded: LoadedProjectConfig | null): UserConfig => {
+        loadedProjectConfig = loaded?.config ?? null;
+        effectiveConfig = mergePluginConfig(loaded?.vite, config);
+        hmrEnabled = effectiveConfig.hmr !== false;
+        emitBoundaryAssets = effectiveConfig.emitBoundaryAssets === true;
+        wasmState = createWasmState(normalizeWasmConfig(effectiveConfig.wasm), projectRoot, resolvePackagedBinary);
 
-      if (envNames.length > 0) {
-        next.environments = buildEnvironments(envNames);
-      }
+        const envNames = resolveEnvironmentNames(effectiveConfig.environments);
+        const next: UserConfig = {};
+        if (envNames.length > 0) next.environments = buildEnvironments(envNames);
+        return next;
+      };
 
-      return next;
+      if (!existsSync(resolve(projectRoot, PROJECT_CONFIG_FILE))) return project(null);
+      const pending = projectConfigLoader
+        ? loadProjectConfig(projectRoot, env, projectConfigLoader)
+        : loadProjectConfig(projectRoot, env);
+      return pending.then(project);
     },
   };
 }

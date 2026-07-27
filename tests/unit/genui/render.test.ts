@@ -5,9 +5,9 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderFromCatalog } from '@czap/genui';
+import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderFromCatalog } from '@liteship/genui';
 
-describe('@czap/genui renderFromCatalog', () => {
+describe('@liteship/genui renderFromCatalog', () => {
   it('renders trusted components without executing script-like prop strings', () => {
     const target = document.createElement('div');
     const { ok } = renderFromCatalog(
@@ -30,7 +30,7 @@ describe('@czap/genui renderFromCatalog', () => {
     expect(target.textContent).toBe('keep');
   });
 
-  it('renders named slots under data-czap-genui-slot containers', () => {
+  it('renders named slots under data-liteship-genui-slot containers', () => {
     const target = document.createElement('div');
     const { ok } = renderFromCatalog(
       {
@@ -43,7 +43,7 @@ describe('@czap/genui renderFromCatalog', () => {
       { catalog: DEMO_COMPONENT_CATALOG, target },
     );
     expect(ok).toBe(true);
-    const slot = target.querySelector('[data-czap-genui-slot="footer"]');
+    const slot = target.querySelector('[data-liteship-genui-slot="footer"]');
     expect(slot?.textContent).toBe('foot');
   });
 
@@ -119,6 +119,24 @@ describe('@czap/genui renderFromCatalog', () => {
     expect(a.getAttribute('class')).toBe('btn');
     expect(a.getAttribute('aria-label')).toBe('go');
     expect(a.getAttribute('data-track')).toBe('cta');
+  });
+
+  it.each([
+    'javascript:alert(1)',
+    'java\nscript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    '//untrusted.example/path',
+  ])('refuses unsafe href %s before mutating the DOM', (href) => {
+    const catalog = defineComponentCatalog({
+      version: 'href-safety',
+      components: { Link: { tag: 'a', props: { href: { type: 'string', required: true } }, children: 'none' } },
+    });
+    const target = document.createElement('div');
+    target.textContent = 'preserve';
+    const result = renderFromCatalog({ name: 'Link', props: { href } }, { catalog, target });
+    expect(result.ok).toBe(false);
+    expect(target.textContent).toBe('preserve');
+    expect(target.querySelector('a')).toBeNull();
   });
 
   it('does not set a declared-but-non-allowlisted string attribute', () => {
@@ -201,7 +219,7 @@ describe('@czap/genui renderFromCatalog', () => {
       { catalog, target },
     );
     expect(ok).toBe(true);
-    const slot = target.querySelector('[data-czap-genui-slot="body"]')!;
+    const slot = target.querySelector('[data-liteship-genui-slot="body"]')!;
     expect(slot.querySelectorAll('p')).toHaveLength(2);
     expect(slot.textContent).toBe('ab');
   });

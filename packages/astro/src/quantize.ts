@@ -7,8 +7,8 @@
  * @module
  */
 
-import type { Boundary, CapTier, Quantizer, StateResolutionReceipt } from '@czap/core';
-import { Diagnostics, VIEWPORT } from '@czap/core';
+import type { Boundary, CapTier, Quantizer, StateResolutionReceipt } from '@liteship/core';
+import { Diagnostics, VIEWPORT } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,7 +24,7 @@ export interface ServerIslandContext {
   readonly userAgent?: string;
   /** Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`. */
   readonly clientHints?: Record<string, string>;
-  /** Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px). */
+  /** Tier detected by `@liteship/edge` (default `'reactive'` → synthetic 960px). */
   readonly detectedCapTier?: CapTier;
 }
 
@@ -32,7 +32,7 @@ export interface ServerIslandContext {
  * Props accepted by the `Quantize` Astro component and by
  * {@link resolveInitialState}.
  */
-export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
+export interface QuantizeProps<B extends Boundary = Boundary> {
   /** Boundary to quantize. */
   readonly boundary: B;
   /** Optional explicit quantizer definition. */
@@ -140,9 +140,9 @@ function isRequestLike(value: unknown): value is Request {
 
 function warnRawRequestContext(value: unknown): void {
   if (!isRequestLike(value)) return;
-  Diagnostics.warnOnce({
-    source: 'czap/astro.quantize',
-    code: 'resolve-initial-state-raw-request',
+  Diagnostics.warnOnceRegistered({
+    source: 'liteship/astro.quantize',
+    code: 'astro/quantize/resolve-initial-state-raw-request',
     message:
       'resolveInitialState received a raw Request object — every ServerIslandContext field reads undefined and SSR falls back to synthetic 960px (reactive tier). ' +
       'Build a ServerIslandContext from the request instead: { userAgent: request.headers.get("user-agent") ?? "", clientHints: …, detectedCapTier: … }.',
@@ -159,16 +159,16 @@ function warnRawRequestContext(value: unknown): void {
  *
  * Evaluates the boundary thresholds to find the matching state.
  */
-export function resolveInitialState<B extends Boundary.Shape>(boundary: B, context: ServerIslandContext = {}): string {
+export function resolveInitialState<B extends Boundary>(boundary: B, context: ServerIslandContext = {}): string {
   return resolveInitialStateWithReceipt(boundary, context).state;
 }
 
 /**
  * Like {@link resolveInitialState} but carries a `StateResolutionReceipt`
- * (`@czap/core`) naming which signal drove SSR — client hints, UA estimate,
+ * (`@liteship/core`) naming which signal drove SSR — client hints, UA estimate,
  * cap-tier synthetic, or policy (reduced-motion bias).
  */
-export function resolveInitialStateWithReceipt<B extends Boundary.Shape>(
+export function resolveInitialStateWithReceipt<B extends Boundary>(
   boundary: B,
   context: ServerIslandContext = {},
 ): ResolvedInitialState {

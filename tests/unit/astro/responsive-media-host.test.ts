@@ -4,9 +4,9 @@
  * The honest analogue of a browser network test: a real browser CANNOT fetch a
  * candidate that no output advertises, so if the SSR markup a production host emits
  * under Save-Data + high DPR never names a heavy candidate, the heavy asset can never
- * be fetched. This drives the ACTUAL production host wiring — `czapMiddleware`
+ * be fetched. This drives the ACTUAL production host wiring — `liteshipMiddleware`
  * (Astro) and `cloudflareMiddleware` (Cloudflare) — with real Client-Hint headers,
- * calls `locals.czap.responsiveMedia(intent)` (the projector the middleware wires), and
+ * calls `locals.liteship.responsiveMedia(intent)` (the projector the middleware wires), and
  * asserts NO heavy candidate appears in src / srcset / <source> / preload / image-set,
  * plus that the responsive `Vary` axis is merged (not clobbered) into the response.
  *
@@ -16,10 +16,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, ResponsiveMedia, buildResponsiveImageSet, selectCandidates } from '@czap/core';
-import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@czap/core';
-import { czapMiddleware } from '@czap/astro';
-import { cloudflareMiddleware } from '@czap/cloudflare';
+import { ResponsiveMedia, buildResponsiveImageSet, selectCandidates, defineBoundary } from '@liteship/core';
+import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
+import { liteshipMiddleware } from '@liteship/astro';
+import { cloudflareMiddleware } from '@liteship/cloudflare';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -67,11 +67,11 @@ function nextWithVary(): () => Promise<Response> {
 function projector(context: {
   locals: Record<string, unknown>;
 }): (i: ResponsiveMediaIntent) => ResponsiveMediaPictureProjection {
-  const czap = context.locals.czap as {
+  const liteship = context.locals.liteship as {
     responsiveMedia?: (i: ResponsiveMediaIntent) => ResponsiveMediaPictureProjection;
   };
-  expect(typeof czap?.responsiveMedia).toBe('function');
-  return czap.responsiveMedia!;
+  expect(typeof liteship?.responsiveMedia).toBe('function');
+  return liteship.responsiveMedia!;
 }
 
 /** Assert NO heavy candidate appears in ANY output artifact of a host projection. */
@@ -96,9 +96,9 @@ function expectNoHeavyAnywhere(projection: ResponsiveMediaPictureProjection, dpr
 
 // ── Astro host path ────────────────────────────────────────────────────────────
 
-describe('Astro host path: czapMiddleware responsive-media projection (#140)', () => {
+describe('Astro host path: liteshipMiddleware responsive-media projection (#140)', () => {
   test.each([1, 2, 3])('Save-Data + DPR %i advertises NO heavy candidate in any artifact', async (dpr) => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext({ 'save-data': 'on', 'sec-ch-dpr': String(dpr) });
     await middleware(context, nextWithVary());
 
@@ -110,7 +110,7 @@ describe('Astro host path: czapMiddleware responsive-media projection (#140)', (
   });
 
   test('Save-Data WITHOUT an authored light variant caps to the floor (no heavy, DPR 3)', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext({ 'save-data': 'on', 'sec-ch-dpr': '3' });
     await middleware(context, nextWithVary());
 
@@ -124,7 +124,7 @@ describe('Astro host path: czapMiddleware responsive-media projection (#140)', (
   });
 
   test('normal path is unchanged: a non-Save-Data client is advertised the FULL set', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext({ 'sec-ch-dpr': '2' });
     await middleware(context, nextWithVary());
 
@@ -136,7 +136,7 @@ describe('Astro host path: czapMiddleware responsive-media projection (#140)', (
   });
 
   test('the responsive Vary axis is MERGED into the response, never clobbering the app Vary', async () => {
-    const middleware = czapMiddleware();
+    const middleware = liteshipMiddleware();
     const context = makeContext({ 'save-data': 'on', 'sec-ch-dpr': '3' });
     const response = await middleware(context, nextWithVary());
 
@@ -153,7 +153,7 @@ describe('Astro host path: czapMiddleware responsive-media projection (#140)', (
   // page rendering through the projector still emits a Save-Data-specific srcset — the
   // Vary axis MUST still be advertised or a CDN serves one variant under a shared key.
   test('advertises the responsive Vary axis even with detect DISABLED (Save-Data still varies output)', async () => {
-    const middleware = czapMiddleware({ detect: false });
+    const middleware = liteshipMiddleware({ detect: false });
     const context = makeContext({ 'save-data': 'on' });
     const response = await middleware(context, nextWithVary());
 
@@ -174,7 +174,7 @@ describe('Astro host path: czapMiddleware responsive-media projection (#140)', (
 
 describe('Cloudflare host path: cloudflareMiddleware responsive-media projection (#140)', () => {
   function makeCfMiddleware() {
-    const boundary = Boundary.make({
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
@@ -193,7 +193,7 @@ describe('Cloudflare host path: cloudflareMiddleware responsive-media projection
     return cloudflareMiddleware({
       boundaryId: boundary.id,
       compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
-      env: { CZAP_BOUNDARY_CACHE: kv },
+      env: { LITESHIP_BOUNDARY_CACHE: kv },
     });
   }
 

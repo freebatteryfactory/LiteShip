@@ -6,7 +6,7 @@
 
 # Type Alias: CompositorWorkerState
 
-> **CompositorWorkerState** = [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts) & `object`
+> **CompositorWorkerState** = [`CompositeState`](../../../liteship/src/media/interfaces/CompositeState.md) & `object`
 
 Defined in: [worker/src/compositor-types.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L33)
 

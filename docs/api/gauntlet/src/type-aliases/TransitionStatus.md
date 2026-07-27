@@ -8,7 +8,7 @@
 
 > **TransitionStatus** = `"equivalent"` \| `"divergent"` \| `"unevidenced"`
 
-Defined in: [gauntlet/src/transition-facts.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/transition-facts.ts#L60)
+Defined in: [gauntlet/src/facts/transition-facts.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/transition-facts.ts#L60)
 
 The verdict a bisimulation case earned — a bare string-union field (the same flat
 discriminant shape as [MutantVerdictTag](MutantVerdictTag.md), NOT a nested `_tag` object), so the

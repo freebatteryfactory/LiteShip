@@ -8,7 +8,7 @@
 
 Defined in: [worker/src/host.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/host.ts#L47)
 
-Render configuration accepted by [WorkerHostShape.startRender](WorkerHostShape.md#startrender).
+Render configuration accepted by [WorkerHost.startRender](WorkerHost.md#startrender).
 Only `durationMs` is genuinely the caller's decision; the rest default
 from context the host already has.
 
@@ -16,7 +16,7 @@ from context the host already has.
 
 ### durationMs
 
-> `readonly` **durationMs**: `number` \| `Millis`
+> `readonly` **durationMs**: `number` \| [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [worker/src/host.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/host.ts#L49)
 

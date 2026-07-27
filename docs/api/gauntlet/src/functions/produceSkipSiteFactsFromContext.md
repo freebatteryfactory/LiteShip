@@ -8,7 +8,7 @@
 
 > **produceSkipSiteFactsFromContext**(`context`, `detect?`): [`SkipSiteFacts`](../interfaces/SkipSiteFacts.md)
 
-Defined in: [gauntlet/src/skip-site-facts.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L137)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L137)
 
 Convenience producer over a [GateContext](../interfaces/GateContext.md) — enumerates the [governedFiles](governedFiles.md),
 reads through the context, and wraps the INJECTED `detectSkipsAST` when the host supplied it

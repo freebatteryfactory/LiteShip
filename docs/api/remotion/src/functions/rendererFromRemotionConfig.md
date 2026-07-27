@@ -8,7 +8,7 @@
 
 > **rendererFromRemotionConfig**(`config`, `compositor`, `signal?`): `VideoRendererShape`
 
-Defined in: [remotion/src/composition.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L75)
+Defined in: [remotion/src/composition.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L76)
 
 Build a `VideoRenderer` directly from Remotion's video config so timing is
 declared exactly once — in Remotion.
@@ -31,11 +31,11 @@ Remotion's video config (`useVideoConfig()` /
 
 `CompositorShape`
 
-The `Compositor` driving the czap state pipeline.
+The `Compositor` driving the liteship state pipeline.
 
 ### signal?
 
-`Controllable`\<`number`\>
+[`Controllable`](../../../liteship/src/reactive/namespaces/Signal/type-aliases/Controllable.md)\<`number`\>
 
 Optional controllable time signal, seeked per frame.
 
@@ -43,7 +43,7 @@ Optional controllable time signal, seeked per frame.
 
 `VideoRendererShape`
 
-A `VideoRenderer.Shape` ready for [precomputeFrames](precomputeFrames.md).
+A `VideoRenderer` ready for [precomputeFrames](precomputeFrames.md).
 
 ## Example
 

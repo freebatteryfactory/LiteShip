@@ -3,7 +3,7 @@ import { build, type RollupOutput } from 'vite';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { plugin } from '@czap/vite';
+import { plugin } from '@liteship/vite';
 
 /**
  * Rolldown silent-fallback guard.
@@ -29,7 +29,7 @@ import { plugin } from '@czap/vite';
  */
 describe('wasmUrl survives the Vite 8 / Rolldown bundler', () => {
   it('rewrites import.meta.ROLLUP_FILE_URL_<id> into a real .wasm asset url', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-wasm-url-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-wasm-url-'));
     try {
       // 8-byte WASM magic header (\0asm + version 1) — well-formed for good
       // hygiene, but the resolver never inspects the bytes.
@@ -41,7 +41,7 @@ describe('wasmUrl survives the Vite 8 / Rolldown bundler', () => {
         entry,
         // Assigning to a global keeps the import live so the bundler cannot
         // tree-shake the wasm-url module away before the token is rewritten.
-        "import { wasmUrl } from 'virtual:czap/wasm-url';\n" + 'globalThis.__CZAP_WASM_URL__ = wasmUrl;\n',
+        "import { wasmUrl } from 'virtual:liteship/wasm-url';\n" + 'globalThis.__LITESHIP_WASM_URL__ = wasmUrl;\n',
       );
 
       const result = (await build({
@@ -61,7 +61,7 @@ describe('wasmUrl survives the Vite 8 / Rolldown bundler', () => {
       const wasmAsset = chunks.find((c) => c.type === 'asset' && c.fileName.endsWith('.wasm'));
       const entryChunk = chunks.find((c) => c.type === 'chunk' && c.fileName === 'entry.js');
 
-      expect(wasmAsset, 'the czap-compute binary must be emitted as a build asset').toBeDefined();
+      expect(wasmAsset, 'the liteship-compute binary must be emitted as a build asset').toBeDefined();
       expect(entryChunk, 'an entry chunk must be produced').toBeDefined();
 
       const code = (entryChunk as Extract<(typeof chunks)[number], { type: 'chunk' }>).code;
@@ -70,7 +70,7 @@ describe('wasmUrl survives the Vite 8 / Rolldown bundler', () => {
       expect(code, 'ROLLUP_FILE_URL_ token left unreplaced → silent TS fallback').not.toMatch(/ROLLUP_FILE_URL_/);
       // ...and rewritten WITH a real .wasm reference, not collapsed to null.
       expect(code, 'wasmUrl must resolve to the emitted .wasm asset').toMatch(/\.wasm/);
-      expect(code, 'wasmUrl must not be null after a successful emit').not.toMatch(/__CZAP_WASM_URL__\s*=\s*null/);
+      expect(code, 'wasmUrl must not be null after a successful emit').not.toMatch(/__LITESHIP_WASM_URL__\s*=\s*null/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

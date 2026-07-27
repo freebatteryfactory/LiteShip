@@ -6,7 +6,7 @@
 
 # Interface: Fact
 
-Defined in: [gauntlet/src/repo-ir.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L239)
+Defined in: [gauntlet/src/repo-ir.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L240)
 
 The oracle-emitted tuple (design §2). An oracle emits a `Fact` per
 `(file, line, property)` it observes, tagged with WHICH oracle saw it and the
@@ -29,7 +29,7 @@ This is the open extension point — a downstream oracle adds new
 
 > `readonly` **coverageClass**: [`CoverageClass`](../type-aliases/CoverageClass.md)
 
-Defined in: [gauntlet/src/repo-ir.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L251)
+Defined in: [gauntlet/src/repo-ir.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L252)
 
 How this observation was evidenced.
 
@@ -39,7 +39,7 @@ How this observation was evidenced.
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L241)
+Defined in: [gauntlet/src/repo-ir.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L242)
 
 The file the fact concerns — MUST exist in [RepoIR.files](RepoIR.md#files).
 
@@ -49,7 +49,7 @@ The file the fact concerns — MUST exist in [RepoIR.files](RepoIR.md#files).
 
 > `readonly` `optional` **line?**: `number`
 
-Defined in: [gauntlet/src/repo-ir.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L243)
+Defined in: [gauntlet/src/repo-ir.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L244)
 
 The line, when the fact is line-located.
 
@@ -59,7 +59,7 @@ The line, when the fact is line-located.
 
 > `readonly` **oracleId**: `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L249)
+Defined in: [gauntlet/src/repo-ir.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L250)
 
 Which oracle emitted this — the traceability + triangulation key.
 
@@ -69,7 +69,7 @@ Which oracle emitted this — the traceability + triangulation key.
 
 > `readonly` **property**: `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L245)
+Defined in: [gauntlet/src/repo-ir.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L246)
 
 The named property observed (e.g. `'isDefaultExport'`, `'returnType'`).
 
@@ -79,6 +79,6 @@ The named property observed (e.g. `'isDefaultExport'`, `'returnType'`).
 
 > `readonly` **value**: `unknown`
 
-Defined in: [gauntlet/src/repo-ir.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L247)
+Defined in: [gauntlet/src/repo-ir.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L248)
 
 The heterogeneous payload — narrow by `property`/`oracleId` before use.

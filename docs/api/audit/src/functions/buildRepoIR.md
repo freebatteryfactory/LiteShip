@@ -6,18 +6,18 @@
 
 # Function: buildRepoIR()
 
-> **buildRepoIR**(`profile?`, `options?`): [`RepoIR`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)
+> **buildRepoIR**(`profile`, `options?`): [`RepoIR`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)
 
-Defined in: [audit/src/repo-ir-build.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L334)
+Defined in: [audit/src/repo-ir-build.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L345)
 
 Build a real [RepoIR](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) from a [DevopsProfile](../interfaces/DevopsProfile.md) — the host-side
 materialization. Pure and deterministic: same source bytes → identical IR.
 
 ## Parameters
 
-### profile?
+### profile
 
-[`DevopsProfile`](../interfaces/DevopsProfile.md) = `liteshipDevopsProfile`
+[`DevopsProfile`](../interfaces/DevopsProfile.md)
 
 The audit profile (`profile.repoRoot` is the authoritative
   target). Defaults to the LiteShip reference profile.

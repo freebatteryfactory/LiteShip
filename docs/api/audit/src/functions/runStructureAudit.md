@@ -6,15 +6,17 @@
 
 # Function: runStructureAudit()
 
-> **runStructureAudit**(`profile?`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`StructureSummary`](../interfaces/StructureSummary.md)\>
+> **runStructureAudit**(`profile`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`StructureSummary`](../interfaces/StructureSummary.md)\>
 
-Defined in: [audit/src/structure.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L272)
+Defined in: [audit/src/structure.ts:288](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L288)
+
+Execute the repository-structure pass under one fully injected profile.
 
 ## Parameters
 
-### profile?
+### profile
 
-[`DevopsProfile`](../interfaces/DevopsProfile.md) = `liteshipDevopsProfile`
+[`DevopsProfile`](../interfaces/DevopsProfile.md)
 
 ## Returns
 

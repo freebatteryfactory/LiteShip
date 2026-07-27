@@ -24,7 +24,7 @@ import {
   type FileId,
   type AssuranceLevel,
   type FileNode,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 /** A minimal IR over the given substantive module files (the inert fixture digest). */
 function irOf(files: readonly FileId[]): ReturnType<typeof makeRepoIR> {

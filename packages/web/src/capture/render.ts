@@ -9,8 +9,8 @@
  * @module
  */
 
-import type { CompositeState } from '@czap/core';
-import { HostCapabilityError } from '@czap/error';
+import type { CompositeState } from '@liteship/core';
+import { HostCapabilityError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,14 +42,14 @@ const defaultRenderFn: RenderFn = (ctx, state, canvas) => {
   ctx.clearRect(0, 0, width, height);
 
   // Apply background from CSS vars if available
-  const bg = css['--czap-background'] ?? css['--czap-bg'];
+  const bg = css['--liteship-background'] ?? css['--liteship-bg'];
   if (typeof bg === 'string') {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
   }
 
   // Apply foreground color
-  const fg = css['--czap-foreground'] ?? css['--czap-fg'] ?? css['--czap-color'];
+  const fg = css['--liteship-foreground'] ?? css['--liteship-fg'] ?? css['--liteship-color'];
   if (typeof fg === 'string') {
     ctx.fillStyle = fg;
   }

@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { codeOnly, stringsBlanked, commentsBlanked } from '@czap/gauntlet';
+import { codeOnly, stringsBlanked, commentsBlanked } from '@liteship/gauntlet';
 
 describe('codeOnly — regex-literal soundness (the desync gap)', () => {
   it('DESYNC CURED: a quote-bearing regex does not corrupt the following lines', () => {

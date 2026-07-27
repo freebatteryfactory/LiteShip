@@ -8,7 +8,6 @@
  * @module
  */
 import ts from 'typescript';
-import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import {
   isSimpleDefaultExpression,
@@ -19,6 +18,7 @@ import {
 } from './shared.js';
 import type { AuditFinding, AuditSectionResult } from './types.js';
 
+/** Aggregate integrity-pass evidence and coverage classification. */
 export interface IntegritySummary {
   readonly runtimeFileCount: number;
   readonly stubCount: number;
@@ -213,9 +213,8 @@ function findCatchReturn(clause: ts.CatchClause): ts.ReturnStatement | null {
   return found;
 }
 
-export function runIntegrityAudit(
-  profile: DevopsProfile = liteshipDevopsProfile,
-): AuditSectionResult<IntegritySummary> {
+/** Execute the integrity pass under one fully injected profile. */
+export function runIntegrityAudit(profile: DevopsProfile): AuditSectionResult<IntegritySummary> {
   const sourceRecords = readProfileSourceFileRecords(profile);
   const rawFindings: AuditFinding[] = [];
   let stubCount = 0;

@@ -22,7 +22,7 @@ Defined in: [compiler/src/responsive-media-compile.ts:20](https://github.com/fre
 
 ### picture
 
-> `readonly` **picture**: `ResponsiveMediaPictureProjection`
+> `readonly` **picture**: [`ResponsiveMediaPictureProjection`](../../../liteship/src/media/interfaces/ResponsiveMediaPictureProjection.md)
 
 Defined in: [compiler/src/responsive-media-compile.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L19)
 
@@ -30,6 +30,6 @@ Defined in: [compiler/src/responsive-media-compile.ts:19](https://github.com/fre
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [compiler/src/responsive-media-compile.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/responsive-media-compile.ts#L21)

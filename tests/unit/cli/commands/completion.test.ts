@@ -1,5 +1,5 @@
 /**
- * Unit tests for `czap completion`. Catches drift between the verb
+ * Unit tests for `liteship completion`. Catches drift between the verb
  * list in dispatch.ts and the static list shipped to shells.
  */
 import { describe, it, expect } from 'vitest';
@@ -19,13 +19,13 @@ describe('completion command', () => {
     for (const v of TOP_LEVEL_VERBS) {
       expect(stdout).toContain(v);
     }
-    expect(stdout).toContain('_czap_completion');
+    expect(stdout).toContain('_liteship_completion');
   });
 
-  it('emits a zsh script with `compdef _czap czap`', async () => {
+  it('emits a zsh script with `compdef _liteship liteship`', async () => {
     const { exit, stdout } = await captureCli(async () => completion('zsh'));
     expect(exit).toBe(0);
-    expect(stdout).toContain('compdef _czap czap');
+    expect(stdout).toContain('compdef _liteship liteship');
     for (const v of TOP_LEVEL_VERBS) {
       expect(stdout).toContain(v);
     }

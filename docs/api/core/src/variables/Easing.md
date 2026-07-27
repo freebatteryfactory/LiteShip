@@ -8,7 +8,7 @@
 
 > `const` **Easing**: `EasingFns`
 
-Defined in: [core/src/easing.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/easing.ts#L344)
+Defined in: [core/src/motion/easing.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L344)
 
 Easing -- pure math easing functions mapping t in [0,1] to value in [0,1].
 Includes standard CSS easings, cubic-bezier, spring physics, and CSS linear() export.

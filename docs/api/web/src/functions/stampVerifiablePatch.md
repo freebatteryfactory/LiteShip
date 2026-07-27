@@ -8,7 +8,7 @@
 
 > **stampVerifiablePatch**(`input`): [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L119)
+Defined in: [web/src/watch-and-prepare.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L117)
 
 Stamp a verifiable-patch envelope for a marker + graph CAS chain + HTML fragment.
 
@@ -18,7 +18,7 @@ Stamp a verifiable-patch envelope for a marker + graph CAS chain + HTML fragment
 
 #### baseGraphId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### html
 
@@ -30,7 +30,7 @@ Stamp a verifiable-patch envelope for a marker + graph CAS chain + HTML fragment
 
 #### resultGraphId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ## Returns
 

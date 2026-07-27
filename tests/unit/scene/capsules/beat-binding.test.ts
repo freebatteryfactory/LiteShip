@@ -16,7 +16,7 @@ import {
   beatBindingCapsule,
   BeatBinding,
   type BeatComponent,
-} from '../../../../packages/scene/src/capsules/beat-binding.js';
+} from '../../../../packages/scene/src/beat-binding-capsule.js';
 
 const sample: readonly BeatComponent[] = [
   { _tag: 'beat', timeMs: 0, strength: 1 },

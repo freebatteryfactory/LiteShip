@@ -4,7 +4,7 @@
 
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { compileTheme } from '@czap/edge';
+import { compileTheme } from '@liteship/edge';
 
 describe('compileTheme', () => {
   test('empty tokens produce empty rule', () => {
@@ -18,17 +18,17 @@ describe('compileTheme', () => {
     const result = compileTheme({
       tokens: { 'color.primary': '#3b82f6' },
     });
-    expect(result.declarations).toEqual([{ property: '--czap-color-primary', value: '#3b82f6' }]);
-    expect(result.css).toContain('--czap-color-primary: #3b82f6;');
-    expect(result.inlineStyle).toContain('--czap-color-primary:#3b82f6');
+    expect(result.declarations).toEqual([{ property: '--liteship-color-primary', value: '#3b82f6' }]);
+    expect(result.css).toContain('--liteship-color-primary: #3b82f6;');
+    expect(result.inlineStyle).toContain('--liteship-color-primary:#3b82f6');
   });
 
   test('compiles numeric token values without units', () => {
     const result = compileTheme({
       tokens: { 'spacing.base': 16 },
     });
-    expect(result.css).toContain('--czap-spacing-base: 16;');
-    expect(result.inlineStyle).toContain('--czap-spacing-base:16');
+    expect(result.css).toContain('--liteship-spacing-base: 16;');
+    expect(result.inlineStyle).toContain('--liteship-spacing-base:16');
   });
 
   test('custom prefix replaces default', () => {
@@ -44,7 +44,7 @@ describe('compileTheme', () => {
       tokens: { 'Font Size.Large': '24px' },
     });
     // dots and spaces become hyphens, lowercased
-    expect(result.css).toContain('--czap-font-size-large: 24px;');
+    expect(result.css).toContain('--liteship-font-size-large: 24px;');
   });
 
   test('invalid characters are stripped', () => {
@@ -52,7 +52,7 @@ describe('compileTheme', () => {
       tokens: { 'color@primary!': 'red' },
     });
     // @ and ! are stripped
-    expect(result.css).toContain('--czap-colorprimary: red;');
+    expect(result.css).toContain('--liteship-colorprimary: red;');
   });
 
   test('multiple tokens produce correct CSS block', () => {
@@ -65,16 +65,16 @@ describe('compileTheme', () => {
     });
     expect(result.css).toMatch(/^:root \{/);
     expect(result.css).toMatch(/\}$/);
-    expect(result.css).toContain('--czap-color-primary: #3b82f6;');
-    expect(result.css).toContain('--czap-color-secondary: #10b981;');
-    expect(result.css).toContain('--czap-spacing-sm: 8;');
+    expect(result.css).toContain('--liteship-color-primary: #3b82f6;');
+    expect(result.css).toContain('--liteship-color-secondary: #10b981;');
+    expect(result.css).toContain('--liteship-spacing-sm: 8;');
   });
 
   test('inline style uses semicolons without spaces', () => {
     const result = compileTheme({
       tokens: { a: '1', b: '2' },
     });
-    expect(result.inlineStyle).toBe('--czap-a:1;--czap-b:2');
+    expect(result.inlineStyle).toBe('--liteship-a:1;--liteship-b:2');
   });
 
   test('declarations remain the primary structured surface', () => {
@@ -83,8 +83,8 @@ describe('compileTheme', () => {
     });
 
     expect(result.declarations).toEqual([
-      { property: '--czap-primary', value: '#fff' },
-      { property: '--czap-spacing', value: '16' },
+      { property: '--liteship-primary', value: '#fff' },
+      { property: '--liteship-spacing', value: '16' },
     ]);
   });
 
@@ -119,7 +119,7 @@ describe('compileTheme', () => {
       compileTheme({
         tokens: { exploit: 'red;display:block' },
       }),
-    ).toThrow(/forbidden characters \(;, \{, \}, <, >\)/);
+    ).toThrow(/HTML style attribute safely/);
   });
 
   test('rejects malformed serializer-context values', () => {
@@ -150,7 +150,7 @@ describe('compileTheme', () => {
 // memory/testing-philosophy.md (pin LAWS, not implementation).
 // ---------------------------------------------------------------------------
 describe('compileTheme error contracts (properties)', () => {
-  const FORBIDDEN_VALUE_CHARS = [';', '{', '}', '<', '>'] as const;
+  const FORBIDDEN_VALUE_CHARS = ['"', "'", '`', ';', '{', '}', '<', '>', '\\', '\u0000'] as const;
 
   // A token name that survives sanitization to a non-empty property — so the
   // value check is actually reached. (Pure ASCII letters always survive.)
@@ -214,7 +214,7 @@ describe('compileTheme error contracts (properties)', () => {
     fc.assert(
       fc.property(
         safeNameArb,
-        fc.string().filter((v) => !FORBIDDEN_VALUE_CHARS.some((c) => v.includes(c))),
+        fc.stringMatching(/^[a-zA-Z0-9#%., _-]*$/),
         (name, value) => {
           // Round-trips cleanly: a benign value is emitted, never rejected.
           const result = compileTheme({ tokens: { [name]: value } });

@@ -6,7 +6,9 @@
 
 # Interface: PackageExportTarget
 
-Defined in: [audit/src/structure.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L75)
+Defined in: [audit/src/structure.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L76)
+
+One concrete file selected by a package export-map entry.
 
 ## Indexable
 

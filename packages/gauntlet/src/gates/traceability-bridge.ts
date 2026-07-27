@@ -21,7 +21,7 @@
  *    the head-probe LAW).
  *
  * LEAN BY CONSTRUCTION (ADR-0012): the gate parses NO YAML, scans NO corpus, and
- * reads NO clock. The HOST (the CLI's `packages/cli/src/lib/traceability.ts` state
+ * reads NO clock. The HOST (the CLI's `packages/cli/src/internal/traceability.ts` state
  * machine) computes the facts and injects them via {@link GateContext.traceability};
  * this gate only FOLDS. REPORT-not-DECIDE: the host's state machine decides each
  * invariant's resolved state; the gate reports it at the right level.
@@ -37,7 +37,7 @@ import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { rankOf, type AssuranceLevel } from '../assurance.js';
 import { memoryContext } from '../engine.js';
-import type { TraceabilityFacts, ResolvedInvariant, TraceabilityDivergence } from '../traceability-facts.js';
+import type { TraceabilityFacts, ResolvedInvariant, TraceabilityDivergence } from '../facts/traceability-facts.js';
 
 const RULE_NS = 'gauntlet/traceability';
 

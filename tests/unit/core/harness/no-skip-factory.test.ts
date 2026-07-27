@@ -15,11 +15,10 @@
  *
  * @module
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
-import type { AssemblyKind } from '@czap/core';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
+import type { AssemblyKind } from '@liteship/core';
 
 const SKIP_CALL = /\b(it|test|describe|bench)\.skip\(/;
 
@@ -27,8 +26,8 @@ const minimalCapsule = (kind: AssemblyKind) =>
   defineCapsule({
     _kind: kind,
     name: `degenerate.${kind}`,
-    input: S.unknown,
-    output: S.unknown,
+    input: schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: [], writes: [] },
     invariants: [],
     budgets: { p95Ms: 1 },
@@ -57,8 +56,6 @@ const WIRE_OR_FAIL_ARMS: ReadonlyArray<{
 ];
 
 describe('harness factory — no generator can emit a placeholder (wire-or-fail)', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   for (const { kind, gen } of WIRE_OR_FAIL_ARMS) {
     it(`${kind}: a degenerate, un-wireable capsule THROWS rather than emitting a placeholder`, () => {
       // A degenerate capsule has no importable binding / resolved probe, so there

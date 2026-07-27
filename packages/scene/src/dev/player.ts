@@ -5,6 +5,8 @@
  * @module
  */
 
+import type { EventDetail } from '@liteship/_spine/events';
+
 let frame = 0;
 let playing = false;
 
@@ -47,13 +49,15 @@ document.addEventListener('keydown', (e) => {
 
 // Vite HMR — preserve playhead on scene module reload.
 const importMetaHot = (
-  import.meta as unknown as { hot?: { on: (event: string, cb: (data: { sceneId: string }) => void) => void } }
+  import.meta as unknown as {
+    hot?: { on: (event: 'liteship:scene-update', cb: (data: EventDetail<'liteship:scene-update'>) => void) => void };
+  }
 ).hot;
 if (importMetaHot) {
-  importMetaHot.on('czap:scene-update', (payload) => {
+  importMetaHot.on('liteship:scene-update', (payload) => {
     log.textContent += `[hmr] scene ${payload.sceneId} reloaded at frame ${frame}\n`;
   });
 }
 
 // Test hook — Playwright waits on this before driving controls.
-(window as unknown as { __czap_player_ready?: boolean }).__czap_player_ready = true;
+(window as unknown as { __liteship_player_ready?: boolean }).__liteship_player_ready = true;

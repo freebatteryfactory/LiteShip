@@ -16,11 +16,11 @@ Compile a responsive-media intent into `<picture>` markup and CSS `image-set()`.
 
 ### intent
 
-`ResponsiveMediaIntent`
+[`ResponsiveMediaIntent`](../../../liteship/src/media/interfaces/ResponsiveMediaIntent.md)
 
 ### caps
 
-`ResponsiveMediaCapabilities`
+[`ResponsiveMediaCapabilities`](../../../liteship/src/media/interfaces/ResponsiveMediaCapabilities.md)
 
 ## Returns
 

@@ -1,0 +1,378 @@
+/**
+ * `migrate/from-tailwind-theme` — unit tests.
+ *
+ * Covers the clean lossless lowering (exact produced TokenDef/BoundaryDef
+ * fields), every NEW decomposition branch (namespace→category recovery, numeric
+ * scale reconstruction with/without a bare fallback, `--breakpoint-*` and
+ * `screens`-option folding, statePrefix naming), teeth for every diagnostic code
+ * the adapter can emit, and the pathological-input path where a `defineToken`
+ * throw is caught and surfaced as a `severity:'error'` diagnostic rather than
+ * escaping.
+ *
+ * NOTE: imports through the `@liteship/compiler/migrate` subpath (the dev
+ * condition resolves to `src`). The facade re-export of `fromTailwindTheme` is
+ * added in Phase C, so this suite is authored now and run then.
+ */
+
+import { describe, it, expect } from 'vitest';
+import fc from 'fast-check';
+import { Boundary } from '@liteship/core';
+import { fromTailwindTheme } from '@liteship/compiler/migrate';
+import { MIGRATE_CODES } from '@liteship/compiler/migrate';
+
+describe('fromTailwindTheme — clean lossless case', () => {
+  it('recovers single-value tokens from their namespace prefixes with no diagnostics', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-primary: #6366f1;
+        --spacing-md: 1rem;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries).toEqual([]);
+    expect(result.themes).toEqual([]);
+    expect(result.tokens).toHaveLength(2);
+
+    const [primary, md] = result.tokens;
+    expect(primary!._tag).toBe('TokenDef');
+    expect(primary!.name).toBe('color-primary');
+    expect(primary!.category).toBe('color');
+    expect([...primary!.axes]).toEqual([]);
+    expect(primary!.values).toEqual({});
+    expect(primary!.fallback).toBe('#6366f1');
+    expect(primary!.cssProperty).toBe('--liteship-color-primary');
+
+    expect(md!.name).toBe('spacing-md');
+    expect(md!.category).toBe('spacing');
+    expect(md!.fallback).toBe('1rem');
+  });
+
+  it('accepts a bare declaration body when no @theme at-rule is present', () => {
+    const result = fromTailwindTheme(`--radius-lg: 0.5rem; --shadow-sm: 0 1px 2px #0001;`);
+    expect(result.diagnostics).toEqual([]);
+    const cats = result.tokens.map((t) => `${t.category}:${t.name}`).sort();
+    expect(cats).toEqual(['radius:radius-lg', 'shadow:shadow-sm']);
+  });
+
+  it('diagnoses a malformed marker without letting it steal a later valid block', () => {
+    const result = fromTailwindTheme(`
+      @theme;
+
+      @theme {
+        --color-accent: red;
+      }
+    `);
+
+    expect(result.tokens).toHaveLength(1);
+    expect(result.tokens[0]?.name).toBe('color-accent');
+    expect(result.tokens[0]?.fallback).toBe('red');
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error', path: ['@theme'] }),
+    );
+  });
+
+  it.each(['static', 'inline'])('accepts the valid Tailwind @theme %s modifier', (modifier) => {
+    const result = fromTailwindTheme(`@theme ${modifier} { --color-accent: red; }`);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens[0]?.name).toBe('color-accent');
+  });
+
+  it.each(['@theme reference { --color-accent: red; }', '@theme { --color-accent: red;'])(
+    'refuses a structurally unsupported or malformed @theme block: %s',
+    (css) => {
+      const result = fromTailwindTheme(css);
+      expect(result.tokens).toEqual([]);
+      expect(result.boundaries).toEqual([]);
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({ code: MIGRATE_CODES.malformedInput, severity: 'error' }),
+      );
+    },
+  );
+});
+
+describe('fromTailwindTheme — token decomposition branches', () => {
+  it('reconstructs numeric scale vars into one scale-axis token (fallback = 500 step)', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-primary-500: #6366f1;
+        --color-primary-700: #4338ca;
+      }
+    `);
+
+    expect(result.tokens).toHaveLength(1);
+    const t = result.tokens[0]!;
+    expect(t.name).toBe('color-primary');
+    expect(t.category).toBe('color');
+    expect([...t.axes]).toEqual(['scale']);
+    // Single-axis value keys are the axis value directly (alphabetical join is a no-op).
+    expect(t.values).toEqual({ '500': '#6366f1', '700': '#4338ca' });
+    // No bare var → fallback prefers the idiomatic 500 step.
+    expect(t.fallback).toBe('#6366f1');
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('uses a co-named bare var as the scale token fallback', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-brand: #000000;
+        --color-brand-500: #123456;
+      }
+    `);
+    expect(result.tokens).toHaveLength(1);
+    const t = result.tokens[0]!;
+    expect(t.name).toBe('color-brand');
+    expect([...t.axes]).toEqual(['scale']);
+    expect(t.values).toEqual({ '500': '#123456' });
+    expect(t.fallback).toBe('#000000');
+  });
+
+  it('keeps tokens of different categories separate even with the same base name', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-accent: #f00;
+        --spacing-accent: 2rem;
+      }
+    `);
+    const pairs = result.tokens.map((t) => `${t.category}:${t.name}`).sort();
+    expect(pairs).toEqual(['color:color-accent', 'spacing:spacing-accent']);
+    expect(result.tokens.map((token) => token.cssProperty).sort()).toEqual([
+      '--liteship-color-accent',
+      '--liteship-spacing-accent',
+    ]);
+  });
+});
+
+describe('fromTailwindTheme — source-ordered namespace resets', () => {
+  it('clears an authored namespace and admits only declarations that follow the reset', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-red-500: #ff0000;
+        --spacing-md: 1rem;
+        --color-*: initial;
+        --color-brand: #123456;
+        --color-red-500: #cc0000;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens.map((token) => token.name).sort()).toEqual(['color-brand', 'color-red', 'spacing-md']);
+    expect(result.tokens.find((token) => token.name === 'color-red')?.values).toEqual({ '500': '#cc0000' });
+    expect(result.tokens.some((token) => token.name.includes('*'))).toBe(false);
+  });
+
+  it('applies a targeted wildcard reset without deleting sibling token families', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-lime-500: lime;
+        --color-lime-700: green;
+        --color-fuchsia-500: fuchsia;
+        --color-lime-*: initial;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens.map((token) => token.name)).toEqual(['color-fuchsia']);
+  });
+
+  it('supports exact resets and refuses wildcard selectors carrying a non-reset value', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --color-brand: red;
+        --color-brand: initial;
+        --color-*: red;
+        --spacing-md: 1rem;
+      }
+    `);
+
+    expect(result.tokens.map((token) => token.name)).toEqual(['spacing-md']);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: MIGRATE_CODES.lossyTokenConversion,
+        severity: 'error',
+        path: ['--color-*'],
+      }),
+    );
+  });
+});
+
+describe('fromTailwindTheme — screens → viewport.width boundary', () => {
+  it('folds --breakpoint-* vars into one ascending boundary', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --breakpoint-sm: 640px;
+        --breakpoint-lg: 1024px;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.tokens).toEqual([]);
+    expect(result.boundaries).toHaveLength(1);
+
+    const b = result.boundaries[0]!;
+    expect(b._tag).toBe('BoundaryDef');
+    expect(b.input).toBe('viewport.width');
+    expect([...b.thresholds]).toEqual([0, 640, 1024]);
+    expect([...b.states]).toEqual(['base', 'sm', 'lg']);
+
+    expect(Boundary.evaluate(b, 500)).toBe('base');
+    expect(Boundary.evaluate(b, 800)).toBe('sm');
+    expect(Boundary.evaluate(b, 1200)).toBe('lg');
+  });
+
+  it('refuses a relative breakpoint without a host signal in that unit', () => {
+    const result = fromTailwindTheme(`@theme { --breakpoint-md: 48rem; }`);
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('keeps a relative breakpoint on a host signal measured in the authored unit', () => {
+    const result = fromTailwindTheme(`@theme { --breakpoint-md: 48rem; }`, {
+      resolveLengthInput: ({ axis, unit }) => `custom:tailwind.${axis}.${unit}`,
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.boundaries[0]!.input).toBe('custom:tailwind.width.rem');
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 48]);
+  });
+
+  it('accepts an explicit screens option map', () => {
+    const result = fromTailwindTheme(`@theme { --color-x: red; }`, { screens: { md: '768px' } });
+    const b = result.boundaries[0]!;
+    expect([...b.thresholds]).toEqual([0, 768]);
+    expect([...b.states]).toEqual(['base', 'md']);
+  });
+
+  it('honours an explicit statePrefix for screen state names', () => {
+    const result = fromTailwindTheme(`@theme { --breakpoint-md: 768px; }`, { statePrefix: 'bp' });
+    const b = result.boundaries[0]!;
+    expect([...b.states]).toEqual(['bp-0', 'bp-768']);
+    expect([...b.thresholds]).toEqual([0, 768]);
+  });
+
+  it('applies breakpoint resets in source order before folding the surviving partition', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --breakpoint-sm: 640px;
+        --breakpoint-*: initial;
+        --breakpoint-md: 768px;
+      }
+    `);
+
+    expect(result.diagnostics).toEqual([]);
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 768]);
+    expect([...result.boundaries[0]!.states]).toEqual(['base', 'md']);
+  });
+});
+
+describe('fromTailwindTheme — every diagnostic code has teeth', () => {
+  it('emits unknown-token-category for a var outside the known namespaces', () => {
+    const result = fromTailwindTheme(`@theme { --text-lg: 1.125rem; }`);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.unknownTokenCategory)).toBe(true);
+    // The unclassifiable var produced no token.
+    expect(result.tokens).toEqual([]);
+  });
+
+  it('emits lossy-token-conversion for a var()/calc() reference value', () => {
+    const result = fromTailwindTheme(`@theme { --color-accent: var(--color-primary-500); }`);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.lossyTokenConversion)).toBe(true);
+    // Still kept the token verbatim (lossy-but-usable, warning severity).
+    const accent = result.tokens.find((t) => t.name === 'color-accent');
+    expect(accent!.fallback).toBe('var(--color-primary-500)');
+    expect(result.diagnostics.find((d) => d.code === MIGRATE_CODES.lossyTokenConversion)!.severity).toBe('warning');
+  });
+
+  it('emits unsupported-at-rule for a screen value that is not a supported length', () => {
+    // `40vw` (and any non px/rem/em value) cannot participate in the one ordered
+    // boundary, so the complete breakpoint fold is refused atomically.
+    const result = fromTailwindTheme(`@theme { --breakpoint-sm: 640px; --breakpoint-wide: 40vw; }`);
+    const d = result.diagnostics.find((x) => x.code === MIGRATE_CODES.unsupportedAtRule);
+    expect(d).toBeDefined();
+    expect(d!.message).toContain('wide');
+    expect(d!.message).toContain('40vw');
+    expect(d!.severity).toBe('error');
+    expect(result.boundaries).toEqual([]);
+  });
+
+  it('refuses a unitless nonzero breakpoint while accepting unitless zero', () => {
+    const refused = fromTailwindTheme(`@theme { --breakpoint-md: 768; }`);
+    expect(refused.boundaries).toEqual([]);
+    expect(refused.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+
+    const zero = fromTailwindTheme(`@theme { --breakpoint-base: 0; }`);
+    expect([...zero.boundaries[0]!.thresholds]).toEqual([0]);
+  });
+
+  it('also diagnoses an unsupported value supplied through the screens option', () => {
+    const result = fromTailwindTheme(`@theme { --color-x: red; }`, { screens: { huge: '100%' } });
+    expect(result.boundaries).toEqual([]);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: MIGRATE_CODES.unsupportedAtRule, severity: 'error' }),
+    );
+  });
+
+  it('emits non-ascending-thresholds when screens are out of source order', () => {
+    const result = fromTailwindTheme(`
+      @theme {
+        --breakpoint-lg: 1024px;
+        --breakpoint-sm: 640px;
+      }
+    `);
+    expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(true);
+    // Sorted before construction — the boundary is still strictly ascending.
+    expect([...result.boundaries[0]!.thresholds]).toEqual([0, 640, 1024]);
+  });
+});
+
+describe('fromTailwindTheme — pathological input is caught, not thrown', () => {
+  it('refuses an empty namespace suffix before construction', () => {
+    // `--color-` strips to an EMPTY token name and is refused at the source grammar.
+    let result!: ReturnType<typeof fromTailwindTheme>;
+    expect(() => {
+      result = fromTailwindTheme(`@theme { --color-: #ffffff; }`);
+    }).not.toThrow();
+
+    // No token was produced (the whole declaration was dropped)...
+    expect(result.tokens).toEqual([]);
+    // ...and the failure is an error-severity migration diagnostic.
+    const err = result.diagnostics.find((d) => d.severity === 'error');
+    expect(err).toBeDefined();
+    expect(err!.code).toBe(MIGRATE_CODES.lossyTokenConversion);
+    expect(err!.message).toContain('no token name');
+  });
+
+  it('refuses a non-finite screen length at the shared query grammar boundary', () => {
+    let result!: ReturnType<typeof fromTailwindTheme>;
+    expect(() => {
+      result = fromTailwindTheme(`@theme { --breakpoint-huge: 1e400px; }`);
+    }).not.toThrow();
+    expect(result.boundaries).toEqual([]);
+    const err = result.diagnostics.find((d) => d.severity === 'error');
+    expect(err).toBeDefined();
+    expect(err!.code).toBe(MIGRATE_CODES.unsupportedAtRule);
+  });
+});
+
+describe('fromTailwindTheme — property: ascending screen sets fold losslessly', () => {
+  it('produces [0, ...sortedBreakpoints] with no ordering diagnostics', () => {
+    fc.assert(
+      fc.property(
+        fc
+          .uniqueArray(fc.integer({ min: 1, max: 5000 }), { minLength: 1, maxLength: 6 })
+          .map((xs) => [...xs].sort((a, b) => a - b)),
+        (bps) => {
+          const body = bps.map((bp, i) => `--breakpoint-s${i}: ${bp}px;`).join('\n');
+          const result = fromTailwindTheme(`@theme { ${body} }`);
+          const b = result.boundaries[0]!;
+          expect([...b.thresholds]).toEqual([0, ...bps]);
+          expect(b.states).toHaveLength(bps.length + 1);
+          expect(result.diagnostics.some((d) => d.code === MIGRATE_CODES.nonAscendingThresholds)).toBe(false);
+        },
+      ),
+      { numRuns: 60 },
+    );
+  });
+});

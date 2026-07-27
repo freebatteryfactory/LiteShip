@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Track } from '@czap/scene';
+import { Track } from '@liteship/scene';
 
 describe('Track.audio', () => {
   it('builds an AudioTrack with default mix at unity linear gain', () => {

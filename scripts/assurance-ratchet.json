@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 3,
+  "catalogFingerprint": "sha256:512793039695046b329caee5b00d719bece1cb496b4e05cb54fa9c747d8fde10",
+  "uniqueRatioMilli": 1224,
+  "packages": [
+    {
+      "sourceLoc": 2999,
+      "authoredEvidenceLoc": 1521,
+      "ratioMilli": 507,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 585,
+      "authoredEvidenceLoc": 4059,
+      "ratioMilli": 6938,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 580,
+      "authoredEvidenceLoc": 3671,
+      "ratioMilli": 6329,
+      "missingEvidence": [
+        "mutation",
+        "mcdc"
+      ]
+    },
+    {
+      "sourceLoc": 16796,
+      "authoredEvidenceLoc": 41076,
+      "ratioMilli": 2445,
+      "missingEvidence": [
+        "mutation",
+        "mcdc"
+      ]
+    },
+    {
+      "sourceLoc": 463,
+      "authoredEvidenceLoc": 1261,
+      "ratioMilli": 2723,
+      "missingEvidence": [
+        "mutation",
+        "mcdc"
+      ]
+    },
+    {
+      "sourceLoc": 616,
+      "authoredEvidenceLoc": 1766,
+      "ratioMilli": 2866,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 5344,
+      "authoredEvidenceLoc": 6900,
+      "ratioMilli": 1291,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 4463,
+      "authoredEvidenceLoc": 8048,
+      "ratioMilli": 1803,
+      "missingEvidence": [
+        "benchmark"
+      ]
+    },
+    {
+      "sourceLoc": 965,
+      "authoredEvidenceLoc": 1912,
+      "ratioMilli": 1981,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 1142,
+      "authoredEvidenceLoc": 1466,
+      "ratioMilli": 1283,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 2762,
+      "authoredEvidenceLoc": 5705,
+      "ratioMilli": 2065,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 2164,
+      "authoredEvidenceLoc": 1512,
+      "ratioMilli": 698,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 154,
+      "authoredEvidenceLoc": 320,
+      "ratioMilli": 2077,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 1379,
+      "authoredEvidenceLoc": 2740,
+      "ratioMilli": 1986,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 8305,
+      "authoredEvidenceLoc": 15133,
+      "ratioMilli": 1822,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 563,
+      "authoredEvidenceLoc": 1396,
+      "ratioMilli": 2479,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 542,
+      "authoredEvidenceLoc": 923,
+      "ratioMilli": 1702,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 1230,
+      "authoredEvidenceLoc": 1894,
+      "ratioMilli": 1539,
+      "missingEvidence": [
+        "mutation",
+        "mcdc"
+      ]
+    },
+    {
+      "sourceLoc": 11589,
+      "authoredEvidenceLoc": 8593,
+      "ratioMilli": 741,
+      "missingEvidence": [
+        "mutation",
+        "mcdc"
+      ]
+    },
+    {
+      "sourceLoc": 7129,
+      "authoredEvidenceLoc": 3911,
+      "ratioMilli": 548,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 7010,
+      "authoredEvidenceLoc": 7539,
+      "ratioMilli": 1075,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 17904,
+      "authoredEvidenceLoc": 16896,
+      "ratioMilli": 943,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 2094,
+      "authoredEvidenceLoc": 3006,
+      "ratioMilli": 1435,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 301,
+      "authoredEvidenceLoc": 388,
+      "ratioMilli": 1289,
+      "missingEvidence": []
+    },
+    {
+      "sourceLoc": 1196,
+      "authoredEvidenceLoc": 2006,
+      "ratioMilli": 1677,
+      "missingEvidence": []
+    }
+  ]
+}

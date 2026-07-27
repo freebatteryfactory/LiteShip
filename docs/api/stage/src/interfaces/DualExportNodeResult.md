@@ -6,7 +6,7 @@
 
 # Interface: DualExportNodeResult
 
-Defined in: [stage/src/dual-export.ts:571](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L571)
+Defined in: [stage/src/dual-export.ts:626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L626)
 
 The result of a HEADLESS dual export: the full [DualExportResult](DualExportResult.md) proof
 PLUS the real encoded video the injected [FrameEncoder](../type-aliases/FrameEncoder.md) produced.
@@ -19,9 +19,9 @@ PLUS the real encoded video the injected [FrameEncoder](../type-aliases/FrameEnc
 
 ### astro
 
-> `readonly` **astro**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **astro**: [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:471](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L471)
+Defined in: [stage/src/dual-export.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L526)
 
 The static-page carrier (`carrier: 'astro-page'`).
 
@@ -33,9 +33,9 @@ The static-page carrier (`carrier: 'astro-page'`).
 
 ### astroReceipt
 
-> `readonly` **astroReceipt**: `ReceiptEnvelope`
+> `readonly` **astroReceipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: [stage/src/dual-export.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L475)
+Defined in: [stage/src/dual-export.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L530)
 
 Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
@@ -47,9 +47,9 @@ Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
 ### bytesDigest
 
-> `readonly` **bytesDigest**: `AddressedDigest`
+> `readonly` **bytesDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: [stage/src/dual-export.ts:580](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L580)
+Defined in: [stage/src/dual-export.ts:635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L635)
 
 Content address of the encoded container bytes (the mp4 byte stream).
 
@@ -59,7 +59,7 @@ Content address of the encoded container bytes (the mp4 byte stream).
 
 > `readonly` **encoded**: [`EncodedVideo`](EncodedVideo.md)
 
-Defined in: [stage/src/dual-export.ts:578](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L578)
+Defined in: [stage/src/dual-export.ts:633](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L633)
 
 The real encoded video (a validatable MP4 when the ffmpeg adapter is used).
 This rides ALONGSIDE the proof — the proof's `video` carrier remains a
@@ -68,11 +68,21 @@ page-digest == video-source-digest invariant is identical to [dualExport](../fun
 
 ***
 
+### encodedReceipt
+
+> `readonly` **encodedReceipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
+
+Defined in: [stage/src/dual-export.ts:637](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L637)
+
+Receipt for the real encoded-byte artifact (separate from the frame proof).
+
+***
+
 ### receipt
 
-> `readonly` **receipt**: `ReceiptEnvelope`
+> `readonly` **receipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: [stage/src/dual-export.ts:482](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L482)
+Defined in: [stage/src/dual-export.ts:537](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L537)
 
 The single assertable head: a parent MERGE envelope whose
 `previous = [astroReceipt.hash, videoReceipt.hash]` and whose payload pins
@@ -86,9 +96,9 @@ The single assertable head: a parent MERGE envelope whose
 
 ### sharedSourceDigest
 
-> `readonly` **sharedSourceDigest**: `AddressedDigest`
+> `readonly` **sharedSourceDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: [stage/src/dual-export.ts:469](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L469)
+Defined in: [stage/src/dual-export.ts:524](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L524)
 
 The ONE source digest both casts derive from — `=== graph.digest`.
 
@@ -100,9 +110,9 @@ The ONE source digest both casts derive from — `=== graph.digest`.
 
 ### video
 
-> `readonly` **video**: [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> `readonly` **video**: [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L473)
+Defined in: [stage/src/dual-export.ts:528](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L528)
 
 The video carrier (`carrier: 'video'`).
 
@@ -114,9 +124,9 @@ The video carrier (`carrier: 'video'`).
 
 ### videoReceipt
 
-> `readonly` **videoReceipt**: `ReceiptEnvelope`
+> `readonly` **videoReceipt**: [`ReceiptEnvelope`](../../../liteship/src/evidence/interfaces/ReceiptEnvelope.md)
 
-Defined in: [stage/src/dual-export.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L476)
+Defined in: [stage/src/dual-export.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L531)
 
 #### Inherited from
 

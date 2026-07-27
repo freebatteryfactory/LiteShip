@@ -3,8 +3,8 @@
  *
  * Scans a project for token definition modules (`tokens.ts` /
  * `*.tokens.ts`) and theme definition modules (`themes.ts` /
- * `*.themes.ts`), then derives the exports behind `virtual:czap/tokens`,
- * `virtual:czap/tokens.css`, and `virtual:czap/themes`.
+ * `*.themes.ts`), then derives the exports behind `virtual:liteship/tokens`,
+ * `virtual:liteship/tokens.css`, and `virtual:liteship/themes`.
  *
  * @module
  */
@@ -12,37 +12,37 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { Theme, Token } from '@czap/core';
-import { Diagnostics } from '@czap/core';
-import { walkFiles } from '@czap/core/fs-walk';
-import { TokenCSSCompiler } from '@czap/compiler';
+import type { Theme, Token } from '@liteship/core';
+import { Diagnostics } from '@liteship/core';
+import { walkFiles } from '@liteship/core/fs-walk';
+import { TokenCSSCompiler } from '@liteship/compiler';
 import { findConventionFiles } from './resolve-fs.js';
 import { tryImportNamed } from './resolve-utils.js';
 
-const DIAGNOSTIC_SOURCE = 'czap/vite.token-manifest';
+const DIAGNOSTIC_SOURCE = 'liteship/vite.token-manifest';
 
 /** Directory names never descended into while scanning a project. */
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.astro', '.wrangler', '.cache', '.output']);
 
-/** Serializable token entry exported from `virtual:czap/tokens`. */
+/** Serializable token entry exported from `virtual:liteship/tokens`. */
 export type TokenManifestEntry = Pick<
-  Token.Shape,
+  Token,
   'id' | 'name' | 'category' | 'axes' | 'values' | 'fallback' | 'cssProperty'
 > & {
   readonly _tag: 'TokenDef';
   readonly _version: 1;
 };
 
-/** Token export name → definition for `virtual:czap/tokens`. */
+/** Token export name → definition for `virtual:liteship/tokens`. */
 export type TokenManifest = Readonly<Record<string, TokenManifestEntry>>;
 
-/** Serializable theme entry exported from `virtual:czap/themes`. */
-export type ThemeManifestEntry = Pick<Theme.Shape, 'id' | 'name' | 'variants' | 'tokens' | 'meta'> & {
+/** Serializable theme entry exported from `virtual:liteship/themes`. */
+export type ThemeManifestEntry = Pick<Theme, 'id' | 'name' | 'variants' | 'tokens' | 'meta'> & {
   readonly _tag: 'ThemeDef';
   readonly _version: 1;
 };
 
-/** Theme export name → definition for `virtual:czap/themes`. */
+/** Theme export name → definition for `virtual:liteship/themes`. */
 export type ThemeManifest = Readonly<Record<string, ThemeManifestEntry>>;
 
 /** Options for {@link collectTokenManifest}. */
@@ -173,7 +173,7 @@ function addConventionFiles(
   }
 }
 
-function serializeToken(token: Token.Shape): TokenManifestEntry {
+function serializeToken(token: Token): TokenManifestEntry {
   return {
     _tag: 'TokenDef',
     _version: 1,
@@ -187,7 +187,7 @@ function serializeToken(token: Token.Shape): TokenManifestEntry {
   };
 }
 
-function serializeTheme(theme: Theme.Shape): ThemeManifestEntry {
+function serializeTheme(theme: Theme): ThemeManifestEntry {
   return {
     _tag: 'ThemeDef',
     _version: 1,
@@ -200,7 +200,7 @@ function serializeTheme(theme: Theme.Shape): ThemeManifestEntry {
 }
 
 /**
- * Derive the token map for `virtual:czap/tokens` and `virtual:czap/tokens.css`.
+ * Derive the token map for `virtual:liteship/tokens` and `virtual:liteship/tokens.css`.
  *
  * @param projectRoot - Absolute path of the project to scan.
  * @param options - Optional `tokenDir` override (mirror of `dirs.token`).
@@ -213,13 +213,9 @@ export async function collectTokenManifest(
   const tokenFiles = new Set<string>(scan.tokenFiles);
   addConventionFiles(tokenFiles, projectRoot, options?.tokenDir, 'tokens.ts', '.tokens.ts');
 
-  const tokensByName = new Map<string, Token.Shape>();
+  const tokensByName = new Map<string, Token>();
   for (const file of tokenFiles) {
-    mergeWithDuplicateWarnings(
-      tokensByName,
-      await importTaggedExports<Token.Shape>(file, 'TokenDef', 'token'),
-      'token',
-    );
+    mergeWithDuplicateWarnings(tokensByName, await importTaggedExports<Token>(file, 'TokenDef', 'token'), 'token');
   }
 
   const manifest: Record<string, TokenManifestEntry> = {};
@@ -230,7 +226,7 @@ export async function collectTokenManifest(
 }
 
 /**
- * Derive the theme map for `virtual:czap/themes`.
+ * Derive the theme map for `virtual:liteship/themes`.
  *
  * @param projectRoot - Absolute path of the project to scan.
  * @param options - Optional `themeDir` override (mirror of `dirs.theme`).
@@ -243,13 +239,9 @@ export async function collectThemeManifest(
   const themeFiles = new Set<string>(scan.themeFiles);
   addConventionFiles(themeFiles, projectRoot, options?.themeDir, 'themes.ts', '.themes.ts');
 
-  const themesByName = new Map<string, Theme.Shape>();
+  const themesByName = new Map<string, Theme>();
   for (const file of themeFiles) {
-    mergeWithDuplicateWarnings(
-      themesByName,
-      await importTaggedExports<Theme.Shape>(file, 'ThemeDef', 'theme'),
-      'theme',
-    );
+    mergeWithDuplicateWarnings(themesByName, await importTaggedExports<Theme>(file, 'ThemeDef', 'theme'), 'theme');
   }
 
   const manifest: Record<string, ThemeManifestEntry> = {};
@@ -271,7 +263,7 @@ export function compileCollectedTokensCss(tokens: TokenManifest): string {
   const rootDecls: string[] = [];
 
   for (const token of tokenList) {
-    const { customProperties } = TokenCSSCompiler.compile(token as Token.Shape);
+    const { customProperties } = TokenCSSCompiler.compile(token as Token);
     const rootIdx = customProperties.indexOf(':root {');
     if (rootIdx === -1) continue;
 

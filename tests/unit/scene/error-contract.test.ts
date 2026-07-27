@@ -1,9 +1,9 @@
-/** @czap/scene error contract */
+/** @liteship/scene error contract */
 import { describe, it, expect } from 'vitest';
-import { hasTag } from '@czap/error';
-import { resolveBeatProjectionToSceneBeats } from '@czap/scene';
+import { hasTag } from '@liteship/error';
+import { resolveBeatProjectionToSceneBeats } from '@liteship/scene';
 
-describe('@czap/scene error contract', () => {
+describe('@liteship/scene error contract', () => {
   it('resolveBeatProjectionToSceneBeats rejects invalid sampleRate with next-step guidance', () => {
     try {
       resolveBeatProjectionToSceneBeats({ projection: { beats: [0] }, sampleRate: 0 });

@@ -1,0 +1,35 @@
+[**LiteShip**](../../README.md)
+
+***
+
+[LiteShip](../../modules.md) / [\_spine](../README.md) / DAGNode
+
+# Interface: DAGNode
+
+Defined in: [\_spine/core.d.ts:1278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1278)
+
+One receipt and its parent hashes in a receipt DAG.
+
+## Properties
+
+### children
+
+> `readonly` **children**: readonly `string`[]
+
+Defined in: [\_spine/core.d.ts:1281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1281)
+
+***
+
+### envelope
+
+> `readonly` **envelope**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
+
+Defined in: [\_spine/core.d.ts:1279](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1279)
+
+***
+
+### parents
+
+> `readonly` **parents**: readonly `string`[]
+
+Defined in: [\_spine/core.d.ts:1280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1280)

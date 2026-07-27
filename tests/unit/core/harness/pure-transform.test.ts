@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { defineCapsule, S } from '@czap/core';
-import { resetCapsuleCatalog } from '@czap/core/testing';
-import * as Harness from '@czap/core/harness';
+import { describe, it, expect } from 'vitest';
+import { defineCapsule, schema } from '@liteship/core';
+import * as Harness from '@liteship/core/harness';
 
 const demoDouble = () =>
   defineCapsule({
     _kind: 'pureTransform',
     name: 'demo.double',
-    input: S.number,
-    output: S.number,
+    input: schema.number,
+    output: schema.number,
     capabilities: { reads: [], writes: [] },
     invariants: [{ name: 'idempotent-on-zero', check: (i: number, o: number) => i !== 0 || o === 0, message: '' }],
     budgets: { p95Ms: 1 },
@@ -24,8 +23,6 @@ const REAL_CTX = {
 } as const;
 
 describe('generatePureTransformHarness', () => {
-  beforeEach(() => resetCapsuleCatalog());
-
   it('emits a real property test + real bench when the binding and compile-time probe are supplied', () => {
     const { testFile, benchFile } = Harness.generatePureTransform(demoDouble(), REAL_CTX);
     expect(testFile).toContain("describe('demo.double'");

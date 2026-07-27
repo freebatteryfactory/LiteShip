@@ -11,7 +11,7 @@ FIRST rejected alternative ("bake per-window easing into dense CSS keyframe stop
 … the oracle documents the approximation instead"):
 
 1. **A scalar easing vocabulary.** `RuntimeEasing.kind` was `'linear' | 'ease' |
-   'spring'`. The full `Easing` catalog (`cubicBezier`, `easeOutBounce`,
+'spring'`. The full `Easing` catalog (`cubicBezier`, `easeOutBounce`,
    `easeOutElastic`, `easeOutBack`) could not be carried on the runtime floor or
    emitted natively — a spring was the only non-analytic curve that lowered to a
    CSS `linear()`. Any other catalog curve had nowhere to live.
@@ -92,13 +92,13 @@ the differently-eased composed case to the per-window runtime floor — retiring
 ## Evidence
 
 - `tests/unit/core/motion-parity.test.ts` — `points-descriptor easings … bit-exact
-  (Law 4)` (floor lands on every emitted stop; intermediate is piecewise-linear),
+(Law 4)` (floor lands on every emitted stop; intermediate is piecewise-linear),
   `catalog-points-bounce` oracle rows across every target, and `differently-eased par —
-  the #148 case` (no diagnostic; per-window kernel parity; per-window Law-4).
+the #148 case` (no diagnostic; per-window kernel parity; per-window Law-4).
 - `tests/property/easing.prop.test.ts` — `easingToLinearCSS` == direct fn samples.
 - `tests/unit/core/reveal.test.ts` / `scroll-timeline.test.ts` /
   `motion-primitives.prop.test.ts` — native leg emits `translate:`, never `translate3d`.
-- `tests/unit/astro/motion-runtime.test.ts` — `parseMotionProgram` accepts the widened
+- `tests/unit/astro/motion-runtime.test.ts` — `parseMotionDirectivePayload` accepts the widened
   kinds + serialized `points` arm and rejects malformed ones LOUDLY.
 
 ## Rejected alternatives
@@ -145,7 +145,7 @@ the differently-eased composed case to the per-window runtime floor — retiring
   timing function)
 - `packages/compiler/src/motion-utils.ts` — `appendTranslateConsumer` (individual
   `translate:`)
-- `packages/astro/src/runtime/motion.ts` — `parseMotionProgram` widened-easing guard
+- `packages/astro/src/runtime/motion.ts` — `parseMotionDirectivePayload` widened-easing guard
 - Supersedes the FIRST rejected alternative of **ADR-0040**; builds on **ADR-0035**
   (motion is intent) and **ADR-0039** (the `TransitionProgram` algebra).
 - Epic #148 (this decision); #149 parked in Follow-up.

@@ -1,7 +1,7 @@
 {
-  "name": "@czap/astro",
-  "version": "0.18.0",
-  "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:satellite` directive and resolve device tiers on the server for first paint.",
+  "name": "@liteship/astro",
+  "version": "0.23.0",
+  "description": "The Astro integration for LiteShip: render adaptive UI as islands with the `client:adaptive` directive and resolve device tiers on the server for first paint.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "astro",
     "integration",
@@ -26,81 +25,70 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
-    "./client-directives/satellite": {
-      "types": "./dist/client-directives/satellite.d.ts",
-      "import": "./dist/client-directives/satellite.js",
-      "development": "./src/client-directives/satellite.ts"
+    "./client-directives/adaptive": {
+      "types": "./dist/client-directives/adaptive.d.ts",
+      "import": "./dist/client-directives/adaptive.js"
     },
     "./client-directives/stream": {
       "types": "./dist/client-directives/stream.d.ts",
-      "import": "./dist/client-directives/stream.js",
-      "development": "./src/client-directives/stream.ts"
+      "import": "./dist/client-directives/stream.js"
     },
     "./client-directives/llm": {
       "types": "./dist/client-directives/llm.d.ts",
-      "import": "./dist/client-directives/llm.js",
-      "development": "./src/client-directives/llm.ts"
+      "import": "./dist/client-directives/llm.js"
     },
     "./client-directives/worker": {
       "types": "./dist/client-directives/worker.d.ts",
-      "import": "./dist/client-directives/worker.js",
-      "development": "./src/client-directives/worker.ts"
+      "import": "./dist/client-directives/worker.js"
     },
     "./client-directives/gpu": {
       "types": "./dist/client-directives/gpu.d.ts",
-      "import": "./dist/client-directives/gpu.js",
-      "development": "./src/client-directives/gpu.ts"
+      "import": "./dist/client-directives/gpu.js"
     },
     "./client-directives/wasm": {
       "types": "./dist/client-directives/wasm.d.ts",
-      "import": "./dist/client-directives/wasm.js",
-      "development": "./src/client-directives/wasm.ts"
+      "import": "./dist/client-directives/wasm.js"
     },
     "./client-directives/graph": {
       "types": "./dist/client-directives/graph.d.ts",
-      "import": "./dist/client-directives/graph.js",
-      "development": "./src/client-directives/graph.ts"
+      "import": "./dist/client-directives/graph.js"
     },
     "./client-directives/motion": {
       "types": "./dist/client-directives/motion.d.ts",
-      "import": "./dist/client-directives/motion.js",
-      "development": "./src/client-directives/motion.ts"
+      "import": "./dist/client-directives/motion.js"
     },
     "./client-directives/svg": {
       "types": "./dist/client-directives/svg.d.ts",
-      "import": "./dist/client-directives/svg.js",
-      "development": "./src/client-directives/svg.ts"
+      "import": "./dist/client-directives/svg.js"
     },
     "./middleware": {
       "types": "./dist/middleware.d.ts",
-      "import": "./dist/middleware.js",
-      "development": "./src/middleware.ts"
+      "import": "./dist/middleware.js"
     },
     "./middleware-entry": {
       "types": "./dist/middleware-entry.d.ts",
-      "import": "./dist/middleware-entry.js",
-      "development": "./src/middleware-entry.ts"
+      "import": "./dist/middleware-entry.js"
     },
     "./fetch-layer": {
       "types": "./dist/fetch-layer.d.ts",
-      "import": "./dist/fetch-layer.js",
-      "development": "./src/fetch-layer.ts"
+      "import": "./dist/fetch-layer.js"
+    },
+    "./adaptive-runtime": {
+      "types": "./dist/adaptive-runtime.d.ts",
+      "import": "./dist/adaptive-runtime.js"
     },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
-      "import": "./dist/runtime/index.js",
-      "development": "./src/runtime/index.ts"
+      "import": "./dist/runtime/index.js"
     },
     "./runtime/inspector-toolbar-app": {
       "types": "./dist/runtime/inspector-toolbar-app.d.ts",
-      "import": "./dist/runtime/inspector-toolbar-app.js",
-      "development": "./src/runtime/inspector-toolbar-app.ts"
+      "import": "./dist/runtime/inspector-toolbar-app.js"
     },
-    "./Satellite": "./src/Satellite.astro",
-    "./Satellite.astro": "./src/Satellite.astro"
+    "./Adaptive": "./src/Adaptive.astro",
+    "./Adaptive.astro": "./src/Adaptive.astro"
   },
   "files": [
     "dist",
@@ -112,22 +100,27 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/canonical": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/vite": "workspace:*",
-    "@czap/detect": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/genui": "workspace:*",
-    "@czap/scene": "workspace:*",
-    "@czap/web": "workspace:*",
-    "@czap/worker": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/canonical": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/vite": "workspace:*",
+    "@liteship/detect": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/genui": "workspace:*",
+    "@liteship/scene": "workspace:*",
+    "@liteship/web": "workspace:*",
+    "@liteship/worker": "workspace:*"
   },
   "peerDependencies": {
-    "astro": ">=7.0.0 <8"
+    "astro": ">=7.1.0 <8"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "astro": "^7.0.0"
+    "astro": "^7.1.0"
   },
   "engines": {
     "node": ">=22.13.0"

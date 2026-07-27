@@ -8,7 +8,7 @@
 
 > `const` **systemClock**: [`Clock`](../interfaces/Clock.md)
 
-Defined in: [core/src/clock.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock.ts#L59)
+Defined in: [core/src/clock/clock.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts#L59)
 
 The sanctioned MONOTONIC time read — for DURATIONS, never timestamps.
 

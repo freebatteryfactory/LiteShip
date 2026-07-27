@@ -1,6 +1,6 @@
 /**
- * THE SOUND, PARSER-BACKED `codeOnly` FLOOR (@czap/audit) — the Slice-B "LanguageService" oracle that
- * the lean char-state-machine in `@czap/gauntlet` (gates/code-only.ts) mirrors. Given a source string it
+ * THE SOUND, PARSER-BACKED `codeOnly` FLOOR (@liteship/audit) — the Slice-B "LanguageService" oracle that
+ * the lean char-state-machine in `@liteship/gauntlet` (gates/code-only.ts) mirrors. Given a source string it
  * returns the SAME string with every STRING / TEMPLATE / REGEX / COMMENT span replaced by spaces
  * (newlines preserved, length unchanged, every CODE character untouched), so a regex-based gate scans
  * code only — never a `throw` inside a comment or a TypeScript suppression directive inside a fixture.

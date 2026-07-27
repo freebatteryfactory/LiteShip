@@ -8,6 +8,6 @@
 
 > **Parser** = [`ChunkParser`](../../../type-aliases/ChunkParser.md)
 
-Defined in: [web/src/stream/llm-adapter.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L190)
+Defined in: [web/src/stream/llm-adapter.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L189)
 
 User-provided chunk-parser function.

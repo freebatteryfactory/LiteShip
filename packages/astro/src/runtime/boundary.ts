@@ -1,16 +1,25 @@
 /**
  * Client-runtime helpers for parsing serialized boundaries out of
- * `data-czap-boundary` attributes, attaching signal observers
+ * `data-liteship-boundary` attributes, attaching signal observers
  * (viewport, scroll), evaluating boundaries live, and applying the
- * resulting state to a satellite element.
+ * resulting state to an adaptive element.
  *
- * Consumed by the Astro `client:satellite` / `client:worker` directives
- * when they hydrate a server-rendered `<div data-czap-boundary="...">`.
+ * Consumed by the Astro `client:adaptive` / `client:worker` directives
+ * when they hydrate a server-rendered `<div data-liteship-boundary="...">`.
  *
  * @module
  */
-import { Boundary, BoundaryAttribute, clamp01, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
-import { dispatchCzapEvent, type CzapEventName } from '@czap/web';
+import {
+  Boundary,
+  BoundaryAttribute,
+  clamp01,
+  Diagnostics,
+  inputToSource,
+  wallClock,
+  type Clock,
+  defineBoundary,
+} from '@liteship/core';
+import { dispatchLiteshipEvent, type LiteshipEventName } from '@liteship/web';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
 /** JSON-safe authored WGSL vector value carried in boundary payloads. */
@@ -21,9 +30,9 @@ export type WgslUniformVector =
 export type WgslUniformValue = number | WgslUniformVector;
 
 /**
- * JSON shape produced on the server by `satelliteAttrs()` and read back
+ * JSON shape produced on the server by `adaptiveAttrs()` and read back
  * on the client via {@link parseBoundary}. Every field corresponds
- * directly to a {@link Boundary.Shape} input.
+ * directly to a {@link Boundary} input.
  */
 export interface SerializedBoundary {
   /** Optional stable boundary id (becomes the runtime `name`). */
@@ -36,35 +45,35 @@ export interface SerializedBoundary {
   readonly states: readonly [string, ...string[]];
   /** Optional hysteresis band applied during evaluation. */
   readonly hysteresis?: number;
-  /** Optional activation filter (JSON-serializable subset of {@link Boundary.Spec}). */
+  /** Optional activation filter (JSON-serializable subset of {@link BoundarySpec}). */
   readonly spec?: {
     readonly timeRange?: { readonly from?: number; readonly until?: number };
     readonly experimentId?: string;
   };
   /**
    * Optional authored per-state ARIA/data attributes (`@aria` blocks), keyed by
-   * state then attribute. Joined onto the satellite from the build manifest by
+   * state then attribute. Joined onto the adaptive from the build manifest by
    * content address. Absent for boundaries with no `@aria` — the common case,
    * so the field is optional and needs no `_version` bump for old payloads.
    */
   readonly stateAttributes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /**
    * Optional authored per-state GLSL uniform values (`@glsl` blocks), keyed by
-   * state then `u_*` uniform name. Joined onto the satellite from the build
+   * state then `u_*` uniform name. Joined onto the adaptive from the build
    * manifest by content address — the GLSL analog of {@link stateAttributes}.
    * Absent for boundaries with no `@glsl`; optional so old payloads parse.
    */
   readonly glslStateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /**
    * Optional authored per-state WGSL uniform binding values (`@wgsl` blocks),
-   * keyed by state then bare snake_case field name. Joined onto the satellite
+   * keyed by state then bare snake_case field name. Joined onto the adaptive
    * from the build manifest by content address. Absent for boundaries with no
    * `@wgsl` — optional, so old payloads need no `_version` bump.
    */
   readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, WgslUniformValue>>>>;
   /**
    * Optional emitted GLSL preamble (`GLSLCompileResult.declarations`: state
-   * `#define`s + `uniform <type> u_*;` lines). Joined onto the satellite from the
+   * `#define`s + `uniform <type> u_*;` lines). Joined onto the adaptive from the
    * build manifest's `outputs[].glsl.declarations` — the compiler's OWN uniform
    * vocabulary, which the `client:gpu` GLSL runtime prepends to the fragment
    * source before compile. The uniform names the runtime binds and the names the
@@ -89,8 +98,8 @@ export interface RuntimeBoundary {
   readonly name: string;
   /** Signal key this boundary consumes. */
   readonly input: string;
-  /** Fully-constructed `Boundary.Shape` ready for evaluation. */
-  readonly boundary: Boundary.Shape<string, readonly [string, ...string[]]>;
+  /** Fully-constructed `Boundary` ready for evaluation. */
+  readonly boundary: Boundary<string, readonly [string, ...string[]]>;
   /**
    * Authored per-state ARIA attributes resolved at parse time. `applyBoundaryState`
    * composes `stateAttributes[currentState]` over the reflected aria so authored
@@ -115,13 +124,13 @@ export interface RuntimeBoundary {
 
 /**
  * Normalised boundary-state payload used for `CustomEvent` dispatch and
- * DOM application. CSS keys are filtered to `--czap-*`; ARIA keys to
+ * DOM application. CSS keys are filtered to `--liteship-*`; ARIA keys to
  * `role` / `aria-*`.
  */
 export interface BoundaryStateDetail {
   /** Discrete state per quantizer name. */
   readonly discrete: Record<string, string>;
-  /** Whitelisted `--czap-*` CSS variable map. */
+  /** Whitelisted `--liteship-*` CSS variable map. */
   readonly css: Record<string, string | number>;
   /** GLSL uniform map (`u_*`). */
   readonly glsl: Record<string, number>;
@@ -133,12 +142,37 @@ export interface BoundaryStateDetail {
 
 /** Boundary state events that share {@link BoundaryStateDetail} / uniform payloads. */
 export type BoundaryStateEventName = Extract<
-  CzapEventName,
-  'czap:state' | 'czap:satellite-state' | 'czap:graph-state' | 'czap:worker-state'
+  LiteshipEventName,
+  'liteship:state' | 'liteship:adaptive-state' | 'liteship:graph-state' | 'liteship:worker-state'
 >;
 
 function isAllowedBoundaryCssProperty(property: string): boolean {
-  return property.startsWith('--czap-');
+  return property.startsWith('--liteship-');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isFiniteOptionalNumber(value: unknown): boolean {
+  return value === undefined || (typeof value === 'number' && Number.isFinite(value));
+}
+
+/** Validate the exact JSON-safe BoundarySpec subset accepted from the DOM wire. */
+function isSerializedBoundarySpec(value: unknown): value is NonNullable<SerializedBoundary['spec']> {
+  if (value === undefined) return true;
+  if (!isRecord(value) || !Object.keys(value).every((key) => key === 'timeRange' || key === 'experimentId')) {
+    return false;
+  }
+  if (value['experimentId'] !== undefined && typeof value['experimentId'] !== 'string') return false;
+  const timeRange = value['timeRange'];
+  if (timeRange === undefined) return true;
+  return (
+    isRecord(timeRange) &&
+    Object.keys(timeRange).every((key) => key === 'from' || key === 'until') &&
+    isFiniteOptionalNumber(timeRange['from']) &&
+    isFiniteOptionalNumber(timeRange['until'])
+  );
 }
 
 /** User-facing parse failure text shared by the runtime and dev inspector. */
@@ -150,12 +184,13 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
   const parsed = parseBoundaryPayload(boundaryJson);
   if (!parsed) {
     return (
-      `data-czap-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
-      `Fix: spread satelliteAttrs({ boundary }) from @czap/astro or re-serialize with JSON.stringify.`
+      `data-liteship-boundary on this element is not valid JSON — the adaptive runtime will stay inert. ` +
+      `Fix: spread adaptiveAttrs({ boundary }) from @liteship/astro or re-serialize with JSON.stringify.`
     );
   }
 
   if (
+    !isRecord(parsed) ||
     typeof parsed.input !== 'string' ||
     !Array.isArray(parsed.thresholds) ||
     parsed.thresholds.length === 0 ||
@@ -165,8 +200,15 @@ export function boundaryParseFailureMessage(boundaryJson: string | null): string
     !parsed.states.every((value) => typeof value === 'string')
   ) {
     return (
-      `data-czap-boundary JSON is missing required fields (input, thresholds, states) — ` +
-      `the satellite runtime will stay inert. Fix: export a Boundary.make({ input, at }) value via satelliteAttrs().`
+      `data-liteship-boundary JSON is missing required fields (input, thresholds, states) — ` +
+      `the adaptive runtime will stay inert. Fix: export a defineBoundary({ input, at }) value via adaptiveAttrs().`
+    );
+  }
+
+  if (!isSerializedBoundarySpec(parsed.spec)) {
+    return (
+      `data-liteship-boundary JSON contains an invalid activation spec — ` +
+      `only finite timeRange.from/timeRange.until numbers and a string experimentId may cross the DOM wire.`
     );
   }
 
@@ -192,7 +234,7 @@ function parseBoundaryPayload(boundaryJson: string): Partial<SerializedBoundary>
 
 /**
  * Parse a JSON-serialised boundary (as produced by
- * `satelliteAttrs()`) into a {@link RuntimeBoundary}. Returns `null`
+ * `adaptiveAttrs()`) into a {@link RuntimeBoundary}. Returns `null`
  * for malformed or structurally invalid payloads so callers can fall
  * back cleanly rather than throwing mid-hydration.
  */
@@ -203,9 +245,11 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
 
   const failureMessage = boundaryParseFailureMessage(boundaryJson);
   if (failureMessage) {
-    const code = failureMessage.includes('not valid JSON') ? 'boundary-json-invalid' : 'boundary-json-shape-invalid';
-    Diagnostics.warnOnce({
-      source: 'czap/astro.boundary',
+    const code = failureMessage.includes('not valid JSON')
+      ? 'astro/boundary/boundary-json-invalid'
+      : 'astro/boundary/boundary-json-shape-invalid';
+    Diagnostics.warnOnceRegistered({
+      source: 'liteship/astro.boundary',
       code,
       message: failureMessage,
       detail: { snippet: boundaryJson.slice(0, 120) },
@@ -224,7 +268,7 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
   return {
     name: parsed.id ?? 'default',
     input: parsed.input,
-    boundary: Boundary.make({
+    boundary: defineBoundary({
       input: parsed.input,
       at,
       ...(typeof parsed.hysteresis === 'number' ? { hysteresis: parsed.hysteresis } : {}),
@@ -254,7 +298,7 @@ export function buildBoundaryActivationContext(clock: Clock = wallClock): {
   activeExperiments: readonly string[];
 } {
   const experimentsAttr =
-    typeof document !== 'undefined' ? document.documentElement.getAttribute('data-czap-experiments') : null;
+    typeof document !== 'undefined' ? document.documentElement.getAttribute('data-liteship-experiments') : null;
   const activeExperiments = experimentsAttr
     ? experimentsAttr
         .split(',')
@@ -328,7 +372,7 @@ function attachScrollListener(axis: 'x' | 'y' | 'progress', callback: () => void
  * - `audio.*`    — rAF observer over the host-published analyser value
  *
  * The signal family is derived from the SOURCE OF TRUTH ({@link inputToSource}
- * in `@czap/core`), never re-parsed here — every reader on the hot path shares
+ * in `@liteship/core`), never re-parsed here — every reader on the hot path shares
  * the one parse so the vocabulary cannot drift.
  *
  * Returns a cleanup function, or `null` when no observer was attached
@@ -362,12 +406,12 @@ export function attachSignalObserver(input: string, callback: () => void): (() =
  *
  * The axis is derived from the SOURCE OF TRUTH ({@link inputToSource}), never
  * re-parsed here. Returns `undefined` for inputs outside the vocabulary
- * (feed those through `@czap/quantizer`'s `live.evaluate()` instead); returns
+ * (feed those through `@liteship/quantizer`'s `live.evaluate()` instead); returns
  * `0` in non-DOM environments so callers can treat SSR and malformed signals
  * uniformly.
  *
  * CANONICAL `scroll.progress` SCALE: **0..1**. This matches `Signal` (the
- * `SignalSource` source of truth, `core/src/signal.ts` — `window.scrollY/max`),
+ * `SignalSource` source of truth, `core/src/reactive/signal.ts` — `window.scrollY/max`),
  * which is the scale boundaries are authored against. The prior runtime
  * returned 0..100, so a boundary authored at `0.5` evaluated wrong; the scale
  * here and the inspector track max (`inspector.ts`) are pinned to agree by a
@@ -430,7 +474,7 @@ export function classifySignalServing(
 }
 
 /**
- * Warn ONCE (deduped across reinit by {@link Diagnostics.warnOnce}) when a
+ * Warn ONCE (deduped across reinit by {@link Diagnostics.warnOnceRegistered}) when a
  * directive is wired to a signal `input` that will never update: either a typo
  * outside the vocabulary, or a recognized signal with no live producer on this
  * surface (the silent-freeze Wave-2 only half-caught — it MISLABELED recognized
@@ -447,17 +491,19 @@ export function warnIfSignalUnserved(
   const serving = classifySignalServing(input, isServedLive);
   if (serving === 'served') return;
   if (serving === 'unknown-typo') {
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: ctx.source,
-      code: 'signal-input-unknown',
+      code: 'astro/boundary/signal-input-unknown',
       message: `${ctx.what} "${input}" is not in the SignalSource vocabulary (likely a typo; see signal-input.ts) — no updates will be emitted.`,
+      detail: { input, what: ctx.what },
     });
     return;
   }
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: ctx.source,
-    code: 'signal-input-unserved-here',
+    code: 'astro/boundary/signal-input-unserved-here',
     message: `${ctx.what} "${input}" is a recognized signal but has no live producer on this directive — it will freeze. Drive it with a served input (viewport.width/height, scroll.x/y/progress, audio.amplitude/beat).`,
+    detail: { input, what: ctx.what },
   });
 }
 
@@ -480,8 +526,8 @@ export function evaluateBoundary(
   // Activation gating only matters when the boundary carries a spec
   // (time-range / experiment / device filter). For the common spec-less
   // case `isActive` is unconditionally true, so building the activation
-  // context here — which allocates and, in a browser, creates a canvas +
-  // WebGL2 context on every call — is pure hot-path waste. Skip it.
+  // context here would create a canvas + WebGL2 context even though the result
+  // cannot affect a spec-less boundary. Skip that semantically dead work.
   if (boundary.boundary.spec) {
     const context = buildBoundaryActivationContext(clock);
     if (!Boundary.isActive(boundary.boundary, context)) {
@@ -498,9 +544,9 @@ export function evaluateBoundary(
 
 /**
  * Merge `state.*` and `state.outputs.*` fields into a single
- * {@link BoundaryStateDetail}, filtering CSS keys to `--czap-*` and
+ * {@link BoundaryStateDetail}, filtering CSS keys to `--liteship-*` and
  * ARIA keys to `role` / `aria-*`. Used as the `detail` of the
- * `czap:state` custom event.
+ * `liteship:state` custom event.
  */
 export function normalizeBoundaryState(state: {
   readonly discrete?: Record<string, string>;
@@ -528,9 +574,9 @@ export function normalizeBoundaryState(state: {
 }
 
 /**
- * Apply a normalised state to a satellite element: sets
- * `data-czap-state`, writes whitelisted CSS variables and ARIA
- * attributes, and dispatches `eventName` + `czap:uniform-update`
+ * Apply a normalised state to an adaptive element: sets
+ * `data-liteship-state`, writes whitelisted CSS variables and ARIA
+ * attributes, and dispatches `eventName` + `liteship:uniform-update`
  * custom events for downstream listeners (GPU/WASM runtimes).
  */
 export function applyBoundaryState(
@@ -556,7 +602,7 @@ export function applyBoundaryState(
 
   // Compose authored per-state ARIA (`@aria`) over the reflected aria so
   // `aria-expanded`/`role` track the live state, not the SSR'd initial state.
-  // `stateAttributes` rides the satellite from the build manifest by content
+  // `stateAttributes` rides the adaptive from the build manifest by content
   // address; absent for boundaries with no `@aria`, where this is a no-op.
   const authored = stateName ? boundary.stateAttributes?.[stateName] : undefined;
   // Authored per-state GPU uniforms for the LIVE state, composed over the
@@ -582,8 +628,8 @@ export function applyBoundaryState(
     ...(authoredWgsl ? { wgsl: { ...normalized.wgsl, ...authoredWgsl } } : {}),
   };
 
-  if (stateName && element.getAttribute('data-czap-state') !== stateName) {
-    element.setAttribute('data-czap-state', stateName);
+  if (stateName && element.getAttribute('data-liteship-state') !== stateName) {
+    element.setAttribute('data-liteship-state', stateName);
   }
 
   for (const [property, value] of Object.entries(detail.css)) {
@@ -594,6 +640,6 @@ export function applyBoundaryState(
     element.setAttribute(attribute, value);
   }
 
-  dispatchCzapEvent(element, eventName, detail);
-  dispatchCzapEvent(element, 'czap:uniform-update', detail);
+  dispatchLiteshipEvent(element, eventName, detail);
+  dispatchLiteshipEvent(element, 'liteship:uniform-update', detail);
 }

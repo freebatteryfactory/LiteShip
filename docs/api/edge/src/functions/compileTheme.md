@@ -31,13 +31,13 @@ CSS string and inline style string.
 ```ts
 const result = compileTheme({
   tokens: { 'color.primary': '#3b82f6', 'spacing.base': 16 },
-  prefix: 'czap',
+  prefix: 'liteship',
 });
 // result.css =>
 //   :root {
-//     --czap-color-primary: #3b82f6;
-//     --czap-spacing-base: 16;
+//     --liteship-color-primary: #3b82f6;
+//     --liteship-spacing-base: 16;
 //   }
 // result.inlineStyle =>
-//   --czap-color-primary:#3b82f6;--czap-spacing-base:16
+//   --liteship-color-primary:#3b82f6;--liteship-spacing-base:16
 ```

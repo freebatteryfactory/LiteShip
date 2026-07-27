@@ -10,12 +10,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { normalizeRepoPath } from './policy.js';
-import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { listProfilePackageManifests, partitionAllowlistedFindings, relativeToRoot } from './shared.js';
 import type { PackageManifestInfo } from './shared.js';
 import type { AuditFinding, AuditSectionResult } from './types.js';
 
+/** Aggregate public-surface audit evidence. */
 export interface SurfaceSummary {
   readonly packageCount: number;
   readonly packageExportCount: number;
@@ -76,7 +76,8 @@ function astroDirectiveSourcePath(astroPackage: PackageManifestInfo, directive: 
   return normalizeRepoPath(resolve(astroPackage.dir, candidate));
 }
 
-export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<SurfaceSummary> {
+/** Execute the public-surface pass under one fully injected profile. */
+export function runSurfaceAudit(profile: DevopsProfile): AuditSectionResult<SurfaceSummary> {
   const root = profile.repoRoot;
   const { surfacePolicy } = profile;
   // Absent surface-policy fields mean "this profile never declared that
@@ -98,7 +99,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       // exports condition (types/import/default — not just development) must
       // resolve, or the install is broken / the tarball shipped without its
       // dist. Runs BEFORE the development-candidate gate so types-only
-      // exports (e.g. @czap/_spine) are verified too (Codex P2, PR #11).
+      // exports (e.g. @liteship/_spine) are verified too (Codex P2, PR #11).
       // The monorepo skips this — dist/ legitimately doesn't exist on a
       // fresh clone, and package:smoke proves the tarball side at release.
       if (profile.packageRoots !== undefined) {
@@ -163,7 +164,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       summary:
         `${surfacePolicy.astroPackage} is named in surfacePolicy.astroPackage but no such package was ` +
         `discovered. If this project has no Astro host, omit astroPackage (or set it to '') in your ` +
-        `profile — or run \`czap audit --consumer\`, which prunes host surfaces you don't ship.`,
+        `profile — or run \`liteship audit --consumer\`, which prunes host surfaces you don't ship.`,
       location: {
         file: surfacePolicy.astroPackage,
       },

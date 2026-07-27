@@ -18,8 +18,8 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { detectSkipsAST } from '@czap/audit';
-import { SANCTIONED_SKIPS, sanctionedSkipFor, normalizeSiteLine } from '@czap/gauntlet';
+import { detectSkipsAST } from '@liteship/audit';
+import { SANCTIONED_SKIPS, sanctionedSkipFor, normalizeSiteLine } from '@liteship/gauntlet';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const ROOT = process.cwd();
@@ -77,7 +77,7 @@ describe('REAL REPO — detectSkipsAST over the whole tests/ tree', () => {
 
 describe('F2 — structural conditionality is the sanctioning proof', () => {
   const FILE = 'tests/smoke/intro-render.test.ts';
-  const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});";
+  const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});";
 
   it('an UNCONDITIONAL it.skip("later") is non-sanctionable via structure', () => {
     const [m] = detectSkipsAST('it.skip("later", () => {});');

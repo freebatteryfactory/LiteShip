@@ -7,8 +7,8 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Diagnostics } from '@czap/core';
-import { ValidationError } from '@czap/error';
+import { Diagnostics } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 import { computeBundleId } from './docs-bundle-id.js';
 
 /** One hashed file entry inside a docs-bundle manifest. */
@@ -125,9 +125,9 @@ export function docsMcpRoute(bundle: DocsMcpBundle): (request: Request) => Promi
         // LOUD — a diagnostic names the real failure — but the route boundary
         // answers with a structured JSON-RPC internal error instead of letting
         // the raw throw escape as a framework 500 (with a stack) to the client.
-        Diagnostics.warn({
-          source: 'czap/astro.docs-mcp-route',
-          code: 'docs-bundle-corruption',
+        Diagnostics.warnRegistered({
+          source: 'liteship/astro.docs-mcp-route',
+          code: 'astro/docs-mcp-route/docs-bundle-corruption',
           message:
             `docs/get "${path}" failed reading the sealed bundle: ` +
             `${error instanceof Error ? error.message : String(error)}. ` +

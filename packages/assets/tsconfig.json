@@ -4,8 +4,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@czap/_spine": ["../_spine/index.d.ts"],
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/_spine": ["../_spine/index.d.ts"],
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],

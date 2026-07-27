@@ -6,26 +6,26 @@
 
 # Variable: RenderWorker
 
-> `const` **RenderWorker**: `object`
+> **RenderWorker**: `object`
 
-Defined in: [worker/src/render-worker.ts:491](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/render-worker.ts#L491)
+Defined in: [worker/src/render-worker.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/render-worker.ts#L38)
 
 Factory namespace for the render worker.
 
 Call [RenderWorker.create](#create) on the main thread to mint a worker
 that owns an `OffscreenCanvas` and renders `VideoFrameOutput` frames
 off the main thread. Transfer control via
-[RenderWorkerShape.transferCanvas](../interfaces/RenderWorkerShape.md#transfercanvas) before calling `startRender`.
+[RenderWorker.transferCanvas](../interfaces/RenderWorker.md#transfercanvas) before calling `startRender`.
 
 ## Type Declaration
 
 ### create
 
-> `readonly` **create**: (`config?`) => [`RenderWorkerShape`](../interfaces/RenderWorkerShape.md) = `_createRenderWorker`
+> `readonly` **create**: (`config?`) => [`RenderWorker`](../interfaces/RenderWorker.md) = `_createRenderWorker`
 
 Spin up a render worker. The worker starts idle; transfer an
 `OffscreenCanvas` via
-[RenderWorkerShape.transferCanvas](../interfaces/RenderWorkerShape.md#transfercanvas) before calling
+[RenderWorker.transferCanvas](../interfaces/RenderWorker.md#transfercanvas) before calling
 `startRender`.
 
 Construction-time knobs ([WorkerConfig](../interfaces/WorkerConfig.md)) are sent to the
@@ -41,12 +41,12 @@ defaults (unpaced free-run).
 
 #### Returns
 
-[`RenderWorkerShape`](../interfaces/RenderWorkerShape.md)
+[`RenderWorker`](../interfaces/RenderWorker.md)
 
 ## Example
 
 ```ts
-import { RenderWorker } from '@czap/worker';
+import { RenderWorker } from '@liteship/worker';
 
 // Pace frame emission at 30fps wall-clock (live preview); omit
 // targetFps to free-run at maximum speed (offline encode).
@@ -54,7 +54,7 @@ const renderer = RenderWorker.create({ targetFps: 30 });
 const offscreen = canvas.transferControlToOffscreen();
 renderer.transferCanvas(offscreen);
 renderer.onFrame((frame) => {
-  // stream frame.image / frame.timestampMs somewhere
+  // project frame.state.outputs.css and frame.progress somewhere
 });
 renderer.startRender({ durationMs: 4000, fps: 30, width: 640, height: 360 });
 ```

@@ -8,10 +8,10 @@
 
 > `const` **graphPatchIdentityCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"pureTransform"`, \{ `a`: \{ `edges`: readonly readonly \[`number`, `number`\][]; `inputs`: readonly `string`[]; \}; `b`: \{ `edges`: readonly readonly \[`number`, `number`\][]; `inputs`: readonly `string`[]; \}; \}, `unknown`, `unknown`\>
 
-Defined in: [core/src/capsules/graph-patch-identity.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsules/graph-patch-identity.ts#L180)
+Defined in: [core/src/authoring/capsules/graph-patch-identity.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/graph-patch-identity.ts#L180)
 
 Declared capsule for the GraphPatch round-trip identity. Registered in the
-module-level catalog at import time; walked by the factory compiler. The
+immutable exported declaration; walked by the factory compiler. The
 generated property test feeds schema-seeds, `run` seals two real graphs and
 computes `diff`→`apply`, and the invariants assert the round-trip / validity /
 id-consistency over the SEALED graphs.

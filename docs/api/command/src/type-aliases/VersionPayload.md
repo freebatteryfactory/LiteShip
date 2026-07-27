@@ -14,9 +14,9 @@ Structured payload returned by the version command.
 
 ## Properties
 
-### czap
+### liteship
 
-> `readonly` **czap**: `string`
+> `readonly` **liteship**: `string`
 
 Defined in: [command/src/commands/version.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/version.ts#L30)
 

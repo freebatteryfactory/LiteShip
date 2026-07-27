@@ -20,15 +20,15 @@ transitions through [MotionCompiler](../variables/MotionCompiler.md).
 
 ### graph
 
-[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](../../../liteship/src/graph/interfaces/DocumentGraph.md)
 
 ### transitionId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ### intent
 
-`RevealIntent`
+[`RevealIntent`](../../../liteship/src/motion/interfaces/RevealIntent.md)
 
 ## Returns
 

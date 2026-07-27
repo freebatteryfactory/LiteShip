@@ -1,10 +1,10 @@
 /**
  * MCP tool dispatch — routes tools/call through the ONE shared command
- * registry/dispatcher (`@czap/command`) and returns the structured
+ * registry/dispatcher (`@liteship/command`) and returns the structured
  * `CapsuleCommandResult.payload` as `structuredContent`. No CLI argv, no
  * stdout capture, no `process.stdout.write` monkey-patch: MCP and CLI are
- * sibling skins over the same dispatcher, and `@czap/mcp-server` never imports
- * `@czap/cli`.
+ * sibling skins over the same dispatcher, and `@liteship/mcp-server` never imports
+ * `@liteship/cli`.
  *
  * Entry point `dispatch` accepts a typed JSON-RPC `Request | Notification`
  * (post-`JsonRpcServer.parse` classification) and produces a
@@ -17,19 +17,23 @@
  * @module
  */
 
-import { CommandDispatcher, commandRegistry, mcpExposedDescriptors } from '@czap/command';
-import { fnv1a } from '@czap/core';
-import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@czap/core';
-import { createNodeCommandContext } from '@czap/command/host';
+import { commandRegistry, createCommandDispatcher, mcpExposedDescriptors } from '@liteship/command';
+import type { CapsuleCommandDescriptor } from '@liteship/command';
+import { canonicalJson } from '@liteship/canonical';
+import { fnv1a } from '@liteship/core';
+import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@liteship/core';
+import { createNodeCommandContext } from '@liteship/command/host';
 import { serverInfo } from './server-info.js';
-import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
+import { MCP_METHOD_CATALOG, PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources, readResource } from './resources.js';
 import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
 import { listManifestResources, readManifestResource } from './manifest-resource.js';
+import type { McpResource } from './resources.js';
+import type { McpUiResource } from './ui-resources.js';
 import { listPrompts, getPrompt } from './prompts.js';
-import type { LiteShipError } from '@czap/error';
-import { ValidationError, isTaggedError, matchTagOr } from '@czap/error';
+import type { LiteShipError } from '@liteship/error';
+import { ValidationError, isTaggedError, matchTagOr } from '@liteship/error';
 import { RESOURCE_NOT_FOUND } from './errors.js';
 import {
   type JsonRpcId,
@@ -48,7 +52,7 @@ import {
 const RECEIPT_META_KEY: CapsuleResultMetaKey = 'liteship/result';
 
 /** The single dispatcher over the canonical registry — same instance the CLI uses. */
-const dispatcher = CommandDispatcher.make(commandRegistry);
+const dispatcher = createCommandDispatcher(commandRegistry);
 
 /** Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP spec; omitted means `{}`. */
 export interface McpToolCall {
@@ -202,12 +206,49 @@ export function errorFromTagged(id: JsonRpcId, err: LiteShipError): JsonRpcRespo
 /** Internal: dispatch result shape. */
 type InvokeResult = { readonly kind: 'ok'; readonly value: unknown } | { readonly kind: 'method-not-found' };
 
+/** Every descriptor shape that can appear in the MCP `resources/list` projection. */
+export type McpListedResource = McpResource | McpUiResource;
+
+/**
+ * Flatten the ordered resource classes into the one MCP list projection. The
+ * inputs are explicit so relation/property tests can plant catalog drift
+ * without patching process globals; production passes the live registries.
+ */
+export function projectMcpResources(classes: readonly (readonly McpListedResource[])[]): readonly McpListedResource[] {
+  return classes.flatMap((resources) => resources);
+}
+
+/** The exact public MCP resource surface, derived from every live registry. */
+export function listMcpResources(): readonly McpListedResource[] {
+  return projectMcpResources([listResources(), listUiResources(), listAppResources(), listManifestResources()]);
+}
+
+/**
+ * Enumerate the exact resources with a working reader through the production
+ * routing law. This is a proof projection, not a second registry: every URI is
+ * sourced from `listMcpResources`, then exercised through the same resolver arm
+ * used by `resources/read`.
+ */
+export function mcpResourceReaderUris(): readonly string[] {
+  return listMcpResources().map((resource) => {
+    const uri = resource.uri;
+    if (uri.startsWith('ui://liteship/app/')) readAppResource(uri);
+    else if (uri.startsWith('ui://')) readUiResource(uri);
+    else if (uri.startsWith('liteship://mcp-app/')) readManifestResource(uri);
+    else readResource(uri);
+    return uri;
+  });
+}
+
 function ok(value: unknown): InvokeResult {
   return { kind: 'ok', value };
 }
 
 async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<InvokeResult> {
-  switch (msg.method) {
+  const descriptor = MCP_METHOD_CATALOG.find((candidate) => candidate.method === msg.method);
+  if (descriptor === undefined) return { kind: 'method-not-found' };
+  const method = descriptor.method;
+  switch (method) {
     case 'initialize': {
       // Lifecycle floor: require a well-formed protocolVersion (malformed → -32602).
       // We support exactly PROTOCOL_VERSION and respond with it (spec negotiation:
@@ -247,9 +288,7 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       // Single static page — D3 JSON resources (liteship://) + D4 static MCP Apps
       // UI resources (ui://liteship/…) + D5 live app resources (ui://liteship/app/…)
       // + the D6 MCP-app manifest (liteship://mcp-app/manifest). Fixed at process start.
-      return ok({
-        resources: [...listResources(), ...listUiResources(), ...listAppResources(), ...listManifestResources()],
-      });
+      return ok({ resources: listMcpResources() });
     case 'resources/read': {
       const params = msg.params as { uri?: unknown } | undefined;
       if (!params || typeof params.uri !== 'string') {
@@ -288,32 +327,10 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       return ok(result);
     }
     default:
-      // Everything not handled above — including resources/templates/list,
-      // resources/subscribe, resources/unsubscribe, and any prompts/* beyond
-      // list+get — is an honest method-not-found (-32601): the method is genuinely
-      // unregistered. (resources/read's unknown-uri case is -32002, handled above.)
+      // Compile-time totality: a catalog row cannot exist without a route arm.
+      method satisfies never;
       return { kind: 'method-not-found' };
   }
-}
-
-/**
- * Canonical JSON (recursively sorted keys) so field/key order never perturbs a
- * resultId. CUT B5a: this is the ONE deliberate exception to the CanonicalCbor
- * identity doctrine (ADR-0003 / B1). `resultId` is a JSON-PROTOCOL identity, not
- * an internal content address — the MCP tool-result payload is JSON-shaped (D1:
- * `structuredContent` = payload), the receipt rides the JSON wire, and B1's
- * float-width CBOR gremlin cannot occur over JSON text (`0.5` → `"0.5"` always).
- * It stays JSON on purpose; the single-canonicalizer guard pins it as the only
- * `canonicalJson` in the tree so a SECOND JSON identity scheme can't drift in.
- */
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-  const obj = value as Record<string, unknown>;
-  return `{${Object.keys(obj)
-    .sort()
-    .map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`)
-    .join(',')}}`;
 }
 
 /**
@@ -363,19 +380,22 @@ export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult
 
 /**
  * MCP tool catalog — projected from the ONE canonical command catalog in
- * @czap/command (the mcpExposed subset). No hand-maintained parallel table:
+ * @liteship/command (the mcpExposed subset). No hand-maintained parallel table:
  * this is the same descriptor source the CLI's `describe`/`completion`/`help`
- * project, so MCP `tools/list` and `czap describe --format=mcp` agree by
+ * project, so MCP `tools/list` and `liteship describe --format=mcp` agree by
  * construction.
  */
-export function listTools(): ReadonlyArray<{
+export interface McpToolDescriptor {
   name: string;
   description: string;
   inputSchema: object;
   outputSchema?: object;
   _meta?: { ui: { resourceUri: string } };
-}> {
-  return mcpExposedDescriptors().map((descriptor) => ({
+}
+
+/** Pure MCP tool projection over an explicit command-descriptor catalog. */
+export function projectMcpTools(descriptors: readonly CapsuleCommandDescriptor[]): readonly McpToolDescriptor[] {
+  return descriptors.map((descriptor) => ({
     name: descriptor.name,
     description: descriptor.summary,
     inputSchema: descriptor.inputSchema,
@@ -384,4 +404,9 @@ export function listTools(): ReadonlyArray<{
     // D5: a tool with a linked live MCP Apps view projects _meta.ui.resourceUri.
     ...(descriptor.ui ? { _meta: { ui: { resourceUri: descriptor.ui.resourceUri } } } : {}),
   }));
+}
+
+/** The exact public MCP tool surface, derived from the canonical command catalog. */
+export function listTools(): readonly McpToolDescriptor[] {
+  return projectMcpTools(mcpExposedDescriptors());
 }

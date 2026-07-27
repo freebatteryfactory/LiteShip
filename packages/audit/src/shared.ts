@@ -12,14 +12,21 @@
  */
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 import fg from 'fast-glob';
 import ts from 'typescript';
-import { auditIgnoreGlobs, auditSourceGlobs, findAllowlistReason, normalizeRepoPath } from './policy.js';
+import {
+  auditIgnoreGlobs,
+  auditSourceGlobs,
+  defaultAnalyzableArtifacts,
+  findAllowlistReason,
+  normalizeRepoPath,
+} from './policy.js';
 import type { PackagePathResolver } from './policy.js';
 import type { DevopsProfile } from './devops-profile.js';
-import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression } from './types.js';
+import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression, PackageArtifactCoverage } from './types.js';
 
+/** Parsed package manifest plus its repository ownership path. */
 export interface PackageManifestInfo {
   readonly name: string;
   readonly dir: string;
@@ -30,6 +37,7 @@ export interface PackageManifestInfo {
   readonly exports: Record<string, unknown>;
 }
 
+/** One discovered source file with normalized repository-relative identity. */
 export interface SourceFileRecord {
   readonly absolutePath: string;
   readonly relativePath: string;
@@ -43,6 +51,7 @@ export function defaultRoot(): string {
   return normalizeRepoPath(process.cwd());
 }
 
+/** Read one UTF-8 JSON file as host-selected data. */
 export function readJsonFile<T>(filePath: string): T {
   // Node's bare SyntaxError/ENOENT names no file; the audit reads dozens.
   try {
@@ -56,6 +65,7 @@ export function readJsonFile<T>(filePath: string): T {
   }
 }
 
+/** Discover executable source files under the audit root in stable order. */
 export function walkAuditSourceFiles(root = defaultRoot()): readonly string[] {
   return fg
     .sync([...auditSourceGlobs], {
@@ -95,6 +105,7 @@ function manifestInfoFromPackageJson(packageJsonPath: string, root: string): Pac
   };
 }
 
+/** Discover publishable and private package manifests in stable path order. */
 export function listPackageManifests(root = defaultRoot()): readonly PackageManifestInfo[] {
   const packageJsons = fg
     .sync(['packages/*/package.json'], {
@@ -128,7 +139,7 @@ export function listProfilePackageManifests(profile: DevopsProfile): readonly Pa
 function sourceRecordFromFile(
   absolutePath: string,
   root: string,
-  packageBySrcDir: ReadonlyMap<string, string>,
+  packageByDir: ReadonlyMap<string, string>,
 ): SourceFileRecord {
   const relativePath = normalizeRepoPath(relative(root, absolutePath));
   const text = readFileSync(absolutePath, 'utf8');
@@ -141,8 +152,9 @@ function sourceRecordFromFile(
   );
 
   const packageName =
-    [...packageBySrcDir.entries()].find(([srcDir]) => normalizeRepoPath(absolutePath).startsWith(srcDir + '/'))?.[1] ??
-    null;
+    [...packageByDir.entries()]
+      .sort(([left], [right]) => right.length - left.length)
+      .find(([packageDir]) => normalizeRepoPath(absolutePath).startsWith(packageDir + '/'))?.[1] ?? null;
 
   return {
     absolutePath,
@@ -153,11 +165,55 @@ function sourceRecordFromFile(
   };
 }
 
+/** Materialize normalized source records for all discovered audit files. */
 export function readSourceFileRecords(root = defaultRoot()): readonly SourceFileRecord[] {
   const packageInfos = listPackageManifests(root);
-  const packageBySrcDir = new Map(packageInfos.map((pkg) => [pkg.srcDir, pkg.name] as const));
+  const packageByDir = new Map(packageInfos.map((pkg) => [pkg.dir, pkg.name] as const));
 
-  return walkAuditSourceFiles(root).map((absolutePath) => sourceRecordFromFile(absolutePath, root, packageBySrcDir));
+  return walkAuditSourceFiles(root).map((absolutePath) => sourceRecordFromFile(absolutePath, root, packageByDir));
+}
+
+function profileArtifactFiles(profile: DevopsProfile): ReadonlyMap<string, readonly string[]> {
+  return new Map(
+    listProfilePackageManifests(profile).map((pkg) => {
+      const globs = profile.packageTopology[pkg.name]?.analyzableArtifacts ?? defaultAnalyzableArtifacts;
+      const files = [
+        ...new Set(
+          fg.sync([...globs], {
+            cwd: pkg.dir,
+            absolute: true,
+            onlyFiles: true,
+            ignore: ['**/node_modules/**'],
+          }),
+        ),
+      ]
+        .map((file) => normalizeRepoPath(file))
+        .sort((left, right) => left.localeCompare(right));
+      return [pkg.name, files] as const;
+    }),
+  );
+}
+
+/**
+ * Classify the exact package-relative artifact contract before any audit pass
+ * can call a zero-file package clean.
+ */
+export function collectProfileArtifactCoverage(profile: DevopsProfile): readonly PackageArtifactCoverage[] {
+  const filesByPackage = profileArtifactFiles(profile);
+  return listProfilePackageManifests(profile).map((pkg): PackageArtifactCoverage => {
+    const expectedArtifacts = [
+      ...(profile.packageTopology[pkg.name]?.analyzableArtifacts ?? defaultAnalyzableArtifacts),
+    ];
+    const matchedFiles = (filesByPackage.get(pkg.name) ?? []).map((file) => normalizeRepoPath(relative(pkg.dir, file)));
+    return matchedFiles.length > 0
+      ? { package: pkg.name, coverage: 'analyzed', expectedArtifacts, matchedFiles }
+      : {
+          package: pkg.name,
+          coverage: 'unverified',
+          expectedArtifacts,
+          reason: `No files matched the declared analyzable artifacts: ${expectedArtifacts.join(', ') || '(none)'}`,
+        };
+  });
 }
 
 /**
@@ -167,28 +223,14 @@ export function readSourceFileRecords(root = defaultRoot()): readonly SourceFile
  * is exactly where consumer-installed packages live.
  */
 export function readProfileSourceFileRecords(profile: DevopsProfile): readonly SourceFileRecord[] {
-  if (!profile.packageRoots) {
-    return readSourceFileRecords(profile.repoRoot);
-  }
-
   const packageInfos = listProfilePackageManifests(profile);
-  const packageBySrcDir = new Map(packageInfos.map((pkg) => [pkg.srcDir, pkg.name] as const));
+  const packageByDir = new Map(packageInfos.map((pkg) => [pkg.dir, pkg.name] as const));
+  const files = [...profileArtifactFiles(profile).values()].flat().sort((a, b) => a.localeCompare(b));
 
-  const files = packageInfos
-    .flatMap((pkg) =>
-      fg.sync(['src/**/*.ts', 'src/**/*.tsx'], {
-        cwd: pkg.dir,
-        absolute: true,
-        onlyFiles: true,
-        ignore: ['**/*.d.ts', '**/node_modules/**'],
-      }),
-    )
-    .map((file) => normalizeRepoPath(file))
-    .sort((a, b) => a.localeCompare(b));
-
-  return files.map((absolutePath) => sourceRecordFromFile(absolutePath, profile.repoRoot, packageBySrcDir));
+  return files.map((absolutePath) => sourceRecordFromFile(absolutePath, profile.repoRoot, packageByDir));
 }
 
+/** Fold findings into exact severity counts. */
 export function createCounts(findings: readonly AuditFinding[]): AuditCounts {
   return findings.reduce<AuditCounts>(
     (counts, finding) => ({
@@ -200,11 +242,13 @@ export function createCounts(findings: readonly AuditFinding[]): AuditCounts {
   );
 }
 
+/** Compare audit severities from most to least release-significant. */
 export function compareSeverity(a: AuditSeverity, b: AuditSeverity): number {
   const order: Record<AuditSeverity, number> = { error: 0, warning: 1, info: 2 };
   return order[a] - order[b];
 }
 
+/** Return findings in deterministic severity, rule, and location order. */
 export function sortFindings<T extends AuditFinding>(findings: readonly T[]): T[] {
   return [...findings].sort((left, right) => {
     const severity = compareSeverity(left.severity, right.severity);
@@ -217,15 +261,16 @@ export function sortFindings<T extends AuditFinding>(findings: readonly T[]): T[
   });
 }
 
+/** Return suppressions in deterministic finding order. */
 export function sortSuppressions<T extends AuditSuppression>(suppressions: readonly T[]): T[] {
   return [...suppressions].sort((left, right) => left.finding.id.localeCompare(right.finding.id));
 }
 
 /**
  * Map repo-relative finding paths to their owning package via the profile's
- * discovered manifests. Monorepo: `packages/astro/src/x.ts` → `@czap/astro` +
+ * discovered manifests. Monorepo: `packages/astro/src/x.ts` → `@liteship/astro` +
  * `src/x.ts`. Consumer install: the same file resolves identically from its
- * `node_modules/.../@czap/astro` root, so package-relative allowlist entries
+ * `node_modules/.../@liteship/astro` root, so package-relative allowlist entries
  * suppress in both layouts. Longest root wins (pnpm virtual-store roots nest
  * under `node_modules/.pnpm/...`).
  */
@@ -244,6 +289,7 @@ export function createPackagePathResolver(profile: DevopsProfile): PackagePathRe
   };
 }
 
+/** Partition raw findings through only the allowlist supplied by the host profile. */
 export function partitionAllowlistedFindings(
   findings: readonly AuditFinding[],
   profile: DevopsProfile,
@@ -256,7 +302,7 @@ export function partitionAllowlistedFindings(
   const resolvePackagePath = createPackagePathResolver(profile);
 
   for (const finding of findings) {
-    const reason = findAllowlistReason(finding, resolvePackagePath);
+    const reason = findAllowlistReason(finding, profile.allowlist ?? [], resolvePackagePath);
     if (reason) {
       suppressed.push({
         rule: finding.rule,
@@ -274,10 +320,12 @@ export function partitionAllowlistedFindings(
   };
 }
 
+/** Read normalized source text for one TypeScript node. */
 export function nodeText(node: ts.Node, sourceFile: ts.SourceFile): string {
   return node.getText(sourceFile);
 }
 
+/** Convert an absolute source position to one-based line and column coordinates. */
 export function lineAndColumn(sourceFile: ts.SourceFile, position: number): { line: number; column: number } {
   const { line, character } = sourceFile.getLineAndCharacterOfPosition(position);
   return {
@@ -286,10 +334,12 @@ export function lineAndColumn(sourceFile: ts.SourceFile, position: number): { li
   };
 }
 
+/** Normalize an absolute path to a slash-separated audit-root path. */
 export function relativeToRoot(filePath: string, root = defaultRoot()): string {
   return normalizeRepoPath(relative(root, filePath));
 }
 
+/** Test whether an export-default expression is statically safe to classify. */
 export function isSimpleDefaultExpression(node: ts.Expression): boolean {
   return (
     ts.isArrayLiteralExpression(node) ||

@@ -1,35 +1,29 @@
 ---
 import Base from '../layouts/Base.astro';
-import { satelliteAttrs } from '@czap/astro';
-// Optional LLM catalog path: `pnpm add @czap/genui`, register a catalog with
-// defineComponentCatalog, wire `genuiCatalog` on client:llm / createLLMSession.
-// Structured chunks use `{ "_genui": true, "name": "...", "props": { ... } }`.
-// The shared layout boundary (mobile / tablet / desktop) drives both
-// halves of the adaptive story: satelliteAttrs() serializes it for the
-// client runtime (data-czap-state updates), and the @quantize block in
-// the <style> below resolves the same export to compile static
-// @container queries.
-import { layout } from '../boundaries/layout.boundaries.js';
+import { layout } from '../adaptive.js';
+
+const plan = layout.plan();
+const preview = layout.explain(940);
 ---
 
 <Base>
   <header class="header">
-    <h1>czap starter</h1>
+    <h1>liteship starter</h1>
     <p>Constraint-based adaptive rendering</p>
   </header>
 
-  <main {...satelliteAttrs({ boundary: layout, class: 'grid' })}>
-    <article class="card">
-      <h2>Boundaries</h2>
-      <p>Define quantization points where your layout adapts.</p>
+  <main {...layout.attrs()}>
+    <article class="liteship-card">
+      <h2>Define</h2>
+      <p>A boundary turns an input into a few named states.</p>
     </article>
-    <article class="card">
-      <h2>Tokens</h2>
-      <p>Design values that vary across themes, density, and contrast.</p>
+    <article class="liteship-card">
+      <h2>Apply</h2>
+      <p>layout.attrs() wires the definition onto this element.</p>
     </article>
-    <article class="card">
-      <h2>Compile</h2>
-      <p>Output to CSS, GLSL, WGSL, ARIA, or AI targets.</p>
+    <article class="liteship-card">
+      <h2>Inspect</h2>
+      <p>At 940px, layout.explain() selects <strong>{preview.boundary.state}</strong>.</p>
     </article>
   </main>
 </Base>
@@ -37,58 +31,34 @@ import { layout } from '../boundaries/layout.boundaries.js';
 <style>
   .header {
     text-align: center;
-    padding: var(--czap-spacing-lg) 0;
+    padding: 2rem 0;
   }
 
   .header h1 {
-    font-size: var(--czap-font-size-lg);
+    font-size: 2rem;
     font-weight: 700;
   }
 
   .header p {
-    font-size: var(--czap-font-size-md);
+    font-size: 1rem;
     opacity: 0.7;
   }
 
-  .card {
-    padding: var(--czap-spacing-md);
+  .liteship-card {
+    opacity: 0.85;
+    padding: 1rem;
     border: 1px solid currentColor;
     border-radius: 0.5rem;
-    opacity: 0.85;
   }
 
-  .card h2 {
-    font-size: var(--czap-font-size-md);
-    margin-bottom: var(--czap-spacing-sm);
+  .liteship-card h2 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
   }
 
-  .card p {
-    font-size: var(--czap-font-size-sm);
-  }
-
-  @quantize layout {
-    mobile {
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--czap-spacing-sm);
-      }
-    }
-
-    tablet {
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--czap-spacing-md);
-      }
-    }
-
-    desktop {
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--czap-spacing-lg);
-      }
-    }
+  .liteship-card p {
+    font-size: 0.875rem;
   }
 </style>
+
+<style is:inline set:html={plan.css}></style>

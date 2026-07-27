@@ -1,18 +1,18 @@
 /**
  * WASM compute-kernel throughput — blend_normalize hot path via WASMDispatch.
- * Skips when the czap-compute artifact is absent (no Rust toolchain).
+ * Skips when the liteship-compute artifact is absent (no Rust toolchain).
  */
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Bench } from 'tinybench';
-import { WASMDispatch } from '@czap/core';
+import { WASMDispatch } from '@liteship/core';
 
 const WASM_PATH = resolve(
   import.meta.dirname,
   '..',
   '..',
-  'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm',
+  'crates/liteship-compute/target/wasm32-unknown-unknown/release/liteship_compute.wasm',
 );
 
 const bench = new Bench({ warmupIterations: 50 });

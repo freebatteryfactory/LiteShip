@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Beat, resolveBeat, resolveFrameMark, addFrameMarks } from '@czap/scene';
+import { Beat, resolveBeat, resolveFrameMark, addFrameMarks } from '@liteship/scene';
 
 describe('Beat', () => {
   it('tags a beat count without resolving to frames', () => {

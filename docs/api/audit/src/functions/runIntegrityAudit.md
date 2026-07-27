@@ -6,15 +6,17 @@
 
 # Function: runIntegrityAudit()
 
-> **runIntegrityAudit**(`profile?`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`IntegritySummary`](../interfaces/IntegritySummary.md)\>
+> **runIntegrityAudit**(`profile`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`IntegritySummary`](../interfaces/IntegritySummary.md)\>
 
-Defined in: [audit/src/integrity.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L216)
+Defined in: [audit/src/integrity.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L217)
+
+Execute the integrity pass under one fully injected profile.
 
 ## Parameters
 
-### profile?
+### profile
 
-[`DevopsProfile`](../interfaces/DevopsProfile.md) = `liteshipDevopsProfile`
+[`DevopsProfile`](../interfaces/DevopsProfile.md)
 
 ## Returns
 

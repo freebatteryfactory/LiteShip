@@ -10,8 +10,8 @@
  * `apps/shell/src/lib/liteship/effect-boundary.ts`). This file is that
  * acceptance contract, written to behave like a real consuming module:
  *
- *  1. It imports ONLY the public `@czap/core` reactive surface, from the package
- *     barrel — never a deep path (`@czap/core/cell`, a `/dist/` or `/src/`
+ *  1. It imports ONLY the public `@liteship/core` reactive surface, from the package
+ *     barrel — never a deep path (`@liteship/core/cell`, a `/dist/` or `/src/`
  *     specifier). A downstream consumer sees exactly the public entry.
  *  2. It builds a small, realistic coordinated-state scenario — two writable
  *     Cells, a Derived over BOTH of them with a live subscriber, a controllable
@@ -40,7 +40,7 @@
 import { describe, test, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { Cell, Derived, Store, Signal } from '@czap/core';
+import { Signal, createCell, computed, createStore } from '@liteship/core';
 
 /**
  * The downstream consumer's own action vocabulary — an ordinary discriminated
@@ -60,15 +60,15 @@ describe('#153 — a downstream consumer coordinates reactive state with no Effe
     //  - `nowPlaying` is a Derived over BOTH cells (a read-only projection),
     //  - `playhead` is a controllable Signal (a DOM-free scrubbable feed),
     //  - `journal` is a Store reducing a PlayerEvent stream into an ordered log.
-    const volume = Cell.make(50);
-    const track = Cell.make(1);
+    const volume = createCell(50);
+    const track = createCell(1);
 
     // A derived value over TWO cells — recomputes when EITHER source changes.
-    const nowPlaying = Derived.make(() => `track ${track.read()} @ vol ${volume.read()}`, [volume, track]);
+    const nowPlaying = computed(() => `track ${track.read()} @ vol ${volume.read()}`, [volume, track]);
 
     const playhead = Signal.controllable();
 
-    const journal = Store.make<readonly string[], PlayerEvent>([], (log, ev) => [...log, `${ev.kind}:${ev.value}`]);
+    const journal = createStore<readonly string[], PlayerEvent>([], (log, ev) => [...log, `${ev.kind}:${ev.value}`]);
 
     // Compile-time containment proof: every reactive read binds directly to a
     // PLAIN value the consumer uses as-is — a number, a string. Were any `read()`
@@ -140,7 +140,7 @@ describe('#153 — a downstream consumer coordinates reactive state with no Effe
     }
   });
 
-  test('this consumer imports ONLY the public @czap/core reactive surface — no Effect, no containment shim', () => {
+  test('this consumer imports ONLY the public @liteship/core reactive surface — no Effect, no containment shim', () => {
     const source = readFileSync(fileURLToPath(import.meta.url), 'utf8');
 
     // (1) No Effect runtime import in ANY form — bare, subpath, or scoped
@@ -157,10 +157,10 @@ describe('#153 — a downstream consumer coordinates reactive state with no Effe
     expect(source).not.toMatch(/from ['"][^'"]*effect-(boundary|containment|runtime)/);
 
     // (3) The reactive surface is imported from the PUBLIC entry only — the bare
-    //     `@czap/core` barrel, never a deep path (`@czap/core/cell`, a `/dist/`
+    //     `@liteship/core` barrel, never a deep path (`@liteship/core/cell`, a `/dist/`
     //     or `/src/` specifier).
-    expect(source).toMatch(/from ['"]@czap\/core['"]/);
-    expect(source).not.toMatch(/from ['"]@czap\/core\//);
+    expect(source).toMatch(/from ['"]@liteship\/core['"]/);
+    expect(source).not.toMatch(/from ['"]@liteship\/core\//);
   });
 
   test('the containment guards have teeth — each grep FIRES on the import form it forbids', () => {
@@ -178,6 +178,6 @@ describe('#153 — a downstream consumer coordinates reactive state with no Effe
     expect(`import { run } from ${q}./lib/liteship/effect-boundary${q};`).toMatch(
       /from ['"][^'"]*effect-(boundary|containment|runtime)/,
     );
-    expect(`import { Cell } from ${q}@czap/core/cell${q};`).toMatch(/from ['"]@czap\/core\//);
+    expect(`import { Cell } from ${q}@liteship/core/cell${q};`).toMatch(/from ['"]@liteship\/core\//);
   });
 });

@@ -1,13 +1,13 @@
-# @czap/genui
+# @liteship/genui
 
 Host-owned generated UI: validate the structured UI trees a model proposes against a catalog you control, then render trusted components only — never model HTML.
 
-> You usually don't install this directly — it's host-wired through [@czap/astro](https://www.npmjs.com/package/@czap/astro), [@czap/web](https://www.npmjs.com/package/@czap/web), and [@czap/mcp-server](https://www.npmjs.com/package/@czap/mcp-server), which own the catalog and interaction authority for you. Install one of those unless you need the validator standalone.
+> You usually don't install this directly — it's host-wired through [@liteship/astro](https://www.npmjs.com/package/@liteship/astro), [@liteship/web](https://www.npmjs.com/package/@liteship/web), and [@liteship/mcp-server](https://www.npmjs.com/package/@liteship/mcp-server), which own the catalog and interaction authority for you. Install one of those unless you need the validator standalone.
 
 ## Install
 
 ```bash
-pnpm add @czap/genui
+pnpm add @liteship/genui
 ```
 
 ## 30 seconds
@@ -18,7 +18,7 @@ import {
   tryParseGeneratedUIChunk,
   validateGeneratedUITree,
   renderHash,
-} from '@czap/genui';
+} from '@liteship/genui';
 
 // A model emits one structured chunk: { "_genui": true, "name": ..., "props": ... }
 const node = tryParseGeneratedUIChunk(
@@ -39,7 +39,7 @@ if (node) {
 
 ## Where it sits
 
-Define a catalog with `defineComponentCatalog` — the only components that can ever render. Its only `@czap` dependencies are `@czap/_spine` (the shared genui type vocabulary), `@czap/canonical` (catalog/render bytes), and `@czap/error`. The model proposes a tree; this package validates it against the catalog and renders allowlisted attributes only. `catalogHash` and `renderHash` mint stable [content addresses](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for cache, replay, and tests. What to *generate* is decided elsewhere — `@czap/mcp-server` projects the catalog to a model, hosts own admission and interaction authority.
+Define a catalog with `defineComponentCatalog` — the only components that can ever render. Its only `@liteship` dependencies are `@liteship/_spine` (the shared genui type vocabulary), `@liteship/canonical` (catalog/render bytes), and `@liteship/error`. The model proposes a tree; this package validates it against the catalog and renders allowlisted attributes only. `catalogHash` and `renderHash` mint stable [content addresses](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for cache, replay, and tests. What to *generate* is decided elsewhere — `@liteship/mcp-server` projects the catalog to a model, hosts own admission and interaction authority.
 
 ## Trust boundary
 
@@ -54,4 +54,4 @@ This package never renders model HTML and never trusts model-controlled keys —
 
 ---
 
-Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — distributed as `@liteship/*` packages.

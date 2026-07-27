@@ -1,5 +1,5 @@
 /**
- * THE DIFFERENTIAL GUARD for the `codeOnly` floor: the sound, parser-backed @czap/audit scanner
+ * THE DIFFERENTIAL GUARD for the `codeOnly` floor: the sound, parser-backed @liteship/audit scanner
  * ({@link codeOnlyAST}) and the lean no-typescript char-machine ({@link codeOnly}) must agree, so the
  * host-injected scanner and its fallback never disagree on which characters are CODE. This is the
  * "pin the mirror" pattern: a real tokenizer is the oracle of record; the hand-rolled machine is held
@@ -8,7 +8,7 @@
  * nested-template bug stays here as a regression.
  */
 import { describe, it, expect } from 'vitest';
-import { codeOnlyAST } from '@czap/audit';
+import { codeOnlyAST } from '@liteship/audit';
 import { codeOnly } from '../../../packages/gauntlet/src/gates/code-only.ts';
 
 /** Lexical-hazard corpus — every case both implementations must blank identically. */

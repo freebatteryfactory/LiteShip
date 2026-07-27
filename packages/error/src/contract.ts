@@ -17,6 +17,10 @@
  * @module
  */
 
+import type { DiagnosticCodeFor } from './codes.js';
+
+const MATCH_TAG_UNHANDLED_CODE = 'error/match-tag/unhandled' satisfies DiagnosticCodeFor<'error'>;
+
 /**
  * The open structural contract every error in the algebra satisfies.
  *
@@ -120,9 +124,10 @@ export function isTaggedError(u: unknown): u is TaggedError {
 }
 
 /**
- * Narrowing guard for a specific tag — the data-oriented replacement for
- * `instanceof SomeError`. `hasTag(e, 'ParseError')` narrows `e` to the
- * `ParseError` variant.
+ * Structural narrowing guard for a specific tag — the data-oriented replacement
+ * for `instanceof`. From `unknown`, it proves only the open
+ * {@link TaggedError} contract (`_tag` + `message`); validate a concrete variant
+ * before reading variant-specific fields such as `ParseError.source`.
  */
 export function hasTag<Tag extends string>(u: unknown, tag: Tag): u is TaggedError<Tag> {
   return isTaggedError(u) && u._tag === tag;
@@ -161,6 +166,16 @@ export function matchTag<E extends TaggedError, R>(
   handlers: { readonly [K in E['_tag']]: (error: Extract<E, TaggedError<K>>) => R },
 ): R {
   const handler = handlers[error._tag as E['_tag']];
+  if (typeof handler !== 'function') {
+    const handled = Object.keys(handlers).sort().slice(0, 16);
+    const suffix = Object.keys(handlers).length > handled.length ? ', …' : '';
+    const detail = `no handler for _tag ${JSON.stringify(error._tag)} (handled: ${handled.join(', ')}${suffix})`;
+    throw taggedError('InvariantViolationError', `invariant matchTag.exhaustive violated: ${detail}`, {
+      invariant: 'matchTag.exhaustive',
+      detail,
+      code: MATCH_TAG_UNHANDLED_CODE,
+    });
+  }
   return handler(error as Extract<E, TaggedError<E['_tag']>>);
 }
 

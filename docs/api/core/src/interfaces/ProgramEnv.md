@@ -6,7 +6,7 @@
 
 # Interface: ProgramEnv
 
-Defined in: [core/src/transition-program.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L83)
+Defined in: [core/src/motion/transition-program.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L83)
 
 Resolved signal values a `choice` selects against (e.g. `{ 'viewport.width': 1024 }`).
 
@@ -16,4 +16,4 @@ Resolved signal values a `choice` selects against (e.g. `{ 'viewport.width': 102
 
 > `readonly` **signals**: `Readonly`\<`Record`\<`string`, `number`\>\>
 
-Defined in: [core/src/transition-program.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/transition-program.ts#L84)
+Defined in: [core/src/motion/transition-program.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L84)

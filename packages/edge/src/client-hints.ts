@@ -2,14 +2,20 @@
  * Client Hints header parsing for edge-side device capability detection.
  *
  * Converts HTTP Client Hints headers into the same `ExtendedDeviceCapabilities`
- * structure that `@czap/detect` uses, enabling reuse of the pure tier mapping
+ * structure that `@liteship/detect` uses, enabling reuse of the pure tier mapping
  * functions at the edge without browser APIs.
  *
  * @module
  */
 
-import type { ExtendedDeviceCapabilities, GPUTier } from '@czap/detect';
-import type { ResponsiveMediaCapabilities } from '@czap/core';
+import type {
+  CapabilityEvidenceInput,
+  CapabilityEvidenceInputs,
+  CapabilityInputEvidence,
+  ExtendedDeviceCapabilities,
+  GPUTier,
+} from '@liteship/detect';
+import type { ResponsiveMediaCapabilities } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,8 +29,6 @@ import type { ResponsiveMediaCapabilities } from '@czap/core';
  * defaults during parsing.
  */
 export interface ClientHintsHeaders {
-  /** `Sec-CH-UA-Platform` (e.g. `"macOS"`, `"Windows"`). */
-  readonly 'sec-ch-ua-platform'?: string;
   /** `Sec-CH-Device-Memory` in GiB (one of the standard buckets). */
   readonly 'sec-ch-device-memory'?: string;
   /** `Sec-CH-DPR` — devicePixelRatio as a decimal string. */
@@ -39,18 +43,20 @@ export interface ClientHintsHeaders {
   readonly 'sec-ch-prefers-color-scheme'?: string;
   /** `Sec-CH-UA-Mobile` as a structured boolean (`?1` / `?0`). */
   readonly 'sec-ch-ua-mobile'?: string;
-  /** `Sec-CH-UA` — full user-agent brand list. */
-  readonly 'sec-ch-ua'?: string;
   /** `Save-Data` (`on`). */
   readonly 'save-data'?: string;
   /** `Downlink` estimate in Mb/s. */
   readonly downlink?: string;
   /** `ECT` effective connection type. */
   readonly ect?: string;
-  /** `RTT` round-trip-time estimate in ms. */
-  readonly rtt?: string;
   /** `User-Agent` fallback for GPU-tier heuristics. */
   readonly 'user-agent'?: string;
+}
+
+/** One canonical Client-Hints parse: complete values plus input-level provenance. */
+export interface ClientHintsEvidence {
+  readonly capabilities: ExtendedDeviceCapabilities;
+  readonly inputEvidence: CapabilityEvidenceInputs;
 }
 
 // ---------------------------------------------------------------------------
@@ -147,20 +153,20 @@ const ALL_HINTS = [
   'Sec-CH-Prefers-Reduced-Motion',
   'Sec-CH-Prefers-Color-Scheme',
   'Sec-CH-UA-Mobile',
-  'Sec-CH-UA',
-  'Sec-CH-UA-Platform',
   'Save-Data',
   'Downlink',
   'ECT',
-  'RTT',
 ] as const;
+
+/** Inputs actually parsed into the host compile context or tier decision. */
+const RESPONSE_SHAPING_HEADERS = [...ALL_HINTS, 'User-Agent'] as const;
 
 // Boot-required hints: listed in `Critical-CH` so the browser RESENDS them before the
 // first render if they were absent (one retry, all at once). `Sec-CH-Viewport-Width` is
 // here because SSR boundary resolution (`resolveInitialState`) reads it to pick the
 // initial state — with it omitted, a cold first paint fell back to a User-Agent estimate
 // that could disagree with the container-query CSS. Every entry MUST also be in
-// `ALL_HINTS` (the `Accept-CH` set), and `@czap/astro`'s `CLIENT_HINTS_HEADERS` derives
+// `ALL_HINTS` (the `Accept-CH` set), and `@liteship/astro`'s `CLIENT_HINTS_HEADERS` derives
 // from here (one source, no hand-mirrored list) — both pinned by
 // tests/unit/astro/critical-ch-drift.test.ts.
 const CRITICAL_HINTS = [
@@ -176,35 +182,45 @@ const CRITICAL_HINTS = [
 // ---------------------------------------------------------------------------
 
 /**
- * Parse Client Hints headers into an {@link ExtendedDeviceCapabilities} structure.
+ * Parse Client Hints into complete capability values plus input-level provenance.
  *
  * For properties that cannot be determined from headers (GPU tier, WebGPU
  * support, CPU cores), conservative defaults are used.
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
- * const caps = ClientHints.parseClientHints({
+ * const evidence = ClientHints.parseEvidence({
  *   'sec-ch-device-memory': '8',
  *   'sec-ch-dpr': '2',
  *   'sec-ch-viewport-width': '1440',
  *   'sec-ch-prefers-color-scheme': 'dark',
  *   'sec-ch-ua-mobile': '?0',
  * });
- * console.log(caps.memory);             // 8
- * console.log(caps.devicePixelRatio);    // 2
- * console.log(caps.prefersColorScheme);  // 'dark'
+ * console.log(evidence.capabilities.memory);             // 8
+ * console.log(evidence.capabilities.devicePixelRatio);    // 2
+ * console.log(evidence.capabilities.prefersColorScheme);  // 'dark'
+ * console.log(evidence.inputEvidence.memory.support);      // 'observed'
  * ```
  *
  * @param headers - Client Hints headers (plain object or Web API Headers)
- * @returns An {@link ExtendedDeviceCapabilities} structure
+ * @returns Complete capabilities and an exhaustive provenance receipt
  */
-function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDeviceCapabilities {
+function inputEvidence<const Input extends CapabilityEvidenceInput>(
+  input: Input,
+  support: CapabilityInputEvidence['support'],
+  source: string,
+): CapabilityInputEvidence & { readonly input: Input } {
+  return Object.freeze({ input, support, source });
+}
+
+function parseEvidence(headers: ClientHintsHeaders | Headers): ClientHintsEvidence {
   const get = headerGetter(headers);
 
   // Memory
-  const rawMemory = parseFloat_(get, 'sec-ch-device-memory');
+  const parsedMemory = parseFloat_(get, 'sec-ch-device-memory');
+  const rawMemory = parsedMemory !== undefined && parsedMemory > 0 ? parsedMemory : undefined;
   const memory = rawMemory !== undefined ? clampMemory(rawMemory) : 4;
 
   // DPR
@@ -217,6 +233,11 @@ function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDevice
   // Preferences
   const reducedMotionRaw = get('sec-ch-prefers-reduced-motion');
   const prefersReducedMotion = reducedMotionRaw === 'reduce' || reducedMotionRaw === '"reduce"';
+  const reducedMotionObserved =
+    reducedMotionRaw === 'reduce' ||
+    reducedMotionRaw === '"reduce"' ||
+    reducedMotionRaw === 'no-preference' ||
+    reducedMotionRaw === '"no-preference"';
 
   const colorSchemeRaw = get('sec-ch-prefers-color-scheme');
   const prefersColorScheme: 'light' | 'dark' =
@@ -237,7 +258,7 @@ function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDevice
   // GPU tier heuristic from UA
   const gpu = gpuTierFromUA(get('user-agent'));
 
-  return {
+  const capabilities: ExtendedDeviceCapabilities = {
     // Base DeviceCapabilities
     gpu,
     cores: 4, // Conservative default -- not available via Client Hints
@@ -263,6 +284,42 @@ function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDevice
     colorGamut: 'srgb',
     updateRate: 'fast',
   };
+  const inputEvidenceMap: CapabilityEvidenceInputs = Object.freeze({
+    gpu: inputEvidence(
+      'gpu',
+      'inferred',
+      get('user-agent') === undefined ? 'integrated-gpu-fallback' : 'user-agent-gpu-heuristic',
+    ),
+    cores: inputEvidence('cores', 'inferred', 'four-core-edge-fallback'),
+    memory: inputEvidence(
+      'memory',
+      rawMemory === undefined ? 'inferred' : 'observed',
+      rawMemory === undefined ? 'four-gib-fallback' : 'sec-ch-device-memory',
+    ),
+    webgpu: inputEvidence('webgpu', 'inferred', 'webgpu-unavailable-at-edge'),
+    prefersReducedMotion: inputEvidence(
+      'prefersReducedMotion',
+      reducedMotionObserved ? 'observed' : 'inferred',
+      reducedMotionObserved ? 'sec-ch-prefers-reduced-motion' : 'no-preference-fallback',
+    ),
+    prefersContrast: inputEvidence('prefersContrast', 'inferred', 'no-preference-edge-fallback'),
+    forcedColors: inputEvidence('forcedColors', 'inferred', 'inactive-edge-fallback'),
+    prefersReducedTransparency: inputEvidence('prefersReducedTransparency', 'inferred', 'no-preference-edge-fallback'),
+    dynamicRange: inputEvidence('dynamicRange', 'inferred', 'standard-range-edge-fallback'),
+    colorGamut: inputEvidence('colorGamut', 'inferred', 'srgb-edge-fallback'),
+    updateRate: inputEvidence('updateRate', 'inferred', 'fast-update-edge-fallback'),
+  });
+  return Object.freeze({ capabilities: Object.freeze(capabilities), inputEvidence: inputEvidenceMap });
+}
+
+/**
+ * Values-only projection of the canonical richer {@link parseEvidence} producer.
+ *
+ * Use this for conservative rendering. Use `parseEvidence` when a consumer
+ * needs to distinguish observed inputs from inferred fallbacks.
+ */
+function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDeviceCapabilities {
+  return parseEvidence(headers).capabilities;
 }
 
 /**
@@ -271,7 +328,7 @@ function parseClientHints(headers: ClientHintsHeaders | Headers): ExtendedDevice
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * const response = new Response('OK', {
  *   headers: { 'Accept-CH': ClientHints.acceptCHHeader() },
@@ -290,7 +347,7 @@ function acceptCHHeader(): string {
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * const response = new Response('OK', {
  *   headers: {
@@ -312,7 +369,7 @@ function criticalCHHeader(): string {
  * inputs or they can serve the wrong tier's representation (#122).
  */
 function varyCHHeader(): string {
-  return ALL_HINTS.join(', ');
+  return RESPONSE_SHAPING_HEADERS.join(', ');
 }
 
 /**
@@ -349,14 +406,14 @@ function responsiveMediaVaryHeader(): string {
  * Client Hints namespace.
  *
  * Parses HTTP Client Hints headers into the same
- * {@link ExtendedDeviceCapabilities} structure used by `@czap/detect`,
+ * {@link ExtendedDeviceCapabilities} structure used by `@liteship/detect`,
  * enabling server-side / edge-side tier mapping without browser APIs.
  * Also generates the `Accept-CH` and `Critical-CH` response headers needed
  * to request hints from the browser.
  *
  * @example
  * ```ts
- * import { ClientHints } from '@czap/edge';
+ * import { ClientHints } from '@liteship/edge';
  *
  * // In an edge handler:
  * const caps = ClientHints.parseClientHints(request.headers);
@@ -369,6 +426,8 @@ function responsiveMediaVaryHeader(): string {
  * ```
  */
 export const ClientHints = {
+  /** Parse Client Hints once into complete values and input-level provenance. */
+  parseEvidence,
   /** Parse Client Hints headers into {@link ExtendedDeviceCapabilities}. */
   parseClientHints,
   /** Produce the `Accept-CH` response header value listing all useful hints. */

@@ -1,5 +1,5 @@
 /**
- * Explicit resolution-cache state for the czap Vite plugin's transform
+ * Explicit resolution-cache state for the liteship Vite plugin's transform
  * pipeline.
  *
  * The CSS `transform` hook resolves `@token` / `@theme` / `@style` /
@@ -29,11 +29,11 @@
  * @module
  */
 
-import type { Boundary, Token, Theme, Style } from '@czap/core';
-import type { BoundaryManifest } from '@czap/edge';
+import type { Boundary, Token, Theme, Style } from '@liteship/core';
+import type { BoundaryManifest } from '@liteship/edge';
 import type { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 
-/** Lazily-collected token/theme manifest backing `virtual:czap/tokens(.css)` + `themes`. */
+/** Lazily-collected token/theme manifest backing `virtual:liteship/tokens(.css)` + `themes`. */
 export interface TokenThemeManifest {
   readonly tokens: Awaited<ReturnType<typeof collectTokenManifest>>;
   readonly themes: Awaited<ReturnType<typeof collectThemeManifest>>;
@@ -52,23 +52,31 @@ export interface TokenThemeManifest {
  * standalone functions reassign them without losing the by-reference handle.
  */
 export interface PrimitiveResolutionCache {
-  readonly boundary: Map<string, Boundary.Shape | null>;
-  readonly token: Map<string, Token.Shape | null>;
-  readonly theme: Map<string, Theme.Shape | null>;
-  readonly style: Map<string, Style.Shape | null>;
+  readonly boundary: Map<string, Boundary | null>;
+  readonly token: Map<string, Token | null>;
+  readonly theme: Map<string, Theme | null>;
+  readonly style: Map<string, Style | null>;
   /** Resolved convention-file path per cache key (`${name}:${id}`). */
   readonly source: Map<string, string>;
-  /** Lazily-collected boundary manifest backing `virtual:czap/boundaries`. */
+  /** Lazily-collected boundary manifest backing `virtual:liteship/boundaries`. */
   readonly boundaryManifest: { value: Promise<BoundaryManifest> | null };
   /** Lazily-collected token/theme manifest backing the design virtual modules. */
   readonly tokenThemeManifest: { value: Promise<TokenThemeManifest> | null };
   /**
-   * Compiled \@quantize CSS per `${boundaryName}:${moduleId}` (#114 shadowing
-   * diagnostic). Keyed so a re-transform OVERWRITES its own entry — an
-   * accumulator string would keep every historical compile of every edited
-   * file for the life of the dev server (unbounded HMR growth).
+   * Complete compiled \@quantize CSS per module id (#114 shadowing
+   * diagnostic). One entry contains every block emitted by that module, so a
+   * re-transform atomically replaces the prior evidence instead of retaining
+   * historical output or collapsing repeated boundary names.
    */
   readonly lastCompiledBoundaryCss: Map<string, string>;
+  /**
+   * Latest non-quantize CSS per module id for the boundary-shadow diagnostic.
+   * Keeping one bounded entry per module makes the diagnostic independent of
+   * Vite transform order: a foreign sheet transformed before its boundary
+   * sheet is checked when the boundary output becomes available, while the
+   * opposite order is checked when the foreign sheet arrives.
+   */
+  readonly lastForeignCss: Map<string, string>;
 }
 
 /** Build a fresh, empty {@link PrimitiveResolutionCache} for one plugin instance. */
@@ -82,6 +90,7 @@ export function createPrimitiveResolutionCache(): PrimitiveResolutionCache {
     boundaryManifest: { value: null },
     tokenThemeManifest: { value: null },
     lastCompiledBoundaryCss: new Map(),
+    lastForeignCss: new Map(),
   };
 }
 
@@ -100,4 +109,22 @@ export function invalidateAllPrimitives(cache: PrimitiveResolutionCache): void {
   cache.boundaryManifest.value = null;
   cache.tokenThemeManifest.value = null;
   cache.lastCompiledBoundaryCss.clear();
+  cache.lastForeignCss.clear();
+}
+
+function physicalModuleId(id: string): string {
+  return id.replace(/[?#].*$/s, '');
+}
+
+/**
+ * Remove shadow-diagnostic evidence for a deleted/renamed physical module,
+ * including every query-bearing Vite module id for that file.
+ */
+export function purgeModuleEvidence(cache: PrimitiveResolutionCache, file: string): void {
+  const physicalFile = physicalModuleId(file);
+  for (const evidence of [cache.lastCompiledBoundaryCss, cache.lastForeignCss]) {
+    for (const id of evidence.keys()) {
+      if (physicalModuleId(id) === physicalFile) evidence.delete(id);
+    }
+  }
 }

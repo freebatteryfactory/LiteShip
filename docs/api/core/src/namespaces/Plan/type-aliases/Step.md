@@ -8,6 +8,6 @@
 
 > **Step** = `PlanStep`
 
-Defined in: [core/src/plan.ts:312](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L312)
+Defined in: [core/src/authoring/plan.ts:312](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L312)
 
 Alias for `PlanStep`.

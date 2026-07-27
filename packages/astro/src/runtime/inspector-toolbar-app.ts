@@ -1,5 +1,5 @@
 /**
- * Astro dev-toolbar app for the czap boundary inspector.
+ * Astro dev-toolbar app for the liteship boundary inspector.
  *
  * Registered via `addDevToolbarApp` in the integration's
  * `astro:config:setup` hook. Astro mounts this module as the entrypoint
@@ -8,8 +8,8 @@
  *
  * The `init(canvas, app, server)` body runs as a normal ES module in the
  * MAIN page realm — `document`/`window` ARE the host page — so the
- * inspector's page-DOM access (`document.querySelectorAll('[data-czap-boundary]')`,
- * `czap:uniform-update` subscriptions, `czap:reinit` dispatch,
+ * inspector's page-DOM access (`document.querySelectorAll('[data-liteship-boundary]')`,
+ * `liteship:uniform-update` subscriptions, `liteship:reinit` dispatch,
  * `document.styleSheets`) all work unchanged. The `canvas` ShadowRoot is
  * a render target, not a JS sandbox. Toggling is owned by Astro
  * (`app.onToggled`); there is no custom hotkey and no custom element.
@@ -20,23 +20,51 @@
 import type { DevToolbarApp } from 'astro';
 import { mountInspectorPanel, type InspectorHandle } from './inspector.js';
 
+interface ToolbarRuntime {
+  readonly dispose: () => void;
+}
+
+const toolbarRuntimes = new WeakMap<object, ToolbarRuntime>();
+
+function routeIsExcluded(): boolean {
+  return (window as Window & { __LITESHIP_OFF__?: boolean }).__LITESHIP_OFF__ === true;
+}
+
 const app: DevToolbarApp = {
   init(canvas, eventTarget) {
+    toolbarRuntimes.get(canvas)?.dispose();
     let handle: InspectorHandle | null = null;
+    let open = false;
+
+    const unmount = (): void => {
+      handle?.dispose();
+      handle = null;
+      canvas.replaceChildren();
+    };
+
+    const reconcile = (): void => {
+      unmount();
+      if (open && !routeIsExcluded()) handle = mountInspectorPanel(canvas);
+    };
+
+    const afterSwap = (): void => reconcile();
+    document.addEventListener('astro:after-swap', afterSwap);
+
+    const runtime: ToolbarRuntime = {
+      dispose() {
+        document.removeEventListener('astro:after-swap', afterSwap);
+        window.removeEventListener('pagehide', runtime.dispose);
+        unmount();
+      },
+    };
+    window.addEventListener('pagehide', runtime.dispose, { once: true });
+    toolbarRuntimes.set(canvas, runtime);
 
     eventTarget.onToggled(({ state }) => {
-      if (state) {
-        // Re-mount fresh on every open so the panel reflects the page as it
-        // is now (boundaries added/removed since the last open), and tear the
-        // prior mount's observers down on close to avoid leaks.
-        handle?.dispose();
-        canvas.replaceChildren();
-        handle = mountInspectorPanel(canvas);
-      } else {
-        handle?.dispose();
-        handle = null;
-        canvas.replaceChildren();
-      }
+      open = state;
+      // Re-mount fresh on every open/swap so the panel reflects the current
+      // page, but excluded routes never inspect or retain page-DOM observers.
+      reconcile();
     });
   },
 };

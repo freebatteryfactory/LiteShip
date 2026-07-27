@@ -16,7 +16,7 @@ Fade constructors.
 
 ### in
 
-> `readonly` **in**: (`span`) => `FadeEnvelope`
+> `readonly` **in**: (`span`) => [`FadeEnvelope`](../../../spine/interfaces/FadeEnvelope.md)
 
 Linear fade-in over the given span.
 
@@ -24,15 +24,15 @@ Linear fade-in over the given span.
 
 ##### span
 
-`BeatHandle`
+[`BeatHandle`](../../../spine/interfaces/BeatHandle.md)
 
 #### Returns
 
-`FadeEnvelope`
+[`FadeEnvelope`](../../../spine/interfaces/FadeEnvelope.md)
 
 ### out
 
-> `readonly` **out**: (`span`) => `FadeEnvelope`
+> `readonly` **out**: (`span`) => [`FadeEnvelope`](../../../spine/interfaces/FadeEnvelope.md)
 
 Linear fade-out over the given span.
 
@@ -40,8 +40,8 @@ Linear fade-out over the given span.
 
 ##### span
 
-`BeatHandle`
+[`BeatHandle`](../../../spine/interfaces/BeatHandle.md)
 
 #### Returns
 
-`FadeEnvelope`
+[`FadeEnvelope`](../../../spine/interfaces/FadeEnvelope.md)

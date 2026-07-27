@@ -1,13 +1,10 @@
 /**
- * Consumer-mode profile factory — audit the `@czap/*` packages INSTALLED in a
- * downstream repo's node_modules instead of a monorepo `packages/*` layout.
+ * Consumer-mode profile factory — audit packages named by an injected profile
+ * inside a downstream repo's node_modules instead of a monorepo layout.
  *
- * Every published czap package ships `src/` alongside `dist/`, so the engine's
- * source-level passes run unmodified against installed artifacts; only package
- * DISCOVERY differs. Discovery is a directory walk, not module resolution:
- * no @czap package exports `./package.json`, and `@czap/_spine` carries a
- * types-only export map, so `require.resolve`/`import.meta.resolve` throw
- * `ERR_PACKAGE_PATH_NOT_EXPORTED` before ever finding a root.
+ * A discovered package that matches none of its declared artifacts is
+ * unverified, never clean. Discovery is a directory walk rather than module
+ * resolution because packages need not export `./package.json`.
  *
  * pnpm hides transitive dependencies inside the virtual store
  * (`node_modules/.pnpm/<pkg>@<v>/node_modules/...`), so the walk seeds from
@@ -18,57 +15,11 @@
  */
 import { existsSync, realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { IoError } from '@czap/error';
+import { IoError } from '@liteship/error';
 import { normalizeRepoPath } from './policy.js';
-import { liteshipDevopsProfile, type DevopsProfile } from './devops-profile.js';
+import type { DevopsProfile } from './devops-profile.js';
 
-/**
- * The canonical dependency-ordered roster of publishable `@czap/*` packages —
- * the SINGLE anchor every fleet drift-guard re-anchors to.
- *
- * Scar S0.4 (docs/plan/scar-ledger.md — *one truth, many private parsers*): the
- * fleet roster was hand-copied into five places (liteship's `LITESHIP_PACKAGES`,
- * the cli package-metadata catalog, command's package-smoke `PACKAGES`, the
- * repo-truths `packageRoster()` accessor, and `.github/workflows/release.yml`),
- * each drifting independently. This export is the anchor those copies pin
- * against: `tests/support/repo-truths.ts` (`packageRoster()`) currently DERIVES
- * the fleet from the on-disk publishable set because this export did not exist —
- * that delegation note retires here.
- *
- * Membership is exactly the on-disk non-private `@czap/*` set (proven by the
- * owner test against `packageRoster()`); the ORDER is authored — the runtime
- * dependency (install) order, identical to `scripts/gen-roster.ts`'s
- * `CANONICAL_ROSTER` and liteship's tarball-shipped `LITESHIP_PACKAGES` mirror
- * (ADR-0010 model: authored order, derived membership). The two non-`@czap`
- * publishable umbrellas (`create-liteship`, `liteship`) are NOT here — they
- * carry the whole fleet as deps and publish last; this is the scoped fleet only.
- */
-export const CZAP_PACKAGE_ROSTER: readonly string[] = [
-  '@czap/_spine',
-  '@czap/error',
-  '@czap/canonical',
-  '@czap/core',
-  '@czap/genui',
-  '@czap/quantizer',
-  '@czap/compiler',
-  '@czap/web',
-  '@czap/detect',
-  '@czap/vite',
-  '@czap/astro',
-  '@czap/edge',
-  '@czap/cloudflare',
-  '@czap/worker',
-  '@czap/remotion',
-  '@czap/scene',
-  '@czap/stage',
-  '@czap/assets',
-  '@czap/gauntlet',
-  '@czap/audit',
-  '@czap/command',
-  '@czap/cli',
-  '@czap/mcp-server',
-];
-
+/** Files and package manifests discovered in an external consumer project. */
 export interface ConsumerDiscovery {
   /** Package name → absolute (realpath'd, normalized) package root. */
   readonly packageRoots: Readonly<Record<string, string>>;
@@ -102,9 +53,9 @@ function findPackageFromSeed(seedDir: string, packageName: string): string | nul
 /**
  * Discover the installed roots of `packageNames` reachable from `cwd`.
  * BFS to fixpoint: each found package's realpath becomes a new seed, which
- * is what surfaces pnpm's hidden transitive `@czap/*` dependencies (they
+ * is what surfaces pnpm's hidden transitive scoped dependencies (they
  * live next to their importer inside the virtual store, not under the
- * project's top-level `node_modules/@czap`).
+ * project's top-level `node_modules`).
  */
 export function discoverInstalledPackageRoots(cwd: string, packageNames: readonly string[]): ConsumerDiscovery {
   const wanted = [...packageNames].sort((a, b) => a.localeCompare(b));
@@ -149,18 +100,15 @@ export function discoverInstalledPackageRoots(cwd: string, packageNames: readonl
 }
 
 /**
- * Build a consumer-mode profile: the base profile (LiteShip's by default)
- * re-rooted at `cwd` with `packageRoots` resolved from the installed
- * `@czap/*` packages. Packages from the topology that aren't installed are
+ * Build a consumer-mode profile: the explicit base profile re-rooted at `cwd`
+ * with `packageRoots` resolved from the installed packages. Packages from the
+ * topology that aren't installed are
  * simply absent — a consumer audits what it actually ships — and the same
  * principle prunes the host-surface policy: a consumer that doesn't install
  * the astro/vite host packages should not eat `*-missing` errors for
  * surfaces it never shipped.
  */
-export function consumerDevopsProfile(
-  cwd: string = process.cwd(),
-  base: DevopsProfile = liteshipDevopsProfile,
-): DevopsProfile {
+export function consumerDevopsProfile(cwd: string, base: DevopsProfile): DevopsProfile {
   const discovery = discoverInstalledPackageRoots(cwd, Object.keys(base.packageTopology));
   const astroInstalled = !base.surfacePolicy.astroPackage || base.surfacePolicy.astroPackage in discovery.packageRoots;
   const viteInstalled = !base.surfacePolicy.vitePackage || base.surfacePolicy.vitePackage in discovery.packageRoots;

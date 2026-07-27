@@ -1,0 +1,107 @@
+// @vitest-environment node
+// PROVES: INV-FACADE-EXPORT-BUDGET
+import { describe, expect, it } from 'vitest';
+import {
+  FACADE_SUBPATH_CONTRACT,
+  FACADE_SUBPATH_CONTRACT_SOURCE,
+  FACADE_LIFECYCLE_CONTRACT,
+  FACADE_LIFECYCLE_CONTRACT_SOURCE,
+  ROOT_EXPORT_CONTRACT,
+  ROOT_EXPORT_CONTRACT_SOURCE,
+  parseFacadeSubpathContract,
+  parseFacadeLifecycleContract,
+  parseRootExportContract,
+} from '../../../packages/liteship/src/export-budget.js';
+
+describe('facade role-contract parser', () => {
+  it('returns deeply immutable records for the admitted root and subpath decisions', () => {
+    expect(Object.isFrozen(ROOT_EXPORT_CONTRACT)).toBe(true);
+    expect(ROOT_EXPORT_CONTRACT.every(Object.isFrozen)).toBe(true);
+    expect(Object.isFrozen(FACADE_SUBPATH_CONTRACT)).toBe(true);
+    expect(FACADE_SUBPATH_CONTRACT.every(Object.isFrozen)).toBe(true);
+    expect(Object.isFrozen(FACADE_LIFECYCLE_CONTRACT)).toBe(true);
+    expect(FACADE_LIFECYCLE_CONTRACT.every(Object.isFrozen)).toBe(true);
+  });
+
+  it.each([
+    ['foreign operation', (entry: Record<string, unknown>) => (entry.operation = 'makeThing')],
+    ['active resource without disposal', (entry: Record<string, unknown>) => (entry.disposal = 'none')],
+    ['active resource without inertness', (entry: Record<string, unknown>) => (entry.postDispose = 'not-applicable')],
+    [
+      'active resource without aggregate cleanup',
+      (entry: Record<string, unknown>) => (entry.siblingCleanup = 'not-applicable'),
+    ],
+    ['non-test proof path', (entry: Record<string, unknown>) => (entry.proof = 'packages/core/src/index.ts')],
+  ])('rejects a lifecycle contract with %s', (_name, mutate) => {
+    const entries = JSON.parse(FACADE_LIFECYCLE_CONTRACT_SOURCE) as Array<Record<string, unknown>>;
+    const active = entries.find((entry) => entry.classification === 'active-owned')!;
+    mutate(active);
+    expect(() => parseFacadeLifecycleContract(JSON.stringify(entries))).toThrow();
+  });
+
+  it('rejects duplicate lifecycle operations', () => {
+    const entries = JSON.parse(FACADE_LIFECYCLE_CONTRACT_SOURCE) as object[];
+    expect(() => parseFacadeLifecycleContract(JSON.stringify([...entries, entries[0]]))).toThrow(
+      /duplicate facade lifecycle operation/,
+    );
+  });
+
+  it('does not treat record order as product meaning', () => {
+    const root = JSON.parse(ROOT_EXPORT_CONTRACT_SOURCE) as object[];
+    const subpaths = JSON.parse(FACADE_SUBPATH_CONTRACT_SOURCE) as object[];
+    expect(
+      parseRootExportContract(JSON.stringify([...root].reverse())).map((entry) => `${entry.kind}:${entry.name}`),
+    ).toEqual([...ROOT_EXPORT_CONTRACT].reverse().map((entry) => `${entry.kind}:${entry.name}`));
+    expect(parseFacadeSubpathContract(JSON.stringify([...subpaths].reverse())).map((entry) => entry.subpath)).toEqual(
+      [...FACADE_SUBPATH_CONTRACT].reverse().map((entry) => entry.subpath),
+    );
+  });
+
+  it.each([
+    ['empty field', (entry: Record<string, unknown>) => (entry.userStory = '   ')],
+    ['foreign field', (entry: Record<string, unknown>) => (entry.foreign = 'not governed')],
+    ['ineligible role', (entry: Record<string, unknown>) => (entry.role = 'tooling')],
+    ['uninhabited surface class', (entry: Record<string, unknown>) => (entry.surfaceClass = 'absent')],
+    ['missing producer', (entry: Record<string, unknown>) => (entry.producer = '')],
+    ['invalid example proof', (entry: Record<string, unknown>) => (entry.exampleProof = 'README.md')],
+  ])('rejects a root contract with an %s', (_name, mutate) => {
+    const entries = JSON.parse(ROOT_EXPORT_CONTRACT_SOURCE) as Array<Record<string, unknown>>;
+    mutate(entries[0]!);
+    expect(() => parseRootExportContract(JSON.stringify(entries))).toThrow();
+  });
+
+  it.each([
+    ['mismatched specifier', (entry: Record<string, unknown>) => (entry.specifier = 'liteship/wrong')],
+    ['path traversal', (entry: Record<string, unknown>) => (entry.subpath = './../private')],
+    ['unscoped owner', (entry: Record<string, unknown>) => (entry.owner = 'other/core')],
+    ['empty proof symbol', (entry: Record<string, unknown>) => (entry.symbol = '')],
+    ['uninhabited route class', (entry: Record<string, unknown>) => (entry.surfaceClass = 'absent')],
+    ['foreign producer', (entry: Record<string, unknown>) => (entry.producer = 'foreign-package')],
+  ])('rejects a subpath contract with %s', (_name, mutate) => {
+    const entries = JSON.parse(FACADE_SUBPATH_CONTRACT_SOURCE) as Array<Record<string, unknown>>;
+    mutate(entries[0]!);
+    expect(() => parseFacadeSubpathContract(JSON.stringify(entries))).toThrow();
+  });
+
+  it('rejects duplicate root and subpath identities', () => {
+    const roots = JSON.parse(ROOT_EXPORT_CONTRACT_SOURCE) as object[];
+    const subpaths = JSON.parse(FACADE_SUBPATH_CONTRACT_SOURCE) as object[];
+    expect(() => parseRootExportContract(JSON.stringify([...roots, roots[0]]))).toThrow(/duplicate root export/);
+    expect(() => parseFacadeSubpathContract(JSON.stringify([...subpaths, subpaths[0]]))).toThrow(
+      /duplicate facade subpath/,
+    );
+  });
+
+  it('reports malformed authored contract data as a tagged validation failure', () => {
+    let failure: unknown;
+    try {
+      parseRootExportContract('{not-json');
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toMatchObject({
+      _tag: 'ValidationError',
+      module: 'liteship.facade-contract',
+    });
+  });
+});

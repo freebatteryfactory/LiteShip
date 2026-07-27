@@ -6,7 +6,7 @@
 
 # Function: sampleMotionFrame()
 
-> **sampleMotionFrame**(`plan`, `frame`, `durationInFrames`): `ReadonlyMap`\<`string`, `TypedValue`\>
+> **sampleMotionFrame**(`plan`, `frame`, `durationInFrames`): `ReadonlyMap`\<`string`, [`TypedValue`](../../../liteship/src/motion/type-aliases/TypedValue.md)\>
 
 Defined in: [remotion/src/motion.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/motion.ts#L24)
 
@@ -18,7 +18,7 @@ reads THIS to prove the remotion leg equals the `sampleProgram` reference within
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### frame
 
@@ -30,4 +30,4 @@ reads THIS to prove the remotion leg equals the `sampleProgram` reference within
 
 ## Returns
 
-`ReadonlyMap`\<`string`, `TypedValue`\>
+`ReadonlyMap`\<`string`, [`TypedValue`](../../../liteship/src/motion/type-aliases/TypedValue.md)\>

@@ -8,7 +8,7 @@
 
 > **applyVerifiablePatch**(`target`, `envelope`, `currentBaseGraphId`, `capability?`): [`ApplyVerifiablePatchResult`](../type-aliases/ApplyVerifiablePatchResult.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L174)
+Defined in: [web/src/watch-and-prepare.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L172)
 
 Apply a verified envelope to `target`, using native DPU when available or the floor path.
 
@@ -24,7 +24,7 @@ Apply a verified envelope to `target`, using native DPU when available or the fl
 
 ### currentBaseGraphId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ### capability?
 

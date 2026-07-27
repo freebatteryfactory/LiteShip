@@ -8,15 +8,14 @@
 
 > **builtinDecoderSiteFor**(`kind`): readonly `Site`[]
 
-Defined in: [assets/src/contract.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L154)
+Defined in: [assets/src/contract.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L162)
 
 Sites a media kind's BUILT-IN decoder can honestly run on. The video
 built-in shells out to ffprobe (node:child_process / fs / os), so a
 builtin-decoded video capsule is node-only — declaring 'browser' would
 lie to bundlers and site routers. The audio built-in (pure RIFF walk)
 and image built-in (header sniff) are byte-level and run anywhere.
-Analysis kinds have no byte decoder, so they keep the permissive
-default; their dedicated projection factories declare their own sites.
+Dedicated analysis projection factories declare their own sites.
 
 ## Parameters
 

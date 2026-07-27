@@ -8,7 +8,7 @@
 
 > **parseTokenBlocks**(`css`, `sourceFile`): readonly [`TokenBlock`](../interfaces/TokenBlock.md)[]
 
-Defined in: [vite/src/token-transform.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-transform.ts#L56)
+Defined in: [vite/src/token-transform.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-transform.ts#L60)
 
 Parse every `@token` block from CSS source text.
 

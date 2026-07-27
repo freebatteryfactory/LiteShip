@@ -1,3 +1,4 @@
+// PROVES: INV-GATE-AUTHORITY-INTEGRITY
 import { describe, it, expect } from 'vitest';
 import {
   ASSURANCE,
@@ -19,14 +20,23 @@ import {
   noSilentCatchGate,
   noSkippedTestGate,
   noPlaceholderGate,
+  type Authority,
   type Gate,
-} from '@czap/gauntlet';
-import { ValidationError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { ValidationError } from '@liteship/error';
+
+const AUTHORITY_BEHAVIORS = ['advisory', 'blocking'] as const satisfies readonly Authority[];
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+const AUTHORITY_IS_EXACT: Equal<Authority, (typeof AUTHORITY_BEHAVIORS)[number]> = true;
 
 // The gauntlet's own foundations are themselves gated by these tests: the
 // authority ratchet, the assurance ladder, and the error→finding bridge.
 
 describe('assurance ladder', () => {
+  it('keeps release authority binary and leaves finding loudness to Severity', () => {
+    expect(AUTHORITY_IS_EXACT).toBe(true);
+    expect(AUTHORITY_BEHAVIORS).toEqual(['advisory', 'blocking']);
+  });
   it('orders L0..L4 and compares by rank', () => {
     expect(ASSURANCE_LEVELS).toEqual(['L0', 'L1', 'L2', 'L3', 'L4']);
     expect(rankOf('L4')).toBeGreaterThan(rankOf('L1'));
@@ -50,7 +60,7 @@ describe('Finding — the shared vocabulary', () => {
     expect('remediation' in a).toBe(false);
   });
 
-  it('projects a tagged @czap/error into a Finding (one vocabulary)', () => {
+  it('projects a tagged @liteship/error into a Finding (one vocabulary)', () => {
     const f = fromError(ValidationError('Mod.x', 'bad input'), { ruleId: 'gate/x', level: 'L2' });
     expect(f.ruleId).toBe('gate/x');
     expect(f.title).toBe('ValidationError');
@@ -71,7 +81,7 @@ describe('defineGate — the plugin contract', () => {
   it('rejects a gate with no id / no fixtures (authority ratchet enforced at construction)', () => {
     expect(() => defineGate({ ...noBareThrowGate, id: '' })).toThrow();
     // @ts-expect-error — deliberately missing fixtures
-    expect(() => defineGate({ id: 'x', level: 'L1', describe: 'x', run: () => [] })).toThrow();
+    expect(() => defineGate({ id: 'gauntlet/x', level: 'L1', describe: 'x', run: () => [] })).toThrow();
   });
 });
 
@@ -107,7 +117,7 @@ describe('authority ratchet — a gate earns blocking by self-proving', () => {
     // A gate whose mutation does NOT change behaviour → mutation not killed → not self-proven.
     const toothless: Gate = defineGate({
       ...noBareThrowGate,
-      id: 'toothless',
+      id: 'gauntlet/toothless',
       fixtures: {
         ...noBareThrowGate.fixtures,
         mutation: { describe: 'identity mutation (no teeth)', mutate: (g) => g },
@@ -131,21 +141,128 @@ describe('engine — runGates applies earned authority', () => {
     expect(result.outcomes[0]!.authority).toBe('blocking');
   });
 
-  it('an UNPROVEN gate surfaces findings but is demoted to advisory (never blocks)', () => {
+  it('keeps an unproven gate semantic finding advisory but blocks on authority integrity', () => {
     const unproven: Gate = defineGate({
       ...noBareThrowGate,
-      id: 'unproven',
+      id: 'gauntlet/unproven',
+      run: (context) =>
+        noBareThrowGate.run(context).map((entry) => ({ ...entry, ruleId: 'gauntlet/unproven' })),
       fixtures: { ...noBareThrowGate.fixtures, mutation: { describe: 'identity', mutate: (g) => g } },
     });
     const result = runGates([unproven], dirty);
-    expect(result.findings.length).toBe(1);
-    expect(result.findings[0]!.severity).toBe('advisory'); // demoted
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: 'gauntlet/unproven', severity: 'advisory' }),
+        expect.objectContaining({ ruleId: 'gauntlet/authority-integrity', severity: 'error' }),
+      ]),
+    );
+    expect(result.outcomes[0]).toMatchObject({ authority: 'advisory', proof: { selfProven: false } });
+    expect(result.blocked).toBe(true);
+  });
+
+  it('blocks failed qualification even when a waiver suppresses the gate semantic finding', () => {
+    const unproven: Gate = defineGate({
+      ...noBareThrowGate,
+      id: 'gauntlet/unproven-waived',
+      run: (context) =>
+        noBareThrowGate.run(context).map((entry) => ({ ...entry, ruleId: 'gauntlet/unproven-waived' })),
+      fixtures: { ...noBareThrowGate.fixtures, mutation: { describe: 'identity', mutate: (g) => g } },
+    });
+    const result = runGates([unproven], dirty, {
+      now: new Date('2026-01-01T00:00:00.000Z'),
+      waivers: [
+        {
+          ruleId: 'gauntlet/unproven-waived',
+          owner: 'quality-owner',
+          reason: 'prove qualification integrity cannot be suppressed with the semantic finding',
+          expires: '2026-12-31',
+          blastRadius: 'release authority',
+          debtScore: 10,
+        },
+      ],
+    });
+    expect(result.findings).toEqual([
+      expect.objectContaining({ ruleId: 'gauntlet/authority-integrity', severity: 'error' }),
+    ]);
+    expect(result.outcomes[0]!.waived).toHaveLength(1);
+    expect(result.blocked).toBe(true);
+  });
+
+  it('turns a thrown qualification fixture into a bounded blocking receipt', () => {
+    const fixtureFailure: Gate = defineGate({
+      ...noBareThrowGate,
+      id: 'gauntlet/fixture-failure',
+      run: (ctx) => {
+        if (ctx.repoRoot === '/qualification-red') throw new Error('fixture detonated');
+        return [];
+      },
+      fixtures: {
+        ...noBareThrowGate.fixtures,
+        red: {
+          name: 'qualification throws',
+          context: memoryContext({ 'x.ts': "throw new Error('boom');" }, '/qualification-red'),
+        },
+      },
+    });
+    const result = runGates([fixtureFailure], memoryContext({ 'x.ts': 'export const clean = true;' }));
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        ruleId: 'gauntlet/authority-integrity',
+        severity: 'error',
+        detail: expect.stringContaining('Qualification execution failed: fixture detonated'),
+      }),
+    ]);
+    expect(result.outcomes[0]!.proof).toEqual({
+      gateId: 'gauntlet/fixture-failure',
+      redCaught: false,
+      greenClean: false,
+      mutationKilled: false,
+      subjectCoverage: {
+        status: 'opaque',
+        enumerator: 'qualification-execution',
+        enumeratedCount: 0,
+        censusDigest: `sha256:${'0'.repeat(64)}`,
+        reason: 'qualification execution failed before subject coverage could be established',
+      },
+      selfProven: false,
+    });
+    expect(result.blocked).toBe(true);
+  });
+
+  it('preserves a genuine advisory finding from a fully qualified gate', () => {
+    const advisoryGate: Gate = defineGate({
+      id: 'gauntlet/advisory-observation',
+      level: 'L1',
+      describe: 'Reports an observation without blocking.',
+      run: (ctx) =>
+        ctx.readFile('x.ts')?.includes('observe') === true
+          ? [
+              finding({
+                ruleId: 'gauntlet/advisory-observation',
+                severity: 'advisory',
+                level: 'L1',
+                title: 'Observation',
+                detail: 'An advisory observation remains non-blocking after qualification.',
+              }),
+            ]
+          : [],
+      fixtures: {
+        red: { name: 'observable', context: memoryContext({ 'x.ts': 'observe' }) },
+        green: { name: 'quiet', context: memoryContext({ 'x.ts': 'clean' }) },
+        mutation: { describe: 'misses the observation', mutate: (gate) => ({ ...gate, run: () => [] }) },
+      },
+    });
+    const result = runGates([advisoryGate], memoryContext({ 'x.ts': 'observe' }));
+    expect(result.outcomes[0]).toMatchObject({ authority: 'blocking', proof: { selfProven: true } });
+    expect(result.findings).toEqual([
+      expect.objectContaining({ ruleId: 'gauntlet/advisory-observation', severity: 'advisory' }),
+    ]);
     expect(result.blocked).toBe(false);
   });
 
   it('a clean context produces no findings and does not block', () => {
     const clean = memoryContext({
-      'x.ts': "import { ValidationError } from '@czap/error';\nthrow ValidationError('x', 'y');\n",
+      'x.ts': "import { ValidationError } from '@liteship/error';\nthrow ValidationError('x', 'y');\n",
     });
     const result = runGates([noBareThrowGate], clean);
     expect(result.findings).toEqual([]);
@@ -157,6 +274,7 @@ describe('extension — a downstream gate composes through the same engine', () 
   it('a custom gate with real fixtures self-proves and runs alongside built-ins', () => {
     const noTodo: Gate = defineGate({
       id: 'app/no-todo',
+      extension: { namespace: 'app', owner: '@acme/app' },
       level: 'L0',
       describe: 'flags TODO markers',
       run: (ctx) =>
@@ -183,5 +301,23 @@ describe('extension — a downstream gate composes through the same engine', () 
     expect(verifyGate(noTodo).selfProven).toBe(true);
     const result = runGates([noTodo], memoryContext({ 'b.ts': '// TODO: later' }));
     expect(result.blocked).toBe(true);
+  });
+
+  it('refuses unowned downstream namespaces and reserved-namespace squatters', () => {
+    expect(() => defineGate({ ...noBareThrowGate, id: 'acme/no-todo' })).toThrow(/extension metadata/);
+    expect(() =>
+      defineGate({
+        ...noBareThrowGate,
+        id: 'gauntlet/no-todo',
+        extension: { namespace: 'gauntlet', owner: '@acme/app' },
+      }),
+    ).toThrow(/reserved LiteShip namespace/);
+    expect(() =>
+      defineGate({
+        ...noBareThrowGate,
+        id: 'acme/no-todo',
+        extension: { namespace: 'other', owner: '@acme/app' },
+      }),
+    ).toThrow(/exact namespace/);
   });
 });

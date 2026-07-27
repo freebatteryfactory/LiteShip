@@ -33,12 +33,20 @@ describe('red-team runtime regressions', () => {
 
   test('rejects cross-origin runtime URLs by default', () => {
     captureDiagnostics(({ events }) => {
-      expect(allowSameOriginRuntimeUrl('https://attacker.example/stream', 'test', 'cross-origin')).toBeNull();
-      expect(allowSameOriginRuntimeUrl('/stream', 'test', 'same-origin')).toBe('/stream');
+      expect(
+        allowSameOriginRuntimeUrl(
+          'https://attacker.example/stream',
+          'test',
+          'astro/url-policy/cross-origin-url-rejected',
+        ),
+      ).toBeNull();
+      expect(allowSameOriginRuntimeUrl('/stream', 'test', 'astro/url-policy/cross-origin-url-rejected')).toBe(
+        '/stream',
+      );
       expect(events).toEqual([
         expect.objectContaining({
           source: 'test',
-          code: 'cross-origin',
+          code: 'astro/url-policy/cross-origin-url-rejected',
         }),
       ]);
     });
@@ -46,7 +54,21 @@ describe('red-team runtime regressions', () => {
 
   test('rejects unsafe theme prefixes and CSS payloads', () => {
     expect(() => compileTheme({ prefix: 'brand bad', tokens: { primary: '#fff' } })).toThrow(/Invalid theme prefix/);
-    expect(() => compileTheme({ tokens: { primary: 'red;display:block' } })).toThrow(/Unsafe theme token "primary" value/);
+    for (const value of [
+      'red;display:block',
+      'red" onload="alert(1)',
+      "red' onmouseover='alert(1)",
+      'red/*comment',
+      'url(https://attacker.example/pixel)',
+      'red\\3c script',
+      'red\nblue',
+    ]) {
+      expect(() => compileTheme({ tokens: { primary: value } }), value).toThrow(/Unsafe theme token "primary"/);
+    }
+
+    const safe = compileTheme({ tokens: { primary: '#fff' } });
+    const parsed = new DOMParser().parseFromString(`<html style="${safe.inlineStyle}"></html>`, 'text/html');
+    expect(parsed.documentElement.getAttributeNames()).toEqual(['style']);
   });
 
   test('sanitized html strips privileged sinks while keeping safe markup', () => {
@@ -154,7 +176,7 @@ describe('red-team runtime regressions', () => {
     applyBoundaryState(element, boundary!, {
       discrete: { hero: 'compact' },
       outputs: {
-        css: { '--czap-gap': 12, color: 'red' },
+        css: { '--liteship-gap': 12, color: 'red' },
         glsl: {},
         aria: { 'aria-hidden': 'true', onclick: 'alert(1)' },
       },
@@ -162,7 +184,7 @@ describe('red-team runtime regressions', () => {
       aria: { style: 'display:none', role: 'status' },
     });
 
-    expect(element.style.getPropertyValue('--czap-gap')).toBe('12');
+    expect(element.style.getPropertyValue('--liteship-gap')).toBe('12');
     expect(element.style.getPropertyValue('color')).toBe('');
     expect(element.style.getPropertyValue('background-image')).toBe('');
     expect(element.getAttribute('aria-hidden')).toBe('true');

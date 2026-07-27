@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from 'vitest';
-import { Boundary, Millis, CellKernel, StateName } from '@czap/core';
-import type { BoundaryCrossing, ReactiveQuantizer } from '@czap/core';
-import { AnimatedQuantizer, Q } from '@czap/quantizer';
-import type { AnimatedQuantizerShape, InterpolatedFrame } from '@czap/quantizer';
+import { Millis, CellKernel, StateName, defineBoundary } from '@liteship/core';
+import type { BoundaryCrossing, ReactiveQuantizer } from '@liteship/core';
+import { AnimatedQuantizer, defineQuantizer, createQuantizer } from '@liteship/quantizer';
+import type { InterpolatedFrame } from '@liteship/quantizer';
 
 function makeBoundary() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
@@ -48,9 +48,7 @@ function mockQuantizer(
     changes,
     evaluate,
   };
-  const quantizer: ReactiveQuantizer<typeof boundary> = opts?.stateSync
-    ? { ...base, stateSync: opts.stateSync }
-    : base;
+  const quantizer: ReactiveQuantizer<typeof boundary> = opts?.stateSync ? { ...base, stateSync: opts.stateSync } : base;
   return { quantizer, emit: (c: Crossing) => changes.publish(c) };
 }
 
@@ -58,7 +56,7 @@ type Frame = InterpolatedFrame<ReturnType<typeof makeBoundary>>;
 
 /** Collect the first `n` interpolated frames; `settled` resolves once `n` land. */
 function collectN(
-  animated: AnimatedQuantizerShape<ReturnType<typeof makeBoundary>>,
+  animated: AnimatedQuantizer<ReturnType<typeof makeBoundary>>,
   n: number,
 ): { frames: Frame[]; settled: Promise<Frame[]>; dispose: () => void } {
   const frames: Frame[] = [];
@@ -74,7 +72,7 @@ function collectN(
 }
 
 /** Collect interpolated frames until one lands (`progress >= 1`). */
-function collectUntilLanded(animated: AnimatedQuantizerShape<ReturnType<typeof makeBoundary>>): {
+function collectUntilLanded(animated: AnimatedQuantizer<ReturnType<typeof makeBoundary>>): {
   frames: Frame[];
   settled: Promise<Frame[]>;
   dispose: () => void;
@@ -96,7 +94,7 @@ describe('AnimatedQuantizer.make', () => {
     const boundary = makeBoundary();
     const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => 'expanded');
 
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       { 'compact->expanded': { duration: Millis(0), delay: Millis(1) } },
       {
@@ -108,7 +106,7 @@ describe('AnimatedQuantizer.make', () => {
     emit(crossing('compact', 'expanded', 800));
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
+    await animated.dispose();
 
     expect(frames).toHaveLength(1);
     expect(frames[0]).toEqual({
@@ -126,7 +124,7 @@ describe('AnimatedQuantizer.make', () => {
       return 'expanded';
     });
 
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       { 'compact->expanded': { duration: Millis(20) } },
       {
@@ -141,10 +139,10 @@ describe('AnimatedQuantizer.make', () => {
     expect(animated.evaluate(800)).toBe('expanded');
     expect(evaluated).toBe(800);
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
-  test('forwards stateSync when the wrapped quantizer exposes one', async () => {
+  test('stateSync reads the wrapper landed state instead of forwarding the ahead-of-animation base state', async () => {
     const boundary = makeBoundary();
     let syncCalls = 0;
     const { quantizer } = mockQuantizer(boundary, 'compact', () => 'compact', {
@@ -154,7 +152,7 @@ describe('AnimatedQuantizer.make', () => {
       },
     });
 
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       { 'compact->expanded': { duration: Millis(0) } },
       { compact: { opacity: 0 }, expanded: { opacity: 1 } },
@@ -162,9 +160,38 @@ describe('AnimatedQuantizer.make', () => {
 
     expect(typeof animated.stateSync).toBe('function');
     expect(animated.stateSync!()).toBe('compact');
-    expect(syncCalls).toBe(1);
+    expect(syncCalls).toBe(0);
 
-    await lifetime.dispose();
+    await animated.dispose();
+  });
+
+  test('stateSync and state.read agree while a transition is in flight and after it lands', async () => {
+    const boundary = makeBoundary();
+    let baseState: QState = 'compact';
+    const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => baseState, {
+      stateSync: () => baseState,
+    });
+
+    vi.useFakeTimers();
+    try {
+      const animated = AnimatedQuantizer.make(
+        quantizer,
+        { '*': { duration: Millis(50) } },
+        { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+      );
+      baseState = 'expanded';
+      emit(crossing('compact', 'expanded', 900));
+
+      expect(animated.state.read()).toBe('compact');
+      expect(animated.stateSync?.()).toBe('compact');
+
+      await vi.advanceTimersByTimeAsync(80);
+      expect(animated.state.read()).toBe('expanded');
+      expect(animated.stateSync?.()).toBe('expanded');
+      await animated.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test('emits interpolated frames for positive-duration transitions and snaps string outputs at halfway', async () => {
@@ -173,7 +200,7 @@ describe('AnimatedQuantizer.make', () => {
 
     vi.useFakeTimers();
     try {
-      const { animated, lifetime } = AnimatedQuantizer.make(
+      const animated = AnimatedQuantizer.make(
         quantizer,
         { '*': { duration: Millis(50) } },
         {
@@ -186,7 +213,7 @@ describe('AnimatedQuantizer.make', () => {
       await vi.advanceTimersByTimeAsync(120);
       const frames = await settled;
       dispose();
-      await lifetime.dispose();
+      await animated.dispose();
 
       expect(frames.length).toBeGreaterThanOrEqual(2);
       expect(frames[0]!.progress).toBeGreaterThanOrEqual(0);
@@ -207,13 +234,13 @@ describe('AnimatedQuantizer.make', () => {
     const boundary = makeBoundary();
     const { quantizer } = mockQuantizer(boundary, 'compact', () => 'compact');
 
-    const { animated, lifetime } = AnimatedQuantizer.make(quantizer, {});
+    const animated = AnimatedQuantizer.make(quantizer, {});
     const transition = animated.transition.getTransition('compact', 'expanded');
 
     expect(transition.duration).toBe(0);
     expect(transition.delay).toBeUndefined();
 
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('honors delayed transitions and still settles on the latest output values', async () => {
@@ -222,7 +249,7 @@ describe('AnimatedQuantizer.make', () => {
 
     vi.useFakeTimers();
     try {
-      const { animated, lifetime } = AnimatedQuantizer.make(
+      const animated = AnimatedQuantizer.make(
         quantizer,
         { '*': { duration: Millis(30), delay: Millis(20) } },
         {
@@ -235,7 +262,7 @@ describe('AnimatedQuantizer.make', () => {
       await vi.advanceTimersByTimeAsync(100);
       const frames = await settled;
       dispose();
-      await lifetime.dispose();
+      await animated.dispose();
 
       expect(frames[0]!.state).toBe('expanded');
       expect(frames.at(-1)!.progress).toBeGreaterThan(0.5);
@@ -252,7 +279,7 @@ describe('AnimatedQuantizer.make', () => {
 
     vi.useFakeTimers();
     try {
-      const { animated, lifetime } = AnimatedQuantizer.make(
+      const animated = AnimatedQuantizer.make(
         quantizer,
         { '*': { duration: Millis(200) } },
         {
@@ -268,7 +295,7 @@ describe('AnimatedQuantizer.make', () => {
       await vi.advanceTimersByTimeAsync(500);
       const frames = await settled;
       dispose();
-      await lifetime.dispose();
+      await animated.dispose();
 
       // The second crossing should have interrupted the first: the last frame
       // targets 'compact' (the second crossing's destination).
@@ -279,11 +306,38 @@ describe('AnimatedQuantizer.make', () => {
     }
   });
 
+  test('a crossing published reentrantly from a terminal frame keeps the newest landed state', async () => {
+    const boundary = makeBoundary();
+    const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => 'compact');
+    const animated = AnimatedQuantizer.make(
+      quantizer,
+      { '*': { duration: Millis(0) } },
+      { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+    );
+    const frameStates: QState[] = [];
+    let reentered = false;
+    animated.interpolated.subscribe((frame) => {
+      frameStates.push(frame.state);
+      if (!reentered) {
+        reentered = true;
+        emit(crossing('expanded', 'compact', 100, 1, 1));
+      }
+    });
+
+    emit(crossing('compact', 'expanded', 900));
+    await Promise.resolve();
+
+    expect(frameStates).toEqual(['expanded', 'compact']);
+    expect(animated.state.read()).toBe('compact');
+    expect(animated.stateSync?.()).toBe('compact');
+    await animated.dispose();
+  });
+
   test('lerps outputs with keys present in only one side', async () => {
     const boundary = makeBoundary();
     const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => 'expanded');
 
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       { '*': { duration: Millis(0) } },
       {
@@ -295,7 +349,7 @@ describe('AnimatedQuantizer.make', () => {
     emit(crossing('compact', 'expanded', 900));
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
+    await animated.dispose();
 
     expect(frames).toHaveLength(1);
     // Keys from only the target side should snap to their target values.
@@ -307,12 +361,12 @@ describe('AnimatedQuantizer.make', () => {
     const boundary = makeBoundary();
     const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => 'expanded');
 
-    const { animated, lifetime } = AnimatedQuantizer.make(quantizer, { '*': { duration: Millis(0) } });
+    const animated = AnimatedQuantizer.make(quantizer, { '*': { duration: Millis(0) } });
     const { settled, dispose } = collectN(animated, 1);
     emit(crossing('compact', 'expanded', 900));
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
+    await animated.dispose();
 
     expect(frames).toHaveLength(1);
     expect(frames[0]!.state).toBe('expanded');
@@ -326,7 +380,7 @@ describe('AnimatedQuantizer.make', () => {
     vi.useFakeTimers();
     vi.stubGlobal('performance', undefined);
     try {
-      const { animated, lifetime } = AnimatedQuantizer.make(
+      const animated = AnimatedQuantizer.make(
         quantizer,
         { '*': { duration: Millis(20) } },
         {
@@ -339,7 +393,7 @@ describe('AnimatedQuantizer.make', () => {
       await vi.advanceTimersByTimeAsync(80);
       const frames = await settled;
       dispose();
-      await lifetime.dispose();
+      await animated.dispose();
 
       expect(frames).toHaveLength(2);
       expect(frames[0]!.outputs.fromOnly).toBe('compact-label');
@@ -357,30 +411,32 @@ describe('AnimatedQuantizer.make', () => {
     const boundary = makeBoundary();
     const { quantizer } = mockQuantizer(boundary, 'compact', () => 'compact');
 
-    const { animated, lifetime } = AnimatedQuantizer.make(quantizer, { '*': { duration: Millis(20) } });
+    const animated = AnimatedQuantizer.make(quantizer, { '*': { duration: Millis(20) } });
     // No crossing is ever emitted — nothing animates. Subscribe then dispose;
     // disposal closes the fan-out and tears down cleanly (no throw).
     const dispose = animated.interpolated.subscribe(() => undefined);
     dispose();
-    await lifetime.dispose();
+    await animated.dispose();
   });
 
   test('derives interpolation outputs from a LiveQuantizer config.outputs.css when outputs are omitted', async () => {
     const boundary = makeBoundary();
-    const config = Q.from(boundary).outputs({
-      css: {
-        compact: { opacity: '0', width: '10px' },
-        expanded: { opacity: '1', width: '20px' },
+    const config = defineQuantizer(boundary, {
+      outputs: {
+        css: {
+          compact: { opacity: '0', width: '10px' },
+          expanded: { opacity: '1', width: '20px' },
+        },
       },
     });
-    const { quantizer: live, lifetime: liveLifetime } = config.create();
-    const { animated, lifetime } = AnimatedQuantizer.make(live, { '*': { duration: 0 } });
+    const live = createQuantizer(config);
+    const animated = AnimatedQuantizer.make(live, { '*': { duration: 0 } });
     const { settled, dispose } = collectN(animated, 1);
     live.evaluate(900); // compact -> expanded crossing
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
-    await liveLifetime.dispose();
+    await animated.dispose();
+    await live.dispose();
 
     expect(frames).toHaveLength(1);
     // '1' is finite-numeric and coerces so it lerps; '20px' passes through as a string.
@@ -393,14 +449,16 @@ describe('AnimatedQuantizer.make', () => {
 
   test('explicit outputs still override derivation for a LiveQuantizer', async () => {
     const boundary = makeBoundary();
-    const config = Q.from(boundary).outputs({
-      css: {
-        compact: { opacity: '0.25' },
-        expanded: { opacity: '0.75' },
+    const config = defineQuantizer(boundary, {
+      outputs: {
+        css: {
+          compact: { opacity: '0.25' },
+          expanded: { opacity: '0.75' },
+        },
       },
     });
-    const { quantizer: live, lifetime: liveLifetime } = config.create();
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const live = createQuantizer(config);
+    const animated = AnimatedQuantizer.make(
       live,
       { '*': { duration: 0 } },
       { compact: { scale: 1 }, expanded: { scale: 2 } },
@@ -409,8 +467,8 @@ describe('AnimatedQuantizer.make', () => {
     live.evaluate(900);
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
-    await liveLifetime.dispose();
+    await animated.dispose();
+    await live.dispose();
 
     expect(frames).toHaveLength(1);
     expect(frames[0]!.outputs).toEqual({ scale: 2 });
@@ -422,7 +480,7 @@ describe('AnimatedQuantizer.make', () => {
 
     vi.useFakeTimers();
     try {
-      const { animated, lifetime } = AnimatedQuantizer.make(
+      const animated = AnimatedQuantizer.make(
         quantizer,
         { '*': { duration: Millis(20), easing: () => 0.5 } },
         {
@@ -435,7 +493,7 @@ describe('AnimatedQuantizer.make', () => {
       await vi.advanceTimersByTimeAsync(40);
       const frames = await settled;
       dispose();
-      await lifetime.dispose();
+      await animated.dispose();
 
       expect(frames).toHaveLength(1);
       expect(frames[0]!.outputs.label).toBe('expanded');
@@ -476,7 +534,7 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
   test('drives the frame cadence from the injected scheduler, not the 16ms loop', async () => {
     const clock = microtaskClock();
     const { quantizer, emit } = crossingQuantizer();
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       { 'compact->expanded': { duration: Millis(64) } },
       { compact: { opacity: 0 }, expanded: { opacity: 1 } },
@@ -486,7 +544,7 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
     emit(crossing('compact', 'expanded', 800));
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
+    await animated.dispose();
 
     // The scheduler was the cadence source.
     expect(clock.calls()).toBeGreaterThan(0);
@@ -503,7 +561,7 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
     vi.useFakeTimers();
     try {
       const { quantizer, emit } = crossingQuantizer();
-      const { animated, lifetime } = AnimatedQuantizer.make(
+      const animated = AnimatedQuantizer.make(
         quantizer,
         { 'compact->expanded': { duration: Millis(32) } },
         { compact: { opacity: 0 }, expanded: { opacity: 1 } },
@@ -514,7 +572,7 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
       await vi.advanceTimersByTimeAsync(80);
       const frames = await settled;
       dispose();
-      await lifetime.dispose();
+      await animated.dispose();
 
       expect(frames.at(-1)?.progress).toBe(1);
       expect(frames.at(-1)?.outputs.opacity).toBe(1);
@@ -530,7 +588,7 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
     // delay and the transition, so the stream completes with the landed frame.
     const clock = microtaskClock();
     const { quantizer, emit } = crossingQuantizer();
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       { 'compact->expanded': { duration: Millis(48), delay: Millis(32) } },
       { compact: { opacity: 0 }, expanded: { opacity: 1 } },
@@ -540,7 +598,7 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
     emit(crossing('compact', 'expanded', 800));
     const frames = await settled;
     dispose();
-    await lifetime.dispose();
+    await animated.dispose();
 
     // The delay was driven by the scheduler too (extra scheduled ticks beyond the
     // transition's own), and the transition still lands cleanly.
@@ -599,7 +657,7 @@ describe('AnimatedQuantizer.make — dispose promptness (scar S3.2)', () => {
     const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => 'expanded');
     const recorder = recordingScheduler();
 
-    const { animated, lifetime } = AnimatedQuantizer.make(
+    const animated = AnimatedQuantizer.make(
       quantizer,
       // Long duration so a single tick never lands the animation — it stays
       // in-flight, parked on the next pending tick.
@@ -625,7 +683,7 @@ describe('AnimatedQuantizer.make — dispose promptness (scar S3.2)', () => {
     const schedulesAtDispose = recorder.scheduleCount();
 
     // Dispose mid-animation. The clock is NEVER stepped again after this point.
-    await lifetime.dispose();
+    await animated.dispose();
     await flush();
 
     // LAW (S3.2): the pending tick's finalizer ran promptly — `cancel` fired
@@ -634,5 +692,62 @@ describe('AnimatedQuantizer.make — dispose promptness (scar S3.2)', () => {
     expect(recorder.scheduleCount()).toBe(schedulesAtDispose);
 
     unsubscribe();
+  });
+
+  test('dispose freezes the landed state and post-dispose evaluate cannot advance the wrapped quantizer', async () => {
+    const boundary = makeBoundary();
+    let evaluateCalls = 0;
+    const { quantizer, emit } = mockQuantizer(boundary, 'compact', () => {
+      evaluateCalls += 1;
+      return 'expanded';
+    });
+    const recorder = recordingScheduler();
+    const animated = AnimatedQuantizer.make(
+      quantizer,
+      { '*': { duration: Millis(1000) } },
+      { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+      { scheduler: recorder.scheduler },
+    );
+
+    emit(crossing('compact', 'expanded', 900));
+    await flush();
+    recorder.step(0);
+    await flush();
+    await animated.dispose();
+
+    expect(animated.state.closed).toBe(true);
+    expect(animated.interpolated.closed).toBe(true);
+    expect(animated.state.read()).toBe('compact');
+    expect(animated.stateSync?.()).toBe('compact');
+    expect(animated.evaluate(900)).toBe('compact');
+    expect(evaluateCalls).toBe(0);
+  });
+
+  test('a throwing frame completion cannot strand the landed-state cell open', async () => {
+    const boundary = makeBoundary();
+    const { quantizer } = mockQuantizer(boundary, 'compact', () => 'compact');
+    const animated = AnimatedQuantizer.make(
+      quantizer,
+      { '*': { duration: Millis(0) } },
+      { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+    );
+    let stateCompleted = 0;
+    animated.interpolated.subscribe({
+      next: () => undefined,
+      complete: () => {
+        throw new Error('frame-complete-fault');
+      },
+    });
+    animated.state.subscribe({
+      next: () => undefined,
+      complete: () => {
+        stateCompleted += 1;
+      },
+    });
+
+    await expect(animated.dispose()).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
+    expect(animated.interpolated.closed).toBe(true);
+    expect(animated.state.closed).toBe(true);
+    expect(stateCompleted).toBe(1);
   });
 });

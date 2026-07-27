@@ -8,7 +8,7 @@
 
 > `const` **Scheduler**: `object`
 
-Defined in: [core/src/scheduler.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L143)
+Defined in: [core/src/reactive/scheduler.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L143)
 
 Scheduler — clock abstraction that decouples animation driver from real time.
 Pick the impl that matches the runtime: `raf` in browser, `noop` on the

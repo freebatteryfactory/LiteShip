@@ -6,13 +6,13 @@
 
 # Interface: RafDebouncedTrigger()
 
-Defined in: [core/src/scheduler.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L169)
+Defined in: [core/src/reactive/scheduler.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L170)
 
 A coalescing trigger from [rafDebounce](../functions/rafDebounce.md): call to schedule, `.cancel()` to drop a pending frame.
 
 > **RafDebouncedTrigger**(): `void`
 
-Defined in: [core/src/scheduler.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L171)
+Defined in: [core/src/reactive/scheduler.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L172)
 
 Request a `callback` run on the next frame; repeated calls before it fires collapse to one.
 
@@ -26,7 +26,7 @@ Request a `callback` run on the next frame; repeated calls before it fires colla
 
 > **cancel**(): `void`
 
-Defined in: [core/src/scheduler.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/scheduler.ts#L173)
+Defined in: [core/src/reactive/scheduler.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/scheduler.ts#L174)
 
 Drop a pending coalesced frame, if any. Idempotent — safe to call repeatedly.
 

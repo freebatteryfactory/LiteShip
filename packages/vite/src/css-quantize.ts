@@ -8,17 +8,17 @@
  * @module
  */
 
-import { Diagnostics, inputToSource, type Boundary } from '@czap/core';
-import { CSSCompiler, type CSSAtRuleGroup, type CSSRule, type CSSStateInput } from '@czap/compiler';
-import { normalizeCssLineEndings } from './normalize-css-eol.js';
+import { Diagnostics, inputToSource, type Boundary } from '@liteship/core';
+import { CSSCompiler, type CSSAtRuleGroup, type CSSRule, type CSSStateInput } from '@liteship/compiler';
 import {
+  normalizeCssLineEndings,
   blankCssCommentsAndStrings,
   braceDepthDelta,
   lineOfOffset,
   parseFlatDeclarations,
   skipSegment,
   skipWsAndComments,
-} from './css-scan.js';
+} from '@liteship/compiler/parse';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -329,7 +329,7 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
     // warn with the offending segment head so the author can find the typo.
     if (terminator === '' && pos >= css.length && buf.trim().length > 0) {
       Diagnostics.warn({
-        source: 'czap/vite.css-quantize',
+        source: 'liteship/vite.css-quantize',
         code: 'unterminated-quantize-segment',
         message:
           `A segment inside a @quantize state never terminated (unbalanced parenthesis or missing brace?): ` +
@@ -492,7 +492,7 @@ export function parseQuantizeBlocks(css: string, sourceFile: string): readonly Q
 }
 
 // ---------------------------------------------------------------------------
-// Compiler (delegates to @czap/compiler CSSCompiler)
+// Compiler (delegates to @liteship/compiler CSSCompiler)
 // ---------------------------------------------------------------------------
 
 /**
@@ -515,7 +515,7 @@ export interface QuantizeSheetContext {
 }
 
 /** Sanitize a boundary input identifier into its CSS container name. */
-function containerNameOf(boundary: Boundary.Shape): string {
+function containerNameOf(boundary: Boundary): string {
   return boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
 }
 
@@ -560,7 +560,7 @@ export function viewportQueryAxis(input: string): 'width' | 'height' | null {
  * default. A host whose layout can't have `:root` be a container (a
  * size-contained `:root` removes it from its parent's size calc, which a
  * fixed/absolute viewport-locked wrapper conflicts with) sets the plugin's
- * `quantize.container` to a named selector (e.g. `.czap-vp`) and is then
+ * `quantize.container` to a named selector (e.g. `.liteship-vp`) and is then
  * responsible for sizing that element to the viewport. Width-only sheets
  * stay `inline-size`; a `viewport-height` name upgrades to `size` + a
  * `100dvh` block-size on the chosen selector.
@@ -593,7 +593,7 @@ export function viewportContainmentRule(names: Iterable<string>, selector: strin
  * container, so a {@link Diagnostics.warn} teaches the literal
  * declaration to add.
  */
-function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?: QuantizeSheetContext): string | null {
+function containmentRule(block: QuantizeBlock, boundary: Boundary, sheet?: QuantizeSheetContext): string | null {
   const containerName = containerNameOf(boundary);
 
   if (viewportQueryAxis(boundary.input) !== null) {
@@ -612,7 +612,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
     // message; container queries only measure width and height, so
     // auto-containment would claim a dimension this signal does not have.
     Diagnostics.warn({
-      source: 'czap/vite.css-quantize',
+      source: 'liteship/vite.css-quantize',
       code: 'container-not-declared',
       message:
         `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) measures "${boundary.input}", ` +
@@ -620,7 +620,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
         `viewport.height compile to (width ...) / (height ...) conditions, so no container was ` +
         `auto-declared and the compiled rules will match nothing. ` +
         `Fix: re-author the boundary on viewport.width or viewport.height, or use the runtime ` +
-        `satellite path (satelliteAttrs({ boundary }) + [data-czap-state="..."] selectors).`,
+        `adaptive path (adaptiveAttrs({ boundary }) + [data-liteship-state="..."] selectors).`,
       detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
     });
     return null;
@@ -633,7 +633,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
   const heightAxis = boundary.input === 'height' || boundary.input.endsWith('.height');
   const containment = heightAxis ? 'size' : 'inline-size';
   Diagnostics.warn({
-    source: 'czap/vite.css-quantize',
+    source: 'liteship/vite.css-quantize',
     code: 'container-not-declared',
     message:
       `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) compiles to ` +
@@ -648,11 +648,11 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
 
 /**
  * Compile a parsed {@link QuantizeBlock} plus its resolved
- * {@link Boundary.Shape} into CSS `@container` query rules. Delegates
+ * {@link Boundary} into CSS `@container` query rules. Delegates
  * to the canonical `CSSCompiler` to avoid duplicating threshold-to-query
  * logic.
  *
- * Bare declarations keep the default `.czap-boundary` selector; nested
+ * Bare declarations keep the default `.liteship-boundary` selector; nested
  * rules each compile to their own selector inside the state's
  * `@container` block.
  *
@@ -666,11 +666,7 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
  * emit a `container-not-declared` diagnostic naming the declaration to
  * add.
  */
-export function compileQuantizeBlock(
-  block: QuantizeBlock,
-  boundary: Boundary.Shape,
-  sheet?: QuantizeSheetContext,
-): string {
+export function compileQuantizeBlock(block: QuantizeBlock, boundary: Boundary, sheet?: QuantizeSheetContext): string {
   const mapAtRuleGroup = (group: QuantizeAtRuleGroup): CSSAtRuleGroup => ({
     prelude: group.prelude,
     bareProps: group.bareProps,

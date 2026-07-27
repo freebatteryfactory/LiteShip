@@ -6,7 +6,7 @@
 
 # Variable: DEMO\_COMPONENT\_CATALOG
 
-> `const` **DEMO\_COMPONENT\_CATALOG**: `ComponentCatalog`
+> `const` **DEMO\_COMPONENT\_CATALOG**: [`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: [genui/src/demo-catalog.ts:12](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/demo-catalog.ts#L12)
 

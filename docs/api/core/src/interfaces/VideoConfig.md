@@ -6,17 +6,17 @@
 
 # Interface: VideoConfig
 
-Defined in: [core/src/video.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L23)
+Defined in: [core/src/media/video.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L24)
 
-Configuration for a [VideoRenderer](../variables/VideoRenderer.md): resolution, target fps, and total duration.
+Configuration for a [VideoRenderer](../type-aliases/VideoRenderer.md): resolution, target fps, and total duration.
 
 ## Properties
 
 ### durationMs
 
-> `readonly` **durationMs**: `Millis`
+> `readonly` **durationMs**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
-Defined in: [core/src/video.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L27)
+Defined in: [core/src/media/video.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L28)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/video.ts:27](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **fps**: `number`
 
-Defined in: [core/src/video.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L24)
+Defined in: [core/src/media/video.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L25)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/video.ts:24](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **height**: `number`
 
-Defined in: [core/src/video.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L26)
+Defined in: [core/src/media/video.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L27)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [core/src/video.ts:26](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **width**: `number`
 
-Defined in: [core/src/video.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/video.ts#L25)
+Defined in: [core/src/media/video.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L26)

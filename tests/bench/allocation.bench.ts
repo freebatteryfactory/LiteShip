@@ -1,6 +1,6 @@
 /**
  * Allocation bench — the per-op LIVE-allocation measurement for the two
- * "zero-allocation hot path" claims (`@czap/core` compositor compose +
+ * "zero-allocation hot path" claims (`@liteship/core` compositor compose +
  * token-buffer push/drainInto). Unlike a throughput bench (ops/sec via tinybench),
  * this measures HEAP behaviour: the bytes that SURVIVE a forced `global.gc()` per
  * op. It MUST run under `node --expose-gc`.

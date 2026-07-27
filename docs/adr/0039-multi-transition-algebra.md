@@ -99,14 +99,30 @@ receipt.
   carries per-window easing precisely; the native path keeps ONE timing function, so
   the backend stays untouched (the important invariant is the multi-offset STRUCTURE).
 
+## 0.21 ontology amendment (2026-07-26)
+
+The original phrase “`TransitionProgram` IR” described its role too broadly. The
+public concepts are now separated by what they can actually do:
+
+- `TransitionProgram` is the authored recursive composition tree.
+- `TransitionTimeline` is the deterministic resolved schedule produced by
+  `lowerTransitionProgram`.
+- `RuntimeWritePlan` is the admitted executable leaf-write plan consumed by
+  Scene and host adapters.
+- `MotionDirectivePayload` is Astro's wire envelope around reveal intent,
+  runtime plan, signals, and threshold; it is not another motion program.
+
+This amendment preserves the algebra and lowering behavior while removing the
+old one-noun-for-several-roles ambiguity.
+
 ## References
 
-- `packages/core/src/transition-program.ts` — the IR + `lowerTransitionProgram` /
+- `packages/core/src/motion/transition-program.ts` — the authored tree + `lowerTransitionProgram` /
   `interpretProgram` / `sampleProgramWindows`
-- `packages/core/src/interpret-transition.ts` — `keyframesForRouting` DELETED;
+- `packages/core/src/motion/interpret-transition.ts` — `keyframesForRouting` DELETED;
   `twoFrameKeyframes` single-step path; `RuntimeWritePlan.windows`
-- `packages/core/src/plan.ts` — the ordering substrate (`Plan.make`/`topoSort`)
-- `packages/core/src/reveal.ts` (`lowerRevealChain`), `packages/core/src/stagger.ts`
+- `packages/core/src/authoring/plan.ts` — the ordering substrate (`Plan.make`/`topoSort`)
+- `packages/core/src/motion/reveal.ts` (`lowerRevealChain`), `packages/core/src/motion/stagger.ts`
   (`staggerProgram`) — authoring sugar
 - `packages/astro/src/runtime/write-continuous-map.ts` — the floor reads the windows
 - Supersedes the `EdgeType`-as-algebra framing in **ADR-0035**; ADR-0035 keeps the

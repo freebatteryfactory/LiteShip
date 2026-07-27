@@ -16,7 +16,7 @@ describe('MCP stdio transport (auto-run guard, spawned)', () => {
   it('responds to tools/list piped via stdin', async () => {
     await withSpawned(
       'pnpm',
-      ['exec', 'tsx', 'packages/mcp-server/src/stdio.ts'],
+      ['exec', 'tsx', 'packages/mcp-server/src/stdio-server.ts'],
       async (handle) => {
         const responseLine = await pipeOneRequest(handle, {
           jsonrpc: '2.0', id: 1, method: 'tools/list', params: {},

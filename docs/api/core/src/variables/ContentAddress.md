@@ -6,9 +6,9 @@
 
 # Variable: ContentAddress
 
-> **ContentAddress**: (`value`) => `ContentAddress`
+> **ContentAddress**: (`value`) => [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/brands.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L42)
+Defined in: [core/src/schema/brands.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L42)
 
 Wrap a plain string as a ContentAddress.
 
@@ -20,7 +20,7 @@ Wrap a plain string as a ContentAddress.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ## Throws
 

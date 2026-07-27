@@ -1,7 +1,7 @@
 /**
  * BlendTree determinism — f32-canonical + accumulation-order independence.
  *
- * `BlendTree.computeBlend` (packages/core/src/blend.ts) is a pure f64 weighted
+ * `BlendTree.computeBlend` (packages/core/src/motion/blend.ts) is a pure f64 weighted
  * average with NO WASM twin and NO parity test — yet it sums per-node
  * contributions by iterating `nodes.values()` in Map insertion order. A weighted
  * sum in IEEE-754 is NOT associative: reordering the addends shifts the rounding,
@@ -22,7 +22,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
-import { BlendTree } from '@czap/core';
+import { createBlendTree } from '@liteship/core';
 
 type Vec = { x: number; y: number; z: number };
 
@@ -35,7 +35,7 @@ interface Entry {
 
 /** Build a tree, add entries in the given order, and compute the blend. */
 function blendInOrder(entries: readonly Entry[]): Vec {
-  const { tree } = BlendTree.make<Vec>();
+  const tree = createBlendTree<Vec>();
   for (const e of entries) tree.add(e.name, e.value, e.weight);
   return tree.compute();
 }

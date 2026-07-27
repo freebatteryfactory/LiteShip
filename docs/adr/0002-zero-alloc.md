@@ -14,7 +14,7 @@ Per-frame hot paths allocate zero objects. Four mechanisms:
 
 1. **Pooled composite state.** `CompositorStatePool` hands out pre-allocated `CompositeState` instances; compositor writes in place; renderer returns them (`packages/core/src/compositor-pool.ts`).
 2. **Bitmap-backed dirty tracking.** `DirtyFlags` is a bitmask, not a `Set` (`packages/core/src/dirty.ts`).
-3. **Float64Array dense ECS storage.** Contiguous typed arrays with index-wrapping writes (`packages/core/src/ecs.ts`, `_makeDenseStore` from L61).
+3. **Float64Array dense ECS storage.** Contiguous typed arrays behind Part-owned writers (`packages/core/src/ecs/runtime.ts`, `createDenseStore`).
 4. **Microtask batching.** Dirty marks accumulate within a microtask, then flush once: one evaluate → one quantize → one compile → one DOM write per coalesced burst (`compositor.ts`).
 
 The per-frame inner loop is plain JS. Effect is used only for setup/teardown (scoped resources), never inside rAF.
@@ -25,14 +25,14 @@ The per-frame inner loop is plain JS. Effect is used only for setup/teardown (sc
 - `DirtyFlags` skips unchanged quantizers: **50–80% recompute elimination** typical.
 - `CompositorStatePool` caps at `COMPOSITOR_POOL_CAP` (`defaults.ts`); beyond cap, `acquire()` returns a fresh instance. Documented tradeoff, not silent fallback.
 - `DirtyFlags` caps at `DIRTY_FLAGS_MAX`; beyond cap, full recomputation runs. Crossing the cap is a signal to rearchitect.
-- Dense stores throw `RangeError` at capacity (`ecs.ts:88-89`); callers size for their workload.
+- Dense stores refuse capacity overflow through the tagged LiteShip error contract; callers size for their workload.
 - `DenseStore.view()` Float64Array shares layout with the WASM escape-hatch input buffer. Zero-copy across the JS/WASM tier boundary.
 
 ## Evidence
 
 - `Boundary.evaluate` at **71 ns / 10M+ ops/s**; `Compositor.computeState` at **~42 μs**. Together 0.05–0.25% of the 16 ms frame budget.
 - `ECS World tick — 100 entities (dense)` at **3893 ns** vs sparse at **21789 ns** (5.6×).
-- Bench source: `tests/bench/core.bench.ts`. Gate enforcement: `scripts/bench-gate.ts`. Numbers above are baseline reference points; the *current* gate posture is recorded per-run in `benchmarks/directive-gate.json` and rolled up into `reports/runtime-seams.json`. Read those first when verifying claims; this ADR is the design rationale, not the live ledger.
+- Bench source: `tests/bench/core.bench.ts`. Gate enforcement: `scripts/bench-gate.ts`. Numbers above are baseline reference points; the _current_ gate posture is recorded per-run in `benchmarks/directive-gate.json` and rolled up into `reports/runtime-seams.json`. Read those first when verifying claims; this ADR is the design rationale, not the live ledger.
 - **Transport cost floor** (diagnostic `worker-runtime-startup`): the off-thread seam is inherent. Node/BenchWorker median overhead ~75–80% (support ~32 μs/iter, parity ~17 μs). Dominant residual stages (`state-delivery:message-receipt` for one microtask turn in Node, structured-clone + event-loop hop in browser, Chromium ~100 μs; and `request-compute:dispatch-send`) are `support-only` in `WORKER_STARTUP_DIAGNOSTIC_STAGE_LABELS`: no in-process analogue by design. SAB-backed delivery rejected (strings in `BootstrapQuantizerRegistration` still need encoding). **Tradeoff:** keep structured-clone envelopes; residual is boundary cost, not product debt. Threshold `WORKER_TRANSPORT_FLOOR_THRESHOLD = 100%` gives ~22 pp headroom; reducible shared portion is hard-gated via `worker-runtime-startup-shared` (15%).
 
 ## Rejected alternatives
@@ -42,12 +42,12 @@ The per-frame inner loop is plain JS. Effect is used only for setup/teardown (sc
 
 ## References
 
-- `packages/core/src/compositor.ts`, `compositor-pool.ts`, `dirty.ts`, `ecs.ts`, `frame-budget.ts`
+- `packages/core/src/media/compositor.ts`, `compositor-pool.ts`, `packages/core/src/reactive/dirty.ts`, `packages/core/src/ecs/runtime.ts`, `frame-budget.ts`
 - `tests/bench/core.bench.ts`
 
 ## Amendment (2026-04-23): Dense ECS Systems in Scene Playback
 
-Scene playback in `@czap/scene` uses the dense `Part` stores from `@czap/core` for per-frame position/opacity/volume/audioPhase. Each dense system reads its query store's `Float64Array` view directly and mutates in place. This matches the pool/dirty-flags/frame-budget discipline already in force for the compositor working line.
+Scene playback in `@liteship/scene` uses dense `Part<T>` stores from `@liteship/core/ecs` for per-frame numeric state. Each dense system receives read-only packed views and an owner-authorized writer. This matches the pool/dirty-flags/frame-budget discipline already in force for the compositor working line without exposing an unscoped mutation handle.
 
 The scene compiler (`packages/scene/src/compile.ts`) spawns one ECS entity per declared track at world-construction time with component seeds produced by the Track helpers. During playback, no system allocates per tick.
 
@@ -60,7 +60,7 @@ The canonical systems bound by this discipline:
 - `SyncSystem`: reads marker arrays (pre-baked via `BeatMarkerProjection`), writes `Intensity` (shared dense store with `EffectSystem`)
 - `PassThroughMixer`: reads `Volume` + `Pan`, emits receipts to an externally supplied sink (no internal allocation)
 
-Tasks 33-35 added two additive ECS primitives that these systems use ergonomically: `World.setComponent(id, name, value)` (schema-free write-back) and entity-query results that spread component values as direct properties alongside the existing `.components` Map. Both are backward-compatible. Existing ECS consumers that only read `.components` are unaffected.
+The former schema-free `World.setComponent(id, name, value)` escape hatch was retired during the typed-ECS admission pass. A `Part<T>` now owns identity and decoding, `admitPart` is the only unknown-value boundary, and each system's declared query/read/write sets constrain its hot-path context. This makes producer/consumer connectivity enumerable while retaining zero-allocation execution after admission.
 
 ### Additional references
 

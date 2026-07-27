@@ -5,7 +5,7 @@
  * `catalog:` refs broke a standalone `pnpm pack` (ERR_PNPM_CATALOG_ENTRY_NOT_FOUND
  * outside workspace context); the deeper law is that a *published* tarball must
  * carry zero unresolved `catalog:`/`workspace:` specs — a consumer that
- * `npm install`s it cannot resolve them. `@czap/core@0.1.4` shipped exactly this
+ * `npm install`s it cannot resolve them. `@liteship/core@0.1.4` shipped exactly this
  * defect (workspace: leak). The `package-smoke` command already guards
  * `workspace:` residue (`ensureNoWorkspaceProtocolsInTarball`) but NOT `catalog:`
  * residue, and never asserts the resolved ranges MATCH their catalog/workspace
@@ -181,7 +181,7 @@ describe('packed release artifacts carry no workspace/catalog residue', () => {
       const source = SOURCE_BY_DIR.get(dir);
       if (source === undefined) throw new Error(`no source manifest for packages/${dir}`);
 
-      const workDir = mkdtempSync(join(tmpdir(), `czap-pack-residue-${dir}-`));
+      const workDir = mkdtempSync(join(tmpdir(), `liteship-pack-residue-${dir}-`));
       try {
         const tgzPath = await packInWorkspace(join(REPO_ROOT, 'packages', dir), workDir, {
           ignoreScripts: true,
@@ -220,17 +220,17 @@ describe('packed release artifacts carry no workspace/catalog residue', () => {
 // ---------------------------------------------------------------------------
 describe('residueViolations detects each residue class (negative control)', () => {
   const cleanPacked: PackedManifest = {
-    name: '@czap/example',
+    name: '@liteship/example',
     version: '0.12.0',
-    dependencies: { '@czap/core': '0.12.0', cborg: '^4.2.0' },
+    dependencies: { '@liteship/core': '0.12.0', cborg: '^4.2.0' },
     peerDependencies: { effect: '>=4.0.0-beta.32 <5' },
   };
   const source: DepSections = {
-    dependencies: { '@czap/core': 'workspace:*', cborg: '^4.2.0' },
+    dependencies: { '@liteship/core': 'workspace:*', cborg: '^4.2.0' },
     peerDependencies: { effect: 'catalog:' },
   };
   const base = {
-    packageName: '@czap/example',
+    packageName: '@liteship/example',
     source,
     workspaceVersion: '0.12.0',
     catalog: (name: string): string | undefined => (name === 'effect' ? '>=4.0.0-beta.32 <5' : undefined),
@@ -243,33 +243,33 @@ describe('residueViolations detects each residue class (negative control)', () =
   it('flags a catalog: spec left unresolved in the packed manifest', () => {
     const doctored: PackedManifest = { ...cleanPacked, peerDependencies: { effect: 'catalog:' } };
     expect(residueViolations({ ...base, packed: doctored })).toContain(
-      '@czap/example peerDependencies.effect: unresolved catalog residue "catalog:"',
+      '@liteship/example peerDependencies.effect: unresolved catalog residue "catalog:"',
     );
   });
 
   it('flags a workspace: spec left unresolved in the packed manifest', () => {
     const doctored: PackedManifest = {
       ...cleanPacked,
-      dependencies: { '@czap/core': 'workspace:*', cborg: '^4.2.0' },
+      dependencies: { '@liteship/core': 'workspace:*', cborg: '^4.2.0' },
     };
     expect(residueViolations({ ...base, packed: doctored })).toContain(
-      '@czap/example dependencies.@czap/core: unresolved workspace residue "workspace:*"',
+      '@liteship/example dependencies.@liteship/core: unresolved workspace residue "workspace:*"',
     );
   });
 
   it('flags a resolved range that does not match its catalog/workspace source', () => {
     const doctored: PackedManifest = {
       ...cleanPacked,
-      dependencies: { '@czap/core': '9.9.9', cborg: '^4.2.0' }, // valid semver, WRONG version
+      dependencies: { '@liteship/core': '9.9.9', cborg: '^4.2.0' }, // valid semver, WRONG version
     };
     const violations = residueViolations({ ...base, packed: doctored });
-    expect(violations.some((v) => v.includes('@czap/core') && v.includes('should resolve to "0.12.0"'))).toBe(true);
+    expect(violations.some((v) => v.includes('@liteship/core') && v.includes('should resolve to "0.12.0"'))).toBe(true);
   });
 
   it('flags a resolved value that is not a valid semver range', () => {
     const doctored: PackedManifest = {
       ...cleanPacked,
-      dependencies: { '@czap/core': 'not-a-range', cborg: '^4.2.0' },
+      dependencies: { '@liteship/core': 'not-a-range', cborg: '^4.2.0' },
     };
     const violations = residueViolations({ ...base, packed: doctored });
     expect(violations.some((v) => v.includes('is not a valid semver range'))).toBe(true);

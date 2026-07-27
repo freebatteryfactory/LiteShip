@@ -10,24 +10,21 @@
  * @module
  */
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { run } from '@czap/cli';
+import { run } from '@liteship/cli';
+import { COMMAND_CATALOG } from '@liteship/command';
 import { captureCli } from './cli/capture.js';
 
 /**
- * Source-parse dispatch.ts to extract the top-level `case '<verb>':`
- * entries. This is the single source of truth — anything dispatch
- * routes to must be describable.
+ * The top-level verbs dispatch routes. Dispatch is now a PROJECTION of the
+ * command catalog (the hand-rolled switch is gone): `resolveExecutor` recognizes
+ * exactly the catalog's top-level verbs, and dispatch fails fast at module load
+ * if any catalog verb lacks an executor. So the catalog's distinct first segments
+ * ARE the authoritative "what dispatch routes" list — anything dispatch routes to
+ * must therefore be describable.
  */
 function extractDispatchCommands(): readonly string[] {
-  const dispatchPath = resolve(__dirname, '../../packages/cli/src/dispatch.ts');
-  const source = readFileSync(dispatchPath, 'utf8');
-  // Match top-level `case 'verb':` lines inside the run() switch.
-  // Excludes nested subcommand `if (sub === '...')` branches.
-  const matches = source.matchAll(/^\s{4}case '([a-z][a-z-]*)':/gm);
-  return [...matches].map((m) => m[1]!);
+  return [...new Set(COMMAND_CATALOG.map((d) => d.name.split('.')[0]!))];
 }
 
 /**

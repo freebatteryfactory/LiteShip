@@ -18,7 +18,7 @@ their catalog entries and `{ stepped: n }` builds the step quantizer.
 
 ### tag
 
-`EaseTag`
+[`EaseTag`](../../../spine/type-aliases/EaseTag.md)
 
 ## Returns
 

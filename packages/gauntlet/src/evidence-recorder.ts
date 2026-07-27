@@ -38,7 +38,7 @@
  * @module
  */
 
-import type { GateContext } from './gate.js';
+import { GATE_FACT_CHANNELS, type GateContext, type GateContextCapability, type GateFactChannel } from './gate.js';
 import type { FileId } from './repo-ir.js';
 
 /**
@@ -55,27 +55,10 @@ import type { FileId } from './repo-ir.js';
  * cannot silently drift from the context shape. This closes the residual where the
  * recorder hand-maintained a copy that could fall behind the context.
  */
-export const FACT_CHANNELS = [
-  'supplyChain',
-  'mutation',
-  'transition',
-  'spineRelation',
-  'mcdc',
-  'simulation',
-  'traceability',
-  'standards',
-  'declaredFix',
-  'taint',
-  'capabilityLink',
-  'fuzzCorpus',
-  'proof',
-  'composition',
-  'skipSites',
-  'activeSurfaceFacts',
-] as const;
+export const FACT_CHANNELS = GATE_FACT_CHANNELS;
 
 /** One injected-fact channel name — derived from {@link FACT_CHANNELS}, never re-typed. */
-export type FactChannel = (typeof FACT_CHANNELS)[number];
+export type FactChannel = GateFactChannel;
 
 /**
  * The closed set of EVIDENCE CHANNELS the recorder tracks — every read surface a
@@ -117,10 +100,9 @@ type OptionalFactKeys = Exclude<
     [K in keyof GateContext]-?: undefined extends GateContext[K] ? K : never;
   }[keyof GateContext],
   // `ir` (structural, tracked via ir.facts/ir.refs), `allFiles` (the file-list channel), and
-  // the CAPABILITY functions `skipDetector` / `codeOnly` (the AST-vs-token and scanner-vs-char-machine
-  // choices are part of the toolchain digest the host folds, not per-run fact channels) are NOT fact
-  // channels.
-  'ir' | 'allFiles' | 'skipDetector' | 'earlyReturnDetector' | 'codeOnly'
+  // the CAPABILITY functions below (parser-vs-lean detector choices are part of the
+  // toolchain digest the host folds, not per-run fact channels) are NOT fact channels.
+  'ir' | 'allFiles' | GateContextCapability
 >;
 type _factChannelsCoverContext = FactChannel extends OptionalFactKeys ? true : never;
 type _contextFactsAreChannels = OptionalFactKeys extends FactChannel ? true : never;

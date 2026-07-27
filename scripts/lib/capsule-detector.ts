@@ -13,13 +13,14 @@
 import ts from 'typescript';
 import { resolve } from 'node:path';
 // CUT B5b — one slash-normalize home. Slice B — the type-directed `ts.Program`
-// config (WORKSPACE_ALIASES + CompilerOptions) is now sourced from @czap/audit
+// config (WORKSPACE_ALIASES + CompilerOptions) is now sourced from @liteship/audit
 // so there is ONE config shared by the capsule detector and the repo-IR builder,
 // never a divergent fork. WORKSPACE_ALIASES is re-exported below so the existing
 // drift test (tests/unit/capsule-detector.test.ts) keeps pinning it.
-import { normalizeRepoPath, WORKSPACE_ALIASES, createTypeDirectedProgram } from '@czap/audit';
+import { normalizeRepoPath, createTypeDirectedProgram } from '@liteship/audit';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../packages/cli/src/internal/liteship-typescript-aliases.js';
 
-export { WORKSPACE_ALIASES };
+export { LITESHIP_TYPESCRIPT_PATH_ALIASES as WORKSPACE_ALIASES };
 
 /**
  * Naming-convention map for known capsule factories. Source of truth lives in
@@ -119,10 +120,10 @@ const CAPSULE_TYPE_NAMES = new Set(['CapsuleContract', 'CapsuleDef']);
 /**
  * Build a TypeScript program covering enough of the repo to resolve
  * capsule contract return types across factory wrappers. Delegates to the
- * shared `@czap/audit` config (the ONE type-directed program substrate).
+ * shared `@liteship/audit` config (the ONE type-directed program substrate).
  */
 function createProgram(files: readonly string[]): ts.Program {
-  return createTypeDirectedProgram(files, process.cwd());
+  return createTypeDirectedProgram(files, process.cwd(), LITESHIP_TYPESCRIPT_PATH_ALIASES);
 }
 
 /**
@@ -144,6 +145,25 @@ function unquoteLiteralString(s: string): string | undefined {
  * CapsuleContract<K, ...> / CapsuleDef<K, ...>, else undefined.
  */
 function tryExtractKind(checker: ts.TypeChecker, type: ts.Type): string | undefined {
+  // Prefer the public structural contract over alias-name archaeology. Factory
+  // return aliases such as AssetCapsule<K> can hide CapsuleDef from the alias /
+  // base-type walk even though their resolved value still carries the complete
+  // capsule shape. Requiring the companion contract fields avoids classifying an
+  // unrelated object that merely happens to expose a `_kind` literal.
+  const structuralKindSymbol = checker.getPropertyOfType(type, '_kind');
+  const structuralKindDeclaration =
+    structuralKindSymbol?.valueDeclaration ?? structuralKindSymbol?.declarations?.[0];
+  const structuralKind =
+    structuralKindSymbol !== undefined && structuralKindDeclaration !== undefined
+      ? checker.getTypeOfSymbolAtLocation(structuralKindSymbol, structuralKindDeclaration)
+      : undefined;
+  if (
+    structuralKind?.isStringLiteral() === true &&
+    ['name', 'site', 'invariants'].every((property) => checker.getPropertyOfType(type, property) !== undefined)
+  ) {
+    return structuralKind.value;
+  }
+
   // Walk the candidate type itself plus its base types so we catch
   // CapsuleDef<K,...> which extends CapsuleContract<K,...>.
   const candidates: ts.Type[] = [type];

@@ -11,7 +11,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { spawnArgvCapture } from '@czap/command/host';
+import { spawnArgvCapture } from '@liteship/command/host';
 
 describe('spawnArgvCapture — optional timeoutMs bound (CUT test-flake)', () => {
   it('a slow child is killed and resolves with timedOut:true (not a hang, not a throw)', async () => {

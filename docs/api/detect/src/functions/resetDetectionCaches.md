@@ -8,7 +8,7 @@
 
 > **resetDetectionCaches**(): `void`
 
-Defined in: [detect/src/detect.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L299)
+Defined in: [detect/src/detect.ts:309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L309)
 
 Clear memoized session-stable probe results (currently the GPU renderer
 string). The GPU cannot change while a page lives, so production code never

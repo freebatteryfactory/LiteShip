@@ -33,11 +33,11 @@ export type Infer<S> = S extends { readonly Type: infer A } ? A : never;
 /** The encoded (wire) type of a schema: its `Encoded` phantom. */
 export type InferEncoded<S> = S extends { readonly Encoded: infer I } ? I : never;
 
-/** A fields record as accepted by `S.struct` — string keys to (optional-or-not) schemas. */
+/** A fields record as accepted by `schema.struct` — string keys to (optional-or-not) schemas. */
 export type SchemaFields = Readonly<Record<string, Schema<unknown, unknown>>>;
 
 /**
- * The decoded object type of `S.struct(fields)`: required fields become required
+ * The decoded object type of `schema.struct(fields)`: required fields become required
  * keys, `OptionalSchema`-marked fields become OPTIONAL keys (`k?:`). Key
  * remapping via `as` drives the required/optional split off `IsOptional`.
  */
@@ -47,7 +47,7 @@ export type StructType<F extends SchemaFields> = Prettify<
   }
 >;
 
-/** The encoded object type of `S.struct(fields)` — the {@link StructType} shape over `Encoded`. */
+/** The encoded object type of `schema.struct(fields)` — the {@link StructType} shape over `Encoded`. */
 export type StructEncoded<F extends SchemaFields> = Prettify<
   { readonly [K in keyof F as IsOptional<F[K]> extends true ? never : K]: InferEncoded<F[K]> } & {
     readonly [K in keyof F as IsOptional<F[K]> extends true ? K : never]?: InferEncoded<F[K]>;
@@ -55,19 +55,19 @@ export type StructEncoded<F extends SchemaFields> = Prettify<
 >;
 
 /**
- * The decoded type of `S.tuple(...elements)`: a READONLY tuple that mirrors each
+ * The decoded type of `schema.tuple(...elements)`: a READONLY tuple that mirrors each
  * element position's `Infer`. The homomorphic mapped type over `keyof E` preserves
- * tuple-ness (arity and per-position types), so `S.tuple(S.number, S.string)` infers
+ * tuple-ness (arity and per-position types), so `schema.tuple(schema.number, schema.string)` infers
  * `readonly [number, string]`, not `readonly (number | string)[]`.
  */
 export type TupleType<E extends readonly Schema<unknown, unknown>[]> = {
   readonly [K in keyof E]: Infer<E[K]>;
 };
 
-/** The encoded (wire) tuple type of `S.tuple(...elements)` — the {@link TupleType} shape over `InferEncoded`. */
+/** The encoded (wire) tuple type of `schema.tuple(...elements)` — the {@link TupleType} shape over `InferEncoded`. */
 export type TupleEncoded<E extends readonly Schema<unknown, unknown>[]> = {
   readonly [K in keyof E]: InferEncoded<E[K]>;
 };
 
-/** Re-exported so `S.optional`'s return type and consumers share one optional brand. */
+/** Re-exported so `schema.optional`'s return type and consumers share one optional brand. */
 export type { OptionalSchema };

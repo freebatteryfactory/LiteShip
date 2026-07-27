@@ -44,7 +44,7 @@ Defined in: [compiler/src/css.ts:105](https://github.com/freebatteryfactory/Lite
 
 The boundary selector this result was compiled against (mirrors the
 `selector` argument to [CSSCompiler.compile](../variables/CSSCompiler.md#compile); default
-`.czap-boundary`). Carried so [CSSCompiler.serialize](../variables/CSSCompiler.md#serialize) re-wraps
+`.liteship-boundary`). Carried so [CSSCompiler.serialize](../variables/CSSCompiler.md#serialize) re-wraps
 conditional-group bare declarations with the same selector as `raw`.
 Optional for back-compat with hand-constructed results, which fall back
 to the default selector.

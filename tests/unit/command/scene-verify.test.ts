@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { sceneVerifyCommand } from '@czap/command';
+import { sceneVerifyCommand } from '@liteship/command';
 
 const SCENE_MOD = { myScene: { _kind: 'sceneComposition', id: 'scene-1', name: 'intro' } };
 const MANIFEST = JSON.stringify({ capsules: [{ name: 'intro', generated: { testFile: 't.test.ts', benchFile: 't.bench.ts' } }] });
 
-describe('@czap/command scene.verify', () => {
+describe('@liteship/command scene.verify', () => {
   it('missing scene file → failed exit 1', async () => {
     const r = await sceneVerifyCommand.handler({ name: 'scene.verify', args: { scene: 'nope.ts' } }, { fileExists: () => false });
     expect(r.status).toBe('failed');
@@ -18,6 +18,16 @@ describe('@czap/command scene.verify', () => {
     );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
+  });
+
+  it('contains a throwing scene-module provider as a structured verify failure', async () => {
+    const r = await sceneVerifyCommand.handler(
+      { name: 'scene.verify', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule: async () => { throw new Error('import exploded'); } },
+    );
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(1);
+    expect((r.payload as { error: string }).error).toContain('import exploded');
   });
 
   it('capsule not in manifest → failed exit 1', async () => {

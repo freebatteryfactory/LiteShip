@@ -6,7 +6,9 @@
 
 # Interface: PackagePolicy
 
-Defined in: [audit/src/policy.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L40)
+Defined in: [audit/src/policy.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L38)
+
+Injected import and surface policy for one package.
 
 ## Properties
 
@@ -14,7 +16,17 @@ Defined in: [audit/src/policy.ts:40](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **allowedInternalImports**: readonly `string`[]
 
-Defined in: [audit/src/policy.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L41)
+Defined in: [audit/src/policy.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L39)
+
+***
+
+### analyzableArtifacts?
+
+> `readonly` `optional` **analyzableArtifacts?**: readonly `string`[]
+
+Defined in: [audit/src/policy.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L42)
+
+Package-relative source/declaration globs constituting analyzed source.
 
 ***
 
@@ -22,4 +34,4 @@ Defined in: [audit/src/policy.ts:41](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **kind**: `"core"` \| `"layered"` \| `"host-adjacent"` \| `"standalone"`
 
-Defined in: [audit/src/policy.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L42)
+Defined in: [audit/src/policy.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L40)

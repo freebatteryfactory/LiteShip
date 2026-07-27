@@ -18,22 +18,22 @@
  * @module
  */
 
-import { NotFoundError, ValidationError } from '@czap/error';
-import { closestMatch, defineCapsule, S } from '@czap/core';
-import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
-import { mkAssetRefId, type AssetRefId } from './brands.js';
+import { NotFoundError, ValidationError } from '@liteship/error';
+import { closestMatch, defineCapsule, schema } from '@liteship/core';
+import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@liteship/core';
+import { isAssetRefId, mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
 import { videoDecoder, type DecodedVideo } from './decoders/video.js';
 import { imageDecoder, type DecodedImage } from './decoders/image.js';
 
-/** Supported asset kinds. */
-export type AssetKind = 'audio' | 'video' | 'image' | 'beat-markers' | 'onsets' | 'waveform';
+/** Supported source asset kinds. Analysis results are projections, never source assets. */
+export type AssetKind = 'audio' | 'video' | 'image';
 
 /**
- * Decoded output for each media {@link AssetKind}. Analysis kinds
- * (beat-markers / onsets / waveform) have no built-in decoder — their
- * projections come from the dedicated factories (BeatMarkerProjection,
- * OnsetProjection, WaveformProjection) — so they map to `unknown`.
+ * Decoded output for each source-media {@link AssetKind}. Beat markers,
+ * onsets, and waveforms are derived by their dedicated projection factories;
+ * they are not byte-source kinds and therefore cannot widen this type to
+ * `unknown`.
  */
 export type DecodedAsset<K extends AssetKind> = K extends 'audio'
   ? DecodedAudio
@@ -41,7 +41,7 @@ export type DecodedAsset<K extends AssetKind> = K extends 'audio'
     ? DecodedVideo
     : K extends 'image'
       ? DecodedImage
-      : unknown;
+      : never;
 
 /** Asset declaration shape consumed by `defineAsset`. */
 export interface AssetDecl<K extends AssetKind> {
@@ -75,19 +75,31 @@ export interface AssetDecl<K extends AssetKind> {
 }
 
 /** Any asset capsule, regardless of its decoded shape. The unit an {@link AssetRegistry} indexes. */
-export type AssetCapsule = CapsuleDef<'cachedProjection', unknown, unknown, unknown>;
+export interface AssetDescriptor<K extends AssetKind = AssetKind> {
+  readonly kind: K;
+  readonly source: string;
+  readonly decoder?: AssetDecoder<K>;
+}
+
+/** Asset capsule plus the immutable media ownership the generic capsule algebra cannot express. */
+export type AssetCapsule<K extends AssetKind = AssetKind> = CapsuleDef<
+  'cachedProjection',
+  ArrayBuffer,
+  DecodedAsset<K>,
+  unknown
+> & {
+  readonly asset: AssetDescriptor<K>;
+};
+
+/** Discriminated union accepted by heterogeneous registries without erasing each capsule's decoded output. */
+export type AnyAssetCapsule = { readonly [K in AssetKind]: AssetCapsule<K> }[AssetKind];
 
 /** Decode function shape shared by AssetDecl.decoder and the built-ins. */
-export type AssetDecoder = (bytes: ArrayBuffer) => Promise<unknown>;
+export type AssetDecoder<K extends AssetKind = AssetKind> = (bytes: ArrayBuffer) => Promise<DecodedAsset<K>>;
 
 /** Per-kind decode p95 budget defaults (ms). Explicit `decl.budgets.decodeP95Ms` overrides. */
 export function defaultDecodeP95MsFor(kind: AssetKind): number {
   switch (kind) {
-    case 'beat-markers':
-    case 'onsets':
-      return 200;
-    case 'waveform':
-      return 100;
     case 'video':
       return 100;
     case 'image':
@@ -102,7 +114,7 @@ export function defaultDecodeP95MsFor(kind: AssetKind): number {
  * Nearest registered id to `id` by edit distance, when one is close enough to
  * plausibly be a typo. The threshold scales with id length (≤2 edits, capped at
  * a third of the id) so 'intro-bd' → 'intro-bed' suggests but 'xyz' → 'beats'
- * stays silent. Delegates to @czap/core's shared Levenshtein picker, passing the
+ * stays silent. Delegates to @liteship/core's shared Levenshtein picker, passing the
  * assets-registry threshold policy through its `threshold` parameter.
  */
 function suggestId(id: string, ids: readonly string[]): string | undefined {
@@ -125,9 +137,8 @@ function registryMissError(subject: string, id: string, ids: readonly string[]):
 }
 
 /**
- * Built-in decoder for a media kind. Analysis kinds (beat-markers /
- * onsets / waveform) have their own projection factories and no byte
- * decoder, so they resolve to undefined.
+ * Built-in decoder for a source media kind. Analysis outputs have dedicated
+ * projection factories and are deliberately absent from {@link AssetKind}.
  */
 export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
   switch (kind) {
@@ -137,8 +148,6 @@ export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
       return videoDecoder;
     case 'image':
       return imageDecoder;
-    default:
-      return undefined;
   }
 }
 
@@ -148,8 +157,7 @@ export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
  * builtin-decoded video capsule is node-only — declaring 'browser' would
  * lie to bundlers and site routers. The audio built-in (pure RIFF walk)
  * and image built-in (header sniff) are byte-level and run anywhere.
- * Analysis kinds have no byte decoder, so they keep the permissive
- * default; their dedicated projection factories declare their own sites.
+ * Dedicated analysis projection factories declare their own sites.
  */
 export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
   return kind === 'video' ? ['node'] : ['node', 'browser'];
@@ -165,7 +173,7 @@ export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
  * `Schema<ArrayBuffer>` is structurally the `SchemaPort<ArrayBuffer>` the slot
  * declares — no `asDeclaration` bridge and no double-cast through `unknown`).
  */
-export const AssetBytes = S.bytes(ArrayBuffer);
+export const AssetBytes = schema.bytes(ArrayBuffer);
 
 /**
  * Effective site for a declaration: the explicit `decl.site` override when
@@ -175,7 +183,9 @@ export const AssetBytes = S.bytes(ArrayBuffer);
  */
 function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site[] {
   if (decl.site === undefined) {
-    return decl.decoder !== undefined ? ['node', 'browser'] : builtinDecoderSiteFor(decl.kind);
+    const derived: readonly Site[] =
+      decl.decoder !== undefined ? (['node', 'browser'] as const) : builtinDecoderSiteFor(decl.kind);
+    return Object.freeze([...derived]);
   }
   if (decl.site.length === 0) {
     throw ValidationError(
@@ -218,32 +228,81 @@ function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site
  * An explicit `decl.site` wins over both derivations after validation
  * (see {@link AssetDecl.site}).
  */
-export function defineAsset<K extends AssetKind>(
-  decl: AssetDecl<K>,
-): CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown> {
-  const decode: AssetDecoder | undefined = decl.decoder ?? builtinDecoderFor(decl.kind);
+export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AssetCapsule<K> {
+  if (decl === null || typeof decl !== 'object') {
+    throw ValidationError('defineAsset', 'asset declaration must be an object');
+  }
+  if (typeof decl.id !== 'string' || !isAssetRefId(decl.id)) {
+    throw ValidationError('defineAsset', 'id must be a non-empty token with no whitespace');
+  }
+  if (typeof decl.source !== 'string' || decl.source.trim().length === 0) {
+    throw ValidationError('defineAsset', `defineAsset('${decl.id}') requires a non-empty source path`);
+  }
+  if (!['audio', 'video', 'image'].includes(decl.kind)) {
+    throw ValidationError('defineAsset', `defineAsset('${decl.id}') has unsupported kind ${JSON.stringify(decl.kind)}`);
+  }
+  if (decl.decoder !== undefined && typeof decl.decoder !== 'function') {
+    throw ValidationError('defineAsset', `defineAsset('${decl.id}') decoder must be a function when provided`);
+  }
+  if (decl.site !== undefined) {
+    if (!Array.isArray(decl.site) || decl.site.some((site) => !['node', 'browser', 'worker', 'edge'].includes(site))) {
+      throw ValidationError('defineAsset', `defineAsset('${decl.id}') site must contain only node/browser/worker/edge`);
+    }
+  }
+  if (
+    decl.budgets?.decodeP95Ms !== undefined &&
+    (!Number.isFinite(decl.budgets.decodeP95Ms) || decl.budgets.decodeP95Ms <= 0)
+  ) {
+    throw ValidationError('defineAsset', `defineAsset('${decl.id}') decodeP95Ms must be finite and positive`);
+  }
+  if (decl.budgets?.memoryMb !== undefined && (!Number.isFinite(decl.budgets.memoryMb) || decl.budgets.memoryMb <= 0)) {
+    throw ValidationError('defineAsset', `defineAsset('${decl.id}') memoryMb must be finite and positive`);
+  }
+  if (decl.invariants !== undefined && !Array.isArray(decl.invariants)) {
+    throw ValidationError('defineAsset', `defineAsset('${decl.id}') invariants must be an array`);
+  }
+
+  const builtin = decl.decoder ?? builtinDecoderFor(decl.kind);
+  const decode =
+    builtin === undefined
+      ? undefined
+      : decl.kind === 'video' && decl.decoder === undefined
+        ? (bytes: ArrayBuffer) => videoDecoder(bytes, decl.source)
+        : builtin;
   const site: readonly Site[] = resolveDeclSite(decl);
   const decodeP95Ms = decl.budgets?.decodeP95Ms ?? defaultDecodeP95MsFor(decl.kind);
+  const invariants = Object.freeze((decl.invariants ?? []).map((invariant) => Object.freeze({ ...invariant })));
+  const budgets = Object.freeze({ p95Ms: decodeP95Ms, memoryMb: decl.budgets?.memoryMb });
+  const attribution =
+    decl.attribution === undefined
+      ? undefined
+      : Object.freeze({
+          license: decl.attribution.license,
+          author: decl.attribution.author,
+          ...(decl.attribution.url === undefined ? {} : { url: decl.attribution.url }),
+        });
   const capsule = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
-    input: decode !== undefined ? AssetBytes : S.unknown,
-    output: S.unknown,
+    input: decode !== undefined ? AssetBytes : schema.unknown,
+    output: schema.unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
-    invariants: decl.invariants ?? [],
-    budgets: { p95Ms: decodeP95Ms, memoryMb: decl.budgets?.memoryMb },
+    invariants,
+    budgets,
     site,
-    attribution: decl.attribution,
+    ...(attribution === undefined ? {} : { attribution }),
     ...(decode !== undefined
       ? {
-          derive: (source: unknown) =>
-            decl.kind === 'video' && decl.decoder === undefined
-              ? videoDecoder(source as ArrayBuffer, decl.source)
-              : decode(source as ArrayBuffer),
+          derive: (source: unknown) => decode(source as ArrayBuffer),
         }
       : {}),
   });
-  return capsule as CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown>;
+  const asset = Object.freeze({
+    kind: decl.kind,
+    source: decl.source,
+    ...(decode === undefined ? {} : { decoder: decode }),
+  });
+  return Object.freeze({ ...capsule, asset }) as AssetCapsule<K>;
 }
 
 // ---------------------------------------------------------------------------
@@ -266,7 +325,7 @@ export interface AssetRegistry {
   /** Sorted ids of every capsule in this registry (for teaching errors / listing). */
   ids(): readonly string[];
   /** The capsule registered under `id`, or `undefined`. */
-  capsule(id: string): AssetCapsule | undefined;
+  capsule(id: string): AnyAssetCapsule | undefined;
   /**
    * Validate `id` is registered and return it as a branded {@link AssetRefId}.
    * Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
@@ -279,19 +338,17 @@ export interface AssetRegistry {
    */
   assertAudioRegistered(audioAssetId: string, factory: string): void;
   /**
-   * Resolve the decode function for an asset id: the registered capsule's
-   * `derive` handler (which carries the asset's own decoder, custom or
-   * built-in) when present, else the audio built-in — host processes that
-   * build a registry without the scene's asset module (e.g. the CLI reading
-   * only the compiled manifest) keep the audio-decode fallback. The audio
-   * fallback matches the only consumers (beat/onset/waveform are audio
-   * projections).
+   * Resolve the registered byte decoder for an asset id. Unknown ids and
+   * assets without a decoder fail closed; hosts that only have a manifest
+   * must select an explicit decoder rather than manufacture registry truth.
    */
   resolveDecoder(assetId: string): AssetDecoder;
+  /** Resolve a registered audio decoder and reject unknown or non-audio assets. */
+  resolveAudioDecoder(assetId: string): AssetDecoder<'audio'>;
 }
 
-function makeAssetRegistry(capsules: readonly AssetCapsule[]): AssetRegistry {
-  const index = new Map<string, AssetCapsule>();
+function makeAssetRegistry(capsules: readonly AnyAssetCapsule[]): AssetRegistry {
+  const index = new Map<string, AnyAssetCapsule>();
   for (const capsule of capsules) {
     if (index.has(capsule.name)) {
       throw ValidationError(
@@ -306,20 +363,44 @@ function makeAssetRegistry(capsules: readonly AssetCapsule[]): AssetRegistry {
   return Object.freeze({
     has: (id: string): boolean => index.has(id),
     ids: sortedIds,
-    capsule: (id: string): AssetCapsule | undefined => index.get(id),
+    capsule: (id: string): AnyAssetCapsule | undefined => index.get(id),
     ref: (id: string): AssetRefId => {
       if (!index.has(id)) throw registryMissError(`AssetRef('${id}')`, id, sortedIds());
       return mkAssetRefId(id);
     },
     assertAudioRegistered: (audioAssetId: string, factory: string): void => {
-      if (!index.has(audioAssetId)) {
+      const capsule = index.get(audioAssetId);
+      if (capsule === undefined) {
         throw registryMissError(`${factory}('${audioAssetId}')`, audioAssetId, sortedIds());
+      }
+      if (capsule.asset.kind !== 'audio' || capsule.asset.decoder === undefined) {
+        throw ValidationError(
+          factory,
+          `${factory}('${audioAssetId}') requires a registered audio asset with a decoder; found ${capsule.asset.kind}`,
+        );
       }
     },
     resolveDecoder: (assetId: string): AssetDecoder => {
-      const derive = index.get(assetId)?.derive;
-      if (derive !== undefined) return async (bytes: ArrayBuffer) => derive(bytes);
-      return audioDecoder;
+      const capsule = index.get(assetId);
+      if (capsule === undefined) throw registryMissError(`resolveDecoder('${assetId}')`, assetId, sortedIds());
+      if (capsule.asset.decoder === undefined) {
+        throw ValidationError(
+          'AssetRegistry.resolveDecoder',
+          `asset '${assetId}' (${capsule.asset.kind}) has no byte decoder`,
+        );
+      }
+      return capsule.asset.decoder;
+    },
+    resolveAudioDecoder: (assetId: string): AssetDecoder<'audio'> => {
+      const capsule = index.get(assetId);
+      if (capsule === undefined) throw registryMissError(`resolveAudioDecoder('${assetId}')`, assetId, sortedIds());
+      if (capsule.asset.kind !== 'audio' || capsule.asset.decoder === undefined) {
+        throw ValidationError(
+          'AssetRegistry.resolveAudioDecoder',
+          `asset '${assetId}' must be a decodable audio asset, found ${capsule.asset.kind}`,
+        );
+      }
+      return capsule.asset.decoder as AssetDecoder<'audio'>;
     },
   });
 }
@@ -334,7 +415,7 @@ function makeAssetRegistry(capsules: readonly AssetCapsule[]): AssetRegistry {
  * const introBed = defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
  * const registry = AssetRegistry.make([introBed]);
  * registry.ref('intro-bed');                 // branded id, validated
- * const decode = registry.resolveDecoder('intro-bed');
+ * const decode = registry.resolveAudioDecoder('intro-bed');
  * ```
  */
 export const AssetRegistry = {

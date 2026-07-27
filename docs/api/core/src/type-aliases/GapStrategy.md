@@ -8,7 +8,7 @@
 
 > **GapStrategy** = \{ `bufferPosition`: `number`; `type`: `"resume"`; \} \| \{ `frames`: readonly [`UIFrame`](../interfaces/UIFrame.md)[]; `type`: `"replay"`; \} \| \{ `fromScratch`: `true`; `type`: `"re-request"`; \} \| \{ `type`: `"noop"`; \}
 
-Defined in: [core/src/gen-frame.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L60)
+Defined in: [core/src/media/gen-frame.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L60)
 
 Recovery plan returned by [GenFrame.resolveGap](../variables/GenFrame.md#resolvegap) when a stream disconnects:
 resume from a buffer position, replay cached frames, request a full restart,

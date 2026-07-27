@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { AVBridge } from '@czap/core';
+import { Lifetime, attachLifetime, type AVBridge } from '@liteship/core';
 import type { AudioProcessor } from './processor.js';
 
 const PROCESSOR_SOURCE = /* js */ `
@@ -67,7 +67,7 @@ registerProcessor('av-sync-processor', AVSyncProcessor);
  * @param bridge - Shared AV bridge the worklet will mutate 128 samples
  *   at a time.
  */
-export async function createAudioProcessor(context: AudioContext, bridge: AVBridge.Shape): Promise<AudioProcessor> {
+export async function createAudioProcessor(context: AudioContext, bridge: AVBridge): Promise<AudioProcessor> {
   const blob = new Blob([PROCESSOR_SOURCE], { type: 'application/javascript' });
   const url = URL.createObjectURL(blob);
 
@@ -84,24 +84,44 @@ export async function createAudioProcessor(context: AudioContext, bridge: AVBrid
     outputChannelCount: [2],
   });
 
-  return {
-    node,
-    bridge,
+  const lifetime = Lifetime.make();
+  lifetime.add(() => {
+    // Teardown is attempt-all: one hostile host operation must not strand the
+    // remaining owned resource. The Lifetime promise is the error channel; all
+    // three synchronous release attempts still run before dispose() returns.
+    const errors: unknown[] = [];
+    const attempt = (operation: () => void): void => {
+      try {
+        operation();
+      } catch (error) {
+        errors.push(error);
+      }
+    };
+    attempt(() => bridge.setRunning(false));
+    attempt(() => node.port.postMessage('stop'));
+    attempt(() => node.disconnect());
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'AudioProcessor disposal failed after attempting every teardown step');
+    }
+  });
 
-    start() {
-      bridge.setRunning(true);
-      node.port.postMessage('start');
-    },
+  return attachLifetime(
+    {
+      node,
+      bridge,
 
-    stop() {
-      bridge.setRunning(false);
-      node.port.postMessage('stop');
-    },
+      start() {
+        if (lifetime.disposed) return;
+        bridge.setRunning(true);
+        node.port.postMessage('start');
+      },
 
-    dispose() {
-      bridge.setRunning(false);
-      node.port.postMessage('stop');
-      node.disconnect();
+      stop() {
+        if (lifetime.disposed) return;
+        bridge.setRunning(false);
+        node.port.postMessage('stop');
+      },
     },
-  };
+    lifetime,
+  );
 }

@@ -10,7 +10,7 @@
 
 Defined in: [vite/src/token-manifest.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L208)
 
-Derive the token map for `virtual:czap/tokens` and `virtual:czap/tokens.css`.
+Derive the token map for `virtual:liteship/tokens` and `virtual:liteship/tokens.css`.
 
 ## Parameters
 

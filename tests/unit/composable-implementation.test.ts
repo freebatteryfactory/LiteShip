@@ -6,10 +6,18 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Boundary, Token, Composable, ComposableWorld, World } from '@czap/core';
+import {
+  Boundary,
+  ComposableWorld,
+  World,
+  defineBoundary,
+  defineToken,
+  Composable,
+  createComposable,
+} from '@liteship/core';
 
 describe('ECS Composable Implementation', () => {
-  const boundary = Boundary.make({
+  const boundary = defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'mobile'],
@@ -18,7 +26,7 @@ describe('ECS Composable Implementation', () => {
     ],
   });
 
-  const token = Token.make({
+  const token = defineToken({
     name: 'primary',
     category: 'color',
     axes: ['theme'],
@@ -27,25 +35,26 @@ describe('ECS Composable Implementation', () => {
   });
 
   test('Composable.make creates entity with deterministic ID', () => {
-    const entity1 = Composable.make({ boundary });
-    const entity2 = Composable.make({ boundary });
+    const entity1 = createComposable({ boundary });
+    const entity2 = createComposable({ boundary });
 
     // Same components should produce same ID
     expect(entity1.id).toBe(entity2.id);
     expect(entity1.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
     expect(entity1._tag).toBe('ComposableEntity');
-    expect(entity1.components.boundary).toBe(boundary);
+    expect(entity1.components.boundary).toStrictEqual(boundary);
+    expect(entity1.components.boundary).not.toBe(boundary);
   });
 
   test('Composable.compose merges entities correctly', () => {
-    const entity1 = Composable.make({ boundary });
-    const entity2 = Composable.make({ token });
+    const entity1 = createComposable({ boundary });
+    const entity2 = createComposable({ token });
 
     const composed = Composable.compose(entity1, entity2);
 
     // Should have both components
-    expect(composed.components.boundary).toBe(boundary);
-    expect(composed.components.token).toBe(token);
+    expect(composed.components.boundary).toStrictEqual(boundary);
+    expect(composed.components.token).toStrictEqual(token);
     expect(composed._tag).toBe('ComposableEntity');
 
     // Should have new ID based on merged components
@@ -54,22 +63,22 @@ describe('ECS Composable Implementation', () => {
   });
 
   test('Composable.merge handles multiple entities', () => {
-    const entity1 = Composable.make({ boundary });
-    const entity2 = Composable.make({ token });
-    const entity3 = Composable.make({ boundary, token });
+    const entity1 = createComposable({ boundary });
+    const entity2 = createComposable({ token });
+    const entity3 = createComposable({ boundary, token });
 
     const merged = Composable.merge(entity1, entity2, entity3);
 
     // Should have all components (entity3 takes precedence)
-    expect(merged.components.boundary).toBe(boundary);
-    expect(merged.components.token).toBe(token);
+    expect(merged.components.boundary).toStrictEqual(boundary);
+    expect(merged.components.token).toStrictEqual(token);
   });
 
   test('Composable.make with multiple components', () => {
-    const entity = Composable.make({ boundary, token });
+    const entity = createComposable({ boundary, token });
 
-    expect(entity.components.boundary).toBe(boundary);
-    expect(entity.components.token).toBe(token);
+    expect(entity.components.boundary).toStrictEqual(boundary);
+    expect(entity.components.token).toStrictEqual(token);
     expect(entity.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
@@ -81,7 +90,7 @@ describe('ECS Composable Implementation', () => {
 
   test('ComposableWorld.evaluate concept', () => {
     // Test the evaluation concept without Effect complexity
-    const entity = Composable.make({ boundary });
+    const entity = createComposable({ boundary });
 
     // Direct boundary evaluation (what the world would do)
     const result = Boundary.evaluate(boundary, 800);
@@ -90,7 +99,7 @@ describe('ECS Composable Implementation', () => {
 
   test('ComposableWorld integration concept', () => {
     // Test that the integration concept exists
-    const entity = Composable.make({ boundary, token });
+    const entity = createComposable({ boundary, token });
 
     // Verify entity structure for world integration
     expect(entity.components.boundary).toBeDefined();
@@ -99,7 +108,7 @@ describe('ECS Composable Implementation', () => {
   });
 
   test('Entity composition preserves primitive properties', () => {
-    const entity = Composable.make({ boundary, token });
+    const entity = createComposable({ boundary, token });
 
     // Boundary properties preserved
     expect(entity.components.boundary.input).toBe('viewport.width');
@@ -112,27 +121,27 @@ describe('ECS Composable Implementation', () => {
   });
 
   test('Entity composition is deterministic', () => {
-    const entity1 = Composable.make({ boundary, token });
-    const entity2 = Composable.make({ boundary, token });
+    const entity1 = createComposable({ boundary, token });
+    const entity2 = createComposable({ boundary, token });
 
     // Same components = same ID
     expect(entity1.id).toBe(entity2.id);
 
     // Different order = same ID (canonical serialization)
-    const entity3 = Composable.make({ token, boundary });
+    const entity3 = createComposable({ token, boundary });
     expect(entity1.id).toBe(entity3.id);
   });
 
   test('Entity composition collision resistance', () => {
-    const entity1 = Composable.make({ boundary });
-    const entity2 = Composable.make({ token });
+    const entity1 = createComposable({ boundary });
+    const entity2 = createComposable({ token });
 
     // Different components = different IDs
     expect(entity1.id).not.toBe(entity2.id);
   });
 
   test('Empty entity composition', () => {
-    const entity = Composable.make({});
+    const entity = createComposable({});
 
     expect(entity.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
     expect(entity.components).toEqual({});

@@ -20,9 +20,18 @@ describe('gauntlet phase subset selection', () => {
     const selected = selectGauntletPhases({ profile: 'ci-parallel-preflight', skipBuild: true });
     expect(selected.map((phase) => phase.label)).toEqual([
       'typecheck',
+      'typecheck:qualify',
       'lint',
       'lint:structural',
+      'lockfile:gate',
+      'prebuild:gate',
+      'workflow-output:gate',
+      'workspace-deps:gate',
+      'governed-exceptions:gate',
+      'docs:check:fast',
       'docs:check',
+      'assurance:gate',
+      'test:constitution',
       'invariants',
       'check:gates',
       'audit:floor',

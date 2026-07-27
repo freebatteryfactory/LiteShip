@@ -8,7 +8,7 @@
 
 > **isGoverned**(`file`): `boolean`
 
-Defined in: [gauntlet/src/skip-site-facts.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L74)
+Defined in: [gauntlet/src/facts/skip-site-facts.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/facts/skip-site-facts.ts#L74)
 
 A `.ts` file the no-skipped-test rule judges — excludes `tests/generated/` (the plumb-gate's
 tree owns that subtree's zero-skip guarantee). The producer's corpus filter; a deliberate

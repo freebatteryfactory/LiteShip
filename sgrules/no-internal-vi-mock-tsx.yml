@@ -1,0 +1,23 @@
+# TSX parser projection of no-internal-vi-mock.yml.
+#
+# ast-grep binds a rule to one parser grammar: the TypeScript grammar governs
+# .ts/.mts/.cts, while .tsx requires the TSX grammar. Keep this rule's patterns,
+# constraints, severity, and message byte-aligned with the canonical TypeScript
+# rule; tests/unit/meta/source-grammar-rules.test.ts proves both projections on
+# red and green fixtures.
+id: no-internal-vi-mock-tsx
+language: tsx
+severity: error
+message: 'vi.mock/vi.doMock of an internal module (@liteship/* or a relative reach) is banned — inject a narrow, defaulted dependency seam instead. Direct module mocks stay legal only for node builtins (node:*) and third-party specifiers.'
+files:
+  - '**/tests/**/*.tsx'
+rule:
+  any:
+    - pattern: vi.mock($SRC)
+    - pattern: vi.mock($SRC, $$$REST)
+    - pattern: vi.doMock($SRC)
+    - pattern: vi.doMock($SRC, $$$REST)
+constraints:
+  SRC:
+    kind: string
+    regex: "^['\"](@liteship/|\\.\\.?/)"

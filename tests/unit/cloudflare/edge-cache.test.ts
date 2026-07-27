@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
-import { createBoundaryCache, EdgeTier } from '@czap/edge';
-import { createCloudflareEdgeCache, resolveKvBinding } from '@czap/cloudflare';
+import { Diagnostics, defineBoundary } from '@liteship/core';
+import { createBoundaryCache, EdgeTier } from '@liteship/edge';
+import { createCloudflareEdgeCache, resolveKvBinding } from '@liteship/cloudflare';
 
 afterEach(() => {
   Diagnostics.reset();
@@ -11,7 +11,7 @@ describe('createCloudflareEdgeCache', () => {
   it('resolves KV get/put through a binding name', async () => {
     const store = new Map<string, string>();
     const env = {
-      CZAP_BOUNDARY_CACHE: {
+      LITESHIP_BOUNDARY_CACHE: {
         async get(key: string) {
           return store.get(key) ?? null;
         },
@@ -20,7 +20,7 @@ describe('createCloudflareEdgeCache', () => {
         },
       },
     };
-    const kv = createCloudflareEdgeCache(() => env, { binding: 'CZAP_BOUNDARY_CACHE' });
+    const kv = createCloudflareEdgeCache(() => env, { binding: 'LITESHIP_BOUNDARY_CACHE' });
     await kv.put('k1', 'v1');
     expect(await kv.get('k1')).toBe('v1');
     expect(await kv.get('missing')).toBeNull();
@@ -36,7 +36,7 @@ describe('createCloudflareEdgeCache', () => {
     expect(events).toEqual([
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/cloudflare.edge-cache',
+        source: 'liteship/cloudflare.edge-cache',
         code: 'kv-binding-missing',
         message: expect.stringContaining('MISSING'),
       }),
@@ -48,7 +48,7 @@ describe('createCloudflareEdgeCache', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
     const kv = createCloudflareEdgeCache(() => ({ OTHER: { get: async () => null, put: async () => {} } }), {
-      binding: 'CZAP_BOUNDARY_CACHE',
+      binding: 'LITESHIP_BOUNDARY_CACHE',
     });
     await kv.get('k');
     expect(events[0]?.message).toContain('available: OTHER');
@@ -75,7 +75,7 @@ describe('createCloudflareEdgeCache', () => {
         },
       },
     };
-    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'compact']] });
     const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
     const cache = createBoundaryCache(createCloudflareEdgeCache(() => env, { binding: 'KV' }));
 
@@ -111,7 +111,7 @@ describe('createCloudflareEdgeCache', () => {
         },
       },
     };
-    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+    const boundary = defineBoundary({ input: 'viewport.width', at: [[0, 'compact']] });
     const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
     const boundaryCache = createBoundaryCache(createCloudflareEdgeCache(() => env, { binding: 'KV', cache: cacheApi }));
 
@@ -120,10 +120,51 @@ describe('createCloudflareEdgeCache', () => {
       propertyRegistrations: '',
       containerQueries: '',
     });
+    // A write invalidates the Cache API projection immediately. Isolate the
+    // active-invalidation assertion from that separate coherence contract.
+    cacheApi.delete.mockClear();
     await boundaryCache.invalidateByPath(boundary.id);
 
     expect(cacheApi.delete).toHaveBeenCalledTimes(1);
     expect(cacheApi.delete.mock.calls[0]?.[0]).toBeInstanceOf(Request);
+  });
+
+  it('keeps Cache API L1 coherent when authoritative KV is overwritten', async () => {
+    const store = new Map<string, string>();
+    const l1 = new Map<string, string>();
+    const pending: Promise<unknown>[] = [];
+    const cacheApi = {
+      async match(request: Request) {
+        const value = l1.get(request.url);
+        return value === undefined ? undefined : new Response(value);
+      },
+      async put(request: Request, response: Response) {
+        l1.set(request.url, await response.text());
+      },
+      async delete(request: Request) {
+        return l1.delete(request.url);
+      },
+    };
+    const kv = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get(key: string) {
+            return store.get(key) ?? null;
+          },
+          async put(key: string, value: string) {
+            store.set(key, value);
+          },
+        },
+      }),
+      { binding: 'KV', cache: cacheApi },
+      { waitUntil: (promise) => pending.push(promise) },
+    );
+
+    await kv.put('tag-index', 'v1');
+    expect(await kv.get('tag-index')).toBe('v1');
+    await Promise.all(pending.splice(0));
+    await kv.put('tag-index', 'v2');
+    expect(await kv.get('tag-index')).toBe('v2');
   });
 
   it('serves a Cache API L1 hit without reading KV', async () => {
@@ -176,7 +217,8 @@ describe('createCloudflareEdgeCache', () => {
           async put() {},
         },
       }),
-      { binding: 'KV', cache, ctx, cacheTtl: 120 },
+      { binding: 'KV', cache, cacheTtl: 120 },
+      ctx,
     );
 
     await expect(kv.get('k')).resolves.toBe('from-kv');

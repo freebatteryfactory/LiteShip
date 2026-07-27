@@ -8,22 +8,22 @@
 
 > **FrameEncoder** = (`frames`, `config`) => `Promise`\<[`EncodedVideo`](../interfaces/EncodedVideo.md)\>
 
-Defined in: [stage/src/dual-export.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L96)
+Defined in: [stage/src/dual-export.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L90)
 
-The byte-encode seam: turn the produced per-frame [CompositeState](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+The byte-encode seam: turn the produced per-frame [CompositeState](../../../liteship/src/media/interfaces/CompositeState.md)
 snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
 is INJECTED at the call site so the pure graph-walk never imports a codec:
 
- - browser/worker: WebCodecs over an OffscreenCanvas (`@czap/web` capture);
- - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
-
-Both are real backends of this one shape; neither lives in `dual-export.ts`.
+The shipped implementation is the node/headless ffmpeg child-process adapter
+in `./ffmpeg-encoder`. Other hosts may implement this exact
+CompositeState-to-bytes contract, but `@liteship/web`'s canvas capture API is
+a distinct renderer contract and is not presented as this type.
 
 ## Parameters
 
 ### frames
 
-readonly [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)[]
+readonly [`CompositeState`](../../../liteship/src/media/interfaces/CompositeState.md)[]
 
 ### config
 

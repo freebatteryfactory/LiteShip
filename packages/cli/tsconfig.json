@@ -4,19 +4,21 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@czap/_spine": ["../_spine/index.d.ts"],
-      "@czap/error": ["../error/src/index.ts"]
+      "@liteship/_spine": ["../_spine/index.d.ts"],
+      "@liteship/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
+    { "path": "../canonical" },
     { "path": "../core" },
     { "path": "../command" },
     { "path": "../scene" },
     { "path": "../assets" },
     { "path": "../audit" },
     { "path": "../edge" },
-    { "path": "../error" }
+    { "path": "../error" },
+    { "path": "../gauntlet" }
   ]
 }

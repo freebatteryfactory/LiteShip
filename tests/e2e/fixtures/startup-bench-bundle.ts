@@ -1,4 +1,4 @@
-import { WorkerHost } from '@czap/worker';
+import { WorkerHost } from '@liteship/worker';
 import { topOutliers } from '../../../scripts/paired-truth.js';
 import llmDirective from '../../../packages/astro/src/client-directives/llm.js';
 import {
@@ -194,8 +194,8 @@ async function measureLLMStartupPath(
   readonly chunkToFirstTokenMs: number;
 }> {
   const host = document.createElement('section');
-  host.setAttribute('data-czap-llm-url', '/llm');
-  host.setAttribute('data-czap-llm-mode', 'append');
+  host.setAttribute('data-liteship-llm-url', '/llm');
+  host.setAttribute('data-liteship-llm-mode', 'append');
   const target = document.createElement('div');
   target.className = 'target';
   host.appendChild(target);
@@ -206,7 +206,7 @@ async function measureLLMStartupPath(
   const tokenAt = new Promise<number>((resolve) => {
     let tokenCount = 0;
     host.addEventListener(
-      'czap:llm-token',
+      'liteship:llm-token',
       () => {
         tokenCount += 1;
         if (tokenCount === scenario.firstTokenOrdinal) {
@@ -233,7 +233,7 @@ async function measureLLMStartupPath(
   const firstTokenAt = await tokenAt;
   await waitForMicrotasks();
 
-  host.dispatchEvent(new CustomEvent('czap:teardown'));
+  host.dispatchEvent(new CustomEvent('liteship:teardown'));
   host.remove();
 
   return {
@@ -244,7 +244,7 @@ async function measureLLMStartupPath(
 }
 
 async function measureLLMStartup(iterations = 30): Promise<LLMRealityResult> {
-  document.documentElement.setAttribute('data-czap-tier', 'reactive');
+  document.documentElement.setAttribute('data-liteship-tier', 'reactive');
 
   const originalEventSource = window.EventSource;
   Object.defineProperty(window, 'EventSource', {

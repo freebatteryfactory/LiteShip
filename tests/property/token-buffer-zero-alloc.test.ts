@@ -1,17 +1,16 @@
 // PROVES: INV-TOKEN-BUFFER-ZERO-ALLOC
 /**
- * The MEASURED proof that `@czap/core`'s TokenBuffer `push` + `drainInto` hot path
- * is GENUINELY zero-allocation — the claim the module doc makes ("zero-alloc
- * push/drainInto"), now held to a real allocation measurement instead of prose.
+ * The MEASURED, cross-platform qualification of `@liteship/core`'s TokenBuffer
+ * `push` + `drainInto` hot path. The blocking verdict is the ratio to a
+ * known-allocating reference, not a platform-specific absolute byte count.
  *
  * The measurement REQUIRES a forced `global.gc()` (only available under
  * `node --expose-gc`), which vitest does not run with by default. So this test
  * SPAWNS the committed allocation gate (`scripts/alloc-gate.ts`) in a child node
- * process WITH `--expose-gc`, and asserts: (a) the gate exits 0 (both hot paths
- * within budget), and (b) the token-buffer RESULT line reports a live per-op
- * allocation at or below the proven budget. The gate forces GC around K batches of
- * N ops and divides the SURVIVING heap delta by the op count — the only honest
- * "is this zero-alloc" measurement for a GC'd runtime.
+ * process WITH `--expose-gc`, and asserts the token-buffer `RELATIVE` verdict. The
+ * gate forces GC around K batches of N ops, then compares the observed live growth
+ * with an intentionally allocating reference so V8's platform-dependent heap unit
+ * cannot turn the contract into a flaky absolute threshold.
  *
  * @module
  */
@@ -29,11 +28,7 @@ const GATE = resolve(REPO_ROOT, 'scripts/alloc-gate.ts');
 
 /** Run the allocation gate under `--expose-gc` + tsx via the canonical spawn helper. */
 async function runAllocGate(): Promise<{ stdout: string; status: number }> {
-  const result = await spawnArgvCapture(
-    process.execPath,
-    ['--expose-gc', '--import', 'tsx', GATE],
-    { cwd: REPO_ROOT },
-  );
+  const result = await spawnArgvCapture(process.execPath, ['--expose-gc', '--import', 'tsx', GATE], { cwd: REPO_ROOT });
   return { stdout: result.stdout, status: result.exitCode };
 }
 
@@ -57,20 +52,22 @@ function parseRelative(stdout: string): ReadonlyArray<{ label: string; ratio: nu
 }
 
 describe('TokenBuffer push+drainInto is genuinely zero-allocation (INV-TOKEN-BUFFER-ZERO-ALLOC)', () => {
-  it('the token-buffer hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)', async () => {
-    const { stdout, status } = await runAllocGate();
-    // The gate exits 0 only when EVERY governed hot path is within its relative ratio.
-    expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
+  it(
+    'the token-buffer hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)',
+    async () => {
+      const { stdout, status } = await runAllocGate();
+      // The gate exits 0 only when EVERY governed hot path is within its relative ratio.
+      expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
 
-    const relative = parseRelative(stdout);
-    const tokenBuffer = relative.find(
-      (r) => r.label.includes('token-buffer') && r.label.includes('retaining ref'),
-    );
-    expect(tokenBuffer, `no token-buffer RELATIVE line in:\n${stdout}`).toBeDefined();
-    // The token-buffer path's per-op live growth is a small fraction (≤ RELATIVE_MAX_RATIO)
-    // of a path that genuinely RETAINS per op. The ratio cancels the platform's heap
-    // accounting unit — proven zero-alloc on every OS, where an absolute budget is not.
-    expect(tokenBuffer!.verdict).toBe('PASS');
-    expect(tokenBuffer!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
-  }, scaledTimeout(120_000));
+      const relative = parseRelative(stdout);
+      const tokenBuffer = relative.find((r) => r.label.includes('token-buffer') && r.label.includes('retaining ref'));
+      expect(tokenBuffer, `no token-buffer RELATIVE line in:\n${stdout}`).toBeDefined();
+      // The token-buffer path's per-op live growth is a small fraction (≤ RELATIVE_MAX_RATIO)
+      // of a path that genuinely RETAINS per op. The ratio cancels the platform's heap
+      // accounting unit — proven zero-alloc on every OS, where an absolute budget is not.
+      expect(tokenBuffer!.verdict).toBe('PASS');
+      expect(tokenBuffer!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
+    },
+    scaledTimeout(120_000),
+  );
 });

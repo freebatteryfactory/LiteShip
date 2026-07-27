@@ -8,7 +8,7 @@
 
 > **HostCapabilityError**: (`capability`, `detail`) => [`HostCapabilityError`](../interfaces/HostCapabilityError.md)
 
-Defined in: [error/src/variants.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L123)
+Defined in: [error/src/variants.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L124)
 
 Build a HostCapabilityError.
 

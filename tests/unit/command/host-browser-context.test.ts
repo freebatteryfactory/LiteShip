@@ -7,7 +7,7 @@
  * @module
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { createBrowserCommandContext, browserSafeCommandNames } from '@czap/command/host-browser';
+import { createBrowserCommandContext, browserSafeCommandNames } from '@liteship/command/host-browser';
 
 function stubFetch(body: unknown): ReturnType<typeof vi.fn> {
   const mock = vi.fn(async () => ({ json: async () => body }));
@@ -31,10 +31,10 @@ describe('createBrowserCommandContext — local stubs', () => {
       exitCode: 1,
       stderrTail: 'vitest unavailable in browser host',
     });
-    expect(await context.runAudioProjection!('onset', new ArrayBuffer(0))).toBe(0);
+    expect(context.runAudioProjection).toBeUndefined();
     expect(context.hostVersion!()).toBe('browser');
     expect(await context.spawnCapture!('ls', [])).toEqual({ exitCode: 1, stdout: '' });
-    expect(await context.runSceneCompile!()).toBeUndefined();
+    expect(context.runSceneCompile).toBeUndefined();
   });
 
   it('browserSafeCommandNames lists the delegation-free registry subset', () => {
@@ -80,7 +80,7 @@ describe('renderScene MCP delegation (fetch stubbed)', () => {
     expect(failure).toContain(`browser-context.render (${URL})`);
     expect(failure).toContain('scene.render delegation failed');
     expect(failure).toContain('"boom"');
-    expect(failure).toContain('czap mcp --http=PORT');
+    expect(failure).toContain('liteship mcp --http=PORT');
   });
 
   it('result.isError throws the delegation failure too', async () => {

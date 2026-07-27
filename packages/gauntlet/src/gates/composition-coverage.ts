@@ -55,7 +55,7 @@ import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR, type FileId } from '../rep
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
 import { maxLevel, type AssuranceLevel } from '../assurance.js';
-import type { CompositionFacts, InteractionEdge, CoverageEvidence } from '../composition-facts.js';
+import type { CompositionFacts, InteractionEdge, CoverageEvidence } from '../facts/composition-facts.js';
 
 /** The gate id — namespaces every finding (traceability). */
 const GATE_ID = 'gauntlet/composition-coverage';
@@ -144,11 +144,11 @@ function notEvidencedFinding(): Finding {
     level: 'L4',
     title: 'Composition-coverage not evidenced',
     detail:
-      'No composition facts were injected, so the untested-interaction analysis could not run — the gate reports this honestly rather than passing silently. A host (the CLI `czap check --ir --composition` path) derives the interaction edges from the IR call graph, decides which units are individually tested, decides which edges an integration test covers together, and injects CompositionFacts for this gate to fold.',
+      'No composition facts were injected, so the untested-interaction analysis could not run — the gate reports this honestly rather than passing silently. A host (the CLI `liteship check gates --ir --composition` path) derives the interaction edges from the IR call graph, decides which units are individually tested, decides which edges an integration test covers together, and injects CompositionFacts for this gate to fold.',
     remediation: {
       kind: 'instruction',
       description: 'Run the composition-coverage analysis so the untested interactions are evidenced.',
-      steps: ['Run `czap check --ir --composition` so the host builds + injects CompositionFacts.'],
+      steps: ['Run `liteship check gates --ir --composition` so the host builds + injects CompositionFacts.'],
     },
   });
 }
@@ -185,7 +185,7 @@ function compositionContext(ir: RepoIR, composition: CompositionFacts): GateCont
 }
 
 /** A fixtures-only L4 file id (matches the `core/.../brands.ts` L4 glob in the map). */
-const L4_FILE = 'packages/core/src/brands.ts';
+const L4_FILE = 'packages/core/src/schema/brands.ts';
 /** A fixtures-only caller of the L4 file. */
 const CALLER = 'packages/core/src/caller.ts';
 
@@ -193,8 +193,8 @@ const CALLER = 'packages/core/src/caller.ts';
 function fixtureIR(): RepoIR {
   return makeRepoIR({
     files: [
-      { id: CALLER, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: CALLER, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: L4_FILE, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     imports: [{ fromFile: CALLER, specifier: './brands.js', kind: 'relative', targetFile: L4_FILE }],
   });

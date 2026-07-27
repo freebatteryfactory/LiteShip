@@ -2,13 +2,13 @@
  * capsule inspect / list / verify (CUT A1) — read operations over the capsule
  * manifest, plus generated-test verification. Pure logic returning structured
  * results: the adapter resolves + reads the manifest (honoring
- * CZAP_CAPSULE_MANIFEST) and runs vitest; these handlers parse + decide.
+ * LITESHIP_CAPSULE_MANIFEST) and runs vitest; these handlers parse + decide.
  *
  * @module
  */
-import { S, type CapsuleCommandResult, type CommandJsonSchema } from '@czap/core';
+import { type CapsuleCommandResult, type CommandJsonSchema, schema } from '@liteship/core';
 import { capabilityUnavailable, defineCommand, failed, ok, type CommandCapability } from '../registry.js';
-import { loadManifest, manifestUnavailable } from './manifest.js';
+import { loadManifest, manifestUnavailable, type CapsuleManifestEntry } from './manifest.js';
 
 /** A domain failure whose payload is a single teaching `error` string. */
 function fail(command: string, error: string, exitCode: number): CapsuleCommandResult {
@@ -51,12 +51,38 @@ const CapsuleVerifyPayloadSchema = {
   required: ['capsuleId'],
 } as const satisfies CommandJsonSchema;
 
+/**
+ * Structured payload returned by `capsule.inspect` — a single manifest entry.
+ * The descriptor's outputSchema keeps the entry opaque (decision #2, no drift
+ * with the manifest); this TS mirror is the precise real shape, a
+ * CapsuleManifestEntry.
+ */
+export type CapsuleInspectPayload = {
+  readonly capsule: CapsuleManifestEntry;
+};
+
+/** Structured payload returned by `capsule.list` — the (optionally filtered) entries + the nullable `kind` echo. */
+export type CapsuleListPayload = {
+  readonly capsules: readonly CapsuleManifestEntry[];
+  readonly kind: string | null;
+};
+
+/**
+ * Structured payload returned by the manifest-tier `capsule.verify` verb — the
+ * verified capsule's id. Named distinctly from the `capsule-verify` GATE's
+ * CapsuleVerifyPayload (a different command with a different shape).
+ */
+export type CapsuleVerifyResultPayload = {
+  readonly capsuleId: string;
+};
+
 /** `capsule inspect <id>` — return a single manifest entry. */
 export const capsuleInspectCommand = defineCommand({
   descriptor: {
     name: 'capsule.inspect',
     summary: 'Inspect a capsule manifest entry.',
     inputSchema: INSPECT_SCHEMA,
+    cli: { outputMode: 'json', positionals: ['id'] },
     // Minimal stable contract (decision #2): the entry is a manifest object;
     // its internal fields are not mirrored here to avoid drift with the manifest.
     outputSchema: CapsuleInspectPayloadSchema,
@@ -64,7 +90,7 @@ export const capsuleInspectCommand = defineCommand({
     // CUT D5: link a live MCP Apps view that renders this tool's result (host-injected).
     ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
   },
-  argsSchema: S.struct({ id: S.string }),
+  argsSchema: schema.struct({ id: schema.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded, context);
@@ -85,10 +111,11 @@ export const capsuleListCommand = defineCommand({
       type: 'object',
       properties: { kind: { type: 'string' } },
     } as const satisfies CommandJsonSchema,
+    cli: { outputMode: 'json' },
     outputSchema: CapsuleListPayloadSchema,
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
-  argsSchema: S.struct({ kind: S.optional(S.string) }),
+  argsSchema: schema.struct({ kind: schema.optional(schema.string) }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.list', loaded, context);
@@ -105,11 +132,12 @@ export const capsuleVerifyCommand = defineCommand({
     name: 'capsule.verify',
     summary: 'Verify a capsule’s generated tests.',
     inputSchema: INSPECT_SCHEMA,
+    cli: { outputMode: 'json', positionals: ['id'] },
     requires: ['runVitest'] satisfies readonly CommandCapability[],
     outputSchema: CapsuleVerifyPayloadSchema,
     annotations: { mcpExposed: true, group: 'manifest' },
   },
-  argsSchema: S.struct({ id: S.string }),
+  argsSchema: schema.struct({ id: schema.string }),
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
     if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded, context);

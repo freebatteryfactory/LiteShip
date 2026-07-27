@@ -8,7 +8,7 @@
 
 > **watchCapabilities**(`onChange`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: [detect/src/detect.ts:686](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L686)
+Defined in: [detect/src/detect.ts:740](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L740)
 
 Watch for capability changes via matchMedia listeners and resize observer.
 Emits a fresh DetectionResult whenever viewport, color scheme, or
@@ -38,7 +38,7 @@ A [Disposer](../type-aliases/Disposer.md) that removes the listeners it added
 ## Example
 
 ```ts
-import { Detect } from '@czap/detect';
+import { Detect } from '@liteship/detect';
 
 const dispose = Detect.watchCapabilities((result) => {
   console.log('Capabilities changed:', result.capTier);

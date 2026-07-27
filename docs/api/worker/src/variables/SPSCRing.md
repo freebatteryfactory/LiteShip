@@ -6,9 +6,9 @@
 
 # Variable: SPSCRing
 
-> `const` **SPSCRing**: `object`
+> **SPSCRing**: `object`
 
-Defined in: [worker/src/spsc-ring.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L404)
+Defined in: [worker/src/spsc-ring.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L74)
 
 SPSC ring buffer namespace.
 
@@ -22,7 +22,7 @@ fully non-blocking.
 
 ### attachConsumer
 
-> `readonly` **attachConsumer**: (`sab`, `slotCount?`, `slotSize?`) => [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md) = `_attachConsumer`
+> `readonly` **attachConsumer**: (`sab`, `slotCount?`, `slotSize?`) => [`SPSCRing`](../interfaces/SPSCRing.md) = `_attachConsumer`
 
 Attach as consumer to an existing SharedArrayBuffer.
 Call this on the main thread that consumes data.
@@ -49,14 +49,14 @@ Optional; validated against the buffer header (a mismatch throws)
 
 #### Returns
 
-[`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md)
+[`SPSCRing`](../interfaces/SPSCRing.md)
 
-A consumer-side [SPSCRingBufferShape](../interfaces/SPSCRingBufferShape.md)
+A consumer-side SPSCRing
 
 #### Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // On the main thread after receiving buffer from Worker:
 const consumer = SPSCRing.attachConsumer(sharedBuffer);
@@ -68,7 +68,7 @@ if (consumer.pop(out)) {
 
 ### attachProducer
 
-> `readonly` **attachProducer**: (`sab`, `slotCount?`, `slotSize?`) => [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md) = `_attachProducer`
+> `readonly` **attachProducer**: (`sab`, `slotCount?`, `slotSize?`) => [`SPSCRing`](../interfaces/SPSCRing.md) = `_attachProducer`
 
 Attach as producer to an existing SharedArrayBuffer.
 Call this inside the Worker that produces data.
@@ -95,14 +95,14 @@ Optional; validated against the buffer header (a mismatch throws)
 
 #### Returns
 
-[`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md)
+[`SPSCRing`](../interfaces/SPSCRing.md)
 
-A producer-side [SPSCRingBufferShape](../interfaces/SPSCRingBufferShape.md)
+A producer-side SPSCRing
 
 #### Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // Inside a Worker's message handler:
 self.onmessage = (e) => {
@@ -147,7 +147,7 @@ A [SPSCRingPair](../interfaces/SPSCRingPair.md): the shared buffer + producer/co
 #### Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 const { buffer, producer, consumer } = SPSCRing.createPair(64, 4);
 // producer.push(new Float64Array([1, 2, 3, 4])); // true
@@ -168,7 +168,7 @@ values fail loudly.
 ## Example
 
 ```ts
-import { SPSCRing } from '@czap/worker';
+import { SPSCRing } from '@liteship/worker';
 
 // Main thread: create pair and send buffer to Worker
 const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);

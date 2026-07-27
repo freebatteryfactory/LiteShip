@@ -1,6 +1,6 @@
 /**
- * `@czap/scene` — **LiteShip** scene stack: typed timeline authoring over the
- * ECS substrate in `@czap/core`.
+ * `@liteship/scene` — **LiteShip** scene stack: typed timeline authoring over the
+ * ECS substrate in `@liteship/core`.
  *
  * @module
  */
@@ -28,8 +28,47 @@ export type { TrackRef } from './track.js';
 export { compileScene } from './compile.js';
 export type { CompiledScene, TrackSpawn } from './compile.js';
 
-export { BeatBinding, beatBindingCapsule, bindBeats } from './capsules/beat-binding.js';
-export type { BeatComponent, BeatSpawn } from './capsules/beat-binding.js';
+export {
+  SceneParts,
+  SceneSeedParts,
+  TrackIdPart,
+  VideoSourcePart,
+  AudioSourcePart,
+  FrameRangePart,
+  TrackLayerPart,
+  EnvelopePart,
+  VolumePart,
+  PanPart,
+  SyncBeatMarkerPart,
+  TransitionKindPart,
+  BetweenPart,
+  EasePart,
+  EffectKindPart,
+  TargetEntityPart,
+  SyncAnchorPart,
+  BeatPart,
+  OpacityPart,
+  PhasePart,
+  GainPart,
+  BlendPart,
+  IntensityPart,
+  SvgAttrsPart,
+  RuntimeWritePlanPart,
+  MotionSamplePart,
+  admitScenePartSeed,
+  scenePartSeed,
+} from './parts.js';
+export type {
+  ScenePartSeed,
+  ScenePartName,
+  SceneSeedPart,
+  SceneSeedPartName,
+  FrameRange,
+  MotionSample,
+} from './parts.js';
+
+export { BeatBinding, beatBindingCapsule, bindBeats } from './beat-binding-capsule.js';
+export type { BeatComponent, BeatSpawn } from './beat-binding-capsule.js';
 
 // The official bridge from a raw asset-space BeatMarkerSet (sample indices)
 // to scene-space BeatComponent[] (milliseconds) — feed its output into
@@ -42,7 +81,7 @@ export type { SceneRuntimeHandle, SceneRuntimeOptions } from './runtime.js';
 export { VideoSystem } from './systems/video.js';
 export { AudioSystem } from './systems/audio.js';
 export { TransitionSystem } from './systems/transition.js';
-export { MotionSampleSystem, sampleSceneMotion, motionComponentName } from './systems/motion.js';
+export { MotionSampleSystem, sampleSceneMotion, sceneMotionTime } from './systems/motion.js';
 export { EffectSystem } from './systems/effect.js';
 export { SyncSystem } from './systems/sync.js';
 export { PassThroughMixer } from './systems/pass-through-mixer.js';
@@ -66,7 +105,7 @@ export type { SceneSubscenePartial } from './include.js';
 export { inheritContext } from './context.js';
 export type { SceneContext } from './context.js';
 
-// `startDevServer` lives at `@czap/scene/dev` sub-path — it imports
+// `startDevServer` lives at `@liteship/scene/dev` sub-path — it imports
 // `node:os`, `node:crypto`, and Vite's server. Keeping it off the main
 // entry prevents bundlers targeting browsers / Workers / Deno from hitting
 // a hard import error at parse time on code paths they never call.

@@ -1,20 +1,20 @@
 import { describe, expect, test } from 'vitest';
-import { Boundary } from '@czap/core';
-import { czapMiddleware } from '@czap/astro';
+import { defineBoundary } from '@liteship/core';
+import { liteshipMiddleware } from '@liteship/astro';
 
 describe('Astro edge host pipeline integration', () => {
   test('resolves hints, tier, theme, and cached outputs through the middleware host path', async () => {
     const cacheStore = new Map<string, string>();
     // Real minted address -- the KV keyspace is content-addressed (ADR-0003),
-    // so tests use Boundary.make ids rather than fabricated strings.
-    const boundary = Boundary.make({
+    // so tests use defineBoundary ids rather than fabricated strings.
+    const boundary = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
         [768, 'wide'],
       ],
     });
-    const middleware = czapMiddleware({
+    const middleware = liteshipMiddleware({
       edge: {
         theme: ({ tier }) => ({
           prefix: 'brand',
@@ -54,22 +54,38 @@ describe('Astro edge host pipeline integration', () => {
     };
 
     const response = await middleware(context, async () => {
-      const czap = context.locals.czap as Record<string, any>;
+      const liteship = context.locals.liteship as Record<string, any>;
       return new Response(
         JSON.stringify({
-          tiers: czap.tiers,
-          edge: czap.edge,
+          tiers: liteship.tiers,
+          tierEvidence: liteship.tierEvidence,
+          edge: liteship.edge,
         }),
         { status: 200 },
       );
     });
 
     const body = JSON.parse(await response.text()) as {
-      readonly tiers: { readonly motion: string };
-      readonly edge: { readonly theme: { readonly css: string }; readonly compiledOutputs: { readonly css: string } };
+      readonly tiers: { readonly tier: string; readonly motion: string; readonly design: string };
+      readonly tierEvidence: Record<
+        'tier' | 'motion' | 'design',
+        { readonly value: string; readonly support: 'observed' | 'inferred' }
+      >;
+      readonly edge: {
+        readonly theme: { readonly css: string };
+        readonly compiledOutputs: { readonly css: string };
+        readonly htmlAttributesMap: Readonly<Record<string, string>>;
+      };
     };
 
     expect(body.tiers.motion).toBe('none');
+    expect(body.tierEvidence.motion.value).toBe(body.tiers.motion);
+    expect(body.tierEvidence.motion.support).toBe('inferred');
+    expect(body.edge.htmlAttributesMap).toEqual({
+      'data-liteship-tier': body.tiers.tier,
+      'data-liteship-motion': body.tiers.motion,
+      'data-liteship-design': body.tiers.design,
+    });
     expect(body.edge.theme.css).toContain('--brand-color-primary');
     expect(body.edge.compiledOutputs.css).toContain('[data-tier=');
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');

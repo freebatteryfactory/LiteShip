@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ease, easeFnFor } from '@czap/scene';
+import { ease, easeFnFor } from '@liteship/scene';
 
 describe('ease', () => {
   it('cubic: 0 -> 0, 1 -> 1, monotonic increasing', () => {

@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Resumption } from '@czap/web';
-import type { ResumptionState } from '@czap/web';
+import { Resumption } from '@liteship/web';
+import type { ResumptionState } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -81,10 +81,10 @@ describe('Resumption.saveState / loadState', () => {
   });
 
   test('loadState returns null and cleans up corrupt JSON', async () => {
-    storage.setItem('czap:resumption:bad', '{not json');
+    storage.setItem('liteship:resumption:bad', '{not json');
     const loaded = await Resumption.loadState('bad');
     expect(loaded).toBeNull();
-    expect(storage.removeItem).toHaveBeenCalledWith('czap:resumption:bad');
+    expect(storage.removeItem).toHaveBeenCalledWith('liteship:resumption:bad');
   });
 });
 
@@ -152,7 +152,7 @@ describe('Resumption.resume', () => {
     const result = Resumption.resume('art-1', '50');
     // Teaching contract: the fetched URL, the status, and the way out.
     await expect(result).rejects.toThrow(
-      /Snapshot request to .*\/czap\/snapshot\/art-1 failed: 500.*ResumptionConfig\.snapshotUrl/,
+      /Snapshot request to .*\/liteship\/snapshot\/art-1 failed: 500.*ResumptionConfig\.snapshotUrl/,
     );
   });
 
@@ -169,7 +169,7 @@ describe('Resumption.resume', () => {
 
     const result = Resumption.resume('art-1', '15');
     await expect(result).rejects.toThrow(
-      /Replay request to .*\/czap\/replay\/art-1.* failed: 500.*ResumptionConfig\.replayUrl/,
+      /Replay request to .*\/liteship\/replay\/art-1.* failed: 500.*ResumptionConfig\.replayUrl/,
     );
   });
 
@@ -284,22 +284,22 @@ describe('Resumption.resume', () => {
 
   test('loadState returns null for structurally invalid sessionStorage data (missing fields)', async () => {
     // Valid JSON but not a valid ResumptionState -- missing lastSequence and timestamp
-    storage.setItem('czap:resumption:bad-shape', JSON.stringify({ artifactId: 'bad-shape', lastEventId: 'evt-1' }));
+    storage.setItem('liteship:resumption:bad-shape', JSON.stringify({ artifactId: 'bad-shape', lastEventId: 'evt-1' }));
     const loaded = await Resumption.loadState('bad-shape');
     expect(loaded).toBeNull();
-    expect(storage.removeItem).toHaveBeenCalledWith('czap:resumption:bad-shape');
+    expect(storage.removeItem).toHaveBeenCalledWith('liteship:resumption:bad-shape');
   });
 
   test('loadState returns null when sessionStorage contains a non-object JSON value', async () => {
-    storage.setItem('czap:resumption:num', '42');
+    storage.setItem('liteship:resumption:num', '42');
     const loaded = await Resumption.loadState('num');
     expect(loaded).toBeNull();
-    expect(storage.removeItem).toHaveBeenCalledWith('czap:resumption:num');
+    expect(storage.removeItem).toHaveBeenCalledWith('liteship:resumption:num');
   });
 
   test('loadState returns null when sessionStorage fields have wrong types', async () => {
     storage.setItem(
-      'czap:resumption:wrong-types',
+      'liteship:resumption:wrong-types',
       JSON.stringify({
         artifactId: 'wrong-types',
         lastEventId: 123, // should be string
@@ -392,7 +392,7 @@ describe('Resumption.resume', () => {
   });
 
   test('loadState rethrows non-Syntax parse failures so callers do not silently swallow storage bugs', async () => {
-    storage.setItem('czap:resumption:bad', '{"artifactId":"bad"}');
+    storage.setItem('liteship:resumption:bad', '{"artifactId":"bad"}');
     const parseSpy = vi.spyOn(JSON, 'parse').mockImplementation(() => {
       throw new TypeError('parse exploded');
     });
@@ -400,7 +400,7 @@ describe('Resumption.resume', () => {
     // loadState is a synchronous localStorage read — a non-Syntax parse failure
     // throws synchronously (it is not swallowed like a SyntaxError).
     expect(() => Resumption.loadState('bad')).toThrow('parse exploded');
-    expect(storage.removeItem).not.toHaveBeenCalledWith('czap:resumption:bad');
+    expect(storage.removeItem).not.toHaveBeenCalledWith('liteship:resumption:bad');
 
     parseSpy.mockRestore();
   });

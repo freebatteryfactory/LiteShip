@@ -5,9 +5,9 @@
  *
  * Builds a 2-entity graph (A: viewport.width mobile|desktop @ [0,768] with a css
  * projection + a glsl pose uniform; B: scroll.progress), loads it, and asserts:
- *   - each element is seeded (data-czap-state + the css var / glsl uniform);
+ *   - each element is seeded (data-liteship-state + the css var / glsl uniform);
  *   - resizing past 768 + firing resize flips A to 'desktop', updates the css var,
- *     and dispatches the czap:uniform-update CustomEvent;
+ *     and dispatches the liteship:uniform-update CustomEvent;
  *   - a recast that adds a pose re-casts the affected entity WITHOUT detaching the
  *     untouched entity B's observer (the delta seam is surgical).
  */
@@ -22,7 +22,7 @@ import {
   GraphPatch,
   projectionKeys,
   HLC,
-} from '@czap/core';
+} from '@liteship/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -31,7 +31,7 @@ import type {
   ProjectionNode,
   PoseNode,
   CellMeta,
-} from '@czap/core';
+} from '@liteship/core';
 import { loadGraphRuntime } from '../../../packages/astro/src/runtime/graph-runtime.js';
 
 const ts = HLC.increment(HLC.create('test'), 1);
@@ -93,7 +93,7 @@ function pose(entityRef: ContentAddress, state: string, bindings: Record<string,
 /**
  * Build the 2-entity acceptance graph. Entity A: a `viewport.width` boundary
  * (mobile|desktop @ [0,768]) with a css projection and per-state poses carrying a
- * `--czap-card` CSS var + a `u_blur` GLSL uniform. Entity B: a `scroll.progress`
+ * `--liteship-card` CSS var + a `u_blur` GLSL uniform. Entity B: a `scroll.progress`
  * boundary (top|bottom @ [0,0.5]) with a css projection.
  */
 function buildGraph(): DocumentGraph {
@@ -108,8 +108,8 @@ function buildGraph(): DocumentGraph {
     components: [compA.id],
   });
   const projA = projection('css', compA.id, 'card');
-  const poseAMobile = pose(entA.id, 'mobile', { '--czap-card': '14px', u_blur: 2 });
-  const poseADesktop = pose(entA.id, 'desktop', { '--czap-card': '18px', u_blur: 8 });
+  const poseAMobile = pose(entA.id, 'mobile', { '--liteship-card': '14px', u_blur: 2 });
+  const poseADesktop = pose(entA.id, 'desktop', { '--liteship-card': '18px', u_blur: 8 });
 
   const sigB = signal('scroll.progress');
   const compB = component('rail', [0, 0.5], ['top', 'bottom']);
@@ -122,7 +122,7 @@ function buildGraph(): DocumentGraph {
     components: [compB.id],
   });
   const projB = projection('css', compB.id, 'rail');
-  const poseBTop = pose(entB.id, 'top', { '--czap-rail': '0' });
+  const poseBTop = pose(entB.id, 'top', { '--liteship-rail': '0' });
 
   return sealGraph({
     _tag: 'DocumentGraph',
@@ -159,7 +159,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   let elB: HTMLElement;
   // jsdom has no real ResizeObserver wiring; capture the boundary runtime's
   // viewport-observer callback so the test can fire it after changing innerWidth
-  // (the existing satellite/worker runtime tests use this same mock).
+  // (the existing adaptive/worker runtime tests use this same mock).
   let fireResize: (() => void) | null;
 
   beforeEach(() => {
@@ -193,29 +193,29 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     const graph = buildGraph();
 
     const uniformSpy = vi.fn();
-    elA.addEventListener('czap:uniform-update', uniformSpy);
+    elA.addEventListener('liteship:uniform-update', uniformSpy);
 
     const handle = loadGraphRuntime(graph, resolverFor(graph));
     expect(handle).not.toBeNull();
 
-    // SEED: A starts mobile — data-czap-state + the css var + (via uniform event) the glsl uniform.
-    expect(elA.getAttribute('data-czap-state')).toBe('mobile');
-    expect(elA.style.getPropertyValue('--czap-card')).toBe('14px');
+    // SEED: A starts mobile — data-liteship-state + the css var + (via uniform event) the glsl uniform.
+    expect(elA.getAttribute('data-liteship-state')).toBe('mobile');
+    expect(elA.style.getPropertyValue('--liteship-card')).toBe('14px');
     // The seed dispatched a uniform-update carrying the mobile glsl uniform.
     expect(uniformSpy).toHaveBeenCalled();
     const seedDetail = uniformSpy.mock.calls.at(-1)![0].detail as { glsl: Record<string, number> };
     expect(seedDetail.glsl.u_blur).toBe(2);
 
     // B starts at scroll.progress 0 → 'top'.
-    expect(elB.getAttribute('data-czap-state')).toBe('top');
+    expect(elB.getAttribute('data-liteship-state')).toBe('top');
 
     // FLIP: resize past 768 → A becomes 'desktop', css var updates, uniform event fires.
     uniformSpy.mockClear();
     window.innerWidth = 1024;
     fireResize!();
 
-    expect(elA.getAttribute('data-czap-state')).toBe('desktop');
-    expect(elA.style.getPropertyValue('--czap-card')).toBe('18px');
+    expect(elA.getAttribute('data-liteship-state')).toBe('desktop');
+    expect(elA.style.getPropertyValue('--liteship-card')).toBe('18px');
     expect(uniformSpy).toHaveBeenCalled();
     const flipDetail = uniformSpy.mock.calls.at(-1)![0].detail as { glsl: Record<string, number> };
     expect(flipDetail.glsl.u_blur).toBe(8);
@@ -231,16 +231,16 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     // recast that only touches A. We detect "still attached" by asserting B keeps
     // re-evaluating after the recast (a detached observer would freeze B).
     // First, confirm B reacts to scroll before the recast.
-    // Change A's mobile pose binding (new --czap-card value) via a patch — only A is touched.
+    // Change A's mobile pose binding (new --liteship-card value) via a patch — only A is touched.
     const compA = graph.nodes.find((n) => n.family === 'component' && n.name === 'card') as ComponentNode;
     const entA = graph.nodes.find(
       (n) => n.family === 'entity' && (n as EntityNode).components.includes(compA.id),
     ) as EntityNode;
-    const newPose = pose(entA.id, 'mobile', { '--czap-card': '15px', u_blur: 3 });
+    const newPose = pose(entA.id, 'mobile', { '--liteship-card': '15px', u_blur: 3 });
     const patch = GraphPatch.propose(graph, [{ op: 'update', family: 'pose', node: newPose }]);
 
     // B's element state before recast.
-    const bStateBefore = elB.getAttribute('data-czap-state');
+    const bStateBefore = elB.getAttribute('data-liteship-state');
 
     // SPY on observer teardown: B's scroll observer cleanup calls
     // window.removeEventListener('scroll', ...). A surgical recast that only
@@ -256,8 +256,8 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     removeSpy.mockRestore();
 
     // A re-cast: the new mobile binding applied (still mobile at width 500).
-    expect(elA.getAttribute('data-czap-state')).toBe('mobile');
-    expect(elA.style.getPropertyValue('--czap-card')).toBe('15px');
+    expect(elA.getAttribute('data-liteship-state')).toBe('mobile');
+    expect(elA.style.getPropertyValue('--liteship-card')).toBe('15px');
 
     // B's observer survived: a scroll change still flips B (a detached observer would not).
     // Drive scroll.progress past 0.5 by making the document scrollable and scrolling.
@@ -271,7 +271,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     return new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
         expect(bStateBefore).toBe('top');
-        expect(elB.getAttribute('data-czap-state')).toBe('bottom');
+        expect(elB.getAttribute('data-liteship-state')).toBe('bottom');
         handle.release();
         resolve();
       });
@@ -424,8 +424,8 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     });
     const proj1 = projection('css', comp1.id, 'card');
     const proj2 = projection('css', comp2.id, 'rail');
-    const poseMobile = pose(ent.id, 'mobile', { '--czap-card': '14px' });
-    const poseTop = pose(ent.id, 'top', { '--czap-rail': '0' });
+    const poseMobile = pose(ent.id, 'mobile', { '--liteship-card': '14px' });
+    const poseTop = pose(ent.id, 'top', { '--liteship-rail': '0' });
 
     const graph = sealGraph({
       _tag: 'DocumentGraph',
@@ -447,13 +447,13 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     expect(handle).not.toBeNull();
 
     // BOTH boundaries seeded onto the element: the viewport boundary applied
-    // `--czap-card`, the scroll boundary applied `--czap-rail`. If the second
+    // `--liteship-card`, the scroll boundary applied `--liteship-rail`. If the second
     // binding had overwritten the first in the registry, only one would seed —
     // but seeding happens in loadGraphRuntime regardless; the real leak shows up
     // at release. Assert both observers detach: spy on BOTH removeEventListener
     // channels (resize observer via disconnect; scroll via removeEventListener).
-    expect(elA.style.getPropertyValue('--czap-card')).toBe('14px');
-    expect(elA.style.getPropertyValue('--czap-rail')).toBe('0');
+    expect(elA.style.getPropertyValue('--liteship-card')).toBe('14px');
+    expect(elA.style.getPropertyValue('--liteship-rail')).toBe('0');
 
     // release() must detach BOTH observers. The scroll observer detaches via
     // window.removeEventListener('scroll', …); if the first (viewport) binding had
@@ -469,7 +469,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   });
 
   // FINDING 3 [P2]: a component whose thresholds are NOT strictly ascending makes
-  // Boundary.make throw; that throw must NOT escape loadGraphRuntime. The bad
+  // defineBoundary throw; that throw must NOT escape loadGraphRuntime. The bad
   // entity is omitted (lowering stays total), the loader returns a handle, and the
   // good entity still casts.
   test('omits a non-ascending-threshold component without throwing', () => {
@@ -503,7 +503,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
       components: [goodComp.id],
     });
     const goodProj = projection('css', goodComp.id, 'rail');
-    const goodPose = pose(goodEnt.id, 'top', { '--czap-rail': '0' });
+    const goodPose = pose(goodEnt.id, 'top', { '--liteship-rail': '0' });
 
     const graph = sealGraph({
       _tag: 'DocumentGraph',
@@ -528,7 +528,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     expect(handle).not.toBeNull();
 
     // The bad entity was OMITTED (no state seeded onto elA); the good entity cast.
-    expect(elA.getAttribute('data-czap-state')).toBeNull();
-    expect(elB.getAttribute('data-czap-state')).toBe('top');
+    expect(elA.getAttribute('data-liteship-state')).toBeNull();
+    expect(elB.getAttribute('data-liteship-state')).toBe('top');
   });
 });

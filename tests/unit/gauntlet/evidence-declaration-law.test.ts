@@ -62,7 +62,7 @@ import {
   type Gate,
   type GateContext,
   type Finding,
-} from '@czap/gauntlet';
+} from '@liteship/gauntlet';
 
 // ── the law engine ───────────────────────────────────────────────────────────
 
@@ -121,7 +121,11 @@ function isInIr(path: string, ctx: GateContext): boolean {
   // is OUT-OF-IR, an evidenceDigest obligation.
   if (PACKAGE_SOURCE.test(path)) return true;
   const isSourceFile = path.endsWith('.ts') || path.endsWith('.tsx');
-  return isSourceFile && !NON_IR_SOURCE_TREES.some((tree) => path.startsWith(tree));
+  // Fixture shorthand is deliberately just a bare filename (`good.ts`). A
+  // directory-qualified source path outside packages/*/src is real out-of-IR
+  // evidence: scripts/, docs/, dist/*.d.ts, or any future repository owner must
+  // be declared instead of being laundered through the fixture convention.
+  return isSourceFile && !path.includes('/');
 }
 
 /**
@@ -417,7 +421,7 @@ function cloneContext(base: GateContext): GateContext {
   return out;
 }
 
-// The injected-fact channels are derived from the SINGLE SOURCE (`@czap/gauntlet`'s
+// The injected-fact channels are derived from the SINGLE SOURCE (`@liteship/gauntlet`'s
 // FACT_CHANNELS, pinned to GateContext by a compile-time conformance assertion) — never
 // a hand-copy that can drift from the context shape (the round-5 residual: a channel the
 // recorder/law forgot to instrument). cloneContext + perturbFact iterate exactly this set.
@@ -702,7 +706,7 @@ describe('THE LAW IS COMPLETE — out-of-IR is IR-membership, not a 3-root hand-
     // A `.github/workflows/ci.yml` read is out-of-IR because it is NOT in `ir.files` —
     // proving the predicate is IR-MEMBERSHIP, identical with or without an injected IR.
     const ir = makeRepoIR({
-      files: [{ id: 'packages/x/src/a.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/x' }],
+      files: [{ id: 'packages/x/src/a.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/x' }],
     });
     const ctx: GateContext = {
       repoRoot: '/virtual',

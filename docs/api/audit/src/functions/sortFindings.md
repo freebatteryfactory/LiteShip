@@ -8,7 +8,9 @@
 
 > **sortFindings**\<`T`\>(`findings`): `T`[]
 
-Defined in: [audit/src/shared.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L208)
+Defined in: [audit/src/shared.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L252)
+
+Return findings in deterministic severity, rule, and location order.
 
 ## Type Parameters
 

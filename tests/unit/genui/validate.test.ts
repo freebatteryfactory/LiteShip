@@ -1,10 +1,10 @@
 /**
- * @czap/genui validation tests.
+ * @liteship/genui validation tests.
  */
 
 import { describe, expect, it } from 'vitest';
-import type { ComponentCatalog, GeneratedUINode } from '@czap/genui';
-import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, validateGeneratedUITree } from '@czap/genui';
+import type { ComponentCatalog, GeneratedUINode } from '@liteship/genui';
+import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, validateGeneratedUITree } from '@liteship/genui';
 import { isInteractionProp } from '../../../packages/genui/src/interaction.js';
 
 describe('validateGeneratedUITree', () => {
@@ -78,6 +78,19 @@ describe('validateGeneratedUITree', () => {
       expect(result.error.code).toBe('genui/invalid-prop');
       expect(result.error.path).toBe('Text.props');
     }
+  });
+
+  it('refuses cyclic hostile input without recursion or getter execution', () => {
+    const cycle: { name: string; props: Record<string, unknown>; children: unknown[] } = {
+      name: 'Card',
+      props: { title: 'cycle' },
+      children: [],
+    };
+    cycle.children.push(cycle);
+    expect(() => validateGeneratedUITree(cycle as unknown as GeneratedUINode, DEMO_COMPONENT_CATALOG)).not.toThrow();
+    const result = validateGeneratedUITree(cycle as unknown as GeneratedUINode, DEMO_COMPONENT_CATALOG);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('genui/invalid-children');
   });
 
   it('rejects a missing required prop with genui/invalid-prop', () => {

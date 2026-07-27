@@ -10,7 +10,7 @@ declare module 'vitest/internal/browser' {
 
 declare global {
   interface Window {
-    __czap_player_ready?: boolean;
+    __liteship_player_ready?: boolean;
   }
 }
 
@@ -68,7 +68,7 @@ describe('scene-dev player UI', () => {
       // player.ts attaches listeners then sets the ready flag at module top level.
       const readyDeadline = Date.now() + 3000;
       while (true) {
-        if (window.__czap_player_ready === true) break;
+        if (window.__liteship_player_ready === true) break;
         if (Date.now() > readyDeadline) throw new Error('player ready flag never set');
         await new Promise((r) => setTimeout(r, 30));
       }
@@ -142,7 +142,7 @@ describe('scene-dev player UI', () => {
       press(' ');
     } finally {
       document.body.innerHTML = originalBody;
-      delete window.__czap_player_ready;
+      delete window.__liteship_player_ready;
       await commands.stopSceneDev();
     }
   });

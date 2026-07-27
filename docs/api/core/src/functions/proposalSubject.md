@@ -6,9 +6,9 @@
 
 # Function: proposalSubject()
 
-> **proposalSubject**\<`T`\>(`proposal`): `ContentAddress`
+> **proposalSubject**\<`T`\>(`proposal`): [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/validated-output.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/validated-output.ts#L175)
+Defined in: [core/src/evidence/validated-output.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/validated-output.ts#L175)
 
 The content address (== receipt subject id) of a validated proposal. Exposed
 so a host can cite/cache a proposal by identity without touching the branded
@@ -28,4 +28,4 @@ token.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)

@@ -23,8 +23,10 @@
  * @module
  */
 
-import { UnsupportedError, ValidationError } from '@czap/error';
+import { UnsupportedError, ValidationError } from '@liteship/error';
 import { compareBytes } from './compare-bytes.js';
+import { isCanonicalCborRecord, isCanonicalCborValue } from './value-domain.js';
+import type { CanonicalCborValue } from './value-domain.js';
 
 const MAJOR_UNSIGNED = 0 << 5;
 const MAJOR_NEGATIVE = 1 << 5;
@@ -104,6 +106,12 @@ function encodeInteger(value: number): Uint8Array {
 }
 
 function encodeFloat64(value: number): Uint8Array {
+  if (Number.isNaN(value)) {
+    // One quiet-NaN payload. JavaScript engines may preserve different NaN
+    // payload bits when a Number originates in a DataView; portable identity
+    // cannot depend on those invisible host bits.
+    return new Uint8Array([MAJOR_SIMPLE | SIMPLE_FLOAT64, 0x7f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+  }
   const buf = new ArrayBuffer(8);
   new DataView(buf).setFloat64(0, value, false /* big-endian */);
   const out = new Uint8Array(9);
@@ -131,7 +139,7 @@ function encodeBytes(value: Uint8Array): Uint8Array {
 function encodeArray(value: readonly unknown[]): Uint8Array {
   const parts: Uint8Array[] = [encodeHead(MAJOR_ARRAY, value.length)];
   for (const item of value) {
-    parts.push(_encode(item));
+    parts.push(encodeCanonical(item as CanonicalCborValue));
   }
   return concat(parts);
 }
@@ -143,7 +151,7 @@ function encodeObject(value: Record<string, unknown>): Uint8Array {
   for (const key of keys) {
     pairs.push({
       keyBytes: encodeString(key),
-      valueBytes: _encode(value[key]),
+      valueBytes: encodeCanonical(value[key] as CanonicalCborValue),
     });
   }
   // RFC 8949 §4.2.1: sort by encoded-key byte sequence, lexicographically.
@@ -157,7 +165,7 @@ function encodeObject(value: Record<string, unknown>): Uint8Array {
   return concat(parts);
 }
 
-const _encode = (value: unknown): Uint8Array => {
+const encodeCanonical = (value: CanonicalCborValue): Uint8Array => {
   if (value === null || value === undefined) {
     return new Uint8Array([MAJOR_SIMPLE | SIMPLE_NULL]);
   }
@@ -176,16 +184,25 @@ const _encode = (value: unknown): Uint8Array => {
   if (Array.isArray(value)) {
     return encodeArray(value);
   }
-  if (typeof value === 'object') {
+  if (isCanonicalCborRecord(value)) {
     return encodeObject(value as Record<string, unknown>);
   }
   throw UnsupportedError('CBOR value type', `${typeof value} cannot be canonically encoded`);
 };
 
+const encode = (value: unknown): Uint8Array => {
+  if (!isCanonicalCborValue(value)) {
+    throw UnsupportedError(
+      'CBOR value',
+      'value must be portable data (primitives, byte strings, arrays, or plain records without cycles/accessors)',
+    );
+  }
+  return encodeCanonical(value);
+};
+
 /** Canonical CBOR encoder namespace (ADR-0001 pattern). */
-export const CanonicalCbor = { encode: _encode } as const;
+export const CanonicalCbor = { encode } as const;
 
 export declare namespace CanonicalCbor {
   /** Output type — raw CBOR bytes per RFC 8949 §4.2.1. */
-  export type Encoded = Uint8Array;
 }

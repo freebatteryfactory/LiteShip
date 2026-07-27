@@ -13,7 +13,15 @@
  * getters. See ADR-0005 §Category 4 for the rationale.
  */
 
-import { CellKernel, Lifetime, Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
+import {
+  CellKernel,
+  Lifetime,
+  attachLifetime,
+  Diagnostics,
+  SSE_BUFFER_SIZE,
+  SSE_HEARTBEAT_MS,
+  type AsyncOwnedResource,
+} from '@liteship/core';
 import type { SSEConfig, SSEState, SSEMessage, BackpressureHint, OverflowPolicy } from '../types.js';
 
 /**
@@ -31,7 +39,7 @@ export interface SSEEventSource {
 /**
  * SSE client instance.
  */
-export interface SSEClient {
+export interface SSEClient extends AsyncOwnedResource {
   /**
    * Live async stream of parsed messages. Iterating drains the sse-pure
    * overflow buffer (so {@link backpressure} `bufferSize` drops as messages are
@@ -53,12 +61,6 @@ export interface SSEClient {
   readonly lastEventId: string | null;
   /** Backpressure snapshot for the current buffer occupancy (plain accessor). */
   readonly backpressure: BackpressureHint;
-  /**
-   * Synchronous teardown: cancel the reconnect/heartbeat timers, detach and
-   * close the live EventSource, drop the buffer, and complete the
-   * `messages`/`stateChanges` streams. Idempotent — a second call is a no-op.
-   */
-  close(): void;
   /** Manual reconnect: cancel timers, close the source, reset backoff, re-open. */
   reconnect(): void;
 }
@@ -107,20 +109,20 @@ export const buildUrl = _buildUrl;
  *
  * @example
  * ```ts
- * import { SSE } from '@czap/web';
+ * import { SSE } from '@liteship/web';
  *
  * const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
  * for await (const msg of client.messages) {
  *   console.log(msg);
  * }
- * client.close();
+ * await client.dispose();
  * ```
  *
  * @example
  * ```ts
  * // Fully synchronous consumption (the live morph directives): pass callbacks
  * // and skip the async buffer entirely.
- * import { SSE } from '@czap/web';
+ * import { SSE } from '@liteship/web';
  *
  * const client = SSE.create({
  *   url: '/api/stream',
@@ -129,7 +131,7 @@ export const buildUrl = _buildUrl;
  *   onStateChange: (state) => updateBadge(state),
  * });
  * // Teardown owned by the host (e.g. a Lifetime finalizer):
- * // lifetime.add(() => client.close());
+ * // lifetime.add(() => client.dispose());
  * ```
  *
  * @param config - SSE connection configuration
@@ -190,7 +192,7 @@ export const create = (config: SSEConfig): SSEClient => {
     machine.status = next;
     // External state listeners (the `stateChanges` edge fan-out + the synchronous
     // `onStateChange` callback) must NOT abort the transport bookkeeping that TRIGGERED this
-    // transition: a throw here during `close()` would strand `lifetime.dispose()` (leaking the
+    // transition: a throw here during `dispose()` would strand later teardown (leaking the
     // live EventSource + timers), and during `handleConnectionLoss()` would abort before the
     // reconnect timer is scheduled (a stranded, permanently-closed source). The status has
     // already committed, so attempt BOTH channels, ISOLATE each fault, and surface it via
@@ -199,9 +201,9 @@ export const create = (config: SSEConfig): SSEClient => {
     try {
       stateEdges.publish(next);
     } catch (error) {
-      Diagnostics.warnOnce({
-        source: 'czap/web.SSE',
-        code: 'sse-state-listener-threw',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/web.SSE',
+        code: 'web/stream/sse-state-listener-threw',
         message: `An SSE stateChanges subscriber threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
       });
     }
@@ -210,9 +212,9 @@ export const create = (config: SSEConfig): SSEClient => {
     try {
       config.onStateChange?.(next);
     } catch (error) {
-      Diagnostics.warnOnce({
-        source: 'czap/web.SSE',
-        code: 'sse-onstatechange-threw',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/web.SSE',
+        code: 'web/stream/sse-on-state-change-threw',
         message: `The SSE onStateChange callback threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
       });
     }
@@ -242,8 +244,13 @@ export const create = (config: SSEConfig): SSEClient => {
     if (!src) return;
     src.onmessage = null;
     src.onerror = null;
-    src.close();
-    machine.source = null;
+    try {
+      src.close();
+    } finally {
+      // Release the generation even when the host's close hook throws. A
+      // retained source is already detached and must never be treated as live.
+      machine.source = null;
+    }
   };
 
   /**
@@ -349,9 +356,9 @@ export const create = (config: SSEConfig): SSEClient => {
       try {
         config.onMessage(message);
       } catch (error) {
-        Diagnostics.warnOnce({
-          source: 'czap/web.SSE',
-          code: 'sse-onmessage-threw',
+        Diagnostics.warnOnceRegistered({
+          source: 'liteship/web.SSE',
+          code: 'web/stream/sse-on-message-threw',
           message: `The SSE onMessage callback threw for a live message; the transport heartbeat/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
         });
       }
@@ -367,9 +374,9 @@ export const create = (config: SSEConfig): SSEClient => {
       // First saturation only (latched + warnOnce-deduped): the buffer is
       // overflowing and the policy is now actively shedding load.
       machine.saturated = true;
-      Diagnostics.warnOnce({
-        source: 'czap/web.sse',
-        code: 'sse-buffer-saturated',
+      Diagnostics.warnOnceRegistered({
+        source: 'liteship/web.sse',
+        code: 'web/stream/sse-buffer-saturated',
         message: 'SSE receive buffer saturated; applying overflow policy.',
         detail: { policy: overflowPolicy, maxBufferSize, bufferSize: pendingMessages.length },
       });
@@ -502,76 +509,67 @@ export const create = (config: SSEConfig): SSEClient => {
     },
   };
 
-  // One Lifetime owns the teardown finalizer (replacing the former Scope). Its
-  // sync body runs synchronously inside `dispose()`, so `close()` tears the
-  // transport down in one pass — a straggler frame from a dead generation
-  // cannot morph the fresh one on reinit.
+  // One Lifetime owns every teardown sibling (replacing the former Scope).
+  // Lifetime itself records every fault and continues through the complete LIFO
+  // pass. The promise returned by dispose() carries the aggregate only AFTER
+  // every timer, source, buffer, and stream received its release attempt.
   const lifetime = Lifetime.make();
+  // Lifetime is LIFO; register in reverse of the intended teardown order.
+  lifetime.add(() => stateEdges.close());
+  lifetime.add(() => messageWakeup.close());
   lifetime.add(() => {
-    clearReconnectHandle();
-    clearHeartbeat();
-    detachSource();
     pendingMessages = [];
-    messageWakeup.close();
-    stateEdges.close();
   });
+  lifetime.add(detachSource);
+  lifetime.add(clearHeartbeat);
+  lifetime.add(clearReconnectHandle);
+  lifetime.add(() => setStatus('disconnected'));
 
-  const client: SSEClient = {
-    messages,
-    stateChanges,
+  const client = attachLifetime(
+    {
+      messages,
+      stateChanges,
 
-    get state() {
-      return machine.status;
+      get state() {
+        return machine.status;
+      },
+
+      get lastEventId() {
+        return machine.lastEventId;
+      },
+
+      get backpressure(): BackpressureHint {
+        const bufferSize = pendingMessages.length;
+        const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
+        return {
+          bufferSize,
+          maxBufferSize,
+          percentFull,
+          dropping: bufferSize >= maxBufferSize,
+          policy: overflowPolicy,
+          droppedCount: machine.droppedCount,
+          coalescedCount: machine.coalescedCount,
+        };
+      },
+
+      reconnect: () => {
+        if (lifetime.disposed) {
+          return;
+        }
+        clearReconnectHandle();
+        clearHeartbeat();
+        const currentSource = machine.source;
+        if (currentSource) {
+          currentSource.close();
+          machine.source = null;
+        }
+        machine.reconnectAttempt = 0;
+        setStatus('connecting');
+        setupSource();
+      },
     },
-
-    get lastEventId() {
-      return machine.lastEventId;
-    },
-
-    get backpressure(): BackpressureHint {
-      const bufferSize = pendingMessages.length;
-      const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
-      return {
-        bufferSize,
-        maxBufferSize,
-        percentFull,
-        dropping: bufferSize >= maxBufferSize,
-        policy: overflowPolicy,
-        droppedCount: machine.droppedCount,
-        coalescedCount: machine.coalescedCount,
-      };
-    },
-
-    close: () => {
-      if (lifetime.disposed) {
-        return;
-      }
-      // `close()` is an intentional teardown — land in `disconnected` regardless
-      // of whether a live source was present (e.g. the heartbeat watchdog may
-      // have already cleared it). Publish the edge BEFORE disposing so a
-      // `stateChanges` subscriber sees the final transition, then complete.
-      setStatus('disconnected');
-      // Sync finalizer lands synchronously inside dispose(); teardown is
-      // fire-and-forget (there is no async finalizer), so the promise is dropped.
-      void lifetime.dispose();
-    },
-
-    reconnect: () => {
-      if (lifetime.disposed) {
-        return;
-      }
-      clearReconnectHandle();
-      clearHeartbeat();
-      const currentSource = machine.source;
-      if (currentSource) {
-        currentSource.close();
-        machine.source = null;
-      }
-      machine.reconnectAttempt = 0;
-      setStatus('connecting');
-      setupSource();
-    },
-  };
+    lifetime,
+  );
 
   // Open the initial connection synchronously (AbortController-first: no runtime
   // to run, no Scope to provide).
@@ -596,14 +594,14 @@ export const create = (config: SSEConfig): SSEClient => {
  *
  * @example
  * ```ts
- * import { SSE } from '@czap/web';
+ * import { SSE } from '@liteship/web';
  *
  * const client = SSE.create({ url: '/api/events' });
  * const state = client.state; // 'connecting' | 'connected' | ...
  * for await (const msg of client.messages) {
  *   console.log(msg.type);
  * }
- * client.close();
+ * await client.dispose();
  * ```
  */
 export const SSE = {

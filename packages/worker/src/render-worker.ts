@@ -14,7 +14,15 @@
  * @module
  */
 
-import { Diagnostics, PROJECTION_KEYS_SOURCE, type VideoConfig, type VideoFrameOutput } from '@czap/core';
+import {
+  Diagnostics,
+  Lifetime,
+  PROJECTION_KEYS_SOURCE,
+  attachLifetime,
+  type AsyncOwnedResource,
+  type VideoConfig,
+  type VideoFrameOutput,
+} from '@liteship/core';
 import type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } from './messages.js';
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
 
@@ -25,9 +33,9 @@ import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
 /**
  * Host-facing surface of a render worker. Owns the underlying `Worker`
  * and `OffscreenCanvas` once transferred; created by
- * {@link RenderWorker.create}.
+ * {@link RenderWorker.create}. Release it with `await worker.dispose()`.
  */
-export interface RenderWorkerShape {
+export interface RenderWorker extends AsyncOwnedResource {
   /** The underlying Worker instance. */
   readonly worker: Worker;
 
@@ -48,9 +56,6 @@ export interface RenderWorkerShape {
 
   /** Subscribe to render completion. Returns an unsubscribe function. */
   onComplete(callback: (totalFrames: number) => void): () => void;
-
-  /** Terminate the worker and clean up resources. */
-  dispose(): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -374,15 +379,24 @@ function _send(worker: WorkerLike, msg: ToWorkerMessage, transfer?: Transferable
 // Factory
 // ---------------------------------------------------------------------------
 
-function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
+function _createRenderWorker(config?: WorkerConfig): RenderWorker {
   const blob = new Blob([RENDER_WORKER_SCRIPT], { type: 'application/javascript' });
   const url = URL.createObjectURL(blob);
-  const worker = new Worker(url, { type: 'classic', name: 'czap-renderer' });
+  const worker = new Worker(url, { type: 'classic', name: 'liteship-renderer' });
 
   URL.revokeObjectURL(url);
 
   const frameListeners = new Set<(output: VideoFrameOutput) => void>();
   const completeListeners = new Set<(totalFrames: number) => void>();
+  const lifetime = Lifetime.make();
+
+  // Register in reverse release order. Lifetime invokes every synchronous
+  // finalizer before dispose() returns and joins future async arms through the
+  // returned promise without letting one host fault strand its siblings.
+  lifetime.add(() => worker.terminate());
+  lifetime.add(() => completeListeners.clear());
+  lifetime.add(() => frameListeners.clear());
+  lifetime.add(() => _send(worker, { type: 'dispose' }));
 
   worker.addEventListener('message', (e: MessageEvent<FromWorkerMessage>) => {
     const msg = e.data;
@@ -397,7 +411,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
         break;
       case 'error':
         Diagnostics.error({
-          source: 'czap/worker.render-worker',
+          source: 'liteship/worker.render-worker',
           code: 'worker-message-error',
           message: 'Render worker reported an error.',
           detail: { code: msg.code, message: msg.message, hint: msg.hint },
@@ -408,7 +422,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
 
   worker.addEventListener('error', (e: ErrorEvent) => {
     Diagnostics.error({
-      source: 'czap/worker.render-worker',
+      source: 'liteship/worker.render-worker',
       code: 'worker-unhandled-error',
       message: 'Render worker raised an unhandled error.',
       detail: e.message,
@@ -420,45 +434,41 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
   // (free-running, unpaced render loop).
   _send(worker, config === undefined ? { type: 'init' } : { type: 'init', config });
 
-  return {
-    get worker(): Worker {
-      return worker;
-    },
+  return attachLifetime<Omit<RenderWorker, keyof AsyncOwnedResource>>(
+    {
+      get worker(): Worker {
+        return worker;
+      },
 
-    transferCanvas(canvas) {
-      // The canvas is Transferable -- it must be in the transfer list
-      _send(worker, { type: 'transfer-canvas', canvas }, [canvas]);
-    },
+      transferCanvas(canvas) {
+        // The canvas is Transferable -- it must be in the transfer list
+        _send(worker, { type: 'transfer-canvas', canvas }, [canvas]);
+      },
 
-    startRender(config) {
-      _send(worker, { type: 'start-render', config });
-    },
+      startRender(config) {
+        _send(worker, { type: 'start-render', config });
+      },
 
-    stopRender() {
-      _send(worker, { type: 'stop-render' });
-    },
+      stopRender() {
+        _send(worker, { type: 'stop-render' });
+      },
 
-    onFrame(callback) {
-      frameListeners.add(callback);
-      return () => {
-        frameListeners.delete(callback);
-      };
-    },
+      onFrame(callback) {
+        frameListeners.add(callback);
+        return () => {
+          frameListeners.delete(callback);
+        };
+      },
 
-    onComplete(callback) {
-      completeListeners.add(callback);
-      return () => {
-        completeListeners.delete(callback);
-      };
+      onComplete(callback) {
+        completeListeners.add(callback);
+        return () => {
+          completeListeners.delete(callback);
+        };
+      },
     },
-
-    dispose() {
-      _send(worker, { type: 'dispose' });
-      frameListeners.clear();
-      completeListeners.clear();
-      worker.terminate();
-    },
-  };
+    lifetime,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -471,11 +481,11 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
  * Call {@link RenderWorker.create} on the main thread to mint a worker
  * that owns an `OffscreenCanvas` and renders `VideoFrameOutput` frames
  * off the main thread. Transfer control via
- * {@link RenderWorkerShape.transferCanvas} before calling `startRender`.
+ * {@link RenderWorker.transferCanvas} before calling `startRender`.
  *
  * @example
  * ```ts
- * import { RenderWorker } from '@czap/worker';
+ * import { RenderWorker } from '@liteship/worker';
  *
  * // Pace frame emission at 30fps wall-clock (live preview); omit
  * // targetFps to free-run at maximum speed (offline encode).
@@ -483,7 +493,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
  * const offscreen = canvas.transferControlToOffscreen();
  * renderer.transferCanvas(offscreen);
  * renderer.onFrame((frame) => {
- *   // stream frame.image / frame.timestampMs somewhere
+ *   // project frame.state.outputs.css and frame.progress somewhere
  * });
  * renderer.startRender({ durationMs: 4000, fps: 30, width: 640, height: 360 });
  * ```
@@ -492,7 +502,7 @@ export const RenderWorker = {
   /**
    * Spin up a render worker. The worker starts idle; transfer an
    * `OffscreenCanvas` via
-   * {@link RenderWorkerShape.transferCanvas} before calling
+   * {@link RenderWorker.transferCanvas} before calling
    * `startRender`.
    *
    * Construction-time knobs ({@link WorkerConfig}) are sent to the
@@ -503,7 +513,4 @@ export const RenderWorker = {
   create: _createRenderWorker,
 } as const;
 
-export declare namespace RenderWorker {
-  /** Public host-side surface returned by {@link RenderWorker.create}. */
-  export type Shape = RenderWorkerShape;
-}
+/** Public structural type for `RenderWorker`. */

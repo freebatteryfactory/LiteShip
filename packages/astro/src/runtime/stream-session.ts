@@ -28,7 +28,7 @@ export interface StreamSchedulerConfig {
 }
 
 /** Host surface of a stream scheduler. */
-export interface StreamSchedulerShape {
+export interface StreamScheduler {
   readonly state: RuntimeSessionState;
   activate(): void;
   beginReconnect(): void;
@@ -44,7 +44,7 @@ export interface StreamSchedulerShape {
  * single microtask-flushed DOM write and calls `config.onFlush` once
  * per batch.
  */
-export function createStreamScheduler(config: StreamSchedulerConfig): StreamSchedulerShape {
+export function createStreamScheduler(config: StreamSchedulerConfig): StreamScheduler {
   const runtime = createRuntimeSession();
   let queue: StreamPatch[] = [];
   let resolvers: Array<() => void> = [];

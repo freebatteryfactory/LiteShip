@@ -8,7 +8,7 @@
 
 > `const` **KVCache**: `object`
 
-Defined in: [edge/src/kv-cache.ts:730](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L730)
+Defined in: [edge/src/kv-cache.ts:775](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L775)
 
 KV cache namespace.
 
@@ -39,7 +39,7 @@ A generic KV namespace implementing get/put
 
 ##### options?
 
-`CacheOptions`
+[`CacheOptions`](../interfaces/CacheOptions.md)
 
 Optional TTL (seconds) and key prefix configuration
 
@@ -52,13 +52,13 @@ A [BoundaryCache](../interfaces/BoundaryCache.md) instance
 #### Example
 
 ```ts
-import { KVCache, EdgeTier } from '@czap/edge';
-import { Boundary } from '@czap/core';
+import { KVCache, EdgeTier } from '@liteship/edge';
+import { defineBoundary } from '@liteship/core';
 
 const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
 const cache = KVCache.createBoundaryCache(kv, { ttl: 3600, prefix: 'myapp' });
 
-const myBoundary = Boundary.make({
+const myBoundary = defineBoundary({
   input: 'viewport.width',
   at: [[0, 'compact'], [768, 'wide']],
 });
@@ -81,7 +81,7 @@ const cached = await cache.getCompiledOutputs(myBoundary.id, tierResult);
 ## Example
 
 ```ts
-import { KVCache } from '@czap/edge';
+import { KVCache } from '@liteship/edge';
 
 const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
 const cache = KVCache.createBoundaryCache(kv, { ttl: 3600 });

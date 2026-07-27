@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { Diagnostics } from '@czap/core';
-import { Boundary } from '@czap/core';
-import { dedupeOutputsByTier, enumerateTierKeys } from '@czap/edge';
-import type { BoundaryManifest, BoundaryManifestFile } from '@czap/edge';
-import * as frontDoor from '@czap/cloudflare';
-import { cloudflareMiddleware } from '@czap/cloudflare';
-import * as testingEntry from '@czap/cloudflare/testing';
-import { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from '@czap/cloudflare/testing';
+import { Diagnostics } from '@liteship/core';
+import { defineBoundary } from '@liteship/core';
+import { dedupeOutputsByTier, enumerateTierKeys } from '@liteship/edge';
+import type { BoundaryManifest, BoundaryManifestFile } from '@liteship/edge';
+import * as frontDoor from '@liteship/cloudflare';
+import { cloudflareMiddleware } from '@liteship/cloudflare';
+import * as testingEntry from '@liteship/cloudflare/testing';
+import { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from '@liteship/cloudflare/testing';
 
 /** Mint a real boundary so test ids honor the ADR-0003 identity law. */
 function makeBoundary() {
-  return Boundary.make({
+  return defineBoundary({
     input: 'viewport.width',
     at: [
       [0, 'compact'],
@@ -23,9 +23,9 @@ function makeBoundary() {
 function makeManifest(name = 'viewport'): { boundary: ReturnType<typeof makeBoundary>; manifest: BoundaryManifest } {
   const boundary = makeBoundary();
   const outputs = {
-    css: '@container viewport-width (width >= 768px) {.czap-boundary {--gap: 24px;}}',
+    css: '@container viewport-width (width >= 768px) {.liteship-boundary {--gap: 24px;}}',
     propertyRegistrations: '',
-    containerQueries: '@container viewport-width (width >= 768px) {.czap-boundary {--gap: 24px;}}',
+    containerQueries: '@container viewport-width (width >= 768px) {.liteship-boundary {--gap: 24px;}}',
   };
   const manifest: BoundaryManifest = {
     [name]: {
@@ -63,8 +63,8 @@ afterEach(() => {
 
 describe('testing-mutator partition (DX item #115)', () => {
   // LAW: the env-cache mutators are a footgun in production paths, so they must NOT
-  // be reachable from the front door (`@czap/cloudflare`) — only from the partitioned
-  // `@czap/cloudflare/testing` subpath. The documented production path stays the `env`
+  // be reachable from the front door (`@liteship/cloudflare`) — only from the partitioned
+  // `@liteship/cloudflare/testing` subpath. The documented production path stays the `env`
   // option on CloudflareMiddlewareConfig. Pin the partition, not a name count.
   const TEST_MUTATORS = ['setWorkersEnvForTesting', 'resetWorkersEnvForTesting', 'getDefaultWorkersEnv'] as const;
 
@@ -83,13 +83,97 @@ describe('testing-mutator partition (DX item #115)', () => {
 });
 
 describe('cloudflareMiddleware', () => {
-  test('defaults binding to CZAP_BOUNDARY_CACHE when omitted', async () => {
+  test('uses the live Astro Cloudflare cfContext as the sole waitUntil owner', async () => {
+    const { kv, cacheStore } = makeKVStore();
+    let releasePut: (() => void) | undefined;
+    kv.put = async (key: string, value: string) =>
+      new Promise<void>((resolve) => {
+        releasePut = () => {
+          cacheStore.set(key, value);
+          resolve();
+        };
+      });
+    const deferred: Promise<unknown>[] = [];
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      env: { KV: kv },
+    });
+    const context = {
+      request: new Request('http://localhost/'),
+      locals: {
+        cfContext: { waitUntil: (promise: Promise<unknown>) => deferred.push(promise) },
+      } as Record<string, unknown>,
+    };
+
+    await middleware(context, async () => new Response('ok'));
+    expect(deferred).toHaveLength(1);
+    expect(cacheStore.size).toBe(0);
+    releasePut?.();
+    await Promise.all(deferred);
+    expect(cacheStore.size).toBe(1);
+  });
+
+  test('supports an explicit per-request execution-context resolver for custom hosts', async () => {
+    const { kv } = makeKVStore();
+    const deferred: Promise<unknown>[] = [];
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      env: { KV: kv },
+      resolveExecutionContext: () => ({ waitUntil: (promise) => deferred.push(promise) }),
+    });
+    await middleware(
+      { request: new Request('http://localhost/'), locals: {} },
+      async () => new Response('ok'),
+    );
+    expect(deferred).toHaveLength(1);
+    await Promise.all(deferred);
+  });
+
+  test('keeps KV read cacheTtl and write expirationTtl as distinct host policies', async () => {
+    let getOptions: unknown;
+    let putOptions: unknown;
+    const store = new Map<string, string>();
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      cacheTtl: 120,
+      expirationTtl: 3600,
+      env: {
+        KV: {
+          async get(key: string, options?: { cacheTtl?: number }) {
+            getOptions = options;
+            return store.get(key) ?? null;
+          },
+          async put(key: string, value: string, options?: { expirationTtl?: number }) {
+            putOptions = options;
+            store.set(key, value);
+          },
+        },
+      },
+    });
+    await middleware(
+      { request: new Request('http://localhost/'), locals: {} },
+      async () => new Response('ok'),
+    );
+    expect(getOptions).toEqual({ cacheTtl: 120 });
+    expect(putOptions).toEqual({ expirationTtl: 3600 });
+  });
+
+  test('defaults binding to LITESHIP_BOUNDARY_CACHE when omitted', async () => {
     const { kv } = makeKVStore();
     const boundary = makeBoundary();
     const middleware = cloudflareMiddleware({
       boundaryId: boundary.id,
       compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
-      env: { CZAP_BOUNDARY_CACHE: kv },
+      env: { LITESHIP_BOUNDARY_CACHE: kv },
     });
 
     const context = {
@@ -97,7 +181,7 @@ describe('cloudflareMiddleware', () => {
       locals: {} as Record<string, unknown>,
     };
     await middleware(context, async () => new Response('ok'));
-    expect((context.locals.czap as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBeDefined();
+    expect((context.locals.liteship as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBeDefined();
   });
 
   test('loadWorkersEnvFromRuntime warns when cloudflare:workers is unavailable', async () => {
@@ -121,7 +205,7 @@ describe('cloudflareMiddleware', () => {
     expect(events.some((e) => e.code === 'workers-env-unavailable')).toBe(true);
     expect(events.find((e) => e.code === 'workers-env-unavailable')).toMatchObject({
       level: 'warn',
-      source: 'czap/cloudflare.middleware',
+      source: 'liteship/cloudflare.middleware',
     });
     resetWorkersEnvForTesting();
   });
@@ -142,7 +226,7 @@ describe('cloudflareMiddleware', () => {
     };
     const response = await middleware(context, async () => new Response('ok'));
     expect(response.status).toBe(200);
-    expect((context.locals.czap as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBeDefined();
+    expect((context.locals.liteship as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBeDefined();
   });
 
   test('env getter is invoked per KV operation', async () => {
@@ -186,7 +270,7 @@ describe('cloudflareMiddleware', () => {
 
     await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
 
-    const tagKeys = JSON.parse(cacheStore.get('czap:tag:products') ?? '[]') as string[];
+    const tagKeys = JSON.parse(cacheStore.get('liteship:tag:products') ?? '[]') as string[];
     expect(tagKeys.some((key) => key.includes(boundary.id))).toBe(true);
   });
 
@@ -206,7 +290,7 @@ describe('cloudflareMiddleware', () => {
 
     await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
 
-    const tagKeys = JSON.parse(cacheStore.get('czap:tag:hero-route') ?? '[]') as string[];
+    const tagKeys = JSON.parse(cacheStore.get('liteship:tag:hero-route') ?? '[]') as string[];
     expect(tagKeys.some((key) => key.includes(boundary.id))).toBe(true);
   });
 
@@ -237,7 +321,7 @@ describe('cloudflareMiddleware', () => {
     expect(emptyOutputEvents).toHaveLength(1);
     expect(emptyOutputEvents[0]).toMatchObject({
       level: 'warn',
-      source: 'czap/cloudflare.middleware',
+      source: 'liteship/cloudflare.middleware',
       detail: { boundary: manifestBoundary },
     });
   });
@@ -276,7 +360,7 @@ describe('cloudflareMiddleware', () => {
   test('primes workerd env on first request when env is omitted', async () => {
     resetWorkersEnvForTesting();
     setWorkersEnvForTesting({
-      CZAP_BOUNDARY_CACHE: {
+      LITESHIP_BOUNDARY_CACHE: {
         async get() {
           return null;
         },
@@ -286,7 +370,7 @@ describe('cloudflareMiddleware', () => {
 
     const boundary = makeBoundary();
     const middleware = cloudflareMiddleware({
-      binding: 'CZAP_BOUNDARY_CACHE',
+      binding: 'LITESHIP_BOUNDARY_CACHE',
       boundaryId: boundary.id,
       compile: async () => ({ css: '', propertyRegistrations: '', containerQueries: '' }),
     });
@@ -296,7 +380,7 @@ describe('cloudflareMiddleware', () => {
       locals: {} as Record<string, unknown>,
     };
     await middleware(context, async () => new Response('ok'));
-    expect(getDefaultWorkersEnv().CZAP_BOUNDARY_CACHE).toBeDefined();
+    expect(getDefaultWorkersEnv().LITESHIP_BOUNDARY_CACHE).toBeDefined();
     resetWorkersEnvForTesting();
   });
 
@@ -325,7 +409,7 @@ describe('cloudflareMiddleware', () => {
     };
     await middleware(context, async () => new Response('ok'));
 
-    const edge = (context.locals.czap as { edge?: { cacheStatus?: string; compiledOutputs?: { css?: string } } }).edge;
+    const edge = (context.locals.liteship as { edge?: { cacheStatus?: string; compiledOutputs?: { css?: string } } }).edge;
     expect(edge?.cacheStatus).toBe('precompiled');
     expect(edge?.compiledOutputs?.css).toContain('@container');
     // "No KV traffic" means zero reads AND zero writes, not just an empty store.
@@ -340,7 +424,7 @@ describe('cloudflareMiddleware', () => {
     const manifestWithAssets: BoundaryManifest = {
       viewport: {
         ...manifest.viewport!,
-        assetUrls: { 0: '/_czap/viewport/0.abcd.css' },
+        assetUrls: { 0: '/_liteship/viewport/0.abcd.css' },
       },
     };
     const middleware = cloudflareMiddleware({
@@ -359,15 +443,15 @@ describe('cloudflareMiddleware', () => {
     await middleware(context, async () => new Response('ok'));
 
     const edge = (
-      context.locals.czap as {
+      context.locals.liteship as {
         edge?: {
           assetUrl?: string;
           boundaries?: Record<string, { assetUrl?: string }>;
         };
       }
     ).edge;
-    expect(edge?.assetUrl).toBe('/_czap/viewport/0.abcd.css');
-    expect(edge?.boundaries?.viewport?.assetUrl).toBe('/_czap/viewport/0.abcd.css');
+    expect(edge?.assetUrl).toBe('/_liteship/viewport/0.abcd.css');
+    expect(edge?.boundaries?.viewport?.assetUrl).toBe('/_liteship/viewport/0.abcd.css');
   });
 
   test('single-entry manifest needs no boundary selector', async () => {
@@ -385,13 +469,13 @@ describe('cloudflareMiddleware', () => {
     };
     await middleware(context, async () => new Response('ok'));
 
-    expect((context.locals.czap as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBe('precompiled');
+    expect((context.locals.liteship as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBe('precompiled');
   });
 
-  test('accepts the emitted czap-boundary-manifest.json envelope', async () => {
+  test('accepts the emitted liteship-boundary-manifest.json envelope', async () => {
     const { kv } = makeKVStore();
     const { manifest } = makeManifest();
-    const file: BoundaryManifestFile = { _tag: 'CzapBoundaryManifest', _version: 2, boundaries: manifest };
+    const file: BoundaryManifestFile = { _tag: 'LiteshipBoundaryManifest', _version: 2, boundaries: manifest };
     const middleware = cloudflareMiddleware({
       binding: 'KV',
       manifest: file,
@@ -404,7 +488,7 @@ describe('cloudflareMiddleware', () => {
     };
     await middleware(context, async () => new Response('ok'));
 
-    expect((context.locals.czap as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBe('precompiled');
+    expect((context.locals.liteship as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBe('precompiled');
   });
 
   /**
@@ -412,14 +496,14 @@ describe('cloudflareMiddleware', () => {
    * addresses) and distinct CSS -- the cross-poisoning fixture.
    */
   function makeMultiManifest(): BoundaryManifest {
-    const viewport = Boundary.make({
+    const viewport = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'compact'],
         [768, 'wide'],
       ],
     });
-    const sidebar = Boundary.make({
+    const sidebar = defineBoundary({
       input: 'viewport.width',
       at: [
         [0, 'collapsed'],
@@ -456,7 +540,7 @@ describe('cloudflareMiddleware', () => {
     await middleware(context, async () => new Response('ok'));
 
     const edge = (
-      context.locals.czap as {
+      context.locals.liteship as {
         edge?: {
           compiledOutputs?: unknown;
           boundaries?: Record<string, { compiledOutputs?: { css?: string }; cacheStatus?: string }>;
@@ -488,7 +572,7 @@ describe('cloudflareMiddleware', () => {
     await middleware(context, async () => new Response('ok'));
 
     const edge = (
-      context.locals.czap as {
+      context.locals.liteship as {
         edge?: { boundaries?: Record<string, { compiledOutputs?: { css?: string } }> };
       }
     ).edge;
@@ -551,6 +635,6 @@ describe('cloudflareMiddleware', () => {
         binding: 'KV',
         env: { KV: kv },
       }),
-    ).toThrowError(/virtual:czap\/boundaries/);
+    ).toThrowError(/virtual:liteship\/boundaries/);
   });
 });

@@ -24,13 +24,13 @@ import {
   GENERATOR_SOURCE_FILES,
   sourceProvenanceDigest,
   generatorVersionDigest,
-} from '@czap/command/host';
+} from '@liteship/command/host';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
 
 /** Materialize a throwaway repo-shaped root with the given relative files. */
 function scratchRoot(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-provenance-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-provenance-'));
   for (const [rel, content] of Object.entries(files)) {
     const abs = join(root, rel);
     mkdirSync(dirname(abs), { recursive: true });
@@ -97,7 +97,7 @@ describe('generatorVersionDigest (generator-logic content-hash)', () => {
   // Copy the live generator source set into a scratch root so we can mutate a
   // generator file without touching the real repo.
   function generatorScratch(): string {
-    const root = mkdtempSync(join(tmpdir(), 'czap-genver-'));
+    const root = mkdtempSync(join(tmpdir(), 'liteship-genver-'));
     for (const rel of GENERATOR_SOURCE_FILES) {
       const abs = join(root, rel);
       mkdirSync(dirname(abs), { recursive: true });

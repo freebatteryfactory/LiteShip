@@ -6,8 +6,8 @@
 
 # scene/src
 
-`@czap/scene` — **LiteShip** scene stack: typed timeline authoring over the
-ECS substrate in `@czap/core`.
+`@liteship/scene` — **LiteShip** scene stack: typed timeline authoring over the
+ECS substrate in `@liteship/core`.
 
 ## Namespaces
 
@@ -20,6 +20,7 @@ ECS substrate in `@czap/core`.
 - [AudioTrack](interfaces/AudioTrack.md)
 - [CompiledScene](interfaces/CompiledScene.md)
 - [EffectTrack](interfaces/EffectTrack.md)
+- [FrameRange](interfaces/FrameRange.md)
 - [MixReceipt](interfaces/MixReceipt.md)
 - [SceneContext](interfaces/SceneContext.md)
 - [SceneContract](interfaces/SceneContract.md)
@@ -42,10 +43,15 @@ ECS substrate in `@czap/core`.
 - [FadeEnvelope](type-aliases/FadeEnvelope.md)
 - [FrameMark](type-aliases/FrameMark.md)
 - [FrameMarkSum](type-aliases/FrameMarkSum.md)
+- [MotionSample](type-aliases/MotionSample.md)
 - [PulseEnvelope](type-aliases/PulseEnvelope.md)
 - [ResolvedEnvelope](type-aliases/ResolvedEnvelope.md)
 - [ResolvedSceneContract](type-aliases/ResolvedSceneContract.md)
 - [SceneBeat](type-aliases/SceneBeat.md)
+- [ScenePartName](type-aliases/ScenePartName.md)
+- [ScenePartSeed](type-aliases/ScenePartSeed.md)
+- [SceneSeedPart](type-aliases/SceneSeedPart.md)
+- [SceneSeedPartName](type-aliases/SceneSeedPartName.md)
 - [SceneSubscenePartial](type-aliases/SceneSubscenePartial.md)
 - [SvgAttrsFrame](type-aliases/SvgAttrsFrame.md)
 - [SvgElementResolver](type-aliases/SvgElementResolver.md)
@@ -56,21 +62,48 @@ ECS substrate in `@czap/core`.
 
 ## Variables
 
+- [AudioSourcePart](variables/AudioSourcePart.md)
 - [BeatBinding](variables/BeatBinding.md)
 - [beatBindingCapsule](variables/beatBindingCapsule.md)
+- [BeatPart](variables/BeatPart.md)
+- [BetweenPart](variables/BetweenPart.md)
+- [BlendPart](variables/BlendPart.md)
 - [ease](variables/ease.md)
+- [EasePart](variables/EasePart.md)
+- [EffectKindPart](variables/EffectKindPart.md)
+- [EnvelopePart](variables/EnvelopePart.md)
 - [fade](variables/fade.md)
+- [FrameRangePart](variables/FrameRangePart.md)
+- [GainPart](variables/GainPart.md)
+- [IntensityPart](variables/IntensityPart.md)
 - [Layout](variables/Layout.md)
+- [MotionSamplePart](variables/MotionSamplePart.md)
+- [OpacityPart](variables/OpacityPart.md)
+- [PanPart](variables/PanPart.md)
+- [PhasePart](variables/PhasePart.md)
 - [pulse](variables/pulse.md)
+- [RuntimeWritePlanPart](variables/RuntimeWritePlanPart.md)
 - [Scene](variables/Scene.md)
+- [SceneParts](variables/SceneParts.md)
 - [SceneRuntime](variables/SceneRuntime.md)
 - [sceneRuntimeCapsule](variables/sceneRuntimeCapsule.md)
+- [SceneSeedParts](variables/SceneSeedParts.md)
+- [SvgAttrsPart](variables/SvgAttrsPart.md)
+- [SyncAnchorPart](variables/SyncAnchorPart.md)
+- [SyncBeatMarkerPart](variables/SyncBeatMarkerPart.md)
 - [syncTo](variables/syncTo.md)
+- [TargetEntityPart](variables/TargetEntityPart.md)
 - [Track](variables/Track.md)
+- [TrackIdPart](variables/TrackIdPart.md)
+- [TrackLayerPart](variables/TrackLayerPart.md)
+- [TransitionKindPart](variables/TransitionKindPart.md)
+- [VideoSourcePart](variables/VideoSourcePart.md)
+- [VolumePart](variables/VolumePart.md)
 
 ## Functions
 
 - [addFrameMarks](functions/addFrameMarks.md)
+- [admitScenePartSeed](functions/admitScenePartSeed.md)
 - [applySvgAttrs](functions/applySvgAttrs.md)
 - [AudioSystem](functions/AudioSystem.md)
 - [Beat](functions/Beat.md)
@@ -81,7 +114,6 @@ ECS substrate in `@czap/core`.
 - [EffectSystem](functions/EffectSystem.md)
 - [envelopeFactor](functions/envelopeFactor.md)
 - [inheritContext](functions/inheritContext.md)
-- [motionComponentName](functions/motionComponentName.md)
 - [MotionSampleSystem](functions/MotionSampleSystem.md)
 - [PassThroughMixer](functions/PassThroughMixer.md)
 - [resolveBeat](functions/resolveBeat.md)
@@ -89,6 +121,8 @@ ECS substrate in `@czap/core`.
 - [resolveEnvelope](functions/resolveEnvelope.md)
 - [resolveFrameMark](functions/resolveFrameMark.md)
 - [sampleSceneMotion](functions/sampleSceneMotion.md)
+- [sceneMotionTime](functions/sceneMotionTime.md)
+- [scenePartSeed](functions/scenePartSeed.md)
 - [SVGSystem](functions/SVGSystem.md)
 - [SyncSystem](functions/SyncSystem.md)
 - [trackRefId](functions/trackRefId.md)

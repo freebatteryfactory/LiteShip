@@ -1,20 +1,17 @@
 /**
- * @czap/detect type spine -- device capability detection + branded tiers.
+ * @liteship/detect type spine -- device capability detection + branded tiers.
  */
 
-import type { CapTier, CapSet, MotionTier } from './core.d.ts';
-
-// MotionTier canonical declaration lives in core.d.ts; re-exported here so
-// `@czap/_spine` consumers reading the detect surface still see it on this
-// sub-spine without an extra import.
-export type { MotionTier };
+import type { CapTier, CapSet, MotionTier } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. DETECTION TIERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Coarse GPU capability bucket reported by browser detection. */
 export type GPUTier = 0 | 1 | 2 | 3;
 
+/** Browser-observed hardware, preference, viewport, and connection capabilities. */
 export interface DeviceCapabilities {
   readonly gpu: GPUTier;
   readonly cores: number;
@@ -33,11 +30,68 @@ export interface DeviceCapabilities {
   };
 }
 
+/** Canonical capability-axis names shared by detection and hosts. */
+export type CapAxis = 'tier' | 'motion' | 'design';
+
+/** Source tier triple projected onto the canonical capability axes. */
+export interface CapabilityTierProjection {
+  readonly capTier: CapTier;
+  readonly motionTier: MotionTier;
+  readonly designTier: DesignTier;
+}
+
+/** Complete values projected on the three capability axes. */
+export interface CapabilityAxisValues {
+  readonly tier: CapTier;
+  readonly motion: MotionTier;
+  readonly design: DesignTier;
+}
+
+/** Primitive inputs consumed by the tier ladders. */
+export type CapabilityEvidenceInput =
+  | 'gpu'
+  | 'cores'
+  | 'memory'
+  | 'webgpu'
+  | 'prefersReducedMotion'
+  | 'prefersContrast'
+  | 'forcedColors'
+  | 'prefersReducedTransparency'
+  | 'dynamicRange'
+  | 'colorGamut'
+  | 'updateRate';
+
+/** Provenance for one primitive capability value. */
+export interface CapabilityInputEvidence {
+  readonly input: CapabilityEvidenceInput;
+  readonly support: 'observed' | 'inferred';
+  readonly source: string;
+}
+
+/** Exhaustive provenance map for the primitive inputs used by the tier ladders. */
+export type CapabilityEvidenceInputs = Readonly<{
+  [Input in CapabilityEvidenceInput]: CapabilityInputEvidence & { readonly input: Input };
+}>;
+
+/** One capability-axis value plus exhaustive primitive provenance. */
+export interface CapabilityAxisEvidence<Axis extends CapAxis = CapAxis> {
+  readonly axis: Axis;
+  readonly value: CapabilityAxisValues[Axis];
+  readonly support: 'observed' | 'inferred';
+  readonly inputs: readonly CapabilityInputEvidence[];
+}
+
+/** Per-axis provenance for one complete tier projection. */
+export type CapabilityTierEvidence = Readonly<{
+  [Axis in CapAxis]: CapabilityAxisEvidence<Axis>;
+}>;
+
+/** Base capability evidence and the rendering tier derived from it. */
 export interface DetectionResult {
   readonly capabilities: DeviceCapabilities;
   readonly capTier: CapTier;
   readonly capSet: CapSet;
-  readonly confidence: number;
+  readonly tierEvidence: CapabilityTierEvidence;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -68,8 +122,10 @@ export declare function resetDetectionCaches(): void;
 // § 3. 2-AXIS TIERS (design × motion)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Ordered visual-detail tier selected from device evidence. */
 export type DesignTier = 'minimal' | 'standard' | 'enhanced' | 'rich';
 
+/** Optional browser capabilities used by richer host decisions. */
 export interface ExtendedDeviceCapabilities extends DeviceCapabilities {
   readonly prefersContrast: 'no-preference' | 'more' | 'less' | 'custom';
   readonly forcedColors: boolean;
@@ -79,6 +135,7 @@ export interface ExtendedDeviceCapabilities extends DeviceCapabilities {
   readonly updateRate: 'fast' | 'slow' | 'none';
 }
 
+/** Detection result extended with motion and design-tier decisions. */
 export interface ExtendedDetectionResult extends DetectionResult {
   readonly capabilities: ExtendedDeviceCapabilities;
   readonly designTier: DesignTier;

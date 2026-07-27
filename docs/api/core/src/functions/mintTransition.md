@@ -8,10 +8,10 @@
 
 > **mintTransition**(`previous`, `next`, `options`): `Promise`\<\{ `receipt`: [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md); `transition`: [`DiscreteStateTransition`](../interfaces/DiscreteStateTransition.md); \}\>
 
-Defined in: [core/src/state-transition.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts#L136)
+Defined in: [core/src/motion/state-transition.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L144)
 
 Companion mint the authority host calls AFTER a synchronous
-[StateCellStoreShape.applyDiscrete](../interfaces/StateCellStoreShape.md#applydiscrete) — builds the transition VALUE from
+[StateCellStore.applyDiscrete](../interfaces/StateCellStore.md#applydiscrete) — builds the transition VALUE from
 the crossing's `previous`/`next` cells plus the graph identity, then mints its
 receipt via [transitionReceipt](transitionReceipt.md). Kept separate so `applyDiscrete` stays
 synchronous (no crypto in the hot path).
@@ -30,7 +30,7 @@ synchronous (no crypto in the hot path).
 
 #### base
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### previousHash?
 
@@ -38,7 +38,7 @@ synchronous (no crypto in the hot path).
 
 #### resultId?
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### timestamp?
 

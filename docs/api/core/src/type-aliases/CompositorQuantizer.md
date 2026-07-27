@@ -8,7 +8,7 @@
 
 > **CompositorQuantizer**\<`B`\> = [`Quantizer`](../interfaces/Quantizer.md)\<`B`\> & `object` \| [`ReactiveQuantizer`](../interfaces/ReactiveQuantizer.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L87)
+Defined in: [core/src/schema/quantizer-types.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L89)
 
 A quantizer the [Compositor](../namespaces/Compositor/README.md) can drive: it must be able to produce its
 current discrete state, EITHER synchronously (a REQUIRED [Quantizer.stateSync](../interfaces/Quantizer.md#statesync))
@@ -23,4 +23,4 @@ in the accepted type turns that into a compile-time error instead (the base
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](Boundary.md) = [`Boundary`](Boundary.md)

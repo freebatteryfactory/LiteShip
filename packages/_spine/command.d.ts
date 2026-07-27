@@ -1,17 +1,17 @@
 /**
- * @czap command spine — declaration-only contract for the shared command
- * registry (CUT A1). One canonical command language: `@czap/command` owns the
- * runtime (registry + dispatcher + handlers); `@czap/cli` and `@czap/mcp-server`
+ * @liteship command spine — declaration-only contract for the shared command
+ * registry (CUT A1). One canonical command language: `@liteship/command` owns the
+ * runtime (registry + dispatcher + handlers); `@liteship/cli` and `@liteship/mcp-server`
  * are projection adapters. These types carry no runtime behavior.
  */
 
-import type { ContentAddress } from './core.d.ts';
+import type { ContentAddress } from './core.js';
 
 /**
  * A volatile wall-clock timestamp (CUT B2): an ISO-8601 string stamped at the
  * moment a result/receipt is produced. It is **identity-irrelevant** — excluded
  * from `resultId` (idempotency) and never used for causal ordering. It is NOT an
- * {@link ./core.d.ts!HLC} (the causal, monotonic, hash/chain-relevant clock). Use
+ * `HLC` (the causal, monotonic, hash/chain-relevant clock). Use
  * this alias for every volatile command/result timestamp so the contract is
  * visible at the type level without a breaking field rename.
  */
@@ -44,8 +44,8 @@ export interface CommandAnnotations {
    */
   readonly mcpExposed?: boolean;
   /**
-   * Presentation phase used to group the command in the CLI help chart
-   * ("the chart: CLI verb table grouped by phase"). Identity, not chrome: the
+   * Presentation phase used to group the command in the CLI help list
+   * ("the command list grouped by phase"). Identity, not presentation: the
    * adapter maps a group key to a human label + order. Surfaces that don't group
    * (MCP, describe) ignore it.
    */
@@ -56,7 +56,7 @@ export interface CommandAnnotations {
  * What execution shape a command is — the central command law:
  *
  *   - `handler`: finite structured invocation → returns a `CapsuleCommandResult`
- *     via a `@czap/command` handler. The only kind eligible for MCP exposure.
+ *     via a `@liteship/command` handler. The only kind eligible for MCP exposure.
  *   - `cli-orchestration`: terminal UX, inherited stdio, long-running servers,
  *     destructive workflows, visible repairs, streaming receipts, or catalog
  *     projections. Registry-described for identity/discovery, but intentionally
@@ -75,6 +75,27 @@ export interface CapsuleCommandDescriptor {
   readonly inputSchema: CommandJsonSchema;
   readonly outputSchema?: CommandJsonSchema;
   readonly annotations?: CommandAnnotations;
+  /**
+   * CLI projection metadata layered over the transport-neutral input schema.
+   *
+   * `inputSchema.properties` remains the semantic argument contract shared by
+   * the CLI and MCP. `adapterFlags` lists only CLI-host concerns that must never
+   * leak into MCP tools (for example `--json` pretty-output suppression or the
+   * package-smoke scratch-artifact directory). Positional property names are
+   * removed from the derived flag set; every other input property projects to a
+   * kebab-cased long flag. Dotted command identity always projects to a
+   * space-separated invocation and is therefore not repeated here.
+   */
+  readonly cli?: {
+    /** Default stdout contract for the invocation. */
+    readonly outputMode: 'json' | 'text' | 'process';
+    /** Names from `inputSchema.properties` consumed positionally by argv. */
+    readonly positionals?: readonly string[];
+    /** CLI-host-only long flags and their argv value shape. */
+    readonly adapterFlags?: Readonly<Record<`--${string}`, { readonly type: 'boolean' | 'string' }>>;
+    /** Optional short aliases keyed by the canonical long flag. */
+    readonly flagAliases?: Readonly<Record<`--${string}`, readonly `-${string}`[]>>;
+  };
   /** Execution shape — `handler` (structured) vs `cli-orchestration` (CLI-owned). */
   readonly executionKind?: CommandExecutionKind;
   /**
@@ -145,3 +166,13 @@ export interface CapsuleResultReceipt {
 
 /** Product-owned `_meta` key under which a {@link CapsuleResultReceipt} rides on an MCP result (no maintainer identity). */
 export type CapsuleResultMetaKey = 'liteship/result';
+
+/** Host-projected facts from one real scene compilation. */
+export interface SceneCompilation {
+  /** Resolved scene duration, including track-derived duration when authoring omitted it. */
+  readonly durationMs: number;
+  /** Validated output frame rate. */
+  readonly fps: number;
+  /** Number of compiled track spawns, not the unvalidated authoring-array length. */
+  readonly trackCount: number;
+}

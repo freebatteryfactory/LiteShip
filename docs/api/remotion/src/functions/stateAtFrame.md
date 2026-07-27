@@ -6,7 +6,7 @@
 
 # Function: stateAtFrame()
 
-> **stateAtFrame**(`frames`, `frameIndex`): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+> **stateAtFrame**(`frames`, `frameIndex`): [`CompositeState`](../../../liteship/src/media/interfaces/CompositeState.md)
 
 Defined in: [remotion/src/hooks.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/hooks.ts#L63)
 
@@ -23,7 +23,7 @@ undefined output. Both degraded paths emit a warn-once diagnostic
 
 ### frames
 
-readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
+readonly [`VideoFrameOutput`](../../../liteship/src/media/interfaces/VideoFrameOutput.md)[]
 
 Output of [precomputeFrames](precomputeFrames.md).
 
@@ -36,7 +36,7 @@ Zero-based frame index (typically from Remotion's
 
 ## Returns
 
-[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](../../../liteship/src/media/interfaces/CompositeState.md)
 
 The state at the clamped frame.
 

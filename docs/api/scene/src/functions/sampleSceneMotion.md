@@ -6,20 +6,17 @@
 
 # Function: sampleSceneMotion()
 
-> **sampleSceneMotion**(`plan`, `t`): `ReadonlyMap`\<`string`, `TypedValue`\>
+> **sampleSceneMotion**(`plan`, `t`): [`MotionSample`](../type-aliases/MotionSample.md)
 
 Defined in: [scene/src/systems/motion.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L34)
 
-Sample the shared motion kernel at normalized time `t`, projected to the scene's
-component representation: a `cssVar → TypedValue` map, exactly the leaves a
-[MotionSampleSystem](MotionSampleSystem.md) writes. Pure — the differential oracle reads THIS to prove
-the scene leg equals the `sampleProgram` reference within epsilon.
+Pure aggregate projection of one RuntimeWritePlan sample.
 
 ## Parameters
 
 ### plan
 
-`RuntimeWritePlan`
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ### t
 
@@ -27,4 +24,4 @@ the scene leg equals the `sampleProgram` reference within epsilon.
 
 ## Returns
 
-`ReadonlyMap`\<`string`, `TypedValue`\>
+[`MotionSample`](../type-aliases/MotionSample.md)

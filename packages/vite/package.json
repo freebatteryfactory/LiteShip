@@ -1,6 +1,6 @@
 {
-  "name": "@czap/vite",
-  "version": "0.18.0",
+  "name": "@liteship/vite",
+  "version": "0.23.0",
   "description": "The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS and hot-reload boundary definitions as you edit.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -12,7 +12,6 @@
   "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
   "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
-    "czap",
     "liteship",
     "vite-plugin",
     "css",
@@ -26,13 +25,15 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./html-transform": {
       "types": "./dist/html-transform.d.ts",
-      "import": "./dist/html-transform.js",
-      "development": "./src/html-transform.ts"
+      "import": "./dist/html-transform.js"
+    },
+    "./hmr": {
+      "types": "./dist/hmr.d.ts",
+      "import": "./dist/hmr.js"
     },
     "./virtual": {
       "types": "./virtual.d.ts"
@@ -49,14 +50,19 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*",
-    "@czap/compiler": "workspace:*",
-    "@czap/edge": "workspace:*",
-    "@czap/error": "workspace:*",
-    "@czap/web": "workspace:*"
+    "@liteship/core": "workspace:*",
+    "@liteship/compiler": "workspace:*",
+    "@liteship/edge": "workspace:*",
+    "@liteship/error": "workspace:*",
+    "@liteship/web": "workspace:*"
   },
   "peerDependencies": {
     "vite": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

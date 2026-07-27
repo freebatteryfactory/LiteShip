@@ -6,11 +6,11 @@
 
 # Interface: ReactiveQuantizer\<B\>
 
-Defined in: [core/src/quantizer-types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L70)
+Defined in: [core/src/schema/quantizer-types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L72)
 
 Reactive quantizer — the [Quantizer](Quantizer.md) base plus its reactive substrate: a
 replay-1 current-state read and a no-replay crossing subscription, both on the
-extracted [CellKernel](../variables/CellKernel.md). This is the shape `@czap/quantizer`'s live
+extracted [CellKernel](../variables/CellKernel.md). This is the shape `@liteship/quantizer`'s live
 evaluator produces; a purely-synchronous quantizer omits this extension.
 
 ## Extends
@@ -21,7 +21,7 @@ evaluator produces; a purely-synchronous quantizer omits this extension.
 
 ### B
 
-`B` *extends* [`Shape`](../namespaces/Boundary/type-aliases/Shape.md) = [`Shape`](../namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary`](../type-aliases/Boundary.md) = [`Boundary`](../type-aliases/Boundary.md)
 
 ## Properties
 
@@ -29,7 +29,7 @@ evaluator produces; a purely-synchronous quantizer omits this extension.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: [core/src/quantizer-types.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L35)
+Defined in: [core/src/schema/quantizer-types.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L37)
 
 #### Inherited from
 
@@ -41,7 +41,7 @@ Defined in: [core/src/quantizer-types.ts:35](https://github.com/freebatteryfacto
 
 > `readonly` **boundary**: `B`
 
-Defined in: [core/src/quantizer-types.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L36)
+Defined in: [core/src/schema/quantizer-types.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L38)
 
 #### Inherited from
 
@@ -53,7 +53,7 @@ Defined in: [core/src/quantizer-types.ts:36](https://github.com/freebatteryfacto
 
 > `readonly` **changes**: [`QuantizerCrossings`](../type-aliases/QuantizerCrossings.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L74)
+Defined in: [core/src/schema/quantizer-types.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L76)
 
 No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>`).
 
@@ -63,7 +63,7 @@ No-replay crossing subscription (was `Stream.Stream<BoundaryCrossing<StateUnion<
 
 > `readonly` **state**: [`QuantizerState`](../type-aliases/QuantizerState.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L72)
+Defined in: [core/src/schema/quantizer-types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L74)
 
 Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
@@ -73,7 +73,7 @@ Replay-1 current-state read (was `Effect.Effect<StateUnion<B>>`).
 
 > `readonly` `optional` **stateSync?**: () => [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L38)
+Defined in: [core/src/schema/quantizer-types.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L40)
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -91,7 +91,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > **evaluate**(`value`): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [core/src/quantizer-types.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts#L39)
+Defined in: [core/src/schema/quantizer-types.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts#L41)
 
 #### Parameters
 

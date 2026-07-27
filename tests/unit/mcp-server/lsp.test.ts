@@ -12,7 +12,7 @@
  *   3. The LSP server lifecycle: an `initialize` handshake returns the
  *      capabilities (codeActionProvider); a request before `initialize` is a
  *      protocol violation; shutdown/exit close cleanly.
- *   4. A `czap/check` request over a STUB set of findings (injected runner)
+ *   4. A `liteship/check` request over a STUB set of findings (injected runner)
  *      produces publishDiagnostics notifications grouped by URI.
  *   5. The `textDocument/codeAction` request returns the remediations for the
  *      findings in the requested range.
@@ -21,6 +21,8 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { runLspStdio } from '../../../packages/mcp-server/src/lsp/stdio.js';
 import {
@@ -33,7 +35,7 @@ import {
   initialLspState,
   makeFrameReader,
   encodeFrame,
-  CZAP_CHECK_METHOD,
+  LITESHIP_CHECK_METHOD,
   LSP_SERVER_CAPABILITIES,
   DiagnosticSeverity,
   CodeActionKind,
@@ -123,7 +125,7 @@ describe('LSP — Finding → Diagnostic projection (pure)', () => {
     const d = projectFinding(ERR_FINDING)!.diagnostic;
     expect(d.code).toBe('no-default-export');
     expect(d.source).toBe(DIAGNOSTIC_SOURCE);
-    expect(d.source).toBe('czap-gauntlet');
+    expect(d.source).toBe('liteship-gauntlet');
     expect(d.message).toBe('default export — modules must use named exports');
     expect(d.data).toEqual({ level: 'L3', ruleId: 'no-default-export' });
   });
@@ -167,6 +169,16 @@ describe('LSP — Finding → Diagnostic projection (pure)', () => {
     // `pathToFileURL` (verified in diagnostic.ts) yet hold on every OS because
     // `fileToUri` no longer routes through the platform path resolver.
     expect(fileToUri('packages/x/a#b.ts')).toBe('file:///packages/x/a%23b.ts');
+  });
+
+  it('resolves repo-relative findings beneath POSIX and Windows workspace roots', () => {
+    expect(fileToUri('packages/x/src/a.ts', 'file:///home/eassa/LiteShip')).toBe(
+      'file:///home/eassa/LiteShip/packages/x/src/a.ts',
+    );
+    expect(fileToUri('packages/x/naïve file.ts', 'file:///C:/Users/Eassa/LiteShip/')).toBe(
+      'file:///C:/Users/Eassa/LiteShip/packages/x/na%C3%AFve%20file.ts',
+    );
+    expect(() => fileToUri('../outside.ts', 'file:///repo/')).toThrow(/escapes the initialized workspace/);
   });
 
   it('groups diagnostics by URI deterministically, dropping unanchored findings', () => {
@@ -229,17 +241,22 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
     const caps = (ok.result as { capabilities: typeof LSP_SERVER_CAPABILITIES }).capabilities;
     expect(caps.codeActionProvider.codeActionKinds).toContain('quickfix');
     expect(caps).toEqual(LSP_SERVER_CAPABILITIES);
-    expect((ok.result as { serverInfo: { name: string } }).serverInfo.name).toBe('czap-gauntlet-lsp');
+    const info = (ok.result as { serverInfo: { name: string; version: string } }).serverInfo;
+    const manifest = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, '../../../packages/mcp-server/package.json'), 'utf8'),
+    ) as { version: string };
+    expect(info.name).toBe('liteship-gauntlet-lsp');
+    expect(info.version).toBe(manifest.version);
   });
 
   it('a request before initialize is a protocol violation (error, not silent)', async () => {
     const { result } = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       initialLspState(),
       runner,
     );
     const err = result.response as JsonRpcErrorResponse;
-    expect(err.error.code).toBe(-32603); // InvariantViolationError → internal
+    expect(err.error.code).toBe(-32600);
     expect(err.error.message).toContain('before');
   });
 
@@ -274,18 +291,40 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
     expect(ex.result.exit).toBe(true);
   });
 
+  it('retains the initialized workspace root and rejects every post-shutdown request', async () => {
+    const init = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { rootUri: 'file:///C:/Users/Eassa/LiteShip' },
+      }),
+      initialLspState(),
+      runner,
+    );
+    expect(init.state.workspaceRootUri).toBe('file:///C:/Users/Eassa/LiteShip/');
+    const shutdown = await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'shutdown' }), init.state, runner);
+    const after = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'workspace/diagnostic' }),
+      shutdown.state,
+      runner,
+    );
+    expect((after.result.response as JsonRpcErrorResponse).error.code).toBe(-32600);
+    expect(after.state).toBe(shutdown.state);
+  });
+
   it('a malformed JSON frame body yields a -32700 parse error (never a silent drop)', async () => {
     const { result } = await handle('{not json', initialLspState(), runner);
     expect((result.response as JsonRpcErrorResponse).error.code).toBe(-32700);
   });
 
   it('a FAILING notification handler produces no response but logs the error (window/logMessage — never a silent drop)', async () => {
-    // A `czap/check` NOTIFICATION (no id) before `initialize` throws in the
+    // A `liteship/check` NOTIFICATION (no id) before `initialize` throws in the
     // handler. §4.1: a notification gets no JSON-RPC response — but the error must
     // be CONSUMED, not laundered. It is surfaced over the out-of-band LSP log
     // channel (window/logMessage), so the failure is observable.
     const { result } = await handle(
-      JSON.stringify({ jsonrpc: '2.0', method: CZAP_CHECK_METHOD }), // no id → notification
+      JSON.stringify({ jsonrpc: '2.0', method: LITESHIP_CHECK_METHOD }), // no id → notification
       initialLspState(),
       runner,
     );
@@ -300,9 +339,105 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
   });
 });
 
-// ---------- 4. czap/check → publishDiagnostics ----------
+// ---------- 4. LSP 3.17 pull diagnostics ----------
 
-describe('LSP — czap/check publishes diagnostics grouped by URI (injected runner)', () => {
+describe('LSP — pull diagnostics share the gauntlet Finding projection', () => {
+  it('textDocument/diagnostic returns only the requested document and caches the full fold', async () => {
+    const runner = stubRunner([ERR_FINDING, WARN_FINDING, UNANCHORED_FINDING]);
+    const init = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { rootUri: 'file:///repo' },
+      }),
+      initialLspState(),
+      runner,
+    );
+    const pulled = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'textDocument/diagnostic',
+        params: { textDocument: { uri: 'file:///repo/packages/x/src/a.ts' } },
+      }),
+      init.state,
+      runner,
+    );
+    const body = (pulled.result.response as JsonRpcSuccess).result as {
+      kind: string;
+      items: readonly LspDiagnostic[];
+    };
+    expect(body.kind).toBe('full');
+    expect(body.items.map((item) => item.code)).toEqual(['no-default-export']);
+    expect(pulled.state.lastFindings).toEqual([ERR_FINDING, WARN_FINDING, UNANCHORED_FINDING]);
+    expect(pulled.result.notifications).toEqual([]);
+  });
+
+  it('textDocument/diagnostic returns an honest empty full report for a clean document', async () => {
+    const runner = stubRunner([ERR_FINDING]);
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { rootUri: 'file:///repo' } }),
+      initialLspState(),
+      runner,
+    );
+    const pulled = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'textDocument/diagnostic',
+        params: { textDocument: { uri: 'file:///repo/packages/x/src/clean.ts' } },
+      }),
+      init.state,
+      runner,
+    );
+    expect((pulled.result.response as JsonRpcSuccess).result).toEqual({ kind: 'full', items: [] });
+  });
+
+  it('workspace/diagnostic emits the LSP 3.17 version field and the same diagnostics', async () => {
+    const runner = stubRunner([ERR_FINDING]);
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { rootUri: 'file:///repo' } }),
+      initialLspState(),
+      runner,
+    );
+    const pulled = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'workspace/diagnostic' }),
+      init.state,
+      runner,
+    );
+    expect((pulled.result.response as JsonRpcSuccess).result).toEqual({
+      items: [
+        {
+          uri: 'file:///repo/packages/x/src/a.ts',
+          version: null,
+          kind: 'full',
+          items: [projectFinding(ERR_FINDING, 'file:///repo/')!.diagnostic],
+        },
+      ],
+    });
+  });
+
+  it('rejects a pull request whose textDocument URI is absent or empty', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    for (const params of [{}, { textDocument: { uri: '' } }]) {
+      const result = await handle(
+        JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'textDocument/diagnostic', params }),
+        init.state,
+        stubRunner([]),
+      );
+      expect((result.result.response as JsonRpcErrorResponse).error.code).toBe(-32602);
+    }
+  });
+});
+
+// ---------- 5. liteship/check → publishDiagnostics ----------
+
+describe('LSP — liteship/check publishes diagnostics grouped by URI (injected runner)', () => {
   it('runs the injected runner and emits one publishDiagnostics per file URI', async () => {
     const runner = stubRunner([ERR_FINDING, WARN_FINDING, ADVISORY_FINDING, UNANCHORED_FINDING]);
     const init = await handle(
@@ -311,7 +446,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       runner,
     );
     const { state, result } = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       runner,
     );
@@ -338,7 +473,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     );
     // First run: a.ts (ERR) and b.ts (WARN) both carry findings.
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -348,7 +483,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     ]);
     // Second run: only a.ts still has a finding — b.ts is now clean.
     const second = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 3, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 3, method: LITESHIP_CHECK_METHOD }),
       first.state,
       stubRunner([ERR_FINDING]),
     );
@@ -363,14 +498,14 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     expect(byUri.get('file:///packages/x/src/b.ts')!.diagnostics).toEqual([]);
   });
 
-  it('does not clear diagnostics outside a scoped czap/check run', async () => {
+  it('does not clear diagnostics outside a scoped liteship/check run', async () => {
     const init = await handle(
       JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
       initialLspState(),
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -379,7 +514,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/x/src/a.ts'] },
       }),
       first.state,
@@ -399,7 +534,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -408,7 +543,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/x/src/a.ts'] },
       }),
       first.state,
@@ -417,7 +552,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     expect(scoped.state.lastFindings).toEqual([WARN_FINDING]);
 
     const clean = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 4, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 4, method: LITESHIP_CHECK_METHOD }),
       scoped.state,
       stubRunner([]),
     );
@@ -433,7 +568,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -442,7 +577,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/**/a.ts'] },
       }),
       first.state,
@@ -462,7 +597,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING]),
     );
@@ -471,7 +606,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/x/src/**/*.ts'] },
       }),
       first.state,
@@ -491,7 +626,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -500,7 +635,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/{x,y}/src/**/*.ts'] },
       }),
       first.state,
@@ -522,7 +657,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -531,7 +666,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/[xy]/src/a.ts'] },
       }),
       first.state,
@@ -551,7 +686,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       stubRunner([]),
     );
     const first = await handle(
-      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }),
       init.state,
       stubRunner([ERR_FINDING, WARN_FINDING]),
     );
@@ -560,7 +695,7 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
       JSON.stringify({
         jsonrpc: '2.0',
         id: 3,
-        method: CZAP_CHECK_METHOD,
+        method: LITESHIP_CHECK_METHOD,
         params: { globs: ['packages/**/*.ts', '!packages/x/src/a.ts'] },
       }),
       first.state,
@@ -586,7 +721,7 @@ describe('LSP — textDocument/codeAction returns the remediations in range', ()
         runner,
       )
     ).state;
-    s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }), s, runner)).state;
+    s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }), s, runner)).state;
 
     // a.ts, lines 0..40 — covers ERR_FINDING (line 11) but ADVISORY has no remediation
     const caResult = await handle(
@@ -636,7 +771,7 @@ describe('LSP — textDocument/codeAction returns the remediations in range', ()
         runner,
       )
     ).state;
-    s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }), s, runner)).state;
+    s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD }), s, runner)).state;
     const r = await handle(
       JSON.stringify({
         jsonrpc: '2.0',
@@ -684,10 +819,10 @@ describe('LSP — Content-Length framing round-trip', () => {
 // ---------- 7. full stdio driver round-trip (the injected-runner loop) ----------
 
 describe('LSP — runLspStdio drives the full framed loop with the injected runner', () => {
-  it('initialize → czap/check → shutdown → exit, framing in + out, drains before close', async () => {
+  it('initialize → liteship/check → shutdown → exit, framing in + out, drains before close', async () => {
     const input = Readable.from([
       encodeFrame(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { capabilities: {} } })),
-      encodeFrame(JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD })),
+      encodeFrame(JSON.stringify({ jsonrpc: '2.0', id: 2, method: LITESHIP_CHECK_METHOD })),
       encodeFrame(JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'shutdown' })),
       encodeFrame(JSON.stringify({ jsonrpc: '2.0', method: 'exit' })),
     ]);
@@ -701,10 +836,10 @@ describe('LSP — runLspStdio drives the full framed loop with the injected runn
 
     await runLspStdio(stubRunner([ERR_FINDING]), input, output);
 
-    // The reduce-race regression: czap/check's publishDiagnostics MUST have been
+    // The reduce-race regression: liteship/check's publishDiagnostics MUST have been
     // written before the loop closed on `exit`.
     expect(out).toContain('"id":1'); // initialize response
-    expect(out).toContain('textDocument/publishDiagnostics'); // czap/check push
+    expect(out).toContain('textDocument/publishDiagnostics'); // liteship/check push
     expect(out).toContain('"code":"no-default-export"');
     expect(out).toContain('"id":3'); // shutdown response
     // Every emitted frame carries a Content-Length header (LSP base protocol).

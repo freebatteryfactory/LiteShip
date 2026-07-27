@@ -6,47 +6,47 @@
 
 # Interface: HMRPayload
 
-Defined in: [vite/src/hmr.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L30)
+Defined in: [vite/src/hmr.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L32)
 
-Shape of the HMR payload the czap Vite plugin ships over the Vite
-dev-server WebSocket. Handled by [handleHMR](../functions/handleHMR.md) on the client.
+Canonical Vite HMR payload. `previousBoundaryId` finds the currently rendered
+hosts; `boundary` and `manifest` are the newly compiled definition/projection.
 
 ## Properties
 
 ### boundary
 
-> `readonly` **boundary**: `string`
-
-Defined in: [vite/src/hmr.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L34)
-
-Boundary id whose compiled output changed.
-
-***
-
-### css?
-
-> `readonly` `optional` **css?**: `string`
+> `readonly` **boundary**: [`HMRBoundaryIdentity`](HMRBoundaryIdentity.md)
 
 Defined in: [vite/src/hmr.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L36)
 
-New compiled CSS (omitted when only uniforms changed).
+***
+
+### boundaryName
+
+> `readonly` **boundaryName**: `string`
+
+Defined in: [vite/src/hmr.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L34)
+
+***
+
+### manifest
+
+> `readonly` **manifest**: `Pick`\<`BoundaryManifestEntry`, `"id"` \| `"outputs"` \| `"outputsByTier"`\>
+
+Defined in: [vite/src/hmr.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L37)
+
+***
+
+### previousBoundaryId
+
+> `readonly` **previousBoundaryId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
+
+Defined in: [vite/src/hmr.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L35)
 
 ***
 
 ### type
 
-> `readonly` **type**: `"czap:update"`
+> `readonly` **type**: `"liteship:update"`
 
-Defined in: [vite/src/hmr.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L32)
-
-Message discriminator. Always `'czap:update'`.
-
-***
-
-### uniforms?
-
-> `readonly` `optional` **uniforms?**: `Record`\<`string`, `number`\>
-
-Defined in: [vite/src/hmr.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L38)
-
-New shader-uniform values (omitted when only CSS changed).
+Defined in: [vite/src/hmr.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L33)

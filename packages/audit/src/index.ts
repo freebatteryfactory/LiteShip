@@ -1,5 +1,5 @@
 /**
- * @czap/audit — the profile-driven, downstream-installable audit engine.
+ * @liteship/audit — the profile-driven, downstream-installable audit engine.
  *
  * Runs the structure / integrity / surface passes against a `DevopsProfile`
  * (`profile.repoRoot` is the authoritative audit target). The LiteShip HICP
@@ -15,6 +15,7 @@ export * from './devops-profile.js';
 export * from './consumer.js';
 export * from './ts-program.js';
 export * from './code-ranges.js';
+export * from './diagnostic-emission-ast.js';
 export * from './repo-ir-build.js';
 export * from './repo-ir-language-service.js';
 export * from './repo-ir-taint.js';
@@ -33,24 +34,56 @@ export * from './integrity.js';
 export * from './surface.js';
 export * from './skip-detect-ast.js';
 export * from './active-surface-reader.js';
+export * from './feature-edge-census.js';
+export * from './catalog-feature-edge-census.js';
 export * from './workers-date-scan.js';
 
-import { liteshipDevopsProfile, resolveDevopsProfile } from './devops-profile.js';
+import { resolveDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { runStructureAudit, type StructureSummary } from './structure.js';
 import { runIntegrityAudit, type IntegritySummary } from './integrity.js';
 import { runSurfaceAudit, type SurfaceSummary } from './surface.js';
-import { createCounts } from './shared.js';
-import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } from './types.js';
+import { collectProfileArtifactCoverage, createCounts } from './shared.js';
+import type {
+  AuditCounts,
+  AuditFinding,
+  AuditSectionResult,
+  AuditSuppression,
+  PackageArtifactCoverage,
+} from './types.js';
 
 /** The three audit passes plus their merged counts, run against one profile. */
 export interface AuditPassResult {
   readonly structure: AuditSectionResult<StructureSummary>;
   readonly integrity: AuditSectionResult<IntegritySummary>;
   readonly surface: AuditSectionResult<SurfaceSummary>;
+  /** Exact artifacts each discovered package did or did not contribute to analysis. */
+  readonly artifactCoverage: readonly PackageArtifactCoverage[];
   readonly counts: AuditCounts;
   readonly findings: readonly AuditFinding[];
   readonly suppressed: readonly AuditSuppression[];
+}
+
+function unverifiedPackageArtifactFindings(
+  coverage: readonly PackageArtifactCoverage[],
+  profile: DevopsProfile,
+): readonly AuditFinding[] {
+  return coverage
+    .filter((entry) => entry.coverage === 'unverified')
+    .map((entry): AuditFinding => ({
+      id: `support/package-artifacts/${entry.package}`,
+      section: 'support',
+      rule: 'package-artifacts-unverified',
+      severity: 'error',
+      title: 'Package analysis surface is unverified',
+      summary:
+        `${entry.package} was discovered under ${profile.repoRoot}, but ${entry.reason}. ` +
+        'A zero-file package cannot produce a clean audit verdict.',
+      metadata: {
+        packageName: entry.package,
+        expectedArtifacts: entry.expectedArtifacts,
+      },
+    }));
 }
 
 /**
@@ -83,12 +116,12 @@ function consumerMissingFindings(profile: DevopsProfile): AuditFinding[] {
  * a deceptively green zero-findings result.
  */
 function nothingAuditedFinding(profile: DevopsProfile): AuditFinding {
-  const prefix = profile.internalPackagePrefix || '@czap/';
+  const prefix = profile.internalPackagePrefix;
   const summary = profile.packageRoots
     ? `No installed packages from the profile's packageTopology were found under ${profile.repoRoot} — ` +
       `nothing was audited. Install the ${prefix}* packages you ship, or audit a workspace by passing --profile instead.`
     : `No packages were discovered under ${profile.repoRoot}/packages/* — nothing was audited. ` +
-      `If this repo consumes ${prefix}* packages from npm, run \`czap audit --consumer\`; ` +
+      `If this repo consumes ${prefix}* packages from npm, run \`liteship audit --consumer\`; ` +
       `otherwise pass --profile pointing at your workspace.`;
   return {
     id: 'support/no-packages',
@@ -116,16 +149,13 @@ function skippedConsumerStructureAudit(profile: DevopsProfile): AuditSectionResu
       coverageClassification: {
         topology: [],
         orphan: {
-          coverage: 'file-proxy-only',
-          candidateCount: 0,
-          note: 'Consumer aggregate mode skips the source-structure pass; run runStructureAudit(profile) explicitly to inspect installed-package source topology.',
+          coverage: 'not-checked',
+          reason:
+            'Consumer aggregate mode skips the source-structure pass; run runStructureAudit(profile) explicitly to inspect installed-package source topology.',
         },
         symbol: {
-          coverage: 'symbol-evidenced',
-          consumedCount: 0,
-          starCoveredCount: 0,
-          candidateCount: 0,
-          note: 'Consumer aggregate mode skips symbol-orphan structure evidence.',
+          coverage: 'not-checked',
+          reason: 'Consumer aggregate mode skips symbol-orphan structure evidence.',
         },
         allowlistUnexercised: [],
       },
@@ -142,10 +172,12 @@ function skippedConsumerStructureAudit(profile: DevopsProfile): AuditSectionResu
  *
  * Accepts a PARTIAL profile: omitted fields take the documented defaults of
  * {@link resolveDevopsProfile}, so `runAuditPasses({ repoRoot })` just works.
- * With no argument at all, the full LiteShip reference profile applies.
+ * The host must supply at least its repository root; no project policy is
+ * inherited from the reusable engine.
  */
-export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsProfile): AuditPassResult {
+export function runAuditPasses(profile: Partial<DevopsProfile>): AuditPassResult {
   const resolved = resolveDevopsProfile(profile);
+  const artifactCoverage = collectProfileArtifactCoverage(resolved);
   const structure = resolved.packageRoots ? skippedConsumerStructureAudit(resolved) : runStructureAudit(resolved);
   const integrity = runIntegrityAudit(resolved);
   const surface = runSurfaceAudit(resolved);
@@ -157,6 +189,7 @@ export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsP
     ...integrity.findings,
     ...surface.findings,
     ...(auditedPackageCount === 0 ? [nothingAuditedFinding(resolved)] : []),
+    ...unverifiedPackageArtifactFindings(artifactCoverage, resolved),
     ...consumerMissingFindings(resolved),
   ];
   const suppressed = [...structure.suppressed, ...integrity.suppressed, ...surface.suppressed];
@@ -164,6 +197,7 @@ export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsP
     structure,
     integrity,
     surface,
+    artifactCoverage,
     counts: createCounts(findings),
     findings,
     suppressed,

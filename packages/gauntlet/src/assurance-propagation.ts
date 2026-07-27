@@ -33,16 +33,16 @@
  *   boundedness. The result is fully deterministic (no clock, no rng, no I/O —
  *   pure graph math over the injected IR).
  *
- * This is contained to the IR-present (`--ir`) path: the lean `czap check` / MCP
+ * This is contained to the IR-present (`--ir`) path: the lean `liteship check` / MCP
  * path never builds an IR, so it keeps the glob-only levels unchanged. The
  * propagation AUGMENTS the base map; it never lowers a level and never edits the
  * map. This module carries NO `typescript` dependency — it is pure math over the
- * already-built {@link RepoIR}, keeping `@czap/gauntlet` lean.
+ * already-built {@link RepoIR}, keeping `@liteship/gauntlet` lean.
  *
  * @module
  */
 
-import { InvariantViolationError } from '@czap/error';
+import { InvariantViolationError } from '@liteship/error';
 import { type AssuranceLevel, rankOf, maxLevel } from './assurance.js';
 import type { RepoIR, FileId } from './repo-ir.js';
 

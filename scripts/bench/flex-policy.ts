@@ -24,7 +24,43 @@ export const ACCEPTED_BENCH_STABILITY_NOISY_LABELS = [
   'worker-runtime-startup-shared',
   'llm-startup-shared',
   'llm-promoted-startup-shared',
-  'satellite',
+  'adaptive',
   'worker',
   'llm-runtime-steady',
 ] as const;
+
+export interface BenchFlexPolicy {
+  readonly replicateExceedanceMax: number;
+  readonly p99ToBaselineMax: number;
+  readonly directiveP99MaxNs: number;
+  readonly acceptedNoisyLabels: readonly string[];
+}
+
+export const BENCH_FLEX_POLICY: BenchFlexPolicy = Object.freeze({
+  replicateExceedanceMax: LLM_STEADY_REPLICATE_EXCEEDANCE_MAX,
+  p99ToBaselineMax: LLM_STEADY_P99_TO_BASELINE_MAX,
+  directiveP99MaxNs: LLM_STEADY_DIRECTIVE_P99_MAX_NS,
+  acceptedNoisyLabels: ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
+});
+
+/** Pure policy validator shared by flex:verify, devx:check, and controls. */
+export function benchFlexPolicyFailures(policy: BenchFlexPolicy): readonly string[] {
+  const failures: string[] = [];
+  if (!(policy.replicateExceedanceMax > 0 && policy.replicateExceedanceMax < 1)) {
+    failures.push('replicateExceedanceMax must be inside (0,1)');
+  }
+  if (!(policy.p99ToBaselineMax > 1 && policy.p99ToBaselineMax < 5)) {
+    failures.push('p99ToBaselineMax must be inside (1,5)');
+  }
+  if (!(Number.isFinite(policy.directiveP99MaxNs) && policy.directiveP99MaxNs > 0)) {
+    failures.push('directiveP99MaxNs must be finite and positive');
+  }
+  if (policy.acceptedNoisyLabels.length < 2) failures.push('acceptedNoisyLabels must name at least two owners');
+  if (new Set(policy.acceptedNoisyLabels).size !== policy.acceptedNoisyLabels.length) {
+    failures.push('acceptedNoisyLabels must be unique');
+  }
+  if (policy.acceptedNoisyLabels.some((label) => label.trim().length === 0)) {
+    failures.push('acceptedNoisyLabels must not contain blank labels');
+  }
+  return failures;
+}

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics, GenFrame } from '@czap/core';
-import { WorkerHost } from '@czap/worker';
-import { Resumption } from '@czap/web';
-import satelliteDirective from '../../../packages/astro/src/client-directives/satellite.js';
+import { Diagnostics, GenFrame } from '@liteship/core';
+import { WorkerHost } from '@liteship/worker';
+import { Resumption } from '@liteship/web';
+import adaptiveDirective from '../../../packages/astro/src/client-directives/adaptive.js';
 import llmDirective from '../../../packages/astro/src/client-directives/llm.js';
 import gpuDirective from '../../../packages/astro/src/client-directives/gpu.js';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
@@ -32,7 +32,7 @@ describe('astro directive branch coverage', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     _resetRuntimePolicyForTests();
     configureRuntimePolicy();
   });
@@ -43,7 +43,7 @@ describe('astro directive branch coverage', () => {
     restoreWorker?.();
     restoreWorker = null;
     document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-      element.dispatchEvent(new CustomEvent('czap:teardown'));
+      element.dispatchEvent(new CustomEvent('liteship:teardown'));
     });
     Diagnostics.reset();
     stubs.restoreAll();
@@ -51,35 +51,35 @@ describe('astro directive branch coverage', () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     document.body.innerHTML = '';
-    document.documentElement.removeAttribute('data-czap-tier');
+    document.documentElement.removeAttribute('data-liteship-tier');
     // True isolation: clear the module-private policy store rather than
     // re-configuring a default (which would leave a stale policy live for
     // any suite that expects unconfigured state).
     _resetRuntimePolicyForTests();
   });
 
-  test('satellite ignores invalid boundaries, unsupported inputs, and invalid reinit payloads gracefully', () => {
+  test('adaptive ignores invalid boundaries, unsupported inputs, and invalid reinit payloads gracefully', () => {
     const load = vi.fn(async () => {});
-    const invalid = makeEl('div', { 'data-czap-boundary': '{not-json' });
-    satelliteDirective(load, {}, invalid);
+    const invalid = makeEl('div', { 'data-liteship-boundary': '{not-json' });
+    adaptiveDirective(load, {}, invalid);
     expect(load).not.toHaveBeenCalled();
-    expect(invalid.getAttribute('data-czap-state')).toBeNull();
+    expect(invalid.getAttribute('data-liteship-state')).toBeNull();
 
     const unsupported = makeEl('div', {
-      'data-czap-boundary': JSON.stringify({
+      'data-liteship-boundary': JSON.stringify({
         input: 'scroll.depth',
         thresholds: [0, 100],
         states: ['near', 'far'],
       }),
-      'data-czap-state': 'near',
+      'data-liteship-state': 'near',
     });
-    satelliteDirective(load, {}, unsupported);
+    adaptiveDirective(load, {}, unsupported);
     expect(load).toHaveBeenCalledOnce();
-    expect(unsupported.getAttribute('data-czap-state')).toBe('near');
+    expect(unsupported.getAttribute('data-liteship-state')).toBe('near');
 
-    unsupported.setAttribute('data-czap-boundary', '{broken-again');
-    unsupported.dispatchEvent(new CustomEvent('czap:reinit'));
-    expect(unsupported.getAttribute('data-czap-state')).toBe('near');
+    unsupported.setAttribute('data-liteship-boundary', '{broken-again');
+    unsupported.dispatchEvent(new CustomEvent('liteship:reinit'));
+    expect(unsupported.getAttribute('data-liteship-state')).toBe('near');
   });
 
   test('llm directive supports morph mode, target selectors, plain-text fallback, and static-tier suppression', async () => {
@@ -87,14 +87,14 @@ describe('astro directive branch coverage', () => {
     const load = vi.fn(async () => {});
 
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-mode': 'morph',
-      'data-czap-llm-target': '.content',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-mode': 'morph',
+      'data-liteship-llm-target': '.content',
     });
     el.innerHTML = '<div class="content"></div>';
 
     const llmStartEvents: Event[] = [];
-    el.addEventListener('czap:llm-start', (event) => llmStartEvents.push(event));
+    el.addEventListener('liteship:llm-start', (event) => llmStartEvents.push(event));
 
     llmDirective(load, {}, el);
     const source = MockEventSource.instances[0]!;
@@ -113,10 +113,10 @@ describe('astro directive branch coverage', () => {
     expect(el.querySelector('.content')?.textContent).toBe('Hello world<img src=x onerror=alert(1)>');
     expect(el.querySelector('.content img')).toBeNull();
 
-    document.documentElement.setAttribute('data-czap-tier', 'static');
+    document.documentElement.setAttribute('data-liteship-tier', 'static');
     const staticHost = makeEl('div', {
-      'data-czap-llm-url': '/api/static',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/static',
+      'data-liteship-llm-mode': 'append',
     });
     llmDirective(async () => {}, {}, staticHost);
     MockEventSource.instances[1]!.simulateMessage(JSON.stringify({ type: 'text', content: 'hidden' }));
@@ -127,11 +127,11 @@ describe('astro directive branch coverage', () => {
   test('llm directive emits error events, connection failures, and reconnects on reinit', () => {
     cleanupEventSource = MockEventSource.install();
     const el = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
+      'data-liteship-llm-url': '/api/chat',
     });
 
     const errors: unknown[] = [];
-    el.addEventListener('czap:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     llmDirective(async () => {}, {}, el);
     const firstSource = MockEventSource.instances[0]!;
@@ -140,7 +140,7 @@ describe('astro directive branch coverage', () => {
 
     expect(errors).toEqual([{ message: 'boom' }]);
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(MockEventSource.instances).toHaveLength(2);
     expect(MockEventSource.instances[1]).not.toBe(firstSource);
   });
@@ -155,26 +155,26 @@ describe('astro directive branch coverage', () => {
     expect(MockEventSource.instances).toHaveLength(0);
 
     const host = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-target': '.missing-target',
-      'data-czap-llm-mode': 'replace',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-target': '.missing-target',
+      'data-liteship-llm-mode': 'replace',
     });
     host.innerHTML = '<div class="other">ignored</div>';
 
     const errors: unknown[] = [];
-    host.addEventListener('czap:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
 
     llmDirective(load, {}, host);
     const source = MockEventSource.instances.at(-1)!;
     source.simulateMessage(JSON.stringify({ type: 'error', message: 'message branch' }));
     expect(errors).toContainEqual({ message: 'message branch' });
 
-    host.dispatchEvent(new CustomEvent('czap:reinit'));
+    host.dispatchEvent(new CustomEvent('liteship:reinit'));
     const secondSource = MockEventSource.instances.at(-1)!;
     secondSource.simulateMessage(JSON.stringify({ type: 'error' }));
     expect(errors).toContainEqual({ message: 'unknown error' });
 
-    host.dispatchEvent(new CustomEvent('czap:reinit'));
+    host.dispatchEvent(new CustomEvent('liteship:reinit'));
     const thirdSource = MockEventSource.instances.at(-1)!;
     thirdSource.simulateMessage(JSON.stringify({ type: 'receipt', data: { hash: 123 } }));
     thirdSource.simulateMessage(JSON.stringify({ type: 'text', content: 'selector fallback' }));
@@ -184,9 +184,9 @@ describe('astro directive branch coverage', () => {
     expect(errors).toContainEqual({ reason: 'connection-error', strategy: 're-request' });
 
     const unsafeTargetHost = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-target': 'div > .unsafe',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-target': 'div > .unsafe',
+      'data-liteship-llm-mode': 'append',
     });
     unsafeTargetHost.innerHTML = '<div class="unsafe">ignored</div>';
 
@@ -209,14 +209,14 @@ describe('astro directive branch coverage', () => {
       } as never,
     );
 
-    const broken = makeEl('div', { 'data-czap-llm-url': '/api/broken' });
+    const broken = makeEl('div', { 'data-liteship-llm-url': '/api/broken' });
     llmDirective(async () => {}, {}, broken);
 
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'error',
-        source: 'czap/astro.llm',
-        code: 'llm-runtime-init-failed',
+        source: 'liteship/astro.llm',
+        code: 'astro/llm/llm-runtime-init-failed',
         detail: 'init boom',
       }),
     );
@@ -226,9 +226,9 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
 
     const host = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-target': '#target',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-target': '#target',
+      'data-liteship-llm-mode': 'append',
     });
     host.innerHTML = '<div id="target">ignored</div>';
 
@@ -250,12 +250,12 @@ describe('astro directive branch coverage', () => {
   test('llm directive suppresses connection-error events when receipt history enables replay recovery', async () => {
     cleanupEventSource = MockEventSource.install();
     const host = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-mode': 'append',
     });
 
     const errors: unknown[] = [];
-    host.addEventListener('czap:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:llm-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
     vi.spyOn(GenFrame, 'resolveGap').mockReturnValue({
       type: 'replay',
       frames: [],
@@ -280,14 +280,14 @@ describe('astro directive branch coverage', () => {
     Diagnostics.setSink(sink);
 
     const llmHost = makeEl('div', {
-      'data-czap-llm-url': 'https://evil.example/chat',
+      'data-liteship-llm-url': 'https://evil.example/chat',
     });
     llmDirective(async () => {}, {}, llmHost);
 
     const streamHost = makeEl('div', {
-      'data-czap-stream-url': 'https://evil.example/feed',
-      'data-czap-snapshot-url': 'https://evil.example/snapshot',
-      'data-czap-replay-url': 'https://evil.example/replay',
+      'data-liteship-stream-url': 'https://evil.example/feed',
+      'data-liteship-snapshot-url': 'https://evil.example/snapshot',
+      'data-liteship-replay-url': 'https://evil.example/replay',
     });
     streamDirective(async () => {}, {}, streamHost);
 
@@ -295,15 +295,15 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.llm',
-        code: 'llm-cross-origin-url-rejected',
+        source: 'liteship/astro.llm',
+        code: 'astro/llm/llm-cross-origin-url-rejected',
       }),
     );
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.stream',
-        code: 'stream-cross-origin-url-rejected',
+        source: 'liteship/astro.stream',
+        code: 'astro/stream/stream-cross-origin-url-rejected',
       }),
     );
   });
@@ -321,12 +321,12 @@ describe('astro directive branch coverage', () => {
     });
 
     const llmHost = makeEl('div', {
-      'data-czap-llm-url': 'https://trusted.example/chat',
+      'data-liteship-llm-url': 'https://trusted.example/chat',
     });
     llmDirective(async () => {}, {}, llmHost);
 
     const streamHost = makeEl('div', {
-      'data-czap-stream-url': 'https://trusted.example/feed',
+      'data-liteship-stream-url': 'https://trusted.example/feed',
     });
     streamDirective(async () => {}, {}, streamHost);
 
@@ -339,8 +339,8 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
 
     const defaultHost = makeEl('div', {
-      'data-czap-llm-url': '/api/chat',
-      'data-czap-llm-mode': 'morph',
+      'data-liteship-llm-url': '/api/chat',
+      'data-liteship-llm-mode': 'morph',
     });
 
     llmDirective(async () => {}, {}, defaultHost);
@@ -358,8 +358,8 @@ describe('astro directive branch coverage', () => {
     });
 
     const sanitizedHost = makeEl('div', {
-      'data-czap-llm-url': '/api/chat-2',
-      'data-czap-llm-mode': 'morph',
+      'data-liteship-llm-url': '/api/chat-2',
+      'data-liteship-llm-mode': 'morph',
     });
 
     llmDirective(async () => {}, {}, sanitizedHost);
@@ -378,11 +378,11 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
 
     const styledHost = makeEl('div', {
-      'data-czap-llm-url': '/api/styled',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/styled',
+      'data-liteship-llm-mode': 'append',
     });
 
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
     llmDirective(async () => {}, {}, styledHost);
     MockEventSource.instances.at(-1)!.simulateMessage('{bad-json');
     MockEventSource.instances.at(-1)!.simulateMessage(JSON.stringify({ type: 'text', content: 'styled tier' }));
@@ -391,10 +391,10 @@ describe('astro directive branch coverage', () => {
     expect(styledHost.textContent).toBe('styled tier');
 
     const animatedHost = makeEl('div', {
-      'data-czap-llm-url': '/api/animated',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/animated',
+      'data-liteship-llm-mode': 'append',
     });
-    document.documentElement.setAttribute('data-czap-tier', 'animated');
+    document.documentElement.setAttribute('data-liteship-tier', 'animated');
     llmDirective(async () => {}, {}, animatedHost);
     MockEventSource.instances.at(-1)!.simulateMessage(JSON.stringify({ type: 'text', content: 'animated tier' }));
     await Promise.resolve();
@@ -402,10 +402,10 @@ describe('astro directive branch coverage', () => {
     expect(animatedHost.textContent).toBe('animated tier');
 
     const gpuHost = makeEl('div', {
-      'data-czap-llm-url': '/api/gpu',
-      'data-czap-llm-mode': 'append',
+      'data-liteship-llm-url': '/api/gpu',
+      'data-liteship-llm-mode': 'append',
     });
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
     llmDirective(async () => {}, {}, gpuHost);
     MockEventSource.instances.at(-1)!.simulateMessage(JSON.stringify({ type: 'text', content: 'gpu tier' }));
     await Promise.resolve();
@@ -426,14 +426,14 @@ describe('astro directive branch coverage', () => {
       } as never,
     );
 
-    const broken = makeEl('div', { 'data-czap-llm-url': '/api/string-broken' });
+    const broken = makeEl('div', { 'data-liteship-llm-url': '/api/string-broken' });
     llmDirective(async () => {}, {}, broken);
 
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'error',
-        source: 'czap/astro.llm',
-        code: 'llm-runtime-init-failed',
+        source: 'liteship/astro.llm',
+        code: 'astro/llm/llm-runtime-init-failed',
         detail: 'string boom',
       }),
     );
@@ -461,8 +461,8 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.gpu',
-        code: 'webgl2-unavailable',
+        source: 'liteship/astro.gpu',
+        code: 'astro/gpu/webgl2-unavailable',
         message: 'WebGL2 is unavailable; falling back to CSS rendering.',
       }),
     );
@@ -512,7 +512,7 @@ describe('astro directive branch coverage', () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, statusText: 'Not Found' })) as never);
 
     const canvas = makeEl('canvas', {
-      'data-czap-shader-src': '/shader.frag',
+      'data-liteship-shader-src': '/shader.frag',
     }) as HTMLCanvasElement;
     gpuDirective(async () => {}, {}, canvas);
     await Promise.resolve();
@@ -521,8 +521,8 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.gpu',
-        code: 'shader-fetch-failed',
+        source: 'liteship/astro.gpu',
+        code: 'astro/gpu/shader-fetch-failed',
         message: 'Failed to fetch shader source.',
         detail: 'Not Found',
       }),
@@ -538,7 +538,7 @@ describe('astro directive branch coverage', () => {
     // (bootDirectiveEntry guards double-boot), so the throw path needs an unbound
     // canvas to activate.
     const throwingCanvas = makeEl('canvas', {
-      'data-czap-shader-src': '/shader.frag',
+      'data-liteship-shader-src': '/shader.frag',
     }) as HTMLCanvasElement;
     gpuDirective(async () => {}, {}, throwingCanvas);
     await Promise.resolve();
@@ -547,8 +547,8 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.gpu',
-        code: 'shader-fetch-threw',
+        source: 'liteship/astro.gpu',
+        code: 'astro/gpu/shader-fetch-threw',
         message: 'Fetching shader source threw an error.',
         cause: expect.any(Error),
       }),
@@ -561,7 +561,7 @@ describe('astro directive branch coverage', () => {
     // hatch must bypass the heuristic gate while the real getContext probe still
     // guards capability (here mocked absent → graceful CSS fallback, not a crash).
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
 
     // Baseline: no force at a styled tier → hard no-op, never touches a canvas.
     const gated = makeEl('div');
@@ -580,8 +580,8 @@ describe('astro directive branch coverage', () => {
     expect(getContext).toHaveBeenCalled();
     expect(forcedOptsLoad).toHaveBeenCalledOnce();
 
-    // Force via the `data-czap-gpu-force` attribute (no directive value).
-    const forcedAttr = makeEl('div', { 'data-czap-gpu-force': '' });
+    // Force via the `data-liteship-gpu-force` attribute (no directive value).
+    const forcedAttr = makeEl('div', { 'data-liteship-gpu-force': '' });
     gpuDirective(async () => {}, {}, forcedAttr);
     expect(forcedAttr.querySelector('canvas')).not.toBeNull();
   });
@@ -591,13 +591,13 @@ describe('astro directive branch coverage', () => {
     // can bind gpu at a provisional tier (where it only defers to detect-ready), and a
     // later `client:gpu={{ force: true }}` has to upgrade that no-op, not be skipped.
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
 
     const el = makeEl('div');
     // Prior scanner pass: marks the host bound but only defers (no canvas yet).
     gpuDirective(async () => {}, {}, el);
     expect(el.querySelector('canvas'), 'scanner no-op at the provisional tier').toBeNull();
-    expect(el.getAttribute('data-czap-directive-bound')).toContain('gpu');
+    expect(el.getAttribute('data-liteship-directive-bound')).toContain('gpu');
 
     // Astro then hydrates the same host with the force hatch.
     gpuDirective(async () => {}, { name: 'gpu', value: { force: true } }, el);
@@ -606,17 +606,17 @@ describe('astro directive branch coverage', () => {
 
     // The scanner's bail armed an onDetectReady retry. When the tier upgrades it must
     // NOT append a second canvas over the shader the force hatch already started.
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
-    document.dispatchEvent(new Event('czap:detect-ready'));
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
+    document.dispatchEvent(new Event('liteship:detect-ready'));
     expect(el.querySelectorAll('canvas'), 'the stale retry must not double-boot').toHaveLength(1);
   });
 
-  test('gpu directive re-boots when the async probe upgrades the tier (czap:detect-ready)', () => {
+  test('gpu directive re-boots when the async probe upgrades the tier (liteship:detect-ready)', () => {
     // The fix for the force-hatch root cause: a directive that bails on the
     // conservative PROVISIONAL tier must re-boot when the GPU probe settles a
     // higher tier — no force needed in the capable-GPU case.
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
 
     const host = makeEl('div');
     gpuDirective(async () => {}, {}, host);
@@ -624,20 +624,20 @@ describe('astro directive branch coverage', () => {
     expect(getContext).not.toHaveBeenCalled();
 
     // Probe upgrades the tier and fires the settle signal → the directive re-boots.
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
-    document.dispatchEvent(new Event('czap:detect-ready'));
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
+    document.dispatchEvent(new Event('liteship:detect-ready'));
     expect(host.querySelector('canvas'), 'boots after the upgrade').not.toBeNull();
     expect(getContext).toHaveBeenCalled();
   });
 
   test('gpu directive stays dark if the probe settles a still-low tier', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
     const host = makeEl('div');
     gpuDirective(async () => {}, {}, host);
 
     // Probe ran but the device is genuinely low — tier stays styled → no boot.
-    document.dispatchEvent(new Event('czap:detect-ready'));
+    document.dispatchEvent(new Event('liteship:detect-ready'));
     expect(host.querySelector('canvas')).toBeNull();
   });
 
@@ -646,7 +646,7 @@ describe('astro directive branch coverage', () => {
     // swap, torn down) must never re-init — that would allocate an orphan GPU
     // context on a node nobody can see. The el.isConnected guard enforces it.
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
 
     const host = makeEl('div');
     gpuDirective(async () => {}, {}, host);
@@ -654,33 +654,33 @@ describe('astro directive branch coverage', () => {
 
     host.remove(); // detached before the async probe settles
 
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
-    document.dispatchEvent(new Event('czap:detect-ready'));
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
+    document.dispatchEvent(new Event('liteship:detect-ready'));
     expect(host.querySelector('canvas'), 'no re-boot on a detached host').toBeNull();
     expect(getContext, 'no GPU context allocated on a detached node').not.toHaveBeenCalled();
   });
 
   test('gpu directive still re-boots a host that SURVIVES a live reinit before the probe settles', () => {
-    // slots.ts dispatches czap:reinit on still-connected roots on every VT
+    // slots.ts dispatches liteship:reinit on still-connected roots on every VT
     // after-swap (the reinit step of the swap pipeline; teardown is a SEPARATE
     // event after F-2). A persisted (transition:persist) host that bailed on the
     // provisional tier must keep its deferred onDetectReady boot through that
-    // reinit — the bail path has no czap:reinit re-registration, so the deferred
+    // reinit — the bail path has no liteship:reinit re-registration, so the deferred
     // listener (which only fires on detect-ready) must survive a stray reinit.
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
-    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    document.documentElement.setAttribute('data-liteship-tier', 'styled');
 
     const host = makeEl('div');
     gpuDirective(async () => {}, {}, host);
     expect(host.querySelector('canvas')).toBeNull();
 
     // Live VT reinit lands before the probe settles; the host stays connected.
-    host.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+    host.dispatchEvent(new CustomEvent('liteship:reinit', { bubbles: true }));
     expect(host.isConnected).toBe(true);
 
     // Probe then settles a GPU-admitting tier → the survivor boots.
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
-    document.dispatchEvent(new Event('czap:detect-ready'));
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
+    document.dispatchEvent(new Event('liteship:detect-ready'));
     expect(host.querySelector('canvas'), 'boots after upgrade despite the reinit').not.toBeNull();
   });
 
@@ -738,7 +738,7 @@ describe('astro directive branch coverage', () => {
     );
 
     const canvas = makeEl('canvas', {
-      'data-czap-boundary': JSON.stringify({ id: 'hero', states: ['compact', 'expanded'] }),
+      'data-liteship-boundary': JSON.stringify({ id: 'hero', states: ['compact', 'expanded'] }),
     }) as HTMLCanvasElement;
     stubs.define(canvas, 'clientWidth', { configurable: true, value: 320 });
     stubs.define(canvas, 'clientHeight', { configurable: true, value: 180 });
@@ -747,7 +747,7 @@ describe('astro directive branch coverage', () => {
     await Promise.resolve();
 
     document.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { uniform: 'u_progress', value: 0.75 },
       }),
     );
@@ -768,8 +768,8 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.gpu',
-        code: 'shader-compile-failed',
+        source: 'liteship/astro.gpu',
+        code: 'astro/gpu/shader-compile-failed',
         message: expect.stringContaining('Shader compilation failed for element'),
       }),
     );
@@ -790,8 +790,8 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.gpu',
-        code: 'program-link-failed',
+        source: 'liteship/astro.gpu',
+        code: 'astro/gpu/program-link-failed',
         message: 'Shader program linking failed.',
         detail: 'link failed',
       }),
@@ -807,7 +807,7 @@ describe('astro directive branch coverage', () => {
     const cleanupCanvas = makeEl('canvas') as HTMLCanvasElement;
     gpuDirective(async () => {}, {}, cleanupCanvas);
     await Promise.resolve();
-    cleanupCanvas.dispatchEvent(new CustomEvent('czap:reinit'));
+    cleanupCanvas.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
     expect(cleanupGl.deleteProgram).toHaveBeenCalled();
@@ -818,19 +818,19 @@ describe('astro directive branch coverage', () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
 
-    document.documentElement.setAttribute('data-czap-tier', 'static');
+    document.documentElement.setAttribute('data-liteship-tier', 'static');
     const staticHost = makeEl('div');
     gpuDirective(load, {}, staticHost);
     expect(staticHost.querySelector('canvas')).toBeNull();
 
-    document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    document.documentElement.setAttribute('data-liteship-tier', 'reactive');
     const wgslHost = makeEl('div', {
-      'data-czap-shader-type': 'wgsl',
-      'data-czap-shader-src': '/shader.wgsl',
+      'data-liteship-shader-type': 'wgsl',
+      'data-liteship-shader-src': '/shader.wgsl',
     });
     const secondWgslHost = makeEl('div', {
-      'data-czap-shader-type': 'wgsl',
-      'data-czap-shader-src': '/shader-2.wgsl',
+      'data-liteship-shader-type': 'wgsl',
+      'data-liteship-shader-src': '/shader-2.wgsl',
     });
 
     gpuDirective(load, {}, wgslHost);
@@ -839,7 +839,7 @@ describe('astro directive branch coverage', () => {
     await Promise.resolve();
 
     expect(load).toHaveBeenCalledTimes(3);
-    expect(events.filter((event) => event.code === 'webgpu-unavailable')).toHaveLength(1);
+    expect(events.filter((event) => event.code === 'astro/wgpu/webgpu-unavailable')).toHaveLength(1);
   });
 
   test('gpu directive ignores malformed boundary payloads and non-numeric css uniform updates', async () => {
@@ -891,7 +891,7 @@ describe('astro directive branch coverage', () => {
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1) as never);
 
     const canvas = makeEl('canvas', {
-      'data-czap-boundary': '{broken',
+      'data-liteship-boundary': '{broken',
     }) as HTMLCanvasElement;
     stubs.define(canvas, 'clientWidth', { configurable: true, value: 320 });
     stubs.define(canvas, 'clientHeight', { configurable: true, value: 180 });
@@ -901,12 +901,12 @@ describe('astro directive branch coverage', () => {
       await Promise.resolve();
 
       canvas.dispatchEvent(
-        new CustomEvent('czap:uniform-update', {
+        new CustomEvent('liteship:uniform-update', {
           detail: {
             discrete: { hero: 'desktop' },
             css: {
-              '--czap-gap': 'not-a-number',
-              '--czap-state': '0.5',
+              '--liteship-gap': 'not-a-number',
+              '--liteship-state': '0.5',
             },
           },
         }),
@@ -917,15 +917,15 @@ describe('astro directive branch coverage', () => {
       expect(events).toContainEqual(
         expect.objectContaining({
           level: 'warn',
-          source: 'czap/astro.gpu',
-          code: 'uniform-update-parse-failed',
+          source: 'liteship/astro.gpu',
+          code: 'astro/gpu/uniform-update-parse-failed',
         }),
       );
     });
   });
 
   test('gpu directive defaults to reactive tier, tolerates null active uniforms, and skips missing discrete state uniforms', async () => {
-    document.documentElement.removeAttribute('data-czap-tier');
+    document.documentElement.removeAttribute('data-liteship-tier');
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1) as never);
 
     const uniformCalls: Array<[string, number]> = [];
@@ -975,7 +975,7 @@ describe('astro directive branch coverage', () => {
     );
 
     const canvas = makeEl('canvas', {
-      'data-czap-boundary': JSON.stringify({
+      'data-liteship-boundary': JSON.stringify({
         states: ['mobile', 'desktop'],
       }),
     }) as HTMLCanvasElement;
@@ -986,16 +986,16 @@ describe('astro directive branch coverage', () => {
     await Promise.resolve();
 
     canvas.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: {
           css: {
-            '--czap-gap': '12',
+            '--liteship-gap': '12',
           },
         },
       }),
     );
     canvas.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: {
           discrete: { default: 'missing' },
         },
@@ -1006,7 +1006,7 @@ describe('astro directive branch coverage', () => {
   });
 
   test('gpu directive exits cleanly when a program cannot be created after shader compilation succeeds', async () => {
-    document.documentElement.removeAttribute('data-czap-tier');
+    document.documentElement.removeAttribute('data-liteship-tier');
     const load = vi.fn(async () => {});
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1) as never);
     const gl = {
@@ -1115,9 +1115,9 @@ describe('astro directive branch coverage', () => {
     );
 
     const canvas = makeEl('canvas', {
-      'data-czap-shader-src':
+      'data-liteship-shader-src':
         '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main(){ fragColor = vec4(1.0); }',
-      'data-czap-boundary': JSON.stringify({ states: ['idle', 'active'] }),
+      'data-liteship-boundary': JSON.stringify({ states: ['idle', 'active'] }),
     }) as HTMLCanvasElement;
     stubs.define(canvas, 'clientWidth', { configurable: true, value: 300 });
     stubs.define(canvas, 'clientHeight', { configurable: true, value: 150 });
@@ -1129,16 +1129,16 @@ describe('astro directive branch coverage', () => {
     // With u_time registered, render() should feed the per-frame timestamp.
     expect(uniform1f).toHaveBeenCalledWith('u_time', expect.any(Number));
 
-    canvas.dispatchEvent(new CustomEvent('czap:uniform-update'));
+    canvas.dispatchEvent(new CustomEvent('liteship:uniform-update'));
     canvas.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: { discrete: { default: 'active' } },
       }),
     );
 
     expect(uniform1f).toHaveBeenCalledWith('u_state', 1);
 
-    canvas.dispatchEvent(new CustomEvent('czap:reinit'));
+    canvas.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(cancelAnimationFrame).toHaveBeenCalledWith(7);
   });
 
@@ -1148,7 +1148,7 @@ describe('astro directive branch coverage', () => {
     Diagnostics.setSink(sink);
 
     const host = makeEl('div', {
-      'data-czap-shader-src': 'https://evil.example/shader.frag',
+      'data-liteship-shader-src': 'https://evil.example/shader.frag',
     });
     gpuDirective(load, {}, host);
     await Promise.resolve();
@@ -1156,8 +1156,8 @@ describe('astro directive branch coverage', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.gpu',
-        code: 'shader-cross-origin-url-rejected',
+        source: 'liteship/astro.gpu',
+        code: 'astro/gpu/shader-cross-origin-url-rejected',
       }),
     );
   });
@@ -1229,8 +1229,8 @@ describe('astro directive branch coverage', () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, text: async () => 'void main(){}' })) as never);
 
     const host = makeEl('canvas', {
-      'data-czap-shader-src': '/shader.frag',
-      'data-czap-boundary': JSON.stringify({ id: 'hero', states: ['idle', 'active'] }),
+      'data-liteship-shader-src': '/shader.frag',
+      'data-liteship-boundary': JSON.stringify({ id: 'hero', states: ['idle', 'active'] }),
     }) as HTMLCanvasElement;
     stubs.define(host, 'clientWidth', { configurable: true, value: 200 });
     stubs.define(host, 'clientHeight', { configurable: true, value: 100 });
@@ -1240,14 +1240,14 @@ describe('astro directive branch coverage', () => {
     await Promise.resolve();
 
     host.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
+      new CustomEvent('liteship:uniform-update', {
         detail: {
           discrete: { hero: 'active' },
-          css: { '--czap-state': '0.5' },
+          css: { '--liteship-state': '0.5' },
         },
       }),
     );
-    document.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { uniform: 'u_state', value: 1 } }));
+    document.dispatchEvent(new CustomEvent('liteship:uniform-update', { detail: { uniform: 'u_state', value: 1 } }));
 
     expect(uniform1f).not.toHaveBeenCalled();
   });
@@ -1258,16 +1258,16 @@ describe('astro directive branch coverage', () => {
     try {
       const el = makeEl('div', {
         id: 'stream-root',
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-morph': 'outerHTML',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-morph': 'outerHTML',
       });
       el.innerHTML = '<input id="before" value="old" />';
 
       const morphs: unknown[] = [];
       const errors: unknown[] = [];
-      document.addEventListener('czap:stream-morph', ((event: CustomEvent) =>
+      document.addEventListener('liteship:stream-morph', ((event: CustomEvent) =>
         morphs.push(event.type)) as EventListener);
-      document.addEventListener('czap:stream-error', ((event: CustomEvent) =>
+      document.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
         errors.push(event.detail)) as EventListener);
 
       streamDirective(async () => {}, {}, el);
@@ -1285,7 +1285,7 @@ describe('astro directive branch coverage', () => {
       await Promise.resolve();
       await Promise.resolve();
       expect(document.getElementById('after')).not.toBeNull();
-      expect(morphs).toEqual(['czap:stream-morph']);
+      expect(morphs).toEqual(['liteship:stream-morph']);
 
       source.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
       expect(document.getElementById('after')).not.toBeNull();
@@ -1297,7 +1297,7 @@ describe('astro directive branch coverage', () => {
 
       const active = document.getElementById('after') as HTMLInputElement;
       active.focus();
-      document.getElementById('stream-root')!.dispatchEvent(new CustomEvent('czap:reinit'));
+      document.getElementById('stream-root')!.dispatchEvent(new CustomEvent('liteship:reinit'));
       expect(MockEventSource.instances).toHaveLength(2);
 
       source = MockEventSource.instances.at(-1)!;
@@ -1325,14 +1325,15 @@ describe('astro directive branch coverage', () => {
     try {
       const el = makeEl('div', {
         id: 'stream-resume',
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
 
       const signals: unknown[] = [];
       const errors: unknown[] = [];
-      el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
-      el.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+      el.addEventListener('liteship:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+      el.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
+        errors.push(event.detail)) as EventListener);
 
       streamDirective(async () => {}, {}, el);
 
@@ -1361,13 +1362,13 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
 
     const distractor = document.createElement('div');
-    distractor.setAttribute('data-czap-id', 'semantic-other');
+    distractor.setAttribute('data-liteship-id', 'semantic-other');
     document.body.appendChild(distractor);
 
     const host = makeEl('section', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-morph': 'outerHTML',
-      'data-czap-id': 'semantic-root',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-morph': 'outerHTML',
+      'data-liteship-id': 'semantic-root',
     });
 
     streamDirective(async () => {}, {}, host);
@@ -1376,18 +1377,18 @@ describe('astro directive branch coverage', () => {
     firstSource.simulateMessage(
       JSON.stringify({
         type: 'patch',
-        data: '<section data-czap-id="semantic-root"><div class="replacement">patched</div></section>',
+        data: '<section data-liteship-id="semantic-root"><div class="replacement">patched</div></section>',
       }),
       'evt-1',
     );
     await Promise.resolve();
     await Promise.resolve();
 
-    const replacement = document.querySelector('[data-czap-id="semantic-root"]') as HTMLElement | null;
+    const replacement = document.querySelector('[data-liteship-id="semantic-root"]') as HTMLElement | null;
     expect(replacement).not.toBeNull();
     expect(replacement?.querySelector('.replacement')?.textContent).toBe('patched');
 
-    replacement?.dispatchEvent(new CustomEvent('czap:reinit'));
+    replacement?.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     expect(MockEventSource.instances).toHaveLength(2);
     expect(firstSource.readyState).toBe(MockEventSource.CLOSED);
@@ -1398,9 +1399,9 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
 
     const host = makeEl('section', {
-      'data-czap-stream-url': '/api/feed',
-      'data-czap-stream-morph': 'outerHTML',
-      'data-czap-id': 'semantic-root',
+      'data-liteship-stream-url': '/api/feed',
+      'data-liteship-stream-morph': 'outerHTML',
+      'data-liteship-id': 'semantic-root',
     });
 
     streamDirective(async () => {}, {}, host);
@@ -1416,9 +1417,9 @@ describe('astro directive branch coverage', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(document.querySelector('[data-czap-id="semantic-root"]')).toBeNull();
+    expect(document.querySelector('[data-liteship-id="semantic-root"]')).toBeNull();
 
-    host.dispatchEvent(new CustomEvent('czap:reinit'));
+    host.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     expect(MockEventSource.instances).toHaveLength(2);
     expect(firstSource.readyState).toBe(MockEventSource.CLOSED);
@@ -1426,10 +1427,10 @@ describe('astro directive branch coverage', () => {
 
   test('stream directive resolves semantic-id targets on the document root through the root fast path', async () => {
     cleanupEventSource = MockEventSource.install();
-    document.documentElement.setAttribute('data-czap-id', 'semantic-fast-path');
+    document.documentElement.setAttribute('data-liteship-id', 'semantic-fast-path');
     const host = makeEl('section', {
-      'data-czap-stream-url': '/api/root-feed',
-      'data-czap-id': 'semantic-fast-path',
+      'data-liteship-stream-url': '/api/root-feed',
+      'data-liteship-id': 'semantic-fast-path',
     });
 
     try {
@@ -1439,7 +1440,7 @@ describe('astro directive branch coverage', () => {
       source.simulateMessage(
         JSON.stringify({
           type: 'batch',
-          data: '<section data-czap-id="semantic-fast-path"><main class="root-fast-path">patched</main></section>',
+          data: '<section data-liteship-id="semantic-fast-path"><main class="root-fast-path">patched</main></section>',
         }),
         'evt-root',
       );
@@ -1448,7 +1449,7 @@ describe('astro directive branch coverage', () => {
 
       expect(host.querySelector('.root-fast-path')?.textContent).toBe('patched');
     } finally {
-      document.documentElement.removeAttribute('data-czap-id');
+      document.documentElement.removeAttribute('data-liteship-id');
     }
   });
 
@@ -1456,7 +1457,7 @@ describe('astro directive branch coverage', () => {
     cleanupEventSource = MockEventSource.install();
 
     const host = makeEl('div', {
-      'data-czap-stream-url': '/api/feed',
+      'data-liteship-stream-url': '/api/feed',
     });
     host.innerHTML = '<div class="initial">before</div>';
 
@@ -1498,8 +1499,8 @@ describe('astro directive branch coverage', () => {
 
     try {
       const host = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
 
       streamDirective(async () => {}, {}, host);
@@ -1541,10 +1542,10 @@ describe('astro directive branch coverage', () => {
 
     try {
       const host = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
-        'data-czap-snapshot-url': '/api/snapshot',
-        'data-czap-replay-url': '/api/replay',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
+        'data-liteship-snapshot-url': '/api/snapshot',
+        'data-liteship-replay-url': '/api/replay',
       });
 
       streamDirective(async () => {}, {}, host);
@@ -1598,8 +1599,8 @@ describe('astro directive branch coverage', () => {
 
     try {
       const resumable = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
 
       streamDirective(async () => {}, {}, resumable);
@@ -1628,7 +1629,7 @@ describe('astro directive branch coverage', () => {
       resumeSpy.mockClear();
 
       const noArtifact = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
+        'data-liteship-stream-url': '/api/feed',
       });
 
       streamDirective(async () => {}, {}, noArtifact);
@@ -1669,8 +1670,8 @@ describe('astro directive branch coverage', () => {
 
     try {
       const resumable = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
 
       streamDirective(async () => {}, {}, resumable);
@@ -1711,13 +1712,14 @@ describe('astro directive branch coverage', () => {
     try {
       const host = makeEl('div', {
         id: 'stable-stream',
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
       const addSpy = vi.spyOn(host, 'addEventListener');
       const removeSpy = vi.spyOn(host, 'removeEventListener');
       const errors: unknown[] = [];
-      host.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+      host.addEventListener('liteship:stream-error', ((event: CustomEvent) =>
+        errors.push(event.detail)) as EventListener);
 
       streamDirective(async () => {}, {}, host);
 
@@ -1738,8 +1740,8 @@ describe('astro directive branch coverage', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(addSpy.mock.calls.filter(([type]) => type === 'czap:reinit')).toHaveLength(1);
-      expect(removeSpy.mock.calls.filter(([type]) => type === 'czap:reinit')).toHaveLength(0);
+      expect(addSpy.mock.calls.filter(([type]) => type === 'liteship:reinit')).toHaveLength(1);
+      expect(removeSpy.mock.calls.filter(([type]) => type === 'liteship:reinit')).toHaveLength(0);
       expect(resumeSpy).toHaveBeenCalledWith('hero', 'evt-4', {});
       expect(errors).toContainEqual({ reason: 'resume-failed', message: 'resume string failure' });
     } finally {
@@ -1766,8 +1768,8 @@ describe('astro directive branch coverage', () => {
 
     try {
       const host = makeEl('div', {
-        'data-czap-stream-url': '/api/feed',
-        'data-czap-stream-artifact': 'hero',
+        'data-liteship-stream-url': '/api/feed',
+        'data-liteship-stream-artifact': 'hero',
       });
 
       streamDirective(async () => {}, {}, host);
@@ -1821,7 +1823,7 @@ describe('astro directive branch coverage', () => {
 
     const load = vi.fn(async () => {});
     const el = makeEl('div', {
-      'data-czap-boundary': JSON.stringify({
+      'data-liteship-boundary': JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
         thresholds: [0, 768],
@@ -1833,12 +1835,12 @@ describe('astro directive branch coverage', () => {
     const workerStates: unknown[] = [];
     const uniformStates: unknown[] = [];
     let readyCount = 0;
-    el.addEventListener('czap:worker-ready', () => {
+    el.addEventListener('liteship:worker-ready', () => {
       readyCount++;
     });
-    el.addEventListener('czap:worker-state', ((event: CustomEvent) =>
+    el.addEventListener('liteship:worker-state', ((event: CustomEvent) =>
       workerStates.push(event.detail)) as EventListener);
-    el.addEventListener('czap:uniform-update', ((event: CustomEvent) =>
+    el.addEventListener('liteship:uniform-update', ((event: CustomEvent) =>
       uniformStates.push(event.detail)) as EventListener);
 
     workerDirective(load, {}, el);
@@ -1876,7 +1878,7 @@ describe('astro directive branch coverage', () => {
 
     expect(load).toHaveBeenCalledOnce();
     expect(readyCount).toBe(1);
-    expect(el.getAttribute('data-czap-state')).toBe('desktop');
+    expect(el.getAttribute('data-liteship-state')).toBe('desktop');
     expect(workerStates).toContainEqual(
       expect.objectContaining({
         discrete: { hero: 'desktop' },
@@ -1901,7 +1903,7 @@ describe('astro directive branch coverage', () => {
       transfer: [],
     });
 
-    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    el.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(firstWorker.postedMessages.some((entry) => (entry.data as { type: string }).type === 'dispose')).toBe(false);
     expect(MockWorker.instances).toHaveLength(1);
     expect(firstWorker.postedMessages.slice(-3).map((entry) => (entry.data as { type: string }).type)).toEqual([
@@ -1944,7 +1946,7 @@ describe('astro directive branch coverage', () => {
 
     const load = vi.fn(async () => {});
     const el = makeEl('div', {
-      'data-czap-boundary': JSON.stringify({
+      'data-liteship-boundary': JSON.stringify({
         id: 'hero',
         input: 'scroll.progress',
         thresholds: [0, 0.5],
@@ -1953,7 +1955,7 @@ describe('astro directive branch coverage', () => {
     });
 
     const uniformStates: unknown[] = [];
-    el.addEventListener('czap:uniform-update', ((event: CustomEvent) =>
+    el.addEventListener('liteship:uniform-update', ((event: CustomEvent) =>
       uniformStates.push(event.detail)) as EventListener);
 
     workerDirective(load, {}, el);
@@ -2027,13 +2029,13 @@ describe('astro directive branch coverage', () => {
     );
 
     const load = vi.fn(async () => {});
-    const invalid = makeEl('div', { 'data-czap-boundary': '{broken' });
+    const invalid = makeEl('div', { 'data-liteship-boundary': '{broken' });
     workerDirective(load, {}, invalid);
     expect(MockWorker.instances).toHaveLength(0);
     expect(load).not.toHaveBeenCalled();
 
     const unsupported = makeEl('div', {
-      'data-czap-boundary': JSON.stringify({
+      'data-liteship-boundary': JSON.stringify({
         id: 'hero',
         input: 'scroll.depth',
         thresholds: [0, 100],
@@ -2080,7 +2082,7 @@ describe('astro directive branch coverage', () => {
     );
 
     const el = makeEl('div', {
-      'data-czap-boundary': JSON.stringify({
+      'data-liteship-boundary': JSON.stringify({
         id: 'hero',
         input: 'viewport.width',
         thresholds: [0, 768],
@@ -2090,21 +2092,21 @@ describe('astro directive branch coverage', () => {
     });
 
     workerDirective(async () => {}, {}, el);
-    expect(el.getAttribute('data-czap-state')).toBe('desktop');
+    expect(el.getAttribute('data-liteship-state')).toBe('desktop');
     expect(events).toContainEqual(
       expect.objectContaining({
         level: 'warn',
-        source: 'czap/astro.worker',
-        code: 'worker-host-fallback',
+        source: 'liteship/astro.worker',
+        code: 'astro/worker/worker-host-fallback',
         detail: 'worker boom',
       }),
     );
 
     vi.stubGlobal('innerWidth', 640);
     resizeCallback?.([] as never, {} as never);
-    expect(el.getAttribute('data-czap-state')).toBe('mobile');
+    expect(el.getAttribute('data-liteship-state')).toBe('mobile');
 
-    el.dispatchEvent(new CustomEvent('czap:teardown'));
+    el.dispatchEvent(new CustomEvent('liteship:teardown'));
     expect(disconnect).toHaveBeenCalled();
   });
 });

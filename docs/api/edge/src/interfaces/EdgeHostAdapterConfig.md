@@ -20,7 +20,7 @@ present, boundary-cache write-back on a compile miss is scheduled via
 
 ### background?
 
-> `readonly` `optional` **background?**: `EdgeHostBackground`
+> `readonly` `optional` **background?**: [`EdgeHostBackground`](EdgeHostBackground.md)
 
 Defined in: [edge/src/host-adapter.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L178)
 

@@ -26,11 +26,11 @@ Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`.
 
 ### detectedCapTier?
 
-> `readonly` `optional` **detectedCapTier?**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> `readonly` `optional` **detectedCapTier?**: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md)
 
 Defined in: [astro/src/quantize.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
 
-Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px).
+Tier detected by `@liteship/edge` (default `'reactive'` → synthetic 960px).
 
 ***
 

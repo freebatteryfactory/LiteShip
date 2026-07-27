@@ -8,7 +8,9 @@
 
 > **PackagePathResolver** = (`file`) => [`PackagePathResolution`](../interfaces/PackagePathResolution.md) \| `null`
 
-Defined in: [audit/src/policy.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L38)
+Defined in: [audit/src/policy.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L35)
+
+Resolve a repository file to its owning package and package-relative path.
 
 ## Parameters
 

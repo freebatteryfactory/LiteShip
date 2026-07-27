@@ -19,8 +19,8 @@ import {
   resolveAssetUrlByTier,
   resolveOutputsByTier,
   tierKey,
-} from '@czap/edge';
-import type { CompiledOutputs, TierKey } from '@czap/edge';
+} from '@liteship/edge';
+import type { CompiledOutputs, TierKey } from '@liteship/edge';
 
 /**
  * Representative pre-dedupe map, shaped exactly like the build produces:
@@ -31,7 +31,7 @@ import type { CompiledOutputs, TierKey } from '@czap/edge';
 function makePreDedupeGrid(): Readonly<Partial<Record<TierKey, CompiledOutputs>>> {
   const containerQueries =
     ':root { container-type: inline-size; container-name: viewport-width; }\n\n' +
-    '@container viewport-width (width >= 768px) { .czap-boundary { --gap: 24px; } }';
+    '@container viewport-width (width >= 768px) { .liteship-boundary { --gap: 24px; } }';
   const propertyRegistrations = '@property --gap { syntax: "<length>"; inherits: false; initial-value: 8px; }';
   const byTier: Partial<Record<TierKey, CompiledOutputs>> = {};
   for (const motionTier of MOTION_TIERS) {
@@ -108,7 +108,7 @@ describe('manifest tier-grid dedupe', () => {
   });
 
   test('a true v1 entry (no outputs pool at all) gets the rebuild teaching error, not a TypeError', () => {
-    // A previously-emitted v1 czap-boundary-manifest.json entry has NO
+    // A previously-emitted v1 liteship-boundary-manifest.json entry has NO
     // `outputs` field — the error template itself must not dereference the
     // missing pool while explaining the problem.
     const v1 = {
@@ -124,13 +124,13 @@ describe('manifest tier-grid dedupe', () => {
     const entry = {
       ...dedupeOutputsByTier(makePreDedupeGrid()),
       assetUrls: {
-        0: '/_czap/f6a7/0.abcd.css',
-        1: '/_czap/f6a7/1.ef01.css',
+        0: '/_liteship/f6a7/0.abcd.css',
+        1: '/_liteship/f6a7/1.ef01.css',
       },
     };
 
-    expect(resolveAssetUrlByTier(entry, 'none:standard')).toBe('/_czap/f6a7/0.abcd.css');
-    expect(resolveAssetUrlByTier(entry, 'transitions:standard')).toBe('/_czap/f6a7/1.ef01.css');
+    expect(resolveAssetUrlByTier(entry, 'none:standard')).toBe('/_liteship/f6a7/0.abcd.css');
+    expect(resolveAssetUrlByTier(entry, 'transitions:standard')).toBe('/_liteship/f6a7/1.ef01.css');
   });
 
   test('resolveAssetUrlByTier returns undefined when manifest has no asset URLs', () => {

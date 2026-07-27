@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { walkFiles } from '@czap/core/fs-walk';
+import { walkFiles } from '@liteship/core/fs-walk';
 import { runPnpm } from './support/pnpm-process.ts';
 import { cloudflareChildEnv } from './support/cloudflare-env.ts';
 import { doctor } from '../packages/cli/src/commands/doctor.js';
@@ -41,7 +41,7 @@ async function main(): Promise<void> {
   }
   console.log('  Workspace built.\n');
 
-  console.log('[2/4] czap doctor --target cloudflare --ci on example...');
+  console.log('[2/4] liteship doctor --target cloudflare --ci on example...');
   const doctorExit = await doctor({ pretty: false, target: 'cloudflare', ci: true, cwd: EXAMPLE_DIR });
   assert(doctorExit === 0, 'doctor --target cloudflare --ci exits 0 for the example app');
 
@@ -68,10 +68,10 @@ async function main(): Promise<void> {
     'dist/server/index.mjs (or entry.mjs / wrangler.json / _worker.js) exists (Workers SSR output)',
   );
   assert(
-    anyFileContains(DIST_DIR, '.html', 'data-czap-boundary') ||
-      anyFileContains(DIST_DIR, '.js', 'data-czap-boundary') ||
-      anyFileContains(DIST_DIR, '.mjs', 'data-czap-boundary'),
-    'build output contains czap boundary marker',
+    anyFileContains(DIST_DIR, '.html', 'data-liteship-boundary') ||
+      anyFileContains(DIST_DIR, '.js', 'data-liteship-boundary') ||
+      anyFileContains(DIST_DIR, '.mjs', 'data-liteship-boundary'),
+    'build output contains liteship boundary marker',
   );
 
   console.log('[4/4] Vitest cloudflare edge pipeline...');

@@ -6,28 +6,17 @@
 
 # Interface: ActiveSurfaceReaderOptions
 
-Defined in: [audit/src/active-surface-reader.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L59)
+Defined in: [audit/src/active-surface-reader.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L35)
 
 Injected inputs for [buildActiveSurfaceFacts](../functions/buildActiveSurfaceFacts.md).
 
 ## Properties
 
-### exportRequiredFields?
-
-> `readonly` `optional` **exportRequiredFields?**: readonly `string`[]
-
-Defined in: [audit/src/active-surface-reader.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L72)
-
-Load-bearing field names for the active `export` surface — injected by the
-HOST from the real `@czap/core` type (`keyof ExportNode`).
-
-***
-
 ### promotion?
 
 > `readonly` `optional` **promotion?**: `ActiveSurfacePromotion`
 
-Defined in: [audit/src/active-surface-reader.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L79)
+Defined in: [audit/src/active-surface-reader.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L50)
 
 The live `--ir` path now injects `'blocking'` (#130 landed the `interpretTransition`
 reader, so the TransitionNode surface has readers and the gate is green at blocking).
@@ -40,18 +29,36 @@ to prove the ratchet's teeth.
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [audit/src/active-surface-reader.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L61)
+Defined in: [audit/src/active-surface-reader.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L37)
 
 Absolute repo root; every relative path resolves against it.
 
 ***
 
-### transitionRequiredFields
+### requiredFields
 
-> `readonly` **transitionRequiredFields**: readonly `string`[]
+> `readonly` **requiredFields**: `Readonly`\<`Record`\<`string`, readonly `string`[]\>\>
 
-Defined in: [audit/src/active-surface-reader.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L67)
+Defined in: [audit/src/active-surface-reader.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L41)
 
-Load-bearing field names for the active `transition` surface — injected by the
-HOST from the real `@czap/core` type (`keyof TransitionNode`), never derived
-inside audit (audit-leaf-purity / D9b).
+Load-bearing fields keyed by the enrolled surface family.
+
+***
+
+### surfaces
+
+> `readonly` **surfaces**: readonly [`EnrolledActiveSurface`](EnrolledActiveSurface.md)[]
+
+Defined in: [audit/src/active-surface-reader.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L39)
+
+Host-owned surface enrollment; the engine names no project families or paths.
+
+***
+
+### typeScriptPathAliases?
+
+> `readonly` `optional` **typeScriptPathAliases?**: `Readonly`\<`Record`\<`string`, readonly `string`[]\>\>
+
+Defined in: [audit/src/active-surface-reader.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L43)
+
+Host-owned source aliases used by the TypeScript resolver.

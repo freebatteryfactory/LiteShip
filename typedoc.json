@@ -24,12 +24,15 @@
     "packages/command/src/index.ts",
     "packages/cli/src/index.ts",
     "packages/mcp-server/src/index.ts",
-    "packages/liteship/src/index.ts",
-    "packages/_spine/typedoc-entry.ts"
+    "packages/_spine/index.d.ts",
+    "packages/create-liteship/src/index.ts",
+    "packages/liteship/src"
   ],
   "entryPointStrategy": "expand",
   "out": "docs/api",
-  "plugin": ["typedoc-plugin-markdown"],
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
   "readme": "TYPEDOC.md",
   "excludePrivate": true,
   "excludeInternal": true,
@@ -41,59 +44,89 @@
   "hidePageHeader": false,
   "hideGenerator": true,
   "externalSymbolLinkMappings": {
-    "@czap/core": {
+    "@liteship/core": {
       "Diagnostics": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/variables/Diagnostics.md",
       "DiagnosticsSink": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md",
-      "DiscreteStateTransition": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-transition.ts",
-      "Boundary.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md",
-      "Token.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md",
-      "Theme.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md",
-      "Style.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md",
-      "Component.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md",
-      "VideoRenderer.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/VideoRenderer/type-aliases/Shape.md",
+      "DiscreteStateTransition": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts",
+      "Boundary": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Boundary.md",
+      "defineBoundary": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/defineBoundary.md",
+      "Token": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Token.md",
+      "defineToken": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/defineToken.md",
+      "Theme": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Theme.md",
+      "defineTheme": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/defineTheme.md",
+      "Style": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Style.md",
+      "defineStyle": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/defineStyle.md",
+      "createCell": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/createCell.md",
+      "computed": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/computed.md",
+      "createStore": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/createStore.md",
+      "createTimeline": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/createTimeline.md",
+      "schema": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/variables/schema.md",
+      "Component": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Component.md",
+      "VideoRenderer": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/VideoRenderer.md",
       "VideoFrameOutput": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md",
       "ContentAddress": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md",
       "Millis": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md",
-      "CapLevel": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md",
       "CapSet": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md",
       "CapTier": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md",
       "Quantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md",
       "Clock": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md",
       "Rng": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md",
-      "LadderTarget": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md",
-      "CzapValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md",
-      "FaultDecl.trigger": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts",
-      "EscalationSubject": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts",
-      "mintValidated": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/validated-output.ts",
-      "__type.evaluateResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts",
-      "ComponentNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "ExportNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "ProjectionNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "DocumentGraph": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "CompositeState": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts",
-      "Lifetime": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/lifetime.ts",
-      "CellKernel": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts",
-      "Disposer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts",
-      "EmissionPolicy": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts",
-      "ReentrancyPolicy": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cell-kernel.ts",
-      "HLCClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts",
-      "makeClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/hlc.ts",
-      "ReactiveQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/quantizer-types.ts",
-      "CompositorFactory.create": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts",
-      "World.Handle": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
-      "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
-      "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/animation.ts"
+      "QualityTierTarget": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/QualityTierTarget.md",
+      "LiteshipValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/classes/LiteshipValidationError.md",
+      "FaultDecl.trigger": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts",
+      "EscalationSubject": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsules/escalation-choose-tier.ts",
+      "mintValidated": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/validated-output.ts",
+      "__type.evaluateResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/boundary-f32.ts",
+      "ComponentNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
+      "ExportNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
+      "ProjectionNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
+      "DocumentGraph": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
+      "CompositeState": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor-pool.ts",
+      "Lifetime": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts",
+      "OwnedResource": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/OwnedResource.md",
+      "AsyncOwnedResource": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/AsyncOwnedResource.md",
+      "attachLifetime": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/functions/attachLifetime.md",
+      "CellKernel": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
+      "Disposer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
+      "EmissionPolicy": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
+      "ReentrancyPolicy": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts",
+      "HLCClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts",
+      "makeClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts",
+      "ReactiveQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts",
+      "CompositorFactory.create": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts",
+      "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs/runtime.ts",
+      "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts",
+      "wallClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts",
+      "Receipt": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts",
+      "Receipt.validateChainDetailed": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts",
+      "TypedRef": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/typed-ref.ts",
+      "applyTransition": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts",
+      "rawIndexF32": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/boundary-f32.ts",
+      "WASMDispatch.load": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/wasm/wasm-dispatch.ts",
+      "TransitionNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-node.ts",
+      "GraphPatch.receipt": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts",
+      "GraphPatch.decode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts",
+      "SignalNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts",
+      "Plan": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts",
+      "createRuntimeCoordinator": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts",
+      "contentAddressOf": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/content-address.ts",
+      "ConfigInput": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts",
+      "BoundarySpec": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/boundary.ts",
+      "ArbitraryAnnotationId": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts",
+      "OptionalId": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/ast.ts"
     },
     "@types/node": {
       "__global.AbortController": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController"
     },
-    "@czap/error": {
+    "@liteship/error": {
       "ValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "ParseError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
       "InvariantViolationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
-      "HostCapabilityError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts"
+      "HostCapabilityError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
+      "DiagnosticCode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts",
+      "DiagnosticEntry": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts"
     },
-    "@czap/gauntlet": {
+    "@liteship/gauntlet": {
       "RepoIR": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
       "Fact": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
       "Fact.value": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
@@ -106,34 +139,46 @@
       "McdcConditionOutcome": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
       "Finding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts",
       "GauntletResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts",
-      "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
+      "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts",
+      "CoverageClass": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts"
     },
-    "@czap/command": {
-      "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts"
+    "@liteship/command": {
+      "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts",
+      "CLI_OWNED_DESCRIPTORS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts"
     },
-    "@czap/_spine": {
+    "@liteship/_spine": {
       "GeneratedUINode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts",
       "ComponentCatalog.catalogHash": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts"
     },
-    "@czap/worker": {
+    "@liteship/worker": {
       "MetricsMessage": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md",
       "_makeRing": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts"
     },
-    "@czap/vite": {
-      "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts"
+    "@liteship/vite": {
+      "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts",
+      "resolvePackagedWasm": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/wasm-package-resolve.ts"
     },
-    "@czap/detect": {
+    "@liteship/astro": {
+      "createDOMLLMSessionHost": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/runtime/llm-session.ts",
+      "createLLMSessionWithHost": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/runtime/llm-session.ts"
+    },
+    "@liteship/quantizer": {
+      "DefineQuantizerOptions": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts",
+      "DefineQuantizerOptions.tier": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts",
+      "AnimatedQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts"
+    },
+    "@liteship/detect": {
       "ExtendedDeviceCapabilities": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",
       "CapAxis": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md"
     },
-    "@czap/scene": {
+    "@liteship/scene": {
       "CANONICAL_SYSTEM_COUNT": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts",
       "DEFAULT_MIX_RECEIPT_CAP": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts"
     },
-    "@czap/edge": {
+    "@liteship/edge": {
       "KVNamespace": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md"
     },
-    "@czap/mcp-server": {
+    "@liteship/mcp-server": {
       "ResourceNotFoundError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
       "InvalidParamsError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
       "RECEIPT_META_KEY": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts"
@@ -144,6 +189,7 @@
     },
     "typescript": {
       "Map": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+      "AbortController": "https://developer.mozilla.org/en-US/docs/Web/API/AbortController",
       "AbortSignal": "https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal",
       "ts.CompilerOptions": "https://www.typescriptlang.org/docs/handbook/compiler-options.html",
       "ts.Program": "https://github.com/microsoft/TypeScript/blob/main/src/compiler/types.ts",

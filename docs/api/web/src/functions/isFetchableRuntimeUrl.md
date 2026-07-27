@@ -60,7 +60,7 @@ classification only. Never throws ([resolveRuntimeUrl](resolveRuntimeUrl.md) nev
 
 `string` \| `null` \| `undefined`
 
-the candidate token (e.g. a `data-czap-shader-src` value).
+the candidate token (e.g. a `data-liteship-shader-src` value).
 
 ## Returns
 

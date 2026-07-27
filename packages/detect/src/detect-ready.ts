@@ -1,30 +1,30 @@
 /**
- * The `czap:detect-ready` event contract — the ONE consolidated "detection
- * settled" signal the head-inline GPU probe dispatches once `__CZAP_DETECT__` and
- * the `data-czap-*` attributes are final.
+ * The `liteship:detect-ready` event contract — the ONE consolidated "detection
+ * settled" signal the head-inline GPU probe dispatches once `__LITESHIP_DETECT__` and
+ * the `data-liteship-*` attributes are final.
  *
- * `@czap/detect` OWNS this event: the name literal ({@link DETECT_READY_EVENT}),
+ * `@liteship/detect` OWNS this event: the name literal ({@link DETECT_READY_EVENT}),
  * the payload shape ({@link DetectReadyDetail}), and the DUAL-DISPATCH invariant —
  * the probe dispatches `detect-ready` on BOTH its success path (with the resolved
  * tiers) AND its error path (`{ error: true }`), so a consumer that subscribes via
  * {@link onDetectReady} is guaranteed exactly one settle and never hangs on a
- * thrown probe. Consumers (e.g. `@czap/astro`'s GPU directive) import this helper
+ * thrown probe. Consumers (e.g. `@liteship/astro`'s GPU directive) import this helper
  * instead of hand-typing the raw string literal + `addEventListener` plumbing.
  *
  * @module
  */
 
-import type { CapTier, MotionTier } from '@czap/core';
+import type { CapTier, MotionTier } from '@liteship/core';
 import type { GPUTier } from './detect.js';
 
 /** The canonical event name the head-inline probe dispatches on `document`. */
-export const DETECT_READY_EVENT = 'czap:detect-ready' as const;
+export const DETECT_READY_EVENT = 'liteship:detect-ready' as const;
 
 /** A teardown function — call it to remove the listener. */
 export type Disposer = () => void;
 
 /**
- * The `czap:detect-ready` payload. On the probe's SUCCESS path it carries the
+ * The `liteship:detect-ready` payload. On the probe's SUCCESS path it carries the
  * resolved cap/motion/GPU tiers; on its ERROR path it carries `{ error: true }`
  * (the provisional tier stands). Either way the event fires exactly once.
  */
@@ -39,7 +39,7 @@ export type DetectReadyDetail =
   | { readonly error: true };
 
 /**
- * Subscribe to the `czap:detect-ready` event on `document`, returning a
+ * Subscribe to the `liteship:detect-ready` event on `document`, returning a
  * {@link Disposer} that removes the listener.
  *
  * The callback receives the final {@link DetectReadyDetail} (or `null` if a

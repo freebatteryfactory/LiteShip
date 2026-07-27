@@ -1,18 +1,18 @@
 /**
  * THE SOUND, AST-BASED SKIP DETECTOR — the cure that ends the token-scanner whack-a-mole.
  *
- * The token `detectSkips` (`@czap/gauntlet`'s dependency-free fallback) is a char/token
+ * The token `detectSkips` (`@liteship/gauntlet`'s dependency-free fallback) is a char/token
  * scanner. It cannot PARSE JavaScript, so each codex round found a new spelling it missed
  * (`it.concurrent.skip`, multi-line `.each([⏎…]).skip`, the ASI rebind `const t = it⏎t.skip`).
  * The cure is a REAL AST: `ts.createSourceFile` (the PARSER — we do NOT need a full
  * `ts.Program`/`TypeChecker`; the syntactic skip forms + LOCAL binding analysis are decidable
  * from the syntax tree alone). A real AST is line-AGNOSTIC, so every multi-line evasion is free.
  *
- * THE ARCHITECTURE BOUNDARY (load-bearing LAW). `@czap/gauntlet` is the LEAN engine — it carries
- * NO `typescript` dependency; the token `detectSkips` is its zero-capability fallback. `@czap/audit`
+ * THE ARCHITECTURE BOUNDARY (load-bearing LAW). `@liteship/gauntlet` is the LEAN engine — it carries
+ * NO `typescript` dependency; the token `detectSkips` is its zero-capability fallback. `@liteship/audit`
  * HAS `typescript`. So the AST detector lives HERE, and the no-skip gate / plumb-scan take it as
  * an INJECTED capability (`(context.skipDetector ?? detectSkips)(text)`) — the host (the CLI, which
- * deps `@czap/audit`) injects `detectSkipsAST`; the lean token detector stays as the fallback.
+ * deps `@liteship/audit`) injects `detectSkipsAST`; the lean token detector stays as the fallback.
  *
  * WHAT IT RETURNS. The SAME `SkipMatch` shape the token detector returns (so it is a drop-in
  * for both consumers), EXTENDED with the `conditional` classification ({@link SkipConditionality}) —
@@ -50,7 +50,7 @@
  */
 
 import ts from 'typescript';
-import type { SkipForm, SkipMatch, SkipConditionality } from '@czap/gauntlet';
+import type { SkipForm, SkipMatch, SkipConditionality } from '@liteship/gauntlet';
 
 /** Runner ROOTS a skip hangs off — mirrors the token detector's set (the literal call surfaces + focus aliases). */
 const RUNNER_ROOTS: ReadonlySet<string> = new Set([
@@ -993,7 +993,7 @@ function classifyConditional(node: ts.Node): SkipConditionality {
  *  - every enclosing `if (<cond>) { … }` condition up to the function boundary.
  *
  * This is the syntactic counterpart of `classifyConditional` that returns the guard NODES rather
- * than a classification — the CAPABILITY-GATE LINKER (`@czap/audit`'s capability-link oracle) resolves
+ * than a classification — the CAPABILITY-GATE LINKER (`@liteship/audit`'s capability-link oracle) resolves
  * the symbols of these expressions through the checker to PROVE the skip's guard derives from its
  * declared capability's probe (codex round-8 #1b: conditional ≠ gated-by-the-declared-capability).
  * Returns `[]` for an unconditional skip (no guard) — exported for the host oracle (parser-only; the
@@ -1299,6 +1299,7 @@ export interface EarlyReturnMatch {
   readonly token: string;
 }
 
+/** Find test branches that can return before reaching an assertion. */
 export function detectEarlyReturnBeforeExpectAST(source: string): readonly EarlyReturnMatch[] {
   const sourceFile = ts.createSourceFile(
     'early-return-scan.tsx',

@@ -8,7 +8,7 @@
 
 > `const` **Track**: `object`
 
-Defined in: [scene/src/track.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/track.ts#L143)
+Defined in: [scene/src/track.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/track.ts#L145)
 
 Track namespace — typed constructors for the four track kinds plus
 per-kind id minters (Track.videoId, Track.audioId, Track.transitionId,
@@ -32,11 +32,11 @@ Build an AudioTrack referencing an asset id, with default mix { volume: 1, pan: 
 
 ###### envelope?
 
-`TrackEnvelope`
+[`TrackEnvelope`](../../../spine/type-aliases/TrackEnvelope.md)
 
 ###### from
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ###### mix?
 
@@ -82,7 +82,7 @@ level), 0 is silence. Mixers multiply this by the envelope-driven
 
 ###### to
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 #### Returns
 
@@ -120,11 +120,11 @@ Build an EffectTrack applying an intensity curve to a target video, optionally s
 
 ###### envelope?
 
-`TrackEnvelope`
+[`TrackEnvelope`](../../../spine/type-aliases/TrackEnvelope.md)
 
 ###### from
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ###### kind
 
@@ -148,7 +148,7 @@ Build an EffectTrack applying an intensity curve to a target video, optionally s
 
 ###### to
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 #### Returns
 
@@ -190,11 +190,11 @@ readonly \[[`TrackRef`](../type-aliases/TrackRef.md)\<`"video"`\>, [`TrackRef`](
 
 ###### ease?
 
-`EaseTag`
+[`EaseTag`](../../../spine/type-aliases/EaseTag.md)
 
 ###### from
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ###### kind
 
@@ -202,7 +202,7 @@ readonly \[[`TrackRef`](../type-aliases/TrackRef.md)\<`"video"`\>, [`TrackRef`](
 
 ###### to
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 #### Returns
 
@@ -240,15 +240,19 @@ Build a VideoTrack referencing a quantizer source, with optional layer and opaci
 
 ###### envelope?
 
-`TrackEnvelope`
+[`TrackEnvelope`](../../../spine/type-aliases/TrackEnvelope.md)
 
 ###### from
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ###### layer?
 
 `number`
+
+###### motion?
+
+[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
 
 ###### source
 
@@ -256,7 +260,7 @@ Build a VideoTrack referencing a quantizer source, with optional layer and opaci
 
 ###### to
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 #### Returns
 

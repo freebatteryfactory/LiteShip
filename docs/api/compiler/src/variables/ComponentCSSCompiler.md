@@ -13,10 +13,10 @@ Defined in: [compiler/src/component-css.ts:60](https://github.com/freebatteryfac
 Component CSS compiler namespace.
 
 Wraps [StyleCSSCompiler](StyleCSSCompiler.md) with component-scoped conventions: children
-inside `[data-czap-slot]` use `display: contents` so slotted content
+inside `[data-liteship-slot]` use `display: contents` so slotted content
 inherits layout from the surrounding parent, and elements tagged
-`[data-czap-satellite="<name>"]` get `container-type: inline-size` so
-satellite-mounted instances participate in container queries.
+`[data-liteship-adaptive="<name>"]` get `container-type: inline-size` so
+adaptive-mounted instances participate in container queries.
 
 ## Type Declaration
 
@@ -24,16 +24,16 @@ satellite-mounted instances participate in container queries.
 
 > **compile**: (`component`) => [`StyleCSSResult`](../interfaces/StyleCSSResult.md)
 
-Compile a component definition into scoped CSS with slot + satellite markers.
+Compile a component definition into scoped CSS with slot + adaptive markers.
 
-Compile a [Component.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md) into scoped CSS with slot and satellite
+Compile a [Component](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Component.md) into scoped CSS with slot and adaptive
 markers appended inside the component's `@layer` block.
 
 #### Parameters
 
 ##### component
 
-[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)
+[`Component`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Component.md)
 
 #### Returns
 

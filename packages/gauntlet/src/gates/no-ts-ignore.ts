@@ -80,6 +80,7 @@ export const noTsIgnoreGate: Gate = defineGate({
   id: 'gauntlet/no-ts-ignore',
   level: 'L1',
   describe: 'Flags `@ts-ignore` / `@ts-nocheck` — use `@ts-expect-error` (a typed, intentional assertion) instead.',
+  access: {},
   run: scan,
   fixtures: {
     red: {

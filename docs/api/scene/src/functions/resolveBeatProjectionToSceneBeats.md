@@ -6,9 +6,9 @@
 
 # Function: resolveBeatProjectionToSceneBeats()
 
-> **resolveBeatProjectionToSceneBeats**(`input`): readonly `BeatComponent`[]
+> **resolveBeatProjectionToSceneBeats**(`input`): readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
-Defined in: [scene/src/beat-projection.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-projection.ts#L37)
+Defined in: [scene/src/beat-projection.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-projection.ts#L38)
 
 Resolve a raw beat-marker projection into scene-ready beat components.
 
@@ -22,14 +22,15 @@ is supplied it is carried onto every marker; otherwise the field is omitted.
 
 ### input
 
-`BeatProjectionResolutionInput`
+[`BeatProjectionResolutionInput`](../../../spine/interfaces/BeatProjectionResolutionInput.md)
 
 ## Returns
 
-readonly `BeatComponent`[]
+readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 ## Throws
 
-RangeError if `sampleRate` is not a positive, finite number — a
-zero/negative/NaN rate cannot define a timeline, so we fail loudly rather
-than emit `Infinity`/`NaN` beat times.
+ValidationError if `sampleRate` is not a positive, finite number —
+a zero/negative/NaN rate cannot define a timeline, so we fail loudly rather
+than emit `Infinity`/`NaN` beat times. The tagged error's module is
+`resolveBeatProjectionToSceneBeats`.

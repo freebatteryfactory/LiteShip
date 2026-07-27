@@ -6,9 +6,9 @@
 
 # Type Alias: SignalInput\<I\>
 
-> **SignalInput**\<`I`\> = `_SignalInput`\<`I`\>
+> **SignalInput**\<`I`\> = [`SignalInput`](../../../spine/type-aliases/SignalInput.md)\<`I`\>
 
-Defined in: [core/src/brands.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L30)
+Defined in: [core/src/schema/brands.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L30)
 
 Branded input signal name. Dot-notation signal path (e.g. viewport.width, prefers-color-scheme).
 

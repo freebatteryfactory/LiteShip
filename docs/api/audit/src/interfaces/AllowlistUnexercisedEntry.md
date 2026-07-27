@@ -6,7 +6,9 @@
 
 # Interface: AllowlistUnexercisedEntry
 
-Defined in: [audit/src/types.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L26)
+Defined in: [audit/src/types.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L48)
+
+An injected allowlist edge that no discovered import exercised.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [audit/src/types.ts:26](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **coverage**: `"allowlisted"`
 
-Defined in: [audit/src/types.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L29)
+Defined in: [audit/src/types.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L51)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [audit/src/types.ts:29](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **exercised**: `false`
 
-Defined in: [audit/src/types.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L30)
+Defined in: [audit/src/types.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L52)
 
 ***
 
@@ -30,7 +32,7 @@ Defined in: [audit/src/types.ts:30](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **package**: `string`
 
-Defined in: [audit/src/types.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L27)
+Defined in: [audit/src/types.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L49)
 
 ***
 
@@ -38,4 +40,4 @@ Defined in: [audit/src/types.ts:27](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **permitted**: `string`
 
-Defined in: [audit/src/types.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L28)
+Defined in: [audit/src/types.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L50)

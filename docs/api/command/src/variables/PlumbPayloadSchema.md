@@ -15,7 +15,7 @@ byte-parity-pinned against the parity fixture. [PlumbPayload](../type-aliases/Pl
 plain-TS mirror.
 
 The `skips` element `kind` mirrors [PlumbSkip.kind](../interfaces/PlumbSkip.md#kind) — the detected skip
-TOKEN from the UNIFIED alias-aware detector (`@czap/gauntlet`'s `detectSkips`),
+TOKEN from the UNIFIED alias-aware detector (`@liteship/gauntlet`'s `detectSkips`),
 which covers every form a generated test can carry (`it.skip` / `test.skip` /
 `describe.skip` / `bench.skip` / `it.todo` / `xit` / the runtime-conditional
 `it.skipIf` / `it.runIf` / the `COND ? it : it.skip` alias). It is a free

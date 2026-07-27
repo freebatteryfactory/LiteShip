@@ -1,9 +1,9 @@
 /**
  * CUT D7b — the DevopsProfile boundary is executable (ADR-0012).
  *
- * `@czap/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
+ * `@liteship/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
  * the audit consumes — no aspirational fields"; that law lived only in a comment.
- * These guards make it teeth: the profile keeps exactly its 5 fields, and the
+ * These guards make it teeth: the profile keeps exactly its nine public keys, and the
  * repo-local contracts (invariants / coverage / bench / artifact-paths) stay local —
  * they never leak onto the profile or into the published engine surface. The two
  * root-derivation families (checkout-root vs caller-root) stay split.
@@ -12,10 +12,12 @@
  *
  * @module
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, expectTypeOf } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { liteshipDevopsProfile } from '@czap/audit';
+import ts from 'typescript';
+import { DEVOPS_PROFILE_KEYS, type DevopsProfile } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');
@@ -35,30 +37,21 @@ const auditEngineSources = (): string[] => {
   return out;
 };
 
-// foundationalPackages (the runtime analogue of @czap/_spine — packages every
-// package may import unlisted) is a CONSUMED field: structure.ts reads it to
-// bless foundational edges. So it is an approved profile field, not aspirational.
-const APPROVED_FIELDS = [
-  'repoRoot',
-  'internalPackagePrefix',
-  'packageTopology',
-  'foundationalPackages',
-  'dynamicImportExemptions',
-  'surfacePolicy',
-];
-
 describe('D7b — DevopsProfile has exactly the approved fields (no aspirational drift)', () => {
-  it('the default profile carries exactly the 6 approved fields', () => {
-    expect(Object.keys(liteshipDevopsProfile).sort()).toEqual([...APPROVED_FIELDS].sort());
+  it('the default profile carries every non-consumer key and no foreign key', () => {
+    expect(Object.keys(liteshipDevopsProfile).sort()).toEqual(
+      DEVOPS_PROFILE_KEYS.filter((key) => key !== 'packageRoots').sort(),
+    );
   });
 
-  it('the DevopsProfile interface declares the 6 approved fields and NO devops-junk-drawer field', () => {
+  it('the public key projection is exactly the DevopsProfile interface, including optional keys', () => {
+    expectTypeOf<(typeof DEVOPS_PROFILE_KEYS)[number]>().toEqualTypeOf<keyof DevopsProfile>();
+  });
+
+  it('the DevopsProfile interface declares no devops-junk-drawer field', () => {
     const src = read('packages/audit/src/devops-profile.ts');
     const body = src.match(/export interface DevopsProfile \{([\s\S]*?)\n\}/)?.[1];
     expect(body, 'DevopsProfile interface must be findable').toBeTruthy();
-    for (const f of APPROVED_FIELDS) {
-      expect(body!, `DevopsProfile must declare ${f}`).toMatch(new RegExp(`readonly\\s+${f}\\b`));
-    }
     // The instant someone adds one of these as a profile field, this fails (ADR-0012).
     expect(body!).not.toMatch(/readonly\s+(invariants|coverage|bench|artifactPaths?|reportPaths|thresholds)\b/);
   });
@@ -66,19 +59,26 @@ describe('D7b — DevopsProfile has exactly the approved fields (no aspirational
 
 describe('D7b — repo-local contracts stay local (not threaded through the profile, not in the engine)', () => {
   // The published audit engine must not reference any of the LiteShip-local contracts.
-  const FORBIDDEN_IN_ENGINE = ['invariants', 'coverageExclude', 'directivePairs', 'DIRECTIVE_BENCH_PAIRS', 'reportPaths'];
-  it('the published @czap/audit engine surface references none of the local contracts', () => {
+  const FORBIDDEN_IN_ENGINE = [
+    'invariants',
+    'coverageExclude',
+    'directivePairs',
+    'DIRECTIVE_BENCH_PAIRS',
+    'reportPaths',
+  ];
+  it('the published @liteship/audit engine surface references none of the local contracts', () => {
     const offenders: string[] = [];
     for (const file of auditEngineSources()) {
       const src = readFileSync(file, 'utf8');
       for (const term of FORBIDDEN_IN_ENGINE) {
-        if (src.includes(term)) offenders.push(`${file.replace(/\\/g, '/').replace(`${REPO.replace(/\\/g, '/')}/`, '')}: ${term}`);
+        if (src.includes(term))
+          offenders.push(`${file.replace(/\\/g, '/').replace(`${REPO.replace(/\\/g, '/')}/`, '')}: ${term}`);
       }
     }
     expect(offenders).toEqual([]);
   });
 
-  it('invariants are a repo-local rule set in @czap/command (CUT A3: migrated off scripts/)', () => {
+  it('invariants are a repo-local rule set in @liteship/command (CUT A3: migrated off scripts/)', () => {
     const home = 'packages/command/src/commands/check-invariants-registry.ts';
     expect(existsSync(resolve(REPO, home))).toBe(true);
     expect(read(home)).toMatch(/INVARIANTS/);
@@ -88,14 +88,34 @@ describe('D7b — repo-local contracts stay local (not threaded through the prof
     expect(read('vitest.shared.ts')).toMatch(/export const coverageExclude/);
   });
 
-  it('bench is product-shaped: the directive suite value-imports and executes the CZAP runtime', () => {
+  it('bench is product-shaped: the directive suite value-imports and executes the LiteShip runtime', () => {
     const suite = read('scripts/bench/directive-suite.ts');
     // It imports the framework itself — there is nothing off-product to make configurable.
-    expect(suite).toMatch(/from '@czap\/core'/);
+    expect(suite).toMatch(/from '@liteship\/core'/);
   });
 
   it('artifact/report paths are repo-local in scripts/audit/policy.ts (D9b-1), not the engine', () => {
     expect(read('scripts/audit/policy.ts')).toMatch(/reportPaths/);
+  });
+});
+
+describe('ADR-0023 — project policy is host-injected', () => {
+  it('the published engine contains no project package literal outside dependency imports', () => {
+    const offenders: string[] = [];
+    for (const file of auditEngineSources()) {
+      const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+      const visit = (node: ts.Node): void => {
+        if (ts.isStringLiteralLike(node) && node.text.startsWith('@liteship/')) {
+          const parent = node.parent;
+          const isDependencySpecifier =
+            (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent)) && parent.moduleSpecifier === node;
+          if (!isDependencySpecifier) offenders.push(`${file.replace(/\\/g, '/')}:${node.getStart(source)}`);
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
+    }
+    expect(offenders).toEqual([]);
   });
 });
 

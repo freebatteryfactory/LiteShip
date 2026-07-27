@@ -6,9 +6,9 @@
 
 # Function: AudioSystem()
 
-> **AudioSystem**(`frameIndex`, `fps`, `sampleRate`): `SystemShape`
+> **AudioSystem**(`frameIndex`, `fps`, `sampleRate`): `System`
 
-Defined in: [scene/src/systems/audio.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/audio.ts#L18)
+Defined in: [scene/src/systems/audio.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/audio.ts#L22)
 
 Build an AudioSystem keyed to frame index + fps + sample rate.
 
@@ -16,7 +16,7 @@ Build an AudioSystem keyed to frame index + fps + sample rate.
 
 ### frameIndex
 
-`number`
+`FrameSource`
 
 ### fps
 
@@ -28,4 +28,4 @@ Build an AudioSystem keyed to frame index + fps + sample rate.
 
 ## Returns
 
-`SystemShape`
+`System`

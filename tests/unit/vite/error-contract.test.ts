@@ -1,9 +1,9 @@
-/** @czap/vite error contract */
+/** @liteship/vite error contract */
 import { describe, it, expect } from 'vitest';
-import { fileExists } from '@czap/vite';
+import { fileExists } from '@liteship/vite';
 
-describe('@czap/vite error contract', () => {
+describe('@liteship/vite error contract', () => {
   it('fileExists rejects non-string paths with TypeError', () => {
-    expect(() => fileExists(42 as unknown as string, 'czap/vite.test')).toThrow(TypeError);
+    expect(() => fileExists(42 as unknown as string, 'liteship/vite.test')).toThrow(TypeError);
   });
 });

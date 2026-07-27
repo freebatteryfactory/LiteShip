@@ -8,6 +8,6 @@
 
 > **ValidationResult** = `PlanValidationResult`
 
-Defined in: [core/src/plan.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L318)
+Defined in: [core/src/authoring/plan.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L318)
 
 Alias for `PlanValidationResult`.

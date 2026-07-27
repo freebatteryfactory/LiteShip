@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { detectEarlyReturnBeforeExpectAST } from '@czap/audit';
-import { detectEarlyReturnBeforeExpect, noEarlyReturnTestGate, verifyGate } from '@czap/gauntlet';
+import { detectEarlyReturnBeforeExpectAST } from '@liteship/audit';
+import { detectEarlyReturnBeforeExpect, noEarlyReturnTestGate, verifyGate } from '@liteship/gauntlet';
 
 describe('detectEarlyReturnBeforeExpectAST', () => {
   it('flags if-guard return before expect', () => {

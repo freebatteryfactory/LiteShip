@@ -4,8 +4,8 @@
  * @module
  */
 import { describe, expect, test } from 'vitest';
-import { lowerStaggerIntent } from '@czap/core';
-import { compileStagger } from '@czap/compiler';
+import { lowerStaggerIntent } from '@liteship/core';
+import { compileStagger } from '@liteship/compiler';
 import { staggerRevealPreset } from '../../../examples/07-stagger-reveal/stagger-preset.js';
 
 describe('examples/07-stagger-reveal dogfood (#124)', () => {
@@ -16,6 +16,6 @@ describe('examples/07-stagger-reveal dogfood (#124)', () => {
     const compiled = compileStagger(lowered);
     expect(compiled.items).toHaveLength(3);
     expect(compiled.raw).toContain('animation-delay: 80ms');
-    expect(compiled.raw).toContain('[data-czap-boundary="item-0"]');
+    expect(compiled.raw).toContain('[data-liteship-boundary="item-0"]');
   });
 });

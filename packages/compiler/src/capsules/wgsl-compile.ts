@@ -21,19 +21,19 @@
  * @module
  */
 
-import { defineCapsule, Boundary, wgslIdent, S } from '@czap/core';
-import type { Infer } from '@czap/core';
+import { defineCapsule, wgslIdent, defineBoundary, schema } from '@liteship/core';
+import type { Infer, Boundary } from '@liteship/core';
 import { WGSLCompiler } from '../wgsl.js';
 import type { WGSLCompileResult } from '../wgsl.js';
 
 /** Seed material the schema-arbitrary CAN produce. `run` normalizes it. */
-const WGSLCompileSeed = S.struct({
+const WGSLCompileSeed = schema.struct({
   /** Candidate state names → deduped, ascending-thresholded boundary states. */
-  states: S.array(S.string),
+  states: schema.array(schema.string),
   /** Candidate field names → deduped authored struct-field key set. */
-  fields: S.array(S.string),
+  fields: schema.array(schema.string),
   /** Value matrix `values[stateIdx][fieldIdx]`; a short row omits the tail. */
-  values: S.array(S.array(S.number)),
+  values: schema.array(schema.array(schema.number)),
 });
 
 type WGSLCompileSeedValue = Infer<typeof WGSLCompileSeed>;
@@ -50,17 +50,17 @@ interface WGSLCompileOutput {
 }
 
 /** Build a valid Boundary from a recorded (deduped) state-name list. */
-function makeBoundary(stateNames: readonly string[]): Boundary.Shape {
+function makeBoundary(stateNames: readonly string[]): Boundary {
   const at = stateNames.map((name, i) => [i, name] as const);
-  return Boundary.make({
+  return defineBoundary({
     input: 'seed.signal',
     at: at as unknown as readonly [readonly [number, string]],
-  }) as unknown as Boundary.Shape;
+  }) as unknown as Boundary;
 }
 
 /** Normalize a seed into a real Boundary + per-state value maps (see glsl-compile.ts). */
 function buildInputs(seed: WGSLCompileSeedValue): {
-  boundary: Boundary.Shape;
+  boundary: Boundary;
   states: StateMaps;
   stateNames: string[];
   fieldNames: string[];
@@ -68,6 +68,7 @@ function buildInputs(seed: WGSLCompileSeedValue): {
   const stateNames: string[] = [];
   const seenStates = new Set<string>();
   for (const raw of seed.states) {
+    if (raw.trim().length === 0) continue;
     if (seenStates.has(raw)) continue;
     seenStates.add(raw);
     stateNames.push(raw);
@@ -121,7 +122,7 @@ export const wgslCompileCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'compiler.wgsl-compile',
   input: WGSLCompileSeed,
-  output: S.unknown,
+  output: schema.unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {
@@ -178,7 +179,7 @@ export const wgslCompileCapsule = defineCapsule({
       check: (_input: unknown, output: unknown): boolean => {
         const o = output as WGSLCompileOutput;
         // All authored values are integers (the Number arbitrary mints
-        // integers), so f32 never appears here; the i32>u32 rung is exercised by
+        // integers), so f32 never appears here; the i32>u32 tier is exercised by
         // negative values. Pin the exact promotion: a field carrying any
         // negative value is i32, otherwise u32. (Float→f32 is unit-tested
         // separately since the arbitrary domain is integer-only.)
@@ -209,6 +210,3 @@ export const wgslCompileCapsule = defineCapsule({
     return { stateNames, fieldNames, states, result };
   },
 });
-
-/** Internal helpers exported for direct unit assertions over the seed→inputs builder. */
-export const _wgslCompileInternals = { buildInputs, makeBoundary } as const;

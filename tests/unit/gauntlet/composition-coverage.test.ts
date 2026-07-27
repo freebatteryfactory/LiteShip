@@ -30,10 +30,10 @@ import {
   type CompositionFacts,
   type InteractionEdge,
   type CoverageEvidence,
-} from '@czap/gauntlet';
-import { isTaggedError } from '@czap/error';
+} from '@liteship/gauntlet';
+import { isTaggedError } from '@liteship/error';
 
-const L4_FILE = 'packages/core/src/brands.ts'; // an L4 glob in the assurance map
+const L4_FILE = 'packages/core/src/schema/brands.ts'; // an L4 glob in the assurance map
 const L1_CALLER = 'packages/x/src/caller.ts'; // an L1 caller of the L4 file
 const L1_OTHER = 'packages/x/src/other.ts'; // an ordinary L1 file
 
@@ -45,8 +45,8 @@ function ctx(ir: RepoIR, composition: CompositionFacts): GateContext {
 function edgeIR(from: string, to: string): RepoIR {
   return makeRepoIR({
     files: [
-      { id: from, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
-      { id: to, contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/core' },
+      { id: from, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
+      { id: to, contentDigest: PLACEHOLDER_DIGEST, packageName: '@liteship/core' },
     ],
     imports: [{ fromFile: from, specifier: './t.js', kind: 'relative', targetFile: to }],
   });

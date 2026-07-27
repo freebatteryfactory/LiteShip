@@ -17,7 +17,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, GraphPatch, projectionKeys, HLC } from '@czap/core';
+import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, GraphPatch, projectionKeys, HLC } from '@liteship/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -27,7 +27,7 @@ import type {
   PoseNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
+} from '@liteship/core';
 import { loadGraphRuntime, type GraphRuntimeHandle } from '../../../packages/astro/src/runtime/graph-runtime.js';
 import { castGraphContext, admitGraphPatchProposal, adoptAppliedGraph } from '../../../packages/astro/src/runtime/graph-ai-apply.js';
 
@@ -98,8 +98,8 @@ function buildGraph(): DocumentGraph {
     components: [compA.id],
   });
   const projA = projection('css', compA.id, 'card');
-  const poseAMobile = pose(entA.id, 'mobile', { '--czap-card': '14px' });
-  const poseADesktop = pose(entA.id, 'desktop', { '--czap-card': '18px' });
+  const poseAMobile = pose(entA.id, 'mobile', { '--liteship-card': '14px' });
+  const poseADesktop = pose(entA.id, 'desktop', { '--liteship-card': '18px' });
 
   return sealGraph({
     _tag: 'DocumentGraph',
@@ -127,8 +127,8 @@ function addEntityBOps(): GraphPatch['ops'] {
     components: [compB.id],
   });
   const projB = projection('css', compB.id, 'rail');
-  const poseBTop = pose(entB.id, 'top', { '--czap-rail': '0' });
-  const poseBBottom = pose(entB.id, 'bottom', { '--czap-rail': '1' });
+  const poseBTop = pose(entB.id, 'top', { '--liteship-rail': '0' });
+  const poseBBottom = pose(entB.id, 'bottom', { '--liteship-rail': '1' });
   return [
     { op: 'add', family: 'signal', node: sigB },
     { op: 'add', family: 'component', node: compB },
@@ -223,8 +223,8 @@ describe('admitGraphPatchProposal — apply a validated patch to a live runtime 
 
     // The new entity B is LIVE: it seeded to 'top' at scroll 0, and flips to 'bottom'
     // on a scroll crossing through the freshly-attached delta-recast observer.
-    expect(elB.getAttribute('data-czap-state')).toBe('top');
-    expect(elB.style.getPropertyValue('--czap-rail')).toBe('0');
+    expect(elB.getAttribute('data-liteship-state')).toBe('top');
+    expect(elB.style.getPropertyValue('--liteship-rail')).toBe('0');
 
     document.documentElement.style.height = '5000px';
     Object.defineProperty(window, 'scrollY', { value: 4000, configurable: true });
@@ -234,8 +234,8 @@ describe('admitGraphPatchProposal — apply a validated patch to a live runtime 
 
     return new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
-        expect(elB.getAttribute('data-czap-state')).toBe('bottom');
-        expect(elB.style.getPropertyValue('--czap-rail')).toBe('1');
+        expect(elB.getAttribute('data-liteship-state')).toBe('bottom');
+        expect(elB.style.getPropertyValue('--liteship-rail')).toBe('1');
         handle.release();
         resolve();
       });
@@ -291,11 +291,11 @@ describe('admitGraphPatchProposal — apply a validated patch to a live runtime 
     const baseId = handle.graph.id;
 
     // Craft an OLD candidate against the original graph (a pose tweak on entity A).
-    const newPoseMobile = pose(idA, 'mobile', { '--czap-card': '16px' });
+    const newPoseMobile = pose(idA, 'mobile', { '--liteship-card': '16px' });
     const oldCandidate = GraphPatch.propose(handle.graph, [{ op: 'update', family: 'pose', node: newPoseMobile }]);
 
     // ADVANCE the graph via a SEPARATE patch (a different pose value) so its id changes.
-    const advancePose = pose(idA, 'mobile', { '--czap-card': '20px' });
+    const advancePose = pose(idA, 'mobile', { '--liteship-card': '20px' });
     const advanceCandidate = GraphPatch.propose(handle.graph, [{ op: 'update', family: 'pose', node: advancePose }]);
     const advanced = admitGraphPatchProposal(handle, advanceCandidate);
     expect(advanced.ok).toBe(true);
@@ -362,8 +362,8 @@ describe('admitGraphPatchProposal — apply a validated patch to a live runtime 
     expect(result.ok).toBe(true);
     expect(result.graph!.id).toBe(next.id);
     expect(handle.graph.id).toBe(next.id);
-    expect(elB.getAttribute('data-czap-state')).toBe('top');
-    expect(elB.style.getPropertyValue('--czap-rail')).toBe('0');
+    expect(elB.getAttribute('data-liteship-state')).toBe('top');
+    expect(elB.style.getPropertyValue('--liteship-rail')).toBe('0');
 
     document.documentElement.style.height = '5000px';
     Object.defineProperty(window, 'scrollY', { value: 4000, configurable: true });
@@ -373,8 +373,8 @@ describe('admitGraphPatchProposal — apply a validated patch to a live runtime 
 
     return new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
-        expect(elB.getAttribute('data-czap-state')).toBe('bottom');
-        expect(elB.style.getPropertyValue('--czap-rail')).toBe('1');
+        expect(elB.getAttribute('data-liteship-state')).toBe('bottom');
+        expect(elB.style.getPropertyValue('--liteship-rail')).toBe('1');
         handle.release();
         resolve();
       });

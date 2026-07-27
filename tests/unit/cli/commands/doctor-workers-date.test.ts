@@ -6,7 +6,7 @@ import { probeWorkersModuleScopeDate } from '../../../../packages/cli/src/comman
 
 describe('doctor workers module-scope Date (#115)', () => {
   test('flags export-bound Date.now() when export is the first statement', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -20,7 +20,7 @@ export function handler() { return startedAt; }`,
   });
 
   test('does not flag Date.now inside a string literal', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -31,7 +31,7 @@ export function handler() { return hint; }`,
   });
 
   test('does not flag deferred () => Date.now() at module scope', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -42,7 +42,7 @@ export function handler() { return clock(); }`,
   });
 
   test('flags object-literal and post-boundary export const Date.now()', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -53,7 +53,7 @@ export const cfg = { t: Date.now() };`,
   });
 
   test('does not flag Date.now inside export default method body', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -70,7 +70,7 @@ export const cfg = { t: Date.now() };`,
   // ---------------------------------------------------------------------------
 
   test('F-PROTO-3(a): flags module-scope Date.now() inside a template interpolation', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -81,7 +81,7 @@ export function handler() { return stamp; }`,
   });
 
   test('F-PROTO-3(b): flags an immediately-invoked arrow that reads Date.now() at load', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -92,7 +92,7 @@ export function handler() { return boot; }`,
   });
 
   test('F-PROTO-3(c): flags a non-exported const Date.now() placed AFTER a function decl', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -104,7 +104,7 @@ const startedAt = Date.now();`,
   });
 
   test('F-PROTO-3(d): flags a class STATIC field initializer that reads Date.now() at load', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -117,7 +117,7 @@ export class Config {
   });
 
   test('F-PROTO-3: does NOT flag Date.now() in a deferred instance-method body', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -129,7 +129,7 @@ export class Config {
   });
 
   test('F-PROTO-3: does NOT flag Date.now() in a deferred object getter body', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -142,7 +142,7 @@ export function handler() { return clock.now; }`,
   });
 
   test('F-PROTO-3: does NOT flag deterministic new Date(explicitTimestamp) at module scope', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'src', 'api.worker.ts'),
@@ -153,7 +153,7 @@ export function handler() { return epoch; }`,
   });
 
   test('wrangler.jsonc with comment resolves main without throwing (#115)', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(
       join(dir, 'wrangler.jsonc'),
@@ -175,7 +175,7 @@ export default { fetch() { return new Response(String(bootedAt)); } };`,
   });
 
   test('wrangler.toml project flags generic src/index.ts without worker path hints (#115)', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'czap-workers-date-'));
+    const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });
     writeFileSync(join(dir, 'wrangler.toml'), 'name = "demo"\nmain = "src/index.ts"\n');
     writeFileSync(

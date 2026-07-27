@@ -1,5 +1,5 @@
 /**
- * Generic runtime-session lifecycle used by every `@czap/astro` client
+ * Generic runtime-session lifecycle used by every `@liteship/astro` client
  * directive. Owns a microtask scheduler, a set of pending timers, and
  * a state machine (`idle` / `active` / `reconnecting` / `disposed`)
  * that every concrete session (stream, llm, gpu, ...) composes.
@@ -17,7 +17,7 @@ export type RuntimeSessionState = 'idle' | 'active' | 'reconnecting' | 'disposed
  * `setTimer` / `clearTimer` mirror `setTimeout` but participate in
  * `dispose()` so no task outlives the session.
  */
-export interface RuntimeSessionShape {
+export interface RuntimeSession {
   readonly state: RuntimeSessionState;
   activate(): void;
   beginReconnect(): void;
@@ -33,7 +33,7 @@ export interface RuntimeSessionShape {
  * state and must be explicitly `activate()`d before tasks are allowed
  * to run.
  */
-export function createRuntimeSession(): RuntimeSessionShape {
+export function createRuntimeSession(): RuntimeSession {
   let state: RuntimeSessionState = 'idle';
   let scheduled = false;
   let tasks: Array<() => void> | null = null;

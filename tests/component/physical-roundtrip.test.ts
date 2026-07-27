@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Physical, Morph, SemanticId } from '@czap/web';
+import { Physical, Morph, SemanticId } from '@liteship/web';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,7 +48,7 @@ describe('Physical.capture', () => {
   });
 
   test('captures focused input element', () => {
-    const root = mount('<div><input type="text" data-czap-id="myinput" /></div>');
+    const root = mount('<div><input type="text" data-liteship-id="myinput" /></div>');
     const input = root.querySelector('input')!;
     input.focus();
     const state = run(Physical.capture(root));
@@ -58,7 +58,7 @@ describe('Physical.capture', () => {
   });
 
   test('captures cursor position in input', () => {
-    const root = mount('<div><input type="text" value="hello world" data-czap-id="inp" /></div>');
+    const root = mount('<div><input type="text" value="hello world" data-liteship-id="inp" /></div>');
     const input = root.querySelector('input')!;
     input.focus();
     input.setSelectionRange(5, 5);
@@ -69,7 +69,7 @@ describe('Physical.capture', () => {
   });
 
   test('captures text selection range in input', () => {
-    const root = mount('<div><input type="text" value="hello world" data-czap-id="inp" /></div>');
+    const root = mount('<div><input type="text" value="hello world" data-liteship-id="inp" /></div>');
     const input = root.querySelector('input')!;
     input.focus();
     input.setSelectionRange(0, 5);
@@ -79,7 +79,7 @@ describe('Physical.capture', () => {
   });
 
   test('captures textarea focus state', () => {
-    const root = mount('<div><textarea data-czap-id="ta">some text</textarea></div>');
+    const root = mount('<div><textarea data-liteship-id="ta">some text</textarea></div>');
     const ta = root.querySelector('textarea')!;
     ta.focus();
     ta.setSelectionRange(2, 7);
@@ -96,8 +96,8 @@ describe('Physical.capture', () => {
 
 describe('Physical.restore focus', () => {
   test('restores focus to input by semantic ID', () => {
-    const root = mount('<div><input data-czap-id="target" /><input data-czap-id="other" /></div>');
-    const targetInput = root.querySelector('[data-czap-id="target"]') as HTMLInputElement;
+    const root = mount('<div><input data-liteship-id="target" /><input data-liteship-id="other" /></div>');
+    const targetInput = root.querySelector('[data-liteship-id="target"]') as HTMLInputElement;
     targetInput.focus();
     const state = run(Physical.capture(root));
 
@@ -111,7 +111,7 @@ describe('Physical.restore focus', () => {
   });
 
   test('restores cursor position in input', () => {
-    const root = mount('<div><input type="text" value="hello" data-czap-id="inp" /></div>');
+    const root = mount('<div><input type="text" value="hello" data-liteship-id="inp" /></div>');
     const input = root.querySelector('input')!;
     input.focus();
     input.setSelectionRange(3, 3);
@@ -126,7 +126,7 @@ describe('Physical.restore focus', () => {
   });
 
   test('restores selection range in input', () => {
-    const root = mount('<div><input type="text" value="abcdef" data-czap-id="inp" /></div>');
+    const root = mount('<div><input type="text" value="abcdef" data-liteship-id="inp" /></div>');
     const input = root.querySelector('input')!;
     input.focus();
     input.setSelectionRange(1, 4);
@@ -147,14 +147,14 @@ describe('Physical.restore focus', () => {
 
 describe('Physical roundtrip through morph', () => {
   test('focus survives morph via morphWithState', () => {
-    const root = mount('<div><input type="text" value="keep" data-czap-id="myfield" /><p>other</p></div>');
+    const root = mount('<div><input type="text" value="keep" data-liteship-id="myfield" /><p>other</p></div>');
     const input = root.querySelector('input')!;
     input.focus();
     input.setSelectionRange(2, 2);
 
     // morphWithState should capture and restore focus
     const result = run(
-      Morph.morphWithState(root, '<input type="text" value="keep" data-czap-id="myfield" /><p>updated</p>'),
+      Morph.morphWithState(root, '<input type="text" value="keep" data-liteship-id="myfield" /><p>updated</p>'),
     );
     expect(result.type).toBe('success');
 
@@ -164,11 +164,11 @@ describe('Physical roundtrip through morph', () => {
   });
 
   test('text content updates while preserving focused element identity', () => {
-    const root = mount('<div><input data-czap-id="f1" value="a" /><span>old</span></div>');
+    const root = mount('<div><input data-liteship-id="f1" value="a" /><span>old</span></div>');
     const input = root.querySelector('input')!;
     input.focus();
 
-    run(Morph.morphWithState(root, '<input data-czap-id="f1" value="a" /><span>new</span>'));
+    run(Morph.morphWithState(root, '<input data-liteship-id="f1" value="a" /><span>new</span>'));
 
     // Input should survive morph (same element reused due to semantic ID)
     const currentInput = root.querySelector('input')!;
@@ -186,12 +186,12 @@ describe('Physical scroll', () => {
     // Create a scrollable container
     const root = mount(
       '<div>' +
-        '<div data-czap-id="scroller" style="overflow:auto;width:100px;height:100px">' +
+        '<div data-liteship-id="scroller" style="overflow:auto;width:100px;height:100px">' +
         '<div style="width:500px;height:500px">content</div>' +
         '</div>' +
         '</div>',
     );
-    const scroller = root.querySelector('[data-czap-id="scroller"]') as HTMLElement;
+    const scroller = root.querySelector('[data-liteship-id="scroller"]') as HTMLElement;
 
     // jsdom doesn't support real scrolling, but we can check the capture/restore wiring
     // Set scrollTop/scrollLeft directly
@@ -217,7 +217,7 @@ describe('Physical scroll', () => {
 
 describe('Physical path resolution', () => {
   test('semantic ID path resolves back', () => {
-    const root = mount('<div><span data-czap-id="target">found</span></div>');
+    const root = mount('<div><span data-liteship-id="target">found</span></div>');
     const span = root.querySelector('span')!;
     span.focus(); // Even if not focusable, it sets active
     // We can test SemanticId directly

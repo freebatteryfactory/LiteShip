@@ -8,13 +8,9 @@
 
 > **runStdio**(`input?`, `output?`): `Promise`\<`void`\>
 
-Defined in: [mcp-server/src/stdio.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/stdio.ts#L37)
+Defined in: [mcp-server/src/stdio.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/stdio.ts#L68)
 
-Run the MCP stdio loop until the input stream closes. Defaults to
-`process.stdin` / `process.stdout` so the production CLI bootstrap
-stays a one-liner (`runStdio()`); tests inject a pre-populated
-Readable + a sink Writable to exercise the full read-line-write loop
-without spawning a child process.
+Run the stdio transport until its input closes.
 
 ## Parameters
 

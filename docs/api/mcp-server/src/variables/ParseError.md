@@ -8,4 +8,6 @@
 
 > `const` **ParseError**: `-32700`
 
-Defined in: [mcp-server/src/jsonrpc.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L65)
+Defined in: [mcp-server/src/jsonrpc.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L66)
+
+JSON-RPC standard parse-error code.

@@ -6,13 +6,12 @@
 
 # Function: builtinDecoderFor()
 
-> **builtinDecoderFor**(`kind`): [`AssetDecoder`](../type-aliases/AssetDecoder.md) \| `undefined`
+> **builtinDecoderFor**(`kind`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)\<[`AssetKind`](../type-aliases/AssetKind.md)\> \| `undefined`
 
-Defined in: [assets/src/contract.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L132)
+Defined in: [assets/src/contract.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L143)
 
-Built-in decoder for a media kind. Analysis kinds (beat-markers /
-onsets / waveform) have their own projection factories and no byte
-decoder, so they resolve to undefined.
+Built-in decoder for a source media kind. Analysis outputs have dedicated
+projection factories and are deliberately absent from [AssetKind](../type-aliases/AssetKind.md).
 
 ## Parameters
 
@@ -22,4 +21,4 @@ decoder, so they resolve to undefined.
 
 ## Returns
 
-[`AssetDecoder`](../type-aliases/AssetDecoder.md) \| `undefined`
+[`AssetDecoder`](../type-aliases/AssetDecoder.md)\<[`AssetKind`](../type-aliases/AssetKind.md)\> \| `undefined`

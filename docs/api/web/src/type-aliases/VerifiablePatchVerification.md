@@ -6,8 +6,8 @@
 
 # Type Alias: VerifiablePatchVerification
 
-> **VerifiablePatchVerification** = \{ `_tag`: `"verified"`; \} \| \{ `_tag`: `"staleBase"`; `expected`: [`ContentAddress`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md); `received`: [`ContentAddress`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md); \} \| \{ `_tag`: `"digestMismatch"`; `actual`: `string`; `expected`: `string`; \} \| \{ `_tag`: `"markerMismatch"`; `expected`: `string`; `received`: `string`; \}
+> **VerifiablePatchVerification** = \{ `_tag`: `"verified"`; \} \| \{ `_tag`: `"staleBase"`; `expected`: [`ContentAddress`](../../../liteship/src/schema/type-aliases/ContentAddress.md); `received`: [`ContentAddress`](../../../liteship/src/schema/type-aliases/ContentAddress.md); \} \| \{ `_tag`: `"digestMismatch"`; `actual`: `string`; `expected`: `string`; \} \| \{ `_tag`: `"markerMismatch"`; `expected`: `string`; `received`: `string`; \}
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L58)
+Defined in: [web/src/watch-and-prepare.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L58)
 
 Outcome of verifying a stamped patch against the current base graph.

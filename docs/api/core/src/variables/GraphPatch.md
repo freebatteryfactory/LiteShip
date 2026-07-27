@@ -8,7 +8,7 @@
 
 > **GraphPatch**: `object`
 
-Defined in: [core/src/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L65)
+Defined in: [core/src/graph/graph-patch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L65)
 
 GraphPatch namespace — the tagged-delta mutation surface over
 [DocumentGraph](../interfaces/DocumentGraph.md). Propose a delta, apply/preview it (re-addressing through
@@ -118,7 +118,7 @@ readonly [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]
 
 ### patchId
 
-> **patchId**: (`patch`) => `ContentAddress`
+> **patchId**: (`patch`) => [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 The receipt subject id for a patch: a content address over `{ base, ops }`, so
 structurally-equal patches share a receipt subject (the mutation's identity,
@@ -132,7 +132,7 @@ minted through the one kernel — distinct from the sha256 receipt byte law).
 
 #### Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ### preview
 
@@ -182,8 +182,8 @@ readonly [`PatchOp`](../type-aliases/PatchOp.md)[]
 
 > **receipt**: (`patch`, `options?`) => `Promise`\<[`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)\>
 
-Compose the patch's `resultId` onto the [Receipt](Receipt.md) byte law: a single
-genesis-or-linked envelope whose payload is a [TypedRef](TypedRef.md) over the
+Compose the patch's `resultId` onto the `Receipt` byte law: a single
+genesis-or-linked envelope whose payload is a `TypedRef` over the
 mutation, subject-keyed by the patch identity. Async (`Promise`-returning)
 because the receipt byte law hashes via `crypto.subtle` (SHA-256) — the same
 async kernel `Receipt.createEnvelope` rides on; folding it to a sync value
@@ -236,7 +236,7 @@ here, before anyone commits it.
 ## Example
 
 ```ts
-import { GraphPatch } from '@czap/core';
+import { GraphPatch } from '@liteship/core';
 
 const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node }]);
 const next = GraphPatch.apply(base, patch);          // re-addressed: next.id !== base.id

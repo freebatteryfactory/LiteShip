@@ -5,9 +5,9 @@
  *
  * @module
  */
-import { GenFrame, TokenBuffer, UIQuality } from '@czap/core';
-import type { ContentAddress, UIFrame } from '@czap/core';
-import { renderHash, tryParseGeneratedUIChunk, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
+import { GenFrame, UIQuality, createTokenBuffer, type TokenBuffer } from '@liteship/core';
+import type { ContentAddress, UIFrame } from '@liteship/core';
+import { renderHash, tryParseGeneratedUIChunk, type ComponentCatalog, type GeneratedUINode } from '@liteship/genui';
 
 type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
 
@@ -17,7 +17,7 @@ type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
  */
 export interface LLMRenderRuntime {
   /** Ring of incoming text fragments feeding the scheduler. */
-  readonly tokenBuffer: TokenBuffer.Shape<string>;
+  readonly tokenBuffer: TokenBuffer<string>;
   /** Adaptive quality controller. Reassigned on each reset. */
   quality: ReturnType<typeof UIQuality.make>;
   /** Frame scheduler bound to `tokenBuffer` + `quality`. */
@@ -98,7 +98,7 @@ function resetLLMRuntime(runtime: LLMRenderRuntime): void {
 }
 
 function createSessionRenderRuntime(config: Pick<LLMRenderPipelineConfig, 'getDeviceTier'>): LLMRenderRuntime {
-  const tokenBuffer = TokenBuffer.make<string>({ capacity: 128 });
+  const tokenBuffer = createTokenBuffer<string>({ capacity: 128 });
   const llmRuntime: LLMRenderRuntime = {
     tokenBuffer,
     quality: UIQuality.make(),

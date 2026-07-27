@@ -1,7 +1,7 @@
 /**
- * Authored-motion adapter for `@czap/remotion`.
+ * Authored-motion adapter for `@liteship/remotion`.
  *
- * A Remotion composition samples the ONE shared kernel `sampleProgram` (`@czap/core`,
+ * A Remotion composition samples the ONE shared kernel `sampleProgram` (`@liteship/core`,
  * Law 4) at its current frame — `t = frame / max(1, durationInFrames-1)` — and folds the
  * typed leaves into the frame content (typically as CSS custom properties via
  * {@link motionCssVars}, mirroring `cssVarsFromState`). This is the SAME reader the
@@ -14,7 +14,7 @@
  * @module
  */
 
-import { formatTypedValue, frameToT, sampleProgram, type RuntimeWritePlan, type TypedValue } from '@czap/core';
+import { frameToT, sampleProgram, sampleProgramUniforms, type RuntimeWritePlan, type TypedValue } from '@liteship/core';
 
 /**
  * Sample the shared motion kernel at Remotion `frame` of a `durationInFrames`-long
@@ -37,9 +37,5 @@ export function sampleMotionFrame(
  * Remotion paints is byte-identical to the live runtime's.
  */
 export function motionCssVars(plan: RuntimeWritePlan, frame: number, durationInFrames: number): Record<string, string> {
-  const vars: Record<string, string> = {};
-  for (const [cssVar, value] of sampleMotionFrame(plan, frame, durationInFrames)) {
-    vars[cssVar] = formatTypedValue(value);
-  }
-  return vars;
+  return sampleProgramUniforms(plan, frameToT(frame, durationInFrames)).css;
 }

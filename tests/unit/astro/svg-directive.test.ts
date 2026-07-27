@@ -3,7 +3,7 @@
  * SVG last-mile directive (0.4.0 item E): the LIVE DOM applicator path.
  *
  * Proves the SVG cast arm reaches the live DOM. `attachSvgRuntime` discovers
- * `[data-czap-entity]` SVG elements, resolves each to its `SVGElement`, and on
+ * `[data-liteship-entity]` SVG elements, resolves each to its `SVGElement`, and on
  * a signal crossing applies the active state's authored attrs through the
  * scene egress `applySvgAttrs` — so `opacity` / `transform` update IN PLACE,
  * not just in an offline/CLI snapshot.
@@ -35,9 +35,9 @@ const svgStateAttrs = {
 function makeSvgWithRect(): { svg: SVGSVGElement; rect: SVGRectElement } {
   const svg = document.createElementNS(SVG_NS, 'svg') as SVGSVGElement;
   const rect = document.createElementNS(SVG_NS, 'rect') as SVGRectElement;
-  rect.setAttribute('data-czap-entity', 'rect');
-  rect.setAttribute('data-czap-svg', JSON.stringify(svgStateAttrs));
-  rect.setAttribute('data-czap-boundary', JSON.stringify(boundary));
+  rect.setAttribute('data-liteship-entity', 'rect');
+  rect.setAttribute('data-liteship-svg', JSON.stringify(svgStateAttrs));
+  rect.setAttribute('data-liteship-boundary', JSON.stringify(boundary));
   svg.appendChild(rect);
   document.body.appendChild(svg);
   return { svg, rect };
@@ -61,7 +61,7 @@ describe('SVG last-mile directive: live DOM applicator', () => {
   test('buildEntityElementResolver maps entity id → SVGElement and skips non-SVG', () => {
     const { rect } = makeSvgWithRect();
     const div = document.createElement('div');
-    div.setAttribute('data-czap-entity', 'plain');
+    div.setAttribute('data-liteship-entity', 'plain');
     document.body.appendChild(div);
 
     const resolve = buildEntityElementResolver(document);
@@ -91,7 +91,7 @@ describe('SVG last-mile directive: live DOM applicator', () => {
     const cleanup = attachSvgRuntime(document);
 
     // Boot applied the initial ('a') state's authored attrs to the live rect.
-    expect(rect.getAttribute('data-czap-state')).toBe('a');
+    expect(rect.getAttribute('data-liteship-state')).toBe('a');
     expect(rect.getAttribute('opacity')).toBe('0.2');
     expect(rect.getAttribute('transform')).toBe('translateX(0)');
 
@@ -100,7 +100,7 @@ describe('SVG last-mile directive: live DOM applicator', () => {
     resizeCallback?.([] as never, {} as never);
 
     // The live SVGElement attributes updated to state 'b' via applySvgAttrs.
-    expect(rect.getAttribute('data-czap-state')).toBe('b');
+    expect(rect.getAttribute('data-liteship-state')).toBe('b');
     expect(rect.getAttribute('opacity')).toBe('1');
     expect(rect.getAttribute('transform')).toBe('translateX(10)');
 

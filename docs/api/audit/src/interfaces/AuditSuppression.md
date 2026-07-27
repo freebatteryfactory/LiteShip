@@ -6,7 +6,9 @@
 
 # Interface: AuditSuppression
 
-Defined in: [audit/src/types.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L78)
+Defined in: [audit/src/types.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L130)
+
+One finding suppressed by explicit host policy with its reason.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [audit/src/types.ts:78](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **finding**: [`AuditFinding`](AuditFinding.md)
 
-Defined in: [audit/src/types.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L81)
+Defined in: [audit/src/types.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L133)
 
 ***
 
@@ -22,12 +24,12 @@ Defined in: [audit/src/types.ts:81](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/types.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L80)
+Defined in: [audit/src/types.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L132)
 
 ***
 
 ### rule
 
-> `readonly` **rule**: `string`
+> `readonly` **rule**: `"console-call"` \| `"consumer-package-missing"` \| `"default-export"` \| `"export-target-missing"` \| `"fallback-laundering"` \| `"host-surface"` \| `"missing-manifest-dependency"` \| `"missing-manifest-dependency-dynamic"` \| `"missing-runtime-capability"` \| `"no-packages-discovered"` \| `"orphan-export-candidate"` \| `"package-export-surface"` \| `"package-artifacts-unverified"` \| `"package-topology"` \| `"placeholder-content"` \| `"stub-marker"` \| `"suspicious-reimplementation"` \| `"symbol-orphan-candidate"` \| `"unknown-internal-package"` \| `"unresolved-internal-import"` \| `"virtual-module-surface"`
 
-Defined in: [audit/src/types.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L79)
+Defined in: [audit/src/types.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L131)

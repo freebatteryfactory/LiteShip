@@ -5,7 +5,7 @@
  *
  * `initShader()` is async (it `fetch`es the shader source). The reinit teardown
  * used to be registered at the END of initShader, AFTER the await — so a
- * `czap:reinit` landing DURING the fetch found no listener and ORPHANED the GL
+ * `liteship:reinit` landing DURING the fetch found no listener and ORPHANED the GL
  * program + render loop created right after. The fix arms a mutable Disposer cell
  * SYNCHRONOUSLY before the first await; a reinit mid-fetch flips a flag so the
  * resolved shader tears ITSELF down. These tests pin that the program is deleted
@@ -63,7 +63,7 @@ function makeGlMock() {
 describe('gpu reinit-race (F-3)', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.documentElement.setAttribute('data-liteship-tier', 'gpu');
     _resetRuntimePolicyForTests();
     configureRuntimePolicy();
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
@@ -77,13 +77,13 @@ describe('gpu reinit-race (F-3)', () => {
     document.body.innerHTML = '';
   });
 
-  test('a czap:reinit during the shader fetch tears down the program that resolves after it', async () => {
+  test('a liteship:reinit during the shader fetch tears down the program that resolves after it', async () => {
     const gl = makeGlMock();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) =>
       kind === 'webgl2' ? (gl as never) : null,
     );
 
-    // A fetch we resolve MANUALLY, so we can fire czap:reinit while it's pending.
+    // A fetch we resolve MANUALLY, so we can fire liteship:reinit while it's pending.
     // A plain response stub (not a real `Response`) keeps `.text()` on the
     // microtask queue so the deterministic await-drain below settles it.
     let resolveFetch: (value: { ok: boolean; status: number; statusText: string; text: () => Promise<string> }) => void =
@@ -99,18 +99,18 @@ describe('gpu reinit-race (F-3)', () => {
     vi.stubGlobal('fetch', vi.fn(() => fetchPending));
 
     const canvas = document.createElement('canvas');
-    canvas.setAttribute('data-czap-shader-src', '/shader.frag');
+    canvas.setAttribute('data-liteship-shader-src', '/shader.frag');
     // Secure-by-default: an external shader fetch must carry a valid integrity pin
     // or the runtime REFUSES to compile (no program → no teardown to observe). This
     // test's intent is the reinit TEARDOWN RACE, not integrity, so pin the exact
     // mock content the fetch resolves with ('void main(){}') — `sha256-<base64>` via
     // the same kernel the verifier uses — so the fetch+verify path proceeds to the
     // race it actually exercises (the orphaned program tearing ITSELF down).
-    canvas.setAttribute('data-czap-shader-integrity', 'sha256-SiIwsNXzaDxxGGj/iArP98JuZQA2Kum5Ll+4iDGgqDs=');
+    canvas.setAttribute('data-liteship-shader-integrity', 'sha256-SiIwsNXzaDxxGGj/iArP98JuZQA2Kum5Ll+4iDGgqDs=');
     document.body.appendChild(canvas);
 
     const gpuReady = vi.fn();
-    canvas.addEventListener('czap:gpu-ready', gpuReady);
+    canvas.addEventListener('liteship:gpu-ready', gpuReady);
 
     gpuDirective(async () => {}, {}, canvas);
 
@@ -118,7 +118,7 @@ describe('gpu reinit-race (F-3)', () => {
     expect(gl.createProgram).not.toHaveBeenCalled();
 
     // Reinit lands DURING the fetch (a fast VT swap) — before initShader resolves.
-    canvas.dispatchEvent(new CustomEvent('czap:reinit'));
+    canvas.dispatchEvent(new CustomEvent('liteship:reinit'));
 
     // Now the fetch resolves: the program compiles but must tear ITSELF down.
     resolveFetch({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve('void main(){}') });
@@ -142,7 +142,7 @@ describe('gpu reinit-race (F-3)', () => {
     document.body.appendChild(canvas);
 
     const gpuReady = vi.fn();
-    canvas.addEventListener('czap:gpu-ready', gpuReady);
+    canvas.addEventListener('liteship:gpu-ready', gpuReady);
 
     gpuDirective(async () => {}, {}, canvas);
     await Promise.resolve();
@@ -153,7 +153,7 @@ describe('gpu reinit-race (F-3)', () => {
     expect(gl.deleteProgram).not.toHaveBeenCalled();
 
     // A later reinit tears it down through the armed cell.
-    canvas.dispatchEvent(new CustomEvent('czap:reinit'));
+    canvas.dispatchEvent(new CustomEvent('liteship:reinit'));
     expect(gl.deleteProgram).toHaveBeenCalledTimes(1);
     expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
   });

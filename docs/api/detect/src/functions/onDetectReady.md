@@ -10,7 +10,7 @@
 
 Defined in: [detect/src/detect-ready.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect-ready.ts#L54)
 
-Subscribe to the `czap:detect-ready` event on `document`, returning a
+Subscribe to the `liteship:detect-ready` event on `document`, returning a
 [Disposer](../type-aliases/Disposer.md) that removes the listener.
 
 The callback receives the final [DetectReadyDetail](../type-aliases/DetectReadyDetail.md) (or `null` if a

@@ -11,8 +11,8 @@
 
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { spawnArgvVisible } from '../../lib/spawn.js';
-import { isLiteShipWorkspace } from '../../lib/workspace.js';
+import { spawnArgvVisible } from '../../internal/spawn.js';
+import { isLiteShipWorkspace } from '../../internal/workspace.js';
 import { loadBuiltPackages } from './manifest.js';
 import type { DoctorCheck, DoctorFix } from './types.js';
 
@@ -33,7 +33,7 @@ export async function applyFixes(checks: readonly DoctorCheck[], cwd: string): P
       id: 'build',
       action: 'skipped: cwd is not the LiteShip workspace',
       status: 'failed',
-      detail: 'doctor --fix only invokes pnpm run build when root package.json name === "czap"',
+      detail: 'doctor --fix only invokes pnpm run build when root package.json name === "liteship-monorepo"',
     });
   } else if (needsBuild) {
     // Package list is read from root tsconfig.json's project references, so
@@ -76,7 +76,7 @@ export async function applyFixes(checks: readonly DoctorCheck[], cwd: string): P
       action: 'skipped: cwd is not the LiteShip workspace',
       status: 'failed',
       detail:
-        'doctor --fix only invokes pnpm exec tsx scripts/link-pre-commit.ts when root package.json name === "czap"',
+        'doctor --fix only invokes pnpm exec tsx scripts/link-pre-commit.ts when root package.json name === "liteship-monorepo"',
     });
   } else if (needsHook) {
     // Same JSON-stdout-purity reason as the build invocation above.

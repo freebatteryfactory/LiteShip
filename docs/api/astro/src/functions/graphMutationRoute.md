@@ -34,7 +34,7 @@ it does not replace host session/origin auth (ADR-0015) — the host still owns 
 
 ### store
 
-`GraphStore`
+[`GraphStore`](../../../liteship/src/graph/interfaces/GraphStore.md)
 
 ## Returns
 

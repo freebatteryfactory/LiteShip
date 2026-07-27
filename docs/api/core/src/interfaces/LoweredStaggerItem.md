@@ -6,7 +6,7 @@
 
 # Interface: LoweredStaggerItem
 
-Defined in: [core/src/stagger.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L57)
+Defined in: [core/src/motion/stagger.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L57)
 
 One lowered child with its transition id and computed delay.
 
@@ -14,9 +14,9 @@ One lowered child with its transition id and computed delay.
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/stagger.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L60)
+Defined in: [core/src/motion/stagger.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L60)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/stagger.ts:60](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **delayMs**: `number`
 
-Defined in: [core/src/stagger.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L61)
+Defined in: [core/src/motion/stagger.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L61)
 
 ***
 
@@ -32,12 +32,12 @@ Defined in: [core/src/stagger.ts:61](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/stagger.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L58)
+Defined in: [core/src/motion/stagger.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L58)
 
 ***
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/stagger.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stagger.ts#L59)
+Defined in: [core/src/motion/stagger.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L59)

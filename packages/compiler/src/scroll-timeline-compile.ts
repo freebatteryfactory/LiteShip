@@ -4,7 +4,7 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError } from '@liteship/error';
 import {
   AddressedDigest,
   interpretTransition,
@@ -16,7 +16,7 @@ import {
   type ProjectionNode,
   type ScrollTimelineIntent,
   type ScrollTimelineAxis,
-} from '@czap/core';
+} from '@liteship/core';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileResult, MotionEasing, MotionScrollTimeline } from './motion.js';
 import { appendReducedMotionGuard, appendTranslateConsumer } from './motion-utils.js';

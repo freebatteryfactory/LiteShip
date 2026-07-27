@@ -1,69 +1,46 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.test-paths.generated.json",
   "compilerOptions": {
     "composite": false,
     "declaration": false,
     "declarationMap": false,
     "sourceMap": false,
     "noEmit": true,
-    "types": ["node"],
-    "paths": {
-      "@czap/error": ["./packages/error/src/index.ts"],
-      "@czap/gauntlet": ["./packages/gauntlet/src/index.ts"],
-      "@czap/canonical": ["./packages/canonical/src/index.ts"],
-      "@czap/genui": ["./packages/genui/src/index.ts"],
-      "@czap/core": ["./packages/core/src/index.ts"],
-      "@czap/quantizer": ["./packages/quantizer/src/index.ts"],
-      "@czap/compiler": ["./packages/compiler/src/index.ts"],
-      "@czap/web/lite": ["./packages/web/src/lite.ts"],
-      "@czap/web": ["./packages/web/src/index.ts"],
-      "@czap/detect": ["./packages/detect/src/index.ts"],
-      "@czap/vite/html-transform": ["./packages/vite/src/html-transform.ts"],
-      "@czap/vite": ["./packages/vite/src/index.ts"],
-      "@czap/astro/runtime": ["./packages/astro/src/runtime/index.ts"],
-      "@czap/astro": ["./packages/astro/src/index.ts"],
-      "@czap/remotion": ["./packages/remotion/src/index.ts"],
-      "@czap/scene": ["./packages/scene/src/index.ts"],
-      "@czap/assets": ["./packages/assets/src/index.ts"],
-      "@czap/cli": ["./packages/cli/src/index.ts"],
-      "@czap/mcp-server": ["./packages/mcp-server/src/index.ts"],
-      "@czap/edge": ["./packages/edge/src/index.ts"],
-      "@czap/cloudflare": ["./packages/cloudflare/src/index.ts"],
-      "@czap/worker": ["./packages/worker/src/index.ts"],
-      "@czap/_spine": ["./packages/_spine"]
-    }
+    "types": ["node"]
   },
-  // Scoped to tests that carry compile-time assertions (@ts-expect-error and
-  // the helper conformance seams). The broader test tree has accumulated
-  // type-errors that are tolerated because tests/ was excluded from
-  // typecheck; expanding coverage is follow-up cleanup.
+  // Every property suite is type-admitted before it can earn property evidence.
+  // Other entries are the focused compile-time assertions (@ts-expect-error),
+  // helpers, fuzzers, benches, and conformance seams whose types are themselves
+  // load-bearing proof.
   // The conformance helpers are listed explicitly: their production-surface
   // assertions (MockWebSocket -> WireSocket, MockWorker -> WorkerLike, ...)
   // only bite if this project typechecks them. They import the consumed
   // production modules DIRECTLY (not package indexes) so the typecheck
   // surface stays scoped to the contracts under assertion.
   "include": [
+    "tests/property/**/*.prop.test.ts",
+    "packages/cloudflare/src/cloudflare-workers.d.ts",
     "tests/unit/track-id.test.ts",
     "tests/unit/spawn-quoting-drift.test.ts",
     // The AI-cast no-bypass proof: its `@ts-expect-error` asserts that raw model
     // output is NOT assignable to `ValidatedProposal` — the load-bearing security
     // property is only enforced if THIS project typechecks the directive.
-    "tests/unit/core/ai-cast.test.ts",
+    "tests/unit/core/authoring/ai-cast.test.ts",
     // The DiscreteStateTransition uncompilable-seam proof (#133, Law 16): its
     // `@ts-expect-error` asserts a continuous StateCell / raw SignalNode is NOT
     // assignable to `applyTransition`'s DiscreteStateTransition input — the
     // "widen the replay payload with a signal" fix is only uncompilable if THIS
     // project typechecks the fixture.
-    "tests/unit/core/state-transition.test.ts",
+    "tests/unit/core/motion/state-transition.test.ts",
     "tests/unit/_spine/beat-contract.test.ts",
     // The worker spine mirror (worker.d.ts) had no drift guard and silently
     // diverged; this pins it via bidirectional spine⇔runtime assignability so a
     // future divergence fails the typecheck (see the file's module doc).
     "tests/unit/_spine/worker-contract.test.ts",
-    // The @czap/core spine conformance guard: its type-level assignments
+    // The @liteship/core spine conformance guard: its type-level assignments
     // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
     // bidirectional pins) only bite if THIS project typechecks them. Listed here so
-    // a future divergence between core.d.ts and the @czap/core runtime fails the
+    // a future divergence between core.d.ts and the @liteship/core runtime fails the
     // typecheck rather than living as a dead assertion.
     "tests/unit/spine-conformance.test.ts",
     // The Wave-8.5 TYPE-export surface gate (#156): the mechanism that closes the
@@ -79,12 +56,10 @@
     // The cure-wave determinism + zero-alloc + perf-claim tests: typechecked here
     // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
     // alloc-gate budget import, the gate surface) bite rather than rot.
-    "tests/property/verdict-cache-determinism.prop.test.ts",
-    "tests/property/repo-ir-determinism.prop.test.ts",
-    "tests/property/compositor-zero-alloc.test.ts",
-    "tests/property/token-buffer-zero-alloc.test.ts",
     "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
     "tests/bench/allocation.bench.ts",
+    "tests/bench/allocation-curves.bench.ts",
+    "tests/unit/meta/allocation-contracts.test.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",
     "tests/helpers/mock-dom.ts",
@@ -127,11 +102,31 @@
     // Consumed by BOTH the property test and the repo-local transition-conformance gate
     // script (no second oracle / corpus / law), so a drift fails the typecheck.
     "tests/support/reactive-conformance.ts",
-    "tests/property/reactive-conformance.prop.test.ts",
+    // Wave 5 generated-UI assurance: shared valid/invalid generators, the
+    // validator decision table, fuzz/property campaigns, and benchmark subject
+    // all consume the public @liteship/genui contracts. Typecheck the packet so
+    // fixture or catalog drift fails before the runtime campaigns execute.
+    "tests/support/genui-fixtures.ts",
+    "tests/fuzz/genui-tree-fuzz.test.ts",
+    "tests/unit/genui/validation-fault-simulation.test.ts",
+    "tests/unit/genui/validation-mcdc.test.ts",
+    "tests/bench/genui.bench.ts",
+    // Wave 5 asset assurance: strict binary fixtures, audio properties,
+    // parser fuzzing, fault simulation/injection, MC/DC, independent sharp
+    // differential, and benchmark subject all consume the public asset API.
+    "tests/support/wav-fixtures.ts",
+    "tests/fuzz/assets-binary-fuzz.test.ts",
+    "tests/unit/assets/analysis/projection-execution.test.ts",
+    "tests/unit/assets/binary-fault-simulation.test.ts",
+    "tests/unit/assets/binary-mcdc.test.ts",
+    "tests/unit/assets/decoder-fault-injection.test.ts",
+    "tests/integration/assets-image-differential.test.ts",
+    "tests/bench/assets.bench.ts",
     // The transition-conformance gate RUNNER proof (green over the native transports + red on
     // a forced divergence) — folds the shared runner through the lean gate exactly as the CI
     // gate script does, so a runner/law drift fails the typecheck.
-    "tests/unit/gauntlet/transition-conformance-gate.test.ts"
+    "tests/unit/gauntlet/transition-conformance-gate.test.ts",
+    "tests/unit/gauntlet/gate-access-manifest.test.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

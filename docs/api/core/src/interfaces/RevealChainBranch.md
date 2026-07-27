@@ -6,7 +6,7 @@
 
 # Interface: RevealChainBranch
 
-Defined in: [core/src/reveal.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L341)
+Defined in: [core/src/motion/reveal.ts:414](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L414)
 
 One `choice` arm appended to a chain: a condition over a named signal → a step.
 
@@ -16,7 +16,7 @@ One `choice` arm appended to a chain: a condition over a named signal → a step
 
 > `readonly` **source**: [`SignalInput`](../type-aliases/SignalInput.md)
 
-Defined in: [core/src/reveal.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L343)
+Defined in: [core/src/motion/reveal.ts:416](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L416)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/reveal.ts:343](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **step**: [`RevealChainStep`](RevealChainStep.md)
 
-Defined in: [core/src/reveal.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L344)
+Defined in: [core/src/motion/reveal.ts:417](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L417)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/reveal.ts:344](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **when**: [`BranchCondition`](../type-aliases/BranchCondition.md)
 
-Defined in: [core/src/reveal.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reveal.ts#L342)
+Defined in: [core/src/motion/reveal.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L415)

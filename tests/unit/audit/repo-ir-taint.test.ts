@@ -18,7 +18,7 @@
  *   • a value with no source is NOT flagged (no false-tainted);
  *   • determinism: tracing twice over unchanged source → identical flows.
  *
- * The oracle barrel-exports from @czap/audit; it is imported via its src path (the
+ * The oracle barrel-exports from @liteship/audit; it is imported via its src path (the
  * "src-path import = full pre-wire test" pattern the LanguageService oracle test
  * uses) so the trace is proven independently of the barrel.
  *
@@ -34,7 +34,7 @@ import {
   type TaintRegistry,
   type BuildRepoIRTaintOptions,
 } from '../../../packages/audit/src/repo-ir-taint.js';
-import { resolveDevopsProfile } from '@czap/audit';
+import { resolveDevopsProfile } from '@liteship/audit';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 function makeFixture(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'czap-taint-oracle-'));
+  const root = mkdtempSync(join(tmpdir(), 'liteship-taint-oracle-'));
   fixtures.push(root);
   for (const [rel, content] of Object.entries(files)) {
     const abs = resolve(root, rel);

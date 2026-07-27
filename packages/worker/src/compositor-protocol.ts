@@ -18,7 +18,7 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics } from '@liteship/core';
 import type { FromWorkerMessage } from './messages.js';
 import type {
   CompositorWorkerState,
@@ -249,7 +249,7 @@ export function applyProtocolEffects(state: CompositorWorkerRuntimeState, effect
         break;
       case 'worker-error':
         Diagnostics.error({
-          source: 'czap/worker.compositor-worker',
+          source: 'liteship/worker.compositor-worker',
           code: 'worker-message-error',
           // Both worker-side catch sites wrap compute(), where the
           // dominant failure is a registration whose thresholds do not

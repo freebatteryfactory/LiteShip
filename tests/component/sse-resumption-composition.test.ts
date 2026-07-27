@@ -18,9 +18,9 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SSE, Resumption } from '@czap/web';
-import type { ResumptionState, SSEConfig } from '@czap/web';
-import { Millis } from '@czap/core';
+import { SSE, Resumption } from '@liteship/web';
+import type { ResumptionState, SSEConfig } from '@liteship/web';
+import { Millis } from '@liteship/core';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
 // ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('SSE + Resumption composition (docblock recipe)', () => {
-  test('step 1: SSE.create seeded from Resumption.loadState re-sends the cursor on the stream URL', () => {
+  test('step 1: SSE.create seeded from Resumption.loadState re-sends the cursor on the stream URL', async () => {
     // A previous session persisted its cursor.
     Resumption.saveState(previousSessionState);
 
@@ -122,10 +122,10 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     expect(url.searchParams.get('lastEventId')).toBe('evt-42');
 
     expect(client.lastEventId).toBe('evt-42');
-    client.close();
+    await client.dispose();
   });
 
-  test('step 1 (cold start): no persisted state means no cursor on the URL', () => {
+  test('step 1 (cold start): no persisted state means no cursor on the URL', async () => {
     const saved = Resumption.loadState(ARTIFACT_ID);
     expect(saved).toBeNull();
 
@@ -137,7 +137,7 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     const es = MockEventSource.instances[0]!;
     const url = new URL(es.url);
     expect(url.searchParams.get('lastEventId')).toBeNull();
-    client.close();
+    await client.dispose();
   });
 
   // -------------------------------------------------------------------------
@@ -174,7 +174,7 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
       lastSequence: 8,
       timestamp: 1700000000,
     });
-    client.close();
+    await client.dispose();
   });
 
   // -------------------------------------------------------------------------
@@ -217,10 +217,10 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     // The replay request asked for exactly the persisted->current range, with
     // the artifactId appended as a path segment (see SSEConfig docs).
     const replayUrl = new URL(String(fetchMock.mock.calls[0]![0]));
-    expect(replayUrl.pathname).toBe(`/czap/replay/${ARTIFACT_ID}`);
+    expect(replayUrl.pathname).toBe(`/liteship/replay/${ARTIFACT_ID}`);
     expect(replayUrl.searchParams.get('from')).toBe('evt-42');
     expect(replayUrl.searchParams.get('to')).toBe('evt-45');
-    client.close();
+    await client.dispose();
   });
 
   test('step 3 (no prior state): Resumption.resume falls back to a full snapshot', async () => {
@@ -240,6 +240,6 @@ describe('SSE + Resumption composition (docblock recipe)', () => {
     }
 
     const snapshotUrl = new URL(String(fetchMock.mock.calls[0]![0]));
-    expect(snapshotUrl.pathname).toBe(`/czap/snapshot/${ARTIFACT_ID}`);
+    expect(snapshotUrl.pathname).toBe(`/liteship/snapshot/${ARTIFACT_ID}`);
   });
 });

@@ -1,8 +1,8 @@
-import { Boundary } from '@czap/core';
+import { Boundary, defineBoundary } from '@liteship/core';
 
 export type ThroughputTier = 'very-low' | 'low' | 'moderate' | 'high' | 'very-high';
 
-const throughputBoundary = Boundary.make({
+const throughputBoundary = defineBoundary({
   input: 'ops-per-sec',
   at: [
     [0, 'very-low'],

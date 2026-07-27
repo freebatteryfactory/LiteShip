@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDetectionResult
 
-Defined in: [detect/src/detect.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L147)
+Defined in: [detect/src/detect.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L154)
 
 Full detection result including design and motion tiers.
 
@@ -24,7 +24,7 @@ and compiler dispatch.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [detect/src/detect.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L149)
+Defined in: [detect/src/detect.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L156)
 
 Extended capabilities (superset of `DeviceCapabilities`).
 
@@ -36,11 +36,11 @@ Extended capabilities (superset of `DeviceCapabilities`).
 
 ### capSet
 
-> `readonly` **capSet**: [`CapSet`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
+> `readonly` **capSet**: [`CapSet`](../../../liteship/src/evidence/interfaces/CapSet.md)
 
-Defined in: [detect/src/detect.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
+Defined in: [detect/src/detect.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L120)
 
-Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
+Monotone set of every [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) at or below `capTier`.
 
 #### Inherited from
 
@@ -50,11 +50,11 @@ Monotone set of every [CapTier](https://github.com/freebatteryfactory/LiteShip/b
 
 ### capTier
 
-> `readonly` **capTier**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> `readonly` **capTier**: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md)
 
-Defined in: [detect/src/detect.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
+Defined in: [detect/src/detect.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L118)
 
-Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
+Highest [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) the device qualifies for.
 
 #### Inherited from
 
@@ -62,25 +62,11 @@ Highest [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/
 
 ***
 
-### confidence
-
-> `readonly` **confidence**: `number`
-
-Defined in: [detect/src/detect.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L115)
-
-Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
-
-#### Inherited from
-
-[`DetectionResult`](DetectionResult.md).[`confidence`](DetectionResult.md#confidence)
-
-***
-
 ### designTier
 
 > `readonly` **designTier**: [`DesignTier`](../type-aliases/DesignTier.md)
 
-Defined in: [detect/src/detect.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L151)
+Defined in: [detect/src/detect.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L158)
 
 Visual fidelity tier derived from display metadata.
 
@@ -88,8 +74,22 @@ Visual fidelity tier derived from display metadata.
 
 ### motionTier
 
-> `readonly` **motionTier**: `MotionTier`
+> `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
-Defined in: [detect/src/detect.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L153)
+Defined in: [detect/src/detect.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L160)
 
 Motion complexity tier derived from GPU, cores, and reduced-motion.
+
+***
+
+### tierEvidence
+
+> `readonly` **tierEvidence**: [`CapabilityTierEvidence`](../type-aliases/CapabilityTierEvidence.md)
+
+Defined in: [detect/src/detect.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L122)
+
+Per-axis provenance for the complete tier values.
+
+#### Inherited from
+
+[`DetectionResult`](DetectionResult.md).[`tierEvidence`](DetectionResult.md#tierevidence)

@@ -41,7 +41,7 @@ describe('tarballManifestAddress', () => {
       try {
         // Pack from the IN-WORKSPACE package dir (not a tmp copy): pnpm resolves the
         // package's `catalog:` peer spec to its concrete range only inside the
-        // workspace — exactly as `czap ship` / `pnpm publish` do on the real release
+        // workspace — exactly as `liteship ship` / `pnpm publish` do on the real release
         // path (.github/workflows/release.yml). The shared owner (tests/support/pack.ts,
         // scar S0.5) drops the .tgz into the clean tmp dir, leaving no artifact behind
         // in the source package, and returns its path.
@@ -97,9 +97,9 @@ describe('lockfileAddress', () => {
 });
 
 describe('workspaceManifestAddress', () => {
-  const pkgA = new TextEncoder().encode('{"name":"@czap/a","version":"0.1.0"}');
-  const pkgB = new TextEncoder().encode('{"name":"@czap/b","version":"0.1.0"}');
-  const pkgC = new TextEncoder().encode('{"name":"@czap/c","version":"0.1.0"}');
+  const pkgA = new TextEncoder().encode('{"name":"@liteship/a","version":"0.1.0"}');
+  const pkgB = new TextEncoder().encode('{"name":"@liteship/b","version":"0.1.0"}');
+  const pkgC = new TextEncoder().encode('{"name":"@liteship/c","version":"0.1.0"}');
 
   it('is order-independent (helper sorts internally)', () => {
     const inOrder = [
@@ -359,16 +359,16 @@ describe('findWorkspaceSpecLeaks (ship workspace-protocol guard)', () => {
   it('lists every dependency section entry still carrying the workspace: protocol', () => {
     const leaks = findWorkspaceSpecLeaks(
       tgzWithManifest({
-        name: '@czap/core',
+        name: '@liteship/core',
         version: '0.1.4',
-        dependencies: { '@czap/_spine': 'workspace:*', cborg: '^4.2.0' },
+        dependencies: { '@liteship/_spine': 'workspace:*', cborg: '^4.2.0' },
         peerDependencies: { effect: 'workspace:^' },
-        optionalDependencies: { '@czap/detect': 'workspace:~' },
+        optionalDependencies: { '@liteship/detect': 'workspace:~' },
       }),
     );
     expect([...leaks].sort()).toEqual([
-      'dependencies.@czap/_spine: workspace:*',
-      'optionalDependencies.@czap/detect: workspace:~',
+      'dependencies.@liteship/_spine: workspace:*',
+      'optionalDependencies.@liteship/detect: workspace:~',
       'peerDependencies.effect: workspace:^',
     ]);
   });
@@ -376,9 +376,9 @@ describe('findWorkspaceSpecLeaks (ship workspace-protocol guard)', () => {
   it('returns empty for concrete specs (the published 0.1.5 shape)', () => {
     const leaks = findWorkspaceSpecLeaks(
       tgzWithManifest({
-        name: '@czap/core',
+        name: '@liteship/core',
         version: '0.1.5',
-        dependencies: { '@czap/_spine': '0.1.5', cborg: '^4.2.0' },
+        dependencies: { '@liteship/_spine': '0.1.5', cborg: '^4.2.0' },
       }),
     );
     expect(leaks).toEqual([]);
@@ -393,10 +393,10 @@ describe('findWorkspaceSpecLeaks (ship workspace-protocol guard)', () => {
   it('devDependencies do not count — npm ignores them on install', () => {
     const leaks = findWorkspaceSpecLeaks(
       tgzWithManifest({
-        name: '@czap/core',
+        name: '@liteship/core',
         version: '0.1.5',
         dependencies: { cborg: '^4.2.0' },
-        devDependencies: { '@czap/audit': 'workspace:*' },
+        devDependencies: { '@liteship/audit': 'workspace:*' },
       }),
     );
     expect(leaks).toEqual([]);

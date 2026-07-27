@@ -43,7 +43,7 @@
  * @module
  */
 
-import { HostCapabilityError, InvariantViolationError, ValidationError } from '@czap/error';
+import { HostCapabilityError, InvariantViolationError, ValidationError } from '@liteship/error';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -71,7 +71,7 @@ const CONTROL_BYTES = 16;
  * ring buffer backed by `SharedArrayBuffer`. Created by
  * {@link SPSCRing.attachProducer} or {@link SPSCRing.attachConsumer}.
  */
-export interface SPSCRingBufferShape {
+export interface SPSCRing {
   /**
    * Push a data slot into the ring buffer.
    * Returns `false` if the buffer is full (non-blocking).
@@ -100,9 +100,9 @@ export interface SPSCRingPair {
   /** The shared buffer carrying the control header + data slots. Transfer this to the Worker. */
   readonly buffer: SharedArrayBuffer;
   /** Producer-side handle (push-only). */
-  readonly producer: SPSCRingBufferShape;
+  readonly producer: SPSCRing;
   /** Consumer-side handle (pop-only). */
-  readonly consumer: SPSCRingBufferShape;
+  readonly consumer: SPSCRing;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +118,18 @@ function _createBuffer(slotCount: number, slotSize: number): SharedArrayBuffer {
   control[SLOT_COUNT_INDEX] = slotCount;
   control[SLOT_SIZE_INDEX] = slotSize;
   return sab;
+}
+
+function assertRingGeometry(slotCount: number, slotSize: number): void {
+  if (slotCount <= 0 || !Number.isInteger(slotCount)) {
+    throw InvariantViolationError(
+      'spsc-ring',
+      `SPSCRingBuffer: slotCount must be a positive integer, got ${slotCount}`,
+    );
+  }
+  if (slotSize <= 0 || !Number.isInteger(slotSize)) {
+    throw InvariantViolationError('spsc-ring', `SPSCRingBuffer: slotSize must be a positive integer, got ${slotSize}`);
+  }
 }
 
 /**
@@ -164,16 +176,8 @@ function _makeRing(
   slotCount: number,
   slotSize: number,
   role: 'producer' | 'consumer',
-): SPSCRingBufferShape {
-  if (slotCount <= 0 || !Number.isInteger(slotCount)) {
-    throw InvariantViolationError(
-      'spsc-ring',
-      `SPSCRingBuffer: slotCount must be a positive integer, got ${slotCount}`,
-    );
-  }
-  if (slotSize <= 0 || !Number.isInteger(slotSize)) {
-    throw InvariantViolationError('spsc-ring', `SPSCRingBuffer: slotSize must be a positive integer, got ${slotSize}`);
-  }
+): SPSCRing {
+  assertRingGeometry(slotCount, slotSize);
   const control = new Int32Array(sab, 0, 2);
   const data = new Float64Array(sab, CONTROL_BYTES);
 
@@ -271,7 +275,7 @@ function _makeRing(
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * const { buffer, producer, consumer } = SPSCRing.createPair(64, 4);
  * // producer.push(new Float64Array([1, 2, 3, 4])); // true
@@ -305,9 +309,12 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
   ) {
     throw HostCapabilityError(
       'SharedArrayBuffer',
-      'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
+      'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @liteship/astro sets these headers for you.',
     );
   }
+  // Validate before allocating: invalid geometry must report the stable
+  // LiteShip invariant instead of escaping as a V8 ArrayBuffer RangeError.
+  assertRingGeometry(slotCount, slotSize);
   const buffer = _createBuffer(slotCount, slotSize);
   return {
     buffer,
@@ -322,7 +329,7 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * // Inside a Worker's message handler:
  * self.onmessage = (e) => {
@@ -335,9 +342,9 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
  * @param sab       - The SharedArrayBuffer from the main thread
  * @param slotCount - Optional; validated against the buffer header (a mismatch throws)
  * @param slotSize  - Optional; validated against the buffer header (a mismatch throws)
- * @returns A producer-side {@link SPSCRingBufferShape}
+ * @returns A producer-side {@link SPSCRing}
  */
-function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape {
+function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRing {
   const geometry = _readGeometry(sab, 'attachProducer', slotCount, slotSize);
   return _makeRing(sab, geometry.slotCount, geometry.slotSize, 'producer');
 }
@@ -348,7 +355,7 @@ function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: 
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * // On the main thread after receiving buffer from Worker:
  * const consumer = SPSCRing.attachConsumer(sharedBuffer);
@@ -361,9 +368,9 @@ function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: 
  * @param sab       - The SharedArrayBuffer shared with the producer
  * @param slotCount - Optional; validated against the buffer header (a mismatch throws)
  * @param slotSize  - Optional; validated against the buffer header (a mismatch throws)
- * @returns A consumer-side {@link SPSCRingBufferShape}
+ * @returns A consumer-side {@link SPSCRing}
  */
-function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape {
+function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRing {
   const geometry = _readGeometry(sab, 'attachConsumer', slotCount, slotSize);
   return _makeRing(sab, geometry.slotCount, geometry.slotSize, 'consumer');
 }
@@ -383,7 +390,7 @@ function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: 
  *
  * @example
  * ```ts
- * import { SPSCRing } from '@czap/worker';
+ * import { SPSCRing } from '@liteship/worker';
  *
  * // Main thread: create pair and send buffer to Worker
  * const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);
@@ -407,7 +414,4 @@ export const SPSCRing = {
   attachConsumer: _attachConsumer,
 } as const;
 
-export declare namespace SPSCRing {
-  /** Producer- or consumer-facing view of a SPSC ring buffer. */
-  export type Shape = SPSCRingBufferShape;
-}
+/** Public structural type for `SPSCRing`. */

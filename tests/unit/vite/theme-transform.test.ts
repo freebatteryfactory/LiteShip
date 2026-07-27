@@ -56,7 +56,7 @@ describe('parseThemeBlocks', () => {
 describe('compileThemeBlock', () => {
   test('delegates canonical CSS generation to ThemeCSSCompiler and appends html overrides when present', () => {
     const compile = vi.spyOn(ThemeCSSCompiler, 'compile').mockReturnValue({
-      selectors: 'html[data-theme="ocean"] {\n  --czap-color-primary: blue;\n}',
+      selectors: 'html[data-theme="ocean"] {\n  --liteship-color-primary: blue;\n}',
       transitions: 'html[data-theme] {\n  transition: color 200ms ease;\n}',
     });
     const block = {

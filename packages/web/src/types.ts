@@ -1,5 +1,5 @@
 /**
- * `@czap/web` -- Core Web Types
+ * `@liteship/web` -- Core Web Types
  *
  * DOM runtime type definitions for slot addressing, island modes,
  * physical state capture/restore, morph configuration, SSE streaming,
@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { Millis } from '@czap/core';
+import type { Millis } from '@liteship/core';
 
 // =============================================================================
 // Slot Types
@@ -45,7 +45,7 @@ export interface SlotEntry {
 }
 
 /**
- * Input accepted by `SlotRegistryShape.register`. Registered entries are
+ * Input accepted by `SlotRegistry.register`. Registered entries are
  * normalized to a full {@link SlotEntry}: `mode` defaults to `'partial'`
  * and `mounted` defaults to `true`.
  */

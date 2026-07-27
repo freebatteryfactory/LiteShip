@@ -21,7 +21,7 @@
  * never names a concrete scheduler — so swapping the implementation cannot change
  * the scenario API.
  *
- * **What ships now: {@link realLoopScheduler}.** It runs the steps sequentially on
+ * **What ships now.** {@link realLoopScheduler} runs the steps sequentially on
  * the real event loop, awaiting each before the next. For the single-threaded,
  * sequential scenarios this harness targets (a quantizer call, a graph-patch
  * sequence, a boundary evaluation), the observed order IS the declared order, so
@@ -29,19 +29,16 @@
  * byte-exact. It reads NO real time and NO real randomness itself — all
  * nondeterminism it could introduce is ordering, and sequential drive removes it.
  *
- * **The documented DROP-IN: the full FoundationDB deterministic scheduler.** A
- * future `simulatedScheduler` (NOT built here — noted as the additive upgrade)
- * intercepts every Promise/timer/IO continuation and chooses the next ready step
- * from a SEED-DRIVEN priority over the world's {@link Rng}, exploring interleavings
- * a real loop would never reveal — and replaying the SAME interleaving from the
- * same seed. It satisfies THIS interface unchanged: a scenario does not know which
- * scheduler ran it. That is the whole point of the seam — the focused scheduler is
- * correct-but-narrow today; the full one is broad-and-correct later, under one API.
+ * {@link seededInterleavingScheduler} explores permutations of independently
+ * declared ready steps using a scheduler-private seeded RNG. It does not pretend
+ * to intercept arbitrary Promise/timer/IO continuations; it is the honest bounded
+ * interleaving authority the current {@link Scheduler} contract can express.
  *
  * @module
  */
 
-import type { Clock, Rng } from '../index.js';
+import type { Clock } from '../clock/clock.js';
+import { seededRng, type Rng } from '../clock/rng.js';
 
 /**
  * The substrate a scheduler threads into each step — the world's fixed clock and
@@ -130,6 +127,30 @@ export const realLoopScheduler: Scheduler = {
     for (const step of steps) {
       const value = await step.act(world);
       outcomes.push({ label: step.label, value });
+    }
+    return outcomes;
+  },
+};
+
+/**
+ * Deterministically explore one permutation of the scenario's ready steps.
+ *
+ * Scheduling draws from a PRIVATE stream derived from the world seed. The SUT's
+ * `world.rng` therefore observes exactly the same stream regardless of scheduler;
+ * ordering entropy and application entropy never contaminate one another.
+ */
+export const seededInterleavingScheduler: Scheduler = {
+  _tag: 'simulated',
+  run: async (world: SchedulerWorld, steps: readonly SimStep[]): Promise<readonly StepOutcome[]> => {
+    const ordered = [...steps];
+    const schedulerRng = seededRng((world.seed ^ 0x9e3779b9) >>> 0);
+    for (let cursor = ordered.length - 1; cursor > 0; cursor -= 1) {
+      const swap = Math.floor(schedulerRng.next() * (cursor + 1));
+      [ordered[cursor], ordered[swap]] = [ordered[swap]!, ordered[cursor]!];
+    }
+    const outcomes: StepOutcome[] = [];
+    for (const step of ordered) {
+      outcomes.push({ label: step.label, value: await step.act(world) });
     }
     return outcomes;
   },

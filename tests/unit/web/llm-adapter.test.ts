@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { LLMAdapter, LLMChunkNormalization } from '@czap/web';
-import type { LLMChunk } from '@czap/web';
+import { LLMAdapter, LLMChunkNormalization } from '@liteship/web';
+import type { LLMChunk } from '@liteship/web';
 
 function makeSSEMessage(data: string) {
   return { id: '', event: '', data, retry: undefined };
@@ -189,7 +189,7 @@ describe('LLMAdapter', () => {
     toolCallBuffer = partialDelta.toolCallBuffer;
 
     const finalDelta = LLMChunkNormalization.normalize(
-      { type: 'tool-call-delta', partial: false, content: '"czap"}' },
+      { type: 'tool-call-delta', partial: false, content: '"liteship"}' },
       toolCallBuffer,
     );
     toolCallBuffer = finalDelta.toolCallBuffer;
@@ -205,13 +205,13 @@ describe('LLMAdapter', () => {
     expect(finalDelta.chunk).toEqual({
       type: 'tool-call-delta',
       partial: false,
-      content: '"czap"}',
+      content: '"liteship"}',
     });
     expect(end.chunk).toEqual({
       type: 'tool-call-end',
       partial: false,
       toolName: 'search',
-      toolArgs: { query: 'czap' },
+      toolArgs: { query: 'liteship' },
     });
     expect(end.toolCallBuffer).toBeNull();
   });

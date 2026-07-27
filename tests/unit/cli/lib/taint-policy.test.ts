@@ -1,7 +1,7 @@
 /**
- * The HOST-INJECTED LiteShip TAINT REGISTRY (`packages/cli/src/lib/taint-policy.ts`)
+ * The HOST-INJECTED LiteShip TAINT REGISTRY (`packages/cli/src/internal/taint-policy.ts`)
  * — the LiteShip-LOCAL source / sink / sanitizer classification the CLI injects into
- * `@czap/audit`'s GENERIC taint oracle (the ADR-0012 / D7b boundary).
+ * `@liteship/audit`'s GENERIC taint oracle (the ADR-0012 / D7b boundary).
  *
  * This module carries NO logic — it is DATA the host hands the oracle. So these pins
  * are CONTRACT pins on that data (the LAW it encodes), not behavior churn:
@@ -24,7 +24,7 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { LITESHIP_TAINT_REGISTRY } from '../../../../packages/cli/src/lib/taint-policy.js';
+import { LITESHIP_TAINT_REGISTRY } from '../../../../packages/cli/src/internal/taint-policy.js';
 
 const { sources, sinks, sanitizers, assignmentSinkNames, memberSinks, notes } = LITESHIP_TAINT_REGISTRY;
 

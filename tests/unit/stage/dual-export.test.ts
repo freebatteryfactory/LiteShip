@@ -8,7 +8,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC, Receipt } from '@czap/core';
+import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC, Receipt } from '@liteship/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -17,8 +17,8 @@ import type {
   EntityNode,
   ContentAddress,
   CellMeta,
-} from '@czap/core';
-import { dualExport, exportAstroPage, exportVideo } from '@czap/stage';
+} from '@liteship/core';
+import { dualExport, exportAstroPage, exportVideo, exportVideoEncoded } from '@liteship/stage';
 
 const ts = HLC.increment(HLC.create('test'), 1);
 const meta: CellMeta = { created: ts, updated: ts, version: 1 };
@@ -92,6 +92,19 @@ function buildGraph(): DocumentGraph {
 }
 
 describe('dualExport — one graph, two casts, one source (P4)', () => {
+  test('exportVideo has no dead encoder parameter', () => {
+    expect(exportVideo.length).toBe(1);
+  });
+
+  test('the explicit encoder seam propagates a host failure without minting success', async () => {
+    const failure = new Error('encoder-host-failed');
+    await expect(
+      exportVideoEncoded(buildGraph(), async () => {
+        throw failure;
+      }),
+    ).rejects.toBe(failure);
+  });
+
   test('a css projection over a stateless component fails with a clear message (boundaryOf guard)', () => {
     const emptyComponent = sealNode<ComponentNode>({
       _tag: 'DocGraphComponentNode',

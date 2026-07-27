@@ -8,8 +8,8 @@
  * @module
  */
 
-import type { Boundary, StateUnion } from '@czap/core';
-import { Diagnostics } from '@czap/core';
+import type { Boundary, StateUnion } from '@liteship/core';
+import { Diagnostics } from '@liteship/core';
 import { inferSyntax } from './css-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -67,7 +67,7 @@ export interface CSSContainerRule {
  * authoring form).
  */
 export interface CSSStateBody {
-  /** Properties applied to the boundary selector (the `selector` param, default `.czap-boundary`). */
+  /** Properties applied to the boundary selector (the `selector` param, default `.liteship-boundary`). */
   readonly bareProps?: Record<string, string>;
   /** Per-selector rules emitted verbatim into the state's `@container` block. */
   readonly rules?: readonly CSSRule[];
@@ -97,7 +97,7 @@ export interface CSSCompileResult {
   /**
    * The boundary selector this result was compiled against (mirrors the
    * `selector` argument to {@link CSSCompiler.compile}; default
-   * `.czap-boundary`). Carried so {@link CSSCompiler.serialize} re-wraps
+   * `.liteship-boundary`). Carried so {@link CSSCompiler.serialize} re-wraps
    * conditional-group bare declarations with the same selector as `raw`.
    * Optional for back-compat with hand-constructed results, which fall back
    * to the default selector.
@@ -114,7 +114,7 @@ export interface CSSCompileResult {
  * called without an explicit `selector`. Single source of truth: both the
  * compile-time wrapping and the {@link serialize} round-trip fall back to it.
  */
-const DEFAULT_BOUNDARY_SELECTOR = '.czap-boundary';
+const DEFAULT_BOUNDARY_SELECTOR = '.liteship-boundary';
 
 /**
  * Serialize a `Record<string, string>` of CSS properties into a declaration block.
@@ -241,10 +241,10 @@ function isStateBody(input: CSSStateInput): input is CSSStateBody {
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { CSSCompiler } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { CSSCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });
@@ -262,10 +262,10 @@ function isStateBody(input: CSSStateInput): input is CSSStateBody {
  *
  * @param boundary - The boundary definition with states and thresholds
  * @param states   - Per-state CSS inputs (flat property maps or structured bodies)
- * @param selector - Optional CSS selector for bare properties (defaults to `.czap-boundary`)
+ * @param selector - Optional CSS selector for bare properties (defaults to `.liteship-boundary`)
  * @returns A {@link CSSCompileResult} with structured rules and raw CSS text
  */
-function compile<B extends Boundary.Shape>(
+function compile<B extends Boundary>(
   boundary: B,
   states: { readonly [S in StateUnion<B> & string]?: CSSStateInput },
   selector?: string,
@@ -326,9 +326,9 @@ function compile<B extends Boundary.Shape>(
   for (const supplied of Object.keys(states)) {
     if (knownStates.has(supplied)) continue;
     const match = stateNames.find((s) => s.toLowerCase() === supplied.toLowerCase());
-    Diagnostics.warn({
-      source: 'czap/compiler.css',
-      code: 'unknown-state-key',
+    Diagnostics.warnRegistered({
+      source: 'liteship/compiler.css',
+      code: 'compiler/css/unknown-state-key',
       message: `State "${supplied}" is not one of boundary "${boundary.input}" states [${stateNames.join(', ')}]; its CSS was skipped.${match ? ` Did you mean "${match}"?` : ''}`,
     });
   }
@@ -342,7 +342,7 @@ function compile<B extends Boundary.Shape>(
  *
  * @example
  * ```ts
- * import { CSSCompiler } from '@czap/compiler';
+ * import { CSSCompiler } from '@liteship/compiler';
  *
  * const result = CSSCompiler.compile(boundary, states);
  * const css = CSSCompiler.serialize(result);
@@ -403,7 +403,7 @@ function initialValueForSyntax(syntax: string): string {
  *
  * @example
  * ```ts
- * import { CSSCompiler } from '@czap/compiler';
+ * import { CSSCompiler } from '@liteship/compiler';
  *
  * const states = {
  *   sm: { '--card-bg': '#ffffff', '--card-radius': '4px' },
@@ -451,10 +451,10 @@ export function generatePropertyRegistrations(
  *
  * @example
  * ```ts
- * import { Boundary } from '@czap/core';
- * import { CSSCompiler } from '@czap/compiler';
+ * import { defineBoundary } from '@liteship/core';
+ * import { CSSCompiler } from '@liteship/compiler';
  *
- * const boundary = Boundary.make({
+ * const boundary = defineBoundary({
  *   input: 'width',
  *   at: [[0, 'sm'], [768, 'lg']],
  * });

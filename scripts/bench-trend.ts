@@ -17,8 +17,11 @@
  *
  * Skips when fewer than `MIN_HISTORY_FOR_GATE` distinct entries are
  * available, so a fresh checkout doesn't start failing immediately.
- * Under `BENCH_TREND_STRICT=1`, skips are tagged `[ceremonial-skip]` and
- * regression failures are enforced when history exists.
+ * Under strict mode (`--strict`, or the legacy `BENCH_TREND_STRICT=1`), skips are
+ * tagged `[ceremonial-skip]` and regression failures are enforced when history
+ * exists. The `--strict` FLAG is the cross-platform selector (the env-var prefix
+ * form is not portable to a Windows `cmd.exe` shell), so the check registry drives
+ * this via `pnpm run bench:trend -- --strict`.
  *
  * @module
  */
@@ -26,7 +29,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { repoRoot } from '../vitest.shared.js';
-import type { WallClockTimestamp } from '@czap/core';
+import type { WallClockTimestamp } from '@liteship/core';
 
 /** Number of most-recent distinct entries to consider as the rolling window. */
 const ROLLING_WINDOW = 10;
@@ -107,8 +110,9 @@ function ceremonialSkip(message: string): void {
 }
 
 function main(): void {
-  const strict = process.env.BENCH_TREND_STRICT === '1';
-  const historyPath = resolve(repoRoot, 'benchmarks', 'history.jsonl');
+  const strict = process.argv.includes('--strict') || process.env.BENCH_TREND_STRICT === '1';
+  const historyPath =
+    process.env['LITESHIP_BENCH_TREND_HISTORY_PATH'] ?? resolve(repoRoot, 'benchmarks', 'history.jsonl');
   const all = readHistory(historyPath);
   if (all.length === 0) {
     ceremonialSkip('no history yet (benchmarks/history.jsonl missing or empty). Skipping.');

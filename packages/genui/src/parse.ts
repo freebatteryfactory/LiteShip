@@ -7,36 +7,7 @@
  */
 
 import type { GeneratedUINode } from './types.js';
-import { isPlainObject } from './guards.js';
-
-const isGeneratedUINode = (value: unknown): value is GeneratedUINode => {
-  if (!isPlainObject(value)) {
-    return false;
-  }
-  if (typeof value.name !== 'string' || !isPlainObject(value.props)) {
-    return false;
-  }
-  if ('children' in value && value.children !== undefined) {
-    if (!Array.isArray(value.children) || !value.children.every(isGeneratedUINode)) {
-      return false;
-    }
-  }
-  if ('slots' in value && value.slots !== undefined) {
-    if (!isPlainObject(value.slots)) {
-      return false;
-    }
-    for (const slotValue of Object.values(value.slots)) {
-      if (Array.isArray(slotValue)) {
-        if (!slotValue.every(isGeneratedUINode)) {
-          return false;
-        }
-      } else if (!isGeneratedUINode(slotValue)) {
-        return false;
-      }
-    }
-  }
-  return true;
-};
+import { inspectGeneratedUITreeShape } from './guards.js';
 
 /**
  * Try to parse a text chunk as a generated UI tree.
@@ -55,10 +26,10 @@ export function tryParseGeneratedUIChunk(content: string): GeneratedUINode | nul
     }
     const { _genui: _marker, ...rest } = parsed;
     void _marker;
-    if (!isGeneratedUINode(rest)) {
+    if (!inspectGeneratedUITreeShape(rest).ok) {
       return null;
     }
-    return rest;
+    return rest as unknown as GeneratedUINode;
   } catch (error) {
     // Malformed JSON — fall through to legacy token/text/HTML paths.
     if (error instanceof SyntaxError) {

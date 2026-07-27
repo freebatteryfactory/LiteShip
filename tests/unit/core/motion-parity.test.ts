@@ -4,7 +4,7 @@
  * Cross-target motion parity — THE #130 differential oracle.
  *
  * ONE authored motion program renders identically across EVERY target because every
- * non-CSS target samples the ONE shared kernel `sampleProgram` (`@czap/core`, Law 4) and
+ * non-CSS target samples the ONE shared kernel `sampleProgram` (`@liteship/core`, Law 4) and
  * the declarative CSS `@keyframes` are generated from the SAME kernel. This test is the
  * READER that makes each adapter load-bearing (Law 16): for each fixture × canonical
  * sample time it computes the reference vector from `sampleProgram`, then asserts every
@@ -15,7 +15,7 @@
  *   - scene           — `sampleSceneMotion` (the `MotionSampleSystem` projection);
  *   - stage video leg — `sampleMotionFrames` (per FrameRange index);
  *   - remotion        — `sampleMotionFrame` (per composition frame);
- *   - worker          — `motionSampleMessage` (off-thread sampler → `czap:uniform-update`);
+ *   - worker          — `motionSampleMessage` (off-thread sampler → `liteship:uniform-update`);
  *   - browser CSS     — reconstructed from the emitted `css.keyframes`.
  *
  * EPSILON + its source (blueprint risk #6): the non-CSS targets all call `sampleProgram`,
@@ -32,6 +32,7 @@
  */
 
 import { describe, test, expect, afterEach } from 'vitest';
+import fc from 'fast-check';
 import {
   sampleProgram,
   sampleProgramUniforms,
@@ -45,11 +46,11 @@ import {
   type RuntimeEasing,
   type RuntimeWritePlan,
   type TypedValue,
-} from '@czap/core';
+} from '@liteship/core';
 import { writeContinuousMap } from '../../../packages/astro/src/runtime/write-continuous-map.js';
 import { sampleSceneMotion } from '../../../packages/scene/src/systems/motion.js';
 import { sampleMotionFrames } from '../../../packages/stage/src/motion-export.js';
-import { sampleMotionFrame } from '../../../packages/remotion/src/motion.js';
+import { motionCssVars, sampleMotionFrame } from '../../../packages/remotion/src/motion.js';
 import { motionSampleMessage } from '../../../packages/worker/src/motion-sample.js';
 import {
   MOTION_PARITY_FIXTURES,
@@ -89,6 +90,11 @@ function expectTypedClose(actual: TypedValue | undefined, expected: TypedValue, 
 /** The reference vector: the ONE kernel sampled continuously at `t`, keyed by cssVar. */
 function reference(plan: RuntimeWritePlan, t: number): Map<string, TypedValue> {
   return new Map(sampleProgram(plan, t).map((s) => [s.cssVar, s.value]));
+}
+
+/** Project Scene's immutable aggregate record into the map shape used by this oracle. */
+function sceneSampleMap(plan: RuntimeWritePlan, t: number): ReadonlyMap<string, TypedValue> {
+  return new Map(Object.entries(sampleSceneMotion(plan, t)));
 }
 
 /** Assert a target's `cssVar → TypedValue` map matches the reference within `eps`. */
@@ -218,6 +224,35 @@ function runtimeDomSample(plan: RuntimeWritePlan, t: number, ref: Map<string, Ty
 // -- The oracle -----------------------------------------------------------------------
 
 describe('cross-target motion parity — the #130 differential oracle', () => {
+  test('standard LiteShip numeric properties project to bare WGSL field names', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.stringMatching(/^[a-z][a-z0-9]*$/u), { minLength: 1, maxLength: 5 }),
+        fc.double({ min: -1_000, max: 1_000, noNaN: true, noDefaultInfinity: true }),
+        (segments, terminal) => {
+          const cssVar = `--liteship-${segments.join('-')}`;
+          const plan: RuntimeWritePlan = {
+            ...MOTION_PARITY_FIXTURES[0]!.plan,
+            properties: [
+              {
+                cssVar,
+                from: { k: 'number', v: 0 },
+                to: { k: 'number', v: terminal },
+              },
+            ],
+          };
+          const uniforms = sampleProgramUniforms(plan, 1);
+          const expectedTerminal = Object.is(terminal, -0) ? 0 : terminal;
+
+          expect(uniforms.css).toEqual({ [cssVar]: String(expectedTerminal) });
+          expect(uniforms.wgsl).toEqual({ [segments.join('_')]: expectedTerminal });
+          expect(Object.keys(uniforms.wgsl).every((field) => !field.startsWith('hip_'))).toBe(true);
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+
   for (const fixture of MOTION_PARITY_FIXTURES) {
     describe(fixture.name, () => {
       for (const t of fixture.sampleTimes) {
@@ -229,7 +264,7 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
           expectMapMatches(runtimeDomSample(fixture.plan, t, ref), ref, EPSILON_KERNEL, 'runtime');
 
           // scene — the MotionSampleSystem projection.
-          expectMapMatches(sampleSceneMotion(fixture.plan, t), ref, EPSILON_KERNEL, 'scene');
+          expectMapMatches(sceneSampleMap(fixture.plan, t), ref, EPSILON_KERNEL, 'scene');
 
           // worker — the off-thread sampler's posted uniforms, parsed back to typed.
           const msg = motionSampleMessage(fixture.plan, t);
@@ -270,6 +305,9 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
             EPSILON_KERNEL,
             `remotion@${frame.frame}`,
           );
+          expect(motionCssVars(fixture.plan, frame.frame, totalFrames)).toEqual(
+            sampleProgramUniforms(fixture.plan, frame.t).css,
+          );
         }
       });
     });
@@ -293,7 +331,7 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
     }
     // Every target lands on that pose (settle skips the tween → the t=1 endpoint).
     expectMapMatches(runtimeDomSample(fixture.plan, 1, terminal), terminal, EPSILON_KERNEL, 'runtime-settle');
-    expectMapMatches(sampleSceneMotion(fixture.plan, 1), terminal, EPSILON_KERNEL, 'scene-settle');
+    expectMapMatches(sceneSampleMap(fixture.plan, 1), terminal, EPSILON_KERNEL, 'scene-settle');
     expectMapMatches(sampleMotionFrame(fixture.plan, 8, 9), terminal, EPSILON_KERNEL, 'remotion-settle');
     const stageLast = sampleMotionFrames(fixture.plan, 9).at(-1)!;
     expectMapMatches(stageLast.values, terminal, EPSILON_KERNEL, 'stage-settle');
@@ -380,7 +418,7 @@ describe('differently-eased par — the #148 case', () => {
       const ref = reference(plan, t);
       expect(ref.size, 'par animates at least one leaf').toBeGreaterThan(0);
       expectMapMatches(runtimeDomSample(plan, t, ref), ref, EPSILON_KERNEL, 'runtime');
-      expectMapMatches(sampleSceneMotion(plan, t), ref, EPSILON_KERNEL, 'scene');
+      expectMapMatches(sceneSampleMap(plan, t), ref, EPSILON_KERNEL, 'scene');
       const msg = motionSampleMessage(plan, t);
       const workerTyped = new Map([...Object.entries(msg.css)].map(([k, v]) => [k, parseTypedBinding(k, v)]));
       expectMapMatches(workerTyped, ref, EPSILON_KERNEL, 'worker');

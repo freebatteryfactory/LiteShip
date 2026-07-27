@@ -6,7 +6,7 @@
 
 # Interface: HandledCommand
 
-Defined in: [command/src/registry.ts:530](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L530)
+Defined in: [command/src/registry.ts:685](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L685)
 
 A fully-migrated command: descriptor + a guaranteed handler. Migrated command
 modules type their export as this so adapters can invoke `.handler` directly
@@ -20,9 +20,9 @@ without a presence check. Assignable to [RegisteredCommand](RegisteredCommand.md
 
 ### argsSchema?
 
-> `readonly` `optional` **argsSchema?**: `Schema`\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
+> `readonly` `optional` **argsSchema?**: [`Schema`](../../../liteship/src/schema/interfaces/Schema.md)\<`Readonly`\<`Record`\<`string`, `unknown`\>\>, `Readonly`\<`Record`\<`string`, `unknown`\>\>\>
 
-Defined in: [command/src/registry.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L522)
+Defined in: [command/src/registry.ts:677](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L677)
 
 The declared kernel schema for the command's args. When present, the
 dispatcher decodes `invocation.args` against it BEFORE invoking the handler
@@ -39,9 +39,9 @@ step is then a no-op passthrough).
 
 ### descriptor
 
-> `readonly` **descriptor**: `CapsuleCommandDescriptor`
+> `readonly` **descriptor**: [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)
 
-Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L512)
+Defined in: [command/src/registry.ts:667](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L667)
 
 #### Inherited from
 
@@ -53,7 +53,7 @@ Defined in: [command/src/registry.ts:512](https://github.com/freebatteryfactory/
 
 > `readonly` **handler**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)
 
-Defined in: [command/src/registry.ts:531](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L531)
+Defined in: [command/src/registry.ts:686](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L686)
 
 #### Overrides
 

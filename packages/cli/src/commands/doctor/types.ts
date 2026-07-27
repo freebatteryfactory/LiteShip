@@ -1,5 +1,5 @@
 /**
- * doctor — shared vocabulary. The probe-result types (bearing/verdict/check/
+ * doctor — shared vocabulary. The probe-result types (status/verdict/check/
  * fix/receipt/target), the discriminated {@link Readout} for environment
  * file probes, and the version-string parsers every probe leans on.
  *
@@ -11,10 +11,10 @@
 
 import type { WallClockTimestamp } from '../../receipts.js';
 
-/** Bearing for a single probe — quantized from a continuous "is it set up?" signal. */
+/** Status for a single environment probe. */
 export type DoctorBearing = 'ok' | 'warn' | 'fail';
 
-/** Overall sailing readiness. Aggregates the per-check bearings. */
+/** Overall environment readiness. Aggregates the per-check statuses. */
 export type DoctorVerdict = 'ready' | 'caution' | 'blocked';
 
 /** Host deployment target for focused probe profiles. */
@@ -55,7 +55,7 @@ export function unreadable(e: unknown): { kind: 'unreadable'; detail: string } {
   return { kind: 'unreadable', detail: e instanceof Error ? e.message : String(e) };
 }
 
-/** Receipt shape emitted by `czap doctor`. */
+/** Receipt shape emitted by `liteship doctor`. */
 export interface DoctorReceipt {
   readonly status: 'ok' | 'failed';
   readonly command: 'doctor';
@@ -88,7 +88,7 @@ export function parseEngineMajor(s: string | undefined): number | null {
 /**
  * Per-probe subprocess bound (CUT test-flake). External probes (`pnpm`/`cargo`/`git`/
  * `wrangler`) shell out; under parallel load those spawns can drag past the test
- * timeout. A bound keeps `czap doctor` deterministic and non-hanging: a slow/wedged
+ * timeout. A bound keeps `liteship doctor` deterministic and non-hanging: a slow/wedged
  * tool degrades to a `warn` ("didn't answer in time") instead of blocking forever.
  * Concurrency (see runAllProbes) makes the path "max single probe", not the sum —
  * so 4s is comfortable.

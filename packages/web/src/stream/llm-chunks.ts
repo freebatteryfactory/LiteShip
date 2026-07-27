@@ -1,5 +1,5 @@
 /**
- * Normalised LLM chunk protocol used by `@czap/web`'s streaming
+ * Normalised LLM chunk protocol used by `@liteship/web`'s streaming
  * pipeline. Every provider (OpenAI, Anthropic, Vercel AI SDK, ...) is
  * translated into this shape by a user-supplied {@link ChunkParser}.
  *
@@ -128,4 +128,4 @@ export const LLMChunkNormalization = {
   parseAccumulatedToolArgs,
 } as const;
 
-export { tryParseGeneratedUIChunk } from '@czap/genui';
+export { tryParseGeneratedUIChunk } from '@liteship/genui';

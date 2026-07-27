@@ -8,7 +8,7 @@
 
 > **symbolIdOfOrphanFact**(`file`, `value`): `string`
 
-Defined in: [audit/src/repo-ir-language-service.ts:320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L320)
+Defined in: [audit/src/repo-ir-language-service.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L326)
 
 Reconstruct the IR [SymbolId](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) (`<file>#<name>`) a `symbol-orphan` fact
 concerns, from the fact's `file` and its structured [OrphanValue](../interfaces/OrphanValue.md) `name`.

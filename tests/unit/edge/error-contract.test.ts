@@ -1,8 +1,8 @@
-/** @czap/edge error contract */
+/** @liteship/edge error contract */
 import { describe, it, expect } from 'vitest';
-import { resolveOutputsByTier } from '@czap/edge';
+import { resolveOutputsByTier } from '@liteship/edge';
 
-describe('@czap/edge error contract', () => {
+describe('@liteship/edge error contract', () => {
   it('resolveOutputsByTier rejects legacy manifest shapes with _version: 2 teaching', () => {
     const legacy = {
       outputs: [],

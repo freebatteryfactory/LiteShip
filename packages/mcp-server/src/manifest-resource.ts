@@ -1,22 +1,22 @@
 /**
  * MCP-app manifest resource (CUT D6) — the reachable emission of the pure
- * `@czap/compiler` projector. The server collects the real registries it already
+ * `@liteship/compiler` projector. The server collects the real registries it already
  * owns (command catalog, D3 resources/prompts, D4 static UI, D5 live app
  * resources, server identity + capabilities) and feeds them to
  * `compileMcpAppManifest`, then serves the result as a JSON resource at
  * `liteship://mcp-app/manifest`.
  *
  * The compiler stays pure (it never imports this package); the dependency edge
- * is one-way `@czap/mcp-server → @czap/compiler`. The manifest is a top-level
+ * is one-way `@liteship/mcp-server → @liteship/compiler`. The manifest is a top-level
  * projection class — it lives at `ui-app`-distinct `liteship://mcp-app/…`, NOT in
  * the D3 `registry/*` space, and is NOT a member of its own `resources` array
  * (no self-reference).
  *
  * @module
  */
-import { compileMcpAppManifest } from '@czap/compiler';
-import type { McpAppManifest } from '@czap/compiler';
-import { mcpExposedDescriptors } from '@czap/command';
+import { compileMcpAppManifest } from '@liteship/compiler';
+import type { McpAppManifest } from '@liteship/compiler';
+import { mcpExposedDescriptors } from '@liteship/command';
 import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources } from './resources.js';
@@ -24,7 +24,7 @@ import type { McpResource, McpResourceContents } from './resources.js';
 import { listUiResources } from './ui-resources.js';
 import { listAppResources } from './app-resources.js';
 import { listPrompts } from './prompts.js';
-import { NotFoundError } from '@czap/error';
+import { NotFoundError } from '@liteship/error';
 
 /** The single top-level app-manifest resource URI (product-owned; distinct from registry/*). */
 const MANIFEST_URI = 'liteship://mcp-app/manifest';

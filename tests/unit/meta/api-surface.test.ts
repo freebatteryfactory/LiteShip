@@ -5,11 +5,11 @@
  * snapshot (`tests/fixtures/api-surface-snapshot.json`) — no hand-maintained
  * registry to forget:
  *
- *  1. DRIFT — regenerate the live surface of every public `@czap/*` barrel + diff
+ *  1. DRIFT — regenerate the live surface of every public `@liteship/*` barrel + diff
  *     it against the committed snapshot. Any added/removed/signature-changed
  *     export FAILS with a precise message, so an accidental public-API change is
  *     impossible to miss and a deliberate one is a reviewed snapshot edit
- *     (`CZAP_UPDATE_API_SNAPSHOT=1` regenerates the committed file).
+ *     (`LITESHIP_UPDATE_API_SNAPSHOT=1` regenerates the committed file).
  *
  *  2. SEMVER — classify each drift (added = minor-compatible; removed / signature
  *     changed = breaking) and assert the package version bump satisfies the
@@ -26,8 +26,8 @@
 
 import { describe, test, expect } from 'vitest';
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import {
   generatePackageSurface,
@@ -49,13 +49,18 @@ import {
 const SNAPSHOT_PATH = fileURLToPath(new URL('../../fixtures/api-surface-snapshot.json', import.meta.url));
 const PACKAGES_DIR = fileURLToPath(new URL('../../../packages', import.meta.url));
 
+interface WorkspaceRuntimePackage {
+  readonly version: string;
+  readonly entryFile: string;
+}
+
 /**
  * Map every workspace package NAME → its `package.json` version, read once from
  * disk (the source of truth the snapshot records). Built from the actual
  * `packages/*` directories so it can never drift from the real version stamps.
  */
-const versionByPackageName = (): Readonly<Record<string, string>> => {
-  const byName: Record<string, string> = {};
+const runtimePackageByName = (): Readonly<Record<string, WorkspaceRuntimePackage>> => {
+  const byName: Record<string, WorkspaceRuntimePackage> = {};
   for (const dir of readdirSync(PACKAGES_DIR)) {
     const manifestPath = resolve(PACKAGES_DIR, dir, 'package.json');
     let raw: string;
@@ -64,10 +69,18 @@ const versionByPackageName = (): Readonly<Record<string, string>> => {
     } catch {
       continue; // not a package directory (no manifest) — skip
     }
-    const manifest = JSON.parse(raw) as { name?: string; version?: string };
-    if (typeof manifest.name === 'string' && typeof manifest.version === 'string') {
-      byName[manifest.name] = manifest.version;
-    }
+    const manifest = JSON.parse(raw) as {
+      name?: string;
+      version?: string;
+      exports?: { readonly '.'?: { readonly import?: string } };
+    };
+    if (typeof manifest.name !== 'string' || typeof manifest.version !== 'string') continue;
+    const importTarget = manifest.exports?.['.']?.import;
+    if (typeof importTarget !== 'string') continue;
+    byName[manifest.name] = {
+      version: manifest.version,
+      entryFile: resolve(dirname(manifestPath), importTarget),
+    };
   }
   return byName;
 };
@@ -77,15 +90,18 @@ const versionByPackageName = (): Readonly<Record<string, string>> => {
  * LIVE surface snapshot.
  */
 async function computeLiveSnapshot(policy: ApiSurfacePolicy): Promise<ApiSurfaceSnapshot> {
-  const versions = versionByPackageName();
+  const runtimePackages = runtimePackageByName();
   const packages: Record<string, PackageSurface> = {};
   for (const pkg of policy.publicPackages) {
-    const moduleNamespace = (await import(/* @vite-ignore */ pkg)) as Record<string, unknown>;
-    const version = versions[pkg];
-    if (typeof version !== 'string') {
-      throw new Error(`No package.json version found for ${pkg} — cannot record it in the API snapshot`);
+    const runtimePackage = runtimePackages[pkg];
+    if (runtimePackage === undefined) {
+      throw new Error(`No importable package.json "." entry found for ${pkg} — cannot record its API surface`);
     }
-    packages[pkg] = generatePackageSurface(version, moduleNamespace);
+    const moduleNamespace = (await import(/* @vite-ignore */ pathToFileURL(runtimePackage.entryFile).href)) as Record<
+      string,
+      unknown
+    >;
+    packages[pkg] = generatePackageSurface(runtimePackage.version, moduleNamespace);
   }
   return { snapshotFormat: 1, packages };
 }
@@ -105,11 +121,11 @@ const readCommittedSnapshot = (): ApiSurfaceSnapshot =>
   JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as ApiSurfaceSnapshot;
 
 describe('API-surface snapshot gate (drift)', () => {
-  test('the committed snapshot matches the live public surface (regenerate intentionally with CZAP_UPDATE_API_SNAPSHOT=1)', { timeout: scaledTimeout(60_000) }, async () => {
+  test('the committed snapshot matches the live public surface (regenerate intentionally with LITESHIP_UPDATE_API_SNAPSHOT=1)', { timeout: scaledTimeout(60_000) }, async () => {
     const live = await buildLiveSnapshot(LITESHIP_API_SURFACE_POLICY);
     const serialized = serializeSnapshot(live);
 
-    if (process.env.CZAP_UPDATE_API_SNAPSHOT === '1') {
+    if (process.env.LITESHIP_UPDATE_API_SNAPSHOT === '1') {
       writeFileSync(SNAPSHOT_PATH, serialized);
     } else {
       const committed = serializeSnapshot(readCommittedSnapshot());
@@ -135,11 +151,11 @@ describe('API-surface snapshot gate (drift)', () => {
       expect(
         serialized === committed,
         drift.length === 0
-          ? 'API surface serialization drifted but no per-export diff was found — the snapshot schema or version stamp changed; run CZAP_UPDATE_API_SNAPSHOT=1 to regenerate and review.'
+          ? 'API surface serialization drifted but no per-export diff was found — the snapshot schema or version stamp changed; run LITESHIP_UPDATE_API_SNAPSHOT=1 to regenerate and review.'
           : `Public API surface drifted from the committed snapshot:\n` +
               drift.map((d) => `  • ${d.pkg}: ${d.detail} [${d.changeClass}]`).join('\n') +
               `\n\nIf this change is intentional, regenerate the snapshot ` +
-              `(CZAP_UPDATE_API_SNAPSHOT=1 npx vitest run tests/unit/meta/api-surface.test.ts) ` +
+              `(LITESHIP_UPDATE_API_SNAPSHOT=1 npx vitest run tests/unit/meta/api-surface.test.ts) ` +
               `and review the diff. An accidental public-API change must never pass silently.`,
       ).toBe(true);
     }
@@ -161,18 +177,18 @@ describe('API-surface snapshot gate (drift)', () => {
   // ── BITE PROOF — the drift gate must catch a simulated export removal ────────
 
   test('BITE: a simulated export removal from the committed snapshot is detected as drift', () => {
-    // Take the REAL committed @czap/core surface and simulate the live build
+    // Take the REAL committed @liteship/core surface and simulate the live build
     // having DROPPED a public export (e.g. `fnv1a`). The diff must report it as a
     // `removed` change — proving the drift gate would fail the build, not pass it.
     const committed = readCommittedSnapshot();
-    const corePrior = committed.packages['@czap/core']!;
+    const corePrior = committed.packages['@liteship/core']!;
     expect(corePrior.exports.some((e) => e.name === 'fnv1a')).toBe(true);
 
     const liveWithRemoval: PackageSurface = {
       version: corePrior.version,
       exports: corePrior.exports.filter((e) => e.name !== 'fnv1a'),
     };
-    const diffs = diffPackageSurface('@czap/core', corePrior, liveWithRemoval);
+    const diffs = diffPackageSurface('@liteship/core', corePrior, liveWithRemoval);
     const removal = diffs.find((d) => d.name === 'fnv1a');
     expect(removal).toBeDefined();
     expect(removal?.changeClass).toBe('removed');
@@ -271,10 +287,10 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
       version: '0.4.0', // UNBUMPED despite removing `gone`
       exports: [{ name: 'keep', kind: 'function', signature: '(1)' }],
     };
-    const diffs = diffPackageSurface('@czap/demo', prior, current);
+    const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'removed' && d.name === 'gone')).toBe(true);
 
-    const verdict = assertVersionBumpForDiff('@czap/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
     expect(verdict.ok).toBe(false);
     if (!verdict.ok) expect(verdict.reason).toMatch(/BREAKING changes present/);
   });
@@ -291,17 +307,17 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
       version: '0.5.0', // a minor bump — the pre-1.0 breaking channel
       exports: [{ name: 'keep', kind: 'function', signature: '(1)' }],
     };
-    const diffs = diffPackageSurface('@czap/demo', prior, current);
-    const verdict = assertVersionBumpForDiff('@czap/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const diffs = diffPackageSurface('@liteship/demo', prior, current);
+    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
     expect(verdict.ok).toBe(true);
   });
 
   test('BITE: a changed signature (arity) is classified breaking and demands a bump', () => {
     const prior: PackageSurface = { version: '0.4.0', exports: [{ name: 'f', kind: 'function', signature: '(1)' }] };
     const current: PackageSurface = { version: '0.4.0', exports: [{ name: 'f', kind: 'function', signature: '(2)' }] };
-    const diffs = diffPackageSurface('@czap/demo', prior, current);
+    const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'signature-changed' && d.name === 'f')).toBe(true);
-    const verdict = assertVersionBumpForDiff('@czap/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
     expect(verdict.ok).toBe(false);
   });
 
@@ -314,9 +330,9 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
       version: '0.4.0',
       exports: [{ name: 'Boundary', kind: 'namespace', signature: 'make:function' }], // `evaluate` removed
     };
-    const diffs = diffPackageSurface('@czap/demo', prior, current);
+    const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'signature-changed' && d.name === 'Boundary')).toBe(true);
-    const verdict = assertVersionBumpForDiff('@czap/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
     expect(verdict.ok).toBe(false);
   });
 
@@ -329,9 +345,9 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
         { name: 'b', kind: 'const' }, // added, unbumped
       ],
     };
-    const diffs = diffPackageSurface('@czap/demo', prior, current);
+    const diffs = diffPackageSurface('@liteship/demo', prior, current);
     expect(diffs.some((d) => d.changeClass === 'added' && d.name === 'b')).toBe(true);
-    const verdict = assertVersionBumpForDiff('@czap/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
     expect(verdict.ok).toBe(false);
   });
 
@@ -344,8 +360,8 @@ describe('API-surface semver gate (unbumped breaking change)', () => {
         { name: 'b', kind: 'const' },
       ],
     };
-    const diffs = diffPackageSurface('@czap/demo', prior, current);
-    const verdict = assertVersionBumpForDiff('@czap/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
+    const diffs = diffPackageSurface('@liteship/demo', prior, current);
+    const verdict = assertVersionBumpForDiff('@liteship/demo', prior.version, current.version, diffs, LITESHIP_API_SURFACE_POLICY);
     expect(verdict.ok).toBe(false);
     if (!verdict.ok) expect(verdict.reason).toMatch(/DOWNGRADE/);
   });

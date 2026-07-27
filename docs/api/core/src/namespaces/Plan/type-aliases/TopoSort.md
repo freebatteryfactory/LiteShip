@@ -8,6 +8,6 @@
 
 > **TopoSort** = `TopoSortResult`
 
-Defined in: [core/src/plan.ts:320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L320)
+Defined in: [core/src/authoring/plan.ts:320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/plan.ts#L320)
 
 Alias for `TopoSortResult`.

@@ -1,9 +1,9 @@
 /**
  * capsule inspect / verify / list (CLI adapter) — thin projections over
- * `@czap/command`'s capsule commands, routed through {@link runCliCommand}. The
- * manifest read (path resolution honoring CZAP_CAPSULE_MANIFEST) and the vitest
+ * `@liteship/command`'s capsule commands, routed through {@link runCliCommand}. The
+ * manifest read (path resolution honoring LITESHIP_CAPSULE_MANIFEST) and the vitest
  * run are provided by the shared host context (`createNodeCommandContext`); the
- * structured decisions live in `@czap/command`. This adapter renders the exact
+ * structured decisions live in `@liteship/command`. This adapter renders the exact
  * JSON receipts to stdout and errors to stderr.
  *
  * The capsule payload types are not yet in `CommandMap` (still `unknown`), so the
@@ -13,7 +13,7 @@
  * @module
  */
 
-import { runCliCommand } from '../lib/run-command.js';
+import { runCliCommand } from '../internal/run-command.js';
 import { emit } from '../receipts.js';
 
 /** Execute `capsule inspect <id>`. */
