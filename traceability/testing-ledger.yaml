@@ -1,7 +1,7 @@
 # The trace — every invariant in invariants.yaml mapped to its proving test(s) OR
 # a waiver-with-teeth. This is one half of the bidirectional trace: the OTHER half
 # is the `// PROVES: <id>` header the proving test itself carries. The deterministic
-# state machine (packages/cli/src/lib/traceability.ts) scans the LIVE headers and
+# state machine (packages/cli/src/internal/traceability.ts) scans the LIVE headers and
 # REQUIRES the two agree — a ledger entry whose claimed test lacks a matching header
 # (or vice versa) is a divergence finding (the head-probe LAW).
 #

@@ -8,4 +8,4 @@
 
 > **CacheStatus** = [`EdgeHostCacheStatus`](../../../type-aliases/EdgeHostCacheStatus.md)
 
-Defined in: [\_spine/edge.d.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L303)
+Defined in: [\_spine/edge.d.ts:329](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L329)

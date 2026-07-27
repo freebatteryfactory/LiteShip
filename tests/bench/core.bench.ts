@@ -6,14 +6,21 @@ import { Bench } from 'tinybench';
 import {
   Boundary,
   Compositor,
-  createDenseStore,
   Config,
   defineBoundary,
   defineToken,
   defineConfig,
-  createWorld,
   createBlendTree,
+  schema,
 } from '@liteship/core';
+import {
+  admitPart,
+  createDenseStore,
+  createWorld,
+  defineDenseSystem,
+  definePart,
+  defineSystem,
+} from '@liteship/core/ecs';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -124,15 +131,22 @@ bench.add('Compositor.compute() -- empty', () => {
 
 // ECS World tick -- setup extracted so only tick() is measured per iteration
 {
+  const Position = definePart('bench-position', schema.struct({ x: schema.number, y: schema.number }));
   const world100 = createWorld();
   for (let i = 0; i < 100; i++) {
-    world100.spawn({ position: { x: i, y: i * 2 } });
+    const admitted = admitPart(Position, { x: i, y: i * 2 });
+    if (!admitted.ok) throw new Error('benchmark fixture failed Position admission');
+    world100.spawn(admitted.value);
   }
-  world100.addSystem({
-    name: 'mover',
-    query: ['position'],
-    execute: () => {},
-  });
+  world100.addSystem(
+    defineSystem({
+      name: 'mover',
+      query: [Position],
+      reads: [],
+      writes: [],
+      execute: () => {},
+    }),
+  );
 
   bench.add('ECS World tick -- 100 entities, 1 system', () => {
     world100.tick();
@@ -141,37 +155,45 @@ bench.add('Compositor.compute() -- empty', () => {
 
 {
   const world100Dense = createWorld();
-  const posX = createDenseStore('posX', 128);
-  const posY = createDenseStore('posY', 128);
+  const PosX = definePart('bench-pos-x', schema.number);
+  const PosY = definePart('bench-pos-y', schema.number);
+  const posX = createDenseStore(PosX, 128);
+  const posY = createDenseStore(PosY, 128);
 
   world100Dense.addDenseStore(posX);
   world100Dense.addDenseStore(posY);
 
   for (let i = 0; i < 100; i++) {
     const id = world100Dense.spawn();
-    posX.set(id, i);
-    posY.set(id, i * 2);
+    posX.writer.set(id, i);
+    posY.writer.set(id, i * 2);
   }
 
-  world100Dense.addSystem({
-    name: 'mover',
-    query: ['posX', 'posY'],
-    _denseSystem: true as const,
-    execute(stores) {
-      const pxStore = stores.get('posX')!;
-      const pyStore = stores.get('posY')!;
-      const xData = pxStore.data;
-      const yData = pyStore.data;
-      const len = pxStore.count;
-      for (let i = 0; i < len; i++) {
-        xData[i] = xData[i]! + 1;
-        yData[i] = yData[i]! + 1;
-      }
-    },
-  });
+  world100Dense.addSystem(
+    defineDenseSystem({
+      name: 'mover',
+      reads: [PosY],
+      writes: [PosX, PosY],
+      execute(context) {
+        const xData = context.write(PosX).view();
+        const yData = context.write(PosY).view();
+        for (let i = 0; i < yData.length; i++) {
+          xData[i] = xData[i]! + 1;
+          yData[i] = yData[i]! + 1;
+        }
+      },
+    }),
+  );
 
   bench.add('ECS World tick -- 100 entities, 1 system (dense)', () => {
     world100Dense.tick();
+  });
+
+  const publicReadView = posX.store.view();
+  bench.add('ECS DenseStore read view -- 100 values', () => {
+    let sum = 0;
+    for (let i = 0; i < publicReadView.length; i++) sum += publicReadView.at(i)!;
+    return sum;
   });
 }
 

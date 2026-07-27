@@ -42,7 +42,7 @@ export type {
   ProgramEnv,
   BranchGuard,
   ProgramTimelineEntry,
-  LoweredProgramTimeline,
+  TransitionTimeline,
   ProgramSample,
   ProgramUniforms,
 } from '@liteship/core/motion';

@@ -8,6 +8,6 @@
 
 > **VideoRenderer** = `VideoRendererShape`
 
-Defined in: [core/src/media/video.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L167)
+Defined in: [core/src/media/video.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L245)
 
 Public structural type for `VideoRenderer`.

@@ -6,7 +6,7 @@
 
 # Interface: LiveCell\<K, T\>
 
-Defined in: [\_spine/core.d.ts:811](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L811)
+Defined in: [\_spine/core.d.ts:1026](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1026)
 
 Reactive cell specialized to a declared transport or projection kind.
 
@@ -30,7 +30,7 @@ Reactive cell specialized to a declared transport or projection kind.
 
 > `readonly` **\_tag**: `"LiveCell"`
 
-Defined in: [\_spine/core.d.ts:812](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L812)
+Defined in: [\_spine/core.d.ts:1027](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1027)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:812](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **crossings**: `Pick`\<[`Fanout`](../namespaces/CellKernel/interfaces/Fanout.md)\<[`BoundaryCrossing`](../type-aliases/BoundaryCrossing.md)\<`string`\>\>, `"subscribe"`\>
 
-Defined in: [\_spine/core.d.ts:814](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L814)
+Defined in: [\_spine/core.d.ts:1029](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1029)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/core.d.ts:814](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `K`
 
-Defined in: [\_spine/core.d.ts:815](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L815)
+Defined in: [\_spine/core.d.ts:1030](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1030)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [\_spine/core.d.ts:815](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:662](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L662)
+Defined in: [\_spine/core.d.ts:877](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L877)
 
 #### Inherited from
 
@@ -66,7 +66,7 @@ Defined in: [\_spine/core.d.ts:662](https://github.com/freebatteryfactory/LiteSh
 
 > **envelope**(): [`CellEnvelope`](CellEnvelope.md)\<`K`, `T`\>
 
-Defined in: [\_spine/core.d.ts:813](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L813)
+Defined in: [\_spine/core.d.ts:1028](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1028)
 
 #### Returns
 
@@ -78,7 +78,7 @@ Defined in: [\_spine/core.d.ts:813](https://github.com/freebatteryfactory/LiteSh
 
 > **publishCrossing**(`crossing`): `void`
 
-Defined in: [\_spine/core.d.ts:816](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L816)
+Defined in: [\_spine/core.d.ts:1031](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1031)
 
 #### Parameters
 
@@ -96,7 +96,7 @@ Defined in: [\_spine/core.d.ts:816](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `T`
 
-Defined in: [\_spine/core.d.ts:658](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L658)
+Defined in: [\_spine/core.d.ts:873](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L873)
 
 #### Returns
 
@@ -112,7 +112,7 @@ Defined in: [\_spine/core.d.ts:658](https://github.com/freebatteryfactory/LiteSh
 
 > **set**(`value`): `void`
 
-Defined in: [\_spine/core.d.ts:659](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L659)
+Defined in: [\_spine/core.d.ts:874](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L874)
 
 #### Parameters
 
@@ -134,7 +134,7 @@ Defined in: [\_spine/core.d.ts:659](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:661](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L661)
+Defined in: [\_spine/core.d.ts:876](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L876)
 
 #### Parameters
 
@@ -156,7 +156,7 @@ Defined in: [\_spine/core.d.ts:661](https://github.com/freebatteryfactory/LiteSh
 
 > **update**(`f`): `void`
 
-Defined in: [\_spine/core.d.ts:660](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L660)
+Defined in: [\_spine/core.d.ts:875](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L875)
 
 #### Parameters
 

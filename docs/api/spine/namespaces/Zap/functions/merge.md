@@ -8,7 +8,7 @@
 
 > **merge**\<`T`\>(`events`): [`Zap`](../../../interfaces/Zap.md)\<`T`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:724](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L724)
+Defined in: [\_spine/core.d.ts:939](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L939)
 
 ## Type Parameters
 

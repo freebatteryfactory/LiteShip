@@ -8,7 +8,7 @@
 
 > **generatePureTransform**(`cap`, `ctx?`): [`HarnessOutput`](../interfaces/HarnessOutput.md)
 
-Defined in: core/dist/harness/pure-transform.d.ts:276
+Defined in: core/dist/harness/pure-transform.d.ts:277
 
 Generate the test + bench file contents for a `pureTransform` capsule.
 The emitted files are strings; the repo compiler writes them to

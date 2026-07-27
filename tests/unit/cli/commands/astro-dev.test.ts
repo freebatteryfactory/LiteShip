@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { astroDev } from '../../../../packages/cli/src/commands/astro-dev.js';
-import * as spawnLib from '../../../../packages/cli/src/lib/spawn.js';
+import * as spawnLib from '../../../../packages/cli/src/internal/spawn.js';
 
 async function captureStdout(fn: () => Promise<number>): Promise<{ exit: number; stdout: string }> {
   let stdout = '';

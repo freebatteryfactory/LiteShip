@@ -6,7 +6,7 @@
  * @module
  */
 
-export { WebCodecsCapture } from './webcodecs.js';
+export { createWebCodecsCapture } from './webcodecs.js';
 export type { WebCodecsCaptureOptions } from './webcodecs.js';
 
 export { renderToCanvas } from './render.js';

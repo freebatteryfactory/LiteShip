@@ -34,7 +34,7 @@ The `<h1>` carries the CSS variables (`--scale`, `--bg`, ...) computed for which
 
 ## Where it sits
 
-A host adapter — it calls Remotion's `useCurrentFrame` so nothing else has to. Its only `@liteship` dependency is `@liteship/core`, for the `VideoRenderer` that produces frames and the state type those frames carry. Timeline authoring (tracks, beats, transitions) lives in `@liteship/scene`; this package only consumes rendered frames. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+A host adapter — it calls Remotion's `useCurrentFrame` so nothing else has to. Its only `@liteship` dependency is `@liteship/core`, for the `VideoRenderer` created by `createVideoRenderer`, the shared `FrameSchedule` coordinates that renderer follows, and the state type those frames carry. `precomputeFrames` is the adapter from the renderer's deterministic stream to Remotion's indexed reads. Timeline authoring (tracks, beats, transitions) lives in `@liteship/scene`; this package only consumes rendered frames. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 

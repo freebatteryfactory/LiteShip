@@ -2,7 +2,7 @@ import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Config, defineConfig } from './packages/core/src/authoring/config.js';
-import { TEST_CORPUS_ROOTS } from './packages/cli/src/lib/test-corpus.js';
+import { TEST_CORPUS_ROOTS } from './packages/cli/src/internal/test-corpus.js';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 

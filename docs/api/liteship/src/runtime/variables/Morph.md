@@ -8,7 +8,7 @@
 
 > `const` **Morph**: `object`
 
-Defined in: web/dist/morph/diff.d.ts:42
+Defined in: web/dist/morph/diff.d.ts:45
 
 DOM morph namespace.
 

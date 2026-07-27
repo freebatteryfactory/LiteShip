@@ -1,6 +1,6 @@
 {
   "name": "@liteship/core",
-  "version": "0.21.0",
+  "version": "0.23.0",
   "description": "The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -22,7 +22,7 @@
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, the nine curated DOMAIN facades (`./authoring`, `./reactive`, `./motion`, `./graph`, `./evidence`, `./schema`, `./media`, `./clock`, `./wasm`), `./harness`, `./simulation`, and `./fs-walk` are importable. Each domain subpath resolves to a `src/<domain>/index.ts` facade that is EXPLICIT curated named re-exports only (no `export *`), so the subpath surface is the reviewed public surface of that domain — never the raw source layout. There is DELIBERATELY no `\"./*\"` wildcard and NO `./internal` subpath: a wildcard would expose every `src/*.ts` module as a public subpath and prevent safe refactoring. Public leaf utilities are owned by their semantic domains and exposed only through the curated facades. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts (under `src/evidence/`) holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the TIER_TARGET_SETS subpath leak). Internal relative imports `./evidence/validated-output.js` are unaffected. Both halves (no-wildcard + the deny) plus the closed domain allowlist are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
+  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, the ten curated DOMAIN facades (`./authoring`, `./reactive`, `./motion`, `./graph`, `./evidence`, `./schema`, `./media`, `./clock`, `./wasm`, `./ecs`), `./harness`, `./simulation`, and `./fs-walk` are importable. Each domain subpath resolves to a reviewed facade that uses explicit named re-exports only (no `export *`), so the subpath surface is the reviewed public surface of that domain — never the raw source layout. There is DELIBERATELY no `\"./*\"` wildcard and NO `./internal` subpath: a wildcard would expose every `src/*.ts` module as a public subpath and prevent safe refactoring. Public leaf utilities are owned by their semantic domains and exposed only through the curated facades. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts (under `src/evidence/`) holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the TIER_TARGET_SETS subpath leak). Internal relative imports `./evidence/validated-output.js` are unaffected. Both halves (no-wildcard + the deny) plus the closed domain allowlist are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -71,6 +71,10 @@
     "./simulation": {
       "types": "./dist/simulation/index.d.ts",
       "import": "./dist/simulation/index.js"
+    },
+    "./ecs": {
+      "types": "./dist/ecs/index.d.ts",
+      "import": "./dist/ecs/index.js"
     },
     "./fs-walk": {
       "types": "./dist/fs-walk.d.ts",

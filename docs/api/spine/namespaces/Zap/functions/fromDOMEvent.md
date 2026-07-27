@@ -8,7 +8,7 @@
 
 > **fromDOMEvent**\<`K`\>(`element`, `event`): [`Zap`](../../../interfaces/Zap.md)\<`HTMLElementEventMap`\[`K`\]\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:720](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L720)
+Defined in: [\_spine/core.d.ts:935](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L935)
 
 ## Type Parameters
 

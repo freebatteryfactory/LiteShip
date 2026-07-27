@@ -8,7 +8,7 @@
 
 > **HLC** = `object`
 
-Defined in: [\_spine/core.d.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L105)
+Defined in: [\_spine/core.d.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L111)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/core.d.ts:105](https://github.com/freebatteryfactory/LiteSh
 
 > **compare**(`a`, `b`): `-1` \| `0` \| `1`
 
-Defined in: [\_spine/core.d.ts:939](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L939)
+Defined in: [\_spine/core.d.ts:1154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1154)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:939](https://github.com/freebatteryfactory/LiteSh
 
 > **create**(`nodeId`): `HLC`
 
-Defined in: [\_spine/core.d.ts:938](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L938)
+Defined in: [\_spine/core.d.ts:1153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1153)
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/core.d.ts:938](https://github.com/freebatteryfactory/LiteSh
 
 > **decode**(`s`): `HLC`
 
-Defined in: [\_spine/core.d.ts:943](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L943)
+Defined in: [\_spine/core.d.ts:1158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1158)
 
 #### Parameters
 
@@ -74,7 +74,7 @@ Defined in: [\_spine/core.d.ts:943](https://github.com/freebatteryfactory/LiteSh
 
 > **encode**(`hlc`): `string`
 
-Defined in: [\_spine/core.d.ts:942](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L942)
+Defined in: [\_spine/core.d.ts:1157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1157)
 
 #### Parameters
 
@@ -92,7 +92,7 @@ Defined in: [\_spine/core.d.ts:942](https://github.com/freebatteryfactory/LiteSh
 
 > **increment**(`hlc`, `now?`): `HLC`
 
-Defined in: [\_spine/core.d.ts:940](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L940)
+Defined in: [\_spine/core.d.ts:1155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1155)
 
 #### Parameters
 
@@ -114,7 +114,7 @@ Defined in: [\_spine/core.d.ts:940](https://github.com/freebatteryfactory/LiteSh
 
 > **makeClock**(`nodeId`, `clock?`): [`HLCClock`](../interfaces/HLCClock.md)
 
-Defined in: [\_spine/core.d.ts:944](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L944)
+Defined in: [\_spine/core.d.ts:1159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1159)
 
 #### Parameters
 
@@ -136,7 +136,7 @@ Defined in: [\_spine/core.d.ts:944](https://github.com/freebatteryfactory/LiteSh
 
 > **merge**(`local`, `remote`, `now?`): `HLC`
 
-Defined in: [\_spine/core.d.ts:941](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L941)
+Defined in: [\_spine/core.d.ts:1156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1156)
 
 #### Parameters
 

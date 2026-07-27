@@ -12,9 +12,10 @@
  * @module
  */
 
-import { createDenseStore, EntityId } from '../ecs.js';
-import type { DenseStore } from '../ecs.js';
+import { createDenseStore, definePart, EntityId } from '../ecs/index.js';
+import type { DenseStore } from '../ecs/index.js';
 import { Plan } from '../authoring/plan.js';
+import { schema } from '../schema/constructors.js';
 
 /**
  * Named stages of the runtime frame pass, in canonical topological order:
@@ -63,6 +64,8 @@ interface RegisteredQuantizer {
 }
 
 const DEFAULT_RUNTIME_CAPACITY = 128;
+const RuntimeStateIndexPart = definePart('runtime-state-index', schema.number);
+const RuntimeDirtyEpochPart = definePart('runtime-dirty-epoch', schema.number);
 
 function makeRuntimePlan(name: string): Plan.IR {
   return Plan.make(name)
@@ -100,8 +103,10 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
   const name = config?.name ?? 'liteship-runtime';
   const plan = name === RUNTIME_PLAN_TEMPLATE.name ? RUNTIME_PLAN_TEMPLATE : { ...RUNTIME_PLAN_TEMPLATE, name };
   const phases = RUNTIME_PHASES;
-  const stateIndex = createDenseStore('state-index', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
-  const dirtyEpoch = createDenseStore('dirty-epoch', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
+  const stateIndexOwner = createDenseStore(RuntimeStateIndexPart, config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
+  const dirtyEpochOwner = createDenseStore(RuntimeDirtyEpochPart, config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
+  const stateIndex = stateIndexOwner.store;
+  const dirtyEpoch = dirtyEpochOwner.store;
   const quantizerByName = new Map<string, RegisteredQuantizer>();
   let nextEntity = 0;
 
@@ -117,8 +122,8 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
     reset(registrations) {
       quantizerByName.clear();
       nextEntity = 0;
-      stateIndex.reset();
-      dirtyEpoch.reset();
+      stateIndexOwner.writer.reset();
+      dirtyEpochOwner.writer.reset();
 
       for (const registration of registrations ?? []) {
         this.registerQuantizer(registration.name, registration.states);
@@ -140,8 +145,8 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
         entityId,
         stateLookup,
       });
-      stateIndex.set(entityId, 0);
-      dirtyEpoch.set(entityId, 1);
+      stateIndexOwner.writer.set(entityId, 0);
+      dirtyEpochOwner.writer.set(entityId, 1);
       return entityId;
     },
 
@@ -152,8 +157,8 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
       }
 
       quantizerByName.delete(name);
-      stateIndex.delete(quantizer.entityId);
-      dirtyEpoch.delete(quantizer.entityId);
+      stateIndexOwner.writer.delete(quantizer.entityId);
+      dirtyEpochOwner.writer.delete(quantizer.entityId);
     },
 
     hasQuantizer(name) {
@@ -166,7 +171,7 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
         return;
       }
 
-      stateIndex.set(quantizer.entityId, quantizer.stateLookup[state] ?? 0);
+      stateIndexOwner.writer.set(quantizer.entityId, quantizer.stateLookup[state] ?? 0);
     },
 
     applyState(name, state) {
@@ -176,7 +181,7 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
       }
 
       const nextIndex = quantizer.stateLookup[state] ?? 0;
-      stateIndex.set(quantizer.entityId, nextIndex);
+      stateIndexOwner.writer.set(quantizer.entityId, nextIndex);
       return nextIndex;
     },
 
@@ -195,7 +200,7 @@ export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): Run
         return;
       }
 
-      dirtyEpoch.set(quantizer.entityId, dirtyEpoch.get(quantizer.entityId)! + 1);
+      dirtyEpochOwner.writer.set(quantizer.entityId, dirtyEpoch.get(quantizer.entityId)! + 1);
     },
 
     getDirtyEpoch(name) {

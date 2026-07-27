@@ -8,4 +8,4 @@
 
 > **FromWorker** = [`FromWorkerMessage`](../../../type-aliases/FromWorkerMessage.md)
 
-Defined in: [\_spine/worker.d.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L282)
+Defined in: [\_spine/worker.d.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L283)

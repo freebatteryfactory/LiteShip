@@ -13,8 +13,8 @@ import { buildActiveSurfaceFacts } from '@liteship/audit';
 import {
   LITESHIP_ACTIVE_SURFACES,
   LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
-} from '../../../packages/cli/src/lib/active-surface-policy.js';
-import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/lib/liteship-typescript-aliases.js';
+} from '../../../packages/cli/src/internal/active-surface-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/internal/liteship-typescript-aliases.js';
 import { resolve } from 'node:path';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');

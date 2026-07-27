@@ -18,7 +18,7 @@ import type {
 import { projectResponsiveMediaPicture } from '@liteship/core';
 import type { ResponsiveMediaIntent, ResponsiveMediaPictureProjection } from '@liteship/core';
 import { projectCapabilityAxisValues } from '@liteship/detect';
-import type { CapabilityAxisValues, ExtendedDeviceCapabilities } from '@liteship/detect';
+import type { CapabilityAxisValues, CapabilityTierEvidence, ExtendedDeviceCapabilities } from '@liteship/detect';
 import { applyLiteshipHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import { applyResponsiveMediaVary } from './responsive-media.js';
@@ -41,6 +41,8 @@ export interface LiteshipLocals {
    * `@liteship/detect`), so they can never disagree.
    */
   readonly tiers: CapabilityAxisValues;
+  /** Per-axis observed/inferred provenance behind {@link tiers}. */
+  readonly tierEvidence: CapabilityTierEvidence;
   /** Parsed device capabilities. */
   readonly capabilities: ExtendedDeviceCapabilities;
   /**
@@ -140,8 +142,9 @@ export function liteshipMiddleware(
 
   return async (context: MiddlewareContext, next: () => Promise<Response>): Promise<Response> => {
     const edgeResolution = edgeAdapter ? await edgeAdapter.resolve(context.request.headers) : null;
-    const capabilities = edgeResolution?.capabilities ?? ClientHints.parseClientHints(context.request.headers);
-    const tier = edgeResolution?.tier ?? EdgeTier.detectTier(context.request.headers);
+    const parsed = edgeResolution ? null : ClientHints.parseEvidence(context.request.headers);
+    const capabilities = edgeResolution?.capabilities ?? parsed!.capabilities;
+    const tier = edgeResolution?.tier ?? EdgeTier.tierFromEvidence(parsed!);
 
     // Save-Data / DPR caps for the responsive-media projector, derived ONCE from the
     // request's real Client Hints (the production wiring of responsiveMediaCapabilities).
@@ -150,6 +153,7 @@ export function liteshipMiddleware(
     // Inject into locals for component access
     context.locals.liteship = {
       tiers: projectCapabilityAxisValues(tier),
+      tierEvidence: tier.tierEvidence,
       capabilities,
       responsiveMedia: (intent: ResponsiveMediaIntent): ResponsiveMediaPictureProjection =>
         projectResponsiveMediaPicture(intent, responsiveMediaCaps),

@@ -7,7 +7,7 @@
  */
 
 import { glossaryCommand, GLOSSARY_ENTRIES, type GlossaryEntry, type GlossaryPayload } from '@liteship/command';
-import { color, colorEnabled } from '../lib/ansi.js';
+import { color, colorEnabled } from '../internal/ansi.js';
 import { emit, emitError } from '../receipts.js';
 
 // Re-exported so existing tests and tooling keep their import site stable.

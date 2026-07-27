@@ -6,7 +6,7 @@
 
 # Interface: CSSCompileResult
 
-Defined in: [\_spine/compiler.d.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L34)
+Defined in: [\_spine/compiler.d.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L42)
 
 Deterministic stylesheet projection and its structured rule inventory.
 
@@ -16,7 +16,7 @@ Deterministic stylesheet projection and its structured rule inventory.
 
 > `readonly` **containerRules**: readonly [`CSSContainerRule`](CSSContainerRule.md)[]
 
-Defined in: [\_spine/compiler.d.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L35)
+Defined in: [\_spine/compiler.d.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L43)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:35](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **raw**: `string`
 
-Defined in: [\_spine/compiler.d.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L36)
+Defined in: [\_spine/compiler.d.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L44)

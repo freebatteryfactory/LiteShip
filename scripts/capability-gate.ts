@@ -26,7 +26,7 @@ import {
   LITESHIP_CAPABILITY_MODULES,
   LITESHIP_CAPABILITY_IDS,
   resolveCapabilitySites,
-} from '../packages/cli/src/lib/capability-policy.js';
+} from '../packages/cli/src/internal/capability-policy.js';
 import { isDirectExecution } from './audit/shared.js';
 
 /** Build the capability-link facts over `root` through the production policy (modules + ids + sites). */

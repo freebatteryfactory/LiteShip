@@ -201,7 +201,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "audience": "application-author",
       "category": "authoring",
       "surfaceClass": "paved-road",
-      "producer": "./authoring/adaptive.js",
+      "producer": "./adaptive.js",
       "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
       "replacement": "none",
       "userStory": "Define adaptive behavior, apply its attributes, inspect state, and emit its compiled plan.",
@@ -720,6 +720,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/core/media/compositor.test.ts",
         "tests/unit/core/media/compositor-pool.test.ts",
+        "tests/unit/core/media/video.test.ts",
         "tests/unit/core/media/frame-budget-runtime.test.ts",
         "tests/unit/core/media/token-buffer.test.ts"
       ],
@@ -835,7 +836,9 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "tests/unit/web/llm-adapter.test.ts",
         "tests/unit/liteship/facade-lifecycle-contract.test.ts",
         "tests/unit/web/web-runtime-primitives.test.ts",
-        "tests/unit/web/runtime-security-helpers.test.ts"
+        "tests/unit/web/runtime-security-helpers.test.ts",
+        "tests/unit/web/physical.test.ts",
+        "tests/unit/web/web-capture.test.ts"
       ],
       "remediation": "Correct the input at @liteship/web, retry Morph.morph(input, input), then run check/hermetic and check/test and check/test-e2e."
     },
@@ -1268,6 +1271,22 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "remediation": "Do not add artificial disposal; The state pool is bounded reusable memory with no active external handle. Verify tests/unit/core/media/compositor-pool.test.ts."
     },
     {
+      "operation": "createFrameSchedule",
+      "specifier": "liteship/media",
+      "owner": "@liteship/core/media",
+      "classification": "pure-allocation",
+      "disposal": "none",
+      "postDispose": "not-applicable",
+      "siblingCleanup": "not-applicable",
+      "proof": "tests/unit/core/media/video.test.ts",
+      "rationale": "The schedule is an immutable frame-coordinate projection and owns no clock, task, or external handle.",
+      "checkIds": [
+        "check/hermetic",
+        "check/test"
+      ],
+      "remediation": "Do not add artificial disposal; The schedule is an immutable frame-coordinate projection and owns no clock, task, or external handle. Verify tests/unit/core/media/video.test.ts."
+    },
+    {
       "operation": "createFrameBudget",
       "specifier": "liteship/media",
       "owner": "@liteship/core/media",
@@ -1298,6 +1317,22 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test"
       ],
       "remediation": "Do not add artificial disposal; The token buffer is bounded synchronous storage and owns no active resource. Verify tests/unit/core/media/token-buffer.test.ts."
+    },
+    {
+      "operation": "createVideoRenderer",
+      "specifier": "liteship/media",
+      "owner": "@liteship/core/media",
+      "classification": "pure-allocation",
+      "disposal": "none",
+      "postDispose": "not-applicable",
+      "siblingCleanup": "not-applicable",
+      "proof": "tests/unit/core/media/video.test.ts",
+      "rationale": "The renderer is a caller-driven async projection over a compositor and immutable frame schedule; it starts no independent task.",
+      "checkIds": [
+        "check/hermetic",
+        "check/test"
+      ],
+      "remediation": "Do not add artificial disposal; The renderer is a caller-driven async projection over a compositor and immutable frame schedule; it starts no independent task. Verify tests/unit/core/media/video.test.ts."
     },
     {
       "operation": "LLMAdapter.create",
@@ -1383,6 +1418,40 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test-e2e"
       ],
       "remediation": "Do not add artificial disposal; The helper returns an inert document fragment and starts no observer or background work. Verify tests/unit/web/runtime-security-helpers.test.ts."
+    },
+    {
+      "operation": "createPhysicalStateTracker",
+      "specifier": "liteship/runtime",
+      "owner": "@liteship/web",
+      "classification": "active-owned",
+      "disposal": "dispose-async",
+      "postDispose": "inert",
+      "siblingCleanup": "aggregate",
+      "proof": "tests/unit/web/physical.test.ts",
+      "rationale": "The tracker owns three document composition listeners; disposal removes every listener and clears the active IME state.",
+      "checkIds": [
+        "check/hermetic",
+        "check/test",
+        "check/test-e2e"
+      ],
+      "remediation": "Dispose through dispose-async and verify tests/unit/web/physical.test.ts; cleanup must remain idempotent, inert, and attempt-all."
+    },
+    {
+      "operation": "createWebCodecsCapture",
+      "specifier": "liteship/runtime",
+      "owner": "@liteship/web",
+      "classification": "active-owned",
+      "disposal": "dispose-async",
+      "postDispose": "inert",
+      "siblingCleanup": "aggregate",
+      "proof": "tests/unit/web/web-capture.test.ts",
+      "rationale": "The capture owns a VideoEncoder and mediabunny Output; terminal finalize and explicit disposal both release every host handle.",
+      "checkIds": [
+        "check/hermetic",
+        "check/test",
+        "check/test-e2e"
+      ],
+      "remediation": "Dispose through dispose-async and verify tests/unit/web/web-capture.test.ts; cleanup must remain idempotent, inert, and attempt-all."
     },
     {
       "operation": "createLLMSession",

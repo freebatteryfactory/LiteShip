@@ -8,6 +8,6 @@
 
 > **WorkerUpdate** = [`RemoveQuantizerUpdate`](../interfaces/RemoveQuantizerUpdate.md) \| [`EvaluateUpdate`](../interfaces/EvaluateUpdate.md) \| [`SetBlendUpdate`](../interfaces/SetBlendUpdate.md)
 
-Defined in: [\_spine/worker.d.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L138)
+Defined in: [\_spine/worker.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L139)
 
 Closed mutation language accepted by a batched worker update.

@@ -6,7 +6,7 @@
 
 # Interface: RevealSsrPaint
 
-Defined in: core/dist/motion/reveal.d.ts:66
+Defined in: core/dist/motion/reveal.d.ts:68
 
 SSR first-paint payload for a reveal boundary.
 
@@ -16,7 +16,7 @@ SSR first-paint payload for a reveal boundary.
 
 > `readonly` **boundaryAttr**: `string`
 
-Defined in: core/dist/motion/reveal.d.ts:69
+Defined in: core/dist/motion/reveal.d.ts:71
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/reveal.d.ts:69
 
 > `readonly` **cssVars**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: core/dist/motion/reveal.d.ts:68
+Defined in: core/dist/motion/reveal.d.ts:70
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/dist/motion/reveal.d.ts:68
 
 > `readonly` **state**: [`StateName`](../../schema/type-aliases/StateName.md)
 
-Defined in: core/dist/motion/reveal.d.ts:67
+Defined in: core/dist/motion/reveal.d.ts:69

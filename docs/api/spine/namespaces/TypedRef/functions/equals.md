@@ -8,7 +8,7 @@
 
 > **equals**(`a`, `b`): `boolean`
 
-Defined in: [\_spine/core.d.ts:916](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L916)
+Defined in: [\_spine/core.d.ts:1131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1131)
 
 ## Parameters
 

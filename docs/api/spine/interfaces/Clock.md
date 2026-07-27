@@ -6,7 +6,7 @@
 
 # Interface: Clock
 
-Defined in: [\_spine/core.d.ts:702](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L702)
+Defined in: [\_spine/core.d.ts:917](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L917)
 
 A monotonic-ish millisecond time source — the injectable shape runtime time is
 read through (mirrors `@liteship/core`'s `clock.ts` export). `now()` returns
@@ -21,7 +21,7 @@ to the runtime's `systemClock` (the monotonic `performance.now` boundary).
 
 > `readonly` **now**: () => `number`
 
-Defined in: [\_spine/core.d.ts:704](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L704)
+Defined in: [\_spine/core.d.ts:919](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L919)
 
 Current time in milliseconds.
 

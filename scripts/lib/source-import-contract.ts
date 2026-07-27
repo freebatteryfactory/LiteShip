@@ -1,7 +1,7 @@
 /** Structural import-contract scanner for source-owned entrypoints. @module */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, extname, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import { dirname, extname, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
 
 export interface ForbiddenImportFinding {
@@ -41,9 +41,39 @@ function runtimeSpecifiers(path: string): readonly string[] {
   return specifiers;
 }
 
+function sourceSpecifiers(path: string): readonly string[] {
+  const source = readFileSync(path, 'utf8');
+  const ast = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const specifiers: string[] = [];
+  const visit = (node: ts.Node): void => {
+    if (
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+      node.moduleSpecifier !== undefined &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      specifiers.push(node.moduleSpecifier.text);
+    } else if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments.length === 1 &&
+      ts.isStringLiteral(node.arguments[0]!)
+    ) {
+      specifiers.push(node.arguments[0].text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return specifiers;
+}
+
+/** Normalize one source path for deterministic receipts on Windows and POSIX. */
+export function normalizeSourcePath(path: string): string {
+  return path.replaceAll('\\', '/');
+}
+
 /** Parse the static runtime import/export specifiers for one source entrypoint. */
 export function sourceRuntimeImports(root: string, entry: string): readonly string[] {
-  return runtimeSpecifiers(resolve(root, entry)).sort((left, right) => left.localeCompare(right));
+  return [...runtimeSpecifiers(resolve(root, entry))].sort((left, right) => left.localeCompare(right));
 }
 
 function resolveSourceImport(importer: string, specifier: string): string | null {
@@ -51,13 +81,101 @@ function resolveSourceImport(importer: string, specifier: string): string | null
   const unresolved = resolve(dirname(importer), specifier);
   const extension = extname(unresolved);
   const candidates = [
-    unresolved,
-    ...(extension === '.js' ? [unresolved.slice(0, -3) + '.ts'] : []),
+    ...(extension === '.js' ? [unresolved.slice(0, -3) + '.ts', unresolved.slice(0, -3) + '.tsx'] : []),
     ...(extension === '.mjs' ? [unresolved.slice(0, -4) + '.mts'] : []),
     ...(extension === '.cjs' ? [unresolved.slice(0, -4) + '.cts'] : []),
-    ...(extension === '' ? [`${unresolved}.ts`, resolve(unresolved, 'index.ts')] : []),
+    ...(extension === ''
+      ? [
+          `${unresolved}.ts`,
+          `${unresolved}.tsx`,
+          `${unresolved}.mts`,
+          `${unresolved}.cts`,
+          resolve(unresolved, 'index.ts'),
+          resolve(unresolved, 'index.tsx'),
+          resolve(unresolved, 'index.mts'),
+          resolve(unresolved, 'index.cts'),
+        ]
+      : []),
+    unresolved,
   ];
-  return candidates.find((candidate) => existsSync(candidate)) ?? null;
+  const source = candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile());
+  return source === undefined ? null : realpathSync.native(source);
+}
+
+/** Recursively enumerate every TypeScript source file below a repo-owned directory. */
+export function sourceFilesUnder(root: string, directory: string): readonly string[] {
+  const rootPath = realpathSync.native(resolve(root));
+  const rootPrefix = `${rootPath}${sep}`;
+  const start = realpathSync.native(resolve(rootPath, directory));
+  if (start !== rootPath && !start.startsWith(rootPrefix)) {
+    throw new Error(`source directory escapes repository root: ${directory}`);
+  }
+  const queue = [start];
+  const files: string[] = [];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const entry of readdirSync(current, { withFileTypes: true }).sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )) {
+      const path = resolve(current, entry.name);
+      if (entry.isDirectory()) queue.push(path);
+      else if (entry.isFile() && /\.[cm]?tsx?$/u.test(entry.name)) files.push(path);
+    }
+  }
+  return files
+    .map((path) => normalizeSourcePath(relative(rootPath, path)))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+/**
+ * Enumerate the exact static source closure of one or more executable/public roots.
+ *
+ * Unlike {@link sourceRuntimeImports}, this includes type-only edges: a private
+ * declaration helper is inhabited when it contributes to emitted declarations even
+ * when it has no runtime edge. Literal dynamic imports are included; computed imports
+ * remain deliberately opaque rather than guessed.
+ */
+export function sourceImportClosure(root: string, entries: readonly string[]): readonly string[] {
+  const rootPath = realpathSync.native(resolve(root));
+  const rootPrefix = `${rootPath}${sep}`;
+  const queue = entries.map((entry) => {
+    const path = resolve(rootPath, entry);
+    return existsSync(path) && statSync(path).isFile() ? realpathSync.native(path) : path;
+  });
+  const visited = new Set<string>();
+
+  while (queue.length > 0) {
+    const importer = queue.shift()!;
+    if (visited.has(importer)) continue;
+    if (importer !== rootPath && !importer.startsWith(rootPrefix)) continue;
+    visited.add(importer);
+    for (const specifier of sourceSpecifiers(importer)) {
+      const dependency = resolveSourceImport(importer, specifier);
+      if (dependency !== null && dependency.startsWith(rootPrefix)) queue.push(dependency);
+    }
+  }
+
+  return [...visited]
+    .map((path) => normalizeSourcePath(relative(rootPath, path)))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+/**
+ * Report every source below `directories` that no admitted root reaches.
+ *
+ * Privacy markers do not excuse an orphan: callers select the private scopes,
+ * while this function compares their complete recursive census with the actual
+ * static import graph.
+ */
+export function unreachableSourceFiles(
+  root: string,
+  entries: readonly string[],
+  directories: readonly string[],
+): readonly string[] {
+  const reachable = new Set(sourceImportClosure(root, entries));
+  return [...new Set(directories.flatMap((directory) => sourceFilesUnder(root, directory)))]
+    .filter((file) => !reachable.has(file))
+    .sort((left, right) => left.localeCompare(right));
 }
 
 /**

@@ -16,7 +16,7 @@
  * diff/classify functions and carries NO heavy dependency: `@liteship/gauntlet` stays
  * the lean engine, so it never reads the filesystem, never content-addresses (the
  * fnv1a kernel lives in `@liteship/core`), and never reads a clock. A HOST (the CLI's
- * `packages/cli/src/lib/standards-surface.ts` extractor) does the heavy lifting —
+ * `packages/cli/src/internal/standards-surface.ts` extractor) does the heavy lifting —
  * read the live config off `@liteship/gauntlet`'s own exports + the committed
  * `benchmarks/`/`traceability/` artifacts, content-address the surface via the ONE
  * `contentAddressOf` kernel, diff it against the committed snapshot, apply the
@@ -38,6 +38,7 @@
  */
 
 import type { AssuranceLevel } from '../assurance.js';
+import { matchesGlob } from '../assurance-map.js';
 import {
   asSkipCapability,
   siteCarriesPlaceholderMarker,
@@ -118,6 +119,23 @@ export interface AssuranceSurface {
   /** The repo-relative glob this rule scopes. */
   readonly glob: string;
   /** The assurance level paths matching the glob carry — LOWERING it is a WEAKEN. */
+  readonly level: AssuranceLevel;
+  /**
+   * First-match priority in the ordered assurance map. Format-1 snapshots omit
+   * this field; format 2 records it so reordering overlapping rules is part of
+   * the standards surface rather than invisible serialization noise.
+   */
+  readonly order?: number;
+}
+
+/**
+ * One live file's resolved assurance under the ordered map. This is an internal
+ * member of the standards union, not a separate public concept: policy syntax
+ * and its governed effect travel in the same content-addressed receipt.
+ */
+interface AssuranceCoverageSurface {
+  readonly _tag: 'assurance-coverage';
+  readonly file: string;
   readonly level: AssuranceLevel;
 }
 
@@ -201,6 +219,7 @@ export type StandardsElement =
   | WaiverSurface
   | AlwaysBlockingSurface
   | AssuranceSurface
+  | AssuranceCoverageSurface
   | InvariantSurface
   | FloorSurface
   | SkipAllowlistSurface;
@@ -213,7 +232,7 @@ export type StandardsElement =
  */
 export interface StandardsSurface {
   /** Snapshot format version — bumped if the element schema itself changes. */
-  readonly snapshotFormat: 1;
+  readonly snapshotFormat: 1 | 2;
   /** Every standards element, in canonical order (sorted by {@link surfaceElementKey}). */
   readonly elements: readonly StandardsElement[];
   /** The content address (fnv1a over the canonical elements) — host-minted; drift detector. */
@@ -265,6 +284,8 @@ export function surfaceElementKey(el: StandardsElement): string {
       return `always-blocking::${el.ruleId}`;
     case 'assurance':
       return `assurance::${el.glob}`;
+    case 'assurance-coverage':
+      return `assurance-coverage::${el.file}`;
     case 'invariant':
       return `invariant::${el.id}`;
     case 'floor':
@@ -480,7 +501,77 @@ function diffAssurance(prior: AssuranceSurface, current: AssuranceSurface): read
       },
     ];
   }
+  if (prior.order !== current.order) {
+    return [
+      {
+        elementKey: key,
+        changeClass: 'neutral',
+        detail: `assurance for ${current.glob} first-match priority changed ${prior.order ?? '(legacy-unrecorded)'} → ${current.order ?? '(unrecorded)'} — per-file coverage rows decide whether the ordered policy's EFFECT strengthened or weakened.`,
+      },
+    ];
+  }
   return [];
+}
+
+function diffAssuranceCoverage(
+  prior: AssuranceCoverageSurface,
+  current: AssuranceCoverageSurface,
+): readonly StandardsChange[] {
+  const key = surfaceElementKey(current);
+  const priorRank = levelRank(prior.level);
+  const currentRank = levelRank(current.level);
+  if (currentRank < priorRank) {
+    return [
+      {
+        elementKey: key,
+        changeClass: 'weaken',
+        weakening: 'assurance-level-lowered',
+        detail: `effective assurance for ${current.file} LOWERED ${prior.level} → ${current.level} under the ordered map — live source lost rigor.`,
+      },
+    ];
+  }
+  if (currentRank > priorRank) {
+    return [
+      {
+        elementKey: key,
+        changeClass: 'strengthen',
+        detail: `effective assurance for ${current.file} raised ${prior.level} → ${current.level} under the ordered map.`,
+      },
+    ];
+  }
+  return [];
+}
+
+function semanticAssuranceRemoval(
+  el: AssuranceSurface,
+  currentCoverage: ReadonlyMap<string, AssuranceLevel>,
+): StandardsChange | undefined {
+  if (currentCoverage.size === 0) return undefined;
+  const matched = [...currentCoverage.keys()].filter((file) => matchesGlob(file, el.glob));
+  if (matched.length === 0) {
+    return {
+      elementKey: surfaceElementKey(el),
+      changeClass: 'neutral',
+      detail: `assurance rule for ${el.glob} (${el.level}) removed after it matched zero live governed paths — dead policy was deleted; no source lost rigor.`,
+    };
+  }
+
+  const demoted = matched.filter((file) => levelRank(currentCoverage.get(file) ?? 'L1') < levelRank(el.level));
+  if (demoted.length === 0) {
+    return {
+      elementKey: surfaceElementKey(el),
+      changeClass: 'neutral',
+      detail: `assurance rule for ${el.glob} (${el.level}) removed, but all ${matched.length} live governed path(s) remain at ${el.level} or higher under the ordered live map — the rule was superseded without weakening coverage.`,
+    };
+  }
+
+  const examples = demoted.slice(0, 3).join(', ');
+  return {
+    elementKey: surfaceElementKey(el),
+    changeClass: 'weaken',
+    weakening: 'assurance-level-lowered',
+    detail: `assurance rule for ${el.glob} (${el.level}) removed and ${demoted.length}/${matched.length} live governed path(s) are now lower (${examples}${demoted.length > 3 ? ', …' : ''}) — real source lost its rigor band.`,
+  };
 }
 
 /** Diff an invariant MODIFY (same id) — a lowered level OR proof→waiver is a weaken. */
@@ -565,7 +656,7 @@ function diffSkipAllowlist(prior: SkipAllowlistSurface, current: SkipAllowlistSu
 }
 
 /** The detail message for a REMOVED element (gone from the live surface) — always a weaken. */
-function removalChange(el: StandardsElement): StandardsChange {
+function removalChange(el: StandardsElement, currentCoverage: ReadonlyMap<string, AssuranceLevel>): StandardsChange {
   const key = surfaceElementKey(el);
   switch (el._tag) {
     case 'gate':
@@ -597,11 +688,19 @@ function removalChange(el: StandardsElement): StandardsChange {
         detail: `floor ${el.name} REMOVED — a committed numeric floor dropped (no floor demands no rigor).`,
       };
     case 'assurance':
+      return (
+        semanticAssuranceRemoval(el, currentCoverage) ?? {
+          elementKey: key,
+          changeClass: 'weaken',
+          weakening: 'assurance-level-lowered',
+          detail: `assurance rule for ${el.glob} (${el.level}) REMOVED — a path lost its rigor band (defaults to the weak L1 floor).`,
+        }
+      );
+    case 'assurance-coverage':
       return {
         elementKey: key,
-        changeClass: 'weaken',
-        weakening: 'assurance-level-lowered',
-        detail: `assurance rule for ${el.glob} (${el.level}) REMOVED — a path lost its rigor band (defaults to the weak L1 floor).`,
+        changeClass: 'neutral',
+        detail: `effective-assurance subject ${el.file} removed from the live governed census — deleted source carries no remaining rigor claim.`,
       };
     case 'waiver':
       // A REMOVED waiver = LESS is waived = a STRENGTHEN.
@@ -649,6 +748,13 @@ function additionChange(el: StandardsElement): StandardsChange {
       detail: `NEW sanctioned skip for ${el.file} (site \`${el.site}\`, capability: ${el.capability}) — one more capability-gated skip SITE is allowed than the committed snapshot recorded. This is owner-SIGNABLE (a capability-gate skip is conditional + reviewable): add a matching owner sign-off, or regenerate the snapshot intentionally if the capability gate is genuinely honest. Until signed/regenerated it BLOCKS.`,
     };
   }
+  if (el._tag === 'assurance-coverage') {
+    return {
+      elementKey: key,
+      changeClass: 'neutral',
+      detail: `effective-assurance subject ${el.file} admitted at ${el.level} — a new live source path is now enumerated by the standards surface.`,
+    };
+  }
   // Adding any other element (gate, invariant, always-blocking rule, floor,
   // assurance band) is a STRENGTHEN.
   return {
@@ -674,6 +780,11 @@ export function diffStandardsSurface(
   const priorByKey = new Map(prior.map((el) => [surfaceElementKey(el), el] as const));
   const currentByKey = new Map(current.map((el) => [surfaceElementKey(el), el] as const));
   const changes: StandardsChange[] = [];
+  const currentCoverage = new Map(
+    current
+      .filter((element): element is AssuranceCoverageSurface => element._tag === 'assurance-coverage')
+      .map((element) => [element.file, element.level] as const),
+  );
 
   for (const [key, currentEl] of currentByKey) {
     const priorEl = priorByKey.get(key);
@@ -686,6 +797,8 @@ export function diffStandardsSurface(
     else if (priorEl._tag === 'waiver' && currentEl._tag === 'waiver') changes.push(...diffWaiver(priorEl, currentEl));
     else if (priorEl._tag === 'assurance' && currentEl._tag === 'assurance')
       changes.push(...diffAssurance(priorEl, currentEl));
+    else if (priorEl._tag === 'assurance-coverage' && currentEl._tag === 'assurance-coverage')
+      changes.push(...diffAssuranceCoverage(priorEl, currentEl));
     else if (priorEl._tag === 'invariant' && currentEl._tag === 'invariant')
       changes.push(...diffInvariant(priorEl, currentEl));
     else if (priorEl._tag === 'floor' && currentEl._tag === 'floor') changes.push(...diffFloor(priorEl, currentEl));
@@ -705,7 +818,7 @@ export function diffStandardsSurface(
     // signal; a MODIFY is impossible, only add/remove.)
   }
   for (const [key, priorEl] of priorByKey) {
-    if (!currentByKey.has(key)) changes.push(removalChange(priorEl));
+    if (!currentByKey.has(key)) changes.push(removalChange(priorEl, currentCoverage));
   }
 
   return changes.sort((a, b) => codeUnitCompare(a.elementKey, b.elementKey));

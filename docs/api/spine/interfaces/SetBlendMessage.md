@@ -6,7 +6,7 @@
 
 # Interface: SetBlendMessage
 
-Defined in: [\_spine/worker.d.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L111)
+Defined in: [\_spine/worker.d.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L112)
 
 Host command updating the blend weight of one compositor state.
 
@@ -16,7 +16,7 @@ Host command updating the blend weight of one compositor state.
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/worker.d.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L113)
+Defined in: [\_spine/worker.d.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L114)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:113](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"set-blend"`
 
-Defined in: [\_spine/worker.d.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L112)
+Defined in: [\_spine/worker.d.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L113)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/worker.d.ts:112](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **weights**: `Record`\<`string`, `number`\>
 
-Defined in: [\_spine/worker.d.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L114)
+Defined in: [\_spine/worker.d.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L115)

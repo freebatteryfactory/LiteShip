@@ -8,7 +8,7 @@
 
 > **make**(): [`Lifetime`](../../../interfaces/Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L162)
+Defined in: [\_spine/core.d.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L168)
 
 Build a fresh, undisposed Lifetime.
 

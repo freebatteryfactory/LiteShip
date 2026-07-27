@@ -6,7 +6,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { doctor } from '../../../../packages/cli/src/commands/doctor.js';
-import * as spawnLib from '../../../../packages/cli/src/lib/spawn.js';
+import * as spawnLib from '../../../../packages/cli/src/internal/spawn.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 function writeCloudflareSandbox(base: string, extra?: { wrangler?: boolean; astroConfig?: boolean }): void {

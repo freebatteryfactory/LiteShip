@@ -8,7 +8,7 @@
 
 > **resolveRevealInitialState**(`intent`, `opts`): [`StateName`](../../schema/type-aliases/StateName.md)
 
-Defined in: core/dist/motion/reveal.d.ts:79
+Defined in: core/dist/motion/reveal.d.ts:81
 
 Resolve the discrete state for SSR / reduced-motion first paint.
 

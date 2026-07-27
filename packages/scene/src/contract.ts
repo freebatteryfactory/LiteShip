@@ -12,6 +12,7 @@
  */
 
 import type { Site } from '@liteship/core';
+import type { RuntimeWritePlan } from '@liteship/core/motion';
 import type {
   TrackId as _TrackId,
   TrackKind as _TrackKind,
@@ -55,6 +56,8 @@ export interface VideoTrack<M extends FrameMark = FrameMark> {
    * Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer', id: 'hero-boundary' } })
    */
   readonly source: unknown;
+  /** Optional executable motion floor sampled per entity over this track's frame range. */
+  readonly motion?: RuntimeWritePlan;
   readonly layer?: number;
   /** Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelope` component VideoSystem reads each tick. */
   readonly envelope?: TrackEnvelope;

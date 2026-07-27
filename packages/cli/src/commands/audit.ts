@@ -10,7 +10,7 @@
 import { wallClock } from '@liteship/core';
 import { auditCommand, type AuditPayload, type AuditEngineSummary } from '@liteship/command';
 import { runAuditPasses } from '@liteship/audit';
-import { loadProfile } from '../lib/load-profile.js';
+import { loadProfile } from '../internal/load-profile.js';
 import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt emitted by `liteship audit`. */
@@ -50,7 +50,7 @@ export async function audit(
   const cwd = opts.cwd ?? process.cwd();
 
   if (opts.consumerApp) {
-    const { scanConsumerAppSource } = await import('../lib/consumer-app-audit.js');
+    const { scanConsumerAppSource } = await import('../internal/consumer-app-audit.js');
     // A filesystem failure mid-scan (permissions, file deleted between walk and
     // read) must produce the same structured emitError envelope the rest of the
     // CLI guarantees — not an unhandled rejection.

@@ -8,4 +8,4 @@
 
 > `const` **ROOT\_TYPE\_BUDGET\_MAX**: `30` = `30`
 
-Defined in: [liteship/src/export-budget.ts:936](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L936)
+Defined in: [liteship/src/export-budget.ts:940](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L940)

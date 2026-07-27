@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { explainCommand, type ExplainPayload } from '@liteship/command';
-import { buildApiSymbolResolver } from '../../../packages/cli/src/lib/api-index.js';
+import { buildApiSymbolResolver } from '../../../packages/cli/src/internal/api-index.js';
 
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -73,6 +73,7 @@ describe('@liteship/command explain command — diagnostic-code arm', () => {
     ['schema/type', 'schema', '@liteship/core/schema'],
     ['compiler/css/unknown-state-key', 'compiler', '@liteship/compiler'],
     ['genui/unknown-component', 'genui', '@liteship/genui'],
+    ['web/morph/preserve-id-missing', 'web', '@liteship/web'],
     ['astro/wgpu/webgpu-unavailable', 'astro', '@liteship/astro'],
     ['cli/usage', 'cli', '@liteship/cli'],
     ['migrate/malformed-input', 'migrate', '@liteship/compiler/migrate'],

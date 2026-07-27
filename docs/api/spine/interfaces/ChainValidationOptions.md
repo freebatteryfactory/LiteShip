@@ -6,7 +6,7 @@
 
 # Interface: ChainValidationOptions
 
-Defined in: [\_spine/core.d.ts:1002](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1002)
+Defined in: [\_spine/core.d.ts:1217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1217)
 
 Optional trust material and bounds used while validating a receipt chain.
 
@@ -16,7 +16,7 @@ Optional trust material and bounds used while validating a receipt chain.
 
 > `readonly` `optional` **base?**: `string`
 
-Defined in: [\_spine/core.d.ts:1003](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1003)
+Defined in: [\_spine/core.d.ts:1218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1218)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1003](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **checkpoint?**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [\_spine/core.d.ts:1004](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1004)
+Defined in: [\_spine/core.d.ts:1219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1219)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1004](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **verifyCheckpoint?**: (`checkpoint`) => `Promise`\<`boolean`\>
 
-Defined in: [\_spine/core.d.ts:1012](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1012)
+Defined in: [\_spine/core.d.ts:1227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1227)
 
 Provenance verifier for the checkpoint attestation (injected capability). The
 structural checks prove the checkpoint is well-formed but not that it attests to

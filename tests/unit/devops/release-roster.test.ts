@@ -26,7 +26,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { PUBLISHABLE_ROSTER, collectRosterDrift } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 

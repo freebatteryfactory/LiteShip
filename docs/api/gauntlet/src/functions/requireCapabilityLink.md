@@ -8,7 +8,7 @@
 
 > **requireCapabilityLink**(`context`, `gateId`): [`CapabilityLinkFacts`](../interfaces/CapabilityLinkFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:1180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1180)
+Defined in: [gauntlet/src/gate.ts:1480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1480)
 
 Read the injected [CapabilityLinkFacts](../interfaces/CapabilityLinkFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) (never silently no-ops the gate whose whole job is the capability-link

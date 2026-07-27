@@ -45,9 +45,16 @@ export { bridgeSceneToGraph } from './scene-bridge.js';
 export { writeContinuousMap } from './write-continuous-map.js';
 // Continuous-motion FLOOR (client:motion): the production driver of writeContinuousMap.
 // Native `animation-timeline` owns motion where supported; this scrubs the SSR-inlined
-// lowered program (sampling the SAME easing kernel as the CSS linear()) everywhere else.
-export { initMotionDirective, parseMotionProgram, nativeTimelineSupported, MOTION_PROGRAM_ATTR } from './motion.js';
-export type { SerializedMotionProgram } from './motion.js';
+// directive payload (sampling the SAME easing kernel as the CSS linear()) everywhere else.
+export {
+  initMotionDirective,
+  decodeMotionDirectivePayload,
+  parseMotionDirectivePayload,
+  serializeMotionDirectivePayload,
+  nativeTimelineSupported,
+  MOTION_PAYLOAD_ATTR,
+} from './motion.js';
+export type { MotionDirectivePayload } from './motion.js';
 export type {
   BridgeableScene,
   BridgeClock,

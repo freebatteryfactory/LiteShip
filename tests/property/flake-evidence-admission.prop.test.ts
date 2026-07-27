@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { IntegrityDigest } from '@liteship/core';
-import { createCurePacket } from '../../packages/cli/src/lib/cure-packet.js';
+import { createCurePacket } from '../../packages/cli/src/internal/cure-packet.js';
 import {
   assertFlakeEvidenceCurrent,
   buildFlakeEvidence,

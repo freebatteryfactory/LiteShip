@@ -6,7 +6,7 @@
 
 # Interface: CompositeState
 
-Defined in: [\_spine/core.d.ts:439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L439)
+Defined in: [\_spine/core.d.ts:458](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L458)
 
 Named compositor state with deterministic numeric properties.
 
@@ -16,7 +16,7 @@ Named compositor state with deterministic numeric properties.
 
 > `readonly` **blend**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
 
-Defined in: [\_spine/core.d.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L441)
+Defined in: [\_spine/core.d.ts:460](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L460)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:441](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **discrete**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/core.d.ts:440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L440)
+Defined in: [\_spine/core.d.ts:459](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L459)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:440](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **outputs**: `object`
 
-Defined in: [\_spine/core.d.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L442)
+Defined in: [\_spine/core.d.ts:461](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L461)
 
 #### aria
 

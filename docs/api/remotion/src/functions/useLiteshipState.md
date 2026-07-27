@@ -8,7 +8,7 @@
 
 > **useLiteshipState**(): [`CompositeState`](../../../liteship/src/media/interfaces/CompositeState.md)
 
-Defined in: [remotion/src/composition.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L148)
+Defined in: [remotion/src/composition.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L149)
 
 Hook that reads the `CompositeState` for the current Remotion frame
 from the nearest [Provider](Provider.md). Returns a structurally-empty state

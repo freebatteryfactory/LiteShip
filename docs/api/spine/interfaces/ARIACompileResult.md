@@ -6,7 +6,7 @@
 
 # Interface: ARIACompileResult\<S\>
 
-Defined in: [\_spine/compiler.d.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L167)
+Defined in: [\_spine/compiler.d.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L179)
 
 Accessibility attributes and announcements projected per adaptive state.
 
@@ -22,7 +22,7 @@ Accessibility attributes and announcements projected per adaptive state.
 
 > `readonly` **currentAttributes**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/compiler.d.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L169)
+Defined in: [\_spine/compiler.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L181)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [\_spine/compiler.d.ts:169](https://github.com/freebatteryfactory/Li
 
 > `readonly` **stateAttributes**: `Record`\<`S`, `Record`\<`string`, `string`\>\>
 
-Defined in: [\_spine/compiler.d.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L168)
+Defined in: [\_spine/compiler.d.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L180)

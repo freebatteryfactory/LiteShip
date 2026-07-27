@@ -10,10 +10,6 @@ Defined in: web/dist/types.d.ts:142
 
 Morph rejection when preserve constraints are violated.
 
-## Extended by
-
-- [`LiteshipMorphRejectedDetail`](LiteshipMorphRejectedDetail.md)
-
 ## Properties
 
 ### hint?

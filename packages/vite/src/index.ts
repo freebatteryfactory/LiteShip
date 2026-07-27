@@ -89,8 +89,8 @@ export type {
 export { collectTokenManifest, collectThemeManifest, compileCollectedTokensCss } from './token-manifest.js';
 
 // HMR
-export type { HMRPayload } from './hmr.js';
-export { handleHMR } from './hmr.js';
+export type { HMRBoundaryIdentity, HMRPayload } from './hmr.js';
+export { handleHMR, isHMRPayload } from './hmr.js';
 
 // Generic primitive resolution. `KIND_META` is intentionally not exported —
 // it's the internal static lookup table that powers `resolvePrimitive`.

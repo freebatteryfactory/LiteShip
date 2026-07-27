@@ -6,7 +6,21 @@
  * Envelope / Ease components every tick.
  */
 import { describe, it, expect } from 'vitest';
-import { Track, Beat, fade, compileScene, SceneRuntime, ease } from '@liteship/scene';
+import {
+  AudioSourcePart,
+  Beat,
+  BlendPart,
+  GainPart,
+  OpacityPart,
+  SceneRuntime,
+  Track,
+  TrackIdPart,
+  TransitionKindPart,
+  VideoSourcePart,
+  compileScene,
+  ease,
+  fade,
+} from '@liteship/scene';
 import type { SceneContract } from '@liteship/scene';
 
 describe('scene sugar wiring (Beat + envelope + ease, end to end)', () => {
@@ -47,10 +61,10 @@ describe('scene sugar wiring (Beat + envelope + ease, end to end)', () => {
     try {
       // Frame 0: hero in range but fade.in starts at 0 — opacity 0.
       await handle.tick(0);
-      let entities = handle.world.query('VideoSource');
+      let entities = handle.world.query(VideoSourcePart, TrackIdPart, OpacityPart);
       const opacityOf = (id: string): number => {
-        const e = entities.find((x) => (x.components.get('trackId') as string) === id)!;
-        return (e as unknown as { _opacity: number })._opacity;
+        const e = entities.find((x) => x.get(TrackIdPart) === id)!;
+        return e.get(OpacityPart);
       };
 
       expect(opacityOf('hero')).toBe(0);
@@ -59,17 +73,17 @@ describe('scene sugar wiring (Beat + envelope + ease, end to end)', () => {
 
       // Advance to 500ms → frame 30 → fade.in(Beat(2)) factor = 30 / 56.25.
       await handle.tick(500);
-      entities = handle.world.query('VideoSource');
+      entities = handle.world.query(VideoSourcePart, TrackIdPart, OpacityPart);
       expect(opacityOf('hero')).toBeCloseTo(30 / 56.25, 6);
 
       // Advance to 1500ms → frame 90 → past the 56.25-frame span → fully faded in.
       await handle.tick(1000);
-      entities = handle.world.query('VideoSource');
+      entities = handle.world.query(VideoSourcePart, TrackIdPart, OpacityPart);
       expect(opacityOf('hero')).toBe(1);
 
       // Advance to 2500ms → frame 150 → outro (from frame 112.5) now visible.
       await handle.tick(1000);
-      entities = handle.world.query('VideoSource');
+      entities = handle.world.query(VideoSourcePart, TrackIdPart, OpacityPart);
       expect(opacityOf('outro')).toBe(1);
     } finally {
       await handle.release();
@@ -82,20 +96,18 @@ describe('scene sugar wiring (Beat + envelope + ease, end to end)', () => {
       // 1000ms → frame 60. Transition spans frames [0, 112.5): local = 60/112.5.
       await handle.tick(1000);
 
-      const audio = handle.world.query('AudioSource');
-      const bed = audio[0] as unknown as { _gain: number };
+      const audio = handle.world.query(AudioSourcePart, GainPart);
+      const bed = audio[0]!;
       // bed range [0, 225), fade.out span 56.25 → still in the hold-at-1 region.
-      expect(bed._gain).toBe(1);
+      expect(bed.get(GainPart)).toBe(1);
 
-      const transitions = handle.world.query('TransitionKind');
-      const xfade = transitions[0] as unknown as { _blend: number };
-      expect(xfade._blend).toBeCloseTo(ease.cubic(60 / 112.5), 6);
+      const transitions = handle.world.query(TransitionKindPart, BlendPart);
+      expect(transitions[0]!.get(BlendPart)).toBeCloseTo(ease.cubic(60 / 112.5), 6);
 
       // 3500ms → frame 210. Last 56.25 frames of [0,225): gain = (225 - 210) / 56.25.
       await handle.tick(2500);
-      const audioLate = handle.world.query('AudioSource');
-      const bedLate = audioLate[0] as unknown as { _gain: number };
-      expect(bedLate._gain).toBeCloseTo((225 - 210) / 56.25, 6);
+      const audioLate = handle.world.query(AudioSourcePart, GainPart);
+      expect(audioLate[0]!.get(GainPart)).toBeCloseTo((225 - 210) / 56.25, 6);
     } finally {
       await handle.release();
     }

@@ -6,7 +6,7 @@
 
 # Interface: CaptureResult
 
-Defined in: [\_spine/core.d.ts:1394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1394)
+Defined in: [\_spine/core.d.ts:1631](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1631)
 
 Completed capture bytes and their media metadata.
 
@@ -16,7 +16,7 @@ Completed capture bytes and their media metadata.
 
 > `readonly` **blob**: `Blob`
 
-Defined in: [\_spine/core.d.ts:1395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1395)
+Defined in: [\_spine/core.d.ts:1632](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1632)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1395](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **codec**: `string`
 
-Defined in: [\_spine/core.d.ts:1396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1396)
+Defined in: [\_spine/core.d.ts:1633](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1633)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1396](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **durationMs**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:1398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1398)
+Defined in: [\_spine/core.d.ts:1635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1635)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1398](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **frames**: `number`
 
-Defined in: [\_spine/core.d.ts:1397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1397)
+Defined in: [\_spine/core.d.ts:1634](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1634)

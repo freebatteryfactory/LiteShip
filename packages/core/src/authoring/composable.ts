@@ -10,14 +10,15 @@
 import type { ContentAddress } from '../schema/brands.js';
 import type { Token } from './token.js';
 import type { Style } from './style.js';
-import type { World } from '../ecs.js';
-import type { DenseStore, EntityId } from '../ecs.js';
+import type { World } from '../ecs/index.js';
+import type { AdmittedPartValue, DenseStore, DenseStoreWriter, EntityId, Part } from '../ecs/index.js';
 import { Token as TokenNS } from './token.js';
 import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
-import { createDenseStore } from '../ecs.js';
+import { admitPart, createDenseStore, definePart } from '../ecs/index.js';
 import { contentAddressOf } from '../evidence/content-address.js';
 import { ValidationError } from '@liteship/error';
+import { schema } from '../schema/constructors.js';
 
 // ---------------------------------------------------------------------------
 // Entity Composition Types
@@ -44,6 +45,24 @@ export interface ComposableEntity<T extends EntityComponents = EntityComponents>
   readonly _tag: 'ComposableEntity';
 }
 
+const ComposableComponentsPart = definePart('composable-components', schema.record(schema.unknown));
+const composableAdmissions = new WeakMap<object, AdmittedPartValue<typeof ComposableComponentsPart>>();
+
+function admitComposableComponents(components: EntityComponents): AdmittedPartValue<typeof ComposableComponentsPart> {
+  const admission = admitPart(ComposableComponentsPart, components);
+  if (!admission.ok) {
+    throw ValidationError(
+      'ComposableWorld.spawn',
+      `components failed ECS admission: ${admission.error.map((issue) => issue.message).join('; ')}`,
+    );
+  }
+  return admission.value;
+}
+
+function admissionFor(entity: ComposableEntity): AdmittedPartValue<typeof ComposableComponentsPart> {
+  return composableAdmissions.get(entity) ?? admitComposableComponents(entity.components);
+}
+
 // ---------------------------------------------------------------------------
 // Composable Factory
 // ---------------------------------------------------------------------------
@@ -66,13 +85,16 @@ function makeEntityId(components: EntityComponents): ContentAddress {
  * ADR-0046 — `create` allocates a content-addressed unit).
  */
 export function createComposable<T extends EntityComponents>(components: T): ComposableEntity<T> {
-  const id = makeEntityId(components);
-
-  return {
+  const admission = admitComposableComponents(components);
+  const ownedComponents = admission.value as T;
+  const id = makeEntityId(ownedComponents);
+  const entity = Object.freeze({
     id,
-    components,
+    components: ownedComponents,
     _tag: 'ComposableEntity',
-  };
+  } as const);
+  composableAdmissions.set(entity, admission);
+  return entity;
 }
 
 function _compose<T extends EntityComponents>(
@@ -106,17 +128,6 @@ function _merge<T extends EntityComponents>(...entities: ComposableEntity<T>[]):
 // ECS Integration
 // ---------------------------------------------------------------------------
 
-/**
- * Convert a runtime `Map<string, unknown>` (from ECS query results) into a typed
- * `Pick<Schema, K>`. The ECS query filters guarantee the required keys are present;
- * this helper contains the one boundary cast where runtime shape joins the type lattice.
- */
-function entriesToPick<Schema extends EntityComponents, K extends keyof Schema>(
-  components: ReadonlyMap<string, unknown>,
-): Pick<Schema, K> {
-  return Object.fromEntries(components) as Pick<Schema, K>;
-}
-
 interface TypedComposableWorld<Schema extends EntityComponents = EntityComponents> {
   spawn<T extends Schema>(components: T): ComposableEntity<T>;
   spawnWith<T extends Schema>(entity: ComposableEntity<T>): ComposableEntity<T>;
@@ -133,29 +144,27 @@ function makeComposableWorld<Schema extends EntityComponents = EntityComponents>
   return {
     spawn<T extends Schema>(components: T): ComposableEntity<T> {
       const entity = createComposable(components);
-      const ecsId = world.spawn(components);
+      const ecsId = world.spawn(admissionFor(entity));
       addressToEntityId.set(entity.id, ecsId);
       return entity;
     },
 
     spawnWith<T extends Schema>(entity: ComposableEntity<T>): ComposableEntity<T> {
-      const ecsId = world.spawn(entity.components);
+      const ecsId = world.spawn(admissionFor(entity));
       addressToEntityId.set(entity.id, ecsId);
       return entity;
     },
 
     query<K extends keyof Schema>(...componentTypes: K[]): readonly ComposableEntity<Pick<Schema, K>>[] {
-      const names = [...componentTypes].map((k) => String(k)).sort();
-      const entities = world.query(...names);
+      const names = [...componentTypes].map((key) => String(key)).sort();
+      const entities = world.query(ComposableComponentsPart);
       return [...entities]
         .sort((left, right) => left.id.localeCompare(right.id))
-        .map((entityShape) => {
-          // world.query guarantees entityShape.components contains at least the K keys
-          // that were queried for; convert the runtime Map<string, unknown> to the typed
-          // Pick<Schema, K> via a single contained cast (runtime shape is validated by
-          // the ECS query filter).
-          const components = entriesToPick<Schema, K>(entityShape.components);
-          return createComposable(components);
+        .map((entityShape) => entityShape.get(ComposableComponentsPart))
+        .filter((components) => names.every((name) => Object.hasOwn(components, name)))
+        .map((components) => {
+          const picked = Object.fromEntries(names.map((name) => [name, components[name]])) as Pick<Schema, K>;
+          return createComposable(picked);
         });
     },
 
@@ -216,17 +225,20 @@ function makeComposableDenseStore(world: World): ComposableDenseStore {
   // Maintain a mapping from ContentAddress to ECS EntityId for dense store ops
   const addressToEntityId = new Map<ContentAddress, EntityId>();
   let denseStore: DenseStore | undefined;
+  let denseWriter: DenseStoreWriter | undefined;
 
   return {
     create(name: string, capacity: number): DenseStore {
-      const store = createDenseStore(name, capacity);
-      world.addDenseStore(store);
-      denseStore = store;
-      return store;
+      const part: Part<number> = definePart(name, schema.number);
+      const owned = createDenseStore(part, capacity);
+      world.addDenseStore(owned);
+      denseStore = owned.store;
+      denseWriter = owned.writer;
+      return owned.store;
     },
 
     store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): void {
-      if (!denseStore) {
+      if (!denseStore || !denseWriter) {
         throw ValidationError(
           'ComposableWorld.store',
           'no dense store exists — call world.create(name, capacity) before world.store(entity, value).',
@@ -236,10 +248,10 @@ function makeComposableDenseStore(world: World): ComposableDenseStore {
       let ecsId = addressToEntityId.get(entity.id);
       if (!ecsId) {
         // Spawn into the world to get an EntityId, then track mapping
-        ecsId = world.spawn(entity.components);
+        ecsId = world.spawn(admissionFor(entity));
         addressToEntityId.set(entity.id, ecsId);
       }
-      denseStore.set(ecsId, value);
+      denseWriter.set(ecsId, value);
     },
 
     retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): number | undefined {
@@ -275,14 +287,14 @@ export const Composable: ComposableFactory = {
 };
 
 /**
- * Bridge between a raw ECS {@link World} and typed {@link ComposableEntity}
+ * Bridge between a raw ECS `World` from `@liteship/core/ecs` and typed {@link ComposableEntity}
  * operations (`spawn`, `query`, `evaluate`) plus a thin dense-store integration.
  */
 // OBLIGATION: OBL-REACTIVE-SWEEP-3
 export const ComposableWorld = {
-  /** Wrap a {@link World} with the typed composable-entity API. */
+  /** Wrap an `@liteship/core/ecs` `World` with the typed composable-entity API. */
   make: makeComposableWorld,
-  /** Build a dense-store bridge over a {@link World} for per-entity numeric data. */
+  /** Build a dense-store bridge over an `@liteship/core/ecs` `World` for per-entity numeric data. */
   dense: makeComposableDenseStore,
 };
 

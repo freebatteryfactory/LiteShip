@@ -8,7 +8,7 @@
 
 > **create**(`schemaHash`, `payload`): `Promise`\<[`TypedRef`](../../../interfaces/TypedRef.md)\>
 
-Defined in: [\_spine/core.d.ts:915](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L915)
+Defined in: [\_spine/core.d.ts:1130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1130)
 
 ## Parameters
 

@@ -8,7 +8,7 @@
 
 > **combine**\<`T`, `U`\>(`sources`, `combiner`): [`Derived`](../../../interfaces/Derived.md)\<`U`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:688](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L688)
+Defined in: [\_spine/core.d.ts:903](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L903)
 
 ## Type Parameters
 

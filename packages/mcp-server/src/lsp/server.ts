@@ -160,6 +160,16 @@ export function projectLspCapabilities(catalog: readonly LspMethodDescriptor[]):
 /** Server capabilities projected from the same method catalog used for routing. */
 export const LSP_SERVER_CAPABILITIES = projectLspCapabilities(LSP_METHOD_CATALOG);
 
+/** Exact inbound route subjects; the exhaustive dispatch switch consumes this catalog union. */
+export function lspRoutedMethodNames(): readonly string[] {
+  return LSP_METHOD_CATALOG.filter((entry) => entry.direction === 'client-to-server').map((entry) => entry.method);
+}
+
+/** Exact outbound methods emitted by the two production notification builders. */
+export function lspNotificationProducerMethods(): readonly string[] {
+  return [PUBLISH_DIAGNOSTICS_METHOD, LOG_MESSAGE_METHOD];
+}
+
 /** Server identity in the `initialize` response (§InitializeResult.serverInfo). */
 function lspServerInfo(): { readonly name: 'liteship-gauntlet-lsp'; readonly version: string } {
   return { name: 'liteship-gauntlet-lsp', version: serverInfo().version };

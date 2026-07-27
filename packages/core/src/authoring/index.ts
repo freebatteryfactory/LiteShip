@@ -117,7 +117,7 @@ export type {
   Decision,
 } from './capsule.js';
 
-export { TypeValidator } from './capsule.js';
+export { ASSEMBLY_KINDS, TypeValidator } from './capsule.js';
 
 export { defineCapsule, defineCapsuleCatalog } from './assembly.js';
 

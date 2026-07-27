@@ -8,4 +8,4 @@
 
 > **CompileContext** = [`EdgeHostCompileContext`](../../../interfaces/EdgeHostCompileContext.md)
 
-Defined in: [\_spine/edge.d.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L305)
+Defined in: [\_spine/edge.d.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L331)

@@ -114,6 +114,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
     glob: 'packages/gauntlet/src/{engine,authority,waiver,gate,assurance-map,finding,assurance}.ts',
     level: 'L4',
   },
+  { glob: 'packages/gauntlet/src/facts/standards-facts.ts', level: 'L4' },
 
   // ── L3: deterministic runtime/projection/cache + authority-bearing tooling ────
   // Definition/artifact addressing owners. A source-derived census in
@@ -124,7 +125,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
     level: 'L3',
   },
   { glob: 'packages/core/src/authoring/capsules/{canonical-cbor,canonical-cbor-decode}.ts', level: 'L3' },
-  { glob: 'packages/core/src/{ecs}.ts', level: 'L3' },
+  { glob: 'packages/core/src/ecs/**', level: 'L3' },
   { glob: 'packages/core/src/evidence/content-address.ts', level: 'L3' },
   { glob: 'packages/core/src/harness/site-adapter.ts', level: 'L3' },
   { glob: 'packages/core/src/reactive/{zap,speculative}.ts', level: 'L3' },
@@ -151,7 +152,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   { glob: 'packages/gauntlet/src/gates/**', level: 'L3' },
   // The audit authority — these four files gate topology/policy/profile/integrity.
   {
-    glob: 'packages/audit/src/{structure,policy,devops-profile,integrity,mcdc-engine,mcdc-facts-build,mutation-engine,mutation-facts-build,mutation-verdict,transition-facts-build}.ts',
+    glob: 'packages/audit/src/{structure,policy,devops-profile,integrity,catalog-feature-edge-census,feature-edge-census,mcdc-engine,mcdc-facts-build,mutation-engine,mutation-facts-build,mutation-verdict,transition-facts-build}.ts',
     level: 'L3',
   },
   // External-input + tool-dispatch + state-mutating boundaries.
@@ -161,7 +162,10 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   { glob: 'packages/cli/src/dispatch.ts', level: 'L3' },
   { glob: 'packages/cli/src/{ship-manifest}.ts', level: 'L3' },
   { glob: 'packages/cli/src/capsules/ship-emit.ts', level: 'L3' },
-  { glob: 'packages/cli/src/lib/{cure-packet,sbom,seam-execution-coverage,supply-chain}.ts', level: 'L3' },
+  {
+    glob: 'packages/cli/src/internal/{cure-packet,sbom,seam-execution-coverage,standards-surface,supply-chain}.ts',
+    level: 'L3',
+  },
   {
     glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,check,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
     level: 'L3',

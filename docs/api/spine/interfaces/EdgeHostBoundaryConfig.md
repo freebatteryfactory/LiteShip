@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostBoundaryConfig
 
-Defined in: [\_spine/edge.d.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L235)
+Defined in: [\_spine/edge.d.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L255)
 
 Boundary manifest and precompiled-asset inputs for edge host resolution.
 
@@ -14,9 +14,9 @@ Boundary manifest and precompiled-asset inputs for edge host resolution.
 
 ### assetUrlsByTier?
 
-> `readonly` `optional` **assetUrlsByTier?**: `Readonly`\<`Partial`\<`Record`\<`` `${MotionTier}:minimal` `` \| `` `${MotionTier}:standard` `` \| `` `${MotionTier}:enhanced` `` \| `` `${MotionTier}:rich` ``, `string`\>\>\>
+> `readonly` `optional` **assetUrlsByTier?**: `Readonly`\<`Partial`\<`Record`\<`"none:minimal"` \| `"none:standard"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:minimal"` \| `"transitions:standard"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:minimal"` \| `"animations:standard"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:minimal"` \| `"physics:standard"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:minimal"` \| `"compute:standard"` \| `"compute:enhanced"` \| `"compute:rich"`, `string`\>\>\>
 
-Defined in: [\_spine/edge.d.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L238)
+Defined in: [\_spine/edge.d.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L258)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/edge.d.ts:238](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **boundaryId**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/edge.d.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L236)
+Defined in: [\_spine/edge.d.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L256)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/edge.d.ts:236](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **compile?**: (`context`) => [`CompiledOutputs`](CompiledOutputs.md) \| `Promise`\<[`CompiledOutputs`](CompiledOutputs.md)\>
 
-Defined in: [\_spine/edge.d.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L239)
+Defined in: [\_spine/edge.d.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L259)
 
 #### Parameters
 
@@ -48,9 +48,9 @@ Defined in: [\_spine/edge.d.ts:239](https://github.com/freebatteryfactory/LiteSh
 
 ### precompiled?
 
-> `readonly` `optional` **precompiled?**: `Readonly`\<`Partial`\<`Record`\<`` `${MotionTier}:minimal` `` \| `` `${MotionTier}:standard` `` \| `` `${MotionTier}:enhanced` `` \| `` `${MotionTier}:rich` ``, [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
+> `readonly` `optional` **precompiled?**: `Readonly`\<`Partial`\<`Record`\<`"none:minimal"` \| `"none:standard"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:minimal"` \| `"transitions:standard"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:minimal"` \| `"animations:standard"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:minimal"` \| `"physics:standard"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:minimal"` \| `"compute:standard"` \| `"compute:enhanced"` \| `"compute:rich"`, [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
 
-Defined in: [\_spine/edge.d.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L237)
+Defined in: [\_spine/edge.d.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L257)
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: [\_spine/edge.d.ts:237](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **tags?**: [`EdgeHostCacheTags`](../type-aliases/EdgeHostCacheTags.md)
 
-Defined in: [\_spine/edge.d.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L240)
+Defined in: [\_spine/edge.d.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L260)

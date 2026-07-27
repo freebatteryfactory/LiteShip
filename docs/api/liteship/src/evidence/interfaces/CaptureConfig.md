@@ -6,7 +6,7 @@
 
 # Interface: CaptureConfig
 
-Defined in: core/dist/evidence/capture.d.ts:11
+Defined in: core/dist/evidence/capture.d.ts:12
 
 Encoder-facing configuration: target resolution and frame rate.
 
@@ -16,7 +16,7 @@ Encoder-facing configuration: target resolution and frame rate.
 
 > `readonly` **fps**: `number`
 
-Defined in: core/dist/evidence/capture.d.ts:14
+Defined in: core/dist/evidence/capture.d.ts:15
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/evidence/capture.d.ts:14
 
 > `readonly` **height**: `number`
 
-Defined in: core/dist/evidence/capture.d.ts:13
+Defined in: core/dist/evidence/capture.d.ts:14
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/dist/evidence/capture.d.ts:13
 
 > `readonly` **width**: `number`
 
-Defined in: core/dist/evidence/capture.d.ts:12
+Defined in: core/dist/evidence/capture.d.ts:13

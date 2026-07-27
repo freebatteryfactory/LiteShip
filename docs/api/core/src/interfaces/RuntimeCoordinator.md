@@ -6,7 +6,7 @@
 
 # Interface: RuntimeCoordinator
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L36)
+Defined in: [core/src/reactive/runtime-coordinator.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L37)
 
 Live coordinator surface: the immutable runtime `Plan`, ordered phase
 list, dense stores for state index + dirty epoch, and registration/mutation
@@ -18,7 +18,7 @@ APIs used by the compositor on the hot path.
 
 > `readonly` **phases**: readonly [`RuntimePhase`](../type-aliases/RuntimePhase.md)[]
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L38)
+Defined in: [core/src/reactive/runtime-coordinator.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L39)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:38](https://github.com/fre
 
 > `readonly` **plan**: `PlanIR`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L37)
+Defined in: [core/src/reactive/runtime-coordinator.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L38)
 
 ***
 
@@ -34,15 +34,15 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:37](https://github.com/fre
 
 > `readonly` **stores**: `object`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L39)
+Defined in: [core/src/reactive/runtime-coordinator.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L40)
 
 #### dirtyEpoch
 
-> `readonly` **dirtyEpoch**: [`DenseStore`](DenseStore.md)
+> `readonly` **dirtyEpoch**: `DenseStore`
 
 #### stateIndex
 
-> `readonly` **stateIndex**: [`DenseStore`](DenseStore.md)
+> `readonly` **stateIndex**: `DenseStore`
 
 ## Methods
 
@@ -50,7 +50,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:39](https://github.com/fre
 
 > **applyState**(`name`, `state`): `number`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L53)
+Defined in: [core/src/reactive/runtime-coordinator.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L54)
 
 #### Parameters
 
@@ -72,7 +72,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:53](https://github.com/fre
 
 > **getDirtyEpoch**(`name`): `number`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L56)
+Defined in: [core/src/reactive/runtime-coordinator.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L57)
 
 #### Parameters
 
@@ -90,7 +90,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:56](https://github.com/fre
 
 > **getStateIndex**(`name`): `number`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L54)
+Defined in: [core/src/reactive/runtime-coordinator.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L55)
 
 #### Parameters
 
@@ -108,7 +108,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:54](https://github.com/fre
 
 > **hasQuantizer**(`name`): `boolean`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L51)
+Defined in: [core/src/reactive/runtime-coordinator.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L52)
 
 #### Parameters
 
@@ -126,7 +126,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:51](https://github.com/fre
 
 > **markDirty**(`name`): `void`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L55)
+Defined in: [core/src/reactive/runtime-coordinator.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L56)
 
 #### Parameters
 
@@ -144,7 +144,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:55](https://github.com/fre
 
 > **registeredNames**(): readonly `string`[]
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L57)
+Defined in: [core/src/reactive/runtime-coordinator.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L58)
 
 #### Returns
 
@@ -154,9 +154,9 @@ readonly `string`[]
 
 ### registerQuantizer()
 
-> **registerQuantizer**(`name`, `states`): [`EntityId`](../type-aliases/EntityId.md)
+> **registerQuantizer**(`name`, `states`): `EntityId`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L49)
+Defined in: [core/src/reactive/runtime-coordinator.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L50)
 
 #### Parameters
 
@@ -170,7 +170,7 @@ readonly `string`[]
 
 #### Returns
 
-[`EntityId`](../type-aliases/EntityId.md)
+`EntityId`
 
 ***
 
@@ -178,7 +178,7 @@ readonly `string`[]
 
 > **removeQuantizer**(`name`): `void`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L50)
+Defined in: [core/src/reactive/runtime-coordinator.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L51)
 
 #### Parameters
 
@@ -196,7 +196,7 @@ Defined in: [core/src/reactive/runtime-coordinator.ts:50](https://github.com/fre
 
 > **reset**(`registrations?`): `void`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L43)
+Defined in: [core/src/reactive/runtime-coordinator.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L44)
 
 #### Parameters
 
@@ -214,7 +214,7 @@ readonly `object`[]
 
 > **setState**(`name`, `state`): `void`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L52)
+Defined in: [core/src/reactive/runtime-coordinator.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L53)
 
 #### Parameters
 

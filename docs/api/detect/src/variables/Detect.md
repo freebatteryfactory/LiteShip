@@ -8,7 +8,7 @@
 
 > `const` **Detect**: `object`
 
-Defined in: [detect/src/detect.ts:657](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L657)
+Defined in: [detect/src/detect.ts:708](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L708)
 
 Device capability detection namespace.
 
@@ -58,7 +58,7 @@ console.log(result.capabilities.gpu);       // 0-3
 console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
-console.log(result.confidence);             // 0.5 - 1.0
+console.log(result.tierEvidence.motion.support); // 'observed' | 'inferred'
 ```
 
 #### Returns

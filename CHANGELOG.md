@@ -4,6 +4,59 @@ All notable changes to LiteShip. The format follows [Keep a Changelog](https://k
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.23.0] (unreleased)
+
+### Changed
+
+- **Owned browser capture lifecycle.** `createWebCodecsCapture` and
+  `createPhysicalStateTracker` implement the fleet-wide async owned-resource contract.
+  WebCodecs encoder/muxer teardown is attempt-all and preserves simultaneous operation and
+  disposal failures; IME composition listeners are installed only by an explicit host owner,
+  removed on disposal, and never appear as an import side effect. Morph accepts the tracker and
+  Astro's stream host owns its lifetime.
+- **Bidirectional runtime diagnostics.** All 16 Web runtime diagnostics use registered-only
+  emission and resolve through `liteship explain`. A parser-backed source census proves the
+  exact emitter-to-registry relation, including package ownership, and also enrolled the three
+  feature-edge authority diagnostics it exposed while scanning the live tree.
+- **Execution-qualified assurance.** Command and CLI benchmarks now name public package
+  subjects and execute through the real benchmark host. Astro, MCP, Remotion, and Stage carry
+  deterministic simulation/chaos evidence. Injected Gauntlet parser capabilities are one
+  type-pinned vocabulary whose every presence/absence combination survives level scoping.
+
+## [0.22.0] (unreleased)
+
+### Changed
+
+- **Typed projection and execution substrate.** The raw root-level ECS surface moves to
+  `@liteship/core/ecs`, with owner-minted `Part<T>` identities, admission-branded values,
+  typed system read/write metadata, and dense stores governed by the same component law.
+  Scene entities now carry real `RuntimeWritePlan` components, so motion sampling writes
+  through an inhabited producer-to-consumer route instead of the retired `MotionProgram`
+  string marker.
+- **One motion schedule, honest role names.** `TransitionProgram` remains authored
+  composition, `TransitionTimeline` is its lowered schedule, `RuntimeWritePlan` is the
+  executable property program, and `MotionDirectivePayload` is the Astro wire envelope.
+  `createFrameSchedule` is the shared timing kernel consumed by VideoRenderer, Stage,
+  Remotion, and Web adapters; the allocator is now `createVideoRenderer`.
+- **Evidence-bearing edge capabilities.** Device tiers carry observed or inferred evidence
+  independently for every capability axis. `requireObserved` admits only the axes a host
+  must trust; the removed aggregate confidence scalar can no longer disguise partial
+  evidence as a complete claim.
+- **Generated fleet event protocol.** Five owner-local event catalogs generate the
+  declaration-only `_spine` projection, Web DOM vocabulary, and host audit facts. The
+  production feature-edge census verifies all declared event producers, and Vite HMR now
+  emits a real content-addressed `liteship:update` payload from boundary-manifest diffs.
+- **Qualified feature-edge authority.** The gauntlet now proves complete subject coverage
+  and producer/consumer connectivity across ECS components, LSP and MCP methods, command
+  capabilities and commands, MCP resources and prompts, capsule kinds, and fleet events.
+  A required opaque census is an unwaivable authority-integrity failure.
+- **Exact type-spine provenance.** Every same-name runtime mirror is generated and checked
+  by bidirectional TypeScript assignability, including public fields, generic methods,
+  brands, and lifecycle symbols. Generated protocol projections are classified separately
+  from `_spine`-owned declarations rather than being mistaken for type authority.
+- **Private CLI topology.** CLI implementation clusters live under `src/internal`, with
+  source-reachability proof preventing the privacy boundary from becoming dead-code amnesty.
+
 ## [0.21.0] (unreleased)
 
 ### Changed

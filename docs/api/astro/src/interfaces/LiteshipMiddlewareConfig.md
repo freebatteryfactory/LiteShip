@@ -6,7 +6,7 @@
 
 # Interface: LiteshipMiddlewareConfig
 
-Defined in: [astro/src/middleware.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L91)
+Defined in: [astro/src/middleware.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L93)
 
 Options accepted by [liteshipMiddleware](../functions/liteshipMiddleware.md).
 
@@ -23,7 +23,7 @@ have an `@liteship/edge` host adapter (KV cache, theme compilation).
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/middleware.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L95)
+Defined in: [astro/src/middleware.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L97)
 
 Whether to include the Client Hints request headers (default `true`).
 
@@ -33,7 +33,7 @@ Whether to include the Client Hints request headers (default `true`).
 
 > `readonly` `optional` **edge?**: `EdgeHostAdapterConfig`
 
-Defined in: [astro/src/middleware.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L93)
+Defined in: [astro/src/middleware.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L95)
 
 Edge host adapter configuration (KV cache, theme compilation).
 
@@ -43,7 +43,7 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/middleware.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L102)
+Defined in: [astro/src/middleware.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L104)
 
 Whether to emit COOP/COEP headers for worker features. `coep`
 selects the embedder policy value (default `'require-corp'`);

@@ -189,7 +189,9 @@ describe('device detection runtime', () => {
     expect(result.capSet.levels.includes('gpu')).toBe(true);
     expect(result.designTier).toBe('rich');
     expect(result.motionTier).toBe('compute');
-    expect(result.confidence).toBeCloseTo(1, 10);
+    expect(result.tierEvidence.tier.support).toBe('observed');
+    expect(result.tierEvidence.motion.support).toBe('observed');
+    expect(result.tierEvidence.design.support).toBe('observed');
 
     setNavigatorProperty('connection', undefined);
     resetDetectionCaches();
@@ -206,7 +208,8 @@ describe('device detection runtime', () => {
     expect(fallback.capabilities.prefersColorScheme).toBe('light');
     expect(fallback.capabilities.prefersReducedMotion).toBe(false);
     expect(fallback.capabilities.connection).toBeUndefined();
-    expect(fallback.confidence).toBe(0.7);
+    expect(fallback.tierEvidence.tier.support).toBe('inferred');
+    expect(fallback.tierEvidence.design.support).toBe('inferred');
   });
 
   test('detect() covers custom preference branches, connection defaults, and unknown renderers', () => {
@@ -328,7 +331,10 @@ describe('device detection runtime', () => {
     const result = detect();
 
     expect(result.capabilities.gpu).toBe(1);
-    expect(result.confidence).toBeCloseTo(0.8, 10);
+    expect(result.tierEvidence.tier.support).toBe('inferred');
+    expect(result.tierEvidence.tier.inputs).toContainEqual(
+      expect.objectContaining({ input: 'gpu', support: 'inferred' }),
+    );
   });
 
   test('falls back to experimental-webgl when standard webgl context is unavailable', () => {
@@ -873,7 +879,7 @@ describe('device detection runtime', () => {
     expect(events[0]?.source).toBe('liteship/detect');
     expect(events[0]?.message).toContain('renderer (threw: Error: SecurityError: fingerprinting protection)');
     expect(events[0]?.message).toContain('connection (API unavailable)');
-    expect(events[0]?.message).toContain('confidence');
+    expect(events[0]?.message).toContain('marked inferred');
 
     // warn-once: a second identical sweep adds nothing.
     detect();
@@ -954,7 +960,9 @@ describe('device detection runtime', () => {
       updateRate: 'fast',
     });
     expect(result.capabilities.connection).toBeUndefined();
-    expect(result.confidence).toBe(0.5);
+    expect(result.tierEvidence.tier.support).toBe('inferred');
+    expect(result.tierEvidence.motion.support).toBe('inferred');
+    expect(result.tierEvidence.design.support).toBe('inferred');
     expect(detectGPUTier()).toBe(1);
   });
 

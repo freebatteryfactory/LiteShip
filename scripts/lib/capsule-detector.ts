@@ -18,7 +18,7 @@ import { resolve } from 'node:path';
 // never a divergent fork. WORKSPACE_ALIASES is re-exported below so the existing
 // drift test (tests/unit/capsule-detector.test.ts) keeps pinning it.
 import { normalizeRepoPath, createTypeDirectedProgram } from '@liteship/audit';
-import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../packages/cli/src/lib/liteship-typescript-aliases.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../packages/cli/src/internal/liteship-typescript-aliases.js';
 
 export { LITESHIP_TYPESCRIPT_PATH_ALIASES as WORKSPACE_ALIASES };
 

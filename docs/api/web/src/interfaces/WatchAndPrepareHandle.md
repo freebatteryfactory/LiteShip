@@ -6,7 +6,7 @@
 
 # Interface: WatchAndPrepareHandle
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L86)
+Defined in: [web/src/watch-and-prepare.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L86)
 
 Handle returned by [watchAndPrepare](../functions/watchAndPrepare.md) — stamps and applies verifiable patches.
 
@@ -20,7 +20,7 @@ Handle returned by [watchAndPrepare](../functions/watchAndPrepare.md) — stamps
 
 > `readonly` **capability**: [`DpuCapability`](../type-aliases/DpuCapability.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L89)
+Defined in: [web/src/watch-and-prepare.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L89)
 
 ***
 
@@ -42,7 +42,7 @@ The owning disposal handle — for advanced/debug composition only.
 
 > `readonly` **marker**: `string`
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L87)
+Defined in: [web/src/watch-and-prepare.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L87)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:87](https://github.com/freebattery
 
 > `readonly` **target**: `Element`
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L88)
+Defined in: [web/src/watch-and-prepare.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L88)
 
 ## Methods
 
@@ -76,7 +76,7 @@ Well-known disposer so the resource works with an `await using` declaration.
 
 > **apply**(`envelope`, `currentBaseGraphId`): [`ApplyVerifiablePatchResult`](../type-aliases/ApplyVerifiablePatchResult.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L95)
+Defined in: [web/src/watch-and-prepare.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L95)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Tear down exactly once; the returned promise settles when async finalizers settl
 
 > **stamp**(`input`): [`VerifiablePatchEnvelope`](VerifiablePatchEnvelope.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L90)
+Defined in: [web/src/watch-and-prepare.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L90)
 
 #### Parameters
 

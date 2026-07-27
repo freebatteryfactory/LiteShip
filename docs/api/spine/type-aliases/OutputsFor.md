@@ -8,7 +8,7 @@
 
 > **OutputsFor**\<`B`, `T`\> = `{ readonly [S in StateUnion<B>]: T }`
 
-Defined in: [\_spine/core.d.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L125)
+Defined in: [\_spine/core.d.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L131)
 
 Generate valid output shapes per state
 

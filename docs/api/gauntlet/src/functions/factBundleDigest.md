@@ -8,7 +8,7 @@
 
 > **factBundleDigest**(`context`, `requires`): `string`
 
-Defined in: [gauntlet/src/gate.ts:951](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L951)
+Defined in: [gauntlet/src/gate.ts:1240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1240)
 
 The out-of-IR evidence digest for a [FactGate](../interfaces/FactGate.md) — the cache-soundness keystone,
 derived from the DECLARED fact channels (not hand-authored). Folds each required
@@ -24,7 +24,7 @@ a FactPack's content — or the sanction registry the producer folds into it —
 
 ### requires
 
-readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"checkGovernance"`)[]
+readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"featureEdges"` \| `"checkGovernance"`)[]
 
 ## Returns
 

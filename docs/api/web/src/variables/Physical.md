@@ -8,21 +8,23 @@
 
 > `const` **Physical**: `object`
 
-Defined in: [web/src/index.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/index.ts#L137)
+Defined in: [web/src/index.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/index.ts#L138)
 
 Physical DOM-state helpers for save/restore across morphs and hot
-reloads. Captures focus, selection, scroll, and IME composition so a
-subsequent [Morph.morph](Morph.md#morph) preserves them.
+reloads. Passive capture covers focus, selection, and scroll. Allocate
+[Physical.createTracker](#createtracker) when a host also needs IME composition state;
+the tracker owns and removes its document listeners.
 
 ## Type Declaration
 
 ### capture
 
-> **capture**: (`root`) => [`PhysicalState`](../interfaces/PhysicalState.md)
+> **capture**: (`root`, `ime`) => [`PhysicalState`](../interfaces/PhysicalState.md)
 
-Snapshot focus/selection/scroll state on the document.
+Snapshot passive focus/selection/scroll state on the document.
 
-Capture full physical state of an element and its descendants.
+Capture passive physical state of an element and its descendants. Pass an
+IME snapshot supplied by a host-owned tracker to include composition state.
 
 #### Parameters
 
@@ -30,9 +32,33 @@ Capture full physical state of an element and its descendants.
 
 `Element`
 
+##### ime?
+
+[`IMEState`](../interfaces/IMEState.md) \| `null`
+
 #### Returns
 
 [`PhysicalState`](../interfaces/PhysicalState.md)
+
+### createTracker
+
+> `readonly` **createTracker**: (`ownerDocument`) => [`PhysicalStateTracker`](../interfaces/PhysicalStateTracker.md) = `createPhysicalStateTracker`
+
+Install host-owned IME tracking. Await disposal to remove its document listeners.
+
+Install document-level IME tracking under one explicit async-uniform owner.
+Separate trackers never share mutable state; disposing one cannot disable a
+sibling owned by another host.
+
+#### Parameters
+
+##### ownerDocument
+
+`Document`
+
+#### Returns
+
+[`PhysicalStateTracker`](../interfaces/PhysicalStateTracker.md)
 
 ### restore
 

@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { cloudflareAdapterCapsule } from '../../../packages/cloudflare/src/capsules/cloudflare-adapter.js';
+import { cloudflareAdapterCapsule } from '../../../packages/cloudflare/src/cloudflare-adapter-capsule.js';
 
 // DECLARED-INTEGRATION host-capability matrix for 'cloudflare.workers-kv-boundary'. NO MOCKS ON THE HOST
 // PATH: each declared site is proved by a REAL-host lane that already exists (the

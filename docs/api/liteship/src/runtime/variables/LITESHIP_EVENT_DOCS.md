@@ -6,8 +6,8 @@
 
 # Variable: LITESHIP\_EVENT\_DOCS
 
-> `const` **LITESHIP\_EVENT\_DOCS**: `Record`\<[`LiteshipEventName`](../type-aliases/LiteshipEventName.md), `string`\>
+> `const` **LITESHIP\_EVENT\_DOCS**: `Readonly`\<`Record`\<[`EventsInChannel`](../../../../spine/type-aliases/EventsInChannel.md)\<`"dom"`\>, `string`\>\>
 
-Defined in: web/dist/wire/liteship-events.d.ts:112
+Defined in: web/dist/wire/liteship-events.generated.d.ts:6
 
-Short human descriptions for generated wire-contract docs.
+Generated human descriptions for each DOM-channel event identity.

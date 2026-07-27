@@ -170,6 +170,16 @@ recorder, and symbol-level orphan detection. The gap is field-level — see #132
 gate proves **wired, not correct**: semantic correctness stays with red-green + a
 differential oracle, never the compiler alone.
 
+Qualification also covers the gate's **subjects**, not only its planted fixtures. A
+`GateProof` must report a deterministic complete census (enumerator, count, and digest)
+or explicitly report that its subject coverage is opaque. A required gate with opaque
+coverage is an unwaivable authority-integrity failure: a detector that cannot enumerate
+what it governs has not earned the right to claim the release is complete. Feature-edge
+families derive producers and consumers from their canonical executable catalogs (typed
+ECS Parts/systems, command and MCP registries, protocol event owners), then the shared
+connectivity gate checks the projection. Do not substitute a hand-maintained list or a
+string scan for a source-owned catalog merely because the scan is easier to write.
+
 **Lean on the compiler first — the gate is the backstop, not the front line.** Push each
 completeness obligation as high as it will go before it becomes a gauntlet fact: make it
 _unrepresentable_ (a node family you can't add to the union without its interpreter case;

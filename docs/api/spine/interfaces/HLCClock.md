@@ -6,7 +6,7 @@
 
 # Interface: HLCClock
 
-Defined in: [\_spine/core.d.ts:931](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L931)
+Defined in: [\_spine/core.d.ts:1146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1146)
 
 A managed HLC clock handle — a plain (Effect-free) mutable holder over the pure
 increment/merge ops, reading wall time through an injected [Clock](Clock.md) (Wave 6).
@@ -19,7 +19,7 @@ reads without advancing.
 
 > **current**(): [`HLC`](../type-aliases/HLC.md)
 
-Defined in: [\_spine/core.d.ts:934](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L934)
+Defined in: [\_spine/core.d.ts:1149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1149)
 
 #### Returns
 
@@ -31,7 +31,7 @@ Defined in: [\_spine/core.d.ts:934](https://github.com/freebatteryfactory/LiteSh
 
 > **receive**(`remote`): [`HLC`](../type-aliases/HLC.md)
 
-Defined in: [\_spine/core.d.ts:933](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L933)
+Defined in: [\_spine/core.d.ts:1148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1148)
 
 #### Parameters
 
@@ -49,7 +49,7 @@ Defined in: [\_spine/core.d.ts:933](https://github.com/freebatteryfactory/LiteSh
 
 > **tick**(): [`HLC`](../type-aliases/HLC.md)
 
-Defined in: [\_spine/core.d.ts:932](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L932)
+Defined in: [\_spine/core.d.ts:1147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1147)
 
 #### Returns
 

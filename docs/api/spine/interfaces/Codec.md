@@ -6,7 +6,7 @@
 
 # Interface: Codec\<A, I\>
 
-Defined in: [\_spine/core.d.ts:1276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1276)
+Defined in: [\_spine/core.d.ts:1491](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1491)
 
 Bidirectional schema-backed codec between input and decoded values.
 
@@ -26,7 +26,7 @@ Bidirectional schema-backed codec between input and decoded values.
 
 > `readonly` **schema**: [`SchemaPort`](../type-aliases/SchemaPort.md)\<`A`, `I`\>
 
-Defined in: [\_spine/core.d.ts:1277](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1277)
+Defined in: [\_spine/core.d.ts:1492](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1492)
 
 ## Methods
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:1277](https://github.com/freebatteryfactory/LiteS
 
 > **decode**(`input`): [`Result`](../namespaces/Codec/type-aliases/Result.md)\<`A`, [`ParseError`](../namespaces/Codec/interfaces/ParseError.md)\>
 
-Defined in: [\_spine/core.d.ts:1281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1281)
+Defined in: [\_spine/core.d.ts:1496](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1496)
 
 Validate untrusted input into the typed value. Sync `Result` — never an Effect (Wave 8).
 
@@ -54,7 +54,7 @@ Validate untrusted input into the typed value. Sync `Result` — never an Effect
 
 > **encode**(`value`): [`Result`](../namespaces/Codec/type-aliases/Result.md)\<`I`, [`ParseError`](../namespaces/Codec/interfaces/ParseError.md)\>
 
-Defined in: [\_spine/core.d.ts:1279](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1279)
+Defined in: [\_spine/core.d.ts:1494](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1494)
 
 Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8).
 

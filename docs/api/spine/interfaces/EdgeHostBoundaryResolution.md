@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostBoundaryResolution
 
-Defined in: [\_spine/edge.d.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L260)
+Defined in: [\_spine/edge.d.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L280)
 
 Resolved state and compiled outputs for one boundary.
 
@@ -16,7 +16,7 @@ Resolved state and compiled outputs for one boundary.
 
 > `readonly` `optional` **assetUrl?**: `string`
 
-Defined in: [\_spine/edge.d.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L263)
+Defined in: [\_spine/edge.d.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L283)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/edge.d.ts:263](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **boundaryId**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/edge.d.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L261)
+Defined in: [\_spine/edge.d.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L281)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/edge.d.ts:261](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **cacheStatus**: `"precompiled"` \| `"hit"` \| `"miss"`
 
-Defined in: [\_spine/edge.d.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L264)
+Defined in: [\_spine/edge.d.ts:284](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L284)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/edge.d.ts:264](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [\_spine/edge.d.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L262)
+Defined in: [\_spine/edge.d.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L282)

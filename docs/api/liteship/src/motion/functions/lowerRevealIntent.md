@@ -8,7 +8,7 @@
 
 > **lowerRevealIntent**(`intent`): [`LoweredReveal`](../interfaces/LoweredReveal.md)
 
-Defined in: core/dist/motion/reveal.d.ts:90
+Defined in: core/dist/motion/reveal.d.ts:92
 
 Lower a [RevealIntent](../interfaces/RevealIntent.md) into real DocumentGraph node families:
 Signal → Entity → Component → Pose×2 → Transition → Policy → Projection.

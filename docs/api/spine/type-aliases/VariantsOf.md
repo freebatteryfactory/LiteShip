@@ -8,7 +8,7 @@
 
 > **VariantsOf**\<`T`\> = `T`\[`"variants"`\]\[`number`\]
 
-Defined in: [\_spine/design.d.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L192)
+Defined in: [\_spine/design.d.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L193)
 
 Variant-name union carried by a theme definition.
 

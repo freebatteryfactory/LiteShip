@@ -6,19 +6,19 @@
 
 # Function: handleHMR()
 
-> **handleHMR**(`payload`): `void`
+> **handleHMR**(`input`): `number`
 
-Defined in: vite/dist/hmr.d.ts:36
+Defined in: vite/dist/hmr.d.ts:44
 
-Handle a liteship:update HMR payload.
-Dispatches to CSS replacement or shader uniform updates based on payload content.
+Apply one admitted HMR payload. Returns the number of canonical boundary
+hosts updated; zero means malformed/foreign/stale and leaves the DOM intact.
 
 ## Parameters
 
-### payload
+### input
 
-[`HMRPayload`](../interfaces/HMRPayload.md)
+`unknown`
 
 ## Returns
 
-`void`
+`number`

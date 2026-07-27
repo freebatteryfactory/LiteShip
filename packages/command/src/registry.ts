@@ -482,6 +482,85 @@ export interface CommandCache {
 export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
 
 /**
+ * Complete runtime projection of the structural CommandContext capability set.
+ * The type-level checks below make an omitted or invented key uncompilable.
+ */
+export const COMMAND_CAPABILITIES = Object.freeze([
+  'clock',
+  'spawnCapture',
+  'hostVersion',
+  'manifestSource',
+  'manifestPath',
+  'runVitest',
+  'runAudit',
+  'runAuditFloor',
+  'runPackageSmoke',
+  'runCapsuleGate',
+  'runPlumb',
+  'runCheckInvariants',
+  'runGauntlet',
+  'fileExists',
+  'loadAssetBytes',
+  'runAudioProjection',
+  'loadSceneModule',
+  'cache',
+  'runSceneCompile',
+  'renderScene',
+  'readFileBytes',
+  'decodeShipCapsule',
+  'resolveApiSymbol',
+  'recomputeTarballAddress',
+] as const satisfies readonly CommandCapability[]);
+
+type MissingCommandCapability = Exclude<CommandCapability, (typeof COMMAND_CAPABILITIES)[number]>;
+type ForeignCommandCapability = Exclude<(typeof COMMAND_CAPABILITIES)[number], CommandCapability>;
+const COMMAND_CAPABILITY_SET_IS_EXACT: [MissingCommandCapability, ForeignCommandCapability] extends [never, never]
+  ? true
+  : never = true;
+void COMMAND_CAPABILITY_SET_IS_EXACT;
+
+/** The concrete owner or modeled floor that supplies one command capability. */
+export type CommandCapabilityProvision = 'shared-host' | 'cli-host' | 'modeled-fallback';
+
+/** One exact command capability and the host layer responsible for supplying it. */
+export interface CommandCapabilityDisposition {
+  readonly capability: CommandCapability;
+  readonly provision: CommandCapabilityProvision;
+}
+
+/**
+ * One explicit owner for every admitted capability. `modeled-fallback` is a real
+ * command-level counterpart (currently the injected clock's systemClock floor),
+ * not permission to silently ignore an absent required capability.
+ */
+export const COMMAND_CAPABILITY_DISPOSITIONS: readonly CommandCapabilityDisposition[] = Object.freeze([
+  { capability: 'clock', provision: 'modeled-fallback' },
+  { capability: 'spawnCapture', provision: 'shared-host' },
+  { capability: 'hostVersion', provision: 'cli-host' },
+  { capability: 'manifestSource', provision: 'shared-host' },
+  { capability: 'manifestPath', provision: 'shared-host' },
+  { capability: 'runVitest', provision: 'shared-host' },
+  { capability: 'runAudit', provision: 'cli-host' },
+  { capability: 'runAuditFloor', provision: 'cli-host' },
+  { capability: 'runPackageSmoke', provision: 'cli-host' },
+  { capability: 'runCapsuleGate', provision: 'cli-host' },
+  { capability: 'runPlumb', provision: 'shared-host' },
+  { capability: 'runCheckInvariants', provision: 'cli-host' },
+  { capability: 'runGauntlet', provision: 'shared-host' },
+  { capability: 'fileExists', provision: 'shared-host' },
+  { capability: 'loadAssetBytes', provision: 'shared-host' },
+  { capability: 'runAudioProjection', provision: 'shared-host' },
+  { capability: 'loadSceneModule', provision: 'shared-host' },
+  { capability: 'cache', provision: 'shared-host' },
+  { capability: 'runSceneCompile', provision: 'shared-host' },
+  { capability: 'renderScene', provision: 'shared-host' },
+  { capability: 'readFileBytes', provision: 'shared-host' },
+  { capability: 'decodeShipCapsule', provision: 'cli-host' },
+  { capability: 'resolveApiSymbol', provision: 'cli-host' },
+  { capability: 'recomputeTarballAddress', provision: 'cli-host' },
+]);
+
+/**
  * The receipt-timestamp clock — a MODULE-BOUNDARY injection point (the two-clock
  * law), not a per-call `context.clock`: every `ok`/`failed` envelope reads the
  * SAME source, so the receipt shape lives in one place. Defaults to {@link

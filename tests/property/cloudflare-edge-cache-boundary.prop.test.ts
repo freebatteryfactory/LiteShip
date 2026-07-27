@@ -15,7 +15,6 @@ import {
   DESIGN_TIERS,
   MOTION_TIERS,
   type CompiledOutputs,
-  type EdgeTierResult,
   type KVNamespace,
 } from '@liteship/edge';
 import { createCloudflareEdgeCache, resolveKvBinding } from '@liteship/cloudflare';
@@ -49,7 +48,7 @@ const boundaryIdArb = fc
   .array(fc.constantFrom(...'0123456789abcdef'), { minLength: 8, maxLength: 8 })
   .map((parts) => `fnv1a:${parts.join('')}` as ContentAddress);
 const safeIdentityArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,15}$/);
-const tierArb: fc.Arbitrary<EdgeTierResult> = fc.record({
+const tierArb = fc.record({
   capTier: fc.constantFrom(
     'static' as const,
     'styled' as const,
@@ -129,7 +128,8 @@ describe('edge cache deterministic projection and identity', () => {
           const kv = recordingKV();
           const cache = createBoundaryCache(kv, { prefix });
           await cache.getCompiledOutputs(boundaryId, tier, qualifier, theme);
-          await cache.getCompiledOutputs(boundaryId, { ...tier, capTier: 'static' }, qualifier, theme);
+          const sameCacheTierWithIrrelevantCap = { ...tier, capTier: 'static' as const };
+          await cache.getCompiledOutputs(boundaryId, sameCacheTierWithIrrelevantCap, qualifier, theme);
 
           const expected = `${prefix}:boundary:${boundaryId}:${qualifier}:${tier.motionTier}:${tier.designTier}:t:${theme}`;
           expect(kv.gets).toEqual([expected, expected]);

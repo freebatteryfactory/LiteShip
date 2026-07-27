@@ -47,10 +47,10 @@ files:
 ignores:
   - '**/packages/liteship/src/export-budget.ts'
   # ast-grep's globstar matcher lets the top-level `*.ts` pattern reach this
-  # nested implementation owner. Exempt only the concrete owner: a broad
-  # `*/*.ts` ignore would also disable the domain-index facade law below it.
-  - '**/packages/liteship/src/authoring/adaptive.ts'
-  - '**/packages/liteship/src/testing/package-roster.ts'
+  # package-wide singleton implementation owners. Exempt only the two concrete
+  # owners: every other top-level liteship module remains a facade entry.
+  - '**/packages/liteship/src/adaptive.ts'
+  - '**/packages/liteship/src/package-roster.generated.ts'
 rule:
   any:
     - kind: function_declaration

@@ -45,8 +45,10 @@ import {
   type DocumentGraph,
   type PoseNode,
 } from '@liteship/core';
+import type { Entity, World } from '@liteship/core/ecs';
+import { formatTypedValue } from '@liteship/core/motion';
 import { dispatchLiteshipEvent } from '@liteship/web';
-import type { SceneRuntime } from '@liteship/scene';
+import { BlendPart, MotionSamplePart, TrackIdPart, type MotionSample, type SceneRuntime } from '@liteship/scene';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
 import { graphRuntimeInternals, type EntityElementResolver, type GraphRuntimeHandle } from './graph-runtime.js';
 
@@ -65,18 +67,7 @@ export interface BridgeableScene {
 }
 
 /** The narrow `world.query` surface the bridge reads — the `@liteship/core` World exposes exactly this. */
-export interface SceneWorld {
-  /**
-   * Query entities carrying ALL named components. `@liteship/core`'s `World.query`
-   * is SYNCHRONOUS and returns the matched entities directly, so the bridge reads
-   * the result inline ({@link SceneQueryEffect} = `readonly SceneEntity[]`). The
-   * real `SceneRuntime.Handle.world` (whose `query` returns the world's entity
-   * rows) satisfies this structurally; each entity carries its live component map,
-   * and a host may still supply a `runQuery` projection to lift `trackId` out of
-   * that map (the real World stores it as a component — see `scene-stage.ts`).
-   */
-  readonly query: (...componentNames: string[]) => SceneQueryEffect;
-}
+export type SceneWorld = Pick<World, 'query'>;
 
 /**
  * Compile-time anchor: a real `@liteship/scene` {@link SceneRuntime.Handle} MUST be a
@@ -94,18 +85,7 @@ void _sceneHandleIsBridgeable;
  * runner). A host may inject a `runQuery` projection to reshape it (e.g. lift
  * `trackId` out of the component map) before the routing loop reads each entity.
  */
-export type SceneQueryEffect = readonly SceneEntity[];
-
-/**
- * One queried entity as the bridge reads it: a track id plus its live component
- * map. `trackId` is OPTIONAL because the raw `@liteship/core` World stores it as a
- * component rather than a top-level field — the reference `runQuery` projection
- * (`scene-stage.ts`) lifts it up; a fake scene supplies it directly.
- */
-interface SceneEntity {
-  readonly trackId?: unknown;
-  readonly components: ReadonlyMap<string, unknown>;
-}
+export type SceneQueryEffect = readonly Entity[];
 
 /**
  * Clock that drives the bridge's tick loop:
@@ -136,14 +116,6 @@ export interface BridgeOptions {
    * mapper).
    */
   readonly projectTrack?: (trackId: string) => ContentAddress | undefined;
-  /**
-   * Optional projection over the world-query result. `world.query(...)` is read
-   * DIRECTLY (it is synchronous); when supplied, `runQuery` reshapes the rows
-   * before the routing loop reads them — the reference consumer injects the
-   * `trackId`-lifting projection here (`scene-stage.ts`). May be sync or async;
-   * the bridge awaits it either way. Omitted, the query rows are used as-is.
-   */
-  readonly runQuery?: (query: SceneQueryEffect) => readonly SceneEntity[] | Promise<readonly SceneEntity[]>;
   /**
    * The `--liteship-*` CSS custom property the continuous blend is written to.
    * Defaults to `--liteship-blend`. The leaf write + `liteship:uniform-update` dispatch
@@ -211,6 +183,17 @@ function writeContinuous(element: HTMLElement, cssVar: string, blend: number): v
   dispatchLiteshipEvent(element, 'liteship:uniform-update', { css: { [cssVar]: value } });
 }
 
+/** Write one aggregate Scene motion sample through the same CSS/GPU leaf seam. */
+function writeMotionSample(element: HTMLElement, sample: MotionSample): void {
+  const css: Record<string, string> = {};
+  for (const [cssVar, value] of Object.entries(sample)) {
+    const formatted = formatTypedValue(value);
+    element.style.setProperty(cssVar, formatted);
+    css[cssVar] = formatted;
+  }
+  if (Object.keys(css).length > 0) dispatchLiteshipEvent(element, 'liteship:uniform-update', { css });
+}
+
 /** The custom-event name the discrete crossing dispatches on (mirrors the graph runtime's default). */
 const GRAPH_STATE_EVENT = 'liteship:graph-state';
 
@@ -254,7 +237,6 @@ export function bridgeSceneToGraph(
   opts: BridgeOptions = {},
 ): SceneBridgeHandle {
   const projectTrack = opts.projectTrack ?? ((trackId: string) => trackId as ContentAddress);
-  const runQuery = opts.runQuery;
   const continuousVar = opts.continuousVar ?? '--liteship-blend';
 
   // The scene's projection into the graph: a STABLE trackId → EntityNode.id map.
@@ -278,20 +260,22 @@ export function bridgeSceneToGraph(
     await scene.tick(dtMs);
     if (stopped) return;
 
-    // Read the live transition tracks: entities carrying `_blend` (written by
-    // TransitionSystem this tick) plus their `trackId`. `world.query` is
-    // SYNCHRONOUS — read it directly; an optional `runQuery` projection reshapes
-    // the rows (e.g. lifts `trackId` out of the component map for a real scene).
-    const queried = scene.world.query('_blend');
-    const entities = runQuery ? await runQuery(queried) : queried;
-    if (stopped) return;
+    // TrackId is the stable projection owner. Typed ECS has no broad optional
+    // entity read, so enumerate each inhabited edge and join by entity id.
+    const rows = new Map<string, { trackId: string; blend?: number; motionSample?: MotionSample }>();
+    for (const entity of scene.world.query(TrackIdPart, BlendPart)) {
+      rows.set(entity.id, { trackId: entity.get(TrackIdPart), blend: entity.get(BlendPart) });
+    }
+    for (const entity of scene.world.query(TrackIdPart, MotionSamplePart)) {
+      const prior = rows.get(entity.id);
+      rows.set(entity.id, {
+        trackId: entity.get(TrackIdPart),
+        ...(prior?.blend !== undefined ? { blend: prior.blend } : {}),
+        motionSample: entity.get(MotionSamplePart),
+      });
+    }
 
-    for (const entity of entities) {
-      const trackId = typeof entity.trackId === 'string' ? entity.trackId : String(entity.trackId);
-      const blendRaw = entity.components.get('_blend');
-      if (typeof blendRaw !== 'number') continue;
-      const blend = blendRaw;
-
+    for (const { trackId, blend, motionSample } of rows.values()) {
       // PROJECTION (built once): trackId → EntityNode.id. Resolve+cache lazily.
       if (!mappedOnce && !trackToEntity.has(trackId)) {
         const entityId = projectTrack(trackId);
@@ -302,10 +286,12 @@ export function bridgeSceneToGraph(
 
       // CONTINUOUS: write the tween to the leaf element EVERY frame — never patches.
       const element = resolve(entityId);
-      if (element) writeContinuous(element, continuousVar, blend);
+      if (element && blend !== undefined) writeContinuous(element, continuousVar, blend);
+      if (element && motionSample !== undefined) writeMotionSample(element, motionSample);
 
       // DISCRETE: a crossing is a change in the quantized side vs last tick. Only
       // then do we mutate the graph (recast) AND flip the leaf's discrete state.
+      if (blend === undefined) continue;
       const nextState = discreteStateOf(blend);
       const prevState = lastState.get(trackId);
       if (prevState !== nextState) {

@@ -331,6 +331,7 @@ describe('Config.toTestAliases()', () => {
       'testing',
       'harness',
       'simulation',
+      'ecs',
       'fs-walk',
     ];
 

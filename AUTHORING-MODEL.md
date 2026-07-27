@@ -32,7 +32,11 @@ import { defineAdaptive } from 'liteship';
 export const hero = defineAdaptive({
   boundary: {
     input: 'viewport.width',
-    at: [[0, 'stacked'], [760, 'split'], [1180, 'cinematic']],
+    at: [
+      [0, 'stacked'],
+      [760, 'split'],
+      [1180, 'cinematic'],
+    ],
   },
   style: {
     base: { properties: { display: 'grid', gap: '1rem' } },
@@ -69,7 +73,7 @@ For the full prose-register authority across this corpus, see [GLOSSARY.md](./GL
 
 ## What it feels like to author
 
-You start by naming the few states a surface has: *stacked, split, cinematic*. Put the input partition and state-specific outputs in one `defineAdaptive` call, spread its attributes, emit its plan, and move on. Reach into the constituent definitions only when you actually need lower-level control.
+You start by naming the few states a surface has: _stacked, split, cinematic_. Put the input partition and state-specific outputs in one `defineAdaptive` call, spread its attributes, emit its plan, and move on. Reach into the constituent definitions only when you actually need lower-level control.
 
 The CSS variable, the GLSL preamble, and the ARIA attribute all come out of that one boundary without you authoring them three times. The AI manifest is its own structured artifact authored alongside, sharing the same state vocabulary. When you drag the window edge, the CSS re-paints; if you wired a shader in, the uniform changes the same tick; a screen reader sees the same state your styles do.
 
@@ -77,7 +81,7 @@ The CSS variable, the GLSL preamble, and the ARIA attribute all come out of that
 
 ## Constituent definitions and escape hatches
 
-> `defineAdaptive` composes the common path. A *boundary*, *token*, *theme*, or *style* can also be authored directly when a compiler, integration, or reusable design system needs to own that layer.
+> `defineAdaptive` composes the common path. A _boundary_, _token_, _theme_, or _style_ can also be authored directly when a compiler, integration, or reusable design system needs to own that layer.
 
 The underlying authored definition types remain public:
 
@@ -178,7 +182,7 @@ Starting from signals and states keeps the authored layer semantic; starting fro
 
 ## Naming rules
 
-> State names describe *behavior* (`stacked`, `cinematic`), not size (`large`, `medium`). Token names describe *role* (`accent`, `surface`), not the implementation value (`blue-500`). Boundary identifiers name the *surface* (`heroLayout`), not the primitive type (`mainBoundary`).
+> State names describe _behavior_ (`stacked`, `cinematic`), not size (`large`, `medium`). Token names describe _role_ (`accent`, `surface`), not the implementation value (`blue-500`). Boundary identifiers name the _surface_ (`heroLayout`), not the primitive type (`mainBoundary`).
 
 ### State names
 
@@ -243,7 +247,11 @@ import { defineAdaptive } from 'liteship';
 export const hero = defineAdaptive({
   boundary: {
     input: 'viewport.width',
-    at: [[0, 'stacked'], [760, 'split'], [1180, 'cinematic']],
+    at: [
+      [0, 'stacked'],
+      [760, 'split'],
+      [1180, 'cinematic'],
+    ],
   },
   style: {
     base: { properties: { display: 'grid' } },
@@ -503,8 +511,8 @@ A few rules of thumb:
 
 - The state vocabulary is the contract. Whatever names appear in the boundary are the same names the ARIA author keys into; if you rename a state, both surfaces update from the one definition. There is no separate "ARIA state" concept to keep in sync.
 - Pair a `motionTier`-driven boundary with `prefers-reduced-motion`. `motionTierFromCapabilities` (`packages/detect/src/tiers.ts`) returns `'none'` unconditionally when `caps.prefersReducedMotion` is true, regardless of GPU tier — author for the `'none'` case explicitly (still imagery, `aria-live="polite"` announcements for state transitions, no transform/translate animations).
-- For a *continuous* authored motion (a `Reveal.intent` scrubbed off scroll), author it once and let it project two ways: `MotionCompiler` compiles the native `animation-timeline` CSS, and `client:motion` runs the JS FLOOR wherever that is unsupported — both sampling the intent's ONE easing config, so the curve is identical (Law 4). The floor honors reduced-motion directly: with `policy.reducedMotion: 'settle'` it pins the final pose once and skips the tween (no per-frame writes). The runnable cookbook is `examples/showcase` → `/motion` (`src/server/motion-program.ts` + `src/pages/motion.astro`); the continuous-motion runtime is documented in [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md) under `### motion`.
-- For a *multi-step* motion — "A then B", "A with B", "A or B" — compose transitions into a `TransitionProgram` (ADR-0039), NOT a per-node `routing` label. `seq` sequences (total is `Σ` of the parts + delays, each mapped to a disjoint sub-window); `par` runs children together (total is the `max`; a short child holds its final pose); `choice` executes EXACTLY one branch, selected by a `BranchCondition` over a named signal (the pick is an auditable receipt; the unchosen arms never write). `interpretProgram` lowers the program to REAL multi-offset keyframes + per-window sub-samplers that scrub through the SAME `client:motion` floor. Author it with `Reveal.chain` (`lowerRevealChain`: a `seq` + optional trailing `choice`) or `staggerProgram` (a `par` over stagger children). Reduced-motion settles to the terminal step's `to` pose. The runnable cookbook is `examples/showcase` → `/motion-chain` (`src/server/motion-chain.ts` + `src/pages/motion-chain.astro`).
+- For a _continuous_ authored motion (a `Reveal.intent` scrubbed off scroll), author it once and let it project two ways: `MotionCompiler` compiles the native `animation-timeline` CSS, and `client:motion` runs the JS FLOOR wherever that is unsupported — both sampling the intent's ONE easing config, so the curve is identical (Law 4). The floor honors reduced-motion directly: with `policy.reducedMotion: 'settle'` it pins the final pose once and skips the tween (no per-frame writes). The runnable cookbook is `examples/showcase` → `/motion` (`src/server/motion-payload.ts` + `src/pages/motion.astro`); the continuous-motion runtime is documented in [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md) under `### motion`.
+- For a _multi-step_ motion — "A then B", "A with B", "A or B" — compose transitions into a `TransitionProgram` (ADR-0039), NOT a per-node `routing` label. `seq` sequences (total is `Σ` of the parts + delays, each mapped to a disjoint sub-window); `par` runs children together (total is the `max`; a short child holds its final pose); `choice` executes EXACTLY one branch, selected by a `BranchCondition` over a named signal (the pick is an auditable receipt; the unchosen arms never write). `interpretProgram` lowers the program to REAL multi-offset keyframes + per-window sub-samplers that scrub through the SAME `client:motion` floor. Author it with `Reveal.chain` (`lowerRevealChain`: a `seq` + optional trailing `choice`) or `staggerProgram` (a `par` over stagger children). Reduced-motion settles to the terminal step's `to` pose. The runnable cookbook is `examples/showcase` → `/motion-chain` (`src/server/motion-chain.ts` + `src/pages/motion-chain.astro`).
 - Never stash arbitrary attributes through the ARIA compiler. The validator drops anything that isn't `aria-*` or `role`; that's intentional. Use `data-*` attributes via your own template if you need extra DOM hooks.
 - Boundary state is applied as `data-liteship-state` on the adaptive, so CSS attribute selectors keyed on `[data-liteship-state="expanded"]` and ARIA attributes resolve from the same evaluator on the same element. There is no two-write race; both are written synchronously inside `applyBoundaryState`.
 

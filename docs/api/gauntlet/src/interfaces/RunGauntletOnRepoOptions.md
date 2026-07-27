@@ -6,7 +6,7 @@
 
 # Interface: RunGauntletOnRepoOptions
 
-Defined in: [gauntlet/src/runner.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L222)
+Defined in: [gauntlet/src/runner.ts:228](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L228)
 
 Options for [runGauntletOnRepo](../functions/runGauntletOnRepo.md).
 
@@ -16,7 +16,7 @@ Options for [runGauntletOnRepo](../functions/runGauntletOnRepo.md).
 
 > `readonly` `optional` **activeSurfaceFacts?**: [`ActiveSurfaceFacts`](ActiveSurfaceFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L252)
+Defined in: [gauntlet/src/runner.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L260)
 
 Required host-built reader facts for the active modeled-surface gate.
 
@@ -26,7 +26,7 @@ Required host-built reader facts for the active modeled-surface gate.
 
 > `readonly` `optional` **benchmarkSubjects?**: [`BenchmarkSubjectFacts`](BenchmarkSubjectFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L248)
+Defined in: [gauntlet/src/runner.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L256)
 
 Host-computed parser-backed benchmark subject reachability.
 
@@ -36,7 +36,7 @@ Host-computed parser-backed benchmark subject reachability.
 
 > `readonly` `optional` **capabilityLink?**: [`CapabilityLinkFacts`](CapabilityLinkFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L340)
+Defined in: [gauntlet/src/runner.ts:350](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L350)
 
 The INJECTED capability-link facts (codex round-8, #1b) — OPTIONAL. A host (the CLI's
 `liteship check gates --ir --capability-gate` path) resolves each sanctioned skip's guard against the
@@ -50,7 +50,7 @@ gate is not in the set.
 
 > `readonly` `optional` **checkGovernance?**: [`CheckGovernanceFacts`](CheckGovernanceFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L250)
+Defined in: [gauntlet/src/runner.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L258)
 
 Required facts for every check-governance gate present in the composition.
 
@@ -60,7 +60,7 @@ Required facts for every check-governance gate present in the composition.
 
 > `readonly` `optional` **codeOnly?**: (`source`) => `string`
 
-Defined in: [gauntlet/src/runner.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L246)
+Defined in: [gauntlet/src/runner.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L252)
 
 The INJECTED SOUND `codeOnly` floor (the @liteship/audit scanner `codeOnlyAST`) — OPTIONAL, same
 pattern as [skipDetector](#skipdetector). Lands on the [GateContext](GateContext.md) for code-scanning gates to use
@@ -82,7 +82,7 @@ via `(context.codeOnly ?? codeOnly)`. Omit it (the lean path) and the char-machi
 
 > `readonly` `optional` **composition?**: [`CompositionFacts`](CompositionFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L370)
+Defined in: [gauntlet/src/runner.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L380)
 
 The INJECTED composition-coverage facts (the LOCAL-VS-GLOBAL correctness family —
 "locally green, globally untested interaction") — OPTIONAL. A host (the CLI's
@@ -94,11 +94,31 @@ gate is simply not in the set — no corpus scan, no cost.
 
 ***
 
+### diagnosticEmitterDetector?
+
+> `readonly` `optional` **diagnosticEmitterDetector?**: (`source`) => readonly [`DiagnosticEmissionMatch`](DiagnosticEmissionMatch.md)[]
+
+Defined in: [gauntlet/src/runner.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L254)
+
+Host-injected parser-backed Diagnostics-call census.
+
+#### Parameters
+
+##### source
+
+`string`
+
+#### Returns
+
+readonly [`DiagnosticEmissionMatch`](DiagnosticEmissionMatch.md)[]
+
+***
+
 ### earlyReturnDetector?
 
 > `readonly` `optional` **earlyReturnDetector?**: (`source`) => readonly [`EarlyReturnMatch`](EarlyReturnMatch.md)[]
 
-Defined in: [gauntlet/src/runner.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L240)
+Defined in: [gauntlet/src/runner.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L246)
 
 The INJECTED SOUND early-return detector (`detectEarlyReturnBeforeExpectAST`) — OPTIONAL.
 Lands on [GateContext](GateContext.md) for `noEarlyReturnTestGate` via
@@ -116,11 +136,21 @@ readonly [`EarlyReturnMatch`](EarlyReturnMatch.md)[]
 
 ***
 
+### featureEdges?
+
+> `readonly` `optional` **featureEdges?**: [`FeatureEdgeFacts`](FeatureEdgeFacts.md)
+
+Defined in: [gauntlet/src/runner.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L262)
+
+Required host-built fleet feature-edge connectivity facts.
+
+***
+
 ### fuzzCorpus?
 
 > `readonly` `optional` **fuzzCorpus?**: [`FuzzCorpusFacts`](FuzzCorpusFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:350](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L350)
+Defined in: [gauntlet/src/runner.ts:360](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L360)
 
 The INJECTED decode-fuzz facts (the untrusted-byte decode-surface hardening) —
 OPTIONAL. A host (the `tests/fuzz` decode fuzzer, driven by the CLI fuzz path)
@@ -136,7 +166,7 @@ the gate is simply not in the set — no fuzzer run, no cost.
 
 > `readonly` **globs**: readonly `string`[]
 
-Defined in: [gauntlet/src/runner.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L226)
+Defined in: [gauntlet/src/runner.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L232)
 
 Repo-relative glob patterns selecting the files the gates consider.
 
@@ -146,7 +176,7 @@ Repo-relative glob patterns selecting the files the gates consider.
 
 > `readonly` `optional` **ir?**: [`RepoIR`](RepoIR.md)
 
-Defined in: [gauntlet/src/runner.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L260)
+Defined in: [gauntlet/src/runner.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L270)
 
 The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
 and never builds an IR; a host (the CLI, via `@liteship/audit`'s `ts.Program`)
@@ -160,7 +190,7 @@ regex gates run unchanged.
 
 > `readonly` `optional` **mcdc?**: [`McdcFacts`](McdcFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L289)
+Defined in: [gauntlet/src/runner.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L299)
 
 The INJECTED MC/DC facts (the avionics tier — DO-178B Level A's coverage requirement,
 realized as condition-level mutation) — OPTIONAL. A host (`@liteship/audit`'s
@@ -177,7 +207,7 @@ suite-runs, no cost.
 
 > `readonly` `optional` **mutation?**: [`MutationFacts`](MutationFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L278)
+Defined in: [gauntlet/src/runner.ts:288](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L288)
 
 The INJECTED mutation facts (Slice C, the avionics tier — mutation-as-divergence)
 — OPTIONAL. A host (`@liteship/audit`'s mutation engine + the CLI's per-mutant vitest
@@ -192,7 +222,7 @@ is simply not in the set — no mutants generated, no suite-runs, no cost.
 
 > `readonly` `optional` **proof?**: [`ProofFacts`](ProofFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:360](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L360)
+Defined in: [gauntlet/src/runner.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L370)
 
 The INJECTED proof-strength facts (the LOCAL-VS-GLOBAL correctness family — the
 lax-functor) — OPTIONAL. A host (the CLI's `liteship check gates --ir --proof` path) reads
@@ -208,7 +238,7 @@ invariants), blends them into per-module scalars, and threads the decided
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [gauntlet/src/runner.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L224)
+Defined in: [gauntlet/src/runner.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L230)
 
 Absolute root of the repo to run against.
 
@@ -218,7 +248,7 @@ Absolute root of the repo to run against.
 
 > `readonly` `optional` **simulation?**: [`SimulationFacts`](SimulationFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L300)
+Defined in: [gauntlet/src/runner.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L310)
 
 The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
 determinism spine) — OPTIONAL. A host (the CLI's `liteship check gates --ir --simulate`
@@ -235,7 +265,7 @@ scenario run, no cost.
 
 > `readonly` `optional` **skipDetector?**: (`source`) => readonly [`SkipMatch`](SkipMatch.md)[]
 
-Defined in: [gauntlet/src/runner.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L234)
+Defined in: [gauntlet/src/runner.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L240)
 
 The INJECTED SOUND skip detector (the AST detector) — OPTIONAL. The gauntlet is the lean
 engine and never deps `typescript`; a host (the CLI, which deps `@liteship/audit`) builds
@@ -259,7 +289,7 @@ readonly [`SkipMatch`](SkipMatch.md)[]
 
 > `readonly` `optional` **spineRelation?**: [`SpineRelationFacts`](SpineRelationFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L380)
+Defined in: [gauntlet/src/runner.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L390)
 
 The INJECTED two-axis spine-relation facts (Wave 8.5, the public constitution's
 STATIC-projection half) — OPTIONAL. A host (the CLI's `liteship check gates --ir
@@ -275,11 +305,11 @@ not in the set — no ts.Program probe, no cost.
 
 > `readonly` `optional` **standards?**: [`StandardsIntegrityFacts`](StandardsIntegrityFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L322)
+Defined in: [gauntlet/src/runner.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L332)
 
 The INJECTED standards-integrity facts (the AGENT-SAFETY META-GAUNTLET, the
 "raccoon rule") — OPTIONAL. A host (the CLI's
-`packages/cli/src/lib/standards-surface.ts` extractor) reads the live standards
+`packages/cli/src/internal/standards-surface.ts` extractor) reads the live standards
 surface, content-addresses it, diffs it against the committed snapshot, applies the
 owner sign-offs against the injected wall-clock date, and threads the decided
 [StandardsIntegrityFacts](StandardsIntegrityFacts.md) here, where they land on the [GateContext](GateContext.md) for
@@ -292,7 +322,7 @@ not in the set — no surface read, no addressing cost.
 
 > `readonly` `optional` **supplyChain?**: [`SupplyChainFacts`](SupplyChainFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L269)
+Defined in: [gauntlet/src/runner.ts:279](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L279)
 
 The INJECTED supply-chain facts (Slice C, the avionics tier) — OPTIONAL. A
 host (the CLI's `@liteship/cli` analyzer) parses the lockfile, builds the SBOM,
@@ -307,7 +337,7 @@ set — no facts computed, no SBOM cost, no `not-evidenced` noise.
 
 > `readonly` `optional` **taint?**: [`TaintFacts`](TaintFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L332)
+Defined in: [gauntlet/src/runner.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L342)
 
 The INJECTED taint-flow facts (the TAINT-ANALYSIS family) — OPTIONAL. A host (the
 CLI's `liteship check gates --ir --taint` path) traces the source→sink dataflow via
@@ -323,11 +353,11 @@ no cost.
 
 > `readonly` `optional` **traceability?**: [`TraceabilityFacts`](TraceabilityFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L311)
+Defined in: [gauntlet/src/runner.ts:321](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L321)
 
 The INJECTED requirements-traceability facts (the avionics-tier ledger,
 DO-178B-style) — OPTIONAL. A host (the CLI's
-`packages/cli/src/lib/traceability.ts` state machine) parses `traceability/*.yaml`,
+`packages/cli/src/internal/traceability.ts` state machine) parses `traceability/*.yaml`,
 scans the corpus for `// PROVES:` headers, runs the lifecycle fold against the
 injected wall-clock date, and threads the decided [TraceabilityFacts](TraceabilityFacts.md) here,
 where they land on the [GateContext](GateContext.md) for `traceabilityBridgeGate` to fold.

@@ -27,7 +27,7 @@ import {
   resolveDevopsProfile,
   type FactOracle,
 } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import {
   PLACEHOLDER_DIGEST,
   litelaunchGauntlet,

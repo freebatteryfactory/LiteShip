@@ -217,6 +217,13 @@ describe('engine — runGates applies earned authority', () => {
       redCaught: false,
       greenClean: false,
       mutationKilled: false,
+      subjectCoverage: {
+        status: 'opaque',
+        enumerator: 'qualification-execution',
+        enumeratedCount: 0,
+        censusDigest: `sha256:${'0'.repeat(64)}`,
+        reason: 'qualification execution failed before subject coverage could be established',
+      },
       selfProven: false,
     });
     expect(result.blocked).toBe(true);

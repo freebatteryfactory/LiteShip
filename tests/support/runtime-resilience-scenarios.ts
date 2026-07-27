@@ -19,7 +19,7 @@ import { consultFault, type SimScenario, type SimStep, type SimWorld } from '@li
 import { createQuantizer, defineQuantizer } from '@liteship/quantizer';
 import { SSE, Resumption } from '@liteship/web';
 import { SPSCRing } from '@liteship/worker';
-import { campaignObservation, type RecoveryCorpusEntry } from '../../packages/cli/src/lib/simulation-corpus.js';
+import { campaignObservation, type RecoveryCorpusEntry } from '../../packages/cli/src/internal/simulation-corpus.js';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
 const WORKER_FAULT_POINT = 'worker.producer-crash';

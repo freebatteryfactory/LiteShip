@@ -8,4 +8,4 @@
 
 > **ToWorker** = [`ToWorkerMessage`](../../../type-aliases/ToWorkerMessage.md)
 
-Defined in: [\_spine/worker.d.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L281)
+Defined in: [\_spine/worker.d.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L282)

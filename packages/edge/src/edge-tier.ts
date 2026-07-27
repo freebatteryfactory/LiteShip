@@ -13,10 +13,17 @@ import {
   CAP_AXES,
   capAxisAttr,
   projectCapabilityAxisValues,
+  projectCapabilityTierEvidence,
 } from '@liteship/detect';
-import type { DesignTier, ExtendedDeviceCapabilities, MotionTier, CapAxis } from '@liteship/detect';
+import type {
+  CapabilityTierEvidence,
+  CapabilityTierProjection,
+  DesignTier,
+  MotionTier,
+  CapAxis,
+} from '@liteship/detect';
 import { ClientHints } from './client-hints.js';
-import type { ClientHintsHeaders } from './client-hints.js';
+import type { ClientHintsEvidence, ClientHintsHeaders } from './client-hints.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,6 +43,8 @@ export interface EdgeTierResult {
   readonly motionTier: MotionTier;
   /** Visual fidelity tier permitted for this device. */
   readonly designTier: DesignTier;
+  /** Per-axis observed/inferred provenance for the complete tier values. */
+  readonly tierEvidence: CapabilityTierEvidence;
 }
 
 // ---------------------------------------------------------------------------
@@ -43,14 +52,16 @@ export interface EdgeTierResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Map already-parsed {@link ExtendedDeviceCapabilities} to the tier triple
- * using the same pure functions as the client runtime.
+ * Map the canonical Client-Hints evidence receipt to the tier triple using the
+ * same pure functions as the client runtime.
  */
-function tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult {
+function tierFromEvidence(parsed: ClientHintsEvidence): EdgeTierResult {
+  const caps = parsed.capabilities;
   const capTier = capTierFromCapabilities(caps);
   const motionTier = motionTierFromCapabilities(caps);
   const designTier = designTierFromCapabilities(caps);
-  return { capTier, motionTier, designTier };
+  const tierEvidence = projectCapabilityTierEvidence({ capTier, motionTier, designTier }, parsed.inputEvidence);
+  return Object.freeze({ capTier, motionTier, designTier, tierEvidence });
 }
 
 /**
@@ -58,7 +69,7 @@ function tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult {
  * and the same pure tier mapping functions used on the client.
  */
 function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
-  return tierFromParsed(ClientHints.parseClientHints(headers));
+  return tierFromEvidence(ClientHints.parseEvidence(headers));
 }
 
 /**
@@ -78,7 +89,7 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
  * // => { 'data-liteship-tier': 'reactive', 'data-liteship-motion': 'animations', 'data-liteship-design': 'enhanced' }
  * ```
  */
-function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-liteship-${CapAxis}`, string>> {
+function tierDataAttributesMap(result: CapabilityTierProjection): Readonly<Record<`data-liteship-${CapAxis}`, string>> {
   // The canonical axis registry is the single source: attribute names can never
   // drift from the `Astro.locals.liteship.tiers` field names / runtime readers.
   const value = projectCapabilityAxisValues(result);
@@ -98,7 +109,7 @@ function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-li
  * // => 'data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced"'
  * ```
  */
-function tierDataAttributes(result: EdgeTierResult): string {
+function tierDataAttributes(result: CapabilityTierProjection): string {
   return Object.entries(tierDataAttributesMap(result))
     .map(([attr, val]) => `${attr}="${val}"`)
     .join(' ');
@@ -127,8 +138,8 @@ function tierDataAttributes(result: EdgeTierResult): string {
 export const EdgeTier = {
   /** Detect {@link EdgeTierResult} from a `Headers`-like bag. */
   detectTier,
-  /** Map parsed Client Hints capabilities to an {@link EdgeTierResult}. */
-  tierFromParsed,
+  /** Map a canonical Client-Hints evidence receipt to an {@link EdgeTierResult}. */
+  tierFromEvidence,
   /** Render an `EdgeTierResult` into a `data-liteship-*` attribute STRING for the root HTML element. */
   tierDataAttributes,
   /** Structured, spreadable `data-liteship-*` map for the root HTML element (auto-includes every CAP_AXES axis). */

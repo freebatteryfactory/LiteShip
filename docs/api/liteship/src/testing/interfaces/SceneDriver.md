@@ -61,7 +61,7 @@ Exported name of the `() => CompiledScene` function (e.g. `compileIntro`).
 
 > `readonly` **contentAddressImport**: `string`
 
-Defined in: core/dist/harness/scene-composition.d.ts:117
+Defined in: core/dist/harness/scene-composition.d.ts:119
 
 Import specifier (with `.js`) for the canonical `contentAddressOf`.
 
@@ -71,7 +71,7 @@ Import specifier (with `.js`) for the canonical `contentAddressOf`.
 
 > `readonly` **hasAudio**: `boolean`
 
-Defined in: core/dist/harness/scene-composition.d.ts:119
+Defined in: core/dist/harness/scene-composition.d.ts:121
 
 Whether the scene declares at least one audio track (gates sync-accuracy).
 
@@ -81,9 +81,19 @@ Whether the scene declares at least one audio track (gates sync-accuracy).
 
 > `readonly` **hasVideo**: `boolean`
 
-Defined in: core/dist/harness/scene-composition.d.ts:121
+Defined in: core/dist/harness/scene-composition.d.ts:123
 
 Whether the scene declares at least one video track (gates sync-accuracy).
+
+***
+
+### partsImport
+
+> `readonly` **partsImport**: `string`
+
+Defined in: core/dist/harness/scene-composition.d.ts:117
+
+Import specifier (with `.js`) for the canonical Scene Part identities.
 
 ***
 

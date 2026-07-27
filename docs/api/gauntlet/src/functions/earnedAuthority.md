@@ -8,7 +8,7 @@
 
 > **earnedAuthority**(`proof`): [`Authority`](../type-aliases/Authority.md)
 
-Defined in: [gauntlet/src/authority.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L73)
+Defined in: [gauntlet/src/authority.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L135)
 
 The ratchet decision for a gate's SEMANTIC findings: a self-proven gate earns
 `blocking`; anything else is `advisory`. The engine still fails closed on the

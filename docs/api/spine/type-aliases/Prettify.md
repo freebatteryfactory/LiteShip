@@ -8,7 +8,7 @@
 
 > **Prettify**\<`T`\> = `{ [K in keyof T]: T[K] }` & `object`
 
-Defined in: [\_spine/core.d.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L119)
+Defined in: [\_spine/core.d.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L125)
 
 Flatten branded intersections for clean IDE hints
 

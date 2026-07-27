@@ -8,7 +8,7 @@
 
 > **SlotsOf**\<`C`\> = keyof `C`\[`"slots"`\]
 
-Defined in: [\_spine/design.d.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L194)
+Defined in: [\_spine/design.d.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L195)
 
 Slot-name union carried by a component definition.
 

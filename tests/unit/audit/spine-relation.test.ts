@@ -25,8 +25,8 @@ import type { SpineRelationFacts } from '../../../packages/gauntlet/src/facts/sp
 import {
   LITESHIP_SPINE_ADMISSIONS,
   LITESHIP_SPINE_EXACT_RELATION_CATALOG,
-} from '../../../packages/cli/src/lib/spine-relation-policy.js';
-import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/lib/liteship-typescript-aliases.js';
+} from '../../../packages/cli/src/internal/spine-relation-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/internal/liteship-typescript-aliases.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../..');
@@ -68,6 +68,21 @@ function driftedFileFacts(file: string, mutate: (source: string) => string): Spi
   return buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, {
     ...SPINE_OPTIONS,
     overlay: { [file]: drifted },
+  });
+}
+
+/** Build a small named admission slice against one in-memory core mirror mutation. */
+function focusedCoreFacts(typeNames: readonly string[], mutate: (core: string) => string): SpineRelationFacts {
+  const drifted = mutate(REAL_CORE);
+  expect(drifted, 'the focused drift edit must actually change core.d.ts').not.toBe(REAL_CORE);
+  const admissions = typeNames.map((typeName) => {
+    const admission = ADMISSIONS.find((entry) => entry.typeName === typeName);
+    expect(admission, `${typeName} must remain admitted`).toBeDefined();
+    return admission!;
+  });
+  return buildSpineRelationFacts(admissions, REPO_ROOT, {
+    ...SPINE_OPTIONS,
+    overlay: { [CORE_DTS]: drifted },
   });
 }
 
@@ -211,6 +226,20 @@ describe('spine-relation gate — REDS on the three historical drift fixtures (t
 });
 
 describe('spine-relation exact census — planted declaration mutations', () => {
+  it('reds on a fake runtime twin instead of admitting a declaration-only name', { timeout: scaledTimeout(60_000) }, () => {
+    const fake: SpineTypeAdmission = {
+      typeName: 'CapSet.fakeRuntimeTwin',
+      authority: 'runtime',
+      admittedRelation: 'exact',
+      spineExpr: 'CapSet',
+      runtimeModule: 'packages/core/src/index.ts',
+      runtimeExpr: 'CapSetThatDoesNotExist',
+    };
+    const facts = buildSpineRelationFacts([fake], REPO_ROOT, SPINE_OPTIONS);
+    expect(facts.observations[0]).toMatchObject({ resolved: false, observedRelation: 'opaque' });
+    expect(gateFindings(facts).some((finding) => finding.title.includes('fakeRuntimeTwin'))).toBe(true);
+  });
+
   it('reds on a missing required mirror', { timeout: scaledTimeout(60_000) }, () => {
     const facts = driftedFileFacts(COMMAND_DTS, (source) =>
       source.replace('export interface SceneCompilation {', 'export interface SceneCompilationRemoved {'),
@@ -259,6 +288,46 @@ describe('spine-relation exact census — planted declaration mutations', () => 
     const observation = reversed.observations.find((entry) => entry.typeName === 'Signal.audio')!;
     expect(observation.observedRelation).toBe('public-narrower');
     expect(gateFindings(reversed).some((finding) => finding.title.includes('Signal.audio'))).toBe(true);
+  });
+});
+
+describe('spine-relation public-contract projection — private witnesses stay private without hiding public drift', () => {
+  it('reds on visible Part, System, and generic SystemContext drift', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = focusedCoreFacts(['Part', 'System', 'SystemContext'], (source) =>
+      source
+        .replace('readonly retention: PartRetentionPolicy;', 'readonly retention?: PartRetentionPolicy;')
+        .replace(
+          'execute(entities: readonly SystemEntity[], context: SystemContext<Q, R, W>): void;',
+          'execute(entities: readonly SystemEntity[], context: unknown): void;',
+        )
+        .replace(
+          'write<P extends TuplePart<W>>(entity: SystemEntity, part: P, value: PartValue<P>): void;',
+          'write<P extends TuplePart<W>>(entity: SystemEntity, part: P, value: unknown): void;',
+        ),
+    );
+
+    for (const typeName of ['Part', 'System', 'SystemContext'] as const) {
+      const observation = facts.observations.find((entry) => entry.typeName === typeName)!;
+      expect(observation.observedRelation, `${typeName} public drift must not be erased`).not.toBe('exact');
+      expect(gateFindings(facts).some((finding) => finding.title.includes(typeName))).toBe(true);
+    }
+  });
+
+  it('keeps the public async-disposal symbol in the compared contract', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = focusedCoreFacts(['AsyncOwnedResource'], (source) =>
+      source.replace('  [Symbol.asyncDispose](): Promise<void>;\n', ''),
+    );
+    const resource = facts.observations[0]!;
+    expect(resource.observedRelation).not.toBe('exact');
+    expect(gateFindings(facts).some((finding) => finding.title.includes('AsyncOwnedResource'))).toBe(true);
+  });
+
+  it('ignores only a module-private unique-symbol witness name', { timeout: scaledTimeout(60_000) }, () => {
+    const facts = focusedCoreFacts(['Part'], (source) =>
+      source.replaceAll('SpinePartWitness', 'AlternatePrivatePartWitness'),
+    );
+    expect(facts.observations[0]).toMatchObject({ resolved: true, observedRelation: 'exact' });
+    expect(gateFindings(facts)).toEqual([]);
   });
 });
 

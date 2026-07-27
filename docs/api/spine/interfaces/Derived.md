@@ -6,7 +6,7 @@
 
 # Interface: Derived\<T\>
 
-Defined in: [\_spine/core.d.ts:669](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L669)
+Defined in: [\_spine/core.d.ts:884](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L884)
 
 Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6)
 
@@ -22,7 +22,7 @@ Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6)
 
 > `readonly` **\_tag**: `"Derived"`
 
-Defined in: [\_spine/core.d.ts:670](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L670)
+Defined in: [\_spine/core.d.ts:885](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L885)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:670](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:673](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L673)
+Defined in: [\_spine/core.d.ts:888](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L888)
 
 ## Methods
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:673](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `T`
 
-Defined in: [\_spine/core.d.ts:671](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L671)
+Defined in: [\_spine/core.d.ts:886](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L886)
 
 #### Returns
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:671](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L672)
+Defined in: [\_spine/core.d.ts:887](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L887)
 
 #### Parameters
 

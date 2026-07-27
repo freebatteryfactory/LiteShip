@@ -3,7 +3,7 @@
  * Component test: Device capability detection probes.
  *
  * Tests GPU tier classification, detect() sweep, individual probes,
- * confidence scoring, and watchCapabilities lifecycle.
+ * per-axis evidence, and watchCapabilities lifecycle.
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -161,8 +161,9 @@ describe('detect()', () => {
     expect(result.capabilities).toBeDefined();
     expect(result.capTier).toBeDefined();
     expect(result.capSet).toBeDefined();
-    expect(result.confidence).toBeGreaterThanOrEqual(0.5);
-    expect(result.confidence).toBeLessThanOrEqual(1.0);
+    expect(result.tierEvidence.tier.value).toBe(result.capTier);
+    expect(result.tierEvidence.motion.value).toBe(result.motionTier);
+    expect(result.tierEvidence.design.value).toBe(result.designTier);
     expect(result.designTier).toBeDefined();
     expect(result.motionTier).toBeDefined();
   });
@@ -421,34 +422,47 @@ describe('detect() media preferences', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Confidence scoring
+// Per-axis evidence
 // ---------------------------------------------------------------------------
 
-describe('detect() confidence', () => {
-  test('base confidence without WebGL is at most 0.8', () => {
-    // No WebGL renderer — confidence misses the +0.2 WebGL bonus
+describe('detect() tier evidence', () => {
+  test('a missing WebGL observation marks dependent axes inferred', () => {
     restoreNav = mockNavigator({ hardwareConcurrency: 4 });
     const result = detect();
-    expect(result.confidence).toBeLessThanOrEqual(0.8);
-    expect(result.confidence).toBeGreaterThanOrEqual(0.5);
+    expect(result.tierEvidence.tier.support).toBe('inferred');
+    expect(result.tierEvidence.motion.support).toBe('inferred');
+    expect(result.tierEvidence.tier.inputs).toContainEqual(
+      expect.objectContaining({ input: 'gpu', support: 'inferred', source: 'integrated-gpu-fallback' }),
+    );
   });
 
-  test('WebGL renderer adds 0.2 confidence', () => {
+  test('one successful probe cannot launder another missing input', () => {
     restoreGL = mockWebGL('Intel HD Graphics');
     restoreNav = mockNavigator({ hardwareConcurrency: 0 });
     const result = detect();
-    expect(result.confidence).toBeGreaterThanOrEqual(0.7);
+    expect(result.tierEvidence.tier.inputs).toContainEqual(
+      expect.objectContaining({ input: 'gpu', support: 'observed', source: 'webgl-renderer' }),
+    );
+    expect(result.tierEvidence.tier.inputs).toContainEqual(
+      expect.objectContaining({ input: 'cores', support: 'inferred', source: 'two-core-fallback' }),
+    );
+    expect(result.tierEvidence.tier.support).toBe('inferred');
   });
 
-  test('all probes present gives high confidence', () => {
+  test('evidence receipts and their input lists are immutable', () => {
     restoreGL = mockWebGL('Intel HD Graphics');
+    restoreMM = mockMatchMedia({});
     restoreNav = mockNavigator({
       hardwareConcurrency: 8,
       deviceMemory: 16,
       connection: { effectiveType: '4g', downlink: 10, saveData: false },
     });
     const result = detect();
-    expect(result.confidence).toBeCloseTo(1.0, 10);
+    expect(result.tierEvidence.tier.support).toBe('observed');
+    expect(result.tierEvidence.motion.support).toBe('observed');
+    expect(result.tierEvidence.design.support).toBe('observed');
+    expect(Object.isFrozen(result.tierEvidence)).toBe(true);
+    expect(Object.isFrozen(result.tierEvidence.tier.inputs)).toBe(true);
   });
 });
 

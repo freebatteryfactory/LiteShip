@@ -6,7 +6,7 @@
  * @module
  */
 
-import { arrow, bearingGlyph, color, colorEnabled, header } from '../../lib/ansi.js';
+import { arrow, bearingGlyph, color, colorEnabled, header } from '../../internal/ansi.js';
 import type { DoctorCheck, DoctorFix, DoctorVerdict } from './types.js';
 
 export function aggregate(checks: readonly DoctorCheck[]): DoctorVerdict {

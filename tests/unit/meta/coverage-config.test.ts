@@ -35,7 +35,6 @@ describe('coverage config drift guard', () => {
     // cli/src/commands/ship.ts (orchestrates git + pnpm pack + pnpm publish
     // --dry-run + pnpm publish; integration-tested via the liteship ship
     // --dry-run path that runs in every package:smoke gauntlet phase) and
-    // cli/src/render-backend/ffmpeg.ts (spawns ffmpeg; skip-when-unavailable
     // smoke test makes this structurally 0% on machines without ffmpeg).
     // + 1 stage ffmpeg backend (productionization wave): stage/src/ffmpeg-encoder.ts
     // is the host-realm twin of command/host/ffmpeg.ts — it spawns the system
@@ -47,7 +46,7 @@ describe('coverage config drift guard', () => {
     // orchestrates `pnpm pack` ×N → install → smoke-import → liteship describe (pure
     // subprocess glue with no in-process branch surface). Its genuinely pure logic
     // (executable resolution, pnpm-store dependency resolution, tarball URLs) was
-    // EXTRACTED to cli/src/lib/package-smoke-helpers.ts and unit-tested directly
+    // EXTRACTED to cli/src/internal/package-smoke-helpers.ts and unit-tested directly
     // (tests/unit/cli/commands/package-smoke-helpers.test.ts), so only the thin
     // spawn wrapper is excluded — logic extracted + tested first, never to dodge work.
     // + 3 core domain type modules replace the former single internal/type-level.ts

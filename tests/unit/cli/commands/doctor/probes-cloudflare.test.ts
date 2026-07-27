@@ -21,7 +21,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import * as spawnLib from '../../../../../packages/cli/src/lib/spawn.js';
+import * as spawnLib from '../../../../../packages/cli/src/internal/spawn.js';
 import {
   probeCloudflareAdapter,
   probeCloudflareAstro,

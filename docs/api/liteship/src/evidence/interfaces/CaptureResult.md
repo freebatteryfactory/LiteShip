@@ -6,7 +6,7 @@
 
 # Interface: CaptureResult
 
-Defined in: core/dist/evidence/capture.d.ts:34
+Defined in: core/dist/evidence/capture.d.ts:36
 
 Encoder output returned from [FrameCapture](FrameCapture.md).`finalize`: the encoded blob plus codec metadata.
 
@@ -16,7 +16,7 @@ Encoder output returned from [FrameCapture](FrameCapture.md).`finalize`: the enc
 
 > `readonly` **blob**: `Blob`
 
-Defined in: core/dist/evidence/capture.d.ts:35
+Defined in: core/dist/evidence/capture.d.ts:37
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/evidence/capture.d.ts:35
 
 > `readonly` **codec**: `string`
 
-Defined in: core/dist/evidence/capture.d.ts:36
+Defined in: core/dist/evidence/capture.d.ts:38
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: core/dist/evidence/capture.d.ts:36
 
 > `readonly` **durationMs**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
-Defined in: core/dist/evidence/capture.d.ts:38
+Defined in: core/dist/evidence/capture.d.ts:40
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: core/dist/evidence/capture.d.ts:38
 
 > `readonly` **frames**: `number`
 
-Defined in: core/dist/evidence/capture.d.ts:37
+Defined in: core/dist/evidence/capture.d.ts:39

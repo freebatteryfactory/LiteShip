@@ -6,7 +6,7 @@
 
 # Interface: ReconnectConfig
 
-Defined in: [\_spine/web.d.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L248)
+Defined in: [\_spine/web.d.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L270)
 
 Bounded exponential-backoff parameters for SSE reconnection.
 
@@ -16,15 +16,15 @@ Bounded exponential-backoff parameters for SSE reconnection.
 
 > `readonly` **factor**: `number`
 
-Defined in: [\_spine/web.d.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L252)
+Defined in: [\_spine/web.d.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L274)
 
 ***
 
 ### initialDelay
 
-> `readonly` **initialDelay**: `number`
+> `readonly` **initialDelay**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/web.d.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L250)
+Defined in: [\_spine/web.d.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L272)
 
 ***
 
@@ -32,12 +32,12 @@ Defined in: [\_spine/web.d.ts:250](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **maxAttempts**: `number`
 
-Defined in: [\_spine/web.d.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L249)
+Defined in: [\_spine/web.d.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L271)
 
 ***
 
 ### maxDelay
 
-> `readonly` **maxDelay**: `number`
+> `readonly` **maxDelay**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/web.d.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L251)
+Defined in: [\_spine/web.d.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L273)

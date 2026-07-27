@@ -19,7 +19,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isTaggedError } from '@liteship/error';
 import { noUnregisteredTodoGate, verifyGate, nodeContext, memoryContext } from '@liteship/gauntlet';
-import { buildObligationLedger } from '../../../packages/cli/src/lib/traceability.js';
+import { buildObligationLedger } from '../../../packages/cli/src/internal/traceability.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');

@@ -22,15 +22,15 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { wallClock } from '@liteship/core';
-import { detectHost, type BuildHost } from '../lib/host-detect.js';
+import { detectHost, type BuildHost } from '../internal/host-detect.js';
 import {
   detectProjectPackageManager,
   projectPackageManagerFailureHint,
   projectPackageManagerFailureMessage,
   projectBinaryInvocation,
   type ProjectPackageManager,
-} from '../lib/project-package-manager.js';
-import { spawnArgv } from '../lib/spawn.js';
+} from '../internal/project-package-manager.js';
+import { spawnArgv } from '../internal/spawn.js';
 import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt emitted by `liteship dev` when it delegates to the consumer app's own host dev server. */

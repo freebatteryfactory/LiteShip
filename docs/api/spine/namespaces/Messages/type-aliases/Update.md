@@ -8,4 +8,4 @@
 
 > **Update** = [`WorkerUpdate`](../../../type-aliases/WorkerUpdate.md)
 
-Defined in: [\_spine/worker.d.ts:284](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L284)
+Defined in: [\_spine/worker.d.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L285)

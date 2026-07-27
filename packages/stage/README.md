@@ -41,7 +41,7 @@ if (ffmpegEncodeAvailable()) {
 
 ## Where it sits
 
-Stage owns no identity kernel and reinvents no caster. It walks the graph and drives what already exists — `CSSCompiler.compile` (`@liteship/compiler`), the adaptive helpers (`@liteship/astro`), `VideoRenderer` over a `Compositor` (`@liteship/core`) — and mints every address through `CanonicalCbor` → `AddressedDigest` (the `@liteship/core` kernel). Core stays pure nouns; stage is the verbs over it. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md).
+Stage owns no identity kernel and reinvents no timing kernel. It walks the graph and drives what already exists — `CSSCompiler.compile` (`@liteship/compiler`), the adaptive helpers (`@liteship/astro`), and the shared `FrameSchedule` over a `Compositor` (`@liteship/core`) — while retaining Stage's graph-specific state projector. Every address still flows through `CanonicalCbor` → `AddressedDigest`. Core stays pure nouns; Stage owns the carrier orchestration. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md).
 
 ## The byte-encode is injected
 

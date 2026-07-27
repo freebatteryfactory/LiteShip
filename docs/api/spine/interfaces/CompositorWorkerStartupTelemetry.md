@@ -6,7 +6,7 @@
 
 # Interface: CompositorWorkerStartupTelemetry
 
-Defined in: [\_spine/worker.d.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L342)
+Defined in: [\_spine/worker.d.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L343)
 
 Per-stage timing and path evidence from compositor-worker startup.
 
@@ -16,7 +16,7 @@ Per-stage timing and path evidence from compositor-worker startup.
 
 > `optional` **onResolvedStateSettled**(`states`): `void`
 
-Defined in: [\_spine/worker.d.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L345)
+Defined in: [\_spine/worker.d.ts:346](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L346)
 
 Fired when the worker acknowledges the resolved-state bootstrap.
 
@@ -36,7 +36,7 @@ readonly [`ResolvedStateEntry`](ResolvedStateEntry.md)[]
 
 > **recordStage**(`stage`, `durationNs`): `void`
 
-Defined in: [\_spine/worker.d.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L343)
+Defined in: [\_spine/worker.d.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L344)
 
 #### Parameters
 

@@ -8,15 +8,23 @@
 import { describe, test, expect } from 'vitest';
 import {
   ComposableWorld,
-  createDenseStore,
   RuntimeCoordinator,
   defineBoundary,
   defineToken,
   defineStyle,
-  createWorld,
   Composable,
   createComposable,
+  schema,
 } from '@liteship/core';
+import {
+  admitPart,
+  createDenseStore,
+  createWorld,
+  defineDenseSystem,
+  definePart,
+  defineSystem,
+} from '@liteship/core/ecs';
+import type { AdmittedPartValue, Part } from '@liteship/core/ecs';
 
 const boundary = defineBoundary({
   input: 'viewport.width',
@@ -66,13 +74,24 @@ type TestSchema = {
   style?: typeof style;
 };
 
+const BoundaryPresence = definePart('integration-boundary-presence', schema.boolean);
+const Hp = definePart('integration-hp', schema.number);
+
+const mustAdmit = <P extends Part>(part: P, value: unknown): AdmittedPartValue<P> => {
+  const admitted = admitPart(part, value);
+  if (!admitted.ok) throw new Error(`integration fixture failed ${part.name} admission`);
+  return admitted.value;
+};
+
 describe('ECS Composition Integration', () => {
-  test('full lifecycle: spawn, query, evaluate, add system, and tick', () => {
+  test('full lifecycle composes authored entities with a typed ECS system on one world', () => {
     const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entityA = composableWorld.spawn({ boundary, token, style });
     const entityB = composableWorld.spawn({ boundary });
     composableWorld.spawn({ token });
+    world.spawn(mustAdmit(BoundaryPresence, true));
+    world.spawn(mustAdmit(BoundaryPresence, true));
 
     const queried = composableWorld.query('boundary');
     const evaluationA = composableWorld.evaluate(entityA, {
@@ -85,14 +104,18 @@ describe('ECS Composition Integration', () => {
 
     let executed = 0;
     let matched = 0;
-    world.addSystem({
-      name: 'boundary-system',
-      query: ['boundary'],
-      execute(entities) {
-        executed++;
-        matched = entities.length;
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'boundary-system',
+        query: [BoundaryPresence],
+        reads: [],
+        writes: [],
+        execute(entities) {
+          executed++;
+          matched = entities.length;
+        },
+      }),
+    );
 
     world.tick();
 
@@ -115,18 +138,18 @@ describe('ECS Composition Integration', () => {
     dense.store(entity, 5);
 
     let seenMetric = 0;
-    world.addSystem({
-      name: 'metrics-system',
-      query: ['metrics'],
-      _denseSystem: true,
-      execute(stores) {
-        const store = stores.get('metrics');
-        if (store) {
-          seenMetric = store.data[0] ?? 0;
-          store.data[0] = seenMetric + 10;
-        }
-      },
-    });
+    world.addSystem(
+      defineDenseSystem({
+        name: 'metrics-system',
+        reads: [],
+        writes: [metrics.part],
+        execute(context) {
+          const values = context.write(metrics.part).view();
+          seenMetric = values[0] ?? 0;
+          values[0] = seenMetric + 10;
+        },
+      }),
+    );
 
     world.tick();
     const afterTick = dense.retrieve(entity);
@@ -140,20 +163,20 @@ describe('ECS Composition Integration', () => {
 
   test('entity despawn removes entities from queries and dense stores', () => {
     const world = createWorld();
-    const denseStore = createDenseStore('hp', 16);
+    const denseStore = createDenseStore(Hp, 16);
     world.addDenseStore(denseStore);
-    const id = world.spawn({ boundary, role: 'hero' });
-    denseStore.set(id, 99);
+    const id = world.spawn(mustAdmit(BoundaryPresence, true));
+    denseStore.writer.set(id, 99);
 
-    const before = world.query('boundary');
+    const before = world.query(BoundaryPresence);
     world.despawn(id);
-    const after = world.query('boundary');
+    const after = world.query(BoundaryPresence);
 
     const result = {
       before,
       after,
-      hp: denseStore.get(id),
-      count: denseStore.count,
+      hp: denseStore.store.get(id),
+      count: denseStore.store.count,
     };
 
     expect(result.before).toHaveLength(1);
@@ -180,24 +203,32 @@ describe('ECS Composition Integration', () => {
 
   test('multiple systems execute in registration order', () => {
     const world = createWorld();
-    world.spawn({ boundary });
+    world.spawn(mustAdmit(BoundaryPresence, true));
     const calls: string[] = [];
 
-    world.addSystem({
-      name: 'first',
-      query: ['boundary'],
-      execute() {
-        calls.push('first');
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'first',
+        query: [BoundaryPresence],
+        reads: [],
+        writes: [],
+        execute() {
+          calls.push('first');
+        },
+      }),
+    );
 
-    world.addSystem({
-      name: 'second',
-      query: ['boundary'],
-      execute() {
-        calls.push('second');
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'second',
+        query: [BoundaryPresence],
+        reads: [],
+        writes: [],
+        execute() {
+          calls.push('second');
+        },
+      }),
+    );
 
     world.tick();
     const order = calls;

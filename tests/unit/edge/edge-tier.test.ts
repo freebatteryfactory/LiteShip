@@ -46,7 +46,9 @@ describe('EdgeTier', () => {
       designTier: 'enhanced' as const,
     };
     const attrs = EdgeTier.tierDataAttributes(result);
-    expect(attrs).toBe('data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced"');
+    expect(attrs).toBe(
+      'data-liteship-tier="reactive" data-liteship-motion="animations" data-liteship-design="enhanced"',
+    );
   });
 
   test('tierDataAttributesMap is the spreadable form, one key per CAP_AXES axis (auto-includes new axes)', () => {
@@ -78,23 +80,27 @@ describe('EdgeTier', () => {
     expect(EdgeTier.tierDataAttributes(result)).toBe(rebuilt);
   });
 
-  test('tierFromParsed matches detectTier for the same headers', () => {
+  test('tierFromEvidence matches detectTier for the same headers', () => {
     const headers = {
       'sec-ch-prefers-reduced-motion': 'reduce',
       'sec-ch-device-memory': '8',
       'sec-ch-viewport-width': '1280',
     };
-    const caps = ClientHints.parseClientHints(headers);
-    expect(EdgeTier.tierFromParsed(caps)).toEqual(EdgeTier.detectTier(headers));
+    const parsed = ClientHints.parseEvidence(headers);
+    expect(EdgeTier.tierFromEvidence(parsed)).toEqual(EdgeTier.detectTier(headers));
   });
 
-  test('tierFromParsed matches detectTier for the same headers', () => {
+  test('empty edge hints remain complete but report inferred provenance', () => {
     const headers = {
       'sec-ch-prefers-reduced-motion': 'reduce',
       'sec-ch-device-memory': '8',
       'sec-ch-viewport-width': '1280',
     };
-    const caps = ClientHints.parseClientHints(headers);
-    expect(EdgeTier.tierFromParsed(caps)).toEqual(EdgeTier.detectTier(headers));
+    const parsed = ClientHints.parseEvidence(headers);
+    const result = EdgeTier.tierFromEvidence(parsed);
+    expect(result.tierEvidence.tier.value).toBe(result.capTier);
+    expect(result.tierEvidence.tier.support).toBe('inferred');
+    expect(result.tierEvidence.motion.support).toBe('inferred');
+    expect(result.tierEvidence.design.support).toBe('inferred');
   });
 });

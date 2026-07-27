@@ -17,6 +17,9 @@
       "@liteship/_spine/genui": [
         "./packages/_spine/genui.d.ts"
       ],
+      "@liteship/_spine/events": [
+        "./packages/_spine/events.generated.d.ts"
+      ],
       "@liteship/error": [
         "./packages/error/src/index.ts"
       ],
@@ -59,6 +62,9 @@
       "@liteship/core/simulation": [
         "./packages/core/src/simulation/index.ts"
       ],
+      "@liteship/core/ecs": [
+        "./packages/core/src/ecs/index.ts"
+      ],
       "@liteship/core/fs-walk": [
         "./packages/core/src/fs-walk.ts"
       ],
@@ -97,6 +103,9 @@
       ],
       "@liteship/vite/html-transform": [
         "./packages/vite/src/html-transform.ts"
+      ],
+      "@liteship/vite/hmr": [
+        "./packages/vite/src/hmr.ts"
       ],
       "@liteship/vite/virtual": [
         "./packages/vite/virtual.d.ts"

@@ -1,7 +1,7 @@
 /**
  * #146 — answer-first package metadata check (the prepublish enforcement point).
  *
- * The catalog (`packages/cli/src/lib/package-metadata-catalog.ts`) is the ONE
+ * The catalog (`packages/cli/src/internal/package-metadata-catalog.ts`) is the ONE
  * source of the 25 publishable descriptions/keywords; `runPackageSmokeScan` calls
  * {@link checkPackedMetadata} on every packed manifest at release time. These
  * tests pin the check's semantics AND run it directly against all 25 REAL
@@ -17,7 +17,7 @@ import {
   answerFirstViolation,
   checkPackedMetadata,
   type PackedMetadata,
-} from '../../../../packages/cli/src/lib/package-metadata-catalog.js';
+} from '../../../../packages/cli/src/internal/package-metadata-catalog.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..', '..');
 

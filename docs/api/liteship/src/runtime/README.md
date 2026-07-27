@@ -25,10 +25,6 @@ contract. Curated named re-exports only — no behavior lives here.
 - [DpuAdoptClient](interfaces/DpuAdoptClient.md)
 - [FocusState](interfaces/FocusState.md)
 - [IMEState](interfaces/IMEState.md)
-- [LiteshipEventDetailMap](interfaces/LiteshipEventDetailMap.md)
-- [LiteshipMorphRejectedDetail](interfaces/LiteshipMorphRejectedDetail.md)
-- [LiteshipStreamErrorDetail](interfaces/LiteshipStreamErrorDetail.md)
-- [LiteshipUniformUpdateDetail](interfaces/LiteshipUniformUpdateDetail.md)
 - [LLMAdapter](interfaces/LLMAdapter.md)
 - [LLMChunk](interfaces/LLMChunk.md)
 - [LLMStreamConfig](interfaces/LLMStreamConfig.md)
@@ -38,6 +34,7 @@ contract. Curated named re-exports only — no behavior lives here.
 - [MorphHints](interfaces/MorphHints.md)
 - [MorphRejection](interfaces/MorphRejection.md)
 - [PhysicalState](interfaces/PhysicalState.md)
+- [PhysicalStateTracker](interfaces/PhysicalStateTracker.md)
 - [ReconnectConfig](interfaces/ReconnectConfig.md)
 - [ResolvedStreamRecoverySubstrate](interfaces/ResolvedStreamRecoverySubstrate.md)
 - [ResumptionConfig](interfaces/ResumptionConfig.md)
@@ -70,8 +67,11 @@ contract. Curated named re-exports only — no behavior lives here.
 - [IntegrityDecision](type-aliases/IntegrityDecision.md)
 - [IntegrityResult](type-aliases/IntegrityResult.md)
 - [IslandMode](type-aliases/IslandMode.md)
+- [LiteshipEventDetailMap](type-aliases/LiteshipEventDetailMap.md)
 - [LiteshipEventDisposer](type-aliases/LiteshipEventDisposer.md)
 - [LiteshipEventName](type-aliases/LiteshipEventName.md)
+- [LiteshipStreamErrorDetail](type-aliases/LiteshipStreamErrorDetail.md)
+- [LiteshipUniformUpdateDetail](type-aliases/LiteshipUniformUpdateDetail.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
@@ -91,7 +91,6 @@ contract. Curated named re-exports only — no behavior lives here.
 - [StreamWireAttrKey](type-aliases/StreamWireAttrKey.md)
 - [ToolCallAccumulator](type-aliases/ToolCallAccumulator.md)
 - [VerifiablePatchVerification](type-aliases/VerifiablePatchVerification.md)
-- [WebCodecsCapture](type-aliases/WebCodecsCapture.md)
 
 ## Variables
 
@@ -123,7 +122,6 @@ contract. Curated named re-exports only — no behavior lives here.
 - [STREAM\_WIRE\_ATTRIBUTE\_DOCS](variables/STREAM_WIRE_ATTRIBUTE_DOCS.md)
 - [STREAM\_WIRE\_ATTRIBUTES](variables/STREAM_WIRE_ATTRIBUTES.md)
 - [supplementReplayIfSignalsDropped](variables/supplementReplayIfSignalsDropped.md)
-- [WebCodecsCapture](variables/WebCodecsCapture.md)
 
 ## Functions
 
@@ -134,6 +132,8 @@ contract. Curated named re-exports only — no behavior lives here.
 - [computeShaderIntegrity](functions/computeShaderIntegrity.md)
 - [createAudioProcessor](functions/createAudioProcessor.md)
 - [createHtmlFragment](functions/createHtmlFragment.md)
+- [createPhysicalStateTracker](functions/createPhysicalStateTracker.md)
+- [createWebCodecsCapture](functions/createWebCodecsCapture.md)
 - [decideShaderIntegrity](functions/decideShaderIntegrity.md)
 - [detectDpuCapability](functions/detectDpuCapability.md)
 - [digestHtmlFragment](functions/digestHtmlFragment.md)
@@ -157,3 +157,9 @@ contract. Curated named re-exports only — no behavior lives here.
 - [verifyShaderIntegrity](functions/verifyShaderIntegrity.md)
 - [verifyVerifiablePatch](functions/verifyVerifiablePatch.md)
 - [watchAndPrepare](functions/watchAndPrepare.md)
+
+## References
+
+### LiteshipMorphRejectedDetail
+
+Re-exports [LiteshipMorphRejectedDetail](../../../web/src/type-aliases/LiteshipMorphRejectedDetail.md)

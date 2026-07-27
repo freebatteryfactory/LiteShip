@@ -6,7 +6,7 @@
 
 # Interface: StyleCSSResult
 
-Defined in: [\_spine/compiler.d.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L368)
+Defined in: [\_spine/compiler.d.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L476)
 
 CSS projection of one adaptive style definition.
 
@@ -16,7 +16,7 @@ CSS projection of one adaptive style definition.
 
 > `readonly` **layers**: `string`
 
-Defined in: [\_spine/compiler.d.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L370)
+Defined in: [\_spine/compiler.d.ts:478](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L478)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:370](https://github.com/freebatteryfactory/Li
 
 > `readonly` **scoped**: `string`
 
-Defined in: [\_spine/compiler.d.ts:369](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L369)
+Defined in: [\_spine/compiler.d.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L477)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:369](https://github.com/freebatteryfactory/Li
 
 > `readonly` **startingStyle**: `string`
 
-Defined in: [\_spine/compiler.d.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L371)
+Defined in: [\_spine/compiler.d.ts:479](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L479)

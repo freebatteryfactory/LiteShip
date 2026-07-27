@@ -18,6 +18,13 @@ export type { TypedValue, TransformPart, ColorSpace } from './interpolate.js';
 
 export { interpretTransition } from './interpret-transition.js';
 
+export {
+  decodeRuntimeWritePlan,
+  RuntimeWritePlanSchema,
+  decodeTypedValue,
+  TypedValueSchema,
+} from './runtime-write-plan.js';
+
 export type {
   LoweredMotionPlan,
   CssMotionPlan,
@@ -45,13 +52,14 @@ export type {
   ProgramEnv,
   BranchGuard,
   ProgramTimelineEntry,
-  LoweredProgramTimeline,
+  TransitionTimeline,
   ProgramSample,
   ProgramUniforms,
 } from './transition-program.js';
 
 export {
   Reveal,
+  decodeRevealIntent,
   lowerRevealIntent,
   lowerRevealChain,
   resolveRevealInitialState,

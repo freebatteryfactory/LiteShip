@@ -14,12 +14,12 @@ import {
   readStandardsWaivers,
   STANDARDS_WAIVERS_PATH,
   type StandardsIntegrityResult,
-} from '../../packages/cli/src/lib/standards-surface.js';
+} from '../../packages/cli/src/internal/standards-surface.js';
 import {
   buildObligationLedger,
   buildTraceabilityFacts,
   type ObligationLedger,
-} from '../../packages/cli/src/lib/traceability.js';
+} from '../../packages/cli/src/internal/traceability.js';
 import type { TraceabilityFacts } from '../../packages/gauntlet/src/index.js';
 
 export const TESTING_LEDGER_PATH = 'traceability/testing-ledger.yaml';

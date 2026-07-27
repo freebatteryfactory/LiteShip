@@ -10,7 +10,7 @@ import {
   stampVerifiablePatch,
   verifyVerifiablePatch,
   DPU_MARKER_ATTR,
-} from '../../../packages/web/src/dpu/watch-and-prepare.js';
+} from '../../../packages/web/src/watch-and-prepare.js';
 import type { ContentAddress, DocumentGraph } from '@liteship/core';
 
 function graphWithId(id: string): DocumentGraph {

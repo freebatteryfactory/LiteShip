@@ -1,6 +1,6 @@
 {
-  "snapshotFormat": 1,
-  "address": "fnv1a:68b071b1",
+  "snapshotFormat": 2,
+  "address": "fnv1a:b5ddff3d",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -15,214 +15,5198 @@
       "ruleId": "gauntlet/no-skipped-test"
     },
     {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/astro.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/beats.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/command.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/compiler.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/config.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/core.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/design.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/detect.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/edge.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/events.generated.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/genui.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/index.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/quantizer.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/remotion.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/scene.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/stub.js",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/vite.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/web.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/_spine/worker.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/analysis/audio-input.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/analysis/beat-markers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/analysis/onsets.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/analysis/wav-metadata.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/analysis/waveform.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/brands.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/contract.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/decoders/audio.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/decoders/image.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/decoders/riff.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/decoders/video.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/assets/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/Adaptive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/adaptive-runtime.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/adaptive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/gpu.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/llm.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/motion.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/stream.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/svg.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/wasm.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/client-directives/worker.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/detect-provisional.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/detect-upgrade.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/diagnostics-bridge.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/docs-bundle-id.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/docs-mcp-route.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/fetch-layer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/graph-mutation-route.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/graph-query-route.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/headers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/integration-toggles.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/integration.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/middleware-entry.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/middleware.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/quantize.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/responsive-media.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/adaptive.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/audio-signal.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/boundary.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/directive-boot.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/directive-bound.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/event-protocol.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/globals.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/gpu.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/graph-ai-apply.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/graph-directive.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/graph-lower.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/graph-runtime.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/index.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector-panels.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector-toolbar-app.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector/boundary-edit.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector/dom-probes.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector/graph-peek.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector/mount.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector/panel.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/inspector/styles.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/llm-receipt-tracker.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/llm-render-pipeline.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/llm-session.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/llm.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/motion.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/owned-disposal.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/policy.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/receipt-chain.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/runtime-session.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/scene-bridge.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/scene-stage.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/slots.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/stream-session.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/stream.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/svg.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/swap-pipeline.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/uniform-signal.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/url-policy.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/wasm.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/wgpu.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/worker.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/astro/src/runtime/write-continuous-map.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/active-surface-reader.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/benchmark-subject-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/catalog-feature-edge-census.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/code-ranges.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/consumer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/devops-profile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/diagnostic-emission-ast.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/feature-edge-census.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/integrity.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/mcdc-engine.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/mcdc-facts-build.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/mutation-engine.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/mutation-equivalents.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/mutation-facts-build.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/mutation-verdict.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/policy.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/repo-ir-build.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/repo-ir-capability-link.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/repo-ir-language-service.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/repo-ir-taint.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/shared.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/skip-detect-ast.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/spine-relation-build.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/structure.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/surface.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/transition-facts-build.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/ts-program.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/type-export-surface.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/audit/src/workers-date-scan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/addressed-digest.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/brands.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/canonical-json.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/cbor-decode.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/cbor.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/compare-bytes.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/fnv.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/index.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/canonical/src/value-domain.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/03-cast-aria/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/03-cast-aria/src/boundaries/nav.boundaries.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/05-ai-patch-refused/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/06-mutation-roundtrip/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/06-mutation-roundtrip/src/pages/api/graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/06-mutation-roundtrip/src/server/graph-store.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/07-stagger-reveal/stagger-preset.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/cloudflare-astro/astro.config.mjs",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/cloudflare-astro/src/boundaries.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/cloudflare-astro/src/env.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/cloudflare-astro/src/middleware.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/default/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/default/liteship.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/default/src/adaptive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/remotion-demo/remotion.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/remotion-demo/render.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/remotion-demo/src/LiteshipDemo.tsx",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/remotion-demo/src/Root.tsx",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/remotion-demo/src/setup.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/scenes/assets.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/scenes/intro.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/boundaries/layout.boundaries.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/middleware.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/pages/api/chat.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/pages/api/feed.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/pages/api/graph-feed.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/pages/api/graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/server/motion-chain.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/server/motion-payload.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/server/sse-heartbeat.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/server/stream-graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/themes/dark.themes.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/showcase/src/tokens/colors.tokens.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/tutorial/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/tutorial/src/boundaries/viewport.boundaries.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/tutorial/src/pages/api/feed.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/example/tutorial/src/tokens/spacing.tokens.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/template/default/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/template/default/liteship.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/fragments/template/default/src/adaptive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/bin.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/capsules/ship-emit.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/capsules/vitest-runner.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/add.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/asset-analyze.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/asset-verify.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/astro-dev.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/audit-floor.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/audit.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/build.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/capsule-verify.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/capsule.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/check-invariants.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/check.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/completion.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/context.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/describe.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/dev.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/doctor.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/fix.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/manifest.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/probes-astro.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/probes-cloudflare.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/probes-deployed.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/probes-workers-date.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/probes-workspace.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/profiles.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/summary.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/doctor/types.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/explain.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/gauntlet.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/glossary.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/help.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/info.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/lsp.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/package-smoke.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/plumb.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/sbom.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/scene-compile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/scene-dev.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/scene-render.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/scene-verify.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/ship-verify.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/ship.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/commands/version.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/dispatch.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/gauntlet-argv.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/gauntlet-phases.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/idempotency.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/active-surface-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/ansi.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/api-index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/argv.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/audit-package-catalog.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/audit-package-topology.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/capability-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/consumer-app-audit.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/cure-packet.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/feature-edge-profile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/fleet-event-feature-edge.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/fleet-event-protocol.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/gauntlet-verdict-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/generated-corpus-runner.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/host-detect.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/liteship-audit-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/liteship-audit-profile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/liteship-typescript-aliases.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/load-profile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/local-vs-global.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/lockfile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/mutation-runner.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/mutation-targets.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/one-install-cost-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/one-install-cost-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/package-metadata-catalog.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/package-metadata-catalog.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/package-smoke-helpers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/project-package-manager.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/release-artifact-bundle.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/repo-ir-gauntlet.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/run-command.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/sbom.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/seam-execution-coverage.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/semantic-assurance-campaigns.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/semantic-assurance-receipt.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/simulation-corpus.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/spawn.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/spine-provenance.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/spine-relation-admissions.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/spine-relation-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/standards-surface.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/supply-chain-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/supply-chain.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/taint-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/template-renames.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/test-corpus.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/traceability.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/workflow-action-pins.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/workspace.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/mcp-server.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/receipts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/ship-manifest.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/spawn-helpers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/cache-provider.dev.mjs",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/cache-provider.mjs",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/cache-provider.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/cloudflare-adapter-capsule.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/cloudflare-workers.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/edge-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/env-source.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/middleware.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cloudflare/src/testing.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/catalog.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/cure-packet.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/definition.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/evidence-requirement-derivation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/evidence-requirements.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/plan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/registry.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/checks/script-exemptions.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/asset.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/audit-floor-registry.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/audit-floor.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/audit.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/capsule-verify.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/capsule.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/check-invariants-registry.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/check-invariants.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/check.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/context-map.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/context.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/explain.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/glossary.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/manifest.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/package-smoke-registry.generated.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/package-smoke-registry.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/package-smoke.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/plumb-registry.generated.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/plumb-registry.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/plumb.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/public-surface-context.generated.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/public-surface-context.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/scene.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/ship-planning.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/verify.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/commands/version.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/dispatcher.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host-browser/context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host-browser/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host-browser/webmcp.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/capsule-provenance.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/check-governance.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/ffmpeg-probe.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/ffmpeg.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/idempotency.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/launcher.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/manifest-path.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/plumb-scan.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/spawn.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/host/vitest-runner.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/command/src/registry.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/ai-manifest.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/aria.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/capsules/aria-compile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/capsules/glsl-compile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/capsules/wgsl-compile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/component-css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/css-string.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/css-utils.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/dispatch.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/glsl.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/mcp-app-manifest.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/custom-property-name.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/diagnostics.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/from-container-queries.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/from-css-custom-properties.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/from-design-tokens.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/from-media-queries.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/from-tailwind-theme.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/query-length.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/record.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/migrate/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/motion-utils.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/motion.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/parse/css-cascade.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/parse/css-scan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/parse/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/parse/normalize-css-eol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/responsive-media-compile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/reveal-compile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/scroll-timeline-compile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/stagger-compile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/style-css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/theme-css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/token-css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/token-js.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/token-tailwind.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/view-transition-compile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/compiler/src/wgsl.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/adaptive.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/ai-cast.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/assembly.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/boundary-attribute.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/boundary.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsule.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/ai-cast-proposal.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/ai-cast-summarize.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/boundary-evaluate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/canonical-cbor-decode.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/canonical-cbor.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/document-graph-address.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/escalation-choose-tier.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/graph-patch-identity.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/capsules/token-buffer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/command.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/component.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/composable.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/config.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/defaults.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/input-validation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/plan.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/ship-capsule.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/style.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/theme.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/token.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/tuple-map.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/authoring/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/clock/clock.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/clock/hlc.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/clock/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/clock/rng.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/clock/vector-clock.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/ecs/dense.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/ecs/index.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/ecs/part.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/ecs/world.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/addressed-digest.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/bench-classify.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/bench-marker.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/caps.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/capture.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/closest-match.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/content-address.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/definition-snapshot.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/diagnostics.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/escalation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/fnv.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/quality-tiers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/receipt.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/typed-ref.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/ui-quality.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/evidence/validated-output.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/fs-walk.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/dag.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/document-graph-address.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/document-graph-schema.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/document-graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/graph-mutation-client.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/graph-mutation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/graph-patch.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/graph-query-gap-replay.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/graph-query.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/graph/projection.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/arbitrary-from-schema.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/cached-projection.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/policy-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/pure-transform.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/receipted-mutation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/scene-composition.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/site-adapter.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/harness/state-machine.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/av-bridge.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/av-renderer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/compositor-pool.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/compositor.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/frame-budget.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/gen-frame.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/responsive-media.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/token-buffer.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/media/video.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/animation.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/blend.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/clamp.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/easing.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/interpolate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/interpret-transition.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/reveal.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/runtime-write-plan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/scroll-timeline.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/stagger.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/state-transition.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/timeline.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/motion/transition-program.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/cell-kernel.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/cell.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/derived.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/dirty.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/lifetime.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/live-cell.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/primitive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/runtime-coordinator.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/scheduler.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/signal-input.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/signal.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/speculative.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/state-cell.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/store.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/stream-recovery.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/reactive/zap.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/repository-path.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/ast.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/brands.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/cbor.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/codec.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/constructors.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/decode.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/infer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/quantizer-types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/schema-port.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/standard.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/to-json-schema.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/schema/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/simulation/fault.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/simulation/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/simulation/scenario.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/simulation/scheduler.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/simulation/trace.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/simulation/world.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/wasm/boundary-f32.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/wasm/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/wasm/wasm-dispatch.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/core/src/wasm/wasm-fallback.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/bin/create-liteship.mjs",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/src/scaffold.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/src/template-renames.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/templates/default/astro.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/templates/default/liteship.config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/create-liteship/templates/default/src/adaptive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/cap-axes.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/detect-ready.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/detect.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/event-protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/gpu-patterns.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/head-probe.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/detect/src/tiers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/client-hints.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/cross-origin.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/edge-tier.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/host-adapter.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/kv-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/manifest.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/edge/src/theme-compiler.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/error/src/codes.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/error/src/contract.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/error/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/error/src/result.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/error/src/variants.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/ambition-proof.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/assurance-map.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/assurance-propagation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/assurance.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/authority.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/declared-fix.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/engine.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/evidence-recorder.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/active-surface-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/capability-link-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/check-governance-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/composition-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/feature-edge-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/fuzz-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/mcdc-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/mutation-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/proof-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/simulation-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/skip-site-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/spine-relation-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/standards-facts.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/supply-chain-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/taint-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/traceability-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/facts/transition-facts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/finding.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gate.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/active-modeled-surface-reader.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/bench-subjects.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/capability-gate-link.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/check-negative-control.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/check-registry-complete.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/check-waiver-freshness.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/claim-property.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/code-only.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/composition-coverage.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/crdt-laws.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/declared-fix-protocol.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/diagnostic-code-registered.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/early-return-detect.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/facade-export-budget.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/feature-edge-connectivity.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/fuzz-corpus.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/make-oracle-divergence-gate.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/mcdc-coverage.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/mutation-divergence.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-bare-throw-ir.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-bare-throw.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-default-export-divergence.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-early-return-test.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-nondeterminism.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-placeholder.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-require-divergence.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-silent-catch.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-skipped-test-fact.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-skipped-test.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-ts-ignore.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-unregistered-todo.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/no-var-divergence.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/perf-claim-bench.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/performance-contracts.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/proof-propagation.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/simulation-determinism.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/skip-allowlist.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/skip-detect.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/spine-relation.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/standards-integrity.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/supply-chain.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/symbol-orphan-divergence.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/taint-flow.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/traceability-bridge.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/gates/transition-conformance.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/node-context.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/proof-propagation.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/repo-ir.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/runner.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/verdict-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/waiver.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/gauntlet/src/waivers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/brands.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/catalog.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/demo-catalog.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/guards.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/identity.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/interaction.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/parse.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/render.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/genui/src/validate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/bin/liteship.mjs",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/adaptive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/astro.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/compiler.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/export-budget.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/genui.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/graph.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/media.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/migrate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/motion.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/package-roster.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/reactive.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/runtime.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/schema.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/testing.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/liteship/src/vite.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/app-render.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/app-resources.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/capabilities.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/dispatch.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/errors.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/http-server.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/http.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/jsonrpc.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/code-action.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/diagnostic.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/framing.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/server.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/stdio.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/lsp/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/manifest-resource.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/prompts.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/resources.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/server-info.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/start.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/stdio-server.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/stdio.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/ui-render.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/mcp-server/src/ui-resources.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/animated-quantizer.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/evaluate.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/index.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/memo-cache.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/quantizer.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/testing.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/quantizer/src/transition.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/remotion/src/composition.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/remotion/src/hooks.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/remotion/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/remotion/src/motion.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/remotion/src/peer-types.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/remotion/src/remotion-adapter-capsule.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/beat-binding-capsule.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/beat-projection.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/compile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/contract.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/dev/event-protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/dev/player.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/dev/server.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/include.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/parts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/runtime.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/sugar/beat.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/sugar/ease.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/sugar/envelope.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/sugar/layout.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/sugar/sync-to.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/audio.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/effect.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/motion.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/pass-through-mixer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/svg-egress.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/svg.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/sync.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/transition.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/systems/video.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/scene/src/track.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/stage/src/dual-export.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/stage/src/ffmpeg-encoder.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/stage/src/ffmpeg.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/stage/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/stage/src/motion-export.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/boundary-manifest.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/boundary-shadowing.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/css-quantize.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/environments.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/event-protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/hmr-producer.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/hmr.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/html-scan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/html-transform-engine.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/html-transform.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/plugin.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/primitive-resolution-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/primitive-resolve.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/project-config.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/resolve-fs.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/resolve-utils.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/style-transform.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/theme-transform.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/token-manifest.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/token-transform.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/transform-css.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/virtual-modules.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/wasm-package-resolve.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/wasm-resolve.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/src/wasm-state.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/vite/virtual.d.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/audio/processor-bootstrap.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/audio/processor.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/capture/index.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/capture/mediabunny.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/capture/pipeline.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/capture/render.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/capture/webcodecs.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/graph-form.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/lite.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/morph/diff-pure.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/morph/diff.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/morph/hints.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/morph/opaque.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/morph/semantic-id.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/physical/capture.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/physical/restore.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/security/html-trust.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/security/runtime-url.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/security/shader-integrity.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/slot/addressing.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/slot/registry.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream-receipt-capsule.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/llm-adapter.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/llm-chunks.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/recovery-substrate.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/recovery.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/resumption-pure.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/resumption.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/sse-pure.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/stream/sse.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/watch-and-prepare.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/dispatch.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/event-protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/liteship-events.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/liteship-events.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/render-contract-doc.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/web/src/wire/stream-attributes.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-mode.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-protocol.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-script.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-startup.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-state.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-types.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/compositor-worker.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/evaluate-inline.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/host.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/index.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/messages.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/motion-sample.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/render-worker.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/spsc-ring.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/worker/src/startup-packet.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/admit-delivery-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/affected-plan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/alloc-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/allocation-contracts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/artifact-builders.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/artifact-context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/artifact-integrity.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/artifact-types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/artifact-verifiers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/assurance-inventory.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/artifact-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/integrity.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/report.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/shared.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/structure.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/surface.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/audit/types.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench-contracts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench-format.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench-gate.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench-reality.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench-trend.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/allocation-curves.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/allocation-probes.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/contract-coverage.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/contract-probes.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/contracts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/directive-suite.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/flex-policy.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/bench/replicate-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/build-api-docs.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/build-release-artifacts.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/build-wasm.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/capability-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/capsule-compile.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/capture-json-schema-parity.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/ci-plan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/clean.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/collect-delivery-metrics.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/devx-check.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/docs-build.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/docs-bundle.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/docs-check.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/docs-input-fingerprint.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/doctor.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/extract-changelog-section.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/feedback-verify.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/flex-verify.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gauntlet.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-docs.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-event-protocol.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-public-export-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-public-surface-context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-roster.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/gen-spine-surface.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/glossary.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/affected-result-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/affected-selector-calibration.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/affected-test-execution.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/affected-test-plan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/agent-context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/assurance-inventory.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/bench-snapshot.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/breadcrumb-depth.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/capsule-detector.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/capsule-paths.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/change-intent.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/check-execution-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/ci-authority-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/ci-authority.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/ci-evidence-selection.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/command-docs.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/coverage-shard-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/declared-fix-admission.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/delivery-admission-receipt.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/delivery-evidence-schema.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/delivery-evidence-verifier.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/delivery-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/delivery-metrics.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/devcontainer-pins.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/doc-registry.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/event-protocol-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/executable-failure-proof.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/execution-prerequisites.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/feature-edge-profile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/flake-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/flake-signature-ledger.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/github-change-intent.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/github-run-jobs.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/governed-exceptions.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/local-resource-profile.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/local-verification-plan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/package-docs.generated.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/package-source-entrypoints.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/project-reference-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/public-export-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/release-attestation-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/release-delivery-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/release-plan-admission.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/release-promotion-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/script-categories.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/source-import-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/source-layout-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/spawn.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/spine-surface-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/test-constitution.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/typedoc-input-fingerprint.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/typedoc-proof-cache.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/typescript-toolchain-qualification.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/link-pre-commit.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/local-resources.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/merge-coverage.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/merge-shard-coverage.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/merge-subprocess-v8.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/mint-gauntlet-context.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/native-tsc.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/package-catalog.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/paired-truth.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/postinstall.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/preflight.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/refresh-bench-snapshot.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/report-adaptive-scan.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/report-runtime-seams.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/runtime-gate.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/scripts-index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/semantic-convergence-report.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/source-layout-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/spine-relation-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/standards-integrity-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/support/cloudflare-env.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/support/pnpm-process.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-affected.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-astro.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-cloudflare-astro.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-cloudflare-dev.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-constitution.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-e2e.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-flake-targets.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-flake.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-journey.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-shard.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-tailwind.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/test-vite.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/transition-conformance-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/typescript-toolchain-qualification.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/verify-affected-result-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/verify-release-delivery-evidence.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/verify.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/write-affected-result-evidence.ts",
+      "level": "L1"
+    },
+    {
       "_tag": "assurance",
       "glob": "packages/*/src/index.ts",
-      "level": "L2"
+      "level": "L2",
+      "order": 44
     },
     {
       "_tag": "assurance",
       "glob": "packages/*/src/{contract,capsule}.ts",
-      "level": "L2"
+      "level": "L2",
+      "order": 45
     },
     {
       "_tag": "assurance",
       "glob": "packages/astro/src/runtime/**",
-      "level": "L3"
+      "level": "L3",
+      "order": 25
     },
     {
       "_tag": "assurance",
-      "glob": "packages/audit/src/{structure,policy,devops-profile,integrity}.ts",
-      "level": "L3"
+      "glob": "packages/audit/src/{structure,policy,devops-profile,integrity,catalog-feature-edge-census,feature-edge-census,mcdc-engine,mcdc-facts-build,mutation-engine,mutation-facts-build,mutation-verdict,transition-facts-build}.ts",
+      "level": "L3",
+      "order": 33
     },
     {
       "_tag": "assurance",
       "glob": "packages/canonical/src/**",
-      "level": "L4"
+      "level": "L4",
+      "order": 0
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/cli/src/capsules/ship-emit.ts",
+      "level": "L3",
+      "order": 39
     },
     {
       "_tag": "assurance",
       "glob": "packages/cli/src/commands/**",
-      "level": "L2"
+      "level": "L2",
+      "order": 51
     },
     {
       "_tag": "assurance",
-      "glob": "packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts",
-      "level": "L3"
+      "glob": "packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,check,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts",
+      "level": "L3",
+      "order": 41
     },
     {
       "_tag": "assurance",
       "glob": "packages/cli/src/dispatch.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 37
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/cli/src/internal/{cure-packet,sbom,seam-execution-coverage,standards-surface,supply-chain}.ts",
+      "level": "L3",
+      "order": 40
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/cli/src/{ship-manifest}.ts",
+      "level": "L3",
+      "order": 38
     },
     {
       "_tag": "assurance",
       "glob": "packages/command/src/commands/**",
-      "level": "L2"
+      "level": "L2",
+      "order": 50
     },
     {
       "_tag": "assurance",
       "glob": "packages/command/src/dispatcher.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 35
     },
     {
       "_tag": "assurance",
       "glob": "packages/command/src/host/plumb-scan.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 42
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/command/src/host/{capsule-provenance,idempotency}.ts",
+      "level": "L3",
+      "order": 36
     },
     {
       "_tag": "assurance",
       "glob": "packages/command/src/{catalog,registry}.ts",
-      "level": "L2"
+      "level": "L2",
+      "order": 49
     },
     {
       "_tag": "assurance",
-      "glob": "packages/core/src/authoring/{boundary,ai-cast}.ts",
-      "level": "L3"
+      "glob": "packages/compiler/src/{responsive-media-compile,reveal-compile,scroll-timeline-compile,stagger-compile}.ts",
+      "level": "L3",
+      "order": 28
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/authoring/capsules/{canonical-cbor,canonical-cbor-decode}.ts",
+      "level": "L3",
+      "order": 12
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/authoring/{adaptive,boundary,component,config,ship-capsule,style,theme,token,ai-cast}.ts",
+      "level": "L3",
+      "order": 11
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/authoring/{plan,assembly}.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 4
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/clock/clock.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 19
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/clock/hlc.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 3
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/clock/rng.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 20
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/ecs/**",
+      "level": "L3",
+      "order": 13
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/evidence/content-address.ts",
+      "level": "L3",
+      "order": 14
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/evidence/{receipt,validated-output}.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 2
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/graph/dag.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 5
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/harness/site-adapter.ts",
+      "level": "L3",
+      "order": 15
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/media/{gen-frame,token-buffer}.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 17
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/motion/timeline.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 8
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/motion/{blend,animation}.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 18
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/reactive/{cell-kernel,cell,derived,store,signal,live-cell}.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 7
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/reactive/{zap,speculative}.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 16
     },
     {
       "_tag": "assurance",
       "glob": "packages/core/src/schema/brands.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 6
     },
     {
       "_tag": "assurance",
       "glob": "packages/edge/src/manifest.ts",
-      "level": "L2"
+      "level": "L2",
+      "order": 47
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/gauntlet/src/facts/standards-facts.ts",
+      "level": "L4",
+      "order": 10
     },
     {
       "_tag": "assurance",
       "glob": "packages/gauntlet/src/gates/**",
-      "level": "L3"
+      "level": "L3",
+      "order": 32
     },
     {
       "_tag": "assurance",
       "glob": "packages/gauntlet/src/{engine,authority,waiver,gate,assurance-map,finding,assurance}.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 9
     },
     {
       "_tag": "assurance",
       "glob": "packages/gauntlet/src/{runner,node-context}.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 31
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/genui/src/{catalog,identity}.ts",
+      "level": "L3",
+      "order": 29
     },
     {
       "_tag": "assurance",
       "glob": "packages/mcp-server/src/{capabilities,jsonrpc,errors,prompts,resources,manifest-resource,app-resources,ui-resources}.ts",
-      "level": "L2"
+      "level": "L2",
+      "order": 48
     },
     {
       "_tag": "assurance",
       "glob": "packages/mcp-server/src/{http,stdio,dispatch}.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 34
     },
     {
       "_tag": "assurance",
       "glob": "packages/quantizer/src/**",
-      "level": "L3"
+      "level": "L3",
+      "order": 21
     },
     {
       "_tag": "assurance",
-      "glob": "packages/remotion/src/composition.ts",
-      "level": "L3"
+      "glob": "packages/remotion/src/{composition,motion}.ts",
+      "level": "L3",
+      "order": 27
     },
     {
       "_tag": "assurance",
       "glob": "packages/scene/src/contract.ts",
-      "level": "L2"
+      "level": "L2",
+      "order": 46
     },
     {
       "_tag": "assurance",
-      "glob": "packages/stage/src/{dual-export,ffmpeg-encoder}.ts",
-      "level": "L3"
+      "glob": "packages/stage/src/{dual-export,ffmpeg-encoder,motion-export}.ts",
+      "level": "L3",
+      "order": 26
     },
     {
       "_tag": "assurance",
       "glob": "packages/web/src/capture/**",
-      "level": "L3"
+      "level": "L3",
+      "order": 22
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/web/src/security/shader-integrity.ts",
+      "level": "L3",
+      "order": 30
     },
     {
       "_tag": "assurance",
       "glob": "packages/web/src/stream/**",
-      "level": "L3"
+      "level": "L3",
+      "order": 23
     },
     {
       "_tag": "assurance",
       "glob": "packages/worker/src/**",
-      "level": "L3"
+      "level": "L3",
+      "order": 24
     },
     {
       "_tag": "assurance",
       "glob": "packages/{assets,genui}/src/brands.ts",
-      "level": "L4"
+      "level": "L4",
+      "order": 1
     },
     {
       "_tag": "assurance",
       "glob": "packages/{cli,command,mcp-server,audit,remotion,stage}/src/**",
-      "level": "L1"
+      "level": "L1",
+      "order": 52
     },
     {
       "_tag": "assurance",
       "glob": "scripts/**",
-      "level": "L1"
+      "level": "L1",
+      "order": 53
     },
     {
       "_tag": "assurance",
       "glob": "scripts/{gauntlet,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts",
-      "level": "L3"
+      "level": "L3",
+      "order": 43
     },
     {
       "_tag": "floor",
@@ -535,6 +5519,33 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/check-negative-control",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-registry-complete",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/check-waiver-freshness",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/claim-without-confirmer",
       "set": "LITESHIP_IR_GATES",
       "level": "L3",
@@ -556,6 +5567,24 @@
       "ruleId": "gauntlet/diagnostic-code-registered",
       "set": "LITESHIP_IR_GATES",
       "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/facade-export-budget",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/feature-edge-connectivity",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L4",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1
@@ -643,6 +5672,15 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/no-unregistered-todo",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/no-var-divergence",
       "set": "LITESHIP_IR_GATES",
       "level": "L1",
@@ -709,6 +5747,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-BEGINNER-SURFACE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-BRAND-RESIDUE-ZERO",
       "level": "L3",
       "proofKind": "proof"
@@ -764,6 +5808,12 @@
     {
       "_tag": "invariant",
       "id": "INV-FACADE-EXPORT-BUDGET",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-GATE-AUTHORITY-INTEGRITY",
       "level": "L4",
       "proofKind": "proof"
     },
@@ -830,6 +5880,12 @@
     {
       "_tag": "invariant",
       "id": "INV-MUTATION-FACTS-DETERMINISTIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-PUBLIC-SURFACE-INHABITED",
       "level": "L4",
       "proofKind": "proof"
     },

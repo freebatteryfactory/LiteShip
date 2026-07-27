@@ -8,7 +8,7 @@
 
 > **watchAndPrepare**(`marker`, `target`): [`WatchAndPrepareHandle`](../interfaces/WatchAndPrepareHandle.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:148
+Defined in: web/dist/watch-and-prepare.d.ts:148
 
 Watch a DOM slot under `marker` and prepare stamped verifiable patches against it.
 The target is annotated with `data-liteship-dpu-marker` immediately; successful applies

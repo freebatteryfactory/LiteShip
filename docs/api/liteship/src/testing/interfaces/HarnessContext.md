@@ -215,7 +215,7 @@ capsule's input schema, not the arbitrary walker.
 
 > `readonly` `optional` **runtimeDriver?**: `object`
 
-Defined in: core/dist/harness/pure-transform.d.ts:165
+Defined in: core/dist/harness/pure-transform.d.ts:166
 
 COMPILE-TIME resolution (stateMachine): a runtime-backed state machine whose
 step semantics live in a BUILDER + tick handle rather than declared
@@ -322,6 +322,10 @@ modules.
 
 > `readonly` **hasVideo**: `boolean`
 
+#### partsImport
+
+> `readonly` **partsImport**: `string`
+
 #### runtimeImport
 
 > `readonly` **runtimeImport**: `string`
@@ -332,7 +336,7 @@ modules.
 
 > `readonly` `optional` **sceneDriverNotApplicableReason?**: `string`
 
-Defined in: core/dist/harness/pure-transform.d.ts:192
+Defined in: core/dist/harness/pure-transform.d.ts:193
 
 COMPILE-TIME reason (sceneComposition): when no [sceneDriver](#scenedriver) was
 resolved, the specific reason this capsule has no tickable scene (e.g. it is
@@ -346,7 +350,7 @@ used.
 
 > `readonly` `optional` **siteAdapter?**: `object`
 
-Defined in: core/dist/harness/pure-transform.d.ts:203
+Defined in: core/dist/harness/pure-transform.d.ts:204
 
 COMPILE-TIME resolution (siteAdapter): everything the two lane-aware checks
 need. Resolved by `scripts/capsule-compile.ts` — the siteAdapter analogue of

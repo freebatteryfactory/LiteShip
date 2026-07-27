@@ -9,7 +9,7 @@ import fc from 'fast-check';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildTraceabilityFacts } from '../../packages/cli/src/lib/traceability.js';
+import { buildTraceabilityFacts } from '../../packages/cli/src/internal/traceability.js';
 
 let root = '';
 const NOW = new Date('2026-07-26T00:00:00.000Z');

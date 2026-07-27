@@ -9,7 +9,7 @@
  * handler and the typed payload arrives at projectOk with no cast.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { projectCliResult, runCliCommand } from '../../../../packages/cli/src/lib/run-command.js';
+import { projectCliResult, runCliCommand } from '../../../../packages/cli/src/internal/run-command.js';
 import { emit } from '../../../../packages/cli/src/receipts.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 

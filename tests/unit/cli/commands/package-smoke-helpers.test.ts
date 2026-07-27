@@ -31,7 +31,7 @@ import {
   semanticClosureFileHash,
   assertPackedTypeClosure,
   packedLiteshipBin,
-} from '../../../../packages/cli/src/lib/package-smoke-helpers.js';
+} from '../../../../packages/cli/src/internal/package-smoke-helpers.js';
 
 describe('packedLiteshipBin — facade owns the public executable', () => {
   it('never points release smoke at the implementation-only @liteship/cli package', () => {

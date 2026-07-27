@@ -8,7 +8,7 @@
 
 > **pickFacts**(`context`, `requires`): [`FactBundle`](../interfaces/FactBundle.md)
 
-Defined in: [gauntlet/src/gate.ts:916](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L916)
+Defined in: [gauntlet/src/gate.ts:1201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1201)
 
 Pick EXACTLY the declared FactPacks off a context into a [FactBundle](../interfaces/FactBundle.md) — the engine
 seam that hands a [FactGate](../interfaces/FactGate.md)'s [FactGate.decide](../interfaces/FactGate.md#decide) only what it declared. A
@@ -24,7 +24,7 @@ boundary: `decide` sees this bundle, never the context.
 
 ### requires
 
-readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"checkGovernance"`)[]
+readonly (`"skipSites"` \| `"activeSurfaceFacts"` \| `"featureEdges"` \| `"checkGovernance"`)[]
 
 ## Returns
 

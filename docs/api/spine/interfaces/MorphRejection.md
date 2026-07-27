@@ -6,7 +6,7 @@
 
 # Interface: MorphRejection
 
-Defined in: [\_spine/web.d.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L113)
+Defined in: [\_spine/web.d.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L119)
 
 Stable reason and context for a refused DOM morph.
 
@@ -16,7 +16,7 @@ Stable reason and context for a refused DOM morph.
 
 > `readonly` `optional` **hint?**: `string`
 
-Defined in: [\_spine/web.d.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L120)
+Defined in: [\_spine/web.d.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L126)
 
 Literal next step for the consumer rendering the rejection.
 
@@ -26,7 +26,7 @@ Literal next step for the consumer rendering the rejection.
 
 > `readonly` `optional` **missingIds?**: readonly `string`[]
 
-Defined in: [\_spine/web.d.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L116)
+Defined in: [\_spine/web.d.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L122)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/web.d.ts:116](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **reason**: `string`
 
-Defined in: [\_spine/web.d.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L118)
+Defined in: [\_spine/web.d.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L124)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/web.d.ts:118](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **slot?**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: [\_spine/web.d.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L117)
+Defined in: [\_spine/web.d.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L123)
 
 ***
 
@@ -50,6 +50,6 @@ Defined in: [\_spine/web.d.ts:117](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **type**: `"preserve_violation"`
 
-Defined in: [\_spine/web.d.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L115)
+Defined in: [\_spine/web.d.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L121)
 
 Closed union of the rejection kinds the runtime emits.

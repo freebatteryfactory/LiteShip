@@ -10,7 +10,7 @@ import {
   releasePackArgv,
   verifyReleaseArtifactBundle,
   type ReleaseArtifactBundle,
-} from '../../../packages/cli/src/lib/release-artifact-bundle.js';
+} from '../../../packages/cli/src/internal/release-artifact-bundle.js';
 import { tarballManifestAddress } from '../../../packages/cli/src/ship-manifest.js';
 import { loadReleaseArtifactWorkspace } from '../../journey/harness.js';
 

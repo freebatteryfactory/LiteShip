@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { IntegrityDigest } from '@liteship/core';
-import { createCurePacket } from '../../../../packages/cli/src/lib/cure-packet.js';
+import { createCurePacket } from '../../../../packages/cli/src/internal/cure-packet.js';
 
 const BASE_INPUT = {
   headSha: '0123456789abcdef',
@@ -47,6 +47,16 @@ describe('CurePacket', () => {
 
     expect(changedTree.packetId).not.toBe(baseline.packetId);
     expect(changedFailure.packetId).not.toBe(baseline.packetId);
+  });
+
+  it('canonicalizes artifact order before minting identity', () => {
+    const a = { path: 'reports/a.json', digest: IntegrityDigest(`sha256:${'c'.repeat(64)}`) };
+    const b = { path: 'reports/b.json', digest: IntegrityDigest(`sha256:${'d'.repeat(64)}`) };
+    const first = createCurePacket({ ...BASE_INPUT, artifacts: [b, a] });
+    const second = createCurePacket({ ...BASE_INPUT, artifacts: [a, b] });
+
+    expect(second.packetId).toBe(first.packetId);
+    expect(first.evidence.artifacts.map((artifact) => artifact.path)).toEqual(['reports/a.json', 'reports/b.json']);
   });
 
   it('deeply snapshots and freezes all caller-owned collections', () => {

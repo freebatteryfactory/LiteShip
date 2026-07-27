@@ -1,7 +1,8 @@
 /**
  * `@liteship/core` — **LiteShip** primitives: boundaries,
  * tokens, styles, themes, signals, and working-deck coordination (compositor,
- * plan graph, ECS, capsule factory).
+ * plan graph, capsule factory). The typed projection/execution substrate lives
+ * on the explicit `@liteship/core/ecs` advanced subpath.
  * @module
  */
 
@@ -212,7 +213,7 @@ export type {
   ProgramEnv,
   BranchGuard,
   ProgramTimelineEntry,
-  LoweredProgramTimeline,
+  TransitionTimeline,
   ProgramSample,
   ProgramUniforms,
 } from './motion/index.js';
@@ -346,8 +347,8 @@ export { GenFrame } from './media/index.js';
 export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from './media/index.js';
 
 // Video
-export { VideoRenderer, compositeStateToRgba } from './media/index.js';
-export type { VideoConfig, VideoFrameOutput } from './media/index.js';
+export { createFrameSchedule, createVideoRenderer, compositeStateToRgba } from './media/index.js';
+export type { FrameSchedule, ScheduledFrame, VideoConfig, VideoFrameOutput, VideoRenderer } from './media/index.js';
 
 // Capture
 export type { CaptureConfig, CaptureFrame, FrameCapture, CaptureResult } from './evidence/index.js';
@@ -366,10 +367,6 @@ export type { DirtyFlags } from './reactive/index.js';
 
 // Protocol
 export type { CellKind, CellMeta, CellEnvelope } from './schema/index.js';
-
-// ECS
-export type { Entity, Part, System, DenseSystem, DenseStore, World } from './ecs.js';
-export { EntityId, createDenseStore, createWorld } from './ecs.js';
 
 // Composable
 export { Composable, ComposableWorld, createComposable } from './authoring/index.js';
@@ -654,7 +651,7 @@ export type {
   Decision,
 } from './authoring/index.js';
 
-export { TypeValidator } from './authoring/index.js';
+export { ASSEMBLY_KINDS, TypeValidator } from './authoring/index.js';
 
 export { defineCapsule, defineCapsuleCatalog } from './authoring/index.js';
 export type { CapsuleCatalog, CapsuleDef } from './authoring/index.js';

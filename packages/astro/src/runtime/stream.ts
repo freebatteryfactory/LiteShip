@@ -25,6 +25,7 @@ import {
   getStreamRecoverySubstrate,
   recordStreamPatchReceipt,
   registerStreamRecoverySubstrate,
+  createPhysicalStateTracker,
 } from '@liteship/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@liteship/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
@@ -314,6 +315,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     return;
   }
 
+  // The directive is the host owner for document-level IME tracking. Importing
+  // @liteship/web is passive; this explicit allocation installs the listeners,
+  // and the teardown event below removes them through the one async lifecycle.
+  const physicalStateTracker = createPhysicalStateTracker(document);
+
   const artifactId = target.getAttribute(streamWireAttr('artifact')) ?? undefined;
   const morphStyle = (target.getAttribute(streamWireAttr('morph')) ?? 'innerHTML') as 'innerHTML' | 'outerHTML';
   const snapshotUrl =
@@ -386,12 +392,18 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       const locator = targetLocator(target);
       pendingLocator = locator;
       // `Morph.morphWithState` applies the DOM morph synchronously — call it directly.
-      Morph.morphWithState(target, html, {
-        morphStyle,
-        preserveFocus: true,
-        preserveScroll: true,
-        preserveSelection: true,
-      });
+      Morph.morphWithState(
+        target,
+        html,
+        {
+          morphStyle,
+          preserveFocus: true,
+          preserveScroll: true,
+          preserveSelection: true,
+        },
+        undefined,
+        physicalStateTracker,
+      );
 
       if (locator && locator.type !== 'slot') {
         target = findTarget(locator) ?? target;
@@ -823,6 +835,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     unbindSnapshotRecovery?.();
     closeClient();
     patchScheduler.dispose();
+    disposeOwnedResourceFromEvent(physicalStateTracker, 'stream');
   });
   load();
 }

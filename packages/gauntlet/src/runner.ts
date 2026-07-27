@@ -18,7 +18,7 @@
  * @module
  */
 
-import type { Gate } from './gate.js';
+import type { DiagnosticEmissionMatch, Gate } from './gate.js';
 import { ValidationError } from '@liteship/error';
 import type { SkipMatch } from './gates/skip-detect.js';
 import type { RepoIR } from './repo-ir.js';
@@ -35,6 +35,7 @@ import type { ProofFacts } from './facts/proof-facts.js';
 import type { CompositionFacts } from './facts/composition-facts.js';
 import type { SpineRelationFacts } from './facts/spine-relation-facts.js';
 import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
+import type { FeatureEdgeFacts } from './facts/feature-edge-facts.js';
 import type { CheckGovernanceFacts } from './facts/check-governance-facts.js';
 import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
@@ -67,6 +68,7 @@ import { checkWaiverFreshnessGate } from './gates/check-waiver-freshness.js';
 import { diagnosticCodeRegisteredGate } from './gates/diagnostic-code-registered.js';
 import { facadeExportBudgetGate } from './gates/facade-export-budget.js';
 import { noUnregisteredTodoGate } from './gates/no-unregistered-todo.js';
+import { featureEdgeConnectivityGate } from './gates/feature-edge-connectivity.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The three
@@ -206,6 +208,10 @@ export const LITESHIP_IR_ONLY_GATES: readonly Gate[] = [
   // perf-claim gate (no IR); rides the IR-host set alongside it, never the lean cut.
   claimPropertyGate,
   activeModeledSurfaceReaderGate,
+  // The fleet feature-edge census is host-built from typed runtime catalogs
+  // and TS semantic owners. It is required on the IR path; opaque/missing
+  // subject coverage is an authority-integrity failure, never an empty green.
+  featureEdgeConnectivityGate,
 ];
 
 /**
@@ -244,12 +250,16 @@ export interface RunGauntletOnRepoOptions {
    * via `(context.codeOnly ?? codeOnly)`. Omit it (the lean path) and the char-machine fallback runs.
    */
   readonly codeOnly?: (source: string) => string;
+  /** Host-injected parser-backed Diagnostics-call census. */
+  readonly diagnosticEmitterDetector?: (source: string) => readonly DiagnosticEmissionMatch[];
   /** Host-computed parser-backed benchmark subject reachability. */
   readonly benchmarkSubjects?: BenchmarkSubjectFacts;
   /** Required facts for every check-governance gate present in the composition. */
   readonly checkGovernance?: CheckGovernanceFacts;
   /** Required host-built reader facts for the active modeled-surface gate. */
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /** Required host-built fleet feature-edge connectivity facts. */
+  readonly featureEdges?: FeatureEdgeFacts;
   /**
    * The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
    * and never builds an IR; a host (the CLI, via `@liteship/audit`'s `ts.Program`)
@@ -301,7 +311,7 @@ export interface RunGauntletOnRepoOptions {
   /**
    * The INJECTED requirements-traceability facts (the avionics-tier ledger,
    * DO-178B-style) — OPTIONAL. A host (the CLI's
-   * `packages/cli/src/lib/traceability.ts` state machine) parses `traceability/*.yaml`,
+   * `packages/cli/src/internal/traceability.ts` state machine) parses `traceability/*.yaml`,
    * scans the corpus for `// PROVES:` headers, runs the lifecycle fold against the
    * injected wall-clock date, and threads the decided {@link TraceabilityFacts} here,
    * where they land on the {@link GateContext} for `traceabilityBridgeGate` to fold.
@@ -312,7 +322,7 @@ export interface RunGauntletOnRepoOptions {
   /**
    * The INJECTED standards-integrity facts (the AGENT-SAFETY META-GAUNTLET, the
    * "raccoon rule") — OPTIONAL. A host (the CLI's
-   * `packages/cli/src/lib/standards-surface.ts` extractor) reads the live standards
+   * `packages/cli/src/internal/standards-surface.ts` extractor) reads the live standards
    * surface, content-addresses it, diffs it against the committed snapshot, applies the
    * owner sign-offs against the injected wall-clock date, and threads the decided
    * {@link StandardsIntegrityFacts} here, where they land on the {@link GateContext} for
@@ -418,9 +428,11 @@ export function runGauntletOnRepo(
     opts.skipDetector !== undefined ||
     opts.earlyReturnDetector !== undefined ||
     opts.codeOnly !== undefined ||
+    opts.diagnosticEmitterDetector !== undefined ||
     opts.benchmarkSubjects !== undefined ||
     opts.checkGovernance !== undefined ||
-    opts.activeSurfaceFacts !== undefined
+    opts.activeSurfaceFacts !== undefined ||
+    opts.featureEdges !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
@@ -434,9 +446,13 @@ export function runGauntletOnRepo(
           ...(opts.earlyReturnDetector !== undefined ? { earlyReturnDetector: opts.earlyReturnDetector } : {}),
           // The SOUND scanner codeOnly floor (injected by the host); omitted ⇒ char-machine fallback.
           ...(opts.codeOnly !== undefined ? { codeOnly: opts.codeOnly } : {}),
+          ...(opts.diagnosticEmitterDetector !== undefined
+            ? { diagnosticEmitterDetector: opts.diagnosticEmitterDetector }
+            : {}),
           ...(opts.benchmarkSubjects !== undefined ? { benchmarkSubjects: opts.benchmarkSubjects } : {}),
           ...(opts.checkGovernance !== undefined ? { checkGovernance: opts.checkGovernance } : {}),
           ...(opts.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: opts.activeSurfaceFacts } : {}),
+          ...(opts.featureEdges !== undefined ? { featureEdges: opts.featureEdges } : {}),
         }
       : baseContext;
   return runGates(gates, context, runOpts);
@@ -617,6 +633,7 @@ export function litelaunchGauntletWithIR(
       // `activeModeledSurfaceReaderGate` folds them. When that gate is selected,
       // omission invalidates the plan before execution; it can never false-green.
       ...(cacheOpts.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: cacheOpts.activeSurfaceFacts } : {}),
+      ...(cacheOpts.featureEdges !== undefined ? { featureEdges: cacheOpts.featureEdges } : {}),
       // Inject the host-built SOUND AST skip detector (`detectSkipsAST`) when supplied — the
       // no-skipped-test gate uses it via `(context.skipDetector ?? detectSkips)`, gaining the
       // line-agnostic multi-line/ASI/inner-describe coverage + the structural F2 conditionality.
@@ -625,6 +642,9 @@ export function litelaunchGauntletWithIR(
       ...(cacheOpts.earlyReturnDetector !== undefined ? { earlyReturnDetector: cacheOpts.earlyReturnDetector } : {}),
       // The SOUND scanner codeOnly floor (host-injected `codeOnlyAST`); omitted ⇒ char-machine fallback.
       ...(cacheOpts.codeOnly !== undefined ? { codeOnly: cacheOpts.codeOnly } : {}),
+      ...(cacheOpts.diagnosticEmitterDetector !== undefined
+        ? { diagnosticEmitterDetector: cacheOpts.diagnosticEmitterDetector }
+        : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -768,6 +788,8 @@ export interface LitelaunchCacheOptions {
    * orphan reports as advisory until #130.
    */
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /** Required host-built fleet feature-edge connectivity facts. */
+  readonly featureEdges?: FeatureEdgeFacts;
   /**
    * OPTIONAL host-built SOUND AST skip detector (`@liteship/audit`'s `detectSkipsAST`) threaded onto
    * the {@link GateContext} as `skipDetector`. The no-skipped-test gate uses it via
@@ -788,4 +810,6 @@ export interface LitelaunchCacheOptions {
    * Supplied on the `--ir` path; omitted on the lean path (char-machine fallback, pinned equivalent).
    */
   readonly codeOnly?: (source: string) => string;
+  /** Host-built parser-backed Diagnostics-call census. */
+  readonly diagnosticEmitterDetector?: (source: string) => readonly DiagnosticEmissionMatch[];
 }

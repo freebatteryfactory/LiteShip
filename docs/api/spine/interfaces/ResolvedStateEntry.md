@@ -6,7 +6,7 @@
 
 # Interface: ResolvedStateEntry
 
-Defined in: [\_spine/worker.d.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L58)
+Defined in: [\_spine/worker.d.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L59)
 
 A single resolved discrete-state entry in a bootstrap/apply message.
 `generation` increases monotonically so receivers can discard stale
@@ -18,7 +18,7 @@ out-of-order deliveries.
 
 > `readonly` **generation**: `number`
 
-Defined in: [\_spine/worker.d.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L61)
+Defined in: [\_spine/worker.d.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L62)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [\_spine/worker.d.ts:61](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/worker.d.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L59)
+Defined in: [\_spine/worker.d.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L60)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [\_spine/worker.d.ts:59](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **state**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [\_spine/worker.d.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L60)
+Defined in: [\_spine/worker.d.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L61)

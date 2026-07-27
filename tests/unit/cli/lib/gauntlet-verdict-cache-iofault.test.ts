@@ -35,7 +35,7 @@ vi.mock('node:fs', async (importOriginal) => {
 });
 
 const { makeFsVerdictCache, makeFsMutantVerdictCache } = await import(
-  '../../../../packages/cli/src/lib/gauntlet-verdict-cache.js'
+  '../../../../packages/cli/src/internal/gauntlet-verdict-cache.js'
 );
 
 describe('verdict-cache read fault discrimination — a sanctioned errno is a MISS, an EIO is a tagged throw', () => {

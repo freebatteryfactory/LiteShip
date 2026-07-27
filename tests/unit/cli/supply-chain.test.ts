@@ -26,12 +26,12 @@ import {
   type AddressedDigest as AD,
   type HLC,
 } from '@liteship/core';
-import { parseLockfile } from '../../../packages/cli/src/lib/lockfile.js';
+import { parseLockfile } from '../../../packages/cli/src/internal/lockfile.js';
 import {
   evaluateLockfilePolicy,
   LITESHIP_LOCKFILE_POLICY,
   type PublishedImporters,
-} from '../../../packages/cli/src/lib/supply-chain-policy.js';
+} from '../../../packages/cli/src/internal/supply-chain-policy.js';
 import {
   analyzeLockfile,
   buildSbom,
@@ -40,8 +40,8 @@ import {
   scanCiAuthority,
   readWorkflows,
   type WorkspacePkg,
-} from '../../../packages/cli/src/lib/supply-chain.js';
-import { readWorkspacePackages } from '../../../packages/cli/src/lib/workspace.js';
+} from '../../../packages/cli/src/internal/supply-chain.js';
+import { readWorkspacePackages } from '../../../packages/cli/src/internal/workspace.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');

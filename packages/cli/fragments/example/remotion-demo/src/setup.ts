@@ -9,7 +9,7 @@
  * @module
  */
 
-import { Compositor, Millis, VideoRenderer, defineBoundary } from '@liteship/core';
+import { Compositor, Millis, createVideoRenderer, defineBoundary } from '@liteship/core';
 import type { VideoFrameOutput } from '@liteship/core';
 import { defineQuantizer, createQuantizer } from '@liteship/quantizer';
 
@@ -66,7 +66,10 @@ export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
   compositor.add('scale', quantizer);
 
   // Create the VideoRenderer
-  const renderer = VideoRenderer.make({ fps: FPS, width: WIDTH, height: HEIGHT, durationMs: Millis(DURATION_MS) }, compositor);
+  const renderer = createVideoRenderer(
+    { fps: FPS, width: WIDTH, height: HEIGHT, durationMs: Millis(DURATION_MS) },
+    compositor,
+  );
 
   // Drive the quantizer through the progress range (0-100) across frames
   // so each frame evaluates the boundary at the correct progress value

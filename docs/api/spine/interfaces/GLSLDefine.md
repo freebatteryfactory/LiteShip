@@ -6,7 +6,7 @@
 
 # Interface: GLSLDefine
 
-Defined in: [\_spine/compiler.d.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L79)
+Defined in: [\_spine/compiler.d.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L87)
 
 One preprocessor define emitted into a GLSL program.
 
@@ -16,7 +16,7 @@ One preprocessor define emitted into a GLSL program.
 
 > `readonly` `optional` **comment?**: `string`
 
-Defined in: [\_spine/compiler.d.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L82)
+Defined in: [\_spine/compiler.d.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L90)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:82](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/compiler.d.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L80)
+Defined in: [\_spine/compiler.d.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L88)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:80](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **value**: `string`
 
-Defined in: [\_spine/compiler.d.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L81)
+Defined in: [\_spine/compiler.d.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L89)

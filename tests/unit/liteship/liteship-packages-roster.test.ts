@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/testing.js';
 import { CANONICAL_ROSTER, renderLiteshipPackages } from '../../../scripts/gen-roster.js';
 import { packageManifests, packageRoster } from '../../support/repo-truths.js';
@@ -22,7 +22,7 @@ const LITESHIP_ROSTER = resolve(
   '..',
   '..',
   '..',
-  'packages/liteship/src/testing/package-roster.ts',
+  'packages/liteship/src/package-roster.generated.ts',
 );
 
 function liteshipDependenciesFromManifest(): string[] {
@@ -39,7 +39,7 @@ function generatedBlock(): string {
     /\/\* BEGIN gen-roster: LITESHIP_PACKAGES[^\n]*\*\/\n([\s\S]*?)\n\/\* END gen-roster: LITESHIP_PACKAGES/.exec(src);
   if (!match)
     throw new Error(
-      'packages/liteship/src/testing/package-roster.ts: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found',
+      'packages/liteship/src/package-roster.generated.ts: BEGIN/END gen-roster: LITESHIP_PACKAGES markers not found',
     );
   return match[1]!;
 }

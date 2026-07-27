@@ -6,7 +6,7 @@
 
 # Interface: ResolvedStateAckPayload
 
-Defined in: [\_spine/worker.d.ts:361](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L361)
+Defined in: [\_spine/worker.d.ts:362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L362)
 
 Acknowledgement payload emitted by the worker after it applies a
 resolved-state update from the main thread.
@@ -17,7 +17,7 @@ resolved-state update from the main thread.
 
 > `readonly` **additionalOutputsChanged**: `boolean`
 
-Defined in: [\_spine/worker.d.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L370)
+Defined in: [\_spine/worker.d.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L371)
 
 Whether non-discrete outputs (blend, CSS, etc.) changed in this round.
 
@@ -27,7 +27,7 @@ Whether non-discrete outputs (blend, CSS, etc.) changed in this round.
 
 > `readonly` **generation**: `number`
 
-Defined in: [\_spine/worker.d.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L363)
+Defined in: [\_spine/worker.d.ts:364](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L364)
 
 Generation counter the worker acknowledges.
 
@@ -37,6 +37,6 @@ Generation counter the worker acknowledges.
 
 > `readonly` **states**: readonly `object`[]
 
-Defined in: [\_spine/worker.d.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L365)
+Defined in: [\_spine/worker.d.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L366)
 
 The state transitions the worker actually observed.

@@ -8,7 +8,7 @@
 
 > **BoundaryCrossing**\<`S`\> = `object`
 
-Defined in: [\_spine/core.d.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L130)
+Defined in: [\_spine/core.d.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L136)
 
 Discriminated union of boundary crossings
 
@@ -24,7 +24,7 @@ Discriminated union of boundary crossings
 
 > `readonly` **from**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [\_spine/core.d.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L131)
+Defined in: [\_spine/core.d.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L137)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:131](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **timestamp**: [`HLC`](HLC.md)
 
-Defined in: [\_spine/core.d.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L133)
+Defined in: [\_spine/core.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L139)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:133](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **to**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [\_spine/core.d.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L132)
+Defined in: [\_spine/core.d.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L138)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [\_spine/core.d.ts:132](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: `number`
 
-Defined in: [\_spine/core.d.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L134)
+Defined in: [\_spine/core.d.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L140)

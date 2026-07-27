@@ -20,6 +20,9 @@ import {
   BeatBinding,
   beatBindingCapsule,
   bindBeats,
+  BeatPart,
+  IntensityPart,
+  SyncAnchorPart,
 } from '@liteship/scene';
 import type { SceneContract, BeatComponent } from '@liteship/scene';
 
@@ -105,10 +108,10 @@ describe('beat-binding integration with SceneRuntime', () => {
     const compiled = compileScene(buildSceneWithBeats(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
-      const beatEntities = handle.world.query('Beat');
+      const beatEntities = handle.world.query(BeatPart);
       expect(beatEntities.length).toBe(beats.length);
       const spawnedTimes = beatEntities
-        .map((e) => (e.components.get('Beat') as { timeMs: number }).timeMs)
+        .map((e) => e.get(BeatPart).timeMs)
         .sort((a, b) => a - b);
       expect(spawnedTimes).toEqual([250, 500, 750]);
     } finally {
@@ -125,10 +128,10 @@ describe('beat-binding integration with SceneRuntime', () => {
     try {
       // 500 ms — exactly at the beat.
       await handle.tick(500);
-      const synced = handle.world.query('SyncAnchor');
+      const synced = handle.world.query(SyncAnchorPart, IntensityPart);
       expect(synced.length).toBeGreaterThan(0);
       for (const e of synced) {
-        const intensity = e.components.get('_intensity');
+        const intensity = e.get(IntensityPart);
         expect(typeof intensity).toBe('number');
         // At the exact beat time, decay is exp(0) = 1.
         expect(intensity as number).toBeCloseTo(1, 2);
@@ -145,10 +148,10 @@ describe('beat-binding integration with SceneRuntime', () => {
     try {
       // 500 ms past the only beat → exp(-500/250) = exp(-2) ≈ 0.135.
       await handle.tick(500);
-      const synced = handle.world.query('SyncAnchor');
+      const synced = handle.world.query(SyncAnchorPart, IntensityPart);
       expect(synced.length).toBeGreaterThan(0);
       for (const e of synced) {
-        const intensity = e.components.get('_intensity') as number;
+        const intensity = e.get(IntensityPart);
         expect(intensity).toBeGreaterThan(0);
         expect(intensity).toBeLessThan(0.5);
       }
@@ -164,9 +167,9 @@ describe('beat-binding integration with SceneRuntime', () => {
     const handle = await SceneRuntime.build(compiled);
     try {
       await handle.tick(100);
-      const synced = handle.world.query('SyncAnchor');
+      const synced = handle.world.query(SyncAnchorPart, IntensityPart);
       for (const e of synced) {
-        const intensity = e.components.get('_intensity');
+        const intensity = e.get(IntensityPart);
         expect(intensity).toBe(0);
       }
     } finally {

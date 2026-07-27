@@ -6,7 +6,7 @@
 
 # Interface: WGSLBinding
 
-Defined in: [\_spine/compiler.d.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L124)
+Defined in: [\_spine/compiler.d.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L136)
 
 One WGSL resource binding in a declared bind group.
 
@@ -16,7 +16,7 @@ One WGSL resource binding in a declared bind group.
 
 > `readonly` **binding**: `number`
 
-Defined in: [\_spine/compiler.d.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L126)
+Defined in: [\_spine/compiler.d.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L138)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:126](https://github.com/freebatteryfactory/Li
 
 > `readonly` **group**: `number`
 
-Defined in: [\_spine/compiler.d.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L125)
+Defined in: [\_spine/compiler.d.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L137)
 
 ***
 
@@ -32,12 +32,12 @@ Defined in: [\_spine/compiler.d.ts:125](https://github.com/freebatteryfactory/Li
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/compiler.d.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L127)
+Defined in: [\_spine/compiler.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L139)
 
 ***
 
 ### type
 
-> `readonly` **type**: [`WGSLType`](../type-aliases/WGSLType.md)
+> `readonly` **type**: [`WGSLBindingType`](../type-aliases/WGSLBindingType.md)
 
-Defined in: [\_spine/compiler.d.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L128)
+Defined in: [\_spine/compiler.d.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L140)

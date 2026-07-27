@@ -3,7 +3,7 @@ import type { CapsuleCommandDescriptor } from '@liteship/core';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { catalogCliFlagNames, hasDispatchExecutor } from '../../packages/cli/src/dispatch.js';
-import { takeFlagValue } from '../../packages/cli/src/lib/argv.js';
+import { takeFlagValue } from '../../packages/cli/src/internal/argv.js';
 
 const descriptorArbitrary = fc.constantFrom(...COMMAND_CATALOG);
 

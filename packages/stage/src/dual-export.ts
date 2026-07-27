@@ -6,8 +6,9 @@
  * every content address is minted through `CanonicalCbor.encode` →
  * `AddressedDigest.of` (the `@liteship/core` kernel, ADR-0003/0011), and every
  * caster it drives already EXISTS — `CSSCompiler.compile` (`@liteship/compiler`),
- * `resolveInitialState`/`adaptiveAttrs` (`@liteship/astro`), `VideoRenderer.make`
- * over a `Compositor` (`@liteship/core`). Stage reinvents none of them; it only
+ * `resolveInitialState`/`adaptiveAttrs` (`@liteship/astro`), and the shared
+ * `FrameSchedule` over a `Compositor` (`@liteship/core`). Stage reinvents none
+ * of them; it only
  * walks the graph and binds the casters' outputs back to the graph's source.
  *
  * The shared-source hash is the **DocumentGraph.digest** itself — not a hash of
@@ -41,7 +42,7 @@ import {
   sealNode,
   Boundary,
   Compositor,
-  VideoRenderer,
+  createFrameSchedule,
   Receipt,
   TypedRef,
   HLC,
@@ -261,10 +262,10 @@ type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<s
 /**
  * Produce the REAL per-frame {@link CompositeState} snapshots for the graph's
  * video cast. Builds the REAL Compositor (one pose-parked quantizer per pose)
- * and the REAL VideoRenderer over it; the renderer owns the fixed-step
- * schedule/total-frame count. We drive its compositor + clock directly (its
- * `frames()` async generator computes synchronously) so this stays sync and
- * headless: each frame is the genuine compositor output VideoRenderer yields.
+ * and the shared FrameSchedule over it. Stage consumes the common timing
+ * coordinates while retaining its graph-specific pose projection, so this
+ * stays synchronous and headless without pretending every host shares one
+ * state renderer.
  *
  * This is the canonical Stage video-carrier frame stream consumed by the
  * injected {@link FrameEncoder}. It is intentionally distinct from the
@@ -312,13 +313,9 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
         driven.push({ key, quantizer, lo, hi, bindingsByState });
       }
     }
-    const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
-    // `denom` is the number of inter-frame steps; clamped to ≥1 so the sweep
-    // is well-defined for any frame count without a dead conditional branch.
-    const denom = Math.max(1, renderer.totalFrames - 1);
+    const schedule = createFrameSchedule(VIDEO_CONFIG);
     const collected: VideoFrame[] = [];
-    for (let i = 0; i < renderer.totalFrames; i++) {
-      renderer.scheduler.step();
+    for (const { progress } of schedule) {
       // Sweep the input across the boundary's threshold span as the clock
       // advances so each quantizer's `evaluate` re-derives its state per frame
       // (a real boundary crossing over the video's timeline). Marking each
@@ -326,7 +323,6 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
       // of carrying forward the previous composite — the same evaluate→mark-
       // dirty contract the worker compositor uses. The crossing is also
       // captured in `posed` so the artifact digest records it explicitly.
-      const progress = i / denom;
       const posedFrame: Record<string, string> = {};
       for (const { key, quantizer, lo, hi } of driven) {
         posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;

@@ -7,7 +7,11 @@
  * @module
  */
 
-import type { System } from '@liteship/core';
+import { defineSystem, type System } from '@liteship/core/ecs';
+import { AudioSourcePart, PanPart, VolumePart } from '../parts.js';
+
+type FrameSource = number | (() => number);
+const readFrame = (source: FrameSource): number => (typeof source === 'function' ? source() : source);
 
 /** Mix receipt shape emitted by PassThroughMixer per entity per tick. */
 export interface MixReceipt {
@@ -18,19 +22,22 @@ export interface MixReceipt {
 }
 
 /** Build a PassThroughMixer keyed to a frame index + receipt sink. */
-export function PassThroughMixer(frameIndex: number, sink: (receipt: MixReceipt) => void): System {
-  return {
+export function PassThroughMixer(frameIndex: FrameSource, sink: (receipt: MixReceipt) => void): System {
+  return defineSystem({
     name: 'PassThroughMixer',
-    query: ['AudioSource', 'Volume', 'Pan'],
-    execute: (entities) => {
+    query: [AudioSourcePart, VolumePart, PanPart],
+    reads: [],
+    writes: [],
+    execute: (entities, context) => {
+      const frame = readFrame(frameIndex);
       for (const e of entities) {
         sink({
-          frame: frameIndex,
+          frame,
           entity: e.id,
-          volume: e.components.get('Volume') as number,
-          pan: e.components.get('Pan') as number,
+          volume: context.read(e, VolumePart),
+          pan: context.read(e, PanPart),
         });
       }
     },
-  };
+  });
 }

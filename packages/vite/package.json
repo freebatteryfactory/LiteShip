@@ -1,6 +1,6 @@
 {
   "name": "@liteship/vite",
-  "version": "0.21.0",
+  "version": "0.23.0",
   "description": "The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS and hot-reload boundary definitions as you edit.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -30,6 +30,10 @@
     "./html-transform": {
       "types": "./dist/html-transform.d.ts",
       "import": "./dist/html-transform.js"
+    },
+    "./hmr": {
+      "types": "./dist/hmr.d.ts",
+      "import": "./dist/hmr.js"
     },
     "./virtual": {
       "types": "./virtual.d.ts"

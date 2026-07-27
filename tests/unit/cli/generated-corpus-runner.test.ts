@@ -13,7 +13,7 @@ import {
   runGeneratedCorpus,
   type GeneratedBenchRunner,
   type GeneratedCorpusSpawn,
-} from '../../../packages/cli/src/lib/generated-corpus-runner.js';
+} from '../../../packages/cli/src/internal/generated-corpus-runner.js';
 import { repoRoot, scaledTimeout } from '../../../vitest.shared.js';
 
 describe('generated corpus runner', () => {

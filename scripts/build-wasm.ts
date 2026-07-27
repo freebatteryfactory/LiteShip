@@ -21,7 +21,7 @@
 
 import { copyFileSync, mkdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { bearingGlyph, color, header } from '../packages/cli/src/lib/ansi.js';
+import { bearingGlyph, color, header } from '../packages/cli/src/internal/ansi.js';
 import { spawnArgv } from './lib/spawn.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');

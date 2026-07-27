@@ -149,7 +149,7 @@ export default tseslint.config(
     files: [
       // Brand factories
       'packages/core/src/schema/brands.ts',
-      'packages/core/src/ecs.ts',
+      'packages/core/src/ecs/runtime.ts',
       'packages/web/src/types.ts',
 
       // Tuple + generic-preservation helpers
@@ -216,7 +216,7 @@ export default tseslint.config(
       // spawn impl now lives in @liteship/command/host; cli/lib/spawn.ts is a re-export.
       'packages/command/src/host/spawn.ts',
       'packages/command/src/host/launcher.ts',
-      'packages/cli/src/lib/spawn.ts',
+      'packages/cli/src/internal/spawn.ts',
       'scripts/lib/spawn.ts',
       'scripts/support/pnpm-process.ts',
       'scripts/gauntlet.ts', // reason: gauntlet phase orchestration (predates this work, has its own drift guards)
@@ -229,9 +229,9 @@ export default tseslint.config(
       'scripts/link-pre-commit.ts', // reason: spawnSync('git rev-parse') from prepare hook before tsc --build; cannot import spawn shim (@liteship/command dist)
       'packages/cli/src/commands/package-smoke.ts', // reason: execFileSync (sync packaging smoke test) — migrated from scripts/package-smoke.ts (CUT A5); the runPackageSmoke engine is CLI-only, spawns sync pnpm pack/install/tar/node with no code under test
       'packages/cli/src/commands/capsule-verify.ts', // reason: execSync('pnpm run capsule:compile' / 'pnpm exec vitest run tests/generated/') — migrated from scripts/capsule-verify.ts; the runCapsuleGate engine is CLI-only, spawns the freshness-confirm compile + the generated-suite run, no code under test
-      'packages/cli/src/lib/mutation-runner.ts', // reason: spawnSync('pnpm exec vitest run <coveringTests>') — the per-mutant mutation runner (liteship check gates --ir --mutate). The @liteship/audit evaluateMutant contract is SYNCHRONOUS (runner => {failed}), so the async spawn helper is inapplicable; the subprocess runs the COVERING TESTS under their own coverage (not the runner's code), and the clean process per mutant IS the determinism/isolation boundary
-      'packages/cli/src/lib/seam-execution-coverage.ts', // reason: spawnSync('pnpm exec vitest run <test> --coverage.include=<seam> --coverage.reportsDirectory=<tmp>') — the execution-coverage probe for the mutation cannon's barrel-problem fix (liteship check gates --ir --mutate). The probe is SYNCHRONOUS (called inside the sync buildSeamCoverageMap → buildMutationFacts fold), so the async spawn helper is inapplicable; it DELIBERATELY scopes coverage to one seam via explicit --coverage.* flags + a per-probe reportsDirectory (NOT the inherited NODE_V8_COVERAGE the helper preserves — that would conflict with the scoping), the single test file per fork IS the determinism boundary, and the result is read from the seam-scoped report only
-      'packages/cli/src/lib/standards-surface.ts', // reason: execFileSync('git', ['show', '<base>:traceability/standards-snapshot.json']) — the raccoon-rule backstop reads the PRIOR baseline snapshot AS COMMITTED ON THE BASE REF (defeats a same-commit code+snapshot weakening). Sync content read (git content-addresses → deterministic), no code under test, so coverage inheritance is moot; the injection seam (GitShowReader) keeps the heavy I/O testable
+      'packages/cli/src/internal/mutation-runner.ts', // reason: spawnSync('pnpm exec vitest run <coveringTests>') — the per-mutant mutation runner (liteship check gates --ir --mutate). The @liteship/audit evaluateMutant contract is SYNCHRONOUS (runner => {failed}), so the async spawn helper is inapplicable; the subprocess runs the COVERING TESTS under their own coverage (not the runner's code), and the clean process per mutant IS the determinism/isolation boundary
+      'packages/cli/src/internal/seam-execution-coverage.ts', // reason: spawnSync('pnpm exec vitest run <test> --coverage.include=<seam> --coverage.reportsDirectory=<tmp>') — the execution-coverage probe for the mutation cannon's barrel-problem fix (liteship check gates --ir --mutate). The probe is SYNCHRONOUS (called inside the sync buildSeamCoverageMap → buildMutationFacts fold), so the async spawn helper is inapplicable; it DELIBERATELY scopes coverage to one seam via explicit --coverage.* flags + a per-probe reportsDirectory (NOT the inherited NODE_V8_COVERAGE the helper preserves — that would conflict with the scoping), the single test file per fork IS the determinism boundary, and the result is read from the seam-scoped report only
+      'packages/cli/src/internal/standards-surface.ts', // reason: execFileSync('git', ['show', '<base>:traceability/standards-snapshot.json']) — the raccoon-rule backstop reads the PRIOR baseline snapshot AS COMMITTED ON THE BASE REF (defeats a same-commit code+snapshot weakening). Sync content read (git content-addresses → deterministic), no code under test, so coverage inheritance is moot; the injection seam (GitShowReader) keeps the heavy I/O testable
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
       'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)

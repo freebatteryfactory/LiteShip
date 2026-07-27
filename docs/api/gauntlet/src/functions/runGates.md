@@ -8,7 +8,7 @@
 
 > **runGates**(`gates`, `context`, `opts?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/engine.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L472)
+Defined in: [gauntlet/src/engine.ts:487](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L487)
 
 Run a set of gates over `context`. Each gate is first verified against its own
 fixtures; unproven gates run with semantic findings demoted to advisory, while

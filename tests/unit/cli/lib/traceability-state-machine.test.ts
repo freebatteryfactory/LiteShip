@@ -1,5 +1,5 @@
 /**
- * The HOST traceability state machine (`packages/cli/src/lib/traceability.ts`) —
+ * The HOST traceability state machine (`packages/cli/src/internal/traceability.ts`) —
  * the deterministic lifecycle fold that parses `traceability/*.yaml`, scans the
  * corpus for `// PROVES:` headers, and resolves each invariant's state.
  *
@@ -21,7 +21,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { isTaggedError } from '@liteship/error';
-import { buildTraceabilityFacts } from '../../../../packages/cli/src/lib/traceability.js';
+import { buildTraceabilityFacts } from '../../../../packages/cli/src/internal/traceability.js';
 
 let root: string;
 

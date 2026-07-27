@@ -5,7 +5,7 @@ import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
 import { executionPrerequisites, type ExecutionPrerequisite } from './execution-prerequisites.js';
 import type { AssuranceLevel } from '../../packages/gauntlet/src/assurance.js';
 import { PACKAGE_CATALOG, type PackageCatalogRecord } from '../package-catalog.js';
-import { isNodeTestEntrypoint } from '../../packages/cli/src/lib/test-corpus.js';
+import { isNodeTestEntrypoint } from '../../packages/cli/src/internal/test-corpus.js';
 import type { AssuranceInventory } from './assurance-inventory.js';
 
 export type AffectedRiskLevel = 'low' | 'moderate' | 'high' | 'critical';

@@ -1,6 +1,6 @@
 /**
  * Re-export shim. The canonical spawn helper now lives in
- * @liteship/cli (packages/cli/src/lib/spawn.ts) so it can be part of the
+ * @liteship/cli (packages/cli/src/internal/spawn.ts) so it can be part of the
  * cli's tsc --build (rootDir) tree. This file preserves the existing
  * import path used by tests and other scripts.
  *
@@ -14,11 +14,11 @@ export {
   quoteWindowsArg,
   withSpawned,
   startSpawnHandle,
-} from '../../packages/cli/src/lib/spawn.js';
+} from '../../packages/cli/src/internal/spawn.js';
 export type {
   SpawnArgvOpts,
   SpawnCaptureOpts,
   SpawnCaptureResult,
   SpawnResult,
   SpawnHandle,
-} from '../../packages/cli/src/lib/spawn.js';
+} from '../../packages/cli/src/internal/spawn.js';

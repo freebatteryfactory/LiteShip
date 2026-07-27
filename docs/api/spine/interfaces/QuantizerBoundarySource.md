@@ -6,7 +6,7 @@
 
 # Interface: QuantizerBoundarySource
 
-Defined in: [\_spine/worker.d.ts:377](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L377)
+Defined in: [\_spine/worker.d.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L378)
 
 The boundary surface addQuantizer derives a registration from —
 structurally satisfied by a `defineBoundary` result from @liteship/core.
@@ -17,7 +17,7 @@ structurally satisfied by a `defineBoundary` result from @liteship/core.
 
 > `readonly` **id**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/worker.d.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L378)
+Defined in: [\_spine/worker.d.ts:379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L379)
 
 ***
 
@@ -25,7 +25,7 @@ Defined in: [\_spine/worker.d.ts:378](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **input**: `string`
 
-Defined in: [\_spine/worker.d.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L380)
+Defined in: [\_spine/worker.d.ts:381](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L381)
 
 Signal input name — used as the quantizer name when none is given.
 
@@ -35,7 +35,7 @@ Signal input name — used as the quantizer name when none is given.
 
 > `readonly` **states**: readonly `string`[]
 
-Defined in: [\_spine/worker.d.ts:382](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L382)
+Defined in: [\_spine/worker.d.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L383)
 
 Plain strings — BoundaryDef.states is unbranded.
 
@@ -45,4 +45,4 @@ Plain strings — BoundaryDef.states is unbranded.
 
 > `readonly` **thresholds**: readonly `number`[]
 
-Defined in: [\_spine/worker.d.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L383)
+Defined in: [\_spine/worker.d.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L384)

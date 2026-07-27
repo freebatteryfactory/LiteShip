@@ -6,7 +6,7 @@
 
 # Interface: FixedStep
 
-Defined in: [\_spine/core.d.ts:1325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1325)
+Defined in: [\_spine/core.d.ts:1540](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1540)
 
 Host-neutral frame scheduler used by animation and quantization runtimes.
 
@@ -20,7 +20,7 @@ Host-neutral frame scheduler used by animation and quantization runtimes.
 
 > `readonly` **\_tag**: `"FrameScheduler"`
 
-Defined in: [\_spine/core.d.ts:1319](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1319)
+Defined in: [\_spine/core.d.ts:1534](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1534)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1319](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **frame**: `number`
 
-Defined in: [\_spine/core.d.ts:1327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1327)
+Defined in: [\_spine/core.d.ts:1542](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1542)
 
 ## Methods
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:1327](https://github.com/freebatteryfactory/LiteS
 
 > **cancel**(`id`): `void`
 
-Defined in: [\_spine/core.d.ts:1321](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1321)
+Defined in: [\_spine/core.d.ts:1536](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1536)
 
 #### Parameters
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/core.d.ts:1321](https://github.com/freebatteryfactory/LiteS
 
 > **schedule**(`callback`): `number`
 
-Defined in: [\_spine/core.d.ts:1320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1320)
+Defined in: [\_spine/core.d.ts:1535](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1535)
 
 #### Parameters
 
@@ -84,7 +84,7 @@ Defined in: [\_spine/core.d.ts:1320](https://github.com/freebatteryfactory/LiteS
 
 > **step**(): `void`
 
-Defined in: [\_spine/core.d.ts:1326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1326)
+Defined in: [\_spine/core.d.ts:1541](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1541)
 
 #### Returns
 

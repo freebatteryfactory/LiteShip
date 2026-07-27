@@ -26,7 +26,7 @@
 
 // ── Curated root VALUES — default immutable authoring + inspection only ─────
 export { defineConfig, defineBoundary, defineToken, defineTheme, defineStyle, schema } from '@liteship/core';
-export { defineAdaptive } from './authoring/adaptive.js';
+export { defineAdaptive } from './adaptive.js';
 export { defineQuantizer } from '@liteship/quantizer';
 // The diagnostic explainer — the one reader that turns any emitted LiteShip
 // diagnostic code into its title/explanation/remediation.

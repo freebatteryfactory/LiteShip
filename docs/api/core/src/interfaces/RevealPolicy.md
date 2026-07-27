@@ -6,7 +6,7 @@
 
 # Interface: RevealPolicy
 
-Defined in: [core/src/motion/reveal.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L56)
+Defined in: [core/src/motion/reveal.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L60)
 
 Policy gate for reduced-motion and motion tier.
 
@@ -16,7 +16,7 @@ Policy gate for reduced-motion and motion tier.
 
 > `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
-Defined in: [core/src/motion/reveal.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L58)
+Defined in: [core/src/motion/reveal.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L62)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/motion/reveal.ts:58](https://github.com/freebatteryfactory
 
 > `readonly` **reducedMotion**: [`RevealReducedMotion`](../type-aliases/RevealReducedMotion.md)
 
-Defined in: [core/src/motion/reveal.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L57)
+Defined in: [core/src/motion/reveal.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L61)

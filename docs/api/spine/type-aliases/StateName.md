@@ -8,7 +8,7 @@
 
 > **StateName**\<`S`\> = `S` & `object`
 
-Defined in: [\_spine/core.d.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L59)
+Defined in: [\_spine/core.d.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L65)
 
 Branded state name -- e.g. 'mobile', 'tablet', 'desktop'
 

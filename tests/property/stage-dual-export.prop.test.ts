@@ -6,9 +6,11 @@ import {
   AddressedDigest,
   CanonicalCbor,
   HLC,
+  Millis,
   StateName,
   ThresholdValue,
   projectionKeys,
+  createFrameSchedule,
   sealGraph,
   sealNode,
   type CellMeta,
@@ -160,7 +162,8 @@ describe('@liteship/stage cross-carrier contract', () => {
             };
           });
 
-          expect(observedFrames).toHaveLength(4);
+          const schedule = createFrameSchedule({ fps: 4, durationMs: Millis(1000) });
+          expect(observedFrames).toHaveLength(schedule.totalFrames);
           expect(cssVarsFromState(observedFrames[0]!)['--font-size']).toBe(String(mobileSize));
           expect(cssVarsFromState(observedFrames.at(-1)!)['--font-size']).toBe(String(desktopSize));
           expect(result.receipt.kind).toBe('stage.export.video.encoded');

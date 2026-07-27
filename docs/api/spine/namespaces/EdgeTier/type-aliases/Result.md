@@ -8,4 +8,4 @@
 
 > **Result** = [`EdgeTierResult`](../../../interfaces/EdgeTierResult.md)
 
-Defined in: [\_spine/edge.d.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L58)
+Defined in: [\_spine/edge.d.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L78)

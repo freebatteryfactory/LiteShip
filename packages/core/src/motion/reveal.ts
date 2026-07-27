@@ -31,6 +31,10 @@ import { sourceToInput } from '../reactive/signal-input.js';
 import type { SignalSource } from '../reactive/signal.js';
 import type { MotionTier } from '../evidence/ui-quality.js';
 import type { BranchCondition, TransitionProgram } from './transition-program.js';
+import { ValidationError } from '@liteship/error';
+import { snapshotDefinitionValue } from '../evidence/definition-snapshot.js';
+import { decode, parseErrorFromIssues } from '../schema/decode.js';
+import { schema } from '../schema/constructors.js';
 
 /** Reduced-motion handling for a reveal. */
 export type RevealReducedMotion = 'settle' | 'none';
@@ -71,6 +75,75 @@ export interface RevealIntentInput {
 /** Sealed reveal intent — data over graph, no behavior authority. */
 export interface RevealIntent extends RevealIntentInput {
   readonly _tag: 'RevealIntent';
+}
+
+const finiteNonNegative = schema.brand(
+  schema.number,
+  (value) => {
+    if (!Number.isFinite(value) || value < 0) {
+      throw ValidationError('RevealIntent', 'duration and spring values must be finite and non-negative');
+    }
+    return value;
+  },
+  'RevealFiniteNonNegative',
+);
+const finitePositive = schema.brand(
+  schema.number,
+  (value) => {
+    if (!Number.isFinite(value) || value <= 0) {
+      throw ValidationError('RevealIntent', 'spring stiffness and mass must be finite and positive');
+    }
+    return value;
+  },
+  'RevealFinitePositive',
+);
+const revealBindingsSchema = schema.record(schema.union(schema.number, schema.string));
+const revealTriggerSchema = schema.union(
+  schema.struct({ type: schema.literal('view'), range: schema.tuple(schema.string, schema.string) }),
+  schema.struct({
+    type: schema.literal('scroll'),
+    axis: schema.optional(schema.union(schema.literal('progress'), schema.literal('y'), schema.literal('x'))),
+  }),
+);
+const revealTransitionSchema = schema.struct({
+  durationMs: finiteNonNegative,
+  easing: schema.optional(schema.union(schema.literal('linear'), schema.literal('ease'), schema.literal('spring'))),
+  spring: schema.optional(
+    schema.struct({
+      stiffness: schema.optional(finitePositive),
+      damping: schema.optional(finiteNonNegative),
+      mass: schema.optional(finitePositive),
+    }),
+  ),
+});
+const revealPolicySchema = schema.struct({
+  reducedMotion: schema.union(schema.literal('settle'), schema.literal('none')),
+  motionTier: schema.union(
+    schema.literal('none'),
+    schema.literal('transitions'),
+    schema.literal('animations'),
+    schema.literal('physics'),
+    schema.literal('compute'),
+  ),
+});
+const revealIntentSchema = schema.struct({
+  _tag: schema.literal('RevealIntent'),
+  target: schema.string,
+  trigger: revealTriggerSchema,
+  from: revealBindingsSchema,
+  to: revealBindingsSchema,
+  transition: revealTransitionSchema,
+  policy: revealPolicySchema,
+});
+
+/** Strictly admit and recursively snapshot one reveal intent crossing a host/wire boundary. */
+export function decodeRevealIntent(value: unknown): RevealIntent {
+  const result = decode(revealIntentSchema, value);
+  if (!result.ok) throw parseErrorFromIssues(result.error, 'RevealIntent');
+  if (result.value.target.trim() === '') {
+    throw ValidationError('RevealIntent', 'target must be a non-empty string');
+  }
+  return snapshotDefinitionValue(result.value) as RevealIntent;
 }
 
 /** Graph bundle produced by {@link lowerRevealIntent}. */
@@ -509,7 +582,7 @@ export function lowerRevealChain(input: RevealChainInput): LoweredRevealChain {
 export const Reveal = {
   /** Seal a reveal intent from authoring input. */
   intent(input: RevealIntentInput): RevealIntent {
-    return Object.freeze({ _tag: 'RevealIntent', ...input });
+    return decodeRevealIntent({ _tag: 'RevealIntent', ...input });
   },
   /** Author a multi-step chain (`seq` + optional `choice`) → graph + {@link TransitionProgram}. */
   chain: lowerRevealChain,

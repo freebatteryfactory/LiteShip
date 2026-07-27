@@ -39,6 +39,11 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
   { script: 'docs:build:sharded', reason: 'Docs workflow: sharded API-docs build.' },
   { script: 'docs:bundle', reason: 'Docs workflow: bundles the built docs.' },
   { script: 'docs:gen', reason: 'Gen workflow: regenerates derived docs.' },
+  { script: 'spine:gen', reason: 'Gen workflow: regenerates the explicit _spine surface projections.' },
+  {
+    script: 'public-exports:gen',
+    reason: 'Gen workflow: regenerates the public-export contract projections.',
+  },
   {
     script: 'docs:check:local',
     reason: 'Local resource-aware alias of check/docs; it reuses a content-addressed proof when valid.',
@@ -51,6 +56,14 @@ export const SCRIPT_EXEMPTIONS: readonly ScriptExemption[] = [
   // ── Components of an aggregate check (assertion registered under the aggregate) ──
   { script: 'typecheck:scripts', reason: 'Component of the typecheck aggregate (check/typecheck runs it).' },
   { script: 'typecheck:tests', reason: 'Component of the typecheck aggregate (check/typecheck runs it).' },
+  {
+    script: 'spine:check',
+    reason: 'Projection check component: check/spine-relation-gate proves the generated spine and its relations.',
+  },
+  {
+    script: 'public-exports:check',
+    reason: 'Projection check component: facade and API authorities consume the generated public-export contract.',
+  },
   {
     script: 'typecheck:spine',
     reason: 'Targeted _spine typecheck helper; check/typecheck + check/spine-relation-gate cover the spine.',

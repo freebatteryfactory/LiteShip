@@ -89,7 +89,7 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
   });
 
   test('consumer-app-audit normalizes CRLF and repo paths before sink scan (Windows-smoke law)', () => {
-    const text = readFileSync(resolve(REPO, 'packages/cli/src/lib/consumer-app-audit.ts'), 'utf8');
+    const text = readFileSync(resolve(REPO, 'packages/cli/src/internal/consumer-app-audit.ts'), 'utf8');
     expect(text).toContain('normalizeSourceLines');
     expect(text).toContain('normalizeRepoPath');
   });

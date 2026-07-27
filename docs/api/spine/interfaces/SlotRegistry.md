@@ -6,7 +6,7 @@
 
 # Interface: SlotRegistry
 
-Defined in: [\_spine/web.d.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L176)
+Defined in: [\_spine/web.d.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L188)
 
 Live registry that owns DOM slots and observes their lifecycle.
 
@@ -16,7 +16,7 @@ Live registry that owns DOM slots and observes their lifecycle.
 
 > **entries**(): `ReadonlyMap`\<[`SlotPath`](../type-aliases/SlotPath.md), [`SlotEntry`](SlotEntry.md)\>
 
-Defined in: [\_spine/web.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L181)
+Defined in: [\_spine/web.d.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L193)
 
 #### Returns
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/web.d.ts:181](https://github.com/freebatteryfactory/LiteShi
 
 > **findByPrefix**(`prefix`): readonly [`SlotEntry`](SlotEntry.md)[]
 
-Defined in: [\_spine/web.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L182)
+Defined in: [\_spine/web.d.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L194)
 
 #### Parameters
 
@@ -46,7 +46,7 @@ readonly [`SlotEntry`](SlotEntry.md)[]
 
 > **get**(`path`): [`SlotEntry`](SlotEntry.md) \| `undefined`
 
-Defined in: [\_spine/web.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L177)
+Defined in: [\_spine/web.d.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L189)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Defined in: [\_spine/web.d.ts:177](https://github.com/freebatteryfactory/LiteShi
 
 > **has**(`path`): `boolean`
 
-Defined in: [\_spine/web.d.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L180)
+Defined in: [\_spine/web.d.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L192)
 
 #### Parameters
 
@@ -82,7 +82,7 @@ Defined in: [\_spine/web.d.ts:180](https://github.com/freebatteryfactory/LiteShi
 
 > **register**(`entry`): `void`
 
-Defined in: [\_spine/web.d.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L178)
+Defined in: [\_spine/web.d.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L190)
 
 #### Parameters
 
@@ -100,7 +100,7 @@ Defined in: [\_spine/web.d.ts:178](https://github.com/freebatteryfactory/LiteShi
 
 > **unregister**(`path`): `void`
 
-Defined in: [\_spine/web.d.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L179)
+Defined in: [\_spine/web.d.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L191)
 
 #### Parameters
 

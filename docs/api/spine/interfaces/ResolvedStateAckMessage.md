@@ -6,7 +6,7 @@
 
 # Interface: ResolvedStateAckMessage
 
-Defined in: [\_spine/worker.d.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L210)
+Defined in: [\_spine/worker.d.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L211)
 
 Worker acknowledgement of an applied authoritative state snapshot.
 
@@ -16,7 +16,7 @@ Worker acknowledgement of an applied authoritative state snapshot.
 
 > `readonly` **additionalOutputsChanged**: `boolean`
 
-Defined in: [\_spine/worker.d.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L217)
+Defined in: [\_spine/worker.d.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L218)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:217](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **generation**: `number`
 
-Defined in: [\_spine/worker.d.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L212)
+Defined in: [\_spine/worker.d.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L213)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/worker.d.ts:212](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **states**: readonly `object`[]
 
-Defined in: [\_spine/worker.d.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L213)
+Defined in: [\_spine/worker.d.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L214)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/worker.d.ts:213](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"resolved-state-ack"`
 
-Defined in: [\_spine/worker.d.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L211)
+Defined in: [\_spine/worker.d.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L212)

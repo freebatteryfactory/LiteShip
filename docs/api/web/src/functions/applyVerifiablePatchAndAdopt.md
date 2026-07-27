@@ -8,7 +8,7 @@
 
 > **applyVerifiablePatchAndAdopt**(`target`, `envelope`, `currentBaseGraphId`, `adoptClient`, `resultGraph`, `capability?`): [`ApplyVerifiablePatchAdoptResult`](../type-aliases/ApplyVerifiablePatchAdoptResult.md)
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L233)
+Defined in: [web/src/watch-and-prepare.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L233)
 
 Apply a verified DPU patch and adopt the result graph under the host mutation client.
 Refuses when `resultGraph.id` does not match `envelope.resultGraphId`.

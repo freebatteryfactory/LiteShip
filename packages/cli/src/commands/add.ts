@@ -21,7 +21,7 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { wallClock } from '@liteship/core';
 import { emit, emitError } from '../receipts.js';
-import { GENERATED_TEMPLATE_RENAMES } from '../lib/template-renames.generated.js';
+import { GENERATED_TEMPLATE_RENAMES } from '../internal/template-renames.generated.js';
 
 /** The scaffold-fragment kinds this minimal copier understands. */
 export type FragmentKind = 'example' | 'template';

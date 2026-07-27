@@ -16,7 +16,7 @@ Frozen, content-addressed result of [defineConfig](../functions/defineConfig.md)
 
 > `readonly` **\_tag**: `"ConfigDef"`
 
-Defined in: [core/src/authoring/config.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L131)
+Defined in: [core/src/authoring/config.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L132)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/authoring/config.ts:131](https://github.com/freebatteryfac
 
 > `readonly` `optional` **astro?**: `object`
 
-Defined in: [core/src/authoring/config.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L138)
+Defined in: [core/src/authoring/config.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L139)
 
 #### adaptive?
 
@@ -40,7 +40,7 @@ Defined in: [core/src/authoring/config.ts:138](https://github.com/freebatteryfac
 
 > `readonly` **boundaries**: `object`
 
-Defined in: [core/src/authoring/config.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L133)
+Defined in: [core/src/authoring/config.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L134)
 
 #### Index Signature
 
@@ -52,7 +52,7 @@ Defined in: [core/src/authoring/config.ts:133](https://github.com/freebatteryfac
 
 > `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/authoring/config.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L132)
+Defined in: [core/src/authoring/config.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L133)
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: [core/src/authoring/config.ts:132](https://github.com/freebatteryfac
 
 > `readonly` **styles**: `object`
 
-Defined in: [core/src/authoring/config.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L136)
+Defined in: [core/src/authoring/config.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L137)
 
 #### Index Signature
 
@@ -72,7 +72,7 @@ Defined in: [core/src/authoring/config.ts:136](https://github.com/freebatteryfac
 
 > `readonly` **themes**: `object`
 
-Defined in: [core/src/authoring/config.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L135)
+Defined in: [core/src/authoring/config.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L136)
 
 #### Index Signature
 
@@ -84,7 +84,7 @@ Defined in: [core/src/authoring/config.ts:135](https://github.com/freebatteryfac
 
 > `readonly` **tokens**: `object`
 
-Defined in: [core/src/authoring/config.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L134)
+Defined in: [core/src/authoring/config.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L135)
 
 #### Index Signature
 
@@ -96,7 +96,7 @@ Defined in: [core/src/authoring/config.ts:134](https://github.com/freebatteryfac
 
 > `readonly` `optional` **vite?**: `object`
 
-Defined in: [core/src/authoring/config.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L137)
+Defined in: [core/src/authoring/config.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/config.ts#L138)
 
 #### dirs?
 

@@ -23,7 +23,7 @@ import { ClientHints, EdgeTier } from '@liteship/edge';
 export default {
   async fetch(request: Request): Promise<Response> {
     const tier = EdgeTier.detectTier(request.headers);
-    const html = `<!doctype html><html ${EdgeTier.tierDataAttributes(tier)}><body>${tier.capLevel}</body></html>`;
+    const html = `<!doctype html><html ${EdgeTier.tierDataAttributes(tier)}><body>${tier.capTier}</body></html>`;
     return new Response(html, {
       headers: {
         'content-type': 'text/html',
@@ -35,6 +35,13 @@ export default {
 ```
 
 The served `<html>` element carries `data-liteship-tier`, `data-liteship-motion`, and `data-liteship-design` attributes — the same capability/motion/visual-fidelity triple the browser-side detector would compute, available before any client JavaScript runs.
+
+`EdgeTier.detectTier()` always returns that complete renderable triple. Its
+`tierEvidence` receipt separately records whether each axis was fully observed
+or still depends on conservative inference. An adapter that needs a
+trust-bearing claim should declare `@liteship/detect` directly and call
+`requireObserved(tier.tierEvidence, axes)`; do not use provenance to withhold
+the safe initial HTML or to fork cache identity.
 
 `ClientHints.responsiveMediaCapabilities(headers)` derives the Save-Data / DPR slice that `@liteship/core`'s `selectCandidates` responsive-media law consumes, and `responsiveMediaVaryHeader()` is the `Vary` axis (`Sec-CH-DPR, Save-Data`) a CDN keys those representations on. Both are production-wired through `@liteship/astro`'s `liteshipMiddleware` (and `@liteship/cloudflare` through it) as of #140 — a Save-Data client is never advertised a heavy image candidate.
 

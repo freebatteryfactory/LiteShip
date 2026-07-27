@@ -421,7 +421,7 @@ export const COMMAND_BENCHMARK_ELIGIBILITY: readonly CommandBenchmarkEligibility
         },
         subject: {
           role: 'sut',
-          origin: { kind: 'file', path: 'packages/command/src/checks/plan.ts' },
+          origin: { kind: 'module', specifier: '@liteship/command' },
           symbol: 'planChecks',
           binding: 'planChecks',
         },
@@ -433,7 +433,7 @@ export const COMMAND_BENCHMARK_ELIGIBILITY: readonly CommandBenchmarkEligibility
         },
         subject: {
           role: 'sut',
-          origin: { kind: 'file', path: 'packages/command/src/registry.ts' },
+          origin: { kind: 'module', specifier: '@liteship/command' },
           symbol: 'createCommandRegistry',
           binding: 'createCommandRegistry',
         },

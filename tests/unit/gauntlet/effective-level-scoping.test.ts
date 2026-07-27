@@ -25,9 +25,9 @@ import {
 
 // A file that the GLOB map scores L1 (cosmetic CLI lib) but that — on the --ir
 // path — was pulled into an L4 path by an import edge.
-const PULLED_FILE = 'packages/cli/src/lib/ansi.ts'; // glob → L1
+const PULLED_FILE = 'packages/cli/src/internal/ansi.ts'; // glob → L1
 const TRUE_L4_FILE = 'packages/canonical/src/x.ts'; // glob → L4
-const PLAIN_L1_FILE = 'packages/cli/src/lib/other.ts'; // glob → L1, NOT pulled
+const PLAIN_L1_FILE = 'packages/cli/src/internal/other.ts'; // glob → L1, NOT pulled
 
 const ctx: GateContext = memoryContext({
   [PULLED_FILE]: 'pulled-into-L4',
@@ -116,18 +116,28 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     }
   });
 
-  it('preserves the injected CAPABILITY functions (skipDetector, codeOnly) through L4 scoping', () => {
+  it('preserves every injected parser capability through L4 scoping', () => {
     // Capabilities are EXCLUDED from FACT_CHANNELS, so the class guard above does NOT cover them — yet
     // scopeContextByLevel must carry them or a scoped (assurance-map) run silently falls back to the
     // lean implementations. `codeOnly` was dropped exactly this way (codex review, PR #60), making the
-    // injected sound scanner inert on the production `litelaunchGauntlet*` path; `skipDetector` would
-    // re-open the whack-a-mole. Pin both — adding a capability without teaching the scoper reds HERE.
+    // injected sound scanner inert on the production `litelaunchGauntlet*` path. The property suite
+    // pins every presence/absence combination; this focused test keeps the original incident legible.
     const skipSentinel = ((): readonly never[] => []) as GateContext['skipDetector'];
     const codeSentinel = ((source: string): string => source) as GateContext['codeOnly'];
-    const withCaps = { ...ctx, skipDetector: skipSentinel, codeOnly: codeSentinel } as GateContext;
+    const earlyReturnSentinel = ((): readonly never[] => []) as GateContext['earlyReturnDetector'];
+    const diagnosticSentinel = ((): readonly never[] => []) as GateContext['diagnosticEmitterDetector'];
+    const withCaps = {
+      ...ctx,
+      skipDetector: skipSentinel,
+      earlyReturnDetector: earlyReturnSentinel,
+      codeOnly: codeSentinel,
+      diagnosticEmitterDetector: diagnosticSentinel,
+    } as GateContext;
     const scoped = scopeContextByLevel(withCaps, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
     expect(scoped.skipDetector).toBe(skipSentinel);
+    expect(scoped.earlyReturnDetector).toBe(earlyReturnSentinel);
     expect(scoped.codeOnly).toBe(codeSentinel);
+    expect(scoped.diagnosticEmitterDetector).toBe(diagnosticSentinel);
   });
 });
 

@@ -6,7 +6,7 @@
 
 # Interface: CaptureFrame
 
-Defined in: core/dist/evidence/capture.d.ts:17
+Defined in: core/dist/evidence/capture.d.ts:18
 
 Single pre-rendered frame handed to a [FrameCapture](FrameCapture.md) — frame number, timestamp, and pixel source.
 
@@ -16,7 +16,7 @@ Single pre-rendered frame handed to a [FrameCapture](FrameCapture.md) — frame 
 
 > `readonly` **bitmap**: `ImageBitmap` \| `OffscreenCanvas`
 
-Defined in: core/dist/evidence/capture.d.ts:20
+Defined in: core/dist/evidence/capture.d.ts:21
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/evidence/capture.d.ts:20
 
 > `readonly` **frame**: `number`
 
-Defined in: core/dist/evidence/capture.d.ts:18
+Defined in: core/dist/evidence/capture.d.ts:19
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/dist/evidence/capture.d.ts:18
 
 > `readonly` **timestamp**: `number`
 
-Defined in: core/dist/evidence/capture.d.ts:19
+Defined in: core/dist/evidence/capture.d.ts:20

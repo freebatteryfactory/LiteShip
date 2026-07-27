@@ -23,7 +23,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { buildRepoIRTaint, type TaintFacts } from '../../../packages/audit/src/repo-ir-taint.js';
-import { LITESHIP_TAINT_REGISTRY } from '../../../packages/cli/src/lib/taint-policy.js';
+import { LITESHIP_TAINT_REGISTRY } from '../../../packages/cli/src/internal/taint-policy.js';
 
 const SHADER_COMPILE_SINKS = new Set(['shaderSource', 'compileShader', 'createShaderModule']);
 

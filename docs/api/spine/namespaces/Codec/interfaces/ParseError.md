@@ -6,7 +6,7 @@
 
 # Interface: ParseError
 
-Defined in: [\_spine/core.d.ts:1300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1300)
+Defined in: [\_spine/core.d.ts:1515](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1515)
 
 The encode/decode failure — structurally `@liteship/error`'s `ParseError`
 variant (a `TaggedError<'ParseError'>` carrying `source`/`detail` and the
@@ -18,7 +18,7 @@ optional machine fields `code`/`offset`). Parity pinned in the same test.
 
 > `readonly` **\_tag**: `"ParseError"`
 
-Defined in: [\_spine/core.d.ts:1301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1301)
+Defined in: [\_spine/core.d.ts:1516](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1516)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [\_spine/core.d.ts:1301](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **code?**: `string`
 
-Defined in: [\_spine/core.d.ts:1305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1305)
+Defined in: [\_spine/core.d.ts:1520](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1520)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:1305](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **detail**: `string`
 
-Defined in: [\_spine/core.d.ts:1304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1304)
+Defined in: [\_spine/core.d.ts:1519](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1519)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:1304](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **message**: `string`
 
-Defined in: [\_spine/core.d.ts:1302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1302)
+Defined in: [\_spine/core.d.ts:1517](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1517)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/core.d.ts:1302](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **offset?**: `number`
 
-Defined in: [\_spine/core.d.ts:1306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1306)
+Defined in: [\_spine/core.d.ts:1521](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1521)
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: [\_spine/core.d.ts:1306](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **source**: `string`
 
-Defined in: [\_spine/core.d.ts:1303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1303)
+Defined in: [\_spine/core.d.ts:1518](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1518)

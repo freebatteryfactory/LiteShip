@@ -7,7 +7,7 @@
  * precompiled outputs for the full (motion x design) tier grid.
  */
 
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
@@ -431,9 +431,9 @@ ${Object.entries(attrs)
 
     // Manifest path: compileOutputsByTier → dispatch(CSSCompiler) → outputs.containerQueries.
     const manifest = await collectBoundaryManifest(root);
-    const manifestQueries = manifest['viewport']!.outputs
-      .map((output) => output.containerQueries)
-      .find((queries) => queries.includes('@supports'))!;
+    const manifestQueries = manifest['viewport']!.outputs.map((output) => output.containerQueries).find((queries) =>
+      queries.includes('@supports'),
+    )!;
 
     // Dev path: parseQuantizeBlocks → compileQuantizeBlock. `referenceBoundary`
     // is the same viewport.width boundary the module fixture mirrors, so a
@@ -526,33 +526,37 @@ export const drawer = {
     expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
   });
 
+  // Keep the capability-sanction identity on one line: the allowlist pins the
+  // complete guard + title, not a formatter-dependent line number.
+  // prettier-ignore
   test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {
-    const root = makeTempDir();
-    const srcDir = join(root, 'src');
-    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
-    writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
-    // Circular link: src/loop -> root, so a walk without a visited set
-    // would recurse root -> src -> loop -> src -> ... forever.
-    symlinkSync(root, join(srcDir, 'loop'), 'dir');
+      const root = makeTempDir();
+      const srcDir = join(root, 'src');
+      writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+      writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
+      // Circular link: src/loop -> root, so a walk without a visited set
+      // would recurse root -> src -> loop -> src -> ... forever.
+      symlinkSync(root, join(srcDir, 'loop'), 'dir');
 
-    const manifest = await collectBoundaryManifest(root);
+      const manifest = await collectBoundaryManifest(root);
 
-    expect(Object.keys(manifest)).toEqual(['viewport']);
-    expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
-    expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
-  });
+      expect(Object.keys(manifest)).toEqual(['viewport']);
+      expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
+      expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
+    });
 
+  // prettier-ignore -- same exact-site capability contract as the preceding test.
   test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {
-    const root = makeTempDir();
-    const external = makeTempDir();
-    writeModule(external, 'boundaries.ts', BOUNDARY_MODULE);
-    writeModule(join(root, 'src'), 'styles.css', QUANTIZE_CSS);
-    symlinkSync(external, join(root, 'src', 'defs'), 'dir');
+      const root = makeTempDir();
+      const external = makeTempDir();
+      writeModule(external, 'boundaries.ts', BOUNDARY_MODULE);
+      writeModule(join(root, 'src'), 'styles.css', QUANTIZE_CSS);
+      symlinkSync(external, join(root, 'src', 'defs'), 'dir');
 
-    const manifest = await collectBoundaryManifest(root);
+      const manifest = await collectBoundaryManifest(root);
 
-    expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
-  });
+      expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
+    });
 
   test('@quantize block referencing an unknown boundary is skipped with a diagnostic, not crashed on', async () => {
     const root = makeTempDir();
@@ -604,10 +608,7 @@ describe('plugin virtual:liteship/boundaries wiring', () => {
     writeModule(srcDir, 'extra.boundaries.ts', BOUNDARY_MODULE.replace('viewport', 'sidebar'));
     const { invalidated, moduleGraph } = makeModuleGraphMock();
     (
-      vitePlugin.hotUpdate as (
-        this: unknown,
-        options: { type: string; file: string; modules: unknown[] },
-      ) => unknown
+      vitePlugin.hotUpdate as (this: unknown, options: { type: string; file: string; modules: unknown[] }) => unknown
     ).call(
       { environment: { moduleGraph } },
       { type: 'create', file: join(srcDir, 'extra.boundaries.ts'), modules: [] },
@@ -620,6 +621,45 @@ describe('plugin virtual:liteship/boundaries wiring', () => {
     );
     expect(second).toContain('sidebar');
     expect(second).toContain('viewport');
+  });
+
+  test('dev lifecycle emits canonical liteship:update payloads from real manifest diffs', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
+
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve', base: '/' } as never);
+    await vitePlugin.buildStart?.call({ warn: vi.fn(), emitFile: vi.fn() } as never);
+
+    writeModule(srcDir, 'styles.css', QUANTIZE_CSS.replace('--gap: 24px', '--gap: 64px'));
+    const { moduleGraph } = makeModuleGraphMock();
+    const send = vi.fn();
+    await (vitePlugin.hotUpdate as (this: unknown, options: unknown) => Promise<unknown>).call(
+      { environment: { moduleGraph } },
+      {
+        type: 'update',
+        file: join(srcDir, 'styles.css').replace(/\\/g, '/'),
+        modules: [],
+        server: { ws: { send } },
+      },
+    );
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'custom',
+        event: 'liteship:update',
+        data: expect.objectContaining({
+          type: 'liteship:update',
+          boundaryName: 'viewport',
+          previousBoundaryId: referenceBoundary.id,
+          boundary: expect.objectContaining({ id: referenceBoundary.id }),
+          manifest: expect.objectContaining({ id: referenceBoundary.id }),
+        }),
+      }),
+    );
+    expect(JSON.stringify(send.mock.calls)).toContain('64px');
   });
 
   test('@quantize inside .astro <style> blocks contributes to the manifest', async () => {

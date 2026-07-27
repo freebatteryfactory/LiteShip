@@ -8,4 +8,4 @@
 
 > **CacheTags** = [`EdgeHostCacheTags`](../../../type-aliases/EdgeHostCacheTags.md)
 
-Defined in: [\_spine/edge.d.ts:307](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L307)
+Defined in: [\_spine/edge.d.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L333)

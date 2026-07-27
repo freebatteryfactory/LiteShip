@@ -6,7 +6,7 @@
 
 # Interface: ComposableEntity\<T\>
 
-Defined in: [core/src/authoring/composable.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L41)
+Defined in: [core/src/authoring/composable.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L42)
 
 Content-addressed entity: the identity is an FNV-1a hash over its components,
 so two entities with structurally equal components share the same `id`.
@@ -23,7 +23,7 @@ so two entities with structurally equal components share the same `id`.
 
 > `readonly` **\_tag**: `"ComposableEntity"`
 
-Defined in: [core/src/authoring/composable.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L44)
+Defined in: [core/src/authoring/composable.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L45)
 
 ***
 
@@ -31,7 +31,7 @@ Defined in: [core/src/authoring/composable.ts:44](https://github.com/freebattery
 
 > `readonly` **components**: `T`
 
-Defined in: [core/src/authoring/composable.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L43)
+Defined in: [core/src/authoring/composable.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L44)
 
 ***
 
@@ -39,4 +39,4 @@ Defined in: [core/src/authoring/composable.ts:43](https://github.com/freebattery
 
 > `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: [core/src/authoring/composable.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L42)
+Defined in: [core/src/authoring/composable.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L43)

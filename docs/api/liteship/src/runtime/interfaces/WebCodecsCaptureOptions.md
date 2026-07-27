@@ -8,7 +8,7 @@
 
 Defined in: web/dist/capture/webcodecs.d.ts:14
 
-Options for [WebCodecsCapture.make](../variables/WebCodecsCapture.md#make). All fields are optional;
+Options for [createWebCodecsCapture](../functions/createWebCodecsCapture.md). All fields are optional;
 omitted values fall back to Baseline H.264 at 4 Mbps.
 
 ## Properties

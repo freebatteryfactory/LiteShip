@@ -8,4 +8,4 @@
 
 > **Context** = [`EdgeHostContext`](../../../interfaces/EdgeHostContext.md)
 
-Defined in: [\_spine/edge.d.ts:304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L304)
+Defined in: [\_spine/edge.d.ts:330](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L330)

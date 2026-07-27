@@ -6,7 +6,7 @@
 
 # Interface: RevealChainBranch
 
-Defined in: core/dist/motion/reveal.d.ts:100
+Defined in: core/dist/motion/reveal.d.ts:102
 
 One `choice` arm appended to a chain: a condition over a named signal → a step.
 
@@ -16,7 +16,7 @@ One `choice` arm appended to a chain: a condition over a named signal → a step
 
 > `readonly` **source**: [`SignalInput`](../../schema/type-aliases/SignalInput.md)
 
-Defined in: core/dist/motion/reveal.d.ts:102
+Defined in: core/dist/motion/reveal.d.ts:104
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/reveal.d.ts:102
 
 > `readonly` **step**: [`RevealChainStep`](RevealChainStep.md)
 
-Defined in: core/dist/motion/reveal.d.ts:103
+Defined in: core/dist/motion/reveal.d.ts:105
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/dist/motion/reveal.d.ts:103
 
 > `readonly` **when**: [`BranchCondition`](../type-aliases/BranchCondition.md)
 
-Defined in: core/dist/motion/reveal.d.ts:101
+Defined in: core/dist/motion/reveal.d.ts:103

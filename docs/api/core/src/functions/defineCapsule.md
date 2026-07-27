@@ -18,7 +18,7 @@ module never mutates process-global state.
 
 ### K
 
-`K` *extends* [`AssemblyKind`](../type-aliases/AssemblyKind.md)
+`K` *extends* `"pureTransform"` \| `"receiptedMutation"` \| `"stateMachine"` \| `"siteAdapter"` \| `"policyGate"` \| `"cachedProjection"` \| `"sceneComposition"`
 
 ### InS
 

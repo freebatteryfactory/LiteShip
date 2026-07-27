@@ -24,7 +24,7 @@ import {
   type DevopsProfile,
 } from '@liteship/audit';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -595,7 +595,7 @@ describe('consumer mode — allowlist entries follow the package, not the monore
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
       'node_modules/@liteship/cli/package.json': PKG('@liteship/cli'),
       'node_modules/@liteship/cli/src/index.ts': 'export const cliReady = true;\n',
-      'node_modules/@liteship/cli/src/lib/workspace.ts':
+      'node_modules/@liteship/cli/src/internal/workspace.ts':
         'export function isWorkspace(read: () => string): boolean {\n' +
         '  try {\n' +
         "    return read() === 'liteship';\n" +

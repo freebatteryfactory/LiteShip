@@ -55,10 +55,10 @@ behavior lives here.
 
 ### LITESHIP\_PACKAGES
 
-Re-exports [LITESHIP_PACKAGES](package-roster/variables/LITESHIP_PACKAGES.md)
+Re-exports [LITESHIP_PACKAGES](../package-roster.generated/variables/LITESHIP_PACKAGES.md)
 
 ***
 
 ### LiteshipPackageName
 
-Re-exports [LiteshipPackageName](package-roster/type-aliases/LiteshipPackageName.md)
+Re-exports [LiteshipPackageName](../package-roster.generated/type-aliases/LiteshipPackageName.md)

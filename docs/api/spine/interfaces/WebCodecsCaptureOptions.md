@@ -6,7 +6,7 @@
 
 # Interface: WebCodecsCaptureOptions
 
-Defined in: [\_spine/web.d.ts:376](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L376)
+Defined in: [\_spine/web.d.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L404)
 
 Canvas, timing, and codec options for browser video capture.
 
@@ -16,7 +16,7 @@ Canvas, timing, and codec options for browser video capture.
 
 > `readonly` `optional` **bitrate?**: `number`
 
-Defined in: [\_spine/web.d.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L378)
+Defined in: [\_spine/web.d.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L406)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/web.d.ts:378](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **codec?**: `string`
 
-Defined in: [\_spine/web.d.ts:377](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L377)
+Defined in: [\_spine/web.d.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L405)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/web.d.ts:377](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **keyframeInterval?**: `number`
 
-Defined in: [\_spine/web.d.ts:379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L379)
+Defined in: [\_spine/web.d.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L407)

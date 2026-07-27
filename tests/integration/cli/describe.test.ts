@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { run } from '@liteship/cli';
-
-const ASSEMBLY_KINDS = [
-  'pureTransform', 'receiptedMutation', 'stateMachine',
-  'siteAdapter', 'policyGate', 'cachedProjection', 'sceneComposition',
-] as const;
+import { ASSEMBLY_KINDS } from '@liteship/core';
 
 function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; stderr: string }> {
   let stdout = '';
@@ -32,7 +28,7 @@ describe('liteship describe', () => {
     const { exit, stdout } = await capture(() => run(['describe']));
     expect(exit).toBe(0);
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-    expect(receipt.assemblyKinds).toEqual(expect.arrayContaining([...ASSEMBLY_KINDS]));
+    expect(receipt.assemblyKinds).toEqual(ASSEMBLY_KINDS);
     expect(Array.isArray(receipt.commands)).toBe(true);
     expect(receipt.commands.length).toBeGreaterThan(0);
   });

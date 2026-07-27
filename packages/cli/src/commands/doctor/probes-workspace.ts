@@ -14,13 +14,13 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import { probeFfmpegRender } from '@liteship/command/host';
-import { spawnArgvCapture } from '../../lib/spawn.js';
+import { spawnArgvCapture } from '../../internal/spawn.js';
 import {
   detectProjectPackageManager,
   projectPackageManagerFailureHint,
   projectPackageManagerFailureMessage,
   type ProjectPackageManager,
-} from '../../lib/project-package-manager.js';
+} from '../../internal/project-package-manager.js';
 import { findWorkspaceRoot } from './manifest.js';
 import {
   DOCTOR_PROBE_TIMEOUT_MS,

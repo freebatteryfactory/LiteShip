@@ -8,7 +8,7 @@
 
 > **Primitive**\<`T`\> = [`Cell`](../interfaces/Cell.md)\<`T`\> \| [`Derived`](../interfaces/Derived.md)\<`T`\> \| [`Zap`](../interfaces/Zap.md)\<`T`\>
 
-Defined in: [\_spine/core.d.ts:747](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L747)
+Defined in: [\_spine/core.d.ts:962](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L962)
 
 Discriminated union of all primitives
 

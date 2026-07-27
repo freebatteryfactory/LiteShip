@@ -7,12 +7,12 @@ import {
   ONE_INSTALL_COST_UPDATE_ENV,
   oneInstallCostFindings,
   parseOneInstallCostBaseline,
-} from '../../../../packages/cli/src/lib/one-install-cost-gate.js';
+} from '../../../../packages/cli/src/internal/one-install-cost-gate.js';
 import {
   buildOneInstallCostReport,
   type InstalledCostObservation,
   type OneInstallCostReport,
-} from '../../../../packages/cli/src/lib/one-install-cost-evidence.js';
+} from '../../../../packages/cli/src/internal/one-install-cost-evidence.js';
 
 const names = Array.from({ length: 25 }, (_, index) => `@liteship/package-${index}`);
 const installed: InstalledCostObservation = {

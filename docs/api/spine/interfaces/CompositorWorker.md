@@ -6,7 +6,7 @@
 
 # Interface: CompositorWorker
 
-Defined in: [\_spine/worker.d.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L387)
+Defined in: [\_spine/worker.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L388)
 
 Live worker handle that owns quantization and compositor state.
 
@@ -20,7 +20,7 @@ Live worker handle that owns quantization and compositor state.
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L175)
+Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **runtime**: [`RuntimeCoordinator`](RuntimeCoordinator.md)
 
-Defined in: [\_spine/worker.d.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L390)
+Defined in: [\_spine/worker.d.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L391)
 
 Shared runtime coordination surface reflecting host-side worker state.
 
@@ -42,7 +42,7 @@ Shared runtime coordination surface reflecting host-side worker state.
 
 > `readonly` **worker**: `Worker`
 
-Defined in: [\_spine/worker.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L388)
+Defined in: [\_spine/worker.d.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L389)
 
 ## Methods
 
@@ -50,7 +50,7 @@ Defined in: [\_spine/worker.d.ts:388](https://github.com/freebatteryfactory/Lite
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L177)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 
@@ -68,7 +68,7 @@ Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteSh
 
 > **addQuantizer**(`boundary`): `void`
 
-Defined in: [\_spine/worker.d.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L392)
+Defined in: [\_spine/worker.d.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L393)
 
 Register a quantizer from a defineBoundary result; name defaults to boundary.input.
 
@@ -86,7 +86,7 @@ Register a quantizer from a defineBoundary result; name defaults to boundary.inp
 
 > **addQuantizer**(`name`, `boundary`): `void`
 
-Defined in: [\_spine/worker.d.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L393)
+Defined in: [\_spine/worker.d.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L394)
 
 ##### Parameters
 
@@ -120,7 +120,7 @@ readonly `number`[]
 
 > **applyResolvedState**(`states`): `void`
 
-Defined in: [\_spine/worker.d.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L408)
+Defined in: [\_spine/worker.d.ts:409](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L409)
 
 Mirror resolved quantizer state updates into the worker without raw threshold evaluation.
 
@@ -140,7 +140,7 @@ readonly [`ResolvedStateEntry`](ResolvedStateEntry.md)[]
 
 > **bootstrapResolvedState**(`states`): `void`
 
-Defined in: [\_spine/worker.d.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L406)
+Defined in: [\_spine/worker.d.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L407)
 
 Seed resolved quantizer state into the worker without raw threshold evaluation.
 
@@ -160,7 +160,7 @@ readonly [`ResolvedStateEntry`](ResolvedStateEntry.md)[]
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L176)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 #### Returns
 
@@ -176,7 +176,7 @@ Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteSh
 
 > **evaluate**(`name`, `value`): `void`
 
-Defined in: [\_spine/worker.d.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L403)
+Defined in: [\_spine/worker.d.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L404)
 
 #### Parameters
 
@@ -198,7 +198,7 @@ Defined in: [\_spine/worker.d.ts:403](https://github.com/freebatteryfactory/Lite
 
 > **onMetrics**(`callback`): () => `void`
 
-Defined in: [\_spine/worker.d.ts:419](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L419)
+Defined in: [\_spine/worker.d.ts:420](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L420)
 
 Subscribe to metrics updates. The callback receives a single
 [WorkerMetrics](../type-aliases/WorkerMetrics.md) record (not positional `fps`/`budgetUsed`
@@ -221,7 +221,7 @@ existing callbacks (F1).
 
 > **onResolvedStateAck**(`callback`): () => `void`
 
-Defined in: [\_spine/worker.d.ts:412](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L412)
+Defined in: [\_spine/worker.d.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L413)
 
 Subscribe to resolved-state acknowledgement updates. Returns an unsubscribe function.
 
@@ -241,7 +241,7 @@ Subscribe to resolved-state acknowledgement updates. Returns an unsubscribe func
 
 > **onState**(`callback`): () => `void`
 
-Defined in: [\_spine/worker.d.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L410)
+Defined in: [\_spine/worker.d.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L411)
 
 #### Parameters
 
@@ -259,7 +259,7 @@ Defined in: [\_spine/worker.d.ts:410](https://github.com/freebatteryfactory/Lite
 
 > **removeQuantizer**(`name`): `void`
 
-Defined in: [\_spine/worker.d.ts:402](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L402)
+Defined in: [\_spine/worker.d.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L403)
 
 #### Parameters
 
@@ -277,7 +277,7 @@ Defined in: [\_spine/worker.d.ts:402](https://github.com/freebatteryfactory/Lite
 
 > **requestCompute**(): `void`
 
-Defined in: [\_spine/worker.d.ts:409](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L409)
+Defined in: [\_spine/worker.d.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L410)
 
 #### Returns
 
@@ -289,7 +289,7 @@ Defined in: [\_spine/worker.d.ts:409](https://github.com/freebatteryfactory/Lite
 
 > **setBlendWeights**(`name`, `weights`): `void`
 
-Defined in: [\_spine/worker.d.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L404)
+Defined in: [\_spine/worker.d.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L405)
 
 #### Parameters
 

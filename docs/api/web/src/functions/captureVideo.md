@@ -24,7 +24,7 @@ The VideoRenderer producing deterministic frames
 
 [`FrameCapture`](../../../liteship/src/evidence/interfaces/FrameCapture.md)
 
-The FrameCapture implementation (WebCodecs, Remotion, etc.)
+The owned FrameCapture consumed and disposed by this operation
 
 ### renderFn?
 

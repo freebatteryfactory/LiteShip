@@ -8,7 +8,7 @@ import {
   campaignObservation,
   runSimulationCorpus,
   type RecoveryCorpusEntry,
-} from '../../packages/cli/src/lib/simulation-corpus.js';
+} from '../../packages/cli/src/internal/simulation-corpus.js';
 
 const FAULT_POINT = 'compiler.media-type-corruption';
 const VALID_SOURCE = '@media (min-width: 768px) { .card { display: grid; } }';

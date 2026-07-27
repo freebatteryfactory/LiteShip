@@ -26,6 +26,7 @@ compilation.
 - [BoundaryManifestEntry](interfaces/BoundaryManifestEntry.md)
 - [BoundaryManifestFile](interfaces/BoundaryManifestFile.md)
 - [CacheOptions](interfaces/CacheOptions.md)
+- [ClientHintsEvidence](interfaces/ClientHintsEvidence.md)
 - [ClientHintsHeaders](interfaces/ClientHintsHeaders.md)
 - [CompiledGLSLOutput](interfaces/CompiledGLSLOutput.md)
 - [CompiledOutputs](interfaces/CompiledOutputs.md)

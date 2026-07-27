@@ -82,15 +82,20 @@ export {
 } from './repo-ir.js';
 
 export {
+  type DiagnosticEmissionMatch,
+  type DiagnosticEmitterMethod,
   type GateContext,
+  type GateContextCapability,
   type GateFixture,
   type GateFixtures,
   type GateMutation,
+  type GateSubjectCoverage,
   type ExtensionGateIdentity,
   type Gate,
   type GateAccessManifest,
   type GateFactAccess,
   type GateFactChannel,
+  GATE_CONTEXT_CAPABILITIES,
   GATE_FACT_CHANNELS,
   defineGate,
   requireIR,
@@ -211,6 +216,21 @@ export {
 export { type CapabilityLinkFacts, type CapabilityLinkResult } from './facts/capability-link-facts.js';
 
 export {
+  FEATURE_EDGE_ENUMERATORS,
+  FEATURE_EDGE_FAMILIES,
+  featureEdgeSubjectCoverage,
+  type FeatureEdgeFacts,
+  type FeatureEdgeAggregateReceipt,
+  type FeatureEdgeEnumerator,
+  type FeatureEdgeFamily,
+  type FeatureEdgeFamilyFacts,
+  type FeatureEdgeMechanism,
+  type FeatureEdgeObservation,
+  type FeatureEdgeSubjectCoverage,
+  type OpaqueFeatureEdgeSite,
+} from './facts/feature-edge-facts.js';
+
+export {
   type TraceabilityFacts,
   type ResolvedInvariant,
   type InvariantState,
@@ -269,7 +289,7 @@ export { LITESHIP_WAIVERS } from './waivers.js';
 
 // The AGENT-SAFETY META-GAUNTLET (the "raccoon rule") — the lean standards-surface
 // model + the PURE weakening-diff + the owner-sign-off application. The HOST extractor
-// (`packages/cli/src/lib/standards-surface.ts`) reads the live surface, content-
+// (`packages/cli/src/internal/standards-surface.ts`) reads the live surface, content-
 // addresses it, diffs it vs the committed snapshot, and folds the decided verdicts into
 // the StandardsIntegrityFacts the `standardsIntegrityGate` reports.
 export {
@@ -387,6 +407,7 @@ export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 export { activeModeledSurfaceReaderGate, decideActiveSurfaceReaders } from './gates/active-modeled-surface-reader.js';
+export { featureEdgeConnectivityGate, decideFeatureEdgeConnectivity } from './gates/feature-edge-connectivity.js';
 export {
   type ActiveSurfaceFacts,
   type ActiveSurfaceEntry,
@@ -569,7 +590,7 @@ export { capabilityGateLinkGate } from './gates/capability-gate-link.js';
 // level. The heavy work (parsing traceability/*.yaml, scanning the corpus for
 // `// PROVES:` headers, running the lifecycle state machine against an injected
 // wall-clock date, content-addressing the resolved ledger) lives in the @liteship/cli
-// host (`packages/cli/src/lib/traceability.ts`). Exported but DELIBERATELY NOT in
+// host (`packages/cli/src/internal/traceability.ts`). Exported but DELIBERATELY NOT in
 // LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected host path only.
 // The CLI composes it ALWAYS-ON on the `--ir` path (the committed ledger is cheap to
 // fold), the same ~3-line wiring as supplyChainGate. See the integrator note.

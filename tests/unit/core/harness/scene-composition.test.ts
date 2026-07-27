@@ -36,6 +36,7 @@ describe('generateSceneComposition (lane-aware)', () => {
     capsuleName: 'demo',
     capsuleImport: '../../examples/scenes/demo.js',
     runtimeImport: '../../packages/scene/src/runtime.js',
+    partsImport: '../../packages/scene/src/parts.js',
     contentAddressImport: '../../packages/core/src/content-address.js',
     hasAudio: true,
     hasVideo: true,
@@ -67,6 +68,12 @@ describe('generateSceneComposition (lane-aware)', () => {
     expect(testFile).toContain('SceneRuntime.build');
     expect(testFile).toContain('contentAddressOf');
     expect(testFile).toContain("from '" + driver.compileImport + "'");
+    expect(testFile).toContain("import { SceneRuntime } from '" + driver.runtimeImport + "'");
+    expect(testFile).toContain("} from '" + driver.partsImport + "';");
+    expect(testFile).toContain('handle.world.query(FrameRangePart)');
+    expect(testFile).toContain('handle.world.query(AudioSourcePart, FrameRangePart, PhasePart)');
+    expect(testFile).not.toMatch(/world\.query\(['"]/);
+    expect(testFile).not.toContain('.components.get(');
     // Unit lane carries no bench — that is the bench lane's job.
     expect(testFile).not.toContain('bench(');
   });

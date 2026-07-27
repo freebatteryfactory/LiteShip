@@ -24,7 +24,7 @@ export {
   dynamicImportExemptions,
   surfacePolicy,
   auditAllowlist,
-} from '../../packages/cli/src/lib/liteship-audit-policy.js';
+} from '../../packages/cli/src/internal/liteship-audit-policy.js';
 export type { PackagePolicy, AuditAllowlistEntry } from '@liteship/audit';
 
 // ── LiteShip HICP rubric (repo-local) ────────────────────────────────────

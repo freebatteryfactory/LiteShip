@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { SANCTIONED_SKIPS } from '@liteship/gauntlet';
-import { resolveCapabilitySites } from '../../../../packages/cli/src/lib/capability-policy.js';
+import { resolveCapabilitySites } from '../../../../packages/cli/src/internal/capability-policy.js';
 
 function writeSanctionedSkipFixture(root: string, duplicateFile?: string): void {
   const byFile = new Map<string, string[]>();

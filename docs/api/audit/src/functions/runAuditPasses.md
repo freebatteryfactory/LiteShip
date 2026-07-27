@@ -8,7 +8,7 @@
 
 > **runAuditPasses**(`profile`): [`AuditPassResult`](../interfaces/AuditPassResult.md)
 
-Defined in: [audit/src/index.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L175)
+Defined in: [audit/src/index.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/index.ts#L178)
 
 Run all three engine passes against a profile and merge their findings. This
 is the reusable, repo-agnostic audit — it does NOT compute the LiteShip HICP

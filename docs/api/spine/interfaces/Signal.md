@@ -6,7 +6,7 @@
 
 # Interface: Signal\<T\>
 
-Defined in: [\_spine/core.d.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L308)
+Defined in: [\_spine/core.d.ts:314](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L314)
 
 Reactive signal over CellKernel.replay1 (Effect-free, Wave 6)
 
@@ -26,7 +26,7 @@ Reactive signal over CellKernel.replay1 (Effect-free, Wave 6)
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:312](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L312)
+Defined in: [\_spine/core.d.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L318)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:312](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **source**: [`SignalSource`](../type-aliases/SignalSource.md)
 
-Defined in: [\_spine/core.d.ts:309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L309)
+Defined in: [\_spine/core.d.ts:315](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L315)
 
 ## Methods
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:309](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `T`
 
-Defined in: [\_spine/core.d.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L310)
+Defined in: [\_spine/core.d.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L316)
 
 #### Returns
 
@@ -54,7 +54,7 @@ Defined in: [\_spine/core.d.ts:310](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L311)
+Defined in: [\_spine/core.d.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L317)
 
 #### Parameters
 

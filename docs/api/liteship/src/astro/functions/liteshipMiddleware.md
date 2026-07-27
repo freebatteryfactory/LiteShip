@@ -8,7 +8,7 @@
 
 > **liteshipMiddleware**(`config?`): (`context`, `next`) => `Promise`\<`Response`\>
 
-Defined in: astro/dist/middleware.d.ts:105
+Defined in: astro/dist/middleware.d.ts:107
 
 Create the liteship edge middleware.
 

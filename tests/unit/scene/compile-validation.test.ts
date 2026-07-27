@@ -143,16 +143,7 @@ describe('scene runtime/bridge error contract', () => {
     );
   });
 
-  it('SyncSystem warns once when executed without a world', () => {
-    const { sink, events } = Diagnostics.createBufferSink();
-    Diagnostics.setSink(sink);
-
-    SyncSystem(0, 60).execute([], undefined);
-    SyncSystem(1, 60).execute([], undefined);
-
-    const warns = events.filter((e) => e.code === 'worldless-degrade');
-    expect(warns.length).toBe(1); // warnOnce dedupes
-    expect(warns[0]?.message).toContain('no world supplied, so no Beat entities are visible');
-    expect(warns[0]?.message).toContain('pass the world as the second execute argument');
+  it('SyncSystem fails closed when invoked outside its world-minted context', () => {
+    expect(() => SyncSystem(0, 60).execute([], undefined as never)).toThrow(/query/);
   });
 });

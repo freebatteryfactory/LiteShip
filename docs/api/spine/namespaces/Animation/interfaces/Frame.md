@@ -6,7 +6,7 @@
 
 # Interface: Frame
 
-Defined in: [\_spine/core.d.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L397)
+Defined in: [\_spine/core.d.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L406)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [\_spine/core.d.ts:397](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **eased**: `number`
 
-Defined in: [\_spine/core.d.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L399)
+Defined in: [\_spine/core.d.ts:408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L408)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [\_spine/core.d.ts:399](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **elapsed**: [`Millis`](../../../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L400)
+Defined in: [\_spine/core.d.ts:409](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L409)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:400](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **progress**: `number`
 
-Defined in: [\_spine/core.d.ts:398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L398)
+Defined in: [\_spine/core.d.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L407)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [\_spine/core.d.ts:398](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [\_spine/core.d.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L401)
+Defined in: [\_spine/core.d.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L410)

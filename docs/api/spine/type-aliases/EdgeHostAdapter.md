@@ -8,7 +8,7 @@
 
 > **EdgeHostAdapter** = `object`
 
-Defined in: [\_spine/edge.d.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L290)
+Defined in: [\_spine/edge.d.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L316)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/edge.d.ts:290](https://github.com/freebatteryfactory/LiteSh
 
 > **create**(`config?`): `EdgeHostAdapter`
 
-Defined in: [\_spine/edge.d.ts:297](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L297)
+Defined in: [\_spine/edge.d.ts:323](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L323)
 
 #### Parameters
 

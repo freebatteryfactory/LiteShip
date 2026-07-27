@@ -413,7 +413,7 @@ plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
   integration smells — unsafe HTML sinks, raw-`Request` `resolveInitialState`,
   missing `Vary`, boundary shadowing, module-scope Worker `Date`, hand-built
   `data-liteship-*`, direct graph mutation. Seed: the taint registry
-  (`packages/cli/src/lib/taint-policy.ts`); today the corpus is framework
+  (`packages/cli/src/internal/taint-policy.ts`); today the corpus is framework
   packages only (`packages/gauntlet/src/node-context.ts`), never arbitrary
   consumer app code.
 
@@ -437,7 +437,7 @@ plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
   `tests/regression/red-team-runtime.test.ts` covering the embedded-whitespace
   variants. Makes SECURITY.md's scheme-strip claim true.
 - **Add `insertAdjacentHTML`/`document.write` to the taint registry** as
-  defense-in-depth — `packages/cli/src/lib/taint-policy.ts` lists only
+  defense-in-depth — `packages/cli/src/internal/taint-policy.ts` lists only
   `innerHTML`/`outerHTML` as assignment sinks. No live sink uses them today, so
   this is a gate that catches a future one (and the DPU `*Unsafe` family when it
   lands). Makes SECURITY.md's "no third unguarded path" machine-checkable.

@@ -169,9 +169,9 @@ export const fromElement = (element: Element): MorphHints => {
       result.idMap = new Map(Object.entries(parsed));
     } catch (cause) {
       // The hint must not break the morph, but a typo'd map should be visible.
-      Diagnostics.warn({
+      Diagnostics.warnRegistered({
         source: 'liteship/web.morph',
-        code: 'invalid-morph-id-map',
+        code: 'web/morph/invalid-id-map',
         message: `data-morph-id-map contains invalid JSON: ${idMapAttr}. The id map was skipped. Expected a JSON object mapping old ids to new ids, e.g. data-morph-id-map='{"old-id":"new-id"}'.`,
         cause,
       });

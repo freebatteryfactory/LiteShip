@@ -4,11 +4,11 @@
 
 [LiteShip](../../modules.md) / [\_spine](../README.md) / Part
 
-# Interface: Part\<T\>
+# Interface: Part\<T, Name, Encoded\>
 
-Defined in: [\_spine/core.d.ts:583](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L583)
+Defined in: [\_spine/core.d.ts:723](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L723)
 
-Authored ECS component contract pairing a name with its schema.
+One minted, schema-backed ECS component declaration.
 
 ## Type Parameters
 
@@ -16,18 +16,42 @@ Authored ECS component contract pairing a name with its schema.
 
 `T` = `unknown`
 
+### Name
+
+`Name` *extends* `string` = `string`
+
+### Encoded
+
+`Encoded` = `unknown`
+
 ## Properties
+
+### \[SpinePartWitness\]
+
+> `readonly` **\[SpinePartWitness\]**: `T`
+
+Defined in: [\_spine/core.d.ts:727](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L727)
+
+***
 
 ### name
 
-> `readonly` **name**: `string`
+> `readonly` **name**: `Name`
 
-Defined in: [\_spine/core.d.ts:584](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L584)
+Defined in: [\_spine/core.d.ts:724](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L724)
+
+***
+
+### retention
+
+> `readonly` **retention**: [`PartRetentionPolicy`](../type-aliases/PartRetentionPolicy.md)
+
+Defined in: [\_spine/core.d.ts:726](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L726)
 
 ***
 
 ### schema
 
-> `readonly` **schema**: [`SchemaPort`](../type-aliases/SchemaPort.md)\<`T`\>
+> `readonly` **schema**: [`KernelSchema`](KernelSchema.md)\<`T`, `Encoded`\>
 
-Defined in: [\_spine/core.d.ts:585](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L585)
+Defined in: [\_spine/core.d.ts:725](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L725)

@@ -6,7 +6,7 @@
 
 # Interface: MorphConfig
 
-Defined in: [\_spine/web.d.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L93)
+Defined in: [\_spine/web.d.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L99)
 
 Safety, matching, and preservation options for one DOM morph.
 
@@ -16,7 +16,7 @@ Safety, matching, and preservation options for one DOM morph.
 
 > `readonly` `optional` **callbacks?**: [`MorphCallbacks`](MorphCallbacks.md)
 
-Defined in: [\_spine/web.d.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L98)
+Defined in: [\_spine/web.d.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L104)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/web.d.ts:98](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **morphStyle**: `"innerHTML"` \| `"outerHTML"`
 
-Defined in: [\_spine/web.d.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L97)
+Defined in: [\_spine/web.d.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L103)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/web.d.ts:97](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **preserveFocus**: `boolean`
 
-Defined in: [\_spine/web.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L94)
+Defined in: [\_spine/web.d.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L100)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/web.d.ts:94](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **preserveScroll**: `boolean`
 
-Defined in: [\_spine/web.d.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L95)
+Defined in: [\_spine/web.d.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L101)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [\_spine/web.d.ts:95](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **preserveSelection**: `boolean`
 
-Defined in: [\_spine/web.d.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L96)
+Defined in: [\_spine/web.d.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L102)

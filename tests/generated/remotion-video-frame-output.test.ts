@@ -10,14 +10,14 @@ import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('remotion.video-frame-output', () => {
   // UNIT LANE — pure round-trip equality. The adapter's native <-> liteship boundary
-  // is its 'output' schema; liteship's canonical serialization is the
+  // is its 'input' schema; liteship's canonical serialization is the
   // round trip. capsule:compile resolved this schema as arbitrary-derivable, so we
   // sample it via the canonical schemaToArbitrary walker (never a hand-built
   // fixture), encode -> decode through CanonicalCbor, and assert structure is
   // preserved via the canonical contentAddressOf (never a hand-rolled deep-equal).
   // A serialization regression that forks structure breaks the address equality RED.
-  const cap = remotionAdapterCapsule as { output: unknown };
-  const arb = schemaToArbitrary(cap.output as never) as fc.Arbitrary<unknown>;
+  const cap = remotionAdapterCapsule as { input: unknown };
+  const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
 
   it('round-trip equality: native -> liteship -> native preserves structure', () => {
     fc.assert(

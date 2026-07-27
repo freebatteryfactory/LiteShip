@@ -8,7 +8,7 @@
 
 > **CompositorWorker** = `object`
 
-Defined in: [\_spine/worker.d.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L387)
+Defined in: [\_spine/worker.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L388)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/worker.d.ts:387](https://github.com/freebatteryfactory/Lite
 
 > **create**(`config?`, `startupTelemetry?`): `CompositorWorker`
 
-Defined in: [\_spine/worker.d.ts:423](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L423)
+Defined in: [\_spine/worker.d.ts:424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L424)
 
 #### Parameters
 

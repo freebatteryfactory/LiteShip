@@ -5,6 +5,8 @@
  * @module
  */
 
+import type { EventDetail } from '@liteship/_spine/events';
+
 let frame = 0;
 let playing = false;
 
@@ -47,7 +49,9 @@ document.addEventListener('keydown', (e) => {
 
 // Vite HMR — preserve playhead on scene module reload.
 const importMetaHot = (
-  import.meta as unknown as { hot?: { on: (event: string, cb: (data: { sceneId: string }) => void) => void } }
+  import.meta as unknown as {
+    hot?: { on: (event: 'liteship:scene-update', cb: (data: EventDetail<'liteship:scene-update'>) => void) => void };
+  }
 ).hot;
 if (importMetaHot) {
   importMetaHot.on('liteship:scene-update', (payload) => {

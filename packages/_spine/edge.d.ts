@@ -2,8 +2,15 @@
  * @liteship/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
  */
 
-import type { CapTier, ContentAddress } from './core.js';
-import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabilities } from './detect.js';
+import type { CapTier, ContentAddress, MotionTier, ResponsiveMediaCapabilities } from './core.js';
+import type {
+  CapabilityEvidenceInputs,
+  CapabilityTierEvidence,
+  CapabilityTierProjection,
+  CapAxis,
+  DesignTier,
+  ExtendedDeviceCapabilities,
+} from './detect.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CLIENT HINTS
@@ -11,23 +18,35 @@ import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabili
 
 /** HTTP client-hint headers consumed by edge capability resolution. */
 export interface ClientHintsHeaders {
-  readonly 'sec-ch-ua-arch'?: string;
-  readonly 'sec-ch-ua-model'?: string;
-  readonly 'sec-ch-ua-platform'?: string;
-  readonly 'sec-ch-ua-mobile'?: string;
-  readonly 'device-memory'?: string;
-  readonly 'sec-ch-viewport-width'?: string;
+  readonly 'sec-ch-device-memory'?: string;
   readonly 'sec-ch-dpr'?: string;
-  readonly 'sec-ch-prefers-color-scheme'?: string;
+  readonly 'sec-ch-viewport-width'?: string;
+  readonly 'sec-ch-viewport-height'?: string;
   readonly 'sec-ch-prefers-reduced-motion'?: string;
+  readonly 'sec-ch-prefers-color-scheme'?: string;
+  readonly 'sec-ch-ua-mobile'?: string;
   readonly 'save-data'?: string;
+  readonly downlink?: string;
+  readonly ect?: string;
   readonly 'user-agent'?: string;
 }
 
+/** One canonical Client-Hints parse: complete values plus input-level provenance. */
+export interface ClientHintsEvidence {
+  readonly capabilities: ExtendedDeviceCapabilities;
+  readonly inputEvidence: CapabilityEvidenceInputs;
+}
+
 export declare const ClientHints: {
+  parseEvidence(headers: Headers | ClientHintsHeaders): ClientHintsEvidence;
   parseClientHints(headers: Headers | ClientHintsHeaders): ExtendedDeviceCapabilities;
   acceptCHHeader(): string;
   criticalCHHeader(): string;
+  varyCHHeader(): string;
+  responsiveMediaCapabilities(
+    headersOrCaps: Headers | ClientHintsHeaders | ExtendedDeviceCapabilities,
+  ): ResponsiveMediaCapabilities;
+  responsiveMediaVaryHeader(): string;
 };
 
 /** Parsers and normalizers for edge-visible client-hint evidence. */
@@ -44,13 +63,14 @@ export interface EdgeTierResult {
   readonly capTier: CapTier;
   readonly motionTier: MotionTier;
   readonly designTier: DesignTier;
+  readonly tierEvidence: CapabilityTierEvidence;
 }
 
 export declare const EdgeTier: {
   detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult;
-  tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult;
-  tierDataAttributes(result: EdgeTierResult): string;
-  tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<string, string>>;
+  tierFromEvidence(parsed: ClientHintsEvidence): EdgeTierResult;
+  tierDataAttributes(result: CapabilityTierProjection): string;
+  tierDataAttributesMap(result: CapabilityTierProjection): Readonly<Record<`data-liteship-${CapAxis}`, string>>;
 };
 
 /** Conservative edge-tier inference helpers. */
@@ -116,13 +136,13 @@ export interface BoundaryCache {
    */
   getCompiledOutputs(
     boundaryId: ContentAddress,
-    tierResult: EdgeTierResult,
+    tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
     qualifier?: string,
     themeFp?: string,
   ): Promise<CompiledOutputs | null>;
   putCompiledOutputs(
     boundaryId: ContentAddress,
-    tierResult: EdgeTierResult,
+    tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
     outputs: CompiledOutputs,
     qualifier?: string,
     themeFp?: string,
@@ -268,6 +288,12 @@ export interface EdgeHostBoundaryResolution {
 export interface EdgeHostAdapterConfig {
   readonly theme?: ThemeCompileConfig | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
   readonly cache?: EdgeHostCacheConfig;
+  readonly background?: EdgeHostBackground;
+}
+
+/** Workers background hook for deferring cache write-back off the request path. */
+export interface EdgeHostBackground {
+  readonly waitUntil: (promise: Promise<unknown>) => void;
 }
 
 /** Tier, theme, boundary, asset, and cache evidence returned by an edge host. */

@@ -6,25 +6,41 @@
 
 # Interface: HMRPayload
 
-Defined in: [\_spine/vite.d.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L216)
+Defined in: [\_spine/vite.d.ts:229](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L229)
 
-Typed payload sent when a LiteShip definition changes during HMR.
+Canonical payload sent when a LiteShip boundary changes during HMR.
 
 ## Properties
 
 ### boundary
 
-> `readonly` **boundary**: `string`
+> `readonly` **boundary**: [`HMRBoundaryIdentity`](HMRBoundaryIdentity.md)
 
-Defined in: [\_spine/vite.d.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L218)
+Defined in: [\_spine/vite.d.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L233)
 
 ***
 
-### css?
+### boundaryName
 
-> `readonly` `optional` **css?**: `string`
+> `readonly` **boundaryName**: `string`
 
-Defined in: [\_spine/vite.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L219)
+Defined in: [\_spine/vite.d.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L231)
+
+***
+
+### manifest
+
+> `readonly` **manifest**: `Pick`\<[`BoundaryManifestEntry`](BoundaryManifestEntry.md), `"id"` \| `"outputs"` \| `"outputsByTier"`\>
+
+Defined in: [\_spine/vite.d.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L234)
+
+***
+
+### previousBoundaryId
+
+> `readonly` **previousBoundaryId**: [`ContentAddress`](../type-aliases/ContentAddress.md)
+
+Defined in: [\_spine/vite.d.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L232)
 
 ***
 
@@ -32,12 +48,4 @@ Defined in: [\_spine/vite.d.ts:219](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **type**: `"liteship:update"`
 
-Defined in: [\_spine/vite.d.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L217)
-
-***
-
-### uniforms?
-
-> `readonly` `optional` **uniforms?**: `Record`\<`string`, `number`\>
-
-Defined in: [\_spine/vite.d.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L220)
+Defined in: [\_spine/vite.d.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/vite.d.ts#L230)

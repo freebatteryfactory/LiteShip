@@ -39,9 +39,30 @@ import type { CompositionFacts } from './facts/composition-facts.js';
 import type { SkipMatch } from './gates/skip-detect.js';
 import type { SkipSiteFacts } from './facts/skip-site-facts.js';
 import type { ActiveSurfaceFacts } from './facts/active-surface-facts.js';
+import { FEATURE_EDGE_ENUMERATORS, FEATURE_EDGE_FAMILIES } from './facts/feature-edge-facts.js';
+import type {
+  FeatureEdgeFacts,
+  FeatureEdgeFamily,
+  FeatureEdgeFamilyFacts,
+  FeatureEdgeMechanism,
+  FeatureEdgeObservation,
+  FeatureEdgeSubjectCoverage,
+  OpaqueFeatureEdgeSite,
+} from './facts/feature-edge-facts.js';
 import type { CheckGovernanceFacts, WaiverFreshnessFact } from './facts/check-governance-facts.js';
 import type { BenchmarkSubjectFacts } from './gates/bench-subjects.js';
 import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
+
+/** Runtime Diagnostics facade methods recognized by the diagnostic-emission authority. */
+export type DiagnosticEmitterMethod =
+  'warn' | 'error' | 'warnOnce' | 'warnRegistered' | 'errorRegistered' | 'warnOnceRegistered';
+
+/** One parser-proven Diagnostics call and its statically resolved code, when available. */
+export interface DiagnosticEmissionMatch {
+  readonly method: DiagnosticEmitterMethod;
+  readonly code?: string;
+  readonly line: number;
+}
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -104,6 +125,12 @@ export interface GateContext {
    * differential test (tests/unit/audit/code-ranges.test.ts), so the fallback stays faithful.
    */
   readonly codeOnly?: (source: string) => string;
+  /**
+   * Parser-backed Diagnostics-call census injected by a TypeScript-owning host.
+   * The lean engine keeps a literal fallback; the injected detector proves call
+   * ownership, ignores prose/fixtures, and resolves local constant aliases.
+   */
+  readonly diagnosticEmitterDetector?: (source: string) => readonly DiagnosticEmissionMatch[];
   /**
    * Parser-backed benchmark reachability facts produced by a repository host.
    * The gauntlet folds these flat facts and never imports the TypeScript compiler.
@@ -216,7 +243,7 @@ export interface GateContext {
    * work (parsing `traceability/*.yaml`, scanning the test corpus for `// PROVES:`
    * headers, running the lifecycle state machine against the injected wall-clock date,
    * content-addressing the resolved ledger) all lives in a HOST (the CLI's
-   * `packages/cli/src/lib/traceability.ts` state machine), which folds the verdicts
+   * `packages/cli/src/internal/traceability.ts` state machine), which folds the verdicts
    * into flat {@link TraceabilityFacts} (every invariant's resolved state + any
    * ledger⇔header divergence + the resolved-ledger content address) and lands them
    * here. The {@link traceabilityBridgeGate} reads ONLY through this; in-memory
@@ -234,7 +261,7 @@ export interface GateContext {
    * artifacts, content-addressing the surface via the ONE `contentAddressOf` kernel,
    * diffing it against the committed snapshot, applying the owner sign-offs against the
    * injected wall-clock date) all lives in a HOST (the CLI's
-   * `packages/cli/src/lib/standards-surface.ts` extractor), which folds the decided
+   * `packages/cli/src/internal/standards-surface.ts` extractor), which folds the decided
    * verdicts into flat {@link StandardsIntegrityFacts} (the unsigned/signed/forbidden/
    * expired weakenings + the stale strengthens) and lands them here. The
    * {@link standardsIntegrityGate} reads ONLY through this; in-memory fixtures supply a
@@ -370,6 +397,8 @@ export interface GateContext {
    * folds an empty verdict. See {@link ActiveSurfaceFacts}.
    */
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  /** Checker-produced feature producer/consumer connectivity facts. */
+  readonly featureEdges?: FeatureEdgeFacts;
   /**
    * Pre-computed CHECK-GOVERNANCE evidence — an INJECTED FactPack the three
    * check-governance meta-gates (`check-registry-complete` / `check-negative-control` /
@@ -411,6 +440,58 @@ export interface GateFixtures {
 }
 
 /**
+ * A gate's current-head account of the discrete subjects it claims to govern.
+ *
+ * This is deliberately a receipt, not a historical score. A gate either names
+ * the complete population it judged or reports why that population is opaque.
+ * Gates that are predicates over their entire covered corpus rather than a
+ * discrete subject registry omit the resolver entirely; the authority layer
+ * records that distinction as `not-applicable`.
+ */
+export type GateSubjectCoverage =
+  | {
+      readonly status: 'complete';
+      readonly enumerator: string;
+      readonly enumeratedCount: number;
+      readonly censusDigest: `sha256:${string}`;
+    }
+  | {
+      readonly status: 'opaque';
+      readonly enumerator: string;
+      readonly enumeratedCount: number;
+      readonly censusDigest: `sha256:${string}`;
+      readonly reason: string;
+    };
+
+/**
+ * Host-injected parser capabilities that refine lean gate fallbacks. These are
+ * executable toolchain inputs, not per-run fact channels. The tuple exists so
+ * scoping, recording, and adversarial tests share one vocabulary.
+ */
+export const GATE_CONTEXT_CAPABILITIES = [
+  'skipDetector',
+  'earlyReturnDetector',
+  'codeOnly',
+  'diagnosticEmitterDetector',
+] as const;
+
+/** One host-injected parser capability carried by {@link GateContext}. */
+export type GateContextCapability = (typeof GATE_CONTEXT_CAPABILITIES)[number];
+
+type OptionalFunctionKeys = {
+  [K in keyof GateContext]-?: undefined extends GateContext[K]
+    ? NonNullable<GateContext[K]> extends (...args: never[]) => unknown
+      ? K
+      : never
+    : never;
+}[keyof GateContext];
+type OptionalCapabilityKeys = Exclude<OptionalFunctionKeys, 'allFiles'>;
+type _capabilitiesCoverContext = GateContextCapability extends OptionalCapabilityKeys ? true : never;
+type _contextCapabilitiesAreListed = OptionalCapabilityKeys extends GateContextCapability ? true : never;
+const _gateContextCapabilitiesExhaustive: _capabilitiesCoverContext & _contextCapabilitiesAreListed = true;
+void _gateContextCapabilitiesExhaustive;
+
+/**
  * Runtime fact channels a hosted gate may consume. This tuple is the canonical
  * runtime vocabulary used by gate access manifests and by the instrumented
  * evidence recorder. It is kept distinct from {@link FACT_KINDS}: FactGate is
@@ -435,6 +516,7 @@ export const GATE_FACT_CHANNELS = [
   'composition',
   'skipSites',
   'activeSurfaceFacts',
+  'featureEdges',
   'checkGovernance',
   'benchmarkSubjects',
 ] as const;
@@ -491,6 +573,17 @@ export interface Gate {
   readonly describe: string;
   /** The fold: produce findings for `context`. Pure w.r.t. the context. */
   readonly run: (context: GateContext) => readonly Finding[];
+  /**
+   * Enumerate the complete current-head subject population for a gate whose
+   * claim is about discrete subjects (symbols, protocol methods, registry rows,
+   * feature edges, ...). An opaque receipt is a qualification failure: a gate
+   * cannot earn release authority over subjects it cannot enumerate.
+   *
+   * Omit only when the gate is a predicate over its complete covered corpus and
+   * therefore has no separate subject registry. This callback reads through the
+   * same declared evidence surfaces as {@link run}; it is not a second oracle.
+   */
+  readonly subjectCoverage?: (context: GateContext) => GateSubjectCoverage;
   /**
    * OPTIONAL coverage declaration (Slice B, B2 — the content-addressed cache).
    * Returns the {@link FileId}s whose CONTENT this gate's verdict depends on, so
@@ -581,7 +674,7 @@ export interface Gate {
  * host-produced FactPack channel — a field on {@link FactBundle} and an optional key on
  * {@link GateContext}.
  */
-export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts', 'checkGovernance'] as const;
+export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts', 'featureEdges', 'checkGovernance'] as const;
 
 /** One FactKind — derived from {@link FACT_KINDS}, never re-typed. */
 export type FactKind = (typeof FACT_KINDS)[number];
@@ -594,6 +687,7 @@ export type FactKind = (typeof FACT_KINDS)[number];
 export interface FactBundle {
   readonly skipSites?: SkipSiteFacts;
   readonly activeSurfaceFacts?: ActiveSurfaceFacts;
+  readonly featureEdges?: FeatureEdgeFacts;
   readonly checkGovernance?: CheckGovernanceFacts;
 }
 
@@ -703,6 +797,192 @@ function normalizeActiveSurfaceFacts(value: ActiveSurfaceFacts | undefined): Act
     });
   });
   return Object.freeze({ surfaces: Object.freeze(normalized) });
+}
+
+const FEATURE_EDGE_ROLES = new Set(['consumer', 'producer']);
+const FEATURE_EDGE_MECHANISMS = new Set([
+  'system-query',
+  'world-query',
+  'world-spawn',
+  'world-set-component',
+  'world-add-component',
+  'dense-store',
+  'protocol-declaration',
+  'request-route',
+  'notification-emitter',
+  'capability-advertisement',
+  'rpc-handler',
+  'context-declaration',
+  'command-requirement',
+  'host-provider',
+  'modeled-degradation',
+  'registry-entry',
+  'command-handler',
+  'cli-executor',
+  'resource-reader',
+  'prompt-resolver',
+  'capsule-validator',
+  'capsule-compiler',
+  'event-dispatch',
+  'event-listener',
+]);
+
+const FEATURE_EDGE_ENUMERATOR_BY_FAMILY = FEATURE_EDGE_ENUMERATORS;
+
+const FEATURE_EDGE_FAMILY_SET = new Set<string>(FEATURE_EDGE_FAMILIES);
+const SHA256_FACT = /^sha256:[0-9a-f]{64}$/u;
+
+function normalizeFeatureEdgeFacts(value: FeatureEdgeFacts | undefined): FeatureEdgeFacts | undefined {
+  if (value === undefined) return undefined;
+  assertPlainFactRecord(value, 'featureEdges');
+  if (ownDataField(value, '_tag') !== 'feature-edge-facts') {
+    throw ValidationError('FactGate', 'featureEdges._tag must be feature-edge-facts');
+  }
+  const familiesRaw = ownDataField(value, 'families');
+  const aggregateRaw = ownDataField(value, 'aggregate');
+  if (!Array.isArray(familiesRaw)) throw ValidationError('FactGate', 'featureEdges.families must be an array');
+
+  const families: FeatureEdgeFamilyFacts[] = familiesRaw.map((familyEntry, familyIndex) => {
+    const familyLabel = `featureEdges.families[${familyIndex}]`;
+    assertPlainFactRecord(familyEntry, familyLabel);
+    const family = ownDataField(familyEntry, 'family');
+    const observationsRaw = ownDataField(familyEntry, 'observations');
+    const coverageRaw = ownDataField(familyEntry, 'subjectCoverage');
+    if (typeof family !== 'string' || !FEATURE_EDGE_FAMILY_SET.has(family) || !Array.isArray(observationsRaw)) {
+      throw ValidationError('FactGate', `${familyLabel} is malformed`);
+    }
+    const typedFamily = family as FeatureEdgeFamily;
+    const observations: FeatureEdgeObservation[] = observationsRaw.map((entry, index) => {
+      assertPlainFactRecord(entry, `${familyLabel}.observations[${index}]`);
+      const observationFamily = ownDataField(entry, 'family');
+      const subject = ownDataField(entry, 'subject');
+      const role = ownDataField(entry, 'role');
+      const mechanism = ownDataField(entry, 'mechanism');
+      const file = ownDataField(entry, 'file');
+      const line = ownDataField(entry, 'line');
+      if (
+        typeof observationFamily !== 'string' ||
+        !FEATURE_EDGE_FAMILY_SET.has(observationFamily) ||
+        typeof subject !== 'string' ||
+        subject.trim() === '' ||
+        typeof role !== 'string' ||
+        !FEATURE_EDGE_ROLES.has(role) ||
+        typeof mechanism !== 'string' ||
+        !FEATURE_EDGE_MECHANISMS.has(mechanism) ||
+        typeof file !== 'string' ||
+        typeof line !== 'number' ||
+        !Number.isInteger(line) ||
+        line < 1
+      ) {
+        throw ValidationError('FactGate', `${familyLabel}.observations[${index}] is malformed`);
+      }
+      return Object.freeze({
+        family: observationFamily as FeatureEdgeFamily,
+        subject,
+        role: role as FeatureEdgeObservation['role'],
+        mechanism: mechanism as FeatureEdgeMechanism,
+        file,
+        line,
+      });
+    });
+
+    assertPlainFactRecord(coverageRaw, `${familyLabel}.subjectCoverage`);
+    const status = ownDataField(coverageRaw, 'status');
+    const enumerator = ownDataField(coverageRaw, 'enumerator');
+    const enumeratedCount = ownDataField(coverageRaw, 'enumeratedCount');
+    const censusDigest = ownDataField(coverageRaw, 'censusDigest');
+    if (
+      (status !== 'complete' && status !== 'unknown') ||
+      enumerator !== FEATURE_EDGE_ENUMERATOR_BY_FAMILY[typedFamily] ||
+      typeof enumeratedCount !== 'number' ||
+      !Number.isSafeInteger(enumeratedCount) ||
+      enumeratedCount < 0 ||
+      typeof censusDigest !== 'string' ||
+      !SHA256_FACT.test(censusDigest)
+    ) {
+      throw ValidationError('FactGate', `${familyLabel}.subjectCoverage is malformed`);
+    }
+    const typedEnumerator = enumerator as FeatureEdgeSubjectCoverage['enumerator'];
+    let subjectCoverage: FeatureEdgeSubjectCoverage;
+    if (status === 'complete') {
+      subjectCoverage = Object.freeze({
+        status,
+        enumerator: typedEnumerator,
+        enumeratedCount,
+        censusDigest: censusDigest as `sha256:${string}`,
+      });
+    } else {
+      const opaqueRaw = ownDataField(coverageRaw, 'opaqueSites');
+      if (!Array.isArray(opaqueRaw)) {
+        throw ValidationError('FactGate', `${familyLabel}.subjectCoverage.opaqueSites must be an array`);
+      }
+      const opaqueSites: OpaqueFeatureEdgeSite[] = opaqueRaw.map((entry, index) => {
+        assertPlainFactRecord(entry, `${familyLabel}.subjectCoverage.opaqueSites[${index}]`);
+        const opaqueFamily = ownDataField(entry, 'family');
+        const role = ownDataField(entry, 'role');
+        const mechanism = ownDataField(entry, 'mechanism');
+        const file = ownDataField(entry, 'file');
+        const line = ownDataField(entry, 'line');
+        const reason = ownDataField(entry, 'reason');
+        if (
+          typeof opaqueFamily !== 'string' ||
+          !FEATURE_EDGE_FAMILY_SET.has(opaqueFamily) ||
+          typeof role !== 'string' ||
+          !FEATURE_EDGE_ROLES.has(role) ||
+          typeof mechanism !== 'string' ||
+          !FEATURE_EDGE_MECHANISMS.has(mechanism) ||
+          typeof file !== 'string' ||
+          typeof line !== 'number' ||
+          !Number.isInteger(line) ||
+          line < 1 ||
+          typeof reason !== 'string' ||
+          reason.trim() === ''
+        ) {
+          throw ValidationError('FactGate', `${familyLabel}.subjectCoverage.opaqueSites[${index}] is malformed`);
+        }
+        return Object.freeze({
+          family: opaqueFamily as FeatureEdgeFamily,
+          role: role as OpaqueFeatureEdgeSite['role'],
+          mechanism: mechanism as FeatureEdgeMechanism,
+          file,
+          line,
+          reason,
+        });
+      });
+      subjectCoverage = Object.freeze({
+        status,
+        enumerator: typedEnumerator,
+        enumeratedCount,
+        censusDigest: censusDigest as `sha256:${string}`,
+        opaqueSites: Object.freeze(opaqueSites),
+      });
+    }
+    return Object.freeze({ family: typedFamily, observations: Object.freeze(observations), subjectCoverage });
+  });
+
+  assertPlainFactRecord(aggregateRaw, 'featureEdges.aggregate');
+  const aggregateEnumerator = ownDataField(aggregateRaw, 'enumerator');
+  const aggregateCount = ownDataField(aggregateRaw, 'enumeratedCount');
+  const aggregateDigest = ownDataField(aggregateRaw, 'censusDigest');
+  if (
+    aggregateEnumerator !== 'feature-edge/family-set-v1' ||
+    typeof aggregateCount !== 'number' ||
+    !Number.isSafeInteger(aggregateCount) ||
+    aggregateCount < 0 ||
+    typeof aggregateDigest !== 'string' ||
+    !SHA256_FACT.test(aggregateDigest)
+  ) {
+    throw ValidationError('FactGate', 'featureEdges.aggregate is malformed');
+  }
+  return Object.freeze({
+    _tag: 'feature-edge-facts',
+    families: Object.freeze(families),
+    aggregate: Object.freeze({
+      enumerator: aggregateEnumerator,
+      enumeratedCount: aggregateCount,
+      censusDigest: aggregateDigest as `sha256:${string}`,
+    }),
+  });
 }
 
 const WAIVER_STORES = new Set(['gauntlet', 'ledger']);
@@ -855,6 +1135,9 @@ export function defineGate(spec: Gate): Gate {
   if (typeof spec.run !== 'function') {
     throw ValidationError('defineGate', `gate "${spec.id}" must supply a run function`);
   }
+  if (spec.subjectCoverage !== undefined && typeof spec.subjectCoverage !== 'function') {
+    throw ValidationError('defineGate', `gate "${spec.id}" subjectCoverage must be a function when supplied`);
+  }
   // A fact gate is the SMUGGLING-FREE form; its discriminant is unforgeable (the module-private
   // `FACT_GATES` WeakSet). A gate built with `defineGate` that hand-sets `form: 'fact'` is a
   // forgery — it would carry an arbitrary context-reading `run` while CLAIMING the data-only
@@ -903,6 +1186,8 @@ export interface FactGateSpec {
   readonly requires: readonly FactKind[];
   /** The bounded, data-only decision — no {@link GateContext} parameter, by design. */
   readonly decide: (facts: FactBundle) => readonly Finding[];
+  /** Data-only subject census derived from the same declared facts as `decide`. */
+  readonly subjectCoverage?: (facts: FactBundle) => GateSubjectCoverage;
   readonly fixtures: GateFixtures;
 }
 
@@ -917,6 +1202,7 @@ export function pickFacts(context: GateContext, requires: readonly FactKind[]): 
   const bundle: {
     skipSites?: SkipSiteFacts;
     activeSurfaceFacts?: ActiveSurfaceFacts;
+    featureEdges?: FeatureEdgeFacts;
     checkGovernance?: CheckGovernanceFacts;
   } = {};
   for (const kind of requires) {
@@ -926,6 +1212,9 @@ export function pickFacts(context: GateContext, requires: readonly FactKind[]): 
         break;
       case 'activeSurfaceFacts':
         bundle.activeSurfaceFacts = normalizeActiveSurfaceFacts(context.activeSurfaceFacts);
+        break;
+      case 'featureEdges':
+        bundle.featureEdges = normalizeFeatureEdgeFacts(context.featureEdges);
         break;
       case 'checkGovernance':
         bundle.checkGovernance = normalizeCheckGovernanceFacts(context.checkGovernance);
@@ -959,6 +1248,9 @@ export function factBundleDigest(context: GateContext, requires: readonly FactKi
         // Raw fold for cache soundness — normalization strips unknown keys (e.g. the
         // evidence-law perturbation salt) that must still flip the digest.
         fact = context.activeSurfaceFacts;
+        break;
+      case 'featureEdges':
+        fact = context.featureEdges;
         break;
       case 'checkGovernance':
         // Raw fold (same rationale as activeSurfaceFacts) — the perturbation salt must
@@ -1009,6 +1301,9 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   if (typeof spec.decide !== 'function') {
     throw ValidationError('defineFactGate', `fact gate "${spec.id}" must supply a decide(facts) function`);
   }
+  if (spec.subjectCoverage !== undefined && typeof spec.subjectCoverage !== 'function') {
+    throw ValidationError('defineFactGate', `fact gate "${spec.id}" subjectCoverage must be a function when supplied`);
+  }
   const f = spec.fixtures;
   if (f === undefined || f.red === undefined || f.green === undefined || f.mutation === undefined) {
     throw ValidationError(
@@ -1022,6 +1317,10 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   const requires = spec.requires;
   const decide = spec.decide;
   const run = (context: GateContext): readonly Finding[] => decide(pickFacts(context, requires));
+  const subjectCoverage =
+    spec.subjectCoverage === undefined
+      ? undefined
+      : (context: GateContext): GateSubjectCoverage => spec.subjectCoverage!(pickFacts(context, requires));
   const evidenceDigest = (context: GateContext): string => factBundleDigest(context, requires);
   const gate: FactGate = {
     id: spec.id,
@@ -1033,6 +1332,7 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
     requires,
     decide,
     run,
+    ...(subjectCoverage !== undefined ? { subjectCoverage } : {}),
     evidenceDigest,
     access: Object.freeze({
       facts: Object.freeze(requires.map((channel) => Object.freeze({ channel, presence: 'required' as const }))),

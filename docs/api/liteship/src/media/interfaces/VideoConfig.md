@@ -8,7 +8,7 @@
 
 Defined in: core/dist/media/video.d.ts:15
 
-Configuration for a [VideoRenderer](../variables/VideoRenderer.md): resolution, target fps, and total duration.
+Configuration for a [VideoRenderer](../type-aliases/VideoRenderer.md): resolution, target fps, and total duration.
 
 ## Properties
 

@@ -8,7 +8,7 @@
 
 > **create**(): [`Compositor`](../../../interfaces/Compositor.md) & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:466](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L466)
+Defined in: [\_spine/core.d.ts:493](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L493)
 
 Build a compositor that owns its own teardown via `dispose()`.
 

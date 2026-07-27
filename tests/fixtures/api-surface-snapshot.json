@@ -2,7 +2,7 @@
   "snapshotFormat": 1,
   "packages": {
     "@liteship/assets": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "AssetRegistry",
@@ -92,7 +92,7 @@
       ]
     },
     "@liteship/astro": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "adaptiveAttrs",
@@ -187,10 +187,14 @@
       ]
     },
     "@liteship/audit": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "ACTIVE_SURFACE_ORACLE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "AUDIT_RULE_IDS",
           "kind": "const"
         },
         {
@@ -215,11 +219,11 @@
           "kind": "const"
         },
         {
-          "name": "LANGUAGE_SERVICE_ORACLE_ID",
+          "name": "DEVOPS_PROFILE_KEYS",
           "kind": "const"
         },
         {
-          "name": "LITESHIP_PACKAGE_ROSTER",
+          "name": "LANGUAGE_SERVICE_ORACLE_ID",
           "kind": "const"
         },
         {
@@ -239,10 +243,6 @@
           "kind": "const"
         },
         {
-          "name": "WORKSPACE_ALIASES",
-          "kind": "const"
-        },
-        {
           "name": "applyConditionMutant",
           "kind": "function",
           "signature": "(2)"
@@ -258,8 +258,9 @@
           "signature": "(1)"
         },
         {
-          "name": "auditAllowlist",
-          "kind": "const"
+          "name": "auditDiagnosticCode",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "auditIgnoreGlobs",
@@ -280,6 +281,16 @@
           "signature": "(1)"
         },
         {
+          "name": "buildCatalogFeatureEdgeFamily",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "buildEcsFeatureEdgeFacts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "buildMcdcFacts",
           "kind": "function",
           "signature": "(2)"
@@ -292,12 +303,12 @@
         {
           "name": "buildPackageExportTargets",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(2)"
         },
         {
           "name": "buildRepoIR",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(1)"
         },
         {
           "name": "buildRepoIRTaint",
@@ -307,7 +318,7 @@
         {
           "name": "buildSpineRelationFacts",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(3)"
         },
         {
           "name": "buildTransitionFacts",
@@ -320,7 +331,22 @@
           "signature": "(1)"
         },
         {
+          "name": "buildTypedEcsFeatureEdgeFacts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "codeOnlyAST",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "collectProfileArtifactCoverage",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "combineFeatureEdgeFamilies",
           "kind": "function",
           "signature": "(1)"
         },
@@ -342,7 +368,7 @@
         {
           "name": "consumerDevopsProfile",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(2)"
         },
         {
           "name": "createCounts",
@@ -360,9 +386,18 @@
           "signature": "(1)"
         },
         {
+          "name": "defaultAnalyzableArtifacts",
+          "kind": "const"
+        },
+        {
           "name": "defaultRoot",
           "kind": "function",
           "signature": "(0)"
+        },
+        {
+          "name": "detectDiagnosticEmissionsAST",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "detectEarlyReturnBeforeExpectAST",
@@ -385,13 +420,14 @@
           "signature": "(2)"
         },
         {
-          "name": "dynamicImportExemptions",
-          "kind": "const"
-        },
-        {
           "name": "enumeratePackageTypeExports",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "enumerateSwitchSubjects",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "evaluateMutant",
@@ -406,11 +442,7 @@
         {
           "name": "findAllowlistReason",
           "kind": "function",
-          "signature": "(2)"
-        },
-        {
-          "name": "foundationalPackages",
-          "kind": "const"
+          "signature": "(3)"
         },
         {
           "name": "generateConditionMutants",
@@ -458,10 +490,6 @@
           "signature": "(1)"
         },
         {
-          "name": "liteshipDevopsProfile",
-          "kind": "const"
-        },
-        {
           "name": "makeCoverageMap",
           "kind": "function",
           "signature": "(1)"
@@ -485,10 +513,6 @@
           "name": "normalizeRepoPath",
           "kind": "function",
           "signature": "(1)"
-        },
-        {
-          "name": "packageTopology",
-          "kind": "const"
         },
         {
           "name": "parseEquivalentMutants",
@@ -538,22 +562,22 @@
         {
           "name": "runAuditPasses",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(1)"
         },
         {
           "name": "runIntegrityAudit",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(1)"
         },
         {
           "name": "runStructureAudit",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(1)"
         },
         {
           "name": "runSurfaceAudit",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(1)"
         },
         {
           "name": "scanModuleScopeDateReads",
@@ -579,10 +603,6 @@
           "name": "sortSuppressions",
           "kind": "function",
           "signature": "(1)"
-        },
-        {
-          "name": "surfacePolicy",
-          "kind": "const"
         },
         {
           "name": "symbolIdOfOrphanFact",
@@ -612,7 +632,7 @@
       ]
     },
     "@liteship/canonical": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "AddressedDigest",
@@ -645,6 +665,11 @@
           "signature": "(1)"
         },
         {
+          "name": "canonicalJson",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "decode",
           "kind": "function",
           "signature": "(1)"
@@ -660,6 +685,16 @@
           "signature": "(1)"
         },
         {
+          "name": "isCanonicalCborRecord",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isCanonicalCborValue",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "sha256Hex",
           "kind": "function",
           "signature": "(1)"
@@ -667,7 +702,7 @@
       ]
     },
     "@liteship/cli": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "run",
@@ -677,7 +712,7 @@
       ]
     },
     "@liteship/cloudflare": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "cloudflareAdapterCapsule",
@@ -691,7 +726,7 @@
         {
           "name": "createCloudflareEdgeCache",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(3)"
         },
         {
           "name": "resolveKvBinding",
@@ -701,7 +736,7 @@
       ]
     },
     "@liteship/command": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "AUDIT_WARNING_FLOOR",
@@ -736,6 +771,14 @@
           "kind": "const"
         },
         {
+          "name": "COMMAND_CAPABILITIES",
+          "kind": "const"
+        },
+        {
+          "name": "COMMAND_CAPABILITY_DISPOSITIONS",
+          "kind": "const"
+        },
+        {
           "name": "COMMAND_CATALOG",
           "kind": "const"
         },
@@ -758,16 +801,6 @@
         {
           "name": "CheckPayloadSchema",
           "kind": "const"
-        },
-        {
-          "name": "CommandDispatcher",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
-          "name": "CommandRegistry",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "ContextPayloadSchema",
@@ -895,6 +928,16 @@
           "signature": "argsSchema:const,descriptor:const,handler:function"
         },
         {
+          "name": "createCommandDispatcher",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createCommandRegistry",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "defineCommand",
           "kind": "function",
           "signature": "(1)"
@@ -935,6 +978,11 @@
           "signature": "(1)"
         },
         {
+          "name": "matchesInvariantExemption",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "mcpExposedDescriptors",
           "kind": "function",
           "signature": "(0)"
@@ -960,6 +1008,11 @@
           "signature": "descriptor:const,handler:function"
         },
         {
+          "name": "parseRootScriptCheckExecution",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "planChecks",
           "kind": "function",
           "signature": "(2)"
@@ -976,6 +1029,11 @@
         },
         {
           "name": "readPackageManagerVersion",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "renderRootScriptCheckExecution",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1012,7 +1070,7 @@
       ]
     },
     "@liteship/compiler": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "AIManifestCompiler",
@@ -1105,6 +1163,11 @@
           "signature": "(1)"
         },
         {
+          "name": "compileViewTransition",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "dispatch",
           "kind": "function",
           "signature": "(1)"
@@ -1127,12 +1190,16 @@
       ]
     },
     "@liteship/core": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "AICast",
           "kind": "namespace",
           "signature": "applyValidatedPatch:function,castContext:function,generatedUIProposalSchema:function,graphPatchProposalSchema:function,summarizeGraph:function,validateGeneratedUIProposal:function,validateGraphPatchProposal:function"
+        },
+        {
+          "name": "ASSEMBLY_KINDS",
+          "kind": "const"
         },
         {
           "name": "AVBridge",
@@ -1275,11 +1342,6 @@
           "signature": "cubicBezier:function,ease:function,easeIn:function,easeInCubic:function,easeInOut:function,easeInOutCubic:function,easeOut:function,easeOutBack:function,easeOutBounce:function,easeOutCubic:function,easeOutElastic:function,easeOutExpo:function,easingToLinearCSS:function,linear:function,spring:function,springNaturalDuration:function,springToLinearCSS:function"
         },
         {
-          "name": "EntityId",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
           "name": "GRAPH_QUERY_FALLBACK_HEADER",
           "kind": "const"
         },
@@ -1320,11 +1382,6 @@
         {
           "name": "PROJECTION_KEYS_SOURCE",
           "kind": "const"
-        },
-        {
-          "name": "Part",
-          "kind": "namespace",
-          "signature": "dense:function"
         },
         {
           "name": "Plan",
@@ -1488,11 +1545,6 @@
           "signature": "compare:function,concurrent:function,equals:function,from:function,get:function,happensBefore:function,make:function,merge:function,peers:function,size:function,tick:function,toObject:function"
         },
         {
-          "name": "VideoRenderer",
-          "kind": "namespace",
-          "signature": "make:function"
-        },
-        {
           "name": "WASMDispatch",
           "kind": "namespace",
           "signature": "detect:function,isLoaded:function,kernels:function,load:function,unload:function"
@@ -1646,6 +1698,11 @@
           "signature": "(1)"
         },
         {
+          "name": "createFrameSchedule",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "createGraphMutationClient",
           "kind": "function",
           "signature": "(1)"
@@ -1691,9 +1748,9 @@
           "signature": "(1)"
         },
         {
-          "name": "createWorld",
+          "name": "createVideoRenderer",
           "kind": "function",
-          "signature": "(0)"
+          "signature": "(3)"
         },
         {
           "name": "decode",
@@ -1722,6 +1779,11 @@
         },
         {
           "name": "defineCapsule",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineCapsuleCatalog",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1804,11 +1866,6 @@
           "name": "frameToT",
           "kind": "function",
           "signature": "(2)"
-        },
-        {
-          "name": "getCapsuleCatalog",
-          "kind": "function",
-          "signature": "(0)"
         },
         {
           "name": "glslIdent",
@@ -2223,8 +2280,12 @@
       ]
     },
     "@liteship/detect": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
+        {
+          "name": "CAPABILITY_EVIDENCE_INPUTS",
+          "kind": "const"
+        },
         {
           "name": "CAP_AXES",
           "kind": "const"
@@ -2311,6 +2372,21 @@
           "signature": "(1)"
         },
         {
+          "name": "projectCapabilityAxisValues",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "projectCapabilityTierEvidence",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "requireObserved",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "resetDetectionCaches",
           "kind": "function",
           "signature": "(0)"
@@ -2323,12 +2399,12 @@
       ]
     },
     "@liteship/edge": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "ClientHints",
           "kind": "namespace",
-          "signature": "acceptCHHeader:function,criticalCHHeader:function,parseClientHints:function,responsiveMediaCapabilities:function,responsiveMediaVaryHeader:function,varyCHHeader:function"
+          "signature": "acceptCHHeader:function,criticalCHHeader:function,parseClientHints:function,parseEvidence:function,responsiveMediaCapabilities:function,responsiveMediaVaryHeader:function,varyCHHeader:function"
         },
         {
           "name": "CrossOriginIsolation",
@@ -2347,7 +2423,7 @@
         {
           "name": "EdgeTier",
           "kind": "namespace",
-          "signature": "detectTier:function,tierDataAttributes:function,tierDataAttributesMap:function,tierFromParsed:function"
+          "signature": "detectTier:function,tierDataAttributes:function,tierDataAttributesMap:function,tierFromEvidence:function"
         },
         {
           "name": "KVCache",
@@ -2401,7 +2477,7 @@
       ]
     },
     "@liteship/error": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "DIAGNOSTIC_AREAS",
@@ -2523,7 +2599,7 @@
       ]
     },
     "@liteship/gauntlet": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "ABSENT_SUFFIX",
@@ -2582,6 +2658,22 @@
           "kind": "const"
         },
         {
+          "name": "FEATURE_EDGE_ENUMERATORS",
+          "kind": "const"
+        },
+        {
+          "name": "FEATURE_EDGE_FAMILIES",
+          "kind": "const"
+        },
+        {
+          "name": "GATE_CONTEXT_CAPABILITIES",
+          "kind": "const"
+        },
+        {
+          "name": "GATE_FACT_CHANNELS",
+          "kind": "const"
+        },
+        {
           "name": "HEATMAP_FORMAT",
           "kind": "const"
         },
@@ -2598,7 +2690,23 @@
           "kind": "const"
         },
         {
+          "name": "LITESHIP_GOVERNANCE_GATES",
+          "kind": "const"
+        },
+        {
           "name": "LITESHIP_IR_GATES",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_IR_ONLY_GATES",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_PROJECTION_GATES",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_TEXT_GATES",
           "kind": "const"
         },
         {
@@ -2676,7 +2784,7 @@
         {
           "name": "activeModeledSurfaceReaderGate",
           "kind": "namespace",
-          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+          "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
         },
         {
           "name": "allFileIds",
@@ -2704,6 +2812,11 @@
           "signature": "(2)"
         },
         {
+          "name": "benchmarkSubjectFactFor",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "capabilityGateLinkGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
@@ -2711,22 +2824,22 @@
         {
           "name": "checkNegativeControlGate",
           "kind": "namespace",
-          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+          "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
         },
         {
           "name": "checkRegistryCompleteGate",
           "kind": "namespace",
-          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+          "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
         },
         {
           "name": "checkWaiverFreshnessGate",
           "kind": "namespace",
-          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+          "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
         },
         {
           "name": "claimPropertyGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "classifyStructuralRelation",
@@ -2742,6 +2855,11 @@
           "name": "commentsBlanked",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "composeGateSets",
+          "kind": "function",
+          "signature": "(0)"
         },
         {
           "name": "compositionCoverageGate",
@@ -2766,7 +2884,7 @@
         {
           "name": "crdtLawsGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "decideActiveSurfaceReaders",
@@ -2785,6 +2903,11 @@
         },
         {
           "name": "decideCheckWaiverFreshness",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideFeatureEdgeConnectivity",
           "kind": "function",
           "signature": "(1)"
         },
@@ -2826,7 +2949,7 @@
         {
           "name": "diagnosticCodeRegisteredGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "diffStandardsSurface",
@@ -2841,7 +2964,7 @@
         {
           "name": "facadeExportBudgetGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "factAccessEvidenceDigest",
@@ -2852,6 +2975,16 @@
           "name": "factBundleDigest",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "featureEdgeConnectivityGate",
+          "kind": "namespace",
+          "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function,subjectCoverage:function"
+        },
+        {
+          "name": "featureEdgeSubjectCoverage",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "fileHasSanctionedSkip",
@@ -2966,67 +3099,67 @@
         {
           "name": "noBareThrowGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noBareThrowIRGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noDefaultExportDivergenceGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noEarlyReturnTestGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noNondeterminismGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noPlaceholderGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noRequireDivergenceGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noSilentCatchGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noSkippedTestFactGate",
           "kind": "namespace",
-          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+          "signature": "access:const,decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
         },
         {
           "name": "noSkippedTestGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noTsIgnoreGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noUnregisteredTodoGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noVarDivergenceGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "nodeContext",
@@ -3039,14 +3172,19 @@
           "signature": "(1)"
         },
         {
+          "name": "parseQualifiedBenchDistribution",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "perfClaimBenchGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "performanceContractsGate",
           "kind": "namespace",
-          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "pickFacts",
@@ -3090,6 +3228,11 @@
         },
         {
           "name": "relationSatisfied",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "replaceGate",
           "kind": "function",
           "signature": "(2)"
         },
@@ -3211,7 +3354,7 @@
         {
           "name": "symbolOrphanDivergenceGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "access:const,describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "taintFlowGate",
@@ -3251,7 +3394,7 @@
       ]
     },
     "@liteship/genui": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "ContentAddress",
@@ -3295,7 +3438,7 @@
       ]
     },
     "@liteship/mcp-server": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "APPLY_PATCH_COMMAND",
@@ -3335,7 +3478,15 @@
           "kind": "const"
         },
         {
+          "name": "LSP_METHOD_CATALOG",
+          "kind": "const"
+        },
+        {
           "name": "LSP_SERVER_CAPABILITIES",
+          "kind": "const"
+        },
+        {
+          "name": "MCP_METHOD_CATALOG",
           "kind": "const"
         },
         {
@@ -3344,6 +3495,10 @@
         },
         {
           "name": "ParseError",
+          "kind": "const"
+        },
+        {
+          "name": "SERVER_CAPABILITIES",
           "kind": "const"
         },
         {
@@ -3383,7 +3538,7 @@
         {
           "name": "groupDiagnosticsByUri",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(2)"
         },
         {
           "name": "handleLspMessage",
@@ -3411,6 +3566,11 @@
           "signature": "(0)"
         },
         {
+          "name": "listMcpResources",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
           "name": "listPrompts",
           "kind": "function",
           "signature": "(0)"
@@ -3431,12 +3591,27 @@
           "signature": "(0)"
         },
         {
+          "name": "lspNotificationProducerMethods",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "lspRoutedMethodNames",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
           "name": "makeFrameReader",
           "kind": "function",
           "signature": "(0)"
         },
         {
           "name": "mcpAppManifest",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "mcpResourceReaderUris",
           "kind": "function",
           "signature": "(0)"
         },
@@ -3448,12 +3623,27 @@
         {
           "name": "projectFinding",
           "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "projectLspCapabilities",
+          "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "projectRemediation",
           "kind": "function",
           "signature": "(3)"
+        },
+        {
+          "name": "projectServerCapabilities",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "promptResolverNames",
+          "kind": "function",
+          "signature": "(0)"
         },
         {
           "name": "readAppResource",
@@ -3508,7 +3698,7 @@
       ]
     },
     "@liteship/quantizer": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "AnimatedQuantizer",
@@ -3548,7 +3738,7 @@
       ]
     },
     "@liteship/remotion": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "Provider",
@@ -3602,8 +3792,12 @@
       ]
     },
     "@liteship/scene": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
+        {
+          "name": "AudioSourcePart",
+          "kind": "const"
+        },
         {
           "name": "AudioSystem",
           "kind": "function",
@@ -3620,9 +3814,45 @@
           "signature": "bind:function"
         },
         {
+          "name": "BeatPart",
+          "kind": "const"
+        },
+        {
+          "name": "BetweenPart",
+          "kind": "const"
+        },
+        {
+          "name": "BlendPart",
+          "kind": "const"
+        },
+        {
+          "name": "EasePart",
+          "kind": "const"
+        },
+        {
+          "name": "EffectKindPart",
+          "kind": "const"
+        },
+        {
           "name": "EffectSystem",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "EnvelopePart",
+          "kind": "const"
+        },
+        {
+          "name": "FrameRangePart",
+          "kind": "const"
+        },
+        {
+          "name": "GainPart",
+          "kind": "const"
+        },
+        {
+          "name": "IntensityPart",
+          "kind": "const"
         },
         {
           "name": "Layout",
@@ -3630,14 +3860,34 @@
           "signature": "grid:function,stack:function"
         },
         {
+          "name": "MotionSamplePart",
+          "kind": "const"
+        },
+        {
           "name": "MotionSampleSystem",
           "kind": "function",
-          "signature": "(3)"
+          "signature": "(1)"
+        },
+        {
+          "name": "OpacityPart",
+          "kind": "const"
+        },
+        {
+          "name": "PanPart",
+          "kind": "const"
         },
         {
           "name": "PassThroughMixer",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "PhasePart",
+          "kind": "const"
+        },
+        {
+          "name": "RuntimeWritePlanPart",
+          "kind": "const"
         },
         {
           "name": "SVGSystem",
@@ -3650,9 +3900,29 @@
           "signature": "include:function,runtime:function,subscene:function"
         },
         {
+          "name": "SceneParts",
+          "kind": "const"
+        },
+        {
           "name": "SceneRuntime",
           "kind": "namespace",
           "signature": "build:function,systemCount:const"
+        },
+        {
+          "name": "SceneSeedParts",
+          "kind": "const"
+        },
+        {
+          "name": "SvgAttrsPart",
+          "kind": "const"
+        },
+        {
+          "name": "SyncAnchorPart",
+          "kind": "const"
+        },
+        {
+          "name": "SyncBeatMarkerPart",
+          "kind": "const"
         },
         {
           "name": "SyncSystem",
@@ -3660,9 +3930,25 @@
           "signature": "(1)"
         },
         {
+          "name": "TargetEntityPart",
+          "kind": "const"
+        },
+        {
           "name": "Track",
           "kind": "namespace",
           "signature": "audio:function,audioId:function,effect:function,effectId:function,transition:function,transitionId:function,video:function,videoId:function"
+        },
+        {
+          "name": "TrackIdPart",
+          "kind": "const"
+        },
+        {
+          "name": "TrackLayerPart",
+          "kind": "const"
+        },
+        {
+          "name": "TransitionKindPart",
+          "kind": "const"
         },
         {
           "name": "TransitionSystem",
@@ -3670,14 +3956,27 @@
           "signature": "(1)"
         },
         {
+          "name": "VideoSourcePart",
+          "kind": "const"
+        },
+        {
           "name": "VideoSystem",
           "kind": "function",
           "signature": "(1)"
         },
         {
+          "name": "VolumePart",
+          "kind": "const"
+        },
+        {
           "name": "addFrameMarks",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "admitScenePartSeed",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "applySvgAttrs",
@@ -3686,7 +3985,8 @@
         },
         {
           "name": "beatBindingCapsule",
-          "kind": "const"
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:const,invariants:const,name:const,output:const,run:function,site:const"
         },
         {
           "name": "bindBeats",
@@ -3729,11 +4029,6 @@
           "signature": "(2)"
         },
         {
-          "name": "motionComponentName",
-          "kind": "function",
-          "signature": "(1)"
-        },
-        {
           "name": "pulse",
           "kind": "namespace",
           "signature": "every:function"
@@ -3764,6 +4059,16 @@
           "signature": "(2)"
         },
         {
+          "name": "sceneMotionTime",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "scenePartSeed",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "sceneRuntimeCapsule",
           "kind": "const"
         },
@@ -3780,7 +4085,7 @@
       ]
     },
     "@liteship/stage": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "dualExport",
@@ -3805,7 +4110,7 @@
         {
           "name": "exportVideo",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(1)"
         },
         {
           "name": "exportVideoEncoded",
@@ -3820,7 +4125,7 @@
       ]
     },
     "@liteship/vite": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "collectBoundaryManifest",
@@ -3864,6 +4169,11 @@
         },
         {
           "name": "handleHMR",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isHMRPayload",
           "kind": "function",
           "signature": "(1)"
         },
@@ -3955,7 +4265,7 @@
       ]
     },
     "@liteship/web": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "DEFAULT_SHADER_INTEGRITY_MODE",
@@ -4013,7 +4323,7 @@
         {
           "name": "Physical",
           "kind": "namespace",
-          "signature": "capture:function,restore:function"
+          "signature": "capture:function,createTracker:function,restore:function"
         },
         {
           "name": "Resumption",
@@ -4051,11 +4361,6 @@
           "name": "SlotRegistry",
           "kind": "namespace",
           "signature": "create:function,findElement:function,getPath:function,observe:function,scanDOM:function"
-        },
-        {
-          "name": "WebCodecsCapture",
-          "kind": "namespace",
-          "signature": "make:function"
         },
         {
           "name": "adoptRefreshedGraphBase",
@@ -4111,6 +4416,16 @@
           "name": "createHtmlFragment",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "createPhysicalStateTracker",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createWebCodecsCapture",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "decideShaderIntegrity",
@@ -4249,7 +4564,7 @@
       ]
     },
     "@liteship/worker": {
-      "version": "0.21.0",
+      "version": "0.23.0",
       "exports": [
         {
           "name": "CompositorWorker",
@@ -4285,6 +4600,85 @@
           "name": "sampleProgramUniforms",
           "kind": "function",
           "signature": "(2)"
+        }
+      ]
+    },
+    "create-liteship": {
+      "version": "0.23.0",
+      "exports": [
+        {
+          "name": "DEFAULT_DIR",
+          "kind": "const"
+        },
+        {
+          "name": "defaultTemplateDir",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "projectNameFromDir",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "run",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "scaffold",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "liteship": {
+      "version": "0.23.0",
+      "exports": [
+        {
+          "name": "defineAdaptive",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineBoundary",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineConfig",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineQuantizer",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "defineStyle",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineTheme",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineToken",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "explainDiagnostic",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "schema",
+          "kind": "namespace",
+          "signature": "any:const,array:function,boolean:const,brand:function,bytes:function,hole:function,literal:function,number:const,optional:function,record:function,string:const,struct:function,tuple:function,union:function,unknown:const"
         }
       ]
     }

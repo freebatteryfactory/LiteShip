@@ -26,8 +26,26 @@ export {
   designTierFromCapabilities,
   motionTierFromCapabilities,
 } from './tiers.js';
-export { CAP_AXES, capAxisAttr, projectCapabilityAxisValues } from './cap-axes.js';
-export type { CapAxis, CapabilityAxisValues, CapabilityTierProjection } from './cap-axes.js';
+export {
+  CAP_AXES,
+  CAPABILITY_EVIDENCE_INPUTS,
+  capAxisAttr,
+  projectCapabilityAxisValues,
+  projectCapabilityTierEvidence,
+  requireObserved,
+} from './cap-axes.js';
+export type {
+  CapAxis,
+  CapabilityAxisEvidence,
+  CapabilityAxisValues,
+  CapabilityEvidenceInput,
+  CapabilityEvidenceInputs,
+  CapabilityEvidenceSupport,
+  CapabilityInputEvidence,
+  CapabilityTierEvidence,
+  CapabilityTierProjection,
+  ObservedCapabilityAxisValues,
+} from './cap-axes.js';
 export { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
 export {
   emitDetectUpgradeScript,

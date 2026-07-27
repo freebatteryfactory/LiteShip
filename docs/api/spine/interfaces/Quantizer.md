@@ -6,7 +6,7 @@
 
 # Interface: Quantizer\<B\>
 
-Defined in: [\_spine/core.d.ts:761](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L761)
+Defined in: [\_spine/core.d.ts:976](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L976)
 
 Immutable output mapping for every state of a boundary.
 
@@ -26,7 +26,7 @@ Immutable output mapping for every state of a boundary.
 
 > `readonly` **\_tag**: `"Quantizer"`
 
-Defined in: [\_spine/core.d.ts:762](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L762)
+Defined in: [\_spine/core.d.ts:977](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L977)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:762](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **boundary**: `B`
 
-Defined in: [\_spine/core.d.ts:763](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L763)
+Defined in: [\_spine/core.d.ts:978](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L978)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:763](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **stateSync?**: () => [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:765](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L765)
+Defined in: [\_spine/core.d.ts:980](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L980)
 
 Synchronous state accessor for hot paths (avoids reactive read overhead).
 
@@ -56,7 +56,7 @@ Synchronous state accessor for hot paths (avoids reactive read overhead).
 
 > **evaluate**(`value`): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:766](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L766)
+Defined in: [\_spine/core.d.ts:981](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L981)
 
 #### Parameters
 

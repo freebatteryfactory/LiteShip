@@ -22,12 +22,15 @@ to observe finalizer failure; fire-and-forget disposal is unsupported.
 
 - [`WatchAndPrepareHandle`](../../../../web/src/interfaces/WatchAndPrepareHandle.md)
 - [`SSEClient`](../../../../web/src/interfaces/SSEClient.md)
+- [`PhysicalStateTracker`](../../../../web/src/interfaces/PhysicalStateTracker.md)
 - [`AudioProcessor`](../../../../web/src/interfaces/AudioProcessor.md)
 - [`RenderWorker`](../../../../worker/src/interfaces/RenderWorker.md)
 - [`WorkerHost`](../../../../worker/src/interfaces/WorkerHost.md)
 - [`LLMSession`](../../astro/interfaces/LLMSession.md)
+- [`FrameCapture`](../../evidence/interfaces/FrameCapture.md)
 - [`WatchAndPrepareHandle`](../../runtime/interfaces/WatchAndPrepareHandle.md)
 - [`SSEClient`](../../runtime/interfaces/SSEClient.md)
+- [`PhysicalStateTracker`](../../runtime/interfaces/PhysicalStateTracker.md)
 - [`AudioProcessor`](../../runtime/interfaces/AudioProcessor.md)
 
 ## Properties

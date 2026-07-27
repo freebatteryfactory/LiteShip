@@ -118,7 +118,7 @@ off the adaptive's members — non-tautological):
 
 - `packages/core/src/authoring/adaptive.ts` — the lowering kernel, aggregate-id
   kernel, boundary-attr serializer, and structural composition contract.
-- `packages/liteship/src/authoring/adaptive.ts` — the explicit facade composition
+- `packages/liteship/src/adaptive.ts` — the explicit facade composition
   root supplying quantizer and compiler owners.
 - `packages/compiler/src/style-css.ts` — native container and Adaptive
   state-marker projections sharing one style-layer serializer.

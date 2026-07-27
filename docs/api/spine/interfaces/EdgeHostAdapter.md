@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostAdapter
 
-Defined in: [\_spine/edge.d.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L290)
+Defined in: [\_spine/edge.d.ts:316](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L316)
 
 Host-neutral edge adapter that resolves request evidence into LiteShip outputs.
 
@@ -16,7 +16,7 @@ Host-neutral edge adapter that resolves request evidence into LiteShip outputs.
 
 > **resolve**(`headers`): `Promise`\<[`EdgeHostResolution`](EdgeHostResolution.md)\>
 
-Defined in: [\_spine/edge.d.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L291)
+Defined in: [\_spine/edge.d.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L317)
 
 #### Parameters
 

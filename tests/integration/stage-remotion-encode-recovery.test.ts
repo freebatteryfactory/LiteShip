@@ -20,7 +20,7 @@ import {
 } from '@liteship/core';
 import { exportVideoEncoded, type EncodedVideo, type FrameEncoder } from '@liteship/stage';
 import { cssVarsFromState } from '@liteship/remotion';
-import { createCurePacket } from '../../packages/cli/src/lib/cure-packet.js';
+import { createCurePacket } from '../../packages/cli/src/internal/cure-packet.js';
 
 const timestamp = HLC.increment(HLC.create('stage-remotion-recovery'), 1);
 const meta: CellMeta = { created: timestamp, updated: timestamp, version: 1 };

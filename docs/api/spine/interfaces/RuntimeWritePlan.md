@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWritePlan
 
-Defined in: [\_spine/core.d.ts:1190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1190)
+Defined in: [\_spine/core.d.ts:1405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1405)
 
 Deterministic sequence of runtime property-write windows.
 
@@ -16,7 +16,7 @@ Deterministic sequence of runtime property-write windows.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [\_spine/core.d.ts:1192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1192)
+Defined in: [\_spine/core.d.ts:1407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1407)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1192](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [\_spine/core.d.ts:1196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1196)
+Defined in: [\_spine/core.d.ts:1411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1411)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1196](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **fromState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [\_spine/core.d.ts:1194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1194)
+Defined in: [\_spine/core.d.ts:1409](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1409)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:1194](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: [\_spine/core.d.ts:1191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1191)
+Defined in: [\_spine/core.d.ts:1406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1406)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/core.d.ts:1191](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **routing**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [\_spine/core.d.ts:1193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1193)
+Defined in: [\_spine/core.d.ts:1408](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1408)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/core.d.ts:1193](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **toState**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [\_spine/core.d.ts:1195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1195)
+Defined in: [\_spine/core.d.ts:1410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1410)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [\_spine/core.d.ts:1195](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **windows?**: readonly [`RuntimeWriteWindow`](RuntimeWriteWindow.md)[]
 
-Defined in: [\_spine/core.d.ts:1197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1197)
+Defined in: [\_spine/core.d.ts:1412](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1412)

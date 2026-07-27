@@ -2,8 +2,8 @@
  * SceneRuntime — `stateMachine` arm capsule `scene.runtime`.
  *
  * Owns the ECS world lifetime via a `Lifetime`, registers the
- * 7 canonical scene systems (Video → Audio → Transition → Effect →
- * Sync → PassThroughMixer → SVG) in topological order, and exposes
+ * 8 canonical scene systems (Video → Audio → Transition → Effect →
+ * Sync → PassThroughMixer → Motion → SVG) in topological order, and exposes
  * `tick(dtMs)` + `release()` for use by render pipelines (CLI,
  * browser player, smoke tests).
  *
@@ -23,8 +23,8 @@
  * @module
  */
 
-import type { System, World as WorldNS, Entity } from '@liteship/core';
-import { defineCapsule, createWorld, schema } from '@liteship/core';
+import { defineCapsule, schema } from '@liteship/core';
+import { createWorld, type World as WorldNS } from '@liteship/core/ecs';
 import { InvariantViolationError, ValidationError } from '@liteship/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './beat-binding-capsule.js';
@@ -36,9 +36,11 @@ import { SyncSystem } from './systems/sync.js';
 import { PassThroughMixer, type MixReceipt } from './systems/pass-through-mixer.js';
 import { SVGSystem } from './systems/svg.js';
 import { collectSvgAttrs, type SvgAttrsFrame } from './systems/svg-egress.js';
+import { MotionSampleSystem } from './systems/motion.js';
+import { BeatPart, admitScenePartSeed, scenePartSeed } from './parts.js';
 
 /** Number of canonical scene systems — pinned for invariants. */
-const CANONICAL_SYSTEM_COUNT = 7;
+const CANONICAL_SYSTEM_COUNT = 8;
 
 // ---------------------------------------------------------------------------
 // Capsule declaration
@@ -130,7 +132,7 @@ export interface SceneRuntimeHandle {
    * bridge can `await` the result without importing Effect (gate 24's
    * Promise-facade decision) — the same entity shape `world.query` returns.
    */
-  readonly query: (...componentNames: string[]) => Promise<readonly Entity[]>;
+  readonly query: WorldNS['query'];
   /** Number of systems registered (always {@link CANONICAL_SYSTEM_COUNT}). */
   readonly systemsRegistered: number;
   /** Number of entities spawned at build time (one per scene track). */
@@ -200,7 +202,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   // Spawn one entity per compiled track.
   let entitySpawnCount = 0;
   for (const t of compiled.trackSpawns) {
-    world.spawn({ trackId: t.trackId, ...t.components });
+    world.spawn(...t.components.map(admitScenePartSeed));
     entitySpawnCount++;
   }
 
@@ -211,31 +213,28 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   if (compiled.beats.length > 0) {
     const spawns = BeatBinding.bind(compiled.beats);
     for (const beatSpawn of spawns) {
-      world.spawn({ Beat: beatSpawn.components });
+      world.spawn(admitScenePartSeed(scenePartSeed(BeatPart, beatSpawn.components)));
     }
   }
 
-  // Wrap each canonical factory as a single system that delegates to a
-  // fresh factory instance per tick. This keeps the public system
-  // semantics intact (each factory builds a `System` keyed to a frame
-  // index) without re-registering systems on every frame.
-  const wrapped: readonly System[] = [
-    wrapForFrame('VideoSystem', ['VideoSource', 'FrameRange'], () => VideoSystem(ctx.frameIndex)),
-    wrapForFrame('AudioSystem', ['AudioSource', 'FrameRange'], () =>
-      AudioSystem(ctx.frameIndex, compiled.fps, sampleRate),
-    ),
-    wrapForFrame('TransitionSystem', ['TransitionKind', 'FrameRange', 'Between'], () =>
-      TransitionSystem(ctx.frameIndex),
-    ),
-    wrapForFrame('EffectSystem', ['EffectKind', 'FrameRange'], () => EffectSystem(ctx.frameIndex)),
-    wrapForFrame('SyncSystem', ['SyncAnchor'], () => SyncSystem(ctx.frameIndex, compiled.fps)),
-    wrapForFrame('PassThroughMixer', ['AudioSource', 'Volume', 'Pan'], () => PassThroughMixer(ctx.frameIndex, mixSink)),
+  // Each system reads the live frame through one shared source function. The
+  // system identities are minted once; no per-frame re-registration or free
+  // string query reconstruction occurs.
+  const frame = (): number => ctx.frameIndex;
+  const systems = [
+    VideoSystem(frame),
+    AudioSystem(frame, compiled.fps, sampleRate),
+    TransitionSystem(frame),
+    EffectSystem(frame),
+    SyncSystem(frame, compiled.fps),
+    PassThroughMixer(frame, mixSink),
+    MotionSampleSystem(frame),
     // MUST run last: SVGSystem reads `_opacity` (VideoSystem) and `_blend`
     // (TransitionSystem) populated earlier this tick to compose `_svgAttrs`.
-    wrapForFrame('SVGSystem', ['VideoSource', 'FrameRange'], () => SVGSystem(ctx.frameIndex)),
+    SVGSystem(0),
   ];
 
-  for (const sys of wrapped) {
+  for (const sys of systems) {
     world.addSystem(sys);
   }
 
@@ -243,8 +242,8 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
 
   const handle: SceneRuntimeHandle = {
     world,
-    query: (...componentNames: string[]) => Promise.resolve(world.query(...componentNames)),
-    systemsRegistered: wrapped.length,
+    query: world.query,
+    systemsRegistered: systems.length,
     entitySpawnCount,
     currentTimeMs: () => ctx.timeMs,
     currentFrame: () => ctx.frameIndex,
@@ -281,22 +280,6 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
   };
 
   return handle;
-}
-
-/**
- * Wrap a frame-indexed system factory as a single registered `System`.
- * The wrapper preserves the factory's `name` and `query`, but rebuilds
- * the inner system every tick so it sees the current frame index.
- */
-function wrapForFrame(name: string, query: readonly string[], factory: () => System): System {
-  return {
-    name,
-    query,
-    execute: (entities, world) => {
-      const inner = factory();
-      inner.execute(entities, world);
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------

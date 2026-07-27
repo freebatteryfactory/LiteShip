@@ -6,7 +6,7 @@
 
 # Interface: VideoFrameOutput
 
-Defined in: [\_spine/core.d.ts:1348](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1348)
+Defined in: [\_spine/core.d.ts:1563](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1563)
 
 One scheduled video frame and the compositor state that produced it.
 
@@ -16,7 +16,7 @@ One scheduled video frame and the compositor state that produced it.
 
 > `readonly` **frame**: `number`
 
-Defined in: [\_spine/core.d.ts:1349](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1349)
+Defined in: [\_spine/core.d.ts:1564](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1564)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1349](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **progress**: `number`
 
-Defined in: [\_spine/core.d.ts:1351](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1351)
+Defined in: [\_spine/core.d.ts:1566](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1566)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1351](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **state**: [`CompositeState`](CompositeState.md)
 
-Defined in: [\_spine/core.d.ts:1352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1352)
+Defined in: [\_spine/core.d.ts:1567](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1567)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1352](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [\_spine/core.d.ts:1350](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1350)
+Defined in: [\_spine/core.d.ts:1565](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1565)

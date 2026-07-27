@@ -52,4 +52,4 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 #### Inherited from
 
-`TaggedError.message`
+[`LifetimeDisposeError`](../../../../core/src/interfaces/LifetimeDisposeError.md).[`message`](../../../../core/src/interfaces/LifetimeDisposeError.md#message)

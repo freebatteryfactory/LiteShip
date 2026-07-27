@@ -6,7 +6,7 @@
 
 # Interface: MorphHints
 
-Defined in: [\_spine/web.d.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L82)
+Defined in: [\_spine/web.d.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L88)
 
 Optional identity and preservation hints applied during DOM matching.
 
@@ -16,7 +16,7 @@ Optional identity and preservation hints applied during DOM matching.
 
 > `readonly` `optional` **idMap?**: `ReadonlyMap`\<`string`, `string`\>
 
-Defined in: [\_spine/web.d.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L85)
+Defined in: [\_spine/web.d.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L91)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/web.d.ts:85](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **preserve?**: readonly `string`[]
 
-Defined in: [\_spine/web.d.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L88)
+Defined in: [\_spine/web.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L94)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/web.d.ts:88](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **preserveFocus?**: readonly `string`[]
 
-Defined in: [\_spine/web.d.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L86)
+Defined in: [\_spine/web.d.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L92)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/web.d.ts:86](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **preserveIds?**: readonly `string`[]
 
-Defined in: [\_spine/web.d.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L83)
+Defined in: [\_spine/web.d.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L89)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/web.d.ts:83](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **preserveScroll?**: readonly `string`[]
 
-Defined in: [\_spine/web.d.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L87)
+Defined in: [\_spine/web.d.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L93)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/web.d.ts:87](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **remap?**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/web.d.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L89)
+Defined in: [\_spine/web.d.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L95)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [\_spine/web.d.ts:89](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **semanticIds?**: readonly `string`[]
 
-Defined in: [\_spine/web.d.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L84)
+Defined in: [\_spine/web.d.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L90)

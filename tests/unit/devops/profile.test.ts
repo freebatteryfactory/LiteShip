@@ -16,7 +16,7 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { repoRoot } from '../../../scripts/audit/shared.js';
 import { packageTopology, surfacePolicy, dynamicImportExemptions } from '../../../scripts/audit/policy.js';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import type { DevopsProfile } from '@liteship/audit';
 
 const fixtures: string[] = [];

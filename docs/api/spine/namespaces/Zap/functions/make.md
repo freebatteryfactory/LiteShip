@@ -8,7 +8,7 @@
 
 > **make**\<`T`\>(): [`Zap`](../../../interfaces/Zap.md)\<`T`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:719](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L719)
+Defined in: [\_spine/core.d.ts:934](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L934)
 
 ## Type Parameters
 

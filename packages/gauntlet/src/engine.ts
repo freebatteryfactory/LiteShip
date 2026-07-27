@@ -120,9 +120,9 @@ interface GateQualification {
  * A thrown fixture is represented as an all-false proof plus bounded diagnostic
  * text; it remains fail-closed while giving humans and agents a cureable result.
  */
-function qualifyGate(gate: Gate): GateQualification {
+function qualifyGate(gate: Gate, context: GateContext): GateQualification {
   try {
-    return { proof: verifyGate(gate) };
+    return { proof: verifyGate(gate, context) };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return {
@@ -131,6 +131,13 @@ function qualifyGate(gate: Gate): GateQualification {
         redCaught: false,
         greenClean: false,
         mutationKilled: false,
+        subjectCoverage: {
+          status: 'opaque',
+          enumerator: 'qualification-execution',
+          enumeratedCount: 0,
+          censusDigest: `sha256:${'0'.repeat(64)}`,
+          reason: 'qualification execution failed before subject coverage could be established',
+        },
         selfProven: false,
       },
       executionFailure: message.slice(0, 1_000),
@@ -146,6 +153,9 @@ function authorityIntegrityFinding(gate: Gate, qualification: GateQualification)
     ...(!proof.redCaught ? ['red fixture did not prove detection'] : []),
     ...(!proof.greenClean ? ['green fixture was not clean'] : []),
     ...(!proof.mutationKilled ? ['mutation survived'] : []),
+    ...(proof.subjectCoverage.status === 'opaque'
+      ? [`subject population is opaque (${proof.subjectCoverage.reason})`]
+      : []),
   ];
   const execution = executionFailure === undefined ? '' : ` Qualification execution failed: ${executionFailure}`;
   return finding({
@@ -156,11 +166,12 @@ function authorityIntegrityFinding(gate: Gate, qualification: GateQualification)
     detail: `Required gate "${gate.id}" is unqualified (${failed.join('; ')}).${execution} Its semantic findings remain advisory, but this run cannot be green while its release authority is unverified.`,
     remediation: {
       kind: 'instruction',
-      description: `Repair the red, green, and mutation proof for ${gate.id}.`,
+      description: `Repair the qualification proof for ${gate.id}.`,
       steps: [
         'Make the red fixture produce at least one finding.',
         'Make the green fixture produce no findings.',
         'Make the mutation change behavior so the fixtures kill it.',
+        'If the gate governs discrete subjects, enumerate the complete current-head population and retain its census digest.',
         'Rerun the gate through runGates and retain the qualification receipt.',
       ],
     },
@@ -229,6 +240,9 @@ export function scopeContextByLevel(
     // to the char-machine — making the injection inert on the production `litelaunchGauntlet*` path
     // (codex review, PR #60; the same scoping drop the capabilityLink pass-through fixed).
     ...(context.codeOnly !== undefined ? { codeOnly: context.codeOnly } : {}),
+    ...(context.diagnosticEmitterDetector !== undefined
+      ? { diagnosticEmitterDetector: context.diagnosticEmitterDetector }
+      : {}),
     ...(context.benchmarkSubjects !== undefined ? { benchmarkSubjects: context.benchmarkSubjects } : {}),
     // Pass the injected IR through unchanged — scoping narrows `files()`, not the
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
@@ -350,6 +364,7 @@ export function scopeContextByLevel(
     // pass-throughs above fix.
     ...(context.skipSites !== undefined ? { skipSites: context.skipSites } : {}),
     ...(context.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: context.activeSurfaceFacts } : {}),
+    ...(context.featureEdges !== undefined ? { featureEdges: context.featureEdges } : {}),
     // Likewise the injected check-governance FactPack (the three meta-gates): it describes
     // the root-script partition / negative-controls / waiver freshness (repo-wide facts, not
     // per-src-file), so file-scoping never narrows it — it passes through unchanged. Omit the
@@ -501,11 +516,6 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
   let blocked = false;
 
   for (const gate of gates) {
-    const qualification = qualifyGate(gate);
-    const { proof } = qualification;
-    const authority = earnedAuthority(proof);
-    const integrityFinding = authorityIntegrityFinding(gate, qualification);
-
     // Scope the context to the gate's level when a map is supplied; otherwise the
     // gate sees everything (back-compat). On the --ir path the PROPAGATED effective
     // levels (when present) drive scoping, so a file pulled into the gate's band by
@@ -514,6 +524,11 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
       opts.assuranceMap !== undefined
         ? scopeContextByLevel(context, gate.level, opts.assuranceMap, opts.effectiveLevels)
         : context;
+
+    const qualification = qualifyGate(gate, scoped);
+    const { proof } = qualification;
+    const authority = earnedAuthority(proof);
+    const integrityFinding = authorityIntegrityFinding(gate, qualification);
 
     // Compute the RAW gate.run findings — from the verdict cache when it HITS,
     // else by running the gate (the expensive part) and writing the result back.

@@ -125,7 +125,7 @@ describe('typed-ref — no fnv1a identity path feeds through TypedRef.canonicali
     const B1_IDENTITY_FILES = [
       'packages/quantizer/src/quantizer.ts',
       'packages/core/src/authoring/composable.ts',
-      'packages/core/src/ecs.ts',
+      'packages/core/src/ecs/runtime.ts',
       'packages/core/src/authoring/config.ts',
     ];
     for (const rel of B1_IDENTITY_FILES) {

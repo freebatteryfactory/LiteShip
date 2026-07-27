@@ -6,7 +6,7 @@
 
 # Interface: LoweredReveal
 
-Defined in: core/dist/motion/reveal.d.ts:56
+Defined in: core/dist/motion/reveal.d.ts:58
 
 Graph bundle produced by [lowerRevealIntent](../functions/lowerRevealIntent.md).
 
@@ -16,7 +16,7 @@ Graph bundle produced by [lowerRevealIntent](../functions/lowerRevealIntent.md).
 
 > `readonly` **componentId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:60
+Defined in: core/dist/motion/reveal.d.ts:62
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/reveal.d.ts:60
 
 > `readonly` **entityId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:61
+Defined in: core/dist/motion/reveal.d.ts:63
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: core/dist/motion/reveal.d.ts:61
 
 > `readonly` **graph**: [`DocumentGraph`](../../graph/interfaces/DocumentGraph.md)
 
-Defined in: core/dist/motion/reveal.d.ts:57
+Defined in: core/dist/motion/reveal.d.ts:59
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: core/dist/motion/reveal.d.ts:57
 
 > `readonly` **intent**: [`RevealIntent`](RevealIntent.md)
 
-Defined in: core/dist/motion/reveal.d.ts:58
+Defined in: core/dist/motion/reveal.d.ts:60
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: core/dist/motion/reveal.d.ts:58
 
 > `readonly` **policyId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:62
+Defined in: core/dist/motion/reveal.d.ts:64
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: core/dist/motion/reveal.d.ts:62
 
 > `readonly` **projectionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:63
+Defined in: core/dist/motion/reveal.d.ts:65
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: core/dist/motion/reveal.d.ts:63
 
 > `readonly` **transitionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:59
+Defined in: core/dist/motion/reveal.d.ts:61

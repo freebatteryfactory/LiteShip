@@ -1951,7 +1951,7 @@
       "subjects": [
         {
           "role": "sut",
-          "origin": { "kind": "file", "path": "packages/command/src/checks/plan.ts" },
+          "origin": { "kind": "module", "specifier": "@liteship/command" },
           "symbol": "planChecks",
           "binding": "planChecks"
         }
@@ -1966,7 +1966,7 @@
       "subjects": [
         {
           "role": "sut",
-          "origin": { "kind": "file", "path": "packages/command/src/registry.ts" },
+          "origin": { "kind": "module", "specifier": "@liteship/command" },
           "symbol": "createCommandRegistry",
           "binding": "createCommandRegistry"
         }
@@ -1984,6 +1984,21 @@
           "origin": { "kind": "file", "path": "packages/command/src/host/idempotency.ts" },
           "symbol": "hashInputs",
           "binding": "hashInputs"
+        }
+      ]
+    },
+    {
+      "name": "cli run -- public help projection",
+      "file": "tests/bench/command.bench.ts",
+      "inputSize": 38,
+      "shape": "canonical-command-descriptors",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "module", "specifier": "@liteship/cli" },
+          "symbol": "run",
+          "binding": "run"
         }
       ]
     }

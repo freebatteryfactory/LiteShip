@@ -22,7 +22,13 @@
  */
 
 import { DIAGNOSTIC_AREAS, explainDiagnostic } from '@liteship/error';
-import { defineGate, type GateContext, type Gate } from '../gate.js';
+import {
+  defineGate,
+  type DiagnosticEmissionMatch,
+  type DiagnosticEmitterMethod,
+  type GateContext,
+  type Gate,
+} from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { commentsBlanked } from './code-only.js';
@@ -56,6 +62,35 @@ const STABLE_AREA_PATTERN = DIAGNOSTIC_AREAS.filter((area) => area !== 'check')
 const STABLE_DIAGNOSTIC_CODE = new RegExp(`(['"\\x60])((?:${STABLE_AREA_PATTERN})/[a-zA-Z0-9_/-]+)\\1`, 'g');
 const STABLE_CHECK_ID = /(['"`])(check\/[a-zA-Z0-9_/-]+)\1/g;
 const AUDIT_RULE_ID = /\brule\s*:\s*(['"`])([a-zA-Z0-9_/-]+)\1/g;
+const REGISTERED_METHODS = new Set<DiagnosticEmitterMethod>([
+  'warnRegistered',
+  'errorRegistered',
+  'warnOnceRegistered',
+]);
+
+/** Lean direct-object fallback; the TypeScript-owning host injects the sound AST detector. */
+function detectDiagnosticEmissions(text: string): readonly DiagnosticEmissionMatch[] {
+  const code = commentsBlanked(text);
+  const pattern =
+    /\bDiagnostics\.(warn|error|warnOnce|warnRegistered|errorRegistered|warnOnceRegistered)\s*\(\s*\{[\s\S]{0,512}?\bcode\s*:\s*(['"`])([^'"`\r\n]+)\2/g;
+  const matches: DiagnosticEmissionMatch[] = [];
+  for (const match of code.matchAll(pattern)) {
+    const method = match[1] as DiagnosticEmitterMethod | undefined;
+    const codeValue = match[3];
+    if (method === undefined || codeValue === undefined) continue;
+    const line = code.slice(0, match.index).split('\n').length;
+    matches.push({ method, code: codeValue, line });
+  }
+  return matches;
+}
+
+/** Package-owned runtime area, when the package name is itself an admitted diagnostic area. */
+function runtimeAreaForFile(file: string): string | undefined {
+  const packageName = /^packages\/([^/]+)\/src\//.exec(file)?.[1];
+  return packageName !== undefined && (DIAGNOSTIC_AREAS as readonly string[]).includes(packageName)
+    ? packageName
+    : undefined;
+}
 
 /** All the codes a single source file emits (comments stripped so a doc mention never counts). */
 function codesIn(text: string, pattern: RegExp): readonly string[] {
@@ -148,6 +183,36 @@ function orphanFinding(code: string): Finding {
   });
 }
 
+/** A stable runtime area must use the typed registered-only Diagnostics methods. */
+function ungovernedEmitterFinding(
+  file: string,
+  line: number,
+  area: string,
+  emission: DiagnosticEmissionMatch,
+): Finding {
+  const problem = !REGISTERED_METHODS.has(emission.method)
+    ? `uses the untyped Diagnostics.${emission.method} method`
+    : emission.code !== undefined && !emission.code.startsWith(`${area}/`)
+      ? `emits "${emission.code}" outside its owning "${area}/" area`
+      : 'is not governed';
+  return finding({
+    ruleId: RULE_ID,
+    severity: 'error',
+    level: 'L2',
+    title: `Stable ${area} diagnostic bypasses registered emission`,
+    detail: `${file}:${line} ${problem}. A package with an admitted diagnostic area must emit through a registered-only Diagnostics method using a statically accountable owner/domain/slug identity.`,
+    location: { file, line },
+    remediation: {
+      kind: 'instruction',
+      description: 'Route the stable diagnostic through the typed registry boundary.',
+      steps: [
+        `Use Diagnostics.warnRegistered, Diagnostics.warnOnceRegistered, or Diagnostics.errorRegistered.`,
+        `Enroll an ${area}/<domain>/<slug> identity in packages/error/src/codes.ts and pass that exact identity at the emitter.`,
+      ],
+    },
+  });
+}
+
 /**
  * THE SCAN — fold every governed source file into unregistered-code findings. Reads the
  * UNSCOPED corpus (`allFiles()`, falling back to `files()`) so level-scoping never hides a
@@ -179,13 +244,33 @@ function scan(context: GateContext): readonly Finding[] {
       continue;
     }
 
+    const runtimeArea = runtimeAreaForFile(file);
+    if (runtimeArea !== undefined) {
+      const detector = context.diagnosticEmitterDetector ?? detectDiagnosticEmissions;
+      for (const emission of detector(text)) {
+        // A registered method with a dynamic code parameter is still closed by
+        // its DiagnosticCode type. Static identities additionally prove owner
+        // prefix and participate in the source-side reverse census.
+        const governed =
+          REGISTERED_METHODS.has(emission.method) &&
+          (emission.code === undefined || emission.code.startsWith(`${runtimeArea}/`));
+        if (!governed) findings.push(ungovernedEmitterFinding(file, emission.line, runtimeArea, emission));
+        if (emission.code !== undefined) record(emission.code, file);
+      }
+    }
+
     // A check identity is authored exactly once by CHECK_REGISTRY. Other package files
     // legitimately carry planted check ids as negative-control facts and test data; those
     // values are not emitted diagnostics. Diagnostic areas remain source-scanned across
     // the full package corpus because their codes may be routed through typed maps before
     // reaching the emitter.
     const pattern = file === CHECK_REGISTRY_FILE ? STABLE_CHECK_ID : STABLE_DIAGNOSTIC_CODE;
-    for (const code of codesIn(text, pattern)) record(code, file);
+    for (const code of codesIn(text, pattern)) {
+      // A package-owned runtime area is accounted for only by real Diagnostics
+      // calls. A prose string or fixture constant cannot satisfy reverse closure.
+      if (runtimeArea === 'web' && code.startsWith('web/')) continue;
+      record(code, file);
+    }
     if (AUDIT_EMITTER_FILE.test(file)) {
       for (const rule of codesIn(text, AUDIT_RULE_ID)) record(`audit/${rule}`, file);
     }

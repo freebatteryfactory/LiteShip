@@ -8,7 +8,7 @@
 
 > **Source**\<`T`\> = `Pick`\<[`Replay`](../../CellKernel/interfaces/Replay.md)\<`T`\>, `"read"` \| `"subscribe"`\>
 
-Defined in: [\_spine/core.d.ts:684](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L684)
+Defined in: [\_spine/core.d.ts:899](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L899)
 
 The readable + subscribable source `combine` recomputes from.
 

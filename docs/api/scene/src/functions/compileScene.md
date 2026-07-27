@@ -8,7 +8,7 @@
 
 > **compileScene**(`scene`): [`CompiledScene`](../interfaces/CompiledScene.md)
 
-Defined in: [scene/src/compile.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L108)
+Defined in: [scene/src/compile.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L128)
 
 Compile a [SceneContract](../interfaces/SceneContract.md) into a pure [CompiledScene](../interfaces/CompiledScene.md)
 descriptor. No world is constructed here — see [SceneRuntime](../namespaces/SceneRuntime/README.md).

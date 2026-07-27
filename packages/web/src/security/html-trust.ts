@@ -157,9 +157,9 @@ function effectiveHtmlPolicy(options?: HtmlTrustOptions): HtmlPolicy {
   if (requested === 'trusted-html' && options?.allowTrustedHtml !== true) {
     // The downgrade keeps the trust boundary narrow by design; it just must
     // not be silent. warnOnce dedupes per session.
-    Diagnostics.warnOnce({
+    Diagnostics.warnOnceRegistered({
       source: 'liteship/web.htmlTrust',
-      code: 'trusted-html-downgraded',
+      code: 'web/security/trusted-html-downgraded',
       message:
         'policy "trusted-html" was downgraded to "sanitized-html" because allowTrustedHtml is not true. If this HTML is genuinely trusted, pass { policy: "trusted-html", allowTrustedHtml: true }.',
     });

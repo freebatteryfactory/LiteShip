@@ -6,7 +6,7 @@
 
 # Interface: StartupComputePacket
 
-Defined in: [\_spine/worker.d.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L65)
+Defined in: [\_spine/worker.d.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L66)
 
 First compute payload bundled with worker bootstrap.
 
@@ -16,7 +16,7 @@ First compute payload bundled with worker bootstrap.
 
 > `readonly` **bootstrapMode**: `"cold"` \| `"warm-snapshot"` \| `"rebuild"`
 
-Defined in: [\_spine/worker.d.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L66)
+Defined in: [\_spine/worker.d.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L67)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:66](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **registrations**: readonly [`BootstrapQuantizerRegistration`](BootstrapQuantizerRegistration.md)[]
 
-Defined in: [\_spine/worker.d.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L67)
+Defined in: [\_spine/worker.d.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L68)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/worker.d.ts:67](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **updates**: readonly [`WorkerUpdate`](../type-aliases/WorkerUpdate.md)[]
 
-Defined in: [\_spine/worker.d.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L68)
+Defined in: [\_spine/worker.d.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L69)

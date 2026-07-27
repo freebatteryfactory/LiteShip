@@ -12,21 +12,20 @@ import {
   Diagnostics,
   Easing,
   HLC,
-  createDenseStore,
   Receipt,
   Style,
   Token,
   defineBoundary,
   defineToken,
   defineStyle,
-  createWorld,
   Composable,
   createComposable,
   createDirtyFlags,
   createFrameBudget,
 } from '@liteship/core';
+import { createDenseStore, createWorld, definePart, EntityId } from '@liteship/core/ecs';
 import { hasTag } from '@liteship/error';
-import type { EntityId } from '@liteship/core';
+import { schema } from '@liteship/core';
 
 /**
  * Await a promise expected to REJECT and hand back the rejection reason typed as
@@ -126,16 +125,17 @@ describe('Receipt.validateChain error contract', () => {
 
 describe('dense store capacity error contract', () => {
   test('capacity overflow names the store, capacity, entity, and both remedies', () => {
-    const store = createDenseStore('physics', 1);
-    store.set('e-1' as EntityId, 1);
+    const Physics = definePart('physics', schema.number);
+    const { writer } = createDenseStore(Physics, 1);
+    writer.set(EntityId('e-1'), 1);
 
     try {
-      store.set('e-2' as EntityId, 2);
+      writer.set(EntityId('e-2'), 2);
       expect.unreachable('expected set to throw');
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/store "physics" at capacity \(1\)/);
-      expect(String(error)).toMatch(/createDenseStore\(name, n\)/);
+      expect(String(error)).toMatch(/larger capacity/);
       expect(String(error)).toMatch(/remove entities/);
     }
   });

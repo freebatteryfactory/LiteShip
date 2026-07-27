@@ -6,7 +6,7 @@
 
 # Interface: VideoRenderer
 
-Defined in: [\_spine/core.d.ts:1356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1356)
+Defined in: [\_spine/core.d.ts:1586](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1586)
 
 Canonical frame scheduler over a compositor and video configuration.
 
@@ -16,7 +16,15 @@ Canonical frame scheduler over a compositor and video configuration.
 
 > `readonly` **config**: [`VideoConfig`](VideoConfig.md)
 
-Defined in: [\_spine/core.d.ts:1357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1357)
+Defined in: [\_spine/core.d.ts:1587](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1587)
+
+***
+
+### schedule
+
+> `readonly` **schedule**: [`FrameSchedule`](FrameSchedule.md)
+
+Defined in: [\_spine/core.d.ts:1588](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1588)
 
 ***
 
@@ -24,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1357](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **scheduler**: [`FixedStep`](../namespaces/Scheduler/interfaces/FixedStep.md)
 
-Defined in: [\_spine/core.d.ts:1359](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1359)
+Defined in: [\_spine/core.d.ts:1590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1590)
 
 ***
 
@@ -32,7 +40,7 @@ Defined in: [\_spine/core.d.ts:1359](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **totalFrames**: `number`
 
-Defined in: [\_spine/core.d.ts:1358](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1358)
+Defined in: [\_spine/core.d.ts:1589](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1589)
 
 ## Methods
 
@@ -40,7 +48,7 @@ Defined in: [\_spine/core.d.ts:1358](https://github.com/freebatteryfactory/LiteS
 
 > **frames**(): `AsyncGenerator`\<[`VideoFrameOutput`](VideoFrameOutput.md)\>
 
-Defined in: [\_spine/core.d.ts:1360](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1360)
+Defined in: [\_spine/core.d.ts:1591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1591)
 
 #### Returns
 

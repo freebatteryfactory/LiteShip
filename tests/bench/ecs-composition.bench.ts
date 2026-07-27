@@ -9,14 +9,22 @@ import { Bench } from 'tinybench';
 import {
   Boundary,
   ComposableWorld,
-  createDenseStore,
   defineBoundary,
   defineToken,
   defineStyle,
-  createWorld,
   Composable,
   createComposable,
+  schema,
 } from '@liteship/core';
+import {
+  admitPart,
+  createDenseStore,
+  createWorld,
+  defineDenseSystem,
+  definePart,
+  defineSystem,
+  EntityId,
+} from '@liteship/core/ecs';
 
 const bench = new Bench({ warmupIterations: 50 });
 
@@ -52,13 +60,17 @@ type TestSchema = {
   style?: typeof style;
 };
 
-const denseStore = createDenseStore('hp', 2048);
-const denseEntityIds = Array.from(
-  { length: 256 },
-  (_, index) => `entity-${index}:fnv1a:${index.toString(16).padStart(8, '0')}` as never,
+const Hp = definePart('bench-composition-hp', schema.number);
+const Temp = definePart('bench-composition-temp', schema.number);
+const BoundaryPart = definePart('bench-composition-boundary', schema.unknown);
+const PosX = definePart('bench-composition-pos-x', schema.number);
+const PosY = definePart('bench-composition-pos-y', schema.number);
+const denseStore = createDenseStore(Hp, 2048);
+const denseEntityIds = Array.from({ length: 256 }, (_, index) =>
+  EntityId(`entity-${index}:fnv1a:${index.toString(16).padStart(8, '0')}`),
 );
 for (const [index, entityId] of denseEntityIds.entries()) {
-  denseStore.set(entityId, index);
+  denseStore.writer.set(entityId, index);
 }
 
 bench.add('direct boundary evaluation', () => {
@@ -99,56 +111,54 @@ bench.add('ComposableWorld.evaluate -- boundary + token + style', () => {
 });
 
 bench.add('DenseStore get -- hot lookup', () => {
-  denseStore.get(denseEntityIds[128]!);
+  denseStore.store.get(denseEntityIds[128]!);
 });
 
 bench.add('DenseStore set -- overwrite hot slot', () => {
-  denseStore.set(denseEntityIds[128]!, 999);
+  denseStore.writer.set(denseEntityIds[128]!, 999);
 });
 
 bench.add('DenseStore delete + reinsert', () => {
-  const tempStore = createDenseStore('temp', 8);
-  const idA = 'entity-a:fnv1a:aaaaaaaa' as never;
-  const idB = 'entity-b:fnv1a:bbbbbbbb' as never;
-  tempStore.set(idA, 1);
-  tempStore.set(idB, 2);
-  tempStore.delete(idA);
-  tempStore.set(idA, 3);
+  const tempStore = createDenseStore(Temp, 8);
+  const idA = EntityId('entity-a:fnv1a:aaaaaaaa');
+  const idB = EntityId('entity-b:fnv1a:bbbbbbbb');
+  tempStore.writer.set(idA, 1);
+  tempStore.writer.set(idB, 2);
+  tempStore.writer.delete(idA);
+  tempStore.writer.set(idA, 3);
 });
 
 bench.add('World.tick -- regular system', () => {
   const scopedWorld = createWorld();
-  scopedWorld.spawn({ boundary });
-  scopedWorld.addSystem({
-    name: 'reader',
-    query: ['boundary'],
-    execute() {},
-  });
+  const admitted = admitPart(BoundaryPart, boundary);
+  if (!admitted.ok) throw new Error('benchmark fixture failed boundary admission');
+  scopedWorld.spawn(admitted.value);
+  scopedWorld.addSystem(defineSystem({ name: 'reader', query: [BoundaryPart], reads: [], writes: [], execute() {} }));
   scopedWorld.tick();
 });
 
 bench.add('World.tick -- dense system', () => {
   const scopedWorld = createWorld();
-  const posX = createDenseStore('posX', 8);
-  const posY = createDenseStore('posY', 8);
+  const posX = createDenseStore(PosX, 8);
+  const posY = createDenseStore(PosY, 8);
   scopedWorld.addDenseStore(posX);
   scopedWorld.addDenseStore(posY);
   const id = scopedWorld.spawn();
-  posX.set(id, 1);
-  posY.set(id, 2);
-  scopedWorld.addSystem({
-    name: 'dense-reader',
-    query: ['posX', 'posY'],
-    _denseSystem: true,
-    execute(stores) {
-      const x = stores.get('posX');
-      const y = stores.get('posY');
-      if (x && y) {
-        x.data[0] = x.data[0]! + 1;
-        y.data[0] = y.data[0]! + 1;
-      }
-    },
-  });
+  posX.writer.set(id, 1);
+  posY.writer.set(id, 2);
+  scopedWorld.addSystem(
+    defineDenseSystem({
+      name: 'dense-reader',
+      reads: [],
+      writes: [PosX, PosY],
+      execute(context) {
+        const x = context.write(PosX).view();
+        const y = context.write(PosY).view();
+        x[0] = x[0]! + 1;
+        y[0] = y[0]! + 1;
+      },
+    }),
+  );
   scopedWorld.tick();
 });
 

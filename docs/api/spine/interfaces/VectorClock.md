@@ -6,7 +6,7 @@
 
 # Interface: VectorClock
 
-Defined in: [\_spine/core.d.ts:952](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L952)
+Defined in: [\_spine/core.d.ts:1167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1167)
 
 Immutable peer-counter map used for causal ordering.
 
@@ -16,7 +16,7 @@ Immutable peer-counter map used for causal ordering.
 
 > `readonly` **\_tag**: `"VectorClock"`
 
-Defined in: [\_spine/core.d.ts:953](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L953)
+Defined in: [\_spine/core.d.ts:1168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1168)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/core.d.ts:953](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **entries**: `ReadonlyMap`\<`string`, `number`\>
 
-Defined in: [\_spine/core.d.ts:954](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L954)
+Defined in: [\_spine/core.d.ts:1169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1169)

@@ -8,7 +8,7 @@
 
 > **stampVerifiablePatch**(`input`): [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:107
+Defined in: web/dist/watch-and-prepare.d.ts:107
 
 Stamp a verifiable-patch envelope for a marker + graph CAS chain + HTML fragment.
 

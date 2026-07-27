@@ -29,8 +29,8 @@ import {
   resolveDevopsProfile,
   type DevopsProfile,
 } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
-import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
+import { liteshipRegexOracle } from '../../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import {
   noBareThrowGate,
   noBareThrowIRGate,

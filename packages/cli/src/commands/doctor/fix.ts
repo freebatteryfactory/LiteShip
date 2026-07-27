@@ -11,8 +11,8 @@
 
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { spawnArgvVisible } from '../../lib/spawn.js';
-import { isLiteShipWorkspace } from '../../lib/workspace.js';
+import { spawnArgvVisible } from '../../internal/spawn.js';
+import { isLiteShipWorkspace } from '../../internal/workspace.js';
 import { loadBuiltPackages } from './manifest.js';
 import type { DoctorCheck, DoctorFix } from './types.js';
 

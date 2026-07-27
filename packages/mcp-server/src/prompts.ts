@@ -43,39 +43,55 @@ export interface GetPromptResult {
   }>;
 }
 
-const PROMPTS: readonly McpPrompt[] = [
+interface PromptEntry {
+  readonly prompt: McpPrompt;
+  readonly resolve: (args: Readonly<Record<string, unknown>>) => GetPromptResult;
+}
+
+/** One row owns both the list projection and its resolver. */
+const PROMPT_REGISTRY: readonly PromptEntry[] = [
   {
-    name: 'liteship.command.inspect',
-    description: 'Explain a LiteShip command from its canonical registry descriptor.',
-    arguments: [
-      { name: 'command', description: 'Canonical command id to inspect (e.g. scene.render).', required: true },
-    ],
+    prompt: {
+      name: 'liteship.command.inspect',
+      description: 'Explain a LiteShip command from its canonical registry descriptor.',
+      arguments: [
+        { name: 'command', description: 'Canonical command id to inspect (e.g. scene.render).', required: true },
+      ],
+    },
+    resolve: inspectCommand,
   },
   {
-    name: 'liteship.tool.use',
-    description: 'Explain how to call an MCP-exposed LiteShip tool, including its result envelope.',
-    arguments: [{ name: 'tool', description: 'MCP-exposed tool name (e.g. asset.analyze).', required: true }],
+    prompt: {
+      name: 'liteship.tool.use',
+      description: 'Explain how to call an MCP-exposed LiteShip tool, including its result envelope.',
+      arguments: [{ name: 'tool', description: 'MCP-exposed tool name (e.g. asset.analyze).', required: true }],
+    },
+    resolve: useTool,
   },
 ];
 
+const PROMPT_BY_NAME = new Map(PROMPT_REGISTRY.map((entry) => [entry.prompt.name, entry]));
+
 /** The two registry-backed prompts, in stable order. */
 export function listPrompts(): readonly McpPrompt[] {
-  return PROMPTS;
+  return PROMPT_REGISTRY.map((entry) => entry.prompt);
 }
 
 /** Resolve a prompt by name. Unknown prompt / missing / invalid argument → `ValidationError` (-32602). */
 export function getPrompt(name: string, args: Readonly<Record<string, unknown>>): GetPromptResult {
-  switch (name) {
-    case 'liteship.command.inspect':
-      return inspectCommand(args);
-    case 'liteship.tool.use':
-      return useTool(args);
-    default:
-      throw ValidationError(
-        'prompts/get',
-        `unknown prompt: ${name}. Available prompts: ${PROMPTS.map((p) => p.name).join(', ')} (see prompts/list).`,
-      );
+  const entry = PROMPT_BY_NAME.get(name);
+  if (entry === undefined) {
+    throw ValidationError(
+      'prompts/get',
+      `unknown prompt: ${name}. Available prompts: ${PROMPT_REGISTRY.map((candidate) => candidate.prompt.name).join(', ')} (see prompts/list).`,
+    );
   }
+  return entry.resolve(args);
+}
+
+/** Exact resolver subjects, projected from the same rows as prompts/list. */
+export function promptResolverNames(): readonly string[] {
+  return [...PROMPT_BY_NAME.keys()];
 }
 
 function userMessage(text: string): GetPromptResult['messages'][number] {

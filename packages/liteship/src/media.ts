@@ -38,8 +38,8 @@ export type { TokenBuffer } from '@liteship/core/media';
 export { GenFrame } from '@liteship/core/media';
 export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from '@liteship/core/media';
 
-export { VideoRenderer, compositeStateToRgba } from '@liteship/core/media';
-export type { VideoConfig, VideoFrameOutput } from '@liteship/core/media';
+export { createFrameSchedule, createVideoRenderer, compositeStateToRgba } from '@liteship/core/media';
+export type { FrameSchedule, ScheduledFrame, VideoConfig, VideoFrameOutput, VideoRenderer } from '@liteship/core/media';
 
 export { createFrameBudget } from '@liteship/core/media';
 export type { FrameBudget, Priority } from '@liteship/core/media';

@@ -199,7 +199,7 @@ export const CONTEXT_MAP: Readonly<Record<string, ContextTask>> = {
       ),
       file(
         'owner-file',
-        'packages/cli/src/lib/sbom.ts',
+        'packages/cli/src/internal/sbom.ts',
         'The deterministic CycloneDX SBOM over the lockfile + workspace.',
       ),
       file('doc', 'docs/adr/0011-ship-capsule.md', 'ADR-0011 — the ShipCapsule design + release flow.'),

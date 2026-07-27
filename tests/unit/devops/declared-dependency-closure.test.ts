@@ -41,7 +41,7 @@ import {
   isNodeBuiltin,
   packageNameOfSpecifier,
   type BareImport,
-} from '../../../packages/cli/src/lib/declared-dependency-closure.js';
+} from '../../support/declared-dependency-closure.js';
 import { publishablePackageDirs } from '../../support/repo-truths.js';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');

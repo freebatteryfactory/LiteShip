@@ -6,7 +6,7 @@
 
 # Interface: AstroLoggerLike
 
-Defined in: [\_spine/astro.d.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L111)
+Defined in: [\_spine/astro.d.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L156)
 
 Minimal Astro logger capability required by the diagnostic bridge.
 
@@ -16,7 +16,7 @@ Minimal Astro logger capability required by the diagnostic bridge.
 
 > **error**(`message`): `void`
 
-Defined in: [\_spine/astro.d.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L113)
+Defined in: [\_spine/astro.d.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L158)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/astro.d.ts:113](https://github.com/freebatteryfactory/LiteS
 
 > **warn**(`message`): `void`
 
-Defined in: [\_spine/astro.d.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L112)
+Defined in: [\_spine/astro.d.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L157)
 
 #### Parameters
 

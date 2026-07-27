@@ -30,6 +30,12 @@
  */
 export type MotionTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
 
+/** Capability slice required to resolve responsive-media intent. */
+export interface ResponsiveMediaCapabilities {
+  readonly devicePixelRatio: number;
+  readonly saveData: boolean;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. BRANDS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -365,11 +371,11 @@ export declare namespace Easing {
 
   export interface Config {
     /** Default: 170. */
-    stiffness?: number;
+    readonly stiffness?: number;
     /** Default: 26. */
-    damping?: number;
+    readonly damping?: number;
     /** Default: 1. */
-    mass?: number;
+    readonly mass?: number;
   }
 
   export interface Fns {
@@ -387,6 +393,9 @@ export declare namespace Easing {
     readonly easeInOut: Fn;
     spring(config: Config): Fn;
     cubicBezier(x1: number, y1: number, x2: number, y2: number): Fn;
+    easingToLinearCSS(fn: Fn, sampleCount?: number): string;
+    springToLinearCSS(config: Config, sampleCount?: number): string;
+    springNaturalDuration(config: Config, epsilon?: number): number;
   }
 }
 
@@ -401,9 +410,19 @@ export declare namespace Animation {
     readonly timestamp: number;
   }
 
-  export function run(config: { duration: Millis; easing?: Easing.Fn; scheduler?: Scheduler }): AsyncIterable<Frame>;
+  export function run(config: {
+    duration: Millis;
+    easing?: Easing.Fn;
+    scheduler?: Scheduler;
+    signal?: AbortSignal;
+  }): AsyncGenerator<Frame, void, void>;
 
-  export function interpolate<T extends Record<string, number>>(from: T, to: T, eased: number): T;
+  export function interpolate<T extends Record<string, number>>(
+    from: T,
+    to: T,
+    eased: number,
+    defaults?: Partial<Record<string, number>>,
+  ): T;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -411,7 +430,7 @@ export declare namespace Animation {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /** Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free, Wave 6) */
-export interface Timeline<B extends Boundary = Boundary> {
+export interface Timeline<B extends Boundary = Boundary> extends AsyncOwnedResource {
   readonly boundary: B;
   state(): StateUnion<B>;
   progress(): number;
@@ -447,11 +466,18 @@ export interface CompositeState {
   };
 }
 
+/** Quantizer shape accepted by the live compositor. */
+type CompositorQuantizer<B extends Boundary = Boundary> =
+  (Quantizer<B> & { readonly stateSync: () => StateUnion<B> }) | ReactiveQuantizer<B>;
+
 /** Live compositor that evaluates and blends registered states. */
 export interface Compositor {
-  add<B extends Boundary>(name: string, quantizer: Quantizer<B>): void;
+  add<B extends Boundary>(name: string, quantizer: CompositorQuantizer<B>): void;
   remove(name: string): void;
   compute(): CompositeState;
+  setBlendWeights(name: string, weights: Record<string, number>): void;
+  evaluateSpeculative(name: string, value: number, velocity?: number): void;
+  scheduleBatch(): void;
   /**
    * Replay-1 subscription surface of the compositor's extracted {@link CellKernel}:
    * `subscribe` replays the current live state on attach and returns a disposer;
@@ -459,6 +485,7 @@ export interface Compositor {
    * the compositor is the sole writer and its {@link Lifetime} closes the kernel.
    */
   readonly changes: Pick<CellKernel.Replay<CompositeState>, 'subscribe' | 'read' | 'closed' | 'size'>;
+  readonly runtime: RuntimeCoordinator;
 }
 
 export declare namespace Compositor {
@@ -573,37 +600,196 @@ export interface CellEnvelope<K extends CellKind = CellKind, T = unknown> {
 /** Branded identifier minted for an ECS entity. */
 export type EntityId = string & { readonly _brand: 'EntityId' };
 
-/** ECS entity view containing its identifier and component map. */
-export interface Entity {
+/** Primitive literal carried by a literal schema node. */
+type LiteralValue = string | number | boolean | null;
+/** Constructor shape retained by a bytes schema node. */
+type BytesCtor = abstract new (...args: never[]) => object;
+/** Annotation map shared by the kernel schema AST. */
+type SchemaAnnotations = Readonly<Record<symbol, unknown>>;
+/** Common metadata on every kernel schema node. */
+interface SchemaNodeMeta {
+  readonly annotations?: SchemaAnnotations;
+}
+/** String schema AST node. */
+interface StringSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'string';
+}
+/** Number schema AST node. */
+interface NumberSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'number';
+}
+/** Boolean schema AST node. */
+interface BooleanSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'boolean';
+}
+/** Literal schema AST node. */
+interface LiteralSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'literal';
+  readonly value: LiteralValue;
+}
+/** Union schema AST node. */
+interface UnionSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'union';
+  readonly members: readonly SchemaNode[];
+}
+/** One named field in a struct schema node. */
+interface StructSchemaField {
+  readonly key: string;
+  readonly node: SchemaNode;
+  readonly optional: boolean;
+}
+/** Struct schema AST node. */
+interface StructSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'struct';
+  readonly fields: readonly StructSchemaField[];
+}
+/** Array schema AST node. */
+interface ArraySchemaNode extends SchemaNodeMeta {
+  readonly kind: 'array';
+  readonly element: SchemaNode;
+}
+/** Tuple schema AST node. */
+interface TupleSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'tuple';
+  readonly elements: readonly SchemaNode[];
+}
+/** Record schema AST node. */
+interface RecordSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'record';
+  readonly value: SchemaNode;
+}
+/** Unknown schema AST node. */
+interface UnknownSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'unknown';
+}
+/** Any schema AST node. */
+interface AnySchemaNode extends SchemaNodeMeta {
+  readonly kind: 'any';
+}
+/** Bytes schema AST node. */
+interface BytesSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'bytes';
+  readonly ctor: BytesCtor;
+  readonly name: string;
+}
+/** Branded schema AST node. */
+interface BrandSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'brand';
+  readonly base: SchemaNode;
+  readonly name: string;
+  readonly refine: (value: unknown) => unknown;
+}
+/** Named hole schema AST node. */
+interface HoleSchemaNode extends SchemaNodeMeta {
+  readonly kind: 'hole';
+  readonly name: string;
+}
+/** Closed kernel schema AST union mirrored for Part identity. */
+type SchemaNode =
+  | StringSchemaNode
+  | NumberSchemaNode
+  | BooleanSchemaNode
+  | LiteralSchemaNode
+  | UnionSchemaNode
+  | StructSchemaNode
+  | ArraySchemaNode
+  | TupleSchemaNode
+  | RecordSchemaNode
+  | UnknownSchemaNode
+  | AnySchemaNode
+  | BytesSchemaNode
+  | BrandSchemaNode
+  | HoleSchemaNode;
+/** Minimal structural schema contract bound to one Part. */
+interface KernelSchema<out A, out I = A> {
+  readonly ast: SchemaNode;
+  readonly Type: A;
+  readonly Encoded: I;
+}
+
+/** How a Part retains values after successful schema admission. */
+export type PartRetentionPolicy = 'snapshot' | 'reference';
+
+/** Module-private witness preserving a Part's admitted value type in exact relation probes. */
+declare const SpinePartWitness: unique symbol;
+/** Module-private witness distinguishing schema-admitted values from unchecked inputs. */
+declare const SpineAdmissionWitness: unique symbol;
+/** Module-private witness preserving ordinary System identity in exact relation probes. */
+declare const SpineSystemWitness: unique symbol;
+/** Module-private witness preserving DenseSystem identity in exact relation probes. */
+declare const SpineDenseSystemWitness: unique symbol;
+
+/** One minted, schema-backed ECS component declaration. */
+export interface Part<T = unknown, Name extends string = string, Encoded = unknown> {
+  readonly name: Name;
+  readonly schema: KernelSchema<T, Encoded>;
+  readonly retention: PartRetentionPolicy;
+  readonly [SpinePartWitness]: T;
+}
+
+/** Erased Part used by heterogeneous world operations. */
+type AnyPart = Part<unknown, string, unknown>;
+/** Runtime value carried by one Part. */
+export type PartValue<P extends AnyPart> = P extends Part<infer T, string, unknown> ? T : never;
+/** Value admitted by the exact Part schema and witness. */
+export interface AdmittedPartValue<P extends AnyPart = AnyPart> {
+  readonly part: P;
+  readonly value: PartValue<P>;
+  readonly [SpineAdmissionWitness]: true;
+}
+/** Tuple of Parts used to declare system authority. */
+type PartTuple = readonly AnyPart[];
+/** Part member selected from one authority tuple. */
+type TuplePart<P extends PartTuple> = P[number];
+/** Part readable through either a system query or read declaration. */
+type ReadablePart<Q extends PartTuple, R extends PartTuple> = TuplePart<Q> | TuplePart<R>;
+
+/** Immutable snapshot view of one entity. */
+export interface Entity<P extends AnyPart = AnyPart> {
   readonly id: EntityId;
-  readonly components: ReadonlyMap<string, unknown>;
+  get<Q extends P>(part: Q): PartValue<Q>;
 }
 
-/** Authored ECS component contract pairing a name with its schema. */
-export interface Part<T = unknown> {
-  readonly name: string;
-  readonly schema: SchemaPort<T>;
+/** Minimal entity handle supplied to a declared system. */
+export interface SystemEntity {
+  readonly id: EntityId;
 }
 
-/** ECS system that evaluates entities matching a component-name query. */
-export interface System {
+/** Trusted read/write context supplied to one declared system. */
+export interface SystemContext<
+  Q extends PartTuple = PartTuple,
+  R extends PartTuple = PartTuple,
+  W extends PartTuple = PartTuple,
+> {
+  read<P extends TuplePart<Q>>(entity: SystemEntity, part: P): PartValue<P>;
+  optional<P extends ReadablePart<Q, R>>(entity: SystemEntity, part: P): PartValue<P> | undefined;
+  query<const P extends readonly ReadablePart<Q, R>[]>(...parts: P): readonly Entity<TuplePart<P>>[];
+  write<P extends TuplePart<W>>(entity: SystemEntity, part: P, value: PartValue<P>): void;
+}
+
+/** Typed ECS system with explicit query/read/write authority. */
+export interface System<
+  Q extends PartTuple = PartTuple,
+  R extends PartTuple = PartTuple,
+  W extends PartTuple = PartTuple,
+> {
   readonly name: string;
-  readonly query: readonly string[];
-  /** Second argument is the world — use it to write computed output components back. */
-  execute(entities: readonly Entity[], world?: World): void;
+  readonly query: Q;
+  readonly reads: R;
+  readonly writes: W;
+  execute(entities: readonly SystemEntity[], context: SystemContext<Q, R, W>): void;
+  readonly [SpineSystemWitness]: true;
 }
 
 /** Live ECS world that owns entities, dense stores, and scheduled systems. */
 export interface World {
-  spawn(components?: Record<string, unknown>): EntityId;
+  spawn(...values: readonly AdmittedPartValue[]): EntityId;
   despawn(id: EntityId): void;
-  addComponent<T>(id: EntityId, component: Part<T>, value: T): void;
-  /** Schema-free component write — used by systems to persist computed output values. */
-  setComponent(id: EntityId, name: string, value: unknown): void;
-  removeComponent(id: EntityId, name: string): void;
-  query(...componentNames: string[]): readonly Entity[];
-  addSystem(system: System): void;
-  addDenseStore(store: DenseStore): void;
+  set<P extends AnyPart>(id: EntityId, value: AdmittedPartValue<P>): void;
+  remove(id: EntityId, part: AnyPart): void;
+  query<const P extends PartTuple>(...parts: P): readonly Entity<TuplePart<P>>[];
+  addSystem(system: System | DenseSystem): void;
+  addDenseStore<P extends Part<number>>(owned: OwnedDenseStore<P>): void;
   tick(): void;
 }
 
@@ -620,32 +806,61 @@ export declare function createWorld(): World & AsyncOwnedResource;
  * Stores values in a flat array indexed by entity slot for cache efficiency.
  */
 /** Dense, fixed-capacity numeric ECS component storage. */
-export interface DenseStore {
-  readonly name: string;
+export interface DenseStore<P extends Part<number> = Part<number>> {
+  readonly part: P;
+  readonly name: P['name'];
   readonly capacity: number;
   readonly _dense: true;
-  readonly entityToIndex: Map<EntityId, number>;
-  readonly indexToEntity: EntityId[];
-  readonly data: Float64Array;
-  count: number;
-  get(id: EntityId): number | undefined;
-  set(id: EntityId, value: number): void;
-  delete(id: EntityId): boolean;
-  has(id: EntityId): boolean;
-  reset(): void;
-  view(): Float64Array;
+  readonly entityToIndex: ReadonlyMap<EntityId, number>;
+  readonly indexToEntity: readonly EntityId[];
+  readonly count: number;
+  get(entityId: EntityId): number | undefined;
+  has(entityId: EntityId): boolean;
+  view(): ReadonlyDenseValues;
   entities(): readonly EntityId[];
 }
 
-/** Allocate a dense numeric ECS component store. */
-export declare function createDenseStore(name: string, capacity: number): DenseStore;
+/** Read-only packed numeric values exposed by a dense store. */
+export interface ReadonlyDenseValues extends Iterable<number> {
+  readonly length: number;
+  at(index: number): number | undefined;
+}
 
-/** ECS system that operates on dense-packed component stores */
-export interface DenseSystem {
+/** Trusted writer paired with one dense numeric store. */
+export interface DenseStoreWriter<P extends Part<number> = Part<number>> {
+  readonly part: P;
+  set(entityId: EntityId, value: number): void;
+  delete(entityId: EntityId): boolean;
+  reset(): void;
+  view(): Float64Array;
+}
+
+/** Read and write halves returned for one allocated dense store. */
+export interface OwnedDenseStore<P extends Part<number> = Part<number>> {
+  readonly store: DenseStore<P>;
+  readonly writer: DenseStoreWriter<P>;
+}
+
+/** Allocate a Part-bound dense numeric ECS component store. */
+export declare function createDenseStore<P extends Part<number>>(part: P, capacity: number): OwnedDenseStore<P>;
+
+/** Part-authorized dense stores supplied to one dense system. */
+export interface DenseSystemContext<R extends readonly Part<number>[], W extends readonly Part<number>[]> {
+  read<P extends TuplePart<R>>(part: P): DenseStore<P>;
+  write<P extends TuplePart<W>>(part: P): DenseStoreWriter<P>;
+}
+
+/** ECS system that operates on dense-packed component stores. */
+export interface DenseSystem<
+  R extends readonly Part<number>[] = readonly Part<number>[],
+  W extends readonly Part<number>[] = readonly Part<number>[],
+> {
   readonly name: string;
-  readonly query: readonly string[];
+  readonly reads: R;
+  readonly writes: W;
   readonly _denseSystem: true;
-  execute(stores: ReadonlyMap<string, DenseStore>): void;
+  execute(context: DenseSystemContext<R, W>): void;
+  readonly [SpineDenseSystemWitness]: true;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -859,8 +1074,8 @@ export interface RuntimeCoordinator {
   readonly plan: PlanIR;
   readonly phases: readonly RuntimePhase[];
   readonly stores: {
-    readonly stateIndex: RuntimeCoordinatorDenseStore;
-    readonly dirtyEpoch: RuntimeCoordinatorDenseStore;
+    readonly stateIndex: DenseStore;
+    readonly dirtyEpoch: DenseStore;
   };
   reset(registrations?: readonly { readonly name: string; readonly states: readonly string[] }[]): void;
   registerQuantizer(name: string, states: readonly string[]): EntityId;
@@ -1352,17 +1567,39 @@ export interface VideoFrameOutput {
   readonly state: CompositeState;
 }
 
+/** One deterministic coordinate in an offline frame schedule. */
+export interface ScheduledFrame {
+  readonly frame: number;
+  readonly timestamp: number;
+  readonly progress: number;
+}
+
+/** Host-neutral frame timing shared by every renderer adapter. */
+export interface FrameSchedule extends Iterable<ScheduledFrame> {
+  readonly fps: number;
+  readonly durationMs: Millis;
+  readonly totalFrames: number;
+  at(frame: number): ScheduledFrame;
+}
+
 /** Canonical frame scheduler over a compositor and video configuration. */
 export interface VideoRenderer {
   readonly config: VideoConfig;
+  readonly schedule: FrameSchedule;
   readonly totalFrames: number;
   readonly scheduler: Scheduler.FixedStep;
   frames(): AsyncGenerator<VideoFrameOutput>;
 }
 
-export declare namespace VideoRenderer {
-  export function make(config: VideoConfig, compositor: Compositor): VideoRenderer;
-}
+/** Create the shared deterministic frame schedule for one duration and fps. */
+export declare function createFrameSchedule(config: Pick<VideoConfig, 'fps' | 'durationMs'>): FrameSchedule;
+
+/** Create a deterministic video renderer. */
+export declare function createVideoRenderer(
+  config: VideoConfig,
+  compositor: Compositor,
+  signal?: Signal.Controllable<number>,
+): VideoRenderer;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 26. CAPTURE TYPES
@@ -1382,8 +1619,8 @@ export interface CaptureFrame {
   readonly bitmap: ImageBitmap | OffscreenCanvas;
 }
 
-/** Live browser capture handle that produces and releases encoded frames. */
-export interface FrameCapture {
+/** Live browser capture handle with one async-uniform encoder lifecycle. */
+export interface FrameCapture extends AsyncOwnedResource {
   readonly _tag: 'FrameCapture';
   init(config: CaptureConfig): Promise<void>;
   capture(frame: CaptureFrame): Promise<void>;

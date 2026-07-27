@@ -61,7 +61,7 @@ vi.mock('node:child_process', async (importOriginal) => {
   return { ...orig, spawnSync: spawnSyncMock };
 });
 import type { MutationTargetFile } from '../../../../packages/audit/src/index.js';
-import { buildSeamCoverageMap } from '../../../../packages/cli/src/lib/mutation-targets.js';
+import { buildSeamCoverageMap } from '../../../../packages/cli/src/internal/mutation-targets.js';
 import {
   computeSeamExecutionCoverage,
   executionCoverageRelation,
@@ -77,7 +77,7 @@ import {
   type SeamCandidates,
   type LineRange,
   type SeamTestExecution,
-} from '../../../../packages/cli/src/lib/seam-execution-coverage.js';
+} from '../../../../packages/cli/src/internal/seam-execution-coverage.js';
 import { makeCoverageMap } from '../../../../packages/audit/src/index.js';
 
 /**

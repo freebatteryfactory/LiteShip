@@ -24,7 +24,7 @@ import {
 import {
   captureActiveElement,
   captureFocusState,
-  captureIME,
+  createPhysicalStateTracker,
   captureSelection,
   elementToPath,
   findScrollable,
@@ -586,7 +586,8 @@ describe('web runtime primitives', () => {
     expect(document.getElementById('mixed-outer')?.textContent).toBe('keep');
   });
 
-  test('covers physical state capture helpers for focus, selection, scroll, and IME', () => {
+  test('covers physical state capture helpers for focus, selection, scroll, and IME', async () => {
+    const tracker = createPhysicalStateTracker(document);
     const root = document.createElement('div');
     const scrollBox = document.createElement('div');
     scrollBox.id = 'scrollable';
@@ -622,14 +623,14 @@ describe('web runtime primitives', () => {
 
     input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
     input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'kana' }));
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#search',
       text: 'kana',
       start: 1,
       end: 4,
     });
     input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
 
     const selection = window.getSelection();
     const textNode = editor.firstChild!;
@@ -649,6 +650,7 @@ describe('web runtime primitives', () => {
 
     expect(elementToPath(editor)).toBe('div:nth-child(1) > div:nth-child(3)');
     expect(findScrollable(root)).toEqual([scrollBox]);
+    await tracker.dispose();
   });
 
   test('covers additional physical capture edge cases for collapsed selections and non-scrollable nodes', () => {
@@ -1363,7 +1365,8 @@ describe('web runtime primitives', () => {
 
         const nested = document.createElement('div');
         nested.appendChild(document.createTextNode('ignored'));
-        nested.innerHTML += '<div data-liteship-slot="relative-footer"></div><div data-liteship-slot="/hero/footer"></div>';
+        nested.innerHTML +=
+          '<div data-liteship-slot="relative-footer"></div><div data-liteship-slot="/hero/footer"></div>';
         root.appendChild(nested);
         root.appendChild(document.createTextNode('still-ignored'));
         await flushMutations();

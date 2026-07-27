@@ -6,7 +6,7 @@
 
 # Interface: ClientHintsHeaders
 
-Defined in: [edge/src/client-hints.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L25)
+Defined in: [edge/src/client-hints.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L31)
 
 Plain-object header bag accepted by [ClientHints.parseClientHints](../variables/ClientHints.md#parseclienthints).
 
@@ -20,7 +20,7 @@ defaults during parsing.
 
 > `readonly` `optional` **downlink?**: `string`
 
-Defined in: [edge/src/client-hints.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L43)
+Defined in: [edge/src/client-hints.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L49)
 
 `Downlink` estimate in Mb/s.
 
@@ -30,7 +30,7 @@ Defined in: [edge/src/client-hints.ts:43](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **ect?**: `string`
 
-Defined in: [edge/src/client-hints.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L45)
+Defined in: [edge/src/client-hints.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L51)
 
 `ECT` effective connection type.
 
@@ -40,7 +40,7 @@ Defined in: [edge/src/client-hints.ts:45](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **save-data?**: `string`
 
-Defined in: [edge/src/client-hints.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L41)
+Defined in: [edge/src/client-hints.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L47)
 
 `Save-Data` (`on`).
 
@@ -50,7 +50,7 @@ Defined in: [edge/src/client-hints.ts:41](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-device-memory?**: `string`
 
-Defined in: [edge/src/client-hints.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L27)
+Defined in: [edge/src/client-hints.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L33)
 
 `Sec-CH-Device-Memory` in GiB (one of the standard buckets).
 
@@ -60,7 +60,7 @@ Defined in: [edge/src/client-hints.ts:27](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-dpr?**: `string`
 
-Defined in: [edge/src/client-hints.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L29)
+Defined in: [edge/src/client-hints.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L35)
 
 `Sec-CH-DPR` — devicePixelRatio as a decimal string.
 
@@ -70,7 +70,7 @@ Defined in: [edge/src/client-hints.ts:29](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-prefers-color-scheme?**: `string`
 
-Defined in: [edge/src/client-hints.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L37)
+Defined in: [edge/src/client-hints.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L43)
 
 `Sec-CH-Prefers-Color-Scheme` (`light` / `dark`).
 
@@ -80,7 +80,7 @@ Defined in: [edge/src/client-hints.ts:37](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-prefers-reduced-motion?**: `string`
 
-Defined in: [edge/src/client-hints.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L35)
+Defined in: [edge/src/client-hints.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L41)
 
 `Sec-CH-Prefers-Reduced-Motion` (`reduce` / `no-preference`).
 
@@ -90,7 +90,7 @@ Defined in: [edge/src/client-hints.ts:35](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-ua-mobile?**: `string`
 
-Defined in: [edge/src/client-hints.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L39)
+Defined in: [edge/src/client-hints.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L45)
 
 `Sec-CH-UA-Mobile` as a structured boolean (`?1` / `?0`).
 
@@ -100,7 +100,7 @@ Defined in: [edge/src/client-hints.ts:39](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-viewport-height?**: `string`
 
-Defined in: [edge/src/client-hints.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L33)
+Defined in: [edge/src/client-hints.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L39)
 
 `Sec-CH-Viewport-Height` in CSS pixels.
 
@@ -110,7 +110,7 @@ Defined in: [edge/src/client-hints.ts:33](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **sec-ch-viewport-width?**: `string`
 
-Defined in: [edge/src/client-hints.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L31)
+Defined in: [edge/src/client-hints.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L37)
 
 `Sec-CH-Viewport-Width` in CSS pixels.
 
@@ -120,6 +120,6 @@ Defined in: [edge/src/client-hints.ts:31](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **user-agent?**: `string`
 
-Defined in: [edge/src/client-hints.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L47)
+Defined in: [edge/src/client-hints.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L53)
 
 `User-Agent` fallback for GPU-tier heuristics.

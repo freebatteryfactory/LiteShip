@@ -201,9 +201,9 @@ export const create = (config: SSEConfig): SSEClient => {
     try {
       stateEdges.publish(next);
     } catch (error) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/web.SSE',
-        code: 'sse-state-listener-threw',
+        code: 'web/stream/sse-state-listener-threw',
         message: `An SSE stateChanges subscriber threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
       });
     }
@@ -212,9 +212,9 @@ export const create = (config: SSEConfig): SSEClient => {
     try {
       config.onStateChange?.(next);
     } catch (error) {
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/web.SSE',
-        code: 'sse-onstatechange-threw',
+        code: 'web/stream/sse-on-state-change-threw',
         message: `The SSE onStateChange callback threw on the "${next}" transition; the transport teardown/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
       });
     }
@@ -356,9 +356,9 @@ export const create = (config: SSEConfig): SSEClient => {
       try {
         config.onMessage(message);
       } catch (error) {
-        Diagnostics.warnOnce({
+        Diagnostics.warnOnceRegistered({
           source: 'liteship/web.SSE',
-          code: 'sse-onmessage-threw',
+          code: 'web/stream/sse-on-message-threw',
           message: `The SSE onMessage callback threw for a live message; the transport heartbeat/reconnect bookkeeping is unaffected. Cause: ${String(error)}`,
         });
       }
@@ -374,9 +374,9 @@ export const create = (config: SSEConfig): SSEClient => {
       // First saturation only (latched + warnOnce-deduped): the buffer is
       // overflowing and the policy is now actively shedding load.
       machine.saturated = true;
-      Diagnostics.warnOnce({
+      Diagnostics.warnOnceRegistered({
         source: 'liteship/web.sse',
-        code: 'sse-buffer-saturated',
+        code: 'web/stream/sse-buffer-saturated',
         message: 'SSE receive buffer saturated; applying overflow policy.',
         detail: { policy: overflowPolicy, maxBufferSize, bufferSize: pendingMessages.length },
       });

@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDetectionResult
 
-Defined in: [\_spine/detect.d.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L83)
+Defined in: [\_spine/detect.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L139)
 
 Detection result extended with motion and design-tier decisions.
 
@@ -20,7 +20,7 @@ Detection result extended with motion and design-tier decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [\_spine/detect.d.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L84)
+Defined in: [\_spine/detect.d.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L140)
 
 #### Overrides
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/detect.d.ts:84](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **capSet**: [`CapSet`](CapSet.md)
 
-Defined in: [\_spine/detect.d.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L37)
+Defined in: [\_spine/detect.d.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L93)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [\_spine/detect.d.ts:37](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **capTier**: [`CapTier`](../type-aliases/CapTier.md)
 
-Defined in: [\_spine/detect.d.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L36)
+Defined in: [\_spine/detect.d.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L92)
 
 #### Inherited from
 
@@ -52,23 +52,11 @@ Defined in: [\_spine/detect.d.ts:36](https://github.com/freebatteryfactory/LiteS
 
 ***
 
-### confidence
-
-> `readonly` **confidence**: `number`
-
-Defined in: [\_spine/detect.d.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L38)
-
-#### Inherited from
-
-[`DetectionResult`](DetectionResult.md).[`confidence`](DetectionResult.md#confidence)
-
-***
-
 ### designTier
 
 > `readonly` **designTier**: [`DesignTier`](../type-aliases/DesignTier.md)
 
-Defined in: [\_spine/detect.d.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L85)
+Defined in: [\_spine/detect.d.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L141)
 
 ***
 
@@ -76,4 +64,16 @@ Defined in: [\_spine/detect.d.ts:85](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **motionTier**: [`MotionTier`](../type-aliases/MotionTier.md)
 
-Defined in: [\_spine/detect.d.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L86)
+Defined in: [\_spine/detect.d.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L142)
+
+***
+
+### tierEvidence
+
+> `readonly` **tierEvidence**: [`CapabilityTierEvidence`](../type-aliases/CapabilityTierEvidence.md)
+
+Defined in: [\_spine/detect.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L94)
+
+#### Inherited from
+
+[`DetectionResult`](DetectionResult.md).[`tierEvidence`](DetectionResult.md#tierevidence)

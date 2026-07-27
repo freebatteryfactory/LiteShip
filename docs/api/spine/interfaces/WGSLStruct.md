@@ -6,7 +6,7 @@
 
 # Interface: WGSLStruct
 
-Defined in: [\_spine/compiler.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L139)
+Defined in: [\_spine/compiler.d.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L151)
 
 Named WGSL structure and its ordered field declarations.
 
@@ -16,7 +16,7 @@ Named WGSL structure and its ordered field declarations.
 
 > `readonly` **fields**: readonly `object`[]
 
-Defined in: [\_spine/compiler.d.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L141)
+Defined in: [\_spine/compiler.d.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L153)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:141](https://github.com/freebatteryfactory/Li
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/compiler.d.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L140)
+Defined in: [\_spine/compiler.d.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L152)

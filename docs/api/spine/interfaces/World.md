@@ -6,55 +6,29 @@
 
 # Interface: World
 
-Defined in: [\_spine/core.d.ts:597](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L597)
+Defined in: [\_spine/core.d.ts:785](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L785)
 
 Live ECS world that owns entities, dense stores, and scheduled systems.
 
 ## Methods
 
-### addComponent()
+### addDenseStore()
 
-> **addComponent**\<`T`\>(`id`, `component`, `value`): `void`
+> **addDenseStore**\<`P`\>(`owned`): `void`
 
-Defined in: [\_spine/core.d.ts:600](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L600)
+Defined in: [\_spine/core.d.ts:792](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L792)
 
 #### Type Parameters
 
-##### T
+##### P
 
-`T`
-
-#### Parameters
-
-##### id
-
-[`EntityId`](../type-aliases/EntityId.md)
-
-##### component
-
-[`Part`](Part.md)\<`T`\>
-
-##### value
-
-`T`
-
-#### Returns
-
-`void`
-
-***
-
-### addDenseStore()
-
-> **addDenseStore**(`store`): `void`
-
-Defined in: [\_spine/core.d.ts:606](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L606)
+`P` *extends* [`Part`](Part.md)\<`number`, `string`, `unknown`\>
 
 #### Parameters
 
-##### store
+##### owned
 
-[`DenseStore`](DenseStore.md)
+[`OwnedDenseStore`](OwnedDenseStore.md)\<`P`\>
 
 #### Returns
 
@@ -66,13 +40,13 @@ Defined in: [\_spine/core.d.ts:606](https://github.com/freebatteryfactory/LiteSh
 
 > **addSystem**(`system`): `void`
 
-Defined in: [\_spine/core.d.ts:605](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L605)
+Defined in: [\_spine/core.d.ts:791](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L791)
 
 #### Parameters
 
 ##### system
 
-[`System`](System.md)
+[`System`](System.md)\<[`PartTuple`](../type-aliases/PartTuple.md), [`PartTuple`](../type-aliases/PartTuple.md), [`PartTuple`](../type-aliases/PartTuple.md)\> \| [`DenseSystem`](DenseSystem.md)\<readonly [`Part`](Part.md)\<`number`, `string`, `unknown`\>[], readonly [`Part`](Part.md)\<`number`, `string`, `unknown`\>[]\>
 
 #### Returns
 
@@ -84,7 +58,7 @@ Defined in: [\_spine/core.d.ts:605](https://github.com/freebatteryfactory/LiteSh
 
 > **despawn**(`id`): `void`
 
-Defined in: [\_spine/core.d.ts:599](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L599)
+Defined in: [\_spine/core.d.ts:787](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L787)
 
 #### Parameters
 
@@ -100,27 +74,33 @@ Defined in: [\_spine/core.d.ts:599](https://github.com/freebatteryfactory/LiteSh
 
 ### query()
 
-> **query**(...`componentNames`): readonly [`Entity`](Entity.md)[]
+> **query**\<`P`\>(...`parts`): readonly [`Entity`](Entity.md)\<[`TuplePart`](../type-aliases/TuplePart.md)\<`P`\>\>[]
 
-Defined in: [\_spine/core.d.ts:604](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L604)
+Defined in: [\_spine/core.d.ts:790](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L790)
+
+#### Type Parameters
+
+##### P
+
+`P` *extends* [`PartTuple`](../type-aliases/PartTuple.md)
 
 #### Parameters
 
-##### componentNames
+##### parts
 
-...`string`[]
+...`P`
 
 #### Returns
 
-readonly [`Entity`](Entity.md)[]
+readonly [`Entity`](Entity.md)\<[`TuplePart`](../type-aliases/TuplePart.md)\<`P`\>\>[]
 
 ***
 
-### removeComponent()
+### remove()
 
-> **removeComponent**(`id`, `name`): `void`
+> **remove**(`id`, `part`): `void`
 
-Defined in: [\_spine/core.d.ts:603](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L603)
+Defined in: [\_spine/core.d.ts:789](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L789)
 
 #### Parameters
 
@@ -128,9 +108,9 @@ Defined in: [\_spine/core.d.ts:603](https://github.com/freebatteryfactory/LiteSh
 
 [`EntityId`](../type-aliases/EntityId.md)
 
-##### name
+##### part
 
-`string`
+[`AnyPart`](../type-aliases/AnyPart.md)
 
 #### Returns
 
@@ -138,13 +118,17 @@ Defined in: [\_spine/core.d.ts:603](https://github.com/freebatteryfactory/LiteSh
 
 ***
 
-### setComponent()
+### set()
 
-> **setComponent**(`id`, `name`, `value`): `void`
+> **set**\<`P`\>(`id`, `value`): `void`
 
-Defined in: [\_spine/core.d.ts:602](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L602)
+Defined in: [\_spine/core.d.ts:788](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L788)
 
-Schema-free component write — used by systems to persist computed output values.
+#### Type Parameters
+
+##### P
+
+`P` *extends* [`AnyPart`](../type-aliases/AnyPart.md)
 
 #### Parameters
 
@@ -152,13 +136,9 @@ Schema-free component write — used by systems to persist computed output value
 
 [`EntityId`](../type-aliases/EntityId.md)
 
-##### name
-
-`string`
-
 ##### value
 
-`unknown`
+[`AdmittedPartValue`](AdmittedPartValue.md)\<`P`\>
 
 #### Returns
 
@@ -168,15 +148,15 @@ Schema-free component write — used by systems to persist computed output value
 
 ### spawn()
 
-> **spawn**(`components?`): [`EntityId`](../type-aliases/EntityId.md)
+> **spawn**(...`values`): [`EntityId`](../type-aliases/EntityId.md)
 
-Defined in: [\_spine/core.d.ts:598](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L598)
+Defined in: [\_spine/core.d.ts:786](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L786)
 
 #### Parameters
 
-##### components?
+##### values
 
-`Record`\<`string`, `unknown`\>
+...readonly [`AdmittedPartValue`](AdmittedPartValue.md)\<[`AnyPart`](../type-aliases/AnyPart.md)\>[]
 
 #### Returns
 
@@ -188,7 +168,7 @@ Defined in: [\_spine/core.d.ts:598](https://github.com/freebatteryfactory/LiteSh
 
 > **tick**(): `void`
 
-Defined in: [\_spine/core.d.ts:607](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L607)
+Defined in: [\_spine/core.d.ts:793](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L793)
 
 #### Returns
 

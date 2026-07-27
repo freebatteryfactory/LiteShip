@@ -90,7 +90,7 @@ Optional pre-computed DST (simulation) facts to inject.
 
 The optional `traceability` is the INJECTED requirements-traceability facts
 capability (the avionics-tier ledger): a host (the CLI's
-`packages/cli/src/lib/traceability.ts` state machine) parses `traceability/*.yaml`,
+`packages/cli/src/internal/traceability.ts` state machine) parses `traceability/*.yaml`,
 scans the corpus for `// PROVES:` headers, runs the lifecycle fold against the
 injected wall-clock date, and folds the verdicts into [TraceabilityFacts](../interfaces/TraceabilityFacts.md),
 then threads them through so the `traceabilityBridgeGate` can fold them. Same
@@ -105,7 +105,7 @@ Optional pre-computed requirements-traceability facts to inject.
 
 The optional `standards` is the INJECTED standards-integrity facts capability (the
 AGENT-SAFETY META-GAUNTLET, the "raccoon rule"): a host (the CLI's
-`packages/cli/src/lib/standards-surface.ts` extractor) reads the live standards
+`packages/cli/src/internal/standards-surface.ts` extractor) reads the live standards
 surface, content-addresses it, diffs it against the committed snapshot, applies the
 owner sign-offs against the injected wall-clock date, and folds the verdicts into
 [StandardsIntegrityFacts](../interfaces/StandardsIntegrityFacts.md), then threads them through so the

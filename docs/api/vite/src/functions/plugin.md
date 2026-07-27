@@ -8,7 +8,7 @@
 
 > **plugin**(`config?`, `resolvePackaged?`, `projectConfigLoader?`): `Plugin`
 
-Defined in: [vite/src/plugin.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L198)
+Defined in: [vite/src/plugin.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/plugin.ts#L199)
 
 Create the liteship Vite plugin.
 

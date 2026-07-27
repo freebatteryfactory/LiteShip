@@ -241,6 +241,15 @@ import { describe, it, expect } from 'vitest';
 import { contentAddressOf } from '${driver.contentAddressImport}';
 import { ${driver.compileName} } from '${driver.compileImport}';
 import { SceneRuntime } from '${driver.runtimeImport}';
+import {
+  AudioSourcePart,
+  BlendPart,
+  FrameRangePart,
+  GainPart,
+  IntensityPart,
+  OpacityPart,
+  PhasePart,
+} from '${driver.partsImport}';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('${name}', () => {
@@ -270,7 +279,13 @@ function sharedHelpers(driver: SceneDriver): string {
   // The DURABLE per-entity outputs the scene systems persist via setComponent
   // (VideoSystem _opacity, AudioSystem _phase/_gain, SyncSystem _intensity,
   // TransitionSystem _blend). Reading these is the observable frame state.
-  const FRAME_COMPONENTS = ['_opacity', '_phase', '_gain', '_intensity', '_blend'];
+  const FRAME_COMPONENTS = [
+    ['_opacity', OpacityPart],
+    ['_phase', PhasePart],
+    ['_gain', GainPart],
+    ['_intensity', IntensityPart],
+    ['_blend', BlendPart],
+  ];
 
   // Snapshot one frame to a plain, ordered, content-addressable structure:
   // every entity's id + the durable output components present on it, plus the
@@ -278,16 +293,16 @@ function sharedHelpers(driver: SceneDriver): string {
   // forks the address.
   const snapshotFrame = async (handle) => {
     // World.query is synchronous — read the ticked FrameRange entities directly.
-    const entities = handle.world.query('FrameRange');
-    const rows = entities
-      .map((e) => {
-        const out = {};
-        for (const key of FRAME_COMPONENTS) {
-          const v = e.components.get(key);
-          if (v !== undefined) out[key] = v;
-        }
-        return { id: String(e.id), out };
-      })
+    const rowsById = new Map(
+      handle.world.query(FrameRangePart).map((e) => [String(e.id), { id: String(e.id), out: {} }]),
+    );
+    for (const [key, part] of FRAME_COMPONENTS) {
+      for (const e of handle.world.query(part)) {
+        const row = rowsById.get(String(e.id));
+        if (row !== undefined) row.out[key] = e.get(part);
+      }
+    }
+    const rows = [...rowsById.values()]
       .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     const svg = Array.from(handle.svgAttrs().entries())
       .map(([id, attrs]) => ({ id: String(id), attrs }))
@@ -345,10 +360,10 @@ function syncAccuracyBlock(title: string): string {
         const videoMs = (frame / fps) * 1000;
         // Audio entities in range carry a non-zero _phase relative to their
         // FrameRange.from; reconstruct absolute audio ms and compare to videoMs.
-        const audioEntities = handle.world.query('AudioSource', 'FrameRange', '_phase');
+        const audioEntities = handle.world.query(AudioSourcePart, FrameRangePart, PhasePart);
         for (const e of audioEntities) {
-          const range = e.components.get('FrameRange');
-          const phase = e.components.get('_phase');
+          const range = e.get(FrameRangePart);
+          const phase = e.get(PhasePart);
           if (frame < range.from || frame >= range.to) continue; // not playing this frame
           const audioMs = (phase / samplesPerFrame) * (1000 / fps) + (range.from / fps) * 1000;
           expect(Math.abs(audioMs - videoMs)).toBeLessThanOrEqual(1);
@@ -541,6 +556,8 @@ export interface SceneDriver {
   readonly capsuleImport: string;
   /** Import specifier (with `.js`) for the module exporting `SceneRuntime`. */
   readonly runtimeImport: string;
+  /** Import specifier (with `.js`) for the canonical Scene Part identities. */
+  readonly partsImport: string;
   /** Import specifier (with `.js`) for the canonical `contentAddressOf`. */
   readonly contentAddressImport: string;
   /** Whether the scene declares at least one audio track (gates sync-accuracy). */

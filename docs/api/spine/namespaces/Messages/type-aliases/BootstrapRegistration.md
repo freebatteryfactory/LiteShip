@@ -8,4 +8,4 @@
 
 > **BootstrapRegistration** = [`BootstrapQuantizerRegistration`](../../../interfaces/BootstrapQuantizerRegistration.md)
 
-Defined in: [\_spine/worker.d.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L285)
+Defined in: [\_spine/worker.d.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L286)

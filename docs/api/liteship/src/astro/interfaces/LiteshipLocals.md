@@ -18,7 +18,7 @@ adaptive rendering decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: astro/dist/middleware.d.ts:27
+Defined in: astro/dist/middleware.d.ts:29
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: astro/dist/middleware.d.ts:39
+Defined in: astro/dist/middleware.d.ts:41
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -74,7 +74,7 @@ Spreadable `data-liteship-<axis>` map for `<html {...htmlAttributesMap}>`.
 
 > `readonly` **responsiveMedia**: (`intent`) => [`ResponsiveMediaPictureProjection`](../../media/interfaces/ResponsiveMediaPictureProjection.md)
 
-Defined in: astro/dist/middleware.d.ts:37
+Defined in: astro/dist/middleware.d.ts:39
 
 Project a responsive-media intent using THIS request's Save-Data / DPR caps
 (derived from Client Hints). Every artifact of the returned projection derives
@@ -93,6 +93,16 @@ normal representations apart (#140).
 #### Returns
 
 [`ResponsiveMediaPictureProjection`](../../media/interfaces/ResponsiveMediaPictureProjection.md)
+
+***
+
+### tierEvidence
+
+> `readonly` **tierEvidence**: `CapabilityTierEvidence`
+
+Defined in: astro/dist/middleware.d.ts:27
+
+Per-axis observed/inferred provenance behind [tiers](#tiers).
 
 ***
 

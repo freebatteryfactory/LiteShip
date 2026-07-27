@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDeviceCapabilities
 
-Defined in: [\_spine/detect.d.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L73)
+Defined in: [\_spine/detect.d.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L129)
 
 Optional browser capabilities used by richer host decisions.
 
@@ -20,7 +20,7 @@ Optional browser capabilities used by richer host decisions.
 
 > `readonly` **colorGamut**: `"srgb"` \| `"p3"` \| `"rec2020"`
 
-Defined in: [\_spine/detect.d.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L78)
+Defined in: [\_spine/detect.d.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L134)
 
 ***
 
@@ -74,9 +74,9 @@ Defined in: [\_spine/detect.d.ts:25](https://github.com/freebatteryfactory/LiteS
 
 ### dynamicRange
 
-> `readonly` **dynamicRange**: `"standard"` \| `"high"`
+> `readonly` **dynamicRange**: `"high"` \| `"standard"`
 
-Defined in: [\_spine/detect.d.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L77)
+Defined in: [\_spine/detect.d.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L133)
 
 ***
 
@@ -84,7 +84,7 @@ Defined in: [\_spine/detect.d.ts:77](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **forcedColors**: `boolean`
 
-Defined in: [\_spine/detect.d.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L75)
+Defined in: [\_spine/detect.d.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L131)
 
 ***
 
@@ -128,7 +128,7 @@ Defined in: [\_spine/detect.d.ts:22](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **prefersContrast**: `"custom"` \| `"no-preference"` \| `"more"` \| `"less"`
 
-Defined in: [\_spine/detect.d.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L74)
+Defined in: [\_spine/detect.d.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L130)
 
 ***
 
@@ -148,7 +148,7 @@ Defined in: [\_spine/detect.d.ts:21](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **prefersReducedTransparency**: `boolean`
 
-Defined in: [\_spine/detect.d.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L76)
+Defined in: [\_spine/detect.d.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L132)
 
 ***
 
@@ -168,7 +168,7 @@ Defined in: [\_spine/detect.d.ts:20](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **updateRate**: `"none"` \| `"fast"` \| `"slow"`
 
-Defined in: [\_spine/detect.d.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L79)
+Defined in: [\_spine/detect.d.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L135)
 
 ***
 

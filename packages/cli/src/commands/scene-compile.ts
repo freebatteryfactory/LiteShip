@@ -5,7 +5,7 @@
  * @module
  */
 
-import { runCliCommand } from '../lib/run-command.js';
+import { runCliCommand } from '../internal/run-command.js';
 import { emit } from '../receipts.js';
 
 /** Execute the scene compile command. */

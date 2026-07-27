@@ -6,7 +6,7 @@
 
 # Interface: MorphCallbacks
 
-Defined in: [\_spine/web.d.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L102)
+Defined in: [\_spine/web.d.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L108)
 
 Lifecycle callbacks emitted around a DOM morph operation.
 
@@ -16,7 +16,7 @@ Lifecycle callbacks emitted around a DOM morph operation.
 
 > `optional` **afterAdd**(`node`): `void`
 
-Defined in: [\_spine/web.d.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L104)
+Defined in: [\_spine/web.d.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L110)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/web.d.ts:104](https://github.com/freebatteryfactory/LiteShi
 
 > `optional` **beforeAttributeUpdate**(`element`, `name`, `value`): `boolean`
 
-Defined in: [\_spine/web.d.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L105)
+Defined in: [\_spine/web.d.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L111)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [\_spine/web.d.ts:105](https://github.com/freebatteryfactory/LiteShi
 
 > `optional` **beforeRemove**(`node`): `boolean`
 
-Defined in: [\_spine/web.d.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L103)
+Defined in: [\_spine/web.d.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L109)
 
 #### Parameters
 

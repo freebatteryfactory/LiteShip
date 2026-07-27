@@ -8,6 +8,6 @@
 
 > **Resolution** = [`EdgeHostResolution`](../../../interfaces/EdgeHostResolution.md)
 
-Defined in: [edge/src/host-adapter.ts:568](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L568)
+Defined in: [edge/src/host-adapter.ts:576](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L576)
 
 Alias for [EdgeHostResolution](../../../interfaces/EdgeHostResolution.md).

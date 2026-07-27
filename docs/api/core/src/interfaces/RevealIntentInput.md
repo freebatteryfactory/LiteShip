@@ -6,7 +6,7 @@
 
 # Interface: RevealIntentInput
 
-Defined in: [core/src/motion/reveal.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L62)
+Defined in: [core/src/motion/reveal.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L66)
 
 Authoring input to [Reveal.intent](../variables/Reveal.md#intent).
 
@@ -20,7 +20,7 @@ Authoring input to [Reveal.intent](../variables/Reveal.md#intent).
 
 > `readonly` **from**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/motion/reveal.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L65)
+Defined in: [core/src/motion/reveal.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L69)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [core/src/motion/reveal.ts:65](https://github.com/freebatteryfactory
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: [core/src/motion/reveal.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L68)
+Defined in: [core/src/motion/reveal.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L72)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [core/src/motion/reveal.ts:68](https://github.com/freebatteryfactory
 
 > `readonly` **target**: `string`
 
-Defined in: [core/src/motion/reveal.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L63)
+Defined in: [core/src/motion/reveal.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L67)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [core/src/motion/reveal.ts:63](https://github.com/freebatteryfactory
 
 > `readonly` **to**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: [core/src/motion/reveal.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L66)
+Defined in: [core/src/motion/reveal.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L70)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [core/src/motion/reveal.ts:66](https://github.com/freebatteryfactory
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: [core/src/motion/reveal.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L67)
+Defined in: [core/src/motion/reveal.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L71)
 
 ***
 
@@ -60,4 +60,4 @@ Defined in: [core/src/motion/reveal.ts:67](https://github.com/freebatteryfactory
 
 > `readonly` **trigger**: [`RevealTrigger`](../type-aliases/RevealTrigger.md)
 
-Defined in: [core/src/motion/reveal.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L64)
+Defined in: [core/src/motion/reveal.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L68)

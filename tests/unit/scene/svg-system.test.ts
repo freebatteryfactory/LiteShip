@@ -1,22 +1,33 @@
 /**
  * SVGSystem — P3 (ECS→SVG) suite.
  *
- * SVGSystem is the 7th canonical system. It composes a typed `_svgAttrs`
+ * SVGSystem is the 8th canonical system. It composes a typed `_svgAttrs`
  * struct from outputs *prior* systems already wrote this tick — it never
  * recomputes opacity or blend. These tests pin three properties:
  *
  *  1. Composition: post-tick `_svgAttrs` mirrors the `_opacity`
  *     (VideoSystem) and `_blend` (TransitionSystem) values, never
  *     recomputing them.
- *  2. Ordering: SVGSystem is registered LAST/7th in SceneRuntime — a
+ *  2. Ordering: SVGSystem is registered LAST/8th in SceneRuntime — a
  *     reorder would make it read stale (previous-tick) outputs.
  *  3. Purity: it never touches the DOM (SSR-safe).
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { createWorld } from '@liteship/core';
-import { SVGSystem, VideoSystem, TransitionSystem, Track, compileScene, SceneRuntime } from '@liteship/scene';
+import { createWorld } from '@liteship/core/ecs';
+import {
+  OpacityPart,
+  SVGSystem,
+  SceneRuntime,
+  SvgAttrsPart,
+  Track,
+  TransitionSystem,
+  VideoSourcePart,
+  VideoSystem,
+  compileScene,
+} from '@liteship/scene';
 import type { SceneContract } from '@liteship/scene';
+import { spawnSceneEntity } from '../../support/scene-world.js';
 
 interface SvgAttrsRead {
   readonly _tag: 'SvgAttrs';
@@ -29,16 +40,16 @@ interface SvgAttrsRead {
 describe('SVGSystem', () => {
   it('composes _svgAttrs from the _opacity VideoSystem already wrote (no recompute)', () => {
     const world = createWorld();
-    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    spawnSceneEntity(world, { VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     // VideoSystem first (writes _opacity), then SVGSystem (reads it).
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
     world.tick();
 
-    const entities = world.query('VideoSource');
+    const entities = world.query(VideoSourcePart, OpacityPart, SvgAttrsPart);
     const ent = entities[0]!;
-    const opacity = ent.components.get('_opacity');
-    const attrs = ent.components.get('_svgAttrs') as SvgAttrsRead | undefined;
+    const opacity = ent.get(OpacityPart);
+    const attrs = ent.get(SvgAttrsPart) as SvgAttrsRead;
 
     expect(opacity).toBe(1);
     expect(attrs).toBeDefined();
@@ -49,13 +60,13 @@ describe('SVGSystem', () => {
 
   it('out-of-range opacity (0) flows into _svgAttrs unchanged', () => {
     const world = createWorld();
-    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    spawnSceneEntity(world, { VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(120));
     world.addSystem(SVGSystem(120));
     world.tick();
 
-    const entities = world.query('VideoSource');
-    const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+    const entities = world.query(VideoSourcePart, SvgAttrsPart);
+    const attrs = entities[0]!.get(SvgAttrsPart) as SvgAttrsRead;
     expect(attrs.opacity).toBe(0);
   });
 
@@ -65,7 +76,7 @@ describe('SVGSystem', () => {
     // → 'screen', else 'normal'.
     const blendModeAt = (frameIndex: number): string | undefined => {
       const world = createWorld();
-      world.spawn({
+      spawnSceneEntity(world, {
         VideoSource: {},
         FrameRange: { from: 0, to: 100 },
         TransitionKind: 'crossfade',
@@ -76,8 +87,8 @@ describe('SVGSystem', () => {
       world.addSystem(TransitionSystem(frameIndex));
       world.addSystem(SVGSystem(frameIndex));
       world.tick();
-      const entities = world.query('VideoSource');
-      const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+      const entities = world.query(VideoSourcePart, SvgAttrsPart);
+      const attrs = entities[0]!.get(SvgAttrsPart) as SvgAttrsRead;
       return attrs.mixBlendMode;
     };
     // frame 20 → blend 0.2 → normal; frame 80 → blend 0.8 → screen.
@@ -87,17 +98,17 @@ describe('SVGSystem', () => {
 
   it('omits mixBlendMode when no transition (_blend) is present', () => {
     const world = createWorld();
-    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    spawnSceneEntity(world, { VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
     world.tick();
-    const entities = world.query('VideoSource');
-    const attrs = entities[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+    const entities = world.query(VideoSourcePart, SvgAttrsPart);
+    const attrs = entities[0]!.get(SvgAttrsPart) as SvgAttrsRead;
     expect(attrs.mixBlendMode).toBeUndefined();
     expect(attrs.opacity).toBe(1);
   });
 
-  it('is registered as the 7th and LAST canonical system (ordering invariant)', async () => {
+  it('is registered as the 8th and LAST canonical system (ordering invariant)', async () => {
     const scene: SceneContract = {
       name: 'svg-order-fixture',
       duration: 1000,
@@ -112,18 +123,18 @@ describe('SVGSystem', () => {
     const handle = await SceneRuntime.build(compiled);
     try {
       // The pinned canonical count is 7.
-      expect(SceneRuntime.systemCount).toBe(7);
-      expect(handle.systemsRegistered).toBe(7);
+      expect(SceneRuntime.systemCount).toBe(8);
+      expect(handle.systemsRegistered).toBe(8);
 
       // Ticking through the live runtime (which registers all 7 systems in
       // topological order) must populate _svgAttrs — proof SVGSystem runs
       // AFTER VideoSystem within the same tick.
       await handle.tick((30 / 60) * 1000);
-      const videos = handle.world.query('VideoSource');
-      const attrs = videos[0]!.components.get('_svgAttrs') as SvgAttrsRead;
+      const videos = handle.world.query(VideoSourcePart, OpacityPart, SvgAttrsPart);
+      const attrs = videos[0]!.get(SvgAttrsPart) as SvgAttrsRead;
       expect(attrs).toBeDefined();
       expect(attrs._tag).toBe('SvgAttrs');
-      expect(attrs.opacity).toBe(videos[0]!.components.get('_opacity'));
+      expect(attrs.opacity).toBe(videos[0]!.get(OpacityPart));
     } finally {
       await handle.release();
     }
@@ -147,12 +158,12 @@ describe('SVGSystem', () => {
     );
     try {
       const world = createWorld();
-      world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+      spawnSceneEntity(world, { VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
       world.addSystem(VideoSystem(30));
       world.addSystem(SVGSystem(30));
       world.tick();
-      const entities = world.query('VideoSource');
-      expect(entities[0]!.components.get('_svgAttrs')).toBeDefined();
+      const entities = world.query(VideoSourcePart, SvgAttrsPart);
+      expect(entities[0]!.get(SvgAttrsPart)).toBeDefined();
       expect(docSpy).not.toHaveBeenCalled();
     } finally {
       if (hadDocument) g.document = originalDocument;

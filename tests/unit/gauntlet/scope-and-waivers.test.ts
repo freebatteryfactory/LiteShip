@@ -32,7 +32,7 @@ describe('scopeContextByLevel', () => {
     'packages/core/src/reactive/zap.ts': 'L3 file', // L3
     'packages/canonical/src/x.ts': 'L4 file', // L4
     'packages/edge/src/manifest.ts': 'L2 file', // L2
-    'packages/cli/src/lib/ansi.ts': 'L1 file', // L1
+    'packages/cli/src/internal/ansi.ts': 'L1 file', // L1
   });
 
   it('an L3 scope keeps L3 and L4 files, drops L2 and L1', () => {
@@ -58,7 +58,7 @@ describe('scopeContextByLevel', () => {
     expect(scoped.repoRoot).toBe(ctx.repoRoot);
     expect(scoped.readFile('packages/core/src/reactive/zap.ts')).toBe('L3 file');
     // readFile is NOT scoped — only the file list is.
-    expect(scoped.readFile('packages/cli/src/lib/ansi.ts')).toBe('L1 file');
+    expect(scoped.readFile('packages/cli/src/internal/ansi.ts')).toBe('L1 file');
   });
 
   it('runGates without a map sees ALL files (back-compat)', () => {
@@ -84,7 +84,7 @@ describe('scopeContextByLevel', () => {
     const real = seen.filter((f) => f.startsWith('packages/'));
     expect(real.sort()).toEqual([
       'packages/canonical/src/x.ts',
-      'packages/cli/src/lib/ansi.ts',
+      'packages/cli/src/internal/ansi.ts',
       'packages/core/src/reactive/zap.ts',
       'packages/edge/src/manifest.ts',
     ]);

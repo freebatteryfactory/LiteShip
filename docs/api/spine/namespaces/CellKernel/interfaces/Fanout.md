@@ -6,7 +6,7 @@
 
 # Interface: Fanout\<T\>
 
-Defined in: [\_spine/core.d.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L215)
+Defined in: [\_spine/core.d.ts:221](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L221)
 
 Live no-replay fan-out kernel: fire-and-forget publish, no current-value slot.
 
@@ -22,7 +22,7 @@ Live no-replay fan-out kernel: fire-and-forget publish, no current-value slot.
 
 > `readonly` **\_tag**: `"CellFanout"`
 
-Defined in: [\_spine/core.d.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L216)
+Defined in: [\_spine/core.d.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L222)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:216](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **closed**: `boolean`
 
-Defined in: [\_spine/core.d.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L220)
+Defined in: [\_spine/core.d.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L226)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/core.d.ts:220](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **size**: `number`
 
-Defined in: [\_spine/core.d.ts:221](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L221)
+Defined in: [\_spine/core.d.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L227)
 
 ## Methods
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/core.d.ts:221](https://github.com/freebatteryfactory/LiteSh
 
 > **close**(): `void`
 
-Defined in: [\_spine/core.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L219)
+Defined in: [\_spine/core.d.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L225)
 
 #### Returns
 
@@ -58,7 +58,7 @@ Defined in: [\_spine/core.d.ts:219](https://github.com/freebatteryfactory/LiteSh
 
 > **publish**(`value`): `void`
 
-Defined in: [\_spine/core.d.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L217)
+Defined in: [\_spine/core.d.ts:223](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L223)
 
 #### Parameters
 
@@ -76,7 +76,7 @@ Defined in: [\_spine/core.d.ts:217](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L218)
+Defined in: [\_spine/core.d.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L224)
 
 #### Parameters
 

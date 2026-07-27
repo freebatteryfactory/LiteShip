@@ -4,11 +4,17 @@
 
 [LiteShip](../../modules.md) / [\_spine](../README.md) / DenseStore
 
-# Interface: DenseStore
+# Interface: DenseStore\<P\>
 
-Defined in: [\_spine/core.d.ts:623](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L623)
+Defined in: [\_spine/core.d.ts:809](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L809)
 
 Dense, fixed-capacity numeric ECS component storage.
+
+## Type Parameters
+
+### P
+
+`P` *extends* [`Part`](Part.md)\<`number`\> = [`Part`](Part.md)\<`number`\>
 
 ## Properties
 
@@ -16,7 +22,7 @@ Dense, fixed-capacity numeric ECS component storage.
 
 > `readonly` **\_dense**: `true`
 
-Defined in: [\_spine/core.d.ts:626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L626)
+Defined in: [\_spine/core.d.ts:813](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L813)
 
 ***
 
@@ -24,73 +30,55 @@ Defined in: [\_spine/core.d.ts:626](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **capacity**: `number`
 
-Defined in: [\_spine/core.d.ts:625](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L625)
+Defined in: [\_spine/core.d.ts:812](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L812)
 
 ***
 
 ### count
 
-> **count**: `number`
+> `readonly` **count**: `number`
 
-Defined in: [\_spine/core.d.ts:630](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L630)
-
-***
-
-### data
-
-> `readonly` **data**: `Float64Array`
-
-Defined in: [\_spine/core.d.ts:629](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L629)
+Defined in: [\_spine/core.d.ts:816](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L816)
 
 ***
 
 ### entityToIndex
 
-> `readonly` **entityToIndex**: [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)\<[`EntityId`](../type-aliases/EntityId.md), `number`\>
+> `readonly` **entityToIndex**: `ReadonlyMap`\<[`EntityId`](../type-aliases/EntityId.md), `number`\>
 
-Defined in: [\_spine/core.d.ts:627](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L627)
+Defined in: [\_spine/core.d.ts:814](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L814)
 
 ***
 
 ### indexToEntity
 
-> `readonly` **indexToEntity**: [`EntityId`](../type-aliases/EntityId.md)[]
+> `readonly` **indexToEntity**: readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
-Defined in: [\_spine/core.d.ts:628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L628)
+Defined in: [\_spine/core.d.ts:815](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L815)
 
 ***
 
 ### name
 
-> `readonly` **name**: `string`
+> `readonly` **name**: `P`\[`"name"`\]
 
-Defined in: [\_spine/core.d.ts:624](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L624)
-
-## Methods
-
-### delete()
-
-> **delete**(`id`): `boolean`
-
-Defined in: [\_spine/core.d.ts:633](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L633)
-
-#### Parameters
-
-##### id
-
-[`EntityId`](../type-aliases/EntityId.md)
-
-#### Returns
-
-`boolean`
+Defined in: [\_spine/core.d.ts:811](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L811)
 
 ***
+
+### part
+
+> `readonly` **part**: `P`
+
+Defined in: [\_spine/core.d.ts:810](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L810)
+
+## Methods
 
 ### entities()
 
 > **entities**(): readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
-Defined in: [\_spine/core.d.ts:637](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L637)
+Defined in: [\_spine/core.d.ts:820](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L820)
 
 #### Returns
 
@@ -100,13 +88,13 @@ readonly [`EntityId`](../type-aliases/EntityId.md)[]
 
 ### get()
 
-> **get**(`id`): `number` \| `undefined`
+> **get**(`entityId`): `number` \| `undefined`
 
-Defined in: [\_spine/core.d.ts:631](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L631)
+Defined in: [\_spine/core.d.ts:817](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L817)
 
 #### Parameters
 
-##### id
+##### entityId
 
 [`EntityId`](../type-aliases/EntityId.md)
 
@@ -118,13 +106,13 @@ Defined in: [\_spine/core.d.ts:631](https://github.com/freebatteryfactory/LiteSh
 
 ### has()
 
-> **has**(`id`): `boolean`
+> **has**(`entityId`): `boolean`
 
-Defined in: [\_spine/core.d.ts:634](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L634)
+Defined in: [\_spine/core.d.ts:818](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L818)
 
 #### Parameters
 
-##### id
+##### entityId
 
 [`EntityId`](../type-aliases/EntityId.md)
 
@@ -134,46 +122,12 @@ Defined in: [\_spine/core.d.ts:634](https://github.com/freebatteryfactory/LiteSh
 
 ***
 
-### reset()
-
-> **reset**(): `void`
-
-Defined in: [\_spine/core.d.ts:635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L635)
-
-#### Returns
-
-`void`
-
-***
-
-### set()
-
-> **set**(`id`, `value`): `void`
-
-Defined in: [\_spine/core.d.ts:632](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L632)
-
-#### Parameters
-
-##### id
-
-[`EntityId`](../type-aliases/EntityId.md)
-
-##### value
-
-`number`
-
-#### Returns
-
-`void`
-
-***
-
 ### view()
 
-> **view**(): `Float64Array`
+> **view**(): [`ReadonlyDenseValues`](ReadonlyDenseValues.md)
 
-Defined in: [\_spine/core.d.ts:636](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L636)
+Defined in: [\_spine/core.d.ts:819](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L819)
 
 #### Returns
 
-`Float64Array`
+[`ReadonlyDenseValues`](ReadonlyDenseValues.md)

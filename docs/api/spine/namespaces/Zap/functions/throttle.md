@@ -8,7 +8,7 @@
 
 > **throttle**\<`T`\>(`event`, `ms`, `clock?`): [`Zap`](../../../interfaces/Zap.md)\<`T`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:728](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L728)
+Defined in: [\_spine/core.d.ts:943](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L943)
 
 ## Type Parameters
 

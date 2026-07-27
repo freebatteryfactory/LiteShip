@@ -5,7 +5,8 @@
  */
 
 import type { Compositor, Signal, VideoFrameOutput, CompositeState } from '@liteship/core';
-import { Diagnostics, Millis, VideoRenderer } from '@liteship/core';
+import { Diagnostics, Millis, createVideoRenderer } from '@liteship/core';
+import type { VideoRenderer } from '@liteship/core';
 import { createContext, useContext, createElement } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import { useCurrentFrame } from 'remotion';
@@ -85,7 +86,7 @@ export function rendererFromRemotionConfig(
   if (Math.ceil((durationMs / 1000) * config.fps) > config.durationInFrames) {
     durationMs = durationMs * (1 - Number.EPSILON);
   }
-  return VideoRenderer.make(
+  return createVideoRenderer(
     {
       fps: config.fps,
       width: config.width,

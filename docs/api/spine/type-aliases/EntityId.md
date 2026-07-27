@@ -8,7 +8,7 @@
 
 > **EntityId** = `string` & `object`
 
-Defined in: [\_spine/core.d.ts:574](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L574)
+Defined in: [\_spine/core.d.ts:601](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L601)
 
 Branded identifier minted for an ECS entity.
 

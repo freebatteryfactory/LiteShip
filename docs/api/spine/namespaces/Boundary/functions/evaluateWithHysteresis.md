@@ -8,7 +8,7 @@
 
 > **evaluateWithHysteresis**\<`B`\>(`boundary`, `value`, `previousState`): [`StateUnion`](../../../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L274)
+Defined in: [\_spine/core.d.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L280)
 
 ## Type Parameters
 

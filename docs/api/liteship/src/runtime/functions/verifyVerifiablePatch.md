@@ -8,7 +8,7 @@
 
 > **verifyVerifiablePatch**(`envelope`, `currentBaseGraphId`): [`VerifiablePatchVerification`](../type-aliases/VerifiablePatchVerification.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:114
+Defined in: web/dist/watch-and-prepare.d.ts:114
 
 Verify a stamped envelope against the live base graph id and fragment bytes.
 

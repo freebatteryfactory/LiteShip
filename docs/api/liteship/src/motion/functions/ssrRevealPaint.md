@@ -8,7 +8,7 @@
 
 > **ssrRevealPaint**(`intent`, `opts`): [`RevealSsrPaint`](../interfaces/RevealSsrPaint.md)
 
-Defined in: core/dist/motion/reveal.d.ts:83
+Defined in: core/dist/motion/reveal.d.ts:85
 
 Compute SSR first-paint CSS custom properties for a reveal boundary.
 

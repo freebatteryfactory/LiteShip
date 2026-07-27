@@ -77,7 +77,7 @@ import {
   type HarnessContext,
 } from '../packages/core/src/harness/index.js';
 import type { CapsuleDef } from '../packages/core/src/authoring/assembly.js';
-import type { AssemblyKind } from '../packages/core/src/authoring/capsule.js';
+import { ASSEMBLY_KINDS, type AssemblyKind } from '../packages/core/src/authoring/capsule.js';
 import type { ContentAddress } from '../packages/core/src/schema/brands.js';
 import { detectCapsuleCalls, FACTORY_NAMING, FACTORY_HINTS } from './lib/capsule-detector.js';
 
@@ -684,15 +684,7 @@ function dispatchHarness(
 }
 
 /** Checks whether a string is a valid AssemblyKind. */
-const VALID_KINDS = new Set<string>([
-  'pureTransform',
-  'receiptedMutation',
-  'stateMachine',
-  'siteAdapter',
-  'policyGate',
-  'cachedProjection',
-  'sceneComposition',
-]);
+const VALID_KINDS: ReadonlySet<string> = new Set(ASSEMBLY_KINDS);
 
 function isAssemblyKind(k: string): k is AssemblyKind {
   return VALID_KINDS.has(k);
@@ -891,6 +883,8 @@ async function main(): Promise<void> {
         if (spec !== undefined) {
           const runtimeAbs = resolve('packages/scene/src/runtime.ts');
           const runtimeModule = normalizeRepoPath(relative(dirname(testPath), runtimeAbs)).replace(/\.ts$/, '.js');
+          const partsAbs = resolve('packages/scene/src/parts.ts');
+          const partsModule = normalizeRepoPath(relative(dirname(testPath), partsAbs)).replace(/\.ts$/, '.js');
           const sceneModule = sourceModule.startsWith('.') ? sourceModule : `./${sourceModule}`;
           sceneDriver = {
             compileName: spec.compileExport,
@@ -899,6 +893,7 @@ async function main(): Promise<void> {
             capsuleName: d.binding,
             capsuleImport: sceneModule,
             runtimeImport: runtimeModule.startsWith('.') ? runtimeModule : `./${runtimeModule}`,
+            partsImport: partsModule.startsWith('.') ? partsModule : `./${partsModule}`,
             contentAddressImport: contentAddressModule.startsWith('.')
               ? contentAddressModule
               : `./${contentAddressModule}`,

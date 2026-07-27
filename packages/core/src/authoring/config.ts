@@ -84,6 +84,7 @@ export const Config = {
       '@liteship/genui': r('packages/genui/src/index.ts'),
       '@liteship/core/harness': r('packages/core/src/harness/index.ts'),
       '@liteship/core/simulation': r('packages/core/src/simulation/index.ts'),
+      '@liteship/core/ecs': r('packages/core/src/ecs/index.ts'),
       '@liteship/core/fs-walk': r('packages/core/src/fs-walk.ts'),
       '@liteship/core/authoring': r('packages/core/src/authoring/index.ts'),
       '@liteship/core/reactive': r('packages/core/src/reactive/index.ts'),

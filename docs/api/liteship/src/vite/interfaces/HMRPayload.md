@@ -6,30 +6,42 @@
 
 # Interface: HMRPayload
 
-Defined in: vite/dist/hmr.d.ts:22
+Defined in: vite/dist/hmr.d.ts:31
 
-Shape of the HMR payload the liteship Vite plugin ships over the Vite
-dev-server WebSocket. Handled by [handleHMR](../functions/handleHMR.md) on the client.
+Canonical Vite HMR payload. `previousBoundaryId` finds the currently rendered
+hosts; `boundary` and `manifest` are the newly compiled definition/projection.
 
 ## Properties
 
 ### boundary
 
-> `readonly` **boundary**: `string`
+> `readonly` **boundary**: `HMRBoundaryIdentity`
 
-Defined in: vite/dist/hmr.d.ts:26
-
-Boundary id whose compiled output changed.
+Defined in: vite/dist/hmr.d.ts:35
 
 ***
 
-### css?
+### boundaryName
 
-> `readonly` `optional` **css?**: `string`
+> `readonly` **boundaryName**: `string`
 
-Defined in: vite/dist/hmr.d.ts:28
+Defined in: vite/dist/hmr.d.ts:33
 
-New compiled CSS (omitted when only uniforms changed).
+***
+
+### manifest
+
+> `readonly` **manifest**: `Pick`\<`BoundaryManifestEntry`, `"id"` \| `"outputs"` \| `"outputsByTier"`\>
+
+Defined in: vite/dist/hmr.d.ts:36
+
+***
+
+### previousBoundaryId
+
+> `readonly` **previousBoundaryId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
+
+Defined in: vite/dist/hmr.d.ts:34
 
 ***
 
@@ -37,16 +49,4 @@ New compiled CSS (omitted when only uniforms changed).
 
 > `readonly` **type**: `"liteship:update"`
 
-Defined in: vite/dist/hmr.d.ts:24
-
-Message discriminator. Always `'liteship:update'`.
-
-***
-
-### uniforms?
-
-> `readonly` `optional` **uniforms?**: `Record`\<`string`, `number`\>
-
-Defined in: vite/dist/hmr.d.ts:30
-
-New shader-uniform values (omitted when only CSS changed).
+Defined in: vite/dist/hmr.d.ts:32

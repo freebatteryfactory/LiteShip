@@ -41,7 +41,7 @@ import {
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
 import type { DevopsProfile } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../packages/cli/src/internal/liteship-audit-profile.js';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,

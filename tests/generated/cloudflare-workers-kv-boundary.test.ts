@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
-import { cloudflareAdapterCapsule } from '../../packages/cloudflare/src/capsules/cloudflare-adapter.js';
+import { cloudflareAdapterCapsule } from '../../packages/cloudflare/src/cloudflare-adapter-capsule.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import { CanonicalCbor } from '../../packages/core/src/schema/cbor.js';
 import { decode } from '../../packages/canonical/src/cbor-decode.js';

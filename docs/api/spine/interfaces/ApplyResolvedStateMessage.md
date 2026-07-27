@@ -6,7 +6,7 @@
 
 # Interface: ApplyResolvedStateMessage
 
-Defined in: [\_spine/worker.d.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L91)
+Defined in: [\_spine/worker.d.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L92)
 
 Host command applying a newer authoritative state snapshot.
 
@@ -16,7 +16,7 @@ Host command applying a newer authoritative state snapshot.
 
 > `readonly` `optional` **ack?**: `boolean`
 
-Defined in: [\_spine/worker.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L94)
+Defined in: [\_spine/worker.d.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L95)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:94](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **states**: readonly [`ResolvedStateEntry`](ResolvedStateEntry.md)[]
 
-Defined in: [\_spine/worker.d.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L93)
+Defined in: [\_spine/worker.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L94)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/worker.d.ts:93](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **type**: `"apply-resolved-state"`
 
-Defined in: [\_spine/worker.d.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L92)
+Defined in: [\_spine/worker.d.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L93)

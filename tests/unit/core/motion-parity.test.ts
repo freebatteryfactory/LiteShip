@@ -92,6 +92,11 @@ function reference(plan: RuntimeWritePlan, t: number): Map<string, TypedValue> {
   return new Map(sampleProgram(plan, t).map((s) => [s.cssVar, s.value]));
 }
 
+/** Project Scene's immutable aggregate record into the map shape used by this oracle. */
+function sceneSampleMap(plan: RuntimeWritePlan, t: number): ReadonlyMap<string, TypedValue> {
+  return new Map(Object.entries(sampleSceneMotion(plan, t)));
+}
+
 /** Assert a target's `cssVar → TypedValue` map matches the reference within `eps`. */
 function expectMapMatches(
   actual: ReadonlyMap<string, TypedValue>,
@@ -259,7 +264,7 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
           expectMapMatches(runtimeDomSample(fixture.plan, t, ref), ref, EPSILON_KERNEL, 'runtime');
 
           // scene — the MotionSampleSystem projection.
-          expectMapMatches(sampleSceneMotion(fixture.plan, t), ref, EPSILON_KERNEL, 'scene');
+          expectMapMatches(sceneSampleMap(fixture.plan, t), ref, EPSILON_KERNEL, 'scene');
 
           // worker — the off-thread sampler's posted uniforms, parsed back to typed.
           const msg = motionSampleMessage(fixture.plan, t);
@@ -326,7 +331,7 @@ describe('cross-target motion parity — the #130 differential oracle', () => {
     }
     // Every target lands on that pose (settle skips the tween → the t=1 endpoint).
     expectMapMatches(runtimeDomSample(fixture.plan, 1, terminal), terminal, EPSILON_KERNEL, 'runtime-settle');
-    expectMapMatches(sampleSceneMotion(fixture.plan, 1), terminal, EPSILON_KERNEL, 'scene-settle');
+    expectMapMatches(sceneSampleMap(fixture.plan, 1), terminal, EPSILON_KERNEL, 'scene-settle');
     expectMapMatches(sampleMotionFrame(fixture.plan, 8, 9), terminal, EPSILON_KERNEL, 'remotion-settle');
     const stageLast = sampleMotionFrames(fixture.plan, 9).at(-1)!;
     expectMapMatches(stageLast.values, terminal, EPSILON_KERNEL, 'stage-settle');
@@ -413,7 +418,7 @@ describe('differently-eased par — the #148 case', () => {
       const ref = reference(plan, t);
       expect(ref.size, 'par animates at least one leaf').toBeGreaterThan(0);
       expectMapMatches(runtimeDomSample(plan, t, ref), ref, EPSILON_KERNEL, 'runtime');
-      expectMapMatches(sampleSceneMotion(plan, t), ref, EPSILON_KERNEL, 'scene');
+      expectMapMatches(sceneSampleMap(plan, t), ref, EPSILON_KERNEL, 'scene');
       const msg = motionSampleMessage(plan, t);
       const workerTyped = new Map([...Object.entries(msg.css)].map(([k, v]) => [k, parseTypedBinding(k, v)]));
       expectMapMatches(workerTyped, ref, EPSILON_KERNEL, 'worker');

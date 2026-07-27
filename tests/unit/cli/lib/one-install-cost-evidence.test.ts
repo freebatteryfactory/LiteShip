@@ -14,7 +14,7 @@ import {
   type InstalledCostObservation,
   type InstalledTreeReader,
   type InstalledTreeStat,
-} from '../../../../packages/cli/src/lib/one-install-cost-evidence.js';
+} from '../../../../packages/cli/src/internal/one-install-cost-evidence.js';
 
 const fleet = (): string[] => Array.from({ length: 25 }, (_, index) => `@liteship/package-${index}`);
 

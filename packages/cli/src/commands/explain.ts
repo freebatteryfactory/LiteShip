@@ -9,8 +9,8 @@
  */
 
 import { explainCommand, type CommandContext, type ExplainPayload } from '@liteship/command';
-import { color, colorEnabled } from '../lib/ansi.js';
-import { buildApiSymbolResolver } from '../lib/api-index.js';
+import { color, colorEnabled } from '../internal/ansi.js';
+import { buildApiSymbolResolver } from '../internal/api-index.js';
 import { emit, emitError } from '../receipts.js';
 
 /** Render the diagnostic arm to stderr. */

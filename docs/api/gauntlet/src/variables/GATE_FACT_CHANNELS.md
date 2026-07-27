@@ -6,9 +6,9 @@
 
 # Variable: GATE\_FACT\_CHANNELS
 
-> `const` **GATE\_FACT\_CHANNELS**: readonly \[`"supplyChain"`, `"mutation"`, `"transition"`, `"spineRelation"`, `"mcdc"`, `"simulation"`, `"traceability"`, `"standards"`, `"declaredFix"`, `"taint"`, `"capabilityLink"`, `"fuzzCorpus"`, `"proof"`, `"composition"`, `"skipSites"`, `"activeSurfaceFacts"`, `"checkGovernance"`, `"benchmarkSubjects"`\]
+> `const` **GATE\_FACT\_CHANNELS**: readonly \[`"supplyChain"`, `"mutation"`, `"transition"`, `"spineRelation"`, `"mcdc"`, `"simulation"`, `"traceability"`, `"standards"`, `"declaredFix"`, `"taint"`, `"capabilityLink"`, `"fuzzCorpus"`, `"proof"`, `"composition"`, `"skipSites"`, `"activeSurfaceFacts"`, `"featureEdges"`, `"checkGovernance"`, `"benchmarkSubjects"`\]
 
-Defined in: [gauntlet/src/gate.ts:421](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L421)
+Defined in: [gauntlet/src/gate.ts:502](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L502)
 
 Runtime fact channels a hosted gate may consume. This tuple is the canonical
 runtime vocabulary used by gate access manifests and by the instrumented

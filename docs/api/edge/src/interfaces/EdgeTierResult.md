@@ -6,7 +6,7 @@
 
 # Interface: EdgeTierResult
 
-Defined in: [edge/src/edge-tier.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L32)
+Defined in: [edge/src/edge-tier.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L39)
 
 Outcome of an edge-side tier detection sweep.
 
@@ -20,7 +20,7 @@ code paths from `@liteship/detect`.
 
 > `readonly` **capTier**: [`CapTier`](../../../liteship/src/evidence/type-aliases/CapTier.md)
 
-Defined in: [edge/src/edge-tier.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L34)
+Defined in: [edge/src/edge-tier.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L41)
 
 Highest [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) the device qualifies for.
 
@@ -30,7 +30,7 @@ Highest [CapTier](../../../liteship/src/evidence/type-aliases/CapTier.md) the de
 
 > `readonly` **designTier**: `DesignTier`
 
-Defined in: [edge/src/edge-tier.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L38)
+Defined in: [edge/src/edge-tier.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L45)
 
 Visual fidelity tier permitted for this device.
 
@@ -40,6 +40,16 @@ Visual fidelity tier permitted for this device.
 
 > `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
-Defined in: [edge/src/edge-tier.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L36)
+Defined in: [edge/src/edge-tier.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L43)
 
 Motion complexity tier permitted for this device.
+
+***
+
+### tierEvidence
+
+> `readonly` **tierEvidence**: `CapabilityTierEvidence`
+
+Defined in: [edge/src/edge-tier.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L47)
+
+Per-axis observed/inferred provenance for the complete tier values.

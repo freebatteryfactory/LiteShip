@@ -15,7 +15,7 @@ import {
 import {
   buildSemanticAssuranceReceipt,
   writeSemanticAssuranceReceipt,
-} from '../../../packages/cli/src/lib/semantic-assurance-receipt.js';
+} from '../../../packages/cli/src/internal/semantic-assurance-receipt.js';
 import { spawnArgv } from '../../../scripts/lib/spawn.js';
 
 const roots: string[] = [];

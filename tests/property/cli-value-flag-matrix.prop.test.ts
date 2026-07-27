@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { takeFlagValue } from '../../packages/cli/src/lib/argv.js';
+import { takeFlagValue } from '../../packages/cli/src/internal/argv.js';
 
 const flag = fc.stringMatching(/^--[a-z][a-z0-9-]{0,20}$/u);
 const shortFlag = fc.stringMatching(/^-[a-z]$/u);

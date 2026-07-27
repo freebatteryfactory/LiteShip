@@ -45,7 +45,7 @@ export const DIRECTIVE_ATTRIBUTE_REGISTRY = {
   gpu: [{ scope: 'root', attribute: 'data-liteship-shader-src', implicitBoot: true }],
   wasm: [{ scope: 'root', attribute: 'data-liteship-wasm', implicitBoot: true }],
   graph: [{ scope: 'root', attribute: 'data-liteship-graph', implicitBoot: true }],
-  motion: [{ scope: 'root', attribute: 'data-liteship-motion-program', implicitBoot: true }],
+  motion: [{ scope: 'root', attribute: 'data-liteship-motion-payload', implicitBoot: true }],
   svg: [
     {
       scope: 'descendant',

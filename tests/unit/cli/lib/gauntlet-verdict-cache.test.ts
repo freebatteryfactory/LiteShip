@@ -29,7 +29,7 @@ import {
   toolchainDigestOf,
   TOOLCHAIN_PACKAGES,
   type ToolchainPackageSegment,
-} from '../../../../packages/cli/src/lib/gauntlet-verdict-cache.js';
+} from '../../../../packages/cli/src/internal/gauntlet-verdict-cache.js';
 import { eaccesUntestableAsRoot } from '../../../helpers/capabilities.js';
 
 let dir: string;

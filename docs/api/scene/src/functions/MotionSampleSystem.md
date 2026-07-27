@@ -6,29 +6,19 @@
 
 # Function: MotionSampleSystem()
 
-> **MotionSampleSystem**(`plan`, `frameIndex`, `totalFrames`): `System`
+> **MotionSampleSystem**(`frameIndex`): `System`
 
-Defined in: [scene/src/systems/motion.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L52)
+Defined in: [scene/src/systems/motion.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L45)
 
-Build a `MotionSampleSystem` keyed to a frame index. It queries entities carrying a
-`MotionProgram` marker component and, per tick, samples [sampleSceneMotion](sampleSceneMotion.md) at
-the frame's normalized `t`, writing each leaf as a `motion:<cssVar>` component (via the
-same `world.setComponent` seam `TransitionSystem` uses for `_blend`). It NEVER reads or
-writes `_blend` — the two systems coexist on the same world.
+Build the typed motion system for a fixed frame or a live frame source.
+Runtime registration supplies a function so the same system instance reads
+the current frame each tick; focused tests may pass a number directly.
 
 ## Parameters
 
-### plan
-
-[`RuntimeWritePlan`](../../../liteship/src/motion/interfaces/RuntimeWritePlan.md)
-
 ### frameIndex
 
-`number`
-
-### totalFrames
-
-`number`
+`FrameSource`
 
 ## Returns
 

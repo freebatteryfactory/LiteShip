@@ -29,8 +29,8 @@
 import { repoRoot } from '../vitest.shared.js';
 import { buildSpineRelationFacts } from '../packages/audit/src/index.js';
 import { spineRelationGate, memoryContext, type Finding } from '../packages/gauntlet/src/index.js';
-import { LITESHIP_SPINE_ADMISSIONS } from '../packages/cli/src/lib/spine-relation-policy.js';
-import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../packages/cli/src/lib/liteship-typescript-aliases.js';
+import { LITESHIP_SPINE_ADMISSIONS } from '../packages/cli/src/internal/spine-relation-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../packages/cli/src/internal/liteship-typescript-aliases.js';
 import { isDirectExecution } from './audit/shared.js';
 
 /** Build the spine-relation facts over `root` through the production admission table, then fold the gate. */
@@ -56,7 +56,7 @@ export function main(root = repoRoot): void {
       console.error(`  FAIL [${f.severity}] ${f.title}`);
     }
     throw new Error(
-      `Spine-relation gate failed — ${findings.length} public-contract drift(s): an admitted mirror whose observed relation no longer satisfies its admitted (frozen) relation, or a mirror that no longer resolves. Fix the \`_spine/*.d.ts\` mirror to restore the admitted relation, or — if the runtime surface deliberately changed — re-admit the new relation in packages/cli/src/lib/spine-relation-policy.ts with review (never a silent widening).`,
+      `Spine-relation gate failed — ${findings.length} public-contract drift(s): an admitted mirror whose observed relation no longer satisfies its admitted (frozen) relation, or a mirror that no longer resolves. Fix the \`_spine/*.d.ts\` mirror to restore the admitted relation, or — if the runtime surface deliberately changed — re-admit the new relation in packages/cli/src/internal/spine-relation-policy.ts with review (never a silent widening).`,
     );
   }
   console.log('Spine-relation gate passed — every admitted mirror conforms to its frozen two-axis relation.');

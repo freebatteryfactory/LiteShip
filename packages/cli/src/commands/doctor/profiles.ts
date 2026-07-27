@@ -11,7 +11,7 @@
  * @module
  */
 
-import { isLiteShipWorkspace } from '../../lib/workspace.js';
+import { isLiteShipWorkspace } from '../../internal/workspace.js';
 import { loadEngineMinima } from './manifest.js';
 import {
   probeCloudflareAdapter,
@@ -87,7 +87,7 @@ export async function runCloudflareProbes(cwd: string, spawn?: SpawnArgvCapture)
 
 /** Consumer-app profile — integration smells in the host's own source (#117). */
 export async function runConsumerAppProbes(cwd: string): Promise<readonly DoctorCheck[]> {
-  const { scanConsumerAppSource } = await import('../../lib/consumer-app-audit.js');
+  const { scanConsumerAppSource } = await import('../../internal/consumer-app-audit.js');
   // Let tagged / native fs errors propagate to doctor()'s emitError envelope —
   // do not catch-and-rethrow as bare Error (gauntlet/no-bare-throw).
   const findings = scanConsumerAppSource(cwd);

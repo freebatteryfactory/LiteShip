@@ -8,12 +8,7 @@
 // PROVES: INV-DIAGNOSTIC-CODE-CLOSED
 
 import { describe, expect, it } from 'vitest';
-import {
-  DIAGNOSTIC_AREAS,
-  DIAGNOSTIC_REGISTRY,
-  explainDiagnostic,
-  type DiagnosticCode,
-} from '@liteship/error';
+import { DIAGNOSTIC_AREAS, DIAGNOSTIC_REGISTRY, explainDiagnostic, type DiagnosticCode } from '@liteship/error';
 import type { Diagnostics } from '@liteship/core';
 
 describe('diagnostic registry closure', () => {
@@ -55,6 +50,7 @@ describe('diagnostic registry closure', () => {
     ['audit/no-packages-discovered', 'audit'],
     ['compiler/css/unknown-state-key', 'compiler'],
     ['genui/unknown-component', 'genui'],
+    ['web/morph/preserve-id-missing', 'web'],
     ['astro/wgpu/webgpu-unavailable', 'astro'],
     ['cli/usage', 'cli'],
     ['migrate/malformed-input', 'migrate'],

@@ -8,7 +8,7 @@
 
 > **Provider**(`props`): `ReactElement`
 
-Defined in: [remotion/src/composition.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L124)
+Defined in: [remotion/src/composition.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L125)
 
 React context provider that makes precomputed frames available to
 [useLiteshipState](useLiteshipState.md) anywhere in the subtree. Use this when you prefer

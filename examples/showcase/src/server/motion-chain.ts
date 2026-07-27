@@ -8,7 +8,7 @@
  *
  * The choice is resolved ONCE at build against a snapshot env (the selected branch
  * rides `diagnostics` as an auditable receipt); only that branch's window is inlined,
- * so the unchosen arm never writes. The analogue of `server/motion-program.ts`.
+ * so the unchosen arm never writes. The analogue of `server/motion-payload.ts`.
  *
  * @module
  */
@@ -22,7 +22,7 @@ import {
   type RevealIntent,
   type RuntimeWritePlan,
 } from '@liteship/core';
-import type { SerializedMotionProgram } from '@liteship/astro/runtime';
+import { serializeMotionDirectivePayload, type MotionDirectivePayload } from '@liteship/astro/runtime';
 
 /** The authored chain: rise, THEN choose the terminal hue by viewport width. */
 const CHAIN = lowerRevealChain({
@@ -68,20 +68,23 @@ const CHAIN_INTENT: RevealIntent = Reveal.intent({
   policy: { reducedMotion: 'settle', motionTier: 'transitions' },
 });
 
-/** The serialized program `client:motion` inlines — its `runtime` carries the windows. */
-export const CHAIN_PROGRAM: SerializedMotionProgram = {
+/** The admitted directive payload `client:motion` inlines — its `runtime` carries the windows. */
+export const CHAIN_PAYLOAD: MotionDirectivePayload = {
   intent: CHAIN_INTENT,
   runtime,
   signals: chainPlan.signals,
   threshold: 0.5,
 };
 
+/** Canonical admitted JSON consumed by the Astro directive attribute. */
+export const CHAIN_PAYLOAD_JSON = serializeMotionDirectivePayload(CHAIN_PAYLOAD);
+
 /** SSR first-paint state + custom properties (reduced-motion settles to the final pose). */
 export const CHAIN_SSR_PAINT = ssrRevealPaint(CHAIN_INTENT, { prefersReducedMotion: false });
 
 /** The auditable choice receipt: which branch the snapshot env selected. */
-export const CHAIN_SELECTED = chainPlan.diagnostics.find((d) => d.code === 'choice-selected')?.detail as
-  { branchId: string; source: string } | undefined;
+export const CHAIN_SELECTED = chainPlan.diagnostics.find((d) => d.code === 'core/transition-program/choice-selected')
+  ?.detail as { branchId: string; source: string } | undefined;
 
 /** Total composed duration (ms) — `Σ` of the rise + the selected hue window. */
 export const CHAIN_TOTAL_MS = runtime.durationMs;

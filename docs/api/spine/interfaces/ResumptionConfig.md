@@ -6,17 +6,25 @@
 
 # Interface: ResumptionConfig
 
-Defined in: [\_spine/web.d.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L303)
+Defined in: [\_spine/web.d.ts:325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L325)
 
 Bounds and storage hooks used to resume an interrupted event stream.
 
 ## Properties
 
+### endpointPolicy?
+
+> `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
+
+Defined in: [\_spine/web.d.ts:336](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L336)
+
+***
+
 ### maxGapSize
 
 > `readonly` **maxGapSize**: `number`
 
-Defined in: [\_spine/web.d.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L310)
+Defined in: [\_spine/web.d.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L332)
 
 Maximum number of missed events recoverable via patch replay before
 falling back to a full snapshot.
@@ -29,7 +37,7 @@ Default: 50 — see `defaultResumptionConfig`; `Resumption.resume` accepts a `Pa
 
 > `readonly` `optional` **replayUrl?**: `string`
 
-Defined in: [\_spine/web.d.ts:312](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L312)
+Defined in: [\_spine/web.d.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L334)
 
 ***
 
@@ -37,12 +45,12 @@ Defined in: [\_spine/web.d.ts:312](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: [\_spine/web.d.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L311)
+Defined in: [\_spine/web.d.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L333)
 
 ***
 
 ### timeout?
 
-> `readonly` `optional` **timeout?**: `number`
+> `readonly` `optional` **timeout?**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/web.d.ts:313](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L313)
+Defined in: [\_spine/web.d.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L335)

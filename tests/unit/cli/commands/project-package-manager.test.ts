@@ -8,7 +8,7 @@ import {
   detectProjectPackageManager,
   invalidProjectManifestFailure,
   projectBinaryInvocation,
-} from '../../../../packages/cli/src/lib/project-package-manager.js';
+} from '../../../../packages/cli/src/internal/project-package-manager.js';
 
 const roots: string[] = [];
 

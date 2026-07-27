@@ -1,174 +1,102 @@
 // @vitest-environment jsdom
-import { describe, expect, test, vi } from 'vitest';
-import { handleHMR } from '@liteship/vite';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { handleHMR, isHMRPayload } from '@liteship/vite';
 
-describe('@liteship/vite HMR handler', () => {
-  test('creates or updates a style tag for css payloads', () => {
-    handleHMR({
-      type: 'liteship:update',
-      boundary: 'hero',
-      css: '.hero { color: red; }',
-    });
+const previousId = 'fnv1a:11111111';
+const nextId = 'fnv1a:22222222';
 
-    const style = document.querySelector('style[data-liteship-boundary="hero"]');
-    expect(style?.textContent).toContain('color: red');
+function identity(id: string) {
+  return { id, input: 'viewport.width', thresholds: [0, 768], states: ['compact', 'wide'] };
+}
 
-    handleHMR({
-      type: 'liteship:update',
-      boundary: 'hero',
-      css: '.hero { color: blue; }',
-    });
-    expect(style?.textContent).toContain('color: blue');
+function payload(overrides: Record<string, unknown> = {}) {
+  return {
+    type: 'liteship:update',
+    boundaryName: 'hero',
+    previousBoundaryId: previousId,
+    boundary: identity(nextId),
+    manifest: {
+      id: nextId,
+      outputs: [
+        {
+          css: '.hero { color: red; }',
+          propertyRegistrations: '',
+          containerQueries: '',
+          glsl: { declarations: '', uniformValues: { u_progress: 0.75 } },
+        },
+      ],
+      outputsByTier: { 'transitions:standard': 0 },
+    },
+    ...overrides,
+  };
+}
+
+function appendHost(id = previousId): HTMLElement {
+  const host = document.createElement('div');
+  host.setAttribute('data-liteship-boundary', JSON.stringify({ ...identity(id), component: 'hero-card' }));
+  document.body.appendChild(host);
+  return host;
+}
+
+beforeEach(() => {
+  document.head.innerHTML = '';
+  document.body.innerHTML = '';
+  document.documentElement.setAttribute('data-liteship-motion', 'transitions');
+  document.documentElement.setAttribute('data-liteship-design', 'standard');
+});
+
+describe('@liteship/vite canonical boundary HMR', () => {
+  test('applies producer-shaped payloads by content address and preserves host extras', () => {
+    const host = appendHost();
+    const uniformDetails: unknown[] = [];
+    let reinitializations = 0;
+    host.addEventListener('liteship:uniform-update', ((event: CustomEvent) =>
+      uniformDetails.push(event.detail)) as EventListener);
+    host.addEventListener('liteship:reinit', () => reinitializations++);
+
+    expect(handleHMR(payload())).toBe(1);
+
+    const parsed = JSON.parse(host.getAttribute('data-liteship-boundary')!) as Record<string, unknown>;
+    expect(parsed).toMatchObject({ id: nextId, component: 'hero-card' });
+    expect(document.querySelector(`style[data-liteship-hmr-boundary="${nextId}"]`)?.textContent).toContain(
+      'color: red',
+    );
+    expect(uniformDetails).toEqual([{ glsl: { u_progress: 0.75 } }]);
+    expect(reinitializations).toBe(1);
   });
 
-  test('dispatches uniform updates and applies them to matching canvases', () => {
-    const uniformCalls: Array<[string, number]> = [];
-    const gl = {
-      getUniformLocation: (_program: unknown, name: string) => name,
-      uniform1f: (location: string, value: number) => {
-        uniformCalls.push([location, value]);
-      },
-    };
-
-    const boundary = document.createElement('div');
-    boundary.setAttribute('data-liteship-boundary', 'hero');
-    document.body.appendChild(boundary);
-
-    const canvas = document.createElement('canvas') as HTMLCanvasElement & {
-      __liteshipProgram?: Record<string, unknown>;
-    };
-    canvas.setAttribute('data-liteship-boundary', 'hero');
-    canvas.__liteshipProgram = {};
-    vi.spyOn(canvas, 'getContext').mockImplementation((kind: string) => (kind === 'webgl2' ? null : (gl as never)));
-    document.body.appendChild(canvas);
-
-    const payloads: unknown[] = [];
-    boundary.addEventListener('liteship:uniform-update', ((event: CustomEvent) => {
-      payloads.push(event.detail);
-    }) as EventListener);
-
-    handleHMR({
-      type: 'liteship:update',
-      boundary: 'hero',
-      uniforms: { u_progress: 0.75 },
-    });
-
-    expect(payloads).toEqual([{ glsl: { u_progress: 0.75 } }]);
-    expect(uniformCalls).toEqual([['u_progress', 0.75]]);
+  test('uses canonical identity rather than selector-sensitive export names', () => {
+    const host = appendHost();
+    expect(handleHMR(payload({ boundaryName: 'hero\"] * { color: hotpink } /*' }))).toBe(1);
+    expect(JSON.parse(host.getAttribute('data-liteship-boundary')!).id).toBe(nextId);
   });
 
-  test('scopes uniform broadcast to the target boundary only', () => {
-    const hero = document.createElement('div');
-    hero.setAttribute('data-liteship-boundary', 'hero');
-    const footer = document.createElement('div');
-    footer.setAttribute('data-liteship-boundary', 'footer');
-    document.body.append(hero, footer);
-
-    const heroPayloads: unknown[] = [];
-    const footerPayloads: unknown[] = [];
-    hero.addEventListener('liteship:uniform-update', ((event: CustomEvent) => heroPayloads.push(event.detail)) as EventListener);
-    footer.addEventListener('liteship:uniform-update', ((event: CustomEvent) => footerPayloads.push(event.detail)) as EventListener);
-
-    handleHMR({
-      type: 'liteship:update',
-      boundary: 'hero',
-      uniforms: { u_progress: 0.75 },
-    });
-
-    expect(heroPayloads).toEqual([{ glsl: { u_progress: 0.75 } }]);
-    expect(footerPayloads).toEqual([]);
+  test.each([
+    ['foreign event', { ...payload(), type: 'foreign:update' }],
+    ['stale identity', { ...payload(), previousBoundaryId: 'fnv1a:99999999' }],
+    ['foreign manifest identity', { ...payload(), manifest: { ...payload().manifest, id: 'fnv1a:99999999' } }],
+    ['malformed output', { ...payload(), manifest: { ...payload().manifest, outputs: [{}] } }],
+    [
+      'out-of-range tier projection',
+      { ...payload(), manifest: { ...payload().manifest, outputsByTier: { 'transitions:standard': 8 } } },
+    ],
+  ])('keeps the DOM inert for %s', (_label, candidate) => {
+    const host = appendHost();
+    const before = host.outerHTML;
+    expect(handleHMR(candidate)).toBe(0);
+    expect(host.outerHTML).toBe(before);
+    expect(document.querySelector('style[data-liteship-hmr-boundary]')).toBeNull();
   });
 
-  test('uniform broadcast detail.glsl matches WebGL boundary listener contract', () => {
-    const boundary = document.createElement('div');
-    boundary.setAttribute('data-liteship-boundary', 'hero');
-    document.body.appendChild(boundary);
-
-    const listenerCalls: unknown[] = [];
-    boundary.addEventListener('liteship:uniform-update', ((event: CustomEvent) => {
-      listenerCalls.push(event.detail);
-    }) as EventListener);
-
-    handleHMR({
-      type: 'liteship:update',
-      boundary: 'hero',
-      uniforms: { u_progress: 0.42 },
-    });
-
-    expect(listenerCalls).toEqual([{ glsl: { u_progress: 0.42 } }]);
-    expect(Object.keys(listenerCalls[0] as { glsl: Record<string, number> })).toEqual(['glsl']);
+  test('fails closed when the rendered tier has no compiled output', () => {
+    const host = appendHost();
+    document.documentElement.setAttribute('data-liteship-design', 'expressive');
+    expect(handleHMR(payload())).toBe(0);
+    expect(JSON.parse(host.getAttribute('data-liteship-boundary')!).id).toBe(previousId);
   });
 
-  test('ignores updates when document is unavailable and skips canvases without a usable GL program', () => {
-    const originalDocument = globalThis.document;
-    vi.stubGlobal('document', undefined);
-
-    expect(() =>
-      handleHMR({
-        type: 'liteship:update',
-        boundary: 'hero',
-        css: '.hero { color: green; }',
-      }),
-    ).not.toThrow();
-
-    vi.unstubAllGlobals();
-    vi.stubGlobal('document', originalDocument);
-
-    const boundary = document.createElement('div');
-    boundary.setAttribute('data-liteship-boundary', 'hero');
-    document.body.appendChild(boundary);
-
-    const payloads: unknown[] = [];
-    boundary.addEventListener('liteship:uniform-update', ((event: CustomEvent) => {
-      payloads.push(event.detail);
-    }) as EventListener);
-
-    const noContextCanvas = document.createElement('canvas');
-    noContextCanvas.setAttribute('data-liteship-boundary', 'hero');
-    vi.spyOn(noContextCanvas, 'getContext').mockReturnValue(null);
-    document.body.appendChild(noContextCanvas);
-
-    const noProgramCanvas = document.createElement('canvas');
-    noProgramCanvas.setAttribute('data-liteship-boundary', 'hero');
-    vi.spyOn(noProgramCanvas, 'getContext').mockReturnValue({
-      getUniformLocation: vi.fn(),
-      uniform1f: vi.fn(),
-    } as unknown as RenderingContext);
-    document.body.appendChild(noProgramCanvas);
-
-    expect(() =>
-      handleHMR({
-        type: 'liteship:update',
-        boundary: 'hero',
-        uniforms: { u_progress: 0.5 },
-      }),
-    ).not.toThrow();
-
-    expect(payloads).toEqual([{ glsl: { u_progress: 0.5 } }]);
-  });
-
-  test('skips uniform writes when getUniformLocation returns null', () => {
-    const uniform1f = vi.fn();
-    const gl = {
-      getUniformLocation: vi.fn(() => null),
-      uniform1f,
-    };
-
-    const canvas = document.createElement('canvas') as HTMLCanvasElement & {
-      __liteshipProgram?: Record<string, unknown>;
-    };
-    canvas.setAttribute('data-liteship-boundary', 'hero');
-    canvas.__liteshipProgram = {};
-    vi.spyOn(canvas, 'getContext').mockReturnValue(gl as unknown as RenderingContext);
-    document.body.appendChild(canvas);
-
-    handleHMR({
-      type: 'liteship:update',
-      boundary: 'hero',
-      uniforms: { u_progress: 0.25 },
-    });
-
-    expect(gl.getUniformLocation).toHaveBeenCalledWith(canvas.__liteshipProgram, 'u_progress');
-    expect(uniform1f).not.toHaveBeenCalled();
+  test('admits the exact wire shape only', () => {
+    expect(isHMRPayload(payload())).toBe(true);
+    expect(isHMRPayload({ ...payload(), previousBoundaryId: 42 })).toBe(false);
   });
 });

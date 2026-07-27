@@ -6,7 +6,7 @@
 
 # Interface: PlanIR
 
-Defined in: [\_spine/core.d.ts:1222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1222)
+Defined in: [\_spine/core.d.ts:1437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1437)
 
 Immutable directed execution plan consumed by runtime coordinators.
 
@@ -16,7 +16,7 @@ Immutable directed execution plan consumed by runtime coordinators.
 
 > `readonly` **edges**: readonly [`PlanEdge`](PlanEdge.md)[]
 
-Defined in: [\_spine/core.d.ts:1225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1225)
+Defined in: [\_spine/core.d.ts:1440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1440)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1225](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **metadata?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [\_spine/core.d.ts:1226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1226)
+Defined in: [\_spine/core.d.ts:1441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1441)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1226](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/core.d.ts:1223](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1223)
+Defined in: [\_spine/core.d.ts:1438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1438)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1223](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **steps**: readonly [`PlanStep`](PlanStep.md)[]
 
-Defined in: [\_spine/core.d.ts:1224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1224)
+Defined in: [\_spine/core.d.ts:1439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1439)

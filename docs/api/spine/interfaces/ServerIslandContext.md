@@ -6,7 +6,7 @@
 
 # Interface: ServerIslandContext
 
-Defined in: [\_spine/astro.d.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L53)
+Defined in: [\_spine/astro.d.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L64)
 
 Request evidence used to choose an Astro server island's initial boundary state.
 
@@ -16,7 +16,7 @@ Request evidence used to choose an Astro server island's initial boundary state.
 
 > `readonly` `optional` **clientHints?**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/astro.d.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L55)
+Defined in: [\_spine/astro.d.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L66)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/astro.d.ts:55](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **detectedCapTier?**: [`CapTier`](../type-aliases/CapTier.md)
 
-Defined in: [\_spine/astro.d.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L56)
+Defined in: [\_spine/astro.d.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L67)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/astro.d.ts:56](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **userAgent?**: `string`
 
-Defined in: [\_spine/astro.d.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L54)
+Defined in: [\_spine/astro.d.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L65)

@@ -129,7 +129,7 @@ describe('levelOf — first matching rule wins, default L1', () => {
     ['packages/mcp-server/src/jsonrpc.ts', 'L2'], // protocol kernel
     // L0/L1 — COSMETIC tooling only, where ambient nondeterminism is legit
     ['packages/mcp-server/src/server-info.ts', 'L1'], // version helper
-    ['packages/cli/src/lib/ansi.ts', 'L1'], // formatting
+    ['packages/cli/src/internal/ansi.ts', 'L1'], // formatting
     ['scripts/report-adaptive-scan.ts', 'L1'], // a report
     ['scripts/anything.mjs', 'L1'],
     // default

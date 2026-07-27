@@ -1,10 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
-import { MOTION_PROGRAM, MOTION_CSS, MOTION_SSR_PAINT } from '../server/motion-program';
+import { MOTION_PAYLOAD_JSON, MOTION_CSS, MOTION_SSR_PAINT } from '../server/motion-payload';
 
-// Prerender-friendly: the program + native CSS are computed once at build time.
+// Prerender-friendly: the payload + native CSS are computed once at build time.
 // The client:motion floor only runs when the browser lacks `animation-timeline`.
-const program = JSON.stringify(MOTION_PROGRAM);
+const payload = MOTION_PAYLOAD_JSON;
 // First-paint discrete state (reveal starts at `before`; MotionCompiler's base rule
 // paints the offset-0 custom properties so there is no pre-hydration flash).
 const initialState = MOTION_SSR_PAINT.state;
@@ -28,7 +28,7 @@ const initialState = MOTION_SSR_PAINT.state;
       class="hero-card"
       data-liteship-boundary="hero"
       data-liteship-state={initialState}
-      data-liteship-motion-program={program}
+      data-liteship-motion-payload={payload}
       client:motion
     >
       <strong>Reveal</strong>

@@ -105,6 +105,7 @@ export const PACKAGE_CATALOG = [
       './design': 'packages/_spine/design.d.ts',
       './command': 'packages/_spine/command.d.ts',
       './genui': 'packages/_spine/genui.d.ts',
+      './events': 'packages/_spine/events.generated.d.ts',
     },
     publishable: true,
     runtimeSurface: 'types-only',
@@ -126,7 +127,7 @@ export const PACKAGE_CATALOG = [
     },
     dependencies: [],
     capabilities: ['shared-type-declarations'],
-    publicSubpaths: ['.', './core', './design', './command', './genui'],
+    publicSubpaths: ['.', './core', './design', './command', './genui', './events'],
     smokeImports: [],
     description:
       'Install-only TypeScript declaration spine for LiteShip: the shared type anchor that `@liteship/core` and `@liteship/scene` reference from their published `.d.ts` — there is nothing to import at runtime.',
@@ -215,7 +216,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'package-author',
       stability: 'stable',
-      failureContract: 'Invalid definitions and runtime transitions fail through typed diagnostics without partial state.',
+      failureContract:
+        'Invalid definitions and runtime transitions fail through typed diagnostics without partial state.',
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
@@ -234,9 +236,10 @@ export const PACKAGE_CATALOG = [
       './wasm',
       './harness',
       './simulation',
+      './ecs',
       './fs-walk',
     ],
-    smokeImports: ['@liteship/core', '@liteship/core/harness'],
+    smokeImports: ['@liteship/core', '@liteship/core/ecs', '@liteship/core/harness'],
     description:
       'The heart of LiteShip: define UI boundaries, tokens, themes, and signals once as a content-addressed graph, then drive the engine that keeps every rendered output in sync.',
     keywords: ['liteship', 'adaptive-rendering', 'constraint-based', 'ui-framework', 'typescript'],
@@ -351,7 +354,10 @@ export const PACKAGE_CATALOG = [
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
-    audit: { kind: 'layered', allowedInternalImports: ['@liteship/core', '@liteship/genui', '@liteship/canonical'] },
+    audit: {
+      kind: 'layered',
+      allowedInternalImports: ['@liteship/_spine', '@liteship/core', '@liteship/genui', '@liteship/canonical'],
+    },
     docs: { group: 'runtime', order: 0, surface: true },
     plumbStatus: 'runtime',
     plumbReason: 'Browser-host security/morph/audio primitives consumed by the runtime.',
@@ -366,7 +372,7 @@ export const PACKAGE_CATALOG = [
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
-    dependencies: ['@liteship/canonical', '@liteship/core', '@liteship/error', '@liteship/genui'],
+    dependencies: ['@liteship/_spine', '@liteship/canonical', '@liteship/core', '@liteship/error', '@liteship/genui'],
     capabilities: ['dom-runtime', 'streaming', 'morphing'],
     publicSubpaths: ['.', './lite'],
     smokeImports: ['@liteship/web', '@liteship/web/lite'],
@@ -381,7 +387,7 @@ export const PACKAGE_CATALOG = [
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
-    audit: { kind: 'layered', allowedInternalImports: ['@liteship/core'] },
+    audit: { kind: 'layered', allowedInternalImports: ['@liteship/core', '@liteship/error'] },
     docs: { group: 'runtime', order: 1, surface: true },
     plumbStatus: 'runtime',
     plumbReason: 'Capability detection — consumed by the runtime + edge.',
@@ -396,7 +402,7 @@ export const PACKAGE_CATALOG = [
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
-    dependencies: ['@liteship/core'],
+    dependencies: ['@liteship/core', '@liteship/error'],
     capabilities: ['device-capability-detection'],
     publicSubpaths: ['.'],
     smokeImports: ['@liteship/detect'],
@@ -463,8 +469,8 @@ export const PACKAGE_CATALOG = [
     },
     dependencies: ['@liteship/core', '@liteship/compiler', '@liteship/edge', '@liteship/error', '@liteship/web'],
     capabilities: ['vite-integration', 'css-directive-compilation', 'hmr'],
-    publicSubpaths: ['.', './html-transform', './virtual'],
-    smokeImports: ['@liteship/vite', '@liteship/vite/html-transform'],
+    publicSubpaths: ['.', './html-transform', './hmr', './virtual'],
+    smokeImports: ['@liteship/vite', '@liteship/vite/html-transform', '@liteship/vite/hmr'],
     description:
       'The Vite plugin for LiteShip: compile `@token`, `@theme`, `@style`, and `@quantize` blocks into native CSS and hot-reload boundary definitions as you edit.',
     keywords: ['liteship', 'vite-plugin', 'css', 'hmr', 'typescript'],
@@ -487,7 +493,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'host-integrator',
       stability: 'stable',
-      failureContract: 'Invalid messages and failed worker startup are reported without pretending a live worker exists.',
+      failureContract:
+        'Invalid messages and failed worker startup are reported without pretending a live worker exists.',
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
@@ -703,7 +710,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'host-integrator',
       stability: 'experimental',
-      failureContract: 'Unsupported render targets and failed external encoders produce bounded diagnostics and no false artifact.',
+      failureContract:
+        'Unsupported render targets and failed external encoders produce bounded diagnostics and no false artifact.',
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
@@ -799,7 +807,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'operator',
       stability: 'stable',
-      failureContract: 'Unknown or unmodeled repository facts remain findings and never inherit LiteShip host policy implicitly.',
+      failureContract:
+        'Unknown or unmodeled repository facts remain findings and never inherit LiteShip host policy implicitly.',
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
@@ -935,7 +944,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'operator',
       stability: 'experimental',
-      failureContract: 'Unknown tools and malformed protocol requests return structured errors without invoking a handler.',
+      failureContract:
+        'Unknown tools and malformed protocol requests return structured errors without invoking a handler.',
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
@@ -977,7 +987,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'operator',
       stability: 'stable',
-      failureContract: 'Unsupported package managers and invalid scaffold inputs fail before writing a partial application.',
+      failureContract:
+        'Unsupported package managers and invalid scaffold inputs fail before writing a partial application.',
       relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },
@@ -1021,7 +1032,8 @@ export const PACKAGE_CATALOG = [
     publicSurface: {
       audience: 'package-author',
       stability: 'stable',
-      failureContract: 'The root and advanced facade routes preserve their owning package diagnostics and refusal behavior.',
+      failureContract:
+        'The root and advanced facade routes preserve their owning package diagnostics and refusal behavior.',
       relatedInvariant: 'INV-FACADE-EXPORT-BUDGET',
       reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
     },

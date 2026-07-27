@@ -8,7 +8,7 @@
 
 > **ssrRevealPaint**(`intent`, `opts`): [`RevealSsrPaint`](../interfaces/RevealSsrPaint.md)
 
-Defined in: [core/src/motion/reveal.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L186)
+Defined in: [core/src/motion/reveal.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L259)
 
 Compute SSR first-paint CSS custom properties for a reveal boundary.
 

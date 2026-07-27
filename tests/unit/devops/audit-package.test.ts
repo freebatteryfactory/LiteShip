@@ -20,7 +20,7 @@ import {
   withRepoRoot,
   type DevopsProfile,
 } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const ENGINE_SRC = resolve(REPO, 'packages/audit/src');

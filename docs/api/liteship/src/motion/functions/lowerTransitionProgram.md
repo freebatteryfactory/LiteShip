@@ -6,7 +6,7 @@
 
 # Function: lowerTransitionProgram()
 
-> **lowerTransitionProgram**(`graph`, `program`, `env?`): [`LoweredProgramTimeline`](../interfaces/LoweredProgramTimeline.md)
+> **lowerTransitionProgram**(`graph`, `program`, `env?`): [`TransitionTimeline`](../interfaces/TransitionTimeline.md)
 
 Defined in: core/dist/motion/transition-program.d.ts:117
 
@@ -36,4 +36,4 @@ Ordering runs through `Plan.topoSort` for deterministic offsets.
 
 ## Returns
 
-[`LoweredProgramTimeline`](../interfaces/LoweredProgramTimeline.md)
+[`TransitionTimeline`](../interfaces/TransitionTimeline.md)

@@ -2,9 +2,9 @@
  * @liteship/vite type spine -- Vite 8 plugin for @token, @theme, @style, @quantize processing + HMR.
  */
 
-import type { Boundary } from './core.js';
+import type { Boundary, ContentAddress } from './core.js';
 import type { Token, Theme, Style } from './design.js';
-import type { BoundaryManifest, CompiledOutputs } from './edge.js';
+import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs } from './edge.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. PRIMITIVE KIND
@@ -212,12 +212,27 @@ export declare function serializeBoundaryOutput(output: CompiledOutputs): string
 // § 12. HMR
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Typed payload sent when a LiteShip definition changes during HMR. */
-export interface HMRPayload {
-  readonly type: 'liteship:update';
-  readonly boundary: string;
-  readonly css?: string;
-  readonly uniforms?: Record<string, number>;
+/** JSON-safe boundary identity sent by the Vite HMR channel. */
+export interface HMRBoundaryIdentity {
+  readonly id: ContentAddress;
+  readonly input: string;
+  readonly thresholds: readonly number[];
+  readonly states: readonly [string, ...string[]];
+  readonly hysteresis?: number;
+  readonly spec?: {
+    readonly timeRange?: { readonly from?: number; readonly until?: number };
+    readonly experimentId?: string;
+  };
 }
 
-export declare function handleHMR(payload: HMRPayload): void;
+/** Canonical payload sent when a LiteShip boundary changes during HMR. */
+export interface HMRPayload {
+  readonly type: 'liteship:update';
+  readonly boundaryName: string;
+  readonly previousBoundaryId: ContentAddress;
+  readonly boundary: HMRBoundaryIdentity;
+  readonly manifest: Pick<BoundaryManifestEntry, 'id' | 'outputs' | 'outputsByTier'>;
+}
+
+export declare function isHMRPayload(value: unknown): value is HMRPayload;
+export declare function handleHMR(input: unknown): number;

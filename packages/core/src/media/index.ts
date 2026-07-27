@@ -42,9 +42,9 @@ export { GenFrame } from './gen-frame.js';
 
 export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from './gen-frame.js';
 
-export { VideoRenderer, compositeStateToRgba } from './video.js';
+export { createFrameSchedule, createVideoRenderer, compositeStateToRgba } from './video.js';
 
-export type { VideoConfig, VideoFrameOutput } from './video.js';
+export type { FrameSchedule, ScheduledFrame, VideoConfig, VideoFrameOutput, VideoRenderer } from './video.js';
 
 export { createFrameBudget } from './frame-budget.js';
 

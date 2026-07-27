@@ -6,7 +6,7 @@
 
 # Interface: BoundarySpec
 
-Defined in: [\_spine/core.d.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L239)
+Defined in: [\_spine/core.d.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L245)
 
 Optional per-boundary activation filter: gate a boundary on device
 capabilities, an epoch-ms time window, or experiment participation. When a
@@ -19,7 +19,7 @@ context, the boundary is skipped during evaluation.
 
 > `readonly` `optional` **deviceFilter?**: (`capabilities`) => `boolean`
 
-Defined in: [\_spine/core.d.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L241)
+Defined in: [\_spine/core.d.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L247)
 
 Only evaluate this boundary when the device filter returns true.
 
@@ -39,7 +39,7 @@ Only evaluate this boundary when the device filter returns true.
 
 > `readonly` `optional` **experimentId?**: `string`
 
-Defined in: [\_spine/core.d.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L245)
+Defined in: [\_spine/core.d.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L251)
 
 Only evaluate this boundary for participants in this experiment.
 
@@ -49,7 +49,7 @@ Only evaluate this boundary for participants in this experiment.
 
 > `readonly` `optional` **timeRange?**: `object`
 
-Defined in: [\_spine/core.d.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L243)
+Defined in: [\_spine/core.d.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L249)
 
 Only evaluate this boundary within this time range (epoch ms).
 

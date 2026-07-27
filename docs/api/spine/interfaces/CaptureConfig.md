@@ -6,7 +6,7 @@
 
 # Interface: CaptureConfig
 
-Defined in: [\_spine/core.d.ts:1372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1372)
+Defined in: [\_spine/core.d.ts:1609](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1609)
 
 Browser capture dimensions, frame rate, duration, and codec preferences.
 
@@ -16,7 +16,7 @@ Browser capture dimensions, frame rate, duration, and codec preferences.
 
 > `readonly` **fps**: `number`
 
-Defined in: [\_spine/core.d.ts:1375](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1375)
+Defined in: [\_spine/core.d.ts:1612](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1612)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1375](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **height**: `number`
 
-Defined in: [\_spine/core.d.ts:1374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1374)
+Defined in: [\_spine/core.d.ts:1611](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1611)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1374](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **width**: `number`
 
-Defined in: [\_spine/core.d.ts:1373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1373)
+Defined in: [\_spine/core.d.ts:1610](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1610)

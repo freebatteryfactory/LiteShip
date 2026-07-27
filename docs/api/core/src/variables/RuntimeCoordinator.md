@@ -8,7 +8,7 @@
 
 > **RuntimeCoordinator**: `object`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L36)
+Defined in: [core/src/reactive/runtime-coordinator.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L37)
 
 Runtime coordinator namespace — single entry point for building the shared
 `Plan` + ECS store bundle consumed by every host adapter.

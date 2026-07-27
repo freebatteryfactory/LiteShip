@@ -8,4 +8,4 @@
 
 > **StartupTelemetry** = [`CompositorWorkerStartupTelemetry`](../../../interfaces/CompositorWorkerStartupTelemetry.md)
 
-Defined in: [\_spine/worker.d.ts:488](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L488)
+Defined in: [\_spine/worker.d.ts:489](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L489)

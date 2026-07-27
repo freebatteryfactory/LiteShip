@@ -5,7 +5,7 @@ import {
   scanWorkflowActionPins,
   scanWorkflowCheckoutCredentials,
   TRUSTED_ACTION_SOURCES,
-} from '../../../packages/cli/src/lib/workflow-action-pins.js';
+} from '../../../packages/cli/src/internal/workflow-action-pins.js';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const WORKFLOWS = readdirSync(resolve(ROOT, '.github/workflows'))

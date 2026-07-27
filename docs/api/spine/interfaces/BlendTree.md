@@ -6,7 +6,7 @@
 
 # Interface: BlendTree\<T\>
 
-Defined in: [\_spine/core.d.ts:480](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L480)
+Defined in: [\_spine/core.d.ts:507](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L507)
 
 Mutable weighted blend graph over homogeneous numeric records.
 
@@ -22,7 +22,7 @@ Mutable weighted blend graph over homogeneous numeric records.
 
 > `readonly` **changes**: `Pick`\<[`Fanout`](../namespaces/CellKernel/interfaces/Fanout.md)\<`T`\>, `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [\_spine/core.d.ts:486](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L486)
+Defined in: [\_spine/core.d.ts:513](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L513)
 
 No-replay subscribe surface of the tree's [CellKernel](../namespaces/CellKernel/README.md) fan-out channel.
 
@@ -32,7 +32,7 @@ No-replay subscribe surface of the tree's [CellKernel](../namespaces/CellKernel/
 
 > **add**(`name`, `value`, `weight`): `void`
 
-Defined in: [\_spine/core.d.ts:481](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L481)
+Defined in: [\_spine/core.d.ts:508](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L508)
 
 #### Parameters
 
@@ -58,7 +58,7 @@ Defined in: [\_spine/core.d.ts:481](https://github.com/freebatteryfactory/LiteSh
 
 > **compute**(): `T`
 
-Defined in: [\_spine/core.d.ts:484](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L484)
+Defined in: [\_spine/core.d.ts:511](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L511)
 
 #### Returns
 
@@ -70,7 +70,7 @@ Defined in: [\_spine/core.d.ts:484](https://github.com/freebatteryfactory/LiteSh
 
 > **remove**(`name`): `void`
 
-Defined in: [\_spine/core.d.ts:482](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L482)
+Defined in: [\_spine/core.d.ts:509](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L509)
 
 #### Parameters
 
@@ -88,7 +88,7 @@ Defined in: [\_spine/core.d.ts:482](https://github.com/freebatteryfactory/LiteSh
 
 > **setWeight**(`name`, `weight`): `void`
 
-Defined in: [\_spine/core.d.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L483)
+Defined in: [\_spine/core.d.ts:510](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L510)
 
 #### Parameters
 

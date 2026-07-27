@@ -22,6 +22,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import fg from 'fast-glob';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@liteship/audit'; // CUT B5b — one slash-normalize home
+import { ASSEMBLY_KINDS } from '../packages/core/src/authoring/capsule.js';
 import {
   ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
   BENCH_FLEX_POLICY,
@@ -69,7 +70,7 @@ const sh = (cmd: string): { ok: boolean; out: string } => {
 const SANCTIONED_CAST_FILES = new Set([
   // Brand factories
   'packages/core/src/schema/brands.ts',
-  'packages/core/src/ecs.ts',
+  'packages/core/src/ecs/runtime.ts',
   'packages/web/src/types.ts',
 
   // Tuple + generic-preservation helpers
@@ -400,15 +401,7 @@ const checks: Check[] = [
           return { pass: false, detail: 'manifest malformed: capsules is not an array' };
         }
         const kinds = new Set(manifest.capsules.map((c) => c.kind));
-        const allArms = [
-          'pureTransform',
-          'receiptedMutation',
-          'stateMachine',
-          'siteAdapter',
-          'policyGate',
-          'cachedProjection',
-          'sceneComposition',
-        ];
+        const allArms = ASSEMBLY_KINDS;
         const armsWithInstances = allArms.filter((a) => kinds.has(a)).length;
         // Spec 1.1 promotes the CapsuleFactory dimension from a presence check
         // to a real instance gate. The type-directed AST walker (Task 2) made

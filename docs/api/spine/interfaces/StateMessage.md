@@ -6,7 +6,7 @@
 
 # Interface: StateMessage
 
-Defined in: [\_spine/worker.d.ts:203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L203)
+Defined in: [\_spine/worker.d.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L204)
 
 Worker publication of a computed state transition.
 
@@ -16,7 +16,7 @@ Worker publication of a computed state transition.
 
 > `readonly` `optional` **resolvedStateGenerations?**: `Record`\<`string`, `number`\>
 
-Defined in: [\_spine/worker.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L206)
+Defined in: [\_spine/worker.d.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L207)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:206](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **state**: [`CompositeState`](CompositeState.md)
 
-Defined in: [\_spine/worker.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L205)
+Defined in: [\_spine/worker.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L206)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/worker.d.ts:205](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"state"`
 
-Defined in: [\_spine/worker.d.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L204)
+Defined in: [\_spine/worker.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L205)

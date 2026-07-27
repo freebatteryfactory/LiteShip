@@ -8,7 +8,7 @@
 
 > **listTools**(): readonly [`McpToolDescriptor`](../interfaces/McpToolDescriptor.md)[]
 
-Defined in: [mcp-server/src/dispatch.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L392)
+Defined in: [mcp-server/src/dispatch.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L410)
 
 The exact public MCP tool surface, derived from the canonical command catalog.
 

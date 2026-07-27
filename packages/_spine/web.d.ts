@@ -3,7 +3,7 @@
  * Salvaged from @kit/web, rebranded data-kit-* -> data-liteship-*.
  */
 
-import type { AsyncOwnedResource } from './core.js';
+import type { AsyncOwnedResource, Millis } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CORE WEB TYPES (from @kit/web/types.ts)
@@ -74,6 +74,12 @@ export interface IMEState {
   readonly end: number;
 }
 
+/** Explicit owner for document-level IME listeners and physical-state capture. */
+export interface PhysicalStateTracker extends AsyncOwnedResource {
+  capture(root: Element): PhysicalState;
+  captureIME(): IMEState | null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. MORPH (idiomorph-style DOM diffing)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -122,7 +128,13 @@ export interface MorphRejection {
 
 export declare const Morph: {
   morph(oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): void;
-  morphWithState(oldNode: Element, newHTML: string, config?: Partial<MorphConfig>, hints?: MorphHints): MorphResult;
+  morphWithState(
+    oldNode: Element,
+    newHTML: string,
+    config?: Partial<MorphConfig>,
+    hints?: MorphHints,
+    physicalStateTracker?: Pick<PhysicalStateTracker, 'capture'>,
+  ): MorphResult;
   parseHTML(html: string): DocumentFragment;
   readonly defaultConfig: MorphConfig;
 };
@@ -220,6 +232,16 @@ export type SSEState = 'connecting' | 'connected' | 'reconnecting' | 'disconnect
 /** Backpressure policy applied when an SSE queue reaches capacity. */
 export type OverflowPolicy = 'drop-newest' | 'drop-oldest' | 'coalesce-by-id';
 
+/** Category of remote runtime endpoint governed by a host policy. */
+export type RuntimeEndpointKind = 'stream' | 'snapshot' | 'replay' | 'llm' | 'gpu-shader' | 'wasm';
+
+/** Origin policy applied at runtime network boundaries. */
+export interface RuntimeEndpointPolicy {
+  readonly mode: 'same-origin' | 'allowlist';
+  readonly allowOrigins?: readonly string[];
+  readonly byKind?: Partial<Record<RuntimeEndpointKind, readonly string[]>>;
+}
+
 /** Endpoint, retry, heartbeat, and queue options for an SSE client. */
 export interface SSEConfig {
   readonly url: string;
@@ -230,7 +252,7 @@ export interface SSEConfig {
    * (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
    */
   readonly reconnect?: Partial<ReconnectConfig>;
-  readonly heartbeatInterval?: number;
+  readonly heartbeatInterval?: Millis;
   /** Overflow policy applied when the receive buffer saturates (default `coalesce-by-id`). */
   readonly overflow?: OverflowPolicy;
   /**
@@ -247,8 +269,8 @@ export interface SSEConfig {
 /** Bounded exponential-backoff parameters for SSE reconnection. */
 export interface ReconnectConfig {
   readonly maxAttempts: number;
-  readonly initialDelay: number;
-  readonly maxDelay: number;
+  readonly initialDelay: Millis;
+  readonly maxDelay: Millis;
   readonly factor: number;
 }
 
@@ -310,7 +332,8 @@ export interface ResumptionConfig {
   readonly maxGapSize: number;
   readonly snapshotUrl?: string;
   readonly replayUrl?: string;
-  readonly timeout?: number;
+  readonly timeout?: Millis;
+  readonly endpointPolicy?: RuntimeEndpointPolicy;
 }
 
 /** Last accepted event identity and buffered recovery state. */
@@ -353,11 +376,16 @@ export declare const Resumption: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export declare const Physical: {
-  /** Snapshot the ephemeral DOM state synchronously (was `Effect.Effect<PhysicalState>`). */
+  /** Snapshot passive focus, selection, and scroll state synchronously. */
   capture(root: Element): PhysicalState;
+  /** Install explicitly owned IME listeners for capture across morphs. */
+  createTracker(ownerDocument: Document): PhysicalStateTracker;
   /** Reapply captured DOM state synchronously (was `Effect.Effect<void>`). */
   restore(state: PhysicalState, root: Element, remap?: Record<string, string>): void;
 };
+
+/** Allocate one explicitly owned IME-composition tracker for a browser document. */
+export declare function createPhysicalStateTracker(ownerDocument: Document): PhysicalStateTracker;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 10. CAPTURE (WebCodecs video encoding)
@@ -379,13 +407,17 @@ export interface WebCodecsCaptureOptions {
   readonly keyframeInterval?: number;
 }
 
-/** Host renderer invoked for each browser-capture frame. */
-export type RenderFn = (ctx: OffscreenCanvasRenderingContext2D, state: CompositeState, canvas: OffscreenCanvas) => void;
+/** Canvas surface accepted by browser capture rendering. */
+export type Canvas2DTarget = OffscreenCanvas | HTMLCanvasElement;
 
-/** Browser WebCodecs capture constructor and capability surface. */
-export declare namespace WebCodecsCapture {
-  export function make(options?: WebCodecsCaptureOptions): FrameCapture;
-}
+/** 2D context produced by a browser capture target. */
+export type RenderContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+
+/** Host renderer invoked for each browser-capture frame. */
+export type RenderFn = (ctx: RenderContext2D, state: CompositeState, canvas: Canvas2DTarget) => void;
+
+/** Allocate a browser WebCodecs capture with one async-uniform lifecycle. */
+export declare function createWebCodecsCapture(options?: WebCodecsCaptureOptions): FrameCapture;
 
 export declare function renderToCanvas(state: CompositeState, canvas: OffscreenCanvas, renderFn?: RenderFn): void;
 

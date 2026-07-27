@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHECK_REGISTRY } from '@liteship/command';
-import { scanWorkflowActionPins } from '../../../packages/cli/src/lib/workflow-action-pins.js';
+import { scanWorkflowActionPins } from '../../../packages/cli/src/internal/workflow-action-pins.js';
 import { readReleasePromotionWorkspace, workflowJob } from '../../../scripts/lib/release-promotion-contract.js';
 
 const workspace = readReleasePromotionWorkspace(process.cwd());

@@ -3,14 +3,8 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import {
-  ComposableWorld,
-  defineBoundary,
-  defineToken,
-  defineStyle,
-  createWorld,
-  createComposable,
-} from '@liteship/core';
+import { ComposableWorld, defineBoundary, defineToken, defineStyle, createComposable } from '@liteship/core';
+import { createWorld } from '@liteship/core/ecs';
 
 const boundary = defineBoundary({
   input: 'viewport.width',

@@ -36,7 +36,7 @@ import {
 } from '@liteship/command';
 import { spawnArgvCapture } from '@liteship/command/host';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { scanWorkflowActionPins, scanWorkflowCheckoutCredentials } from '../lib/workflow-action-pins.js';
+import { scanWorkflowActionPins, scanWorkflowCheckoutCredentials } from '../internal/workflow-action-pins.js';
 
 /** Receipt emitted by `liteship check-invariants`. */
 export interface CheckInvariantsReceipt extends CheckInvariantsPayload {

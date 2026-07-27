@@ -8,7 +8,7 @@
 
 > **exportVideo**(`graph`): [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:411](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L411)
+Defined in: [stage/src/dual-export.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L407)
 
 Cast the graph's Pose/Projection-derived state to a deterministic video,
 content-addressing the produced per-frame `CompositeState` snapshots (NOT the

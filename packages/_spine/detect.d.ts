@@ -30,12 +30,68 @@ export interface DeviceCapabilities {
   };
 }
 
+/** Canonical capability-axis names shared by detection and hosts. */
+export type CapAxis = 'tier' | 'motion' | 'design';
+
+/** Source tier triple projected onto the canonical capability axes. */
+export interface CapabilityTierProjection {
+  readonly capTier: CapTier;
+  readonly motionTier: MotionTier;
+  readonly designTier: DesignTier;
+}
+
+/** Complete values projected on the three capability axes. */
+export interface CapabilityAxisValues {
+  readonly tier: CapTier;
+  readonly motion: MotionTier;
+  readonly design: DesignTier;
+}
+
+/** Primitive inputs consumed by the tier ladders. */
+export type CapabilityEvidenceInput =
+  | 'gpu'
+  | 'cores'
+  | 'memory'
+  | 'webgpu'
+  | 'prefersReducedMotion'
+  | 'prefersContrast'
+  | 'forcedColors'
+  | 'prefersReducedTransparency'
+  | 'dynamicRange'
+  | 'colorGamut'
+  | 'updateRate';
+
+/** Provenance for one primitive capability value. */
+export interface CapabilityInputEvidence {
+  readonly input: CapabilityEvidenceInput;
+  readonly support: 'observed' | 'inferred';
+  readonly source: string;
+}
+
+/** Exhaustive provenance map for the primitive inputs used by the tier ladders. */
+export type CapabilityEvidenceInputs = Readonly<{
+  [Input in CapabilityEvidenceInput]: CapabilityInputEvidence & { readonly input: Input };
+}>;
+
+/** One capability-axis value plus exhaustive primitive provenance. */
+export interface CapabilityAxisEvidence<Axis extends CapAxis = CapAxis> {
+  readonly axis: Axis;
+  readonly value: CapabilityAxisValues[Axis];
+  readonly support: 'observed' | 'inferred';
+  readonly inputs: readonly CapabilityInputEvidence[];
+}
+
+/** Per-axis provenance for one complete tier projection. */
+export type CapabilityTierEvidence = Readonly<{
+  [Axis in CapAxis]: CapabilityAxisEvidence<Axis>;
+}>;
+
 /** Base capability evidence and the rendering tier derived from it. */
 export interface DetectionResult {
   readonly capabilities: DeviceCapabilities;
   readonly capTier: CapTier;
   readonly capSet: CapSet;
-  readonly confidence: number;
+  readonly tierEvidence: CapabilityTierEvidence;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

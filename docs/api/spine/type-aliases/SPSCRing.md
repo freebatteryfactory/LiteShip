@@ -8,7 +8,7 @@
 
 > **SPSCRing** = `object`
 
-Defined in: [\_spine/worker.d.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L303)
+Defined in: [\_spine/worker.d.ts:304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L304)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/worker.d.ts:303](https://github.com/freebatteryfactory/Lite
 
 > **attachConsumer**(`sab`, `slotCount?`, `slotSize?`): `SPSCRing`
 
-Defined in: [\_spine/worker.d.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L331)
+Defined in: [\_spine/worker.d.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L332)
 
 Ring geometry rides in the buffer header; explicit slotCount/slotSize are validated against it (a mismatch throws).
 
@@ -44,7 +44,7 @@ Ring geometry rides in the buffer header; explicit slotCount/slotSize are valida
 
 > **attachProducer**(`sab`, `slotCount?`, `slotSize?`): `SPSCRing`
 
-Defined in: [\_spine/worker.d.ts:329](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L329)
+Defined in: [\_spine/worker.d.ts:330](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L330)
 
 Ring geometry rides in the buffer header; explicit slotCount/slotSize are validated against it (a mismatch throws).
 
@@ -72,7 +72,7 @@ Ring geometry rides in the buffer header; explicit slotCount/slotSize are valida
 
 > **createPair**(`slotCount`, `slotSize`): [`SPSCRingPair`](../interfaces/SPSCRingPair.md)
 
-Defined in: [\_spine/worker.d.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L327)
+Defined in: [\_spine/worker.d.ts:328](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L328)
 
 #### Parameters
 

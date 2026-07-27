@@ -42,7 +42,7 @@ function makeKV() {
 
 describe('createEdgeHostAdapter', () => {
   test('resolve parses Client Hints once per request', async () => {
-    const parseSpy = vi.spyOn(ClientHints, 'parseClientHints');
+    const parseSpy = vi.spyOn(ClientHints, 'parseEvidence');
     const adapter = createEdgeHostAdapter();
     await adapter.resolve(makeHeaders());
     expect(parseSpy).toHaveBeenCalledTimes(1);

@@ -16,7 +16,7 @@ import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
 import { buildRuntimeSeamsReport } from '../../../scripts/report-runtime-seams.js';
 import { withRepoRoot } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 
 // CUT D9a — the audit target is `profile.repoRoot`, not a positional `root`.
 // These fixtures use @liteship/ package names, so the LiteShip default profile

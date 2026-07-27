@@ -8,7 +8,7 @@
 
 > **lowerRevealChain**(`input`): [`LoweredRevealChain`](../interfaces/LoweredRevealChain.md)
 
-Defined in: core/dist/motion/reveal.d.ts:137
+Defined in: core/dist/motion/reveal.d.ts:139
 
 Lower a [RevealChainInput](../interfaces/RevealChainInput.md) into ONE DocumentGraph (one signal + component +
 entity, N pose pairs + N transitions) plus a [TransitionProgram](../type-aliases/TransitionProgram.md) composing

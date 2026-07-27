@@ -6,7 +6,7 @@
 
 # Interface: AIToolDefinition
 
-Defined in: [\_spine/compiler.d.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L242)
+Defined in: [\_spine/compiler.d.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L254)
 
 Tool definition synthesized from an agent-visible action.
 
@@ -16,7 +16,7 @@ Tool definition synthesized from an agent-visible action.
 
 > `readonly` **description**: `string`
 
-Defined in: [\_spine/compiler.d.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L244)
+Defined in: [\_spine/compiler.d.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L256)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:244](https://github.com/freebatteryfactory/Li
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/compiler.d.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L243)
+Defined in: [\_spine/compiler.d.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L255)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:243](https://github.com/freebatteryfactory/Li
 
 > `readonly` **parameters**: `Record`\<`string`, `unknown`\>
 
-Defined in: [\_spine/compiler.d.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L245)
+Defined in: [\_spine/compiler.d.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L257)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/compiler.d.ts:245](https://github.com/freebatteryfactory/Li
 
 > `readonly` **returns**: `Record`\<`string`, `unknown`\>
 
-Defined in: [\_spine/compiler.d.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L246)
+Defined in: [\_spine/compiler.d.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L258)

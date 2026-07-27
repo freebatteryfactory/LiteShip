@@ -176,36 +176,9 @@ export function loadVirtualModule(id: string, data?: VirtualModuleData): string 
  * CSS or shader uniform updates surgically without full reload.
  */
 const HMR_CLIENT_SOURCE = `
-import { dispatchLiteshipEvent } from '@liteship/web';
+import { handleHMR } from '@liteship/vite/hmr';
 
 if (import.meta.hot) {
-  import.meta.hot.on('liteship:update', (payload) => {
-    if (typeof document === 'undefined') return;
-    if (payload.css !== undefined) {
-      const sel = 'style[data-liteship-boundary="' + payload.boundary + '"]';
-      let el = document.querySelector(sel);
-      if (!el) {
-        el = document.createElement('style');
-        el.setAttribute('data-liteship-boundary', payload.boundary);
-        document.head.appendChild(el);
-      }
-      el.textContent = payload.css;
-    }
-    if (payload.uniforms !== undefined) {
-      document.querySelectorAll('[data-liteship-boundary="' + payload.boundary + '"]').forEach((boundaryEl) => {
-        dispatchLiteshipEvent(boundaryEl, 'liteship:uniform-update', { glsl: payload.uniforms });
-      });
-      document.querySelectorAll('canvas[data-liteship-boundary="' + payload.boundary + '"]').forEach((canvas) => {
-        const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
-        if (!gl) return;
-        const program = canvas.__liteshipProgram;
-        if (!program) return;
-        Object.entries(payload.uniforms).forEach(([name, value]) => {
-          const loc = gl.getUniformLocation(program, name);
-          if (loc !== null) gl.uniform1f(loc, value);
-        });
-      });
-    }
-  });
+  import.meta.hot.on('liteship:update', handleHMR);
 }
 `.trim();

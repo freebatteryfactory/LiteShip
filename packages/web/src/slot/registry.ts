@@ -145,9 +145,9 @@ export const scanDOM = (registry: SlotRegistry, root: Element, defaultMode: Isla
       };
       registry.register(entry);
     } else if (slotPath) {
-      Diagnostics.warn({
+      Diagnostics.warnRegistered({
         source: 'liteship/web.SlotRegistry',
-        code: 'invalid-slot-path',
+        code: 'web/slot/invalid-path',
         message: `Invalid slot path "${slotPath}". Must start with "/" and contain only alphanumeric, hyphens, underscores, e.g. "/hero" or "/sidebar/nav".`,
       });
     }

@@ -8,6 +8,7 @@
  */
 
 import type { ViteDevServer, InlineConfig } from 'vite';
+import type { EventDetail } from '@liteship/_spine/events';
 import { HostCapabilityError } from '@liteship/error';
 import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
@@ -75,7 +76,11 @@ export async function startDevServer(scenePath: string): Promise<DevServerHandle
           s.watcher.add(resolve(scenePath));
           s.watcher.on('change', (file) => {
             if (file.endsWith(scenePath) || resolve(file) === resolve(scenePath)) {
-              s.ws.send({ type: 'custom', event: 'liteship:scene-update', data: { sceneId: file } });
+              s.ws.send({
+                type: 'custom',
+                event: 'liteship:scene-update',
+                data: { sceneId: file } satisfies EventDetail<'liteship:scene-update'>,
+              });
             }
           });
         },

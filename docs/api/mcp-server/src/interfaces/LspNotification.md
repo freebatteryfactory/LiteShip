@@ -6,7 +6,7 @@
 
 # Interface: LspNotification
 
-Defined in: [mcp-server/src/lsp/server.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L174)
+Defined in: [mcp-server/src/lsp/server.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L184)
 
 A message the server emits OUT-OF-BAND (a server→client notification, e.g.
 `publishDiagnostics`) — distinct from a response to a request. The driver
@@ -19,7 +19,7 @@ transport stays a pure function of (incoming message, runner).
 
 > `readonly` **method**: `string`
 
-Defined in: [mcp-server/src/lsp/server.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L175)
+Defined in: [mcp-server/src/lsp/server.ts:185](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L185)
 
 ***
 
@@ -27,4 +27,4 @@ Defined in: [mcp-server/src/lsp/server.ts:175](https://github.com/freebatteryfac
 
 > `readonly` **params**: `unknown`
 
-Defined in: [mcp-server/src/lsp/server.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L176)
+Defined in: [mcp-server/src/lsp/server.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L186)

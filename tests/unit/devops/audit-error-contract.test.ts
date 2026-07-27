@@ -24,7 +24,7 @@ import {
   runSurfaceAudit,
   type DevopsProfile,
 } from '@liteship/audit';
-import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
+import { loadProfile } from '../../../packages/cli/src/internal/load-profile.js';
 
 const fixtures: string[] = [];
 afterEach(() => {

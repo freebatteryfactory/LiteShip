@@ -6,7 +6,7 @@
 
 # Interface: ForkViolation
 
-Defined in: [\_spine/core.d.ts:1084](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1084)
+Defined in: [\_spine/core.d.ts:1299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1299)
 
 Evidence that a receipt graph violates its declared fork policy.
 
@@ -16,7 +16,7 @@ Evidence that a receipt graph violates its declared fork policy.
 
 > `readonly` **actor**: `string`
 
-Defined in: [\_spine/core.d.ts:1085](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1085)
+Defined in: [\_spine/core.d.ts:1300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1300)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1085](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **attempted**: `string`
 
-Defined in: [\_spine/core.d.ts:1088](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1088)
+Defined in: [\_spine/core.d.ts:1303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1303)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1088](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **existing**: `string`
 
-Defined in: [\_spine/core.d.ts:1087](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1087)
+Defined in: [\_spine/core.d.ts:1302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1302)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1087](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **prevHash**: `string`
 
-Defined in: [\_spine/core.d.ts:1086](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1086)
+Defined in: [\_spine/core.d.ts:1301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1301)

@@ -8,6 +8,6 @@
 
 > **EdgeWGSLUniformVector** = readonly \[`number`, `number`\] \| readonly \[`number`, `number`, `number`\] \| readonly \[`number`, `number`, `number`, `number`\]
 
-Defined in: [\_spine/edge.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L94)
+Defined in: [\_spine/edge.d.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L114)
 
 Fixed-width WGSL vector retained in an edge manifest.

@@ -8,7 +8,7 @@
 
 > **fanout**\<`T`\>(): [`Fanout`](../interfaces/Fanout.md)\<`T`\>
 
-Defined in: [\_spine/core.d.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L226)
+Defined in: [\_spine/core.d.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L232)
 
 Build a no-replay fan-out kernel.
 

@@ -10,6 +10,7 @@
 
 import type { Scheduler } from '../reactive/scheduler.js';
 import { Scheduler as SchedulerImpl } from '../reactive/scheduler.js';
+import { ValidationError } from '@liteship/error';
 import type { CompositeState, Compositor } from './compositor.js';
 import type { Signal } from '../reactive/signal.js';
 import type { Millis } from '../schema/brands.js';
@@ -38,11 +39,80 @@ export interface VideoFrameOutput {
   readonly state: CompositeState;
 }
 
+/** One deterministic coordinate in an offline frame schedule. */
+export interface ScheduledFrame {
+  readonly frame: number;
+  readonly timestamp: number;
+  readonly progress: number;
+}
+
+/**
+ * Host-neutral frame timing. Rendering and encoding remain host-owned; this
+ * kernel owns only the frame-count/index/time/progress law they must share.
+ */
+export interface FrameSchedule extends Iterable<ScheduledFrame> {
+  readonly fps: number;
+  readonly durationMs: Millis;
+  readonly totalFrames: number;
+  at(frame: number): ScheduledFrame;
+}
+
 interface VideoRendererShape {
   readonly config: VideoConfig;
+  readonly schedule: FrameSchedule;
   readonly totalFrames: number;
   readonly scheduler: Scheduler.FixedStep;
   frames(): AsyncGenerator<VideoFrameOutput>;
+}
+
+/** Create the shared deterministic frame schedule for one duration and fps. */
+export function createFrameSchedule(config: Pick<VideoConfig, 'fps' | 'durationMs'>): FrameSchedule {
+  if (!Number.isFinite(config.fps) || config.fps <= 0) {
+    throw ValidationError('createFrameSchedule', `expected fps > 0; received ${String(config.fps)}.`);
+  }
+  if (!Number.isFinite(config.durationMs) || config.durationMs < 0) {
+    throw ValidationError(
+      'createFrameSchedule',
+      `expected a finite durationMs >= 0; received ${String(config.durationMs)}.`,
+    );
+  }
+  // Capture primitive inputs once. Reading the caller-owned object from `at`
+  // would let a later mutation change coordinates while the schedule's public
+  // fps/duration fields kept describing the original timeline.
+  const fps = config.fps;
+  const durationMs = config.durationMs;
+  const totalFrames = Math.ceil((durationMs / 1000) * fps);
+  if (!Number.isSafeInteger(totalFrames)) {
+    throw ValidationError(
+      'createFrameSchedule',
+      `expected a finite safe frame count; received ${String(totalFrames)} from fps=${String(fps)} and durationMs=${String(durationMs)}.`,
+    );
+  }
+  const at = (frame: number): ScheduledFrame => {
+    if (!Number.isInteger(frame) || frame < 0 || frame >= totalFrames) {
+      throw ValidationError(
+        'FrameSchedule.at',
+        `expected an integer in [0, ${Math.max(0, totalFrames - 1)}]; received ${String(frame)}.`,
+      );
+    }
+    return Object.freeze({
+      frame,
+      // Divide before multiplying so a valid finite duration cannot overflow
+      // through the avoidable `frame * 1000` intermediate.
+      timestamp: (frame / fps) * 1000,
+      progress: frameToT(frame, totalFrames),
+    });
+  };
+  const schedule: FrameSchedule = {
+    fps,
+    durationMs,
+    totalFrames,
+    at,
+    *[Symbol.iterator](): Iterator<ScheduledFrame> {
+      for (let frame = 0; frame < totalFrames; frame++) yield at(frame);
+    },
+  };
+  return Object.freeze(schedule);
 }
 
 // ---------------------------------------------------------------------------
@@ -125,49 +195,51 @@ export function compositeStateToRgba(state: CompositeState, width: number, heigh
  * the compositor evaluates, so quantizers that read from that signal advance
  * deterministically with the render clock.
  */
-function _make(config: VideoConfig, compositor: Compositor, signal?: Signal.Controllable<number>): VideoRendererShape {
-  const totalFrames = Math.ceil((config.durationMs / 1000) * config.fps);
-  const scheduler = SchedulerImpl.fixedStep(config.fps);
+export function createVideoRenderer(
+  config: VideoConfig,
+  compositor: Compositor,
+  signal?: Signal.Controllable<number>,
+): VideoRendererShape {
+  // The renderer is an addressed execution plan, not a live view over a
+  // caller-owned options bag. Snapshot its scalar configuration before any
+  // host adapter retains it so capture metadata and frame coordinates cannot
+  // diverge after construction.
+  const ownedConfig: VideoConfig = Object.freeze({
+    fps: config.fps,
+    width: config.width,
+    height: config.height,
+    durationMs: config.durationMs,
+  });
+  const schedule = createFrameSchedule(ownedConfig);
+  const scheduler = SchedulerImpl.fixedStep(ownedConfig.fps);
 
   return {
-    config,
-    totalFrames,
+    config: ownedConfig,
+    schedule,
+    totalFrames: schedule.totalFrames,
     scheduler,
     async *frames(): AsyncGenerator<VideoFrameOutput> {
-      for (let i = 0; i < totalFrames; i++) {
+      for (const coordinate of schedule) {
         scheduler.step();
-        const timestamp = (i * 1000) / config.fps;
         if (signal) {
           // Signal.seek is plain (synchronous) as of the Wave 6 reactive
           // convergence — call it directly, no Effect grounding. (The broader
           // video.ts effect-residue cleanup is the Wave 8 consumer tail; this one
           // line moves now because the Signal type change requires it for a green
           // tree — the §7d producer→consumer discipline.)
-          signal.seek(timestamp);
+          signal.seek(coordinate.timestamp);
         }
         // Compositor.compute() is synchronous as of the core-seams wave (SEAM:2):
         // it returns the CompositeState directly, no Effect wrapper to run.
         const state = compositor.compute();
         yield {
-          frame: i,
-          timestamp,
-          progress: totalFrames > 1 ? frameToT(i, totalFrames) : 1,
+          ...coordinate,
           state,
         };
       }
     },
   };
 }
-
-/**
- * VideoRenderer — fixed-step frame generator for deterministic offline rendering.
- * Drives a {@link Compositor} at the configured fps and optionally seeks a
- * controllable time {@link Signal} so every frame is reproducible.
- */
-export const VideoRenderer = {
-  /** Create a renderer bound to the given compositor and optional seekable time signal. */
-  make: _make,
-};
 
 /** Public structural type for `VideoRenderer`. */
 export type VideoRenderer = VideoRendererShape;

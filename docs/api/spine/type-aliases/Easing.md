@@ -8,4 +8,4 @@
 
 > **Easing** = [`Fns`](../namespaces/Easing/interfaces/Fns.md)
 
-Defined in: [\_spine/core.d.ts:362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L362)
+Defined in: [\_spine/core.d.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L368)

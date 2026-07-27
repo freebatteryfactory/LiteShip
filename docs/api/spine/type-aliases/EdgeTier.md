@@ -8,7 +8,7 @@
 
 > **EdgeTier** = `object`
 
-Defined in: [\_spine/edge.d.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L49)
+Defined in: [\_spine/edge.d.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L69)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/edge.d.ts:49](https://github.com/freebatteryfactory/LiteShi
 
 > **detectTier**(`headers`): [`EdgeTierResult`](../interfaces/EdgeTierResult.md)
 
-Defined in: [\_spine/edge.d.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L50)
+Defined in: [\_spine/edge.d.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L70)
 
 #### Parameters
 
@@ -34,13 +34,13 @@ Defined in: [\_spine/edge.d.ts:50](https://github.com/freebatteryfactory/LiteShi
 
 > **tierDataAttributes**(`result`): `string`
 
-Defined in: [\_spine/edge.d.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L52)
+Defined in: [\_spine/edge.d.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L72)
 
 #### Parameters
 
 ##### result
 
-[`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+[`CapabilityTierProjection`](../interfaces/CapabilityTierProjection.md)
 
 #### Returns
 
@@ -50,33 +50,33 @@ Defined in: [\_spine/edge.d.ts:52](https://github.com/freebatteryfactory/LiteShi
 
 ### tierDataAttributesMap()
 
-> **tierDataAttributesMap**(`result`): `Readonly`\<`Record`\<`string`, `string`\>\>
+> **tierDataAttributesMap**(`result`): `Readonly`\<`Record`\<`` `data-liteship-${CapAxis}` ``, `string`\>\>
 
-Defined in: [\_spine/edge.d.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L53)
+Defined in: [\_spine/edge.d.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L73)
 
 #### Parameters
 
 ##### result
 
-[`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+[`CapabilityTierProjection`](../interfaces/CapabilityTierProjection.md)
 
 #### Returns
 
-`Readonly`\<`Record`\<`string`, `string`\>\>
+`Readonly`\<`Record`\<`` `data-liteship-${CapAxis}` ``, `string`\>\>
 
 ***
 
-### tierFromParsed()
+### tierFromEvidence()
 
-> **tierFromParsed**(`caps`): [`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+> **tierFromEvidence**(`parsed`): [`EdgeTierResult`](../interfaces/EdgeTierResult.md)
 
-Defined in: [\_spine/edge.d.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L51)
+Defined in: [\_spine/edge.d.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L71)
 
 #### Parameters
 
-##### caps
+##### parsed
 
-[`ExtendedDeviceCapabilities`](../interfaces/ExtendedDeviceCapabilities.md)
+[`ClientHintsEvidence`](../interfaces/ClientHintsEvidence.md)
 
 #### Returns
 

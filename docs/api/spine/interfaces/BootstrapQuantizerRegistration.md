@@ -6,7 +6,7 @@
 
 # Interface: BootstrapQuantizerRegistration
 
-Defined in: [\_spine/worker.d.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L44)
+Defined in: [\_spine/worker.d.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L45)
 
 Quantizer definition and initial evidence transferred during bootstrap.
 
@@ -16,7 +16,7 @@ Quantizer definition and initial evidence transferred during bootstrap.
 
 > `readonly` `optional` **blendWeights?**: `Record`\<`string`, `number`\>
 
-Defined in: [\_spine/worker.d.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L50)
+Defined in: [\_spine/worker.d.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L51)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:50](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **boundaryId**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/worker.d.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L46)
+Defined in: [\_spine/worker.d.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L47)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/worker.d.ts:46](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **initialState?**: [`StateName`](../type-aliases/StateName.md)
 
-Defined in: [\_spine/worker.d.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L49)
+Defined in: [\_spine/worker.d.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L50)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/worker.d.ts:49](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/worker.d.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L45)
+Defined in: [\_spine/worker.d.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L46)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/worker.d.ts:45](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **states**: readonly [`StateName`](../type-aliases/StateName.md)[]
 
-Defined in: [\_spine/worker.d.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L47)
+Defined in: [\_spine/worker.d.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L48)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [\_spine/worker.d.ts:47](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **thresholds**: readonly `number`[] \| `Float64Array`\<`ArrayBufferLike`\>
 
-Defined in: [\_spine/worker.d.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L48)
+Defined in: [\_spine/worker.d.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L49)

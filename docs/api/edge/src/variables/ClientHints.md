@@ -8,7 +8,7 @@
 
 > `const` **ClientHints**: `object`
 
-Defined in: [edge/src/client-hints.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L365)
+Defined in: [edge/src/client-hints.ts:428](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L428)
 
 Client Hints namespace.
 
@@ -79,10 +79,10 @@ const response = new Response('OK', {
 
 Parse Client Hints headers into [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md).
 
-Parse Client Hints headers into an [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure.
+Values-only projection of the canonical richer [parseEvidence](#parseevidence) producer.
 
-For properties that cannot be determined from headers (GPU tier, WebGPU
-support, CPU cores), conservative defaults are used.
+Use this for conservative rendering. Use `parseEvidence` when a consumer
+needs to distinguish observed inputs from inferred fallbacks.
 
 #### Parameters
 
@@ -90,30 +90,25 @@ support, CPU cores), conservative defaults are used.
 
 [`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md) \| `Headers`
 
-Client Hints headers (plain object or Web API Headers)
-
 #### Returns
 
 [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-An [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure
+### parseEvidence
 
-#### Example
+> **parseEvidence**: (`headers`) => [`ClientHintsEvidence`](../interfaces/ClientHintsEvidence.md)
 
-```ts
-import { ClientHints } from '@liteship/edge';
+Parse Client Hints once into complete values and input-level provenance.
 
-const caps = ClientHints.parseClientHints({
-  'sec-ch-device-memory': '8',
-  'sec-ch-dpr': '2',
-  'sec-ch-viewport-width': '1440',
-  'sec-ch-prefers-color-scheme': 'dark',
-  'sec-ch-ua-mobile': '?0',
-});
-console.log(caps.memory);             // 8
-console.log(caps.devicePixelRatio);    // 2
-console.log(caps.prefersColorScheme);  // 'dark'
-```
+#### Parameters
+
+##### headers
+
+[`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md) \| `Headers`
+
+#### Returns
+
+[`ClientHintsEvidence`](../interfaces/ClientHintsEvidence.md)
 
 ### responsiveMediaCapabilities
 
@@ -129,7 +124,7 @@ Hosts that already parsed caps can also call this with the result of
 
 ##### headersOrCaps
 
-[`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md) \| `Headers` \| [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+[`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md) \| [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) \| `Headers`
 
 #### Returns
 

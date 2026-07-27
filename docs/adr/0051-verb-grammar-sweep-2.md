@@ -81,8 +81,10 @@ Finish the sweep on the reactive substrate, mirroring the P7 patterns exactly:
   next to `createCell`. The public disposal contract is uniform — every owned
   reactive value is `await x.dispose()` / `await using x = create…()`.
 - The same lifecycle law covers SSE, audio and LLM sessions, DPU watch handles,
-  and worker/compositor hosts. A consumer never chooses among `close`, sync
-  `dispose`, and async `dispose` based on resource kind.
+  worker/compositor hosts, WebCodecs capture, and host-owned physical-state
+  trackers. Importing Web installs no ambient listeners; the allocating host owns
+  the tracker and awaits its teardown. A consumer never chooses among `close`,
+  sync `dispose`, and async `dispose` based on resource kind.
 - `@liteship/core`'s value surface gains `createSignal`, `createWorld`,
   `createBlendTree`, `createTokenBuffer`, `createComponent`, `createComposable`,
   `createDirtyFlags`, `createFrameBudget`, `createCompositorStatePool`,
@@ -106,7 +108,7 @@ Finish the sweep on the reactive substrate, mirroring the P7 patterns exactly:
 
 - `packages/core/src/reactive/signal.ts` — `createSignal` + `attachLifetime` collapse.
 - `packages/core/src/reactive/live-cell.ts` — `createLiveCell` / `createLiveCellBoundary`.
-- `packages/core/src/ecs.ts`, `.../motion/blend.ts`, `.../media/{frame-budget,compositor-pool,token-buffer}.ts`, `.../authoring/{component,composable}.ts`, `.../reactive/dirty.ts` — the renamed factories.
+- `packages/core/src/ecs/runtime.ts`, `.../motion/blend.ts`, `.../media/{frame-budget,compositor-pool,token-buffer}.ts`, `.../authoring/{component,composable}.ts`, `.../reactive/dirty.ts` — the renamed factories.
 - `packages/core/src/reactive/lifetime.ts:createLifetime`, `.../evidence/receipt.ts:inspectReceipt`, `.../evidence/escalation.ts:tierTargets`.
 - `packages/liteship/src/export-budget.ts` — the exact allowlist; `packages/gauntlet/src/gates/facade-export-budget.ts` — the bidirectional gate + red/green/mutation fixtures.
 - `tests/fixtures/api-surface-snapshot.json`, `tests/fixtures/type-export-surface.json` — the regenerated public-surface snapshots.

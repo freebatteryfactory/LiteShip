@@ -6,7 +6,7 @@
 
 # Interface: ResumptionState
 
-Defined in: [\_spine/web.d.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L317)
+Defined in: [\_spine/web.d.ts:340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L340)
 
 Last accepted event identity and buffered recovery state.
 
@@ -16,7 +16,7 @@ Last accepted event identity and buffered recovery state.
 
 > `readonly` **artifactId**: `string`
 
-Defined in: [\_spine/web.d.ts:320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L320)
+Defined in: [\_spine/web.d.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L343)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/web.d.ts:320](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **lastEventId**: `string`
 
-Defined in: [\_spine/web.d.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L318)
+Defined in: [\_spine/web.d.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L341)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/web.d.ts:318](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **lastSequence**: `number`
 
-Defined in: [\_spine/web.d.ts:319](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L319)
+Defined in: [\_spine/web.d.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L342)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/web.d.ts:319](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [\_spine/web.d.ts:321](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L321)
+Defined in: [\_spine/web.d.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L344)

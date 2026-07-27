@@ -6,7 +6,7 @@
 
 # Interface: MotionSampleMessage
 
-Defined in: [\_spine/worker.d.ts:496](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L496)
+Defined in: [\_spine/worker.d.ts:497](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L497)
 
 Transferable motion sample delivered to a worker-side timeline.
 
@@ -16,7 +16,7 @@ Transferable motion sample delivered to a worker-side timeline.
 
 > `readonly` **css**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/worker.d.ts:499](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L499)
+Defined in: [\_spine/worker.d.ts:500](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L500)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:499](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **t**: `number`
 
-Defined in: [\_spine/worker.d.ts:498](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L498)
+Defined in: [\_spine/worker.d.ts:499](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L499)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/worker.d.ts:498](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"motion-sample"`
 
-Defined in: [\_spine/worker.d.ts:497](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L497)
+Defined in: [\_spine/worker.d.ts:498](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L498)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/worker.d.ts:497](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **wgsl**: `Record`\<`string`, `number`\>
 
-Defined in: [\_spine/worker.d.ts:500](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L500)
+Defined in: [\_spine/worker.d.ts:501](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L501)

@@ -41,7 +41,7 @@ import { spawnArgv, spawnArgvCapture } from '../spawn-helpers.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipReceipt, ShipSkippedReceipt } from '../receipts.js';
 import { ShipEmit } from '../capsules/ship-emit.js';
-import { verifyReleaseArtifactBundle } from '../lib/release-artifact-bundle.js';
+import { verifyReleaseArtifactBundle } from '../internal/release-artifact-bundle.js';
 
 interface ShipOptions {
   readonly cwd: string;

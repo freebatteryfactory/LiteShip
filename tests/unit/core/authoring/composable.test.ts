@@ -11,10 +11,10 @@ import {
   defineBoundary,
   defineToken,
   defineStyle,
-  createWorld,
   Composable,
   createComposable,
 } from '@liteship/core';
+import { createWorld } from '@liteship/core/ecs';
 import type { ComposableEntity, EntityComponents, Boundary, Token } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
@@ -115,13 +115,8 @@ describe('Composable.make -- determinism', () => {
     expect(a.id).toBe(b.id);
   });
 
-  test('non-object fallback values use stable stringification in the content address', () => {
-    const a = createComposable({ custom: Symbol.for('shared-address') });
-    const b = createComposable({ custom: Symbol.for('shared-address') });
-    const c = createComposable({ custom: Symbol.for('different-address') });
-
-    expect(a.id).toBe(b.id);
-    expect(a.id).not.toBe(c.id);
+  test('unsupported symbol data is refused at the admitted ECS boundary', () => {
+    expect(() => createComposable({ custom: Symbol.for('shared-address') })).toThrow(/unsupported symbol data/);
   });
 
   test('different components produce different entity IDs', () => {
@@ -164,9 +159,9 @@ describe('Composable.compose -- precedence', () => {
     const composed = Composable.compose(e1, e2);
 
     // boundary should come from e2
-    expect(composed.components.boundary).toBe(altBoundary);
+    expect(composed.components.boundary).toEqual(altBoundary);
     // token should survive from e1 (same in both)
-    expect(composed.components.token).toBe(colorToken);
+    expect(composed.components.token).toEqual(colorToken);
   });
 
   test('merge precedence stays stable for nested plain-object components', () => {
@@ -225,9 +220,9 @@ describe('Composable.merge -- reduces correctly', () => {
 
     // All entities are the same, so merged should be identical
     expect(merged.id).toBe(e1.id);
-    expect(merged.components.boundary).toBe(widthBoundary);
-    expect(merged.components.token).toBe(tokenA);
-    expect(merged.components.style).toBe(baseStyle);
+    expect(merged.components.boundary).toEqual(widthBoundary);
+    expect(merged.components.token).toEqual(tokenA);
+    expect(merged.components.style).toEqual(baseStyle);
   });
 
   test('merge of single entity returns equivalent entity', () => {

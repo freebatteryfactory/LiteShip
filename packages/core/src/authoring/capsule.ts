@@ -14,14 +14,18 @@ import { decode, parseErrorFromIssues } from '../schema/decode.js';
 import type { Schema } from '../schema/ast.js';
 
 /** Closed seven-arm catalog of capsule kinds. Adding an eighth requires ADR amendment. */
-export type AssemblyKind =
-  | 'pureTransform'
-  | 'receiptedMutation'
-  | 'stateMachine'
-  | 'siteAdapter'
-  | 'policyGate'
-  | 'cachedProjection'
-  | 'sceneComposition';
+export const ASSEMBLY_KINDS = Object.freeze([
+  'pureTransform',
+  'receiptedMutation',
+  'stateMachine',
+  'siteAdapter',
+  'policyGate',
+  'cachedProjection',
+  'sceneComposition',
+] as const);
+
+/** One capsule kind derived from the canonical runtime catalog. */
+export type AssemblyKind = (typeof ASSEMBLY_KINDS)[number];
 
 /** Where a capsule may run. */
 export type Site = 'node' | 'browser' | 'worker' | 'edge';

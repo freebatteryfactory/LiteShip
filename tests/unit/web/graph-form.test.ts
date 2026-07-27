@@ -127,7 +127,7 @@ describe('bindGraphForm', () => {
     expect(form.getAttribute('data-liteship-mutation-state')).toBe('error');
     expect(events).toHaveLength(1);
     expect(events[0]!.source).toBe('liteship/web.graphForm');
-    expect(events[0]!.code).toBe('to-ops-threw');
+    expect(events[0]!.code).toBe('web/mutation/to-ops-threw');
     expect(events[0]!.message).toContain('Fix:');
   });
 
@@ -184,7 +184,7 @@ describe('bindGraphForm', () => {
     expect(eventFired).toBe(true);
     expect(form.getAttribute('data-liteship-mutation-state')).toBe('applied');
     expect(events).toHaveLength(1);
-    expect(events[0]!.code).toBe('on-outcome-threw');
+    expect(events[0]!.code).toBe('web/mutation/on-outcome-threw');
     expect(events[0]!.message).toContain('Fix:');
   });
 

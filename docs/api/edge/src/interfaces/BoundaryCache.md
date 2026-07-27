@@ -34,7 +34,7 @@ themes (a per-request theme is a real input to the cached CSS).
 
 ##### tierResult
 
-[`EdgeTierResult`](EdgeTierResult.md)
+`Pick`\<[`EdgeTierResult`](EdgeTierResult.md), `"motionTier"` \| `"designTier"`\>
 
 ##### qualifier?
 
@@ -112,7 +112,7 @@ Defined in: [edge/src/kv-cache.ts:147](https://github.com/freebatteryfactory/Lit
 
 ##### tierResult
 
-[`EdgeTierResult`](EdgeTierResult.md)
+`Pick`\<[`EdgeTierResult`](EdgeTierResult.md), `"motionTier"` \| `"designTier"`\>
 
 ##### outputs
 

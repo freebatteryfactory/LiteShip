@@ -10,7 +10,7 @@
  */
 
 import { contextCommand, CONTEXT_TASK_IDS, type ContextPayload } from '@liteship/command';
-import { color, colorEnabled } from '../lib/ansi.js';
+import { color, colorEnabled } from '../internal/ansi.js';
 import { emit, emitError } from '../receipts.js';
 
 /** Execute the context command (CLI adapter over the shared registry command). */

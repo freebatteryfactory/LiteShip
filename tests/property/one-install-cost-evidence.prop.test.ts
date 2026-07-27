@@ -4,7 +4,7 @@ import {
   buildOneInstallCostReport,
   type CostEvidenceEnvironment,
   type InstalledCostObservation,
-} from '../../packages/cli/src/lib/one-install-cost-evidence.js';
+} from '../../packages/cli/src/internal/one-install-cost-evidence.js';
 
 const NAMES = Array.from({ length: 25 }, (_, index) => `@liteship/package-${index}`);
 const ENVIRONMENT: CostEvidenceEnvironment = {

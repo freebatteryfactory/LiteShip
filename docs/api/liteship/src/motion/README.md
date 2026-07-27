@@ -25,7 +25,6 @@ named re-exports only — no behavior lives here.
 - [CssMotionPlan](interfaces/CssMotionPlan.md)
 - [DiscreteStateTransition](interfaces/DiscreteStateTransition.md)
 - [LoweredMotionPlan](interfaces/LoweredMotionPlan.md)
-- [LoweredProgramTimeline](interfaces/LoweredProgramTimeline.md)
 - [LoweredReveal](interfaces/LoweredReveal.md)
 - [LoweredRevealChain](interfaces/LoweredRevealChain.md)
 - [LoweredScrollTimeline](interfaces/LoweredScrollTimeline.md)
@@ -54,6 +53,7 @@ named re-exports only — no behavior lives here.
 - [StaggerIntentInput](interfaces/StaggerIntentInput.md)
 - [TransformPart](interfaces/TransformPart.md)
 - [TransitionBranch](interfaces/TransitionBranch.md)
+- [TransitionTimeline](interfaces/TransitionTimeline.md)
 
 ## Type Aliases
 

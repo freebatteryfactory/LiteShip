@@ -10,27 +10,31 @@
  * @module
  */
 
-import type { System, World } from '@liteship/core';
+import { defineSystem, type System } from '@liteship/core/ecs';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
+import { EnvelopePart, FrameRangePart, OpacityPart, VideoSourcePart } from '../parts.js';
+
+type FrameSource = number | (() => number);
+const readFrame = (source: FrameSource): number => (typeof source === 'function' ? source() : source);
 
 /** Build a VideoSystem keyed to a specific frame index. */
-export function VideoSystem(frameIndex: number): System {
-  return {
+export function VideoSystem(frameIndex: FrameSource): System {
+  return defineSystem({
     name: 'VideoSystem',
-    query: ['VideoSource', 'FrameRange'],
-    execute: (entities, world?: World) => {
+    query: [VideoSourcePart, FrameRangePart],
+    reads: [EnvelopePart],
+    writes: [OpacityPart],
+    execute: (entities, context) => {
+      const frame = readFrame(frameIndex);
       for (const e of entities) {
-        const range = e.components.get('FrameRange') as { from: number; to: number };
-        const inRange = frameIndex >= range.from && frameIndex < range.to;
-        const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
-        const factor = env !== undefined ? envelopeFactor(env, frameIndex, range) : 1;
+        const range = context.read(e, FrameRangePart);
+        const inRange = frame >= range.from && frame < range.to;
+        const env = context.optional(e, EnvelopePart) as ResolvedEnvelope | undefined;
+        const factor = env !== undefined ? envelopeFactor(env, frame, range) : 1;
         const opacity = inRange ? factor : 0;
-        (e as unknown as { _opacity: number })._opacity = opacity;
-        if (world !== undefined) {
-          world.setComponent(e.id, '_opacity', opacity);
-        }
+        context.write(e, OpacityPart, opacity);
       }
     },
-  };
+  });
 }

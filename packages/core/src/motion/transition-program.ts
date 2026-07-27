@@ -103,7 +103,7 @@ export interface ProgramTimelineEntry {
 }
 
 /** Result of {@link lowerTransitionProgram}: the composed duration + ordered windows. */
-export interface LoweredProgramTimeline {
+export interface TransitionTimeline {
   /** Total composed duration in ms (seq: `Σ`; par: `max`; choice: selected branch). */
   readonly totalMs: number;
   readonly entries: readonly ProgramTimelineEntry[];
@@ -312,7 +312,7 @@ export function lowerTransitionProgram(
   graph: DocumentGraph,
   program: TransitionProgram,
   env: ProgramEnv = { signals: {} },
-): LoweredProgramTimeline {
+): TransitionTimeline {
   const diagnostics: MotionDiagnosticPayload[] = [];
   const result = layout(graph, program, env, diagnostics);
   const entries: ProgramTimelineEntry[] = result.windows.map((w) => ({

@@ -6,7 +6,7 @@
 
 # Interface: StartRenderMessage
 
-Defined in: [\_spine/worker.d.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L157)
+Defined in: [\_spine/worker.d.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L158)
 
 Host command starting the worker's render loop.
 
@@ -16,7 +16,7 @@ Host command starting the worker's render loop.
 
 > `readonly` **config**: [`VideoConfig`](VideoConfig.md)
 
-Defined in: [\_spine/worker.d.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L159)
+Defined in: [\_spine/worker.d.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L160)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/worker.d.ts:159](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"start-render"`
 
-Defined in: [\_spine/worker.d.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L158)
+Defined in: [\_spine/worker.d.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L159)

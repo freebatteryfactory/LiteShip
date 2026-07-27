@@ -16,7 +16,7 @@
 # names TODAY (ratchet plan: rename each to its domain, then widen the glob to
 # `**/packages/*/src/**`):
 #     packages/cli/src/spawn-helpers.ts
-#     packages/cli/src/lib/package-smoke-helpers.ts
+#     packages/cli/src/internal/package-smoke-helpers.ts
 #     packages/compiler/src/motion-utils.ts
 #     packages/compiler/src/css-utils.ts
 #     packages/vite/src/resolve-utils.ts

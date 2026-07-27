@@ -83,16 +83,18 @@ directory** when a second module about the same subject appears — the second
 module is what earns the directory, not the first. You never create a
 single-file domain directory in anticipation of a second file.
 
-These six clauses are enforced structurally by four ast-grep rules under
-`sgrules/`, run in the gauntlet `lint:structural` phase and proven by
-`tests/unit/meta/source-grammar-rules.test.ts`:
+These six clauses are enforced by AST rules under `sgrules/` plus the complete
+source-directory census in `scripts/source-layout-gate.ts`. They run together in
+the gauntlet `lint:structural` phase and have RED/GREEN, mutation, property, and
+live-tree proofs:
 
-| Rule                          | Clause | Scope today                     |
-| ----------------------------- | ------ | ------------------------------- |
-| `facade-only-reexports`       | 2      | `packages/*/src/*/index.ts` + core root |
-| `no-wildcard-facade-export`   | 2      | `packages/*/src/*/index.ts` + core root |
-| `no-utils-file`               | 5      | `packages/core/src/**` (ratchet) |
-| `types-file-purity`           | 3      | `packages/core/src/**/types.ts` (ratchet) |
+| Rule                        | Clause | Scope today                               |
+| --------------------------- | ------ | ----------------------------------------- |
+| `facade-only-reexports`     | 2      | `packages/*/src/*/index.ts` + core root   |
+| `no-wildcard-facade-export` | 2      | `packages/*/src/*/index.ts` + core root   |
+| `no-utils-file`             | 5      | `packages/core/src/**` (ratchet)          |
+| `types-file-purity`         | 3      | `packages/core/src/**/types.ts` (ratchet) |
+| `source-layout-gate`        | 6      | every non-empty immediate `src/<domain>`  |
 
 ## Consequences
 
@@ -117,24 +119,29 @@ These six clauses are enforced structurally by four ast-grep rules under
   facades can still carry migration-era declarations; they ratchet in when
   migrated. This is a deliberate scope, recorded so it is not mistaken for an
   oversight.
+- **Directory subject coverage is fleet-wide.** The source-layout receipt
+  enumerates every non-empty immediate directory below every package `src/`,
+  whether or not it has an `index.ts`. Empty local directories are not Git
+  subjects and are omitted. The receipt carries the ordered subject list and a
+  SHA-256 census digest, so a green result cannot hide an unenumerated singleton.
 
 ## Evidence
 
 - **Rules:** `sgrules/facade-only-reexports.yml`, `sgrules/no-wildcard-facade-export.yml`,
-  `sgrules/no-utils-file.yml`, `sgrules/types-file-purity.yml` — each carries a
-  header explaining its clause, scope, and (where scoped) its ratchet plan.
+  `sgrules/no-utils-file.yml`, `sgrules/types-file-purity.yml`, and
+  `scripts/source-layout-gate.ts` — each carries its clause and exact scope.
 - **Proof harness:** `tests/unit/meta/source-grammar-rules.test.ts` runs each real
   rule file via `ast-grep scan --rule` against a RED fixture (must fire) and a
   GREEN fixture (must pass), plus scope fixtures where scoping matters. Fixtures
   live under a temp tree whose paths mirror each rule's `files:` glob, because
   ast-grep applies a rule only to paths its glob matches.
-- **Gate:** `pnpm lint:structural` runs all four rules across `packages`, `tests`,
-  `scripts`. They pass clean on the migrated tree.
+- **Gate:** `pnpm lint:structural` runs the AST rules plus the content-addressed
+  directory census across `packages`, `tests`, and `scripts`.
 - **Layout:** `packages/core/src/` — domain directories `authoring/ clock/
-  evidence/ graph/ harness/ media/ motion/ reactive/ schema/
-  simulation/ wasm/`, top-level files `ecs.ts fs-walk.ts index.ts testing.ts`.
+ecs/ evidence/ graph/ harness/ media/ motion/ reactive/ schema/
+simulation/ wasm/`, top-level files `fs-walk.ts index.ts repository-path.ts`.
 - **Ratchet offenders (as of 2026-07-19).** Grab-bag filenames outside core:
-  `packages/cli/src/spawn-helpers.ts`, `packages/cli/src/lib/package-smoke-helpers.ts`,
+  `packages/cli/src/spawn-helpers.ts`, `packages/cli/src/internal/package-smoke-helpers.ts`,
   `packages/compiler/src/motion-utils.ts`, `packages/compiler/src/css-utils.ts`,
   `packages/vite/src/resolve-utils.ts`. Value-bearing subdirectory `types.ts`
   outside core: `packages/mcp-server/src/lsp/types.ts` (LSP protocol constant
@@ -149,11 +156,16 @@ These placements were granted deliberately; they are exceptions to the "domain
 directory" default, and recording them here is what keeps them from being
 re-litigated or quietly multiplied.
 
-- **`core/src/ecs.ts`, `core/src/testing.ts`, `core/src/fs-walk.ts` stay top-level.**
-  Each is a package-wide singleton with no sibling cluster (clause 6): the ECS
-  substrate, the testing surface, and the filesystem-walk helper are each one
-  subject that nothing else in core groups with. A domain directory is earned by
-  a _second_ module; none exists, so no directory is created.
+- **`core/src/fs-walk.ts` and `core/src/repository-path.ts` stay top-level.**
+  Each is a package-wide singleton with no sibling cluster (clause 6). A domain
+  directory is earned by a _second_ module; neither subject has one.
+- **Typed ECS graduated to `core/src/ecs/`.** The original `core/src/ecs.ts`
+  exception ended when the subject separated into three content owners:
+  `part.ts` owns identity and admission, `dense.ts` owns fixed-capacity numeric
+  storage, and `world.ts` owns system composition and execution. The public
+  `index.ts` facade does **not** count toward the two-module threshold. The
+  explicit `@liteship/core/ecs` subpath keeps this advanced execution substrate
+  out of the day-to-day core root.
 - **`audit`, `worker`, `edge` stay flat — no second axis earned.** These packages
   are small and single-axis: every module sits directly under `src/` with no
   domain directories. Introducing directories there would be speculative
@@ -193,7 +205,10 @@ re-litigated or quietly multiplied.
 
 - `sgrules/facade-only-reexports.yml`, `sgrules/no-wildcard-facade-export.yml`,
   `sgrules/no-utils-file.yml`, `sgrules/types-file-purity.yml` — the four rules
-- `tests/unit/meta/source-grammar-rules.test.ts` — the proof harness
+- `tests/unit/meta/source-grammar-rules.test.ts` and
+  `tests/unit/devops/source-layout-contract.test.ts` — AST and directory-layout
+  proof harnesses; `scripts/source-layout-gate.ts` runs the latter law in the
+  cheap structural-lint lane
 - `sgconfig.yml` — `ruleDirs: [sgrules]`; `package.json` script `lint:structural`
 - `packages/core/src/index.ts` and `packages/core/src/*/index.ts` — the facades
 - ADR-0001 (namespace object pattern), ADR-0043 (reactive convergence + the

@@ -6,7 +6,7 @@
 
 # Interface: BackpressureHint
 
-Defined in: [\_spine/web.d.ts:256](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L256)
+Defined in: [\_spine/web.d.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L278)
 
 Queue pressure evidence exposed to an SSE producer or consumer.
 
@@ -16,7 +16,7 @@ Queue pressure evidence exposed to an SSE producer or consumer.
 
 > `readonly` **bufferSize**: `number`
 
-Defined in: [\_spine/web.d.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L257)
+Defined in: [\_spine/web.d.ts:279](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L279)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/web.d.ts:257](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **coalescedCount**: `number`
 
-Defined in: [\_spine/web.d.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L263)
+Defined in: [\_spine/web.d.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L285)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/web.d.ts:263](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **droppedCount**: `number`
 
-Defined in: [\_spine/web.d.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L262)
+Defined in: [\_spine/web.d.ts:284](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L284)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/web.d.ts:262](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **dropping**: `boolean`
 
-Defined in: [\_spine/web.d.ts:260](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L260)
+Defined in: [\_spine/web.d.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L282)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/web.d.ts:260](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **maxBufferSize**: `number`
 
-Defined in: [\_spine/web.d.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L258)
+Defined in: [\_spine/web.d.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L280)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/web.d.ts:258](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **percentFull**: `number`
 
-Defined in: [\_spine/web.d.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L259)
+Defined in: [\_spine/web.d.ts:281](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L281)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [\_spine/web.d.ts:259](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **policy**: [`OverflowPolicy`](../type-aliases/OverflowPolicy.md)
 
-Defined in: [\_spine/web.d.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L261)
+Defined in: [\_spine/web.d.ts:283](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L283)

@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
+      "@liteship/_spine/events": ["../_spine/events.generated.d.ts"],
       "@liteship/error": ["../error/src/index.ts"]
     }
   },

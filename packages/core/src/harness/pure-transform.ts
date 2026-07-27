@@ -162,6 +162,7 @@ export interface HarnessContext {
     readonly capsuleName: string;
     readonly capsuleImport: string;
     readonly runtimeImport: string;
+    readonly partsImport: string;
     readonly contentAddressImport: string;
     readonly hasAudio: boolean;
     readonly hasVideo: boolean;

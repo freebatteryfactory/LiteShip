@@ -96,9 +96,9 @@ export function getStreamRecoverySubstrate(artifactId: string): ResolvedStreamRe
 }
 
 const warnRejectedFrame = (artifactId: string, reason: string, cause?: unknown): void => {
-  Diagnostics.warnOnce({
+  Diagnostics.warnOnceRegistered({
     source: 'liteship/web.stream-recovery',
-    code: 'unattested-patch-receipt-frame',
+    code: 'web/stream/unattested-patch-receipt-frame',
     message:
       `SSE receipt frame for artifact "${artifactId}" was REFUSED (${reason}). A frame must be a ` +
       '{ receipt, transition } pair whose receipt hash self-verifies (Receipt.hashEnvelope) and whose ' +

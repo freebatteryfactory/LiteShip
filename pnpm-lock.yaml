@@ -52,6 +52,12 @@ importers:
       '@liteship/canonical':
         specifier: workspace:*
         version: link:packages/canonical
+      '@liteship/cli':
+        specifier: workspace:*
+        version: link:packages/cli
+      '@liteship/command':
+        specifier: workspace:*
+        version: link:packages/command
       '@liteship/compiler':
         specifier: workspace:*
         version: link:packages/compiler
@@ -73,6 +79,9 @@ importers:
       '@liteship/genui':
         specifier: workspace:*
         version: link:packages/genui
+      '@liteship/mcp-server':
+        specifier: workspace:*
+        version: link:packages/mcp-server
       '@liteship/quantizer':
         specifier: workspace:*
         version: link:packages/quantizer
@@ -495,7 +504,7 @@ importers:
         version: link:../scene
       typescript:
         specifier: npm:@typescript/typescript6@6.0.2
-        version: '@typescript/typescript6@npm:typescript@6.0.2'
+        version: '@typescript/typescript6@6.0.2'
       undici:
         specifier: '>=7.28.0 <8'
         version: 7.28.0
@@ -580,6 +589,9 @@ importers:
       '@liteship/core':
         specifier: workspace:*
         version: link:../core
+      '@liteship/error':
+        specifier: workspace:*
+        version: link:../error
 
   packages/edge:
     dependencies:
@@ -803,6 +815,9 @@ importers:
 
   packages/web:
     dependencies:
+      '@liteship/_spine':
+        specifier: workspace:*
+        version: link:../_spine
       '@liteship/canonical':
         specifier: workspace:*
         version: link:../canonical

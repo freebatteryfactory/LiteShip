@@ -6,7 +6,7 @@
 
 # Interface: AISlot
 
-Defined in: [\_spine/compiler.d.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L211)
+Defined in: [\_spine/compiler.d.ts:223](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L223)
 
 One named content slot available to an agent-authored composition.
 
@@ -16,7 +16,7 @@ One named content slot available to an agent-authored composition.
 
 > `readonly` **accepts**: readonly `string`[]
 
-Defined in: [\_spine/compiler.d.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L212)
+Defined in: [\_spine/compiler.d.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L224)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:212](https://github.com/freebatteryfactory/Li
 
 > `readonly` **description**: `string`
 
-Defined in: [\_spine/compiler.d.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L213)
+Defined in: [\_spine/compiler.d.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L225)

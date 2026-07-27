@@ -6,7 +6,7 @@
 
 # Interface: GLSLCompileResult
 
-Defined in: [\_spine/compiler.d.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L86)
+Defined in: [\_spine/compiler.d.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L94)
 
 GLSL source plus the uniforms and defines required to drive it.
 
@@ -16,7 +16,7 @@ GLSL source plus the uniforms and defines required to drive it.
 
 > `readonly` **bindUniforms**: `string`
 
-Defined in: [\_spine/compiler.d.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L91)
+Defined in: [\_spine/compiler.d.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L100)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:91](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **declarations**: `string`
 
-Defined in: [\_spine/compiler.d.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L90)
+Defined in: [\_spine/compiler.d.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L99)
 
 ***
 
@@ -32,7 +32,15 @@ Defined in: [\_spine/compiler.d.ts:90](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **defines**: readonly [`GLSLDefine`](GLSLDefine.md)[]
 
-Defined in: [\_spine/compiler.d.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L87)
+Defined in: [\_spine/compiler.d.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L95)
+
+***
+
+### stateUniforms
+
+> `readonly` **stateUniforms**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
+
+Defined in: [\_spine/compiler.d.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L98)
 
 ***
 
@@ -40,7 +48,7 @@ Defined in: [\_spine/compiler.d.ts:87](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **uniforms**: readonly [`GLSLUniform`](GLSLUniform.md)[]
 
-Defined in: [\_spine/compiler.d.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L88)
+Defined in: [\_spine/compiler.d.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L96)
 
 ***
 
@@ -48,4 +56,4 @@ Defined in: [\_spine/compiler.d.ts:88](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **uniformValues**: `Record`\<`string`, `number`\>
 
-Defined in: [\_spine/compiler.d.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L89)
+Defined in: [\_spine/compiler.d.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L97)

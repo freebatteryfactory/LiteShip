@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defaultAnalyzableArtifacts } from '@liteship/audit';
-import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
-import { packageTopology } from '../../../packages/cli/src/lib/liteship-audit-policy.js';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
+import { packageTopology } from '../../../packages/cli/src/internal/liteship-audit-policy.js';
 import {
   DEFAULT_ANALYZABLE_ARTIFACTS,
   PACKAGE_CATALOG,
@@ -26,6 +26,7 @@ import {
   collectGeneratedProjectionDrift,
   findAuthoredFleetLists,
   renderGeneratedProjections,
+  renderTestPathsTsconfig,
   validatePackageCatalog,
   resolvePackageSourceEntrypoints,
   type CatalogManifest,
@@ -122,9 +123,7 @@ describe('PACKAGE_CATALOG negative controls', () => {
       /expected exactly one source entrypoint, found 0/,
     );
     expect(() =>
-      resolvePackageSourceEntrypoints(mutant, (path) =>
-        path === core.sourceEntry || path.includes('/ambiguous'),
-      ),
+      resolvePackageSourceEntrypoints(mutant, (path) => path === core.sourceEntry || path.includes('/ambiguous')),
     ).toThrow(/expected exactly one source entrypoint, found 2/);
   });
 
@@ -259,7 +258,7 @@ describe('PACKAGE_CATALOG negative controls', () => {
       'ARCHITECTURE.md',
       'PACKAGE-SURFACES.md',
       'AGENTS.md',
-      'packages/liteship/src/testing/package-roster.ts',
+      'packages/liteship/src/package-roster.generated.ts',
     ]) {
       source.set(path, readFileSync(resolve(REPO, path), 'utf8'));
     }
@@ -267,6 +266,16 @@ describe('PACKAGE_CATALOG negative controls', () => {
     expect(collectGeneratedProjectionDrift((path) => source.get(path))).toEqual([
       expect.objectContaining({ copy: 'scripts/ci/publish-roster.json' }),
     ]);
+  });
+
+  it('projects every declaration-only spine subpath into focused test resolution', () => {
+    const rendered = JSON.parse(renderTestPathsTsconfig()) as { compilerOptions: { paths: Record<string, string[]> } };
+    expect(rendered.compilerOptions.paths['@liteship/_spine/events']).toEqual([
+      './packages/_spine/events.generated.d.ts',
+    ]);
+    const mutant = structuredClone(rendered);
+    delete mutant.compilerOptions.paths['@liteship/_spine/events'];
+    expect(JSON.stringify(mutant, null, 2)).not.toBe(renderTestPathsTsconfig());
   });
 
   it('rejects a second authored full-fleet list but permits generated and red-fixture sources', () => {
@@ -278,7 +287,7 @@ describe('PACKAGE_CATALOG negative controls', () => {
     ]);
     expect(
       findAuthoredFleetLists([
-        { path: 'packages/cli/src/lib/audit-package-catalog.generated.ts', text: fleet },
+        { path: 'packages/cli/src/internal/audit-package-catalog.generated.ts', text: fleet },
         { path: 'benchmarks/one-install-cost-baseline.json', text: fleet },
         { path: 'tests/fixtures/package-catalog-red/second-roster.ts', text: fleet },
       ]),

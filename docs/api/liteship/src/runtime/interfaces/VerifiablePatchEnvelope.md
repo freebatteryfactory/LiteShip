@@ -6,7 +6,7 @@
 
 # Interface: VerifiablePatchEnvelope
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:44
+Defined in: web/dist/watch-and-prepare.d.ts:44
 
 Stamped verifiable-patch envelope — marker + CAS base/result ids + sha256 digest
 over the HTML fragment bytes (meta excluded; same law as graph 304 validators).
@@ -17,7 +17,7 @@ over the HTML fragment bytes (meta excluded; same law as graph 304 validators).
 
 > `readonly` **baseGraphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:47
+Defined in: web/dist/watch-and-prepare.d.ts:47
 
 ***
 
@@ -25,7 +25,7 @@ Defined in: web/dist/dpu/watch-and-prepare.d.ts:47
 
 > `readonly` **digest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:49
+Defined in: web/dist/watch-and-prepare.d.ts:49
 
 ***
 
@@ -33,7 +33,7 @@ Defined in: web/dist/dpu/watch-and-prepare.d.ts:49
 
 > `readonly` **html**: `string`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:50
+Defined in: web/dist/watch-and-prepare.d.ts:50
 
 ***
 
@@ -41,7 +41,7 @@ Defined in: web/dist/dpu/watch-and-prepare.d.ts:50
 
 > `readonly` **marker**: `string`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:46
+Defined in: web/dist/watch-and-prepare.d.ts:46
 
 Stable logical marker name (from `nodeLogicalKey`), never a node id.
 
@@ -51,4 +51,4 @@ Stable logical marker name (from `nodeLogicalKey`), never a node id.
 
 > `readonly` **resultGraphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:48
+Defined in: web/dist/watch-and-prepare.d.ts:48

@@ -33,7 +33,7 @@ import {
   makeVitestMutationRunner,
   type MutationSubprocessResult,
   type MutationSubprocessSpawn,
-} from '../../../../packages/cli/src/lib/mutation-runner.js';
+} from '../../../../packages/cli/src/internal/mutation-runner.js';
 
 const ORIGINAL = 'export const x = 1 >= 2;\n';
 const MUTATED = 'export const x = 1 > 2;\n';

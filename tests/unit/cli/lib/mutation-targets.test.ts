@@ -38,7 +38,7 @@ import {
   partitionSeamCandidates,
   buildSeamCoverageMap,
   type SemanticAssuranceCampaign,
-} from '../../../../packages/cli/src/lib/mutation-targets.js';
+} from '../../../../packages/cli/src/internal/mutation-targets.js';
 
 /** Repo-relative seam ids the targeting LAW is exercised against. */
 const HLC = 'packages/core/src/clock/hlc.ts'; // base L4 (the clock/hlc glob)

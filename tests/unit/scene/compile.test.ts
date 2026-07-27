@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { Track, compileScene, SceneRuntime, Beat, fade, pulse, Scene } from '@liteship/scene';
-import type { SceneContract } from '@liteship/scene';
+import type { SceneContract, TrackSpawn } from '@liteship/scene';
+
+const component = (spawn: TrackSpawn, name: TrackSpawn['components'][number]['part']): unknown =>
+  spawn.components.find((seed) => seed.part === name)?.value;
 
 describe('compileScene', () => {
   const hero = Track.videoId('hero');
@@ -40,10 +43,10 @@ describe('compileScene', () => {
     expect(ids).toContain('pulse');
   });
 
-  it('runtime registers the 7 canonical systems and spawns one entity per track', async () => {
+  it('runtime registers the 8 canonical systems and spawns one entity per track', async () => {
     const compiled = compileScene(scene);
     const handle = await SceneRuntime.build(compiled);
-    expect(handle.systemsRegistered).toBe(7);
+    expect(handle.systemsRegistered).toBe(8);
     expect(handle.entitySpawnCount).toBe(4);
     await handle.release();
   });
@@ -52,7 +55,7 @@ describe('compileScene', () => {
 describe('compileScene Beat() resolution (Spec 1 §5.1/§5.4)', () => {
   const frameRangeOf = (scene: SceneContract, id: string): { from: number; to: number } => {
     const spawn = compileScene(scene).trackSpawns.find((s) => s.trackId === id);
-    return spawn!.components['FrameRange'] as { from: number; to: number };
+    return component(spawn!, 'FrameRange') as { from: number; to: number };
   };
 
   const beatScene = (tracks: SceneContract['tracks'], invariants: SceneContract['invariants'] = []): SceneContract => ({
@@ -139,23 +142,23 @@ describe('compileScene envelope + ease components (Spec 1 §5.4)', () => {
     site: ['node'],
   };
 
-  const componentsOf = (id: string): Readonly<Record<string, unknown>> =>
-    compileScene(scene).trackSpawns.find((s) => s.trackId === id)!.components;
+  const componentOf = (id: string, name: TrackSpawn['components'][number]['part']): unknown =>
+    component(compileScene(scene).trackSpawns.find((s) => s.trackId === id)!, name);
 
   it('emits a resolved Envelope component for an enveloped video track', () => {
-    expect(componentsOf('hero')['Envelope']).toEqual({ curve: 'linear-in', spanFrames: 56.25 });
+    expect(componentOf('hero', 'Envelope')).toEqual({ curve: 'linear-in', spanFrames: 56.25 });
   });
 
   it('emits a resolved Envelope component for an enveloped audio track', () => {
-    expect(componentsOf('bed')['Envelope']).toEqual({ curve: 'linear-out', spanFrames: 28.125 });
+    expect(componentOf('bed', 'Envelope')).toEqual({ curve: 'linear-out', spanFrames: 28.125 });
   });
 
   it('emits a resolved Envelope component for an enveloped effect track', () => {
-    expect(componentsOf('fx')['Envelope']).toEqual({ curve: 'pulse', periodFrames: 14.0625, amplitude: 0.3 });
+    expect(componentOf('fx', 'Envelope')).toEqual({ curve: 'pulse', periodFrames: 14.0625, amplitude: 0.3 });
   });
 
   it('emits an Ease component carrying the serializable tag for an eased transition', () => {
-    expect(componentsOf('xfade')['Ease']).toBe('cubic');
+    expect(componentOf('xfade', 'Ease')).toBe('cubic');
   });
 
   it('omits Envelope/Ease components when tracks declare none', () => {
@@ -167,8 +170,8 @@ describe('compileScene envelope + ease components (Spec 1 §5.4)', () => {
       ],
     });
     for (const spawn of plain.trackSpawns) {
-      expect(spawn.components).not.toHaveProperty('Envelope');
-      expect(spawn.components).not.toHaveProperty('Ease');
+      expect(component(spawn, 'Envelope')).toBeUndefined();
+      expect(component(spawn, 'Ease')).toBeUndefined();
     }
   });
 });

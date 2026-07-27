@@ -1,16 +1,15 @@
 // @vitest-environment jsdom
 
 import { describe, expect, test } from 'vitest';
+import { Millis, SpeculativeEvaluator, Style, defineBoundary, defineStyle, schema } from '@liteship/core';
 import {
-  Millis,
+  admitPart,
   createDenseStore,
-  SpeculativeEvaluator,
-  Style,
-  defineBoundary,
-  defineStyle,
-  schema,
   createWorld,
-} from '@liteship/core';
+  defineDenseSystem,
+  definePart,
+  defineSystem,
+} from '@liteship/core/ecs';
 import { evaluate as evaluateQuantizer } from '@liteship/quantizer';
 import { GLSLCompiler } from '@liteship/compiler';
 import { captureSelection, findScrollable } from '../../../packages/web/src/physical/capture.js';
@@ -22,57 +21,66 @@ import {
 
 describe('runtime hotspot coverage', () => {
   test('World regular systems handle empty queries, component add/remove, and missing dense stores', () => {
-    // World is a synchronous API as of the core-seams wave: make() returns a
-    // world that owns its own dispose(), every method returns directly, and
-    // System.execute returns void (no Effect wrapper).
     const world = createWorld();
-    const hpPart = { name: 'hp', schema: schema.number };
-    const labelPart = { name: 'label', schema: schema.string };
-    const presentStore = createDenseStore('present', 8);
+    const Ghost = definePart('ghost', schema.boolean);
+    const Hp = definePart('hp', schema.number);
+    const Label = definePart('label', schema.string);
+    const Present = definePart('present', schema.number);
+    const Missing = definePart('missing', schema.number);
+    const presentStore = createDenseStore(Present, 8);
     world.addDenseStore(presentStore);
 
-    const id = world.spawn({ label: 'player' });
-    world.addComponent(id, hpPart, 100);
-    world.addComponent('missing-entity' as never, hpPart, 50);
+    const label = admitPart(Label, 'player');
+    const hp = admitPart(Hp, 100);
+    if (!label.ok || !hp.ok) throw new Error('typed ECS hotspot fixture failed admission');
+    const id = world.spawn(label.value);
+    world.set(id, hp.value);
+    world.set('missing-entity' as never, hp.value);
 
     let emptyExecutions = 0;
     let denseExecuted = false;
     let regularSeen: string[] = [];
 
-    world.addSystem({
-      name: 'empty-query',
-      query: ['ghost'],
-      execute(entities) {
-        emptyExecutions += 1;
-        expect(entities).toEqual([]);
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'empty-query',
+        query: [Ghost],
+        reads: [],
+        writes: [],
+        execute(entities) {
+          emptyExecutions += 1;
+          expect(entities).toEqual([]);
+        },
+      }),
+    );
 
-    world.addSystem({
-      name: 'label-and-hp',
-      query: ['label', 'hp'],
-      execute(entities) {
-        regularSeen = entities.map((entity) => {
-          const label = entity.components.get(labelPart.name);
-          const hp = entity.components.get(hpPart.name);
-          return `${label}:${hp}`;
-        });
-      },
-    });
+    world.addSystem(
+      defineSystem({
+        name: 'label-and-hp',
+        query: [Label, Hp],
+        reads: [],
+        writes: [],
+        execute(entities, context) {
+          regularSeen = entities.map((entity) => `${context.read(entity, Label)}:${context.read(entity, Hp)}`);
+        },
+      }),
+    );
 
-    world.addSystem({
-      name: 'missing-dense-store',
-      query: ['present', 'missing'],
-      _denseSystem: true as const,
-      execute() {
-        denseExecuted = true;
-      },
-    });
+    world.addSystem(
+      defineDenseSystem({
+        name: 'missing-dense-store',
+        reads: [Present, Missing],
+        writes: [],
+        execute() {
+          denseExecuted = true;
+        },
+      }),
+    );
 
     world.tick();
-    world.removeComponent(id, hpPart.name);
-    world.removeComponent('missing-entity' as never, hpPart.name);
-    const matchedAfterRemoval = world.query('label', 'hp');
+    world.remove(id, Hp);
+    world.remove('missing-entity' as never, Hp);
+    const matchedAfterRemoval = world.query(Label, Hp);
 
     expect(emptyExecutions).toBe(1);
     expect(denseExecuted).toBe(false);

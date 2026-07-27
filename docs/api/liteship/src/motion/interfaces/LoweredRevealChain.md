@@ -6,7 +6,7 @@
 
 # Interface: LoweredRevealChain
 
-Defined in: core/dist/motion/reveal.d.ts:122
+Defined in: core/dist/motion/reveal.d.ts:124
 
 Graph bundle + composed program produced by [lowerRevealChain](../functions/lowerRevealChain.md).
 
@@ -16,7 +16,7 @@ Graph bundle + composed program produced by [lowerRevealChain](../functions/lowe
 
 > `readonly` **componentId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:126
+Defined in: core/dist/motion/reveal.d.ts:128
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/dist/motion/reveal.d.ts:126
 
 > `readonly` **graph**: [`DocumentGraph`](../../graph/interfaces/DocumentGraph.md)
 
-Defined in: core/dist/motion/reveal.d.ts:123
+Defined in: core/dist/motion/reveal.d.ts:125
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: core/dist/motion/reveal.d.ts:123
 
 > `readonly` **policyId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:128
+Defined in: core/dist/motion/reveal.d.ts:130
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: core/dist/motion/reveal.d.ts:128
 
 > `readonly` **program**: [`TransitionProgram`](../type-aliases/TransitionProgram.md)
 
-Defined in: core/dist/motion/reveal.d.ts:124
+Defined in: core/dist/motion/reveal.d.ts:126
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: core/dist/motion/reveal.d.ts:124
 
 > `readonly` **signalId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
-Defined in: core/dist/motion/reveal.d.ts:127
+Defined in: core/dist/motion/reveal.d.ts:129
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: core/dist/motion/reveal.d.ts:127
 
 > `readonly` **transitionIds**: readonly [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)[]
 
-Defined in: core/dist/motion/reveal.d.ts:125
+Defined in: core/dist/motion/reveal.d.ts:127

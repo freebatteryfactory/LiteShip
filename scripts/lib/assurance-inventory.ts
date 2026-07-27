@@ -19,19 +19,19 @@ import { rankOf, type AssuranceLevel } from '../../packages/gauntlet/src/assuran
 import { levelOf } from '../../packages/gauntlet/src/assurance-map.js';
 import { parseQualifiedBenchDistribution } from '../../packages/gauntlet/src/gates/bench-subjects.js';
 import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.js';
-import { buildRepoIRForRepo } from '../../packages/cli/src/lib/repo-ir-gauntlet.js';
-import { isNodeTestEntrypoint } from '../../packages/cli/src/lib/test-corpus.js';
+import { buildRepoIRForRepo } from '../../packages/cli/src/internal/repo-ir-gauntlet.js';
+import { isNodeTestEntrypoint } from '../../packages/cli/src/internal/test-corpus.js';
 import {
   SEMANTIC_ASSURANCE_RECEIPT_PATHS,
   parseSemanticAssuranceReceipt,
   semanticAssuranceReceiptToolchainDigest,
   verifySemanticAssuranceReceipt,
   type SemanticAssuranceMode,
-} from '../../packages/cli/src/lib/semantic-assurance-receipt.js';
+} from '../../packages/cli/src/internal/semantic-assurance-receipt.js';
 import {
   eligibleAssuranceTargets,
   type AssuranceTargetSelection,
-} from '../../packages/cli/src/lib/mutation-targets.js';
+} from '../../packages/cli/src/internal/mutation-targets.js';
 import type { RepoIR } from '../../packages/gauntlet/src/repo-ir.js';
 
 export const ASSURANCE_TARGET_MILLI = 10_000;

@@ -42,16 +42,16 @@ import {
   resolveExecutable,
   semanticClosureFileHash,
   tarballFileUrl,
-} from '../lib/package-smoke-helpers.js';
-import { checkPackedMetadata } from '../lib/package-metadata-catalog.js';
+} from '../internal/package-smoke-helpers.js';
+import { checkPackedMetadata } from '../internal/package-metadata-catalog.js';
 import {
   buildColdImportGraph,
   COLD_IMPORT_PROBE_SOURCE,
   measureOneInstallCostReport,
   type ColdImportGraph,
   type FacadeDependencyReason,
-} from '../lib/one-install-cost-evidence.js';
-import { PACKAGE_METADATA_CATALOG } from '../lib/package-metadata-catalog.js';
+} from '../internal/one-install-cost-evidence.js';
+import { PACKAGE_METADATA_CATALOG } from '../internal/package-metadata-catalog.js';
 import {
   buildOneInstallCostBaseline,
   ONE_INSTALL_COST_BASELINE_PATH,
@@ -59,8 +59,8 @@ import {
   ONE_INSTALL_COST_UPDATE_ENV,
   oneInstallCostFindings,
   parseOneInstallCostBaseline,
-} from '../lib/one-install-cost-gate.js';
-import { verifyReleaseArtifactBundle } from '../lib/release-artifact-bundle.js';
+} from '../internal/one-install-cost-gate.js';
+import { verifyReleaseArtifactBundle } from '../internal/release-artifact-bundle.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** `PEER_INSTALLS` → `{name: version}` map (the extracted, unit-tested helper). */

@@ -8,7 +8,7 @@
 
 > **ResumptionStateInput** = `Omit`\<[`ResumptionState`](../interfaces/ResumptionState.md), `"timestamp"`\> & `object`
 
-Defined in: [\_spine/web.d.ts:329](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L329)
+Defined in: [\_spine/web.d.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L352)
 
 Input accepted by `Resumption.saveState`. The stored shape keeps
 `timestamp` required; on input it defaults to `Date.now()` — only the

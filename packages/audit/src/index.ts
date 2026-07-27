@@ -15,6 +15,7 @@ export * from './devops-profile.js';
 export * from './consumer.js';
 export * from './ts-program.js';
 export * from './code-ranges.js';
+export * from './diagnostic-emission-ast.js';
 export * from './repo-ir-build.js';
 export * from './repo-ir-language-service.js';
 export * from './repo-ir-taint.js';
@@ -33,6 +34,8 @@ export * from './integrity.js';
 export * from './surface.js';
 export * from './skip-detect-ast.js';
 export * from './active-surface-reader.js';
+export * from './feature-edge-census.js';
+export * from './catalog-feature-edge-census.js';
 export * from './workers-date-scan.js';
 
 import { resolveDevopsProfile } from './devops-profile.js';

@@ -6,7 +6,7 @@
 
 # Interface: CheckpointResult
 
-Defined in: [\_spine/core.d.ts:1092](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1092)
+Defined in: [\_spine/core.d.ts:1307](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1307)
 
 Result of anchoring or validating a checkpoint in a receipt graph.
 
@@ -16,7 +16,7 @@ Result of anchoring or validating a checkpoint in a receipt graph.
 
 > `readonly` **checkpoint**: [`ReceiptEnvelope`](ReceiptEnvelope.md)
 
-Defined in: [\_spine/core.d.ts:1094](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1094)
+Defined in: [\_spine/core.d.ts:1309](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1309)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1094](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **dag**: [`ReceiptDAG`](ReceiptDAG.md)
 
-Defined in: [\_spine/core.d.ts:1093](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1093)
+Defined in: [\_spine/core.d.ts:1308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1308)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1093](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **dropped**: readonly `string`[]
 
-Defined in: [\_spine/core.d.ts:1095](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1095)
+Defined in: [\_spine/core.d.ts:1310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1310)

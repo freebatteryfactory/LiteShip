@@ -6,9 +6,9 @@
 
 # Function: run()
 
-> **run**(`config`): `AsyncIterable`\<[`Frame`](../interfaces/Frame.md)\>
+> **run**(`config`): `AsyncGenerator`\<[`Frame`](../interfaces/Frame.md), `void`, `void`\>
 
-Defined in: [\_spine/core.d.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L404)
+Defined in: [\_spine/core.d.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L413)
 
 ## Parameters
 
@@ -26,6 +26,10 @@ Defined in: [\_spine/core.d.ts:404](https://github.com/freebatteryfactory/LiteSh
 
 [`Scheduler`](../../../interfaces/Scheduler.md)
 
+#### signal?
+
+[`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+
 ## Returns
 
-`AsyncIterable`\<[`Frame`](../interfaces/Frame.md)\>
+`AsyncGenerator`\<[`Frame`](../interfaces/Frame.md), `void`, `void`\>

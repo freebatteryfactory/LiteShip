@@ -6,7 +6,7 @@
 
 # Interface: QuantizeProps\<B\>
 
-Defined in: [\_spine/astro.d.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L40)
+Defined in: [\_spine/astro.d.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L51)
 
 Props accepted by the Astro `<Quantize>` component for one boundary-owned region.
 
@@ -22,7 +22,7 @@ Props accepted by the Astro `<Quantize>` component for one boundary-owned region
 
 > `readonly` **boundary**: `B`
 
-Defined in: [\_spine/astro.d.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L41)
+Defined in: [\_spine/astro.d.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L52)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/astro.d.ts:41](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **class?**: `string`
 
-Defined in: [\_spine/astro.d.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L45)
+Defined in: [\_spine/astro.d.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L56)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/astro.d.ts:45](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **fallback?**: `string`
 
-Defined in: [\_spine/astro.d.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L44)
+Defined in: [\_spine/astro.d.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L55)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/astro.d.ts:44](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **initialState?**: `string`
 
-Defined in: [\_spine/astro.d.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L43)
+Defined in: [\_spine/astro.d.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L54)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [\_spine/astro.d.ts:43](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **quantizer?**: [`Quantizer`](Quantizer.md)\<`B`\>
 
-Defined in: [\_spine/astro.d.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L42)
+Defined in: [\_spine/astro.d.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L53)

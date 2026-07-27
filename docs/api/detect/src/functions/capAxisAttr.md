@@ -8,7 +8,7 @@
 
 > **capAxisAttr**(`axis`): `"data-liteship-tier"` \| `"data-liteship-motion"` \| `"data-liteship-design"`
 
-Defined in: [detect/src/cap-axes.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L61)
+Defined in: [detect/src/cap-axes.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L184)
 
 The `<html>` data-attribute name for a capability axis. The suffix IS the
 axis key (a template literal), so an attribute name that disagrees with its

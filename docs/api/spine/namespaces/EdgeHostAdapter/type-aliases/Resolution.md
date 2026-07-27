@@ -8,4 +8,4 @@
 
 > **Resolution** = [`EdgeHostResolution`](../../../interfaces/EdgeHostResolution.md)
 
-Defined in: [\_spine/edge.d.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L302)
+Defined in: [\_spine/edge.d.ts:328](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L328)

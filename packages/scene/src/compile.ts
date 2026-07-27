@@ -20,7 +20,7 @@
  * `registeredSystems: string[]` metadata field via an `as unknown`
  * cast WITHOUT ever calling `world.addSystem`. That theatre is gone:
  * compileScene is now a pure descriptor producer, and the runtime
- * registers the 7 canonical systems.
+ * registers the 8 canonical systems.
  *
  * @module
  */
@@ -31,6 +31,26 @@ import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } 
 import type { BeatBinding } from './beat-binding-capsule.js';
 import { resolveFrameMark } from './sugar/beat.js';
 import { resolveEnvelope } from './sugar/envelope.js';
+import {
+  AudioSourcePart,
+  BetweenPart,
+  EasePart,
+  EffectKindPart,
+  EnvelopePart,
+  FrameRangePart,
+  PanPart,
+  RuntimeWritePlanPart,
+  SyncAnchorPart,
+  SyncBeatMarkerPart,
+  TargetEntityPart,
+  TrackIdPart,
+  TrackLayerPart,
+  TransitionKindPart,
+  VideoSourcePart,
+  VolumePart,
+  scenePartSeed,
+  type ScenePartSeed,
+} from './parts.js';
 
 /**
  * One compiled track — the components the runtime should spawn for it.
@@ -41,7 +61,7 @@ export interface TrackSpawn {
   /** The phantom-kinded id of the source track. */
   readonly trackId: TrackId<TrackKind>;
   /** Component seed map passed to `world.spawn(...)` when {@link SceneRuntime} builds the ECS world. */
-  readonly components: Readonly<Record<string, unknown>>;
+  readonly components: readonly ScenePartSeed[];
 }
 
 /**
@@ -201,7 +221,7 @@ export function compileScene(scene: SceneContract): CompiledScene {
 
   const trackSpawns: TrackSpawn[] = resolved.tracks.map((track) => ({
     trackId: track.id,
-    components: componentsFromTrack(track, ctx),
+    components: [scenePartSeed(TrackIdPart, track.id), ...componentsFromTrack(track, ctx)],
   }));
 
   // Defensive copy: callers may freeze, mutate, or reuse the input
@@ -243,43 +263,44 @@ function resolveTrackMarks(track: Track, ctx: { bpm: number; fps: number }): Tra
   };
 }
 
-function componentsFromTrack(track: Track<number>, ctx: { bpm: number; fps: number }): Record<string, unknown> {
+function componentsFromTrack(track: Track<number>, ctx: { bpm: number; fps: number }): readonly ScenePartSeed[] {
   switch (track._tag) {
     case 'video':
-      return {
-        VideoSource: track.source,
-        FrameRange: { from: track.from, to: track.to },
-        TrackLayer: track.layer ?? 0,
-        ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
-      };
+      return [
+        scenePartSeed(VideoSourcePart, track.source),
+        scenePartSeed(FrameRangePart, { from: track.from, to: track.to }),
+        scenePartSeed(TrackLayerPart, track.layer ?? 0),
+        ...(track.envelope !== undefined ? [scenePartSeed(EnvelopePart, resolveEnvelope(track.envelope, ctx))] : []),
+        ...(track.motion !== undefined ? [scenePartSeed(RuntimeWritePlanPart, track.motion)] : []),
+      ];
     case 'audio':
-      return {
-        AudioSource: track.source,
-        FrameRange: { from: track.from, to: track.to },
+      return [
+        scenePartSeed(AudioSourcePart, track.source),
+        scenePartSeed(FrameRangePart, { from: track.from, to: track.to }),
         // Volume is linear gain; unity (1) keeps an undeclared mix audible.
-        Volume: track.mix?.volume ?? 1,
-        Pan: track.mix?.pan ?? 0,
-        ...(track.mix?.sync?.bpm !== undefined ? { SyncBeatMarker: { bpm: track.mix.sync.bpm } } : {}),
-        ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
-      };
+        scenePartSeed(VolumePart, track.mix?.volume ?? 1),
+        scenePartSeed(PanPart, track.mix?.pan ?? 0),
+        ...(track.mix?.sync?.bpm !== undefined ? [scenePartSeed(SyncBeatMarkerPart, { bpm: track.mix.sync.bpm })] : []),
+        ...(track.envelope !== undefined ? [scenePartSeed(EnvelopePart, resolveEnvelope(track.envelope, ctx))] : []),
+      ];
     case 'transition':
-      return {
-        TransitionKind: track.transitionKind,
-        FrameRange: { from: track.from, to: track.to },
-        Between: track.between,
-        ...(track.ease !== undefined ? { Ease: track.ease } : {}),
-      };
+      return [
+        scenePartSeed(TransitionKindPart, track.transitionKind),
+        scenePartSeed(FrameRangePart, { from: track.from, to: track.to }),
+        scenePartSeed(BetweenPart, track.between),
+        ...(track.ease !== undefined ? [scenePartSeed(EasePart, track.ease)] : []),
+      ];
     case 'effect':
       // An effect may declare BOTH syncTo and envelope. Both components
       // are emitted; the runtime composes them (SyncSystem multiplies
       // its beat-decay base by the envelope factor — see
       // `systems/sync.ts`) so neither contribution clobbers the other.
-      return {
-        EffectKind: track.effectKind,
-        TargetEntity: track.target,
-        FrameRange: { from: track.from, to: track.to },
-        ...(track.syncTo !== undefined ? { SyncAnchor: track.syncTo } : {}),
-        ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
-      };
+      return [
+        scenePartSeed(EffectKindPart, track.effectKind),
+        scenePartSeed(TargetEntityPart, track.target),
+        scenePartSeed(FrameRangePart, { from: track.from, to: track.to }),
+        ...(track.syncTo !== undefined ? [scenePartSeed(SyncAnchorPart, track.syncTo)] : []),
+        ...(track.envelope !== undefined ? [scenePartSeed(EnvelopePart, resolveEnvelope(track.envelope, ctx))] : []),
+      ];
   }
 }

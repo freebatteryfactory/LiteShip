@@ -8,8 +8,8 @@ import {
   parseSemanticAssuranceReceipt,
   verifySemanticAssuranceReceipt,
   writeSemanticAssuranceReceipt,
-} from '../../../../packages/cli/src/lib/semantic-assurance-receipt.js';
-import type { AssuranceTargetSelection } from '../../../../packages/cli/src/lib/mutation-targets.js';
+} from '../../../../packages/cli/src/internal/semantic-assurance-receipt.js';
+import type { AssuranceTargetSelection } from '../../../../packages/cli/src/internal/mutation-targets.js';
 
 const FILE = 'packages/genui/src/index.ts';
 const HELPER = 'packages/genui/src/render.ts';

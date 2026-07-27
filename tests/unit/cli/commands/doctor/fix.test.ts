@@ -22,7 +22,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import * as spawnLib from '../../../../../packages/cli/src/lib/spawn.js';
+import * as spawnLib from '../../../../../packages/cli/src/internal/spawn.js';
 import { applyFixes } from '../../../../../packages/cli/src/commands/doctor/fix.js';
 import type { DoctorCheck } from '../../../../../packages/cli/src/commands/doctor/types.js';
 

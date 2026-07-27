@@ -6,7 +6,7 @@
 
 # Interface: WorkerHost
 
-Defined in: [\_spine/worker.d.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L472)
+Defined in: [\_spine/worker.d.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L473)
 
 Host coordinator that owns worker transport, state, and teardown.
 
@@ -20,7 +20,7 @@ Host coordinator that owns worker transport, state, and teardown.
 
 > `readonly` **compositor**: [`CompositorWorker`](../type-aliases/CompositorWorker.md)
 
-Defined in: [\_spine/worker.d.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L473)
+Defined in: [\_spine/worker.d.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L474)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/worker.d.ts:473](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L175)
+Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
 
 #### Inherited from
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **renderer**: [`RenderWorker`](../type-aliases/RenderWorker.md) \| `null`
 
-Defined in: [\_spine/worker.d.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L474)
+Defined in: [\_spine/worker.d.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L475)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/worker.d.ts:474](https://github.com/freebatteryfactory/Lite
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L177)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 
@@ -64,7 +64,7 @@ Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteSh
 
 > **attachCanvas**(`canvas`): `void`
 
-Defined in: [\_spine/worker.d.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L475)
+Defined in: [\_spine/worker.d.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L476)
 
 #### Parameters
 
@@ -82,7 +82,7 @@ Defined in: [\_spine/worker.d.ts:475](https://github.com/freebatteryfactory/Lite
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L176)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 #### Returns
 
@@ -98,7 +98,7 @@ Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteSh
 
 > **onState**(`callback`): () => `void`
 
-Defined in: [\_spine/worker.d.ts:478](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L478)
+Defined in: [\_spine/worker.d.ts:479](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L479)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Defined in: [\_spine/worker.d.ts:478](https://github.com/freebatteryfactory/Lite
 
 > **startRender**(`config`): `void`
 
-Defined in: [\_spine/worker.d.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L476)
+Defined in: [\_spine/worker.d.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L477)
 
 #### Parameters
 
@@ -134,7 +134,7 @@ Defined in: [\_spine/worker.d.ts:476](https://github.com/freebatteryfactory/Lite
 
 > **stopRender**(): `void`
 
-Defined in: [\_spine/worker.d.ts:477](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L477)
+Defined in: [\_spine/worker.d.ts:478](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L478)
 
 #### Returns
 

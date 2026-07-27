@@ -12,7 +12,7 @@
  * anyone's declaration), so it catches a weakening regardless of who/how it landed.
  *
  * It folds the host-supplied {@link StandardsIntegrityFacts} (the
- * `packages/cli/src/lib/standards-surface.ts` extractor has ALREADY diffed the live
+ * `packages/cli/src/internal/standards-surface.ts` extractor has ALREADY diffed the live
  * surface vs the committed snapshot, classified every change, and applied the owner
  * sign-offs against the injected wall-clock date) into Findings:
  *

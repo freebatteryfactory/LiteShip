@@ -2,7 +2,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { forbiddenSourceImports, sourceRuntimeImports } from '../../../scripts/lib/source-import-contract.js';
+import {
+  forbiddenSourceImports,
+  sourceImportClosure,
+  sourceRuntimeImports,
+} from '../../../scripts/lib/source-import-contract.js';
 
 const roots: string[] = [];
 afterEach(() => {
@@ -84,5 +88,28 @@ describe('source import contract', () => {
     const second = sourceRuntimeImports(root, 'scripts/entry.ts');
     expect(second).toEqual(first);
     expect(first).toEqual(['./value.js', '@liteship/core']);
+  });
+
+  it('enumerates type, runtime, re-export, and literal dynamic edges from real roots without blessing orphan cycles', () => {
+    const root = fixture(`
+      import type { Contract } from './reachable-type.js';
+      export { value } from './reachable-runtime.js';
+      void import('./reachable-dynamic.js');
+      void (0 as unknown as Contract);
+    `);
+    writeFileSync(join(root, 'scripts', 'reachable-type.ts'), 'export interface Contract { readonly ok: true }');
+    writeFileSync(join(root, 'scripts', 'reachable-runtime.ts'), "export { value } from './reachable-leaf.js';");
+    writeFileSync(join(root, 'scripts', 'reachable-leaf.ts'), 'export const value = 1;');
+    writeFileSync(join(root, 'scripts', 'reachable-dynamic.ts'), 'export const dynamic = true;');
+    writeFileSync(join(root, 'scripts', 'orphan-a.ts'), "import './orphan-b.js';");
+    writeFileSync(join(root, 'scripts', 'orphan-b.ts'), "import './orphan-a.js';");
+
+    expect(sourceImportClosure(root, ['scripts/entry.ts'])).toEqual([
+      'scripts/entry.ts',
+      'scripts/reachable-dynamic.ts',
+      'scripts/reachable-leaf.ts',
+      'scripts/reachable-runtime.ts',
+      'scripts/reachable-type.ts',
+    ]);
   });
 });

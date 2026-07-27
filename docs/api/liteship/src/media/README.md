@@ -24,6 +24,7 @@ no behavior lives here.
 
 - [CompositeState](interfaces/CompositeState.md)
 - [CompositorConfig](interfaces/CompositorConfig.md)
+- [FrameSchedule](interfaces/FrameSchedule.md)
 - [ResolvedResponsiveMedia](interfaces/ResolvedResponsiveMedia.md)
 - [ResponsiveMediaCandidateSet](interfaces/ResponsiveMediaCandidateSet.md)
 - [ResponsiveMediaCapabilities](interfaces/ResponsiveMediaCapabilities.md)
@@ -31,6 +32,7 @@ no behavior lives here.
 - [ResponsiveMediaIntentInput](interfaces/ResponsiveMediaIntentInput.md)
 - [ResponsiveMediaPictureProjection](interfaces/ResponsiveMediaPictureProjection.md)
 - [ResponsiveMediaVariant](interfaces/ResponsiveMediaVariant.md)
+- [ScheduledFrame](interfaces/ScheduledFrame.md)
 - [UIFrame](interfaces/UIFrame.md)
 - [VideoConfig](interfaces/VideoConfig.md)
 - [VideoFrameOutput](interfaces/VideoFrameOutput.md)
@@ -58,7 +60,6 @@ no behavior lives here.
 - [Compositor](variables/Compositor.md)
 - [GenFrame](variables/GenFrame.md)
 - [ResponsiveMedia](variables/ResponsiveMedia.md)
-- [VideoRenderer](variables/VideoRenderer.md)
 
 ## Functions
 
@@ -67,7 +68,9 @@ no behavior lives here.
 - [compositeStateToRgba](functions/compositeStateToRgba.md)
 - [createCompositorStatePool](functions/createCompositorStatePool.md)
 - [createFrameBudget](functions/createFrameBudget.md)
+- [createFrameSchedule](functions/createFrameSchedule.md)
 - [createTokenBuffer](functions/createTokenBuffer.md)
+- [createVideoRenderer](functions/createVideoRenderer.md)
 - [projectResponsiveMediaPicture](functions/projectResponsiveMediaPicture.md)
 - [resolveResponsiveMedia](functions/resolveResponsiveMedia.md)
 - [selectCandidates](functions/selectCandidates.md)

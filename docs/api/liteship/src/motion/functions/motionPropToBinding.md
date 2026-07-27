@@ -8,7 +8,7 @@
 
 > **motionPropToBinding**(`target`, `key`): `string`
 
-Defined in: core/dist/motion/reveal.d.ts:72
+Defined in: core/dist/motion/reveal.d.ts:74
 
 Map a motion property key to a CSS custom-property binding for a target.
 

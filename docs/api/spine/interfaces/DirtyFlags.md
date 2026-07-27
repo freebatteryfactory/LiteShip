@@ -6,7 +6,7 @@
 
 # Interface: DirtyFlags\<K\>
 
-Defined in: [\_spine/core.d.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L522)
+Defined in: [\_spine/core.d.ts:549](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L549)
 
 Constant-time dirty-bit tracker over a closed key set.
 
@@ -22,7 +22,7 @@ Constant-time dirty-bit tracker over a closed key set.
 
 > `readonly` **mask**: `number`
 
-Defined in: [\_spine/core.d.ts:528](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L528)
+Defined in: [\_spine/core.d.ts:555](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L555)
 
 ## Methods
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:528](https://github.com/freebatteryfactory/LiteSh
 
 > **clear**(`key`): `void`
 
-Defined in: [\_spine/core.d.ts:524](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L524)
+Defined in: [\_spine/core.d.ts:551](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L551)
 
 #### Parameters
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/core.d.ts:524](https://github.com/freebatteryfactory/LiteSh
 
 > **clearAll**(): `void`
 
-Defined in: [\_spine/core.d.ts:525](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L525)
+Defined in: [\_spine/core.d.ts:552](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L552)
 
 #### Returns
 
@@ -60,7 +60,7 @@ Defined in: [\_spine/core.d.ts:525](https://github.com/freebatteryfactory/LiteSh
 
 > **getDirty**(): readonly `K`[]
 
-Defined in: [\_spine/core.d.ts:527](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L527)
+Defined in: [\_spine/core.d.ts:554](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L554)
 
 #### Returns
 
@@ -72,7 +72,7 @@ readonly `K`[]
 
 > **isDirty**(`key`): `boolean`
 
-Defined in: [\_spine/core.d.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L526)
+Defined in: [\_spine/core.d.ts:553](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L553)
 
 #### Parameters
 
@@ -90,7 +90,7 @@ Defined in: [\_spine/core.d.ts:526](https://github.com/freebatteryfactory/LiteSh
 
 > **mark**(`key`): `void`
 
-Defined in: [\_spine/core.d.ts:523](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L523)
+Defined in: [\_spine/core.d.ts:550](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L550)
 
 #### Parameters
 

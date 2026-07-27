@@ -8,6 +8,6 @@
 
 > **MorphResult** = \{ `type`: `"success"`; \} \| \{ `rejection`: [`MorphRejection`](../interfaces/MorphRejection.md); `type`: `"rejected"`; \}
 
-Defined in: [\_spine/web.d.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L109)
+Defined in: [\_spine/web.d.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L115)
 
 Success or explicit rejection returned by a DOM morph.

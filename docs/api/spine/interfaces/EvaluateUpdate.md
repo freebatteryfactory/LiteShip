@@ -6,7 +6,7 @@
 
 # Interface: EvaluateUpdate
 
-Defined in: [\_spine/worker.d.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L124)
+Defined in: [\_spine/worker.d.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L125)
 
 Batch update that evaluates one quantizer.
 
@@ -16,7 +16,7 @@ Batch update that evaluates one quantizer.
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/worker.d.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L126)
+Defined in: [\_spine/worker.d.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L127)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:126](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"evaluate"`
 
-Defined in: [\_spine/worker.d.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L125)
+Defined in: [\_spine/worker.d.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L126)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/worker.d.ts:125](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **value**: `number`
 
-Defined in: [\_spine/worker.d.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L127)
+Defined in: [\_spine/worker.d.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L128)

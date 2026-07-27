@@ -6,9 +6,13 @@
 
 # Interface: Timeline\<B\>
 
-Defined in: [\_spine/core.d.ts:414](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L414)
+Defined in: [\_spine/core.d.ts:433](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L433)
 
 Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free, Wave 6)
+
+## Extends
+
+- [`AsyncOwnedResource`](AsyncOwnedResource.md)
 
 ## Type Parameters
 
@@ -22,7 +26,7 @@ Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free
 
 > `readonly` **boundary**: `B`
 
-Defined in: [\_spine/core.d.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L415)
+Defined in: [\_spine/core.d.ts:434](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L434)
 
 ***
 
@@ -30,15 +34,51 @@ Defined in: [\_spine/core.d.ts:415](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L425)
+Defined in: [\_spine/core.d.ts:444](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L444)
+
+#### Overrides
+
+[`AsyncOwnedResource`](AsyncOwnedResource.md).[`lifetime`](AsyncOwnedResource.md#lifetime)
 
 ## Methods
+
+### \[asyncDispose\]()
+
+> **\[asyncDispose\]**(): `Promise`\<`void`\>
+
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`AsyncOwnedResource`](AsyncOwnedResource.md).[`[asyncDispose]`](AsyncOwnedResource.md#asyncdispose)
+
+***
+
+### dispose()
+
+> **dispose**(): `Promise`\<`void`\>
+
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`AsyncOwnedResource`](AsyncOwnedResource.md).[`dispose`](AsyncOwnedResource.md#dispose)
+
+***
 
 ### elapsed()
 
 > **elapsed**(): [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L418)
+Defined in: [\_spine/core.d.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L437)
 
 #### Returns
 
@@ -50,7 +90,7 @@ Defined in: [\_spine/core.d.ts:418](https://github.com/freebatteryfactory/LiteSh
 
 > **pause**(): `void`
 
-Defined in: [\_spine/core.d.ts:421](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L421)
+Defined in: [\_spine/core.d.ts:440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L440)
 
 #### Returns
 
@@ -62,7 +102,7 @@ Defined in: [\_spine/core.d.ts:421](https://github.com/freebatteryfactory/LiteSh
 
 > **play**(): `void`
 
-Defined in: [\_spine/core.d.ts:420](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L420)
+Defined in: [\_spine/core.d.ts:439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L439)
 
 #### Returns
 
@@ -74,7 +114,7 @@ Defined in: [\_spine/core.d.ts:420](https://github.com/freebatteryfactory/LiteSh
 
 > **progress**(): `number`
 
-Defined in: [\_spine/core.d.ts:417](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L417)
+Defined in: [\_spine/core.d.ts:436](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L436)
 
 #### Returns
 
@@ -86,7 +126,7 @@ Defined in: [\_spine/core.d.ts:417](https://github.com/freebatteryfactory/LiteSh
 
 > **reverse**(): `void`
 
-Defined in: [\_spine/core.d.ts:422](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L422)
+Defined in: [\_spine/core.d.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L441)
 
 #### Returns
 
@@ -98,7 +138,7 @@ Defined in: [\_spine/core.d.ts:422](https://github.com/freebatteryfactory/LiteSh
 
 > **scrub**(`progress`): `void`
 
-Defined in: [\_spine/core.d.ts:424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L424)
+Defined in: [\_spine/core.d.ts:443](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L443)
 
 #### Parameters
 
@@ -116,7 +156,7 @@ Defined in: [\_spine/core.d.ts:424](https://github.com/freebatteryfactory/LiteSh
 
 > **seek**(`ms`): `void`
 
-Defined in: [\_spine/core.d.ts:423](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L423)
+Defined in: [\_spine/core.d.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L442)
 
 #### Parameters
 
@@ -134,7 +174,7 @@ Defined in: [\_spine/core.d.ts:423](https://github.com/freebatteryfactory/LiteSh
 
 > **state**(): [`StateUnion`](../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:416](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L416)
+Defined in: [\_spine/core.d.ts:435](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L435)
 
 #### Returns
 
@@ -146,7 +186,7 @@ Defined in: [\_spine/core.d.ts:416](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:419](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L419)
+Defined in: [\_spine/core.d.ts:438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L438)
 
 #### Parameters
 

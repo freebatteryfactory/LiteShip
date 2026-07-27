@@ -8,11 +8,12 @@
 
 > `const` **Physical**: `object`
 
-Defined in: web/dist/index.d.ts:51
+Defined in: web/dist/index.d.ts:52
 
 Physical DOM-state helpers for save/restore across morphs and hot
-reloads. Captures focus, selection, scroll, and IME composition so a
-subsequent [Morph.morph](Morph.md#morph) preserves them.
+reloads. Passive capture covers focus, selection, and scroll. Allocate
+[Physical.createTracker](#createtracker) when a host also needs IME composition state;
+the tracker owns and removes its document listeners.
 
 ## Type Declaration
 
@@ -20,7 +21,13 @@ subsequent [Morph.morph](Morph.md#morph) preserves them.
 
 > `readonly` **capture**: *typeof* `capture`
 
-Snapshot focus/selection/scroll state on the document.
+Snapshot passive focus/selection/scroll state on the document.
+
+### createTracker
+
+> `readonly` **createTracker**: *typeof* [`createPhysicalStateTracker`](../functions/createPhysicalStateTracker.md)
+
+Install host-owned IME tracking. Await disposal to remove its document listeners.
 
 ### restore
 

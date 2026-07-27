@@ -357,7 +357,14 @@ function themeFingerprint(theme: ThemeCompileResult): string {
  * viewport/network/accessibility-specific output.
  */
 function compileContextFingerprint(context: EdgeHostContext): string {
-  return contentAddressOf({ capabilities: context.capabilities, tier: context.tier })
+  // Provenance is a receipt, not a render input: requests with byte-identical
+  // capability values and tier decisions retain the pre-R15 cache identity.
+  const tierValues = {
+    capTier: context.tier.capTier,
+    motionTier: context.tier.motionTier,
+    designTier: context.tier.designTier,
+  };
+  return contentAddressOf({ capabilities: context.capabilities, tier: tierValues })
     .replace(/^fnv1a:/, '')
     .slice(0, 12);
 }
@@ -491,8 +498,9 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
 
   return {
     async resolve(headers: Headers | ClientHintsHeaders): Promise<EdgeHostResolution> {
-      const capabilities = ClientHints.parseClientHints(headers);
-      const tier = EdgeTier.tierFromParsed(capabilities);
+      const parsed = ClientHints.parseEvidence(headers);
+      const capabilities = parsed.capabilities;
+      const tier = EdgeTier.tierFromEvidence(parsed);
       const context: EdgeHostContext = { capabilities, tier };
       const themeConfig = compiledStaticTheme ? undefined : resolveThemeConfig(config.theme, context);
       let theme = compiledStaticTheme;

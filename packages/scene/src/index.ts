@@ -28,6 +28,45 @@ export type { TrackRef } from './track.js';
 export { compileScene } from './compile.js';
 export type { CompiledScene, TrackSpawn } from './compile.js';
 
+export {
+  SceneParts,
+  SceneSeedParts,
+  TrackIdPart,
+  VideoSourcePart,
+  AudioSourcePart,
+  FrameRangePart,
+  TrackLayerPart,
+  EnvelopePart,
+  VolumePart,
+  PanPart,
+  SyncBeatMarkerPart,
+  TransitionKindPart,
+  BetweenPart,
+  EasePart,
+  EffectKindPart,
+  TargetEntityPart,
+  SyncAnchorPart,
+  BeatPart,
+  OpacityPart,
+  PhasePart,
+  GainPart,
+  BlendPart,
+  IntensityPart,
+  SvgAttrsPart,
+  RuntimeWritePlanPart,
+  MotionSamplePart,
+  admitScenePartSeed,
+  scenePartSeed,
+} from './parts.js';
+export type {
+  ScenePartSeed,
+  ScenePartName,
+  SceneSeedPart,
+  SceneSeedPartName,
+  FrameRange,
+  MotionSample,
+} from './parts.js';
+
 export { BeatBinding, beatBindingCapsule, bindBeats } from './beat-binding-capsule.js';
 export type { BeatComponent, BeatSpawn } from './beat-binding-capsule.js';
 
@@ -42,7 +81,7 @@ export type { SceneRuntimeHandle, SceneRuntimeOptions } from './runtime.js';
 export { VideoSystem } from './systems/video.js';
 export { AudioSystem } from './systems/audio.js';
 export { TransitionSystem } from './systems/transition.js';
-export { MotionSampleSystem, sampleSceneMotion, motionComponentName } from './systems/motion.js';
+export { MotionSampleSystem, sampleSceneMotion, sceneMotionTime } from './systems/motion.js';
 export { EffectSystem } from './systems/effect.js';
 export { SyncSystem } from './systems/sync.js';
 export { PassThroughMixer } from './systems/pass-through-mixer.js';

@@ -2,13 +2,20 @@
 
 export { start } from './start.js';
 export type { McpServerHandle, StartOpts } from './start.js';
-export { listTools, listMcpResources, dispatchToolCall, dispatch } from './dispatch.js';
+export { listTools, listMcpResources, mcpResourceReaderUris, dispatchToolCall, dispatch } from './dispatch.js';
+export {
+  MCP_METHOD_CATALOG,
+  SERVER_CAPABILITIES,
+  projectServerCapabilities,
+  type McpMethodDescriptor,
+  type McpServerCapabilities,
+} from './capabilities.js';
 export type { McpToolCall, McpToolResult, McpToolDescriptor, McpListedResource } from './dispatch.js';
 
 // Resource + prompt projections (CUT D3) — same registry the CLI/tools surfaces project.
 export { listResources, readResource } from './resources.js';
 export type { McpResource, McpResourceContents } from './resources.js';
-export { listPrompts, getPrompt } from './prompts.js';
+export { listPrompts, getPrompt, promptResolverNames } from './prompts.js';
 export type { McpPrompt, McpPromptArgument, GetPromptResult } from './prompts.js';
 
 // Static MCP Apps UI resources (CUT D4) — the `ui://` visible twins of the D3 JSON resources.
@@ -42,6 +49,8 @@ export {
   LITESHIP_CHECK_METHOD,
   LSP_METHOD_CATALOG,
   LSP_SERVER_CAPABILITIES,
+  lspRoutedMethodNames,
+  lspNotificationProducerMethods,
   projectLspCapabilities,
   DiagnosticSeverity,
   CodeActionKind,

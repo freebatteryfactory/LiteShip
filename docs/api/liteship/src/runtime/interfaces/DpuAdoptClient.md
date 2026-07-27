@@ -6,7 +6,7 @@
 
 # Interface: DpuAdoptClient
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:118
+Defined in: web/dist/watch-and-prepare.d.ts:118
 
 Host mutation client surface for adopt-under after a successful DPU apply (#120).
 
@@ -16,7 +16,7 @@ Host mutation client surface for adopt-under after a successful DPU apply (#120)
 
 > `readonly` **adopt**: (`graph`) => `void`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:119
+Defined in: web/dist/watch-and-prepare.d.ts:119
 
 #### Parameters
 

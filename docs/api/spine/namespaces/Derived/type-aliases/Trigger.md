@@ -8,6 +8,6 @@
 
 > **Trigger** = `Pick`\<[`Replay`](../../CellKernel/interfaces/Replay.md)\<`unknown`\>, `"subscribe"`\>
 
-Defined in: [\_spine/core.d.ts:686](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L686)
+Defined in: [\_spine/core.d.ts:901](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L901)
 
 A recompute trigger for `computed` — the subscribe half of a source.

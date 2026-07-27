@@ -8,7 +8,7 @@
 
 > **make**(`name`): [`PlanBuilder`](../../../interfaces/PlanBuilder.md)
 
-Defined in: [\_spine/core.d.ts:1255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1255)
+Defined in: [\_spine/core.d.ts:1470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1470)
 
 ## Parameters
 

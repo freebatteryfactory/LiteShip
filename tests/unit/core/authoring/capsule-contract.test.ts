@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { schema } from '@liteship/core';
+import { ASSEMBLY_KINDS, schema } from '@liteship/core';
 import type { CapsuleContract, AssemblyKind } from '@liteship/core';
 
 describe('CapsuleContract', () => {
@@ -23,5 +23,18 @@ describe('CapsuleContract', () => {
     const assertKind = (k: AssemblyKind) => k;
     expect(assertKind('pureTransform')).toBe('pureTransform');
     expect(assertKind('sceneComposition')).toBe('sceneComposition');
+  });
+
+  it('derives the closed type vocabulary from one immutable runtime catalog', () => {
+    expect(ASSEMBLY_KINDS).toEqual([
+      'pureTransform',
+      'receiptedMutation',
+      'stateMachine',
+      'siteAdapter',
+      'policyGate',
+      'cachedProjection',
+      'sceneComposition',
+    ]);
+    expect(Object.isFrozen(ASSEMBLY_KINDS)).toBe(true);
   });
 });

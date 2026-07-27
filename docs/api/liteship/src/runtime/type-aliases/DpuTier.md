@@ -8,6 +8,6 @@
 
 > **DpuTier** = `"native-sethtml"` \| `"floor-morph"`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:31
+Defined in: web/dist/watch-and-prepare.d.ts:31
 
 Which tier applied or will apply a verifiable patch.

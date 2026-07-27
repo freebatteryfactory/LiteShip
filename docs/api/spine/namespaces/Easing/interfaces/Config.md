@@ -6,15 +6,15 @@
 
 # Interface: Config
 
-Defined in: [\_spine/core.d.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L366)
+Defined in: [\_spine/core.d.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L372)
 
 ## Properties
 
 ### damping?
 
-> `optional` **damping?**: `number`
+> `readonly` `optional` **damping?**: `number`
 
-Defined in: [\_spine/core.d.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L370)
+Defined in: [\_spine/core.d.ts:376](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L376)
 
 Default: 26.
 
@@ -22,9 +22,9 @@ Default: 26.
 
 ### mass?
 
-> `optional` **mass?**: `number`
+> `readonly` `optional` **mass?**: `number`
 
-Defined in: [\_spine/core.d.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L372)
+Defined in: [\_spine/core.d.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L378)
 
 Default: 1.
 
@@ -32,8 +32,8 @@ Default: 1.
 
 ### stiffness?
 
-> `optional` **stiffness?**: `number`
+> `readonly` `optional` **stiffness?**: `number`
 
-Defined in: [\_spine/core.d.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L368)
+Defined in: [\_spine/core.d.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L374)
 
 Default: 170.

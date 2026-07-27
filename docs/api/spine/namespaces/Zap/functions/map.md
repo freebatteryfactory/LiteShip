@@ -8,7 +8,7 @@
 
 > **map**\<`A`, `B`\>(`event`, `f`): [`Zap`](../../../interfaces/Zap.md)\<`B`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:725](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L725)
+Defined in: [\_spine/core.d.ts:940](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L940)
 
 ## Type Parameters
 

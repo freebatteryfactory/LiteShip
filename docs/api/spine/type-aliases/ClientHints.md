@@ -8,7 +8,7 @@
 
 > **ClientHints** = `object`
 
-Defined in: [\_spine/edge.d.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L27)
+Defined in: [\_spine/edge.d.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L40)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/edge.d.ts:27](https://github.com/freebatteryfactory/LiteShi
 
 > **acceptCHHeader**(): `string`
 
-Defined in: [\_spine/edge.d.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L29)
+Defined in: [\_spine/edge.d.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L43)
 
 #### Returns
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/edge.d.ts:29](https://github.com/freebatteryfactory/LiteShi
 
 > **criticalCHHeader**(): `string`
 
-Defined in: [\_spine/edge.d.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L30)
+Defined in: [\_spine/edge.d.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L44)
 
 #### Returns
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/edge.d.ts:30](https://github.com/freebatteryfactory/LiteShi
 
 > **parseClientHints**(`headers`): [`ExtendedDeviceCapabilities`](../interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [\_spine/edge.d.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L28)
+Defined in: [\_spine/edge.d.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L42)
 
 #### Parameters
 
@@ -51,3 +51,63 @@ Defined in: [\_spine/edge.d.ts:28](https://github.com/freebatteryfactory/LiteShi
 #### Returns
 
 [`ExtendedDeviceCapabilities`](../interfaces/ExtendedDeviceCapabilities.md)
+
+***
+
+### parseEvidence()
+
+> **parseEvidence**(`headers`): [`ClientHintsEvidence`](../interfaces/ClientHintsEvidence.md)
+
+Defined in: [\_spine/edge.d.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L41)
+
+#### Parameters
+
+##### headers
+
+`Headers` \| [`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md)
+
+#### Returns
+
+[`ClientHintsEvidence`](../interfaces/ClientHintsEvidence.md)
+
+***
+
+### responsiveMediaCapabilities()
+
+> **responsiveMediaCapabilities**(`headersOrCaps`): [`ResponsiveMediaCapabilities`](../interfaces/ResponsiveMediaCapabilities.md)
+
+Defined in: [\_spine/edge.d.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L46)
+
+#### Parameters
+
+##### headersOrCaps
+
+[`ExtendedDeviceCapabilities`](../interfaces/ExtendedDeviceCapabilities.md) \| `Headers` \| [`ClientHintsHeaders`](../interfaces/ClientHintsHeaders.md)
+
+#### Returns
+
+[`ResponsiveMediaCapabilities`](../interfaces/ResponsiveMediaCapabilities.md)
+
+***
+
+### responsiveMediaVaryHeader()
+
+> **responsiveMediaVaryHeader**(): `string`
+
+Defined in: [\_spine/edge.d.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L49)
+
+#### Returns
+
+`string`
+
+***
+
+### varyCHHeader()
+
+> **varyCHHeader**(): `string`
+
+Defined in: [\_spine/edge.d.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L45)
+
+#### Returns
+
+`string`

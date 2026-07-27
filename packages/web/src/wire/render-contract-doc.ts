@@ -17,7 +17,7 @@ export function renderWireContractDoc(): string {
   return [
     '### `liteship:*` CustomEvents',
     '',
-    'Single source: `packages/web/src/wire/liteship-events.ts`. Dispatch through `dispatchLiteshipEvent`; subscribe through `onLiteship`.',
+    'Owner-local `event-protocol.ts` declarations generate `@liteship/_spine/events` and this DOM projection. Dispatch through `dispatchLiteshipEvent`; subscribe through `onLiteship`.',
     '',
     '| Event | Role |',
     '| --- | --- |',

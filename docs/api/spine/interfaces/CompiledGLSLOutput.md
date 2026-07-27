@@ -6,7 +6,7 @@
 
 # Interface: CompiledGLSLOutput
 
-Defined in: [\_spine/edge.d.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L87)
+Defined in: [\_spine/edge.d.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L107)
 
 GLSL source and numeric uniforms stored in an edge manifest.
 
@@ -16,7 +16,7 @@ GLSL source and numeric uniforms stored in an edge manifest.
 
 > `readonly` **declarations**: `string`
 
-Defined in: [\_spine/edge.d.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L88)
+Defined in: [\_spine/edge.d.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L108)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/edge.d.ts:88](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **stateUniforms?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
 
-Defined in: [\_spine/edge.d.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L90)
+Defined in: [\_spine/edge.d.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L110)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/edge.d.ts:90](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **uniformValues**: `Readonly`\<`Record`\<`string`, `number`\>\>
 
-Defined in: [\_spine/edge.d.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L89)
+Defined in: [\_spine/edge.d.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L109)

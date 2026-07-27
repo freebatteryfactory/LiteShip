@@ -6,7 +6,7 @@
 
 # Interface: StopRenderMessage
 
-Defined in: [\_spine/worker.d.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L163)
+Defined in: [\_spine/worker.d.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L164)
 
 Host command stopping the worker's render loop.
 
@@ -16,4 +16,4 @@ Host command stopping the worker's render loop.
 
 > `readonly` **type**: `"stop-render"`
 
-Defined in: [\_spine/worker.d.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L164)
+Defined in: [\_spine/worker.d.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L165)

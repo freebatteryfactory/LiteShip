@@ -32,7 +32,7 @@ The repo compiler's harness template for `siteAdapter` emits round-trip tests (n
 ## Supporting evidence
 
 - `packages/remotion/src/capsules/remotion-adapter.ts`: first `siteAdapter` capsule instance (Task 24, commit `6b1e266`)
-- `packages/cloudflare/src/capsules/cloudflare-adapter.ts`: second `siteAdapter` capsule instance — Cloudflare Workers KV boundary cache
+- `packages/cloudflare/src/cloudflare-adapter-capsule.ts`: second `siteAdapter` capsule instance — Cloudflare Workers KV boundary cache
 - `packages/core/src/harness/site-adapter.ts`: harness template (Task 9, commit `3e607d0`)
 - `reports/capsule-manifest.json`: `remotion.video-frame-output` entry with `Remotion-Company-License` attribution
 - Spec §4 assembly catalog + §11 phased rollout

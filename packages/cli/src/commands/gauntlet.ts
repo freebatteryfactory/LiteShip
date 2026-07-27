@@ -12,7 +12,7 @@ import { systemClock, wallClock } from '@liteship/core';
 import { emit, emitError } from '../receipts.js';
 import { gauntletPhaseLabels } from '../gauntlet-phases.js';
 import { formatUnexpectedArgvReceipt, parseGauntletArgv } from '../gauntlet-argv.js';
-import { isLiteShipWorkspace } from '../lib/workspace.js';
+import { isLiteShipWorkspace } from '../internal/workspace.js';
 
 /** The canonical phase labels (CUT D8) — projected from the ONE source the executor runs. */
 const PHASES = gauntletPhaseLabels();

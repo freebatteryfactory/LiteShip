@@ -8,7 +8,7 @@
 
 > **raf**(): [`Scheduler`](../../../interfaces/Scheduler.md)
 
-Defined in: [\_spine/core.d.ts:1330](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1330)
+Defined in: [\_spine/core.d.ts:1545](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1545)
 
 ## Returns
 

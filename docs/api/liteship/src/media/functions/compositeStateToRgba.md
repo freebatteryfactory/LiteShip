@@ -8,7 +8,7 @@
 
 > **compositeStateToRgba**(`state`, `width`, `height`): `Uint8Array`
 
-Defined in: core/dist/media/video.d.ts:63
+Defined in: core/dist/media/video.d.ts:82
 
 Paint one [CompositeState](../interfaces/CompositeState.md) into a solid `width*height*4` RGBA buffer
 whose color is a DETERMINISTIC function of the frame's discrete state + css

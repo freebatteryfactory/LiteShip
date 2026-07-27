@@ -6,8 +6,8 @@
 
 # Type Alias: AssemblyKind
 
-> **AssemblyKind** = `"pureTransform"` \| `"receiptedMutation"` \| `"stateMachine"` \| `"siteAdapter"` \| `"policyGate"` \| `"cachedProjection"` \| `"sceneComposition"`
+> **AssemblyKind** = *typeof* [`ASSEMBLY_KINDS`](../variables/ASSEMBLY_KINDS.md)\[`number`\]
 
-Defined in: [core/src/authoring/capsule.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L17)
+Defined in: [core/src/authoring/capsule.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L28)
 
-Closed seven-arm catalog of capsule kinds. Adding an eighth requires ADR amendment.
+One capsule kind derived from the canonical runtime catalog.

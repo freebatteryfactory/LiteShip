@@ -6,7 +6,7 @@
 
 # Interface: LiteshipLocals
 
-Defined in: [\_spine/astro.d.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L76)
+Defined in: [\_spine/astro.d.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L123)
 
 LiteShip request-local evidence exposed to Astro pages and middleware.
 
@@ -14,9 +14,9 @@ LiteShip request-local evidence exposed to Astro pages and middleware.
 
 ### capabilities
 
-> `readonly` **capabilities**: `unknown`
+> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [\_spine/astro.d.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L82)
+Defined in: [\_spine/astro.d.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L126)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/astro.d.ts:82](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [\_spine/astro.d.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L83)
+Defined in: [\_spine/astro.d.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L128)
 
 #### assetUrl?
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/astro.d.ts:83](https://github.com/freebatteryfactory/LiteSh
 
 #### compiledOutputs?
 
-> `readonly` `optional` **compiledOutputs?**: `unknown`
+> `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
 #### htmlAttributes
 
@@ -52,12 +52,38 @@ Defined in: [\_spine/astro.d.ts:83](https://github.com/freebatteryfactory/LiteSh
 
 #### theme?
 
-> `readonly` `optional` **theme?**: `unknown`
+> `readonly` `optional` **theme?**: [`ThemeCompileResult`](ThemeCompileResult.md)
+
+***
+
+### responsiveMedia
+
+> `readonly` **responsiveMedia**: (`intent`) => [`ResponsiveMediaPictureProjection`](ResponsiveMediaPictureProjection.md)
+
+Defined in: [\_spine/astro.d.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L127)
+
+#### Parameters
+
+##### intent
+
+[`ResponsiveMediaIntent`](ResponsiveMediaIntent.md)
+
+#### Returns
+
+[`ResponsiveMediaPictureProjection`](ResponsiveMediaPictureProjection.md)
+
+***
+
+### tierEvidence
+
+> `readonly` **tierEvidence**: [`CapabilityTierEvidence`](../type-aliases/CapabilityTierEvidence.md)
+
+Defined in: [\_spine/astro.d.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L125)
 
 ***
 
 ### tiers
 
-> `readonly` **tiers**: `Readonly`\<\{ `design`: [`DesignTier`](../type-aliases/DesignTier.md); `motion`: [`MotionTier`](../type-aliases/MotionTier.md); `tier`: [`CapTier`](../type-aliases/CapTier.md); \}\>
+> `readonly` **tiers**: [`CapabilityAxisValues`](CapabilityAxisValues.md)
 
-Defined in: [\_spine/astro.d.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L77)
+Defined in: [\_spine/astro.d.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L124)

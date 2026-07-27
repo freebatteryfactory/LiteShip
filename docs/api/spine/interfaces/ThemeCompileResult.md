@@ -6,7 +6,7 @@
 
 # Interface: ThemeCompileResult
 
-Defined in: [\_spine/edge.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L205)
+Defined in: [\_spine/edge.d.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L225)
 
 Compiled theme CSS and its normalized declaration inventory.
 
@@ -16,7 +16,7 @@ Compiled theme CSS and its normalized declaration inventory.
 
 > `readonly` **css**: `string`
 
-Defined in: [\_spine/edge.d.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L207)
+Defined in: [\_spine/edge.d.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L227)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/edge.d.ts:207](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **declarations**: readonly [`ThemeDeclaration`](ThemeDeclaration.md)[]
 
-Defined in: [\_spine/edge.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L206)
+Defined in: [\_spine/edge.d.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L226)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/edge.d.ts:206](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **inlineStyle**: `string`
 
-Defined in: [\_spine/edge.d.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L208)
+Defined in: [\_spine/edge.d.ts:228](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L228)

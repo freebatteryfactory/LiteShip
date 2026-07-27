@@ -36,7 +36,7 @@ Logs `2` — one spawn per track. `compileScene` resolves each `Beat(n)` mark ag
 
 ## Where it sits
 
-A layered authoring package: it sits on the ECS (entity-component-system) world from `@liteship/core`, and shares its timeline contracts with the rest of the stack through `@liteship/_spine` types. Beat detection is not here — it lives in `@liteship/assets`; bring its sample-space markers into `scene.beats` with `resolveBeatProjectionToSceneBeats`. The Node-only dev server ships at the `@liteship/scene/dev` subpath so browser and Worker bundles never touch it. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+A layered authoring package: it builds on the typed projection/execution substrate at `@liteship/core/ecs`, and shares its timeline contracts with the rest of the stack through `@liteship/_spine` types. Beat detection is not here — it lives in `@liteship/assets`; bring its sample-space markers into `scene.beats` with `resolveBeatProjectionToSceneBeats`. The Node-only dev server ships at the `@liteship/scene/dev` subpath so browser and Worker bundles never touch it. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -44,9 +44,9 @@ Beat-synced effect tracks (`syncTo: syncTo.beat(...)`) tick but never pulse when
 
 ## Authored-motion adapter
 
-`MotionSampleSystem(plan, frameIndex, totalFrames)` is the scene's adapter for an **authored motion program** (`@liteship/core`'s `sampleProgram`, #130): per frame it samples the ONE shared kernel and writes each typed leaf as a `motion:<cssVar>` component (via the same `world.setComponent` seam `TransitionSystem` uses). `sampleSceneMotion(plan, t)` is the pure projection.
+`MotionSampleSystem(frameIndex)` is the Scene adapter for the shared motion kernel. Each selected entity carries its own admitted `RuntimeWritePlanPart` and `FrameRangePart`; the system samples that plan at entity-local time and writes one typed `MotionSamplePart`. `sampleSceneMotion(plan, t)` is the pure aggregate projection used by the differential oracle. Free-string `MotionProgram` queries, dynamic `motion:<cssVar>` component names, and closure-global plans are not part of the runtime contract.
 
-This is **additive** to `TransitionSystem`, not a merge. `TransitionSystem`'s `_blend` is a video-**crossfade** mix factor between two `Between` entities — a different concept from an authored motion program. Both coexist on one world; `TransitionSystem` is untouched. A differential oracle proves the scene leg renders identically to browser CSS, the browser runtime floor, stage, remotion, and worker ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
+This is **additive** to `TransitionSystem`, not a merge. `TransitionSystem`'s typed `BlendPart` is a video-**crossfade** mix factor between two `BetweenPart` entities — a different concept from an authored runtime write plan. Both coexist on one world. A differential oracle proves the Scene leg renders identically to browser CSS, the browser runtime floor, Stage, Remotion, and Worker ([ADR-0040](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0040-cross-target-motion-parity.md)).
 
 ## Docs
 

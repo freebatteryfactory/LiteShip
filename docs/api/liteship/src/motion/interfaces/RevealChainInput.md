@@ -6,7 +6,7 @@
 
 # Interface: RevealChainInput
 
-Defined in: core/dist/motion/reveal.d.ts:111
+Defined in: core/dist/motion/reveal.d.ts:113
 
 Authoring input to [lowerRevealChain](../functions/lowerRevealChain.md) — a REAL multi-step chain on ONE
 target: a `seq` of steps, optionally followed by a `choice` (branches + an
@@ -19,7 +19,7 @@ drives, replacing the pre-W9 routing-label collapse (#141).
 
 > `readonly` `optional` **choice?**: `object`
 
-Defined in: core/dist/motion/reveal.d.ts:115
+Defined in: core/dist/motion/reveal.d.ts:117
 
 #### branches
 
@@ -35,7 +35,7 @@ Defined in: core/dist/motion/reveal.d.ts:115
 
 > `readonly` **policy**: [`RevealPolicy`](RevealPolicy.md)
 
-Defined in: core/dist/motion/reveal.d.ts:119
+Defined in: core/dist/motion/reveal.d.ts:121
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: core/dist/motion/reveal.d.ts:119
 
 > `readonly` **steps**: readonly [`RevealChainStep`](RevealChainStep.md)[]
 
-Defined in: core/dist/motion/reveal.d.ts:114
+Defined in: core/dist/motion/reveal.d.ts:116
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: core/dist/motion/reveal.d.ts:114
 
 > `readonly` **target**: `string`
 
-Defined in: core/dist/motion/reveal.d.ts:112
+Defined in: core/dist/motion/reveal.d.ts:114
 
 ***
 
@@ -59,4 +59,4 @@ Defined in: core/dist/motion/reveal.d.ts:112
 
 > `readonly` **trigger**: [`RevealTrigger`](../type-aliases/RevealTrigger.md)
 
-Defined in: core/dist/motion/reveal.d.ts:113
+Defined in: core/dist/motion/reveal.d.ts:115

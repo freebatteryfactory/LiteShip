@@ -8,7 +8,7 @@
 
 > **defineGate**(`spec`): [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gate.ts:850](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L850)
+Defined in: [gauntlet/src/gate.ts:1130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L1130)
 
 Validate and freeze one pure gate definition.
 

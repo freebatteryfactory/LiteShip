@@ -8,6 +8,6 @@
 
 > **CompositorWorkerStartupStage** = `"claim-or-create"` \| `"coordinator-reset-or-create"` \| `"listener-bind"`
 
-Defined in: [\_spine/worker.d.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L339)
+Defined in: [\_spine/worker.d.ts:340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L340)
 
 Named stages measured while starting or resetting a compositor worker.

@@ -6,7 +6,7 @@
 
 # Interface: CSSContainerRule
 
-Defined in: [\_spine/compiler.d.ts:12](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L12)
+Defined in: [\_spine/compiler.d.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L20)
 
 One container-scoped CSS rule emitted by the low-level style compiler.
 
@@ -16,7 +16,7 @@ One container-scoped CSS rule emitted by the low-level style compiler.
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/compiler.d.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L13)
+Defined in: [\_spine/compiler.d.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L21)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:13](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **query**: `string`
 
-Defined in: [\_spine/compiler.d.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L14)
+Defined in: [\_spine/compiler.d.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L22)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:14](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **rules**: readonly [`CSSRule`](CSSRule.md)[]
 
-Defined in: [\_spine/compiler.d.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L15)
+Defined in: [\_spine/compiler.d.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L23)

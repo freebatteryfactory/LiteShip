@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L127)
+Defined in: [edge/src/edge-tier.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L138)
 
 Edge tier detection namespace.
 
@@ -51,7 +51,7 @@ spreadable-map forms can never disagree.
 
 ##### result
 
-[`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+`CapabilityTierProjection`
 
 #### Returns
 
@@ -83,7 +83,7 @@ point of exposing it alongside the pre-serialized string.
 
 ##### result
 
-[`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+`CapabilityTierProjection`
 
 #### Returns
 
@@ -97,20 +97,20 @@ tierDataAttributesMap(result)
 // => { 'data-liteship-tier': 'reactive', 'data-liteship-motion': 'animations', 'data-liteship-design': 'enhanced' }
 ```
 
-### tierFromParsed
+### tierFromEvidence
 
-> **tierFromParsed**: (`caps`) => [`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+> **tierFromEvidence**: (`parsed`) => [`EdgeTierResult`](../interfaces/EdgeTierResult.md)
 
-Map parsed Client Hints capabilities to an [EdgeTierResult](../interfaces/EdgeTierResult.md).
+Map a canonical Client-Hints evidence receipt to an [EdgeTierResult](../interfaces/EdgeTierResult.md).
 
-Map already-parsed [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) to the tier triple
-using the same pure functions as the client runtime.
+Map the canonical Client-Hints evidence receipt to the tier triple using the
+same pure functions as the client runtime.
 
 #### Parameters
 
-##### caps
+##### parsed
 
-[`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+[`ClientHintsEvidence`](../interfaces/ClientHintsEvidence.md)
 
 #### Returns
 

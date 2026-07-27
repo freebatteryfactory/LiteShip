@@ -15,7 +15,7 @@
  */
 // PROVES: INV-ROSTER-SINGLE-SOURCE
 import { describe, it, expect } from 'vitest';
-import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { CANONICAL_ROSTER } from '../../../scripts/gen-roster.js';
 import { packageRoster } from '../../support/repo-truths.js';
 

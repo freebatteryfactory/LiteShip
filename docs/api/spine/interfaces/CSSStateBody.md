@@ -6,7 +6,7 @@
 
 # Interface: CSSStateBody
 
-Defined in: [\_spine/compiler.d.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L25)
+Defined in: [\_spine/compiler.d.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L33)
 
 Structured declarations for a state, including optional pseudo selectors.
 
@@ -16,7 +16,7 @@ Structured declarations for a state, including optional pseudo selectors.
 
 > `readonly` `optional` **bareProps?**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/compiler.d.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L26)
+Defined in: [\_spine/compiler.d.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L34)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:26](https://github.com/freebatteryfactory/Lit
 
 > `readonly` `optional` **rules?**: readonly [`CSSRule`](CSSRule.md)[]
 
-Defined in: [\_spine/compiler.d.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L27)
+Defined in: [\_spine/compiler.d.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L35)

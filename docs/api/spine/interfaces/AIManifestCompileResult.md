@@ -6,7 +6,7 @@
 
 # Interface: AIManifestCompileResult
 
-Defined in: [\_spine/compiler.d.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L250)
+Defined in: [\_spine/compiler.d.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L262)
 
 AI manifest projection together with its generated tool definitions.
 
@@ -16,7 +16,7 @@ AI manifest projection together with its generated tool definitions.
 
 > `readonly` **jsonSchema**: `Record`\<`string`, `unknown`\>
 
-Defined in: [\_spine/compiler.d.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L253)
+Defined in: [\_spine/compiler.d.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L265)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:253](https://github.com/freebatteryfactory/Li
 
 > `readonly` **manifest**: [`AIManifest`](AIManifest.md)
 
-Defined in: [\_spine/compiler.d.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L251)
+Defined in: [\_spine/compiler.d.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L263)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:251](https://github.com/freebatteryfactory/Li
 
 > `readonly` **systemPrompt**: `string`
 
-Defined in: [\_spine/compiler.d.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L254)
+Defined in: [\_spine/compiler.d.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L266)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/compiler.d.ts:254](https://github.com/freebatteryfactory/Li
 
 > `readonly` **toolDefinitions**: readonly [`AIToolDefinition`](AIToolDefinition.md)[]
 
-Defined in: [\_spine/compiler.d.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L252)
+Defined in: [\_spine/compiler.d.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L264)

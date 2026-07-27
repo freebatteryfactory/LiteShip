@@ -6,7 +6,7 @@
 
 # Interface: WatchAndPrepareHandle
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:91
+Defined in: web/dist/watch-and-prepare.d.ts:91
 
 Handle returned by [watchAndPrepare](../functions/watchAndPrepare.md) — stamps and applies verifiable patches.
 
@@ -20,7 +20,7 @@ Handle returned by [watchAndPrepare](../functions/watchAndPrepare.md) — stamps
 
 > `readonly` **capability**: [`DpuCapability`](../type-aliases/DpuCapability.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:94
+Defined in: web/dist/watch-and-prepare.d.ts:94
 
 ***
 
@@ -42,7 +42,7 @@ The owning disposal handle — for advanced/debug composition only.
 
 > `readonly` **marker**: `string`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:92
+Defined in: web/dist/watch-and-prepare.d.ts:92
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: web/dist/dpu/watch-and-prepare.d.ts:92
 
 > `readonly` **target**: `Element`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:93
+Defined in: web/dist/watch-and-prepare.d.ts:93
 
 ## Methods
 
@@ -76,7 +76,7 @@ Well-known disposer so the resource works with an `await using` declaration.
 
 > **apply**(`envelope`, `currentBaseGraphId`): [`ApplyVerifiablePatchResult`](../type-aliases/ApplyVerifiablePatchResult.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:100
+Defined in: web/dist/watch-and-prepare.d.ts:100
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Tear down exactly once; the returned promise settles when async finalizers settl
 
 > **stamp**(`input`): [`VerifiablePatchEnvelope`](VerifiablePatchEnvelope.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:95
+Defined in: web/dist/watch-and-prepare.d.ts:95
 
 #### Parameters
 

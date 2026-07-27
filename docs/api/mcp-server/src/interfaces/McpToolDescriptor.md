@@ -6,7 +6,7 @@
 
 # Interface: McpToolDescriptor
 
-Defined in: [mcp-server/src/dispatch.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L370)
+Defined in: [mcp-server/src/dispatch.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L388)
 
 MCP tool catalog — projected from the ONE canonical command catalog in
 @liteship/command (the mcpExposed subset). No hand-maintained parallel table:
@@ -20,7 +20,7 @@ construction.
 
 > `optional` **\_meta?**: `object`
 
-Defined in: [mcp-server/src/dispatch.ts:375](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L375)
+Defined in: [mcp-server/src/dispatch.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L393)
 
 #### ui
 
@@ -36,7 +36,7 @@ Defined in: [mcp-server/src/dispatch.ts:375](https://github.com/freebatteryfacto
 
 > **description**: `string`
 
-Defined in: [mcp-server/src/dispatch.ts:372](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L372)
+Defined in: [mcp-server/src/dispatch.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L390)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [mcp-server/src/dispatch.ts:372](https://github.com/freebatteryfacto
 
 > **inputSchema**: `object`
 
-Defined in: [mcp-server/src/dispatch.ts:373](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L373)
+Defined in: [mcp-server/src/dispatch.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L391)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [mcp-server/src/dispatch.ts:373](https://github.com/freebatteryfacto
 
 > **name**: `string`
 
-Defined in: [mcp-server/src/dispatch.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L371)
+Defined in: [mcp-server/src/dispatch.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L389)
 
 ***
 
@@ -60,4 +60,4 @@ Defined in: [mcp-server/src/dispatch.ts:371](https://github.com/freebatteryfacto
 
 > `optional` **outputSchema?**: `object`
 
-Defined in: [mcp-server/src/dispatch.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L374)
+Defined in: [mcp-server/src/dispatch.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L392)

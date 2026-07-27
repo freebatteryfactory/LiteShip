@@ -8,7 +8,7 @@
 
 > **RenderWorker** = `object`
 
-Defined in: [\_spine/worker.d.ts:436](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L436)
+Defined in: [\_spine/worker.d.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L437)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/worker.d.ts:436](https://github.com/freebatteryfactory/Lite
 
 > **create**(`config?`): `RenderWorker`
 
-Defined in: [\_spine/worker.d.ts:446](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L446)
+Defined in: [\_spine/worker.d.ts:447](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L447)
 
 #### Parameters
 

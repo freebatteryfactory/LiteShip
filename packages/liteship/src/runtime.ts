@@ -103,8 +103,8 @@ export type { StreamRecoverySubstrate, ResolvedStreamRecoverySubstrate } from '@
 
 export { Physical } from '@liteship/web';
 
-export { WebCodecsCapture, renderToCanvas, captureVideo } from '@liteship/web';
-export type { WebCodecsCaptureOptions, RenderFn } from '@liteship/web';
+export { createPhysicalStateTracker, createWebCodecsCapture, renderToCanvas, captureVideo } from '@liteship/web';
+export type { PhysicalStateTracker, WebCodecsCaptureOptions, RenderFn } from '@liteship/web';
 
 export { LLMAdapter } from '@liteship/web';
 export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig } from '@liteship/web';

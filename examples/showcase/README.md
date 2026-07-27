@@ -39,10 +39,10 @@ pnpm dev
   snapshot. Opt in with `data-liteship-stream-graph` + the SSR-inlined base graph and
   cell registrations; a plain stream keeps the snapshot floor.
 - **`/motion`** — the continuous-motion floor cookbook (#126, F-MOT-2/3): ONE
-  authored `Reveal.intent` (`src/server/motion-program.ts`) projected two ways.
+  authored `Reveal.intent` (`src/server/motion-payload.ts`) projected two ways.
   `MotionCompiler` emits the native `@supports (animation-timeline: scroll())`
   CSS a modern browser scrubs with zero JS; `client:motion` reads the same lowered
-  program off `data-liteship-motion-program` and runs the JS **FLOOR** wherever native
+  payload off `data-liteship-motion-payload` and runs the JS **FLOOR** wherever native
   timelines are unavailable — writing typed leaf values (`--liteship-hero-y`, `opacity`,
   and the `--liteship-hero-color` color arm) every frame. Both sample the intent's ONE
   `Easing.spring`, so the curve is identical (Law 4). Reduced-motion settles to the

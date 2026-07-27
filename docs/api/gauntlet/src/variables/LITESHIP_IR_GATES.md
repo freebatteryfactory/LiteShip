@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_IR\_GATES**: readonly [`Gate`](../interfaces/Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L216)
+Defined in: [gauntlet/src/runner.ts:222](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L222)
 
 The IR composition is the exact lean composition with the text bare-throw
 scanner replaced by its AST fact fold, unioned with IR-only authorities. It

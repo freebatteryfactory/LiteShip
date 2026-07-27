@@ -6,7 +6,7 @@
 
 # Interface: Store\<S, Msg\>
 
-Defined in: [\_spine/core.d.ts:732](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L732)
+Defined in: [\_spine/core.d.ts:947](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L947)
 
 TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6)
 
@@ -26,7 +26,7 @@ TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6)
 
 > `readonly` **\_tag**: `"Store"`
 
-Defined in: [\_spine/core.d.ts:733](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L733)
+Defined in: [\_spine/core.d.ts:948](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L948)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:733](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:737](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L737)
+Defined in: [\_spine/core.d.ts:952](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L952)
 
 ## Methods
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:737](https://github.com/freebatteryfactory/LiteSh
 
 > **dispatch**(`msg`): `void`
 
-Defined in: [\_spine/core.d.ts:736](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L736)
+Defined in: [\_spine/core.d.ts:951](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L951)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [\_spine/core.d.ts:736](https://github.com/freebatteryfactory/LiteSh
 
 > **read**(): `S`
 
-Defined in: [\_spine/core.d.ts:734](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L734)
+Defined in: [\_spine/core.d.ts:949](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L949)
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [\_spine/core.d.ts:734](https://github.com/freebatteryfactory/LiteSh
 
 > **subscribe**(`subscriber`): [`Disposer`](../namespaces/CellKernel/type-aliases/Disposer.md)
 
-Defined in: [\_spine/core.d.ts:735](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L735)
+Defined in: [\_spine/core.d.ts:950](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L950)
 
 #### Parameters
 

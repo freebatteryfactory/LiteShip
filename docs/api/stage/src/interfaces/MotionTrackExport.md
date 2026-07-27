@@ -6,7 +6,7 @@
 
 # Interface: MotionTrackExport
 
-Defined in: [stage/src/motion-export.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L35)
+Defined in: [stage/src/motion-export.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L36)
 
 A content-addressed authored-motion track: the per-frame samples plus their artifact digest.
 
@@ -16,7 +16,7 @@ A content-addressed authored-motion track: the per-frame samples plus their arti
 
 > `readonly` **artifactDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
-Defined in: [stage/src/motion-export.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L39)
+Defined in: [stage/src/motion-export.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L40)
 
 Content address of the folded per-frame motion content (the video leg's built-in oracle).
 
@@ -26,7 +26,7 @@ Content address of the folded per-frame motion content (the video leg's built-in
 
 > `readonly` **frames**: readonly [`MotionFrameSample`](MotionFrameSample.md)[]
 
-Defined in: [stage/src/motion-export.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L37)
+Defined in: [stage/src/motion-export.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L38)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [stage/src/motion-export.ts:37](https://github.com/freebatteryfactor
 
 > `readonly` **totalFrames**: `number`
 
-Defined in: [stage/src/motion-export.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L36)
+Defined in: [stage/src/motion-export.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L37)

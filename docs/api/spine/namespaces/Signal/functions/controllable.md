@@ -8,7 +8,7 @@
 
 > **controllable**(): [`ControllableSignal`](../../../interfaces/ControllableSignal.md)\<`number`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:328](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L328)
+Defined in: [\_spine/core.d.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L334)
 
 Seekable/pausable time signal (verb grammar — a specialized constructor kept on the namespace).
 

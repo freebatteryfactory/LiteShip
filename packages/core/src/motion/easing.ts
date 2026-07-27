@@ -450,7 +450,7 @@ export function sampleRuntimeEasing(easing: RuntimeEasing): Easing.Fn {
     case 'cubicBezier':
       // A `points`/`cubicBezier` descriptor is well-defined ONLY with its serialized stop
       // list (handled above). Absent it, fall back to identity — the upstream guards
-      // (`parseMotionProgram` / `interpretTransition`) never emit these kinds without one.
+      // (`parseMotionDirectivePayload` / `interpretTransition`) never admit these kinds without one.
       return Easing.linear;
   }
 }

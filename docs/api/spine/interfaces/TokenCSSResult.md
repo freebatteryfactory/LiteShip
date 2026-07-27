@@ -6,7 +6,7 @@
 
 # Interface: TokenCSSResult
 
-Defined in: [\_spine/compiler.d.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L344)
+Defined in: [\_spine/compiler.d.ts:452](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L452)
 
 CSS custom-property projection of a token definition.
 
@@ -16,7 +16,7 @@ CSS custom-property projection of a token definition.
 
 > `readonly` **customProperties**: `string`
 
-Defined in: [\_spine/compiler.d.ts:346](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L346)
+Defined in: [\_spine/compiler.d.ts:454](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L454)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:346](https://github.com/freebatteryfactory/Li
 
 > `readonly` **properties**: readonly `string`[]
 
-Defined in: [\_spine/compiler.d.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L345)
+Defined in: [\_spine/compiler.d.ts:453](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L453)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:345](https://github.com/freebatteryfactory/Li
 
 > `readonly` **themed**: `string`
 
-Defined in: [\_spine/compiler.d.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L347)
+Defined in: [\_spine/compiler.d.ts:455](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L455)

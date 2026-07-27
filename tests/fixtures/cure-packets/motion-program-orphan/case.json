@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "scene-motion-program-orphan",
+  "historicalSourceSha": "aa7832ab9f8a022c5e1c6fa8cb73cc38926c1d35",
+  "owner": "packages/scene",
+  "apiDeclarationFile": "ecs-api.ts",
+  "sourceFiles": ["consumer.ts", "producers.ts"],
+  "expected": {
+    "connectedSubjects": ["VideoSource"],
+    "orphanSubjects": ["MotionProgram"]
+  },
+  "admission": {
+    "kind": "structurally-precluded",
+    "replayProof": "tests/unit/audit/feature-edge-census.test.ts#historical-overlay",
+    "preclusionProof": "tests/unit/audit/live-feature-edge-profile.test.ts#typed-scene-ecs"
+  }
+}

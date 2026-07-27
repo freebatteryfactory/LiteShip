@@ -174,6 +174,7 @@ export interface SlotConfig {
 /** Reusable styled component definition with named content slots. */
 export interface Component<B extends Boundary = Boundary, SlotNames extends readonly string[] = readonly string[]> {
   readonly _tag: 'ComponentDef';
+  readonly _version: 1;
   readonly id: ContentAddress;
   readonly name: string;
   readonly boundary?: B;

@@ -40,15 +40,15 @@ import {
 import { createNodeCommandContext, currentEnvFingerprint } from '@liteship/command/host';
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
-import { createCurePacket } from '../lib/cure-packet.js';
+import { runGauntletWithRepoIR } from '../internal/repo-ir-gauntlet.js';
+import { createCurePacket } from '../internal/cure-packet.js';
 import {
   detectProjectPackageManager,
   invalidProjectManifestFailure,
   projectPackageManagerFailureHint,
   projectPackageManagerFailureMessage,
   projectBinaryInvocation,
-} from '../lib/project-package-manager.js';
+} from '../internal/project-package-manager.js';
 
 /** Receipt emitted by `liteship check gates`. */
 export interface CheckReceipt extends CheckPayload {

@@ -35,10 +35,6 @@ It ships:
 - [DpuAdoptClient](interfaces/DpuAdoptClient.md)
 - [FocusState](interfaces/FocusState.md)
 - [IMEState](interfaces/IMEState.md)
-- [LiteshipEventDetailMap](interfaces/LiteshipEventDetailMap.md)
-- [LiteshipMorphRejectedDetail](interfaces/LiteshipMorphRejectedDetail.md)
-- [LiteshipStreamErrorDetail](interfaces/LiteshipStreamErrorDetail.md)
-- [LiteshipUniformUpdateDetail](interfaces/LiteshipUniformUpdateDetail.md)
 - [LLMAdapter](interfaces/LLMAdapter.md)
 - [LLMChunk](interfaces/LLMChunk.md)
 - [LLMStreamConfig](interfaces/LLMStreamConfig.md)
@@ -48,6 +44,7 @@ It ships:
 - [MorphHints](interfaces/MorphHints.md)
 - [MorphRejection](interfaces/MorphRejection.md)
 - [PhysicalState](interfaces/PhysicalState.md)
+- [PhysicalStateTracker](interfaces/PhysicalStateTracker.md)
 - [ReconnectConfig](interfaces/ReconnectConfig.md)
 - [ResolvedStreamRecoverySubstrate](interfaces/ResolvedStreamRecoverySubstrate.md)
 - [ResumptionConfig](interfaces/ResumptionConfig.md)
@@ -80,8 +77,12 @@ It ships:
 - [IntegrityDecision](type-aliases/IntegrityDecision.md)
 - [IntegrityResult](type-aliases/IntegrityResult.md)
 - [IslandMode](type-aliases/IslandMode.md)
+- [LiteshipEventDetailMap](type-aliases/LiteshipEventDetailMap.md)
 - [LiteshipEventDisposer](type-aliases/LiteshipEventDisposer.md)
 - [LiteshipEventName](type-aliases/LiteshipEventName.md)
+- [LiteshipMorphRejectedDetail](type-aliases/LiteshipMorphRejectedDetail.md)
+- [LiteshipStreamErrorDetail](type-aliases/LiteshipStreamErrorDetail.md)
+- [LiteshipUniformUpdateDetail](type-aliases/LiteshipUniformUpdateDetail.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
@@ -101,7 +102,6 @@ It ships:
 - [StreamWireAttrKey](type-aliases/StreamWireAttrKey.md)
 - [ToolCallAccumulator](type-aliases/ToolCallAccumulator.md)
 - [VerifiablePatchVerification](type-aliases/VerifiablePatchVerification.md)
-- [WebCodecsCapture](type-aliases/WebCodecsCapture.md)
 
 ## Variables
 
@@ -127,7 +127,6 @@ It ships:
 - [STREAM\_WIRE\_ATTRIBUTE\_DOCS](variables/STREAM_WIRE_ATTRIBUTE_DOCS.md)
 - [STREAM\_WIRE\_ATTRIBUTES](variables/STREAM_WIRE_ATTRIBUTES.md)
 - [streamReceiptCapsule](variables/streamReceiptCapsule.md)
-- [WebCodecsCapture](variables/WebCodecsCapture.md)
 
 ## Functions
 
@@ -142,6 +141,8 @@ It ships:
 - [computeShaderIntegrity](functions/computeShaderIntegrity.md)
 - [createAudioProcessor](functions/createAudioProcessor.md)
 - [createHtmlFragment](functions/createHtmlFragment.md)
+- [createPhysicalStateTracker](functions/createPhysicalStateTracker.md)
+- [createWebCodecsCapture](functions/createWebCodecsCapture.md)
 - [decideShaderIntegrity](functions/decideShaderIntegrity.md)
 - [detectDpuCapability](functions/detectDpuCapability.md)
 - [digestHtmlFragment](functions/digestHtmlFragment.md)

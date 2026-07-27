@@ -6,7 +6,7 @@
 
 # Interface: SSEClient
 
-Defined in: [\_spine/web.d.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L267)
+Defined in: [\_spine/web.d.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L289)
 
 Live resumable SSE client with explicit connection and teardown control.
 
@@ -20,7 +20,7 @@ Live resumable SSE client with explicit connection and teardown control.
 
 > `readonly` **backpressure**: [`BackpressureHint`](BackpressureHint.md)
 
-Defined in: [\_spine/web.d.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L278)
+Defined in: [\_spine/web.d.ts:300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L300)
 
 Current backpressure hint — a plain synchronous read (was `Effect.Effect<BackpressureHint>`).
 
@@ -30,7 +30,7 @@ Current backpressure hint — a plain synchronous read (was `Effect.Effect<Backp
 
 > `readonly` **lastEventId**: `string` \| `null`
 
-Defined in: [\_spine/web.d.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L276)
+Defined in: [\_spine/web.d.ts:298](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L298)
 
 Current per-connection cursor — a plain synchronous read (was `Effect.Effect<string | null>`).
 
@@ -40,7 +40,7 @@ Current per-connection cursor — a plain synchronous read (was `Effect.Effect<s
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L175)
+Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
 
 #### Inherited from
 
@@ -52,7 +52,7 @@ Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **messages**: `AsyncIterable`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
 
-Defined in: [\_spine/web.d.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L269)
+Defined in: [\_spine/web.d.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L291)
 
 Live message stream (was `Stream.Stream<SSEMessage>`).
 
@@ -62,7 +62,7 @@ Live message stream (was `Stream.Stream<SSEMessage>`).
 
 > `readonly` **state**: [`SSEState`](../type-aliases/SSEState.md)
 
-Defined in: [\_spine/web.d.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L271)
+Defined in: [\_spine/web.d.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L293)
 
 Current connection state — a plain synchronous read (was `Effect.Effect<SSEState>`).
 
@@ -72,7 +72,7 @@ Current connection state — a plain synchronous read (was `Effect.Effect<SSESta
 
 > `readonly` **stateChanges**: `AsyncIterable`\<[`SSEState`](../type-aliases/SSEState.md)\>
 
-Defined in: [\_spine/web.d.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L273)
+Defined in: [\_spine/web.d.ts:295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L295)
 
 Live state-transition stream (was `Stream.Stream<SSEState>`).
 
@@ -82,7 +82,7 @@ Live state-transition stream (was `Stream.Stream<SSEState>`).
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L177)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 
@@ -98,7 +98,7 @@ Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteSh
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L176)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 #### Returns
 
@@ -114,7 +114,7 @@ Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteSh
 
 > **reconnect**(): `void`
 
-Defined in: [\_spine/web.d.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L274)
+Defined in: [\_spine/web.d.ts:296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L296)
 
 #### Returns
 

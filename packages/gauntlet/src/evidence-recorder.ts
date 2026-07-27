@@ -38,7 +38,7 @@
  * @module
  */
 
-import { GATE_FACT_CHANNELS, type GateContext, type GateFactChannel } from './gate.js';
+import { GATE_FACT_CHANNELS, type GateContext, type GateContextCapability, type GateFactChannel } from './gate.js';
 import type { FileId } from './repo-ir.js';
 
 /**
@@ -100,10 +100,9 @@ type OptionalFactKeys = Exclude<
     [K in keyof GateContext]-?: undefined extends GateContext[K] ? K : never;
   }[keyof GateContext],
   // `ir` (structural, tracked via ir.facts/ir.refs), `allFiles` (the file-list channel), and
-  // the CAPABILITY functions `skipDetector` / `codeOnly` (the AST-vs-token and scanner-vs-char-machine
-  // choices are part of the toolchain digest the host folds, not per-run fact channels) are NOT fact
-  // channels.
-  'ir' | 'allFiles' | 'skipDetector' | 'earlyReturnDetector' | 'codeOnly'
+  // the CAPABILITY functions below (parser-vs-lean detector choices are part of the
+  // toolchain digest the host folds, not per-run fact channels) are NOT fact channels.
+  'ir' | 'allFiles' | GateContextCapability
 >;
 type _factChannelsCoverContext = FactChannel extends OptionalFactKeys ? true : never;
 type _contextFactsAreChannels = OptionalFactKeys extends FactChannel ? true : never;

@@ -29,10 +29,13 @@
  * @module
  */
 
-import { Diagnostics } from '@liteship/core';
-import type { System, World } from '@liteship/core';
+import { defineSystem, type System } from '@liteship/core/ecs';
 import type { ResolvedEnvelope } from '../sugar/envelope.js';
 import { envelopeFactor } from '../sugar/envelope.js';
+import { BeatPart, EnvelopePart, FrameRangePart, IntensityPart, SyncAnchorPart } from '../parts.js';
+
+type FrameSource = number | (() => number);
+const readFrame = (source: FrameSource): number => (typeof source === 'function' ? source() : source);
 
 /** Decay time-constant in ms — controls how fast intensity falls off after a beat. */
 const DECAY_TAU_MS = 250;
@@ -52,41 +55,30 @@ const DECAY_TAU_MS = 250;
  * @param frameIndex — current frame number, supplied by the runtime per tick
  * @param fps        — scene frames per second; defaults to 60 for parity with VideoSystem
  */
-export function SyncSystem(frameIndex: number, fps: number = 60): System {
-  return {
+export function SyncSystem(frameIndex: FrameSource, fps: number = 60): System {
+  return defineSystem({
     name: 'SyncSystem',
-    query: ['SyncAnchor'],
-    execute: (entities, world?: World) => {
-      // Pull beat entities from the world. SyncSystem's contract is
-      // "react to beats in the world" — when no world is supplied
-      // (legacy callers, isolated unit tests) we degrade gracefully
-      // to no decay rather than throw, but say so once: silent zero
-      // intensity reads as "my effects never pulse" with no signal.
-      if (world === undefined) {
-        Diagnostics.warnOnce({
-          source: 'liteship/scene.sync-system',
-          code: 'worldless-degrade',
-          message:
-            'SyncSystem: no world supplied, so no Beat entities are visible — beat-synced effects will stay at intensity 0. If you built via SceneRuntime.build this is a bug; if you are calling SyncSystem directly, pass the world as the second execute argument.',
-        });
-      }
-      const beatEntities = world !== undefined ? world.query('Beat') : [];
+    query: [SyncAnchorPart],
+    reads: [BeatPart, EnvelopePart, FrameRangePart],
+    writes: [IntensityPart],
+    execute: (entities, context) => {
+      const frame = readFrame(frameIndex);
+      const beatEntities = context.query(BeatPart);
 
       // Extract beat timestamps in ms. The Beat component is the flat
       // BeatBinding.Component shape ({ kind, timeMs, strength, ... })
       // written by scene.beat-binding — see packages/scene/src/beat-binding-capsule.ts.
       const beatTimesMs: number[] = [];
       for (const e of beatEntities) {
-        const beat = e.components.get('Beat');
-        if (beat === undefined) continue;
-        const t = (beat as { timeMs?: unknown }).timeMs;
+        const beat = e.get(BeatPart);
+        const t = beat.timeMs;
         if (typeof t === 'number' && Number.isFinite(t)) beatTimesMs.push(t);
       }
       // Sort ascending — beat-binding preserves input order but a
       // user-provided beat array might not be sorted.
       beatTimesMs.sort((a, b) => a - b);
 
-      const currentTimeMs = (frameIndex / fps) * 1000;
+      const currentTimeMs = (frame / fps) * 1000;
       // Last beat at-or-before now. Linear scan is fine — beat counts
       // are tiny relative to per-frame budget; sorted-binary-search
       // optimization waits for a future ADR-driven `hot-path` pass.
@@ -110,19 +102,13 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
         // behave exactly as pre-envelope sync did (plain decay)
         // instead of letting a pulse modulate a dormant effect
         // (Codex P2 follow-up).
-        const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
-        const range = e.components.get('FrameRange') as { from: number; to: number } | undefined;
-        const inRange = range !== undefined && frameIndex >= range.from && frameIndex < range.to;
+        const env = context.optional(e, EnvelopePart) as ResolvedEnvelope | undefined;
+        const range = context.optional(e, FrameRangePart);
+        const inRange = range !== undefined && frame >= range.from && frame < range.to;
         const intensity =
-          env !== undefined && range !== undefined && inRange ? decay * envelopeFactor(env, frameIndex, range) : decay;
-        // Direct property write preserves the legacy in-place mutation
-        // path used by some downstream tests; setComponent persists
-        // through the canonical world-state map for query consumers.
-        (e as unknown as { _intensity: number })._intensity = intensity;
-        if (world !== undefined) {
-          world.setComponent(e.id, '_intensity', intensity);
-        }
+          env !== undefined && range !== undefined && inRange ? decay * envelopeFactor(env, frame, range) : decay;
+        context.write(e, IntensityPart, intensity);
       }
     },
-  };
+  });
 }

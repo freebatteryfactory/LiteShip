@@ -8,7 +8,7 @@
 
 > **ThresholdValue** = `number` & `object`
 
-Defined in: [\_spine/core.d.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L56)
+Defined in: [\_spine/core.d.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L62)
 
 Branded threshold number on a boundary
 

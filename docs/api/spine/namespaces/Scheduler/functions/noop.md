@@ -8,7 +8,7 @@
 
 > **noop**(): [`Scheduler`](../../../interfaces/Scheduler.md)
 
-Defined in: [\_spine/core.d.ts:1331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1331)
+Defined in: [\_spine/core.d.ts:1546](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1546)
 
 ## Returns
 

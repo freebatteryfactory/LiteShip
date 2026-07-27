@@ -8,7 +8,7 @@
 
 > **evaluate**\<`B`\>(`boundary`, `value`): [`StateUnion`](../../../type-aliases/StateUnion.md)\<`B`\>
 
-Defined in: [\_spine/core.d.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L272)
+Defined in: [\_spine/core.d.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L278)
 
 ## Type Parameters
 

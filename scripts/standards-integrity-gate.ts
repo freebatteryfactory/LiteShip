@@ -57,7 +57,7 @@ import { repoRoot } from '../vitest.shared.js';
 import {
   buildStandardsIntegrityFacts,
   resolveStandardsBaseRef,
-} from '../packages/cli/src/lib/standards-surface.js';
+} from '../packages/cli/src/internal/standards-surface.js';
 import { isDirectExecution } from './audit/shared.js';
 
 export interface StandardsGateOutcome {

@@ -8,7 +8,7 @@
 
 > **SignalInput**\<`I`\> = `I` & `object`
 
-Defined in: [\_spine/core.d.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L53)
+Defined in: [\_spine/core.d.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L59)
 
 Branded input signal name -- e.g. 'viewport.width', 'prefers-color-scheme'
 

@@ -361,14 +361,14 @@ describe('facade-only-reexports (a) — facades are pure re-export surfaces', ()
     expect((await scan(RULE, f)).length).toBe(0);
   });
 
-  it('GREEN: nested liteship domain modules remain implementation owners, not facade entries', async () => {
+  it('GREEN: named liteship singleton modules remain implementation owners, not facade entries', async () => {
     const owners = [
       fixture(
-        'packages/liteship/src/authoring/adaptive.ts',
+        'packages/liteship/src/adaptive.ts',
         'export function defineAdaptive() { return { kind: "adaptive" }; }\n',
       ),
       fixture(
-        'packages/liteship/src/testing/package-roster.ts',
+        'packages/liteship/src/package-roster.generated.ts',
         'export const LITESHIP_PACKAGES = ["@liteship/core"] as const;\n',
       ),
     ];
@@ -388,7 +388,7 @@ describe('facade-only-reexports (a) — facades are pure re-export surfaces', ()
   it('GREEN: the liteship root remains an explicit named re-export seam', async () => {
     const f = fixture(
       'packages/liteship/src/index.ts',
-      "export { defineAdaptive } from './authoring/adaptive.js';\nexport type { Adaptive } from '@liteship/core';\n",
+      "export { defineAdaptive } from './adaptive.js';\nexport type { Adaptive } from '@liteship/core';\n",
     );
     expect((await scan(RULE, f)).length).toBe(0);
   });

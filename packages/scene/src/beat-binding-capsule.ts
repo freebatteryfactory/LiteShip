@@ -21,8 +21,8 @@ import { defineCapsule, schema } from '@liteship/core';
 import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@liteship/_spine';
 
 /**
- * Component shape for beat entities — what SyncSystem queries via
- * `world.query('Beat')`. Aliased to the canonical spine contract (CUT A5):
+ * Component shape for beat entities — what SyncSystem reads through the
+ * canonical `BeatPart`. Aliased to the canonical spine contract (CUT A5):
  * the scene/world timeline-space stage of the beat family. The raw
  * asset/sample-space sibling is `@liteship/assets`' `BeatMarkerSet`; the official
  * bridge between them is `resolveBeatProjectionToSceneBeats` (./beat-projection).
@@ -101,8 +101,8 @@ export const beatBindingCapsule = defineCapsule({
 
 /**
  * Pure transform: BeatComponent[] → BeatSpawn[]. Each input beat becomes
- * one spawn descriptor whose `components` field is suitable for direct
- * use as the `Beat` component bag in `world.spawn({ Beat: ... })`.
+ * one spawn descriptor whose `components` field is admitted through the
+ * canonical `BeatPart` before entering a SceneRuntime world.
  *
  * Defensive copy of each beat — callers may freeze, mutate, or hand off
  * the input array; the output is a fresh, owned-by-runtime sequence.

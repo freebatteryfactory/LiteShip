@@ -13,9 +13,9 @@
  */
 
 import { wallClock } from '@liteship/core';
-import { color, colorEnabled } from '../../lib/ansi.js';
+import { color, colorEnabled } from '../../internal/ansi.js';
 import { emit, emitError } from '../../receipts.js';
-import { spawnArgvCapture } from '../../lib/spawn.js';
+import { spawnArgvCapture } from '../../internal/spawn.js';
 import { findWorkspaceRoot } from './manifest.js';
 import { applyFixes } from './fix.js';
 import { runAllProbes } from './profiles.js';

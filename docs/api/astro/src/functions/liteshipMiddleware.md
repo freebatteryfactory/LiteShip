@@ -8,7 +8,7 @@
 
 > **liteshipMiddleware**(`config?`): (`context`, `next`) => `Promise`\<`Response`\>
 
-Defined in: [astro/src/middleware.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L128)
+Defined in: [astro/src/middleware.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L130)
 
 Create the liteship edge middleware.
 

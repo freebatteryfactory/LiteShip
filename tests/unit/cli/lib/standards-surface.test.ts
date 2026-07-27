@@ -1,5 +1,5 @@
 /**
- * The HOST standards-surface EXTRACTOR (`packages/cli/src/lib/standards-surface.ts`)
+ * The HOST standards-surface EXTRACTOR (`packages/cli/src/internal/standards-surface.ts`)
  * — the raccoon-rule phase-A backstop: read the LIVE standards surface, content-
  * address it, diff it against the committed snapshot, apply the owner sign-offs, and
  * produce the flat {@link StandardsIntegrityFacts} the lean engine folds.
@@ -43,9 +43,9 @@ import {
   STANDARDS_BASE_PROBE_PATH,
   type GitShowReader,
   type GitIntroCommitReader,
-} from '../../../../packages/cli/src/lib/standards-surface.js';
+} from '../../../../packages/cli/src/internal/standards-surface.js';
 import type { StandardsElement, StandardsWaiver } from '@liteship/gauntlet';
-import type { StandardsIntegrityResult } from '../../../../packages/cli/src/lib/standards-surface.js';
+import type { StandardsIntegrityResult } from '../../../../packages/cli/src/internal/standards-surface.js';
 
 /**
  * Assert the backstop is ACTIVE (the base carried the snapshot → the diff ran) and return

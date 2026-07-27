@@ -6,9 +6,13 @@
 
 # Interface: FrameCapture
 
-Defined in: [\_spine/core.d.ts:1386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1386)
+Defined in: [\_spine/core.d.ts:1623](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1623)
 
-Live browser capture handle that produces and releases encoded frames.
+Live browser capture handle with one async-uniform encoder lifecycle.
+
+## Extends
+
+- [`AsyncOwnedResource`](AsyncOwnedResource.md)
 
 ## Properties
 
@@ -16,15 +20,43 @@ Live browser capture handle that produces and releases encoded frames.
 
 > `readonly` **\_tag**: `"FrameCapture"`
 
-Defined in: [\_spine/core.d.ts:1387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1387)
+Defined in: [\_spine/core.d.ts:1624](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1624)
+
+***
+
+### lifetime
+
+> `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
+
+Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
+
+#### Inherited from
+
+[`AsyncOwnedResource`](AsyncOwnedResource.md).[`lifetime`](AsyncOwnedResource.md#lifetime)
 
 ## Methods
+
+### \[asyncDispose\]()
+
+> **\[asyncDispose\]**(): `Promise`\<`void`\>
+
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`AsyncOwnedResource`](AsyncOwnedResource.md).[`[asyncDispose]`](AsyncOwnedResource.md#asyncdispose)
+
+***
 
 ### capture()
 
 > **capture**(`frame`): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:1389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1389)
+Defined in: [\_spine/core.d.ts:1626](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1626)
 
 #### Parameters
 
@@ -38,11 +70,27 @@ Defined in: [\_spine/core.d.ts:1389](https://github.com/freebatteryfactory/LiteS
 
 ***
 
+### dispose()
+
+> **dispose**(): `Promise`\<`void`\>
+
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`AsyncOwnedResource`](AsyncOwnedResource.md).[`dispose`](AsyncOwnedResource.md#dispose)
+
+***
+
 ### finalize()
 
 > **finalize**(): `Promise`\<[`CaptureResult`](CaptureResult.md)\>
 
-Defined in: [\_spine/core.d.ts:1390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1390)
+Defined in: [\_spine/core.d.ts:1627](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1627)
 
 #### Returns
 
@@ -54,7 +102,7 @@ Defined in: [\_spine/core.d.ts:1390](https://github.com/freebatteryfactory/LiteS
 
 > **init**(`config`): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:1388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1388)
+Defined in: [\_spine/core.d.ts:1625](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1625)
 
 #### Parameters
 

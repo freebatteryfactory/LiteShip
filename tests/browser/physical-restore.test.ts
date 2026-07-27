@@ -3,7 +3,7 @@ import {
   capture,
   captureActiveElement,
   captureFocusState,
-  captureIME,
+  createPhysicalStateTracker,
   elementToPath,
   findScrollable,
 } from '../../packages/web/src/physical/capture.js';
@@ -319,7 +319,8 @@ describe('browser physical state capture and restore', () => {
     expect(found).not.toContain(notScrollable);
   });
 
-  test('captureIME returns null when no composition is active', () => {
+  test('captureIME returns null when no composition is active', async () => {
+    const tracker = createPhysicalStateTracker(document);
     // Ensure no composition event has been fired
     const input = document.createElement('input');
     root.appendChild(input);
@@ -328,11 +329,13 @@ describe('browser physical state capture and restore', () => {
     // Fire compositionend to clear any state
     input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
 
-    const ime = captureIME();
+    const ime = tracker.captureIME();
     expect(ime).toBeNull();
+    await tracker.dispose();
   });
 
   test('capture and restore round-trip preserves IME composition tracking', async () => {
+    const tracker = createPhysicalStateTracker(document);
     const input = document.createElement('input');
     input.id = 'ime-roundtrip';
     input.value = 'typing';
@@ -345,11 +348,12 @@ describe('browser physical state capture and restore', () => {
     input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
     input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'han' }));
 
-    const state = capture(root);
+    const state = tracker.capture(root);
     expect(state.ime).not.toBeNull();
     expect(state.ime!.text).toBe('han');
 
     // End composition to clean up
     input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+    await tracker.dispose();
   });
 });

@@ -6,7 +6,7 @@
 
 # Interface: NavigatorConnectionInfo
 
-Defined in: [detect/src/detect.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L32)
+Defined in: [detect/src/detect.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L39)
 
 The structural shape the connection probe reads off `navigator.connection`.
 Exported so test doubles (tests/helpers/mock-browser.ts) conform to the
@@ -19,7 +19,7 @@ Forward-declared here; the probe lives below alongside its alias.
 
 > `readonly` **downlink**: `number`
 
-Defined in: [detect/src/detect.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L34)
+Defined in: [detect/src/detect.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L41)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [detect/src/detect.ts:34](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **effectiveType**: `string`
 
-Defined in: [detect/src/detect.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L33)
+Defined in: [detect/src/detect.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L40)
 
 ***
 
@@ -35,4 +35,4 @@ Defined in: [detect/src/detect.ts:33](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **saveData**: `boolean`
 
-Defined in: [detect/src/detect.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L35)
+Defined in: [detect/src/detect.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L42)

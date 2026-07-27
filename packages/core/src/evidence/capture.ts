@@ -1,13 +1,14 @@
 /**
  * Capture types -- the contract between frame rendering and video encoding.
  *
- * `FrameCapture` is the abstraction that both WebCodecs and Remotion
- * implement. VideoRenderer produces frames, FrameCapture consumes them.
+ * `FrameCapture` is the owned encoder abstraction used by browser capture.
+ * VideoRenderer produces frames; a host-owned capture consumes and releases them.
  *
  * @module
  */
 
 import type { Millis } from '../schema/brands.js';
+import type { AsyncOwnedResource } from '../reactive/lifetime.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,10 +30,11 @@ export interface CaptureFrame {
 
 /**
  * Minimal encoder contract: `init` to open the encoder, `capture` per frame,
- * `finalize` to flush and return the encoded blob. Implemented by `@liteship/web`
- * (WebCodecs) and `@liteship/remotion` (Remotion capture).
+ * `finalize` to flush and return the encoded blob, plus LiteShip's one async
+ * owned-resource lifecycle. `finalize` is terminal and releases the encoder;
+ * callers may dispose earlier to abort safely.
  */
-export interface FrameCapture {
+export interface FrameCapture extends AsyncOwnedResource {
   readonly _tag: 'FrameCapture';
   init(config: CaptureConfig): Promise<void>;
   capture(frame: CaptureFrame): Promise<void>;

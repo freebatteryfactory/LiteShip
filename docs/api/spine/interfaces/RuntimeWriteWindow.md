@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWriteWindow
 
-Defined in: [\_spine/core.d.ts:1182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1182)
+Defined in: [\_spine/core.d.ts:1397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1397)
 
 Timed write window containing the properties active over one interval.
 
@@ -16,7 +16,7 @@ Timed write window containing the properties active over one interval.
 
 > `readonly` **easing**: [`RuntimeEasing`](RuntimeEasing.md)
 
-Defined in: [\_spine/core.d.ts:1186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1186)
+Defined in: [\_spine/core.d.ts:1401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1401)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1186](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **properties**: readonly [`RuntimeWriteProperty`](RuntimeWriteProperty.md)[]
 
-Defined in: [\_spine/core.d.ts:1185](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1185)
+Defined in: [\_spine/core.d.ts:1400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1400)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1185](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **windowEnd**: `number`
 
-Defined in: [\_spine/core.d.ts:1184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1184)
+Defined in: [\_spine/core.d.ts:1399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1399)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1184](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **windowStart**: `number`
 
-Defined in: [\_spine/core.d.ts:1183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1183)
+Defined in: [\_spine/core.d.ts:1398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1398)

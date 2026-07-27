@@ -8,7 +8,7 @@
 
 > **QuantizerState**\<`B`\> = `Pick`\<[`Replay`](../namespaces/CellKernel/interfaces/Replay.md)\<[`StateUnion`](StateUnion.md)\<`B`\>\>, `"read"` \| `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [\_spine/core.d.ts:774](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L774)
+Defined in: [\_spine/core.d.ts:989](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L989)
 
 Replay-1 current-state read side (was `Effect.Effect<StateUnion<B>>`): `read()`
 returns the current discrete state; a subscriber is replayed the current value

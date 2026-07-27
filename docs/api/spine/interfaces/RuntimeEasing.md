@@ -6,7 +6,7 @@
 
 # Interface: RuntimeEasing
 
-Defined in: [\_spine/core.d.ts:1164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1164)
+Defined in: [\_spine/core.d.ts:1379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1379)
 
 Serializable easing descriptor consumed by runtime write plans.
 
@@ -16,7 +16,7 @@ Serializable easing descriptor consumed by runtime write plans.
 
 > `readonly` **kind**: `"linear"` \| `"ease"` \| `"spring"` \| `"points"` \| `"bounce"` \| `"elastic"` \| `"back"` \| `"cubicBezier"`
 
-Defined in: [\_spine/core.d.ts:1165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1165)
+Defined in: [\_spine/core.d.ts:1380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1380)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1165](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **points?**: readonly `number`[]
 
-Defined in: [\_spine/core.d.ts:1171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1171)
+Defined in: [\_spine/core.d.ts:1386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1386)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1171](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **spring?**: `object`
 
-Defined in: [\_spine/core.d.ts:1166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1166)
+Defined in: [\_spine/core.d.ts:1381](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1381)
 
 #### damping?
 

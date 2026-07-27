@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildReleaseArtifactBundle } from '../packages/cli/src/lib/release-artifact-bundle.js';
+import { buildReleaseArtifactBundle } from '../packages/cli/src/internal/release-artifact-bundle.js';
 import { admitReleasePlanBinding } from './lib/release-plan-admission.js';
 import { spawnArgvCapture } from './lib/spawn.js';
 

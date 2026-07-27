@@ -11,18 +11,7 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { COMMAND_CATALOG, PUBLIC_SURFACE_CONTEXT, mcpExposedDescriptors } from '@liteship/command';
-import type { CapsuleCommandDescriptor } from '@liteship/core';
-
-/** Closed catalog of the seven assembly kinds (matches ADR-0008). */
-const ASSEMBLY_KINDS = [
-  'pureTransform',
-  'receiptedMutation',
-  'stateMachine',
-  'siteAdapter',
-  'policyGate',
-  'cachedProjection',
-  'sceneComposition',
-] as const;
+import { ASSEMBLY_KINDS, type CapsuleCommandDescriptor } from '@liteship/core';
 
 /** Result of `describe` in JSON mode. */
 export interface DescribeReceipt {

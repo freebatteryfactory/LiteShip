@@ -6,19 +6,19 @@
 
 # Function: handleHMR()
 
-> **handleHMR**(`payload`): `void`
+> **handleHMR**(`input`): `number`
 
-Defined in: [vite/src/hmr.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L115)
+Defined in: [vite/src/hmr.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L137)
 
-Handle a liteship:update HMR payload.
-Dispatches to CSS replacement or shader uniform updates based on payload content.
+Apply one admitted HMR payload. Returns the number of canonical boundary
+hosts updated; zero means malformed/foreign/stale and leaves the DOM intact.
 
 ## Parameters
 
-### payload
+### input
 
-[`HMRPayload`](../interfaces/HMRPayload.md)
+`unknown`
 
 ## Returns
 
-`void`
+`number`

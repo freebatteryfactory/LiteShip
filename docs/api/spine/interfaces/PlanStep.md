@@ -6,7 +6,7 @@
 
 # Interface: PlanStep
 
-Defined in: [\_spine/core.d.ts:1207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1207)
+Defined in: [\_spine/core.d.ts:1422](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1422)
 
 One named operation and dependencies in a plan IR.
 
@@ -16,7 +16,7 @@ One named operation and dependencies in a plan IR.
 
 > `readonly` **id**: `string`
 
-Defined in: [\_spine/core.d.ts:1208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1208)
+Defined in: [\_spine/core.d.ts:1423](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1423)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1208](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **metadata?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [\_spine/core.d.ts:1211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1211)
+Defined in: [\_spine/core.d.ts:1426](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1426)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1211](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/core.d.ts:1209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1209)
+Defined in: [\_spine/core.d.ts:1424](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1424)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1209](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **opType**: [`OpType`](../type-aliases/OpType.md)
 
-Defined in: [\_spine/core.d.ts:1210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1210)
+Defined in: [\_spine/core.d.ts:1425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1425)

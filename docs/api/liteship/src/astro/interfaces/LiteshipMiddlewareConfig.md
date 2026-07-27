@@ -6,7 +6,7 @@
 
 # Interface: LiteshipMiddlewareConfig
 
-Defined in: astro/dist/middleware.d.ts:71
+Defined in: astro/dist/middleware.d.ts:73
 
 Options accepted by [liteshipMiddleware](../functions/liteshipMiddleware.md).
 
@@ -23,7 +23,7 @@ have an `@liteship/edge` host adapter (KV cache, theme compilation).
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: astro/dist/middleware.d.ts:75
+Defined in: astro/dist/middleware.d.ts:77
 
 Whether to include the Client Hints request headers (default `true`).
 
@@ -33,7 +33,7 @@ Whether to include the Client Hints request headers (default `true`).
 
 > `readonly` `optional` **edge?**: `EdgeHostAdapterConfig`
 
-Defined in: astro/dist/middleware.d.ts:73
+Defined in: astro/dist/middleware.d.ts:75
 
 Edge host adapter configuration (KV cache, theme compilation).
 
@@ -43,7 +43,7 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: astro/dist/middleware.d.ts:82
+Defined in: astro/dist/middleware.d.ts:84
 
 Whether to emit COOP/COEP headers for worker features. `coep`
 selects the embedder policy value (default `'require-corp'`);

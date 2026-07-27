@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { restoreTemplateNames, TEMPLATE_RENAMES } from '../../packages/create-liteship/src/template-renames.js';
-import { GENERATED_TEMPLATE_RENAMES } from '../../packages/cli/src/lib/template-renames.generated.js';
+import { GENERATED_TEMPLATE_RENAMES } from '../../packages/cli/src/internal/template-renames.generated.js';
 
 const roots: string[] = [];
 

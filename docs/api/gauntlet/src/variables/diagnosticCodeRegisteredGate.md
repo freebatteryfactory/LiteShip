@@ -8,7 +8,7 @@
 
 > `const` **diagnosticCodeRegisteredGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/diagnostic-code-registered.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/diagnostic-code-registered.ts#L246)
+Defined in: [gauntlet/src/gates/diagnostic-code-registered.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/diagnostic-code-registered.ts#L331)
 
 The diagnostic-code-registered gate — the registry-enrolment backstop. Self-proves via
 synthetic gauntlet/command source (an unregistered ruleId reds; only enrolled codes pass).

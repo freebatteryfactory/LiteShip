@@ -29,7 +29,7 @@ import {
 import { sourceProvenanceDigest, generatorVersionDigest } from '@liteship/command/host';
 import type { CommandContext } from '@liteship/command';
 import { emit, getCapsuleManifestPath, type WallClockTimestamp } from '../receipts.js';
-import { runGeneratedCorpus } from '../lib/generated-corpus-runner.js';
+import { runGeneratedCorpus } from '../internal/generated-corpus-runner.js';
 
 /** Receipt emitted by `liteship capsule-verify`. */
 export interface CapsuleVerifyReceipt extends CapsuleVerifyPayload {

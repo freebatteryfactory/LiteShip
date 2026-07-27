@@ -8,7 +8,7 @@
 
 > **ContentAddress** = `string` & `object`
 
-Defined in: [\_spine/core.d.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L75)
+Defined in: [\_spine/core.d.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L81)
 
 Content-addressed hash (FNV-1a, fnv1a:hex format).
 

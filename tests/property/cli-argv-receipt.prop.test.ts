@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { positional, takeFlagValue } from '../../packages/cli/src/lib/argv.js';
+import { positional, takeFlagValue } from '../../packages/cli/src/internal/argv.js';
 
 const token = fc
   .string({ minLength: 1, maxLength: 32 })

@@ -8,7 +8,7 @@
 
 > **make**\<`A`\>(`schema`): [`Codec`](../../../interfaces/Codec.md)\<`A`, `A`\>
 
-Defined in: [\_spine/core.d.ts:1310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1310)
+Defined in: [\_spine/core.d.ts:1525](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1525)
 
 Wrap an identity kernel schema (`SchemaPort<A, A>`) in the [Codec](../../../interfaces/Codec.md) facade.
 

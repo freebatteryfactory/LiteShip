@@ -54,7 +54,7 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 #### Inherited from
 
-`ValidationError.message`
+[`LifetimeDisposeError`](../../../core/src/interfaces/LifetimeDisposeError.md).[`message`](../../../core/src/interfaces/LifetimeDisposeError.md#message)
 
 ***
 

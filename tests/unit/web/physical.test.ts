@@ -14,9 +14,10 @@
 import { describe, test, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { Physical } from '@liteship/web';
 import type { PhysicalState, FocusState, ScrollPosition, SelectionState, IMEState } from '@liteship/web';
+import { Morph } from '../../../packages/web/src/morph/diff.js';
 import {
-  captureIME,
   captureSelection,
+  createPhysicalStateTracker,
   elementToPath,
   findScrollable,
 } from '../../../packages/web/src/physical/capture.js';
@@ -42,6 +43,101 @@ describe('Physical namespace', () => {
 
   test('exports restore function', () => {
     expect(typeof Physical.restore).toBe('function');
+  });
+
+  test('exports the explicit host-owned tracker factory', () => {
+    expect(typeof Physical.createTracker).toBe('function');
+  });
+
+  test('imports passively and installs no ambient document listeners', async () => {
+    const addListener = vi.spyOn(document, 'addEventListener');
+    vi.resetModules();
+
+    await import('../../../packages/web/src/physical/capture.js');
+
+    expect(addListener).not.toHaveBeenCalled();
+    addListener.mockRestore();
+  });
+
+  test('an explicit tracker owns and removes all IME listeners exactly once', async () => {
+    const addListener = vi.spyOn(document, 'addEventListener');
+    const removeListener = vi.spyOn(document, 'removeEventListener');
+    const tracker = createPhysicalStateTracker(document);
+    const input = document.createElement('input');
+    input.id = 'owned-ime';
+    document.body.appendChild(input);
+
+    expect(addListener.mock.calls.map(([name]) => name)).toEqual([
+      'compositionstart',
+      'compositionupdate',
+      'compositionend',
+    ]);
+
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'owned' }));
+    expect(tracker.captureIME()?.text).toBe('owned');
+
+    const firstDisposal = tracker.dispose();
+    const secondDisposal = tracker.dispose();
+    expect(secondDisposal).toBe(firstDisposal);
+    await firstDisposal;
+
+    expect(removeListener.mock.calls.map(([name]) => name).sort()).toEqual([
+      'compositionend',
+      'compositionstart',
+      'compositionupdate',
+    ]);
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    expect(tracker.captureIME()).toBeNull();
+
+    input.remove();
+    addListener.mockRestore();
+    removeListener.mockRestore();
+  });
+
+  test('Morph consumes the host-owned tracker instead of consulting ambient state', async () => {
+    const tracker = createPhysicalStateTracker(document);
+    const root = document.createElement('div');
+    root.innerHTML = '<input id="morph-ime" value="abcdef">';
+    document.body.appendChild(root);
+    const input = root.querySelector('input')!;
+    input.focus();
+    input.setSelectionRange(1, 4);
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'kana' }));
+    const captureSpy = vi.spyOn(tracker, 'capture');
+
+    Morph.morphWithState(
+      root,
+      '<input id="morph-ime" value="updated">',
+      { preserveFocus: true, preserveScroll: true, preserveSelection: true },
+      undefined,
+      tracker,
+    );
+
+    expect(captureSpy).toHaveBeenCalledWith(root);
+    expect(tracker.captureIME()?.text).toBe('kana');
+    await tracker.dispose();
+    root.remove();
+  });
+
+  test('disposal aggregates listener-removal failures without skipping siblings', async () => {
+    const removed: string[] = [];
+    const ownerDocument = {
+      defaultView: window,
+      addEventListener() {},
+      removeEventListener(name: string) {
+        removed.push(name);
+        if (name !== 'compositionupdate') throw new Error(`remove ${name}`);
+      },
+    } as unknown as Document;
+    const tracker = createPhysicalStateTracker(ownerDocument);
+
+    await expect(tracker.dispose()).rejects.toMatchObject({
+      _tag: 'LifetimeDisposeError',
+      causes: [expect.any(Error), expect.any(Error)],
+    });
+    expect(removed.sort()).toEqual(['compositionend', 'compositionstart', 'compositionupdate']);
   });
 });
 
@@ -332,11 +428,12 @@ describe('Physical.capture() behavioral', () => {
     expect(state.focusState!.cursorPosition).toBe(0);
   });
 
-  test('captures IME state with null selection fallbacks and ignores non-text composition targets', () => {
+  test('captures IME state with null selection fallbacks and ignores non-text composition targets', async () => {
+    const tracker = createPhysicalStateTracker(document);
     const ignoredTarget = document.createElement('div');
     container.appendChild(ignoredTarget);
     ignoredTarget.dispatchEvent(new Event('compositionstart', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -360,7 +457,7 @@ describe('Physical.capture() behavioral', () => {
     });
     input.dispatchEvent(emptyUpdate);
 
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#test-root > input:nth-child(2)',
       text: '',
       start: 0,
@@ -374,7 +471,7 @@ describe('Physical.capture() behavioral', () => {
     });
     input.dispatchEvent(textUpdate);
 
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#test-root > input:nth-child(2)',
       text: 'kana',
       start: 0,
@@ -382,7 +479,8 @@ describe('Physical.capture() behavioral', () => {
     });
 
     input.dispatchEvent(new Event('compositionend', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
+    await tracker.dispose();
   });
 
   test('captures focus state fallback values when input selections are unavailable', () => {

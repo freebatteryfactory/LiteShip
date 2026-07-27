@@ -6,7 +6,7 @@
 
 # Interface: ReadyMessage
 
-Defined in: [\_spine/worker.d.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L198)
+Defined in: [\_spine/worker.d.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L199)
 
 Worker acknowledgement that initialization completed.
 
@@ -16,4 +16,4 @@ Worker acknowledgement that initialization completed.
 
 > `readonly` **type**: `"ready"`
 
-Defined in: [\_spine/worker.d.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L199)
+Defined in: [\_spine/worker.d.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L200)

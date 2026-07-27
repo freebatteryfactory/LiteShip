@@ -8,7 +8,7 @@
 
 > **SlotRegistry** = `object`
 
-Defined in: [\_spine/web.d.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L176)
+Defined in: [\_spine/web.d.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L188)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/web.d.ts:176](https://github.com/freebatteryfactory/LiteShi
 
 > **create**(): `SlotRegistry`
 
-Defined in: [\_spine/web.d.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L186)
+Defined in: [\_spine/web.d.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L198)
 
 #### Returns
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/web.d.ts:186](https://github.com/freebatteryfactory/LiteShi
 
 > **findElement**(`path`): `Element` \| `null`
 
-Defined in: [\_spine/web.d.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L194)
+Defined in: [\_spine/web.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L206)
 
 #### Parameters
 
@@ -46,7 +46,7 @@ Defined in: [\_spine/web.d.ts:194](https://github.com/freebatteryfactory/LiteShi
 
 > **getPath**(`element`): [`SlotPath`](SlotPath.md) \| `null`
 
-Defined in: [\_spine/web.d.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L195)
+Defined in: [\_spine/web.d.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L207)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Defined in: [\_spine/web.d.ts:195](https://github.com/freebatteryfactory/LiteShi
 
 > **observe**(`registry`, `root`): () => `void`
 
-Defined in: [\_spine/web.d.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L193)
+Defined in: [\_spine/web.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L205)
 
 Attach a MutationObserver and return its disposer (was
 `Effect.Effect<void, never, Scope>`): register the returned function on a
@@ -90,7 +90,7 @@ Attach a MutationObserver and return its disposer (was
 
 > **scanDOM**(`registry`, `root`, `defaultMode?`): `void`
 
-Defined in: [\_spine/web.d.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L187)
+Defined in: [\_spine/web.d.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L199)
 
 #### Parameters
 

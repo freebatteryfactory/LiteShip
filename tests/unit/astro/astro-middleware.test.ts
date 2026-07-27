@@ -49,6 +49,7 @@ describe('liteshipMiddleware', () => {
     const liteship = context.locals.liteship as Record<string, unknown>;
     expect(liteship).toBeDefined();
     expect(liteship.tiers).toBeDefined();
+    expect(liteship.tierEvidence).toBeDefined();
     expect(liteship.capabilities).toBeDefined();
   });
 
@@ -161,6 +162,9 @@ describe('liteshipMiddleware', () => {
     expect(tiers.tier).toBeDefined();
     expect(tiers.motion).toBeDefined();
     expect(tiers.design).toBeDefined();
+    const tierEvidence = liteship.tierEvidence as Record<string, { readonly support: string }>;
+    expect(Object.keys(tierEvidence)).toEqual(CAP_AXES);
+    expect(tierEvidence.tier?.support).toBe('inferred');
   });
 
   test('does not attach edge locals when no edge adapter is configured', async () => {
@@ -239,10 +243,9 @@ describe('auto-wired middleware entrypoint (addMiddleware target)', () => {
     expect(typeof autoWiredOnRequest).toBe('function');
 
     const context = makeContext({ 'sec-ch-viewport-width': '1440', 'sec-ch-device-memory': '8' });
-    const response = await (autoWiredOnRequest as unknown as (c: typeof context, n: () => Promise<Response>) => Promise<Response>)(
-      context,
-      makeNext(),
-    );
+    const response = await (
+      autoWiredOnRequest as unknown as (c: typeof context, n: () => Promise<Response>) => Promise<Response>
+    )(context, makeNext());
 
     expect(context.locals.liteship).toBeDefined();
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');

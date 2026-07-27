@@ -11,7 +11,7 @@
  */
 
 export { ClientHints } from './client-hints.js';
-export type { ClientHintsHeaders } from './client-hints.js';
+export type { ClientHintsEvidence, ClientHintsHeaders } from './client-hints.js';
 
 export { CrossOriginIsolation } from './cross-origin.js';
 export type { CrossOriginEmbedderPolicy } from './cross-origin.js';

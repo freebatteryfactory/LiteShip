@@ -8,7 +8,7 @@
 
 > **Audio** = [`Signal`](../../../interfaces/Signal.md)\<`number`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md) & `object`
 
-Defined in: [\_spine/core.d.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L326)
+Defined in: [\_spine/core.d.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L332)
 
 Structural shape of an audio-sourced signal backed by a sample bridge.
 

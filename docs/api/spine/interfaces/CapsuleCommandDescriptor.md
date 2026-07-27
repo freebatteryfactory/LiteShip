@@ -50,7 +50,7 @@ Optional short aliases keyed by the canonical long flag.
 
 #### outputMode
 
-> `readonly` **outputMode**: `"json"` \| `"text"` \| `"process"`
+> `readonly` **outputMode**: `"text"` \| `"json"` \| `"process"`
 
 Default stdout contract for the invocation.
 

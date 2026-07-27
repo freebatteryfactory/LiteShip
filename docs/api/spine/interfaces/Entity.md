@@ -4,24 +4,46 @@
 
 [LiteShip](../../modules.md) / [\_spine](../README.md) / Entity
 
-# Interface: Entity
+# Interface: Entity\<P\>
 
-Defined in: [\_spine/core.d.ts:577](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L577)
+Defined in: [\_spine/core.d.ts:748](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L748)
 
-ECS entity view containing its identifier and component map.
+Immutable snapshot view of one entity.
+
+## Type Parameters
+
+### P
+
+`P` *extends* [`AnyPart`](../type-aliases/AnyPart.md) = [`AnyPart`](../type-aliases/AnyPart.md)
 
 ## Properties
-
-### components
-
-> `readonly` **components**: `ReadonlyMap`\<`string`, `unknown`\>
-
-Defined in: [\_spine/core.d.ts:579](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L579)
-
-***
 
 ### id
 
 > `readonly` **id**: [`EntityId`](../type-aliases/EntityId.md)
 
-Defined in: [\_spine/core.d.ts:578](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L578)
+Defined in: [\_spine/core.d.ts:749](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L749)
+
+## Methods
+
+### get()
+
+> **get**\<`Q`\>(`part`): [`PartValue`](../type-aliases/PartValue.md)\<`Q`\>
+
+Defined in: [\_spine/core.d.ts:750](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L750)
+
+#### Type Parameters
+
+##### Q
+
+`Q` *extends* [`AnyPart`](../type-aliases/AnyPart.md)
+
+#### Parameters
+
+##### part
+
+`Q`
+
+#### Returns
+
+[`PartValue`](../type-aliases/PartValue.md)\<`Q`\>

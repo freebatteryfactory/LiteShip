@@ -8,4 +8,4 @@
 
 > **ResolvedState** = [`ResolvedStateEntry`](../../../interfaces/ResolvedStateEntry.md)
 
-Defined in: [\_spine/worker.d.ts:287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L287)
+Defined in: [\_spine/worker.d.ts:288](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L288)

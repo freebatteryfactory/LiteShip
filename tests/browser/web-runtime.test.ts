@@ -5,7 +5,7 @@ import { createAudioProcessor } from '../../packages/web/src/audio/processor.js'
 import { captureVideo } from '../../packages/web/src/capture/pipeline.js';
 import { renderToCanvas } from '../../packages/web/src/capture/render.js';
 import { Morph } from '../../packages/web/src/morph/diff.js';
-import { capture, captureIME } from '../../packages/web/src/physical/capture.js';
+import { createPhysicalStateTracker } from '../../packages/web/src/physical/capture.js';
 import { restore, restoreIME } from '../../packages/web/src/physical/restore.js';
 import { SlotRegistry } from '../../packages/web/src/slot/registry.js';
 
@@ -53,6 +53,7 @@ describe('browser web runtime coverage', () => {
   });
 
   test('captures and restores focused input state, scroll positions, and IME metadata', async () => {
+    const tracker = createPhysicalStateTracker(document);
     const root = document.createElement('div');
     const scrollBox = document.createElement('div');
     scrollBox.id = 'scroll-box';
@@ -74,10 +75,10 @@ describe('browser web runtime coverage', () => {
     input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
     input.dispatchEvent(new CompositionEvent('compositionupdate', { bubbles: true, data: 'kana' }));
 
-    const state = capture(root);
+    const state = tracker.capture(root);
     expect(state.focusState?.elementId).toContain('focus-target');
     expect(state.scrollPositions['#scroll-box']?.top).toBeCloseTo(60, 0);
-    expect(captureIME()).toEqual({
+    expect(tracker.captureIME()).toEqual({
       elementPath: '#focus-target',
       text: 'kana',
       start: 1,
@@ -97,7 +98,8 @@ describe('browser web runtime coverage', () => {
     expect(scrollBox.scrollTop).toBeCloseTo(60, 0);
 
     input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
-    expect(captureIME()).toBeNull();
+    expect(tracker.captureIME()).toBeNull();
+    await tracker.dispose();
   });
 
   test('creates audio processors and video capture pipelines in the browser lane', async () => {
@@ -165,6 +167,7 @@ describe('browser web runtime coverage', () => {
         frames: 2,
         durationMs: 66 as never,
       })),
+      dispose: vi.fn(async () => {}),
     };
     const renderer = {
       config: { width: 16, height: 16, fps: 30 },
@@ -202,6 +205,7 @@ describe('browser web runtime coverage', () => {
     expect(renderFn).toHaveBeenCalled();
     expect(captureBackend.init).toHaveBeenCalledWith({ width: 16, height: 16, fps: 30 });
     expect(captureBackend.capture).toHaveBeenCalledTimes(2);
+    expect(captureBackend.dispose).toHaveBeenCalledOnce();
     expect(result.frames).toBe(2);
   });
 
@@ -316,7 +320,9 @@ describe('browser web runtime coverage', () => {
     expect(result.capabilities.connection).toBeUndefined();
     expect(result.capabilities.prefersColorScheme).toBe('light');
     expect(result.capabilities.prefersReducedMotion).toBe(false);
-    expect(result.confidence).toBeLessThan(1);
+    expect(result.tierEvidence.tier.support).toBe('inferred');
+    expect(result.tierEvidence.motion.support).toBe('inferred');
+    expect(result.tierEvidence.design.support).toBe('inferred');
   });
 
   test('detect covers custom contrast and low-refresh browser branches in the browser lane', () => {

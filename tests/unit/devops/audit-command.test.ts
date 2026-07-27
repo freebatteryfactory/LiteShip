@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { auditCommand, commandRegistry, mcpExposedDescriptors, type CommandContext } from '@liteship/command';
 import { audit } from '../../../packages/cli/src/commands/audit.js';
-import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
+import { loadProfile } from '../../../packages/cli/src/internal/load-profile.js';
 import { AUDIT_WARNING_FLOOR } from '@liteship/command';
 import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 

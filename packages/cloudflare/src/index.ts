@@ -15,7 +15,7 @@ export {
 
 export { cloudflareMiddleware, type CloudflareMiddlewareConfig, type CloudflareRequestContext } from './middleware.js';
 
-export { cloudflareAdapterCapsule } from './capsules/cloudflare-adapter.js';
+export { cloudflareAdapterCapsule } from './cloudflare-adapter-capsule.js';
 
 // Test-only env mutators (`setWorkersEnvForTesting` / `resetWorkersEnvForTesting` /
 // `getDefaultWorkersEnv`) live behind `@liteship/cloudflare/testing` (see ./testing.ts) so

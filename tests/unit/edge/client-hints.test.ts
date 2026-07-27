@@ -6,6 +6,45 @@ import { describe, test, expect } from 'vitest';
 import { ClientHints } from '@liteship/edge';
 
 describe('ClientHints', () => {
+  test('parseClientHints is the values-only projection of the canonical evidence parse', () => {
+    const headers = {
+      'sec-ch-device-memory': '8',
+      'sec-ch-prefers-reduced-motion': 'reduce',
+    };
+    const parsed = ClientHints.parseEvidence(headers);
+    expect(ClientHints.parseClientHints(headers)).toEqual(parsed.capabilities);
+    expect(parsed.inputEvidence.memory).toEqual({
+      input: 'memory',
+      support: 'observed',
+      source: 'sec-ch-device-memory',
+    });
+    expect(parsed.inputEvidence.gpu.support).toBe('inferred');
+    expect(Object.isFrozen(parsed)).toBe(true);
+    expect(Object.isFrozen(parsed.capabilities)).toBe(true);
+  });
+
+  test('malformed or absent hints remain inferred rather than claiming observation', () => {
+    const parsed = ClientHints.parseEvidence({
+      'sec-ch-device-memory': 'not-a-number',
+      'sec-ch-prefers-reduced-motion': 'maybe',
+    });
+    expect(parsed.capabilities.memory).toBe(4);
+    expect(parsed.capabilities.prefersReducedMotion).toBe(false);
+    expect(parsed.inputEvidence.memory.support).toBe('inferred');
+    expect(parsed.inputEvidence.prefersReducedMotion.support).toBe('inferred');
+  });
+
+  test('a non-positive memory hint remains inferred instead of laundering its fallback', () => {
+    for (const raw of ['0', '-1']) {
+      const parsed = ClientHints.parseEvidence({ 'sec-ch-device-memory': raw });
+      expect(parsed.capabilities.memory).toBe(4);
+      expect(parsed.inputEvidence.memory).toMatchObject({
+        support: 'inferred',
+        source: 'four-gib-fallback',
+      });
+    }
+  });
+
   test('parseClientHints returns conservative defaults for empty headers', () => {
     const caps = ClientHints.parseClientHints({});
     expect(caps.memory).toBe(4);

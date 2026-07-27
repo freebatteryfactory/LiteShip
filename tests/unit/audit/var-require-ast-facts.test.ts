@@ -20,7 +20,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { buildRepoIR, resolveDevopsProfile, type DevopsProfile } from '@liteship/audit';
-import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
+import { liteshipRegexOracle } from '../../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import {
   noVarDivergenceGate,
   noRequireDivergenceGate,

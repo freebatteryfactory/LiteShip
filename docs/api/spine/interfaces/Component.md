@@ -30,11 +30,19 @@ Defined in: [\_spine/design.d.ts:176](https://github.com/freebatteryfactory/Lite
 
 ***
 
+### \_version
+
+> `readonly` **\_version**: `1`
+
+Defined in: [\_spine/design.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L177)
+
+***
+
 ### boundary?
 
 > `readonly` `optional` **boundary?**: `B`
 
-Defined in: [\_spine/design.d.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L179)
+Defined in: [\_spine/design.d.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L180)
 
 ***
 
@@ -42,7 +50,7 @@ Defined in: [\_spine/design.d.ts:179](https://github.com/freebatteryfactory/Lite
 
 > `readonly` `optional` **defaultSlot?**: `SlotNames`\[`number`\]
 
-Defined in: [\_spine/design.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L182)
+Defined in: [\_spine/design.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L183)
 
 ***
 
@@ -50,7 +58,7 @@ Defined in: [\_spine/design.d.ts:182](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **id**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/design.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L177)
+Defined in: [\_spine/design.d.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L178)
 
 ***
 
@@ -58,7 +66,7 @@ Defined in: [\_spine/design.d.ts:177](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/design.d.ts:178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L178)
+Defined in: [\_spine/design.d.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L179)
 
 ***
 
@@ -66,7 +74,7 @@ Defined in: [\_spine/design.d.ts:178](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **slots**: `{ readonly [K in string]: SlotConfig }`
 
-Defined in: [\_spine/design.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L181)
+Defined in: [\_spine/design.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L182)
 
 ***
 
@@ -74,4 +82,4 @@ Defined in: [\_spine/design.d.ts:181](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **styles**: [`Style`](Style.md)\<`B`\>
 
-Defined in: [\_spine/design.d.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L180)
+Defined in: [\_spine/design.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L181)

@@ -8,6 +8,6 @@
 
 > **PlanValidationResult** = \{ `ok`: `true`; `plan`: [`PlanIR`](../interfaces/PlanIR.md); \} \| \{ `errors`: readonly [`PlanValidationError`](PlanValidationError.md)[]; `ok`: `false`; \}
 
-Defined in: [\_spine/core.d.ts:1235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1235)
+Defined in: [\_spine/core.d.ts:1450](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1450)
 
 Success or bounded failure result from plan validation.

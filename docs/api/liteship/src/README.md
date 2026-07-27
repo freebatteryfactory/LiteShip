@@ -64,7 +64,7 @@ scopes (`@liteship/core`, `@liteship/quantizer`, …) exactly as the docs show.
 
 ### defineAdaptive
 
-Re-exports [defineAdaptive](authoring/adaptive/functions/defineAdaptive.md)
+Re-exports [defineAdaptive](adaptive/functions/defineAdaptive.md)
 
 ***
 

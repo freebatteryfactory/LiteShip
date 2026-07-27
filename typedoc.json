@@ -94,7 +94,7 @@
       "makeClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/hlc.ts",
       "ReactiveQuantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/quantizer-types.ts",
       "CompositorFactory.create": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/compositor.ts",
-      "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts",
+      "WorldShape.query": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs/runtime.ts",
       "__type.run": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/animation.ts",
       "wallClock": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/clock/clock.ts",
       "Receipt": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/receipt.ts",

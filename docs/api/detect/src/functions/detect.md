@@ -8,7 +8,7 @@
 
 > **detect**(): [`ExtendedDetectionResult`](../interfaces/ExtendedDetectionResult.md)
 
-Defined in: [detect/src/detect.ts:628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L628)
+Defined in: [detect/src/detect.ts:679](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L679)
 
 Run a full device capability detection sweep.
 All probes are synchronous with internal error handling -- gracefully
@@ -28,7 +28,7 @@ console.log(result.capabilities.gpu);       // 0-3
 console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
-console.log(result.confidence);             // 0.5 - 1.0
+console.log(result.tierEvidence.motion.support); // 'observed' | 'inferred'
 ```
 
 ## Returns

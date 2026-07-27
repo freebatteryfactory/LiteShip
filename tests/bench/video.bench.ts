@@ -9,7 +9,8 @@ import { Bench } from 'tinybench';
 // Compositor.create/add/compute went synchronous in the core-seams wave.
 import {
   Scheduler,
-  VideoRenderer,
+  createFrameSchedule,
+  createVideoRenderer,
   Compositor,
   Boundary,
   Millis,
@@ -79,9 +80,16 @@ bench.add('FixedStepScheduler -- 1000 steps @ 60fps', () => {
   }
 });
 
+bench.add('FrameSchedule -- enumerate 300 deterministic coordinates @ 60fps', () => {
+  const schedule = createFrameSchedule({ fps: 60, durationMs: Millis(5000) });
+  let checksum = 0;
+  for (const frame of schedule) checksum += frame.frame + frame.timestamp + frame.progress;
+  if (!Number.isFinite(checksum)) throw new Error('FrameSchedule produced a non-finite coordinate.');
+});
+
 bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
   const compositor = Compositor.create();
-  const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
+  const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
   }
@@ -89,7 +97,7 @@ bench.add('VideoRenderer -- 30 frames @ 30fps', async () => {
 
 bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
   const compositor = Compositor.create();
-  const renderer = VideoRenderer.make({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
+  const renderer = createVideoRenderer({ fps: 60, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
   for await (const _ of renderer.frames()) {
     /* consume */
   }

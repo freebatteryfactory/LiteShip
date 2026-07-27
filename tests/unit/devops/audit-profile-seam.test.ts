@@ -24,7 +24,7 @@ import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
 import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
 import { withRepoRoot } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import type { DevopsProfile } from '@liteship/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -162,7 +162,7 @@ describe('D9a/D9b — no repo-local @liteship/ gate remains in the audit engine 
 
   it('the reusable engine names no LiteShip scope and the CLI host supplies it once', () => {
     const engineProfile = readFileSync(resolve(REPO, 'packages/audit/src/devops-profile.ts'), 'utf8');
-    const hostProfile = readFileSync(resolve(REPO, 'packages/cli/src/lib/liteship-audit-profile.ts'), 'utf8');
+    const hostProfile = readFileSync(resolve(REPO, 'packages/cli/src/internal/liteship-audit-profile.ts'), 'utf8');
     expect(engineProfile).not.toContain("internalPackagePrefix: '@liteship/'");
     expect(hostProfile.match(/internalPackagePrefix:\s*'@liteship\/'/gu)).toHaveLength(1);
   });

@@ -24,7 +24,7 @@ import {
   type JourneyResult,
   type PackedWorkspace,
 } from './harness.js';
-import { assertPackedTypeClosure } from '../../packages/cli/src/lib/package-smoke-helpers.js';
+import { assertPackedTypeClosure } from '../../packages/cli/src/internal/package-smoke-helpers.js';
 
 const SUBPATHS = [
   { specifier: 'liteship/schema', dist: 'schema.d.ts', symbol: 'schema' },

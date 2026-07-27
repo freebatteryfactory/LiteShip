@@ -4,7 +4,7 @@
 > requirements artifact — NOT loose repo-root junk and NOT under `docs/` (docs are
 > owner-gated). It holds exactly two human-editable YAML files that a deterministic
 > state machine consumes. If you want it moved, this README is the one place that
-> names the location; redline here and the host reader (`packages/cli/src/lib/traceability.ts`)
+> names the location; redline here and the host reader (`packages/cli/src/internal/traceability.ts`)
 > follows.
 
 Every **system INVARIANT** the avionics tier upholds (a LAW — determinism, CRDT
@@ -30,7 +30,7 @@ a LAW with no proof is a hole in the safety case.
 
 The trace is **computed from the LIVE test headers, not hardcoded**. Each proving
 test carries a `// PROVES: INV-X[, INV-Y]` header near the top. The deterministic
-state machine (`packages/cli/src/lib/traceability.ts`) scans the test corpus for
+state machine (`packages/cli/src/internal/traceability.ts`) scans the test corpus for
 these headers and folds the lifecycle:
 
 ```

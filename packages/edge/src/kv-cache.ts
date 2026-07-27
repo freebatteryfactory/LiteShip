@@ -139,14 +139,14 @@ export interface BoundaryCache {
    */
   getCompiledOutputs(
     boundaryId: ContentAddress,
-    tierResult: EdgeTierResult,
+    tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
     qualifier?: string,
     themeFp?: string,
   ): Promise<CompiledOutputs | null>;
 
   putCompiledOutputs(
     boundaryId: ContentAddress,
-    tierResult: EdgeTierResult,
+    tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
     outputs: CompiledOutputs,
     qualifier?: string,
     themeFp?: string,
@@ -204,7 +204,7 @@ export interface CacheOptions {
 function buildCacheKey(
   prefix: string,
   boundaryId: ContentAddress,
-  tierResult: EdgeTierResult,
+  tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
   qualifier?: string,
   themeFp?: string,
 ): string {
@@ -621,7 +621,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
   return {
     async getCompiledOutputs(
       boundaryId: ContentAddress,
-      tierResult: EdgeTierResult,
+      tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
       qualifier?: string,
       themeFp?: string,
     ): Promise<CompiledOutputs | null> {
@@ -702,7 +702,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
 
     async putCompiledOutputs(
       boundaryId: ContentAddress,
-      tierResult: EdgeTierResult,
+      tierResult: Pick<EdgeTierResult, 'motionTier' | 'designTier'>,
       outputs: CompiledOutputs,
       qualifier?: string,
       themeFp?: string,

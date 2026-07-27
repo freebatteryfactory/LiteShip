@@ -13,7 +13,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { runCliCommand } from '../lib/run-command.js';
+import { runCliCommand } from '../internal/run-command.js';
 import { emit } from '../receipts.js';
 
 type Projection = 'beat' | 'onset' | 'waveform';

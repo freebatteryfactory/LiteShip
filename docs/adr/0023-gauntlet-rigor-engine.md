@@ -17,9 +17,10 @@ The governing scar, learned the hard way: **a green gauntlet is NOT a clean repo
 - **Authority decides assurance, not folder names.** `AssuranceLevel` (L0–L4) aims a gate's rigor by the HAZARD it governs — code that blocks releases, waives findings, or governs integrity is high-assurance wherever it lives. Level-scoping narrows the JUDGED surface to a gate's band, while evidence (the confirmer corpus, injected facts) passes through unscoped.
 - **The engine is LEAN; capability is host-INJECTED ([ADR-0012](./0012-devops-profile-boundary.md)).** `@liteship/gauntlet` carries no `typescript` dependency. The triangulated repo-IR (LanguageService + AST + module graph + receipts), the mutation/MC-DC/taint/fuzz oracles, and the sound skip/codeOnly detectors are built by a HOST (`@liteship/audit` + the CLI) and injected through `GateContext`. The audit engine names no LiteShip policy: the CLI host owns the package topology, allowlist, source aliases, active-surface enrollment, and source-entrypoint projection. This keeps the engine downstream-installable and the boundary honest.
 - **Cache soundness is explicit.** A gate's verdict is content-keyed on its coverage digest (in-IR bytes) PLUS an `evidenceDigest` (out-of-IR bytes — the confirmer corpus, benchmarks, injected facts). Any uncertain case MISSES (re-runs); a gate may not serve a verdict it cannot tie to content.
+- **Subject coverage is part of qualification.** `GateProof.subjectCoverage` is a discriminated receipt: a complete census names its enumerator, subject count, and SHA-256 digest; an opaque census states why it cannot enumerate. A required gate with opaque coverage emits an unwaivable authority-integrity error and blocks even though its unqualified semantic findings remain advisory. A detector that cannot say what it governs cannot certify completeness.
 - **Two gate forms.** The closure `defineGate` and the evidence-bound `defineFactGate` ([ADR-0019](./0019-factgate-evidence-bound-gates.md)), whose decision is DATA over a declared FactPack and so cannot read undeclared evidence.
 
-On top of the engine sit the gate FAMILIES the swiss-cheese discovery forced: skip/placeholder floors, mutation-as-divergence and MC/DC at L4, taint dataflow, coverage-guided fuzzing, the claim-vs-reality detectors (a measurable claim with no confirmer is a finding), local-vs-global proof propagation, the requirements-traceability ledger, and the agent-safety meta-gauntlet (the "raccoon rule" — the gauntlet guards its own standards; you cannot sign away a lie).
+On top of the engine sit the gate FAMILIES the swiss-cheese discovery forced: skip/placeholder floors, mutation-as-divergence and MC/DC at L4, taint dataflow, coverage-guided fuzzing, the claim-vs-reality detectors (a measurable claim with no confirmer is a finding), feature-edge connectivity over source-owned producer/consumer catalogs, local-vs-global proof propagation, the requirements-traceability ledger, and the agent-safety meta-gauntlet (the "raccoon rule" — the gauntlet guards its own standards; you cannot sign away a lie).
 
 ## Consequences
 
@@ -31,9 +32,10 @@ On top of the engine sit the gate FAMILIES the swiss-cheese discovery forced: sk
 ## Evidence
 
 - `packages/gauntlet/src/gate.ts`, `authority.ts`, `engine.ts` — the Gate contract, the ratchet (`verifyGate`/`earnedAuthority`), level-scoping, the verdict cache.
+- `packages/gauntlet/src/gates/feature-edge-connectivity.ts` + `packages/audit/src/feature-edge-census.ts` — the shared connectivity decision over executable owner catalogs.
 - `packages/gauntlet/src/assurance.ts` — `AssuranceLevel` L0–L4.
-- `packages/audit/src/*` + `packages/cli/src/lib/*` — the host-injected IR + oracles ([ADR-0012](./0012-devops-profile-boundary.md)).
-- `tests/unit/gauntlet/verdict-cache-soundness.test.ts`, `evidence-declaration-law.test.ts` — the cache + evidence laws with teeth.
+- `packages/audit/src/*` + `packages/cli/src/internal/*` — the host-injected IR + oracles ([ADR-0012](./0012-devops-profile-boundary.md)).
+- `tests/unit/gauntlet/verdict-cache-soundness.test.ts`, `evidence-declaration-law.test.ts`, `subject-coverage-authority.test.ts` — the cache, evidence, and subject-coverage laws with teeth.
 
 ## Rejected alternatives
 

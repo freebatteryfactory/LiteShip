@@ -8,7 +8,7 @@
 
 > **WorkerHost** = `object`
 
-Defined in: [\_spine/worker.d.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L472)
+Defined in: [\_spine/worker.d.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L473)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/worker.d.ts:472](https://github.com/freebatteryfactory/Lite
 
 > **create**(`config?`, `startupTelemetry?`): `WorkerHost`
 
-Defined in: [\_spine/worker.d.ts:484](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L484)
+Defined in: [\_spine/worker.d.ts:485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L485)
 
 #### Parameters
 

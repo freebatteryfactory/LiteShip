@@ -95,6 +95,24 @@ concepts that coexist on the same world / export path. `TransitionSystem` is unt
   existing signature changed. `writeContinuousMap` / `buildKeyframes` were refactored to
   route through the kernel with byte-identical output (all W8/W9 tests unchanged).
 
+## 0.21 typed-edge and schedule amendment (2026-07-26)
+
+The shared sampler remains authoritative, but two original adapter descriptions
+are superseded by stronger, inhabited contracts:
+
+- Scene entities carry the admitted `RuntimeWritePlanPart`; `MotionSampleSystem`
+  queries that minted `Part` and writes `MotionSamplePart`. The former free-string
+  `MotionProgram` query and `motion:<cssVar>` component writes are retired.
+- `FrameSchedule` owns frame count, index, timestamp, and normalized progress.
+  `VideoRenderer` projects compositor state over it; Remotion adapts the renderer
+  stream to indexed frames; Web streams it to capture; Stage consumes the same
+  schedule while retaining its graph-specific state projector. Encoders remain
+  host-owned.
+
+The retained historical `MotionProgram` orphan is a CurePacket calibration case:
+its old source overlay still reds, while the typed current surface proves the
+free-string query cannot be expressed.
+
 ## Rejected alternatives
 
 - **Bake per-window easing into dense CSS keyframe stops + a linear timing function** —

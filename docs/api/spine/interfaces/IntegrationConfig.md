@@ -6,17 +6,25 @@
 
 # Interface: IntegrationConfig
 
-Defined in: [\_spine/astro.d.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L14)
+Defined in: [\_spine/astro.d.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L23)
 
 Options projected into the LiteShip Astro integration and its nested Vite host.
 
 ## Properties
 
+### adaptive?
+
+> `readonly` `optional` **adaptive?**: `boolean`
+
+Defined in: [\_spine/astro.d.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L25)
+
+***
+
 ### detect?
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [\_spine/astro.d.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L17)
+Defined in: [\_spine/astro.d.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L27)
 
 ***
 
@@ -24,7 +32,7 @@ Defined in: [\_spine/astro.d.ts:17](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **exclude?**: readonly `string`[]
 
-Defined in: [\_spine/astro.d.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L16)
+Defined in: [\_spine/astro.d.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L26)
 
 ***
 
@@ -32,7 +40,7 @@ Defined in: [\_spine/astro.d.ts:16](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **gpu?**: `object`
 
-Defined in: [\_spine/astro.d.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L19)
+Defined in: [\_spine/astro.d.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L29)
 
 #### enabled?
 
@@ -48,7 +56,7 @@ Defined in: [\_spine/astro.d.ts:19](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **inspector?**: `boolean`
 
-Defined in: [\_spine/astro.d.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L24)
+Defined in: [\_spine/astro.d.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L35)
 
 Dev-only boundary inspector overlay (default enabled in `astro dev`).
 
@@ -58,7 +66,7 @@ Dev-only boundary inspector overlay (default enabled in `astro dev`).
 
 > `readonly` `optional` **llm?**: `object`
 
-Defined in: [\_spine/astro.d.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L22)
+Defined in: [\_spine/astro.d.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L32)
 
 #### enabled?
 
@@ -70,7 +78,19 @@ Defined in: [\_spine/astro.d.ts:22](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **middleware?**: `boolean`
 
-Defined in: [\_spine/astro.d.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L25)
+Defined in: [\_spine/astro.d.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L36)
+
+***
+
+### motion?
+
+> `readonly` `optional` **motion?**: `object`
+
+Defined in: [\_spine/astro.d.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L33)
+
+#### enabled?
+
+> `readonly` `optional` **enabled?**: `boolean`
 
 ***
 
@@ -78,15 +98,15 @@ Defined in: [\_spine/astro.d.ts:25](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **security?**: `object`
 
-Defined in: [\_spine/astro.d.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L26)
+Defined in: [\_spine/astro.d.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L37)
 
 #### endpointPolicy?
 
-> `readonly` `optional` **endpointPolicy?**: `unknown`
+> `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
 #### htmlPolicy?
 
-> `readonly` `optional` **htmlPolicy?**: `unknown`
+> `readonly` `optional` **htmlPolicy?**: [`RuntimeHtmlPolicy`](RuntimeHtmlPolicy.md)
 
 ***
 
@@ -94,7 +114,7 @@ Defined in: [\_spine/astro.d.ts:26](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **stream?**: `object`
 
-Defined in: [\_spine/astro.d.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L21)
+Defined in: [\_spine/astro.d.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L31)
 
 #### enabled?
 
@@ -106,7 +126,7 @@ Defined in: [\_spine/astro.d.ts:21](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **vite?**: [`PluginConfig`](PluginConfig.md)
 
-Defined in: [\_spine/astro.d.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L15)
+Defined in: [\_spine/astro.d.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L24)
 
 ***
 
@@ -114,7 +134,7 @@ Defined in: [\_spine/astro.d.ts:15](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **wasm?**: `object`
 
-Defined in: [\_spine/astro.d.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L18)
+Defined in: [\_spine/astro.d.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L28)
 
 #### enabled?
 
@@ -130,7 +150,7 @@ Defined in: [\_spine/astro.d.ts:18](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [\_spine/astro.d.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L20)
+Defined in: [\_spine/astro.d.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L30)
 
 #### coep?
 

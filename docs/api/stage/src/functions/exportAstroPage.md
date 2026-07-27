@@ -8,7 +8,7 @@
 
 > **exportAstroPage**(`graph`): [`ExportNode`](../../../liteship/src/graph/interfaces/ExportNode.md)
 
-Defined in: [stage/src/dual-export.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L157)
+Defined in: [stage/src/dual-export.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L158)
 
 Cast the graph's css projections to a static Astro page string.
 

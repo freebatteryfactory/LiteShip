@@ -1,18 +1,24 @@
 # @liteship/_spine symbol index
 
-Generated from the 16 declaration leaf owners. A symbol cannot enter the root barrel unless it has type meaning, one owner, and declaration documentation.
+Generated from the live declaration-leaf census. A symbol cannot enter the root barrel unless it has type meaning, one owner, and declaration documentation.
 
 | Symbol | Kind | Owner leaf | Purpose |
 | --- | --- | --- | --- |
 | `AstroLoggerLike` | interface | `astro.d.ts` | Minimal Astro logger capability required by the diagnostic bridge. |
 | `CrossOriginEmbedderPolicy` | type | `astro.d.ts` | Cross-origin isolation modes supported by the Astro worker integration. |
 | `FetchLayerNext` | type | `astro.d.ts` | Downstream request handler invoked by a LiteShip fetch layer. |
+| `HtmlPolicy` | type | `astro.d.ts` | HTML handling modes accepted by the Astro runtime policy. |
 | `IntegrationConfig` | interface | `astro.d.ts` | Options projected into the LiteShip Astro integration and its nested Vite host. |
 | `LiteshipFetchLayer` | type | `astro.d.ts` | Composable fetch-layer function used outside Astro's middleware object model. |
 | `LiteshipFetchLayerConfig` | interface | `astro.d.ts` | Fetch-layer options including edge-serving and host-rendering decisions. |
 | `LiteshipLocals` | interface | `astro.d.ts` | LiteShip request-local evidence exposed to Astro pages and middleware. |
 | `LiteshipMiddlewareConfig` | interface | `astro.d.ts` | Configuration shared by Astro middleware and fetch-layer adapters. |
 | `QuantizeProps` | interface | `astro.d.ts` | Props accepted by the Astro \`<Quantize>\` component for one boundary-owned region. |
+| `ResponsiveMediaIntent` | interface | `astro.d.ts` | Sealed responsive-media authoring intent consumed by Astro locals. |
+| `ResponsiveMediaPictureProjection` | interface | `astro.d.ts` | Render-ready responsive-media projection returned by Astro locals. |
+| `ResponsiveMediaResolutionReason` | type | `astro.d.ts` | Reason Astro selected one responsive-media source. |
+| `ResponsiveMediaVariant` | interface | `astro.d.ts` | One responsive-media source candidate. |
+| `RuntimeHtmlPolicy` | interface | `astro.d.ts` | Host HTML policy projected into the Astro integration. |
 | `ServerIslandContext` | interface | `astro.d.ts` | Request evidence used to choose an Astro server island's initial boundary state. |
 | `BeatComponent` | interface | `beats.d.ts` | Scene/world beat marker — timeline space. Consumed by \`@liteship/scene\`; what \`SyncSystem\` queries via \`world.query('Beat')\`. |
 | `BeatMarkerSet` | interface | `beats.d.ts` | Raw beat-marker projection — asset/sample space. Produced by \`@liteship/assets\`. \`beats\` are strictly-increasing **sample indices** (not milliseconds); convert with the source audio's sample rate. This is the shape the \`asset:beats\` capability carries. |
@@ -49,18 +55,31 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `CompileResult` | type | `compiler.d.ts` | Closed union returned by the compiler dispatcher for every target. |
 | `CompilerDef` | type | `compiler.d.ts` | Closed union of definition projections accepted by the compiler dispatcher. |
 | `ConfigTemplateResult` | interface | `compiler.d.ts` | Generated host-configuration template and its destination filename. |
+| `CssKeyframeStep` | interface | `compiler.d.ts` | One CSS keyframe emitted from the motion compiler. |
+| `CssMotionPlan` | interface | `compiler.d.ts` | Fully lowered CSS motion plan consumed by the compiler. |
 | `DefKind` | type | `compiler.d.ts` | Definition kinds accepted by the component-level compiler projections. |
 | `GLSLCompileResult` | interface | `compiler.d.ts` | GLSL source plus the uniforms and defines required to drive it. |
 | `GLSLDefine` | interface | `compiler.d.ts` | One preprocessor define emitted into a GLSL program. |
 | `GLSLStates` | type | `compiler.d.ts` | State-indexed GLSL numeric uniform tables accepted by compiler dispatch. |
 | `GLSLType` | type | `compiler.d.ts` | GLSL uniform types supported by LiteShip's shader projection. |
 | `GLSLUniform` | interface | `compiler.d.ts` | One named GLSL uniform declaration and its authored default. |
+| `MotionCompileInput` | interface | `compiler.d.ts` | Input contract for one motion compiler projection. |
+| `MotionCompileResult` | interface | `compiler.d.ts` | CSS fragments emitted by motion compilation. |
+| `MotionEasing` | type | `compiler.d.ts` | Authored easing families accepted by motion compilation. |
+| `MotionPropertyTween` | interface | `compiler.d.ts` | One typed property transition in a compiled motion plan. |
+| `MotionScrollTimeline` | interface | `compiler.d.ts` | Scroll-timeline axis and range projected into CSS. |
+| `MotionSpringConfig` | interface | `compiler.d.ts` | Spring parameters accepted by motion compilation. |
+| `MotionViewTimeline` | interface | `compiler.d.ts` | View-timeline range projected into CSS. |
+| `NativeTimelineEligibility` | type | `compiler.d.ts` | Whether a compiled plan can use a native timeline without semantic loss. |
 | `StyleCSSResult` | interface | `compiler.d.ts` | CSS projection of one adaptive style definition. |
 | `ThemeCSSResult` | interface | `compiler.d.ts` | CSS projection of a theme and its named variants. |
 | `TokenCSSResult` | interface | `compiler.d.ts` | CSS custom-property projection of a token definition. |
 | `TokenJSResult` | interface | `compiler.d.ts` | JavaScript-friendly data projection of a token definition. |
 | `TokenTailwindResult` | interface | `compiler.d.ts` | Tailwind theme extension projected from a token definition. |
+| `ViewTransitionCompileInput` | interface | `compiler.d.ts` | Input contract for one view-transition projection. |
+| `ViewTransitionCompileResult` | interface | `compiler.d.ts` | CSS fragments emitted by view-transition compilation. |
 | `WGSLBinding` | interface | `compiler.d.ts` | One WGSL resource binding in a declared bind group. |
+| `WGSLBindingType` | type | `compiler.d.ts` | A binding may target a built-in WGSL primitive or a declared struct. |
 | `WGSLCompileResult` | interface | `compiler.d.ts` | WGSL source plus its bindings, uniforms, and generated structures. |
 | `WGSLStates` | type | `compiler.d.ts` | State-indexed WGSL uniform tables accepted by compiler dispatch. |
 | `WGSLStruct` | interface | `compiler.d.ts` | Named WGSL structure and its ordered field declarations. |
@@ -71,13 +90,21 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `ConfigInput` | interface | `config.d.ts` | User-facing input — no id, no _tag |
 | `ReadonlyConfigValue` | type | `config.d.ts` | Recursive immutable snapshot applied to retained project-configuration values. |
 | `AddressedDigest` | interface | `core.d.ts` | A pair of hashes over the same canonical bytes: the ergonomic identity ({@link ContentAddress}, fnv1a) plus a cryptographic digest ({@link IntegrityDigest}, sha256 or blake3). Used by external-artifact carriers like ShipCapsule (ADR-0011). \`algo\` records which hash family minted the integrity digest; v0.1.0 emits \`sha256\`, v0.2 will emit \`blake3\`. |
+| `AdmittedPartValue` | interface | `core.d.ts` | Value admitted by the exact Part schema and witness. |
 | `Animation` | namespace | `core.d.ts` | Frame sampling and interpolation helpers for time-based animation. |
+| `AnyPart` | type | `core.d.ts` | Erased Part used by heterogeneous world operations. |
+| `AnySchemaNode` | interface | `core.d.ts` | Any schema AST node. |
+| `ArraySchemaNode` | interface | `core.d.ts` | Array schema AST node. |
 | `AsyncOwnedResource` | interface | `core.d.ts` | A resource that owns its teardown through LiteShip's one public lifecycle. Synchronous finalizers run before \`dispose()\` returns; the promise joins async finalizers and carries aggregate failure. \`[Symbol.asyncDispose]\` makes the value usable with \`await using\`. |
 | `BlendNode` | interface | `core.d.ts` | One weighted input node in a blend tree. |
 | `BlendTree` | interface | `core.d.ts` | Mutable weighted blend graph over homogeneous numeric records. |
+| `BooleanSchemaNode` | interface | `core.d.ts` | Boolean schema AST node. |
 | `Boundary` | interface | `core.d.ts` | Immutable threshold partition that maps one numeric input to named states. |
 | `BoundaryCrossing` | type | `core.d.ts` | Discriminated union of boundary crossings |
 | `BoundarySpec` | interface | `core.d.ts` | Optional per-boundary activation filter: gate a boundary on device capabilities, an epoch-ms time window, or experiment participation. When a spec is present and \`BoundarySpec.isActive\` returns false for the current context, the boundary is skipped during evaluation. |
+| `BrandSchemaNode` | interface | `core.d.ts` | Branded schema AST node. |
+| `BytesCtor` | type | `core.d.ts` | Constructor shape retained by a bytes schema node. |
+| `BytesSchemaNode` | interface | `core.d.ts` | Bytes schema AST node. |
 | `CapSet` | interface | `core.d.ts` | Boolean capability set paired with a rendering tier decision. |
 | `CapTier` | type | `core.d.ts` | Ordered rendering-capability tier from static markup through GPU execution. |
 | `CaptureConfig` | interface | `core.d.ts` | Browser capture dimensions, frame rate, duration, and codec preferences. |
@@ -96,31 +123,44 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `ColorSpace` | type | `core.d.ts` | Color spaces supported by typed runtime motion values. |
 | `CompositeState` | interface | `core.d.ts` | Named compositor state with deterministic numeric properties. |
 | `Compositor` | interface | `core.d.ts` | Live compositor that evaluates and blends registered states. |
+| `CompositorQuantizer` | type | `core.d.ts` | Quantizer shape accepted by the live compositor. |
 | `ContentAddress` | type | `core.d.ts` | Content-addressed hash (FNV-1a, fnv1a:hex format). APEX of THREE intentional homes (ADR-0013) — do NOT merge them. This spine type is the strictest: a symbol-brand, so a raw \`fnv1a:...\` string cannot be typed as ContentAddress without a validating constructor. \`@liteship/core\` and \`@liteship/genui\` re-anchor this brand (\`type ContentAddress = _ContentAddress\`) with validating constructors; \`@liteship/canonical\` is intentionally zero-dep (only \`@liteship/error\`) and uses a \`\` \`fnv1a:${string}\` \`\` template-literal brand instead. Merging the homes would either break canonical's zero-dep property or weaken this symbol-brand to a template literal. The three are parity-guarded at runtime by tests/unit/core/schema/brand-validators.test.ts ("ContentAddress three-home parity drift-guard"). |
 | `ControllableSignal` | interface | `core.d.ts` | Signal whose host can seek, pause, and resume the underlying source. |
 | `DAGNode` | interface | `core.d.ts` | One receipt and its parent hashes in a receipt DAG. |
 | `DenseStore` | interface | `core.d.ts` | Dense, fixed-capacity numeric ECS component storage. |
-| `DenseSystem` | interface | `core.d.ts` | ECS system that operates on dense-packed component stores |
+| `DenseStoreWriter` | interface | `core.d.ts` | Trusted writer paired with one dense numeric store. |
+| `DenseSystem` | interface | `core.d.ts` | ECS system that operates on dense-packed component stores. |
+| `DenseSystemContext` | interface | `core.d.ts` | Part-authorized dense stores supplied to one dense system. |
 | `Derived` | interface | `core.d.ts` | Read-only derived computation over CellKernel.replay1 (Effect-free, Wave 6) |
 | `DirtyFlags` | interface | `core.d.ts` | Constant-time dirty-bit tracker over a closed key set. |
 | `Easing` | namespace | `core.d.ts` | Easing functions and spring configuration used by motion programs. |
 | `EdgeType` | type | `core.d.ts` | Control-flow relation between two plan steps. |
-| `Entity` | interface | `core.d.ts` | ECS entity view containing its identifier and component map. |
+| `Entity` | interface | `core.d.ts` | Immutable snapshot view of one entity. |
 | `EntityId` | type | `core.d.ts` | Branded identifier minted for an ECS entity. |
 | `ForkViolation` | interface | `core.d.ts` | Evidence that a receipt graph violates its declared fork policy. |
 | `FrameBudget` | interface | `core.d.ts` | Frame-time admission controller for prioritized work. |
-| `FrameCapture` | interface | `core.d.ts` | Live browser capture handle that produces and releases encoded frames. |
+| `FrameCapture` | interface | `core.d.ts` | Live browser capture handle with one async-uniform encoder lifecycle. |
+| `FrameSchedule` | interface | `core.d.ts` | Host-neutral frame timing shared by every renderer adapter. |
 | `HLC` | interface | `core.d.ts` | Hybrid Logical Clock -- physical time + logical counter + node identity |
 | `HLCClock` | interface | `core.d.ts` | A managed HLC clock handle — a plain (Effect-free) mutable holder over the pure increment/merge ops, reading wall time through an injected {@link Clock} (Wave 6). \`tick\`/\`receive\` advance the closure-held timestamp and return it; \`current\` reads without advancing. |
+| `HoleSchemaNode` | interface | `core.d.ts` | Named hole schema AST node. |
 | `IntegrityDigest` | type | `core.d.ts` | Cryptographic content digest. Format: \`sha256:<64-hex>\` or \`blake3:<64-hex>\`. The algorithmic complement to {@link ContentAddress}: same canonical bytes, stronger hash. Carried by {@link AddressedDigest} on external/release artifacts where collision resistance matters (see ADR-0011). |
+| `KernelSchema` | interface | `core.d.ts` | Minimal structural schema contract bound to one Part. |
 | `Lifetime` | interface | `core.d.ts` | Lifetime — the disposal primitive that replaces \`Scope\`/\`ManagedRuntime\` at the shed seams. Owns a LIFO finalizer stack disposed exactly once; \`signal\` projects cancellation, and \`dispose()\` settles once every async finalizer settles. |
+| `LiteralSchemaNode` | interface | `core.d.ts` | Literal schema AST node. |
+| `LiteralValue` | type | `core.d.ts` | Primitive literal carried by a literal schema node. |
 | `LiveCell` | interface | `core.d.ts` | Reactive cell specialized to a declared transport or projection kind. |
 | `MergeResult` | interface | `core.d.ts` | Result of merging receipt DAGs, including conflicts and resulting heads. |
 | `Millis` | type | `core.d.ts` | Branded millisecond duration -- forces explicit wrapping of raw numbers at temporal API boundaries. Non-negative millisecond duration. Fractional values allowed. Use Millis(0) for immediate. |
 | `MotionTier` | type | `core.d.ts` | The runtime motion tier — derived from device capability + user preference (notably \`prefers-reduced-motion\`) and used to gate animation / output targets. Canonical declaration; \`_spine/detect.d.ts\` and \`_spine/quantizer.d.ts\` re-anchor from here, and \`packages/core/src/evidence/ui-quality.ts\` re-exports it. Order is from lowest capability to highest. \`none\` is forced by \`prefers-reduced-motion: reduce\` regardless of GPU tier; \`compute\` unlocks every output target including the Rust/WASM kernels. |
+| `NumberSchemaNode` | interface | `core.d.ts` | Number schema AST node. |
 | `OpType` | type | `core.d.ts` | Operation kinds represented by a plan step. |
 | `OutputsFor` | type | `core.d.ts` | Generate valid output shapes per state |
-| `Part` | interface | `core.d.ts` | Authored ECS component contract pairing a name with its schema. |
+| `OwnedDenseStore` | interface | `core.d.ts` | Read and write halves returned for one allocated dense store. |
+| `Part` | interface | `core.d.ts` | One minted, schema-backed ECS component declaration. |
+| `PartRetentionPolicy` | type | `core.d.ts` | How a Part retains values after successful schema admission. |
+| `PartTuple` | type | `core.d.ts` | Tuple of Parts used to declare system authority. |
+| `PartValue` | type | `core.d.ts` | Runtime value carried by one Part. |
 | `Plan` | namespace | `core.d.ts` | Constructors, validation, and topological ordering for plan IR. |
 | `PlanBuilder` | interface | `core.d.ts` | Fluent builder that emits an immutable plan IR. |
 | `PlanEdge` | interface | `core.d.ts` | Typed directed edge between two plan steps. |
@@ -136,9 +176,13 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `QuantizerCrossings` | type | `core.d.ts` | No-replay crossing subscription side (was \`Stream.Stream<BoundaryCrossing<StateUnion<B> & string>>\`): a late subscriber never sees a prior crossing. |
 | `QuantizerState` | type | `core.d.ts` | Replay-1 current-state read side (was \`Effect.Effect<StateUnion<B>>\`): \`read()\` returns the current discrete state; a subscriber is replayed the current value on attach. |
 | `ReactiveQuantizer` | interface | `core.d.ts` | Reactive quantizer — the {@link Quantizer} base plus its reactive substrate on the extracted {@link CellKernel}. This is the shape \`@liteship/quantizer\`'s live evaluator produces; a purely-synchronous quantizer omits this extension. |
+| `ReadablePart` | type | `core.d.ts` | Part readable through either a system query or read declaration. |
+| `ReadonlyDenseValues` | interface | `core.d.ts` | Read-only packed numeric values exposed by a dense store. |
 | `ReceiptDAG` | interface | `core.d.ts` | Indexed receipt graph with head tracking and canonical ordering. |
 | `ReceiptEnvelope` | interface | `core.d.ts` | Hash-linked receipt carrying deterministic evidence payload and causality. |
 | `ReceiptSubject` | interface | `core.d.ts` | Stable identity of the artifact or definition described by a receipt. |
+| `RecordSchemaNode` | interface | `core.d.ts` | Record schema AST node. |
+| `ResponsiveMediaCapabilities` | interface | `core.d.ts` | Capability slice required to resolve responsive-media intent. |
 | `RuntimeCoordinator` | interface | `core.d.ts` | Live coordinator surface shared by the core runtime and worker host. |
 | `RuntimeCoordinatorConfig` | interface | `core.d.ts` | Construction options for the shared runtime coordinator. |
 | `RuntimeCoordinatorDenseStore` | interface | `core.d.ts` | Internal dense numeric-store projection carried by the coordinator. |
@@ -147,7 +191,11 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `RuntimeWritePlan` | interface | `core.d.ts` | Deterministic sequence of runtime property-write windows. |
 | `RuntimeWriteProperty` | interface | `core.d.ts` | One property transition from a typed source value to a typed target value. |
 | `RuntimeWriteWindow` | interface | `core.d.ts` | Timed write window containing the properties active over one interval. |
+| `ScheduledFrame` | interface | `core.d.ts` | One deterministic coordinate in an offline frame schedule. |
 | `Scheduler` | interface | `core.d.ts` | Host-neutral frame scheduler used by animation and quantization runtimes. |
+| `SchemaAnnotations` | type | `core.d.ts` | Annotation map shared by the kernel schema AST. |
+| `SchemaNode` | type | `core.d.ts` | Closed kernel schema AST union mirrored for Part identity. |
+| `SchemaNodeMeta` | interface | `core.d.ts` | Common metadata on every kernel schema node. |
 | `SchemaPort` | type | `core.d.ts` | The permanent schema contract: the phantom \`Type\`/\`Encoded\` pair every schema value carries (\`A\` decodes out, \`I\` is the encoded form). Structural, so an effect \`Schema\`/\`Codec\` value and a kernel schema both satisfy it — the spine names this instead of effect's \`Schema\` (ADR-0010, spine-first). |
 | `Signal` | interface | `core.d.ts` | Reactive signal over CellKernel.replay1 (Effect-free, Wave 6) |
 | `SignalInput` | type | `core.d.ts` | Branded input signal name -- e.g. 'viewport.width', 'prefers-color-scheme' |
@@ -156,13 +204,22 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `StateName` | type | `core.d.ts` | Branded state name -- e.g. 'mobile', 'tablet', 'desktop' |
 | `StateUnion` | type | `core.d.ts` | Extract literal union of state names from a Boundary |
 | `Store` | interface | `core.d.ts` | TEA-style reducer store over CellKernel.replay1 (Effect-free, Wave 6) |
-| `System` | interface | `core.d.ts` | ECS system that evaluates entities matching a component-name query. |
+| `StringSchemaNode` | interface | `core.d.ts` | String schema AST node. |
+| `StructSchemaField` | interface | `core.d.ts` | One named field in a struct schema node. |
+| `StructSchemaNode` | interface | `core.d.ts` | Struct schema AST node. |
+| `System` | interface | `core.d.ts` | Typed ECS system with explicit query/read/write authority. |
+| `SystemContext` | interface | `core.d.ts` | Trusted read/write context supplied to one declared system. |
+| `SystemEntity` | interface | `core.d.ts` | Minimal entity handle supplied to a declared system. |
 | `ThresholdValue` | type | `core.d.ts` | Branded threshold number on a boundary |
 | `Timeline` | interface | `core.d.ts` | Quantizer over time on CellKernel.replay1 ({distinct} state channel, Effect-free, Wave 6) |
 | `TopoSortResult` | type | `core.d.ts` | Topological plan order or the cycle that prevents one. |
 | `TransformPart` | interface | `core.d.ts` | Partial transform components composed into a rendered transform value. |
+| `TuplePart` | type | `core.d.ts` | Part member selected from one authority tuple. |
+| `TupleSchemaNode` | interface | `core.d.ts` | Tuple schema AST node. |
 | `TypedRef` | interface | `core.d.ts` | Content-addressed reference to a payload validated against a schema hash. |
 | `TypedValue` | type | `core.d.ts` | Runtime value whose unit or color space is explicit in the type. |
+| `UnionSchemaNode` | interface | `core.d.ts` | Union schema AST node. |
+| `UnknownSchemaNode` | interface | `core.d.ts` | Unknown schema AST node. |
 | `VectorClock` | interface | `core.d.ts` | Immutable peer-counter map used for causal ordering. |
 | `VideoConfig` | interface | `core.d.ts` | Dimensions, frame rate, and duration of a video render schedule. |
 | `VideoFrameOutput` | interface | `core.d.ts` | One scheduled video frame and the compositor state that produced it. |
@@ -185,6 +242,14 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `TokenRef` | type | `design.d.ts` | Branded reference to a named token definition. |
 | `TokensOf` | type | `design.d.ts` | Token-name union carried by a theme definition. |
 | `VariantsOf` | type | `design.d.ts` | Variant-name union carried by a theme definition. |
+| `CapAxis` | type | `detect.d.ts` | Canonical capability-axis names shared by detection and hosts. |
+| `CapabilityAxisEvidence` | interface | `detect.d.ts` | One capability-axis value plus exhaustive primitive provenance. |
+| `CapabilityAxisValues` | interface | `detect.d.ts` | Complete values projected on the three capability axes. |
+| `CapabilityEvidenceInput` | type | `detect.d.ts` | Primitive inputs consumed by the tier ladders. |
+| `CapabilityEvidenceInputs` | type | `detect.d.ts` | Exhaustive provenance map for the primitive inputs used by the tier ladders. |
+| `CapabilityInputEvidence` | interface | `detect.d.ts` | Provenance for one primitive capability value. |
+| `CapabilityTierEvidence` | type | `detect.d.ts` | Per-axis provenance for one complete tier projection. |
+| `CapabilityTierProjection` | interface | `detect.d.ts` | Source tier triple projected onto the canonical capability axes. |
 | `DesignTier` | type | `detect.d.ts` | Ordered visual-detail tier selected from device evidence. |
 | `DetectionResult` | interface | `detect.d.ts` | Base capability evidence and the rendering tier derived from it. |
 | `DeviceCapabilities` | interface | `detect.d.ts` | Browser-observed hardware, preference, viewport, and connection capabilities. |
@@ -197,12 +262,14 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `BoundaryManifestEntry` | interface | `edge.d.ts` | One boundary's precompiled target outputs indexed by tier pair. |
 | `BoundaryManifestFile` | interface | `edge.d.ts` | Versioned, content-addressed serialized boundary manifest. |
 | `ClientHints` | namespace | `edge.d.ts` | Parsers and normalizers for edge-visible client-hint evidence. |
+| `ClientHintsEvidence` | interface | `edge.d.ts` | One canonical Client-Hints parse: complete values plus input-level provenance. |
 | `ClientHintsHeaders` | interface | `edge.d.ts` | HTTP client-hint headers consumed by edge capability resolution. |
 | `CompiledGLSLOutput` | interface | `edge.d.ts` | GLSL source and numeric uniforms stored in an edge manifest. |
 | `CompiledOutputs` | interface | `edge.d.ts` | Precompiled CSS, shader, accessibility, and agent projections for a boundary. |
 | `CompiledWGSLOutput` | interface | `edge.d.ts` | WGSL source and uniform values stored in an edge manifest. |
 | `EdgeHostAdapter` | interface | `edge.d.ts` | Host-neutral edge adapter that resolves request evidence into LiteShip outputs. |
 | `EdgeHostAdapterConfig` | interface | `edge.d.ts` | Complete configuration accepted by an edge host adapter. |
+| `EdgeHostBackground` | interface | `edge.d.ts` | Workers background hook for deferring cache write-back off the request path. |
 | `EdgeHostBoundaryConfig` | interface | `edge.d.ts` | Boundary manifest and precompiled-asset inputs for edge host resolution. |
 | `EdgeHostBoundaryResolution` | interface | `edge.d.ts` | Resolved state and compiled outputs for one boundary. |
 | `EdgeHostCacheConfig` | interface | `edge.d.ts` | TTL, tags, and cache implementation used by an edge host. |
@@ -220,6 +287,14 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `ThemeCompileResult` | interface | `edge.d.ts` | Compiled theme CSS and its normalized declaration inventory. |
 | `ThemeDeclaration` | interface | `edge.d.ts` | Internal normalized custom-property declaration for one theme variant. |
 | `TierKey` | type | `edge.d.ts` | Stable cache partition composed from motion and design tiers. |
+| `EventDetail` | type | `events.generated.d.ts` | Payload detail for one admitted event identity. |
+| `EventsInChannel` | type | `events.generated.d.ts` | Event identities delivered through one transport channel. |
+| `EventsOwnedBy` | type | `events.generated.d.ts` | Event identities owned by one semantic package owner. |
+| `LiteShipEventChannel` | type | `events.generated.d.ts` | Transport channel on which a fleet event is delivered. |
+| `LiteShipEventMap` | interface | `events.generated.d.ts` | Generated fleet-wide event identity map. Owner catalogs are its only authored source. |
+| `LiteShipEventName` | type | `events.generated.d.ts` | Every event identity admitted by the generated fleet protocol. |
+| `LiteShipEventOwner` | type | `events.generated.d.ts` | Package that owns an event identity and its semantic payload contract. |
+| `ProtocolEvent` | interface | `events.generated.d.ts` | One event protocol row carrying provenance, transport, and detail. |
 | `ComponentCatalog` | interface | `genui.d.ts` | Host-registered component catalog for generated UI. |
 | `ComponentDef` | interface | `genui.d.ts` | Catalog component definition — props and child constraints. |
 | `ComponentPropDef` | interface | `genui.d.ts` | Prop schema entry for a catalog component. |
@@ -256,7 +331,8 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `TrackKind` | type | `scene.d.ts` | Closed set of track kinds. |
 | `BoundaryAssetUrlMap` | type | `vite.d.ts` | Boundary threshold-to-asset URL table emitted for host consumption. |
 | `CollectBoundaryManifestOptions` | interface | `vite.d.ts` | Inputs required to assemble a build-time boundary manifest. |
-| `HMRPayload` | interface | `vite.d.ts` | Typed payload sent when a LiteShip definition changes during HMR. |
+| `HMRBoundaryIdentity` | interface | `vite.d.ts` | JSON-safe boundary identity sent by the Vite HMR channel. |
+| `HMRPayload` | interface | `vite.d.ts` | Canonical payload sent when a LiteShip boundary changes during HMR. |
 | `PluginConfig` | interface | `vite.d.ts` | LiteShip Vite plugin discovery, HMR, environment, and WASM options. |
 | `PrimitiveKind` | type | `vite.d.ts` | Authored definition kinds discovered by the Vite integration. |
 | `PrimitiveResolution` | interface | `vite.d.ts` | Resolved authored definition and the source file that owns it. |
@@ -271,6 +347,7 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `VirtualModuleId` | type | `vite.d.ts` | Closed virtual-module identifiers served by the Vite plugin. |
 | `VitePrimitive` | type | `vite.d.ts` | Definition type selected by a Vite primitive kind. |
 | `BackpressureHint` | interface | `web.d.ts` | Queue pressure evidence exposed to an SSE producer or consumer. |
+| `Canvas2DTarget` | type | `web.d.ts` | Canvas surface accepted by browser capture rendering. |
 | `FocusState` | interface | `web.d.ts` | Focused element and text-selection offsets captured from the DOM. |
 | `IMEState` | interface | `web.d.ts` | Input-method composition state retained across DOM updates. |
 | `IslandMode` | type | `web.d.ts` | Hydration capability selected for one registered island. |
@@ -283,12 +360,16 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `MorphResult` | type | `web.d.ts` | Success or explicit rejection returned by a DOM morph. |
 | `OverflowPolicy` | type | `web.d.ts` | Backpressure policy applied when an SSE queue reaches capacity. |
 | `PhysicalState` | interface | `web.d.ts` | Browser state captured before DOM morphing and restored afterward. |
+| `PhysicalStateTracker` | interface | `web.d.ts` | Explicit owner for document-level IME listeners and physical-state capture. |
 | `ReconnectConfig` | interface | `web.d.ts` | Bounded exponential-backoff parameters for SSE reconnection. |
+| `RenderContext2D` | type | `web.d.ts` | 2D context produced by a browser capture target. |
 | `RenderFn` | type | `web.d.ts` | Host renderer invoked for each browser-capture frame. |
 | `ResumeResponse` | type | `web.d.ts` | Host response to a stream-resumption request. |
 | `ResumptionConfig` | interface | `web.d.ts` | Bounds and storage hooks used to resume an interrupted event stream. |
 | `ResumptionState` | interface | `web.d.ts` | Last accepted event identity and buffered recovery state. |
 | `ResumptionStateInput` | type | `web.d.ts` | Input accepted by \`Resumption.saveState\`. The stored shape keeps \`timestamp\` required; on input it defaults to \`Date.now()\` — only the engine reads it. |
+| `RuntimeEndpointKind` | type | `web.d.ts` | Category of remote runtime endpoint governed by a host policy. |
+| `RuntimeEndpointPolicy` | interface | `web.d.ts` | Origin policy applied at runtime network boundaries. |
 | `SSEClient` | interface | `web.d.ts` | Live resumable SSE client with explicit connection and teardown control. |
 | `SSEConfig` | interface | `web.d.ts` | Endpoint, retry, heartbeat, and queue options for an SSE client. |
 | `SSEMessage` | type | `web.d.ts` | Parsed data, heartbeat, or control message received over SSE. |
@@ -299,7 +380,6 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `SlotEntryInput` | interface | `web.d.ts` | Input accepted by \`SlotRegistry.register\`. Registered entries are normalized to a full {@link SlotEntry}: \`mode\` defaults to \`'partial'\` and \`mounted\` defaults to \`true\`. |
 | `SlotPath` | type | `web.d.ts` | Branded absolute path identifying a DOM morphing slot. |
 | `SlotRegistry` | interface | `web.d.ts` | Live registry that owns DOM slots and observes their lifecycle. |
-| `WebCodecsCapture` | namespace | `web.d.ts` | Browser WebCodecs capture constructor and capability surface. |
 | `WebCodecsCaptureOptions` | interface | `web.d.ts` | Canvas, timing, and codec options for browser video capture. |
 | `AddQuantizerMessage` | interface | `worker.d.ts` | Host command registering one quantizer with the worker. |
 | `ApplyResolvedStateMessage` | interface | `worker.d.ts` | Host command applying a newer authoritative state snapshot. |
@@ -352,4 +432,4 @@ Generated from the 16 declaration leaf owners. A symbol cannot enter the root ba
 | `WorkerMetrics` | type | `worker.d.ts` | The performance sample delivered to \`CompositorWorker.onMetrics\` listeners — a single record reusing the wire {@link MetricsMessage} shape (not positional \`(fps, budgetUsed)\` arguments), so a future metric can be added without changing the callback's arity (F1). |
 | `WorkerUpdate` | type | `worker.d.ts` | Closed mutation language accepted by a batched worker update. |
 
-Value-only leaf declarations excluded from the type root: 117.
+Value-only leaf declarations excluded from the type root: 126.

@@ -85,6 +85,8 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     expect(testFile).toContain('cache hit: identical source yields the same derived output');
     expect(testFile).toContain('invalidation: source change produces new cache entry');
     expect(testFile).toContain('contentAddressOf');
+    expect(testFile).toContain('Only the portable source bytes are the');
+    expect(testFile).not.toContain('contentAddressOf(cached)');
     expect(testFile).toContain('exactArrayBuffer(readFileSync(fixtureAbs))');
     expect(testFile).toContain('sourceKey(exactArrayBuffer(mutated))');
     expect(testFile).not.toContain('readFileSync(fixtureAbs).buffer as ArrayBuffer');

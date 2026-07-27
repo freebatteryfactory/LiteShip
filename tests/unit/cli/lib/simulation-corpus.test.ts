@@ -1,5 +1,5 @@
 /**
- * THE DST SCENARIO CORPUS (`packages/cli/src/lib/simulation-corpus.ts`) — the
+ * THE DST SCENARIO CORPUS (`packages/cli/src/internal/simulation-corpus.ts`) — the
  * committed, content-addressed set of deterministic scenarios the host drives the
  * REAL L4 trust-spine code through, certifying byte-exact replay (the FoundationDB
  * property).
@@ -40,7 +40,7 @@ import {
   runSimulationCorpus,
   type BaselineCorpusEntry,
   type RecoveryCorpusEntry,
-} from '../../../../packages/cli/src/lib/simulation-corpus.js';
+} from '../../../../packages/cli/src/internal/simulation-corpus.js';
 
 function baselineEntry(scenario: SimScenario, seeds: readonly number[]): BaselineCorpusEntry {
   return {

@@ -10,7 +10,7 @@ import {
   projectGovernedExceptions,
   TESTING_LEDGER_PATH,
 } from '../../../scripts/lib/governed-exceptions.js';
-import { STANDARDS_WAIVERS_PATH } from '../../../packages/cli/src/lib/standards-surface.js';
+import { STANDARDS_WAIVERS_PATH } from '../../../packages/cli/src/internal/standards-surface.js';
 import { GOVERNED_EFFECTIVE_DATE, GOVERNED_NOW, governedExceptionSources } from '../../support/governed-exceptions.js';
 
 const effectiveDateOf = (): string => GOVERNED_EFFECTIVE_DATE;

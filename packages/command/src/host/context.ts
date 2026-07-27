@@ -14,7 +14,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { Compositor, VideoRenderer, wallClock, type Millis } from '@liteship/core';
+import { Compositor, createVideoRenderer, wallClock, type Millis } from '@liteship/core';
 import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@liteship/assets';
 import { IoError, ValidationError } from '@liteship/error';
 import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@liteship/gauntlet';
@@ -198,7 +198,7 @@ export function createNodeCommandContext(
       // on the way out, preserving the old `Effect.scoped` cleanup.
       const compositor = Compositor.create();
       try {
-        const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
+        const renderer = createVideoRenderer({ fps, width, height, durationMs: durationMs as Millis }, compositor);
         return await renderWithFfmpeg(renderer.frames(), { output, width, height, fps });
       } finally {
         await compositor.dispose();

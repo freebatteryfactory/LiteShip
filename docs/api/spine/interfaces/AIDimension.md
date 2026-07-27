@@ -6,7 +6,7 @@
 
 # Interface: AIDimension
 
-Defined in: [\_spine/compiler.d.ts:203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L203)
+Defined in: [\_spine/compiler.d.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L215)
 
 One state dimension described to an agent.
 
@@ -16,7 +16,7 @@ One state dimension described to an agent.
 
 > `readonly` **current**: `string`
 
-Defined in: [\_spine/compiler.d.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L205)
+Defined in: [\_spine/compiler.d.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L217)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:205](https://github.com/freebatteryfactory/Li
 
 > `readonly` **description**: `string`
 
-Defined in: [\_spine/compiler.d.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L207)
+Defined in: [\_spine/compiler.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L219)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:207](https://github.com/freebatteryfactory/Li
 
 > `readonly` **exclusive**: `boolean`
 
-Defined in: [\_spine/compiler.d.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L206)
+Defined in: [\_spine/compiler.d.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L218)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/compiler.d.ts:206](https://github.com/freebatteryfactory/Li
 
 > `readonly` **states**: readonly `string`[]
 
-Defined in: [\_spine/compiler.d.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L204)
+Defined in: [\_spine/compiler.d.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L216)

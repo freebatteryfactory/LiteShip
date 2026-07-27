@@ -264,7 +264,7 @@ Tags: [SCH] schema · [EFF] effect-shed · [CSS] motion · [TYP] type-leverage �
 
 - `package.json` — **edit** [EFF] Delete the effect peerDependency (carried only for the capsule Schema declaration). ⏸ BLOCKED: cloudflare-adapter capsule Schema (schema workstream) · **edit** [CER] Replace literal effect peer pin with pnpm catalog: reference.
 - `src/cache-provider.ts` — **edit** [DUP] Delete byte-equivalent resolveEnvSource + primeRuntimeEnv duplication (lines 103-107); import from ./env-source.js.
-- `src/capsules/cloudflare-adapter.ts` — **edit** [SCH] Rebuild Record/Struct/Union/Literal/String schemas with kernel constructors; delete the invariant cast (line 37); removes cloudflare's sole effect import — package becomes runtime effect-free (T008/T023).
+- `src/cloudflare-adapter-capsule.ts` — **edit** [SCH] Rebuild Record/Struct/Union/Literal/String schemas with kernel constructors; delete the invariant cast (line 37); removes cloudflare's sole effect import — package becomes runtime effect-free (T008/T023).
 - `src/env-source.ts` — **create** [DUP] New shared leaf exporting resolveEnvSource (function/value/default Workers-env resolver) and the loadWorkersEnvFromRuntime priming helper used by both entry seams.
 - `src/middleware.ts` — **edit** [DUP] Delete local resolveEnvSource + priming (lines 134-138); import from ./env-source.js.
 - `tsconfig.json` — **edit** [CER] Replace duplicated compilerOptions block with extends ../../tsconfig.base.json; keep only package-specific paths/references/include.
@@ -418,7 +418,7 @@ Tags: [SCH] schema · [EFF] effect-shed · [CSS] motion · [TYP] type-leverage �
 ### packages/web — 15 files
 
 - `package.json` — **edit** [EFF] Delete the effect peerDependency after the SSE/resumption/recovery/morph/physical/slot migrations. ⏸ BLOCKED: stream-receipt.ts capsule Schema (schema workstream); recovery-substrate receipt grounding (core-seams) · **edit** [CER] Replace literal effect peer pin with pnpm catalog: reference. · **edit** [DUP] Add @czap/canonical workspace dependency (bytesToHex import in shader-integrity.ts). · **edit** [SEAM:7] Core-seams blocker (recovery-substrate grounding) clears; effect-peer deletion still awaits stream-receipt.ts capsule Schema (schema workstream) — land the catalog: swap now, deletion stays gated.
-- `src/capsules/stream-receipt.ts` — **edit** [SCH] Rebuild Struct/Union/Literal/Unknown/optional/String/Number schemas with kernel constructors; drop web's capsule effect Schema import (T025).
+- `src/stream-receipt-capsule.ts` — **edit** [SCH] Rebuild Struct/Union/Literal/Unknown/optional/String/Number schemas with kernel constructors; drop web's capsule effect Schema import (T025).
 - `src/index.ts` — **edit** [DUP] Add escapeHtml to the security/html-trust export list (line 62).
 - `src/morph/diff.ts` — **edit** [EFF] Export morphPure directly as morph; delete the Effect.sync wrapper (lines 44-53).
 - `src/physical/capture.ts` — **edit** [EFF] Flatten Effect.sync wrapper (line 58) to a plain synchronous function — first Effect-free public entry for capture.

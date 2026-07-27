@@ -8,6 +8,6 @@
 
 > **WGSLUniformValue** = `number` \| [`WGSLUniformVector`](WGSLUniformVector.md)
 
-Defined in: [\_spine/compiler.d.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L136)
+Defined in: [\_spine/compiler.d.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L148)
 
 Runtime value accepted by a generated WGSL uniform.

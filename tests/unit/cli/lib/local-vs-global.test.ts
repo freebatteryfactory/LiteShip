@@ -24,7 +24,7 @@ import {
   buildCompositionFacts,
   blendProof,
   PROOF_BLEND_WEIGHTS,
-} from '../../../../packages/cli/src/lib/local-vs-global.js';
+} from '../../../../packages/cli/src/internal/local-vs-global.js';
 
 const A = 'packages/core/src/a.ts';
 const B = 'packages/core/src/b.ts';

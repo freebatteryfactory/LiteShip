@@ -8,7 +8,7 @@
 
 > **Messages** = `object`
 
-Defined in: [\_spine/worker.d.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L274)
+Defined in: [\_spine/worker.d.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L275)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [\_spine/worker.d.ts:274](https://github.com/freebatteryfactory/Lite
 
 > **isFromWorker**(`msg`): `msg is FromWorkerMessage`
 
-Defined in: [\_spine/worker.d.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L276)
+Defined in: [\_spine/worker.d.ts:277](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L277)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/worker.d.ts:276](https://github.com/freebatteryfactory/Lite
 
 > **isToWorker**(`msg`): `msg is ToWorkerMessage`
 
-Defined in: [\_spine/worker.d.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L275)
+Defined in: [\_spine/worker.d.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L276)
 
 #### Parameters
 

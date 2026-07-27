@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { scanConsumerAppSource } from '../../../packages/cli/src/lib/consumer-app-audit.js';
+import { scanConsumerAppSource } from '../../../packages/cli/src/internal/consumer-app-audit.js';
 
 describe('consumer-app audit (#117)', () => {
   test('flags raw Request passed to resolveInitialState', () => {

@@ -6,7 +6,7 @@
 
 # Interface: AIParamSchema
 
-Defined in: [\_spine/compiler.d.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L224)
+Defined in: [\_spine/compiler.d.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L236)
 
 Restricted parameter schema used by agent action declarations.
 
@@ -16,7 +16,7 @@ Restricted parameter schema used by agent action declarations.
 
 > `readonly` **description**: `string`
 
-Defined in: [\_spine/compiler.d.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L231)
+Defined in: [\_spine/compiler.d.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L243)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:231](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **enum?**: readonly `string`[]
 
-Defined in: [\_spine/compiler.d.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L226)
+Defined in: [\_spine/compiler.d.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L238)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:226](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **max?**: `number`
 
-Defined in: [\_spine/compiler.d.ts:228](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L228)
+Defined in: [\_spine/compiler.d.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L240)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/compiler.d.ts:228](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **min?**: `number`
 
-Defined in: [\_spine/compiler.d.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L227)
+Defined in: [\_spine/compiler.d.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L239)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/compiler.d.ts:227](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **required?**: `boolean`
 
-Defined in: [\_spine/compiler.d.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L230)
+Defined in: [\_spine/compiler.d.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L242)
 
 Defaults to `false` (JSON Schema convention).
 
@@ -58,4 +58,4 @@ Defaults to `false` (JSON Schema convention).
 
 > `readonly` **type**: `string`
 
-Defined in: [\_spine/compiler.d.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L225)
+Defined in: [\_spine/compiler.d.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L237)

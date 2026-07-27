@@ -6,7 +6,7 @@
 
 # Interface: ReceiptSubject
 
-Defined in: [\_spine/core.d.ts:977](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L977)
+Defined in: [\_spine/core.d.ts:1192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1192)
 
 Stable identity of the artifact or definition described by a receipt.
 
@@ -16,7 +16,7 @@ Stable identity of the artifact or definition described by a receipt.
 
 > `readonly` **id**: `string`
 
-Defined in: [\_spine/core.d.ts:979](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L979)
+Defined in: [\_spine/core.d.ts:1194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1194)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/core.d.ts:979](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **type**: `"effect"` \| `"run"` \| `"artifact"` \| `"intent"`
 
-Defined in: [\_spine/core.d.ts:978](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L978)
+Defined in: [\_spine/core.d.ts:1193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1193)

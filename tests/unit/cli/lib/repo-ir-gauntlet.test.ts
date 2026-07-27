@@ -1,6 +1,6 @@
 // PROVES-CHECK: check/gates
 /**
- * The HOST injection path (`packages/cli/src/lib/repo-ir-gauntlet.ts`, Slice B/C) —
+ * The HOST injection path (`packages/cli/src/internal/repo-ir-gauntlet.ts`, Slice B/C) —
  * the CLI-only wiring that builds the repo-IR via `@liteship/audit`, host-injects the
  * LiteShip `invariant-regex` oracle, composes the avionics opt-in gates, and runs
  * the gauntlet with the IR threaded in.
@@ -53,19 +53,45 @@ import {
   serializeStandardsSurface,
   STANDARDS_SNAPSHOT_PATH,
   type GitShowReader,
-} from '../../../../packages/cli/src/lib/standards-surface.js';
-import type { Fact, FileId } from '@liteship/gauntlet';
+} from '../../../../packages/cli/src/internal/standards-surface.js';
+import {
+  FEATURE_EDGE_ENUMERATORS,
+  FEATURE_EDGE_FAMILIES,
+  type Fact,
+  type FeatureEdgeFacts,
+  type FileId,
+} from '@liteship/gauntlet';
 import {
   liteshipRegexOracle,
   buildRepoIRForRepo,
   runGauntletWithRepoIR as runGauntletWithRepoIRRaw,
   DEFAULT_EXPORT_CHECK_EXCLUDED,
   type RepoIRGauntletCacheOptions,
-} from '../../../../packages/cli/src/lib/repo-ir-gauntlet.js';
-import { parseSemanticAssuranceReceipt } from '../../../../packages/cli/src/lib/semantic-assurance-receipt.js';
+} from '../../../../packages/cli/src/internal/repo-ir-gauntlet.js';
+import { parseSemanticAssuranceReceipt } from '../../../../packages/cli/src/internal/semantic-assurance-receipt.js';
+import { GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS } from '../../../../packages/cli/src/internal/semantic-assurance-campaigns.generated.js';
 
 /** The injected wall-clock — every run is reproducible against THIS date (two-clock law). */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
+const FEATURE_EDGE_DIGEST = `sha256:${'0'.repeat(64)}` as const;
+const FIXTURE_FEATURE_EDGES: FeatureEdgeFacts = {
+  _tag: 'feature-edge-facts',
+  families: FEATURE_EDGE_FAMILIES.map((family) => ({
+    family,
+    observations: [],
+    subjectCoverage: {
+      status: 'complete',
+      enumerator: FEATURE_EDGE_ENUMERATORS[family],
+      enumeratedCount: 0,
+      censusDigest: FEATURE_EDGE_DIGEST,
+    },
+  })),
+  aggregate: {
+    enumerator: 'feature-edge/family-set-v1',
+    enumeratedCount: 0,
+    censusDigest: FEATURE_EDGE_DIGEST,
+  },
+};
 
 /**
  * The raccoon-rule backstop now diffs the LIVE surface against a PRIOR, INDEPENDENT
@@ -88,6 +114,7 @@ function runGauntletWithRepoIR(
 ): ReturnType<typeof runGauntletWithRepoIRRaw> {
   return runGauntletWithRepoIRRaw(repoRoot, now, globs, {
     standards: { gitShow: fixtureBaseGitShow },
+    featureEdges: FIXTURE_FEATURE_EDGES,
     ...cacheOpts,
   });
 }
@@ -222,9 +249,12 @@ function fixtureRootManifest(): string {
   const registered = CHECK_REGISTRY.flatMap((check) =>
     check.contexts.includes('repository') && check.execution.kind === 'root-script' ? [check.execution.script] : [],
   );
-  const scripts = Object.fromEntries([...new Set([...registered, ...SCRIPT_EXEMPTIONS.map((entry) => entry.script)])].map(
-    (script) => [script, 'fixture-only'],
-  ));
+  const scripts = Object.fromEntries(
+    [...new Set([...registered, ...SCRIPT_EXEMPTIONS.map((entry) => entry.script)])].map((script) => [
+      script,
+      'fixture-only',
+    ]),
+  );
   return JSON.stringify({ name: 'liteship-fixture-root', private: true, type: 'module', scripts });
 }
 
@@ -487,10 +517,18 @@ describe('runGauntletWithRepoIR — build IR + always-on facts + run + receipt',
 // ───────────────────────────────────────────────────────────────────────────
 
 describe('runGauntletWithRepoIR — the --mutate / --mcdc seam paths (no L4 seams present)', () => {
-  const campaignEntrypointFixtures = {
-    'packages/genui/src/index.ts': 'export type GenuiFixture = string;\n',
-    'packages/assets/src/index.ts': 'export type AssetsFixture = string;\n',
-  } as const;
+  const campaignEntrypointFixtures = Object.fromEntries(
+    GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS.flatMap((campaign) => [
+      [
+        `${campaign.packageDir}/package.json`,
+        JSON.stringify({ name: campaign.owner, version: '0.0.0', private: true, type: 'module' }),
+      ],
+      ...campaign.entrypoints.map(
+        (entrypoint, index) =>
+          [entrypoint, `export type SemanticCampaignFixture${index} = ${JSON.stringify(campaign.id)};\n`] as const,
+      ),
+    ]),
+  );
 
   it(
     '--mutate composes the mutation gate; an absent baseline/registry yields an empty (no-floor) run',
@@ -634,6 +672,7 @@ describe('runGauntletWithRepoIR — the --spine-relation host path blocks on a p
         noCache: true,
         withSpineRelation: true,
         spineRelation: { overlay: { [CORE_DTS]: drifted } },
+        featureEdges: FIXTURE_FEATURE_EDGES,
         standards: { gitShow: realSnapshotBase },
       });
       // The host COMPOSED the gate and INJECTED the facts: the VideoConfig mirror (durationMs

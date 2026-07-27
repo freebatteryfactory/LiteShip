@@ -6,7 +6,7 @@
 
 # Interface: CellMeta
 
-Defined in: [\_spine/core.d.ts:555](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L555)
+Defined in: [\_spine/core.d.ts:582](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L582)
 
 Optional sequencing metadata attached to a cell emission.
 
@@ -16,7 +16,7 @@ Optional sequencing metadata attached to a cell emission.
 
 > `readonly` **created**: [`HLC`](../type-aliases/HLC.md)
 
-Defined in: [\_spine/core.d.ts:556](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L556)
+Defined in: [\_spine/core.d.ts:583](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L583)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:556](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **updated**: [`HLC`](../type-aliases/HLC.md)
 
-Defined in: [\_spine/core.d.ts:557](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L557)
+Defined in: [\_spine/core.d.ts:584](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L584)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:557](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **version**: `number`
 
-Defined in: [\_spine/core.d.ts:558](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L558)
+Defined in: [\_spine/core.d.ts:585](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L585)

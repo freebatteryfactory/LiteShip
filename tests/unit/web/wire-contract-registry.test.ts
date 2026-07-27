@@ -101,9 +101,7 @@ describe('wire-contract registry — typed liteship:* union + stream attributes'
     expect(streamWireAttr('morph')).toBe('data-liteship-stream-morph');
     expect(streamWireAttr('snapshotUrl')).toBe('data-liteship-snapshot-url');
     expect(streamWireAttr('replayUrl')).toBe('data-liteship-replay-url');
-    expect([...STREAM_WIRE_ATTRIBUTES].sort()).toEqual(
-      STREAM_WIRE_ATTR_KEYS.map((key) => streamWireAttr(key)).sort(),
-    );
+    expect([...STREAM_WIRE_ATTRIBUTES].sort()).toEqual(STREAM_WIRE_ATTR_KEYS.map((key) => streamWireAttr(key)).sort());
   });
 
   test('generated WIRE-CONTRACT block matches renderWireContractDoc (run `pnpm run docs:gen`)', () => {
@@ -118,9 +116,9 @@ describe('wire-contract registry — typed liteship:* union + stream attributes'
   test('runtime liteship:* literals in web+astro+vite runtime are registered (no fabricated names)', () => {
     const literals = collectRuntimeLiteshipEventLiterals();
     const registered = new Set<string>(LITESHIP_EVENT_NAMES);
-    // Dev/HMR and detect-owned events are out of scope for this registry slice.
-    const allowUnregistered = new Set(['liteship:update', 'liteship:detect-ready', 'liteship:scene-update']);
-    const missing = literals.filter((name) => !registered.has(name) && !allowUnregistered.has(name));
+    // Vite/Scene use a non-DOM custom channel; every DOM identity is projected.
+    const nonDom = new Set(['liteship:update', 'liteship:scene-update']);
+    const missing = literals.filter((name) => !registered.has(name) && !nonDom.has(name));
     expect(missing, `add to LITESHIP_EVENT_NAMES: ${missing.join(', ')}`).toEqual([]);
   });
 
@@ -130,9 +128,6 @@ describe('wire-contract registry — typed liteship:* union + stream attributes'
 
   test('runtime liteship:* dispatches route through dispatchLiteshipEvent (no raw CustomEvent bypass)', () => {
     const violations = collectRawLiteshipCustomEventDispatches();
-    expect(
-      violations,
-      `use dispatchLiteshipEvent instead of raw CustomEvent:\n${violations.join('\n')}`,
-    ).toEqual([]);
+    expect(violations, `use dispatchLiteshipEvent instead of raw CustomEvent:\n${violations.join('\n')}`).toEqual([]);
   });
 });

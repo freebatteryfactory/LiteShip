@@ -6,7 +6,7 @@
 
 # Interface: ConfigTemplateResult
 
-Defined in: [\_spine/compiler.d.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L305)
+Defined in: [\_spine/compiler.d.ts:317](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L317)
 
 Generated host-configuration template and its destination filename.
 
@@ -16,4 +16,4 @@ Generated host-configuration template and its destination filename.
 
 > `readonly` **json**: `string`
 
-Defined in: [\_spine/compiler.d.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L306)
+Defined in: [\_spine/compiler.d.ts:318](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L318)

@@ -8,7 +8,7 @@
 
 > **TokensOf**\<`T`\> = keyof `T`\[`"tokens"`\]
 
-Defined in: [\_spine/design.d.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L190)
+Defined in: [\_spine/design.d.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/design.d.ts#L191)
 
 Token-name union carried by a theme definition.
 

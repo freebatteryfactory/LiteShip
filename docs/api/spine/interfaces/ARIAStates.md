@@ -6,7 +6,7 @@
 
 # Interface: ARIAStates
 
-Defined in: [\_spine/compiler.d.ts:298](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L298)
+Defined in: [\_spine/compiler.d.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L310)
 
 State-indexed accessibility output accepted by compiler dispatch.
 
@@ -16,7 +16,7 @@ State-indexed accessibility output accepted by compiler dispatch.
 
 > `readonly` `optional` **currentState?**: `string`
 
-Defined in: [\_spine/compiler.d.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L301)
+Defined in: [\_spine/compiler.d.ts:313](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L313)
 
 Defaults to the boundary's first state.
 
@@ -26,4 +26,4 @@ Defaults to the boundary's first state.
 
 > `readonly` **states**: `Record`\<`string`, `Record`\<`string`, `string`\>\>
 
-Defined in: [\_spine/compiler.d.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L299)
+Defined in: [\_spine/compiler.d.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L311)

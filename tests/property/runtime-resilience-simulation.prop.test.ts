@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { IntegrityDigest } from '@liteship/core';
 import { simulationDeterminismGate, type GateContext, type ScenarioReplayFact } from '@liteship/gauntlet';
-import { createCurePacket } from '../../packages/cli/src/lib/cure-packet.js';
-import { runSimulationCorpus } from '../../packages/cli/src/lib/simulation-corpus.js';
+import { createCurePacket } from '../../packages/cli/src/internal/cure-packet.js';
+import { runSimulationCorpus } from '../../packages/cli/src/internal/simulation-corpus.js';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 import { RUNTIME_RESILIENCE_CORPUS } from '../support/runtime-resilience-scenarios.js';
 

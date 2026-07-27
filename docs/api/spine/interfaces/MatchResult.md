@@ -6,7 +6,7 @@
 
 # Interface: MatchResult
 
-Defined in: [\_spine/web.d.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L138)
+Defined in: [\_spine/web.d.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L150)
 
 Node match together with the evidence that justified it.
 
@@ -16,7 +16,7 @@ Node match together with the evidence that justified it.
 
 > `readonly` `optional` **matchedId?**: `string`
 
-Defined in: [\_spine/web.d.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L141)
+Defined in: [\_spine/web.d.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L153)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/web.d.ts:141](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **matches**: `boolean`
 
-Defined in: [\_spine/web.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L139)
+Defined in: [\_spine/web.d.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L151)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/web.d.ts:139](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **priority**: [`MatchPriority`](../type-aliases/MatchPriority.md)
 
-Defined in: [\_spine/web.d.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L140)
+Defined in: [\_spine/web.d.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L152)

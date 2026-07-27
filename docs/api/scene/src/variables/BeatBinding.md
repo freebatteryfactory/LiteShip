@@ -22,8 +22,8 @@ Companion type namespace exposes Spawn and Component shapes (ADR-0001).
 Bind a list of beat markers into spawn descriptors.
 
 Pure transform: BeatComponent[] → BeatSpawn[]. Each input beat becomes
-one spawn descriptor whose `components` field is suitable for direct
-use as the `Beat` component bag in `world.spawn({ Beat: ... })`.
+one spawn descriptor whose `components` field is admitted through the
+canonical `BeatPart` before entering a SceneRuntime world.
 
 Defensive copy of each beat — callers may freeze, mutate, or hand off
 the input array; the output is a fresh, owned-by-runtime sequence.

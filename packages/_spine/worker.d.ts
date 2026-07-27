@@ -12,6 +12,7 @@ import type {
   ProgramUniforms,
   RuntimeCoordinator,
   AsyncOwnedResource,
+  Millis,
 } from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -459,7 +460,7 @@ export interface TransferableCanvas {
 
 /** Render configuration for WorkerHost.startRender — only durationMs is required. */
 export interface WorkerHostRenderConfig {
-  readonly durationMs: number;
+  readonly durationMs: number | Millis;
   /** @defaultValue 60 */
   readonly fps?: number;
   /** @defaultValue the attached canvas's width at attachCanvas() time */

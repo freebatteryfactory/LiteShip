@@ -6,7 +6,7 @@
 
 # Interface: ThemeDeclaration
 
-Defined in: [\_spine/edge.d.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L199)
+Defined in: [\_spine/edge.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L219)
 
 Internal normalized custom-property declaration for one theme variant.
 
@@ -16,7 +16,7 @@ Internal normalized custom-property declaration for one theme variant.
 
 > `readonly` **property**: `string`
 
-Defined in: [\_spine/edge.d.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L200)
+Defined in: [\_spine/edge.d.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L220)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/edge.d.ts:200](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: `string`
 
-Defined in: [\_spine/edge.d.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L201)
+Defined in: [\_spine/edge.d.ts:221](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L221)

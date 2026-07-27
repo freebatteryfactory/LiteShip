@@ -8,7 +8,7 @@
 
 > `const` **Reveal**: `object`
 
-Defined in: core/dist/motion/reveal.d.ts:139
+Defined in: core/dist/motion/reveal.d.ts:141
 
 Authoring sugar namespace — data over intent, no behavior authority.
 

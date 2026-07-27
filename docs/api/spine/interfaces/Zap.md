@@ -6,7 +6,7 @@
 
 # Interface: Zap\<T\>
 
-Defined in: [\_spine/core.d.ts:708](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L708)
+Defined in: [\_spine/core.d.ts:923](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L923)
 
 Push-based event channel over a no-replay [CellKernel](../namespaces/CellKernel/README.md) fan-out
 
@@ -22,7 +22,7 @@ Push-based event channel over a no-replay [CellKernel](../namespaces/CellKernel/
 
 > `readonly` **\_tag**: `"Zap"`
 
-Defined in: [\_spine/core.d.ts:709](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L709)
+Defined in: [\_spine/core.d.ts:924](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L924)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [\_spine/core.d.ts:709](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **stream**: `Pick`\<[`Fanout`](../namespaces/CellKernel/interfaces/Fanout.md)\<`T`\>, `"subscribe"` \| `"closed"` \| `"size"`\>
 
-Defined in: [\_spine/core.d.ts:711](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L711)
+Defined in: [\_spine/core.d.ts:926](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L926)
 
 The no-replay subscribe surface — `subscribe(sink)` returns a disposer.
 
@@ -40,7 +40,7 @@ The no-replay subscribe surface — `subscribe(sink)` returns a disposer.
 
 > **emit**(`value`): `void`
 
-Defined in: [\_spine/core.d.ts:713](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L713)
+Defined in: [\_spine/core.d.ts:928](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L928)
 
 Fan `value` out to every current subscriber, synchronously. Inert after close.
 

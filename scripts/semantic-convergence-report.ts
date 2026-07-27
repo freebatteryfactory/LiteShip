@@ -137,7 +137,7 @@ function buildReport(): ConvergenceReport {
       'the shed decision + the per-responsibility migration bridge (Scope→Lifetime, SubscriptionRef/Stream→CellKernel, typed channel→Result)',
     ),
     idx(
-      'packages/cli/src/lib/declared-dependency-closure.ts',
+      'tests/support/declared-dependency-closure.ts',
       'gate',
       'the declared-dependency-closure law minted from the fast-check scar (#157): a shipped load-time import must be a declared dependency',
     ),

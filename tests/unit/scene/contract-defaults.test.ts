@@ -72,7 +72,7 @@ describe('compileScene contract defaults', () => {
       tracks: [Track.audio('bed', { from: 0, to: 60, source: 'bed' })],
     });
     const spawn = compiled.trackSpawns.find((s) => s.trackId === 'bed');
-    expect(spawn?.components['Volume']).toBe(1);
+    expect(spawn?.components.find((seed) => seed.part === 'Volume')?.value).toBe(1);
   });
 });
 

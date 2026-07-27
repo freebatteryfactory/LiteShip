@@ -8,6 +8,6 @@
 
 > `const` **DPU\_RESULT\_ATTR**: `"data-liteship-dpu-result"` = `"data-liteship-dpu-result"`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:22
+Defined in: web/dist/watch-and-prepare.d.ts:22
 
 DOM attribute stamped with the result graph id after a successful apply.

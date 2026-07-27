@@ -16,10 +16,10 @@
 
 import { wallClock } from '@liteship/core';
 import { COMMAND_CATALOG } from '@liteship/command';
-import { LITESHIP_PACKAGE_ROSTER } from '../lib/liteship-audit-profile.js';
-import { PACKAGE_METADATA_CATALOG } from '../lib/package-metadata-catalog.js';
-import { color, colorEnabled } from '../lib/ansi.js';
-import { isLiteShipWorkspace } from '../lib/workspace.js';
+import { LITESHIP_PACKAGE_ROSTER } from '../internal/liteship-audit-profile.js';
+import { PACKAGE_METADATA_CATALOG } from '../internal/package-metadata-catalog.js';
+import { color, colorEnabled } from '../internal/ansi.js';
+import { isLiteShipWorkspace } from '../internal/workspace.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { findWorkspaceRoot, loadEngineMinima } from './doctor/manifest.js';
 import {

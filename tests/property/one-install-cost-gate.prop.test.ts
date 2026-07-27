@@ -3,11 +3,11 @@ import fc from 'fast-check';
 import {
   buildOneInstallCostBaseline,
   oneInstallCostFindings,
-} from '../../packages/cli/src/lib/one-install-cost-gate.js';
+} from '../../packages/cli/src/internal/one-install-cost-gate.js';
 import {
   buildOneInstallCostReport,
   type InstalledCostObservation,
-} from '../../packages/cli/src/lib/one-install-cost-evidence.js';
+} from '../../packages/cli/src/internal/one-install-cost-evidence.js';
 
 const names = Array.from({ length: 25 }, (_, index) => `@liteship/package-${index}`);
 const installed: InstalledCostObservation = {

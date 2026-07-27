@@ -8,4 +8,4 @@
 
 > **BoundaryResolution** = [`EdgeHostBoundaryResolution`](../../../interfaces/EdgeHostBoundaryResolution.md)
 
-Defined in: [\_spine/edge.d.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L308)
+Defined in: [\_spine/edge.d.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L334)

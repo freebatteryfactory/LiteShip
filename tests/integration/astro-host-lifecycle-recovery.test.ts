@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { IntegrityDigest } from '@liteship/core';
 import { createBuildCommand, type BuildReceipt } from '../../packages/cli/src/commands/build.js';
 import { createDevCommand, type DevHostReceipt } from '../../packages/cli/src/commands/dev.js';
-import { createCurePacket } from '../../packages/cli/src/lib/cure-packet.js';
+import { createCurePacket } from '../../packages/cli/src/internal/cure-packet.js';
 import { captureCli } from './cli/capture.js';
 
 const roots: string[] = [];

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import {
   analyzeSpineSources,
+  classifySpineProvenance,
   renderSpineBarrel,
   renderSpineSymbolDocumentation,
   type SpineSurfaceAnalysis,
@@ -191,6 +192,56 @@ describe('_spine surface generation laws', () => {
         for (const name of names) expect(barrel).not.toContain(`value${name}`);
       }),
       { numRuns: 50 },
+    );
+  });
+
+  it('partitions arbitrary unique symbols exactly once between mirrors and protocols', () => {
+    fc.assert(
+      fc.property(
+        fc.uniqueArray(typeNameArbitrary, { minLength: 1, maxLength: 20 }),
+        fc.array(fc.boolean(), { minLength: 1, maxLength: 20 }),
+        (names, bits) => {
+          const analysis = analyzeSpineSources(
+            Object.fromEntries(
+              names.map((name, index) => [
+                `${index}.d.ts`,
+                `/** ${name} owner. */\nexport interface ${name} { readonly value: string }`,
+              ]),
+            ),
+          );
+          const mirrors = names.filter((_, index) => bits[index % bits.length]);
+          const contracts = mirrors.flatMap((name) => [
+            {
+              packageName: '@acme/runtime',
+              specifier: '@acme/runtime',
+              name,
+              kind: 'type' as const,
+              producer: `packages/runtime/src/${name}.ts`,
+            },
+            // Duplicate routes to the SAME producer must not manufacture a second owner.
+            {
+              packageName: '@acme/facade',
+              specifier: '@acme/facade/types',
+              name,
+              kind: 'type' as const,
+              producer: `packages/runtime/src/${name}.ts`,
+            },
+          ]);
+          const forward = classifySpineProvenance(analysis, contracts, []);
+          const reversed = classifySpineProvenance(analysis, [...contracts].reverse(), []);
+          expect(forward.findings).toEqual([]);
+          expect(reversed).toEqual(forward);
+          expect(forward.classifications).toHaveLength(names.length);
+          expect(new Set(forward.classifications.map((row) => row.symbol))).toEqual(new Set(names));
+          expect(forward.generatedAdmissions.map((row) => row.typeName)).toEqual([...mirrors].sort());
+          expect(
+            forward.classifications
+              .filter((row) => row.classification === 'spine-protocol')
+              .map((row) => row.symbol),
+          ).toEqual(names.filter((name) => !mirrors.includes(name)).sort());
+        },
+      ),
+      { numRuns: 80 },
     );
   });
 });

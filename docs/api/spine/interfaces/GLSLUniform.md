@@ -6,7 +6,7 @@
 
 # Interface: GLSLUniform
 
-Defined in: [\_spine/compiler.d.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L72)
+Defined in: [\_spine/compiler.d.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L80)
 
 One named GLSL uniform declaration and its authored default.
 
@@ -16,7 +16,7 @@ One named GLSL uniform declaration and its authored default.
 
 > `readonly` `optional` **comment?**: `string`
 
-Defined in: [\_spine/compiler.d.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L75)
+Defined in: [\_spine/compiler.d.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L83)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:75](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **name**: `string`
 
-Defined in: [\_spine/compiler.d.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L73)
+Defined in: [\_spine/compiler.d.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L81)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:73](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **type**: [`GLSLType`](../type-aliases/GLSLType.md)
 
-Defined in: [\_spine/compiler.d.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L74)
+Defined in: [\_spine/compiler.d.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L82)

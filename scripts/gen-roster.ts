@@ -35,6 +35,12 @@ import { TEMPLATE_RENAMES } from '../packages/create-liteship/src/template-renam
 import { renderSpineProjections } from './gen-spine-surface.js';
 import { renderPublicExportProjections } from './gen-public-export-contract.js';
 import { resolvePackageSourceEntrypoints as resolveSourceEntrypoints } from './lib/package-source-entrypoints.js';
+import {
+  collectEventProtocol,
+  renderEventProtocolDts,
+  renderEventProtocolHostProjection,
+  renderWebEventProjection,
+} from './lib/event-protocol-contract.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -54,20 +60,20 @@ export const PUBLISHABLE_UMBRELLAS: readonly string[] = PACKAGE_CATALOG.filter(
 export const PUBLISHABLE_ROSTER: readonly string[] = PACKAGE_CATALOG.map((record) => record.name);
 
 export const PUBLISH_ROSTER_JSON = 'scripts/ci/publish-roster.json';
-export const AUDIT_ROSTER_TS = 'packages/cli/src/lib/audit-package-catalog.generated.ts';
+export const AUDIT_ROSTER_TS = 'packages/cli/src/internal/audit-package-catalog.generated.ts';
 export const COMMAND_SMOKE_TS = 'packages/command/src/commands/package-smoke-registry.generated.ts';
-export const CLI_METADATA_TS = 'packages/cli/src/lib/package-metadata-catalog.generated.ts';
-export const CLI_ASSURANCE_CAMPAIGNS_TS = 'packages/cli/src/lib/semantic-assurance-campaigns.generated.ts';
-export const AUDIT_TOPOLOGY_TS = 'packages/cli/src/lib/audit-package-topology.generated.ts';
+export const CLI_METADATA_TS = 'packages/cli/src/internal/package-metadata-catalog.generated.ts';
+export const CLI_ASSURANCE_CAMPAIGNS_TS = 'packages/cli/src/internal/semantic-assurance-campaigns.generated.ts';
+export const AUDIT_TOPOLOGY_TS = 'packages/cli/src/internal/audit-package-topology.generated.ts';
 export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.generated.ts';
 export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
 export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.generated.ts';
 export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
-export const CLI_TEMPLATE_RENAMES_TS = 'packages/cli/src/lib/template-renames.generated.ts';
+export const CLI_TEMPLATE_RENAMES_TS = 'packages/cli/src/internal/template-renames.generated.ts';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
 export const TEST_PATHS_TSCONFIG_JSON = 'tsconfig.test-paths.generated.json';
 export const TYPEDOC_JSON = 'typedoc.json';
-const LITESHIP_ROSTER_REL = 'packages/liteship/src/testing/package-roster.ts';
+const LITESHIP_ROSTER_REL = 'packages/liteship/src/package-roster.generated.ts';
 const ONE_INSTALL_COST_BASELINE_JSON = 'benchmarks/one-install-cost-baseline.json';
 
 export interface CatalogManifest {
@@ -510,7 +516,11 @@ export function publishJobText(yaml: string): string {
 }
 
 export function renderGeneratedProjections(): ReadonlyArray<readonly [string, string]> {
+  const events = collectEventProtocol(REPO_ROOT);
   return [
+    ['packages/_spine/events.generated.d.ts', renderEventProtocolDts(events)],
+    ['packages/web/src/wire/liteship-events.generated.ts', renderWebEventProjection(events)],
+    ['packages/cli/src/internal/fleet-event-protocol.generated.ts', renderEventProtocolHostProjection(events)],
     ...renderSpineProjections(REPO_ROOT),
     ...renderPublicExportProjections(REPO_ROOT),
     [AUDIT_ROSTER_TS, renderAuditRoster()],

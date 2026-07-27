@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostCompileContext
 
-Defined in: [\_spine/edge.d.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L224)
+Defined in: [\_spine/edge.d.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L244)
 
 Edge host context extended with the selected manifest entry and tiers.
 
@@ -20,7 +20,7 @@ Edge host context extended with the selected manifest entry and tiers.
 
 > `readonly` **boundaryId**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/edge.d.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L226)
+Defined in: [\_spine/edge.d.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L246)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/edge.d.ts:226](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **boundaryName?**: `string`
 
-Defined in: [\_spine/edge.d.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L227)
+Defined in: [\_spine/edge.d.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L247)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [\_spine/edge.d.ts:227](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [\_spine/edge.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L219)
+Defined in: [\_spine/edge.d.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L239)
 
 #### Inherited from
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/edge.d.ts:219](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **theme?**: [`ThemeCompileResult`](ThemeCompileResult.md)
 
-Defined in: [\_spine/edge.d.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L225)
+Defined in: [\_spine/edge.d.ts:245](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L245)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/edge.d.ts:225](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **tier**: [`EdgeTierResult`](EdgeTierResult.md)
 
-Defined in: [\_spine/edge.d.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L220)
+Defined in: [\_spine/edge.d.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L240)
 
 #### Inherited from
 

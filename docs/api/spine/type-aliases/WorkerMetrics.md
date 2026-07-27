@@ -8,7 +8,7 @@
 
 > **WorkerMetrics** = [`MetricsMessage`](../interfaces/MetricsMessage.md)
 
-Defined in: [\_spine/worker.d.ts:262](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L262)
+Defined in: [\_spine/worker.d.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L263)
 
 The performance sample delivered to `CompositorWorker.onMetrics`
 listeners — a single record reusing the wire [MetricsMessage](../interfaces/MetricsMessage.md) shape

@@ -1,6 +1,6 @@
 {
   "name": "@liteship/web",
-  "version": "0.21.0",
+  "version": "0.23.0",
   "description": "The browser runtime for LiteShip: apply CSS, streamed HTML, worker output, and LLM chunks to a live DOM with focus- and scroll-preserving morphing.",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -44,6 +44,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
+    "@liteship/_spine": "workspace:*",
     "@liteship/canonical": "workspace:*",
     "@liteship/core": "workspace:*",
     "@liteship/error": "workspace:*",

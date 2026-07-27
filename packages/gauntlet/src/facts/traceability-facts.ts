@@ -7,7 +7,7 @@
  * `_tag` union and NOTHING else. Like {@link RepoIR}, {@link SupplyChainFacts}, and
  * {@link MutationFacts}, it carries NO heavy dependency: `@liteship/gauntlet` stays the
  * lean engine, so it never parses YAML, never scans the test corpus, and never reads
- * a wall clock. A HOST (the CLI's `packages/cli/src/lib/traceability.ts` state
+ * a wall clock. A HOST (the CLI's `packages/cli/src/internal/traceability.ts` state
  * machine) does the heavy lifting — parse `traceability/*.yaml`, scan the test corpus
  * for `// PROVES:` headers, run the lifecycle fold against the injected wall-clock
  * date, content-address the resolved ledger — and hands the engine these flat,

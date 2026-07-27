@@ -24,7 +24,7 @@ import { fnv1a } from '@liteship/core';
 import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@liteship/core';
 import { createNodeCommandContext } from '@liteship/command/host';
 import { serverInfo } from './server-info.js';
-import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
+import { MCP_METHOD_CATALOG, PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources, readResource } from './resources.js';
 import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
@@ -223,12 +223,32 @@ export function listMcpResources(): readonly McpListedResource[] {
   return projectMcpResources([listResources(), listUiResources(), listAppResources(), listManifestResources()]);
 }
 
+/**
+ * Enumerate the exact resources with a working reader through the production
+ * routing law. This is a proof projection, not a second registry: every URI is
+ * sourced from `listMcpResources`, then exercised through the same resolver arm
+ * used by `resources/read`.
+ */
+export function mcpResourceReaderUris(): readonly string[] {
+  return listMcpResources().map((resource) => {
+    const uri = resource.uri;
+    if (uri.startsWith('ui://liteship/app/')) readAppResource(uri);
+    else if (uri.startsWith('ui://')) readUiResource(uri);
+    else if (uri.startsWith('liteship://mcp-app/')) readManifestResource(uri);
+    else readResource(uri);
+    return uri;
+  });
+}
+
 function ok(value: unknown): InvokeResult {
   return { kind: 'ok', value };
 }
 
 async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<InvokeResult> {
-  switch (msg.method) {
+  const descriptor = MCP_METHOD_CATALOG.find((candidate) => candidate.method === msg.method);
+  if (descriptor === undefined) return { kind: 'method-not-found' };
+  const method = descriptor.method;
+  switch (method) {
     case 'initialize': {
       // Lifecycle floor: require a well-formed protocolVersion (malformed → -32602).
       // We support exactly PROTOCOL_VERSION and respond with it (spec negotiation:
@@ -307,10 +327,8 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       return ok(result);
     }
     default:
-      // Everything not handled above — including resources/templates/list,
-      // resources/subscribe, resources/unsubscribe, and any prompts/* beyond
-      // list+get — is an honest method-not-found (-32601): the method is genuinely
-      // unregistered. (resources/read's unknown-uri case is -32002, handled above.)
+      // Compile-time totality: a catalog row cannot exist without a route arm.
+      method satisfies never;
       return { kind: 'method-not-found' };
   }
 }

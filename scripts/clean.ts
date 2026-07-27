@@ -17,7 +17,7 @@
 
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { color, colorEnabled, header } from '../packages/cli/src/lib/ansi.js';
+import { color, colorEnabled, header } from '../packages/cli/src/internal/ansi.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 

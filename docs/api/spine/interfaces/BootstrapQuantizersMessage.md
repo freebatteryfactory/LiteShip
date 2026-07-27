@@ -6,7 +6,7 @@
 
 # Interface: BootstrapQuantizersMessage
 
-Defined in: [\_spine/worker.d.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L72)
+Defined in: [\_spine/worker.d.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L73)
 
 Batched quantizer registrations sent before live computation starts.
 
@@ -16,7 +16,7 @@ Batched quantizer registrations sent before live computation starts.
 
 > `readonly` **registrations**: readonly [`BootstrapQuantizerRegistration`](BootstrapQuantizerRegistration.md)[]
 
-Defined in: [\_spine/worker.d.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L74)
+Defined in: [\_spine/worker.d.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L75)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/worker.d.ts:74](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **type**: `"bootstrap-quantizers"`
 
-Defined in: [\_spine/worker.d.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L73)
+Defined in: [\_spine/worker.d.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L74)

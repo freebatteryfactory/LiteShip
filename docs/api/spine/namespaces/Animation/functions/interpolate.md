@@ -6,9 +6,9 @@
 
 # Function: interpolate()
 
-> **interpolate**\<`T`\>(`from`, `to`, `eased`): `T`
+> **interpolate**\<`T`\>(`from`, `to`, `eased`, `defaults?`): `T`
 
-Defined in: [\_spine/core.d.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L406)
+Defined in: [\_spine/core.d.ts:420](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L420)
 
 ## Type Parameters
 
@@ -29,6 +29,10 @@ Defined in: [\_spine/core.d.ts:406](https://github.com/freebatteryfactory/LiteSh
 ### eased
 
 `number`
+
+### defaults?
+
+`Partial`\<`Record`\<`string`, `number`\>\>
 
 ## Returns
 

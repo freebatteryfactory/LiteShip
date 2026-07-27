@@ -6,7 +6,7 @@
 
 # Interface: AIConstraint
 
-Defined in: [\_spine/compiler.d.ts:235](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L235)
+Defined in: [\_spine/compiler.d.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L247)
 
 Machine-readable constraint attached to an AI manifest.
 
@@ -16,7 +16,7 @@ Machine-readable constraint attached to an AI manifest.
 
 > `readonly` **condition**: `unknown`
 
-Defined in: [\_spine/compiler.d.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L237)
+Defined in: [\_spine/compiler.d.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L249)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:237](https://github.com/freebatteryfactory/Li
 
 > `readonly` **id**: `string`
 
-Defined in: [\_spine/compiler.d.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L236)
+Defined in: [\_spine/compiler.d.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L248)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:236](https://github.com/freebatteryfactory/Li
 
 > `readonly` **message**: `string`
 
-Defined in: [\_spine/compiler.d.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L238)
+Defined in: [\_spine/compiler.d.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L250)

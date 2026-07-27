@@ -18,7 +18,7 @@ adaptive rendering decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [astro/src/middleware.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L45)
+Defined in: [astro/src/middleware.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L47)
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [astro/src/middleware.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L57)
+Defined in: [astro/src/middleware.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L59)
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -74,7 +74,7 @@ Spreadable `data-liteship-<axis>` map for `<html {...htmlAttributesMap}>`.
 
 > `readonly` **responsiveMedia**: (`intent`) => [`ResponsiveMediaPictureProjection`](../../../liteship/src/media/interfaces/ResponsiveMediaPictureProjection.md)
 
-Defined in: [astro/src/middleware.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L55)
+Defined in: [astro/src/middleware.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L57)
 
 Project a responsive-media intent using THIS request's Save-Data / DPR caps
 (derived from Client Hints). Every artifact of the returned projection derives
@@ -93,6 +93,16 @@ normal representations apart (#140).
 #### Returns
 
 [`ResponsiveMediaPictureProjection`](../../../liteship/src/media/interfaces/ResponsiveMediaPictureProjection.md)
+
+***
+
+### tierEvidence
+
+> `readonly` **tierEvidence**: `CapabilityTierEvidence`
+
+Defined in: [astro/src/middleware.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L45)
+
+Per-axis observed/inferred provenance behind [tiers](#tiers).
 
 ***
 

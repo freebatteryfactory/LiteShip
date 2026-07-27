@@ -1,5 +1,5 @@
 /**
- * The shared TEST-CORPUS reader (`packages/cli/src/lib/test-corpus.ts`) — the ONE
+ * The shared TEST-CORPUS reader (`packages/cli/src/internal/test-corpus.ts`) — the ONE
  * corpus walk the local-vs-global host builders share. A pure, deterministic function
  * of the on-disk test bytes (no clock, no rng, no network).
  *
@@ -23,7 +23,7 @@ import {
   collectRepoTestFiles,
   TEST_CORPUS_ROOTS,
   type RepoTestFile,
-} from '../../../../packages/cli/src/lib/test-corpus.js';
+} from '../../../../packages/cli/src/internal/test-corpus.js';
 
 let root: string;
 

@@ -77,11 +77,13 @@ Two invariants share a shape: ONE authored source is provably read by every targ
 @liteship/error -> @liteship/quantizer
 @liteship/core -> @liteship/compiler
 @liteship/error -> @liteship/compiler
+@liteship/_spine -> @liteship/web
 @liteship/canonical -> @liteship/web
 @liteship/core -> @liteship/web
 @liteship/error -> @liteship/web
 @liteship/genui -> @liteship/web
 @liteship/core -> @liteship/detect
+@liteship/error -> @liteship/detect
 @liteship/core -> @liteship/edge
 @liteship/detect -> @liteship/edge
 @liteship/error -> @liteship/edge

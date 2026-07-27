@@ -18,6 +18,10 @@ defineAdaptive(...) ─▶ attrs() + plan() ─▶ explain(value)
 
 The lower-level `Boundary`, `Style`, `Quantizer`, target compilers, document graph, receipts, motion programs, and host adapters remain available through curated subpaths. The facade compresses the required ontology; it does not remove capability or create a parallel semantic system.
 
+Continuous execution has one explicit advanced substrate at `@liteship/core/ecs`: minted `Part<T>` identities, strict admission for unknown values, declared system read/write authority, and Part-owned dense writers. Scene is the primary frame-driven consumer. The document graph remains the sealed/replayable state authority; ECS is not a second persistence model.
+
+Motion names encode distinct roles: `TransitionProgram` is authored composition, `TransitionTimeline` is its resolved schedule, `RuntimeWritePlan` is the admitted executable leaf-write plan, and `MotionDirectivePayload` is Astro's wire envelope. `FrameSchedule` owns deterministic frame count/index/time/progress; renderers and hosts adapt it rather than owning competing timing laws.
+
 Migration adapters live at `liteship/migrate`. They convert supported media queries, container queries, W3C DTCG tokens, Tailwind `@theme` blocks, and CSS custom properties into ordinary LiteShip definitions. Unsupported or lossy constructs produce stable diagnostics or refusal rather than silent widening.
 
 ## Evidence policy
@@ -30,6 +34,7 @@ Every authoritative result must carry or be associated with:
 - bounded diagnostics for failures;
 - cache provenance when a cached verdict is reused;
 - the host/platform where platform behavior matters.
+- a deterministic subject census when a gate claims complete coverage; a required gate whose subjects remain opaque fails authority integrity rather than silently narrowing its claim.
 
 An older artifact is historical evidence, not proof of the current branch. A registration, unit fold, skipped journey, or all-skipped profile is not proof that a public route works. Release and consumer authorities fail closed when their required environment or journey did not execute.
 
@@ -37,13 +42,13 @@ An older artifact is historical evidence, not proof of the current branch. A reg
 
 `liteship check` and `liteship check --profile quick` are the ordinary local/app authority. The other profiles make different claims; they are not aliases for “more green.”
 
-| Profile | Claim |
-| --- | --- |
-| `quick` | The current project’s app-local configuration, host route, and build-facing surface are coherent. |
-| `full` | The repository is globally coherent across its registered checks. |
-| `release` | The supported package, artifact, platform, and release evidence is complete. |
-| `consumer` | A fresh external consumer can install packed artifacts, resolve public subpaths, typecheck, build, and execute. |
-| `environment` | The local toolchain and host satisfy LiteShip’s declared prerequisites. |
+| Profile       | Claim                                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------------------------------- |
+| `quick`       | The current project’s app-local configuration, host route, and build-facing surface are coherent.               |
+| `full`        | The repository is globally coherent across its registered checks.                                               |
+| `release`     | The supported package, artifact, platform, and release evidence is complete.                                    |
+| `consumer`    | A fresh external consumer can install packed artifacts, resolve public subpaths, typecheck, build, and execute. |
+| `environment` | The local toolchain and host satisfy LiteShip’s declared prerequisites.                                         |
 
 Useful projections:
 
@@ -108,6 +113,7 @@ These surfaces are projections, not independent authored inventories:
 - package roster, dependency order, capability ownership, publish order, package surfaces, and architecture DAG;
 - root facade export budget;
 - command and MCP catalogs;
+- feature-edge producer/consumer facts projected from executable ECS, command, MCP, LSP, capability, capsule, and protocol-event owners;
 - check/profile documentation and CI plan;
 - generated agent package context;
 - public API reference.

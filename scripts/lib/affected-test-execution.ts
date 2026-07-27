@@ -1,6 +1,6 @@
 /** Pure execution projection for the affected Node-test authority. @module */
 
-import { isNodeTestEntrypoint } from '../../packages/cli/src/lib/test-corpus.js';
+import { isNodeTestEntrypoint } from '../../packages/cli/src/internal/test-corpus.js';
 
 export interface AffectedVitestExecution {
   readonly args: readonly string[];

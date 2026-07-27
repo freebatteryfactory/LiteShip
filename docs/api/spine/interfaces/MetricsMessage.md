@@ -6,7 +6,7 @@
 
 # Interface: MetricsMessage
 
-Defined in: [\_spine/worker.d.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L250)
+Defined in: [\_spine/worker.d.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L251)
 
 Worker performance and queue telemetry sent to the host.
 
@@ -16,7 +16,7 @@ Worker performance and queue telemetry sent to the host.
 
 > `readonly` **budgetUsed**: `number`
 
-Defined in: [\_spine/worker.d.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L253)
+Defined in: [\_spine/worker.d.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L254)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:253](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **fps**: `number`
 
-Defined in: [\_spine/worker.d.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L252)
+Defined in: [\_spine/worker.d.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L253)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/worker.d.ts:252](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **type**: `"metrics"`
 
-Defined in: [\_spine/worker.d.ts:251](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L251)
+Defined in: [\_spine/worker.d.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L252)

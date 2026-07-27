@@ -4,7 +4,7 @@
  *
  * The native-CSS path (`MotionCompiler`) owns motion wherever `animation-timeline`
  * is supported. This directive is the permanent FLOOR for everywhere it is not: it
- * reads an SSR-inlined, already-lowered motion program off `data-liteship-motion-program`
+ * reads an SSR-inlined, already-lowered motion payload off `data-liteship-motion-payload`
  * and, when native is unavailable, scrubs the same signal→progress the CSS would,
  * writing typed leaf values through {@link writeContinuousMap} every frame. That
  * writer samples the program's OWN easing descriptor (`RuntimeWritePlan.easing`) —
@@ -36,6 +36,8 @@ import {
   type RevealIntent,
   type RuntimeWritePlan,
 } from '@liteship/core';
+import { decodeRevealIntent, decodeRuntimeWritePlan } from '@liteship/core/motion';
+import { ValidationError } from '@liteship/error';
 import { dispatchLiteshipEvent } from '@liteship/web';
 import { writeContinuousMap } from './write-continuous-map.js';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
@@ -46,7 +48,7 @@ import { bootDirectiveEntry } from './directive-bound.js';
  * Presence GATES the directive — like `client:graph`'s `data-liteship-graph`, it is
  * read directly off the host, not through a wire registry.
  */
-export const MOTION_PROGRAM_ATTR = 'data-liteship-motion-program';
+export const MOTION_PAYLOAD_ATTR = 'data-liteship-motion-payload';
 
 /** The default discrete crossing point on RAW (un-eased) progress. */
 const DEFAULT_THRESHOLD = 0.5;
@@ -59,13 +61,13 @@ const CONTINUOUS_CELL = 'motion.progress';
 const GRAPH_STATE_EVENT = 'liteship:graph-state';
 
 /**
- * The SSR-inlined, already-lowered motion program the directive drives. The
- * authority (see `examples/showcase/src/server/motion-program.ts`) lowers a
+ * The SSR-inlined motion directive envelope the directive drives. The
+ * authority (see `examples/showcase/src/server/motion-payload.ts`) lowers a
  * {@link RevealIntent} to a graph, interprets it, and serializes THIS: the reveal
  * intent (drives reduced-motion first paint) + the runtime leaf-write plan (the
  * floor, carrying its easing) + the resolved signal inputs.
  */
-export interface SerializedMotionProgram {
+export interface MotionDirectivePayload {
   /** The authoring intent — drives {@link resolveRevealInitialState} for first paint. */
   readonly intent: RevealIntent;
   /** The lowered leaf-write floor, including its self-describing easing descriptor. */
@@ -76,130 +78,68 @@ export interface SerializedMotionProgram {
   readonly threshold?: number;
 }
 
-/**
- * The widened authoring/easing vocabulary a serialized `RuntimeEasing`
- * descriptor may carry. Beyond the legacy `linear|ease|spring` the full Easing
- * catalog (bounce/elastic/back/cubicBezier) is now authorable; each catalog easing
- * is serialized as a sampled `points` arm the JS floor lerps — the IDENTICAL point
- * list the CSS `linear()` uses, so both floors read one curve (Law 4).
- */
-const RUNTIME_EASING_KINDS: ReadonlySet<string> = new Set([
-  'linear',
-  'ease',
-  'spring',
-  'points',
-  'bounce',
-  'elastic',
-  'back',
-  'cubicBezier',
-]);
+function invalidPayload(message: string): never {
+  throw ValidationError('MotionDirectivePayload', message);
+}
 
-/**
- * The kinds whose ONLY faithful JS-floor rendering is the sampled `points` arm.
- * `sampleRuntimeEasing` (core) lerps `points` when present, and for these kinds
- * has NO analytic fallback — `points`/`cubicBezier` silently collapse to
- * `Easing.linear` when the arm is missing (bounce/elastic/back keyword-approximate,
- * still a curve divergence from the CSS floor). So a descriptor carrying one of
- * these kinds WITHOUT a valid points list is a lowering bug, not a lean descriptor:
- * the guard must reject it LOUDLY here rather than let the JS floor draw a straight
- * line the CSS floor never would (Law 4: both floors read ONE curve).
- */
-const POINT_BASED_EASING_KINDS: ReadonlySet<string> = new Set(['points', 'bounce', 'elastic', 'back', 'cubicBezier']);
+function payloadData(record: Record<string, unknown>, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(record, key);
+  if (descriptor === undefined) return invalidPayload(`missing required field ${key}`);
+  if (!('value' in descriptor)) return invalidPayload(`accessor field ${key} is not valid wire data`);
+  return descriptor.value;
+}
 
-function isValidPointsArm(value: unknown): boolean {
-  if (!Array.isArray(value) || value.length < 2) return false;
-  for (const point of value) {
-    if (typeof point !== 'number' || !Number.isFinite(point)) return false;
+/** Strictly admit and immutably own one decoded directive payload. */
+export function decodeMotionDirectivePayload(value: unknown): MotionDirectivePayload {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return invalidPayload('expected an object containing { intent, runtime, signals }');
   }
-  return true;
-}
-
-/**
- * Structural guard for a serialized `RuntimeEasing` descriptor. Accepts the
- * widened kind vocabulary; the analytic kinds (`linear|ease|spring`) carry an
- * OPTIONAL points arm, but the point-based kinds ({@link POINT_BASED_EASING_KINDS})
- * REQUIRE a non-degenerate array of finite numbers — anything else (absent /
- * unknown `kind`, a malformed points list, or a point-based kind missing its arm)
- * fails LOUDLY upstream in {@link parseMotionProgram}, leaving the native/CSS floor
- * untouched (Law 1) rather than letting the JS floor silently lerp a straight line.
- */
-function isRuntimeEasingDescriptor(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return false;
-  const easing = value as Record<string, unknown>;
-  if (typeof easing.kind !== 'string' || !RUNTIME_EASING_KINDS.has(easing.kind)) return false;
-  if (POINT_BASED_EASING_KINDS.has(easing.kind)) {
-    if (!isValidPointsArm(easing.points)) return false;
-  } else if (easing.points !== undefined) {
-    if (!isValidPointsArm(easing.points)) return false;
+  const candidate = value as Record<string, unknown>;
+  const prototype = Object.getPrototypeOf(candidate) as object | null;
+  if (prototype !== Object.prototype && prototype !== null) {
+    return invalidPayload('custom prototypes are not valid wire data');
   }
-  if (easing.spring !== undefined && (easing.spring === null || typeof easing.spring !== 'object')) return false;
-  return true;
+  if (Object.getOwnPropertySymbols(candidate).some((symbol) => Object.propertyIsEnumerable.call(candidate, symbol))) {
+    return invalidPayload('enumerable symbol fields are not valid wire data');
+  }
+  const allowed = new Set(['intent', 'runtime', 'signals', 'threshold']);
+  const foreign = Object.keys(candidate).find((key) => !allowed.has(key));
+  if (foreign !== undefined) return invalidPayload(`unknown field ${foreign}`);
+  const intent = payloadData(candidate, 'intent');
+  const runtime = payloadData(candidate, 'runtime');
+  const signals = payloadData(candidate, 'signals');
+  const thresholdDescriptor = Object.getOwnPropertyDescriptor(candidate, 'threshold');
+  if (thresholdDescriptor !== undefined && !('value' in thresholdDescriptor)) {
+    return invalidPayload('accessor field threshold is not valid wire data');
+  }
+  const threshold = thresholdDescriptor === undefined ? undefined : thresholdDescriptor.value;
+  if (!Array.isArray(signals) || !signals.every((signal) => typeof signal === 'string' && signal.trim() !== '')) {
+    return invalidPayload('signals must be an array of non-empty strings');
+  }
+  if (
+    threshold !== undefined &&
+    (typeof threshold !== 'number' || !Number.isFinite(threshold) || threshold < 0 || threshold > 1)
+  ) {
+    return invalidPayload('threshold must be a finite number in [0,1]');
+  }
+  return Object.freeze({
+    intent: decodeRevealIntent(intent),
+    runtime: decodeRuntimeWritePlan(runtime),
+    signals: Object.freeze([...signals]),
+    ...(threshold !== undefined ? { threshold } : {}),
+  });
 }
 
-/** The serialized {@link TypedValue} kinds — the discriminant `k` the sampler reads. */
-const TYPED_VALUE_KINDS: ReadonlySet<string> = new Set(['number', 'opacity', 'length', 'angle', 'color', 'transform']);
-
-/** A typed endpoint the floor interpolates: an object whose `k` names a known kind. */
-function isTypedValue(value: unknown): boolean {
-  return value !== null && typeof value === 'object' && TYPED_VALUE_KINDS.has((value as { k?: unknown }).k as string);
-}
-
-/** One runtime leaf-write property: a `cssVar` string plus typed `from`/`to` endpoints. */
-function isRuntimeWriteProperty(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return false;
-  const property = value as Record<string, unknown>;
-  return typeof property.cssVar === 'string' && isTypedValue(property.from) && isTypedValue(property.to);
-}
-
-/** A properties array whose EVERY entry is a valid {@link RuntimeWriteProperty}. */
-function isRuntimeWritePropertyArray(value: unknown): boolean {
-  return Array.isArray(value) && value.every(isRuntimeWriteProperty);
-}
-
-/**
- * One per-window sub-sampler of a composed program: a local `[start,end]` slice, its
- * own properties, and its own easing descriptor. The floor's `sampleProgram` walks
- * `w.properties.map(...)`, so a window missing (or malforming) `properties`/`easing`
- * must be rejected HERE rather than throwing on the first sampled frame.
- */
-function isRuntimeWriteWindow(value: unknown): boolean {
-  if (value === null || typeof value !== 'object') return false;
-  const window = value as Record<string, unknown>;
-  return (
-    typeof window.windowStart === 'number' &&
-    typeof window.windowEnd === 'number' &&
-    isRuntimeWritePropertyArray(window.properties) &&
-    isRuntimeEasingDescriptor(window.easing)
-  );
-}
-
-/**
- * Structural guard for the serialized {@link RuntimeWritePlan}. Validates the leaf
- * entries the floor actually dereferences — every `properties` entry (cssVar + typed
- * `from`/`to`) and, when present, every composed `windows` entry (its own properties +
- * easing) — not merely that `properties` is an array. A single malformed tween or
- * `windows: [{}]` previously satisfied the shallow check, then crashed downstream in
- * `sampleProgram`'s `w.properties.map(...)` instead of leaving the JS floor inert
- * (Law 1) with the documented `motion-program-shape-invalid` diagnostic.
- */
-function isRuntimeWritePlan(value: unknown): value is RuntimeWritePlan {
-  if (value === null || typeof value !== 'object') return false;
-  const plan = value as Record<string, unknown>;
-  return (
-    isRuntimeWritePropertyArray(plan.properties) &&
-    typeof plan.fromState === 'string' &&
-    typeof plan.toState === 'string' &&
-    typeof plan.durationMs === 'number' &&
-    isRuntimeEasingDescriptor(plan.easing) &&
-    (plan.windows === undefined || (Array.isArray(plan.windows) && plan.windows.every(isRuntimeWriteWindow)))
-  );
+/** Serialize only a payload that satisfies the same admission law as the runtime reader. */
+export function serializeMotionDirectivePayload(value: unknown): string {
+  return JSON.stringify(decodeMotionDirectivePayload(value));
 }
 
 /**
  * Parse the inlined program, returning `null` LOUDLY on any malformed payload so
  * the directive stays inert and the native/CSS floor is unaffected (Law 1).
  */
-export function parseMotionProgram(raw: string): SerializedMotionProgram | null {
+export function parseMotionDirectivePayload(raw: string): MotionDirectivePayload | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -207,29 +147,22 @@ export function parseMotionProgram(raw: string): SerializedMotionProgram | null 
     Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.motion',
       code: 'astro/motion/motion-program-malformed',
-      message: `${MOTION_PROGRAM_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize with JSON.stringify(a lowered motion program).`,
+      message: `${MOTION_PAYLOAD_ATTR} was not valid JSON — the client:motion floor stays inert; native CSS still applies. Serialize through serializeMotionDirectivePayload.`,
       cause,
     });
     return null;
   }
 
-  const program = parsed as Partial<SerializedMotionProgram>;
-  if (
-    program === null ||
-    typeof program !== 'object' ||
-    !isRuntimeWritePlan(program.runtime) ||
-    program.intent === null ||
-    typeof program.intent !== 'object' ||
-    !Array.isArray(program.signals)
-  ) {
+  try {
+    return decodeMotionDirectivePayload(parsed);
+  } catch {
     Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.motion',
       code: 'astro/motion/motion-program-shape-invalid',
-      message: `${MOTION_PROGRAM_ATTR} is missing required fields ({ intent, runtime, signals }) — the client:motion floor stays inert; native CSS still applies.`,
+      message: `${MOTION_PAYLOAD_ATTR} contains an invalid MotionDirectivePayload — the client:motion floor stays inert; native CSS still applies.`,
     });
     return null;
   }
-  return program as SerializedMotionProgram;
 }
 
 /**
@@ -248,7 +181,7 @@ export function nativeTimelineSupported(): boolean {
  * Whether native timeline CSS ACTUALLY drives THIS element — the only condition under
  * which the JS floor may stay idle. A global {@link nativeTimelineSupported} check is
  * NOT enough: a program surface (e.g. a `Reveal.chain`) that inlines
- * `data-liteship-motion-program` but emits no `MotionCompiler` CSS would otherwise be
+ * `data-liteship-motion-payload` but emits no `MotionCompiler` CSS would otherwise be
  * stranded at first paint on a capable browser — floor skipped, no CSS to scrub it.
  * `MotionCompiler` binds its single `liteship-motion-<target>-<from>-<to>` `@keyframes` (see its
  * `keyframeName`) to a scroll/view `animation-timeline` INSIDE a `supports(animation-timeline)`
@@ -286,7 +219,7 @@ interface MotionDriver {
  * progress to `onTick`; the plan's easing is applied downstream in
  * {@link writeContinuousMap}. SSR-safe — with no rAF the loop never starts.
  */
-function startDriver(program: SerializedMotionProgram, onTick: (progress: number) => void): MotionDriver {
+function startDriver(program: MotionDirectivePayload, onTick: (progress: number) => void): MotionDriver {
   const signal = program.signals[0];
 
   if (signal !== undefined) {
@@ -328,7 +261,7 @@ function startDriver(program: SerializedMotionProgram, onTick: (progress: number
 
 /**
  * Activate the `client:motion` directive on `element`. Reads the inlined lowered
- * program off {@link MOTION_PROGRAM_ATTR}, constructs a private
+ * payload off {@link MOTION_PAYLOAD_ATTR}, constructs a private
  * {@link StateCellStore} (one discrete pose cell + one continuous progress cell —
  * the FIRST production caller of `writeContinuous`), and runs the JS floor when
  * native timelines are unavailable. Honors `liteship:reinit` (dispose-then-re-read)
@@ -364,16 +297,16 @@ export function initMotionDirective(load: () => Promise<unknown>, element: HTMLE
     // Dispose FIRST so a reinit re-reads fresh attributes without double-holding.
     teardownDriver();
 
-    const raw = element.getAttribute(MOTION_PROGRAM_ATTR);
+    const raw = element.getAttribute(MOTION_PAYLOAD_ATTR);
     if (raw === null) {
       Diagnostics.warnOnceRegistered({
         source: 'liteship/astro.motion',
         code: 'astro/motion/motion-program-missing',
-        message: `A client:motion host carries no ${MOTION_PROGRAM_ATTR} — nothing to drive; the directive no-ops. Inline the lowered program (JSON.stringify) on the element.`,
+        message: `A client:motion host carries no ${MOTION_PAYLOAD_ATTR} — nothing to drive; the directive no-ops. Inline serializeMotionDirectivePayload(payload) on the element.`,
       });
       return;
     }
-    const program = parseMotionProgram(raw);
+    const program = parseMotionDirectivePayload(raw);
     if (!program) return;
 
     const { runtime } = program;

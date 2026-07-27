@@ -8,7 +8,7 @@
 
 > **Subscriber**\<`T`\> = [`Sink`](../interfaces/Sink.md)\<`T`\> \| ((`value`) => `void`)
 
-Defined in: [\_spine/core.d.ts:203](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L203)
+Defined in: [\_spine/core.d.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L209)
 
 What `subscribe` accepts — a full [Sink](../interfaces/Sink.md) or a bare value listener.
 

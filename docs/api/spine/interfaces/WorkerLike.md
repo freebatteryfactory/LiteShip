@@ -6,7 +6,7 @@
 
 # Interface: WorkerLike
 
-Defined in: [\_spine/worker.d.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L291)
+Defined in: [\_spine/worker.d.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L292)
 
 Structural worker boundary used by browser hosts and deterministic test doubles.
 
@@ -16,7 +16,7 @@ Structural worker boundary used by browser hosts and deterministic test doubles.
 
 > **addEventListener**(`type`, `listener`): `void`
 
-Defined in: [\_spine/worker.d.ts:294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L294)
+Defined in: [\_spine/worker.d.ts:295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L295)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/worker.d.ts:294](https://github.com/freebatteryfactory/Lite
 
 > **postMessage**(`message`, `transfer?`): `void`
 
-Defined in: [\_spine/worker.d.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L292)
+Defined in: [\_spine/worker.d.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L293)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [\_spine/worker.d.ts:292](https://github.com/freebatteryfactory/Lite
 
 > **removeEventListener**(`type`, `listener`): `void`
 
-Defined in: [\_spine/worker.d.ts:295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L295)
+Defined in: [\_spine/worker.d.ts:296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L296)
 
 #### Parameters
 
@@ -82,7 +82,7 @@ Defined in: [\_spine/worker.d.ts:295](https://github.com/freebatteryfactory/Lite
 
 > **terminate**(): `void`
 
-Defined in: [\_spine/worker.d.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L293)
+Defined in: [\_spine/worker.d.ts:294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L294)
 
 #### Returns
 

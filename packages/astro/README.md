@@ -26,7 +26,10 @@ import { defineBoundary } from '@liteship/core';
 
 export const viewport = defineBoundary({
   input: 'viewport.width',
-  at: [[0, 'stacked'], [768, 'split']],
+  at: [
+    [0, 'stacked'],
+    [768, 'split'],
+  ],
   hysteresis: 20, // 20px of grace so the state doesn't flicker
 });
 ```
@@ -46,7 +49,7 @@ Drag the window edge across 768px: the wrapper's `data-liteship-state` attribute
 
 `liteship({ middleware: true })` auto-wires capability detection, so the common case needs no `src/middleware.ts`; it populates a typed `Astro.locals.liteship.tiers.{tier,motion,design}` (no cast). Astro 7 hosts that need LiteShip before Astro's page pipeline can use `liteshipFetchLayer()` from `@liteship/astro/fetch-layer`. Boundaries can also bind live `audio.amplitude` / `audio.beat` signals (`driveAudioFromAnalyser` from `@liteship/astro/runtime`), and the dev boundary inspector ships as an Astro dev-toolbar app (toggle from the toolbar icon).
 
-Continuous authored motion has a production runtime: `liteship({ motion: { enabled: true } })` registers `client:motion`, the JS **FLOOR** for the scroll-scrubbed reveal. Native `animation-timeline` CSS (from `MotionCompiler`) owns the scrub where supported; everywhere it is not, `client:motion` reads the SSR-inlined lowered program off `data-liteship-motion-program` and drives `writeContinuousMap` every frame — sampling the SAME `Easing.spring` the native `linear()` compiled from, so the two paths render one identical curve. The continuous tween is a leaf write (never a graph patch); `prefers-reduced-motion` with a `settle` policy pins the final pose with no tween. Runnable in `examples/showcase` at `/motion`.
+Continuous authored motion has a production runtime: `liteship({ motion: { enabled: true } })` registers `client:motion`, the JS **FLOOR** for the scroll-scrubbed reveal. Native `animation-timeline` CSS (from `MotionCompiler`) owns the scrub where supported; everywhere it is not, `client:motion` reads the SSR-inlined `MotionDirectivePayload` off `data-liteship-motion-payload` and drives `writeContinuousMap` every frame — sampling the SAME `Easing.spring` the native `linear()` compiled from, so the two paths render one identical curve. The continuous tween is a leaf write (never a graph patch); `prefers-reduced-motion` with a `settle` policy pins the final pose with no tween. The distinct `data-liteship-motion` attribute remains the capability-tier projection and never boots this directive. Runnable in `examples/showcase` at `/motion`.
 
 Responsive media adapts at the host: `Astro.locals.liteship.responsiveMedia(intent)` derives Save-Data / DPR caps from the request's Client Hints and projects a `ResponsiveMedia.intent` through the ONE effective-candidate law (`selectCandidates` in `@liteship/core`). Every artifact — `src`, `srcset`, each `<source>`, the preload `imagesrcset` — derives from that set, so under `Save-Data` the whole picture is capped to the light asset and a high-DPR client can never re-fetch the heavy hero. The middleware also merges the responsive `Vary` axis (`Sec-CH-DPR, Save-Data`) into the response so a CDN keys the two representations apart. `projectResponsiveMediaForRequest` / `applyResponsiveMediaVary` are the standalone route-handler helpers. Runnable in `examples/showcase` at `/responsive-media` (and `examples/cloudflare-astro` on the Workers edge).
 

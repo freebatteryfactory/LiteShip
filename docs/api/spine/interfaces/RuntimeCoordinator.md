@@ -6,7 +6,7 @@
 
 # Interface: RuntimeCoordinator
 
-Defined in: [\_spine/core.d.ts:858](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L858)
+Defined in: [\_spine/core.d.ts:1073](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1073)
 
 Live coordinator surface shared by the core runtime and worker host.
 
@@ -16,7 +16,7 @@ Live coordinator surface shared by the core runtime and worker host.
 
 > `readonly` **phases**: readonly [`RuntimePhase`](../type-aliases/RuntimePhase.md)[]
 
-Defined in: [\_spine/core.d.ts:860](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L860)
+Defined in: [\_spine/core.d.ts:1075](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1075)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:860](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **plan**: [`PlanIR`](PlanIR.md)
 
-Defined in: [\_spine/core.d.ts:859](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L859)
+Defined in: [\_spine/core.d.ts:1074](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1074)
 
 ***
 
@@ -32,15 +32,15 @@ Defined in: [\_spine/core.d.ts:859](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **stores**: `object`
 
-Defined in: [\_spine/core.d.ts:861](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L861)
+Defined in: [\_spine/core.d.ts:1076](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1076)
 
 #### dirtyEpoch
 
-> `readonly` **dirtyEpoch**: [`RuntimeCoordinatorDenseStore`](RuntimeCoordinatorDenseStore.md)
+> `readonly` **dirtyEpoch**: [`DenseStore`](DenseStore.md)
 
 #### stateIndex
 
-> `readonly` **stateIndex**: [`RuntimeCoordinatorDenseStore`](RuntimeCoordinatorDenseStore.md)
+> `readonly` **stateIndex**: [`DenseStore`](DenseStore.md)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/core.d.ts:861](https://github.com/freebatteryfactory/LiteSh
 
 > **applyState**(`name`, `state`): `number`
 
-Defined in: [\_spine/core.d.ts:870](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L870)
+Defined in: [\_spine/core.d.ts:1085](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1085)
 
 #### Parameters
 
@@ -70,7 +70,7 @@ Defined in: [\_spine/core.d.ts:870](https://github.com/freebatteryfactory/LiteSh
 
 > **getDirtyEpoch**(`name`): `number`
 
-Defined in: [\_spine/core.d.ts:873](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L873)
+Defined in: [\_spine/core.d.ts:1088](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1088)
 
 #### Parameters
 
@@ -88,7 +88,7 @@ Defined in: [\_spine/core.d.ts:873](https://github.com/freebatteryfactory/LiteSh
 
 > **getStateIndex**(`name`): `number`
 
-Defined in: [\_spine/core.d.ts:871](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L871)
+Defined in: [\_spine/core.d.ts:1086](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1086)
 
 #### Parameters
 
@@ -106,7 +106,7 @@ Defined in: [\_spine/core.d.ts:871](https://github.com/freebatteryfactory/LiteSh
 
 > **hasQuantizer**(`name`): `boolean`
 
-Defined in: [\_spine/core.d.ts:868](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L868)
+Defined in: [\_spine/core.d.ts:1083](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1083)
 
 #### Parameters
 
@@ -124,7 +124,7 @@ Defined in: [\_spine/core.d.ts:868](https://github.com/freebatteryfactory/LiteSh
 
 > **markDirty**(`name`): `void`
 
-Defined in: [\_spine/core.d.ts:872](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L872)
+Defined in: [\_spine/core.d.ts:1087](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1087)
 
 #### Parameters
 
@@ -142,7 +142,7 @@ Defined in: [\_spine/core.d.ts:872](https://github.com/freebatteryfactory/LiteSh
 
 > **registeredNames**(): readonly `string`[]
 
-Defined in: [\_spine/core.d.ts:874](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L874)
+Defined in: [\_spine/core.d.ts:1089](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1089)
 
 #### Returns
 
@@ -154,7 +154,7 @@ readonly `string`[]
 
 > **registerQuantizer**(`name`, `states`): [`EntityId`](../type-aliases/EntityId.md)
 
-Defined in: [\_spine/core.d.ts:866](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L866)
+Defined in: [\_spine/core.d.ts:1081](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1081)
 
 #### Parameters
 
@@ -176,7 +176,7 @@ readonly `string`[]
 
 > **removeQuantizer**(`name`): `void`
 
-Defined in: [\_spine/core.d.ts:867](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L867)
+Defined in: [\_spine/core.d.ts:1082](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1082)
 
 #### Parameters
 
@@ -194,7 +194,7 @@ Defined in: [\_spine/core.d.ts:867](https://github.com/freebatteryfactory/LiteSh
 
 > **reset**(`registrations?`): `void`
 
-Defined in: [\_spine/core.d.ts:865](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L865)
+Defined in: [\_spine/core.d.ts:1080](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1080)
 
 #### Parameters
 
@@ -212,7 +212,7 @@ readonly `object`[]
 
 > **setState**(`name`, `state`): `void`
 
-Defined in: [\_spine/core.d.ts:869](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L869)
+Defined in: [\_spine/core.d.ts:1084](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1084)
 
 #### Parameters
 

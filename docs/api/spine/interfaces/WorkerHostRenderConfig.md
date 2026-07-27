@@ -6,7 +6,7 @@
 
 # Interface: WorkerHostRenderConfig
 
-Defined in: [\_spine/worker.d.ts:461](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L461)
+Defined in: [\_spine/worker.d.ts:462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L462)
 
 Render configuration for WorkerHost.startRender — only durationMs is required.
 
@@ -14,9 +14,9 @@ Render configuration for WorkerHost.startRender — only durationMs is required.
 
 ### durationMs
 
-> `readonly` **durationMs**: `number`
+> `readonly` **durationMs**: `number` \| [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/worker.d.ts:462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L462)
+Defined in: [\_spine/worker.d.ts:463](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L463)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/worker.d.ts:462](https://github.com/freebatteryfactory/Lite
 
 > `readonly` `optional` **fps?**: `number`
 
-Defined in: [\_spine/worker.d.ts:464](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L464)
+Defined in: [\_spine/worker.d.ts:465](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L465)
 
 #### Default Value
 
@@ -38,7 +38,7 @@ Defined in: [\_spine/worker.d.ts:464](https://github.com/freebatteryfactory/Lite
 
 > `readonly` `optional` **height?**: `number`
 
-Defined in: [\_spine/worker.d.ts:468](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L468)
+Defined in: [\_spine/worker.d.ts:469](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L469)
 
 #### Default Value
 
@@ -52,7 +52,7 @@ the attached canvas's height at attachCanvas() time
 
 > `readonly` `optional` **width?**: `number`
 
-Defined in: [\_spine/worker.d.ts:466](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L466)
+Defined in: [\_spine/worker.d.ts:467](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L467)
 
 #### Default Value
 

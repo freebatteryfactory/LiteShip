@@ -51,7 +51,7 @@ async function toCaptureBitmap(canvas: Canvas2DTarget): Promise<ImageBitmap | Of
  * Capture a video from a VideoRenderer using a FrameCapture backend.
  *
  * @param renderer - The VideoRenderer producing deterministic frames
- * @param capture - The FrameCapture implementation (WebCodecs, Remotion, etc.)
+ * @param capture - The owned FrameCapture consumed and disposed by this operation
  * @param renderFn - Optional custom render function for canvas rendering
  * @returns The finalized CaptureResult with the encoded video blob
  */
@@ -61,33 +61,50 @@ export async function captureVideo(
   renderFn?: RenderFn,
 ): Promise<CaptureResult> {
   const { width, height, fps } = renderer.config;
+  let result: CaptureResult | undefined;
+  let operationFailed = false;
+  let operationFailure: unknown;
 
-  // Initialize capture backend
-  await capture.init({ width, height, fps });
+  try {
+    await capture.init({ width, height, fps });
 
-  // Render into an off-thread canvas when available, otherwise fall back to a DOM canvas.
-  const canvas = createRenderCanvas(width, height);
+    const canvas = createRenderCanvas(width, height);
+    for await (const frame of renderer.frames()) {
+      renderToCanvas(frame.state, canvas, renderFn);
 
-  // Process each frame
-  for await (const frame of renderer.frames()) {
-    // Render CompositeState to canvas
-    renderToCanvas(frame.state, canvas, renderFn);
+      const bitmap = await toCaptureBitmap(canvas);
 
-    const bitmap = await toCaptureBitmap(canvas);
-
-    try {
-      await capture.capture({
-        frame: frame.frame,
-        timestamp: frame.timestamp,
-        bitmap,
-      });
-    } finally {
-      if (bitmap !== canvas && 'close' in bitmap && typeof bitmap.close === 'function') {
-        bitmap.close();
+      try {
+        await capture.capture({
+          frame: frame.frame,
+          timestamp: frame.timestamp,
+          bitmap,
+        });
+      } finally {
+        if (bitmap !== canvas && 'close' in bitmap && typeof bitmap.close === 'function') {
+          bitmap.close();
+        }
       }
     }
+
+    result = await capture.finalize();
+  } catch (error) {
+    operationFailed = true;
+    operationFailure = error;
   }
 
-  // Finalize and return result
-  return capture.finalize();
+  try {
+    await capture.dispose();
+  } catch (disposeFailure) {
+    if (operationFailed) {
+      throw new AggregateError(
+        [operationFailure, disposeFailure],
+        'captureVideo failed and its FrameCapture also failed during disposal',
+      );
+    }
+    throw disposeFailure;
+  }
+
+  if (operationFailed) throw operationFailure;
+  return result!;
 }

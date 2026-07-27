@@ -6,7 +6,7 @@
 
 # Interface: AIAction
 
-Defined in: [\_spine/compiler.d.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L217)
+Defined in: [\_spine/compiler.d.ts:229](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L229)
 
 One action an agent may propose through the manifest.
 
@@ -16,7 +16,7 @@ One action an agent may propose through the manifest.
 
 > `readonly` **description**: `string`
 
-Defined in: [\_spine/compiler.d.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L220)
+Defined in: [\_spine/compiler.d.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L232)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:220](https://github.com/freebatteryfactory/Li
 
 > `readonly` **effects**: readonly `string`[]
 
-Defined in: [\_spine/compiler.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L219)
+Defined in: [\_spine/compiler.d.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L231)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/compiler.d.ts:219](https://github.com/freebatteryfactory/Li
 
 > `readonly` **params**: `Record`\<`string`, [`AIParamSchema`](AIParamSchema.md)\>
 
-Defined in: [\_spine/compiler.d.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L218)
+Defined in: [\_spine/compiler.d.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L230)

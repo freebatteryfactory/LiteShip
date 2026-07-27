@@ -11,14 +11,14 @@ import type { Style, Token } from '@liteship/core';
 import {
   Boundary,
   ComposableWorld,
-  createDenseStore,
   defineBoundary,
   defineToken,
   defineStyle,
-  createWorld,
   Composable,
   createComposable,
+  schema,
 } from '@liteship/core';
+import { admitPart, createDenseStore, createWorld, definePart } from '../../packages/core/src/ecs/index.js';
 
 const arbThresholdPairs = fc
   .uniqueArray(fc.integer({ min: 0, max: 10000 }), { minLength: 2, maxLength: 5 })
@@ -35,6 +35,15 @@ const arbEntityRecord = fc.dictionary(
   fc.string({ minLength: 1, maxLength: 8 }),
   fc.oneof(fc.string({ maxLength: 12 }), fc.integer({ min: -100, max: 100 }), fc.boolean()),
 );
+
+const PropertyComponents = definePart('property-composable-components', schema.record(schema.unknown));
+const PropertyDenseValue = definePart('property-composable-dense', schema.number);
+
+function admitComponents(components: Record<string, unknown>) {
+  const admitted = admitPart(PropertyComponents, components);
+  if (!admitted.ok) throw new Error('generated property components failed admission');
+  return admitted.value;
+}
 
 type NumericThemeSchema = {
   boundary?: Boundary;
@@ -75,7 +84,7 @@ describe('ECS Composable Properties', () => {
           const world = createWorld();
           const ids: string[] = [];
           for (const components of componentsList) {
-            ids.push(world.spawn(components ?? undefined));
+            ids.push(components === undefined ? world.spawn() : world.spawn(admitComponents(components)));
           }
           return new Set(ids).size === ids.length;
         },
@@ -89,7 +98,7 @@ describe('ECS Composable Properties', () => {
         const world = createWorld();
         const ids: string[] = [];
         for (const components of componentsList) {
-          ids.push(world.spawn(components));
+          ids.push(world.spawn(admitComponents(components)));
         }
         const sequences = ids.map((id) => Number(id.split(':')[0]?.split('-')[1]));
         return sequences.every((seq, index) => index === 0 || seq > sequences[index - 1]!);
@@ -100,10 +109,10 @@ describe('ECS Composable Properties', () => {
   test('DenseStore set/get round-trips numeric values', () => {
     fc.assert(
       fc.property(fc.float({ min: -1000, max: 1000, noNaN: true }), (value) => {
-        const store = createDenseStore('dense', 4);
+        const store = createDenseStore(PropertyDenseValue, 4);
         const entityId = 'entity-1:fnv1a:aaaaaaaa' as never;
-        store.set(entityId, value);
-        return store.get(entityId) === value;
+        store.writer.set(entityId, value);
+        return store.store.get(entityId) === value;
       }),
     );
   });
@@ -117,15 +126,15 @@ describe('ECS Composable Properties', () => {
           fc.float({ min: -1000, max: 1000, noNaN: true }),
         ),
         ([a, b, c]) => {
-          const store = createDenseStore('dense', 4);
+          const store = createDenseStore(PropertyDenseValue, 4);
           const idA = 'entity-1:fnv1a:aaaaaaaa' as never;
           const idB = 'entity-2:fnv1a:bbbbbbbb' as never;
           const idC = 'entity-3:fnv1a:cccccccc' as never;
-          store.set(idA, a);
-          store.set(idB, b);
-          store.set(idC, c);
-          store.delete(idB);
-          return store.get(idA) === a && store.get(idC) === c && store.count === 2;
+          store.writer.set(idA, a);
+          store.writer.set(idB, b);
+          store.writer.set(idC, c);
+          store.writer.delete(idB);
+          return store.store.get(idA) === a && store.store.get(idC) === c && store.store.count === 2;
         },
       ),
     );
@@ -239,7 +248,7 @@ describe('ECS Composable Properties', () => {
     fc.assert(
       fc.property(arbEntityRecord, (components) => {
         const world = createWorld();
-        const id = world.spawn(components);
+        const id = world.spawn(admitComponents(components));
         return /^entity-\d+:fnv1a:[a-f0-9]{8}$/.test(id);
       }),
     );

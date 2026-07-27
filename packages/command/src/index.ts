@@ -16,13 +16,23 @@ export type {
   CommandJsonSchema,
 } from '@liteship/core';
 
-export { createCommandRegistry, capabilityUnavailable, ok, failed, defineCommand } from './registry.js';
+export {
+  COMMAND_CAPABILITIES,
+  COMMAND_CAPABILITY_DISPOSITIONS,
+  createCommandRegistry,
+  capabilityUnavailable,
+  ok,
+  failed,
+  defineCommand,
+} from './registry.js';
 export type {
   AuditEngineSummary,
   AuditFloorSummary,
   PackageSmokeSummary,
   CapsuleCommandHandler,
   CommandCapability,
+  CommandCapabilityDisposition,
+  CommandCapabilityProvision,
   CommandContext,
   HandledCommand,
   PlumbGateSummary,

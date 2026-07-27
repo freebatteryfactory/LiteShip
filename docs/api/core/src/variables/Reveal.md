@@ -8,7 +8,7 @@
 
 > `const` **Reveal**: `object`
 
-Defined in: [core/src/motion/reveal.ts:509](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L509)
+Defined in: [core/src/motion/reveal.ts:582](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L582)
 
 Authoring sugar namespace — data over intent, no behavior authority.
 

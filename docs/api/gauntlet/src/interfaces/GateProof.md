@@ -6,7 +6,7 @@
 
 # Interface: GateProof
 
-Defined in: [gauntlet/src/authority.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L29)
+Defined in: [gauntlet/src/authority.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L30)
 
 The evidence a gate produced by running against its own fixtures.
 
@@ -16,7 +16,7 @@ The evidence a gate produced by running against its own fixtures.
 
 > `readonly` **gateId**: `string`
 
-Defined in: [gauntlet/src/authority.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L30)
+Defined in: [gauntlet/src/authority.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L31)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/authority.ts:30](https://github.com/freebatteryfactory
 
 > `readonly` **greenClean**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L34)
+Defined in: [gauntlet/src/authority.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L35)
 
 Did the green (known-good) fixture produce 0 findings?
 
@@ -34,7 +34,7 @@ Did the green (known-good) fixture produce 0 findings?
 
 > `readonly` **mutationKilled**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L36)
+Defined in: [gauntlet/src/authority.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L37)
 
 Did mutating the gate's logic make its fixtures fail (mutation killed)?
 
@@ -44,7 +44,7 @@ Did mutating the gate's logic make its fixtures fail (mutation killed)?
 
 > `readonly` **redCaught**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L32)
+Defined in: [gauntlet/src/authority.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L33)
 
 Did the red (known-bad) fixture produce ≥1 finding?
 
@@ -54,6 +54,18 @@ Did the red (known-bad) fixture produce ≥1 finding?
 
 > `readonly` **selfProven**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L38)
+Defined in: [gauntlet/src/authority.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L45)
 
-Fully self-proven iff all three hold.
+Fully self-proven iff the three fixture axes hold and subject coverage is not opaque.
+
+***
+
+### subjectCoverage
+
+> `readonly` **subjectCoverage**: [`GateSubjectCoverage`](../type-aliases/GateSubjectCoverage.md) \| \{ `status`: `"not-applicable"`; \}
+
+Defined in: [gauntlet/src/authority.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L43)
+
+Did the gate enumerate the complete current-head population behind a
+discrete-subject claim? `not-applicable` is engine-derived only when the
+gate declares no separate subject census.

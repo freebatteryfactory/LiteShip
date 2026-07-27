@@ -8,4 +8,4 @@
 
 > **Config** = [`EdgeHostAdapterConfig`](../../../interfaces/EdgeHostAdapterConfig.md)
 
-Defined in: [\_spine/edge.d.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L301)
+Defined in: [\_spine/edge.d.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L327)

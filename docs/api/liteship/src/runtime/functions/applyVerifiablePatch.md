@@ -8,7 +8,7 @@
 
 > **applyVerifiablePatch**(`target`, `envelope`, `currentBaseGraphId`, `capability?`): [`ApplyVerifiablePatchResult`](../type-aliases/ApplyVerifiablePatchResult.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:116
+Defined in: web/dist/watch-and-prepare.d.ts:116
 
 Apply a verified envelope to `target`, using native DPU when available or the floor path.
 

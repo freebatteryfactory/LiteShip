@@ -8,6 +8,6 @@
 
 > **VideoRenderer** = `VideoRendererShape`
 
-Defined in: core/dist/media/video.d.ts:80
+Defined in: core/dist/media/video.d.ts:95
 
 Public structural type for `VideoRenderer`.

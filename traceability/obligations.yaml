@@ -4,7 +4,7 @@
 # source (a lie that reads as done while doing nothing — always-blocked by the
 # `gauntlet/no-placeholder` + `gauntlet/no-unregistered-todo` gates), a genuine deferral
 # is REGISTERED here and referenced in source by a `// OBLIGATION: OBL-<AREA>-<slug>`
-# marker. The host reconciler (packages/cli/src/lib/traceability.ts) scans packages/*/src
+# marker. The host reconciler (packages/cli/src/internal/traceability.ts) scans packages/*/src
 # for those markers and REQUIRES each to name an obligation declared below — a marker
 # naming an unregistered OBL is a divergence (the same head-probe LAW the `// PROVES:`
 # invariant trace upholds).

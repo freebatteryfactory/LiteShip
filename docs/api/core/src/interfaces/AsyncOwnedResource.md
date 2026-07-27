@@ -18,6 +18,10 @@ composition, but the value IS the disposable — there is no pair to
 destructure and separately own. Callers must await disposal when they need
 to observe finalizer failure; fire-and-forget disposal is unsupported.
 
+## Extended by
+
+- [`FrameCapture`](FrameCapture.md)
+
 ## Properties
 
 ### lifetime

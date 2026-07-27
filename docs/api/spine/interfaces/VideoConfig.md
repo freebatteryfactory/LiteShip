@@ -6,7 +6,7 @@
 
 # Interface: VideoConfig
 
-Defined in: [\_spine/core.d.ts:1340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1340)
+Defined in: [\_spine/core.d.ts:1555](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1555)
 
 Dimensions, frame rate, and duration of a video render schedule.
 
@@ -16,7 +16,7 @@ Dimensions, frame rate, and duration of a video render schedule.
 
 > `readonly` **durationMs**: [`Millis`](../type-aliases/Millis.md)
 
-Defined in: [\_spine/core.d.ts:1344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1344)
+Defined in: [\_spine/core.d.ts:1559](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1559)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1344](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **fps**: `number`
 
-Defined in: [\_spine/core.d.ts:1341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1341)
+Defined in: [\_spine/core.d.ts:1556](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1556)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:1341](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **height**: `number`
 
-Defined in: [\_spine/core.d.ts:1343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1343)
+Defined in: [\_spine/core.d.ts:1558](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1558)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [\_spine/core.d.ts:1343](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **width**: `number`
 
-Defined in: [\_spine/core.d.ts:1342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1342)
+Defined in: [\_spine/core.d.ts:1557](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1557)

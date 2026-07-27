@@ -6,7 +6,7 @@
 
 # Interface: LitelaunchCacheOptions
 
-Defined in: [gauntlet/src/runner.ts:652](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L652)
+Defined in: [gauntlet/src/runner.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L672)
 
 The INJECTED verdict-cache options the host threads into
 [litelaunchGauntletWithIR](../functions/litelaunchGauntletWithIR.md) (Slice B, B2). All optional — omit them and the
@@ -20,7 +20,7 @@ engine only consumes them.
 
 > `readonly` `optional` **activeSurfaceFacts?**: [`ActiveSurfaceFacts`](ActiveSurfaceFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:770](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L770)
+Defined in: [gauntlet/src/runner.ts:790](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L790)
 
 OPTIONAL host-computed active-surface field-read facts (#132) threaded onto the
 [GateContext](GateContext.md) for `activeModeledSurfaceReaderGate` to fold. Supplied
@@ -33,7 +33,7 @@ orphan reports as advisory until #130.
 
 > `readonly` `optional` **benchmarkSubjects?**: [`BenchmarkSubjectFacts`](BenchmarkSubjectFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:667](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L667)
+Defined in: [gauntlet/src/runner.ts:687](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L687)
 
 Always-on host-computed benchmark subject reachability facts.
 
@@ -43,7 +43,7 @@ Always-on host-computed benchmark subject reachability facts.
 
 > `readonly` `optional` **cache?**: [`GateVerdictCache`](GateVerdictCache.md)
 
-Defined in: [gauntlet/src/runner.ts:654](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L654)
+Defined in: [gauntlet/src/runner.ts:674](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L674)
 
 The injected verdict store (fs-backed in the CLI host).
 
@@ -53,7 +53,7 @@ The injected verdict store (fs-backed in the CLI host).
 
 > `readonly` `optional` **capabilityLink?**: [`CapabilityLinkFacts`](CapabilityLinkFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:718](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L718)
+Defined in: [gauntlet/src/runner.ts:738](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L738)
 
 OPTIONAL host-computed capability-link facts (codex round-8, #1b) threaded onto the
 [GateContext](GateContext.md) for `capabilityGateLinkGate` to fold. Supplied ONLY on the
@@ -67,7 +67,7 @@ non-capability-gate run).
 
 > `readonly` `optional` **checkGovernance?**: [`CheckGovernanceFacts`](CheckGovernanceFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:669](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L669)
+Defined in: [gauntlet/src/runner.ts:689](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L689)
 
 Required host-built governance facts for the default IR composition.
 
@@ -77,7 +77,7 @@ Required host-built governance facts for the default IR composition.
 
 > `readonly` `optional` **codeOnly?**: (`source`) => `string`
 
-Defined in: [gauntlet/src/runner.ts:790](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L790)
+Defined in: [gauntlet/src/runner.ts:812](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L812)
 
 OPTIONAL host-built SOUND scanner codeOnly floor (`@liteship/audit`'s `codeOnlyAST`) threaded onto the
 [GateContext](GateContext.md) as `codeOnly`. Code-scanning gates use it via `(context.codeOnly ?? codeOnly)`.
@@ -99,7 +99,7 @@ Supplied on the `--ir` path; omitted on the lean path (char-machine fallback, pi
 
 > `readonly` `optional` **composition?**: [`CompositionFacts`](CompositionFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:754](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L754)
+Defined in: [gauntlet/src/runner.ts:774](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L774)
 
 OPTIONAL host-computed composition-coverage facts (the LOCAL-VS-GLOBAL correctness
 family — "locally green, globally untested interaction") threaded onto the
@@ -109,11 +109,31 @@ gate. The composition MODE namespaces the verdict cache key.
 
 ***
 
+### diagnosticEmitterDetector?
+
+> `readonly` `optional` **diagnosticEmitterDetector?**: (`source`) => readonly [`DiagnosticEmissionMatch`](DiagnosticEmissionMatch.md)[]
+
+Defined in: [gauntlet/src/runner.ts:814](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L814)
+
+Host-built parser-backed Diagnostics-call census.
+
+#### Parameters
+
+##### source
+
+`string`
+
+#### Returns
+
+readonly [`DiagnosticEmissionMatch`](DiagnosticEmissionMatch.md)[]
+
+***
+
 ### earlyReturnDetector?
 
 > `readonly` `optional` **earlyReturnDetector?**: (`source`) => readonly [`EarlyReturnMatch`](EarlyReturnMatch.md)[]
 
-Defined in: [gauntlet/src/runner.ts:784](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L784)
+Defined in: [gauntlet/src/runner.ts:806](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L806)
 
 OPTIONAL host-built SOUND AST early-return detector (`detectEarlyReturnBeforeExpectAST`)
 threaded onto [GateContext](GateContext.md) as `earlyReturnDetector`.
@@ -134,9 +154,19 @@ readonly [`EarlyReturnMatch`](EarlyReturnMatch.md)[]
 
 > `readonly` `optional` **env?**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [gauntlet/src/runner.ts:658](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L658)
+Defined in: [gauntlet/src/runner.ts:678](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L678)
 
 The environment fingerprint folded into every key.
+
+***
+
+### featureEdges?
+
+> `readonly` `optional` **featureEdges?**: [`FeatureEdgeFacts`](FeatureEdgeFacts.md)
+
+Defined in: [gauntlet/src/runner.ts:792](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L792)
+
+Required host-built fleet feature-edge connectivity facts.
 
 ***
 
@@ -144,7 +174,7 @@ The environment fingerprint folded into every key.
 
 > `readonly` `optional` **gates?**: readonly [`Gate`](Gate.md)[]
 
-Defined in: [gauntlet/src/runner.ts:665](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L665)
+Defined in: [gauntlet/src/runner.ts:685](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L685)
 
 OPTIONAL gate-set override (Slice C, the `--supply-chain` opt-in). Defaults to
 [LITESHIP\_IR\_GATES](../variables/LITESHIP_IR_GATES.md). The host composes `supplyChainGate` onto the IR-host
@@ -157,7 +187,7 @@ the avionics gate never appears (no `not-evidenced` noise on the default path).
 
 > `readonly` `optional` **mcdc?**: [`McdcFacts`](McdcFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:692](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L692)
+Defined in: [gauntlet/src/runner.ts:712](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L712)
 
 OPTIONAL host-computed MC/DC facts (the avionics tier — DO-178B Level A coverage via
 condition-level mutation) threaded onto the [GateContext](GateContext.md) for
@@ -172,7 +202,7 @@ versa) — exactly the `--mutate` cache-soundness lesson.
 
 > `readonly` `optional` **mutation?**: [`MutationFacts`](MutationFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:683](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L683)
+Defined in: [gauntlet/src/runner.ts:703](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L703)
 
 OPTIONAL host-computed mutation facts (Slice C — mutation-as-divergence) threaded
 onto the [GateContext](GateContext.md) for `mutationDivergenceGate` to fold. Supplied ONLY
@@ -186,7 +216,7 @@ verdict can never be served to a non-mutation run, or vice versa).
 
 > `readonly` `optional` **proof?**: [`ProofFacts`](ProofFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:746](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L746)
+Defined in: [gauntlet/src/runner.ts:766](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L766)
 
 OPTIONAL host-computed proof-strength facts (the LOCAL-VS-GLOBAL correctness family
 — the lax-functor) threaded onto the [GateContext](GateContext.md) for `proofPropagationGate`
@@ -201,7 +231,7 @@ vice versa) — the same `--mutate` cache-soundness lesson.
 
 > `readonly` `optional` **simulation?**: [`SimulationFacts`](SimulationFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:701](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L701)
+Defined in: [gauntlet/src/runner.ts:721](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L721)
 
 OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
 spine) threaded onto the [GateContext](GateContext.md) for `simulationDeterminismGate` to
@@ -216,7 +246,7 @@ vice versa).
 
 > `readonly` `optional` **skipDetector?**: (`source`) => readonly [`SkipMatch`](SkipMatch.md)[]
 
-Defined in: [gauntlet/src/runner.ts:779](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L779)
+Defined in: [gauntlet/src/runner.ts:801](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L801)
 
 OPTIONAL host-built SOUND AST skip detector (`@liteship/audit`'s `detectSkipsAST`) threaded onto
 the [GateContext](GateContext.md) as `skipDetector`. The no-skipped-test gate uses it via
@@ -241,7 +271,7 @@ readonly [`SkipMatch`](SkipMatch.md)[]
 
 > `readonly` `optional` **spineRelation?**: [`SpineRelationFacts`](SpineRelationFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:763](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L763)
+Defined in: [gauntlet/src/runner.ts:783](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L783)
 
 OPTIONAL host-computed two-axis spine-relation facts (Wave 8.5, the public
 constitution's STATIC-projection half) threaded onto the [GateContext](GateContext.md) for
@@ -256,7 +286,7 @@ non-spine-relation run).
 
 > `readonly` `optional` **standards?**: [`StandardsIntegrityFacts`](StandardsIntegrityFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:737](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L737)
+Defined in: [gauntlet/src/runner.ts:757](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L757)
 
 OPTIONAL host-computed standards-integrity facts (the AGENT-SAFETY META-GAUNTLET,
 the "raccoon rule") threaded onto the [GateContext](GateContext.md) for
@@ -272,7 +302,7 @@ cache mode (the env fingerprint + toolchain digest already key it).
 
 > `readonly` `optional` **supplyChain?**: [`SupplyChainFacts`](SupplyChainFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:675](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L675)
+Defined in: [gauntlet/src/runner.ts:695](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L695)
 
 OPTIONAL host-computed supply-chain facts (Slice C) threaded onto the
 [GateContext](GateContext.md) for `supplyChainGate` to fold. Supplied ONLY on the
@@ -284,7 +314,7 @@ OPTIONAL host-computed supply-chain facts (Slice C) threaded onto the
 
 > `readonly` `optional` **taint?**: [`TaintFacts`](TaintFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:710](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L710)
+Defined in: [gauntlet/src/runner.ts:730](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L730)
 
 OPTIONAL host-computed taint-flow facts (the TAINT-ANALYSIS family) threaded onto
 the [GateContext](GateContext.md) for `taintFlowGate` to fold. Supplied ONLY on the
@@ -299,7 +329,7 @@ lesson.
 
 > `readonly` `optional` **toolchainDigest?**: `string`
 
-Defined in: [gauntlet/src/runner.ts:656](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L656)
+Defined in: [gauntlet/src/runner.ts:676](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L676)
 
 The host's toolchain digest (gauntlet dist + version + env) — the anti-lie keystone.
 
@@ -309,7 +339,7 @@ The host's toolchain digest (gauntlet dist + version + env) — the anti-lie key
 
 > `readonly` `optional` **traceability?**: [`TraceabilityFacts`](TraceabilityFacts.md)
 
-Defined in: [gauntlet/src/runner.ts:727](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L727)
+Defined in: [gauntlet/src/runner.ts:747](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/runner.ts#L747)
 
 OPTIONAL host-computed requirements-traceability facts (the avionics-tier ledger)
 threaded onto the [GateContext](GateContext.md) for `traceabilityBridgeGate` to fold.

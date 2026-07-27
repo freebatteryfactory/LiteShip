@@ -18,17 +18,17 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ContentAddress, wallClock } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import { isLiteShipWorkspace, readWorkspacePackages, type WorkspacePackageIdentity } from '../lib/workspace.js';
+import { isLiteShipWorkspace, readWorkspacePackages, type WorkspacePackageIdentity } from '../internal/workspace.js';
 import {
   analyzeLockfile,
   buildSbom,
   checkSbomCompleteness,
   SBOM_ARTIFACT_PATH,
   type WorkspacePkg,
-} from '../lib/supply-chain.js';
+} from '../internal/supply-chain.js';
 import { emit, emitError } from '../receipts.js';
 import type { SbomReceipt } from '../receipts.js';
-import { generateVex, serializeVex, vexAddress } from '../lib/sbom.js';
+import { generateVex, serializeVex, vexAddress } from '../internal/sbom.js';
 
 const VEX_ARTIFACT_PATH = 'reports/vex.json' as const;
 

@@ -6,12 +6,9 @@
 
 # Interface: SvgAttrs
 
-Defined in: [scene/src/systems/svg.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L31)
+Defined in: [scene/src/parts.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/parts.ts#L27)
 
-Composed SVG attribute struct written to the `_svgAttrs` output
-component. All visual fields are optional — only the ones a downstream
-renderer needs to emit are populated. `_tag` is the discriminator
-(scene `_tag` convention) so consumers can pattern-match the struct.
+Composed SVG attribute projection written by the final Scene system.
 
 ## Properties
 
@@ -19,7 +16,7 @@ renderer needs to emit are populated. `_tag` is the discriminator
 
 > `readonly` **\_tag**: `"SvgAttrs"`
 
-Defined in: [scene/src/systems/svg.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L32)
+Defined in: [scene/src/parts.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/parts.ts#L28)
 
 ***
 
@@ -27,7 +24,7 @@ Defined in: [scene/src/systems/svg.ts:32](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **clipPath?**: `string`
 
-Defined in: [scene/src/systems/svg.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L36)
+Defined in: [scene/src/parts.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/parts.ts#L32)
 
 ***
 
@@ -35,7 +32,7 @@ Defined in: [scene/src/systems/svg.ts:36](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **mixBlendMode?**: `string`
 
-Defined in: [scene/src/systems/svg.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L35)
+Defined in: [scene/src/parts.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/parts.ts#L31)
 
 ***
 
@@ -43,7 +40,7 @@ Defined in: [scene/src/systems/svg.ts:35](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **opacity?**: `number`
 
-Defined in: [scene/src/systems/svg.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L34)
+Defined in: [scene/src/parts.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/parts.ts#L30)
 
 ***
 
@@ -51,4 +48,4 @@ Defined in: [scene/src/systems/svg.ts:34](https://github.com/freebatteryfactory/
 
 > `readonly` `optional` **transform?**: `string`
 
-Defined in: [scene/src/systems/svg.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L33)
+Defined in: [scene/src/parts.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/parts.ts#L29)

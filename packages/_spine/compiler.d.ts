@@ -2,7 +2,15 @@
  * @liteship/compiler type spine -- multi-target output generation.
  */
 
-import type { Boundary, StateUnion, ContentAddress } from './core.js';
+import type {
+  Boundary,
+  StateUnion,
+  ContentAddress,
+  StateName,
+  TypedValue,
+  EdgeType,
+  RuntimeEasing,
+} from './core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. CSS COMPILER (Boundary -> @container rules via lightningcss)
@@ -87,6 +95,7 @@ export interface GLSLCompileResult {
   readonly defines: readonly GLSLDefine[];
   readonly uniforms: readonly GLSLUniform[];
   readonly uniformValues: Record<string, number>;
+  readonly stateUniforms: Record<string, Record<string, number>>;
   readonly declarations: string;
   readonly bindUniforms: string;
 }
@@ -120,12 +129,15 @@ export type WGSLType =
   | 'mat3x3f'
   | 'mat4x4f';
 
+/** A binding may target a built-in WGSL primitive or a declared struct. */
+export type WGSLBindingType = WGSLType | (string & {});
+
 /** One WGSL resource binding in a declared bind group. */
 export interface WGSLBinding {
   readonly group: number;
   readonly binding: number;
   readonly name: string;
-  readonly type: WGSLType;
+  readonly type: WGSLBindingType;
 }
 
 /** Fixed-width numeric tuple accepted as a WGSL uniform vector. */
@@ -289,7 +301,7 @@ export declare const AIManifestCompiler: {
 import type { Config } from './config.js';
 
 /** State-indexed CSS property tables accepted by compiler dispatch. */
-export type CSSStates = Readonly<Record<string, Readonly<Record<string, string>>>>;
+export type CSSStates = Readonly<Record<string, CSSStateInput>>;
 /** State-indexed GLSL numeric uniform tables accepted by compiler dispatch. */
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
 /** State-indexed WGSL uniform tables accepted by compiler dispatch. */
@@ -306,6 +318,98 @@ export interface ConfigTemplateResult {
   readonly json: string;
 }
 
+/** One typed property transition in a compiled motion plan. */
+interface MotionPropertyTween {
+  readonly property: string;
+  readonly from: TypedValue;
+  readonly to: TypedValue;
+}
+
+/** One CSS keyframe emitted from the motion compiler. */
+interface CssKeyframeStep {
+  readonly offset: number;
+  readonly properties: Readonly<Record<string, string>>;
+  readonly easing?: RuntimeEasing;
+}
+
+/** Whether a compiled plan can use a native timeline without semantic loss. */
+type NativeTimelineEligibility =
+  | { readonly eligible: true }
+  | { readonly eligible: false; readonly reason: 'mixed-easing-overlap' };
+
+/** Fully lowered CSS motion plan consumed by the compiler. */
+interface CssMotionPlan {
+  readonly selector: string;
+  readonly fromState: StateName;
+  readonly toState: StateName;
+  readonly properties: readonly MotionPropertyTween[];
+  readonly durationMs: number;
+  readonly routing: EdgeType;
+  readonly keyframes: readonly CssKeyframeStep[];
+  readonly transitionProperty: string;
+  readonly nativeTimeline: NativeTimelineEligibility;
+}
+
+/** Spring parameters accepted by motion compilation. */
+interface MotionSpringConfig {
+  readonly stiffness?: number;
+  readonly damping?: number;
+  readonly mass?: number;
+}
+
+/** Authored easing families accepted by motion compilation. */
+type MotionEasing = 'linear' | 'ease' | 'spring';
+
+/** View-timeline range projected into CSS. */
+interface MotionViewTimeline {
+  readonly range: readonly [string, string];
+}
+
+/** Scroll-timeline axis and range projected into CSS. */
+interface MotionScrollTimeline {
+  readonly axis?: 'block' | 'inline' | 'x' | 'y';
+  readonly range: readonly [string, string];
+}
+
+/** Input contract for one motion compiler projection. */
+interface MotionCompileInput {
+  readonly plan: CssMotionPlan;
+  readonly easing?: MotionEasing;
+  readonly spring?: MotionSpringConfig;
+  readonly viewTimeline?: MotionViewTimeline;
+  readonly scrollTimeline?: MotionScrollTimeline;
+  readonly delayMs?: number;
+}
+
+/** CSS fragments emitted by motion compilation. */
+interface MotionCompileResult {
+  readonly raw: string;
+  readonly propertyRegistrations: string;
+  readonly keyframes: string;
+  readonly startingStyle: string;
+  readonly transition: string;
+  readonly scrollTimeline: string;
+}
+
+/** Input contract for one view-transition projection. */
+interface ViewTransitionCompileInput {
+  readonly boundary: string;
+  readonly selector?: string;
+  readonly durationMs: number;
+  readonly easing: string;
+  readonly mpaNavigation?: boolean;
+  readonly delayMs?: number;
+}
+
+/** CSS fragments emitted by view-transition compilation. */
+interface ViewTransitionCompileResult {
+  readonly viewTransitionName: string;
+  readonly nameAssignment: string;
+  readonly pseudoStyles: string;
+  readonly atRule: string;
+  readonly raw: string;
+}
+
 /** Closed union of definition projections accepted by the compiler dispatcher. */
 export type CompilerDef =
   | {
@@ -318,7 +422,9 @@ export type CompilerDef =
   | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary; readonly states: WGSLStates }
   | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary; readonly states: ARIAStates }
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
-  | { readonly _tag: 'ConfigCompiler'; readonly config: Config };
+  | { readonly _tag: 'ConfigCompiler'; readonly config: Config }
+  | { readonly _tag: 'MotionCompiler'; readonly input: MotionCompileInput }
+  | { readonly _tag: 'ViewTransitionCompiler'; readonly input: ViewTransitionCompileInput };
 
 /** Closed union returned by the compiler dispatcher for every target. */
 export type CompileResult =
@@ -327,7 +433,9 @@ export type CompileResult =
   | { readonly target: 'wgsl'; readonly result: WGSLCompileResult }
   | { readonly target: 'aria'; readonly result: ARIACompileResult }
   | { readonly target: 'ai'; readonly result: AIManifestCompileResult }
-  | { readonly target: 'config'; readonly result: ConfigTemplateResult };
+  | { readonly target: 'config'; readonly result: ConfigTemplateResult }
+  | { readonly target: 'motion'; readonly result: MotionCompileResult }
+  | { readonly target: 'view-transition'; readonly result: ViewTransitionCompileResult };
 
 export declare function dispatch(def: CompilerDef): CompileResult;
 

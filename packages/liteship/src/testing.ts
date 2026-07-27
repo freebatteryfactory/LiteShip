@@ -20,5 +20,5 @@ export { generateSceneComposition, SCENE_CHECKS } from '@liteship/core/harness';
 export type { HarnessLane, SceneCheckDisposition, SceneDriver } from '@liteship/core/harness';
 export { BENCH_NOT_APPLICABLE_MARKER, BENCH_NOT_APPLICABLE_RE, benchNotApplicableMarker } from '@liteship/core/harness';
 export { classifyBenchSource, benchHonestyError } from '@liteship/core/harness';
-export { LITESHIP_PACKAGES } from './testing/package-roster.js';
-export type { LiteshipPackageName } from './testing/package-roster.js';
+export { LITESHIP_PACKAGES } from './package-roster.generated.js';
+export type { LiteshipPackageName } from './package-roster.generated.js';

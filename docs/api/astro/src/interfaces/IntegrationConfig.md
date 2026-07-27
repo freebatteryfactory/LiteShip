@@ -122,7 +122,7 @@ refines the same locals. Default off (wire middleware yourself).
 Defined in: [astro/src/integration.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/integration.ts#L135)
 
 Continuous-motion runtime (`client:motion`). Opt-in (default off): registers
-the JS motion FLOOR that scrubs `data-liteship-motion-program` when native
+the JS motion FLOOR that scrubs `data-liteship-motion-payload` when native
 `animation-timeline` is unavailable. The native CSS path (`MotionCompiler`)
 needs no runtime and is unaffected.
 

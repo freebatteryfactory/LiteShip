@@ -6,7 +6,7 @@
 
 # Interface: BlendNode\<T\>
 
-Defined in: [\_spine/core.d.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L474)
+Defined in: [\_spine/core.d.ts:501](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L501)
 
 One weighted input node in a blend tree.
 
@@ -22,7 +22,7 @@ One weighted input node in a blend tree.
 
 > `readonly` **value**: `T`
 
-Defined in: [\_spine/core.d.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L475)
+Defined in: [\_spine/core.d.ts:502](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L502)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [\_spine/core.d.ts:475](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **weight**: `number`
 
-Defined in: [\_spine/core.d.ts:476](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L476)
+Defined in: [\_spine/core.d.ts:503](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L503)

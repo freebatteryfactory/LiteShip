@@ -28,7 +28,7 @@ import { glossary } from './commands/glossary.js';
 import { explain } from './commands/explain.js';
 import { context } from './commands/context.js';
 import { help } from './commands/help.js';
-import { color, colorEnabled } from './lib/ansi.js';
+import { color, colorEnabled } from './internal/ansi.js';
 import { sceneCompile } from './commands/scene-compile.js';
 import { sceneDev } from './commands/scene-dev.js';
 import { sceneRender } from './commands/scene-render.js';
@@ -46,6 +46,7 @@ import { astroDev } from './commands/astro-dev.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
 import { gauntlet } from './commands/gauntlet.js';
 import { lsp, type ImportMcpServer } from './commands/lsp.js';
+import type { McpFeatureEdgeOwners } from './internal/feature-edge-profile.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
 import { sbom } from './commands/sbom.js';
@@ -54,8 +55,8 @@ import { build } from './commands/build.js';
 import { info } from './commands/info.js';
 import { add } from './commands/add.js';
 import { readCliVersion, version } from './commands/version.js';
-import { runGauntletWithRepoIR } from './lib/repo-ir-gauntlet.js';
-import { firstUnknownFlag, positional, takeFlagValue } from './lib/argv.js';
+import { runGauntletWithRepoIR } from './internal/repo-ir-gauntlet.js';
+import { firstUnknownFlag, positional, takeFlagValue } from './internal/argv.js';
 import { emitError } from './receipts.js';
 
 /**
@@ -690,10 +691,18 @@ assertDispatchCoversCatalog();
 
 /** Run the CLI with the given argv slice. Returns a process exit code. */
 export async function run(argv: readonly string[], deps: RunDeps = {}): Promise<number> {
+  const importMcpServer = deps.importMcpServer ?? (() => import('@liteship/mcp-server'));
+  const runGauntletIR =
+    deps.runGauntletWithRepoIR ??
+    (async (repoRoot, now, globs, options) =>
+      runGauntletWithRepoIR(repoRoot, now, globs, {
+        ...options,
+        mcpFeatureEdgeOwners: (await importMcpServer()) as unknown as McpFeatureEdgeOwners,
+      }));
   const resolved: ResolvedDeps = {
     doctor: deps.doctor ?? doctor,
-    runGauntletWithRepoIR: deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR,
-    importMcpServer: deps.importMcpServer ?? (() => import('@liteship/mcp-server')),
+    runGauntletWithRepoIR: runGauntletIR,
+    importMcpServer,
     ...(deps.checkHandler ? { checkHandler: deps.checkHandler } : {}),
     ...(deps.runCheckPlan ? { runCheckPlan: deps.runCheckPlan } : {}),
   };

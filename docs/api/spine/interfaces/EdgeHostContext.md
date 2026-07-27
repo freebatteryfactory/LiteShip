@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostContext
 
-Defined in: [\_spine/edge.d.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L218)
+Defined in: [\_spine/edge.d.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L238)
 
 Request evidence available to an edge host adapter.
 
@@ -21,7 +21,7 @@ Request evidence available to an edge host adapter.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [\_spine/edge.d.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L219)
+Defined in: [\_spine/edge.d.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L239)
 
 ***
 
@@ -29,4 +29,4 @@ Defined in: [\_spine/edge.d.ts:219](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **tier**: [`EdgeTierResult`](EdgeTierResult.md)
 
-Defined in: [\_spine/edge.d.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L220)
+Defined in: [\_spine/edge.d.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L240)

@@ -15,7 +15,7 @@ import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
 import type { CommandContext } from '@liteship/command';
 import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { liteshipDevopsProfile } from '../lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../internal/liteship-audit-profile.js';
 
 /** Receipt emitted by `liteship audit-floor`. */
 export interface AuditFloorReceipt extends AuditFloorPayload {

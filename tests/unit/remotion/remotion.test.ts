@@ -2,7 +2,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { Compositor, Diagnostics, VideoRenderer } from '@liteship/core';
+import { Compositor, Diagnostics, createVideoRenderer } from '@liteship/core';
 import type { CompositeState, VideoFrameOutput } from '@liteship/core';
 import { Internals } from 'remotion';
 import {
@@ -101,7 +101,9 @@ describe('@liteship/remotion hooks', () => {
       return React.createElement('div');
     }
 
-    renderToStaticMarkup(withRemotionFrame(1, React.createElement(Provider, { frames, children: React.createElement(Probe) })));
+    renderToStaticMarkup(
+      withRemotionFrame(1, React.createElement(Provider, { frames, children: React.createElement(Probe) })),
+    );
     expect(observed?.discrete['index']).toBe('1');
   });
 
@@ -113,7 +115,9 @@ describe('@liteship/remotion hooks', () => {
       return React.createElement('div');
     }
 
-    renderToStaticMarkup(withRemotionFrame(0, React.createElement(Provider, { frames: [], children: React.createElement(Probe) })));
+    renderToStaticMarkup(
+      withRemotionFrame(0, React.createElement(Provider, { frames: [], children: React.createElement(Probe) })),
+    );
     expect(observed).toEqual({
       discrete: {},
       blend: {},
@@ -125,7 +129,7 @@ describe('@liteship/remotion hooks', () => {
 describe('@liteship/remotion precomputeFrames', () => {
   test('collects frames from a renderer', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: 500 }, compositor);
+    const renderer = createVideoRenderer({ fps: 10, width: 640, height: 480, durationMs: 500 }, compositor);
 
     const frames = await precomputeFrames(renderer);
     expect(frames).toHaveLength(5);
@@ -135,7 +139,7 @@ describe('@liteship/remotion precomputeFrames', () => {
 
   test('returns an empty array for zero-duration renders', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
+    const renderer = createVideoRenderer({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
 
     await expect(precomputeFrames(renderer)).resolves.toEqual([]);
   });
@@ -144,10 +148,7 @@ describe('@liteship/remotion precomputeFrames', () => {
 describe('@liteship/remotion rendererFromRemotionConfig', () => {
   test('derives VideoConfig from Remotion timing so frame counts cannot drift', async () => {
     const compositor = Compositor.create();
-    const renderer = rendererFromRemotionConfig(
-      { fps: 30, width: 640, height: 480, durationInFrames: 90 },
-      compositor,
-    );
+    const renderer = rendererFromRemotionConfig({ fps: 30, width: 640, height: 480, durationInFrames: 90 }, compositor);
 
     expect(renderer.config).toMatchObject({ fps: 30, width: 640, height: 480, durationMs: 3000 });
     expect(renderer.totalFrames).toBe(90);
@@ -250,7 +251,7 @@ describe('@liteship/remotion degraded-path diagnostics', () => {
   });
 
   test('remotionAdapterCapsule invariant message names the contract, the likely cause, and the fix', () => {
-    const inv = remotionAdapterCapsule.invariants.find((i) => i.name === 'frame-count-matches-totalFrames');
+    const inv = remotionAdapterCapsule.invariants.find((i) => i.name === 'frame-indices-are-contiguous');
 
     expect(inv?.message).toBe(
       'Frame stream out of order: expected frames[i].frame === i for every index. Frames were likely filtered, re-sorted, or concatenated after precomputeFrames — pass the precomputeFrames array through unmodified.',

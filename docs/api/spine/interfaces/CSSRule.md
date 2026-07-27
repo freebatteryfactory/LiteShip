@@ -6,7 +6,7 @@
 
 # Interface: CSSRule
 
-Defined in: [\_spine/compiler.d.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L19)
+Defined in: [\_spine/compiler.d.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L27)
 
 One selector/declaration pair emitted by a CSS compiler.
 
@@ -16,7 +16,7 @@ One selector/declaration pair emitted by a CSS compiler.
 
 > `readonly` **properties**: `Record`\<`string`, `string`\>
 
-Defined in: [\_spine/compiler.d.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L21)
+Defined in: [\_spine/compiler.d.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L29)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:21](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **selector**: `string`
 
-Defined in: [\_spine/compiler.d.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L20)
+Defined in: [\_spine/compiler.d.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L28)

@@ -24,6 +24,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
+import fc from 'fast-check';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -64,7 +65,7 @@ import {
   type GitShowReader,
   type GitIntroCommitReader,
   type StandardsIntegrityResult,
-} from '../../../packages/cli/src/lib/standards-surface.js';
+} from '../../../packages/cli/src/internal/standards-surface.js';
 
 /** Assert the backstop ran (ACTIVE — the base carried the snapshot) and return the facts. */
 function activeFacts(result: StandardsIntegrityResult) {
@@ -264,6 +265,116 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
     expect(part.forbiddenSignoffs).toEqual([]);
     expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(
       true,
+    );
+  });
+});
+
+describe('assurance-map changes are judged by live effective coverage, not stale glob spelling', () => {
+  const subjects = ['packages/example/src/a.ts', 'packages/example/src/b.ts', 'packages/example/src/c.ts'];
+  const coverage = (levels: readonly ('L1' | 'L3' | 'L4')[]): StandardsElement[] =>
+    subjects.map((file, index) => ({ _tag: 'assurance-coverage', file, level: levels[index] ?? 'L1' }));
+
+  test('removing a dead pre-refactor glob is neutral', () => {
+    const prior: StandardsElement[] = [{ _tag: 'assurance', glob: 'packages/example/src/retired.ts', level: 'L3' }];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/runtime/**', level: 'L3', order: 0 },
+      ...coverage(['L1', 'L1', 'L1']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes.find((change) => change.elementKey.includes('retired.ts'))).toMatchObject({
+      changeClass: 'neutral',
+    });
+  });
+
+  test('removing a narrower glob is neutral when the ordered live map keeps every matching path at the same level', () => {
+    const prior: StandardsElement[] = [{ _tag: 'assurance', glob: 'packages/example/src/{a,b}.ts', level: 'L3' }];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/{a,b,c}.ts', level: 'L3', order: 0 },
+      ...coverage(['L3', 'L3', 'L3']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes.find((change) => change.elementKey.includes('{a,b}.ts'))).toMatchObject({ changeClass: 'neutral' });
+    expect(changes.some((change) => change.weakening === 'assurance-level-lowered')).toBe(false);
+  });
+
+  test('removing a live glob remains a blocking weakening when any governed path is demoted', () => {
+    const prior: StandardsElement[] = [{ _tag: 'assurance', glob: 'packages/example/src/{a,b}.ts', level: 'L3' }];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L3', order: 0 },
+      ...coverage(['L3', 'L1', 'L1']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes.find((change) => change.elementKey.includes('{a,b}.ts'))).toMatchObject({
+      changeClass: 'weaken',
+      weakening: 'assurance-level-lowered',
+    });
+  });
+
+  test('reordering overlapping format-2 rules reds when first-match semantics demote a live path', () => {
+    const prior: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L4', order: 0 },
+      { _tag: 'assurance', glob: 'packages/example/src/**', level: 'L1', order: 1 },
+      ...coverage(['L4', 'L1', 'L1']),
+    ];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L4', order: 1 },
+      { _tag: 'assurance', glob: 'packages/example/src/**', level: 'L1', order: 0 },
+      ...coverage(['L1', 'L1', 'L1']),
+    ];
+    const changes = diffStandardsSurface(prior, current);
+    expect(changes).toContainEqual(
+      expect.objectContaining({
+        elementKey: 'assurance-coverage::packages/example/src/a.ts',
+        changeClass: 'weaken',
+        weakening: 'assurance-level-lowered',
+      }),
+    );
+  });
+
+  test('a reordered map with identical effective coverage is neutral drift', () => {
+    const prior: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L3', order: 0 },
+      { _tag: 'assurance', glob: 'packages/example/src/b.ts', level: 'L3', order: 1 },
+      ...coverage(['L3', 'L3', 'L1']),
+    ];
+    const current: StandardsElement[] = [
+      { _tag: 'assurance', glob: 'packages/example/src/a.ts', level: 'L3', order: 1 },
+      { _tag: 'assurance', glob: 'packages/example/src/b.ts', level: 'L3', order: 0 },
+      ...coverage(['L3', 'L3', 'L1']),
+    ];
+    expect(diffStandardsSurface(prior, current)).toEqual([
+      expect.objectContaining({ elementKey: 'assurance::packages/example/src/a.ts', changeClass: 'neutral' }),
+      expect.objectContaining({ elementKey: 'assurance::packages/example/src/b.ts', changeClass: 'neutral' }),
+    ]);
+  });
+
+  test('property: removal classification is monotone over the projected live levels', () => {
+    fc.assert(
+      fc.property(
+        fc.uniqueArray(fc.stringMatching(/^[a-z][a-z0-9]{0,7}$/), { minLength: 1, maxLength: 12 }),
+        (names) => {
+          const files = names.map((name) => `packages/example/src/legacy/${name}.ts`);
+          const prior: StandardsElement[] = [
+            { _tag: 'assurance', glob: 'packages/example/src/legacy/**', level: 'L3' },
+          ];
+          const projected = (levels: readonly ('L1' | 'L3')[]): StandardsElement[] => [
+            { _tag: 'assurance', glob: 'packages/example/src/**', level: 'L3', order: 0 },
+            ...files.map((file, index): StandardsElement => ({
+              _tag: 'assurance-coverage',
+              file,
+              level: levels[index] ?? 'L3',
+            })),
+          ];
+
+          const preserved = diffStandardsSurface(prior, projected(files.map(() => 'L3')));
+          expect(preserved.some((change) => change.changeClass === 'weaken')).toBe(false);
+
+          const oneDemoted = files.map((_, index): 'L1' | 'L3' => (index === 0 ? 'L1' : 'L3'));
+          const demoted = diffStandardsSurface(prior, projected(oneDemoted));
+          expect(demoted.some((change) => change.weakening === 'assurance-level-lowered')).toBe(true);
+        },
+      ),
+      { seed: 0x5a17da7a, numRuns: 80 },
     );
   });
 });

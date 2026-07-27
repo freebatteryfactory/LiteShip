@@ -8,7 +8,7 @@
  */
 
 import type { CaptureConfig, CaptureFrame, FrameCapture, CaptureResult } from '@liteship/core';
-import { CAPTURE_KEYFRAME_INTERVAL, Millis } from '@liteship/core';
+import { attachLifetime, CAPTURE_KEYFRAME_INTERVAL, Lifetime, Millis } from '@liteship/core';
 import { HostCapabilityError, IoError, UnsupportedError, ValidationError } from '@liteship/error';
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from './mediabunny.js';
 
@@ -17,7 +17,7 @@ import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat,
 // ---------------------------------------------------------------------------
 
 /**
- * Options for {@link WebCodecsCapture.make}. All fields are optional;
+ * Options for {@link createWebCodecsCapture}. All fields are optional;
  * omitted values fall back to Baseline H.264 at 4 Mbps.
  */
 export interface WebCodecsCaptureOptions {
@@ -30,7 +30,7 @@ export interface WebCodecsCaptureOptions {
 }
 
 /**
- * The mediabunny muxer classes {@link make} encodes through — the third-party
+ * The mediabunny muxer classes capture encodes through — the third-party
  * video-encode boundary. Injectable (defaulting to {@link REAL_MEDIABUNNY}) so a
  * test can script the muxer without reaching into the `./mediabunny.js` re-export
  * shim: the shim wraps a true external, so the seam injects that external rather
@@ -45,7 +45,7 @@ interface MediabunnyCodecs {
   readonly Output: typeof Output;
 }
 
-/** The production mediabunny classes — the default {@link make} muxes through. */
+/** The production mediabunny classes — the default capture factory muxes through. */
 const REAL_MEDIABUNNY: MediabunnyCodecs = {
   BufferTarget,
   EncodedPacket,
@@ -94,7 +94,12 @@ function supportErrorMessage(err: unknown): string {
 // Factory
 // ---------------------------------------------------------------------------
 
-function make(options?: WebCodecsCaptureOptions, mediabunny: MediabunnyCodecs = REAL_MEDIABUNNY): FrameCapture {
+export function createWebCodecsCapture(options?: WebCodecsCaptureOptions): FrameCapture;
+/** Implementation overload; the injected codec seam remains source-test-only. */
+export function createWebCodecsCapture(
+  options?: WebCodecsCaptureOptions,
+  mediabunny: MediabunnyCodecs = REAL_MEDIABUNNY,
+): FrameCapture {
   const codec = options?.codec ?? 'avc1.42001E';
   const bitrate = options?.bitrate ?? 4_000_000;
   const keyframeInterval = options?.keyframeInterval ?? CAPTURE_KEYFRAME_INTERVAL;
@@ -108,6 +113,7 @@ function make(options?: WebCodecsCaptureOptions, mediabunny: MediabunnyCodecs = 
   let packetQueue: Array<{ packet: EncodedPacket; metadata?: EncodedVideoChunkMetadata }> = [];
   let pendingError: IoError | null = null;
   let lastTimestampUs = -1;
+  const lifetime = Lifetime.make();
 
   function assertHealthy(): void {
     if (pendingError) {
@@ -126,157 +132,176 @@ function make(options?: WebCodecsCaptureOptions, mediabunny: MediabunnyCodecs = 
     lastTimestampUs = -1;
   }
 
-  return {
-    _tag: 'FrameCapture',
+  lifetime.add(async () => {
+    const ownedEncoder = encoder;
+    const ownedOutput = output;
+    resetState();
 
-    async init(captureConfig: CaptureConfig): Promise<void> {
-      if (typeof VideoEncoder === 'undefined') {
-        throw HostCapabilityError(
-          'WebCodecs.VideoEncoder',
-          'WebCodecs VideoEncoder is unavailable in this environment',
-        );
+    const errors: unknown[] = [];
+    try {
+      ownedEncoder?.close();
+    } catch (cause) {
+      errors.push(cause);
+    }
+    if (ownedOutput && ownedOutput.state !== 'canceled' && ownedOutput.state !== 'finalized') {
+      try {
+        await ownedOutput.cancel();
+      } catch (cause) {
+        errors.push(cause);
       }
+    }
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'WebCodecs capture disposal failed after attempting every teardown step');
+    }
+  });
 
-      if (requiresEvenDimensions(codec) && (captureConfig.width % 2 !== 0 || captureConfig.height % 2 !== 0)) {
-        const evenWidth = captureConfig.width - (captureConfig.width % 2);
-        const evenHeight = captureConfig.height - (captureConfig.height % 2);
-        throw ValidationError(
-          'WebCodecsCapture.init',
-          `Codec "${codec}" (H.264/HEVC) requires even width and height. Got ${captureConfig.width}x${captureConfig.height} — round to ${evenWidth}x${evenHeight}, or use a VP9/AV1 codec string.`,
-        );
-      }
+  return attachLifetime(
+    {
+      _tag: 'FrameCapture',
 
-      const encoderConfig = {
-        codec,
-        width: captureConfig.width,
-        height: captureConfig.height,
-        bitrate,
-        framerate: captureConfig.fps,
-      } satisfies VideoEncoderConfig;
-
-      if (typeof VideoEncoder.isConfigSupported === 'function') {
-        let support: VideoEncoderSupport;
-        try {
-          support = await VideoEncoder.isConfigSupported(encoderConfig);
-        } catch (err) {
-          throw IoError('webcodecs.probe', `VideoEncoder support probe failed: ${supportErrorMessage(err)}`, {
-            cause: err,
-          });
+      async init(captureConfig: CaptureConfig): Promise<void> {
+        if (lifetime.disposed) {
+          throw ValidationError('WebCodecsCapture.init', 'FrameCapture is disposed and cannot be initialized again.');
         }
-
-        if (!support.supported) {
-          throw UnsupportedError(
-            'codec',
-            `VideoEncoder does not support codec "${codec}" at ${captureConfig.width}x${captureConfig.height}@${captureConfig.fps}`,
+        if (typeof VideoEncoder === 'undefined') {
+          throw HostCapabilityError(
+            'WebCodecs.VideoEncoder',
+            'WebCodecs VideoEncoder is unavailable in this environment',
           );
         }
-      }
 
-      config = captureConfig;
-      frameCount = 0;
-      packetQueue = [];
-      pendingError = null;
-      lastTimestampUs = -1;
-
-      videoSource = new mediabunny.EncodedVideoPacketSource(toMediabunnyCodec(codec));
-      target = new mediabunny.BufferTarget();
-      output = new mediabunny.Output({
-        format: new mediabunny.Mp4OutputFormat({ fastStart: 'in-memory' }),
-        target,
-      });
-      output.addVideoTrack(videoSource, { frameRate: captureConfig.fps });
-      await output.start();
-
-      encoder = new VideoEncoder({
-        output(chunk: EncodedVideoChunk, metadata?: EncodedVideoChunkMetadata) {
-          packetQueue.push({ packet: mediabunny.EncodedPacket.fromEncodedChunk(chunk), metadata });
-        },
-        error(err: DOMException) {
-          pendingError = IoError('webcodecs.encode', `VideoEncoder error: ${err.message}`, { cause: err });
-        },
-      });
-
-      encoder.configure(encoderConfig);
-    },
-
-    async capture(frame: CaptureFrame): Promise<void> {
-      if (!encoder || !config) {
-        throw ValidationError('WebCodecsCapture', 'FrameCapture not initialized. Call init() first.');
-      }
-
-      assertHealthy();
-
-      const normalizedTimestampUs = normalizeTimestampUs(frame.timestamp, config.fps, lastTimestampUs);
-      lastTimestampUs = normalizedTimestampUs;
-
-      const videoFrame = new VideoFrame(frame.bitmap, {
-        timestamp: normalizedTimestampUs,
-        duration: 1_000_000 / config.fps,
-      });
-
-      const isKeyFrame = frameCount % keyframeInterval === 0;
-      try {
-        encoder.encode(videoFrame, { keyFrame: isKeyFrame });
-        frameCount++;
-      } finally {
-        videoFrame.close();
-      }
-
-      assertHealthy();
-    },
-
-    async finalize(): Promise<CaptureResult> {
-      if (!encoder || !config || !videoSource || !output || !target) {
-        throw ValidationError('WebCodecsCapture', 'FrameCapture not initialized. Call init() first.');
-      }
-
-      if (frameCount === 0) {
-        throw ValidationError('WebCodecsCapture.finalize', 'FrameCapture has no frames to finalize');
-      }
-
-      await encoder.flush();
-      assertHealthy();
-      encoder.close();
-
-      if (packetQueue.length === 0) {
-        throw IoError('webcodecs.encode', 'VideoEncoder produced no packets');
-      }
-
-      for (const entry of packetQueue) {
-        if (entry.metadata) {
-          await videoSource.add(entry.packet, entry.metadata);
-        } else {
-          await videoSource.add(entry.packet);
+        if (requiresEvenDimensions(codec) && (captureConfig.width % 2 !== 0 || captureConfig.height % 2 !== 0)) {
+          const evenWidth = captureConfig.width - (captureConfig.width % 2);
+          const evenHeight = captureConfig.height - (captureConfig.height % 2);
+          throw ValidationError(
+            'WebCodecsCapture.init',
+            `Codec "${codec}" (H.264/HEVC) requires even width and height. Got ${captureConfig.width}x${captureConfig.height} — round to ${evenWidth}x${evenHeight}, or use a VP9/AV1 codec string.`,
+          );
         }
-      }
-      packetQueue = [];
 
-      await output.finalize();
+        const encoderConfig = {
+          codec,
+          width: captureConfig.width,
+          height: captureConfig.height,
+          bitrate,
+          framerate: captureConfig.fps,
+        } satisfies VideoEncoderConfig;
 
-      const buffer = target.buffer;
-      if (!buffer || buffer.byteLength === 0) {
-        throw IoError('webcodecs.mux', 'MP4 muxer produced no output');
-      }
+        if (typeof VideoEncoder.isConfigSupported === 'function') {
+          let support: VideoEncoderSupport;
+          try {
+            support = await VideoEncoder.isConfigSupported(encoderConfig);
+          } catch (err) {
+            throw IoError('webcodecs.probe', `VideoEncoder support probe failed: ${supportErrorMessage(err)}`, {
+              cause: err,
+            });
+          }
 
-      const result: CaptureResult = {
-        blob: new Blob([buffer], { type: 'video/mp4' }),
-        codec,
-        frames: frameCount,
-        durationMs: Millis((frameCount / config.fps) * 1000),
-      };
+          if (!support.supported) {
+            throw UnsupportedError(
+              'codec',
+              `VideoEncoder does not support codec "${codec}" at ${captureConfig.width}x${captureConfig.height}@${captureConfig.fps}`,
+            );
+          }
+        }
 
-      resetState();
-      return result;
+        config = captureConfig;
+        frameCount = 0;
+        packetQueue = [];
+        pendingError = null;
+        lastTimestampUs = -1;
+
+        videoSource = new mediabunny.EncodedVideoPacketSource(toMediabunnyCodec(codec));
+        target = new mediabunny.BufferTarget();
+        output = new mediabunny.Output({
+          format: new mediabunny.Mp4OutputFormat({ fastStart: 'in-memory' }),
+          target,
+        });
+        output.addVideoTrack(videoSource, { frameRate: captureConfig.fps });
+        await output.start();
+
+        encoder = new VideoEncoder({
+          output(chunk: EncodedVideoChunk, metadata?: EncodedVideoChunkMetadata) {
+            packetQueue.push({ packet: mediabunny.EncodedPacket.fromEncodedChunk(chunk), metadata });
+          },
+          error(err: DOMException) {
+            pendingError = IoError('webcodecs.encode', `VideoEncoder error: ${err.message}`, { cause: err });
+          },
+        });
+
+        encoder.configure(encoderConfig);
+      },
+
+      async capture(frame: CaptureFrame): Promise<void> {
+        if (!encoder || !config) {
+          throw ValidationError('WebCodecsCapture', 'FrameCapture not initialized. Call init() first.');
+        }
+
+        assertHealthy();
+
+        const normalizedTimestampUs = normalizeTimestampUs(frame.timestamp, config.fps, lastTimestampUs);
+        lastTimestampUs = normalizedTimestampUs;
+
+        const videoFrame = new VideoFrame(frame.bitmap, {
+          timestamp: normalizedTimestampUs,
+          duration: 1_000_000 / config.fps,
+        });
+
+        const isKeyFrame = frameCount % keyframeInterval === 0;
+        try {
+          encoder.encode(videoFrame, { keyFrame: isKeyFrame });
+          frameCount++;
+        } finally {
+          videoFrame.close();
+        }
+
+        assertHealthy();
+      },
+
+      async finalize(): Promise<CaptureResult> {
+        try {
+          if (!encoder || !config || !videoSource || !output || !target) {
+            throw ValidationError('WebCodecsCapture', 'FrameCapture not initialized. Call init() first.');
+          }
+
+          if (frameCount === 0) {
+            throw ValidationError('WebCodecsCapture.finalize', 'FrameCapture has no frames to finalize');
+          }
+
+          await encoder.flush();
+          assertHealthy();
+
+          if (packetQueue.length === 0) {
+            throw IoError('webcodecs.encode', 'VideoEncoder produced no packets');
+          }
+
+          for (const entry of packetQueue) {
+            if (entry.metadata) {
+              await videoSource.add(entry.packet, entry.metadata);
+            } else {
+              await videoSource.add(entry.packet);
+            }
+          }
+          packetQueue = [];
+
+          await output.finalize();
+
+          const buffer = target.buffer;
+          if (!buffer || buffer.byteLength === 0) {
+            throw IoError('webcodecs.mux', 'MP4 muxer produced no output');
+          }
+
+          return {
+            blob: new Blob([buffer], { type: 'video/mp4' }),
+            codec,
+            frames: frameCount,
+            durationMs: Millis((frameCount / config.fps) * 1000),
+          };
+        } finally {
+          await lifetime.dispose();
+        }
+      },
     },
-  };
+    lifetime,
+  );
 }
-
-/**
- * WebCodecsCapture -- module object + namespace for browser-native video capture.
- */
-export const WebCodecsCapture: {
-  readonly make: (options?: WebCodecsCaptureOptions) => FrameCapture;
-} = { make };
-
-/** Public structural type for `WebCodecsCapture`. */
-export type WebCodecsCapture = FrameCapture;

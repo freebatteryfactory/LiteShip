@@ -60,6 +60,7 @@ import {
   type LoadedProjectConfig,
   type ProjectConfigLoader,
 } from './project-config.js';
+import { createBoundaryHMRPayloads } from './hmr-producer.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -217,6 +218,7 @@ export function plugin(
   let publicBase = '/';
   let boundaryAssetState: Promise<BoundaryAssetState> | null = null;
   let boundaryDefinitions: Promise<BoundaryDefinitionMap> | null = null;
+  let previousBoundaryManifest: BoundaryManifest | null = null;
   // One project tree-walk shared across the manifest + definitions derivations. The
   // scan is a FILE LIST, so it survives content edits and is only invalidated when a
   // scannable file is created/deleted (see hotUpdate) -- no re-scan on every save.
@@ -327,6 +329,14 @@ export function plugin(
 
       if (isBuild && emitBoundaryAssets) {
         return ensureBoundaryAssets((asset) => this.emitFile(asset)).then(() => undefined);
+      }
+
+      // HMR diffs require an admitted before-image. Prime it once at server
+      // startup; subsequent updates always compare two canonical manifests.
+      if (!isBuild && hmrEnabled) {
+        return ensureBoundaryManifest().then((manifest) => {
+          previousBoundaryManifest = manifest;
+        });
       }
     },
 
@@ -498,6 +508,7 @@ export function plugin(
         file.endsWith('.styles.ts') ||
         file.endsWith('/styles.ts');
 
+      let affectedModules: EnvironmentModuleNode[] | undefined;
       if (isDefFile) {
         // Clear all caches since definitions may cross-reference
         invalidateAllPrimitives(cache);
@@ -522,9 +533,7 @@ export function plugin(
 
         invalidateDesignVirtualModules(moduleGraph, transformModules);
 
-        if (transformModules.length > 0) {
-          return transformModules;
-        }
+        if (transformModules.length > 0) affectedModules = transformModules;
       }
 
       if (file.endsWith('.css') || file.endsWith('.astro') || file.endsWith('.html')) {
@@ -534,7 +543,7 @@ export function plugin(
         // covers query-bearing ids like `Page.astro?astro&type=style`
         // that an exact getModuleById(file) lookup would miss) so the
         // edited file's own HMR is never suppressed.
-        const affectedModules: EnvironmentModuleNode[] = [...options.modules];
+        const transformedModules: EnvironmentModuleNode[] = [...options.modules];
 
         // @quantize states contribute to the boundary manifest, so a CSS
         // or .astro-style edit must re-load `virtual:liteship/boundaries` too
@@ -547,16 +556,33 @@ export function plugin(
           const manifestModule = moduleGraph.getModuleById('\0virtual:liteship/boundaries');
           if (manifestModule) {
             moduleGraph.invalidateModule(manifestModule);
-            affectedModules.push(manifestModule);
+            transformedModules.push(manifestModule);
           }
         }
 
-        if (affectedModules.length > 0) {
-          return affectedModules;
-        }
+        if (transformedModules.length > 0) affectedModules = transformedModules;
       }
 
-      return;
+      const changesBoundaryProjection = isDefFile || file.endsWith('.css') || file.endsWith('.astro');
+      if (changesBoundaryProjection) {
+        const before = previousBoundaryManifest;
+        // Vite runs buildStart before hotUpdate. Focused hook consumers that do
+        // not run that lifecycle have no admitted before-image, so preserve the
+        // synchronous affected-module behavior and never invent a diff.
+        if (before === null) return affectedModules;
+        // Definition invalidation already clears both caches. CSS/Astro edits
+        // only clear the manifest above; definitions remain their admitted
+        // source values.
+        return Promise.all([ensureBoundaryManifest(), ensureBoundaryDefinitions()]).then(([current, definitions]) => {
+          previousBoundaryManifest = current;
+          for (const payload of createBoundaryHMRPayloads(before, current, definitions)) {
+            options.server.ws.send({ type: 'custom', event: 'liteship:update', data: payload });
+          }
+          return affectedModules;
+        });
+      }
+
+      return affectedModules;
     },
 
     config(

@@ -27,8 +27,8 @@ import { scaledTimeout } from '../../../vitest.shared.js';
 import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { buildRepoIR, withRepoRoot } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
-import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
+import { liteshipRegexOracle } from '../../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import {
   noVarDivergenceGate,
   noRequireDivergenceGate,

@@ -6,7 +6,7 @@
 
 # Interface: KVNamespace
 
-Defined in: [\_spine/edge.d.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L66)
+Defined in: [\_spine/edge.d.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L86)
 
 Minimal key-value namespace capability required by the edge cache.
 
@@ -16,7 +16,7 @@ Minimal key-value namespace capability required by the edge cache.
 
 > `optional` **delete**(`key`): `Promise`\<`void`\>
 
-Defined in: [\_spine/edge.d.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L69)
+Defined in: [\_spine/edge.d.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L89)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/edge.d.ts:69](https://github.com/freebatteryfactory/LiteShi
 
 > **get**(`key`, `options?`): `Promise`\<`string` \| `null`\>
 
-Defined in: [\_spine/edge.d.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L67)
+Defined in: [\_spine/edge.d.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L87)
 
 #### Parameters
 
@@ -58,7 +58,7 @@ Defined in: [\_spine/edge.d.ts:67](https://github.com/freebatteryfactory/LiteShi
 
 > `optional` **list**(`options`): `Promise`\<\{ `cursor?`: `string`; `keys`: readonly `object`[]; `list_complete`: `boolean`; \}\>
 
-Defined in: [\_spine/edge.d.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L70)
+Defined in: [\_spine/edge.d.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L90)
 
 #### Parameters
 
@@ -82,7 +82,7 @@ Defined in: [\_spine/edge.d.ts:70](https://github.com/freebatteryfactory/LiteShi
 
 > **put**(`key`, `value`, `options?`): `Promise`\<`void`\>
 
-Defined in: [\_spine/edge.d.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L68)
+Defined in: [\_spine/edge.d.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L88)
 
 #### Parameters
 

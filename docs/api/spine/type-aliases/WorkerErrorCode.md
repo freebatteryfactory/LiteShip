@@ -8,6 +8,6 @@
 
 > **WorkerErrorCode** = `"render-failed"` \| `"startup-compute-failed"` \| `"compute-failed"`
 
-Defined in: [\_spine/worker.d.ts:233](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L233)
+Defined in: [\_spine/worker.d.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L234)
 
 Failure site codes the built-in workers emit.

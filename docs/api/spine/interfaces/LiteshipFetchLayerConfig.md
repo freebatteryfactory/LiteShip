@@ -6,7 +6,7 @@
 
 # Interface: LiteshipFetchLayerConfig
 
-Defined in: [\_spine/astro.d.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L102)
+Defined in: [\_spine/astro.d.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L147)
 
 Fetch-layer options including edge-serving and host-rendering decisions.
 
@@ -20,7 +20,7 @@ Fetch-layer options including edge-serving and host-rendering decisions.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [\_spine/astro.d.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L71)
+Defined in: [\_spine/astro.d.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L118)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/astro.d.ts:71](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **edge?**: [`EdgeHostAdapterConfig`](EdgeHostAdapterConfig.md)
 
-Defined in: [\_spine/astro.d.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L70)
+Defined in: [\_spine/astro.d.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L117)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [\_spine/astro.d.ts:70](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **render?**: (`resolution`) => `Response`
 
-Defined in: [\_spine/astro.d.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L104)
+Defined in: [\_spine/astro.d.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L149)
 
 #### Parameters
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/astro.d.ts:104](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **serveFromEdge?**: (`request`, `resolution`) => `boolean`
 
-Defined in: [\_spine/astro.d.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L103)
+Defined in: [\_spine/astro.d.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L148)
 
 #### Parameters
 
@@ -84,7 +84,7 @@ Defined in: [\_spine/astro.d.ts:103](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [\_spine/astro.d.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L72)
+Defined in: [\_spine/astro.d.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L119)
 
 #### coep?
 

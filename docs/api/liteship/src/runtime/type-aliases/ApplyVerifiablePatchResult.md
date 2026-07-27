@@ -8,7 +8,7 @@
 
 > **ApplyVerifiablePatchResult** = \{ `_tag`: `"applied"`; `appliedDigest`: [`AddressedDigest`](../../evidence/type-aliases/AddressedDigest.md); `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); `tier`: [`DpuTier`](DpuTier.md); \} \| \{ `_tag`: `"refused"`; `verification`: `Exclude`\<[`VerifiablePatchVerification`](VerifiablePatchVerification.md), \{ `_tag`: `"verified"`; \}\>; \} \| \{ `_tag`: `"sanitizedEmpty"`; `envelope`: [`VerifiablePatchEnvelope`](../interfaces/VerifiablePatchEnvelope.md); \}
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:75
+Defined in: web/dist/watch-and-prepare.d.ts:75
 
 Outcome of applying a verifiable patch. `applied` carries the digest of the
 DOM serialization actually rendered (post-sanitization); `sanitizedEmpty`

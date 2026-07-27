@@ -6,7 +6,7 @@
 
 # Interface: BoundaryCache
 
-Defined in: [\_spine/edge.d.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L108)
+Defined in: [\_spine/edge.d.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L128)
 
 Async cache contract for content-addressed boundary outputs.
 
@@ -16,7 +16,7 @@ Async cache contract for content-addressed boundary outputs.
 
 > **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`, `themeFp?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
 
-Defined in: [\_spine/edge.d.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L117)
+Defined in: [\_spine/edge.d.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L137)
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
@@ -33,7 +33,7 @@ themes (a per-request theme is a real input to the cached CSS).
 
 ##### tierResult
 
-[`EdgeTierResult`](EdgeTierResult.md)
+`Pick`\<[`EdgeTierResult`](EdgeTierResult.md), `"motionTier"` \| `"designTier"`\>
 
 ##### qualifier?
 
@@ -53,7 +53,7 @@ themes (a per-request theme is a real input to the cached CSS).
 
 > **invalidateByPath**(`boundaryId`): `Promise`\<`number`\>
 
-Defined in: [\_spine/edge.d.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L131)
+Defined in: [\_spine/edge.d.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L151)
 
 #### Parameters
 
@@ -71,7 +71,7 @@ Defined in: [\_spine/edge.d.ts:131](https://github.com/freebatteryfactory/LiteSh
 
 > **invalidateByTag**(`tag`): `Promise`\<`number`\>
 
-Defined in: [\_spine/edge.d.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L132)
+Defined in: [\_spine/edge.d.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L152)
 
 #### Parameters
 
@@ -89,7 +89,7 @@ Defined in: [\_spine/edge.d.ts:132](https://github.com/freebatteryfactory/LiteSh
 
 > **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`, `themeFp?`, `tags?`): `Promise`\<`void`\>
 
-Defined in: [\_spine/edge.d.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L123)
+Defined in: [\_spine/edge.d.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L143)
 
 #### Parameters
 
@@ -99,7 +99,7 @@ Defined in: [\_spine/edge.d.ts:123](https://github.com/freebatteryfactory/LiteSh
 
 ##### tierResult
 
-[`EdgeTierResult`](EdgeTierResult.md)
+`Pick`\<[`EdgeTierResult`](EdgeTierResult.md), `"motionTier"` \| `"designTier"`\>
 
 ##### outputs
 

@@ -8,7 +8,7 @@
 
 > **precomputeFrames**(`renderer`): `Promise`\<readonly [`VideoFrameOutput`](../../../liteship/src/media/interfaces/VideoFrameOutput.md)[]\>
 
-Defined in: [remotion/src/composition.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L35)
+Defined in: [remotion/src/composition.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L36)
 
 Precompute every [VideoFrameOutput](../../../liteship/src/media/interfaces/VideoFrameOutput.md) from a `VideoRenderer` into
 an in-memory array.

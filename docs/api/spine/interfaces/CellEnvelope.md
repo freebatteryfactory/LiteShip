@@ -6,7 +6,7 @@
 
 # Interface: CellEnvelope\<K, T\>
 
-Defined in: [\_spine/core.d.ts:562](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L562)
+Defined in: [\_spine/core.d.ts:589](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L589)
 
 Typed live-cell payload with its kind and transport metadata.
 
@@ -26,7 +26,7 @@ Typed live-cell payload with its kind and transport metadata.
 
 > `readonly` **id**: [`ContentAddress`](../type-aliases/ContentAddress.md)
 
-Defined in: [\_spine/core.d.ts:564](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L564)
+Defined in: [\_spine/core.d.ts:591](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L591)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [\_spine/core.d.ts:564](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **kind**: `K`
 
-Defined in: [\_spine/core.d.ts:563](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L563)
+Defined in: [\_spine/core.d.ts:590](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L590)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [\_spine/core.d.ts:563](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [\_spine/core.d.ts:565](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L565)
+Defined in: [\_spine/core.d.ts:592](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L592)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [\_spine/core.d.ts:565](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **value**: `T`
 
-Defined in: [\_spine/core.d.ts:566](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L566)
+Defined in: [\_spine/core.d.ts:593](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L593)

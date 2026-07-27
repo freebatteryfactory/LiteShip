@@ -38,7 +38,7 @@ A capsule declaration plus its content-addressed id.
 
 > `readonly` **\_kind**: `K`
 
-Defined in: [core/src/authoring/capsule.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L138)
+Defined in: [core/src/authoring/capsule.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L142)
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: [core/src/authoring/capsule.ts:138](https://github.com/freebatteryfa
 
 > `readonly` `optional` **attribution?**: [`AttributionDecl`](AttributionDecl.md)
 
-Defined in: [core/src/authoring/capsule.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L147)
+Defined in: [core/src/authoring/capsule.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L151)
 
 #### Inherited from
 
@@ -62,7 +62,7 @@ Defined in: [core/src/authoring/capsule.ts:147](https://github.com/freebatteryfa
 
 > `readonly` **budgets**: [`BudgetDecl`](BudgetDecl.md)
 
-Defined in: [core/src/authoring/capsule.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L145)
+Defined in: [core/src/authoring/capsule.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L149)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: [core/src/authoring/capsule.ts:145](https://github.com/freebatteryfa
 
 > `readonly` **capabilities**: [`CapabilityDecl`](CapabilityDecl.md)\<`R`\>
 
-Defined in: [core/src/authoring/capsule.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L143)
+Defined in: [core/src/authoring/capsule.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L147)
 
 #### Inherited from
 
@@ -86,7 +86,7 @@ Defined in: [core/src/authoring/capsule.ts:143](https://github.com/freebatteryfa
 
 > `readonly` `optional` **decide?**: (`subject`) => [`Decision`](Decision.md)
 
-Defined in: [core/src/authoring/capsule.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L255)
+Defined in: [core/src/authoring/capsule.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L259)
 
 The decision channel for `policyGate` arms: resolve an `allow`/`deny`
 [Decision](Decision.md) (verdict + reason chain) against a decoded subject (`In`).
@@ -127,7 +127,7 @@ reason against it. Only meaningful for `policyGate` arms.
 
 > `readonly` `optional` **derive?**: (`source`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/authoring/capsule.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L176)
+Defined in: [core/src/authoring/capsule.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L180)
 
 Optional projection handler for `cachedProjection` arms: derives the
 decoded output from a decoded source. The harness checks determinism
@@ -156,7 +156,7 @@ Promises, so the harness awaits every probe.
 
 > `readonly` `optional` **faults?**: readonly `FaultDecl`\<`In`\>[]
 
-Defined in: [core/src/authoring/capsule.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L206)
+Defined in: [core/src/authoring/capsule.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L210)
 
 Declared faults for `receiptedMutation` arms — failure modes the capsule
 promises are reachable. The harness drives each fault's
@@ -190,7 +190,7 @@ Defined in: [core/src/authoring/assembly.ts:21](https://github.com/freebatteryfa
 
 > `readonly` `optional` **initialState?**: `Out`
 
-Defined in: [core/src/authoring/capsule.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L167)
+Defined in: [core/src/authoring/capsule.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L171)
 
 Optional initial state for `stateMachine` arms — the fold seed for
 [CapsuleContract.step](CapsuleContract.md#step)-driven harness tests.
@@ -205,7 +205,7 @@ Optional initial state for `stateMachine` arms — the fold seed for
 
 > `readonly` **input**: [`SchemaPort`](SchemaPort.md)\<`In`, `In`\> \| [`DeclarationSchema`](DeclarationSchema.md)\<`In`\>
 
-Defined in: [core/src/authoring/capsule.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L141)
+Defined in: [core/src/authoring/capsule.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L145)
 
 #### Inherited from
 
@@ -217,7 +217,7 @@ Defined in: [core/src/authoring/capsule.ts:141](https://github.com/freebatteryfa
 
 > `readonly` **invariants**: readonly [`Invariant`](Invariant.md)\<`In`, `Out`\>[]
 
-Defined in: [core/src/authoring/capsule.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L144)
+Defined in: [core/src/authoring/capsule.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L148)
 
 #### Inherited from
 
@@ -229,7 +229,7 @@ Defined in: [core/src/authoring/capsule.ts:144](https://github.com/freebatteryfa
 
 > `readonly` `optional` **mutate?**: (`input`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/authoring/capsule.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L194)
+Defined in: [core/src/authoring/capsule.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L198)
 
 Optional invocation handler for `receiptedMutation` arms: applies the
 mutation for a decoded input (`In`) and returns the decoded audit receipt
@@ -267,7 +267,7 @@ May be async; the harness awaits it. Only meaningful for
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/authoring/capsule.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L140)
+Defined in: [core/src/authoring/capsule.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L144)
 
 #### Inherited from
 
@@ -279,7 +279,7 @@ Defined in: [core/src/authoring/capsule.ts:140](https://github.com/freebatteryfa
 
 > `readonly` **output**: [`SchemaPort`](SchemaPort.md)\<`Out`, `Out`\> \| [`DeclarationSchema`](DeclarationSchema.md)\<`Out`\>
 
-Defined in: [core/src/authoring/capsule.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L142)
+Defined in: [core/src/authoring/capsule.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L146)
 
 #### Inherited from
 
@@ -291,7 +291,7 @@ Defined in: [core/src/authoring/capsule.ts:142](https://github.com/freebatteryfa
 
 > `readonly` `optional` **reason?**: `string`
 
-Defined in: [core/src/authoring/capsule.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L234)
+Defined in: [core/src/authoring/capsule.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L238)
 
 REQUIRED when [receiptKind](CapsuleContract.md#receiptkind) is `'effect-outcome'` — a human-readable
 justification for why this receipt cannot be driven by a pure core (and
@@ -309,7 +309,7 @@ harness writes it verbatim into the generated test file and the manifest.
 
 > `readonly` `optional` **receiptKind?**: `"pure-core"` \| `"effect-outcome"`
 
-Defined in: [core/src/authoring/capsule.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L226)
+Defined in: [core/src/authoring/capsule.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L230)
 
 The TYPED escape hatch for the `receiptedMutation` mandatory-`mutate` rule.
 
@@ -339,7 +339,7 @@ never needs to be written. Only meaningful for `receiptedMutation` arms.
 
 > `readonly` `optional` **run?**: (`input`) => `Out`
 
-Defined in: [core/src/authoring/capsule.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L154)
+Defined in: [core/src/authoring/capsule.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L158)
 
 Optional deterministic transform handler: takes a decoded input and
 returns a decoded output. Used by the harness to drive generated property
@@ -366,7 +366,7 @@ tests end-to-end for `pureTransform` capsules and pre-runtime
 
 > `readonly` **site**: readonly [`Site`](../type-aliases/Site.md)[]
 
-Defined in: [core/src/authoring/capsule.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L146)
+Defined in: [core/src/authoring/capsule.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L150)
 
 #### Inherited from
 
@@ -378,7 +378,7 @@ Defined in: [core/src/authoring/capsule.ts:146](https://github.com/freebatteryfa
 
 > `readonly` `optional` **step?**: (`state`, `event`) => `Out`
 
-Defined in: [core/src/authoring/capsule.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L162)
+Defined in: [core/src/authoring/capsule.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L166)
 
 Optional state-machine step handler: folds one decoded event (`In`)
 into a decoded state (`Out`). With [CapsuleContract.initialState](CapsuleContract.md#initialstate)

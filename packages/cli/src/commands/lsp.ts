@@ -35,7 +35,8 @@
 import { wallClock } from '@liteship/core';
 import { litelaunchGauntlet } from '@liteship/gauntlet';
 import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@liteship/audit';
-import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
+import { runGauntletWithRepoIR } from '../internal/repo-ir-gauntlet.js';
+import type { McpFeatureEdgeOwners } from '../internal/feature-edge-profile.js';
 import { emitError } from '../receipts.js';
 import { readCliVersion } from './version.js';
 
@@ -104,6 +105,7 @@ export async function lsp(opts: LspOptions = {}, deps: LspDeps = {}): Promise<nu
   const cwd = opts.cwd ?? process.cwd();
   const useIr = opts.ir === true;
   const runGauntletIR = deps.runGauntletWithRepoIR ?? runGauntletWithRepoIR;
+  let mcpServer!: McpServerModule;
 
   // The injected runner — built in the CLI host so the engine + @liteship/audit stay
   // OUT of @liteship/mcp-server. Each call re-runs the fold over a fresh wall-clock
@@ -112,7 +114,11 @@ export async function lsp(opts: LspOptions = {}, deps: LspDeps = {}): Promise<nu
   const runGauntlet = async (globs?: readonly string[]): Promise<RunnerResult> => {
     const now = new Date(wallClock.now());
     if (useIr) {
-      const result = await runGauntletIR(cwd, now, globs, { noCache: false, withSymbolReferences: false });
+      const result = await runGauntletIR(cwd, now, globs, {
+        noCache: false,
+        withSymbolReferences: false,
+        mcpFeatureEdgeOwners: mcpServer as unknown as McpFeatureEdgeOwners,
+      });
       return { findings: result.findings, blocked: result.blocked };
     }
     // Inject the host-built SOUND AST detectors (the CLI deps `@liteship/audit`) so the LEAN LSP
@@ -123,7 +129,6 @@ export async function lsp(opts: LspOptions = {}, deps: LspDeps = {}): Promise<nu
   };
 
   const importMcpServer = deps.importMcpServer ?? (() => import('@liteship/mcp-server'));
-  let mcpServer: McpServerModule;
   try {
     mcpServer = await importMcpServer();
   } catch (err) {

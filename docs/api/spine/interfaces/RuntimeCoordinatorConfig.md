@@ -6,7 +6,7 @@
 
 # Interface: RuntimeCoordinatorConfig
 
-Defined in: [\_spine/core.d.ts:834](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L834)
+Defined in: [\_spine/core.d.ts:1049](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1049)
 
 Construction options for the shared runtime coordinator.
 
@@ -16,7 +16,7 @@ Construction options for the shared runtime coordinator.
 
 > `readonly` `optional` **capacity?**: `number`
 
-Defined in: [\_spine/core.d.ts:835](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L835)
+Defined in: [\_spine/core.d.ts:1050](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1050)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/core.d.ts:835](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **name?**: `string`
 
-Defined in: [\_spine/core.d.ts:836](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L836)
+Defined in: [\_spine/core.d.ts:1051](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1051)

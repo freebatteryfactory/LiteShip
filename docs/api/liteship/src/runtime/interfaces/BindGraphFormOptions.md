@@ -6,7 +6,7 @@
 
 # Interface: BindGraphFormOptions
 
-Defined in: web/dist/mutation/graph-form.d.ts:13
+Defined in: web/dist/graph-form.d.ts:13
 
 Wiring for [bindGraphForm](../functions/bindGraphForm.md): the channel client, the host's ops projection, and an optional outcome hook.
 
@@ -16,7 +16,7 @@ Wiring for [bindGraphForm](../functions/bindGraphForm.md): the channel client, t
 
 > `readonly` **client**: [`GraphMutationClient`](../../graph/interfaces/GraphMutationClient.md)
 
-Defined in: web/dist/mutation/graph-form.d.ts:14
+Defined in: web/dist/graph-form.d.ts:14
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: web/dist/mutation/graph-form.d.ts:14
 
 > `readonly` `optional` **onOutcome?**: (`response`) => `void`
 
-Defined in: web/dist/mutation/graph-form.d.ts:18
+Defined in: web/dist/graph-form.d.ts:18
 
 Optional imperative hook; the `liteship:mutation` event fires regardless.
 
@@ -44,7 +44,7 @@ Optional imperative hook; the `liteship:mutation` event fires regardless.
 
 > `readonly` **toOps**: (`data`, `base`) => readonly [`PatchOp`](../../graph/type-aliases/PatchOp.md)[]
 
-Defined in: web/dist/mutation/graph-form.d.ts:16
+Defined in: web/dist/graph-form.d.ts:16
 
 Project the submitted form into patch ops. Host-owned domain logic (nodes must be sealed by the host via sealNode).
 

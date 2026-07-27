@@ -6,7 +6,7 @@
 
 # Interface: RenderWorker
 
-Defined in: [\_spine/worker.d.ts:436](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L436)
+Defined in: [\_spine/worker.d.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L437)
 
 Live rendering worker that owns canvas transfer and frame production.
 
@@ -20,7 +20,7 @@ Live rendering worker that owns canvas transfer and frame production.
 
 > `readonly` **lifetime**: [`Lifetime`](Lifetime.md)
 
-Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L175)
+Defined in: [\_spine/core.d.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L181)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/core.d.ts:175](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **worker**: `Worker`
 
-Defined in: [\_spine/worker.d.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L437)
+Defined in: [\_spine/worker.d.ts:438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L438)
 
 ## Methods
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/worker.d.ts:437](https://github.com/freebatteryfactory/Lite
 
 > **\[asyncDispose\]**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L177)
+Defined in: [\_spine/core.d.ts:183](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L183)
 
 #### Returns
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/core.d.ts:177](https://github.com/freebatteryfactory/LiteSh
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L176)
+Defined in: [\_spine/core.d.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L182)
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [\_spine/core.d.ts:176](https://github.com/freebatteryfactory/LiteSh
 
 > **onComplete**(`callback`): () => `void`
 
-Defined in: [\_spine/worker.d.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L442)
+Defined in: [\_spine/worker.d.ts:443](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L443)
 
 #### Parameters
 
@@ -90,7 +90,7 @@ Defined in: [\_spine/worker.d.ts:442](https://github.com/freebatteryfactory/Lite
 
 > **onFrame**(`callback`): () => `void`
 
-Defined in: [\_spine/worker.d.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L441)
+Defined in: [\_spine/worker.d.ts:442](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L442)
 
 #### Parameters
 
@@ -108,7 +108,7 @@ Defined in: [\_spine/worker.d.ts:441](https://github.com/freebatteryfactory/Lite
 
 > **startRender**(`config`): `void`
 
-Defined in: [\_spine/worker.d.ts:439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L439)
+Defined in: [\_spine/worker.d.ts:440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L440)
 
 #### Parameters
 
@@ -126,7 +126,7 @@ Defined in: [\_spine/worker.d.ts:439](https://github.com/freebatteryfactory/Lite
 
 > **stopRender**(): `void`
 
-Defined in: [\_spine/worker.d.ts:440](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L440)
+Defined in: [\_spine/worker.d.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L441)
 
 #### Returns
 
@@ -138,7 +138,7 @@ Defined in: [\_spine/worker.d.ts:440](https://github.com/freebatteryfactory/Lite
 
 > **transferCanvas**(`canvas`): `void`
 
-Defined in: [\_spine/worker.d.ts:438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L438)
+Defined in: [\_spine/worker.d.ts:439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/worker.d.ts#L439)
 
 #### Parameters
 

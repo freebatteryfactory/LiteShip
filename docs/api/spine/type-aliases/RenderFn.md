@@ -8,7 +8,7 @@
 
 > **RenderFn** = (`ctx`, `state`, `canvas`) => `void`
 
-Defined in: [\_spine/web.d.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L383)
+Defined in: [\_spine/web.d.ts:417](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/web.d.ts#L417)
 
 Host renderer invoked for each browser-capture frame.
 
@@ -16,7 +16,7 @@ Host renderer invoked for each browser-capture frame.
 
 ### ctx
 
-`OffscreenCanvasRenderingContext2D`
+[`RenderContext2D`](RenderContext2D.md)
 
 ### state
 
@@ -24,7 +24,7 @@ Host renderer invoked for each browser-capture frame.
 
 ### canvas
 
-`OffscreenCanvas`
+[`Canvas2DTarget`](Canvas2DTarget.md)
 
 ## Returns
 

@@ -8,6 +8,6 @@
 
 > **DpuCapability** = \{ `available`: `true`; `tier`: `"native-sethtml"`; \} \| \{ `available`: `false`; `tier`: `"floor-morph"`; \}
 
-Defined in: [web/src/dpu/watch-and-prepare.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L40)
+Defined in: [web/src/watch-and-prepare.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/watch-and-prepare.ts#L40)
 
 Feature-detected DPU capability — floor-morph is always available.

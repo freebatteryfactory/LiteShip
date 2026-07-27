@@ -6,7 +6,7 @@
 
 # Interface: AttributionDecl
 
-Defined in: [core/src/authoring/capsule.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L90)
+Defined in: [core/src/authoring/capsule.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L94)
 
 License and authorship metadata carried for audit receipts.
 
@@ -16,7 +16,7 @@ License and authorship metadata carried for audit receipts.
 
 > `readonly` **author**: `string`
 
-Defined in: [core/src/authoring/capsule.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L92)
+Defined in: [core/src/authoring/capsule.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L96)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/authoring/capsule.ts:92](https://github.com/freebatteryfac
 
 > `readonly` **license**: `string`
 
-Defined in: [core/src/authoring/capsule.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L91)
+Defined in: [core/src/authoring/capsule.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L95)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/authoring/capsule.ts:91](https://github.com/freebatteryfac
 
 > `readonly` `optional` **url?**: `string`
 
-Defined in: [core/src/authoring/capsule.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L93)
+Defined in: [core/src/authoring/capsule.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L97)

@@ -6,7 +6,7 @@
 
 # Interface: RuntimeWriteProperty
 
-Defined in: [\_spine/core.d.ts:1175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1175)
+Defined in: [\_spine/core.d.ts:1390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1390)
 
 One property transition from a typed source value to a typed target value.
 
@@ -16,7 +16,7 @@ One property transition from a typed source value to a typed target value.
 
 > `readonly` **cssVar**: `string`
 
-Defined in: [\_spine/core.d.ts:1176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1176)
+Defined in: [\_spine/core.d.ts:1391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1391)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/core.d.ts:1176](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **from**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [\_spine/core.d.ts:1177](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1177)
+Defined in: [\_spine/core.d.ts:1392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1392)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [\_spine/core.d.ts:1177](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **to**: [`TypedValue`](../type-aliases/TypedValue.md)
 
-Defined in: [\_spine/core.d.ts:1178](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1178)
+Defined in: [\_spine/core.d.ts:1393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1393)

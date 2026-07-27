@@ -35,6 +35,7 @@
  * - `audit`     — a repository/consumer audit finding rule.
  * - `compiler`  — a compile-pipeline diagnostic.
  * - `detect`    — a device-capability detection diagnostic.
+ * - `web`       — a browser-runtime diagnostic.
  * - `astro`     — an Astro-integration diagnostic.
  * - `cli`       — a CLI-surface diagnostic.
  * - `migrate`   — a migration/codemod diagnostic.
@@ -49,6 +50,7 @@ export const DIAGNOSTIC_AREAS = [
   'compiler',
   'detect',
   'genui',
+  'web',
   'astro',
   'cli',
   'migrate',
@@ -136,6 +138,11 @@ function detect(title: string, explanation: string, remediation: string): Diagno
 /** Build one generated-UI validation entry (area `genui`). */
 function genui(title: string, explanation: string, remediation: string): DiagnosticEntry {
   return entry('genui', '@liteship/genui', title, explanation, remediation);
+}
+
+/** Build one browser-runtime entry (area `web`). */
+function web(title: string, explanation: string, remediation: string): DiagnosticEntry {
+  return entry('web', '@liteship/web', title, explanation, remediation);
 }
 
 /** Build one Astro runtime/integration entry (area `astro`). */
@@ -598,6 +605,21 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'A gauntlet gate emits a `ruleId` (or the check registry declares a `check/<slug>` id) that has no entry in the DIAGNOSTIC_REGISTRY. Every emitted diagnostic code must be enrolled so it can be explained by `explainDiagnostic`.',
     'Enroll the emitted code in packages/error/src/codes.ts DIAGNOSTIC_REGISTRY with a title, explanation, and remediation.',
   ),
+  'gauntlet/feature-edge-connectivity': gauntlet(
+    'Feature-edge connectivity is incomplete',
+    'A complete catalog/checker-backed feature-edge census found an endpoint consumer without a corresponding producer, or could not prove its subject coverage.',
+    'Restore the canonical producer-to-consumer route and rerun the complete feature-edge census.',
+  ),
+  'gauntlet/feature-edge-connectivity/subject-coverage': gauntlet(
+    'Feature-edge subject census is opaque',
+    'The host omitted required feature-edge facts or an enumerator could not prove complete, coherent coverage of its governed subject family.',
+    'Restore the missing canonical projection or typed identity owner and rerun the census without excluding opaque subjects.',
+  ),
+  'gauntlet/feature-edge-connectivity/orphan-consumer': gauntlet(
+    'Feature-edge consumer has no producer',
+    'The complete feature-edge census found one or more consumers for a governed subject and no producer on the other side.',
+    'Declare and exercise the subject through its canonical producer; do not delete or exclude the consumer to clear the gate.',
+  ),
   'gauntlet/facade-export-budget': gauntlet(
     'Root export outside the facade budget',
     'The `liteship` package root ("." entry) ships a value or type export that is not listed in packages/liteship/src/export-budget.ts (ROOT_VALUE_BUDGET / ROOT_TYPE_BUDGET), or exceeds the 30-symbol-per-kind cap. The curated root is a reviewed authoring surface — every symbol must be an allowlisted entry so the umbrella cannot silently sprawl back into a whole-fleet re-export.',
@@ -908,8 +930,8 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
   ),
   'detect/probes-defaulted': detect(
     'Capability probes used conservative defaults',
-    'One or more browser capability probes were unavailable or threw, so detection continued with documented conservative values and reduced confidence.',
-    'Inspect the diagnostic detail for each failed probe and restore the missing browser API or repair the throwing host adapter.',
+    'One or more browser capability probes were unavailable or threw, so detection continued with documented conservative values and marked each affected tier axis as inferred.',
+    'Inspect the diagnostic detail and per-axis tierEvidence for each failed input; restore the missing browser API before calling requireObserved for a trust-bearing decision.',
   ),
 
   // ── genui: generated-tree validation failures ───────────────────────────────
@@ -932,6 +954,88 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'Generated UI carries invalid slots',
     'A generated component supplied a malformed slot record or an invalid node inside a slot.',
     'Supply a slot record whose values are valid generated UI nodes or node arrays.',
+  ),
+
+  // ── web: browser-runtime diagnostics ───────────────────────────────────────
+  'web/mutation/to-ops-threw': web(
+    'Graph-form operation projection threw',
+    'The host-owned graph-form toOps callback threw while projecting submitted FormData into graph patch operations.',
+    'Keep toOps pure and return valid GraphPatch operations for the submitted form data.',
+  ),
+  'web/mutation/on-outcome-threw': web(
+    'Graph-form outcome callback threw',
+    'The host-owned graph-form onOutcome callback threw after a mutation response; the liteship:mutation event still fired.',
+    'Keep onOutcome non-throwing, or contain and report its failure inside the callback.',
+  ),
+  'web/morph/invalid-id-map': web(
+    'Morph ID map is invalid',
+    'The data-morph-id-map attribute did not contain a JSON object mapping old semantic IDs to new semantic IDs, so the map was skipped.',
+    'Supply a valid JSON object whose keys and values are semantic ID strings.',
+  ),
+  'web/morph/preserve-id-missing': web(
+    'Requested morph-preserve ID is missing',
+    'A preserve ID was absent from the old DOM tree, so LiteShip could not preserve the requested element across the morph.',
+    'Correct the preserve ID or add the matching data-liteship-id attribute to the element that must survive.',
+  ),
+  'web/slot/invalid-path': web(
+    'Slot path is invalid',
+    'A data-liteship-slot path did not start with a slash or contained characters outside the supported path grammar.',
+    'Use a slash-prefixed path containing only alphanumeric characters, hyphens, underscores, and path separators.',
+  ),
+  'web/physical/restore-focus-selection-failed': web(
+    'Focus selection restoration failed',
+    'The browser rejected the saved focus selection range, usually because the element type changed across the morph.',
+    'Keep the focused control text-like across the morph or stop persisting an incompatible selection range.',
+  ),
+  'web/physical/restore-selection-range-failed': web(
+    'Text selection restoration failed',
+    'The browser rejected the saved text selection range, usually because the element type changed across the morph.',
+    'Keep the selected control text-like across the morph or stop persisting an incompatible selection range.',
+  ),
+  'web/physical/restore-range-failed': web(
+    'DOM range restoration failed',
+    'The browser failed to construct a DOM Range from the persisted physical selection offsets.',
+    'Keep the selected text-node structure compatible across the morph and persist offsets within the restored content.',
+  ),
+  'web/physical/restore-ime-selection-failed': web(
+    'IME selection restoration failed',
+    'The browser rejected the saved IME selection range, usually because the element type changed across the morph.',
+    'Keep the IME target text-like across the morph or stop persisting an incompatible IME selection range.',
+  ),
+  'web/physical/restore-path-query-failed': web(
+    'Persisted physical-state selector failed',
+    'Resolving a persisted physical-state selector threw for a reason other than ordinary selector syntax rejection.',
+    'Inspect the selector and host query implementation, then restore a selector that the current DOM can resolve safely.',
+  ),
+  'web/stream/unattested-patch-receipt-frame': web(
+    'Stream patch-receipt frame is unattested',
+    'An SSE receipt frame failed receipt-hash, transition-shape, or subject-identity attestation and was refused before graph gap replay.',
+    'Emit an authority-minted receipt and transition pair that self-verifies and follows the base#cell subject law.',
+  ),
+  'web/stream/sse-state-listener-threw': web(
+    'SSE state listener threw',
+    'A stateChanges subscriber threw during an SSE transport transition; transport teardown and reconnect bookkeeping continued.',
+    'Make stateChanges subscribers non-throwing or contain and report their failures locally.',
+  ),
+  'web/stream/sse-on-state-change-threw': web(
+    'SSE onStateChange callback threw',
+    'The synchronous onStateChange callback threw during an SSE transport transition; transport bookkeeping continued.',
+    'Make onStateChange non-throwing or contain and report its failures locally.',
+  ),
+  'web/stream/sse-on-message-threw': web(
+    'SSE onMessage callback threw',
+    'The synchronous onMessage callback threw for a live SSE message; heartbeat and reconnect bookkeeping continued.',
+    'Make onMessage non-throwing or contain and report its failures locally.',
+  ),
+  'web/stream/sse-buffer-saturated': web(
+    'SSE receive buffer saturated',
+    'The configured SSE receive buffer reached capacity and the selected overflow policy began dropping or coalescing messages.',
+    'Increase the buffer, consume messages faster, or select an overflow policy appropriate for the stream semantics.',
+  ),
+  'web/security/trusted-html-downgraded': web(
+    'Trusted HTML policy was downgraded',
+    'The caller requested trusted-html without explicitly enabling allowTrustedHtml, so LiteShip used sanitized-html instead.',
+    'Pass allowTrustedHtml: true only for genuinely trusted content, or request sanitized-html explicitly.',
   ),
 
   // ── astro: integration and browser-runtime diagnostics ─────────────────────
@@ -1093,7 +1197,7 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
   'astro/motion/motion-program-missing': astro(
     'Required motion program is missing',
     'A motion directive was activated without the serialized program it needs to sample.',
-    'Attach the compiled motion-program attribute before activating the directive.',
+    'Attach the admitted motion directive payload attribute before activating the directive.',
   ),
   'astro/receipt-chain/receipt-signature-unverified': astro(
     'Receipt signature could not be verified',

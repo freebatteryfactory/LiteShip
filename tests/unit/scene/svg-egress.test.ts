@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { createWorld } from '@liteship/core';
+import { createWorld } from '@liteship/core/ecs';
 import {
   SVGSystem,
   VideoSystem,
@@ -31,13 +31,16 @@ import {
   SceneRuntime,
   collectSvgAttrs,
   applySvgAttrs,
+  SvgAttrsPart,
+  VideoSourcePart,
 } from '@liteship/scene';
 import type { SceneContract, SvgAttrs, SvgAttrsFrame } from '@liteship/scene';
+import { spawnSceneEntity } from '../../support/scene-world.js';
 
 describe('collectSvgAttrs (pure egress core)', () => {
   it('collects persisted _svgAttrs into an entity-keyed frame after a tick', () => {
     const world = createWorld();
-    const id = world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    const id = spawnSceneEntity(world, { VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
     world.tick();
@@ -45,8 +48,8 @@ describe('collectSvgAttrs (pure egress core)', () => {
     const collected = collectSvgAttrs(world);
 
     // Read-through: frame value equals what SVGSystem persisted.
-    const entities = world.query('VideoSource');
-    const persisted = entities[0]!.components.get('_svgAttrs') as SvgAttrs;
+    const entities = world.query(VideoSourcePart, SvgAttrsPart);
+    const persisted = entities[0]!.get(SvgAttrsPart) as SvgAttrs;
 
     expect(collected.size).toBe(1);
     const attrs = collected.get(id)!;
@@ -58,7 +61,7 @@ describe('collectSvgAttrs (pure egress core)', () => {
 
   it('is empty before any tick has composed _svgAttrs', () => {
     const world = createWorld();
-    world.spawn({ VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
+    spawnSceneEntity(world, { VideoSource: {}, FrameRange: { from: 0, to: 60 }, TrackLayer: 0 });
     world.addSystem(VideoSystem(30));
     world.addSystem(SVGSystem(30));
     // No tick yet → no persisted _svgAttrs.
@@ -68,7 +71,7 @@ describe('collectSvgAttrs (pure egress core)', () => {
 
   it('carries mixBlendMode through from a _blend TransitionSystem wrote', () => {
     const world = createWorld();
-    const id = world.spawn({
+    const id = spawnSceneEntity(world, {
       VideoSource: {},
       FrameRange: { from: 0, to: 100 },
       TransitionKind: 'crossfade',
@@ -101,7 +104,7 @@ describe('SceneRuntime SVG-egress wiring', () => {
   }
 
   it('does not change the canonical system count (egress is a sink, not a system)', () => {
-    expect(SceneRuntime.systemCount).toBe(7);
+    expect(SceneRuntime.systemCount).toBe(8);
   });
 
   it('surfaces the SVG frame via handle.svgAttrs() post-tick', async () => {

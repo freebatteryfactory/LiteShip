@@ -15,6 +15,7 @@ import { dispatchLiteshipEvent } from '../wire/dispatch.js';
 import * as SemanticIdModule from './semantic-id.js';
 import * as HintsModule from './hints.js';
 import * as Physical from '../physical/capture.js';
+import type { PhysicalStateTracker } from '../physical/capture.js';
 import * as PhysicalRestore from '../physical/restore.js';
 // Import pure functions from diff-pure.ts (Effect-free)
 import {
@@ -51,20 +52,23 @@ export const morph = (oldNode: Element, newHTML: string, config?: Partial<MorphC
  *
  * Captures focus/scroll/selection before the morph (gated on config flags),
  * validates preserve hints afterwards (dispatching `liteship:morph-rejected` and
- * `liteship:request-snapshot` on violation), and restores physical state. When no
- * flags or hints apply it degrades to a plain {@link morph}.
+ * `liteship:request-snapshot` on violation), and restores physical state. A host
+ * may supply an owned physical-state tracker to preserve active IME composition
+ * without installing ambient import-time listeners. When no flags or hints apply
+ * it degrades to a plain {@link morph}.
  */
 export const morphWithState = (
   oldNode: Element,
   newHTML: string,
   config?: Partial<MorphConfig>,
   hints?: MorphHints,
+  physicalStateTracker?: Pick<PhysicalStateTracker, 'capture'>,
 ): MorphResult => {
   const finalConfig = { ...defaultConfig, ...config };
 
   const state =
     finalConfig.preserveFocus || finalConfig.preserveScroll || finalConfig.preserveSelection
-      ? Physical.capture(oldNode)
+      ? (physicalStateTracker?.capture(oldNode) ?? Physical.capture(oldNode))
       : null;
 
   const preserveIds = hints?.preserve ?? hints?.preserveIds ?? [];
@@ -72,9 +76,9 @@ export const morphWithState = (
     const preserveIndex = SemanticIdModule.buildIndex(oldNode);
     for (const id of preserveIds) {
       if (!preserveIndex.has(id)) {
-        Diagnostics.warn({
+        Diagnostics.warnRegistered({
           source: 'liteship/web.morph',
-          code: 'preserve-id-missing',
+          code: 'web/morph/preserve-id-missing',
           message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-liteship-id attributes — check for a typo, or add data-liteship-id="${id}" to the element you want preserved.`,
         });
       }

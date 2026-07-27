@@ -8,7 +8,7 @@
 
 > **dispatchToolCall**(`call`): `Promise`\<[`McpToolResult`](../interfaces/McpToolResult.md)\>
 
-Defined in: [mcp-server/src/dispatch.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L345)
+Defined in: [mcp-server/src/dispatch.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L363)
 
 Dispatch a tools/call through the shared registry dispatcher. The structured
 `arguments` object passes through verbatim (nested objects preserved — no

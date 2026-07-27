@@ -11,7 +11,7 @@ import {
 } from '../../../scripts/artifact-integrity.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
 import { withRepoRoot } from '@liteship/audit';
-import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
 import {

@@ -1,12 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
-import { CHAIN_PROGRAM, CHAIN_SSR_PAINT, CHAIN_SELECTED, CHAIN_TOTAL_MS, CHAIN_WINDOWS } from '../server/motion-chain';
+import { CHAIN_PAYLOAD_JSON, CHAIN_SSR_PAINT, CHAIN_SELECTED, CHAIN_TOTAL_MS, CHAIN_WINDOWS } from '../server/motion-chain';
 
-// Prerender-friendly: the chain program is composed + lowered once at build time.
+// Prerender-friendly: the chain is composed + lowered into its payload once at build time.
 // This surface emits no native MotionCompiler CSS, so the `client:motion` floor drives
 // its per-window sub-samplers on EVERY browser: the floor is the guarantee and stays
 // idle only where native `animation-timeline` CSS actually owns the element.
-const program = JSON.stringify(CHAIN_PROGRAM);
+const payload = CHAIN_PAYLOAD_JSON;
 const initialState = CHAIN_SSR_PAINT.state;
 const seams = CHAIN_WINDOWS.map(([s, e]) => `${Math.round(s * 100)}–${Math.round(e * 100)}%`).join(', ');
 ---
@@ -31,7 +31,7 @@ const seams = CHAIN_WINDOWS.map(([s, e]) => `${Math.round(s * 100)}–${Math.rou
       class="chain-card"
       data-liteship-boundary="chain-hero"
       data-liteship-state={initialState}
-      data-liteship-motion-program={program}
+      data-liteship-motion-payload={payload}
       client:motion
     >
       <strong>Chain</strong>

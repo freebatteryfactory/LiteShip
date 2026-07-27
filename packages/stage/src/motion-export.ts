@@ -18,6 +18,7 @@
 
 import { CanonicalCbor, AddressedDigest, formatTypedValue, frameToT, sampleProgram } from '@liteship/core';
 import type { AddressedDigest as AddressedDigestShape, RuntimeWritePlan, TypedValue } from '@liteship/core';
+import { ValidationError } from '@liteship/error';
 
 /** One sampled motion frame: its index, its normalized `t`, and the typed + formatted leaves. */
 export interface MotionFrameSample {
@@ -39,13 +40,24 @@ export interface MotionTrackExport {
   readonly artifactDigest: AddressedDigestShape;
 }
 
+function requireFrameCount(totalFrames: number): void {
+  if (!Number.isSafeInteger(totalFrames) || totalFrames < 0) {
+    throw ValidationError(
+      'sampleMotionFrames',
+      `totalFrames must be a non-negative safe integer; received ${String(totalFrames)}.`,
+    );
+  }
+}
+
 /**
  * Sample the shared motion kernel at every frame index of a `totalFrames`-long export.
  * Each frame's normalized time is `frame / max(1, totalFrames-1)`, so the endpoints land
  * exactly on `t=0` and `t=1`. Pure — the differential oracle reads the typed `values` to
  * prove the stage/remotion video leg equals the `sampleProgram` reference within epsilon.
+ * Refuses a frame count that is negative, fractional, non-finite, or outside the safe-integer domain.
  */
 export function sampleMotionFrames(plan: RuntimeWritePlan, totalFrames: number): readonly MotionFrameSample[] {
+  requireFrameCount(totalFrames);
   const frames: MotionFrameSample[] = [];
   for (let frame = 0; frame < totalFrames; frame++) {
     const t = frameToT(frame, totalFrames);
@@ -67,6 +79,7 @@ export function sampleMotionFrames(plan: RuntimeWritePlan, totalFrames: number):
  * the ONE kernel (`CanonicalCbor.encode` → `AddressedDigest.of`). The returned
  * `artifactDigest` pins the exact motion the frames carry — the built-in oracle for the
  * video leg, exactly as `dual-export.ts` content-addresses its frame stream.
+ * Frame-count admission is identical to {@link sampleMotionFrames}; malformed counts never mint partial artifacts.
  */
 export function exportMotionTrack(plan: RuntimeWritePlan, totalFrames: number): MotionTrackExport {
   const frames = sampleMotionFrames(plan, totalFrames);

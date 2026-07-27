@@ -11,7 +11,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runCliCommand } from '../lib/run-command.js';
+import { runCliCommand } from '../internal/run-command.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt shape emitted by `liteship version`. */

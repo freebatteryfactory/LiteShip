@@ -46,8 +46,8 @@ import {
 } from '@liteship/core';
 import { MotionCompiler } from '@liteship/compiler';
 import motionDirective from '../../../packages/astro/src/client-directives/motion.js';
-import { parseMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
-import type { SerializedMotionProgram } from '../../../packages/astro/src/runtime/motion.js';
+import { parseMotionDirectivePayload } from '../../../packages/astro/src/runtime/motion.js';
+import type { MotionDirectivePayload } from '../../../packages/astro/src/runtime/motion.js';
 
 const noop = (): Promise<void> => Promise.resolve();
 
@@ -56,7 +56,7 @@ const SPRING = DEFAULT_MOTION_SPRING;
 const kernel = Easing.spring(SPRING);
 
 /** Author a spring reveal and lower it to the serialized program the SSR page inlines. */
-function buildProgram(reducedMotion: 'settle' | 'none' = 'none'): SerializedMotionProgram {
+function buildProgram(reducedMotion: 'settle' | 'none' = 'none'): MotionDirectivePayload {
   const intent: RevealIntent = Reveal.intent({
     target: 'hero',
     trigger: { type: 'scroll', axis: 'progress' },
@@ -86,7 +86,7 @@ const PAR_META: CellMeta = {
  * `css` (so the test derives the element's real animation-name from the compiled output — a true
  * core → compiler → runtime chain, not a hand-picked stub value).
  */
-function buildMixedEasingParProgram(): { serialized: SerializedMotionProgram; css: CssMotionPlan } {
+function buildMixedEasingParProgram(): { serialized: MotionDirectivePayload; css: CssMotionPlan } {
   const node = <T>(n: unknown): T => sealNode(n as never) as unknown as T;
   const signal = node<SignalNode>({
     _tag: 'DocGraphSignalNode',
@@ -217,10 +217,10 @@ function stepScroll(offset: number): void {
   cb?.(performance.now());
 }
 
-function makeEl(program: SerializedMotionProgram | string): HTMLElement {
+function makeEl(program: MotionDirectivePayload | string): HTMLElement {
   const el = document.createElement('div');
   el.setAttribute('data-liteship-boundary', 'hero');
-  el.setAttribute('data-liteship-motion-program', typeof program === 'string' ? program : JSON.stringify(program));
+  el.setAttribute('data-liteship-motion-payload', typeof program === 'string' ? program : JSON.stringify(program));
   document.body.appendChild(el);
   return el;
 }
@@ -465,7 +465,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
    */
   describe('client:motion — multi-step TransitionProgram drives through the floor (#141)', () => {
     /** seq[ opacity 0→1 over 300ms, translateY 24px→0px over 900ms ] → windows [0,.25],[.25,1]. */
-    function buildChainProgram(reducedMotion: 'settle' | 'none' = 'none'): SerializedMotionProgram {
+    function buildChainProgram(reducedMotion: 'settle' | 'none' = 'none'): MotionDirectivePayload {
       const chain = lowerRevealChain({
         target: 'hero',
         trigger: { type: 'scroll', axis: 'progress' },
@@ -539,7 +539,7 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
 });
 
 /**
- * parseMotionProgram — SSR-inlined program validation over the WIDENED easing
+ * parseMotionDirectivePayload — SSR-inlined payload validation over the WIDENED easing
  * descriptor (#CSS). The authoring vocabulary grew beyond `linear|ease|spring` to
  * the full Easing catalog (bounce/elastic/back/cubicBezier), each serialized as a
  * sampled-points arm so the JS floor lerps the IDENTICAL point list the CSS
@@ -547,16 +547,27 @@ describe('client:motion — JS floor is the production driver (retires LATENT)',
  * page inlining a widened-catalog reveal parses — and must still REJECT malformed
  * payloads LOUDLY (a diagnostic + `null`, leaving the native/CSS floor untouched).
  */
-describe('parseMotionProgram — widened easing descriptor validation (#CSS)', () => {
+describe('parseMotionDirectivePayload — widened easing descriptor validation (#CSS)', () => {
+  const validIntent = {
+    _tag: 'RevealIntent',
+    target: 'fixture',
+    trigger: { type: 'scroll', axis: 'progress' },
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+    transition: { durationMs: 420, easing: 'ease' },
+    policy: { reducedMotion: 'none', motionTier: 'transitions' },
+  } as const;
+
   /** A minimal, otherwise-valid serialized program carrying `easing` verbatim. */
   function programJson(easing: unknown): string {
     return JSON.stringify({
-      intent: { policy: { reducedMotion: 'none' } },
+      intent: validIntent,
       runtime: {
         properties: [],
         fromState: 'before',
         toState: 'after',
         durationMs: 420,
+        routing: 'seq',
         easing,
       },
       signals: [],
@@ -576,16 +587,16 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
   });
 
   test('accepts the narrow legacy descriptors (linear / ease / spring)', () => {
-    expect(parseMotionProgram(programJson({ kind: 'linear' }))).not.toBeNull();
-    expect(parseMotionProgram(programJson({ kind: 'ease' }))).not.toBeNull();
-    expect(parseMotionProgram(programJson({ kind: 'spring', spring: DEFAULT_MOTION_SPRING }))).not.toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'linear' }))).not.toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'ease' }))).not.toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'spring', spring: DEFAULT_MOTION_SPRING }))).not.toBeNull();
     expect(sink.events).toHaveLength(0);
   });
 
   test('accepts a widened-catalog kind carrying a serialized sampled-points arm', () => {
     const points = [0, 0.03, 0.34, 0.62, 0.88, 1];
     for (const kind of ['bounce', 'elastic', 'back', 'cubicBezier'] as const) {
-      const program = parseMotionProgram(programJson({ kind, points }));
+      const program = parseMotionDirectivePayload(programJson({ kind, points }));
       // Accept = a parsed program (not null); the widened kind + points arm survive parse.
       expect(program).not.toBeNull();
     }
@@ -599,7 +610,7 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
     // reads the SAME sampled points. So a point-based descriptor carrying no points is a
     // lowering bug and the guard must reject it LOUDLY, not accept it and draw a line.
     for (const kind of ['points', 'bounce', 'elastic', 'back', 'cubicBezier'] as const) {
-      expect(parseMotionProgram(programJson({ kind })), `${kind} without points must reject`).toBeNull();
+      expect(parseMotionDirectivePayload(programJson({ kind })), `${kind} without points must reject`).toBeNull();
     }
     expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
@@ -607,31 +618,37 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
   test('accepts the `points` kind WITH a valid arm (the analytic kinds need none — covered above)', () => {
     // Point-based `points` is accepted once its arm is present; linear (analytic) needs
     // no arm. Together with the reject-without-points case this pins the split.
-    expect(parseMotionProgram(programJson({ kind: 'points', points: [0, 0.5, 1] }))).not.toBeNull();
-    expect(parseMotionProgram(programJson({ kind: 'linear' }))).not.toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'points', points: [0, 0.5, 1] }))).not.toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'linear' }))).not.toBeNull();
     expect(sink.events).toHaveLength(0);
   });
 
   test('rejects an easing with no kind LOUDLY (null + diagnostic)', () => {
-    expect(parseMotionProgram(programJson({ points: [0, 1] }))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ points: [0, 1] }))).toBeNull();
     expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects an unknown easing kind LOUDLY', () => {
-    expect(parseMotionProgram(programJson({ kind: 'wobble' }))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'wobble' }))).toBeNull();
     expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects a malformed points arm (degenerate length or non-finite members)', () => {
-    expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0.5] }))).toBeNull();
-    expect(parseMotionProgram(programJson({ kind: 'bounce', points: 'nope' }))).toBeNull();
-    expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0, 'x', 1] }))).toBeNull();
-    expect(parseMotionProgram(programJson({ kind: 'bounce', points: [0, Number.NaN, 1] }))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'bounce', points: [0.5] }))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'bounce', points: 'nope' }))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'bounce', points: [0, 'x', 1] }))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson({ kind: 'bounce', points: [0, Number.NaN, 1] }))).toBeNull();
     expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects a missing easing entirely LOUDLY', () => {
-    expect(parseMotionProgram(programJson(undefined))).toBeNull();
+    expect(parseMotionDirectivePayload(programJson(undefined))).toBeNull();
+    expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
+  });
+
+  test('rejects a JSON null envelope without throwing', () => {
+    expect(() => parseMotionDirectivePayload('null')).not.toThrow();
+    expect(parseMotionDirectivePayload('null')).toBeNull();
     expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
@@ -641,7 +658,7 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
   // to crash `sampleProgram` instead of leaving the JS floor inert (#158).
   const validProperty = { cssVar: '--x', from: { k: 'number', v: 0 }, to: { k: 'number', v: 1 } };
   const runtimeProgram = (runtime: Record<string, unknown>): string =>
-    JSON.stringify({ intent: { policy: { reducedMotion: 'none' } }, runtime, signals: [] });
+    JSON.stringify({ intent: validIntent, runtime, signals: [] });
 
   test('rejects a plan whose windows entry is structurally malformed (windows: [{}]) LOUDLY', () => {
     const withBadWindow = runtimeProgram({
@@ -649,22 +666,24 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
       fromState: 'a',
       toState: 'b',
       durationMs: 300,
+      routing: 'seq',
       easing: { kind: 'linear' },
       windows: [{}], // no properties/easing → sampleProgram's `w.properties.map(...)` would throw
     });
-    expect(parseMotionProgram(withBadWindow)).toBeNull();
+    expect(parseMotionDirectivePayload(withBadWindow)).toBeNull();
     expect(sink.events.some((e) => e.code === 'astro/motion/motion-program-shape-invalid')).toBe(true);
   });
 
   test('rejects a malformed properties entry ({}), and still ACCEPTS a well-formed windowed plan', () => {
     // A property missing cssVar/from/to reaches the sampler's `interpolateTyped` → reject.
     expect(
-      parseMotionProgram(
+      parseMotionDirectivePayload(
         runtimeProgram({
           properties: [{}],
           fromState: 'a',
           toState: 'b',
           durationMs: 300,
+          routing: 'seq',
           easing: { kind: 'linear' },
         }),
       ),
@@ -675,12 +694,13 @@ describe('parseMotionProgram — widened easing descriptor validation (#CSS)', (
       fromState: 'a',
       toState: 'b',
       durationMs: 300,
+      routing: 'seq',
       easing: { kind: 'linear' },
       windows: [
         { windowStart: 0, windowEnd: 0.5, properties: [validProperty], easing: { kind: 'linear' } },
         { windowStart: 0.5, windowEnd: 1, properties: [validProperty], easing: { kind: 'ease' } },
       ],
     });
-    expect(parseMotionProgram(goodWindows)).not.toBeNull();
+    expect(parseMotionDirectivePayload(goodWindows)).not.toBeNull();
   });
 });

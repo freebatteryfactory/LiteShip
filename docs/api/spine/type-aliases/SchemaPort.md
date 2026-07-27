@@ -8,7 +8,7 @@
 
 > **SchemaPort**\<`A`, `I`\> = `object`
 
-Defined in: [\_spine/core.d.ts:1270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1270)
+Defined in: [\_spine/core.d.ts:1485](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1485)
 
 The permanent schema contract: the phantom `Type`/`Encoded` pair every schema
 value carries (`A` decodes out, `I` is the encoded form). Structural, so an
@@ -31,7 +31,7 @@ names this instead of effect's `Schema` (ADR-0010, spine-first).
 
 > `readonly` **Encoded**: `I`
 
-Defined in: [\_spine/core.d.ts:1272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1272)
+Defined in: [\_spine/core.d.ts:1487](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1487)
 
 ***
 
@@ -39,4 +39,4 @@ Defined in: [\_spine/core.d.ts:1272](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **Type**: `A`
 
-Defined in: [\_spine/core.d.ts:1271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1271)
+Defined in: [\_spine/core.d.ts:1486](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L1486)

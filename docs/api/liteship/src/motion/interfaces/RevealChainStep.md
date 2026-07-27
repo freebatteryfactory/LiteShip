@@ -6,7 +6,7 @@
 
 # Interface: RevealChainStep
 
-Defined in: core/dist/motion/reveal.d.ts:92
+Defined in: core/dist/motion/reveal.d.ts:94
 
 One authored step in a [RevealChainInput](RevealChainInput.md): a pose→pose tween on the target.
 
@@ -16,7 +16,7 @@ One authored step in a [RevealChainInput](RevealChainInput.md): a pose→pose tw
 
 > `readonly` `optional` **delayMs?**: `number`
 
-Defined in: core/dist/motion/reveal.d.ts:97
+Defined in: core/dist/motion/reveal.d.ts:99
 
 Dead time before this step within the sequence (rides the seq offset).
 
@@ -26,7 +26,7 @@ Dead time before this step within the sequence (rides the seq offset).
 
 > `readonly` **from**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: core/dist/motion/reveal.d.ts:93
+Defined in: core/dist/motion/reveal.d.ts:95
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: core/dist/motion/reveal.d.ts:93
 
 > `readonly` **to**: `Readonly`\<`Record`\<`string`, `number` \| `string`\>\>
 
-Defined in: core/dist/motion/reveal.d.ts:94
+Defined in: core/dist/motion/reveal.d.ts:96
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: core/dist/motion/reveal.d.ts:94
 
 > `readonly` **transition**: [`RevealTransition`](RevealTransition.md)
 
-Defined in: core/dist/motion/reveal.d.ts:95
+Defined in: core/dist/motion/reveal.d.ts:97

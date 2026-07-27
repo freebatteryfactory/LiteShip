@@ -30,6 +30,8 @@ export {
   LITESHIP_CHECK_METHOD,
   LSP_METHOD_CATALOG,
   LSP_SERVER_CAPABILITIES,
+  lspRoutedMethodNames,
+  lspNotificationProducerMethods,
   projectLspCapabilities,
   type LspServerState,
   type LspHandleResult,

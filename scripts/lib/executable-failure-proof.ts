@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import ts from 'typescript';
-import { scanResolvedTestTitles } from '../../packages/cli/src/lib/traceability.js';
+import { scanResolvedTestTitles } from '../../packages/cli/src/internal/traceability.js';
 
 export interface DiagnosticOmissionObservation {
   readonly kind: 'diagnostic-and-output-omission';

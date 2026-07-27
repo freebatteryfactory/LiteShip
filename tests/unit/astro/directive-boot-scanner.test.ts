@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { DIRECTIVE_ATTRIBUTE_REGISTRY } from '../../../packages/astro/src/runtime/slots.js';
+import {
+  DIRECTIVE_ATTRIBUTE_REGISTRY,
+  collectDirectiveRootsForName,
+} from '../../../packages/astro/src/runtime/slots.js';
 
 type RegistryDirectiveName = keyof typeof DIRECTIVE_ATTRIBUTE_REGISTRY;
 
@@ -17,6 +20,20 @@ afterEach(() => {
 });
 
 describe('Astro directive boot scanner', () => {
+  test('does not confuse the capability motion tier with a motion directive payload', () => {
+    const tierRoot = document.createElement('html');
+    tierRoot.setAttribute('data-liteship-motion', 'animations');
+    const payloadRoot = document.createElement('section');
+    payloadRoot.setAttribute('data-liteship-motion-payload', '{}');
+    document.body.replaceChildren(payloadRoot);
+
+    expect(collectDirectiveRootsForName('motion', tierRoot)).toEqual([]);
+    expect(collectDirectiveRootsForName('motion', document)).toEqual([payloadRoot]);
+    expect(DIRECTIVE_ATTRIBUTE_REGISTRY.motion).toEqual([
+      { scope: 'root', attribute: 'data-liteship-motion-payload', implicitBoot: true },
+    ]);
+  });
+
   test('boots plain stream elements once and skips already hydrated islands', async () => {
     const initStreamDirective = vi.fn();
     const streamDirective = vi.fn((load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {

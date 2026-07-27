@@ -16,7 +16,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createInfoCommand, info } from '../../../packages/cli/src/commands/info.js';
 import { createDevCommand, dev } from '../../../packages/cli/src/commands/dev.js';
-import { detectHost } from '../../../packages/cli/src/lib/host-detect.js';
+import { detectHost } from '../../../packages/cli/src/internal/host-detect.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../..');

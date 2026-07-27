@@ -8,7 +8,18 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Scheduler, VideoRenderer, Signal, Compositor, Easing, Millis, defineBoundary, createTimeline } from '@liteship/core';
+import { hasTag } from '@liteship/error';
+import {
+  Scheduler,
+  createFrameSchedule,
+  createVideoRenderer,
+  Signal,
+  Compositor,
+  Easing,
+  Millis,
+  defineBoundary,
+  createTimeline,
+} from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // § 1. FrameScheduler
@@ -102,6 +113,38 @@ describe('FrameScheduler', () => {
   });
 });
 
+describe('FrameSchedule', () => {
+  it('is the single deterministic index/time/progress law', () => {
+    const schedule = createFrameSchedule({ fps: 4, durationMs: Millis(1000) });
+    expect([...schedule]).toEqual([
+      { frame: 0, timestamp: 0, progress: 0 },
+      { frame: 1, timestamp: 250, progress: 1 / 3 },
+      { frame: 2, timestamp: 500, progress: 2 / 3 },
+      { frame: 3, timestamp: 750, progress: 1 },
+    ]);
+    expect(schedule.at(2)).toEqual([...schedule][2]);
+    expect(Object.isFrozen(schedule)).toBe(true);
+    expect(Object.isFrozen(schedule.at(0))).toBe(true);
+  });
+
+  it('refuses invalid timing instead of emitting a degenerate schedule', () => {
+    const invalidFps = (): void => {
+      createFrameSchedule({ fps: 0, durationMs: Millis(1000) });
+    };
+    expect(invalidFps).toThrow(/fps > 0/);
+    try {
+      invalidFps();
+      expect.unreachable('expected invalid fps to fail');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+    }
+    expect(() => createFrameSchedule({ fps: 30, durationMs: -1 as ReturnType<typeof Millis> })).toThrow(
+      /durationMs >= 0/,
+    );
+    expect(() => createFrameSchedule({ fps: 30, durationMs: Millis(1000) }).at(30)).toThrow(/integer/);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // § 2. VideoRenderer
 // ---------------------------------------------------------------------------
@@ -109,13 +152,13 @@ describe('FrameScheduler', () => {
 describe('VideoRenderer', () => {
   it('computes correct totalFrames', () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
+    const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(5000) }, compositor);
     expect(renderer.totalFrames).toBe(150);
   });
 
   it('yields correct frame count', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
+    const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(1000) }, compositor);
 
     const frames: Array<{ frame: number; timestamp: number; progress: number }> = [];
     for await (const f of renderer.frames()) {
@@ -131,7 +174,7 @@ describe('VideoRenderer', () => {
 
   it('yields CompositeState with correct shape for every frame', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 10, width: 1280, height: 720, durationMs: Millis(500) }, compositor);
+    const renderer = createVideoRenderer({ fps: 10, width: 1280, height: 720, durationMs: Millis(500) }, compositor);
 
     let checked = 0;
     for await (const f of renderer.frames()) {
@@ -148,7 +191,7 @@ describe('VideoRenderer', () => {
 
   it('progress goes from 0 to 1 across frames', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 10, width: 640, height: 480, durationMs: Millis(1000) }, compositor);
+    const renderer = createVideoRenderer({ fps: 10, width: 640, height: 480, durationMs: Millis(1000) }, compositor);
 
     const progresses: number[] = [];
     for await (const f of renderer.frames()) {
@@ -164,19 +207,22 @@ describe('VideoRenderer', () => {
 
   it('single frame duration yields 1 frame', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(10) }, compositor);
+    const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(10) }, compositor);
 
     const frames: Array<{ frame: number; progress: number }> = [];
     for await (const frame of renderer.frames()) {
       frames.push({ frame: frame.frame, progress: frame.progress });
     }
 
-    expect(frames).toEqual([{ frame: 0, progress: 1 }]);
+    // The shared frameToT law maps a no-span, single-frame timeline to its
+    // initial coordinate. FrameSchedule must not invent a host-only terminal
+    // special case that Stage and Remotion cannot reproduce.
+    expect(frames).toEqual([{ frame: 0, progress: 0 }]);
   });
 
   it('timestamp increments correctly at 60fps', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 60, width: 1920, height: 1080, durationMs: Millis(100) }, compositor);
+    const renderer = createVideoRenderer({ fps: 60, width: 1920, height: 1080, durationMs: Millis(100) }, compositor);
 
     const timestamps: number[] = [];
     for await (const f of renderer.frames()) {
@@ -192,7 +238,11 @@ describe('VideoRenderer', () => {
   it('seeks a controllable signal before each frame when one is provided', async () => {
     const compositor = Compositor.create();
     const signal = Signal.controllable();
-    const renderer = VideoRenderer.make({ fps: 4, width: 320, height: 180, durationMs: Millis(1000) }, compositor, signal);
+    const renderer = createVideoRenderer(
+      { fps: 4, width: 320, height: 180, durationMs: Millis(1000) },
+      compositor,
+      signal,
+    );
 
     const seen: number[] = [];
     for await (const frame of renderer.frames()) {
@@ -336,7 +386,7 @@ describe('springNaturalDuration', () => {
 describe('VideoRenderer edge cases', () => {
   it('durationMs: Millis(0) yields zero frames', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 30, width: 1920, height: 1080, durationMs: Millis(0) }, compositor);
+    const renderer = createVideoRenderer({ fps: 30, width: 1920, height: 1080, durationMs: Millis(0) }, compositor);
     expect(renderer.totalFrames).toBe(0);
 
     let count = 0;
@@ -346,7 +396,7 @@ describe('VideoRenderer edge cases', () => {
 
   it('fps: 1 with 1500ms yields 2 frames', async () => {
     const compositor = Compositor.create();
-    const renderer = VideoRenderer.make({ fps: 1, width: 320, height: 240, durationMs: Millis(1500) }, compositor);
+    const renderer = createVideoRenderer({ fps: 1, width: 320, height: 240, durationMs: Millis(1500) }, compositor);
     expect(renderer.totalFrames).toBe(2); // ceil(1.5 * 1) = 2
 
     let count = 0;

@@ -35,13 +35,13 @@ import {
   type AddressedDigest as AD,
   type HLC,
 } from '@liteship/core';
-import { parseLockfile, type ParsedLockfile } from '../../../packages/cli/src/lib/lockfile.js';
+import { parseLockfile, type ParsedLockfile } from '../../../packages/cli/src/internal/lockfile.js';
 import {
   evaluateLockfilePolicy,
   LITESHIP_LOCKFILE_POLICY,
   type LockfilePolicy,
   type PublishedImporters,
-} from '../../../packages/cli/src/lib/supply-chain-policy.js';
+} from '../../../packages/cli/src/internal/supply-chain-policy.js';
 import {
   generateSbom,
   generateVex,
@@ -49,7 +49,7 @@ import {
   serializeVex,
   sbomAddress,
   vexAddress,
-} from '../../../packages/cli/src/lib/sbom.js';
+} from '../../../packages/cli/src/internal/sbom.js';
 import {
   analyzeLockfile,
   buildSbom,
@@ -62,7 +62,7 @@ import {
   SBOM_ARTIFACT_PATH,
   type WorkspacePkg,
   type AnalyzeInput,
-} from '../../../packages/cli/src/lib/supply-chain.js';
+} from '../../../packages/cli/src/internal/supply-chain.js';
 
 // ── synthetic fixtures (no live-tree reads) ──────────────────────────────────
 

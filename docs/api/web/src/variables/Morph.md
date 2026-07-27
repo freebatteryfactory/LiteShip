@@ -8,7 +8,7 @@
 
 > `const` **Morph**: `object`
 
-Defined in: [web/src/morph/diff.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/diff.ts#L119)
+Defined in: [web/src/morph/diff.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/diff.ts#L123)
 
 DOM morph namespace.
 
@@ -62,14 +62,16 @@ proven you need to skip physical state handling.
 
 ### morphWithState
 
-> **morphWithState**: (`oldNode`, `newHTML`, `config?`, `hints?`) => [`MorphResult`](../type-aliases/MorphResult.md)
+> **morphWithState**: (`oldNode`, `newHTML`, `config?`, `hints?`, `physicalStateTracker?`) => [`MorphResult`](../type-aliases/MorphResult.md)
 
 Morph with physical state capture and restore — the default entry point.
 
 Captures focus/scroll/selection before the morph (gated on config flags),
 validates preserve hints afterwards (dispatching `liteship:morph-rejected` and
-`liteship:request-snapshot` on violation), and restores physical state. When no
-flags or hints apply it degrades to a plain [morph](#morph).
+`liteship:request-snapshot` on violation), and restores physical state. A host
+may supply an owned physical-state tracker to preserve active IME composition
+without installing ambient import-time listeners. When no flags or hints apply
+it degrades to a plain [morph](#morph).
 
 #### Parameters
 
@@ -88,6 +90,10 @@ flags or hints apply it degrades to a plain [morph](#morph).
 ##### hints?
 
 [`MorphHints`](../interfaces/MorphHints.md)
+
+##### physicalStateTracker?
+
+`Pick`\<[`PhysicalStateTracker`](../interfaces/PhysicalStateTracker.md), `"capture"`\>
 
 #### Returns
 

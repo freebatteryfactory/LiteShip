@@ -15,6 +15,7 @@
 
 import { describe, test, expect } from 'vitest';
 import * as Core from '@liteship/core';
+import * as ECS from '@liteship/core/ecs';
 
 // ── Ground-truth API registry ───────────────────────────────────────
 // Every namespace object and its expected methods/values.
@@ -62,10 +63,10 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
 
   // ── Compositor / ECS / scheduling ─────────────────────────────────
   Compositor: { methods: ['create'] },
-  // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` / `Part` / `World` are now
+  // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` are now
   // type-only; construction is the standalone `createCompositorStatePool` / `createBlendTree`
-  // / `createDirtyFlags` / `createFrameBudget` / `createDenseStore` / `createWorld`
-  // (verb grammar, ADR-0051).
+  // / `createDirtyFlags` / `createFrameBudget` (verb grammar, ADR-0051). The typed
+  // ECS substrate is intentionally isolated at `@liteship/core/ecs`.
   Scheduler: { methods: ['raf', 'noop', 'fixedStep', 'audioSync'] },
   // `Composable` construction moved to the standalone `createComposable` (ADR-0051); the
   // namespace object keeps its `compose` / `merge` combinators.
@@ -178,7 +179,6 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
 
   // ── Generative UI / video ─────────────────────────────────────────
   GenFrame: { methods: ['make', 'resolveGap'] },
-  VideoRenderer: { methods: ['make'] },
   AVBridge: { methods: ['make'] },
   AVRenderer: { methods: ['make'] },
   UIQuality: { methods: ['make'], values: ['boundary'] },
@@ -280,14 +280,14 @@ const STANDALONE_FUNCTIONS = [
   // (the `inspect`-verb debug facade over the Receipt namespace), and the `tierTargets`
   // escalation reader wired through to the barrel.
   'createSignal',
-  'createWorld',
-  'createDenseStore',
   'createBlendTree',
   'createTokenBuffer',
   'createComponent',
   'createComposable',
   'createDirtyFlags',
   'createFrameBudget',
+  'createFrameSchedule',
+  'createVideoRenderer',
   'createCompositorStatePool',
   'createLiveCell',
   'createLiveCellBoundary',
@@ -513,6 +513,7 @@ const STANDALONE_OBJECTS = [
   'StateCell',
   'ProjectionState',
   'StateCellStore',
+  'ASSEMBLY_KINDS',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────
@@ -556,7 +557,6 @@ const BRANDED_CONSTRUCTORS = [
   'IntegrityDigest',
   'TokenRef',
   'Millis',
-  'EntityId',
 ];
 
 // ── Tests ───────────────────────────────────────────────────────────
@@ -675,6 +675,29 @@ describe('API health canary', () => {
   });
 
   describe('sub-path exports', () => {
+    test('@liteship/core/ecs exposes the typed component execution substrate', () => {
+      const expected = [
+        'EntityId',
+        'admitPart',
+        'createDenseStore',
+        'createWorld',
+        'defineDenseSystem',
+        'definePart',
+        'defineSystem',
+      ];
+      expect(Object.keys(ECS).sort()).toEqual(expected);
+      for (const name of expected) {
+        expect(typeof (ECS as Record<string, unknown>)[name]).toBe('function');
+      }
+    });
+
+    test('typed ECS factories are NOT on the main entry', () => {
+      const core = Core as Record<string, unknown>;
+      for (const name of ['EntityId', 'admitPart', 'createDenseStore', 'createWorld', 'definePart', 'defineSystem']) {
+        expect(core[name]).toBeUndefined();
+      }
+    });
+
     test('@liteship/core/harness exposes the harness generators', async () => {
       const Harness = await import('@liteship/core/harness');
       const expected = [

@@ -8,6 +8,6 @@
 
 > `const` **DPU\_BASE\_ATTR**: `"data-liteship-dpu-base"` = `"data-liteship-dpu-base"`
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:20
+Defined in: web/dist/watch-and-prepare.d.ts:20
 
 DOM attribute stamped with the base graph id the patch was prepared against.

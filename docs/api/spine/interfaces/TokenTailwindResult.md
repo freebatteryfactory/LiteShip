@@ -6,7 +6,7 @@
 
 # Interface: TokenTailwindResult
 
-Defined in: [\_spine/compiler.d.ts:351](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L351)
+Defined in: [\_spine/compiler.d.ts:459](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L459)
 
 Tailwind theme extension projected from a token definition.
 
@@ -16,4 +16,4 @@ Tailwind theme extension projected from a token definition.
 
 > `readonly` **themeBlock**: `string`
 
-Defined in: [\_spine/compiler.d.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L352)
+Defined in: [\_spine/compiler.d.ts:460](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L460)

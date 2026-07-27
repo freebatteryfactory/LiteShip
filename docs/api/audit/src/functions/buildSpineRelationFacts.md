@@ -8,7 +8,7 @@
 
 > **buildSpineRelationFacts**(`admissions`, `repoRoot`, `options`): `SpineRelationFacts`
 
-Defined in: [audit/src/spine-relation-build.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L207)
+Defined in: [audit/src/spine-relation-build.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/spine-relation-build.ts#L224)
 
 Probe every admitted mirror type's bidirectional assignability against its runtime
 source and classify the observed two-axis relation. Returns flat, already-observed

@@ -6,7 +6,7 @@
 
 # Function: lowerTransitionProgram()
 
-> **lowerTransitionProgram**(`graph`, `program`, `env?`): [`LoweredProgramTimeline`](../interfaces/LoweredProgramTimeline.md)
+> **lowerTransitionProgram**(`graph`, `program`, `env?`): [`TransitionTimeline`](../interfaces/TransitionTimeline.md)
 
 Defined in: [core/src/motion/transition-program.ts:311](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/transition-program.ts#L311)
 
@@ -36,4 +36,4 @@ Ordering runs through `Plan.topoSort` for deterministic offsets.
 
 ## Returns
 
-[`LoweredProgramTimeline`](../interfaces/LoweredProgramTimeline.md)
+[`TransitionTimeline`](../interfaces/TransitionTimeline.md)

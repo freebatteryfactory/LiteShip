@@ -8,7 +8,7 @@
 
 > **debounce**\<`T`\>(`event`, `ms`): [`Zap`](../../../interfaces/Zap.md)\<`T`\> & [`AsyncOwnedResource`](../../../interfaces/AsyncOwnedResource.md)
 
-Defined in: [\_spine/core.d.ts:727](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L727)
+Defined in: [\_spine/core.d.ts:942](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/core.d.ts#L942)
 
 ## Type Parameters
 

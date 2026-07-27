@@ -6,7 +6,7 @@
 
 # Interface: LiteshipMiddlewareConfig
 
-Defined in: [\_spine/astro.d.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L69)
+Defined in: [\_spine/astro.d.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L116)
 
 Configuration shared by Astro middleware and fetch-layer adapters.
 
@@ -20,7 +20,7 @@ Configuration shared by Astro middleware and fetch-layer adapters.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [\_spine/astro.d.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L71)
+Defined in: [\_spine/astro.d.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L118)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [\_spine/astro.d.ts:71](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **edge?**: [`EdgeHostAdapterConfig`](EdgeHostAdapterConfig.md)
 
-Defined in: [\_spine/astro.d.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L70)
+Defined in: [\_spine/astro.d.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L117)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [\_spine/astro.d.ts:70](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [\_spine/astro.d.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L72)
+Defined in: [\_spine/astro.d.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/astro.d.ts#L119)
 
 #### coep?
 
