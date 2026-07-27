@@ -5,7 +5,7 @@ dependency and one complete **define → apply → inspect** loop. Nothing here 
 showcase material; this is what a LiteShip page looks like before you add an
 expert compiler or host surface.
 
-When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.21.0`.
+When installing from npm (outside the monorepo), pin `@liteship/*` packages at `^0.23.0`.
 
 ## Run it
 

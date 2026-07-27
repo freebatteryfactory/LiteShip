@@ -82,7 +82,7 @@ describe('preserve-id-missing warning', () => {
       preserveIds: ['kept', 'cart'],
     });
 
-    const warning = events.find((e) => e.code === 'preserve-id-missing');
+    const warning = events.find((e) => e.code === 'web/morph/preserve-id-missing');
     expect(warning).toBeDefined();
     expect(warning!.message).toContain('Preserve ID "cart" was not found in the old DOM tree before morphing.');
     expect(warning!.message).toContain('data-liteship-id="cart"');
@@ -156,7 +156,7 @@ describe('physical restore warnings', () => {
       }),
     ).toThrow('boom');
 
-    const warning = events.find((e) => e.code === 'restore-focus-selection-failed');
+    const warning = events.find((e) => e.code === 'web/physical/restore-focus-selection-failed');
     expect(warning).toBeDefined();
     expect(warning!.message).toContain('#email');
     expect(warning!.message).toContain('selection APIs only apply to text-like inputs');
@@ -174,7 +174,7 @@ describe('trusted-html downgrade diagnostic', () => {
     resolveHtmlString('<b>hi</b>', { policy: 'trusted-html' });
     resolveHtmlString('<b>hi again</b>', { policy: 'trusted-html' });
 
-    const downgrades = events.filter((e) => e.code === 'trusted-html-downgraded');
+    const downgrades = events.filter((e) => e.code === 'web/security/trusted-html-downgraded');
     expect(downgrades).toHaveLength(1);
     expect(downgrades[0]!.message).toContain('{ policy: "trusted-html", allowTrustedHtml: true }');
 

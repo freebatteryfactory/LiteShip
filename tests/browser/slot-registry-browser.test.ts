@@ -50,12 +50,12 @@ describe('browser SlotRegistry with real MutationObserver', () => {
         expect.objectContaining({
           level: 'warn',
           source: 'liteship/web.SlotRegistry',
-          code: 'invalid-slot-path',
+          code: 'web/slot/invalid-path',
         }),
         expect.objectContaining({
           level: 'warn',
           source: 'liteship/web.SlotRegistry',
-          code: 'invalid-slot-path',
+          code: 'web/slot/invalid-path',
         }),
       ]);
     });

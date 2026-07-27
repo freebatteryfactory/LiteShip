@@ -4,53 +4,13 @@ import {
   formatSharedStartupLine,
   type RawStartupRealityBrowserResult,
 } from '../../../scripts/bench-reality.js';
+import { measuredStartupRealityFixture } from '../../support/startup-reality-fixture.js';
 
 const SUMMARY = { min: 1, median: 1, p75: 1, p95: 1, p99: 1, max: 1, mean: 1 } as const;
 
-function measuredReality(): RawStartupRealityBrowserResult {
-  return {
-    worker: {
-      iterations: 1,
-      frameBudgetMs: 16,
-      exceededFrameBudgetCount: 0,
-      rawSamples: [1],
-      topOutliers: [{ iteration: 0, valueMs: 1 }],
-      summary: {
-        totalStartupMs: SUMMARY,
-        stages: {
-          'claim-or-create': SUMMARY,
-          'coordinator-reset-or-create': SUMMARY,
-          'listener-bind': SUMMARY,
-          'quantizer-bootstrap': SUMMARY,
-          'request-compute': SUMMARY,
-          'state-delivery': SUMMARY,
-          dispose: SUMMARY,
-        },
-      },
-    },
-    llm: {
-      iterations: 1,
-      simple: {
-        rawSamples: [1],
-        topOutliers: [{ iteration: 0, valueMs: 1 }],
-        initToFirstTokenMs: SUMMARY,
-        openToFirstTokenMs: SUMMARY,
-        chunkToFirstTokenMs: SUMMARY,
-      },
-      promoted: {
-        rawSamples: [1],
-        topOutliers: [{ iteration: 0, valueMs: 1 }],
-        initToFirstTokenMs: SUMMARY,
-        openToFirstTokenMs: SUMMARY,
-        chunkToFirstTokenMs: SUMMARY,
-      },
-    },
-  };
-}
-
 describe('bench reality formatting', () => {
   test('rejects vacuous and non-finite browser measurements while admitting measured work', () => {
-    const measured = measuredReality();
+    const measured = measuredStartupRealityFixture();
     expect(browserRealityFailures(measured)).toEqual([]);
     const vacuous: RawStartupRealityBrowserResult = {
       ...measured,

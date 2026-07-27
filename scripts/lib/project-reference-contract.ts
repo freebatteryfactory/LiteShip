@@ -101,6 +101,17 @@ export function validateProjectReferenceClosure(
     for (const source of sources) {
       const path = normalizeRepoPath(source.path);
       if (!path.startsWith(sourcePrefix) || !/\.tsx?$/.test(path)) continue;
+      // The closure only governs workspace package specifiers. Avoid building a
+      // TypeScript AST for package-local files that cannot possibly contain one;
+      // the byte prefilter is conservative (false positives still parse, false
+      // negatives are impossible for string-literal module specifiers).
+      if (
+        !source.text.includes('@liteship/') &&
+        !source.text.includes("'liteship") &&
+        !source.text.includes('"liteship')
+      ) {
+        continue;
+      }
       for (const specifier of staticModuleSpecifiers({ path, text: source.text })) {
         const dependency = workspacePackageName(specifier);
         const dependencyRecord = dependency === null ? undefined : byName.get(dependency);

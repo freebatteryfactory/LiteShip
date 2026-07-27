@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { repoRoot } from '../../../vitest.shared.js';
+import { buildWorkflowOutputReceipt } from '../../../scripts/lib/workflow-output-contract.js';
 
 const workflow = readFileSync(`${repoRoot}/.github/workflows/ci.yml`, 'utf8');
 
@@ -56,5 +57,17 @@ describe('affected PR result artifacts', () => {
     expect(body).toContain('LITESHIP_AFFECTED_OUTCOME_VITEST: ${{ steps.vitest.outcome }}');
     expect(body).toMatch(/name: Upload affected Windows test evidence\s+if: always\(\)/u);
     expect(body).toContain('if-no-files-found: error');
+  });
+
+  it('restores delivery candidates beneath the reports root consumed by admission', () => {
+    const receipt = buildWorkflowOutputReceipt(repoRoot);
+    expect(receipt.artifactFindings).toEqual([]);
+    expect(receipt.artifactDownloads).toEqual([
+      expect.objectContaining({
+        file: '.github/workflows/ci.yml',
+        artifact: 'delivery-evidence-candidates',
+        path: 'reports',
+      }),
+    ]);
   });
 });

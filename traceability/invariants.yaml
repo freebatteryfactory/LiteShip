@@ -190,6 +190,10 @@ invariants:
     law: 'Every gate included in an execution plan must catch its red fixture, keep its green fixture clean, and kill its planted mutation. An unqualified gate cannot use its semantic findings to judge source, but failed or unexecutable qualification emits an unwaivable blocking gauntlet/authority-integrity finding, so broken release authority can never mint green.'
     level: L4
     category: assurance
+  - id: INV-FEATURE-EDGE-PRODUCER
+    law: 'Every governed feature-edge consumer resolves to at least one declared producer, every enumerator proves complete and coherent subject coverage, and an opaque or orphaned family blocks rather than disappearing behind string indirection. Historical escaped defects remain replayable until their invalid state becomes structurally unrepresentable.'
+    level: L4
+    category: assurance
 
   # ── Assurance — the liteship curated facade is a closed public surface (P13/P17) ─
   - id: INV-FACADE-EXPORT-BUDGET

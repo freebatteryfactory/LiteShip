@@ -142,7 +142,7 @@ describe('SurfacePolicy — every field is optional, absent = check skipped', ()
   });
 
   it('the reference surfacePolicy const is typed as the consumed shape (no as-const wart)', () => {
-    const policySrc = readFileSync(resolve(REPO, 'packages/audit/src/policy.ts'), 'utf8');
+    const policySrc = readFileSync(resolve(REPO, 'packages/cli/src/internal/liteship-audit-policy.ts'), 'utf8');
     expect(policySrc).toContain('export const surfacePolicy: SurfacePolicy');
     const constBody = policySrc.slice(policySrc.indexOf('export const surfacePolicy'));
     expect(constBody.slice(0, constBody.indexOf('};'))).not.toContain('as const');

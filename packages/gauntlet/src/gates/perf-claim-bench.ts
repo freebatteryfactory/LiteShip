@@ -351,7 +351,12 @@ function isBenched(site: ClaimSite, surface: readonly QualifiedSurfaceEntry[]): 
   const words = moduleWords(site.file);
   for (const entry of surface) {
     const subject = entry.subject;
-    if (subject.origin.kind !== 'module' || subject.origin.specifier !== owner) continue;
+    if (
+      subject.origin.kind !== 'module' ||
+      (subject.origin.specifier !== owner && !subject.origin.specifier.startsWith(`${owner}/`))
+    ) {
+      continue;
+    }
     const measured = `${subject.symbol} ${entry.name}`.toLowerCase();
     if (symbol.length > 0 && measured.replace(/[^a-z0-9]/gu, '').includes(symbol.replace(/[^a-z0-9]/gu, ''))) {
       return true;

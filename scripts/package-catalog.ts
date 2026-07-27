@@ -880,6 +880,7 @@ export const PACKAGE_CATALOG = [
         '@liteship/gauntlet',
         '@liteship/edge',
         '@liteship/canonical',
+        '@liteship/scene',
       ],
       reason: 'CLI is the terminal host that injects audit/gauntlet facts and deployed edge expectations.',
     },

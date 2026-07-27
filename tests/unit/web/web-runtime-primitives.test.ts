@@ -1123,11 +1123,11 @@ describe('web runtime primitives', () => {
 
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ code: 'restore-focus-selection-failed' }),
-        expect.objectContaining({ code: 'restore-selection-range-failed' }),
-        expect.objectContaining({ code: 'restore-range-failed' }),
-        expect.objectContaining({ code: 'restore-ime-selection-failed' }),
-        expect.objectContaining({ code: 'restore-path-query-failed' }),
+        expect.objectContaining({ code: 'web/physical/restore-focus-selection-failed' }),
+        expect.objectContaining({ code: 'web/physical/restore-selection-range-failed' }),
+        expect.objectContaining({ code: 'web/physical/restore-range-failed' }),
+        expect.objectContaining({ code: 'web/physical/restore-ime-selection-failed' }),
+        expect.objectContaining({ code: 'web/physical/restore-path-query-failed' }),
       ]),
     );
   });
@@ -1438,7 +1438,7 @@ describe('web runtime primitives', () => {
       // scanDOM warns once; each of the two observe() calls now scans the
       // pre-existing DOM first (wave-2 item 57) and re-warns the
       // still-present invalid slot path.
-      expect(events.filter((event) => event.code === 'invalid-slot-path')).toHaveLength(3);
+      expect(events.filter((event) => event.code === 'web/slot/invalid-path')).toHaveLength(3);
       document.documentElement.removeAttribute('data-liteship-slot');
     });
   });

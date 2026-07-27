@@ -255,7 +255,7 @@ describe('SSE saturation diagnostics (BITE)', () => {
       es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
     }
 
-    const saturationEvents = events.filter((e) => e.code === 'sse-buffer-saturated');
+    const saturationEvents = events.filter((e) => e.code === 'web/stream/sse-buffer-saturated');
     expect(saturationEvents).toHaveLength(1);
     expect(saturationEvents[0]!.source).toBe('liteship/web.sse');
 

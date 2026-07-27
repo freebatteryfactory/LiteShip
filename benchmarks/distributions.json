@@ -183,7 +183,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().tick",
           "binding": "world100.tick"
@@ -201,10 +201,28 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().tick",
           "binding": "world100Dense.tick"
+        }
+      ]
+    },
+    {
+      "name": "ECS DenseStore read view -- 100 values",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 100,
+      "shape": "ecs-dense-values",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/core/ecs"
+          },
+          "symbol": "createDenseStore().store.view().at",
+          "binding": "publicReadView.at"
         }
       ]
     },
@@ -381,7 +399,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld",
           "binding": "createWorld"
@@ -417,7 +435,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld",
           "binding": "createWorld"
@@ -462,10 +480,10 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore().get",
-          "binding": "denseStore.get"
+          "symbol": "createDenseStore().store.get",
+          "binding": "denseStore.store.get"
         }
       ]
     },
@@ -480,10 +498,10 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore().set",
-          "binding": "denseStore.set"
+          "symbol": "createDenseStore().writer.set",
+          "binding": "denseStore.writer.set"
         }
       ]
     },
@@ -498,7 +516,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createDenseStore",
           "binding": "createDenseStore"
@@ -507,19 +525,19 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore().set",
-          "binding": "tempStore.set"
+          "symbol": "createDenseStore().writer.set",
+          "binding": "tempStore.writer.set"
         },
         {
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore().delete",
-          "binding": "tempStore.delete"
+          "symbol": "createDenseStore().writer.delete",
+          "binding": "tempStore.writer.delete"
         }
       ]
     },
@@ -534,7 +552,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld",
           "binding": "createWorld"
@@ -543,7 +561,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().spawn",
           "binding": "scopedWorld.spawn"
@@ -552,7 +570,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().addSystem",
           "binding": "scopedWorld.addSystem"
@@ -561,7 +579,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().tick",
           "binding": "scopedWorld.tick"
@@ -579,7 +597,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld",
           "binding": "createWorld"
@@ -588,7 +606,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createDenseStore",
           "binding": "createDenseStore"
@@ -597,7 +615,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().addDenseStore",
           "binding": "scopedWorld.addDenseStore"
@@ -606,7 +624,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().spawn",
           "binding": "scopedWorld.spawn"
@@ -615,25 +633,25 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore().set",
-          "binding": "posX.set"
+          "symbol": "createDenseStore().writer.set",
+          "binding": "posX.writer.set"
         },
         {
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
-          "symbol": "createDenseStore().set",
-          "binding": "posY.set"
+          "symbol": "createDenseStore().writer.set",
+          "binding": "posY.writer.set"
         },
         {
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().addSystem",
           "binding": "scopedWorld.addSystem"
@@ -642,7 +660,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld().tick",
           "binding": "scopedWorld.tick"
@@ -660,7 +678,7 @@
           "role": "sut",
           "origin": {
             "kind": "module",
-            "specifier": "@liteship/core"
+            "specifier": "@liteship/core/ecs"
           },
           "symbol": "createWorld",
           "binding": "createWorld"
@@ -956,6 +974,24 @@
       ]
     },
     {
+      "name": "FrameSchedule -- enumerate 300 deterministic coordinates @ 60fps",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 300,
+      "shape": "video-frame-coordinates",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": {
+            "kind": "module",
+            "specifier": "@liteship/core"
+          },
+          "symbol": "createFrameSchedule",
+          "binding": "createFrameSchedule"
+        }
+      ]
+    },
+    {
       "name": "VideoRenderer -- 30 frames @ 30fps",
       "file": "tests/bench/video.bench.ts",
       "inputSize": 30,
@@ -977,8 +1013,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "VideoRenderer.make",
-          "binding": "VideoRenderer.make"
+          "symbol": "createVideoRenderer",
+          "binding": "createVideoRenderer"
         },
         {
           "role": "sut",
@@ -986,7 +1022,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "VideoRenderer.make().frames",
+          "symbol": "createVideoRenderer().frames",
           "binding": "renderer.frames"
         }
       ]
@@ -1013,8 +1049,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "VideoRenderer.make",
-          "binding": "VideoRenderer.make"
+          "symbol": "createVideoRenderer",
+          "binding": "createVideoRenderer"
         },
         {
           "role": "sut",
@@ -1022,7 +1058,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "VideoRenderer.make().frames",
+          "symbol": "createVideoRenderer().frames",
           "binding": "renderer.frames"
         }
       ]

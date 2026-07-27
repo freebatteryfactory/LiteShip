@@ -34,7 +34,7 @@ export const GENERATED_PACKAGE_TOPOLOGY = {
   // Command owns shared host execution; assets, gauntlet, and canonical are deliberate host seams.
   "@liteship/command": { kind: "layered", allowedInternalImports: ["@liteship/core", "@liteship/assets", "@liteship/gauntlet", "@liteship/canonical"], analyzableArtifacts: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts"] },
   // CLI is the terminal host that injects audit/gauntlet facts and deployed edge expectations.
-  "@liteship/cli": { kind: "host-adjacent", allowedInternalImports: ["@liteship/core", "@liteship/command", "@liteship/assets", "@liteship/audit", "@liteship/gauntlet", "@liteship/edge", "@liteship/canonical"], analyzableArtifacts: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts"] },
+  "@liteship/cli": { kind: "host-adjacent", allowedInternalImports: ["@liteship/core", "@liteship/command", "@liteship/assets", "@liteship/audit", "@liteship/gauntlet", "@liteship/edge", "@liteship/canonical", "@liteship/scene"], analyzableArtifacts: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts"] },
   // MCP projects the command catalog and compiler/UI renderers without importing CLI.
   "@liteship/mcp-server": { kind: "host-adjacent", allowedInternalImports: ["@liteship/canonical", "@liteship/core", "@liteship/command", "@liteship/compiler", "@liteship/genui", "@liteship/web"], analyzableArtifacts: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts"] },
   // The generated scaffold imports core and the core/fs-walk public subpath.

@@ -155,11 +155,12 @@ export function parseMotionDirectivePayload(raw: string): MotionDirectivePayload
 
   try {
     return decodeMotionDirectivePayload(parsed);
-  } catch {
+  } catch (cause) {
     Diagnostics.warnOnceRegistered({
       source: 'liteship/astro.motion',
       code: 'astro/motion/motion-program-shape-invalid',
       message: `${MOTION_PAYLOAD_ATTR} contains an invalid MotionDirectivePayload — the client:motion floor stays inert; native CSS still applies.`,
+      cause,
     });
     return null;
   }

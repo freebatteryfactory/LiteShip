@@ -115,4 +115,30 @@ describe('TypeDoc input fingerprint', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test('scopes directory entry points to the declared tree, independent of warm sibling artifacts', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-typedoc-directory-entry-'));
+    try {
+      mkdirSync(resolve(root, 'packages', 'demo', 'src'), { recursive: true });
+      mkdirSync(resolve(root, 'packages', 'demo', 'dist'), { recursive: true });
+      mkdirSync(resolve(root, 'packages', 'demo', 'node_modules', 'warm-only'), { recursive: true });
+      writeFileSync(
+        resolve(root, 'typedoc.json'),
+        `${JSON.stringify({ entryPoints: ['packages/demo/src'], entryPointStrategy: 'expand' })}\n`,
+      );
+      writeFileSync(resolve(root, 'packages', 'demo', 'src', 'index.ts'), '/** Public. */\nexport const value = 1;\n');
+
+      const cold = buildTypeDocInputFingerprint(root);
+      writeFileSync(resolve(root, 'packages', 'demo', 'dist', 'index.d.ts'), 'export declare const stale: true;\n');
+      writeFileSync(
+        resolve(root, 'packages', 'demo', 'node_modules', 'warm-only', 'index.d.ts'),
+        'export declare const leaked: true;\n',
+      );
+
+      expect(buildTypeDocInputFingerprint(root)).toEqual(cold);
+      expect(cold.inputCount).toBe(2);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

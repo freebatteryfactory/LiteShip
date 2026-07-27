@@ -60,6 +60,10 @@
           "kind": "type"
         },
         {
+          "name": "AdmittedPartValue",
+          "kind": "type"
+        },
+        {
           "name": "AnimatedQuantizer",
           "kind": "type"
         },
@@ -68,11 +72,23 @@
           "kind": "type"
         },
         {
+          "name": "AnyPart",
+          "kind": "type"
+        },
+        {
+          "name": "AnySchemaNode",
+          "kind": "type"
+        },
+        {
           "name": "ApplyResolvedStateMessage",
           "kind": "type"
         },
         {
           "name": "ApplyUpdatesMessage",
+          "kind": "type"
+        },
+        {
+          "name": "ArraySchemaNode",
           "kind": "type"
         },
         {
@@ -113,6 +129,10 @@
         },
         {
           "name": "BlendTree",
+          "kind": "type"
+        },
+        {
+          "name": "BooleanSchemaNode",
           "kind": "type"
         },
         {
@@ -160,6 +180,18 @@
           "kind": "type"
         },
         {
+          "name": "BrandSchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "BytesCtor",
+          "kind": "type"
+        },
+        {
+          "name": "BytesSchemaNode",
+          "kind": "type"
+        },
+        {
           "name": "CSSCompileResult",
           "kind": "type"
         },
@@ -200,11 +232,47 @@
           "kind": "type"
         },
         {
+          "name": "Canvas2DTarget",
+          "kind": "type"
+        },
+        {
+          "name": "CapAxis",
+          "kind": "type"
+        },
+        {
           "name": "CapSet",
           "kind": "type"
         },
         {
           "name": "CapTier",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityAxisEvidence",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityAxisValues",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityEvidenceInput",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityEvidenceInputs",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityInputEvidence",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityTierEvidence",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityTierProjection",
           "kind": "type"
         },
         {
@@ -273,6 +341,10 @@
         },
         {
           "name": "ClientHints",
+          "kind": "type"
+        },
+        {
+          "name": "ClientHintsEvidence",
           "kind": "type"
         },
         {
@@ -352,6 +424,10 @@
           "kind": "type"
         },
         {
+          "name": "CompositorQuantizer",
+          "kind": "type"
+        },
+        {
           "name": "CompositorWorker",
           "kind": "type"
         },
@@ -396,6 +472,14 @@
           "kind": "type"
         },
         {
+          "name": "CssKeyframeStep",
+          "kind": "type"
+        },
+        {
+          "name": "CssMotionPlan",
+          "kind": "type"
+        },
+        {
           "name": "DAGNode",
           "kind": "type"
         },
@@ -412,7 +496,15 @@
           "kind": "type"
         },
         {
+          "name": "DenseStoreWriter",
+          "kind": "type"
+        },
+        {
           "name": "DenseSystem",
+          "kind": "type"
+        },
+        {
+          "name": "DenseSystemContext",
           "kind": "type"
         },
         {
@@ -461,6 +553,10 @@
         },
         {
           "name": "EdgeHostAdapterConfig",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostBackground",
           "kind": "type"
         },
         {
@@ -540,6 +636,18 @@
           "kind": "type"
         },
         {
+          "name": "EventDetail",
+          "kind": "type"
+        },
+        {
+          "name": "EventsInChannel",
+          "kind": "type"
+        },
+        {
+          "name": "EventsOwnedBy",
+          "kind": "type"
+        },
+        {
           "name": "ExtendedDetectionResult",
           "kind": "type"
         },
@@ -581,6 +689,10 @@
         },
         {
           "name": "FrameMessage",
+          "kind": "type"
+        },
+        {
+          "name": "FrameSchedule",
           "kind": "type"
         },
         {
@@ -628,7 +740,19 @@
           "kind": "type"
         },
         {
+          "name": "HMRBoundaryIdentity",
+          "kind": "type"
+        },
+        {
           "name": "HMRPayload",
+          "kind": "type"
+        },
+        {
+          "name": "HoleSchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "HtmlPolicy",
           "kind": "type"
         },
         {
@@ -660,7 +784,35 @@
           "kind": "type"
         },
         {
+          "name": "KernelSchema",
+          "kind": "type"
+        },
+        {
           "name": "Lifetime",
+          "kind": "type"
+        },
+        {
+          "name": "LiteShipEventChannel",
+          "kind": "type"
+        },
+        {
+          "name": "LiteShipEventMap",
+          "kind": "type"
+        },
+        {
+          "name": "LiteShipEventName",
+          "kind": "type"
+        },
+        {
+          "name": "LiteShipEventOwner",
+          "kind": "type"
+        },
+        {
+          "name": "LiteralSchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "LiteralValue",
           "kind": "type"
         },
         {
@@ -732,11 +884,47 @@
           "kind": "type"
         },
         {
+          "name": "MotionCompileInput",
+          "kind": "type"
+        },
+        {
+          "name": "MotionCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "MotionEasing",
+          "kind": "type"
+        },
+        {
+          "name": "MotionPropertyTween",
+          "kind": "type"
+        },
+        {
           "name": "MotionSampleMessage",
           "kind": "type"
         },
         {
+          "name": "MotionScrollTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "MotionSpringConfig",
+          "kind": "type"
+        },
+        {
           "name": "MotionTier",
+          "kind": "type"
+        },
+        {
+          "name": "MotionViewTimeline",
+          "kind": "type"
+        },
+        {
+          "name": "NativeTimelineEligibility",
+          "kind": "type"
+        },
+        {
+          "name": "NumberSchemaNode",
           "kind": "type"
         },
         {
@@ -764,6 +952,10 @@
           "kind": "type"
         },
         {
+          "name": "OwnedDenseStore",
+          "kind": "type"
+        },
+        {
           "name": "OwnedQuantizer",
           "kind": "type"
         },
@@ -772,7 +964,23 @@
           "kind": "type"
         },
         {
+          "name": "PartRetentionPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "PartTuple",
+          "kind": "type"
+        },
+        {
+          "name": "PartValue",
+          "kind": "type"
+        },
+        {
           "name": "PhysicalState",
+          "kind": "type"
+        },
+        {
+          "name": "PhysicalStateTracker",
           "kind": "type"
         },
         {
@@ -832,6 +1040,10 @@
           "kind": "type"
         },
         {
+          "name": "ProtocolEvent",
+          "kind": "type"
+        },
+        {
           "name": "PulseEnvelope",
           "kind": "type"
         },
@@ -888,7 +1100,15 @@
           "kind": "type"
         },
         {
+          "name": "ReadablePart",
+          "kind": "type"
+        },
+        {
           "name": "ReadonlyConfigValue",
+          "kind": "type"
+        },
+        {
+          "name": "ReadonlyDenseValues",
           "kind": "type"
         },
         {
@@ -916,6 +1136,10 @@
           "kind": "type"
         },
         {
+          "name": "RecordSchemaNode",
+          "kind": "type"
+        },
+        {
           "name": "RemotionVideoConfig",
           "kind": "type"
         },
@@ -929,6 +1153,10 @@
         },
         {
           "name": "RenderCompleteMessage",
+          "kind": "type"
+        },
+        {
+          "name": "RenderContext2D",
           "kind": "type"
         },
         {
@@ -953,6 +1181,26 @@
         },
         {
           "name": "ResolvedStateEntry",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaCapabilities",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaIntent",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaPictureProjection",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaResolutionReason",
+          "kind": "type"
+        },
+        {
+          "name": "ResponsiveMediaVariant",
           "kind": "type"
         },
         {
@@ -985,6 +1233,18 @@
         },
         {
           "name": "RuntimeEasing",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeEndpointKind",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeEndpointPolicy",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeHtmlPolicy",
           "kind": "type"
         },
         {
@@ -1032,7 +1292,23 @@
           "kind": "type"
         },
         {
+          "name": "ScheduledFrame",
+          "kind": "type"
+        },
+        {
           "name": "Scheduler",
+          "kind": "type"
+        },
+        {
+          "name": "SchemaAnnotations",
+          "kind": "type"
+        },
+        {
+          "name": "SchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "SchemaNodeMeta",
           "kind": "type"
         },
         {
@@ -1140,6 +1416,18 @@
           "kind": "type"
         },
         {
+          "name": "StringSchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "StructSchemaField",
+          "kind": "type"
+        },
+        {
+          "name": "StructSchemaNode",
+          "kind": "type"
+        },
+        {
           "name": "Style",
           "kind": "type"
         },
@@ -1161,6 +1449,14 @@
         },
         {
           "name": "System",
+          "kind": "type"
+        },
+        {
+          "name": "SystemContext",
+          "kind": "type"
+        },
+        {
+          "name": "SystemEntity",
           "kind": "type"
         },
         {
@@ -1272,11 +1568,27 @@
           "kind": "type"
         },
         {
+          "name": "TuplePart",
+          "kind": "type"
+        },
+        {
+          "name": "TupleSchemaNode",
+          "kind": "type"
+        },
+        {
           "name": "TypedRef",
           "kind": "type"
         },
         {
           "name": "TypedValue",
+          "kind": "type"
+        },
+        {
+          "name": "UnionSchemaNode",
+          "kind": "type"
+        },
+        {
+          "name": "UnknownSchemaNode",
           "kind": "type"
         },
         {
@@ -1300,6 +1612,14 @@
           "kind": "type"
         },
         {
+          "name": "ViewTransitionCompileInput",
+          "kind": "type"
+        },
+        {
+          "name": "ViewTransitionCompileResult",
+          "kind": "type"
+        },
+        {
           "name": "VirtualModuleData",
           "kind": "type"
         },
@@ -1313,6 +1633,10 @@
         },
         {
           "name": "WGSLBinding",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLBindingType",
           "kind": "type"
         },
         {
@@ -1345,10 +1669,6 @@
         },
         {
           "name": "WarmResetMessage",
-          "kind": "type"
-        },
-        {
-          "name": "WebCodecsCapture",
           "kind": "type"
         },
         {
@@ -1608,6 +1928,14 @@
           "kind": "interface"
         },
         {
+          "name": "CatalogFeatureEdgeOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "CatalogFeatureEdgeSite",
+          "kind": "interface"
+        },
+        {
           "name": "ConditionForce",
           "kind": "type"
         },
@@ -1628,7 +1956,23 @@
           "kind": "interface"
         },
         {
+          "name": "DiagnosticEmissionMatch",
+          "kind": "interface"
+        },
+        {
+          "name": "DiagnosticEmitterMethod",
+          "kind": "type"
+        },
+        {
           "name": "EarlyReturnMatch",
+          "kind": "interface"
+        },
+        {
+          "name": "EcsFeatureEdgeApi",
+          "kind": "interface"
+        },
+        {
+          "name": "EcsFeatureEdgeOptions",
           "kind": "interface"
         },
         {
@@ -1808,6 +2152,10 @@
           "kind": "interface"
         },
         {
+          "name": "SwitchSubject",
+          "kind": "interface"
+        },
+        {
           "name": "SymbolOrphanCoverage",
           "kind": "interface"
         },
@@ -1854,6 +2202,18 @@
         {
           "name": "TypeScriptPathAliases",
           "kind": "type"
+        },
+        {
+          "name": "TypedEcsFeatureEdgeOptions",
+          "kind": "interface"
+        },
+        {
+          "name": "TypedEcsPartIdentity",
+          "kind": "interface"
+        },
+        {
+          "name": "TypedEcsSystemMetadata",
+          "kind": "interface"
         },
         {
           "name": "UnverifiedPackageArtifacts",
@@ -2072,6 +2432,14 @@
         },
         {
           "name": "CommandCapability",
+          "kind": "type"
+        },
+        {
+          "name": "CommandCapabilityDisposition",
+          "kind": "type"
+        },
+        {
+          "name": "CommandCapabilityProvision",
           "kind": "type"
         },
         {
@@ -2863,14 +3231,6 @@
           "kind": "type"
         },
         {
-          "name": "DenseStore",
-          "kind": "type"
-        },
-        {
-          "name": "DenseSystem",
-          "kind": "type"
-        },
-        {
           "name": "Derived",
           "kind": "type"
         },
@@ -2935,15 +3295,7 @@
           "kind": "type"
         },
         {
-          "name": "Entity",
-          "kind": "type"
-        },
-        {
           "name": "EntityComponents",
-          "kind": "type"
-        },
-        {
-          "name": "EntityId",
           "kind": "type"
         },
         {
@@ -2976,6 +3328,10 @@
         },
         {
           "name": "FrameCapture",
+          "kind": "type"
+        },
+        {
+          "name": "FrameSchedule",
           "kind": "type"
         },
         {
@@ -3119,10 +3475,6 @@
           "kind": "type"
         },
         {
-          "name": "LoweredProgramTimeline",
-          "kind": "type"
-        },
-        {
           "name": "LoweredReveal",
           "kind": "type"
         },
@@ -3184,10 +3536,6 @@
         },
         {
           "name": "OutputsFor",
-          "kind": "type"
-        },
-        {
-          "name": "Part",
           "kind": "type"
         },
         {
@@ -3459,6 +3807,10 @@
           "kind": "type"
         },
         {
+          "name": "ScheduledFrame",
+          "kind": "type"
+        },
+        {
           "name": "Scheduler",
           "kind": "namespace"
         },
@@ -3615,10 +3967,6 @@
           "kind": "type"
         },
         {
-          "name": "System",
-          "kind": "type"
-        },
-        {
           "name": "Theme",
           "kind": "type"
         },
@@ -3664,6 +4012,10 @@
         },
         {
           "name": "TransitionProgram",
+          "kind": "type"
+        },
+        {
+          "name": "TransitionTimeline",
           "kind": "type"
         },
         {
@@ -3727,10 +4079,6 @@
           "kind": "type"
         },
         {
-          "name": "World",
-          "kind": "type"
-        },
-        {
           "name": "Zap",
           "kind": "type"
         }
@@ -3743,7 +4091,31 @@
           "kind": "type"
         },
         {
+          "name": "CapabilityAxisEvidence",
+          "kind": "type"
+        },
+        {
           "name": "CapabilityAxisValues",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityEvidenceInput",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityEvidenceInputs",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityEvidenceSupport",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityInputEvidence",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityTierEvidence",
           "kind": "type"
         },
         {
@@ -3793,6 +4165,10 @@
         {
           "name": "NavigatorConnectionInfo",
           "kind": "type"
+        },
+        {
+          "name": "ObservedCapabilityAxisValues",
+          "kind": "type"
         }
       ]
     },
@@ -3821,6 +4197,10 @@
         {
           "name": "ClientHints",
           "kind": "namespace"
+        },
+        {
+          "name": "ClientHintsEvidence",
+          "kind": "type"
         },
         {
           "name": "ClientHintsHeaders",
@@ -4143,6 +4523,14 @@
           "kind": "type"
         },
         {
+          "name": "DiagnosticEmissionMatch",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticEmitterMethod",
+          "kind": "type"
+        },
+        {
           "name": "EarlyReturnMatch",
           "kind": "type"
         },
@@ -4180,6 +4568,38 @@
         },
         {
           "name": "FactKind",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeAggregateReceipt",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeEnumerator",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeFacts",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeFamily",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeFamilyFacts",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeMechanism",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeObservation",
+          "kind": "type"
+        },
+        {
+          "name": "FeatureEdgeSubjectCoverage",
           "kind": "type"
         },
         {
@@ -4247,6 +4667,10 @@
           "kind": "type"
         },
         {
+          "name": "GateContextCapability",
+          "kind": "type"
+        },
+        {
           "name": "GateFactAccess",
           "kind": "type"
         },
@@ -4272,6 +4696,10 @@
         },
         {
           "name": "GateProof",
+          "kind": "type"
+        },
+        {
+          "name": "GateSubjectCoverage",
           "kind": "type"
         },
         {
@@ -4392,6 +4820,10 @@
         },
         {
           "name": "NegativeControlFact",
+          "kind": "type"
+        },
+        {
+          "name": "OpaqueFeatureEdgeSite",
           "kind": "type"
         },
         {
@@ -4807,6 +5239,10 @@
           "kind": "type"
         },
         {
+          "name": "McpMethodDescriptor",
+          "kind": "type"
+        },
+        {
           "name": "McpPrompt",
           "kind": "type"
         },
@@ -4820,6 +5256,10 @@
         },
         {
           "name": "McpResourceContents",
+          "kind": "type"
+        },
+        {
+          "name": "McpServerCapabilities",
           "kind": "type"
         },
         {
@@ -5003,7 +5443,15 @@
           "kind": "type"
         },
         {
+          "name": "FrameRange",
+          "kind": "type"
+        },
+        {
           "name": "MixReceipt",
+          "kind": "type"
+        },
+        {
+          "name": "MotionSample",
           "kind": "type"
         },
         {
@@ -5035,6 +5483,14 @@
           "kind": "type"
         },
         {
+          "name": "ScenePartName",
+          "kind": "type"
+        },
+        {
+          "name": "ScenePartSeed",
+          "kind": "type"
+        },
+        {
           "name": "SceneRuntime",
           "kind": "namespace"
         },
@@ -5044,6 +5500,14 @@
         },
         {
           "name": "SceneRuntimeOptions",
+          "kind": "type"
+        },
+        {
+          "name": "SceneSeedPart",
+          "kind": "type"
+        },
+        {
+          "name": "SceneSeedPartName",
           "kind": "type"
         },
         {
@@ -5144,6 +5608,10 @@
         },
         {
           "name": "CollectTokenManifestOptions",
+          "kind": "type"
+        },
+        {
+          "name": "HMRBoundaryIdentity",
           "kind": "type"
         },
         {
@@ -5379,6 +5847,10 @@
           "kind": "type"
         },
         {
+          "name": "PhysicalStateTracker",
+          "kind": "type"
+        },
+        {
           "name": "ReconnectConfig",
           "kind": "type"
         },
@@ -5508,10 +5980,6 @@
         },
         {
           "name": "WatchAndPrepareHandle",
-          "kind": "type"
-        },
-        {
-          "name": "WebCodecsCapture",
           "kind": "type"
         },
         {

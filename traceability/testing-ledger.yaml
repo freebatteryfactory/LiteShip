@@ -209,9 +209,26 @@ traces:
   - id: INV-GATE-AUTHORITY-INTEGRITY
     tests:
       - 'tests/property/gauntlet-authority-integrity.prop.test.ts::blocks iff any qualification axis fails and identifies the exact failed axes'
+      - 'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts::kills mutants that route engine-owned integrity through waivers or stop it from blocking'
+      - 'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts::proves waiver filtering and unwaivable authority-integrity affect the engine verdict independently'
+      - 'tests/property/feature-edge-authority-adversarial.prop.test.ts::blocks iff any of the four current-head qualification axes fails, despite an integrity waiver'
       - 'tests/unit/gauntlet/foundations.test.ts::blocks failed qualification even when a waiver suppresses the gate semantic finding'
       - 'tests/unit/gauntlet/foundations.test.ts::turns a thrown qualification fixture into a bounded blocking receipt'
       - 'tests/unit/gauntlet/foundations.test.ts::preserves a genuine advisory finding from a fully qualified gate'
+
+  # ── Assurance (feature-edge producers + complete subject coverage) ─────────
+  - id: INV-FEATURE-EDGE-PRODUCER
+    tests:
+      - 'tests/property/feature-edge-connectivity-laws.prop.test.ts::orphans are exactly consumers minus producers, independent of observation order'
+      - 'tests/property/feature-edge-connectivity-laws.prop.test.ts::producer-only subjects never become false-positive orphan consumers'
+      - 'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts::kills classic mutants for enumerator, duplicate, opacity, missing-family, and aggregate-count decisions'
+      - 'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts::proves independent true/false effect for every feature-edge coverage decision'
+      - 'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts::kills the aggregate family-set/order/digest and missing/duplicate-family mutants'
+      - 'tests/property/feature-edge-authority-mutation-mcdc.prop.test.ts::proves independent missing and duplicate family refusal in the aggregate builder'
+      - 'tests/property/feature-edge-authority-adversarial.prop.test.ts::is canonical under family, declaration, producer, consumer, and source-image permutations'
+      - 'tests/property/feature-edge-authority-adversarial.prop.test.ts::changes family and aggregate digests when semantic owner evidence changes'
+      - 'tests/property/feature-edge-authority-adversarial.prop.test.ts::rejects fabricated catalog subjects and makes event projection drift observable in every consumer image'
+      - 'tests/property/feature-edge-authority-adversarial.prop.test.ts::retains the escaped MotionProgram RED while the live typed Scene projection precludes it'
 
   # ── Assurance (public subpath closure — node16 + bundler) — tests/unit/liteship/facade-subpaths.test.ts ─
   - id: INV-CONSUMER-SUBPATH-CLOSURE
@@ -222,6 +239,11 @@ traces:
   # ── Assurance (diagnostic-code closure) — exact types + independent source backstop ─
   - id: INV-DIAGNOSTIC-CODE-CLOSED
     tests:
+      - 'tests/property/web-diagnostic-authority.prop.test.ts::is an exact 16-code relation between live registered emitters and the canonical registry'
+      - 'tests/property/web-diagnostic-authority.prop.test.ts::keeps the real parser-backed package corpus clean in both directions'
+      - 'tests/property/web-diagnostic-authority.prop.test.ts::resolves literal, no-substitution-template, and local-constant codes without counting prose'
+      - 'tests/property/web-diagnostic-authority.prop.test.ts::reds unknown registered identities and bare Web emitters'
+      - 'tests/property/web-diagnostic-authority.prop.test.ts::does not let comments, unrelated strings, or uncalled constants satisfy reverse closure'
       - 'tests/unit/error/diagnostic-registry-closure.test.ts::every key agrees with its area and carries complete explanation plus owner metadata'
       - 'tests/unit/error/diagnostic-registry-closure.test.ts::the exact union rejects invented registry and runtime identities at compile time'
       - 'tests/unit/command/explain.test.ts::explains schema/type with area schema and owner @liteship/core/schema'

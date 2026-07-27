@@ -129,6 +129,38 @@ describe('THE CLAIM-VS-REALITY LAW — a perf claim with no bench is a finding',
     expect(perfClaimBenchGate.run(ctx)).toHaveLength(0);
   });
 
+  it('accepts a qualified public subpath subject as evidence for its owning package source', () => {
+    const ctx = memoryContext({
+      'packages/core/src/ecs/dense.ts':
+        '/** Zero-copy numeric view. */\nexport interface DenseValues { at(index: number): number; }\n',
+      'benchmarks/distributions.json': JSON.stringify({
+        schemaVersion: 2,
+        distributions: [
+          {
+            name: 'DenseValues.at -- 100 values',
+            file: 'tests/bench/ecs.bench.ts',
+            inputSize: 100,
+            shape: 'dense-values',
+            replicates: 1,
+            subjects: [
+              {
+                role: 'sut',
+                origin: { kind: 'module', specifier: '@liteship/core/ecs' },
+                symbol: 'createDenseStore().store.view().at',
+                binding: 'values.at',
+              },
+            ],
+          },
+        ],
+      }),
+      'tests/bench/ecs.bench.ts':
+        "import { createDenseStore } from '@liteship/core/ecs';\n" +
+        'const values = createDenseStore().store.view();\n' +
+        "bench.add('DenseValues.at -- 100 values', () => values.at(0));\n",
+    });
+    expect(perfClaimBenchGate.run(ctx)).toHaveLength(0);
+  });
+
   it('does NOT accept a name-only bench registration as measurement evidence', () => {
     const ctx = memoryContext({
       'packages/widget/src/lookup.ts': 'export function fastPath(): number { return 1; }\n',

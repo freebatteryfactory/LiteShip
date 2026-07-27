@@ -163,7 +163,7 @@ describe('Hints.fromElement invalid data-morph-id-map', () => {
     const hints = Hints.fromElement(element);
 
     expect(hints.idMap).toBeUndefined();
-    const warning = events.find((e) => e.code === 'invalid-morph-id-map');
+    const warning = events.find((e) => e.code === 'web/morph/invalid-id-map');
     expect(warning).toBeDefined();
     expect(warning!.message).toContain('{not json');
     expect(warning!.message).toContain('data-morph-id-map=\'{"old-id":"new-id"}\'');

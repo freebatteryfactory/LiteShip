@@ -43,7 +43,7 @@ import {
   type DecoderSut,
   type DecodeOutcome,
 } from './decode-fuzz.js';
-import { FUZZ_CORPUS, seedsForDecoder, corpusAddress, CORPUS_SEEDS } from '../fixtures/fuzz-corpus/index.js';
+import { FUZZ_CORPUS, seedsForDecoder, corpusAddress, seedAddress, CORPUS_SEEDS } from '../fixtures/fuzz-corpus/index.js';
 
 /** A snapshot of the pollution sentinels on Object.prototype — the global-state guard. */
 function prototypeIsClean(): boolean {
@@ -253,5 +253,20 @@ describe('decode-fuzz corpus — content-addressed identity (drift pin)', () => 
     for (const seed of FUZZ_CORPUS) {
       expect(sutById(seed.decoderId), `seed "${seed.id}" targets unknown decoder "${seed.decoderId}"`).toBeDefined();
     }
+  });
+
+  it('addresses hostile prototype inputs without erasing their prototype identity', () => {
+    const base = {
+      id: 'prototype-identity',
+      decoderId: 'document-graph.decode',
+      kind: 'adversarial' as const,
+      note: 'prototype identity negative control',
+      expect: ['failed-closed' as const],
+    };
+    const clean = { value: true };
+    const polluted = Object.create({ inheritedPollution: true }) as Record<string, unknown>;
+    polluted.value = true;
+
+    expect(seedAddress({ ...base, input: clean })).not.toBe(seedAddress({ ...base, input: polluted }));
   });
 });

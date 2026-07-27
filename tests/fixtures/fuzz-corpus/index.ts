@@ -28,7 +28,7 @@
  */
 
 import { contentAddressOf } from '@liteship/core';
-import { CanonicalCbor } from '@liteship/canonical';
+import { CanonicalCbor, isCanonicalCborValue, type CanonicalCborValue } from '@liteship/canonical';
 import type { ContentAddress } from '@liteship/core';
 
 /**
@@ -324,6 +324,35 @@ export const FOUND_BUG_SEEDS: readonly CorpusSeed[] = [];
 /** The full corpus the driver replays: the committed seeds + any promoted found-bug seeds. */
 export const FUZZ_CORPUS: readonly CorpusSeed[] = [...CORPUS_SEEDS, ...FOUND_BUG_SEEDS];
 
+function snapshotNonPortableInput(value: unknown, seen = new Map<object, number>()): CanonicalCborValue {
+  if (isCanonicalCborValue(value)) return value;
+  if (value === null || typeof value !== 'object') {
+    return { kind: 'unsupported-primitive', type: typeof value, value: String(value) };
+  }
+  const prior = seen.get(value);
+  if (prior !== undefined) return { kind: 'cycle-ref', id: prior };
+  const id = seen.size;
+  seen.set(value, id);
+
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  const own = Object.keys(descriptors)
+    .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+    .map((key) => {
+      const descriptor = descriptors[key]!;
+      return 'value' in descriptor
+        ? { key, kind: 'data', value: snapshotNonPortableInput(descriptor.value, seen) }
+        : { key, kind: 'accessor', get: descriptor.get !== undefined, set: descriptor.set !== undefined };
+    });
+  const prototype = Object.getPrototypeOf(value) as unknown;
+  const prototypeIdentity =
+    prototype === null
+      ? 'null'
+      : prototype === Object.prototype
+        ? 'Object.prototype'
+        : snapshotNonPortableInput(prototype, seen);
+  return { kind: 'non-portable-object', id, own, prototype: prototypeIdentity };
+}
+
 /**
  * The content address of a single seed — its deterministic identity through the
  * ONE kernel. Bytes are addressed as the byte array; values/strings as themselves.
@@ -332,7 +361,9 @@ export const FUZZ_CORPUS: readonly CorpusSeed[] = [...CORPUS_SEEDS, ...FOUND_BUG
  */
 export function seedAddress(seed: CorpusSeed): ContentAddress {
   const addressable =
-    seed.input instanceof Uint8Array ? { id: seed.id, bytes: [...seed.input] } : { id: seed.id, value: seed.input };
+    seed.input instanceof Uint8Array
+      ? { id: seed.id, bytes: [...seed.input] }
+      : { id: seed.id, value: snapshotNonPortableInput(seed.input) };
   return contentAddressOf(addressable);
 }
 

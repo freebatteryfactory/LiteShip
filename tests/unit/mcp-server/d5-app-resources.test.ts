@@ -93,7 +93,7 @@ describe('D5 — D4 static surface stays frozen', () => {
     // the app resource embeds the same byte-addressed commands projection.
     // The app embeds the same catalog-owned CLI invocation/output contract as
     // the static commands UI; keep both projections on one content address.
-    expect(pin).toBe('fnv1a:9d3fed32');
+    expect(pin).toBe('fnv1a:34c27d61');
   });
 });
 

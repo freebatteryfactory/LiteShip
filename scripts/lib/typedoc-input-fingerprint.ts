@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
@@ -157,7 +157,22 @@ export function buildTypeDocInputFingerprint(repoRoot: string): TypeDocInputFing
   if (config.entryPoints === undefined || config.entryPoints.length === 0) {
     throw new Error('typedoc-input-fingerprint: typedoc.json declares no entryPoints');
   }
-  const roots = [...new Set(config.entryPoints.map((entry) => dirname(resolve(repoRoot, entry))))];
+  const roots = [
+    ...new Set(
+      config.entryPoints.map((entry) => {
+        const entryPath = resolve(repoRoot, entry);
+        if (!existsSync(entryPath)) {
+          throw new Error(`typedoc-input-fingerprint: entry point ${normalizePath(entry)} does not exist`);
+        }
+        // TypeDoc's expand strategy accepts both source files and source
+        // directories. Treating a directory as a file and taking dirname()
+        // widened `packages/liteship/src` to `packages/liteship`, which made
+        // ignored dist/node_modules residue part of the fingerprint locally
+        // but absent on a cold checkout.
+        return statSync(entryPath).isDirectory() ? entryPath : dirname(entryPath);
+      }),
+    ),
+  ];
   const sourcePaths = [...new Set(roots.flatMap(walkTypeScriptFiles))];
   const tsdocPath = resolve(repoRoot, 'tsdoc.json');
   const authoredPaths = [

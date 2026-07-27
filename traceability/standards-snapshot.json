@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:b5ddff3d",
+  "address": "fnv1a:49ead474",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4421,6 +4421,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/governed-exceptions-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/affected-result-evidence.ts",
       "level": "L1"
     },
@@ -4611,6 +4616,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/prebuild-closure-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/project-reference-contract.ts",
       "level": "L1"
     },
@@ -4686,6 +4696,16 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/workflow-output-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/workspace-dependency-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/link-pre-commit.ts",
       "level": "L1"
     },
@@ -4732,6 +4752,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/postinstall.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/prebuild-dist-free-gate.ts",
       "level": "L1"
     },
     {
@@ -4877,6 +4902,16 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/verify.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/workflow-output-gate.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/workspace-dependency-gate.ts",
       "level": "L1"
     },
     {
@@ -5808,6 +5843,12 @@
     {
       "_tag": "invariant",
       "id": "INV-FACADE-EXPORT-BUDGET",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-FEATURE-EDGE-PRODUCER",
       "level": "L4",
       "proofKind": "proof"
     },

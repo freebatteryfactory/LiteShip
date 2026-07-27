@@ -227,11 +227,14 @@ describe('delivery metrics and SLO fold', () => {
     const benchmark = (sourceSha: string) =>
       createBenchmarkEvidence({
         sut: { id: `${owner}/hot-path`, owner, benchmark: 'hot path', file: 'tests/bench/core.bench.ts' },
-        input: { dimensions: [{ name: 'items', unit: 'count', distribution: 'linear' }], sizes: [1, 2, 4] },
+        input: {
+          dimensions: [{ name: 'items', unit: 'count', distribution: 'linear' }],
+          sizes: [1, 2, 4, 8, 16],
+        },
         measurement: {
           mode: 'warm',
           warmupIterations: 1,
-          repetitions: 3,
+          repetitions: 7,
           canaries: [{ id: 'invokes-sut', verdict: 'pass' }],
         },
         environment: {

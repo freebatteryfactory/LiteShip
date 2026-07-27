@@ -98,13 +98,18 @@ function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   const execution = parseRootScriptCheckExecution(row.command);
   if (execution === null) {
     // Registry rows are static literals, so this is an authoring-time invariant
-    // guard. It stays a locally-built TypeError because this module must load
+    // guard. It stays a locally-built tagged error because this module must load
     // on a cold checkout (the CI plan projects it before any workspace dist
     // exists) — a value-import of @liteship/error resolves into dist and is
     // exactly the cold-start failure the prebuild-dist-free gate forbids.
-    throw new TypeError(
-      `check-registry.execution: repository check "${row.id}" does not name one root package script: ${row.command}`,
-    );
+    const module = 'check-registry.execution';
+    const detail = `repository check "${row.id}" does not name one root package script: ${row.command}`;
+    throw Object.assign(Error(`${module}: ${detail}`), {
+      name: 'ValidationError',
+      _tag: 'ValidationError' as const,
+      module,
+      detail,
+    });
   }
   if (row.authority === 'blocking') {
     return {

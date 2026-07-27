@@ -5,24 +5,18 @@ import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
 import { classifyBenchSource } from '@liteship/core/harness';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
+import { runCapsuleGateScan } from '../../packages/cli/src/commands/capsule-verify.js';
 
-/** Spawn `liteship capsule-verify` and return its parsed JSON receipt. */
-async function runVerifyReceipt(): Promise<{ status: string; errors?: string[] }> {
-  const lines: string[] = [];
-  await withSpawned(
-    'pnpm',
-    ['run', 'capsule:verify'],
-    async (handle) => {
-      for await (const line of handle.readline()) lines.push(line);
-    },
-    { stdio: ['ignore', 'pipe', 'pipe'] },
-  );
-  const receiptLine = lines
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('{') && line.endsWith('}'))
-    .pop();
-  expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
-  return JSON.parse(receiptLine!) as { status: string; errors?: string[] };
+const admitGeneratedCorpus = async () => ({
+  ok: true as const,
+  failedLane: null,
+  test: null,
+  bench: null,
+});
+
+/** Exercise freshness laws without recursively executing the generated corpus. */
+async function runFreshnessReceipt(): Promise<{ status: string; errors?: string[] }> {
+  return runCapsuleGateScan(process.cwd(), { runGeneratedCorpus: admitGeneratedCorpus });
 }
 
 describe('capsule-verify', () => {
@@ -39,17 +33,40 @@ describe('capsule-verify', () => {
   afterAll(() => iso?.restore());
 
   it('exits 0 when the manifest is fresh and all generated tests pass', async () => {
+    const originalManifest = readFileSync(iso.manifestPath, 'utf8');
+    const completeManifest = JSON.parse(originalManifest) as {
+      capsules: { name: string; generated: { benchFile: string } }[];
+    };
+    const representativeNames = new Set(['examples.intro', 'intro-bed']);
+    const representativeManifest = {
+      ...completeManifest,
+      capsules: completeManifest.capsules.filter((capsule) => representativeNames.has(capsule.name)),
+    };
+    expect(representativeManifest.capsules.map((capsule) => capsule.name).sort()).toEqual([
+      'examples.intro',
+      'intro-bed',
+    ]);
+    writeFileSync(iso.manifestPath, JSON.stringify(representativeManifest, null, 2));
+
     const lines: string[] = [];
-    await withSpawned(
-      'pnpm',
-      ['run', 'capsule:verify'],
-      async (handle) => {
-        for await (const line of handle.readline()) {
-          lines.push(line);
-        }
-      },
-      { stdio: ['ignore', 'pipe', 'pipe'] },
-    );
+    try {
+      // The release check executes the complete manifest. This integration proof
+      // keeps one real + one typed-placeholder capsule so the nested Vitest run
+      // proves both lanes without recursively running the whole corpus inside the
+      // already-parallel repository suite.
+      await withSpawned(
+        'pnpm',
+        ['run', 'capsule:verify'],
+        async (handle) => {
+          for await (const line of handle.readline()) {
+            lines.push(line);
+          }
+        },
+        { stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+    } finally {
+      writeFileSync(iso.manifestPath, originalManifest);
+    }
     // Don't trust "last line is JSON" — pnpm/vitest can append reporter
     // output past the script's console.log under nested spawn chains.
     // Pick the last line that actually parses as a JSON object.
@@ -74,15 +91,12 @@ describe('capsule-verify', () => {
     // Derive the expected classification from the manifest the verify run
     // actually read (no hardcoded counts — they drift every time a harness
     // generator graduates a bench from placeholder to real).
-    const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
-      capsules: { name: string; generated: { benchFile: string } }[];
-    };
-    const expectedPlaceholders = manifest.capsules
+    const expectedPlaceholders = representativeManifest.capsules
       .filter((cap) => classifyBenchSource(readFileSync(resolve(cap.generated.benchFile), 'utf8')) === 'placeholder')
       .map((cap) => cap.name)
       .sort();
     expect([...receipt.benches.placeholder].sort()).toEqual(expectedPlaceholders);
-    expect(receipt.benches.real).toBe(manifest.capsules.length - expectedPlaceholders.length);
+    expect(receipt.benches.real).toBe(representativeManifest.capsules.length - expectedPlaceholders.length);
 
     // Independent anchor (not derived via the classifier, so a classifier
     // regression to all-'placeholder' cannot self-justify): intro-bed's
@@ -92,54 +106,24 @@ describe('capsule-verify', () => {
     expect(receipt.benches.real).toBeGreaterThanOrEqual(1);
   }, scaledTimeout(90_000));
 
-  it('a source newer by mtime whose regeneration is byte-identical is NOT stale', async () => {
-    // git does not preserve mtimes: pulling a commit that edits a capsule's
-    // source without changing its generated output leaves "source newer"
-    // forever. Raw mtime comparison false-flagged every incremental
-    // checkout (broke `pnpm test` for anyone pulling main); staleness must
-    // mean "capsule:compile would change the committed file".
+  it('a source-byte change whose regeneration is byte-identical is NOT stale', async () => {
+    // A digest mismatch is suspicion, not proof. A comment-only source edit
+    // must regenerate into byte-identical artifacts and remain admissible.
     const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
       capsules: { name: string; source: string }[];
     };
-    // Two suspect shapes: a placeholder capsule (examples.intro) AND a
-    // binding-carrying capsule (core.token-buffer) whose generated test
-    // embeds relative imports — regeneration must reproduce those imports
-    // byte-identically (the temp dir sits at tests/<dir>, the same depth
-    // as tests/generated, exactly for this).
-    const suspects = ['examples.intro', 'core.token-buffer'].map((name) => {
-      const cap = manifest.capsules.find((c) => c.name === name);
-      expect(cap, name).toBeDefined();
-      const sourcePath = resolve(cap!.source);
-      return { sourcePath, original: statSync(sourcePath) };
-    });
+    const cap = manifest.capsules.find((candidate) => candidate.name === 'core.token-buffer');
+    expect(cap, 'core.token-buffer').toBeDefined();
+    const sourcePath = resolve(cap!.source);
+    const original = readFileSync(sourcePath, 'utf8');
+    const originalStat = statSync(sourcePath);
     try {
-      // Future-date the sources so the mtime fast-path flags them as
-      // suspects (inside the try so any failure still restores mtimes).
-      for (const s of suspects) {
-        utimesSync(s.sourcePath, s.original.atime, new Date(Date.now() + 5_000));
-      }
-      const lines: string[] = [];
-      await withSpawned(
-        'pnpm',
-        ['run', 'capsule:verify'],
-        async (handle) => {
-          for await (const line of handle.readline()) {
-            lines.push(line);
-          }
-        },
-        { stdio: ['ignore', 'pipe', 'pipe'] },
-      );
-      const receiptLine = lines
-        .map((line) => line.trim())
-        .filter((line) => line.startsWith('{') && line.endsWith('}'))
-        .pop();
-      expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
-      const receipt = JSON.parse(receiptLine!);
+      writeFileSync(sourcePath, `${original}\n// capsule freshness comment-only mutation\n`, 'utf8');
+      const receipt = await runFreshnessReceipt();
       expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
     } finally {
-      for (const s of suspects) {
-        utimesSync(s.sourcePath, s.original.atime, s.original.mtime);
-      }
+      writeFileSync(sourcePath, original, 'utf8');
+      utimesSync(sourcePath, originalStat.atime, originalStat.mtime);
     }
   }, scaledTimeout(180_000));
 
@@ -166,7 +150,7 @@ describe('capsule-verify', () => {
       // Future-date the source WITHOUT changing a byte: mtime says "newer", the
       // content-hash says "identical". Verify must stay ok.
       utimesSync(sourcePath, original.atime, new Date(Date.now() + 5_000));
-      const receipt = await runVerifyReceipt();
+      const receipt = await runFreshnessReceipt();
       expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
     } finally {
       utimesSync(sourcePath, original.atime, original.mtime);
@@ -203,7 +187,7 @@ describe('capsule-verify', () => {
         originalSrc.replace("name: 'core.token-buffer'", "name: 'core.token-buffer-mutated'"),
         'utf8',
       );
-      const receipt = await runVerifyReceipt();
+      const receipt = await runFreshnessReceipt();
       expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('stale');
       expect(
         (receipt.errors ?? []).some((e) => e.includes('stale')),

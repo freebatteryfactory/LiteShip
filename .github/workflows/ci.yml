@@ -1399,7 +1399,9 @@ jobs:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: delivery-evidence-candidates
-          path: .
+          # upload-artifact strips the common `reports/` root. Restore the
+          # candidate files beneath that canonical root before admission.
+          path: reports
       - name: Build runtime dependencies for receipt-DAG validation
         run: pnpm run build
       - name: Independently admit exact delivery evidence

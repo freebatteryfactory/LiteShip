@@ -95,6 +95,17 @@ export const surfacePolicy: SurfacePolicy = {
 
 export const auditAllowlist: readonly AuditAllowlistEntry[] = [
   {
+    // A malformed data-liteship-boundary is an unowned/stale DOM host, not a
+    // recoverable HMR target. The HMR admission contract is deliberately a
+    // boolean predicate: invalid JSON stays inert and handleHMR returns zero.
+    rule: 'fallback-laundering',
+    package: '@liteship/vite',
+    filePrefix: 'src/hmr.ts',
+    summaryIncludes: 'returns null',
+    reason:
+      'HMR boundary-attribute admission is a predicate over potentially stale DOM: malformed JSON means not a target, and the public handleHMR receipt reports zero updates.',
+  },
+  {
     rule: 'default-export',
     package: '@liteship/astro',
     filePrefix: 'src/client-directives/adaptive.ts',

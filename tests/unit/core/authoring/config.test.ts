@@ -328,7 +328,6 @@ describe('Config.toTestAliases()', () => {
       'media',
       'clock',
       'wasm',
-      'testing',
       'harness',
       'simulation',
       'ecs',

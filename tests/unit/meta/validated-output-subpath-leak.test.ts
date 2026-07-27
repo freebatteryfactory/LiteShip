@@ -15,7 +15,7 @@
  * consumer and defeating the whole envelope.
  *
  * THE LAYOUT-LOCK: the wildcard is now GONE. The `exports` map is a CLOSED allowlist —
- * only `.`, `./testing`, `./harness`, `./simulation`, and `./fs-walk` are importable; no
+ * only `.`, reviewed domain facades, `./harness`, `./simulation`, `./ecs`, and `./fs-walk` are importable; no
  * internal module leaks as a public subpath, so the layout can be refactored freely.
  * The `"./validated-output":
  * null` deny is retained as belt-and-suspenders (Node honors `null` to deny a subpath;
@@ -23,7 +23,7 @@
  *
  * This guard pins EVERY half so the leak cannot silently return:
  *  1. the `exports` map carries NO wildcard key (nothing containing `*`);
- *  2. the ONLY deep-subpath exports are the sanctioned allowlist (`./testing`,
+ *  2. the ONLY deep-subpath exports are the sanctioned allowlist (`./ecs`,
  *     `./harness`, `./simulation`, `./fs-walk`) — a new internal subpath cannot be
  *     added without a reviewer amending this LAW;
  *  3. the package-manifest deny entry for `./validated-output` survives;
@@ -57,7 +57,7 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
     expect(wildcardKeys).toEqual([]);
   });
 
-  test('the ONLY deep-subpath exports are the sanctioned allowlist (nine domain facades + ./testing, ./harness, ./simulation, ./fs-walk)', () => {
+  test('the ONLY deep-subpath exports are the sanctioned allowlist (domain facades + ./ecs, ./harness, ./simulation, ./fs-walk)', () => {
     const pkg = JSON.parse(readFileSync(corePkgPath, 'utf8')) as {
       exports: Record<string, unknown>;
     };
@@ -80,9 +80,9 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
       './media',
       './clock',
       './wasm',
-      './testing',
       './harness',
       './simulation',
+      './ecs',
       './fs-walk',
     ];
     const importableSubpaths = keys.filter((k) => k !== '.' && pkg.exports[k] !== null);

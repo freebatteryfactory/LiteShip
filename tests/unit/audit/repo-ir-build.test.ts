@@ -28,6 +28,7 @@ import {
   type FactOracle,
 } from '@liteship/audit';
 import { liteshipDevopsProfile } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
+import { buildCheckGovernanceFacts } from '@liteship/command/host';
 import {
   PLACEHOLDER_DIGEST,
   litelaunchGauntlet,
@@ -287,7 +288,17 @@ describe('the injection seam — litelaunchGauntlet threads an injected IR', () 
     // The lean path: no IR. The built-in regex gates still run (this exercises the
     // real repo via the default globs); the call must not throw on the absent IR.
     const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
-    const result = litelaunchGauntlet(REPO_ROOT, new Date(0), ['packages/gauntlet/src/**/*.ts']);
+    const now = new Date(0);
+    const result = litelaunchGauntlet(
+      REPO_ROOT,
+      now,
+      ['packages/gauntlet/src/**/*.ts'],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      buildCheckGovernanceFacts(REPO_ROOT, now),
+    );
     expect(result.outcomes.length).toBeGreaterThan(0);
   });
 

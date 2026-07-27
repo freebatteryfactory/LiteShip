@@ -85,7 +85,18 @@ export const morphWithState = (
     }
   }
 
-  morph(oldNode, newHTML, finalConfig, hints);
+  const remapIds = hints?.remap;
+  const incomingIdMap = new Map(hints?.idMap ?? []);
+  if (remapIds) {
+    // `remap` is authored old -> new, while the pure diff kernel's `idMap`
+    // translates incoming -> current before matching. Reverse only for the
+    // matching projection, then apply the authored direction to the retained
+    // live nodes after the morph.
+    for (const [oldId, newId] of Object.entries(remapIds)) incomingIdMap.set(newId, oldId);
+  }
+  const morphHints = incomingIdMap.size === 0 ? hints : { ...hints, idMap: incomingIdMap };
+
+  morph(oldNode, newHTML, finalConfig, morphHints);
 
   const rejection = HintsModule.rejectIfMissing(hints ?? {}, oldNode);
   if (rejection) {
@@ -99,14 +110,20 @@ export const morphWithState = (
     return { type: 'rejected' as const, rejection };
   }
 
-  const remapIds = hints?.remap ?? (hints?.idMap ? Object.fromEntries(hints.idMap) : undefined);
   if (remapIds) {
     SemanticIdModule.applyIdMap(oldNode, remapIds);
   }
 
   if (state) {
-    const remappedState = remapIds ? HintsModule.applyRemap(state, remapIds) : state;
-    PhysicalRestore.restore(remappedState, oldNode, remapIds);
+    // `idMap` has historically also served as an old -> new physical-state
+    // restore hint. Keep that public contract while the pure morph kernel uses
+    // the same map only for its incoming-node normalization. Explicit `remap`
+    // wins when both spell a mapping for the same retained identity.
+    const restoreRemap = {
+      ...Object.fromEntries(hints?.idMap ?? []),
+      ...remapIds,
+    };
+    PhysicalRestore.restore(state, oldNode, Object.keys(restoreRemap).length === 0 ? undefined : restoreRemap);
   }
 
   return { type: 'success' as const };

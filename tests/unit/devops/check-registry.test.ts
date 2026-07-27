@@ -13,7 +13,7 @@
  * and the traceability ledger against an injected wall-clock date — and runs the SAME
  * gates over them, asserting the real repo is clean. It also proves the gates have TEETH
  * (a synthetic violation is caught) and self-prove (blocking authority), and PINS the
- * gauntlet-phases projection to the exact pre-change 43-label order.
+ * gauntlet-phases projection to the reviewed release-label order.
  *
  * It ENFORCES the negative-control PARTITION (INV-CHECK-NEGATIVE-CONTROL): over the
  * blocking checks, every one declares a `negativeControl` whose path EXISTS. There
@@ -268,7 +268,7 @@ describe('the check-governance meta-gates self-prove → blocking authority', ()
 // ── The gauntlet-phases projection is PINNED to the exact pre-change order ─────
 
 /**
- * The 48 gauntlet phase labels, in execution order — reviewed against the executor's
+ * The gauntlet phase labels, in execution order — reviewed against the executor's
  * dry-run BEFORE `gauntletPhases` became a projection of `CHECK_REGISTRY`. The
  * projection must reproduce this list byte-for-byte (identical labels, identical order):
  * a divergence here means the projection or the registry drifted the release sequence.
@@ -281,6 +281,11 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
   'typecheck:qualify',
   'lint',
   'lint:structural',
+  'lockfile:gate',
+  'prebuild:gate',
+  'workflow-output:gate',
+  'workspace-deps:gate',
+  'governed-exceptions:gate',
   'docs:check:fast',
   'docs:check',
   'assurance:gate',
@@ -325,11 +330,11 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
 ];
 
 describe('the gauntlet-phases projection preserves the reviewed release order', () => {
-  it('projects EXACTLY the pinned 48 labels in the pinned order', () => {
+  it('projects exactly the pinned labels in the pinned order', () => {
     expect(gauntletPhaseLabels()).toEqual(PINNED_GAUNTLET_LABELS);
   });
 
-  it('has 48 phases (the release-profile projection of CHECK_REGISTRY + the executor-only phases)', () => {
-    expect(gauntletPhaseLabels()).toHaveLength(48);
+  it('has exactly the reviewed phase count without a second numeric mirror', () => {
+    expect(gauntletPhaseLabels()).toHaveLength(PINNED_GAUNTLET_LABELS.length);
   });
 });

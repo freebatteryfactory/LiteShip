@@ -6,6 +6,7 @@ import { describe as describeTest, it, expect, beforeAll, afterAll } from 'vites
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { describe } from '../../../../packages/cli/src/commands/describe.js';
+import { FACADE_LIFECYCLE_CONTRACT } from '../../../../packages/liteship/src/export-budget.js';
 
 const MANIFEST_PATH = '.liteship/generated/mcp-manifest.json';
 let preexisting: string | undefined;
@@ -34,7 +35,7 @@ describeTest('describe command', () => {
     expect(r.commands.length).toBeGreaterThan(5);
     expect(r.publicSurface.root.length).toBeGreaterThan(5);
     expect(r.publicSurface.subpaths.length).toBeGreaterThan(5);
-    expect(r.publicSurface.lifecycle).toHaveLength(24);
+    expect(r.publicSurface.lifecycle).toHaveLength(FACADE_LIFECYCLE_CONTRACT.length);
   });
 
   it('explicit JSON mode behaves the same as default', () => {

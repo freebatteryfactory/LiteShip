@@ -21,6 +21,8 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@liteship/core';
+import { admitPart, createWorld, type AdmittedPartValue, type Part } from '@liteship/core/ecs';
+import { BlendPart, TrackIdPart } from '@liteship/scene';
 import type {
   DocumentGraph,
   SignalNode,
@@ -33,7 +35,7 @@ import type {
 } from '@liteship/core';
 import { loadGraphRuntime } from '../../../packages/astro/src/runtime/graph-runtime.js';
 import { bridgeSceneToGraph } from '../../../packages/astro/src/runtime/scene-bridge.js';
-import type { BridgeableScene, SceneQueryEffect } from '../../../packages/astro/src/runtime/scene-bridge.js';
+import type { BridgeableScene } from '../../../packages/astro/src/runtime/scene-bridge.js';
 
 const ts = HLC.increment(HLC.create('test'), 1);
 const meta: CellMeta = { created: ts, updated: ts, version: 1 };
@@ -129,10 +131,9 @@ function buildSceneGraph(): { graph: DocumentGraph; entityId: ContentAddress } {
 }
 
 /**
- * Fake scene: ONE transition track. `tick(dt)` accumulates time and recomputes
- * `_blend` as the local progress over `[0, durationMs]`; the crossing (0→0.5→1)
- * lands deterministically at the half-duration frame. The world exposes the
- * track's `_blend` via `query('_blend')`, matching the shape the bridge reads.
+ * Fake scene: ONE transition track admitted into the real typed ECS world.
+ * `tick(dt)` accumulates time and rewrites the minted {@link BlendPart}; the
+ * crossing (0→0.5→1) lands deterministically at the half-duration frame.
  */
 function makeFakeScene(
   trackId: string,
@@ -145,18 +146,22 @@ function makeFakeScene(
   let timeMs = 0;
   let ticks = 0;
   const blend = (): number => Math.max(0, Math.min(1, timeMs / durationMs));
+  const world = createWorld();
+
+  const admit = <P extends Part>(part: P, candidate: unknown): AdmittedPartValue<P> => {
+    const result = admitPart(part, candidate);
+    if (!result.ok) throw new Error(`test fixture could not admit ${part.name}: ${JSON.stringify(result.error)}`);
+    return result.value;
+  };
+
+  const entityId = world.spawn(admit(TrackIdPart, trackId), admit(BlendPart, blend()));
   const scene: BridgeableScene = {
     tick: async (dt: number): Promise<void> => {
       timeMs += dt;
       ticks += 1;
+      world.set(entityId, admit(BlendPart, blend()));
     },
-    world: {
-      query: ((..._names: string[]): SceneQueryEffect => {
-        // The injected `runQuery` ignores this opaque value and reads the closure,
-        // so we return a marker the bridge passes straight to `runQuery`.
-        return { __track: trackId, __blend: blend } as unknown as SceneQueryEffect;
-      }) as BridgeableScene['world']['query'],
-    },
+    world,
   };
   return {
     scene,
@@ -165,16 +170,6 @@ function makeFakeScene(
     },
     blend,
   };
-}
-
-/** Resolve the fake scene's query marker to the bridge's entity shape, reading the live blend. */
-function runFakeQuery(
-  query: SceneQueryEffect,
-): Promise<readonly { trackId: unknown; components: ReadonlyMap<string, unknown> }[]> {
-  const marker = query as unknown as { __track: string; __blend: () => number };
-  return Promise.resolve([
-    { trackId: marker.__track, components: new Map<string, unknown>([['_blend', marker.__blend()]]) },
-  ]);
 }
 
 describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween never does', () => {
@@ -239,7 +234,6 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
       { kind: 'time' },
       {
         projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-        runQuery: runFakeQuery,
       },
     );
 
@@ -280,7 +274,6 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
       { kind: 'time' },
       {
         projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-        runQuery: runFakeQuery,
       },
     );
 
@@ -325,7 +318,6 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
       },
       {
         projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-        runQuery: runFakeQuery,
       },
     );
 
@@ -356,7 +348,6 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
       { kind: 'time' },
       {
         projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-        runQuery: runFakeQuery,
       },
     );
 

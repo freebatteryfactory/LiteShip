@@ -244,7 +244,7 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     for (let i = 0; i < SSE_BUFFER_SIZE * 2; i++) {
       source.simulateMessage(patchFrame(`id-${i}`, i));
     }
-    expect(captured.events.filter((e) => e.code === 'sse-buffer-saturated')).toHaveLength(0);
+    expect(captured.events.filter((e) => e.code === 'web/stream/sse-buffer-saturated')).toHaveLength(0);
   });
 });
 

@@ -361,18 +361,8 @@ function stripGeneratedBlocks(source: string): string {
     .replace(/\/\* BEGIN gen-roster:[^]*?\/\* END gen-roster:[^]*?\*\//g, '');
 }
 
-function isSanctionedFleetSource(path: string): boolean {
+function isSanctionedFleetSource(path: string, exactGenerated: ReadonlySet<string>): boolean {
   const normalized = path.replaceAll('\\', '/');
-  const exactGenerated = new Set([
-    ...renderGeneratedProjections().map(([relativePath]) => relativePath),
-    // Addressed evidence minted from the catalog-driven 25-tarball package-smoke
-    // observation. It is validated against the live packed fleet at admission;
-    // it is not an independently authored roster owner.
-    ONE_INSTALL_COST_BASELINE_JSON,
-    'scripts/ci/publish-roster.json',
-    'tests/fixtures/api-surface-snapshot.json',
-    'tests/fixtures/type-export-surface.json',
-  ]);
   return (
     normalized === 'scripts/package-catalog.ts' ||
     normalized === 'pnpm-lock.yaml' ||
@@ -448,10 +438,27 @@ function writeCliFragmentProjections(): number {
  * manifests, lock data, API snapshots, and deliberate red fixtures are the
  * only sanctioned places where all 23 scoped names may appear together.
  */
-export function findAuthoredFleetLists(sources: readonly CatalogSource[]): readonly CatalogDrift[] {
+export function findAuthoredFleetLists(
+  sources: readonly CatalogSource[],
+  generatedProjections = renderGeneratedProjections(),
+): readonly CatalogDrift[] {
   const drift: CatalogDrift[] = [];
+  // Rendering the projections includes parsing the fleet event protocol. Build
+  // this classification set once per census, not once per candidate source;
+  // the former keeps the gate linear and cold-Windows-safe while preserving the
+  // exact same complete subject set.
+  const exactGenerated = new Set([
+    ...generatedProjections.map(([relativePath]) => relativePath),
+    // Addressed evidence minted from the catalog-driven 25-tarball package-smoke
+    // observation. It is validated against the live packed fleet at admission;
+    // it is not an independently authored roster owner.
+    ONE_INSTALL_COST_BASELINE_JSON,
+    'scripts/ci/publish-roster.json',
+    'tests/fixtures/api-surface-snapshot.json',
+    'tests/fixtures/type-export-surface.json',
+  ]);
   for (const source of sources) {
-    if (isSanctionedFleetSource(source.path)) continue;
+    if (isSanctionedFleetSource(source.path, exactGenerated)) continue;
     const text = stripGeneratedBlocks(source.text);
     const present = CANONICAL_ROSTER.filter((name) => text.includes(name));
     if (present.length === CANONICAL_ROSTER.length) {
@@ -517,12 +524,14 @@ export function publishJobText(yaml: string): string {
 
 export function renderGeneratedProjections(): ReadonlyArray<readonly [string, string]> {
   const events = collectEventProtocol(REPO_ROOT);
+  const spine = renderSpineProjections(REPO_ROOT);
+  const publicExports = renderPublicExportProjections(REPO_ROOT);
   return [
     ['packages/_spine/events.generated.d.ts', renderEventProtocolDts(events)],
     ['packages/web/src/wire/liteship-events.generated.ts', renderWebEventProjection(events)],
     ['packages/cli/src/internal/fleet-event-protocol.generated.ts', renderEventProtocolHostProjection(events)],
-    ...renderSpineProjections(REPO_ROOT),
-    ...renderPublicExportProjections(REPO_ROOT),
+    ...spine,
+    ...publicExports,
     [AUDIT_ROSTER_TS, renderAuditRoster()],
     [COMMAND_SMOKE_TS, renderCommandSmokeRoster()],
     [CLI_METADATA_TS, renderCliMetadataCatalog()],
@@ -881,9 +890,10 @@ function readRepoProjection(relativePath: string): string | undefined {
 /** Validate every generated projection against arbitrary source bytes. */
 export function collectGeneratedProjectionDrift(
   readProjection: ProjectionReader = readRepoProjection,
+  generatedProjections = renderGeneratedProjections(),
 ): readonly CatalogDrift[] {
   const drift: CatalogDrift[] = [];
-  for (const [relativePath, expected] of renderGeneratedProjections()) {
+  for (const [relativePath, expected] of generatedProjections) {
     if (readProjection(relativePath) !== expected) {
       drift.push({ copy: relativePath, detail: 'stale generated projection; run gen-roster --write' });
     }
@@ -906,12 +916,19 @@ export function collectGeneratedProjectionDrift(
 
 /** Every mismatch between the catalog, package manifests, and generated projections. */
 export async function collectRosterDrift(): Promise<readonly CatalogDrift[]> {
+  const generatedProjections = renderGeneratedProjections();
+  const catalog = catalogDrift();
+  const projectReferences = projectReferenceDrift();
+  const generated = collectGeneratedProjectionDrift(readRepoProjection, generatedProjections);
+  const fragments = collectCliFragmentProjectionDrift();
+  const trackedSources = await trackedCatalogSources();
+  const authoredLists = findAuthoredFleetLists(trackedSources, generatedProjections);
   const drift = [
-    ...catalogDrift(),
-    ...projectReferenceDrift(),
-    ...collectGeneratedProjectionDrift(),
-    ...collectCliFragmentProjectionDrift(),
-    ...findAuthoredFleetLists(await trackedCatalogSources()),
+    ...catalog,
+    ...projectReferences,
+    ...generated,
+    ...fragments,
+    ...authoredLists,
   ];
 
   const publishJob = publishJobText(readReleaseYaml());

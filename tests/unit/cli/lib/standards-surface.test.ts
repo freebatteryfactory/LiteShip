@@ -7,7 +7,7 @@
  * These pins drive the extractor over an ISOLATED, fully-synthetic temp repo (a
  * controlled `benchmarks/` + `traceability/` on disk) so every branch is hermetic —
  * the real live-repo green path is proven separately in `tests/unit/meta/`. Pins:
- *  - SURFACE SHAPE: the live surface is a sorted, uniquely-keyed `snapshotFormat: 1`
+ *  - SURFACE SHAPE: the live surface is a sorted, uniquely-keyed `snapshotFormat: 2`
  *    record whose address is the verbatim `fnv1a:`-prefixed kernel output.
  *  - DETERMINISM (the two-clock law): the same repo + injected `now` → a byte-
  *    identical serialized surface + an identical address; a different `now` may
@@ -65,7 +65,7 @@ function activeFacts(result: StandardsIntegrityResult) {
  * so a same-commit weakening that regenerates the working snapshot still diffs vs the
  * base. These hermetic tests inject the base directly (no real git in a temp repo).
  */
-function baseGitShow(base: { snapshotFormat: 1; elements: readonly StandardsElement[]; address: string }): GitShowReader {
+function baseGitShow(base: { snapshotFormat: 1 | 2; elements: readonly StandardsElement[]; address: string }): GitShowReader {
   return (_root, _ref, path) => (path === STANDARDS_SNAPSHOT_PATH ? serializeStandardsSurface(base) : '{}');
 }
 
@@ -149,9 +149,9 @@ afterEach(() => {
 });
 
 describe('readLiveStandardsSurface — the canonical, content-addressed surface', () => {
-  it('produces a sorted snapshotFormat-1 surface whose address is the verbatim fnv1a kernel output', () => {
+  it('produces a sorted snapshotFormat-2 surface whose address is the verbatim fnv1a kernel output', () => {
     const surface = readLiveStandardsSurface(root, NOW);
-    expect(surface.snapshotFormat).toBe(1);
+    expect(surface.snapshotFormat).toBe(2);
     expect(surface.elements.length).toBeGreaterThan(0);
     // The address is the EXACT kernel output over the sorted elements (no re-prefix).
     expect(surface.address).toBe(String(contentAddressOf(surface.elements)));
@@ -206,8 +206,8 @@ describe('readLiveStandardsSurface — the two-clock determinism law', () => {
     // determinism that bites: two reads at the SAME now are byte-equal.
     expect(readLiveStandardsSurface(root, NOW).address).toBe(readLiveStandardsSurface(root, NOW).address);
     // Both surfaces are well-formed regardless of which side of expiry now is.
-    expect(before.snapshotFormat).toBe(1);
-    expect(after.snapshotFormat).toBe(1);
+    expect(before.snapshotFormat).toBe(2);
+    expect(after.snapshotFormat).toBe(2);
   });
 
   it('omits the floor artifacts when the benchmark files are absent (an optional surface region)', () => {
@@ -268,7 +268,7 @@ describe('serializeStandardsSurface + readCommittedSnapshot — the canonical ro
     writeCommittedSnapshot(root, surface);
     expect(existsSync(join(root, STANDARDS_SNAPSHOT_PATH))).toBe(true);
     const recovered = readCommittedSnapshot(root);
-    expect(recovered.snapshotFormat).toBe(1);
+    expect(recovered.snapshotFormat).toBe(2);
     expect(recovered.address).toBe(surface.address);
     expect(serializeStandardsSurface(recovered)).toBe(serialized);
   });
@@ -294,7 +294,7 @@ describe('serializeStandardsSurface + readCommittedSnapshot — the canonical ro
 
   it('throws when the committed snapshot is malformed (wrong snapshotFormat / no elements[])', () => {
     mkdirSync(join(root, 'traceability'), { recursive: true });
-    writeFileSync(join(root, STANDARDS_SNAPSHOT_PATH), JSON.stringify({ snapshotFormat: 2, elements: [] }), 'utf8');
+    writeFileSync(join(root, STANDARDS_SNAPSHOT_PATH), JSON.stringify({ snapshotFormat: 3, elements: [] }), 'utf8');
     expect(() => readCommittedSnapshot(root)).toThrow();
   });
 

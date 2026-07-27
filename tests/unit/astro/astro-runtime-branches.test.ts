@@ -296,7 +296,7 @@ describe('astro worker directive edge branches', () => {
 
   test('binds worker readiness, resize observation, dispose, and reinit cleanup', async () => {
     const unsubscribe = vi.fn();
-    const hostDispose = vi.fn();
+    const hostDispose = vi.fn(async () => undefined);
     const addQuantizer = vi.fn();
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
@@ -379,7 +379,7 @@ describe('astro worker directive edge branches', () => {
 
   test('ignores stale worker callbacks after cleanup leaves no runtime boundary or host behind', async () => {
     const unsubscribe = vi.fn();
-    const hostDispose = vi.fn();
+    const hostDispose = vi.fn(async () => undefined);
     const addQuantizer = vi.fn();
     const bootstrapResolvedState = vi.fn();
     const applyResolvedState = vi.fn();
@@ -520,7 +520,7 @@ describe('astro worker directive edge branches', () => {
         },
       },
       onState: vi.fn(() => vi.fn()),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -583,7 +583,7 @@ describe('astro worker directive edge branches', () => {
         },
       },
       onState: vi.fn(() => vi.fn()),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -653,7 +653,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -757,7 +757,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -869,7 +869,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
     const element = document.createElement('div');
     element.setAttribute(
@@ -956,7 +956,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
     const element = document.createElement('div');
     element.setAttribute(
@@ -1043,7 +1043,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
     const element = document.createElement('div');
     element.setAttribute(
@@ -1111,7 +1111,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -1206,7 +1206,7 @@ describe('astro worker directive edge branches', () => {
         },
       },
       onState: vi.fn(() => vi.fn()),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
     const element = document.createElement('div');
     element.setAttribute(
@@ -1255,7 +1255,7 @@ describe('astro worker directive edge branches', () => {
         },
       },
       onState: vi.fn(() => vi.fn()),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -1327,7 +1327,7 @@ describe('astro worker directive edge branches', () => {
         },
       },
       onState: vi.fn(() => vi.fn()),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -1408,7 +1408,7 @@ describe('astro worker directive edge branches', () => {
         onStateCallback = callback;
         return vi.fn();
       }),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -1483,7 +1483,7 @@ describe('astro worker directive edge branches', () => {
         },
       },
       onState: vi.fn(() => vi.fn()),
-      dispose: vi.fn(),
+      dispose: vi.fn(async () => undefined),
     }));
 
     vi.stubGlobal('Worker', class MockWorker {});
@@ -1548,7 +1548,7 @@ describe('astro worker directive edge branches', () => {
           },
         },
         onState: vi.fn(() => vi.fn()),
-        dispose: vi.fn(),
+        dispose: vi.fn(async () => undefined),
       };
     });
 

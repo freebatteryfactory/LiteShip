@@ -28,6 +28,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/internal/liteship-audit-profile.js';
 import { PUBLISHABLE_ROSTER, collectRosterDrift } from '../../../scripts/gen-roster.js';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { packageManifests } from '../../support/repo-truths.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -130,9 +131,11 @@ describe('release publish roster matches the workspace (scripts/ci/publish-roste
     // The gen-roster staleness gate (`pnpm exec tsx scripts/gen-roster.ts --check`) run
     // in-process: it cross-checks CANONICAL_ROSTER / PUBLISHABLE_ROSTER, the generated
     // publish-roster.json, and release.yml's publish job against the repo-truths-derived
-    // set. An empty drift list is the green gate.
+    // set. It also computes the compiler-backed spine and public-export projections;
+    // correctness is the exact drift result, not a machine-speed race against Vitest's
+    // generic 10-second default. An empty drift list is the green gate.
     expect(await collectRosterDrift()).toEqual([]);
-  });
+  }, scaledTimeout(30_000));
 
   it('the trusted-publisher checklist (RELEASING.md) states the right publishable count', () => {
     // The maintainer configures OIDC trusted publishing per package from this count

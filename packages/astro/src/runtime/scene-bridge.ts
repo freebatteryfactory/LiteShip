@@ -81,9 +81,8 @@ void _sceneHandleIsBridgeable;
 
 /**
  * The value `world.query(...)` returns: the matched entities, synchronously.
- * `@liteship/core`'s `World.query` is sync, so the bridge reads this inline (no
- * runner). A host may inject a `runQuery` projection to reshape it (e.g. lift
- * `trackId` out of the component map) before the routing loop reads each entity.
+ * `@liteship/core`'s `World.query` is sync, so the bridge reads this inline with
+ * the canonical Scene Part identities and no string-keyed adapter seam.
  */
 export type SceneQueryEffect = readonly Entity[];
 

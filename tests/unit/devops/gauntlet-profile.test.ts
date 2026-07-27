@@ -1,7 +1,7 @@
 /**
  * CUT D8 — the canonical gauntlet phase profile is the ONE source of truth.
  *
- * Pins the 48-phase order to the executor's real run-order (no drift), proves the
+ * Pins the release-phase order to the executor's real run-order (no drift), proves the
  * executor + CLI both DERIVE from this list (no hand-maintained copies left), and
  * preserves the coverage:browser watchdog options across the migration.
  *
@@ -25,7 +25,7 @@ import {
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
-/** The canonical 48 phases, transcribed verbatim from the executor's HEAD run-order. */
+/** The canonical phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'environment-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
@@ -34,6 +34,11 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'typecheck:qualify', command: 'pnpm run typecheck:qualify' },
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
+  { label: 'lockfile:gate', command: 'pnpm run lockfile:gate' },
+  { label: 'prebuild:gate', command: 'pnpm run prebuild:gate' },
+  { label: 'workflow-output:gate', command: 'pnpm run workflow-output:gate' },
+  { label: 'workspace-deps:gate', command: 'pnpm run workspace-deps:gate' },
+  { label: 'governed-exceptions:gate', command: 'pnpm run governed-exceptions:gate' },
   { label: 'docs:check:fast', command: 'pnpm run docs:check:fast' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
   { label: 'assurance:gate', command: 'pnpm run assurance:gate' },
@@ -78,9 +83,9 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 48 phases', () => {
-    expect(gauntletPhases.length).toBe(48);
-    expect(gauntletPhaseLabels().length).toBe(48);
+  it('has exactly the independently reviewed phases', () => {
+    expect(gauntletPhases).toHaveLength(EXPECTED.length);
+    expect(gauntletPhaseLabels()).toHaveLength(EXPECTED.length);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {

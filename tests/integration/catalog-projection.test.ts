@@ -69,7 +69,8 @@ describe('catalog projection — single source of command identity', () => {
 
   it('help mentions every catalog command (the command list is projected, not hand-listed)', () => {
     for (const d of COMMAND_CATALOG) {
-      expect(HELP_TEXT, `help missing ${d.name}`).toContain(d.name);
+      const invocation = d.name.replaceAll('.', ' ');
+      expect(HELP_TEXT, `help missing ${invocation}`).toContain(invocation);
     }
   });
 });

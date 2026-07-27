@@ -3,6 +3,7 @@
 
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
+import { Morph } from '@liteship/web';
 import { morphPure } from '@liteship/web/lite';
 
 const semanticId = fc.integer({ min: 0, max: 1_000_000 }).map((value) => `node-${value}`);
@@ -54,6 +55,26 @@ describe('morph semantic identity model', () => {
         expect(remappedRoot.firstElementChild?.getAttribute('data-liteship-id')).toBe(oldId);
       }),
       { seed: 0x1d5a9, numRuns: 100 },
+    );
+  });
+
+  test('old-to-new remaps retain the old node while publishing the new semantic identity', () => {
+    fc.assert(
+      fc.property(semanticId, semanticId, (oldId, nextId) => {
+        fc.pre(oldId !== nextId);
+        const root = document.createElement('div');
+        root.innerHTML = markup([oldId]);
+        const before = root.firstElementChild;
+
+        const result = Morph.morphWithState(root, markup([nextId]), undefined, {
+          remap: { [oldId]: nextId },
+        });
+
+        expect(result.type).toBe('success');
+        expect(root.firstElementChild).toBe(before);
+        expect(root.firstElementChild?.getAttribute('data-liteship-id')).toBe(nextId);
+      }),
+      { seed: 0x1d5aa, numRuns: 100 },
     );
   });
 

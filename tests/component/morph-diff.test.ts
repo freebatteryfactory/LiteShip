@@ -366,21 +366,18 @@ describe('Morph.morphWithState', () => {
   });
 
   test('warns when a preserved id is missing from the old tree but still completes the morph', () => {
-    const warnSpy = vi.spyOn(Diagnostics, 'warn').mockImplementation(() => {});
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
     const root = el('<div><p>old</p></div>');
     document.body.appendChild(root);
 
     try {
       const result = run(Morph.morphWithState(root, '<p>new</p>', undefined, Hints.preserveIds('ghost')));
       expect(result.type).toBe('rejected');
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          source: 'liteship/web.morph',
-          code: 'preserve-id-missing',
-        }),
+      expect(events).toContainEqual(
+        expect.objectContaining({ source: 'liteship/web.morph', code: 'web/morph/preserve-id-missing' }),
       );
     } finally {
-      warnSpy.mockRestore();
       root.remove();
     }
   });

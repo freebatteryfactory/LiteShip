@@ -16,6 +16,8 @@ import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
 import {
   buildWorkflowOutputReceipt,
+  deliveryEvidenceDownloadFindings,
+  scanDeliveryEvidenceDownloads,
   scanWorkflowOutputHeredocs,
 } from '../../../scripts/lib/workflow-output-contract.js';
 
@@ -116,10 +118,45 @@ describe('output heredoc classification', () => {
   });
 });
 
+describe('delivery evidence ingress', () => {
+  const workflowWithPath = (path: string | null) =>
+    [
+      'jobs:',
+      '  evidence-admission:',
+      '    steps:',
+      '      - uses: actions/download-artifact@pinned',
+      '        with:',
+      '          name: delivery-evidence-candidates',
+      ...(path === null ? [] : [`          path: ${path}`]),
+    ].join('\n');
+
+  it.each([null, '.', 'delivery-evidence-candidates'])('RED: %s does not restore the reports root', (path) => {
+    const subjects = scanDeliveryEvidenceDownloads('fixture.yml', workflowWithPath(path));
+    expect(deliveryEvidenceDownloadFindings(subjects)).toContainEqual(
+      expect.objectContaining({ kind: 'delivery-evidence-outside-reports' }),
+    );
+  });
+
+  it('GREEN: exactly one candidate download beneath reports is admitted', () => {
+    const subjects = scanDeliveryEvidenceDownloads('fixture.yml', workflowWithPath('reports'));
+    expect(subjects).toEqual([
+      { file: 'fixture.yml', line: 4, artifact: 'delivery-evidence-candidates', path: 'reports' },
+    ]);
+    expect(deliveryEvidenceDownloadFindings(subjects)).toEqual([]);
+  });
+
+  it('fails opaque when the candidate download disappears', () => {
+    expect(deliveryEvidenceDownloadFindings([])).toContainEqual(
+      expect.objectContaining({ kind: 'missing-delivery-evidence-download' }),
+    );
+  });
+});
+
 describe('live tree', () => {
   it('every $GITHUB_OUTPUT write is enumerated and every multiline record is compute-then-emit', () => {
     const receipt = buildWorkflowOutputReceipt(REPO);
     expect(receipt.findings).toEqual([]);
+    expect(receipt.artifactFindings).toEqual([]);
     expect(receipt.writes.length).toBeGreaterThan(0);
     expect(receipt.writes.some((subject) => subject.file === '.github/workflows/ci.yml')).toBe(true);
     // The compact CI matrix deliberately needs no multiline delimiter now.

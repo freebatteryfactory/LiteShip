@@ -42,7 +42,8 @@ describe('ECS Composable Implementation', () => {
     expect(entity1.id).toBe(entity2.id);
     expect(entity1.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
     expect(entity1._tag).toBe('ComposableEntity');
-    expect(entity1.components.boundary).toBe(boundary);
+    expect(entity1.components.boundary).toStrictEqual(boundary);
+    expect(entity1.components.boundary).not.toBe(boundary);
   });
 
   test('Composable.compose merges entities correctly', () => {
@@ -52,8 +53,8 @@ describe('ECS Composable Implementation', () => {
     const composed = Composable.compose(entity1, entity2);
 
     // Should have both components
-    expect(composed.components.boundary).toBe(boundary);
-    expect(composed.components.token).toBe(token);
+    expect(composed.components.boundary).toStrictEqual(boundary);
+    expect(composed.components.token).toStrictEqual(token);
     expect(composed._tag).toBe('ComposableEntity');
 
     // Should have new ID based on merged components
@@ -69,15 +70,15 @@ describe('ECS Composable Implementation', () => {
     const merged = Composable.merge(entity1, entity2, entity3);
 
     // Should have all components (entity3 takes precedence)
-    expect(merged.components.boundary).toBe(boundary);
-    expect(merged.components.token).toBe(token);
+    expect(merged.components.boundary).toStrictEqual(boundary);
+    expect(merged.components.token).toStrictEqual(token);
   });
 
   test('Composable.make with multiple components', () => {
     const entity = createComposable({ boundary, token });
 
-    expect(entity.components.boundary).toBe(boundary);
-    expect(entity.components.token).toBe(token);
+    expect(entity.components.boundary).toStrictEqual(boundary);
+    expect(entity.components.token).toStrictEqual(token);
     expect(entity.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 

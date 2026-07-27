@@ -61,7 +61,7 @@ describe('B1 — identity is minted only through CanonicalCbor (source guard, th
     'packages/quantizer/src/quantizer.ts',
     'packages/core/src/evidence/content-address.ts', // P2 — the extracted shared mint kernel (contentAddressOf)
     'packages/core/src/authoring/composable.ts',
-    'packages/core/src/ecs/runtime.ts',
+    'packages/core/src/ecs/world.ts',
     'packages/core/src/authoring/config.ts', // CUT B5a — defineConfig folded into the cage
     'packages/core/src/reactive/live-cell.ts', // CUT live-cell — envelope id is fnv1a identity, not a sha256 receipt
   ];

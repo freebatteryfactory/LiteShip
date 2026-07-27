@@ -9,7 +9,7 @@ const SCENE_ADAPTERS = [
 describe('scene CLI host composition owner', () => {
   test.each(SCENE_ADAPTERS)('%s projects through the shared command host', (file) => {
     const imports = sourceRuntimeImports('.', file);
-    expect(imports).toContain('../lib/run-command.js');
+    expect(imports).toContain('../internal/run-command.js');
     expect(imports).not.toEqual(
       expect.arrayContaining(['@liteship/command/host', '@liteship/core', '@liteship/stage', 'node:url']),
     );
