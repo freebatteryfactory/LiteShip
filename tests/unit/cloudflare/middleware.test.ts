@@ -83,6 +83,90 @@ describe('testing-mutator partition (DX item #115)', () => {
 });
 
 describe('cloudflareMiddleware', () => {
+  test('uses the live Astro Cloudflare cfContext as the sole waitUntil owner', async () => {
+    const { kv, cacheStore } = makeKVStore();
+    let releasePut: (() => void) | undefined;
+    kv.put = async (key: string, value: string) =>
+      new Promise<void>((resolve) => {
+        releasePut = () => {
+          cacheStore.set(key, value);
+          resolve();
+        };
+      });
+    const deferred: Promise<unknown>[] = [];
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      env: { KV: kv },
+    });
+    const context = {
+      request: new Request('http://localhost/'),
+      locals: {
+        cfContext: { waitUntil: (promise: Promise<unknown>) => deferred.push(promise) },
+      } as Record<string, unknown>,
+    };
+
+    await middleware(context, async () => new Response('ok'));
+    expect(deferred).toHaveLength(1);
+    expect(cacheStore.size).toBe(0);
+    releasePut?.();
+    await Promise.all(deferred);
+    expect(cacheStore.size).toBe(1);
+  });
+
+  test('supports an explicit per-request execution-context resolver for custom hosts', async () => {
+    const { kv } = makeKVStore();
+    const deferred: Promise<unknown>[] = [];
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      env: { KV: kv },
+      resolveExecutionContext: () => ({ waitUntil: (promise) => deferred.push(promise) }),
+    });
+    await middleware(
+      { request: new Request('http://localhost/'), locals: {} },
+      async () => new Response('ok'),
+    );
+    expect(deferred).toHaveLength(1);
+    await Promise.all(deferred);
+  });
+
+  test('keeps KV read cacheTtl and write expirationTtl as distinct host policies', async () => {
+    let getOptions: unknown;
+    let putOptions: unknown;
+    const store = new Map<string, string>();
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      cacheTtl: 120,
+      expirationTtl: 3600,
+      env: {
+        KV: {
+          async get(key: string, options?: { cacheTtl?: number }) {
+            getOptions = options;
+            return store.get(key) ?? null;
+          },
+          async put(key: string, value: string, options?: { expirationTtl?: number }) {
+            putOptions = options;
+            store.set(key, value);
+          },
+        },
+      },
+    });
+    await middleware(
+      { request: new Request('http://localhost/'), locals: {} },
+      async () => new Response('ok'),
+    );
+    expect(getOptions).toEqual({ cacheTtl: 120 });
+    expect(putOptions).toEqual({ expirationTtl: 3600 });
+  });
+
   test('defaults binding to LITESHIP_BOUNDARY_CACHE when omitted', async () => {
     const { kv } = makeKVStore();
     const boundary = makeBoundary();

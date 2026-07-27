@@ -6,7 +6,9 @@
 
 # Interface: CommandRegistry
 
-Defined in: [command/src/registry.ts:650](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L650)
+Defined in: [command/src/registry.ts:643](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L643)
+
+Validated command catalog plus lookup and execution operations.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [command/src/registry.ts:650](https://github.com/freebatteryfactory/
 
 > `readonly` **get**: (`name`) => [`RegisteredCommand`](RegisteredCommand.md) \| `undefined`
 
-Defined in: [command/src/registry.ts:651](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L651)
+Defined in: [command/src/registry.ts:644](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L644)
 
 #### Parameters
 
@@ -30,10 +32,10 @@ Defined in: [command/src/registry.ts:651](https://github.com/freebatteryfactory/
 
 ### list
 
-> `readonly` **list**: () => readonly `CapsuleCommandDescriptor`[]
+> `readonly` **list**: () => readonly [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)[]
 
-Defined in: [command/src/registry.ts:652](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L652)
+Defined in: [command/src/registry.ts:645](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L645)
 
 #### Returns
 
-readonly `CapsuleCommandDescriptor`[]
+readonly [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)[]

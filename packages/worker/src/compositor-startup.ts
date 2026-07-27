@@ -327,7 +327,7 @@ export function parkOrDisposeCompositorLease(lease: {
 /**
  * Internal `postMessage` helper with an explicit transfer-list default.
  * Named with a leading underscore to signal that host code should use
- * the typed methods on {@link CompositorWorkerShape} instead.
+ * the typed methods on {@link CompositorWorker} instead.
  */
 export function _send(worker: Worker, msg: ToWorkerMessage, transfer?: Transferable[]): void {
   worker.postMessage(msg, transfer ?? []);

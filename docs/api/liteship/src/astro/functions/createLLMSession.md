@@ -6,9 +6,9 @@
 
 # Function: createLLMSession()
 
-> **createLLMSession**(`config`): [`LLMSessionShape`](../interfaces/LLMSessionShape.md)
+> **createLLMSession**(`config`): [`LLMSession`](../interfaces/LLMSession.md)
 
-Defined in: astro/dist/runtime/llm-session.d.ts:130
+Defined in: astro/dist/runtime/llm-session.d.ts:128
 
 Default `client:llm` factory: builds a session wired to the DOM.
 Equivalent to composing [createDOMLLMSessionHost](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/runtime/llm-session.ts) with
@@ -22,4 +22,4 @@ Equivalent to composing [createDOMLLMSessionHost](https://github.com/freebattery
 
 ## Returns
 
-[`LLMSessionShape`](../interfaces/LLMSessionShape.md)
+[`LLMSession`](../interfaces/LLMSession.md)

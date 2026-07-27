@@ -26,7 +26,7 @@ The shared buffer carrying the control header + data slots. Transfer this to the
 
 ### consumer
 
-> `readonly` **consumer**: [`SPSCRingBufferShape`](SPSCRingBufferShape.md)
+> `readonly` **consumer**: [`SPSCRing`](SPSCRing.md)
 
 Defined in: [worker/src/spsc-ring.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L105)
 
@@ -36,7 +36,7 @@ Consumer-side handle (pop-only).
 
 ### producer
 
-> `readonly` **producer**: [`SPSCRingBufferShape`](SPSCRingBufferShape.md)
+> `readonly` **producer**: [`SPSCRing`](SPSCRing.md)
 
 Defined in: [worker/src/spsc-ring.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L103)
 

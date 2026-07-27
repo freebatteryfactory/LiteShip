@@ -69,7 +69,6 @@ export function createBrowserCommandContext(
           return { frameCount: payload?.frameCount ?? 0, elapsedMs: payload?.elapsedMs ?? 0 };
         }
       : undefined,
-    runAudioProjection: async () => 0,
     hostVersion: () => 'browser',
     spawnCapture: async () => ({ exitCode: 1, stdout: '' }),
   };

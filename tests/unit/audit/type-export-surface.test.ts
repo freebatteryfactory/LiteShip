@@ -13,8 +13,8 @@
  * they prove the enumerator catches what it must before the snapshot is minted.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   buildTypeExportSurface,
@@ -26,40 +26,24 @@ import {
   type TypeExportSurfaceSnapshot,
 } from '../../../packages/audit/src/type-export-surface.js';
 import { LITESHIP_API_SURFACE_POLICY } from '../../fixtures/api-surface-policy.js';
+import { PACKAGE_CATALOG } from '../../../scripts/package-catalog.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../..');
-const PACKAGES_DIR = resolve(REPO_ROOT, 'packages');
 const SNAPSHOT_PATH = resolve(REPO_ROOT, 'tests/fixtures/type-export-surface.json');
 
 /**
  * The type-surface roster: every public runtime barrel the value gate locks, PLUS
  * `@liteship/_spine` (the `.d.ts`-only mirror the value gate cannot enumerate at all,
  * and the whole reason a TYPE surface is needed). Deliberately data, resolved to
- * each package's SOURCE entry (`development`/`types`, never the built `dist`).
+ * each package's catalog-owned SOURCE entry, never the built `dist`.
  */
 const ROSTER_NAMES: readonly string[] = [...LITESHIP_API_SURFACE_POLICY.publicPackages, '@liteship/_spine'];
 
-interface ManifestExports {
-  readonly '.'?: { readonly development?: string; readonly types?: string; readonly import?: string };
-}
-
-function manifestByName(pkgName: string): { readonly dir: string; readonly exports: ManifestExports } {
-  for (const dir of readdirSync(PACKAGES_DIR)) {
-    const pj = join(PACKAGES_DIR, dir, 'package.json');
-    if (!existsSync(pj)) continue;
-    const manifest = JSON.parse(readFileSync(pj, 'utf8')) as { name?: string; exports?: ManifestExports };
-    if (manifest.name === pkgName) return { dir: join(PACKAGES_DIR, dir), exports: manifest.exports ?? {} };
-  }
-  throw new Error(`no packages/*/package.json declares name ${pkgName}`);
-}
-
 function rosterEntry(pkgName: string): TypeExportRosterEntry {
-  const { dir, exports } = manifestByName(pkgName);
-  const dot = exports['.'] ?? {};
-  const rel = dot.development ?? dot.types ?? dot.import;
-  if (rel === undefined) throw new Error(`${pkgName} declares no '.' export entry`);
-  return { name: pkgName, entryFile: resolve(dir, rel) };
+  const record = PACKAGE_CATALOG.find((candidate) => candidate.name === pkgName);
+  if (record === undefined) throw new Error(`the package catalog has no record for ${pkgName}`);
+  return { name: pkgName, entryFile: resolve(REPO_ROOT, record.sourceEntry) };
 }
 
 const ROSTER: readonly TypeExportRosterEntry[] = ROSTER_NAMES.map(rosterEntry);

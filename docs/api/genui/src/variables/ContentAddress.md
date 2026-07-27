@@ -6,7 +6,7 @@
 
 # Variable: ContentAddress
 
-> **ContentAddress**: (`value`) => `ContentAddress`
+> **ContentAddress**: (`value`) => [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [genui/src/brands.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/brands.ts#L15)
 
@@ -20,7 +20,7 @@ Wrap canonical fnv1a bytes as a spine ContentAddress.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ## Throws
 

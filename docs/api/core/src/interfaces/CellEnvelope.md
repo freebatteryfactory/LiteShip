@@ -26,7 +26,7 @@ payload in `value`.
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/schema/protocol.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/protocol.ts#L46)
 

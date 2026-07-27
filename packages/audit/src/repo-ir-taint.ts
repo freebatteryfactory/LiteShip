@@ -90,10 +90,10 @@ import ts from 'typescript';
 import { resolve } from 'node:path';
 import { InvariantViolationError } from '@liteship/error';
 import type { TaintFacts, TaintFlow, TaintEndpoint, SanitizerSite, TaintPathStep } from '@liteship/gauntlet';
-import { liteshipDevopsProfile } from './devops-profile.js';
-import type { DevopsProfile } from './devops-profile.js';
+import { resolveDevopsProfile, type DevopsProfile } from './devops-profile.js';
 import { readProfileSourceFileRecords } from './shared.js';
 import { createTypeDirectedProgram } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /** The oracle id every taint fact this module emits is tagged with (traceability). */
 export const TAINT_ORACLE_ID = 'ts-taint';
@@ -170,8 +170,10 @@ export interface TaintRegistry {
 
 /** Options for {@link buildRepoIRTaint}. */
 export interface BuildRepoIRTaintOptions {
-  /** The audit profile (`profile.repoRoot` is the target). Defaults to LiteShip's. */
+  /** The audit profile. Omission uses generic current-workspace defaults only. */
   readonly profile?: DevopsProfile;
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * The bounded interprocedural hop depth (default
    * {@link DEFAULT_TAINT_INTERPROCEDURAL_DEPTH}). Reported in the facts so the
@@ -758,7 +760,7 @@ function buildCallerIndex(
  * @param options  The profile seam + the interprocedural depth bound.
  */
 export function buildRepoIRTaint(registry: TaintRegistry, options: BuildRepoIRTaintOptions = {}): TaintFacts {
-  const profile = options.profile ?? liteshipDevopsProfile;
+  const profile = options.profile ?? resolveDevopsProfile({});
   const maxHops = options.interproceduralDepth ?? DEFAULT_TAINT_INTERPROCEDURAL_DEPTH;
   if (!Number.isInteger(maxHops) || maxHops < 0) {
     throw InvariantViolationError(
@@ -773,6 +775,7 @@ export function buildRepoIRTaint(registry: TaintRegistry, options: BuildRepoIRTa
   const program = createTypeDirectedProgram(
     records.map((r) => r.absolutePath),
     profile.repoRoot,
+    options.typeScriptPathAliases,
   );
   const checker = program.getTypeChecker();
   // A non-empty corpus MUST yield source files; if the program is empty the trace

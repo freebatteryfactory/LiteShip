@@ -65,6 +65,7 @@ describe('scopeContextByLevel', () => {
     const seen: string[] = [];
     const probe: Gate = defineGate({
       id: 'test/probe',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L3',
       describe: 'records the files it sees',
       run: (c) => {
@@ -93,6 +94,7 @@ describe('scopeContextByLevel', () => {
     const seen: string[] = [];
     const probe: Gate = defineGate({
       id: 'test/probe-scoped',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L3',
       describe: 'records the files it sees',
       run: (c) => {
@@ -120,6 +122,7 @@ describe('runGates — a waiver is evaluated only at the gate whose rule it targ
   const mkProbe = (id: string, token: string): Gate =>
     defineGate({
       id,
+      extension: { namespace: id.slice(0, id.indexOf('/')), owner: 'LiteShip test suite' },
       level: 'L1',
       describe: `flags files containing ${token}`,
       run: (c): readonly Finding[] =>
@@ -331,6 +334,7 @@ describe('forbidden-rule enforcement (a waiver can never cover a skip/placeholde
   it('an expired waiver makes runGates BLOCK (waiver teeth fail the run)', () => {
     const gate: Gate = defineGate({
       id: 'test/flag',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L1',
       describe: 'flags any file containing "flag-me"',
       run: (c: GateContext) =>
@@ -356,6 +360,7 @@ describe('forbidden-rule enforcement (a waiver can never cover a skip/placeholde
   it('a valid waiver suppresses the finding and the run does not block on it', () => {
     const gate: Gate = defineGate({
       id: 'test/flag2',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L1',
       describe: 'flags any file containing "flag-me"',
       run: (c: GateContext) =>

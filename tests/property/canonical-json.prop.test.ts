@@ -34,7 +34,13 @@ describe('canonical JSON owner', () => {
     const getter = Object.defineProperty({}, 'value', { enumerable: true, get: () => 1 });
 
     for (const candidate of [undefined, Number.NaN, Infinity, 1n, new Date(0), cyclic, sparse, getter]) {
-      expect(() => canonicalJson(candidate)).toThrow(TypeError);
+      let failure: unknown;
+      try {
+        canonicalJson(candidate);
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure).toMatchObject({ _tag: 'ValidationError', module: 'canonicalJson' });
     }
   });
 });

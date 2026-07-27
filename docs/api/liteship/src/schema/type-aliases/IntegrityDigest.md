@@ -6,7 +6,7 @@
 
 # Type Alias: IntegrityDigest
 
-> **IntegrityDigest** = `_IntegrityDigest`
+> **IntegrityDigest** = [`IntegrityDigest`](../../../../spine/type-aliases/IntegrityDigest.md)
 
 Defined in: core/dist/schema/brands.d.ts:30
 

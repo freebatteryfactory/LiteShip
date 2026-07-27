@@ -8,7 +8,7 @@
 
 > **Finalizer** = () => `void` \| `Promise`\<`void`\>
 
-Defined in: core/dist/reactive/lifetime.d.ts:94
+Defined in: core/dist/reactive/lifetime.d.ts:93
 
 A registered teardown function — see Finalizer.
 

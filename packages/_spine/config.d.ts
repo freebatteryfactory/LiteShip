@@ -5,6 +5,7 @@
 import type { ContentAddress, Boundary } from './core.js';
 import type { Token, Theme, Style } from './design.js';
 
+/** Recursive immutable snapshot applied to retained project-configuration values. */
 type ReadonlyConfigValue<T> = T extends (...args: never[]) => unknown
   ? T
   : T extends string | number | boolean | bigint | symbol | null | undefined
@@ -15,6 +16,7 @@ type ReadonlyConfigValue<T> = T extends (...args: never[]) => unknown
         ? { readonly [K in keyof T]: ReadonlyConfigValue<T[K]> }
         : T;
 
+/** Immutable, content-addressed project configuration consumed by LiteShip hosts. */
 export interface Config {
   readonly _tag: 'ConfigDef';
   readonly id: ContentAddress;

@@ -18,7 +18,7 @@ deferred sums resolve as `frames + resolveBeat(beats)`.
 
 ### mark
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 ### ctx
 

@@ -56,7 +56,7 @@ Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebattery
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 
@@ -92,7 +92,7 @@ HLC created/updated + version. Excluded from the content address (volatile).
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [core/src/graph/document-graph.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L116)
 
@@ -100,7 +100,7 @@ Defined in: [core/src/graph/document-graph.ts:116](https://github.com/freebatter
 
 ### sourceRef
 
-> `readonly` **sourceRef**: `ContentAddress`
+> `readonly` **sourceRef**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L114)
 

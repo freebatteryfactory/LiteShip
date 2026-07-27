@@ -18,7 +18,7 @@ refinement, the self-proof fixtures) is shared by [makeOracleDivergenceGate](../
 
 > `readonly` **astSawStep**: `string`
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L88)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L90)
 
 The remediation step for the AST-present/regex-absent direction.
 
@@ -28,7 +28,7 @@ The remediation step for the AST-present/regex-absent direction.
 
 > `readonly` **astSawWhy**: `string`
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L86)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L88)
 
 The prose explaining an AST-present/regex-absent divergence — the case the
 AST caught a REAL form the comment-blind regex missed (per-rule, because the
@@ -41,7 +41,7 @@ boundary missed, etc.).
 
 > `readonly` **describe**: `string`
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L79)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L81)
 
 The one-line gate description.
 
@@ -51,12 +51,22 @@ The one-line gate description.
 
 > `readonly` **excludedMarkerProperty**: `string`
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L73)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L75)
 
 The property a host oracle emits to record a POLICY EXCLUDE for this rule (the
 exclude-vs-miss seam — e.g. `default-export-check-excluded`,
 `var-check-excluded`). A file carrying this marker is a sanctioned exclude:
 the regex's silence there is by design, not a coverage miss.
+
+***
+
+### extension?
+
+> `readonly` `optional` **extension?**: [`ExtensionGateIdentity`](ExtensionGateIdentity.md)
+
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L66)
+
+Required when [gateId](#gateid) belongs to a downstream namespace.
 
 ***
 
@@ -74,7 +84,7 @@ The gate id; namespaces every finding (traceability).
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L75)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L77)
 
 The assurance level the gate operates at.
 
@@ -84,7 +94,7 @@ The assurance level the gate operates at.
 
 > `readonly` **property**: `string`
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L66)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L68)
 
 The property both oracles observe (e.g. `is-default-export`, `var-declaration`).
 
@@ -94,6 +104,6 @@ The property both oracles observe (e.g. `is-default-export`, `var-declaration`).
 
 > `readonly` **subject**: `string`
 
-Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L77)
+Defined in: [gauntlet/src/gates/make-oracle-divergence-gate.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/make-oracle-divergence-gate.ts#L79)
 
 A short human name for the thing checked (e.g. a default export, a legacy binding).

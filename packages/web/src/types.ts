@@ -45,7 +45,7 @@ export interface SlotEntry {
 }
 
 /**
- * Input accepted by `SlotRegistryShape.register`. Registered entries are
+ * Input accepted by `SlotRegistry.register`. Registered entries are
  * normalized to a full {@link SlotEntry}: `mode` defaults to `'partial'`
  * and `mounted` defaults to `true`.
  */

@@ -186,10 +186,18 @@ invariants:
     law: 'Every BLOCKING check in CHECK_REGISTRY declares a `negativeControl` whose path EXISTS and whose executable proof drives the real authority against deterministic bad input to produce a red result. The check-negative-control gate reds on every missing or dangling control; no blocker is exempt from proving it can fail.'
     level: L4
     category: assurance
+  - id: INV-GATE-AUTHORITY-INTEGRITY
+    law: 'Every gate included in an execution plan must catch its red fixture, keep its green fixture clean, and kill its planted mutation. An unqualified gate cannot use its semantic findings to judge source, but failed or unexecutable qualification emits an unwaivable blocking gauntlet/authority-integrity finding, so broken release authority can never mint green.'
+    level: L4
+    category: assurance
 
   # ── Assurance — the liteship curated facade is a closed public surface (P13/P17) ─
   - id: INV-FACADE-EXPORT-BUDGET
     law: 'The liteship root export surface is a budgeted, EXACT-match allowlist: every runtime/type export is listed in ROOT_VALUE_BUDGET/ROOT_TYPE_BUDGET and every listed symbol is really exported (no sprawl, no phantom slot), each budget under its 30-symbol cap — the facade-export-budget gate reds an over-budget export AND a dropped listed export.'
+    level: L4
+    category: assurance
+  - id: INV-PUBLIC-SURFACE-INHABITED
+    law: 'Every public package export resolves to one real source producer and carries owner, audience, stability, category, purpose, import example, related invariant, failure contract, replacement/deprecation, and a named proof; every paved-road runtime value additionally executes through a real allocation or read, so a compact facade cannot pass by advertising machinery that no implementation inhabits.'
     level: L4
     category: assurance
   - id: INV-CONSUMER-SUBPATH-CLOSURE

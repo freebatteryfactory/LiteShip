@@ -25,7 +25,7 @@ Appended to the stream URL as a path segment; also the key the
 
 ### heartbeatInterval?
 
-> `readonly` `optional` **heartbeatInterval?**: `Millis`
+> `readonly` `optional` **heartbeatInterval?**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: web/dist/types.d.ts:223
 

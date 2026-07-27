@@ -88,15 +88,9 @@ export type { SchemaPort, DeclarationSchema } from './schema/index.js';
 // fan-out kernel extracted from the compositor's listener-Set. The reactive
 // primitives (Cell/Derived/Store/Signal/Zap) rebuild on these in later waves.
 export { Lifetime, attachLifetime, createLifetime } from './reactive/index.js';
-export type {
-  LifetimeShape,
-  LifetimeDisposeError,
-  Finalizer,
-  OwnedResource,
-  AsyncOwnedResource,
-} from './reactive/index.js';
+export type { LifetimeDisposeError, Finalizer, AsyncOwnedResource } from './reactive/index.js';
 export { CellKernel } from './reactive/index.js';
-export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from './reactive/index.js';
+export type { Disposer, CellSink, CellSubscriber, CellReplay, CellFanout } from './reactive/index.js';
 
 // Type utilities
 export type { StateUnion, OutputsFor, EvaluateResult } from './authoring/index.js';
@@ -293,13 +287,10 @@ export { StateCell, ProjectionState, StateCellStore } from './reactive/index.js'
 export type {
   StateAuthority,
   StateCellKind,
-  StateCell as StateCellShape,
   StateResolutionReceipt,
-  ProjectionState as ProjectionStateShape,
   ResolvedStateSnapshot,
   StateCellRegisterOptions,
   ProjectionStateOptions,
-  StateCellStoreShape,
 } from './reactive/index.js';
 
 // Stream recovery — discrete/continuous replay discriminator (#133)
@@ -377,12 +368,12 @@ export type { DirtyFlags } from './reactive/index.js';
 export type { CellKind, CellMeta, CellEnvelope } from './schema/index.js';
 
 // ECS
-export type { Entity, System, DenseSystem, DenseStore, World } from './ecs.js';
-export { Part, EntityId, createWorld } from './ecs.js';
+export type { Entity, Part, System, DenseSystem, DenseStore, World } from './ecs.js';
+export { EntityId, createDenseStore, createWorld } from './ecs.js';
 
 // Composable
 export { Composable, ComposableWorld, createComposable } from './authoring/index.js';
-export type { EntityComponents, ComposableEntity, ComposableWorldShape } from './authoring/index.js';
+export type { EntityComponents, ComposableEntity } from './authoring/index.js';
 
 // Cell
 export { createCell } from './reactive/index.js';

@@ -29,6 +29,8 @@
  * @module
  */
 
+import { ValidationError } from '@liteship/error';
+
 import {
   DiagnosticSeverity,
   type FindingLike,
@@ -195,7 +197,7 @@ function encodePathSegment(segment: string): string {
  */
 export function normalizeWorkspaceRootUri(uri: string): string {
   const parsed = new URL(uri);
-  if (parsed.protocol !== 'file:') throw new TypeError(`LSP workspace root must be a file URI: ${uri}`);
+  if (parsed.protocol !== 'file:') throw ValidationError('lsp.workspace-root', `must be a file URI: ${uri}`);
   parsed.search = '';
   parsed.hash = '';
   if (!parsed.pathname.endsWith('/')) parsed.pathname += '/';
@@ -217,7 +219,7 @@ export function fileToUri(file: string, workspaceRootUri: string = 'file:///'): 
     return `file://${absolute.split('/').map(encodePathSegment).join('/')}`;
   }
   const segments = normalized.split('/').filter((segment) => segment !== '' && segment !== '.');
-  if (segments.includes('..')) throw new TypeError(`finding path escapes the initialized workspace: ${file}`);
+  if (segments.includes('..')) throw ValidationError('lsp.finding-path', `escapes the initialized workspace: ${file}`);
   const relative = segments.map(encodePathSegment).join('/');
   return new URL(relative, normalizeWorkspaceRootUri(workspaceRootUri)).href;
 }

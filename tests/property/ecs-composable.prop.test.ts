@@ -11,7 +11,7 @@ import type { Style, Token } from '@liteship/core';
 import {
   Boundary,
   ComposableWorld,
-  Part,
+  createDenseStore,
   defineBoundary,
   defineToken,
   defineStyle,
@@ -100,7 +100,7 @@ describe('ECS Composable Properties', () => {
   test('DenseStore set/get round-trips numeric values', () => {
     fc.assert(
       fc.property(fc.float({ min: -1000, max: 1000, noNaN: true }), (value) => {
-        const store = Part.dense('dense', 4);
+        const store = createDenseStore('dense', 4);
         const entityId = 'entity-1:fnv1a:aaaaaaaa' as never;
         store.set(entityId, value);
         return store.get(entityId) === value;
@@ -117,7 +117,7 @@ describe('ECS Composable Properties', () => {
           fc.float({ min: -1000, max: 1000, noNaN: true }),
         ),
         ([a, b, c]) => {
-          const store = Part.dense('dense', 4);
+          const store = createDenseStore('dense', 4);
           const idA = 'entity-1:fnv1a:aaaaaaaa' as never;
           const idB = 'entity-2:fnv1a:bbbbbbbb' as never;
           const idC = 'entity-3:fnv1a:cccccccc' as never;

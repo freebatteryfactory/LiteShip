@@ -83,7 +83,6 @@ export type {
 } from '@liteship/web';
 
 export { SlotRegistry } from '@liteship/web';
-export type { SlotRegistryShape } from '@liteship/web';
 export { SlotAddressing } from '@liteship/web';
 
 export type { SSEClient, SSEEventSource } from '@liteship/web';
@@ -108,7 +107,7 @@ export { WebCodecsCapture, renderToCanvas, captureVideo } from '@liteship/web';
 export type { WebCodecsCaptureOptions, RenderFn } from '@liteship/web';
 
 export { LLMAdapter } from '@liteship/web';
-export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig, LLMAdapterShape } from '@liteship/web';
+export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig } from '@liteship/web';
 export { LLMChunkNormalization } from '@liteship/web';
 export type { ToolCallAccumulator } from '@liteship/web';
 

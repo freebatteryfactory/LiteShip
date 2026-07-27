@@ -34,12 +34,19 @@ export type MotionTier = 'none' | 'transitions' | 'animations' | 'physics' | 'co
 // § 1. BRANDS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Nominal marker for typed signal-input strings. */
 declare const SignalInputBrand: unique symbol;
+/** Nominal marker for validated boundary thresholds. */
 declare const ThresholdValueBrand: unique symbol;
+/** Nominal marker for authored state names. */
 declare const StateNameBrand: unique symbol;
+/** Nominal marker for compact local content labels. */
 declare const ContentAddressBrand: unique symbol;
+/** Nominal marker for cryptographic integrity witnesses. */
 declare const IntegrityDigestBrand: unique symbol;
+/** Nominal marker for hybrid logical clock values. */
 declare const HLCBrand: unique symbol;
+/** Nominal marker for millisecond durations. */
 declare const MillisBrand: unique symbol;
 
 /** Branded input signal name -- e.g. 'viewport.width', 'prefers-color-scheme' */
@@ -54,7 +61,7 @@ export type StateName<S extends string = string> = S & { readonly [StateNameBran
 /**
  * Content-addressed hash (FNV-1a, fnv1a:hex format).
  *
- * APEX of THREE intentional homes (ADR-0012) — do NOT merge them. This spine
+ * APEX of THREE intentional homes (ADR-0013) — do NOT merge them. This spine
  * type is the strictest: a symbol-brand, so a raw `fnv1a:...` string cannot be
  * typed as ContentAddress without a validating constructor. `@liteship/core` and
  * `@liteship/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
@@ -62,7 +69,7 @@ export type StateName<S extends string = string> = S & { readonly [StateNameBran
  * (only `@liteship/error`) and uses a `` `fnv1a:${string}` `` template-literal brand
  * instead. Merging the homes would either break canonical's zero-dep property or
  * weaken this symbol-brand to a template literal. The three are parity-guarded at
- * runtime by tests/unit/core/brand-validators.test.ts ("ContentAddress three-home
+ * runtime by tests/unit/core/schema/brand-validators.test.ts ("ContentAddress three-home
  * parity drift-guard").
  */
 export type ContentAddress = string & { readonly [ContentAddressBrand]: true };
@@ -101,7 +108,7 @@ export interface HLC {
   readonly node_id: string;
 }
 
-// Brand factory
+/** Apply one private nominal marker at a validated construction boundary. */
 export declare function brand<T, B extends symbol>(value: T): T & { readonly [K in B]: true };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -159,23 +166,10 @@ export declare namespace Lifetime {
 export declare function createLifetime(): Lifetime;
 
 /**
- * A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
- * {@link Lifetime}'s finalizers and returns `void`; `[Symbol.dispose]` makes it
- * usable with a `using` declaration. `lifetime` stays reachable for advanced
- * composition. Prefer {@link AsyncOwnedResource} (Lifetime.dispose is async).
- */
-export interface OwnedResource {
-  readonly lifetime: Lifetime;
-  dispose(): void;
-  [Symbol.dispose](): void;
-}
-
-/**
- * A resource that owns its teardown ASYNCHRONOUSLY — the default, since
- * {@link Lifetime}.`dispose` is async. `dispose()` delegates to the owning
- * Lifetime; `[Symbol.asyncDispose]` makes it usable with `await using`. The value
- * IS the disposable — there is no `{ value, lifetime }` pair to destructure —
- * with the owning `lifetime` still reachable for advanced composition.
+ * A resource that owns its teardown through LiteShip's one public lifecycle.
+ * Synchronous finalizers run before `dispose()` returns; the promise joins async
+ * finalizers and carries aggregate failure. `[Symbol.asyncDispose]` makes the
+ * value usable with `await using`.
  */
 export interface AsyncOwnedResource {
   readonly lifetime: Lifetime;
@@ -251,6 +245,7 @@ export interface BoundarySpec {
   readonly experimentId?: string;
 }
 
+/** Immutable threshold partition that maps one numeric input to named states. */
 export interface Boundary<
   I extends string = string,
   S extends readonly [string, ...string[]] = readonly [string, ...string[]],
@@ -287,6 +282,7 @@ export declare namespace Boundary {
 // § 4. SIGNALS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Built-in and host-defined source families understood by reactive signals. */
 export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom' | 'audio';
 
 /**
@@ -316,6 +312,7 @@ export interface Signal<T> {
   readonly lifetime: Lifetime;
 }
 
+/** Signal whose host can seek, pause, and resume the underlying source. */
 export interface ControllableSignal<T> extends Signal<T> {
   seek(to: T): void;
   pause(): void;
@@ -352,13 +349,16 @@ export declare function createSignal(source: SignalSource): Signal<number> & Asy
  * recognized source after normalization.
  */
 export function sourceToInput(source: SignalSource): SignalInput;
+/** Decode a known signal input into its structured source. */
 export function inputToSource(input: string): SignalSource | undefined;
+/** Classify a known signal input without constructing its full source. */
 export function inputSourceType(input: string): SignalSourceType | undefined;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 5. ANIMATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Easing functions and spring configuration used by motion programs. */
 export declare namespace Easing {
   /** Pure easing function: t ∈ [0,1] -> value ∈ [0,1] */
   export type Fn = (t: number) => number;
@@ -392,6 +392,7 @@ export declare namespace Easing {
 
 export declare const Easing: Easing.Fns;
 
+/** Frame sampling and interpolation helpers for time-based animation. */
 export declare namespace Animation {
   export interface Frame {
     readonly progress: number;
@@ -434,6 +435,7 @@ export declare function createTimeline<B extends Boundary>(
 // § 7. COMPOSITOR
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Named compositor state with deterministic numeric properties. */
 export interface CompositeState {
   readonly discrete: Record<string, string>;
   readonly blend: Record<string, Record<string, number>>;
@@ -445,6 +447,7 @@ export interface CompositeState {
   };
 }
 
+/** Live compositor that evaluates and blends registered states. */
 export interface Compositor {
   add<B extends Boundary>(name: string, quantizer: Quantizer<B>): void;
   remove(name: string): void;
@@ -467,11 +470,13 @@ export declare namespace Compositor {
 // § 8. BLEND TREES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** One weighted input node in a blend tree. */
 export interface BlendNode<T> {
   readonly value: T;
   readonly weight: number;
 }
 
+/** Mutable weighted blend graph over homogeneous numeric records. */
 export interface BlendTree<T extends Record<string, number>> {
   add(name: string, value: T, weight: number): void;
   remove(name: string): void;
@@ -491,8 +496,10 @@ export declare function createBlendTree<T extends Record<string, number>>(): Ble
 // § 9. FRAME BUDGET
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Scheduling priority used by frame-budget admission. */
 export type Priority = 'critical' | 'high' | 'low' | 'idle';
 
+/** Frame-time admission controller for prioritized work. */
 export interface FrameBudget {
   remaining(): number;
   canRun(priority: Priority): boolean;
@@ -511,6 +518,7 @@ export declare function createFrameBudget(config?: { targetFps?: number }): Fram
 // § 10. DIRTY TRACKING
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Constant-time dirty-bit tracker over a closed key set. */
 export interface DirtyFlags<K extends string = string> {
   mark(key: K): void;
   clear(key: K): void;
@@ -527,6 +535,7 @@ export declare function createDirtyFlags<K extends string>(keys: readonly K[]): 
 // § 11. PROTOCOL TYPES (from typesp)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Closed family of live-cell transport and projection roles. */
 export type CellKind =
   | 'boundary'
   | 'state'
@@ -542,12 +551,14 @@ export type CellKind =
   | 'aria'
   | 'ai';
 
+/** Optional sequencing metadata attached to a cell emission. */
 export interface CellMeta {
   readonly created: HLC;
   readonly updated: HLC;
   readonly version: number;
 }
 
+/** Typed live-cell payload with its kind and transport metadata. */
 export interface CellEnvelope<K extends CellKind = CellKind, T = unknown> {
   readonly kind: K;
   readonly id: ContentAddress;
@@ -559,18 +570,22 @@ export interface CellEnvelope<K extends CellKind = CellKind, T = unknown> {
 // § 12. ECS (from typesp -- composition over inheritance)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Branded identifier minted for an ECS entity. */
 export type EntityId = string & { readonly _brand: 'EntityId' };
 
+/** ECS entity view containing its identifier and component map. */
 export interface Entity {
   readonly id: EntityId;
   readonly components: ReadonlyMap<string, unknown>;
 }
 
+/** Authored ECS component contract pairing a name with its schema. */
 export interface Part<T = unknown> {
   readonly name: string;
   readonly schema: SchemaPort<T>;
 }
 
+/** ECS system that evaluates entities matching a component-name query. */
 export interface System {
   readonly name: string;
   readonly query: readonly string[];
@@ -578,6 +593,7 @@ export interface System {
   execute(entities: readonly Entity[], world?: World): void;
 }
 
+/** Live ECS world that owns entities, dense stores, and scheduled systems. */
 export interface World {
   spawn(components?: Record<string, unknown>): EntityId;
   despawn(id: EntityId): void;
@@ -587,6 +603,7 @@ export interface World {
   removeComponent(id: EntityId, name: string): void;
   query(...componentNames: string[]): readonly Entity[];
   addSystem(system: System): void;
+  addDenseStore(store: DenseStore): void;
   tick(): void;
 }
 
@@ -602,28 +619,34 @@ export declare function createWorld(): World & AsyncOwnedResource;
  * Dense packed component storage for hot ECS paths.
  * Stores values in a flat array indexed by entity slot for cache efficiency.
  */
-export interface DenseStore<T> {
-  readonly _tag: 'DenseStore';
+/** Dense, fixed-capacity numeric ECS component storage. */
+export interface DenseStore {
   readonly name: string;
-  get(id: EntityId): T | undefined;
-  set(id: EntityId, value: T): void;
-  delete(id: EntityId): void;
+  readonly capacity: number;
+  readonly _dense: true;
+  readonly entityToIndex: Map<EntityId, number>;
+  readonly indexToEntity: EntityId[];
+  readonly data: Float64Array;
+  count: number;
+  get(id: EntityId): number | undefined;
+  set(id: EntityId, value: number): void;
+  delete(id: EntityId): boolean;
   has(id: EntityId): boolean;
-  entries(): ReadonlyArray<readonly [EntityId, T]>;
+  reset(): void;
+  view(): Float64Array;
+  entities(): readonly EntityId[];
 }
 
-export declare namespace DenseStore {
-  export function make<T>(name: string): DenseStore<T>;
-}
+/** Allocate a dense numeric ECS component store. */
+export declare function createDenseStore(name: string, capacity: number): DenseStore;
 
 /** ECS system that operates on dense-packed component stores */
-export interface DenseSystem<Stores extends Record<string, DenseStore<unknown>>> {
+export interface DenseSystem {
   readonly name: string;
-  readonly stores: Stores;
-  execute(entities: ReadonlyArray<EntityId>): void;
+  readonly query: readonly string[];
+  readonly _denseSystem: true;
+  execute(stores: ReadonlyMap<string, DenseStore>): void;
 }
-
-export declare function addDenseStore<T>(world: World, store: DenseStore<T>): void;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 13. REACTIVE PRIMITIVES (from @kit, v4 migrated)
@@ -723,15 +746,18 @@ export declare function createStore<S, Msg>(
 /** Discriminated union of all primitives */
 export type Primitive<T> = Cell<T> | Derived<T> | Zap<T>;
 
-/** Type guards */
+/** Test whether a primitive is a mutable cell. */
 export declare function isCell<T>(p: Primitive<T>): p is Cell<T>;
+/** Test whether a primitive is a computed derived value. */
 export declare function isDerived<T>(p: Primitive<T>): p is Derived<T>;
+/** Test whether a primitive is an event stream. */
 export declare function isZap<T>(p: Primitive<T>): p is Zap<T>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 14. QUANTIZER (forward declaration -- full types in quantizer.d.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Immutable output mapping for every state of a boundary. */
 export interface Quantizer<B extends Boundary = Boundary> {
   readonly _tag: 'Quantizer';
   readonly boundary: B;
@@ -781,6 +807,7 @@ export interface ReactiveQuantizer<B extends Boundary = Boundary> extends Quanti
 // mutation (version + HLC + fnv1a id + boundary state) BEFORE the value fans out,
 // so there is no observable interleave window.
 
+/** Reactive cell specialized to a declared transport or projection kind. */
 export interface LiveCell<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
   readonly _tag: 'LiveCell';
   envelope(): CellEnvelope<K, T>;
@@ -794,6 +821,7 @@ export interface LiveCell<K extends CellKind, T> extends Omit<Cell<T>, '_tag'> {
  * live cell IS its own disposable ({@link AsyncOwnedResource}).
  */
 export declare function createLiveCell<K extends CellKind, T>(kind: K, initial: T): LiveCell<K, T> & AsyncOwnedResource;
+/** Allocate a live numeric cell wired to one boundary definition. */
 export declare function createLiveCellBoundary<I extends string, S extends readonly [string, ...string[]]>(
   boundary: Boundary<I, S>,
   initial: number,
@@ -827,7 +855,7 @@ interface RuntimeCoordinatorDenseStore {
 }
 
 /** Live coordinator surface shared by the core runtime and worker host. */
-export interface RuntimeCoordinatorShape {
+export interface RuntimeCoordinator {
   readonly plan: PlanIR;
   readonly phases: readonly RuntimePhase[];
   readonly stores: {
@@ -846,19 +874,20 @@ export interface RuntimeCoordinatorShape {
   registeredNames(): readonly string[];
 }
 
-export type RuntimeCoordinator = RuntimeCoordinatorShape;
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 16. CAPABILITY LATTICE (re-parameterized from @kit: pure<read<...<system -> static<styled<...<gpu)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Ordered rendering-capability tier from static markup through GPU execution. */
 export type CapTier = 'static' | 'styled' | 'reactive' | 'animated' | 'gpu';
 
+/** Boolean capability set paired with a rendering tier decision. */
 export interface CapSet {
   readonly _tag: 'CapSet';
   readonly levels: readonly CapTier[];
 }
 
+/** Pure operations over rendering capability sets and tier order. */
 export declare const Cap: {
   empty(): CapSet;
   from(levels: ReadonlyArray<CapTier>): CapSet;
@@ -876,6 +905,7 @@ export declare const Cap: {
 // § 17. TYPED REF (content addressing)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Content-addressed reference to a payload validated against a schema hash. */
 export interface TypedRef {
   readonly schema_hash: string;
   readonly content_hash: string;
@@ -918,6 +948,7 @@ export declare const HLC: {
 // § 19. VECTOR CLOCK
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Immutable peer-counter map used for causal ordering. */
 export interface VectorClock {
   readonly _tag: 'VectorClock';
   readonly entries: ReadonlyMap<string, number>;
@@ -942,11 +973,13 @@ export declare const VectorClock: {
 // § 20. RECEIPT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Stable identity of the artifact or definition described by a receipt. */
 export interface ReceiptSubject {
   readonly type: 'effect' | 'run' | 'artifact' | 'intent';
   readonly id: string;
 }
 
+/** Hash-linked receipt carrying deterministic evidence payload and causality. */
 export interface ReceiptEnvelope {
   readonly kind: string;
   readonly timestamp: HLC;
@@ -957,6 +990,7 @@ export interface ReceiptEnvelope {
   readonly signature?: string;
 }
 
+/** Closed reasons a receipt chain can fail structural or cryptographic validation. */
 export type ChainValidationError =
   | { readonly type: 'not_genesis'; readonly index: 0 }
   | { readonly type: 'hash_mismatch'; readonly index: number; readonly computed: string; readonly stored: string }
@@ -964,6 +998,7 @@ export type ChainValidationError =
   | { readonly type: 'hlc_not_increasing'; readonly index: number }
   | { readonly type: 'checkpoint_invalid'; readonly reason: string };
 
+/** Optional trust material and bounds used while validating a receipt chain. */
 export interface ChainValidationOptions {
   readonly base?: string;
   readonly checkpoint?: ReceiptEnvelope;
@@ -977,6 +1012,7 @@ export interface ChainValidationOptions {
   readonly verifyCheckpoint?: (checkpoint: ReceiptEnvelope) => Promise<boolean>;
 }
 
+/** Construct, validate, authenticate, and query receipt chains. */
 export declare const Receipt: {
   readonly GENESIS: string;
   createEnvelope(
@@ -1023,24 +1059,28 @@ export declare const Receipt: {
 // § 21. DAG
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** One receipt and its parent hashes in a receipt DAG. */
 export interface DAGNode {
   readonly envelope: ReceiptEnvelope;
   readonly parents: ReadonlyArray<string>;
   readonly children: ReadonlyArray<string>;
 }
 
+/** Indexed receipt graph with head tracking and canonical ordering. */
 export interface ReceiptDAG {
   readonly nodes: ReadonlyMap<string, DAGNode>;
   readonly heads: ReadonlyArray<string>;
   readonly genesis: string | null;
 }
 
+/** Result of merging receipt DAGs, including conflicts and resulting heads. */
 export interface MergeResult {
   readonly dag: ReceiptDAG;
   readonly added: ReadonlyArray<string>;
   readonly forked: boolean;
 }
 
+/** Evidence that a receipt graph violates its declared fork policy. */
 export interface ForkViolation {
   readonly actor: string;
   readonly prevHash: string;
@@ -1048,12 +1088,14 @@ export interface ForkViolation {
   readonly attempted: string;
 }
 
+/** Result of anchoring or validating a checkpoint in a receipt graph. */
 export interface CheckpointResult {
   readonly dag: ReceiptDAG;
   readonly checkpoint: ReceiptEnvelope;
   readonly dropped: ReadonlyArray<string>;
 }
 
+/** Build and query the receipt directed acyclic graph. */
 export declare const DAG: {
   empty(): ReceiptDAG;
   ingest(dag: ReceiptDAG, envelope: ReceiptEnvelope): ReceiptDAG;
@@ -1084,6 +1126,7 @@ export declare const DAG: {
 // § 22. PLAN
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Operation kinds represented by a plan step. */
 export type OpType =
   | { readonly type: 'pure'; readonly fn?: string }
   | { readonly type: 'effect'; readonly fn?: string }
@@ -1092,19 +1135,23 @@ export type OpType =
   | { readonly type: 'choice'; readonly condition: unknown }
   | { readonly type: 'noop' };
 
+/** Control-flow relation between two plan steps. */
 export type EdgeType = 'seq' | 'par' | 'choice_then' | 'choice_else';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // § 22a. MOTION RUNTIME PROJECTION
 // ════════════════════════════════════════════════════════════════════════════════
 
+/** Partial transform components composed into a rendered transform value. */
 export interface TransformPart {
   readonly fn: string;
   readonly args: readonly TypedValue[];
 }
 
+/** Color spaces supported by typed runtime motion values. */
 export type ColorSpace = 'srgb' | 'oklch';
 
+/** Runtime value whose unit or color space is explicit in the type. */
 export type TypedValue =
   | { readonly k: 'number'; readonly v: number }
   | { readonly k: 'opacity'; readonly v: number }
@@ -1113,6 +1160,7 @@ export type TypedValue =
   | { readonly k: 'color'; readonly space: ColorSpace; readonly components: readonly number[] }
   | { readonly k: 'transform'; readonly parts: readonly TransformPart[] };
 
+/** Serializable easing descriptor consumed by runtime write plans. */
 export interface RuntimeEasing {
   readonly kind: 'linear' | 'ease' | 'spring' | 'points' | 'bounce' | 'elastic' | 'back' | 'cubicBezier';
   readonly spring?: {
@@ -1123,12 +1171,14 @@ export interface RuntimeEasing {
   readonly points?: readonly number[];
 }
 
+/** One property transition from a typed source value to a typed target value. */
 export interface RuntimeWriteProperty {
   readonly cssVar: string;
   readonly from: TypedValue;
   readonly to: TypedValue;
 }
 
+/** Timed write window containing the properties active over one interval. */
 export interface RuntimeWriteWindow {
   readonly windowStart: number;
   readonly windowEnd: number;
@@ -1136,6 +1186,7 @@ export interface RuntimeWriteWindow {
   readonly easing: RuntimeEasing;
 }
 
+/** Deterministic sequence of runtime property-write windows. */
 export interface RuntimeWritePlan {
   readonly properties: readonly RuntimeWriteProperty[];
   readonly durationMs: number;
@@ -1146,11 +1197,13 @@ export interface RuntimeWritePlan {
   readonly windows?: readonly RuntimeWriteWindow[];
 }
 
+/** Uniform values bound while executing a plan program. */
 export interface ProgramUniforms {
   readonly css: Record<string, string>;
   readonly wgsl: Record<string, number>;
 }
 
+/** One named operation and dependencies in a plan IR. */
 export interface PlanStep {
   readonly id: string;
   readonly name: string;
@@ -1158,12 +1211,14 @@ export interface PlanStep {
   readonly metadata?: Record<string, unknown>;
 }
 
+/** Typed directed edge between two plan steps. */
 export interface PlanEdge {
   readonly from: string;
   readonly to: string;
   readonly type: EdgeType;
 }
 
+/** Immutable directed execution plan consumed by runtime coordinators. */
 export interface PlanIR {
   readonly name: string;
   readonly steps: readonly PlanStep[];
@@ -1171,18 +1226,22 @@ export interface PlanIR {
   readonly metadata?: Record<string, unknown>;
 }
 
+/** Closed structural errors produced by plan validation. */
 export type PlanValidationError =
   | { readonly type: 'cycle'; readonly message: string; readonly stepIds?: readonly string[] }
   | { readonly type: 'missing_step'; readonly message: string; readonly stepIds?: readonly string[] };
 
+/** Success or bounded failure result from plan validation. */
 export type PlanValidationResult =
   | { readonly ok: true; readonly plan: PlanIR }
   | { readonly ok: false; readonly errors: readonly PlanValidationError[] };
 
+/** Topological plan order or the cycle that prevents one. */
 export type TopoSortResult =
   | { readonly sorted: readonly string[]; readonly cycle?: undefined }
   | { readonly sorted: readonly string[]; readonly cycle: readonly string[] };
 
+/** Fluent builder that emits an immutable plan IR. */
 export interface PlanBuilder {
   step(name: string, opType: OpType, metadata?: Record<string, unknown>): PlanBuilder;
   seq(fromId: string, toId: string): PlanBuilder;
@@ -1191,6 +1250,7 @@ export interface PlanBuilder {
   build(): PlanIR;
 }
 
+/** Constructors, validation, and topological ordering for plan IR. */
 export declare namespace Plan {
   export function make(name: string): PlanBuilder;
   export function validate(planIR: PlanIR): PlanValidationResult;
@@ -1212,6 +1272,7 @@ export type SchemaPort<A, I = A> = {
   readonly Encoded: I;
 };
 
+/** Bidirectional schema-backed codec between input and decoded values. */
 export interface Codec<A, I = A> {
   readonly schema: SchemaPort<A, I>;
   /** Validate a domain value into its wire form. Sync `Result` — never an Effect (Wave 8). */
@@ -1253,6 +1314,7 @@ export declare namespace Codec {
 // § 24. FRAME SCHEDULER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Host-neutral frame scheduler used by animation and quantization runtimes. */
 export interface Scheduler {
   readonly _tag: 'FrameScheduler';
   schedule(callback: (now: number) => void): number;
@@ -1274,6 +1336,7 @@ export declare namespace Scheduler {
 // § 25. VIDEO RENDERER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Dimensions, frame rate, and duration of a video render schedule. */
 export interface VideoConfig {
   readonly fps: number;
   readonly width: number;
@@ -1281,6 +1344,7 @@ export interface VideoConfig {
   readonly durationMs: Millis;
 }
 
+/** One scheduled video frame and the compositor state that produced it. */
 export interface VideoFrameOutput {
   readonly frame: number;
   readonly timestamp: number;
@@ -1288,6 +1352,7 @@ export interface VideoFrameOutput {
   readonly state: CompositeState;
 }
 
+/** Canonical frame scheduler over a compositor and video configuration. */
 export interface VideoRenderer {
   readonly config: VideoConfig;
   readonly totalFrames: number;
@@ -1303,18 +1368,21 @@ export declare namespace VideoRenderer {
 // § 26. CAPTURE TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Browser capture dimensions, frame rate, duration, and codec preferences. */
 export interface CaptureConfig {
   readonly width: number;
   readonly height: number;
   readonly fps: number;
 }
 
+/** One timestamped RGBA frame emitted by a capture source. */
 export interface CaptureFrame {
   readonly frame: number;
   readonly timestamp: number;
   readonly bitmap: ImageBitmap | OffscreenCanvas;
 }
 
+/** Live browser capture handle that produces and releases encoded frames. */
 export interface FrameCapture {
   readonly _tag: 'FrameCapture';
   init(config: CaptureConfig): Promise<void>;
@@ -1322,6 +1390,7 @@ export interface FrameCapture {
   finalize(): Promise<CaptureResult>;
 }
 
+/** Completed capture bytes and their media metadata. */
 export interface CaptureResult {
   readonly blob: Blob;
   readonly codec: string;

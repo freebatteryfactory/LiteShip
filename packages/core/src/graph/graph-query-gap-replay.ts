@@ -18,7 +18,7 @@ import type { DocumentGraph } from './document-graph.js';
 import { Receipt, type ChainValidationError, type ReceiptEnvelope } from '../evidence/receipt.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { createGraphQueryRefreshBase, graphQueryEtag, sendGraphQuery, type GraphQueryResponse } from './graph-query.js';
-import type { StateCellStoreShape } from '../reactive/state-cell.js';
+import type { StateCellStore } from '../reactive/state-cell.js';
 import {
   applyTransition,
   discreteTransitionSubjectId,
@@ -37,7 +37,7 @@ export interface ReplayDiscreteFromPatchReceiptsOptions {
   readonly localBaseId: ContentAddress;
   readonly serverGraphId: ContentAddress;
   readonly entries: readonly PatchReceiptEntry[];
-  readonly cellStore: StateCellStoreShape;
+  readonly cellStore: StateCellStore;
   /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
   readonly applyTransition?: (transition: DiscreteStateTransition) => void;
 }
@@ -47,7 +47,7 @@ export interface GraphNativeGapReplayOptions {
   readonly queryUrl: string;
   readonly localBase: DocumentGraph;
   readonly entries: readonly PatchReceiptEntry[];
-  readonly cellStore: StateCellStoreShape;
+  readonly cellStore: StateCellStore;
   readonly adopt: (graph: DocumentGraph) => void;
   /** Typed host reflection of an applied crossing (e.g. dispatch to the DOM). */
   readonly applyTransition?: (transition: DiscreteStateTransition) => void;

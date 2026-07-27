@@ -6,6 +6,7 @@
 
 import { codeOnly } from './code-only.js';
 
+/** One test control-flow path that exits before an assertion. */
 export interface EarlyReturnMatch {
   readonly line: number;
   readonly token: string;

@@ -6,6 +6,8 @@
 
 # Type Alias: ComponentPropDef
 
-> **ComponentPropDef** = `_ComponentPropDef`
+> **ComponentPropDef** = [`ComponentPropDef`](../../../../spine/interfaces/ComponentPropDef.md)
 
-Defined in: genui/dist/types.d.ts:8
+Defined in: genui/dist/types.d.ts:10
+
+Declarative primitive-property rule in a component definition.

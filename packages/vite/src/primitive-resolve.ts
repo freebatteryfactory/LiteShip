@@ -28,7 +28,7 @@ export type { PrimitiveKind };
  * Map a {@link PrimitiveKind} to the structural type of the primitive
  * it resolves (`Boundary`, `Token`, ...).
  */
-export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
+export type Primitive<K extends PrimitiveKind> = K extends 'boundary'
   ? Boundary
   : K extends 'token'
     ? Token
@@ -41,7 +41,7 @@ export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
  * absolute path of the module it came from (surfaced in diagnostics).
  */
 export interface PrimitiveResolution<K extends PrimitiveKind> {
-  readonly primitive: PrimitiveShape<K>;
+  readonly primitive: Primitive<K>;
   readonly source: string;
 }
 
@@ -158,14 +158,14 @@ export async function resolvePrimitive<K extends PrimitiveKind>(
     // Try direct convention file: boundaries.ts / tokens.ts / etc.
     const directFile = path.join(dir, file);
     if (fileExists(directFile, diagnosticSource)) {
-      const result = await tryImportNamed<PrimitiveShape<K>>(directFile, name, tag, diagnosticSource, kind);
+      const result = await tryImportNamed<Primitive<K>>(directFile, name, tag, diagnosticSource, kind);
       if (result !== undefined) return { primitive: result, source: directFile };
     }
 
     // Try wildcard files: *.boundaries.ts / *.tokens.ts / etc.
     const wildcardFiles = findConventionFiles(dir, suffix, diagnosticSource);
     for (const wildcardFile of wildcardFiles) {
-      const result = await tryImportNamed<PrimitiveShape<K>>(wildcardFile, name, tag, diagnosticSource, kind);
+      const result = await tryImportNamed<Primitive<K>>(wildcardFile, name, tag, diagnosticSource, kind);
       if (result !== undefined) return { primitive: result, source: wildcardFile };
     }
   }

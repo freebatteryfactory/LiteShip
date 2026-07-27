@@ -76,7 +76,7 @@ Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebattery
 
 ### fromPose
 
-> `readonly` **fromPose**: `ContentAddress`
+> `readonly` **fromPose**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L93)
 
@@ -84,7 +84,7 @@ Defined in: [core/src/graph/document-graph.ts:93](https://github.com/freebattery
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 
@@ -120,6 +120,6 @@ Defined in: [core/src/graph/document-graph.ts:95](https://github.com/freebattery
 
 ### toPose
 
-> `readonly` **toPose**: `ContentAddress`
+> `readonly` **toPose**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L94)

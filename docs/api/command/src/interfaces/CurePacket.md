@@ -6,7 +6,9 @@
 
 # Interface: CurePacket
 
-Defined in: [command/src/checks/cure-packet.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L28)
+Defined in: [command/src/checks/cure-packet.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L32)
+
+Bounded failure handoff designed for deterministic agent repair.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [command/src/checks/cure-packet.ts:28](https://github.com/freebatter
 
 > `readonly` **authority**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L35)
+Defined in: [command/src/checks/cure-packet.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L39)
 
 #### checkId
 
@@ -46,7 +48,7 @@ Defined in: [command/src/checks/cure-packet.ts:35](https://github.com/freebatter
 
 > `readonly` **contract**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L43)
+Defined in: [command/src/checks/cure-packet.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L47)
 
 #### invariantIds
 
@@ -66,7 +68,7 @@ Defined in: [command/src/checks/cure-packet.ts:43](https://github.com/freebatter
 
 > `readonly` **editBoundary**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L65)
+Defined in: [command/src/checks/cure-packet.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L69)
 
 #### allowedOwners
 
@@ -82,7 +84,7 @@ Defined in: [command/src/checks/cure-packet.ts:65](https://github.com/freebatter
 
 > `readonly` **evidence**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L60)
+Defined in: [command/src/checks/cure-packet.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L64)
 
 #### artifacts
 
@@ -102,7 +104,7 @@ Defined in: [command/src/checks/cure-packet.ts:60](https://github.com/freebatter
 
 > `readonly` **finding**: [`Finding`](../../../liteship/src/evidence/interfaces/Finding.md)
 
-Defined in: [command/src/checks/cure-packet.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L48)
+Defined in: [command/src/checks/cure-packet.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L52)
 
 ***
 
@@ -110,7 +112,7 @@ Defined in: [command/src/checks/cure-packet.ts:48](https://github.com/freebatter
 
 > `readonly` **observation**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L56)
+Defined in: [command/src/checks/cure-packet.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L60)
 
 #### actual
 
@@ -124,9 +126,9 @@ Defined in: [command/src/checks/cure-packet.ts:56](https://github.com/freebatter
 
 ### packetId
 
-> `readonly` **packetId**: `IntegrityDigest`
+> `readonly` **packetId**: [`IntegrityDigest`](../../../spine/type-aliases/IntegrityDigest.md)
 
-Defined in: [command/src/checks/cure-packet.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L30)
+Defined in: [command/src/checks/cure-packet.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L34)
 
 ***
 
@@ -134,7 +136,7 @@ Defined in: [command/src/checks/cure-packet.ts:30](https://github.com/freebatter
 
 > `readonly` **prompt**: `string`
 
-Defined in: [command/src/checks/cure-packet.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L70)
+Defined in: [command/src/checks/cure-packet.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L74)
 
 ***
 
@@ -142,7 +144,7 @@ Defined in: [command/src/checks/cure-packet.ts:70](https://github.com/freebatter
 
 > `readonly` **reproducer**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L49)
+Defined in: [command/src/checks/cure-packet.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L53)
 
 #### command
 
@@ -170,7 +172,7 @@ Defined in: [command/src/checks/cure-packet.ts:49](https://github.com/freebatter
 
 > `readonly` **schemaVersion**: `1`
 
-Defined in: [command/src/checks/cure-packet.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L29)
+Defined in: [command/src/checks/cure-packet.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L33)
 
 ***
 
@@ -178,7 +180,7 @@ Defined in: [command/src/checks/cure-packet.ts:29](https://github.com/freebatter
 
 > `readonly` **source**: `object`
 
-Defined in: [command/src/checks/cure-packet.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L31)
+Defined in: [command/src/checks/cure-packet.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L35)
 
 #### headSha
 
@@ -186,7 +188,7 @@ Defined in: [command/src/checks/cure-packet.ts:31](https://github.com/freebatter
 
 #### treeDigest
 
-> `readonly` **treeDigest**: `IntegrityDigest`
+> `readonly` **treeDigest**: [`IntegrityDigest`](../../../spine/type-aliases/IntegrityDigest.md)
 
 ***
 
@@ -194,4 +196,4 @@ Defined in: [command/src/checks/cure-packet.ts:31](https://github.com/freebatter
 
 > `readonly` **verification**: readonly `string`[]
 
-Defined in: [command/src/checks/cure-packet.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L69)
+Defined in: [command/src/checks/cure-packet.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L73)

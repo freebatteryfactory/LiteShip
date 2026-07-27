@@ -26,10 +26,10 @@ import { resolve, join, dirname } from 'node:path';
 import {
   buildRepoIR,
   withRepoRoot,
-  liteshipDevopsProfile,
   resolveDevopsProfile,
   type DevopsProfile,
 } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 import { liteshipRegexOracle } from '../../../packages/cli/src/lib/repo-ir-gauntlet.js';
 import {
   noBareThrowGate,

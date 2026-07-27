@@ -8,7 +8,9 @@
 
 > **partitionAllowlistedFindings**(`findings`, `profile`): `object`
 
-Defined in: [audit/src/shared.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L282)
+Defined in: [audit/src/shared.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L293)
+
+Partition raw findings through only the allowlist supplied by the host profile.
 
 ## Parameters
 

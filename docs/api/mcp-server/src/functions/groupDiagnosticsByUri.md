@@ -8,7 +8,7 @@
 
 > **groupDiagnosticsByUri**(`findings`, `workspaceRootUri?`): readonly `object`[]
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L134)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L136)
 
 Group a flat finding list into `PublishDiagnosticsParams`-shaped buckets keyed
 by file URI. Findings with no location are dropped (they cannot anchor to a

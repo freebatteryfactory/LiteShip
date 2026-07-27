@@ -6,7 +6,7 @@
 
 # Variable: IntegrityDigest
 
-> **IntegrityDigest**: (`value`) => `IntegrityDigest`
+> **IntegrityDigest**: (`value`) => [`IntegrityDigest`](../../../spine/type-aliases/IntegrityDigest.md)
 
 Defined in: [core/src/schema/brands.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L48)
 
@@ -20,7 +20,7 @@ Wrap a plain string as an IntegrityDigest.
 
 ## Returns
 
-`IntegrityDigest`
+[`IntegrityDigest`](../../../spine/type-aliases/IntegrityDigest.md)
 
 ## Throws
 

@@ -80,6 +80,7 @@ function scan(context: GateContext): readonly Finding[] {
  */
 export const noConsoleLogGate: Gate = defineGate({
   id: 'downstream/no-console-log',
+  extension: { namespace: 'downstream', owner: '@acme/gauntlet-rules' },
   level: 'L2',
   describe: 'Downstream rule: no `console.log(...)` in shipped source — route diagnostics through the structured logger.',
   run: scan,

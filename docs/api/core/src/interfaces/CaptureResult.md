@@ -30,7 +30,7 @@ Defined in: [core/src/evidence/capture.ts:45](https://github.com/freebatteryfact
 
 ### durationMs
 
-> `readonly` **durationMs**: `Millis`
+> `readonly` **durationMs**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [core/src/evidence/capture.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/capture.ts#L47)
 

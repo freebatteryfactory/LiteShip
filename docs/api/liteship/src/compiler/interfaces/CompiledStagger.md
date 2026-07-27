@@ -38,6 +38,6 @@ Defined in: compiler/dist/stagger-compile.d.ts:19
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: compiler/dist/stagger-compile.d.ts:21

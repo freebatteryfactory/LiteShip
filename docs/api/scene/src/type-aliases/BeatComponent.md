@@ -6,7 +6,7 @@
 
 # Type Alias: BeatComponent
 
-> **BeatComponent** = `_BeatComponent`
+> **BeatComponent** = [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)
 
 Defined in: [scene/src/beat-binding-capsule.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-binding-capsule.ts#L30)
 

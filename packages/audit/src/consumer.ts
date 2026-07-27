@@ -1,15 +1,10 @@
 /**
- * Consumer-mode profile factory — audit the `@liteship/*` packages INSTALLED in a
- * downstream repo's node_modules instead of a monorepo `packages/*` layout.
+ * Consumer-mode profile factory — audit packages named by an injected profile
+ * inside a downstream repo's node_modules instead of a monorepo layout.
  *
- * Every LiteShip package declares its analyzable shipped artifacts through the
- * generated package-topology projection (TypeScript source trees for ordinary packages,
- * `*.d.ts` for the types-only spine). A discovered package that matches none of
- * its declared artifacts is unverified, never clean. Discovery is a directory walk,
- * not module resolution:
- * no @liteship package exports `./package.json`, and `@liteship/_spine` carries a
- * types-only export map, so `require.resolve`/`import.meta.resolve` throw
- * `ERR_PACKAGE_PATH_NOT_EXPORTED` before ever finding a root.
+ * A discovered package that matches none of its declared artifacts is
+ * unverified, never clean. Discovery is a directory walk rather than module
+ * resolution because packages need not export `./package.json`.
  *
  * pnpm hides transitive dependencies inside the virtual store
  * (`node_modules/.pnpm/<pkg>@<v>/node_modules/...`), so the walk seeds from
@@ -22,17 +17,9 @@ import { existsSync, realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { IoError } from '@liteship/error';
 import { normalizeRepoPath } from './policy.js';
-import { liteshipDevopsProfile, type DevopsProfile } from './devops-profile.js';
-import { GENERATED_LITESHIP_PACKAGE_ROSTER } from './package-catalog.generated.js';
+import type { DevopsProfile } from './devops-profile.js';
 
-/**
- * The dependency-ordered scoped fleet projection authored in
- * `scripts/package-catalog.ts`. Manifests remain the independent packaging
- * oracle; this public wrapper preserves the established `readonly string[]`
- * API while the generated tuple preserves exact values internally.
- */
-export const LITESHIP_PACKAGE_ROSTER: readonly string[] = GENERATED_LITESHIP_PACKAGE_ROSTER;
-
+/** Files and package manifests discovered in an external consumer project. */
 export interface ConsumerDiscovery {
   /** Package name → absolute (realpath'd, normalized) package root. */
   readonly packageRoots: Readonly<Record<string, string>>;
@@ -66,9 +53,9 @@ function findPackageFromSeed(seedDir: string, packageName: string): string | nul
 /**
  * Discover the installed roots of `packageNames` reachable from `cwd`.
  * BFS to fixpoint: each found package's realpath becomes a new seed, which
- * is what surfaces pnpm's hidden transitive `@liteship/*` dependencies (they
+ * is what surfaces pnpm's hidden transitive scoped dependencies (they
  * live next to their importer inside the virtual store, not under the
- * project's top-level `node_modules/@liteship`).
+ * project's top-level `node_modules`).
  */
 export function discoverInstalledPackageRoots(cwd: string, packageNames: readonly string[]): ConsumerDiscovery {
   const wanted = [...packageNames].sort((a, b) => a.localeCompare(b));
@@ -113,18 +100,15 @@ export function discoverInstalledPackageRoots(cwd: string, packageNames: readonl
 }
 
 /**
- * Build a consumer-mode profile: the base profile (LiteShip's by default)
- * re-rooted at `cwd` with `packageRoots` resolved from the installed
- * `@liteship/*` packages. Packages from the topology that aren't installed are
+ * Build a consumer-mode profile: the explicit base profile re-rooted at `cwd`
+ * with `packageRoots` resolved from the installed packages. Packages from the
+ * topology that aren't installed are
  * simply absent — a consumer audits what it actually ships — and the same
  * principle prunes the host-surface policy: a consumer that doesn't install
  * the astro/vite host packages should not eat `*-missing` errors for
  * surfaces it never shipped.
  */
-export function consumerDevopsProfile(
-  cwd: string = process.cwd(),
-  base: DevopsProfile = liteshipDevopsProfile,
-): DevopsProfile {
+export function consumerDevopsProfile(cwd: string, base: DevopsProfile): DevopsProfile {
   const discovery = discoverInstalledPackageRoots(cwd, Object.keys(base.packageTopology));
   const astroInstalled = !base.surfacePolicy.astroPackage || base.surfacePolicy.astroPackage in discovery.packageRoots;
   const viteInstalled = !base.surfacePolicy.vitePackage || base.surfacePolicy.vitePackage in discovery.packageRoots;

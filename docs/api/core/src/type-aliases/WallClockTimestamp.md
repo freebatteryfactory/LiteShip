@@ -6,7 +6,7 @@
 
 # Type Alias: WallClockTimestamp
 
-> **WallClockTimestamp** = `_WallClockTimestamp`
+> **WallClockTimestamp** = [`WallClockTimestamp`](../../../spine/type-aliases/WallClockTimestamp.md)
 
 Defined in: [core/src/authoring/command.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L37)
 

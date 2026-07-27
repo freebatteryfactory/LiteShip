@@ -8,6 +8,6 @@
 
 > `const` **LITESHIP\_CHECK\_METHOD**: `"liteship/check"` = `LSP_METHOD.check`
 
-Defined in: [mcp-server/src/lsp/server.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L105)
+Defined in: [mcp-server/src/lsp/server.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L114)
 
 The custom request an editor extension sends to trigger a gauntlet run + diagnostic publish.

@@ -71,7 +71,7 @@ const CONTROL_BYTES = 16;
  * ring buffer backed by `SharedArrayBuffer`. Created by
  * {@link SPSCRing.attachProducer} or {@link SPSCRing.attachConsumer}.
  */
-export interface SPSCRingBufferShape {
+export interface SPSCRing {
   /**
    * Push a data slot into the ring buffer.
    * Returns `false` if the buffer is full (non-blocking).
@@ -100,9 +100,9 @@ export interface SPSCRingPair {
   /** The shared buffer carrying the control header + data slots. Transfer this to the Worker. */
   readonly buffer: SharedArrayBuffer;
   /** Producer-side handle (push-only). */
-  readonly producer: SPSCRingBufferShape;
+  readonly producer: SPSCRing;
   /** Consumer-side handle (pop-only). */
-  readonly consumer: SPSCRingBufferShape;
+  readonly consumer: SPSCRing;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +176,7 @@ function _makeRing(
   slotCount: number,
   slotSize: number,
   role: 'producer' | 'consumer',
-): SPSCRingBufferShape {
+): SPSCRing {
   assertRingGeometry(slotCount, slotSize);
   const control = new Int32Array(sab, 0, 2);
   const data = new Float64Array(sab, CONTROL_BYTES);
@@ -342,9 +342,9 @@ function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
  * @param sab       - The SharedArrayBuffer from the main thread
  * @param slotCount - Optional; validated against the buffer header (a mismatch throws)
  * @param slotSize  - Optional; validated against the buffer header (a mismatch throws)
- * @returns A producer-side {@link SPSCRingBufferShape}
+ * @returns A producer-side {@link SPSCRing}
  */
-function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape {
+function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRing {
   const geometry = _readGeometry(sab, 'attachProducer', slotCount, slotSize);
   return _makeRing(sab, geometry.slotCount, geometry.slotSize, 'producer');
 }
@@ -368,9 +368,9 @@ function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: 
  * @param sab       - The SharedArrayBuffer shared with the producer
  * @param slotCount - Optional; validated against the buffer header (a mismatch throws)
  * @param slotSize  - Optional; validated against the buffer header (a mismatch throws)
- * @returns A consumer-side {@link SPSCRingBufferShape}
+ * @returns A consumer-side {@link SPSCRing}
  */
-function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape {
+function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRing {
   const geometry = _readGeometry(sab, 'attachConsumer', slotCount, slotSize);
   return _makeRing(sab, geometry.slotCount, geometry.slotSize, 'consumer');
 }
@@ -415,4 +415,3 @@ export const SPSCRing = {
 } as const;
 
 /** Public structural type for `SPSCRing`. */
-export type SPSCRing = SPSCRingBufferShape;

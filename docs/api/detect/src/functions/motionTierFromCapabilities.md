@@ -6,7 +6,7 @@
 
 # Function: motionTierFromCapabilities()
 
-> **motionTierFromCapabilities**(`caps`): `MotionTier`
+> **motionTierFromCapabilities**(`caps`): [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [detect/src/tiers.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/tiers.ts#L104)
 
@@ -26,4 +26,4 @@ that did not come from a `detect()` sweep (capsule/edge consumers).
 
 ## Returns
 
-`MotionTier`
+[`MotionTier`](../../../spine/type-aliases/MotionTier.md)

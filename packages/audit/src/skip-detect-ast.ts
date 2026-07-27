@@ -1299,6 +1299,7 @@ export interface EarlyReturnMatch {
   readonly token: string;
 }
 
+/** Find test branches that can return before reaching an assertion. */
 export function detectEarlyReturnBeforeExpectAST(source: string): readonly EarlyReturnMatch[] {
   const sourceFile = ts.createSourceFile(
     'early-return-scan.tsx',

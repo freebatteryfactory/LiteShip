@@ -6,9 +6,9 @@
 
 # Variable: WorkerHost
 
-> `const` **WorkerHost**: `object`
+> **WorkerHost**: `object`
 
-Defined in: [worker/src/host.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/host.ts#L242)
+Defined in: [worker/src/host.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/host.ts#L73)
 
 `WorkerHost` -- main-thread lifecycle wrapper that owns a
 [CompositorWorker](CompositorWorker.md) and (optionally) a
@@ -22,18 +22,18 @@ Typical flow:
 3. `host.startRender(videoConfig)` / `host.stopRender()` to control
    the render loop.
 4. `host.onState(cb)` to subscribe to composite state updates.
-5. `host.dispose()` when the host is unmounted -- releases both
+5. `await host.dispose()` when the host is unmounted -- releases both
    workers and every subscription.
 
 ## Type Declaration
 
 ### create
 
-> `readonly` **create**: (`config?`, `startupTelemetry?`) => [`WorkerHostShape`](../interfaces/WorkerHostShape.md) = `_createWorkerHost`
+> `readonly` **create**: (`config?`, `startupTelemetry?`) => [`WorkerHost`](../interfaces/WorkerHost.md) = `_createWorkerHost`
 
 Create a worker host. The compositor worker starts immediately; the
 render worker is created lazily on the first
-[WorkerHostShape.attachCanvas](../interfaces/WorkerHostShape.md#attachcanvas) call.
+[WorkerHost.attachCanvas](../interfaces/WorkerHost.md#attachcanvas) call.
 
 #### Parameters
 
@@ -47,7 +47,7 @@ render worker is created lazily on the first
 
 #### Returns
 
-[`WorkerHostShape`](../interfaces/WorkerHostShape.md)
+[`WorkerHost`](../interfaces/WorkerHost.md)
 
 ## Example
 
@@ -61,5 +61,5 @@ host.startRender({ durationMs: 5000 });
 const unsub = host.onState((state) => console.log(state.discrete));
 // ...
 unsub();
-host.dispose();
+await host.dispose();
 ```

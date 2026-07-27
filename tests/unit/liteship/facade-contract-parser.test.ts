@@ -61,6 +61,9 @@ describe('facade role-contract parser', () => {
     ['empty field', (entry: Record<string, unknown>) => (entry.userStory = '   ')],
     ['foreign field', (entry: Record<string, unknown>) => (entry.foreign = 'not governed')],
     ['ineligible role', (entry: Record<string, unknown>) => (entry.role = 'tooling')],
+    ['uninhabited surface class', (entry: Record<string, unknown>) => (entry.surfaceClass = 'absent')],
+    ['missing producer', (entry: Record<string, unknown>) => (entry.producer = '')],
+    ['invalid example proof', (entry: Record<string, unknown>) => (entry.exampleProof = 'README.md')],
   ])('rejects a root contract with an %s', (_name, mutate) => {
     const entries = JSON.parse(ROOT_EXPORT_CONTRACT_SOURCE) as Array<Record<string, unknown>>;
     mutate(entries[0]!);
@@ -72,6 +75,8 @@ describe('facade role-contract parser', () => {
     ['path traversal', (entry: Record<string, unknown>) => (entry.subpath = './../private')],
     ['unscoped owner', (entry: Record<string, unknown>) => (entry.owner = 'other/core')],
     ['empty proof symbol', (entry: Record<string, unknown>) => (entry.symbol = '')],
+    ['uninhabited route class', (entry: Record<string, unknown>) => (entry.surfaceClass = 'absent')],
+    ['foreign producer', (entry: Record<string, unknown>) => (entry.producer = 'foreign-package')],
   ])('rejects a subpath contract with %s', (_name, mutate) => {
     const entries = JSON.parse(FACADE_SUBPATH_CONTRACT_SOURCE) as Array<Record<string, unknown>>;
     mutate(entries[0]!);

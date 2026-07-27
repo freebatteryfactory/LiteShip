@@ -51,6 +51,6 @@ Defined in: web/dist/types.d.ts:306
 
 ### timeout?
 
-> `readonly` `optional` **timeout?**: `Millis`
+> `readonly` `optional` **timeout?**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: web/dist/types.d.ts:308

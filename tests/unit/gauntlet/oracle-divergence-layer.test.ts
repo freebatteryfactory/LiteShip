@@ -189,6 +189,7 @@ describe('the factory is generic — an ad-hoc instance over an arbitrary proper
   it('a brand-new property gate built from the factory self-proves (the LAYER, not a one-off)', () => {
     const gate: Gate = makeOracleDivergenceGate({
       gateId: 'test/synthetic-divergence',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       property: 'synthetic-property',
       excludedMarkerProperty: 'synthetic-check-excluded',
       level: 'L1',

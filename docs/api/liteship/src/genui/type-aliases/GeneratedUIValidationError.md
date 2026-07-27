@@ -6,6 +6,8 @@
 
 # Type Alias: GeneratedUIValidationError
 
-> **GeneratedUIValidationError** = `_GeneratedUIValidationError`
+> **GeneratedUIValidationError** = [`GeneratedUIValidationError`](../../../../spine/interfaces/GeneratedUIValidationError.md)
 
-Defined in: genui/dist/types.d.ts:11
+Defined in: genui/dist/types.d.ts:16
+
+Stable refusal emitted while validating a generated UI tree.

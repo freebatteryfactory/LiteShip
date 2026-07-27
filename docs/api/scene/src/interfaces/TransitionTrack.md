@@ -36,7 +36,7 @@ Defined in: [scene/src/contract.ts:93](https://github.com/freebatteryfactory/Lit
 
 ### ease?
 
-> `readonly` `optional` **ease?**: `EaseTag`
+> `readonly` `optional` **ease?**: [`EaseTag`](../../../spine/type-aliases/EaseTag.md)
 
 Defined in: [scene/src/contract.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L95)
 

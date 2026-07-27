@@ -10,12 +10,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { normalizeRepoPath } from './policy.js';
-import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { listProfilePackageManifests, partitionAllowlistedFindings, relativeToRoot } from './shared.js';
 import type { PackageManifestInfo } from './shared.js';
 import type { AuditFinding, AuditSectionResult } from './types.js';
 
+/** Aggregate public-surface audit evidence. */
 export interface SurfaceSummary {
   readonly packageCount: number;
   readonly packageExportCount: number;
@@ -76,7 +76,8 @@ function astroDirectiveSourcePath(astroPackage: PackageManifestInfo, directive: 
   return normalizeRepoPath(resolve(astroPackage.dir, candidate));
 }
 
-export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<SurfaceSummary> {
+/** Execute the public-surface pass under one fully injected profile. */
+export function runSurfaceAudit(profile: DevopsProfile): AuditSectionResult<SurfaceSummary> {
   const root = profile.repoRoot;
   const { surfacePolicy } = profile;
   // Absent surface-policy fields mean "this profile never declared that

@@ -11,8 +11,10 @@
 import type { IntegrityDigest as IntegrityDigestValue } from '@liteship/core';
 import type { Finding } from '@liteship/gauntlet';
 
+/** Reproduction mechanism carried by a machine-readable cure packet. */
 export type CureReproducerKind = 'command' | 'fixture' | 'seed' | 'schedule' | 'benchmark';
 
+/** Exact reproducer identity and invocation for one failure. */
 export interface CureReproducerInput {
   readonly kind: CureReproducerKind;
   readonly seed?: string;
@@ -20,11 +22,13 @@ export interface CureReproducerInput {
   readonly schedule?: readonly unknown[];
 }
 
+/** Content-addressed artifact attached to a cure packet. */
 export interface CureArtifact {
   readonly path: string;
   readonly digest: IntegrityDigestValue;
 }
 
+/** Bounded failure handoff designed for deterministic agent repair. */
 export interface CurePacket {
   readonly schemaVersion: 1;
   readonly packetId: IntegrityDigestValue;
@@ -70,6 +74,7 @@ export interface CurePacket {
   readonly prompt: string;
 }
 
+/** Inputs required to mint a validated cure packet. */
 export interface CurePacketInput {
   readonly headSha: string;
   readonly treeDigest: IntegrityDigestValue;

@@ -6,7 +6,7 @@
 
 # Type Alias: BeatMarkerSet
 
-> **BeatMarkerSet** = `_BeatMarkerSet`
+> **BeatMarkerSet** = [`BeatMarkerSet`](../../../spine/interfaces/BeatMarkerSet.md)
 
 Defined in: [assets/src/analysis/beat-markers.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L23)
 

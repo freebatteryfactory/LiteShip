@@ -6,9 +6,9 @@
 
 # Variable: LLMAdapter
 
-> `const` **LLMAdapter**: `object`
+> **LLMAdapter**: `object`
 
-Defined in: [web/src/stream/llm-adapter.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L180)
+Defined in: [web/src/stream/llm-adapter.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L57)
 
 LLM adapter namespace.
 
@@ -42,7 +42,7 @@ readonly [`LLMChunk`](../interfaces/LLMChunk.md)[]
 
 ### create
 
-> **create**: (`config`) => [`LLMAdapterShape`](../interfaces/LLMAdapterShape.md) = `_create`
+> **create**: (`config`) => [`LLMAdapter`](../interfaces/LLMAdapter.md) = `_create`
 
 Create an LLM adapter that normalizes any LLM streaming API into typed
 chunk and text-token streams.
@@ -61,9 +61,9 @@ Stream source and parser configuration
 
 #### Returns
 
-[`LLMAdapterShape`](../interfaces/LLMAdapterShape.md)
+[`LLMAdapter`](../interfaces/LLMAdapter.md)
 
-An [LLMAdapterShape](../interfaces/LLMAdapterShape.md) with `chunks` and `textTokens` AsyncIterables
+An LLMAdapter with `chunks` and `textTokens` AsyncIterables
 
 #### Example
 

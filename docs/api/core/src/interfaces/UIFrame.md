@@ -41,7 +41,7 @@ Defined in: [core/src/media/gen-frame.ts:44](https://github.com/freebatteryfacto
 
 ### receiptId
 
-> `readonly` **receiptId**: `ContentAddress`
+> `readonly` **receiptId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/media/gen-frame.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/gen-frame.ts#L47)
 

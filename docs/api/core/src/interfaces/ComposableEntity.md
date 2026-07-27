@@ -37,6 +37,6 @@ Defined in: [core/src/authoring/composable.ts:43](https://github.com/freebattery
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/composable.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L42)

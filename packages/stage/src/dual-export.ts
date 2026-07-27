@@ -46,6 +46,7 @@ import {
   TypedRef,
   HLC,
   defineBoundary,
+  Diagnostics,
 } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { CSSCompiler } from '@liteship/compiler';
@@ -360,7 +361,17 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   } finally {
     // The compositor's one disposable resource is its reactive `changes` kernel;
     // dispose closes it synchronously (its finalizer is sync) once the cast ends.
-    void compositor.dispose();
+    // `exportVideo` remains deliberately synchronous, so observe the Promise's
+    // error channel explicitly instead of creating a fire-and-forget rejection.
+    const disposal = compositor.dispose();
+    void disposal.catch((cause: unknown) => {
+      Diagnostics.error({
+        source: 'liteship/stage.dual-export',
+        code: 'owned-resource-dispose-failed',
+        message: 'Stage compositor disposal failed after producing video frames.',
+        cause,
+      });
+    });
   }
 }
 

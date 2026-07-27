@@ -14,7 +14,6 @@
 
 import { StateName as mkStateName, type StateName } from '../schema/brands.js';
 import { RuntimeCoordinator } from './runtime-coordinator.js';
-import type { RuntimeCoordinatorShape } from './runtime-coordinator.js';
 import { Diagnostics } from '../evidence/diagnostics.js';
 import { ValidationError } from '@liteship/error';
 
@@ -75,21 +74,21 @@ interface RegisteredCell {
   continuousValue?: number;
 }
 
-/** Options for {@link StateCellStoreShape.register}. */
+/** Options for {@link StateCellStore.register}. */
 export interface StateCellRegisterOptions {
   readonly authority?: StateAuthority;
   readonly kind?: StateCellKind;
 }
 
-/** Options for {@link StateCellStoreShape.projectionState}. */
+/** Options for {@link StateCellStore.projectionState}. */
 export interface ProjectionStateOptions {
   readonly quantizerNames?: readonly string[];
   readonly resolution?: StateResolutionReceipt;
 }
 
 /** Live store — coarse authority registry over a {@link RuntimeCoordinator}. */
-export interface StateCellStoreShape {
-  readonly runtime: RuntimeCoordinatorShape;
+export interface StateCellStore {
+  readonly runtime: RuntimeCoordinator;
   register(name: string, states: readonly string[], options?: StateCellRegisterOptions): void;
   unregister(name: string): void;
   applyDiscrete(name: string, state: string, authority?: StateAuthority): StateCell;
@@ -125,7 +124,7 @@ function makeCell(
   }) as StateCell;
 }
 
-function _createStore(runtime?: RuntimeCoordinatorShape): StateCellStoreShape {
+function _createStore(runtime?: RuntimeCoordinator): StateCellStore {
   const coordinator = runtime ?? RuntimeCoordinator.create();
   const registry = new Map<string, RegisteredCell>();
 
@@ -381,4 +380,3 @@ export declare namespace ProjectionState {
 }
 
 /** Public structural type for `StateCellStore`. */
-export type StateCellStore = StateCellStoreShape;

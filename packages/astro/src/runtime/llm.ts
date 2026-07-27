@@ -6,6 +6,7 @@ import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { bootDirectiveEntry } from './directive-bound.js';
+import { disposeOwnedResourceFromEvent } from './owned-disposal.js';
 
 const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-liteship-target="[-:A-Za-z0-9_]+"\])$/;
 
@@ -226,7 +227,7 @@ function resolveLLMTarget(element: HTMLElement, selector: string | null): HTMLEl
  * LLM session on `element`. Reads `data-liteship-llm-url` (plus optional
  * target / mode attributes), validates it against the runtime
  * endpoint policy, opens an SSE stream, and drives an
- * {@link LLMSessionShape} to completion.
+ * {@link LLMSession} to completion.
  */
 export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElement): void {
   const endpointPolicy = readRuntimeEndpointPolicy();
@@ -315,7 +316,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
 
   const cleanup = (): void => {
     cleanupSource();
-    session.dispose();
+    disposeOwnedResourceFromEvent(session, 'llm');
   };
 
   const handleDisconnect = (): void => {

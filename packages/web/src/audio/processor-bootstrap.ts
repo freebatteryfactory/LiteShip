@@ -11,7 +11,7 @@
  * @module
  */
 
-import type { AVBridge } from '@liteship/core';
+import { Lifetime, attachLifetime, type AVBridge } from '@liteship/core';
 import type { AudioProcessor } from './processor.js';
 
 const PROCESSOR_SOURCE = /* js */ `
@@ -84,48 +84,44 @@ export async function createAudioProcessor(context: AudioContext, bridge: AVBrid
     outputChannelCount: [2],
   });
 
-  // Disposal is a one-way ownership transition. Claim it before touching any
-  // external surface so a throwing worklet port or graph node cannot leave the
-  // processor callable under an already-partially-released identity.
-  let disposed = false;
-
-  return {
-    node,
-    bridge,
-
-    start() {
-      if (disposed) return;
-      bridge.setRunning(true);
-      node.port.postMessage('start');
-    },
-
-    stop() {
-      if (disposed) return;
-      bridge.setRunning(false);
-      node.port.postMessage('stop');
-    },
-
-    dispose() {
-      if (disposed) return;
-      disposed = true;
-
-      // Teardown is attempt-all: one hostile host operation must not strand the
-      // remaining owned resource. Surface every failure only after the bridge,
-      // worklet, and audio graph have each received their release attempt.
-      const errors: unknown[] = [];
-      const attempt = (operation: () => void): void => {
-        try {
-          operation();
-        } catch (error) {
-          errors.push(error);
-        }
-      };
-      attempt(() => bridge.setRunning(false));
-      attempt(() => node.port.postMessage('stop'));
-      attempt(() => node.disconnect());
-      if (errors.length > 0) {
-        throw new AggregateError(errors, 'AudioProcessor disposal failed after attempting every teardown step');
+  const lifetime = Lifetime.make();
+  lifetime.add(() => {
+    // Teardown is attempt-all: one hostile host operation must not strand the
+    // remaining owned resource. The Lifetime promise is the error channel; all
+    // three synchronous release attempts still run before dispose() returns.
+    const errors: unknown[] = [];
+    const attempt = (operation: () => void): void => {
+      try {
+        operation();
+      } catch (error) {
+        errors.push(error);
       }
+    };
+    attempt(() => bridge.setRunning(false));
+    attempt(() => node.port.postMessage('stop'));
+    attempt(() => node.disconnect());
+    if (errors.length > 0) {
+      throw new AggregateError(errors, 'AudioProcessor disposal failed after attempting every teardown step');
+    }
+  });
+
+  return attachLifetime(
+    {
+      node,
+      bridge,
+
+      start() {
+        if (lifetime.disposed) return;
+        bridge.setRunning(true);
+        node.port.postMessage('start');
+      },
+
+      stop() {
+        if (lifetime.disposed) return;
+        bridge.setRunning(false);
+        node.port.postMessage('stop');
+      },
     },
-  };
+    lifetime,
+  );
 }

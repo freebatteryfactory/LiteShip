@@ -8,6 +8,6 @@
 
 > **Parser** = [`ChunkParser`](../../../type-aliases/ChunkParser.md)
 
-Defined in: web/dist/stream/llm-adapter.d.ts:120
+Defined in: web/dist/stream/llm-adapter.d.ts:119
 
 User-provided chunk-parser function.

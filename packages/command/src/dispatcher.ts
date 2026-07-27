@@ -16,6 +16,7 @@ import {
 } from './registry.js';
 import type { CommandMap } from './catalog.js';
 
+/** Structured command dispatcher built from the canonical command registry. */
 export interface CommandDispatcher {
   /**
    * Resolve an invocation against the registry and run its handler. Generic over

@@ -6,7 +6,7 @@
 
 # Type Alias: TrackId\<K\>
 
-> **TrackId**\<`K`\> = `_TrackId`\<`K`\>
+> **TrackId**\<`K`\> = [`TrackId`](../../../spine/type-aliases/TrackId.md)\<`K`\>
 
 Defined in: [scene/src/contract.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L32)
 

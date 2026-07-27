@@ -444,6 +444,7 @@ describe('liteship facade — root export budget (exact match + caps)', () => {
 describe('gauntlet/facade-export-budget — exact-match gate (both directions)', () => {
   const BUDGET_FILE = 'packages/liteship/src/export-budget.ts';
   const ROOT_DTS_FILE = 'packages/liteship/dist/index.d.ts';
+  const ROOT_SOURCE_FILE = 'packages/liteship/src/index.ts';
   const entry = (name: string, kind: 'value' | 'type', role = 'authoring') => ({
     name,
     kind,
@@ -454,6 +455,12 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
     failureContract: `${name} fails explicitly.`,
     example: name,
     stability: 'stable',
+    audience: 'application-author',
+    producer: '@liteship/core',
+    surfaceClass: 'paved-road',
+    relatedInvariant: 'INV-FACADE-EXPORT-BUDGET',
+    replacement: 'none',
+    exampleProof: 'tests/unit/liteship/facade-inhabitation.test.ts',
   });
   const source = (entries: readonly object[]): string =>
     `export const ROOT_EXPORT_CONTRACT_SOURCE = \`${JSON.stringify(entries)}\`;`;
@@ -474,6 +481,8 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
       [BUDGET_FILE]: FIXTURE_BUDGET,
       [ROOT_DTS_FILE]:
         "export { alpha } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\nexport declare const beta: number;\n",
+      [ROOT_SOURCE_FILE]:
+        "export { alpha, beta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
     });
     expect(facadeExportBudgetGate.run(ctx)).toEqual([]);
   });
@@ -483,6 +492,8 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
       [BUDGET_FILE]: FIXTURE_BUDGET,
       [ROOT_DTS_FILE]:
         "export { alpha, zeta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\nexport declare const beta: number;\n",
+      [ROOT_SOURCE_FILE]:
+        "export { alpha, beta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
     });
     const findings = facadeExportBudgetGate.run(ctx);
     expect(findings.some((f) => f.detail.includes('zeta') && f.title.includes('outside the facade budget'))).toBe(true);
@@ -493,6 +504,8 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
       [BUDGET_FILE]: FIXTURE_BUDGET,
       // `beta` is listed in the budget but NOT exported by the surface.
       [ROOT_DTS_FILE]: "export { alpha } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
+      [ROOT_SOURCE_FILE]:
+        "export { alpha, beta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
     });
     const findings = facadeExportBudgetGate.run(ctx);
     expect(findings.some((f) => f.detail.includes('beta') && f.title.includes('dropped'))).toBe(true);
@@ -502,15 +515,34 @@ describe('gauntlet/facade-export-budget — exact-match gate (both directions)',
     const ctx = memoryContext({
       [BUDGET_FILE]: source([entry('alpha', 'value', 'tooling')]),
       [ROOT_DTS_FILE]: 'export declare const alpha: number;\n',
+      [ROOT_SOURCE_FILE]: "export { alpha } from '@liteship/core';\n",
     });
     expect(facadeExportBudgetGate.run(ctx).some((finding) => finding.title.includes('role-ineligible'))).toBe(true);
+  });
+
+  it('a listed symbol with no binding from its declared producer reds', () => {
+    const entries = [entry('alpha', 'value')];
+    const findings = facadeExportBudgetGate.run(
+      memoryContext({
+        [BUDGET_FILE]: source(entries),
+        [ROOT_DTS_FILE]: 'export declare const alpha: number;\n',
+        [ROOT_SOURCE_FILE]: "export { alpha } from '@liteship/error';\n",
+      }),
+    );
+    expect(findings.some((finding) => finding.detail.includes('declared producer'))).toBe(true);
   });
 
   it('a role-eligible exact surface still reds when it exceeds the numeric cap', () => {
     const entries = Array.from({ length: 31 }, (_, index) => entry(`value${index}`, 'value'));
     const dts = entries.map((item) => `export declare const ${item.name}: number;`).join('\n');
     const findings = facadeExportBudgetGate.run(
-      memoryContext({ [BUDGET_FILE]: source(entries), [ROOT_DTS_FILE]: dts }),
+      memoryContext({
+        [BUDGET_FILE]: source(entries),
+        [ROOT_DTS_FILE]: dts,
+        [ROOT_SOURCE_FILE]: entries
+          .map((item) => `export { ${item.name} } from '${item.producer}';`)
+          .join('\n'),
+      }),
     );
     expect(findings.some((finding) => finding.title.includes('cap exceeded'))).toBe(true);
   });

@@ -26,8 +26,8 @@
 
 import { describe, test, expect } from 'vitest';
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import {
   generatePackageSurface,
@@ -49,13 +49,18 @@ import {
 const SNAPSHOT_PATH = fileURLToPath(new URL('../../fixtures/api-surface-snapshot.json', import.meta.url));
 const PACKAGES_DIR = fileURLToPath(new URL('../../../packages', import.meta.url));
 
+interface WorkspaceRuntimePackage {
+  readonly version: string;
+  readonly entryFile: string;
+}
+
 /**
  * Map every workspace package NAME → its `package.json` version, read once from
  * disk (the source of truth the snapshot records). Built from the actual
  * `packages/*` directories so it can never drift from the real version stamps.
  */
-const versionByPackageName = (): Readonly<Record<string, string>> => {
-  const byName: Record<string, string> = {};
+const runtimePackageByName = (): Readonly<Record<string, WorkspaceRuntimePackage>> => {
+  const byName: Record<string, WorkspaceRuntimePackage> = {};
   for (const dir of readdirSync(PACKAGES_DIR)) {
     const manifestPath = resolve(PACKAGES_DIR, dir, 'package.json');
     let raw: string;
@@ -64,10 +69,18 @@ const versionByPackageName = (): Readonly<Record<string, string>> => {
     } catch {
       continue; // not a package directory (no manifest) — skip
     }
-    const manifest = JSON.parse(raw) as { name?: string; version?: string };
-    if (typeof manifest.name === 'string' && typeof manifest.version === 'string') {
-      byName[manifest.name] = manifest.version;
-    }
+    const manifest = JSON.parse(raw) as {
+      name?: string;
+      version?: string;
+      exports?: { readonly '.'?: { readonly import?: string } };
+    };
+    if (typeof manifest.name !== 'string' || typeof manifest.version !== 'string') continue;
+    const importTarget = manifest.exports?.['.']?.import;
+    if (typeof importTarget !== 'string') continue;
+    byName[manifest.name] = {
+      version: manifest.version,
+      entryFile: resolve(dirname(manifestPath), importTarget),
+    };
   }
   return byName;
 };
@@ -77,15 +90,18 @@ const versionByPackageName = (): Readonly<Record<string, string>> => {
  * LIVE surface snapshot.
  */
 async function computeLiveSnapshot(policy: ApiSurfacePolicy): Promise<ApiSurfaceSnapshot> {
-  const versions = versionByPackageName();
+  const runtimePackages = runtimePackageByName();
   const packages: Record<string, PackageSurface> = {};
   for (const pkg of policy.publicPackages) {
-    const moduleNamespace = (await import(/* @vite-ignore */ pkg)) as Record<string, unknown>;
-    const version = versions[pkg];
-    if (typeof version !== 'string') {
-      throw new Error(`No package.json version found for ${pkg} — cannot record it in the API snapshot`);
+    const runtimePackage = runtimePackages[pkg];
+    if (runtimePackage === undefined) {
+      throw new Error(`No importable package.json "." entry found for ${pkg} — cannot record its API surface`);
     }
-    packages[pkg] = generatePackageSurface(version, moduleNamespace);
+    const moduleNamespace = (await import(/* @vite-ignore */ pathToFileURL(runtimePackage.entryFile).href)) as Record<
+      string,
+      unknown
+    >;
+    packages[pkg] = generatePackageSurface(runtimePackage.version, moduleNamespace);
   }
   return { snapshotFormat: 1, packages };
 }

@@ -1565,7 +1565,7 @@ describe('astro shared runtime adapters', () => {
     expect(tokenBufferSpy).toHaveBeenCalledOnce();
     expect(frameSpy).toHaveBeenCalledOnce();
 
-    firstSession.dispose();
+    await firstSession.dispose();
 
     const secondSession = createLLMSession({
       element: secondHost,
@@ -1630,7 +1630,7 @@ describe('astro shared runtime adapters', () => {
     expect(doneEvents).toEqual([{ accumulated: '' }]);
   });
 
-  test('llm session avoids runtime construction on static tiers and becomes inert after dispose', () => {
+  test('llm session avoids runtime construction on static tiers and becomes inert after dispose', async () => {
     const host = document.createElement('section');
     document.body.appendChild(host);
 
@@ -1650,7 +1650,7 @@ describe('astro shared runtime adapters', () => {
     expect(frameSpy).not.toHaveBeenCalled();
     expect(host.textContent).toBe('');
 
-    session.dispose();
+    await session.dispose();
     expect(session.ingest({ type: 'text', partial: false, content: 'after dispose' })).toBe('done');
   });
 
@@ -1677,7 +1677,7 @@ describe('astro shared runtime adapters', () => {
     expect(session.ingest({ type: 'text', partial: false, content: '' })).toBe('continue');
     expect(target.textContent).toBe('');
 
-    session.dispose();
+    await session.dispose();
     session.activate();
     session.beginReconnect();
     session.reset(host);
@@ -1688,7 +1688,7 @@ describe('astro shared runtime adapters', () => {
     expect(target.textContent).toBe('');
   });
 
-  test('llm session stops ingesting once disposal happens during queued text ingestion', () => {
+  test('llm session stops ingesting once disposal happens during queued text ingestion', async () => {
     const host = document.createElement('section');
     const target = document.createElement('div');
     host.appendChild(target);
@@ -1708,15 +1708,17 @@ describe('astro shared runtime adapters', () => {
     };
     const originalPushText = controller.pipeline.pushText.bind(controller.pipeline);
 
+    let disposal: Promise<void> | undefined;
     controller.pipeline.pushText = (fragment: string) => {
       originalPushText(fragment);
-      session.dispose();
+      disposal = session.dispose();
     };
 
     session.beginReconnect();
 
     expect(session.ingest({ type: 'text', partial: false, content: 'queued' })).toBe('done');
     expect(session.state).toBe('disposed');
+    await disposal;
     expect(controller.pipeline.queuedTextFragments).toEqual([]);
     expect(target.textContent).toBe('');
   });

@@ -8,7 +8,7 @@
 
 Defined in: core/dist/reactive/state-cell.d.ts:59
 
-Options for [StateCellStoreShape.register](StateCellStoreShape.md#register).
+Options for [StateCellStore.register](StateCellStore.md#register).
 
 ## Properties
 

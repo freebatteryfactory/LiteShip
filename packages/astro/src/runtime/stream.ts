@@ -9,7 +9,7 @@ import {
   decodeDocumentGraph,
   sealGraph,
 } from '@liteship/core';
-import type { DocumentGraph, StateAuthority, StateCellKind, StateCellStoreShape } from '@liteship/core';
+import type { DocumentGraph, StateAuthority, StateCellKind } from '@liteship/core';
 import {
   Morph,
   Resumption,
@@ -32,6 +32,7 @@ import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { bootDirectiveEntry } from './directive-bound.js';
+import { disposeOwnedResourceFromEvent } from './owned-disposal.js';
 
 type Locator =
   | { readonly type: 'slot'; readonly value: string }
@@ -639,9 +640,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       onMessage: handleMessage,
       onStateChange: handleEdge,
     });
-    // The client's `close()` (EventSource close + source null + queue shutdown) is
-    // a synchronous disposer — register it as the Lifetime's finalizer.
-    next.add(() => created.close());
+    // The client's EventSource/source/queue release is registered on the parent
+    // Lifetime. Its synchronous arms still land inside dispose().
+    next.add(() => created.dispose());
     lifetime = next;
     client = created;
   };
@@ -651,15 +652,16 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       const closing = lifetime;
       lifetime = null;
       client = null;
-      // Dispose SYNCHRONOUSLY before the replacement opens: the client's `close`
+      // Claim disposal before the replacement opens: the client's source
       // finalizer closes the EventSource, nulls the primitive's `source`, and
       // shuts the queues in one pass — all synchronous, so it lands inside this
       // `dispose()` call. A frame from the old generation therefore cannot morph
       // stale HTML into the new one on reinit (P1), and SSE.create's onmessage
       // ignores any straggler whose source is no longer current (P2). The promise
-      // `dispose()` returns settles once any async finalizer settles; teardown is
-      // fire-and-forget (the sync close has already landed), so it is not awaited.
-      void closing.dispose();
+      // `dispose()` returns settles once any async finalizer settles. The DOM
+      // event cannot await, so the shared adapter observes and diagnoses a later
+      // aggregate rejection instead of dropping the Promise.
+      disposeOwnedResourceFromEvent({ dispose: () => closing.dispose() }, 'stream');
     }
   };
 
@@ -725,7 +727,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
 
-    const cellStore: StateCellStoreShape = StateCellStore.create();
+    const cellStore: StateCellStore = StateCellStore.create();
     for (const cell of cells) {
       cellStore.register(cell.name, cell.states, {
         ...(cell.kind !== undefined ? { kind: cell.kind } : {}),

@@ -6,7 +6,9 @@
 
 # Interface: CommandDispatcher
 
-Defined in: [command/src/dispatcher.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L19)
+Defined in: [command/src/dispatcher.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L20)
+
+Structured command dispatcher built from the canonical command registry.
 
 ## Methods
 
@@ -14,7 +16,7 @@ Defined in: [command/src/dispatcher.ts:19](https://github.com/freebatteryfactory
 
 > **dispatch**\<`N`\>(`invocation`, `context`): `Promise`\<[`CapsuleCommandResult`](../type-aliases/CapsuleCommandResult.md)\<`N` *extends* keyof [`CommandMap`](CommandMap.md) ? [`CommandMap`](CommandMap.md)\[`N`\] : `unknown`\>\>
 
-Defined in: [command/src/dispatcher.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L28)
+Defined in: [command/src/dispatcher.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L29)
 
 Resolve an invocation against the registry and run its handler. Generic over
 the command NAME: when `N` is a `keyof CommandMap` literal (e.g. the string

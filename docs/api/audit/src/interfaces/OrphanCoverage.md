@@ -6,7 +6,9 @@
 
 # Interface: OrphanCoverage
 
-Defined in: [audit/src/types.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L51)
+Defined in: [audit/src/types.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L56)
+
+File-level proxy evidence for orphan-export analysis.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [audit/src/types.ts:51](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **candidateCount**: `number`
 
-Defined in: [audit/src/types.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L53)
+Defined in: [audit/src/types.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L58)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [audit/src/types.ts:53](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **coverage**: `"file-proxy-only"`
 
-Defined in: [audit/src/types.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L52)
+Defined in: [audit/src/types.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L57)
 
 ***
 
@@ -30,4 +32,4 @@ Defined in: [audit/src/types.ts:52](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **note**: `string`
 
-Defined in: [audit/src/types.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L54)
+Defined in: [audit/src/types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L59)

@@ -15,7 +15,7 @@ over the HTML fragment bytes (meta excluded; same law as graph 304 validators).
 
 ### baseGraphId
 
-> `readonly` **baseGraphId**: `ContentAddress`
+> `readonly` **baseGraphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: web/dist/dpu/watch-and-prepare.d.ts:47
 
@@ -23,7 +23,7 @@ Defined in: web/dist/dpu/watch-and-prepare.d.ts:47
 
 ### digest
 
-> `readonly` **digest**: `AddressedDigest`
+> `readonly` **digest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: web/dist/dpu/watch-and-prepare.d.ts:49
 
@@ -49,6 +49,6 @@ Stable logical marker name (from `nodeLogicalKey`), never a node id.
 
 ### resultGraphId
 
-> `readonly` **resultGraphId**: `ContentAddress`
+> `readonly` **resultGraphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: web/dist/dpu/watch-and-prepare.d.ts:48

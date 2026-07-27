@@ -6,7 +6,7 @@
 
 # Type Alias: CommandAnnotations
 
-> **CommandAnnotations** = `_CommandAnnotations`
+> **CommandAnnotations** = [`CommandAnnotations`](../../../spine/interfaces/CommandAnnotations.md)
 
 Defined in: [core/src/authoring/command.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L23)
 

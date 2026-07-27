@@ -8,6 +8,6 @@
 
 > **Chunk** = [`LLMChunk`](../../../interfaces/LLMChunk.md)
 
-Defined in: web/dist/stream/llm-adapter.d.ts:118
+Defined in: web/dist/stream/llm-adapter.d.ts:117
 
 Normalized LLM chunk type alias.

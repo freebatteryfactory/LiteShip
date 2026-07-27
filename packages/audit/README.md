@@ -1,6 +1,6 @@
 # @liteship/audit
 
-Runs structure, integrity, and surface checks over `@liteship/*` packages and reports findings as structured data — against the LiteShip monorepo or against the packages installed in your own app.
+Runs profile-driven structure, integrity, and surface checks and reports findings as structured data. The reusable engine names no LiteShip package policy; a host supplies topology, source entrypoints, surfaces, and suppressions.
 
 > Install this directly when you want to run the audit passes programmatically. Most projects run it through the facade-owned `liteship audit` command instead, which wraps the same engine in a JSON receipt.
 
@@ -10,14 +10,21 @@ Runs structure, integrity, and surface checks over `@liteship/*` packages and re
 pnpm add -D @liteship/audit
 ```
 
-No peer dependencies. It depends on `@liteship/canonical`, `@liteship/error`, and `@liteship/gauntlet` (it builds the triangulated `RepoIR` the gauntlet defines, and injects the LiteShip oracles — ADR-0012/ADR-0023) plus `typescript`.
+No peer dependencies. It depends on `@liteship/canonical`, `@liteship/error`, and `@liteship/gauntlet` (it builds the triangulated `RepoIR` the gauntlet defines) plus `typescript`.
 
 ## 30 seconds
 
 ```ts
-import { consumerDevopsProfile, runAuditPasses } from '@liteship/audit';
+import { resolveDevopsProfile, runAuditPasses } from '@liteship/audit';
 
-const result = runAuditPasses(consumerDevopsProfile(process.cwd()));
+const profile = resolveDevopsProfile({
+  repoRoot: process.cwd(),
+  internalPackagePrefix: '@acme/',
+  packageTopology: {
+    '@acme/core': { kind: 'core', allowedInternalImports: [] },
+  },
+});
+const result = runAuditPasses(profile);
 
 console.log(result.counts); // { error, warning, info }
 for (const f of result.findings) {
@@ -25,7 +32,7 @@ for (const f of result.findings) {
 }
 ```
 
-In a repo with `@liteship/*` packages installed, this logs the merged counts and one line per finding. `consumerDevopsProfile(cwd)` audits what is actually installed in `node_modules` using each package's catalog-declared analyzable artifacts (ordinary source packages ship `src/`; the types-only spine ships declarations). A discovered package whose declared artifacts match no files is reported as unverified rather than clean. Inside the LiteShip monorepo itself, call `runAuditPasses()` with no argument to audit `packages/*` instead.
+This logs the merged counts and one line per finding. For an installed-package audit, pass the same explicit base profile to `consumerDevopsProfile(cwd, baseProfile)`; discovery then audits only physical packages under `node_modules`. A discovered package whose declared artifacts match no files is reported as unverified rather than clean. There is no implicit LiteShip profile and no all-skipped green default.
 
 ## Rule ids
 
@@ -37,7 +44,7 @@ This is the Node-side audit engine. Its manifest carries the canonical, error, a
 
 ## If it does nothing
 
-Consumer discovery walks `node_modules`; if no `@liteship/*` packages are installed where you ran it, the audit finds zero packages and reports zero findings — a clean result that verified nothing. Before trusting a silent pass, check `Object.keys(consumerDevopsProfile(cwd).packageRoots).length` is what you expect.
+Consumer discovery walks `node_modules`; before trusting a report, verify `Object.keys(consumerDevopsProfile(cwd, baseProfile).packageRoots).length` matches the fleet you intended to inspect.
 
 ## Docs
 

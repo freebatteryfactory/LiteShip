@@ -6,7 +6,7 @@
 
 ## Modules
 
-- [@liteship/\_spine](@liteship/_spine/README.md)
+- [\_spine](spine/README.md)
 - [assets/src](assets/src/README.md)
 - [astro/src](astro/src/README.md)
 - [audit/src](audit/src/README.md)

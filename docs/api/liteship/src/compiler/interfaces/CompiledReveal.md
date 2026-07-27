@@ -38,7 +38,7 @@ Defined in: compiler/dist/reveal-compile.d.ts:14
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: compiler/dist/reveal-compile.d.ts:16
 
@@ -46,7 +46,7 @@ Defined in: compiler/dist/reveal-compile.d.ts:16
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: compiler/dist/reveal-compile.d.ts:18
 

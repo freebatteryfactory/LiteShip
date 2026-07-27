@@ -28,7 +28,7 @@ Defined in: [scene/src/contract.ts:65](https://github.com/freebatteryfactory/Lit
 
 ### envelope?
 
-> `readonly` `optional` **envelope?**: `TrackEnvelope`
+> `readonly` `optional` **envelope?**: [`TrackEnvelope`](../../../spine/type-aliases/TrackEnvelope.md)
 
 Defined in: [scene/src/contract.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L83)
 

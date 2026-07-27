@@ -94,11 +94,11 @@ describe('SSE client lifecycle', () => {
     expect(client.state).toBe('connected');
   });
 
-  test('close shuts down EventSource and state is disconnected', () => {
+  test('dispose shuts down EventSource and state is disconnected', async () => {
     const client = SSE.create(baseConfig);
     const es = MockEventSource.instances[0]!;
 
-    client.close();
+    await client.dispose();
 
     expect(es.readyState).toBe(MockEventSource.CLOSED);
     expect(client.state).toBe('disconnected');
@@ -154,7 +154,7 @@ describe('SSE reconnection', () => {
     expect(MockEventSource.instances).toHaveLength(2); // the reconnect fired despite the throw
   });
 
-  test('a throwing onStateChange during close() still tears the transport down (no leaked source)', () => {
+  test('a throwing onStateChange during dispose() still tears the transport down (no leaked source)', async () => {
     const client = SSE.create({
       ...baseConfig,
       onStateChange: () => {
@@ -162,9 +162,9 @@ describe('SSE reconnection', () => {
       },
     });
     const es = MockEventSource.instances[0]!;
-    // close() calls setStatus('disconnected') BEFORE lifetime.dispose(); a listener fault there
-    // must not abort the teardown, or the EventSource + timers leak.
-    client.close();
+    // The disconnected transition runs inside the Lifetime pass. A listener
+    // fault must not abort the remaining EventSource/timer teardown.
+    await client.dispose();
     expect(es.readyState).toBe(MockEventSource.CLOSED);
     expect(client.state).toBe('disconnected');
   });
@@ -322,11 +322,11 @@ describe('SSE heartbeat', () => {
     expect(client.state).toBe('connected');
   });
 
-  test('close after a heartbeat timeout lands in disconnected and cancels the pending reconnect', () => {
+  test('dispose after a heartbeat timeout lands in disconnected and cancels the pending reconnect', async () => {
     const client = SSE.create(baseConfig);
 
     vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting + scheduled reconnect
-    client.close();
+    await client.dispose();
 
     expect(client.state).toBe('disconnected');
 
@@ -371,7 +371,7 @@ describe('SSE stateChanges', () => {
 
       const edges = await collected;
       expect(edges).toEqual(['connected', 'reconnecting']);
-      client.close();
+      await client.dispose();
     } finally {
       vi.useFakeTimers();
     }
@@ -448,7 +448,7 @@ describe('SSE backpressure', () => {
       const bp = client.backpressure;
       expect(bp.bufferSize).toBe(0);
       expect(bp.percentFull).toBe(0);
-      client.close();
+      await client.dispose();
     } finally {
       vi.useFakeTimers();
     }
@@ -468,7 +468,7 @@ describe('SSE iterator cancellation', () => {
     // disposer detaches, the `complete` callback can no longer fire.
     const result = await parked;
     expect(result.done).toBe(true);
-    client.close();
+    await client.dispose();
   });
 
   test('stateChanges return() settles a parked next() read', async () => {
@@ -479,7 +479,7 @@ describe('SSE iterator cancellation', () => {
     expect(returned.done).toBe(true);
     const result = await parked;
     expect(result.done).toBe(true);
-    client.close();
+    await client.dispose();
   });
 
   test('next() after return() yields done and does NOT pull a buffered message (protocol + no steal)', async () => {
@@ -501,7 +501,7 @@ describe('SSE iterator cancellation', () => {
       // And it did not STEAL the shared-buffered message — a fresh iterator still gets it.
       const [msg] = await takeAsync(client.messages, 1);
       expect(msg).toBeDefined();
-      client.close();
+      await client.dispose();
     } finally {
       vi.useFakeTimers();
     }
@@ -514,7 +514,7 @@ describe('SSE iterator cancellation', () => {
     expect(returned.done).toBe(true);
     const after = await iterator.next();
     expect(after.done).toBe(true);
-    client.close();
+    await client.dispose();
   });
 
   test('two concurrent next() reads before any message each settle, in FIFO order', async () => {
@@ -536,7 +536,7 @@ describe('SSE iterator cancellation', () => {
       expect((r1.value as { data: { i: number } }).data.i).toBe(1);
       expect((r2.value as { data: { i: number } }).data.i).toBe(2);
       await iterator.return!();
-      client.close();
+      await client.dispose();
     } finally {
       vi.useFakeTimers();
     }
@@ -596,15 +596,15 @@ describe('SSE pure helpers', () => {
 // ---------------------------------------------------------------------------
 
 describe('SSE lifetime cleanup', () => {
-  test('close shuts down the EventSource', () => {
-    // `close()` disposes the client's Lifetime, whose synchronous finalizer
+  test('dispose shuts down the EventSource', async () => {
+    // `dispose()` claims the client's Lifetime, whose synchronous finalizer
     // closes the EventSource, nulls the source, and completes the streams.
     const client = SSE.create(baseConfig);
 
     const es = MockEventSource.instances[0]!;
     expect(es.readyState).not.toBe(MockEventSource.CLOSED);
 
-    client.close();
+    await client.dispose();
     expect(es.readyState).toBe(MockEventSource.CLOSED);
   });
 });

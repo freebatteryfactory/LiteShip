@@ -8,11 +8,11 @@
 
 export { Lifetime, attachLifetime, createLifetime } from './lifetime.js';
 
-export type { LifetimeShape, LifetimeDisposeError, Finalizer, OwnedResource, AsyncOwnedResource } from './lifetime.js';
+export type { LifetimeDisposeError, Finalizer, AsyncOwnedResource } from './lifetime.js';
 
 export { CellKernel } from './cell-kernel.js';
 
-export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from './cell-kernel.js';
+export type { Disposer, CellSink, CellSubscriber, CellReplay, CellFanout } from './cell-kernel.js';
 
 export { Signal, createSignal } from './signal.js';
 
@@ -25,13 +25,10 @@ export { StateCell, ProjectionState, StateCellStore } from './state-cell.js';
 export type {
   StateAuthority,
   StateCellKind,
-  StateCell as StateCellShape,
   StateResolutionReceipt,
-  ProjectionState as ProjectionStateShape,
   ResolvedStateSnapshot,
   StateCellRegisterOptions,
   ProjectionStateOptions,
-  StateCellStoreShape,
 } from './state-cell.js';
 
 export {

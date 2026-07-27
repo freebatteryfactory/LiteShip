@@ -30,7 +30,7 @@ Defined in: [core/src/motion/interpret-transition.ts:160](https://github.com/fre
 
 ### graphId
 
-> `readonly` **graphId**: `ContentAddress`
+> `readonly` **graphId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/interpret-transition.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpret-transition.ts#L155)
 

@@ -8,4 +8,4 @@
 
 > **FacadeSiblingCleanupContract** = `"aggregate"` \| `"not-applicable"`
 
-Defined in: [liteship/src/export-budget.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L20)
+Defined in: [liteship/src/export-budget.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L22)

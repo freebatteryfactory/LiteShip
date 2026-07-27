@@ -6,7 +6,7 @@
 
 # Interface: LspHandleResult
 
-Defined in: [mcp-server/src/lsp/server.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L170)
+Defined in: [mcp-server/src/lsp/server.ts:180](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L180)
 
 The outcome of handling one LSP message: an optional response + any push notifications + a lifecycle signal.
 
@@ -16,7 +16,7 @@ The outcome of handling one LSP message: an optional response + any push notific
 
 > `readonly` **exit**: `boolean`
 
-Defined in: [mcp-server/src/lsp/server.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L176)
+Defined in: [mcp-server/src/lsp/server.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L186)
 
 `true` once `exit` is received — the driver closes the loop.
 
@@ -26,7 +26,7 @@ Defined in: [mcp-server/src/lsp/server.ts:176](https://github.com/freebatteryfac
 
 > `readonly` **notifications**: readonly [`LspNotification`](LspNotification.md)[]
 
-Defined in: [mcp-server/src/lsp/server.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L174)
+Defined in: [mcp-server/src/lsp/server.ts:184](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L184)
 
 Server→client notifications to emit (e.g. publishDiagnostics after liteship/check).
 
@@ -36,6 +36,6 @@ Server→client notifications to emit (e.g. publishDiagnostics after liteship/ch
 
 > `readonly` **response**: [`JsonRpcResponse`](../type-aliases/JsonRpcResponse.md) \| `null`
 
-Defined in: [mcp-server/src/lsp/server.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L172)
+Defined in: [mcp-server/src/lsp/server.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L182)
 
 The JSON-RPC response, or `null` for a notification / `exit` (which gets none).

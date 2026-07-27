@@ -31,8 +31,8 @@ readonly [`DocumentGraphNode`](../type-aliases/DocumentGraphNode.md)[]
 
 ### cycle?
 
-> `readonly` `optional` **cycle?**: readonly `ContentAddress`[]
+> `readonly` `optional` **cycle?**: readonly [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)[]
 
 ### sorted
 
-> `readonly` **sorted**: readonly `ContentAddress`[]
+> `readonly` **sorted**: readonly [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)[]

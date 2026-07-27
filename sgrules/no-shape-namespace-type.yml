@@ -6,6 +6,9 @@
 # `Cell<T>`, never `Cell.Shape<T>`. This rule flags (a) any namespace member
 # type/interface literally named `Shape`, and (b) any qualified type reference
 # ending in `.Shape` — the two spellings of the dead convention.
+# Public top-level `XxxShape` declarations/re-exports are the same duplicate-name
+# debt in another spelling, so the rule also rejects those while leaving private
+# implementation aliases alone.
 #
 # Namespaces that merge with a same-name exported VALUE may still carry other
 # aux type members (e.g. `Boundary.Spec`, `Lifetime.Finalizer`) — those are
@@ -36,3 +39,19 @@ rule:
         stopBy: end
     - kind: nested_type_identifier
       regex: "\\.Shape$"
+    - all:
+        - kind: export_statement
+        - has:
+            kind: interface_declaration
+            has:
+              field: name
+              regex: ".+Shape$"
+    - all:
+        - kind: export_statement
+        - has:
+            kind: type_alias_declaration
+            has:
+              field: name
+              regex: ".+Shape$"
+    - kind: export_specifier
+      regex: "(?:^|\\s)[A-Za-z_$][A-Za-z0-9_$]*Shape(?:\\s+as\\s+[A-Za-z_$][A-Za-z0-9_$]*)?$"

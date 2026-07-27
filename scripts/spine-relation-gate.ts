@@ -30,6 +30,7 @@ import { repoRoot } from '../vitest.shared.js';
 import { buildSpineRelationFacts } from '../packages/audit/src/index.js';
 import { spineRelationGate, memoryContext, type Finding } from '../packages/gauntlet/src/index.js';
 import { LITESHIP_SPINE_ADMISSIONS } from '../packages/cli/src/lib/spine-relation-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../packages/cli/src/lib/liteship-typescript-aliases.js';
 import { isDirectExecution } from './audit/shared.js';
 
 /** Build the spine-relation facts over `root` through the production admission table, then fold the gate. */
@@ -37,7 +38,10 @@ export function runSpineRelationGate(root = repoRoot): {
   readonly admissions: number;
   readonly findings: readonly Finding[];
 } {
-  const facts = buildSpineRelationFacts(LITESHIP_SPINE_ADMISSIONS, root);
+  const facts = buildSpineRelationFacts(LITESHIP_SPINE_ADMISSIONS, root, {
+    spinePackageSpecifier: '@liteship/_spine',
+    typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+  });
   const findings = spineRelationGate.run({ ...memoryContext({}), spineRelation: facts });
   return { admissions: facts.observations.length, findings };
 }

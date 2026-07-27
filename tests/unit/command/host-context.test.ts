@@ -152,19 +152,10 @@ describe('createNodeCommandContext', () => {
     expect(waveform).toBe(512);
   });
 
-  it('runAudioProjection resolves every assetId to the audio built-in (empty host registry)', async () => {
-    // The host context assembles a FIXED, EMPTY AssetRegistry — no scene's
-    // asset module is imported in the host process, and `defineAsset` is pure
-    // (no module-global registration), so there is no seam through which a
-    // custom decoder could ever reach the host. `resolveDecoder` therefore
-    // returns the audio built-in for EVERY id. Empty bytes carry no RIFF
-    // header, so the built-in rejects regardless of the assetId supplied.
+  it('runAudioProjection is explicitly the raw-WAV built-in, not an asset-id decoder registry', async () => {
     const ctx = createNodeCommandContext({ cwd: workDir });
-    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'any-asset-id')).rejects.toThrow();
-    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'never-registered-id')).rejects.toThrow();
-    // A real WAV decodes through the same built-in path — proving the empty
-    // registry routes to a working decoder, not a broken one.
-    const waveform = await ctx.runAudioProjection?.(minimalWav(512), 'waveform', 'any-asset-id');
+    await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform')).rejects.toThrow();
+    const waveform = await ctx.runAudioProjection?.(minimalWav(512), 'waveform');
     expect(waveform).toBe(512);
   });
 
@@ -188,12 +179,20 @@ describe('createNodeCommandContext', () => {
     });
   });
 
-  it('loadSceneModule contains missing and malformed module failures as null', async () => {
+  it('loadSceneModule preserves missing and malformed import failures for command diagnostics', async () => {
     const malformedPath = join(workDir, 'malformed.mjs');
     writeFileSync(malformedPath, 'export const = ;\n');
     const ctx = createNodeCommandContext({ cwd: workDir });
-    await expect(ctx.loadSceneModule?.('missing.mjs')).resolves.toBeNull();
-    await expect(ctx.loadSceneModule?.('malformed.mjs')).resolves.toBeNull();
+    await expect(ctx.loadSceneModule?.('missing.mjs')).rejects.toMatchObject({
+      _tag: 'IoError',
+      operation: 'scene-module-import',
+      path: 'missing.mjs',
+    });
+    await expect(ctx.loadSceneModule?.('malformed.mjs')).rejects.toMatchObject({
+      _tag: 'IoError',
+      operation: 'scene-module-import',
+      path: 'malformed.mjs',
+    });
   });
 
   it('runSceneCompile refuses a module with no explicit compile function', async () => {
@@ -204,9 +203,9 @@ describe('createNodeCommandContext', () => {
   it('runSceneCompile refuses ambiguous modules instead of choosing by export order', async () => {
     const ctx = createNodeCommandContext({ cwd: workDir });
     const descriptor = () => ({ duration: 1, fps: 1, trackSpawns: [] });
-    await expect(
-      ctx.runSceneCompile?.({ compileAlpha: descriptor, compileBeta: descriptor }),
-    ).rejects.toThrow(/exports multiple compile functions \(compileAlpha, compileBeta\); export exactly one/);
+    await expect(ctx.runSceneCompile?.({ compileAlpha: descriptor, compileBeta: descriptor })).rejects.toThrow(
+      /exports multiple compile functions \(compileAlpha, compileBeta\); export exactly one/,
+    );
   });
 
   it(

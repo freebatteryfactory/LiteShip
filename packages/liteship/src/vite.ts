@@ -58,5 +58,5 @@ export { collectTokenManifest, collectThemeManifest, compileCollectedTokensCss }
 export type { HMRPayload } from '@liteship/vite';
 export { handleHMR } from '@liteship/vite';
 
-export type { PrimitiveKind, PrimitiveResolution, PrimitiveShape } from '@liteship/vite';
+export type { PrimitiveKind, PrimitiveResolution, Primitive } from '@liteship/vite';
 export { resolvePrimitive, primitiveSearchPatterns } from '@liteship/vite';

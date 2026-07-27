@@ -34,7 +34,7 @@ Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
 ### cellStore
 
-> `readonly` **cellStore**: [`StateCellStoreShape`](../../reactive/interfaces/StateCellStoreShape.md)
+> `readonly` **cellStore**: [`StateCellStore`](../../reactive/interfaces/StateCellStore.md)
 
 Defined in: core/dist/graph/graph-query-gap-replay.d.ts:32
 
@@ -50,7 +50,7 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:31
 
 ### localBaseId
 
-> `readonly` **localBaseId**: `ContentAddress`
+> `readonly` **localBaseId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/graph-query-gap-replay.d.ts:29
 
@@ -58,6 +58,6 @@ Defined in: core/dist/graph/graph-query-gap-replay.d.ts:29
 
 ### serverGraphId
 
-> `readonly` **serverGraphId**: `ContentAddress`
+> `readonly` **serverGraphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/graph-query-gap-replay.d.ts:30

@@ -10,17 +10,22 @@ import { Diagnostics } from '@liteship/core';
 /** Cloudflare Workers execution environment (bindings bag). */
 export type CloudflareWorkersEnv = Record<string, unknown>;
 
+/** Per-request Cloudflare Workers lifetime authority. */
+export interface CloudflareExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+/** Request-scoped options for constructing a Cloudflare edge cache. */
 export interface CloudflareEdgeCacheOptions {
   /** KV namespace binding name (e.g. `LITESHIP_BOUNDARY_CACHE`). */
   readonly binding: string;
-  /** Workers ExecutionContext; enables background Cache API population on KV hits. */
-  readonly ctx?: { waitUntil(promise: Promise<unknown>): void };
   /** Cloudflare KV edge-cache TTL, passed through to `kv.get(key, { cacheTtl })`. */
   readonly cacheTtl?: number;
   /** Cache API implementation. Defaults to `globalThis.caches.default` when present. */
   readonly cache?: CloudflareCacheApi | null;
 }
 
+/** Minimal Cloudflare Cache API capability consumed by the edge cache. */
 export interface CloudflareCacheApi {
   match(request: Request): Promise<Response | undefined>;
   put(request: Request, response: Response): Promise<void>;
@@ -111,6 +116,7 @@ function kvGetOptions(cacheTtl: number | undefined): { cacheTtl: number } | unde
 export function createCloudflareEdgeCache(
   envSource: () => CloudflareWorkersEnv,
   options: CloudflareEdgeCacheOptions,
+  requestContext?: CloudflareExecutionContext,
 ): KVNamespace {
   const edgeCache = options.cache === undefined ? resolveDefaultCache() : options.cache;
   return {
@@ -132,8 +138,8 @@ export function createCloudflareEdgeCache(
         return null;
       }
       const value = await kv.get(key, kvGetOptions(options.cacheTtl));
-      if (value !== null && edgeCache && request && options.ctx) {
-        options.ctx.waitUntil(
+      if (value !== null && edgeCache && request && requestContext) {
+        requestContext.waitUntil(
           edgeCache.put(request, new Response(value)).catch((cause: unknown) => {
             warnCacheApiFailure('write', options.binding, cause);
           }),
@@ -149,6 +155,12 @@ export function createCloudflareEdgeCache(
         return;
       }
       await kv.put(key, value, putOptions);
+      // Cache API is a read-through projection, never a second authority. A KV
+      // mutation invalidates the matching L1 entry before any subsequent read,
+      // preventing stale tag-index read/modify/write and under-purge.
+      if (edgeCache && typeof edgeCache.delete === 'function') {
+        await edgeCache.delete(cacheRequest(options.binding, key));
+      }
     },
     // Workers KV implements delete/list, so expose them only when the live
     // binding really has them. This keeps @liteship/edge's capability checks honest

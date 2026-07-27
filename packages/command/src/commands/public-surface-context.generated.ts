@@ -7,6 +7,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineConfig",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Define the one immutable project configuration consumed by host integrations.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid configuration is rejected before host projection.",
@@ -24,6 +30,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test-astro"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/liteship/root-failure-contract.test.ts"
       ],
@@ -34,6 +41,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineBoundary",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Partition a continuous input into named application states.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid thresholds or states are rejected at definition time.",
@@ -49,6 +62,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/liteship/root-failure-contract.test.ts"
       ],
@@ -59,6 +73,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineQuantizer",
       "specifier": "liteship",
       "owner": "@liteship/quantizer",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/quantizer",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Attach target outputs to a boundary without starting a runtime.",
       "lifecycle": "immutable-definition",
       "failureContract": "Incomplete or invalid output maps are rejected before runtime allocation.",
@@ -74,6 +94,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts"
       ],
       "remediation": "Correct the input at @liteship/quantizer, retry defineQuantizer(boundary, options), then run check/test and check/hermetic."
@@ -83,6 +104,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineToken",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Define one content-addressed design token.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid token identity or values are rejected at definition time.",
@@ -98,6 +125,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry defineToken(input), then run check/test and check/hermetic."
@@ -107,6 +135,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineTheme",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Define named token variants as one immutable theme.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid variants or token references are rejected at definition time.",
@@ -122,6 +156,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry defineTheme(input), then run check/test and check/hermetic."
@@ -131,6 +166,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineStyle",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Define base and state-layer declarations against one boundary.",
       "lifecycle": "immutable-definition",
       "failureContract": "Invalid declarations or state ownership are rejected at definition time.",
@@ -146,6 +187,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/liteship/root-failure-contract.test.ts"
       ],
@@ -155,7 +197,13 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "kind": "root",
       "symbol": "defineAdaptive",
       "specifier": "liteship",
-      "owner": "liteship/authoring",
+      "owner": "liteship",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "./authoring/adaptive.js",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Define adaptive behavior, apply its attributes, inspect state, and emit its compiled plan.",
       "lifecycle": "immutable-definition",
       "failureContract": "Lowering rejects invalid definitions and explanation follows the live quantizer contract.",
@@ -176,18 +224,25 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test-e2e"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/liteship/root-failure-contract.test.ts",
         "tests/property/adaptive-lowering-equivalence.prop.test.ts",
         "tests/e2e/astro-directives.e2e.ts"
       ],
-      "remediation": "Correct the input at liteship/authoring, retry defineAdaptive(spec), then run check/test and check/hermetic and check/journey and check/test-e2e."
+      "remediation": "Correct the input at liteship, retry defineAdaptive(spec), then run check/test and check/hermetic and check/journey and check/test-e2e."
     },
     {
       "kind": "root",
       "symbol": "schema",
       "specifier": "liteship",
       "owner": "@liteship/core/schema",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Describe and decode typed data at a semantic boundary.",
       "lifecycle": "immutable-definition",
       "failureContract": "Decode returns structured issues instead of accepting malformed data.",
@@ -202,6 +257,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/schema, retry schema.struct(fields), then run check/test and check/hermetic."
@@ -211,6 +267,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "explainDiagnostic",
       "specifier": "liteship",
       "owner": "@liteship/error",
+      "audience": "operator",
+      "category": "inspection",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/error",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Turn a stable diagnostic code into meaning and remediation.",
       "lifecycle": "pure-reader",
       "failureContract": "Unknown codes return no invented explanation.",
@@ -225,6 +287,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-inhabitation.test.ts",
         "tests/unit/liteship/facade-subpaths.test.ts"
       ],
       "remediation": "Correct the input at @liteship/error, retry explainDiagnostic(code), then run check/test and check/hermetic."
@@ -234,6 +297,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Config",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate an authored project configuration.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking rejects incompatible configuration shapes.",
@@ -251,6 +320,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test-astro"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry Config, then run check/typecheck and check/hermetic and check/test-vite and check/test-astro."
@@ -260,6 +330,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Boundary",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate a named-state boundary definition.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking preserves the input and state vocabulary.",
@@ -275,6 +351,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry Boundary<'viewport.width', readonly ['mobile', 'desktop']>, then run check/typecheck and check/hermetic."
@@ -284,6 +361,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Quantizer",
       "specifier": "liteship",
       "owner": "@liteship/core/schema",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate the structural mapping from boundary states to outputs.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking rejects state or output mismatches.",
@@ -298,6 +381,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/schema, retry Quantizer<Boundary>, then run check/typecheck and check/hermetic."
@@ -307,6 +391,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Token",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate a content-addressed token definition.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking preserves the token value contract.",
@@ -322,6 +412,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry Token<'brand-accent'>, then run check/typecheck and check/hermetic."
@@ -331,6 +422,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Theme",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate named token variants.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking preserves variant names and token values.",
@@ -346,6 +443,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry Theme<readonly ['default', 'dark']>, then run check/typecheck and check/hermetic."
@@ -355,6 +453,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Style",
       "specifier": "liteship",
       "owner": "@liteship/core/authoring",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate state-aware style declarations.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking binds style states to the boundary vocabulary.",
@@ -370,6 +474,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/core/authoring, retry Style<Boundary>, then run check/typecheck and check/hermetic."
@@ -378,20 +483,20 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "kind": "root",
       "symbol": "Adaptive",
       "specifier": "liteship",
-      "owner": "liteship/authoring",
+      "owner": "@liteship/core",
+      "audience": "application-author",
+      "category": "authoring",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/core",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate the flagship define, apply, and inspect aggregate.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking keeps attrs, explanation, and plan outputs coherent.",
       "failureProof": null,
       "example": "Adaptive",
       "stability": "stable",
-      "expertRoutes": [
-        "liteship/reactive",
-        "liteship/motion",
-        "liteship/compiler",
-        "liteship/astro",
-        "liteship/vite"
-      ],
+      "expertRoutes": [],
       "checkIds": [
         "check/typecheck",
         "check/hermetic",
@@ -399,17 +504,24 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test-e2e"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts",
         "tests/property/adaptive-lowering-equivalence.prop.test.ts",
         "tests/e2e/astro-directives.e2e.ts"
       ],
-      "remediation": "Correct the input at liteship/authoring, retry Adaptive, then run check/typecheck and check/hermetic and check/journey and check/test-e2e."
+      "remediation": "Correct the input at @liteship/core, retry Adaptive, then run check/typecheck and check/hermetic and check/journey and check/test-e2e."
     },
     {
       "kind": "root",
       "symbol": "DiagnosticCode",
       "specifier": "liteship",
       "owner": "@liteship/error",
+      "audience": "operator",
+      "category": "inspection",
+      "surfaceClass": "paved-road",
+      "producer": "@liteship/error",
+      "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+      "replacement": "none",
       "userStory": "Annotate a stable code accepted by diagnostic inspection.",
       "lifecycle": "compile-time-only",
       "failureContract": "Type checking rejects unknown diagnostic identifiers.",
@@ -424,6 +536,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/hermetic"
       ],
       "proofRefs": [
+        "tests/unit/liteship/facade-subpaths.test.ts",
         "tests/unit/meta/api-surface.test.ts"
       ],
       "remediation": "Correct the input at @liteship/error, retry DiagnosticCode, then run check/typecheck and check/hermetic."
@@ -435,6 +548,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "schema",
       "specifier": "liteship/schema",
       "owner": "@liteship/core/schema",
+      "audience": "application-author",
+      "category": "schema",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/schema",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "schema",
       "userStory": "Define, decode, and project transport-agnostic schemas.",
       "lifecycle": "immutable definitions and pure decoders",
@@ -462,6 +581,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "createCell",
       "specifier": "liteship/reactive",
       "owner": "@liteship/core/reactive",
+      "audience": "application-author",
+      "category": "reactive-runtime",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/reactive",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "reactive-runtime",
       "userStory": "Allocate and dispose cells, signals, stores, lifetimes, and live quantizers.",
       "lifecycle": "owned resources require disposal",
@@ -498,6 +623,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "createTimeline",
       "specifier": "liteship/motion",
       "owner": "@liteship/core/motion",
+      "audience": "application-author",
+      "category": "motion",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/motion",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "motion",
       "userStory": "Define and execute transitions, timelines, easing, reveal, and stagger behavior.",
       "lifecycle": "timeline resources require disposal",
@@ -527,6 +658,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "DAG",
       "specifier": "liteship/graph",
       "owner": "@liteship/core/graph",
+      "audience": "application-author",
+      "category": "document-graph",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/graph",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "document-graph",
       "userStory": "Seal, validate, patch, query, and replay the document graph.",
       "lifecycle": "immutable sealed graphs plus explicit clients",
@@ -556,6 +693,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Compositor",
       "specifier": "liteship/media",
       "owner": "@liteship/core/media",
+      "audience": "application-author",
+      "category": "media-runtime",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/media",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "media-runtime",
       "userStory": "Resolve responsive media and run compositor, audio, video, and frame-budget paths.",
       "lifecycle": "owned buffers and renderers require disposal",
@@ -587,6 +730,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "inspectReceipt",
       "specifier": "liteship/evidence",
       "owner": "@liteship/core/evidence",
+      "audience": "operator",
+      "category": "evidence-and-quality",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/evidence",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "evidence-and-quality",
       "userStory": "Inspect receipts, diagnostics, quality tiers, capabilities, and addressed evidence.",
       "lifecycle": "pure readers and immutable receipts",
@@ -614,6 +763,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "CSSCompiler",
       "specifier": "liteship/compiler",
       "owner": "@liteship/compiler",
+      "audience": "application-author",
+      "category": "projection-compiler",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/compiler",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "projection-compiler",
       "userStory": "Compile definitions into CSS, shader, accessibility, AI, and motion targets.",
       "lifecycle": "pure compilation",
@@ -651,6 +806,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "Morph",
       "specifier": "liteship/runtime",
       "owner": "@liteship/web",
+      "audience": "application-author",
+      "category": "browser-runtime",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/web",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "browser-runtime",
       "userStory": "Apply streaming, morphing, recovery, integrity, and browser runtime behavior.",
       "lifecycle": "connections and observers require disposal",
@@ -683,6 +844,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "adaptiveAttrs",
       "specifier": "liteship/astro",
       "owner": "@liteship/astro",
+      "audience": "host-integrator",
+      "category": "astro-host",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/astro",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "astro-host",
       "userStory": "Install LiteShip into Astro and apply Adaptive attributes and server projections.",
       "lifecycle": "host integration lifecycle",
@@ -712,6 +879,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "plugin",
       "specifier": "liteship/vite",
       "owner": "@liteship/vite",
+      "audience": "host-integrator",
+      "category": "vite-host",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/vite",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "vite-host",
       "userStory": "Install LiteShip into Vite and compile directive and virtual-module projections.",
       "lifecycle": "host plugin lifecycle",
@@ -740,6 +913,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "generatePureTransform",
       "specifier": "liteship/testing",
       "owner": "@liteship/core/harness",
+      "audience": "package-author",
+      "category": "test-tooling",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/core/harness",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "test-tooling",
       "userStory": "Generate proof harnesses and inspect the installed fleet roster without exposing test tooling on the production root.",
       "lifecycle": "test process only",
@@ -768,6 +947,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "fromMediaQueries",
       "specifier": "liteship/migrate",
       "owner": "@liteship/compiler/migrate",
+      "audience": "application-author",
+      "category": "migration",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/compiler/migrate",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "migration",
       "userStory": "Translate supported external syntax into ordinary LiteShip definitions.",
       "lifecycle": "pure migration",
@@ -795,6 +980,12 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "symbol": "defineComponentCatalog",
       "specifier": "liteship/genui",
       "owner": "@liteship/genui",
+      "audience": "application-author",
+      "category": "generated-ui",
+      "surfaceClass": "advanced-module",
+      "producer": "@liteship/genui",
+      "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+      "replacement": "none",
       "role": "generated-ui",
       "userStory": "Define a trusted component catalog, validate generated UI, and render it without raw package discovery.",
       "lifecycle": "immutable catalog and pure validation/rendering",
@@ -1130,7 +1321,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "specifier": "liteship/runtime",
       "owner": "@liteship/web",
       "classification": "active-owned",
-      "disposal": "close-sync",
+      "disposal": "dispose-async",
       "postDispose": "inert",
       "siblingCleanup": "aggregate",
       "proof": "tests/unit/liteship/facade-lifecycle-contract.test.ts",
@@ -1140,7 +1331,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test",
         "check/test-e2e"
       ],
-      "remediation": "Dispose through close-sync and verify tests/unit/liteship/facade-lifecycle-contract.test.ts; cleanup must remain idempotent, inert, and attempt-all."
+      "remediation": "Dispose through dispose-async and verify tests/unit/liteship/facade-lifecycle-contract.test.ts; cleanup must remain idempotent, inert, and attempt-all."
     },
     {
       "operation": "SlotRegistry.create",
@@ -1164,7 +1355,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "specifier": "liteship/runtime",
       "owner": "@liteship/web",
       "classification": "active-owned",
-      "disposal": "dispose-sync",
+      "disposal": "dispose-async",
       "postDispose": "inert",
       "siblingCleanup": "aggregate",
       "proof": "tests/unit/liteship/facade-lifecycle-contract.test.ts",
@@ -1174,7 +1365,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test",
         "check/test-e2e"
       ],
-      "remediation": "Dispose through dispose-sync and verify tests/unit/liteship/facade-lifecycle-contract.test.ts; cleanup must remain idempotent, inert, and attempt-all."
+      "remediation": "Dispose through dispose-async and verify tests/unit/liteship/facade-lifecycle-contract.test.ts; cleanup must remain idempotent, inert, and attempt-all."
     },
     {
       "operation": "createHtmlFragment",
@@ -1198,7 +1389,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
       "specifier": "liteship/astro",
       "owner": "@liteship/astro/runtime",
       "classification": "active-owned",
-      "disposal": "dispose-sync",
+      "disposal": "dispose-async",
       "postDispose": "inert",
       "siblingCleanup": "aggregate",
       "proof": "tests/unit/astro/astro-runtime.test.ts",
@@ -1208,7 +1399,7 @@ export const GENERATED_PUBLIC_SURFACE_CONTEXT = {
         "check/test",
         "check/test-astro"
       ],
-      "remediation": "Dispose through dispose-sync and verify tests/unit/astro/astro-runtime.test.ts; cleanup must remain idempotent, inert, and attempt-all."
+      "remediation": "Dispose through dispose-async and verify tests/unit/astro/astro-runtime.test.ts; cleanup must remain idempotent, inert, and attempt-all."
     }
   ]
 } as const;

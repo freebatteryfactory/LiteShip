@@ -41,6 +41,7 @@ const BUDGET_FILE = 'packages/liteship/src/export-budget.ts';
 
 /** The `liteship` root BUILT declaration surface — the judged reality. */
 const ROOT_DTS_FILE = 'packages/liteship/dist/index.d.ts';
+const ROOT_SOURCE_FILE = 'packages/liteship/src/index.ts';
 const FACADE_MANIFEST_FILE = 'packages/liteship/package.json';
 
 const RULE_ID = 'gauntlet/facade-export-budget';
@@ -61,6 +62,13 @@ interface RootSurface {
 interface Budget {
   readonly values: ReadonlySet<string>;
   readonly types: ReadonlySet<string>;
+  readonly entries: readonly RootContractEntry[];
+}
+
+interface RootContractEntry {
+  readonly name: string;
+  readonly kind: 'value' | 'type';
+  readonly producer: string;
 }
 
 interface BudgetParseResult {
@@ -166,6 +174,12 @@ const CONTRACT_KEYS = [
   'failureContract',
   'example',
   'stability',
+  'audience',
+  'producer',
+  'surfaceClass',
+  'relatedInvariant',
+  'replacement',
+  'exampleProof',
 ] as const;
 
 const SUBPATH_KEYS = [
@@ -182,6 +196,12 @@ const SUBPATH_KEYS = [
   'stability',
   'symbol',
   'reason',
+  'audience',
+  'producer',
+  'surfaceClass',
+  'relatedInvariant',
+  'replacement',
+  'exampleProof',
 ] as const;
 
 interface SubpathContractEntry {
@@ -189,6 +209,7 @@ interface SubpathContractEntry {
   readonly specifier: string;
   readonly owner: string;
   readonly symbol: string;
+  readonly producer: string;
 }
 
 function embeddedJson(source: string, constName: string): { readonly value?: unknown; readonly error?: string } {
@@ -213,6 +234,7 @@ function parseBudget(source: string): BudgetParseResult {
   const values = new Set<string>();
   const types = new Set<string>();
   const identities = new Set<string>();
+  const entries: RootContractEntry[] = [];
   const expectedKeys = [...CONTRACT_KEYS].sort().join('\u0000');
   for (let index = 0; index < parsed.length; index += 1) {
     const entry = parsed[index];
@@ -235,13 +257,22 @@ function parseBudget(source: string): BudgetParseResult {
     if (record['stability'] !== 'stable' && record['stability'] !== 'experimental') {
       return { error: `root export contract entry ${index} has invalid stability` };
     }
+    if (
+      !['application-author', 'package-author', 'host-integrator', 'operator'].includes(String(record['audience'])) ||
+      record['surfaceClass'] !== 'paved-road' ||
+      !String(record['relatedInvariant']).startsWith('INV-') ||
+      !/^tests\/[A-Za-z0-9_./-]+\.test\.ts$/.test(String(record['exampleProof']))
+    ) {
+      return { error: `root export contract entry ${index} has invalid inhabitation metadata` };
+    }
     const name = String(record['name']);
     const identity = `${record['kind']}:${name}`;
     if (identities.has(identity)) return { error: `root export contract duplicates ${identity}` };
     identities.add(identity);
     (record['kind'] === 'value' ? values : types).add(name);
+    entries.push({ name, kind: record['kind'], producer: String(record['producer']) });
   }
-  return { budget: { values, types } };
+  return { budget: { values, types, entries } };
 }
 
 function parseSubpathContract(source: string): {
@@ -275,7 +306,12 @@ function parseSubpathContract(source: string): {
       !/^\.\/[a-z0-9][a-z0-9-]*$/.test(subpath) ||
       specifier !== `liteship/${subpath.slice(2)}` ||
       !/^@liteship\/[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9][a-z0-9_-]*)?$/.test(owner) ||
-      (record['stability'] !== 'stable' && record['stability'] !== 'experimental')
+      (record['stability'] !== 'stable' && record['stability'] !== 'experimental') ||
+      !['application-author', 'package-author', 'host-integrator', 'operator'].includes(String(record['audience'])) ||
+      record['surfaceClass'] !== 'advanced-module' ||
+      !String(record['relatedInvariant']).startsWith('INV-') ||
+      !/^@liteship\/[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9][a-z0-9_-]*)?$/.test(String(record['producer'])) ||
+      !/^tests\/[A-Za-z0-9_./-]+\.test\.ts$/.test(String(record['exampleProof']))
     ) {
       return {
         error:
@@ -286,7 +322,13 @@ function parseSubpathContract(source: string): {
     }
     if (seen.has(subpath)) return { error: `facade subpath contract duplicates ${subpath}` };
     seen.add(subpath);
-    entries.push({ subpath, specifier, owner, symbol: String(record['symbol']) });
+    entries.push({
+      subpath,
+      specifier,
+      owner,
+      symbol: String(record['symbol']),
+      producer: String(record['producer']),
+    });
   }
   return { entries };
 }
@@ -363,10 +405,10 @@ function scanSubpaths(context: GateContext, source: string): readonly Finding[] 
       findings.push(invalidSubpathFinding(`${entry.subpath} has no facade source file.`, facadeFile));
       continue;
     }
-    if (!directlyReExports(facadeSource, entry.owner, entry.symbol)) {
+    if (!directlyReExports(facadeSource, entry.producer, entry.symbol)) {
       findings.push(
         invalidSubpathFinding(
-          `${entry.subpath} does not directly re-export its proving symbol ${entry.symbol} from ${entry.owner}.`,
+          `${entry.subpath} does not directly re-export its proving symbol ${entry.symbol} from ${entry.producer}.`,
           facadeFile,
         ),
       );
@@ -454,6 +496,21 @@ function scan(context: GateContext): readonly Finding[] {
   const surfaceTypes = new Set(surface.types);
   const findings: Finding[] = [];
 
+  const rootSource = context.readFile(ROOT_SOURCE_FILE);
+  if (rootSource === undefined) {
+    findings.push(invalidContractFinding(`${ROOT_SOURCE_FILE} is missing; root producers cannot be proven`));
+  } else {
+    for (const entry of budget.entries) {
+      if (!directlyReExports(rootSource, entry.producer, entry.name)) {
+        findings.push(
+          invalidContractFinding(
+            `${entry.kind} ${entry.name} is not directly re-exported from its declared producer ${entry.producer}`,
+          ),
+        );
+      }
+    }
+  }
+
   // Direction 1 — every EXPORTED symbol must be listed (the surface cannot sprawl).
   for (const name of surface.values) {
     if (!budget.values.has(name)) findings.push(unlistedFinding('value', name));
@@ -488,6 +545,12 @@ const contractEntry = (name: string, kind: 'value' | 'type') => ({
   failureContract: `${name} fails explicitly.`,
   example: name,
   stability: 'stable',
+  audience: 'application-author',
+  producer: '@liteship/core',
+  surfaceClass: 'paved-road',
+  relatedInvariant: 'INV-FACADE-EXPORT-BUDGET',
+  replacement: 'none',
+  exampleProof: 'tests/unit/liteship/facade-inhabitation.test.ts',
 });
 
 /** A minimal role-bearing root contract the fixtures judge against. */
@@ -505,6 +568,12 @@ const fixtureSubpath = {
   stability: 'stable',
   symbol: 'schema',
   reason: 'Schema is an expert domain.',
+  audience: 'application-author',
+  producer: '@liteship/core',
+  surfaceClass: 'advanced-module',
+  relatedInvariant: 'INV-CONSUMER-SUBPATH-CLOSURE',
+  replacement: 'none',
+  exampleProof: 'tests/unit/liteship/facade-subpaths.test.ts',
 };
 const FIXTURE_BUDGET =
   `export const ROOT_EXPORT_CONTRACT_SOURCE = \`${JSON.stringify([
@@ -519,6 +588,8 @@ const GREEN_CONTEXT = memoryContext({
   [BUDGET_FILE]: FIXTURE_BUDGET,
   [ROOT_DTS_FILE]:
     "export { alpha } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\nexport declare const beta: number;\n",
+  [ROOT_SOURCE_FILE]:
+    "export { alpha, beta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
   [FACADE_MANIFEST_FILE]: JSON.stringify({ exports: { '.': {}, './schema': {} } }),
   'packages/liteship/src/schema.ts': "export { schema } from '@liteship/core';\n",
 });
@@ -533,6 +604,8 @@ const RED_CONTEXT = memoryContext({
   [BUDGET_FILE]: FIXTURE_BUDGET,
   [ROOT_DTS_FILE]:
     "export { alpha, zeta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
+  [ROOT_SOURCE_FILE]:
+    "export { alpha, beta } from '@liteship/core';\nexport type { Gamma, Delta } from '@liteship/core';\n",
   [FACADE_MANIFEST_FILE]: JSON.stringify({ exports: { '.': {}, './schema': {}, './rogue': {} } }),
   'packages/liteship/src/schema.ts': "export { schema } from '@liteship/core';\n",
 });

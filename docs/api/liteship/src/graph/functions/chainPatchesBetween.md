@@ -26,11 +26,11 @@ discrete replay beats a wrong one.
 
 ### localBaseId
 
-`ContentAddress`
+[`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 ### serverGraphId
 
-`ContentAddress`
+[`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 ### entries
 

@@ -6,7 +6,7 @@
 
 # Function: SyncSystem()
 
-> **SyncSystem**(`frameIndex`, `fps?`): `SystemShape`
+> **SyncSystem**(`frameIndex`, `fps?`): `System`
 
 Defined in: [scene/src/systems/sync.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L55)
 
@@ -37,4 +37,4 @@ envelope factor — sync sets the base, the envelope modulates it
 
 ## Returns
 
-`SystemShape`
+`System`

@@ -150,12 +150,12 @@ export function parseRootScriptCheckExecution(command: string): RootScriptCheckE
       invocation: 'pnpm-run',
     };
   }
-  const test = /^pnpm test(?:\s+(.*))?$/u.exec(command);
-  if (test !== null) {
+  const testCommand = /^pnpm test(?:\s+(.*))?$/u.exec(command);
+  if (testCommand !== null) {
     return {
       kind: 'root-script',
       script: 'test',
-      args: test[1] === undefined ? [] : Object.freeze(test[1].split(/\s+/u)),
+      args: testCommand[1] === undefined ? [] : Object.freeze(testCommand[1].split(/\s+/u)),
       invocation: 'pnpm-test',
     };
   }

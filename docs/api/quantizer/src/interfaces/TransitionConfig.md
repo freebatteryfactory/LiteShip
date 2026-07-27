@@ -10,7 +10,7 @@ Defined in: [quantizer/src/transition.ts:21](https://github.com/freebatteryfacto
 
 Per-transition animation parameters.
 
-Used by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md) to drive interpolation between two
+Used by [AnimatedQuantizer](AnimatedQuantizer.md) to drive interpolation between two
 state output records. `duration` of `0` produces an instantaneous snap.
 
 Plain `number` literals are accepted alongside branded [Millis](../../../liteship/src/schema/variables/Millis.md);
@@ -21,7 +21,7 @@ the resolver brands internally (the one sanctioned cast site lives in
 
 ### delay?
 
-> `readonly` `optional` **delay?**: `number` \| `Millis`
+> `readonly` `optional` **delay?**: `number` \| [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [quantizer/src/transition.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L27)
 
@@ -31,7 +31,7 @@ Delay before the animation begins, in milliseconds (plain `number` or branded [M
 
 ### duration
 
-> `readonly` **duration**: `number` \| `Millis`
+> `readonly` **duration**: `number` \| [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [quantizer/src/transition.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L23)
 

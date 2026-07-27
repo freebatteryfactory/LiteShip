@@ -16,9 +16,24 @@
 export type PackageLayer =
   'foundation' | 'semantic' | 'runtime' | 'host-adapter' | 'verification' | 'tooling' | 'facade';
 
+export type PublicSurfaceAudience = 'package-author' | 'host-integrator' | 'operator';
+
+/** Authored policy inherited by every advanced export of one package. */
+export interface PackagePublicSurfacePolicy {
+  readonly audience: PublicSurfaceAudience;
+  readonly stability: 'stable' | 'experimental';
+  readonly failureContract: string;
+  readonly relatedInvariant: `INV-${string}`;
+  readonly reachabilityProof: `tests/${string}.test.ts`;
+}
+
 export interface PackageCatalogRecord {
   readonly name: string;
   readonly dir: `packages/${string}`;
+  /** Required source root for semantic assurance and source-mode API discovery. */
+  readonly sourceEntry: `packages/${string}`;
+  /** Exceptional public subpaths whose source owner is not the standard `src/<subpath>(/index).ts`. */
+  readonly sourceEntryOverrides?: Readonly<Record<string, `packages/${string}`>>;
   readonly publishable: true;
   /** Whether consumers may import package exports as runtime modules. */
   readonly runtimeSurface: 'module' | 'types-only';
@@ -42,6 +57,7 @@ export interface PackageCatalogRecord {
   readonly apiSurfaceOrder: number | null;
   readonly typedocEntry: string | null;
   readonly typedocOrder: number | null;
+  readonly publicSurface: PackagePublicSurfacePolicy;
   readonly dependencies: readonly string[];
   readonly capabilities: readonly string[];
   readonly publicSubpaths: readonly string[];
@@ -83,6 +99,13 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/_spine',
     dir: 'packages/_spine',
+    sourceEntry: 'packages/_spine/index.d.ts',
+    sourceEntryOverrides: {
+      './core': 'packages/_spine/core.d.ts',
+      './design': 'packages/_spine/design.d.ts',
+      './command': 'packages/_spine/command.d.ts',
+      './genui': 'packages/_spine/genui.d.ts',
+    },
     publishable: true,
     runtimeSurface: 'types-only',
     layer: 'foundation',
@@ -92,8 +115,15 @@ export const PACKAGE_CATALOG = [
     plumbReason: 'The published type spine — declarations only, no runtime.',
     apiSurface: false,
     apiSurfaceOrder: null,
-    typedocEntry: 'packages/_spine/typedoc-entry.ts',
+    typedocEntry: 'packages/_spine/index.d.ts',
     typedocOrder: 22,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'Type checking rejects declarations that diverge from their runtime owners.',
+      relatedInvariant: 'INV-SPINE-EXACT-RELATION',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [],
     capabilities: ['shared-type-declarations'],
     publicSubpaths: ['.', './core', './design', './command', './genui'],
@@ -105,6 +135,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/error',
     dir: 'packages/error',
+    sourceEntry: 'packages/error/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'foundation',
@@ -117,6 +148,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 0,
     typedocEntry: 'packages/error/src/index.ts',
     typedocOrder: 0,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'Malformed diagnostics and foreign tagged errors are rejected without invented meaning.',
+      relatedInvariant: 'INV-DIAGNOSTIC-CODE-CLOSED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [],
     capabilities: ['tagged-error-algebra', 'diagnostic-codes'],
     publicSubpaths: ['.'],
@@ -128,6 +166,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/canonical',
     dir: 'packages/canonical',
+    sourceEntry: 'packages/canonical/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'foundation',
@@ -139,6 +178,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 2,
     typedocEntry: 'packages/canonical/src/index.ts',
     typedocOrder: 1,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'Unsupported or non-canonical values are refused before identity or integrity is minted.',
+      relatedInvariant: 'INV-CANONICAL-BYTES',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/error'],
     capabilities: ['canonical-cbor', 'content-digests'],
     publicSubpaths: ['.'],
@@ -150,6 +196,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/core',
     dir: 'packages/core',
+    sourceEntry: 'packages/core/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'semantic',
@@ -165,6 +212,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 4,
     typedocEntry: 'packages/core/src/index.ts',
     typedocOrder: 3,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'Invalid definitions and runtime transitions fail through typed diagnostics without partial state.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/_spine', '@liteship/canonical', '@liteship/error'],
     capabilities: ['adaptive-authoring', 'reactive-runtime', 'motion', 'document-graph', 'evidence'],
     publicSubpaths: [
@@ -190,6 +244,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/genui',
     dir: 'packages/genui',
+    sourceEntry: 'packages/genui/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'semantic',
@@ -201,6 +256,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 3,
     typedocEntry: 'packages/genui/src/index.ts',
     typedocOrder: 2,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'experimental',
+      failureContract: 'Untrusted generated UI is validated or refused before it can become renderable output.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/_spine', '@liteship/canonical', '@liteship/error'],
     capabilities: ['trusted-component-catalog', 'generated-ui-validation'],
     publicSubpaths: ['.'],
@@ -218,6 +280,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/quantizer',
     dir: 'packages/quantizer',
+    sourceEntry: 'packages/quantizer/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'semantic',
@@ -232,6 +295,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 5,
     typedocEntry: 'packages/quantizer/src/index.ts',
     typedocOrder: 4,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'Invalid state maps and target programs are rejected before the quantizer can emit output.',
+      relatedInvariant: 'INV-ADAPTIVE-RECEIPT-EQUIVALENCE',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/error'],
     capabilities: ['signal-quantization', 'state-transition-runtime'],
     publicSubpaths: ['.', './testing'],
@@ -243,6 +313,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/compiler',
     dir: 'packages/compiler',
+    sourceEntry: 'packages/compiler/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'semantic',
@@ -258,6 +329,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 6,
     typedocEntry: 'packages/compiler/src/index.ts',
     typedocOrder: 5,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'Unsupported source or target semantics emit stable diagnostics and no fabricated projection.',
+      relatedInvariant: 'INV-ADAPTIVE-CSS-BYTE-EQUIVALENCE',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/error'],
     capabilities: ['multi-target-compilation', 'source-parsing', 'migration-adapters'],
     publicSubpaths: ['.', './parse', './migrate'],
@@ -269,6 +347,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/web',
     dir: 'packages/web',
+    sourceEntry: 'packages/web/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -280,6 +359,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 7,
     typedocEntry: 'packages/web/src/index.ts',
     typedocOrder: 6,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Invalid DOM and stream operations fail without leaving partially owned browser state.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/canonical', '@liteship/core', '@liteship/error', '@liteship/genui'],
     capabilities: ['dom-runtime', 'streaming', 'morphing'],
     publicSubpaths: ['.', './lite'],
@@ -291,6 +377,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/detect',
     dir: 'packages/detect',
+    sourceEntry: 'packages/detect/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -302,6 +389,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 8,
     typedocEntry: 'packages/detect/src/index.ts',
     typedocOrder: 8,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Unavailable capabilities resolve conservatively rather than fabricating host support.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core'],
     capabilities: ['device-capability-detection'],
     publicSubpaths: ['.'],
@@ -313,6 +407,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/edge',
     dir: 'packages/edge',
+    sourceEntry: 'packages/edge/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -324,6 +419,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 9,
     typedocEntry: 'packages/edge/src/index.ts',
     typedocOrder: 9,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Unproven edge capability and invalid cache state fall back or refuse without upgrading claims.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/detect', '@liteship/error'],
     capabilities: ['edge-tier-selection', 'boundary-cache'],
     publicSubpaths: ['.'],
@@ -335,6 +437,8 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/vite',
     dir: 'packages/vite',
+    sourceEntry: 'packages/vite/src/index.ts',
+    sourceEntryOverrides: { './virtual': 'packages/vite/virtual.d.ts' },
     publishable: true,
     runtimeSurface: 'module',
     layer: 'host-adapter',
@@ -350,6 +454,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 11,
     typedocEntry: 'packages/vite/src/index.ts',
     typedocOrder: 10,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Invalid project configuration and transforms fail before emitting host output.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/compiler', '@liteship/edge', '@liteship/error', '@liteship/web'],
     capabilities: ['vite-integration', 'css-directive-compilation', 'hmr'],
     publicSubpaths: ['.', './html-transform', './virtual'],
@@ -361,6 +472,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/worker',
     dir: 'packages/worker',
+    sourceEntry: 'packages/worker/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -372,6 +484,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 10,
     typedocEntry: 'packages/worker/src/index.ts',
     typedocOrder: 7,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Invalid messages and failed worker startup are reported without pretending a live worker exists.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/error'],
     capabilities: ['worker-runtime', 'offscreen-rendering', 'spsc-transport'],
     publicSubpaths: ['.'],
@@ -383,6 +502,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/remotion',
     dir: 'packages/remotion',
+    sourceEntry: 'packages/remotion/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -394,6 +514,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 15,
     typedocEntry: 'packages/remotion/src/index.ts',
     typedocOrder: 13,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'experimental',
+      failureContract: 'Invalid composition and frame inputs are refused before render ownership begins.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core'],
     capabilities: ['remotion-integration', 'video-frame-runtime'],
     publicSubpaths: ['.'],
@@ -405,6 +532,8 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/scene',
     dir: 'packages/scene',
+    sourceEntry: 'packages/scene/src/index.ts',
+    sourceEntryOverrides: { './dev': 'packages/scene/src/dev/server.ts' },
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -417,6 +546,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 16,
     typedocEntry: 'packages/scene/src/index.ts',
     typedocOrder: 14,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'experimental',
+      failureContract: 'Invalid scene graphs and timing programs are diagnosed before compilation or playback.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/_spine', '@liteship/core', '@liteship/error'],
     capabilities: ['scene-authoring', 'timeline-runtime'],
     publicSubpaths: ['.', './dev'],
@@ -428,6 +564,11 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/astro',
     dir: 'packages/astro',
+    sourceEntry: 'packages/astro/src/index.ts',
+    sourceEntryOverrides: {
+      './Adaptive': 'packages/astro/src/Adaptive.astro',
+      './Adaptive.astro': 'packages/astro/src/Adaptive.astro',
+    },
     publishable: true,
     runtimeSurface: 'module',
     layer: 'host-adapter',
@@ -453,6 +594,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 12,
     typedocEntry: 'packages/astro/src/index.ts',
     typedocOrder: 11,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Invalid project configuration and directive state fail before Astro emits a misleading build.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [
       '@liteship/core',
       '@liteship/canonical',
@@ -506,6 +654,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/cloudflare',
     dir: 'packages/cloudflare',
+    sourceEntry: 'packages/cloudflare/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'host-adapter',
@@ -517,6 +666,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 14,
     typedocEntry: 'packages/cloudflare/src/index.ts',
     typedocOrder: 12,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'stable',
+      failureContract: 'Missing bindings and failed edge cache operations remain explicit request-scoped failures.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/edge', '@liteship/astro', '@liteship/error'],
     capabilities: ['cloudflare-workers-adapter', 'kv-boundary-cache'],
     publicSubpaths: ['.', './testing', './cache-provider'],
@@ -528,6 +684,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/stage',
     dir: 'packages/stage',
+    sourceEntry: 'packages/stage/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -543,6 +700,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 13,
     typedocEntry: 'packages/stage/src/index.ts',
     typedocOrder: 15,
+    publicSurface: {
+      audience: 'host-integrator',
+      stability: 'experimental',
+      failureContract: 'Unsupported render targets and failed external encoders produce bounded diagnostics and no false artifact.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/astro', '@liteship/compiler', '@liteship/core', '@liteship/error', '@liteship/web'],
     capabilities: ['dual-export', 'ffmpeg-rendering'],
     publicSubpaths: ['.', './ffmpeg'],
@@ -554,6 +718,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/assets',
     dir: 'packages/assets',
+    sourceEntry: 'packages/assets/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'runtime',
@@ -565,6 +730,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 17,
     typedocEntry: 'packages/assets/src/index.ts',
     typedocOrder: 16,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'experimental',
+      failureContract: 'Unsupported asset kinds and malformed bytes are refused instead of decoded as unknown output.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/_spine', '@liteship/core', '@liteship/error'],
     capabilities: ['asset-declarations', 'media-analysis'],
     publicSubpaths: ['.'],
@@ -582,6 +754,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/gauntlet',
     dir: 'packages/gauntlet',
+    sourceEntry: 'packages/gauntlet/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'verification',
@@ -593,6 +766,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 1,
     typedocEntry: 'packages/gauntlet/src/index.ts',
     typedocOrder: 18,
+    publicSurface: {
+      audience: 'operator',
+      stability: 'stable',
+      failureContract: 'Incomplete evidence and blocking findings cannot mint passing authority.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/error'],
     capabilities: ['quality-gates', 'authority-ratchet'],
     publicSubpaths: ['.'],
@@ -604,6 +784,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/audit',
     dir: 'packages/audit',
+    sourceEntry: 'packages/audit/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'verification',
@@ -615,6 +796,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 18,
     typedocEntry: 'packages/audit/src/index.ts',
     typedocOrder: 17,
+    publicSurface: {
+      audience: 'operator',
+      stability: 'stable',
+      failureContract: 'Unknown or unmodeled repository facts remain findings and never inherit LiteShip host policy implicitly.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/canonical', '@liteship/error', '@liteship/gauntlet'],
     capabilities: ['repository-audit', 'consumer-audit', 'fact-building'],
     publicSubpaths: ['.'],
@@ -626,6 +814,10 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/command',
     dir: 'packages/command',
+    sourceEntry: 'packages/command/src/index.ts',
+    sourceEntryOverrides: {
+      './invariants': 'packages/command/src/commands/check-invariants-registry.ts',
+    },
     publishable: true,
     runtimeSurface: 'module',
     layer: 'tooling',
@@ -641,6 +833,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 19,
     typedocEntry: 'packages/command/src/index.ts',
     typedocOrder: 19,
+    publicSurface: {
+      audience: 'operator',
+      stability: 'stable',
+      failureContract: 'Unknown commands, checks, and context pointers are rejected by the closed catalogs.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [
       '@liteship/core',
       '@liteship/assets',
@@ -658,6 +857,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/cli',
     dir: 'packages/cli',
+    sourceEntry: 'packages/cli/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'tooling',
@@ -681,6 +881,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 20,
     typedocEntry: 'packages/cli/src/index.ts',
     typedocOrder: 20,
+    publicSurface: {
+      audience: 'operator',
+      stability: 'stable',
+      failureContract: 'Invalid invocations return structured usage or diagnostic receipts without silent fallback.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [
       '@liteship/core',
       '@liteship/canonical',
@@ -702,6 +909,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: '@liteship/mcp-server',
     dir: 'packages/mcp-server',
+    sourceEntry: 'packages/mcp-server/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'tooling',
@@ -724,6 +932,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 21,
     typedocEntry: 'packages/mcp-server/src/index.ts',
     typedocOrder: 21,
+    publicSurface: {
+      audience: 'operator',
+      stability: 'experimental',
+      failureContract: 'Unknown tools and malformed protocol requests return structured errors without invoking a handler.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [
       '@liteship/canonical',
       '@liteship/core',
@@ -743,6 +958,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: 'create-liteship',
     dir: 'packages/create-liteship',
+    sourceEntry: 'packages/create-liteship/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'tooling',
@@ -758,6 +974,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 22,
     typedocEntry: 'packages/create-liteship/src/index.ts',
     typedocOrder: 23,
+    publicSurface: {
+      audience: 'operator',
+      stability: 'stable',
+      failureContract: 'Unsupported package managers and invalid scaffold inputs fail before writing a partial application.',
+      relatedInvariant: 'INV-PUBLIC-SURFACE-INHABITED',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: ['@liteship/core', '@liteship/error'],
     capabilities: ['project-scaffolding'],
     publicSubpaths: ['.'],
@@ -769,6 +992,7 @@ export const PACKAGE_CATALOG = [
   pkg({
     name: 'liteship',
     dir: 'packages/liteship',
+    sourceEntry: 'packages/liteship/src/index.ts',
     publishable: true,
     runtimeSurface: 'module',
     layer: 'facade',
@@ -794,6 +1018,13 @@ export const PACKAGE_CATALOG = [
     apiSurfaceOrder: 23,
     typedocEntry: 'packages/liteship/src',
     typedocOrder: 24,
+    publicSurface: {
+      audience: 'package-author',
+      stability: 'stable',
+      failureContract: 'The root and advanced facade routes preserve their owning package diagnostics and refusal behavior.',
+      relatedInvariant: 'INV-FACADE-EXPORT-BUDGET',
+      reachabilityProof: 'tests/unit/devops/public-export-contract.test.ts',
+    },
     dependencies: [
       '@liteship/_spine',
       '@liteship/assets',

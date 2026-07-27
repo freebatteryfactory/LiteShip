@@ -6,8 +6,7 @@
 
 # RuntimeCoordinator
 
-Runtime coordinator namespace — single entry point for building the shared
-`Plan` + ECS store bundle consumed by every host adapter.
+Public structural type for `RuntimeCoordinator`.
 
 ## Type Aliases
 

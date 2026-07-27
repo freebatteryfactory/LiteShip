@@ -95,7 +95,7 @@ function resetState(state: CompositeState): void {
  * pool.available; // 4
  * ```
  */
-export function createCompositorStatePool(capacity = COMPOSITOR_POOL_CAP): CompositorStatePoolShape {
+export function createCompositorStatePool(capacity = COMPOSITOR_POOL_CAP): CompositorStatePool {
   const buffer: CompositeState[] = [];
   for (let i = 0; i < capacity; i++) {
     buffer.push(createMutableState());

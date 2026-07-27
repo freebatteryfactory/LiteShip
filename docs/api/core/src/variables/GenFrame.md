@@ -44,7 +44,7 @@ Pick a recovery [GapStrategy](../type-aliases/GapStrategy.md) after a stream dis
 
 ##### lastAckReceiptId
 
-`ContentAddress` \| `null`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md) \| `null`
 
 ##### currentStreamPosition
 

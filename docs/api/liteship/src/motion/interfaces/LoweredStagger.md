@@ -38,6 +38,6 @@ Defined in: core/dist/motion/stagger.d.ts:44
 
 ### signalId
 
-> `readonly` **signalId**: `ContentAddress`
+> `readonly` **signalId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/stagger.d.ts:45

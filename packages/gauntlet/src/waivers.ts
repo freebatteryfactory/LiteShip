@@ -35,6 +35,7 @@ import type { Waiver } from './waiver.js';
  */
 const BOUNDARY_REVIEW = '2027-06-20';
 
+/** Reviewed LiteShip-specific waiver ledger consumed by the repository host. */
 export const LITESHIP_WAIVERS: readonly Waiver[] = [
   // ── The two declared entropy boundaries (the determinism substrate) ──────────
   // Owner-sanctioned per the assurance-map redline: "waive only if the read is the

@@ -3,7 +3,7 @@
  *
  * `@liteship/audit`'s `DevopsProfile` is THE reusable devops seam. D7 ruled "only fields
  * the audit consumes — no aspirational fields"; that law lived only in a comment.
- * These guards make it teeth: the profile keeps exactly its seven public keys, and the
+ * These guards make it teeth: the profile keeps exactly its nine public keys, and the
  * repo-local contracts (invariants / coverage / bench / artifact-paths) stay local —
  * they never leak onto the profile or into the published engine surface. The two
  * root-derivation families (checkout-root vs caller-root) stay split.
@@ -15,7 +15,9 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { DEVOPS_PROFILE_KEYS, liteshipDevopsProfile, type DevopsProfile } from '@liteship/audit';
+import ts from 'typescript';
+import { DEVOPS_PROFILE_KEYS, type DevopsProfile } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const read = (rel: string): string => readFileSync(resolve(REPO, rel), 'utf8');
@@ -94,6 +96,26 @@ describe('D7b — repo-local contracts stay local (not threaded through the prof
 
   it('artifact/report paths are repo-local in scripts/audit/policy.ts (D9b-1), not the engine', () => {
     expect(read('scripts/audit/policy.ts')).toMatch(/reportPaths/);
+  });
+});
+
+describe('ADR-0023 — project policy is host-injected', () => {
+  it('the published engine contains no project package literal outside dependency imports', () => {
+    const offenders: string[] = [];
+    for (const file of auditEngineSources()) {
+      const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+      const visit = (node: ts.Node): void => {
+        if (ts.isStringLiteralLike(node) && node.text.startsWith('@liteship/')) {
+          const parent = node.parent;
+          const isDependencySpecifier =
+            (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent)) && parent.moduleSpecifier === node;
+          if (!isDependencySpecifier) offenders.push(`${file.replace(/\\/g, '/')}:${node.getStart(source)}`);
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
+    }
+    expect(offenders).toEqual([]);
   });
 });
 

@@ -38,7 +38,7 @@ Visual fidelity tier permitted for this device.
 
 ### motionTier
 
-> `readonly` **motionTier**: `MotionTier`
+> `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [edge/src/edge-tier.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L36)
 

@@ -30,7 +30,7 @@ Defined in: core/dist/evidence/capture.d.ts:36
 
 ### durationMs
 
-> `readonly` **durationMs**: `Millis`
+> `readonly` **durationMs**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: core/dist/evidence/capture.d.ts:38
 

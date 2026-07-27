@@ -124,6 +124,7 @@ function makeCountingGate(opts: { id?: string; narrow?: boolean } = {}): Gate & 
     runs: 0,
     ...defineGate({
       id,
+      extension: { namespace: id.slice(0, id.indexOf('/')), owner: 'LiteShip test suite' },
       level: 'L2',
       describe: 'emits one finding per marked file (a real content-dependent verdict)',
       run: (c: GateContext): readonly Finding[] => {

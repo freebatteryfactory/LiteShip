@@ -26,7 +26,7 @@ The headless boundary attr set (`Adaptive.attrs()`).
 
 ### boundaryId
 
-> `readonly` **boundaryId**: `ContentAddress`
+> `readonly` **boundaryId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/adaptive.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L205)
 
@@ -44,7 +44,7 @@ Compiler-owned CSS driven by this Adaptive's runtime state marker.
 
 ### quantizerId?
 
-> `readonly` `optional` **quantizerId?**: `ContentAddress`
+> `readonly` `optional` **quantizerId?**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/adaptive.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L207)
 
@@ -52,6 +52,6 @@ Defined in: [core/src/authoring/adaptive.ts:207](https://github.com/freebatteryf
 
 ### styleId
 
-> `readonly` **styleId**: `ContentAddress`
+> `readonly` **styleId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/adaptive.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L206)

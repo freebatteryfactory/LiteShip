@@ -32,7 +32,7 @@ Defined in: core/dist/graph/graph-patch.d.ts:54
 
 ### base
 
-> `readonly` **base**: `ContentAddress`
+> `readonly` **base**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/graph-patch.d.ts:56
 
@@ -50,7 +50,7 @@ Defined in: core/dist/graph/graph-patch.d.ts:57
 
 ### resultId?
 
-> `readonly` `optional` **resultId?**: `ContentAddress`
+> `readonly` `optional` **resultId?**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/graph-patch.d.ts:59
 

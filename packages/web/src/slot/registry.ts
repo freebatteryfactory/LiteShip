@@ -31,7 +31,7 @@ const readIslandMode = (element: Element): IslandMode | null =>
 /**
  * Slot registry interface -- manages mapping between slot paths and DOM elements.
  */
-export interface SlotRegistryShape {
+export interface SlotRegistry {
   get(path: SlotPath): SlotEntry | undefined;
   register(entry: SlotEntryInput): void;
   unregister(path: SlotPath): void;
@@ -54,9 +54,9 @@ export interface SlotRegistryShape {
  * console.log(entry?.mode); // 'partial' (default; mounted defaults to true)
  * ```
  *
- * @returns A new {@link SlotRegistryShape} instance
+ * @returns A new {@link SlotRegistry} instance
  */
-export const create = (): SlotRegistryShape => {
+export const create = (): SlotRegistry => {
   const registry = new Map<SlotPath, SlotEntry>();
 
   return {
@@ -128,7 +128,7 @@ export const create = (): SlotRegistryShape => {
  * @param root        - The DOM root element to scan
  * @param defaultMode - Default island mode for discovered slots (defaults to 'partial')
  */
-export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode: IslandMode = 'partial'): void => {
+export const scanDOM = (registry: SlotRegistry, root: Element, defaultMode: IslandMode = 'partial'): void => {
   const elements = root.querySelectorAll('[data-liteship-slot]');
 
   for (const element of Array.from(elements)) {
@@ -180,7 +180,7 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
  * @param root     - The DOM root to scan and observe
  * @returns A {@link Disposer} that disconnects the `MutationObserver`
  */
-export const observe = (registry: SlotRegistryShape, root: Element): Disposer => {
+export const observe = (registry: SlotRegistry, root: Element): Disposer => {
   // Pre-existing DOM first; the observer below only sees future mutations.
   scanDOM(registry, root);
 
@@ -359,4 +359,3 @@ export const SlotRegistry = {
 } as const;
 
 /** Public structural type for `SlotRegistry`. */
-export type SlotRegistry = SlotRegistryShape;

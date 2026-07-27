@@ -11,7 +11,7 @@
 Defined in: core/dist/motion/state-transition.d.ts:103
 
 Companion mint the authority host calls AFTER a synchronous
-[StateCellStoreShape.applyDiscrete](../../reactive/interfaces/StateCellStoreShape.md#applydiscrete) — builds the transition VALUE from
+[StateCellStore.applyDiscrete](../../reactive/interfaces/StateCellStore.md#applydiscrete) — builds the transition VALUE from
 the crossing's `previous`/`next` cells plus the graph identity, then mints its
 receipt via [transitionReceipt](transitionReceipt.md). Kept separate so `applyDiscrete` stays
 synchronous (no crypto in the hot path).
@@ -30,7 +30,7 @@ synchronous (no crypto in the hot path).
 
 #### base
 
-`ContentAddress`
+[`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 #### previousHash?
 
@@ -38,7 +38,7 @@ synchronous (no crypto in the hot path).
 
 #### resultId?
 
-`ContentAddress`
+[`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 #### timestamp?
 

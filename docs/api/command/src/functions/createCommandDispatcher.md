@@ -8,7 +8,7 @@
 
 > **createCommandDispatcher**(`registry`): [`CommandDispatcher`](../interfaces/CommandDispatcher.md)
 
-Defined in: [command/src/dispatcher.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L44)
+Defined in: [command/src/dispatcher.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/dispatcher.ts#L45)
 
 Allocate a transport-free dispatcher over one command registry.
 

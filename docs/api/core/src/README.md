@@ -26,7 +26,6 @@ plan graph, ECS, capsule factory).
 - [GraphPatch](namespaces/GraphPatch/README.md)
 - [HLC](namespaces/HLC/README.md)
 - [Lifetime](namespaces/Lifetime/README.md)
-- [Part](namespaces/Part/README.md)
 - [Plan](namespaces/Plan/README.md)
 - [ProjectionState](namespaces/ProjectionState/README.md)
 - [Receipt](namespaces/Receipt/README.md)
@@ -63,16 +62,15 @@ plan graph, ECS, capsule factory).
 - [CaptureResult](interfaces/CaptureResult.md)
 - [CastContextOptions](interfaces/CastContextOptions.md)
 - [CellEnvelope](interfaces/CellEnvelope.md)
-- [CellFanoutShape](interfaces/CellFanoutShape.md)
+- [CellFanout](interfaces/CellFanout.md)
 - [CellMeta](interfaces/CellMeta.md)
-- [CellReplayShape](interfaces/CellReplayShape.md)
+- [CellReplay](interfaces/CellReplay.md)
 - [CellSink](interfaces/CellSink.md)
 - [ChainValidationOptions](interfaces/ChainValidationOptions.md)
 - [CheckpointResult](interfaces/CheckpointResult.md)
 - [Clock](interfaces/Clock.md)
 - [ComponentNode](interfaces/ComponentNode.md)
 - [ComposableEntity](interfaces/ComposableEntity.md)
-- [ComposableWorldShape](interfaces/ComposableWorldShape.md)
 - [CompositeState](interfaces/CompositeState.md)
 - [CompositorConfig](interfaces/CompositorConfig.md)
 - [Config](interfaces/Config.md)
@@ -115,8 +113,8 @@ plan graph, ECS, capsule factory).
 - [GraphSummary](interfaces/GraphSummary.md)
 - [HLCBrand](interfaces/HLCBrand.md)
 - [Invariant](interfaces/Invariant.md)
+- [Lifetime](interfaces/Lifetime.md)
 - [LifetimeDisposeError](interfaces/LifetimeDisposeError.md)
-- [LifetimeShape](interfaces/LifetimeShape.md)
 - [LoweredMotionPlan](interfaces/LoweredMotionPlan.md)
 - [LoweredProgramTimeline](interfaces/LoweredProgramTimeline.md)
 - [LoweredReveal](interfaces/LoweredReveal.md)
@@ -128,7 +126,7 @@ plan graph, ECS, capsule factory).
 - [MergeResult](interfaces/MergeResult.md)
 - [MotionPropertyTween](interfaces/MotionPropertyTween.md)
 - [NodePatchOp](interfaces/NodePatchOp.md)
-- [OwnedResource](interfaces/OwnedResource.md)
+- [Part](interfaces/Part.md)
 - [PatchReceiptEntry](interfaces/PatchReceiptEntry.md)
 - [PolicyNode](interfaces/PolicyNode.md)
 - [PoseNode](interfaces/PoseNode.md)
@@ -167,6 +165,7 @@ plan graph, ECS, capsule factory).
 - [RevealSsrPaint](interfaces/RevealSsrPaint.md)
 - [RevealTransition](interfaces/RevealTransition.md)
 - [Rng](interfaces/Rng.md)
+- [RuntimeCoordinator](interfaces/RuntimeCoordinator.md)
 - [RuntimeCoordinatorConfig](interfaces/RuntimeCoordinatorConfig.md)
 - [RuntimeEasing](interfaces/RuntimeEasing.md)
 - [RuntimeWritePlan](interfaces/RuntimeWritePlan.md)
@@ -185,7 +184,7 @@ plan graph, ECS, capsule factory).
 - [StaggerIntentInput](interfaces/StaggerIntentInput.md)
 - [StateCell](interfaces/StateCell.md)
 - [StateCellRegisterOptions](interfaces/StateCellRegisterOptions.md)
-- [StateCellStoreShape](interfaces/StateCellStoreShape.md)
+- [StateCellStore](interfaces/StateCellStore.md)
 - [StateResolutionReceipt](interfaces/StateResolutionReceipt.md)
 - [StyleLayer](interfaces/StyleLayer.md)
 - [System](interfaces/System.md)
@@ -199,6 +198,7 @@ plan graph, ECS, capsule factory).
 - [VideoFrameOutput](interfaces/VideoFrameOutput.md)
 - [WASMDispatchAPI](interfaces/WASMDispatchAPI.md)
 - [WASMKernels](interfaces/WASMKernels.md)
+- [World](interfaces/World.md)
 
 ## Type Aliases
 
@@ -264,7 +264,6 @@ plan graph, ECS, capsule factory).
 - [JsonSchemaFragment](type-aliases/JsonSchemaFragment.md)
 - [JsonSchemaObject](type-aliases/JsonSchemaObject.md)
 - [KernelDecodeResult](type-aliases/KernelDecodeResult.md)
-- [Lifetime](type-aliases/Lifetime.md)
 - [LifetimeDisposeError](type-aliases/LifetimeDisposeError.md)
 - [LiteshipStandardSchema](type-aliases/LiteshipStandardSchema.md)
 - [LiveCell](type-aliases/LiveCell.md)
@@ -275,7 +274,6 @@ plan graph, ECS, capsule factory).
 - [NodeFamily](type-aliases/NodeFamily.md)
 - [OpType](type-aliases/OpType.md)
 - [OutputsFor](type-aliases/OutputsFor.md)
-- [Part](type-aliases/Part.md)
 - [PatchOp](type-aliases/PatchOp.md)
 - [Prettify](type-aliases/Prettify.md)
 - [Primitive](type-aliases/Primitive.md)
@@ -293,7 +291,6 @@ plan graph, ECS, capsule factory).
 - [ResponsiveMediaResolutionReason](type-aliases/ResponsiveMediaResolutionReason.md)
 - [RevealReducedMotion](type-aliases/RevealReducedMotion.md)
 - [RevealTrigger](type-aliases/RevealTrigger.md)
-- [RuntimeCoordinator](type-aliases/RuntimeCoordinator.md)
 - [RuntimePhase](type-aliases/RuntimePhase.md)
 - [RuntimeSite](type-aliases/RuntimeSite.md)
 - [Scheduler](type-aliases/Scheduler.md)
@@ -308,7 +305,6 @@ plan graph, ECS, capsule factory).
 - [SpeculativeEvaluator](type-aliases/SpeculativeEvaluator.md)
 - [StateAuthority](type-aliases/StateAuthority.md)
 - [StateCellKind](type-aliases/StateCellKind.md)
-- [StateCellStore](type-aliases/StateCellStore.md)
 - [StateName](type-aliases/StateName.md)
 - [StateUnion](type-aliases/StateUnion.md)
 - [Store](type-aliases/Store.md)
@@ -330,7 +326,6 @@ plan graph, ECS, capsule factory).
 - [VectorClock](type-aliases/VectorClock.md)
 - [VideoRenderer](type-aliases/VideoRenderer.md)
 - [WallClockTimestamp](type-aliases/WallClockTimestamp.md)
-- [World](type-aliases/World.md)
 - [Zap](type-aliases/Zap.md)
 
 ## Variables
@@ -384,7 +379,6 @@ plan graph, ECS, capsule factory).
 - [Lifetime](variables/Lifetime.md)
 - [Millis](variables/Millis.md)
 - [MS\_PER\_SEC](variables/MS_PER_SEC.md)
-- [Part](variables/Part.md)
 - [Plan](variables/Plan.md)
 - [PROJECTION\_KEYS\_SOURCE](variables/PROJECTION_KEYS_SOURCE.md)
 - [ProjectionState](variables/ProjectionState.md)
@@ -453,6 +447,7 @@ plan graph, ECS, capsule factory).
 - [createComponent](functions/createComponent.md)
 - [createComposable](functions/createComposable.md)
 - [createCompositorStatePool](functions/createCompositorStatePool.md)
+- [createDenseStore](functions/createDenseStore.md)
 - [createDirtyFlags](functions/createDirtyFlags.md)
 - [createFrameBudget](functions/createFrameBudget.md)
 - [createGraphMutationClient](functions/createGraphMutationClient.md)
@@ -561,15 +556,3 @@ plan graph, ECS, capsule factory).
 - [verifyAppliedGraph](functions/verifyAppliedGraph.md)
 - [wgslIdent](functions/wgslIdent.md)
 - [withArbitrary](functions/withArbitrary.md)
-
-## References
-
-### ProjectionStateShape
-
-Renames and re-exports [ProjectionState](variables/ProjectionState.md)
-
-***
-
-### StateCellShape
-
-Renames and re-exports [StateCell](variables/StateCell.md)

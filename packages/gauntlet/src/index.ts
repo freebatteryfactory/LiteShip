@@ -86,6 +86,7 @@ export {
   type GateFixture,
   type GateFixtures,
   type GateMutation,
+  type ExtensionGateIdentity,
   type Gate,
   type GateAccessManifest,
   type GateFactAccess,

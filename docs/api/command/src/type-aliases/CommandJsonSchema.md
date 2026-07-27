@@ -6,7 +6,7 @@
 
 # Type Alias: CommandJsonSchema
 
-> **CommandJsonSchema** = `_CommandJsonSchema`
+> **CommandJsonSchema** = [`CommandJsonSchema`](../../../spine/interfaces/CommandJsonSchema.md)
 
 Defined in: core/dist/authoring/command.d.ts:10
 

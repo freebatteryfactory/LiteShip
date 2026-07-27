@@ -6,7 +6,7 @@
 
 # Type Alias: CapsuleCommandDescriptor
 
-> **CapsuleCommandDescriptor** = `_CapsuleCommandDescriptor`
+> **CapsuleCommandDescriptor** = [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)
 
 Defined in: core/dist/authoring/command.d.ts:16
 

@@ -14,7 +14,7 @@ Configuration for a [VideoRenderer](../variables/VideoRenderer.md): resolution, 
 
 ### durationMs
 
-> `readonly` **durationMs**: `Millis`
+> `readonly` **durationMs**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [core/src/media/video.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/video.ts#L27)
 

@@ -464,7 +464,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense().get",
+          "symbol": "createDenseStore().get",
           "binding": "denseStore.get"
         }
       ]
@@ -482,7 +482,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense().set",
+          "symbol": "createDenseStore().set",
           "binding": "denseStore.set"
         }
       ]
@@ -500,8 +500,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense",
-          "binding": "Part.dense"
+          "symbol": "createDenseStore",
+          "binding": "createDenseStore"
         },
         {
           "role": "sut",
@@ -509,7 +509,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense().set",
+          "symbol": "createDenseStore().set",
           "binding": "tempStore.set"
         },
         {
@@ -518,7 +518,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense().delete",
+          "symbol": "createDenseStore().delete",
           "binding": "tempStore.delete"
         }
       ]
@@ -590,8 +590,8 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense",
-          "binding": "Part.dense"
+          "symbol": "createDenseStore",
+          "binding": "createDenseStore"
         },
         {
           "role": "sut",
@@ -617,7 +617,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense().set",
+          "symbol": "createDenseStore().set",
           "binding": "posX.set"
         },
         {
@@ -626,7 +626,7 @@
             "kind": "module",
             "specifier": "@liteship/core"
           },
-          "symbol": "Part.dense().set",
+          "symbol": "createDenseStore().set",
           "binding": "posY.set"
         },
         {

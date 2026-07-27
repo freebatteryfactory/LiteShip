@@ -6,7 +6,7 @@
 
 # Interface: AuditFloorSummary
 
-Defined in: [command/src/registry.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L332)
+Defined in: [command/src/registry.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L324)
 
 Structured verdict returned by the injected [CommandContext.runAuditFloor](CommandContext.md#runauditfloor)
 capability — the artifact-independent three-pass warning floor, diffed against
@@ -20,7 +20,7 @@ contract lives in `@liteship/command` without an import of the heavy engine.
 
 > `readonly` **actualWarnings**: `number`
 
-Defined in: [command/src/registry.ts:337](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L337)
+Defined in: [command/src/registry.ts:329](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L329)
 
 Number of `rule@file` warning keys the engine actually surfaced.
 
@@ -30,7 +30,7 @@ Number of `rule@file` warning keys the engine actually surfaced.
 
 > `readonly` **delta**: `object`
 
-Defined in: [command/src/registry.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L341)
+Defined in: [command/src/registry.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L333)
 
 Warning-inventory drift against the floor: `added` are new, `removed` are gone.
 
@@ -48,7 +48,7 @@ Warning-inventory drift against the floor: `added` are new, `removed` are gone.
 
 > `readonly` **errorCount**: `number`
 
-Defined in: [command/src/registry.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L339)
+Defined in: [command/src/registry.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L331)
 
 Error-severity findings across all three passes — any error fails the gate.
 
@@ -58,7 +58,7 @@ Error-severity findings across all three passes — any error fails the gate.
 
 > `readonly` **expectedWarnings**: `number`
 
-Defined in: [command/src/registry.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L335)
+Defined in: [command/src/registry.ts:327](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L327)
 
 Number of pinned floor warnings (`AUDIT_WARNING_FLOOR.length`).
 
@@ -68,7 +68,7 @@ Number of pinned floor warnings (`AUDIT_WARNING_FLOOR.length`).
 
 > `readonly` **inventory**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L343)
+Defined in: [command/src/registry.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L335)
 
 The sorted `rule@file` warning inventory the engine surfaced.
 
@@ -78,4 +78,4 @@ The sorted `rule@file` warning inventory the engine surfaced.
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/registry.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L333)
+Defined in: [command/src/registry.ts:325](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L325)

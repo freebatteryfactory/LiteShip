@@ -10,7 +10,7 @@ import type {
   DocumentGraph,
   GraphMutationClient,
   PatchReceiptEntry,
-  StateCellStoreShape,
+  StateCellStore,
 } from '@liteship/core';
 import { createGraphQueryRefreshBase, graphQueryEtag, runGraphNativeGapReplay } from '@liteship/core';
 import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@liteship/core';
@@ -62,7 +62,7 @@ export interface StreamRecoveryOptions {
   readonly mutationClient?: StreamRecoveryMutationClient;
   readonly handlers: StreamRecoveryHandlers;
   /** StateCell store for discrete gap-replay (#133-full). Required with {@link patchReceiptEntries}. */
-  readonly cellStore?: StateCellStoreShape;
+  readonly cellStore?: StateCellStore;
   /** Transition/receipt chain spanning the missed gap (#133-full). */
   readonly patchReceiptEntries?: readonly PatchReceiptEntry[];
   /**

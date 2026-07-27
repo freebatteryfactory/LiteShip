@@ -26,14 +26,14 @@ import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
 import { videoDecoder, type DecodedVideo } from './decoders/video.js';
 import { imageDecoder, type DecodedImage } from './decoders/image.js';
 
-/** Supported asset kinds. */
-export type AssetKind = 'audio' | 'video' | 'image' | 'beat-markers' | 'onsets' | 'waveform';
+/** Supported source asset kinds. Analysis results are projections, never source assets. */
+export type AssetKind = 'audio' | 'video' | 'image';
 
 /**
- * Decoded output for each media {@link AssetKind}. Analysis kinds
- * (beat-markers / onsets / waveform) have no built-in decoder — their
- * projections come from the dedicated factories (BeatMarkerProjection,
- * OnsetProjection, WaveformProjection) — so they map to `unknown`.
+ * Decoded output for each source-media {@link AssetKind}. Beat markers,
+ * onsets, and waveforms are derived by their dedicated projection factories;
+ * they are not byte-source kinds and therefore cannot widen this type to
+ * `unknown`.
  */
 export type DecodedAsset<K extends AssetKind> = K extends 'audio'
   ? DecodedAudio
@@ -41,7 +41,7 @@ export type DecodedAsset<K extends AssetKind> = K extends 'audio'
     ? DecodedVideo
     : K extends 'image'
       ? DecodedImage
-      : unknown;
+      : never;
 
 /** Asset declaration shape consumed by `defineAsset`. */
 export interface AssetDecl<K extends AssetKind> {
@@ -100,11 +100,6 @@ export type AssetDecoder<K extends AssetKind = AssetKind> = (bytes: ArrayBuffer)
 /** Per-kind decode p95 budget defaults (ms). Explicit `decl.budgets.decodeP95Ms` overrides. */
 export function defaultDecodeP95MsFor(kind: AssetKind): number {
   switch (kind) {
-    case 'beat-markers':
-    case 'onsets':
-      return 200;
-    case 'waveform':
-      return 100;
     case 'video':
       return 100;
     case 'image':
@@ -142,9 +137,8 @@ function registryMissError(subject: string, id: string, ids: readonly string[]):
 }
 
 /**
- * Built-in decoder for a media kind. Analysis kinds (beat-markers /
- * onsets / waveform) have their own projection factories and no byte
- * decoder, so they resolve to undefined.
+ * Built-in decoder for a source media kind. Analysis outputs have dedicated
+ * projection factories and are deliberately absent from {@link AssetKind}.
  */
 export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
   switch (kind) {
@@ -154,8 +148,6 @@ export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
       return videoDecoder;
     case 'image':
       return imageDecoder;
-    default:
-      return undefined;
   }
 }
 
@@ -165,8 +157,7 @@ export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
  * builtin-decoded video capsule is node-only — declaring 'browser' would
  * lie to bundlers and site routers. The audio built-in (pure RIFF walk)
  * and image built-in (header sniff) are byte-level and run anywhere.
- * Analysis kinds have no byte decoder, so they keep the permissive
- * default; their dedicated projection factories declare their own sites.
+ * Dedicated analysis projection factories declare their own sites.
  */
 export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
   return kind === 'video' ? ['node'] : ['node', 'browser'];
@@ -247,7 +238,7 @@ export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AssetCapsu
   if (typeof decl.source !== 'string' || decl.source.trim().length === 0) {
     throw ValidationError('defineAsset', `defineAsset('${decl.id}') requires a non-empty source path`);
   }
-  if (!['audio', 'video', 'image', 'beat-markers', 'onsets', 'waveform'].includes(decl.kind)) {
+  if (!['audio', 'video', 'image'].includes(decl.kind)) {
     throw ValidationError('defineAsset', `defineAsset('${decl.id}') has unsupported kind ${JSON.stringify(decl.kind)}`);
   }
   if (decl.decoder !== undefined && typeof decl.decoder !== 'function') {

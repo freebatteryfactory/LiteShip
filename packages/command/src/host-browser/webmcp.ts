@@ -7,6 +7,7 @@ import { createCommandDispatcher, commandRegistry } from '../index.js';
 import type { CommandContext } from '../registry.js';
 import { browserSafeCommandNames, createBrowserCommandContext } from './context.js';
 
+/** Browser-hosted MCP tool descriptor exposed to a model context. */
 export interface ModelContextTool {
   readonly name: string;
   readonly description: string;
@@ -14,10 +15,12 @@ export interface ModelContextTool {
   readonly execute: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
+/** Minimal browser capability for registering model-context tools. */
 export interface ModelContextHost {
   readonly registerTool: (tool: ModelContextTool) => void;
 }
 
+/** Options for projecting the canonical command catalog into WebMCP. */
 export interface WebMcpProjectionOptions {
   readonly context?: CommandContext;
   readonly commandNames?: readonly string[];

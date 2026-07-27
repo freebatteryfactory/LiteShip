@@ -35,7 +35,6 @@ import {
   startRafLoop,
   type RevealIntent,
   type RuntimeWritePlan,
-  type StateCellStoreShape,
 } from '@liteship/core';
 import { dispatchLiteshipEvent } from '@liteship/web';
 import { writeContinuousMap } from './write-continuous-map.js';
@@ -337,7 +336,7 @@ function startDriver(program: SerializedMotionProgram, onTick: (progress: number
  */
 export function initMotionDirective(load: () => Promise<unknown>, element: HTMLElement): void {
   let driver: MotionDriver | null = null;
-  let store: StateCellStoreShape | null = null;
+  let store: StateCellStore | null = null;
 
   const applyDiscrete = (stateName: string): void => {
     if (!store) return;

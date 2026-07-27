@@ -74,6 +74,7 @@ import { memoryContext } from '../engine.js';
 import { stableEvidenceDigest } from '../verdict-cache.js';
 import { codeOnly, stringsBlanked } from './code-only.js';
 
+/** Stable rule identity for unconfirmed public semantic claims. */
 export const CLAIM_PROPERTY_RULE_ID = 'gauntlet/claim-without-confirmer';
 
 /** The closed set of semantic-property claim kinds this gate confirms. */

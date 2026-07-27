@@ -43,6 +43,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationError } from '@liteship/error';
 import { CanonicalCbor, addressedDigestOf, type IntegrityDigest } from '@liteship/canonical';
+import {
+  COMPLEXITY_ADMISSION_POLICY,
+  complexityAdmissionReasons,
+} from '../../packages/gauntlet/src/gates/performance-contracts.js';
 import { systemClock, type Clock } from '@liteship/core';
 import {
   parseQualifiedBenchDistribution,
@@ -138,10 +142,10 @@ export interface ComplexityMapEntry {
   readonly fittedSlope: number;
   /** The fit's R² — recorded so a reader can see the linear fit's quality. */
   readonly fittedR2: number;
-  /** Maximum coefficient of variation observed across the size sweep. */
-  readonly coefficientOfVariation?: number;
+  /** Maximum lower-envelope coefficient of variation observed across the size sweep. */
+  readonly coefficientOfVariation: number;
   /** Measurement regime used to produce the curve. */
-  readonly measurement?: {
+  readonly measurement: {
     readonly innerIterations: number;
     readonly replicates: number;
     readonly warmupIterations: number;
@@ -150,7 +154,7 @@ export interface ComplexityMapEntry {
 
 /** The committed complexity-map artifact. */
 export interface ComplexityMap {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly entries: readonly ComplexityMapEntry[];
 }
 
@@ -168,6 +172,8 @@ export type BenchmarkEvidenceReason =
   | 'allocation-budget-exceeded'
   | 'leak-slope-exceeded'
   | 'under-replicated'
+  | 'insufficient-size-sweep'
+  | 'invalid-size-sweep'
   | 'low-r2'
   | 'unstable-variance'
   | 'stale-source-sha'
@@ -361,15 +367,31 @@ function deriveBenchmarkAdmission(input: BenchmarkEvidenceInput): BenchmarkEvide
   if (input.allocation !== null && input.allocation.leakSlope > input.allocation.maximumLeakSlope) {
     failures.push('leak-slope-exceeded');
   }
-  if (input.complexity !== null && input.complexity.fittedR2 < input.confidence.minimumR2) {
-    unknowns.push('low-r2');
-  }
-  // One observation cannot establish variance or uncertainty. This is the
-  // mathematical floor, not a claim-class performance threshold; stronger
-  // minima remain an explicit benchmark-constitution policy decision.
-  if (input.measurement.repetitions < 2) unknowns.push('under-replicated');
-  if (input.confidence.coefficientOfVariation > input.confidence.maximumCoefficientOfVariation) {
-    unknowns.push('unstable-variance');
+  if (input.complexity !== null) {
+    unknowns.push(
+      ...complexityAdmissionReasons({
+        sizes: input.input.sizes,
+        replicates: input.measurement.repetitions,
+        fittedR2: input.complexity.fittedR2,
+        coefficientOfVariation: input.confidence.coefficientOfVariation,
+      }),
+    );
+    if (input.complexity.fittedR2 < input.confidence.minimumR2 && !unknowns.includes('low-r2')) {
+      unknowns.push('low-r2');
+    }
+    if (
+      input.confidence.coefficientOfVariation > input.confidence.maximumCoefficientOfVariation &&
+      !unknowns.includes('unstable-variance')
+    ) {
+      unknowns.push('unstable-variance');
+    }
+  } else {
+    // A non-complexity observation still needs enough repetition to expose
+    // variance; claim-bearing complexity evidence has the stronger shared floor.
+    if (input.measurement.repetitions < 2) unknowns.push('under-replicated');
+    if (input.confidence.coefficientOfVariation > input.confidence.maximumCoefficientOfVariation) {
+      unknowns.push('unstable-variance');
+    }
   }
 
   if (failures.length > 0) {
@@ -469,6 +491,19 @@ function snapshotBenchmarkEvidenceInput(input: BenchmarkEvidenceInput): Benchmar
     evidenceValidation('measurement.canary verdict must be pass or fail');
   }
   if (snapshot.confidence.minimumR2 > 1) evidenceValidation('confidence.minimumR2 must be <= 1');
+  if (snapshot.complexity !== null && snapshot.confidence.minimumR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) {
+    evidenceValidation(
+      `confidence.minimumR2 cannot weaken the claim-bearing floor ${COMPLEXITY_ADMISSION_POLICY.minimumR2}`,
+    );
+  }
+  if (
+    snapshot.complexity !== null &&
+    snapshot.confidence.maximumCoefficientOfVariation > COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation
+  ) {
+    evidenceValidation(
+      `confidence.maximumCoefficientOfVariation cannot weaken the claim-bearing ceiling ${COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation}`,
+    );
+  }
   return snapshot;
 }
 
@@ -875,8 +910,30 @@ export interface ComplexityCurve {
   readonly shape: string;
   readonly samples: readonly ComplexitySample[];
   readonly fit: ComplexityFit;
-  /** Maximum coefficient of variation across replicate timings at one size. */
+  /** Maximum lower-envelope coefficient of variation across timings at one size. */
   readonly coefficientOfVariation: number;
+}
+
+/**
+ * Dispersion of the same lower envelope the best-of-k complexity estimator uses.
+ * Scheduler pauses and GC are additive outliers; including their full upper tail
+ * while fitting the minimum would compare two different estimators and turn host
+ * load into a false scientific failure. The fastest half (at least two samples)
+ * preserves real instability in the attainable floor while excluding unrelated
+ * additive stalls. Scale invariance makes the result portable across machines.
+ */
+export function lowerEnvelopeCoefficientOfVariation(samples: readonly number[]): number {
+  const usable = samples.filter((sample) => Number.isFinite(sample) && sample >= 0).sort((a, b) => a - b);
+  if (usable.length < 2) {
+    throw ValidationError(
+      'lowerEnvelopeCoefficientOfVariation',
+      `need at least two finite non-negative samples; got ${usable.length}`,
+    );
+  }
+  const envelope = usable.slice(0, Math.max(2, Math.ceil(usable.length / 2)));
+  const mean = envelope.reduce((sum, sample) => sum + sample, 0) / envelope.length;
+  const variance = envelope.reduce((sum, sample) => sum + (sample - mean) ** 2, 0) / envelope.length;
+  return mean === 0 ? (variance === 0 ? 0 : Number.POSITIVE_INFINITY) : Math.sqrt(variance) / mean;
 }
 
 /**
@@ -935,9 +992,7 @@ export function measureComplexityCurve(
       }
     }
 
-    const mean = replicateSamples.reduce((sum, sample) => sum + sample, 0) / replicateSamples.length;
-    const variance = replicateSamples.reduce((sum, sample) => sum + (sample - mean) ** 2, 0) / replicateSamples.length;
-    coefficientsOfVariation.push(mean === 0 ? Number.POSITIVE_INFINITY : Math.sqrt(variance) / mean);
+    coefficientsOfVariation.push(lowerEnvelopeCoefficientOfVariation(replicateSamples));
 
     samples.push({ size, latencyNs: bestPerCallNs });
   }
@@ -971,10 +1026,29 @@ export function readDistributionRegistry(root: string): DistributionRegistry | n
 
 /** Read + validate the committed complexity map, or `null` if absent. */
 export function readComplexityMap(root: string): ComplexityMap | null {
-  return readArtifact<ComplexityMap>(
-    resolve(root, COMPLEXITY_MAP_ARTIFACT_PATH),
-    (parsed): parsed is ComplexityMap => parsed.schemaVersion === 1 && Array.isArray((parsed as ComplexityMap).entries),
-  );
+  return readArtifact<ComplexityMap>(resolve(root, COMPLEXITY_MAP_ARTIFACT_PATH), (parsed): parsed is ComplexityMap => {
+    if (parsed.schemaVersion !== 2 || !Array.isArray((parsed as ComplexityMap).entries)) return false;
+    return (parsed as unknown as { readonly entries: readonly unknown[] }).entries.every((value) => {
+      if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+      const entry = value as Record<string, unknown>;
+      if (entry['measurement'] === null || typeof entry['measurement'] !== 'object') return false;
+      const measurement = entry['measurement'] as Record<string, unknown>;
+      return (
+        typeof entry['path'] === 'string' &&
+        typeof entry['describe'] === 'string' &&
+        typeof entry['shape'] === 'string' &&
+        Array.isArray(entry['sizes']) &&
+        entry['sizes'].every((size) => typeof size === 'number') &&
+        COMPLEXITY_CLASSES.includes(entry['class'] as ComplexityClass) &&
+        typeof entry['fittedSlope'] === 'number' &&
+        typeof entry['fittedR2'] === 'number' &&
+        typeof entry['coefficientOfVariation'] === 'number' &&
+        typeof measurement['innerIterations'] === 'number' &&
+        typeof measurement['replicates'] === 'number' &&
+        typeof measurement['warmupIterations'] === 'number'
+      );
+    });
+  });
 }
 
 function readArtifact<T extends { readonly schemaVersion: number }>(

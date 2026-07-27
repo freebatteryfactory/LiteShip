@@ -14,7 +14,7 @@ One lowered child with its transition id and computed delay.
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/stagger.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L60)
 
@@ -38,6 +38,6 @@ Defined in: [core/src/motion/stagger.ts:58](https://github.com/freebatteryfactor
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/stagger.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L59)

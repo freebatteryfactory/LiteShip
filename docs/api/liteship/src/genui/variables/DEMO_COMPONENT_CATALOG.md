@@ -6,7 +6,7 @@
 
 # Variable: DEMO\_COMPONENT\_CATALOG
 
-> `const` **DEMO\_COMPONENT\_CATALOG**: `ComponentCatalog`
+> `const` **DEMO\_COMPONENT\_CATALOG**: [`ComponentCatalog`](../../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: genui/dist/demo-catalog.d.ts:9
 

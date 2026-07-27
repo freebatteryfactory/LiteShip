@@ -137,6 +137,7 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
 function probeGate(id: string, level: AssuranceLevel): Gate {
   return defineGate({
     id,
+    extension: { namespace: id.slice(0, id.indexOf('/')), owner: 'LiteShip test suite' },
     level,
     describe: 'flags every file it sees',
     run: (c: GateContext): readonly Finding[] =>
@@ -148,7 +149,10 @@ function probeGate(id: string, level: AssuranceLevel): Gate {
         ),
     fixtures: {
       red: { name: 'red', context: memoryContext({ 'packages/x/src/bad.ts': 'x' }) },
-      green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
+      // The probe flags every packages/* file, so the green fixture must live
+      // outside that judged surface. Keeping a package file here made the gate
+      // silently unqualified under the former advisory false-green behavior.
+      green: { name: 'green', context: memoryContext({ 'fixtures/good.ts': '' }) },
       mutation: { describe: 'noop', mutate: (g): Gate => ({ ...g, run: (): readonly Finding[] => [] }) },
     },
   });
@@ -179,6 +183,7 @@ describe('runGates — a finding on a pulled-in file is elevated to its effectiv
   function l1FlagGate(): Gate {
     return defineGate({
       id: 'test/l1-flagger',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L1',
       describe: 'flags the pulled-in file at L1',
       run: (c: GateContext): readonly Finding[] =>
@@ -220,6 +225,7 @@ describe('runGates — a finding on a pulled-in file is elevated to its effectiv
     // A gate emitting at L4 a finding on a file whose effective level is L1.
     const gate = defineGate({
       id: 'test/l4-emit',
+      extension: { namespace: 'test', owner: 'LiteShip test suite' },
       level: 'L1',
       describe: 'emits an L4 finding on the plain-L1 file',
       run: (c: GateContext): readonly Finding[] =>

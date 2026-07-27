@@ -14,7 +14,7 @@ A content-addressed authored-motion track: the per-frame samples plus their arti
 
 ### artifactDigest
 
-> `readonly` **artifactDigest**: `AddressedDigest`
+> `readonly` **artifactDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [stage/src/motion-export.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/motion-export.ts#L39)
 

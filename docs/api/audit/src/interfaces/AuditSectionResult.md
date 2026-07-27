@@ -6,7 +6,9 @@
 
 # Interface: AuditSectionResult\<TSummary\>
 
-Defined in: [audit/src/types.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L133)
+Defined in: [audit/src/types.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L144)
+
+Result envelope shared by every audit pass.
 
 ## Type Parameters
 
@@ -20,7 +22,7 @@ Defined in: [audit/src/types.ts:133](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **findings**: readonly [`AuditFinding`](AuditFinding.md)[]
 
-Defined in: [audit/src/types.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L136)
+Defined in: [audit/src/types.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L147)
 
 ***
 
@@ -28,7 +30,7 @@ Defined in: [audit/src/types.ts:136](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **section**: [`AuditSection`](../type-aliases/AuditSection.md)
 
-Defined in: [audit/src/types.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L134)
+Defined in: [audit/src/types.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L145)
 
 ***
 
@@ -36,7 +38,7 @@ Defined in: [audit/src/types.ts:134](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **summary**: `TSummary`
 
-Defined in: [audit/src/types.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L135)
+Defined in: [audit/src/types.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L146)
 
 ***
 
@@ -44,4 +46,4 @@ Defined in: [audit/src/types.ts:135](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **suppressed**: readonly [`AuditSuppression`](AuditSuppression.md)[]
 
-Defined in: [audit/src/types.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L137)
+Defined in: [audit/src/types.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L148)

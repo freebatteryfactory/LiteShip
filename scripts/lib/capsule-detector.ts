@@ -17,9 +17,10 @@ import { resolve } from 'node:path';
 // so there is ONE config shared by the capsule detector and the repo-IR builder,
 // never a divergent fork. WORKSPACE_ALIASES is re-exported below so the existing
 // drift test (tests/unit/capsule-detector.test.ts) keeps pinning it.
-import { normalizeRepoPath, WORKSPACE_ALIASES, createTypeDirectedProgram } from '@liteship/audit';
+import { normalizeRepoPath, createTypeDirectedProgram } from '@liteship/audit';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../packages/cli/src/lib/liteship-typescript-aliases.js';
 
-export { WORKSPACE_ALIASES };
+export { LITESHIP_TYPESCRIPT_PATH_ALIASES as WORKSPACE_ALIASES };
 
 /**
  * Naming-convention map for known capsule factories. Source of truth lives in
@@ -122,7 +123,7 @@ const CAPSULE_TYPE_NAMES = new Set(['CapsuleContract', 'CapsuleDef']);
  * shared `@liteship/audit` config (the ONE type-directed program substrate).
  */
 function createProgram(files: readonly string[]): ts.Program {
-  return createTypeDirectedProgram(files, process.cwd());
+  return createTypeDirectedProgram(files, process.cwd(), LITESHIP_TYPESCRIPT_PATH_ALIASES);
 }
 
 /**

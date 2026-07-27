@@ -77,7 +77,7 @@ finalizer (`addFinalizer(sched.cancel)`).
 
 ###### duration
 
-`Millis`
+[`Millis`](../../../spine/type-aliases/Millis.md)
 
 ###### easing?
 

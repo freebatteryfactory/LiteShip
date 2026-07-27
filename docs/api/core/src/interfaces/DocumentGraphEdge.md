@@ -16,7 +16,7 @@ verbatim from `plan.ts` (both endpoints stay in the fnv1a identity law).
 
 ### from
 
-> `readonly` **from**: `ContentAddress`
+> `readonly` **from**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L159)
 
@@ -24,7 +24,7 @@ Defined in: [core/src/graph/document-graph.ts:159](https://github.com/freebatter
 
 ### to
 
-> `readonly` **to**: `ContentAddress`
+> `readonly` **to**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L160)
 

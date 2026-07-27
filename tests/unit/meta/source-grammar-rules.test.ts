@@ -21,6 +21,8 @@
  *                                    + third-party specifiers stay legal (scope: `tests/**`)
  *   - no-reactive-make-factory   (g) the retired reactive `.make` factory spellings
  *                                    stay dead — the create* verb sweep (ADR-0051)
+ *   - no-sync-owned-resource     (h) the retired second owned-resource lifecycle
+ *                                    stays dead — one async-uniform protocol (ADR-0051)
  *
  * Every other sgrule is backstopped by a vitest meta-test that pins the SCARS
  * (float-determinism.test.ts, a1-seam-integrity.test.ts). Those rules ported an
@@ -206,9 +208,59 @@ describe('source-grammar rules are registered with ast-grep', () => {
       'no-internal-vi-mock.yml',
       'no-internal-vi-mock-tsx.yml',
       'no-reactive-make-factory.yml',
+      'no-sync-owned-resource.yml',
+      'no-fire-and-forget-dispose.yml',
     ]) {
       expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
     }
+  });
+});
+
+describe('no-fire-and-forget-dispose (i) — disposal errors stay observable (ADR-0051)', () => {
+  const RULE = 'no-fire-and-forget-dispose.yml';
+
+  it('RED: discarding an owned resource disposal Promise fires', async () => {
+    const f = fixture('packages/faux/src/runtime/leak.ts', 'void resource.dispose();');
+    expect(await scan(RULE, f)).not.toEqual([]);
+  });
+
+  it('GREEN: await, return, and an explicit reporting catch remain legal', async () => {
+    const f = fixture(
+      'packages/faux/src/runtime/observed.ts',
+      [
+        'async function awaited() { await resource.dispose(); }',
+        'function returned() { return resource.dispose(); }',
+        'function reported() { const pending = resource.dispose(); void pending.catch(report); }',
+      ].join('\n'),
+    );
+    expect(await scan(RULE, f)).toEqual([]);
+  });
+});
+
+describe('no-sync-owned-resource (h) — one public owned-resource lifecycle (ADR-0051)', () => {
+  const RULE = 'no-sync-owned-resource.yml';
+
+  it('RED: a declaration, import, or use of the retired sync arm fires', async () => {
+    const f = fixture(
+      'packages/faux/src/reactive/sync-owned.ts',
+      [
+        "import type { OwnedResource } from '@liteship/core';",
+        'export interface HostHandle extends OwnedResource {}',
+      ].join('\n'),
+    );
+    expect(await scan(RULE, f)).not.toEqual([]);
+  });
+
+  it('GREEN: AsyncOwnedResource and internal synchronous close verbs remain legal', async () => {
+    const f = fixture(
+      'packages/faux/src/reactive/async-owned.ts',
+      [
+        "import type { AsyncOwnedResource } from '@liteship/core';",
+        'export interface HostHandle extends AsyncOwnedResource {}',
+        'interface InternalQueue { close(): void }',
+      ].join('\n'),
+    );
+    expect(await scan(RULE, f)).toEqual([]);
   });
 });
 
@@ -462,6 +514,21 @@ describe('no-shape-namespace-type (e) — the ADR-0001 .Shape convention stays d
   it('GREEN: a top-level interface incidentally named Shape (outside any namespace) is not the retired pattern', async () => {
     const f = fixture('packages/faux/src/domain/geometry.ts', 'export interface Shape { readonly sides: number }\n');
     expect((await scan(RULE, f)).length).toBe(0);
+  });
+
+  it('RED: public suffixed types and re-exports are rejected while private implementation names remain legal', async () => {
+    const f = fixture(
+      'packages/faux/src/domain/resource.ts',
+      [
+        'interface PrivateShape { readonly value: number }',
+        'export interface LifetimeShape { dispose(): Promise<void> }',
+        'type LocalShape = PrivateShape;',
+        'export type PublicShape = LocalShape;',
+        'export type { ForeignShape } from "./foreign.js";',
+        '',
+      ].join('\n'),
+    );
+    expect((await scan(RULE, f)).length).toBe(3);
   });
 });
 

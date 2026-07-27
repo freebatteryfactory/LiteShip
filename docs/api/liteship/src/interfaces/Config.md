@@ -50,7 +50,7 @@ Defined in: core/dist/authoring/config.d.ts:52
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/authoring/config.d.ts:51
 

@@ -21,12 +21,14 @@ import { fnv1aBytes } from './evidence/fnv.js';
 import { CanonicalCbor } from './schema/cbor.js';
 import { ValidationError } from '@liteship/error';
 
-interface EntityShape {
+/** One ECS entity and its immutable component view. */
+export interface Entity {
   readonly id: EntityId;
   readonly components: ReadonlyMap<string, unknown>;
 }
 
-interface PartShape<T = unknown> {
+/** One named, schema-validated ECS component declaration. */
+export interface Part<T = unknown> {
   readonly name: string;
   readonly schema: SchemaPort<T>;
 }
@@ -37,7 +39,8 @@ interface PartShape<T = unknown> {
 
 const DENSE_SENTINEL = -Infinity;
 
-interface DenseStoreShape {
+/** Fixed-capacity numeric component storage with dense iteration. */
+export interface DenseStore {
   readonly name: string;
   readonly capacity: number;
   readonly _dense: true;
@@ -61,13 +64,13 @@ interface DenseStoreShape {
   entities(): readonly EntityId[];
 }
 
-function _makeDenseStore(name: string, capacity: number): DenseStoreShape {
+function _makeDenseStore(name: string, capacity: number): DenseStore {
   const entityToIndex = new Map<EntityId, number>();
   const indexToEntity: EntityId[] = [];
   const data = new Float64Array(capacity);
   data.fill(DENSE_SENTINEL);
 
-  const store: DenseStoreShape = {
+  const store: DenseStore = {
     name,
     capacity,
     _dense: true,
@@ -90,9 +93,9 @@ function _makeDenseStore(name: string, capacity: number): DenseStoreShape {
       }
       if (store.count >= capacity) {
         throw ValidationError(
-          'Part.dense',
+          'createDenseStore',
           `store "${name}" at capacity (${capacity}). Cannot add entity ${entityId}. ` +
-            'Create the store with a larger capacity (Part.dense(name, n)) or remove entities before adding.',
+            'Create the store with a larger capacity (createDenseStore(name, n)) or remove entities before adding.',
         );
       }
       idx = store.count;
@@ -148,7 +151,8 @@ function _makeDenseStore(name: string, capacity: number): DenseStoreShape {
 // Dense System -- operates directly on Float64Array data
 // ---------------------------------------------------------------------------
 
-interface DenseSystemShape {
+/** A system that operates directly over dense numeric stores. */
+export interface DenseSystem {
   readonly name: string;
   readonly query: readonly string[];
   readonly _denseSystem: true;
@@ -156,39 +160,41 @@ interface DenseSystemShape {
    * Execute receives dense stores keyed by component name.
    * Systems iterate the typed arrays directly -- zero allocation per tick.
    */
-  execute(stores: ReadonlyMap<string, DenseStoreShape>): void;
+  execute(stores: ReadonlyMap<string, DenseStore>): void;
 }
 
 // ---------------------------------------------------------------------------
 // System types
 // ---------------------------------------------------------------------------
 
-interface SystemShape {
+/** A system that processes entities matching a component-name query. */
+export interface System {
   readonly name: string;
   readonly query: readonly string[];
   readonly _denseSystem?: undefined;
   /** Second argument is the world — use it to write computed output components back. */
-  execute(entities: readonly EntityShape[], world?: WorldShape): void;
+  execute(entities: readonly Entity[], world?: World): void;
 }
 
-type AnySystemShape = SystemShape | DenseSystemShape;
+type AnySystem = System | DenseSystem;
 
 // ---------------------------------------------------------------------------
 // World
 // ---------------------------------------------------------------------------
 
-interface WorldShape {
+/** A live ECS world that owns entities, component stores, and ordered systems. */
+export interface World {
   spawn(components?: Record<string, unknown>): EntityId;
   despawn(id: EntityId): void;
-  addComponent<T>(id: EntityId, component: PartShape<T>, value: T): void;
+  addComponent<T>(id: EntityId, component: Part<T>, value: T): void;
   /** Schema-free component write — used by systems to persist computed output values. */
   setComponent(id: EntityId, name: string, value: unknown): void;
   removeComponent(id: EntityId, name: string): void;
-  query(...componentNames: string[]): readonly EntityShape[];
-  addSystem(system: AnySystemShape): void;
+  query(...componentNames: string[]): readonly Entity[];
+  addSystem(system: AnySystem): void;
   tick(): void;
   /** Register a dense store so the world can wire it into dense systems */
-  addDenseStore(store: DenseStoreShape): void;
+  addDenseStore(store: DenseStore): void;
 }
 
 /**
@@ -199,7 +205,7 @@ interface WorldShape {
  * a carrier of any actual finalizer. The owning {@link Lifetime} stays reachable
  * as `world.lifetime` for advanced composition.
  */
-type OwnedWorld = WorldShape & AsyncOwnedResource;
+type OwnedWorld = World & AsyncOwnedResource;
 
 /**
  * Build a fresh ECS {@link World} — the entity/system container that ticks systems
@@ -209,11 +215,11 @@ type OwnedWorld = WorldShape & AsyncOwnedResource;
  */
 export function createWorld(): OwnedWorld {
   const entities = new Map<EntityId, Map<string, unknown>>();
-  const systems: AnySystemShape[] = [];
-  const denseStores = new Map<string, DenseStoreShape>();
+  const systems: AnySystem[] = [];
+  const denseStores = new Map<string, DenseStore>();
   let nextEntitySeq = 0;
 
-  const world: WorldShape = {
+  const world: World = {
     spawn(components?: Record<string, unknown>): EntityId {
       const seq = nextEntitySeq++;
       // CUT B1: route the identity suffix through the one canonical encoder
@@ -239,7 +245,7 @@ export function createWorld(): OwnedWorld {
       }
     },
 
-    addComponent<T>(id: EntityId, component: PartShape<T>, value: T): void {
+    addComponent<T>(id: EntityId, component: Part<T>, value: T): void {
       const entity = entities.get(id);
       if (entity) {
         entity.set(component.name, value);
@@ -260,8 +266,8 @@ export function createWorld(): OwnedWorld {
       }
     },
 
-    query(...componentNames: string[]): readonly EntityShape[] {
-      const results: EntityShape[] = [];
+    query(...componentNames: string[]): readonly Entity[] {
+      const results: Entity[] = [];
 
       for (const [id, components] of entities) {
         const hasAll = componentNames.every((name) => components.has(name));
@@ -272,7 +278,7 @@ export function createWorld(): OwnedWorld {
           const entity = Object.assign(
             { id, components: componentsCopy },
             Object.fromEntries(componentsCopy),
-          ) as EntityShape;
+          ) as Entity;
           results.push(entity);
         }
       }
@@ -280,11 +286,11 @@ export function createWorld(): OwnedWorld {
       return results;
     },
 
-    addSystem(system: AnySystemShape): void {
+    addSystem(system: AnySystem): void {
       systems.push(system);
     },
 
-    addDenseStore(store: DenseStoreShape): void {
+    addDenseStore(store: DenseStore): void {
       denseStores.set(store.name, store);
     },
 
@@ -303,7 +309,7 @@ export function createWorld(): OwnedWorld {
       for (const system of [...systems]) {
         if (isDenseSystem(system)) {
           // Dense path: collect the stores this system queries
-          const queriedStores = new Map<string, DenseStoreShape>();
+          const queriedStores = new Map<string, DenseStore>();
           for (const name of system.query) {
             const store = denseStores.get(name);
             if (store) queriedStores.set(name, store);
@@ -325,47 +331,19 @@ export function createWorld(): OwnedWorld {
   return attachLifetime(world, Lifetime.make());
 }
 
-function isDenseSystem(system: AnySystemShape): system is DenseSystemShape {
+function isDenseSystem(system: AnySystem): system is DenseSystem {
   return '_denseSystem' in system && system._denseSystem === true;
 }
 
 // ---------------------------------------------------------------------------
-// Part namespace -- factories and types
+// ECS factories and public types
 // ---------------------------------------------------------------------------
 
-function _makeDensePart(name: string, capacity: number): DenseStoreShape {
+/**
+ * Allocate a fixed-capacity dense numeric component store. The standalone
+ * `create*` verb makes allocation explicit while preserving the same
+ * `Float64Array`-backed zero-allocation hot path.
+ */
+export function createDenseStore(name: string, capacity: number): DenseStore {
   return _makeDenseStore(name, capacity);
 }
-
-/**
- * Part namespace — factories for ECS component stores.
- *
- * Currently exposes the dense `Float64Array`-backed store used for hot-path
- * numeric state; sparse/object-valued parts are registered ad-hoc via
- * {@link World}.`addComponent`.
- */
-export const Part = {
-  /** Allocate a dense component store with fixed capacity. */
-  dense: _makeDensePart,
-} as { dense: (name: string, capacity: number) => DenseStoreShape } & Record<string, never>;
-
-/** Public structural type for `Part`. */
-export type Part<T = unknown> = PartShape<T>;
-
-export declare namespace Part {
-  /** Alias for the dense `Float64Array`-backed store. */
-  export type Dense = DenseStoreShape;
-}
-
-/**
- * Public structural type for `World` — the ECS world that ticks systems over
- * entities. Construct one with the standalone {@link createWorld}.
- */
-export type World = WorldShape;
-
-export type {
-  EntityShape as Entity,
-  SystemShape as System,
-  DenseSystemShape as DenseSystem,
-  DenseStoreShape as DenseStore,
-};

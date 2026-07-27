@@ -1,0 +1,14 @@
+# Owned-resource error-channel guard (ADR-0051, D1 closure).
+#
+# Synchronous finalizers run before dispose() returns, but its Promise carries
+# aggregate LifetimeDisposeError and joins async siblings. Discarding that
+# Promise can turn a teardown failure into an unhandled rejection. Await, return,
+# or attach an explicit reporting catch instead.
+id: no-fire-and-forget-dispose
+language: typescript
+severity: error
+message: 'Do not discard dispose() with `void`: await or return the Promise, or attach an explicit error-reporting catch at a synchronous host boundary.'
+files:
+  - '**/packages/*/src/**'
+rule:
+  pattern: 'void $RESOURCE.dispose()'

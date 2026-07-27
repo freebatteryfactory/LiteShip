@@ -13,7 +13,15 @@
  * getters. See ADR-0005 §Category 4 for the rationale.
  */
 
-import { CellKernel, Lifetime, Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@liteship/core';
+import {
+  CellKernel,
+  Lifetime,
+  attachLifetime,
+  Diagnostics,
+  SSE_BUFFER_SIZE,
+  SSE_HEARTBEAT_MS,
+  type AsyncOwnedResource,
+} from '@liteship/core';
 import type { SSEConfig, SSEState, SSEMessage, BackpressureHint, OverflowPolicy } from '../types.js';
 
 /**
@@ -31,7 +39,7 @@ export interface SSEEventSource {
 /**
  * SSE client instance.
  */
-export interface SSEClient {
+export interface SSEClient extends AsyncOwnedResource {
   /**
    * Live async stream of parsed messages. Iterating drains the sse-pure
    * overflow buffer (so {@link backpressure} `bufferSize` drops as messages are
@@ -53,12 +61,6 @@ export interface SSEClient {
   readonly lastEventId: string | null;
   /** Backpressure snapshot for the current buffer occupancy (plain accessor). */
   readonly backpressure: BackpressureHint;
-  /**
-   * Synchronous teardown: cancel the reconnect/heartbeat timers, detach and
-   * close the live EventSource, drop the buffer, and complete the
-   * `messages`/`stateChanges` streams. Idempotent — a second call is a no-op.
-   */
-  close(): void;
   /** Manual reconnect: cancel timers, close the source, reset backoff, re-open. */
   reconnect(): void;
 }
@@ -113,7 +115,7 @@ export const buildUrl = _buildUrl;
  * for await (const msg of client.messages) {
  *   console.log(msg);
  * }
- * client.close();
+ * await client.dispose();
  * ```
  *
  * @example
@@ -129,7 +131,7 @@ export const buildUrl = _buildUrl;
  *   onStateChange: (state) => updateBadge(state),
  * });
  * // Teardown owned by the host (e.g. a Lifetime finalizer):
- * // lifetime.add(() => client.close());
+ * // lifetime.add(() => client.dispose());
  * ```
  *
  * @param config - SSE connection configuration
@@ -190,7 +192,7 @@ export const create = (config: SSEConfig): SSEClient => {
     machine.status = next;
     // External state listeners (the `stateChanges` edge fan-out + the synchronous
     // `onStateChange` callback) must NOT abort the transport bookkeeping that TRIGGERED this
-    // transition: a throw here during `close()` would strand `lifetime.dispose()` (leaking the
+    // transition: a throw here during `dispose()` would strand later teardown (leaking the
     // live EventSource + timers), and during `handleConnectionLoss()` would abort before the
     // reconnect timer is scheduled (a stranded, permanently-closed source). The status has
     // already committed, so attempt BOTH channels, ISOLATE each fault, and surface it via
@@ -508,96 +510,66 @@ export const create = (config: SSEConfig): SSEClient => {
   };
 
   // One Lifetime owns every teardown sibling (replacing the former Scope).
-  // Each wrapper records its own fault so Lifetime can continue through the
-  // complete LIFO pass; close() then surfaces one synchronous AggregateError
-  // only AFTER every timer, source, buffer, and stream received its release
-  // attempt. A hostile host close hook therefore cannot strand later siblings.
+  // Lifetime itself records every fault and continues through the complete LIFO
+  // pass. The promise returned by dispose() carries the aggregate only AFTER
+  // every timer, source, buffer, and stream received its release attempt.
   const lifetime = Lifetime.make();
-  const teardownErrors: unknown[] = [];
-  const attemptTeardown =
-    (operation: () => void): (() => void) =>
-    () => {
-      try {
-        operation();
-      } catch (error) {
-        teardownErrors.push(error);
-      }
-    };
   // Lifetime is LIFO; register in reverse of the intended teardown order.
-  lifetime.add(attemptTeardown(() => stateEdges.close()));
-  lifetime.add(attemptTeardown(() => messageWakeup.close()));
-  lifetime.add(
-    attemptTeardown(() => {
-      pendingMessages = [];
-    }),
+  lifetime.add(() => stateEdges.close());
+  lifetime.add(() => messageWakeup.close());
+  lifetime.add(() => {
+    pendingMessages = [];
+  });
+  lifetime.add(detachSource);
+  lifetime.add(clearHeartbeat);
+  lifetime.add(clearReconnectHandle);
+  lifetime.add(() => setStatus('disconnected'));
+
+  const client = attachLifetime(
+    {
+      messages,
+      stateChanges,
+
+      get state() {
+        return machine.status;
+      },
+
+      get lastEventId() {
+        return machine.lastEventId;
+      },
+
+      get backpressure(): BackpressureHint {
+        const bufferSize = pendingMessages.length;
+        const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
+        return {
+          bufferSize,
+          maxBufferSize,
+          percentFull,
+          dropping: bufferSize >= maxBufferSize,
+          policy: overflowPolicy,
+          droppedCount: machine.droppedCount,
+          coalescedCount: machine.coalescedCount,
+        };
+      },
+
+      reconnect: () => {
+        if (lifetime.disposed) {
+          return;
+        }
+        clearReconnectHandle();
+        clearHeartbeat();
+        const currentSource = machine.source;
+        if (currentSource) {
+          currentSource.close();
+          machine.source = null;
+        }
+        machine.reconnectAttempt = 0;
+        setStatus('connecting');
+        setupSource();
+      },
+    },
+    lifetime,
   );
-  lifetime.add(attemptTeardown(detachSource));
-  lifetime.add(attemptTeardown(clearHeartbeat));
-  lifetime.add(attemptTeardown(clearReconnectHandle));
-
-  const client: SSEClient = {
-    messages,
-    stateChanges,
-
-    get state() {
-      return machine.status;
-    },
-
-    get lastEventId() {
-      return machine.lastEventId;
-    },
-
-    get backpressure(): BackpressureHint {
-      const bufferSize = pendingMessages.length;
-      const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
-      return {
-        bufferSize,
-        maxBufferSize,
-        percentFull,
-        dropping: bufferSize >= maxBufferSize,
-        policy: overflowPolicy,
-        droppedCount: machine.droppedCount,
-        coalescedCount: machine.coalescedCount,
-      };
-    },
-
-    close: () => {
-      if (lifetime.disposed) {
-        return;
-      }
-      // `close()` is an intentional teardown — land in `disconnected` regardless
-      // of whether a live source was present (e.g. the heartbeat watchdog may
-      // have already cleared it). Publish the edge BEFORE disposing so a
-      // `stateChanges` subscriber sees the final transition, then complete.
-      setStatus('disconnected');
-      // All registered arms are synchronous and land before dispose() returns.
-      // Their wrappers keep the Lifetime promise green while preserving faults
-      // here for the synchronous close() contract.
-      void lifetime.dispose();
-      if (teardownErrors.length > 0) {
-        throw new AggregateError(
-          [...teardownErrors],
-          'SSE close failed after attempting every transport teardown step',
-        );
-      }
-    },
-
-    reconnect: () => {
-      if (lifetime.disposed) {
-        return;
-      }
-      clearReconnectHandle();
-      clearHeartbeat();
-      const currentSource = machine.source;
-      if (currentSource) {
-        currentSource.close();
-        machine.source = null;
-      }
-      machine.reconnectAttempt = 0;
-      setStatus('connecting');
-      setupSource();
-    },
-  };
 
   // Open the initial connection synchronously (AbortController-first: no runtime
   // to run, no Scope to provide).
@@ -629,7 +601,7 @@ export const create = (config: SSEConfig): SSEClient => {
  * for await (const msg of client.messages) {
  *   console.log(msg.type);
  * }
- * client.close();
+ * await client.dispose();
  * ```
  */
 export const SSE = {

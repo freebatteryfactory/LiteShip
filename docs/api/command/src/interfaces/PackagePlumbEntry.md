@@ -6,7 +6,9 @@
 
 # Interface: PackagePlumbEntry
 
-Defined in: [command/src/commands/plumb-registry.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L26)
+Defined in: [command/src/commands/plumb-registry.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L28)
+
+One generated package-plumbing obligation.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [command/src/commands/plumb-registry.ts:26](https://github.com/freeb
 
 > `readonly` `optional` **issue?**: `string`
 
-Defined in: [command/src/commands/plumb-registry.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L30)
+Defined in: [command/src/commands/plumb-registry.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L32)
 
 Tracking issue/ADR — REQUIRED for `deferred` (enforced by the meta-test).
 
@@ -24,7 +26,7 @@ Tracking issue/ADR — REQUIRED for `deferred` (enforced by the meta-test).
 
 > `readonly` **reason**: `string`
 
-Defined in: [command/src/commands/plumb-registry.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L28)
+Defined in: [command/src/commands/plumb-registry.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L30)
 
 ***
 
@@ -32,4 +34,4 @@ Defined in: [command/src/commands/plumb-registry.ts:28](https://github.com/freeb
 
 > `readonly` **status**: [`PackagePlumbStatus`](../type-aliases/PackagePlumbStatus.md)
 
-Defined in: [command/src/commands/plumb-registry.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L27)
+Defined in: [command/src/commands/plumb-registry.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L29)

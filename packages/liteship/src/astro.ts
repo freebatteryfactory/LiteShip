@@ -45,6 +45,6 @@ export type { AstroLoggerLike } from '@liteship/astro';
 // Curated browser-session entry used by the generated-UI guide. The implementation
 // remains owned by @liteship/astro/runtime; this host subpath only re-exports it.
 export { createLLMSession } from '@liteship/astro/runtime';
-export type { LLMSessionConfig, LLMSessionShape } from '@liteship/astro/runtime';
+export type { LLMSessionConfig, LLMSession } from '@liteship/astro/runtime';
 
 export type { CrossOriginEmbedderPolicy } from '@liteship/astro';

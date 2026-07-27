@@ -6,6 +6,8 @@
 
 # Type Alias: GeneratedUINode
 
-> **GeneratedUINode** = [`_GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+> **GeneratedUINode** = [`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
-Defined in: [genui/src/types.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/types.ts#L15)
+Defined in: [genui/src/types.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/types.ts#L16)
+
+Untrusted generated UI node accepted only after catalog validation.

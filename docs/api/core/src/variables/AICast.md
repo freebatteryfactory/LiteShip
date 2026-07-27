@@ -98,7 +98,7 @@ discipline.
 
 ##### catalog
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 #### Returns
 
@@ -121,7 +121,7 @@ the graph it was shown.
 
 ##### base
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### Returns
 
@@ -155,9 +155,9 @@ summary ⇒ same content address.
 
 ### validateGeneratedUIProposal
 
-> **validateGeneratedUIProposal**: (`node`, `catalog`, `validate`) => [`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)\>
+> **validateGeneratedUIProposal**: (`node`, `catalog`, `validate`) => [`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)\>
 
-Validate a model-proposed [GeneratedUINode](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts) against a host catalog using
+Validate a model-proposed [GeneratedUINode](../../../spine/interfaces/GeneratedUINode.md) against a host catalog using
 the host's genui validator, then MINT a [ValidatedProposal](../interfaces/ValidatedProposal.md). The genui
 instance of the SAME envelope discipline — same gate, same minting, same
 unforgeable token — so a UI tree cannot reach a host renderer un-validated any
@@ -170,11 +170,11 @@ genui renderer dependency; pass `validateGeneratedUITree` from `@liteship/genui`
 
 ##### node
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
 ##### catalog
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 ##### validate
 
@@ -182,7 +182,7 @@ genui renderer dependency; pass `validateGeneratedUITree` from `@liteship/genui`
 
 #### Returns
 
-[`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)\>
+[`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)\>
 
 ### validateGraphPatchProposal
 

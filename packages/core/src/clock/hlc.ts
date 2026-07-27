@@ -47,7 +47,7 @@ const _create = (nodeId: string): HLCShape => ({
  * // cmp === -1 (a is before b)
  * ```
  */
-export const compare = (a: HLCShape, b: HLCShape): -1 | 0 | 1 => {
+export const compare = (a: HLC, b: HLC): -1 | 0 | 1 => {
   if (a.wall_ms < b.wall_ms) return -1;
   if (a.wall_ms > b.wall_ms) return 1;
   if (a.counter < b.counter) return -1;

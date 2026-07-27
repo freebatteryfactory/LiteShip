@@ -13,8 +13,8 @@
  *
  * @module
  */
-import type { AddressedDigest, ContentAddress, DocumentGraph } from '@liteship/core';
-import { AddressedDigest as AddressedDigestNS } from '@liteship/core';
+import type { AddressedDigest, AsyncOwnedResource, ContentAddress, DocumentGraph } from '@liteship/core';
+import { AddressedDigest as AddressedDigestNS, Lifetime, attachLifetime } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import { morphPure } from '../morph/diff-pure.js';
 import { createHtmlFragment } from '../security/html-trust.js';
@@ -83,7 +83,7 @@ export type ApplyVerifiablePatchResult =
   | { readonly _tag: 'sanitizedEmpty'; readonly envelope: VerifiablePatchEnvelope };
 
 /** Handle returned by {@link watchAndPrepare} — stamps and applies verifiable patches. */
-export interface WatchAndPrepareHandle {
+export interface WatchAndPrepareHandle extends AsyncOwnedResource {
   readonly marker: string;
   readonly target: Element;
   readonly capability: DpuCapability;
@@ -93,8 +93,6 @@ export interface WatchAndPrepareHandle {
     readonly html: string;
   }): VerifiablePatchEnvelope;
   apply(envelope: VerifiablePatchEnvelope, currentBaseGraphId: ContentAddress): ApplyVerifiablePatchResult;
-  /** Release the marker registration so the name can be re-watched. */
-  dispose(): void;
 }
 
 type ElementWithSetHtml = Element & { setHTML?: (html: string, options?: object) => void };
@@ -273,7 +271,7 @@ const markerRegistry = new Map<string, Element>();
  *
  * Throws when `marker` is already watched on a DIFFERENT connected element —
  * duplicate live markers are a wiring bug, not a condition to launder. Call
- * `dispose()` on the previous handle (or disconnect its element) first.
+ * `await dispose()` on the previous handle (or disconnect its element) first.
  */
 export function watchAndPrepare(marker: string, target: Element): WatchAndPrepareHandle {
   const existing = markerRegistry.get(marker);
@@ -287,20 +285,24 @@ export function watchAndPrepare(marker: string, target: Element): WatchAndPrepar
 
   const capability = detectDpuCapability();
   target.setAttribute(DPU_MARKER_ATTR, marker);
-  return {
-    marker,
-    target,
-    capability,
-    stamp(input) {
-      return stampVerifiablePatch({ marker, ...input });
+  const lifetime = Lifetime.make();
+  lifetime.add(() => {
+    if (markerRegistry.get(marker) === target) {
+      markerRegistry.delete(marker);
+    }
+  });
+  return attachLifetime<Omit<WatchAndPrepareHandle, keyof AsyncOwnedResource>>(
+    {
+      marker,
+      target,
+      capability,
+      stamp(input) {
+        return stampVerifiablePatch({ marker, ...input });
+      },
+      apply(envelope, currentBaseGraphId) {
+        return applyVerifiablePatch(target, envelope, currentBaseGraphId, capability);
+      },
     },
-    apply(envelope, currentBaseGraphId) {
-      return applyVerifiablePatch(target, envelope, currentBaseGraphId, capability);
-    },
-    dispose() {
-      if (markerRegistry.get(marker) === target) {
-        markerRegistry.delete(marker);
-      }
-    },
-  };
+    lifetime,
+  );
 }

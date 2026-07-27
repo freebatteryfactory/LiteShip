@@ -16,7 +16,7 @@ Pulse constructors.
 
 ### every
 
-> `readonly` **every**: (`period`, `opts`) => `PulseEnvelope`
+> `readonly` **every**: (`period`, `opts`) => [`PulseEnvelope`](../../../spine/interfaces/PulseEnvelope.md)
 
 Periodic pulse with amplitude and period.
 
@@ -24,7 +24,7 @@ Periodic pulse with amplitude and period.
 
 ##### period
 
-`BeatHandle`
+[`BeatHandle`](../../../spine/interfaces/BeatHandle.md)
 
 ##### opts
 
@@ -34,4 +34,4 @@ Periodic pulse with amplitude and period.
 
 #### Returns
 
-`PulseEnvelope`
+[`PulseEnvelope`](../../../spine/interfaces/PulseEnvelope.md)

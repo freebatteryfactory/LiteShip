@@ -21,8 +21,10 @@
 
 import { GENERATED_PACKAGE_PLUMB } from './plumb-registry.generated.js';
 
+/** Classification of a package's executable product wiring. */
 export type PackagePlumbStatus = 'runtime' | 'tooling' | 'deferred';
 
+/** One generated package-plumbing obligation. */
 export interface PackagePlumbEntry {
   readonly status: PackagePlumbStatus;
   readonly reason: string;

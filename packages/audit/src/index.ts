@@ -35,7 +35,7 @@ export * from './skip-detect-ast.js';
 export * from './active-surface-reader.js';
 export * from './workers-date-scan.js';
 
-import { liteshipDevopsProfile, resolveDevopsProfile } from './devops-profile.js';
+import { resolveDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { runStructureAudit, type StructureSummary } from './structure.js';
 import { runIntegrityAudit, type IntegritySummary } from './integrity.js';
@@ -113,7 +113,7 @@ function consumerMissingFindings(profile: DevopsProfile): AuditFinding[] {
  * a deceptively green zero-findings result.
  */
 function nothingAuditedFinding(profile: DevopsProfile): AuditFinding {
-  const prefix = profile.internalPackagePrefix || '@liteship/';
+  const prefix = profile.internalPackagePrefix;
   const summary = profile.packageRoots
     ? `No installed packages from the profile's packageTopology were found under ${profile.repoRoot} — ` +
       `nothing was audited. Install the ${prefix}* packages you ship, or audit a workspace by passing --profile instead.`
@@ -169,9 +169,10 @@ function skippedConsumerStructureAudit(profile: DevopsProfile): AuditSectionResu
  *
  * Accepts a PARTIAL profile: omitted fields take the documented defaults of
  * {@link resolveDevopsProfile}, so `runAuditPasses({ repoRoot })` just works.
- * With no argument at all, the full LiteShip reference profile applies.
+ * The host must supply at least its repository root; no project policy is
+ * inherited from the reusable engine.
  */
-export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsProfile): AuditPassResult {
+export function runAuditPasses(profile: Partial<DevopsProfile>): AuditPassResult {
   const resolved = resolveDevopsProfile(profile);
   const artifactCoverage = collectProfileArtifactCoverage(resolved);
   const structure = resolved.packageRoots ? skippedConsumerStructureAudit(resolved) : runStructureAudit(resolved);

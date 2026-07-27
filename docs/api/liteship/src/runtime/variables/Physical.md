@@ -8,7 +8,7 @@
 
 > `const` **Physical**: `object`
 
-Defined in: web/dist/index.d.ts:52
+Defined in: web/dist/index.d.ts:51
 
 Physical DOM-state helpers for save/restore across morphs and hot
 reloads. Captures focus, selection, scroll, and IME composition so a

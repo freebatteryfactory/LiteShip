@@ -6,7 +6,7 @@
 
 # Interface: PublicSymbolContext
 
-Defined in: [command/src/commands/public-surface-context.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L39)
+Defined in: [command/src/commands/public-surface-context.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L42)
 
 Enough product context to use, verify, and recover one public symbol.
 
@@ -16,7 +16,23 @@ Enough product context to use, verify, and recover one public symbol.
 
 > `readonly` **allocation**: [`PublicAllocationContext`](PublicAllocationContext.md) \| `null`
 
-Defined in: [command/src/commands/public-surface-context.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L53)
+Defined in: [command/src/commands/public-surface-context.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L62)
+
+***
+
+### audience
+
+> `readonly` **audience**: `string`
+
+Defined in: [command/src/commands/public-surface-context.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L46)
+
+***
+
+### category
+
+> `readonly` **category**: `string`
+
+Defined in: [command/src/commands/public-surface-context.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L47)
 
 ***
 
@@ -24,7 +40,7 @@ Defined in: [command/src/commands/public-surface-context.ts:53](https://github.c
 
 > `readonly` **checkIds**: readonly `string`[]
 
-Defined in: [command/src/commands/public-surface-context.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L50)
+Defined in: [command/src/commands/public-surface-context.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L59)
 
 ***
 
@@ -32,7 +48,7 @@ Defined in: [command/src/commands/public-surface-context.ts:50](https://github.c
 
 > `readonly` **example**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L47)
+Defined in: [command/src/commands/public-surface-context.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L56)
 
 ***
 
@@ -40,7 +56,7 @@ Defined in: [command/src/commands/public-surface-context.ts:47](https://github.c
 
 > `readonly` **expertRoutes**: readonly `string`[]
 
-Defined in: [command/src/commands/public-surface-context.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L49)
+Defined in: [command/src/commands/public-surface-context.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L58)
 
 ***
 
@@ -48,7 +64,7 @@ Defined in: [command/src/commands/public-surface-context.ts:49](https://github.c
 
 > `readonly` **failureContract**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L45)
+Defined in: [command/src/commands/public-surface-context.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L54)
 
 ***
 
@@ -56,7 +72,7 @@ Defined in: [command/src/commands/public-surface-context.ts:45](https://github.c
 
 > `readonly` **failureProof**: [`PublicFailureProofContext`](PublicFailureProofContext.md) \| `null`
 
-Defined in: [command/src/commands/public-surface-context.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L46)
+Defined in: [command/src/commands/public-surface-context.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L55)
 
 ***
 
@@ -64,7 +80,7 @@ Defined in: [command/src/commands/public-surface-context.ts:46](https://github.c
 
 > `readonly` **lifecycle**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L44)
+Defined in: [command/src/commands/public-surface-context.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L53)
 
 ***
 
@@ -72,7 +88,15 @@ Defined in: [command/src/commands/public-surface-context.ts:44](https://github.c
 
 > `readonly` **owner**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L42)
+Defined in: [command/src/commands/public-surface-context.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L45)
+
+***
+
+### producer
+
+> `readonly` **producer**: `string`
+
+Defined in: [command/src/commands/public-surface-context.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L49)
 
 ***
 
@@ -80,7 +104,15 @@ Defined in: [command/src/commands/public-surface-context.ts:42](https://github.c
 
 > `readonly` **proofRefs**: readonly `string`[]
 
-Defined in: [command/src/commands/public-surface-context.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L51)
+Defined in: [command/src/commands/public-surface-context.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L60)
+
+***
+
+### relatedInvariant
+
+> `readonly` **relatedInvariant**: `string`
+
+Defined in: [command/src/commands/public-surface-context.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L50)
 
 ***
 
@@ -88,7 +120,15 @@ Defined in: [command/src/commands/public-surface-context.ts:51](https://github.c
 
 > `readonly` **remediation**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L52)
+Defined in: [command/src/commands/public-surface-context.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L61)
+
+***
+
+### replacement
+
+> `readonly` **replacement**: `string`
+
+Defined in: [command/src/commands/public-surface-context.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L51)
 
 ***
 
@@ -96,13 +136,21 @@ Defined in: [command/src/commands/public-surface-context.ts:52](https://github.c
 
 > `readonly` **specifier**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L41)
+Defined in: [command/src/commands/public-surface-context.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L44)
 
 ***
 
 ### stability
 
 > `readonly` **stability**: [`PublicSurfaceStability`](../type-aliases/PublicSurfaceStability.md)
+
+Defined in: [command/src/commands/public-surface-context.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L57)
+
+***
+
+### surfaceClass
+
+> `readonly` **surfaceClass**: `"paved-road"` \| `"advanced-module"`
 
 Defined in: [command/src/commands/public-surface-context.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L48)
 
@@ -112,7 +160,7 @@ Defined in: [command/src/commands/public-surface-context.ts:48](https://github.c
 
 > `readonly` **symbol**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L40)
+Defined in: [command/src/commands/public-surface-context.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L43)
 
 ***
 
@@ -120,4 +168,4 @@ Defined in: [command/src/commands/public-surface-context.ts:40](https://github.c
 
 > `readonly` **userStory**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L43)
+Defined in: [command/src/commands/public-surface-context.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L52)

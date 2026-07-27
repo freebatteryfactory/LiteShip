@@ -6,7 +6,7 @@
 
 # Type Alias: BeatHandle
 
-> **BeatHandle** = `_BeatHandle`
+> **BeatHandle** = [`BeatHandle`](../../../spine/interfaces/BeatHandle.md)
 
 Defined in: [scene/src/sugar/beat.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L21)
 

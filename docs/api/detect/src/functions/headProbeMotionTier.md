@@ -6,7 +6,7 @@
 
 # Function: headProbeMotionTier()
 
-> **headProbeMotionTier**(`caps`): `MotionTier`
+> **headProbeMotionTier**(`caps`): [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [detect/src/head-probe.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/head-probe.ts#L81)
 
@@ -28,4 +28,4 @@ Authored as a self-contained pure function over primitives so its
 
 ## Returns
 
-`MotionTier`
+[`MotionTier`](../../../spine/type-aliases/MotionTier.md)

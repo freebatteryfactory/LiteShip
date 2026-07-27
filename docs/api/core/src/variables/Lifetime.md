@@ -6,9 +6,9 @@
 
 # Variable: Lifetime
 
-> `const` **Lifetime**: `object`
+> **Lifetime**: `object`
 
-Defined in: [core/src/reactive/lifetime.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L226)
+Defined in: [core/src/reactive/lifetime.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L50)
 
 Lifetime — construct a disposal handle that owns a LIFO finalizer stack.
 Register teardown with `add`, tear down once with `dispose`, and project
@@ -18,10 +18,10 @@ cancellation through `signal`.
 
 ### make
 
-> **make**: () => [`LifetimeShape`](../interfaces/LifetimeShape.md)
+> **make**: () => [`Lifetime`](../interfaces/Lifetime.md)
 
 Build a fresh, undisposed Lifetime.
 
 #### Returns
 
-[`LifetimeShape`](../interfaces/LifetimeShape.md)
+[`Lifetime`](../interfaces/Lifetime.md)

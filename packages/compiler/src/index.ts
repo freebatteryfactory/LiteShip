@@ -104,6 +104,9 @@ export type { CompiledStagger, CompiledStaggerItem } from './stagger-compile.js'
 export { compileScrollTimeline } from './scroll-timeline-compile.js';
 export type { CompiledScrollTimeline } from './scroll-timeline-compile.js';
 
+export { compileViewTransition } from './view-transition-compile.js';
+export type { ViewTransitionCompileInput, ViewTransitionCompileResult } from './view-transition-compile.js';
+
 export { compileResponsiveMedia } from './responsive-media-compile.js';
 export type { CompiledResponsiveMedia } from './responsive-media-compile.js';
 

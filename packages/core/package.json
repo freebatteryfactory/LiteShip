@@ -26,68 +26,55 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./authoring": {
       "types": "./dist/authoring/index.d.ts",
-      "import": "./dist/authoring/index.js",
-      "development": "./src/authoring/index.ts"
+      "import": "./dist/authoring/index.js"
     },
     "./reactive": {
       "types": "./dist/reactive/index.d.ts",
-      "import": "./dist/reactive/index.js",
-      "development": "./src/reactive/index.ts"
+      "import": "./dist/reactive/index.js"
     },
     "./motion": {
       "types": "./dist/motion/index.d.ts",
-      "import": "./dist/motion/index.js",
-      "development": "./src/motion/index.ts"
+      "import": "./dist/motion/index.js"
     },
     "./graph": {
       "types": "./dist/graph/index.d.ts",
-      "import": "./dist/graph/index.js",
-      "development": "./src/graph/index.ts"
+      "import": "./dist/graph/index.js"
     },
     "./evidence": {
       "types": "./dist/evidence/index.d.ts",
-      "import": "./dist/evidence/index.js",
-      "development": "./src/evidence/index.ts"
+      "import": "./dist/evidence/index.js"
     },
     "./schema": {
       "types": "./dist/schema/index.d.ts",
-      "import": "./dist/schema/index.js",
-      "development": "./src/schema/index.ts"
+      "import": "./dist/schema/index.js"
     },
     "./media": {
       "types": "./dist/media/index.d.ts",
-      "import": "./dist/media/index.js",
-      "development": "./src/media/index.ts"
+      "import": "./dist/media/index.js"
     },
     "./clock": {
       "types": "./dist/clock/index.d.ts",
-      "import": "./dist/clock/index.js",
-      "development": "./src/clock/index.ts"
+      "import": "./dist/clock/index.js"
     },
     "./wasm": {
       "types": "./dist/wasm/index.d.ts",
-      "import": "./dist/wasm/index.js",
-      "development": "./src/wasm/index.ts"
+      "import": "./dist/wasm/index.js"
     },
     "./harness": {
       "types": "./dist/harness/index.d.ts",
-      "import": "./dist/harness/index.js",
-      "development": "./src/harness/index.ts"
+      "import": "./dist/harness/index.js"
     },
     "./simulation": {
       "types": "./dist/simulation/index.d.ts",
-      "import": "./dist/simulation/index.js",
-      "development": "./src/simulation/index.ts"
+      "import": "./dist/simulation/index.js"
     },
     "./fs-walk": {
       "types": "./dist/fs-walk.d.ts",
-      "import": "./dist/fs-walk.js",
-      "development": "./src/fs-walk.ts"
+      "import": "./dist/fs-walk.js"
     },
     "./validated-output": null
   },

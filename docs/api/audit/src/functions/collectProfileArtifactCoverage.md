@@ -8,7 +8,7 @@
 
 > **collectProfileArtifactCoverage**(`profile`): readonly [`PackageArtifactCoverage`](../type-aliases/PackageArtifactCoverage.md)[]
 
-Defined in: [audit/src/shared.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L195)
+Defined in: [audit/src/shared.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L201)
 
 Classify the exact package-relative artifact contract before any audit pass
 can call a zero-file package clean.

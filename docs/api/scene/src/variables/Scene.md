@@ -64,7 +64,7 @@ PARENT scene's bpm/fps when the combined contract compiles.
 
 ###### offset
 
-`FrameMark`
+[`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 #### Returns
 

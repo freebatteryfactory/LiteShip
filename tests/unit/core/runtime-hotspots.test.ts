@@ -3,7 +3,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   Millis,
-  Part,
+  createDenseStore,
   SpeculativeEvaluator,
   Style,
   defineBoundary,
@@ -28,7 +28,7 @@ describe('runtime hotspot coverage', () => {
     const world = createWorld();
     const hpPart = { name: 'hp', schema: schema.number };
     const labelPart = { name: 'label', schema: schema.string };
-    const presentStore = Part.dense('present', 8);
+    const presentStore = createDenseStore('present', 8);
     world.addDenseStore(presentStore);
 
     const id = world.spawn({ label: 'player' });

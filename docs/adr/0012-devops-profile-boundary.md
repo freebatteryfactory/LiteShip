@@ -8,7 +8,7 @@
 CUT D7 introduced `DevopsProfile` as the config seam that drives the audit engine,
 with the law _"only fields the audit actually consumes are in the profile — no
 aspirational fields."_ That law lived only in a code comment + `profile.test.ts`.
-D9b published `@czap/audit` as a downstream-installable engine (`czap audit
+D9b published `@liteship/audit` as a downstream-installable engine (`liteship audit
 --profile`), making the profile a genuine reusable surface.
 
 That raised a recurring question for every other devops engine in the repo —
@@ -27,21 +27,23 @@ fields later — entropy in a blazer. This ADR records the classification and th
 ## Decision
 
 `@liteship/audit`'s `DevopsProfile` is **the** reusable devops seam — it carries exactly
-the seven public keys the audit engine consumes: `repoRoot`, `internalPackagePrefix`,
+the nine public keys the audit engine consumes: `repoRoot`, `internalPackagePrefix`,
 `packageTopology`, `foundationalPackages`, `dynamicImportExemptions`, `surfacePolicy`,
-and the consumer-only `packageRoots`. Nothing else. Per-package analyzable artifact
+`allowlist`, `sourceEntrypoints`, and the consumer-only `packageRoots`. Nothing else.
+Suppressions default to none, and source entrypoints are host-owned data rather than a
+package-resolution condition. Per-package analyzable artifact
 globs live inside `packageTopology`; they do not add another profile-level authority.
 
 The remaining devops engines are **repo-local LiteShip contracts by design**, NOT
 profile fields:
 
 - **invariants** — `NO_VAR`/`NO_REQUIRE`/`NO_DEFAULT_EXPORT`/line-endings are the
-  CLAUDE.md coding-convention law verbatim; excludes name specific `@czap` shim files.
+  repository coding-convention law verbatim; excludes name specific host files.
   A downstream supplies a _different rule array_, not field overrides. Repo convention.
-- **coverage** — thresholds keyed to `@czap` package names + literal file paths; the
+- **coverage** — thresholds keyed to LiteShip package names + literal file paths; the
   21-entry exclude list is LiteShip carve-outs; the node/browser/subprocess split is
   LiteShip's dual-runtime topology. LiteShip quality-threshold policy.
-- **bench** — the directive suite **value-imports and executes `@czap/core|edge|web|worker`**;
+- **bench** — the directive suite **value-imports and executes LiteShip runtime packages**;
   it measures _this framework's_ runtime. The suite _is_ the contract — a
   `BenchProfile.directivePairs` would point at nothing off-product. CZAP runtime
   performance contract.
@@ -76,15 +78,14 @@ checkout-root machinery) are local.
 
 ## Evidence
 
-- `packages/audit/src/devops-profile.ts` — `DevopsProfile` and its exact seven-key projection.
+- `packages/audit/src/devops-profile.ts` — `DevopsProfile` and its exact nine-key projection.
 - `packages/audit/src` contains **zero** references to invariants/coverage/bench
   (verified by grep) — the reusable surface does not leak the local contracts.
-- `scripts/bench/directive-suite.ts:3-9` — value-imports `@czap/core|edge|web|worker`
+- `scripts/bench/directive-suite.ts` — value-imports the LiteShip runtime
   - astro/worker runtime: it executes the framework (product-shaped).
 - `packages/command/src/commands/check-invariants-registry.ts` — `INVARIANTS` rule
-  set (repo-local `@czap/command` data; imported by `scripts/audit/report.ts`, never
-  by `@czap/audit`). The scan engine is the `check-invariants` command's host
-  capability (`@czap/command/host`), migrated out of `scripts/check-invariants.ts`.
+  set (repo-local `@liteship/command` data; imported by the host, never by
+  `@liteship/audit`). The scan engine is the `check-invariants` command's host capability.
 - `vitest.shared.ts:20-22` — `coverageInclude`/`coverageExclude` local consts (pinned
   by the pre-existing `tests/unit/meta/coverage-config.test.ts`).
 - `scripts/audit/policy.ts` — `reportPaths` repo-local (D9b-1).

@@ -102,6 +102,11 @@ This is the public surface map:
 - what each package owns
 - what to import for which job
 
+For the generated, exact import-route census and its inhabitation authority,
+read [PUBLIC-EXPORTS.md](./PUBLIC-EXPORTS.md). The compact table points to the
+package policy; `liteship explain <symbol>` returns the symbol-level purpose and
+owner from the real export graph.
+
 ### If the question is "What is green right now?"
 
 Read [STATUS.md](./STATUS.md).

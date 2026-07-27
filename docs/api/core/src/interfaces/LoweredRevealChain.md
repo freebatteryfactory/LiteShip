@@ -14,7 +14,7 @@ Graph bundle + composed program produced by [lowerRevealChain](../functions/lowe
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L366)
 
@@ -30,7 +30,7 @@ Defined in: [core/src/motion/reveal.ts:363](https://github.com/freebatteryfactor
 
 ### policyId
 
-> `readonly` **policyId**: `ContentAddress`
+> `readonly` **policyId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:368](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L368)
 
@@ -46,7 +46,7 @@ Defined in: [core/src/motion/reveal.ts:364](https://github.com/freebatteryfactor
 
 ### signalId
 
-> `readonly` **signalId**: `ContentAddress`
+> `readonly` **signalId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:367](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L367)
 
@@ -54,6 +54,6 @@ Defined in: [core/src/motion/reveal.ts:367](https://github.com/freebatteryfactor
 
 ### transitionIds
 
-> `readonly` **transitionIds**: readonly `ContentAddress`[]
+> `readonly` **transitionIds**: readonly [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)[]
 
 Defined in: [core/src/motion/reveal.ts:365](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L365)

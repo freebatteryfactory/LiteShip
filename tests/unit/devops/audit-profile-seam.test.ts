@@ -23,7 +23,8 @@ import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
 import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
 import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
-import { liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
+import { withRepoRoot } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 import type { DevopsProfile } from '@liteship/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
@@ -80,7 +81,7 @@ describe('D9a — surface audit honors the profile (the @liteship/ host-surface 
   });
 
   it('the LiteShip default profile STILL asserts its Astro/Vite host surface (no behavior loss)', () => {
-    const summary = runSurfaceAudit().summary;
+    const summary = runSurfaceAudit(liteshipDevopsProfile).summary;
     expect(summary.astroDirectiveCount).toBeGreaterThan(0);
     expect(summary.viteVirtualModuleCount).toBeGreaterThan(0);
   });
@@ -159,9 +160,11 @@ describe('D9a/D9b — no repo-local @liteship/ gate remains in the audit engine 
     expect(surface).toMatch(/const\s*\{\s*surfacePolicy\s*\}\s*=\s*profile/);
   });
 
-  it('the @liteship/ prefix literal lives only in the default profile (single source)', () => {
-    const profileSrc = readFileSync(resolve(REPO, 'packages/audit/src/devops-profile.ts'), 'utf8');
-    expect(profileSrc).toContain("internalPackagePrefix: '@liteship/'");
+  it('the reusable engine names no LiteShip scope and the CLI host supplies it once', () => {
+    const engineProfile = readFileSync(resolve(REPO, 'packages/audit/src/devops-profile.ts'), 'utf8');
+    const hostProfile = readFileSync(resolve(REPO, 'packages/cli/src/lib/liteship-audit-profile.ts'), 'utf8');
+    expect(engineProfile).not.toContain("internalPackagePrefix: '@liteship/'");
+    expect(hostProfile.match(/internalPackagePrefix:\s*'@liteship\/'/gu)).toHaveLength(1);
   });
 });
 
@@ -171,16 +174,21 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
   // artifact-dependent supporting findings on top — those are gated elsewhere.)
   it('the real repo holds 0 errors / 0 warnings across structure+integrity+surface', () => {
     const all = [
-      ...runStructureAudit().findings,
-      ...runIntegrityAudit().findings,
-      ...runSurfaceAudit().findings,
+      ...runStructureAudit(liteshipDevopsProfile).findings,
+      ...runIntegrityAudit(liteshipDevopsProfile).findings,
+      ...runSurfaceAudit(liteshipDevopsProfile).findings,
     ];
     const bySeverity = (s: string) => all.filter((f) => f.severity === s).length;
     const inventory = collectWarningInventory();
     const delta = diffInventories(AUDIT_WARNING_FLOOR, inventory);
     // Hard floor — D9a must not move these.
-    expect(bySeverity('error')).toBe(0);
-    expect(bySeverity('warning')).toBe(0);
+    const blocking = all.filter((finding) => finding.severity !== 'info');
+    const diagnostic = blocking
+      .slice(0, 50)
+      .map((finding) => `${finding.rule} ${finding.location?.file ?? '(no file)'}: ${finding.summary}`)
+      .join('\n');
+    expect(bySeverity('error'), diagnostic).toBe(0);
+    expect(bySeverity('warning'), diagnostic).toBe(0);
     expect(inventory).toEqual(AUDIT_WARNING_FLOOR);
     expect(delta.added, `added warnings: ${delta.added.join(', ')}`).toEqual([]);
     expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);

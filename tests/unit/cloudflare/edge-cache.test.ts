@@ -120,10 +120,51 @@ describe('createCloudflareEdgeCache', () => {
       propertyRegistrations: '',
       containerQueries: '',
     });
+    // A write invalidates the Cache API projection immediately. Isolate the
+    // active-invalidation assertion from that separate coherence contract.
+    cacheApi.delete.mockClear();
     await boundaryCache.invalidateByPath(boundary.id);
 
     expect(cacheApi.delete).toHaveBeenCalledTimes(1);
     expect(cacheApi.delete.mock.calls[0]?.[0]).toBeInstanceOf(Request);
+  });
+
+  it('keeps Cache API L1 coherent when authoritative KV is overwritten', async () => {
+    const store = new Map<string, string>();
+    const l1 = new Map<string, string>();
+    const pending: Promise<unknown>[] = [];
+    const cacheApi = {
+      async match(request: Request) {
+        const value = l1.get(request.url);
+        return value === undefined ? undefined : new Response(value);
+      },
+      async put(request: Request, response: Response) {
+        l1.set(request.url, await response.text());
+      },
+      async delete(request: Request) {
+        return l1.delete(request.url);
+      },
+    };
+    const kv = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get(key: string) {
+            return store.get(key) ?? null;
+          },
+          async put(key: string, value: string) {
+            store.set(key, value);
+          },
+        },
+      }),
+      { binding: 'KV', cache: cacheApi },
+      { waitUntil: (promise) => pending.push(promise) },
+    );
+
+    await kv.put('tag-index', 'v1');
+    expect(await kv.get('tag-index')).toBe('v1');
+    await Promise.all(pending.splice(0));
+    await kv.put('tag-index', 'v2');
+    expect(await kv.get('tag-index')).toBe('v2');
   });
 
   it('serves a Cache API L1 hit without reading KV', async () => {
@@ -176,7 +217,8 @@ describe('createCloudflareEdgeCache', () => {
           async put() {},
         },
       }),
-      { binding: 'KV', cache, ctx, cacheTtl: 120 },
+      { binding: 'KV', cache, cacheTtl: 120 },
+      ctx,
     );
 
     await expect(kv.get('k')).resolves.toBe('from-kv');

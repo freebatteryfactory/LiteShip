@@ -11,11 +11,11 @@ import type { ContentAddress } from '../schema/brands.js';
 import type { Token } from './token.js';
 import type { Style } from './style.js';
 import type { World } from '../ecs.js';
-import type { EntityId } from '../ecs.js';
+import type { DenseStore, EntityId } from '../ecs.js';
 import { Token as TokenNS } from './token.js';
 import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
-import { Part } from '../ecs.js';
+import { createDenseStore } from '../ecs.js';
 import { contentAddressOf } from '../evidence/content-address.js';
 import { ValidationError } from '@liteship/error';
 
@@ -207,7 +207,7 @@ function makeComposableWorld<Schema extends EntityComponents = EntityComponents>
 // ---------------------------------------------------------------------------
 
 interface ComposableDenseStore {
-  create(name: string, capacity: number): Part.Dense;
+  create(name: string, capacity: number): DenseStore;
   store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): void;
   retrieve<T extends EntityComponents>(entity: ComposableEntity<T>): number | undefined;
 }
@@ -215,11 +215,11 @@ interface ComposableDenseStore {
 function makeComposableDenseStore(world: World): ComposableDenseStore {
   // Maintain a mapping from ContentAddress to ECS EntityId for dense store ops
   const addressToEntityId = new Map<ContentAddress, EntityId>();
-  let denseStore: Part.Dense | undefined;
+  let denseStore: DenseStore | undefined;
 
   return {
-    create(name: string, capacity: number): Part.Dense {
-      const store = Part.dense(name, capacity);
+    create(name: string, capacity: number): DenseStore {
+      const store = createDenseStore(name, capacity);
       world.addDenseStore(store);
       denseStore = store;
       return store;
@@ -290,4 +290,3 @@ export const ComposableWorld = {
 export type ComposableWorld<Schema extends EntityComponents = EntityComponents> = TypedComposableWorld<Schema>;
 
 // Type exports -- keep legacy alias for backward compatibility
-export type { TypedComposableWorld as ComposableWorldShape };

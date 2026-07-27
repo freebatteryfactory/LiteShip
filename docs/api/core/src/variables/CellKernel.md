@@ -18,7 +18,7 @@ is the strictly-simpler no-replay channel.
 
 ### fanout
 
-> **fanout**: \<`T`\>(`policy`) => [`CellFanoutShape`](../interfaces/CellFanoutShape.md)\<`T`\>
+> **fanout**: \<`T`\>(`policy`) => [`CellFanout`](../interfaces/CellFanout.md)\<`T`\>
 
 Build a no-replay fan-out kernel. `policy` defaults to `{all}` (no dedup).
 
@@ -36,11 +36,11 @@ Build a no-replay fan-out kernel. `policy` defaults to `{all}` (no dedup).
 
 #### Returns
 
-[`CellFanoutShape`](../interfaces/CellFanoutShape.md)\<`T`\>
+[`CellFanout`](../interfaces/CellFanout.md)\<`T`\>
 
 ### replay1
 
-> **replay1**: \<`T`\>(`initial`, `policy`, `reentrancy`) => [`CellReplayShape`](../interfaces/CellReplayShape.md)\<`T`\>
+> **replay1**: \<`T`\>(`initial`, `policy`, `reentrancy`) => [`CellReplay`](../interfaces/CellReplay.md)\<`T`\>
 
 Build a replay-1 kernel seeded with `initial`. `policy` defaults to `{all}`
 (no dedup) and `reentrancy` to `'synchronous'` (the pinned I5 nested fan-out),
@@ -68,4 +68,4 @@ so `replay1(initial)` is byte-for-byte the compositor extraction target.
 
 #### Returns
 
-[`CellReplayShape`](../interfaces/CellReplayShape.md)\<`T`\>
+[`CellReplay`](../interfaces/CellReplay.md)\<`T`\>

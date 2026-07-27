@@ -34,11 +34,11 @@ a renderer because only `ok: true` mints the envelope.
 
 ### node
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
 ### catalog
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 ## Returns
 

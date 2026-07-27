@@ -8,7 +8,9 @@
 
 > `const` **errorResponse**: (`id`, `code`, `message`, `data?`) => [`JsonRpcErrorResponse`](../interfaces/JsonRpcErrorResponse.md) = `_errorResponse`
 
-Defined in: [mcp-server/src/jsonrpc.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L146)
+Defined in: [mcp-server/src/jsonrpc.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L152)
+
+Construct one JSON-RPC error response.
 
 Construct a -32700 / -32600 / -32601 / -32602 / -32603 error response.
 

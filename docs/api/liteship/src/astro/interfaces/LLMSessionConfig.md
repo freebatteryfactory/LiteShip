@@ -37,7 +37,7 @@ Host element (directive root). Receives `liteship:llm-*` events.
 
 ### genuiCatalog?
 
-> `readonly` `optional` **genuiCatalog?**: `ComponentCatalog`
+> `readonly` `optional` **genuiCatalog?**: [`ComponentCatalog`](../../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: astro/dist/runtime/llm-session.d.ts:26
 

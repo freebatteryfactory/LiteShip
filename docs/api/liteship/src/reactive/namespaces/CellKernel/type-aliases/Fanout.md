@@ -6,11 +6,11 @@
 
 # Type Alias: Fanout\<T\>
 
-> **Fanout**\<`T`\> = [`CellFanoutShape`](../../../interfaces/CellFanoutShape.md)\<`T`\>
+> **Fanout**\<`T`\> = [`CellFanout`](../../../interfaces/CellFanout.md)\<`T`\>
 
 Defined in: core/dist/reactive/cell-kernel.d.ts:167
 
-Live no-replay fan-out kernel — see [CellFanoutShape](../../../interfaces/CellFanoutShape.md).
+Live no-replay fan-out kernel — see [CellFanout](../../../interfaces/CellFanout.md).
 
 ## Type Parameters
 

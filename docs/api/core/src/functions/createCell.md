@@ -6,7 +6,7 @@
 
 # Function: createCell()
 
-> **createCell**\<`T`\>(`initial`): `CellShape`\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
+> **createCell**\<`T`\>(`initial`): [`Cell`](../type-aliases/Cell.md)\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
 Defined in: [core/src/reactive/cell.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell.ts#L67)
 
@@ -33,4 +33,4 @@ The cell IS its own disposable ([AsyncOwnedResource](../interfaces/AsyncOwnedRes
 
 ## Returns
 
-`CellShape`\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
+[`Cell`](../type-aliases/Cell.md)\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)

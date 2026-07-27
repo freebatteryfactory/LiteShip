@@ -42,7 +42,7 @@ Defined in: [core/src/graph/document-graph.ts:50](https://github.com/freebattery
 
 ### boundaryRef?
 
-> `readonly` `optional` **boundaryRef?**: `ContentAddress`
+> `readonly` `optional` **boundaryRef?**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L73)
 
@@ -62,7 +62,7 @@ Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebattery
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 
@@ -106,6 +106,6 @@ Defined in: [core/src/graph/document-graph.ts:75](https://github.com/freebattery
 
 ### thresholds?
 
-> `readonly` `optional` **thresholds?**: readonly `ThresholdValue`[]
+> `readonly` `optional` **thresholds?**: readonly [`ThresholdValue`](../../../spine/type-aliases/ThresholdValue.md)[]
 
 Defined in: [core/src/graph/document-graph.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L74)

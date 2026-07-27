@@ -16,7 +16,7 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { repoRoot } from '../../../scripts/audit/shared.js';
 import { packageTopology, surfacePolicy, dynamicImportExemptions } from '../../../scripts/audit/policy.js';
-import { liteshipDevopsProfile } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 import type { DevopsProfile } from '@liteship/audit';
 
 const fixtures: string[] = [];
@@ -62,17 +62,11 @@ describe('D7 — the default profile references the existing policy consts (sing
   });
 });
 
-describe('D7 — default profile reproduces current audit behavior (no drift)', () => {
-  it('runStructureAudit with the explicit default profile equals the implicit-default run', () => {
-    const implicit = runStructureAudit();
+describe('D7 — the host profile is explicit', () => {
+  it('the engine reproduces LiteShip behavior only when the host supplies LiteShip policy', () => {
     const explicit = runStructureAudit(liteshipDevopsProfile);
-    expect(explicit.findings).toEqual(implicit.findings);
-    expect(explicit.suppressed).toEqual(implicit.suppressed);
-    expect(explicit.summary.coverageClassification).toEqual(implicit.summary.coverageClassification);
-    expect(explicit.summary.packageEdges).toEqual(implicit.summary.packageEdges);
-    // Two full-repo ts.Program structure audits — load-sensitive; scale the
-    // timeout like the audit-profile-seam sibling so a busy suite never flakes
-    // this on the default 10s (testing-philosophy: anti-fragile, never flaky).
+    expect(explicit.summary.packageCount).toBeGreaterThan(0);
+    expect(explicit.summary.coverageClassification.topology.every((entry) => entry.coverage === 'clean')).toBe(true);
   }, scaledTimeout(60_000));
 });
 

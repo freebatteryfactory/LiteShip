@@ -44,7 +44,7 @@ Defined in: core/dist/graph/document-graph.d.ts:46
 
 ### artifactDigest
 
-> `readonly` **artifactDigest**: `AddressedDigest`
+> `readonly` **artifactDigest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:132
 
@@ -72,7 +72,7 @@ Defined in: core/dist/graph/document-graph.d.ts:47
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:49
 
@@ -110,6 +110,6 @@ sha256 receipt-chain head (the receipt byte law / `TypedRef`), distinct from `id
 
 ### sourceRefs
 
-> `readonly` **sourceRefs**: readonly `ContentAddress`[]
+> `readonly` **sourceRefs**: readonly [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)[]
 
 Defined in: core/dist/graph/document-graph.d.ts:131

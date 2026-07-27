@@ -59,6 +59,7 @@ function evidenceDigest(context: GateContext): string {
   return stableEvidenceDigest(entries);
 }
 
+/** Gate that rejects tests able to return before proving an expectation. */
 export const noEarlyReturnTestGate: Gate = defineGate({
   id: 'gauntlet/no-early-return-test',
   level: 'L2',

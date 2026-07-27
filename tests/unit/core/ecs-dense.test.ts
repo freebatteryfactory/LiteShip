@@ -1,20 +1,20 @@
 /**
- * Dense component storage tests -- Float64Array-backed Part.dense()
+ * Dense component storage tests -- Float64Array-backed createDenseStore()
  * and DenseSystem integration with World.tick().
  */
 
 import { describe, test, expect } from 'vitest';
-import { Part, createWorld } from '@liteship/core';
+import { createDenseStore, createWorld } from '@liteship/core';
 import { hasTag } from '@liteship/error';
 import type { EntityId, DenseStore } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
-// Part.dense -- standalone store operations
+// createDenseStore -- standalone store operations
 // ---------------------------------------------------------------------------
 
-describe('Part.dense -- DenseStore', () => {
+describe('createDenseStore -- DenseStore', () => {
   test('set/get roundtrip', () => {
-    const store = Part.dense('velocity', 16);
+    const store = createDenseStore('velocity', 16);
     const id = 'e-test-000001' as EntityId;
 
     store.set(id, 42.5);
@@ -22,7 +22,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('has returns true for stored, false for missing', () => {
-    const store = Part.dense('hp', 8);
+    const store = createDenseStore('hp', 8);
     const a = 'e-test-aaa' as EntityId;
     const b = 'e-test-bbb' as EntityId;
 
@@ -32,12 +32,12 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('get returns undefined for missing entity', () => {
-    const store = Part.dense('hp', 8);
+    const store = createDenseStore('hp', 8);
     expect(store.get('e-test-nope' as EntityId)).toBeUndefined();
   });
 
   test('set overwrites existing value', () => {
-    const store = Part.dense('hp', 8);
+    const store = createDenseStore('hp', 8);
     const id = 'e-test-overwrite' as EntityId;
 
     store.set(id, 10);
@@ -47,7 +47,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('delete removes entity and swap-removes correctly', () => {
-    const store = Part.dense('hp', 8);
+    const store = createDenseStore('hp', 8);
     const a = 'e-a' as EntityId;
     const b = 'e-b' as EntityId;
     const c = 'e-c' as EntityId;
@@ -70,7 +70,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('delete last element works', () => {
-    const store = Part.dense('hp', 8);
+    const store = createDenseStore('hp', 8);
     const a = 'e-a' as EntityId;
     store.set(a, 99);
     store.delete(a);
@@ -79,12 +79,12 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('delete returns false for missing entity', () => {
-    const store = Part.dense('hp', 8);
+    const store = createDenseStore('hp', 8);
     expect(store.delete('e-nope' as EntityId)).toBe(false);
   });
 
   test('view returns a Float64Array subarray of live data', () => {
-    const store = Part.dense('speed', 16);
+    const store = createDenseStore('speed', 16);
 
     store.set('e-0' as EntityId, 10);
     store.set('e-1' as EntityId, 20);
@@ -97,7 +97,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('entities returns entity IDs in dense order', () => {
-    const store = Part.dense('mass', 8);
+    const store = createDenseStore('mass', 8);
 
     store.set('e-a' as EntityId, 1);
     store.set('e-b' as EntityId, 2);
@@ -108,7 +108,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('throws ValidationError when capacity exceeded', () => {
-    const store = Part.dense('tiny', 2);
+    const store = createDenseStore('tiny', 2);
 
     store.set('e-0' as EntityId, 1);
     store.set('e-1' as EntityId, 2);
@@ -122,7 +122,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('view updates after delete (swap-remove reflected)', () => {
-    const store = Part.dense('x', 8);
+    const store = createDenseStore('x', 8);
 
     store.set('e-a' as EntityId, 100);
     store.set('e-b' as EntityId, 200);
@@ -138,7 +138,7 @@ describe('Part.dense -- DenseStore', () => {
   });
 
   test('name and capacity are preserved', () => {
-    const store = Part.dense('gravity', 1024);
+    const store = createDenseStore('gravity', 1024);
     expect(store.name).toBe('gravity');
     expect(store.capacity).toBe(1024);
   });
@@ -151,7 +151,7 @@ describe('Part.dense -- DenseStore', () => {
 describe('World.tick() -- dense systems', () => {
   test('dense system iterates Float64Array in tick', () => {
     const world = createWorld();
-    const velocityStore = Part.dense('velocity', 64);
+    const velocityStore = createDenseStore('velocity', 64);
 
     world.addDenseStore(velocityStore);
 
@@ -186,7 +186,7 @@ describe('World.tick() -- dense systems', () => {
 
   test('dense system mutates data in-place via view', () => {
     const world = createWorld();
-    const posStore = Part.dense('posX', 64);
+    const posStore = createDenseStore('posX', 64);
 
     world.addDenseStore(posStore);
 
@@ -248,7 +248,7 @@ describe('World.tick() -- mixed dense + regular systems', () => {
     const results: string[] = [];
 
     const world = createWorld();
-    const speedStore = Part.dense('speed', 32);
+    const speedStore = createDenseStore('speed', 32);
     world.addDenseStore(speedStore);
 
     // Spawn an entity with a regular component
@@ -287,7 +287,7 @@ describe('World.tick() -- mixed dense + regular systems', () => {
 
   test('despawn cleans up dense stores', () => {
     const world = createWorld();
-    const store = Part.dense('hp', 16);
+    const store = createDenseStore('hp', 16);
     world.addDenseStore(store);
 
     const id = world.spawn();
@@ -385,8 +385,8 @@ describe('World.tick() -- within-tick read-current law', () => {
 describe('Dense system -- multi-store query', () => {
   test('system receives multiple dense stores', () => {
     const world = createWorld();
-    const posX = Part.dense('posX', 32);
-    const velX = Part.dense('velX', 32);
+    const posX = createDenseStore('posX', 32);
+    const velX = createDenseStore('velX', 32);
 
     world.addDenseStore(posX);
     world.addDenseStore(velX);

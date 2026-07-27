@@ -10,8 +10,10 @@
 
 import { GENERATED_PUBLIC_SURFACE_CONTEXT } from './public-surface-context.generated.js';
 
+/** Stability label carried by agent-facing public-surface context. */
 export type PublicSurfaceStability = 'stable' | 'experimental';
 
+/** Agent context for one public allocation operation and its owner. */
 export interface PublicAllocationContext {
   readonly operation: string;
   readonly specifier: string;
@@ -24,6 +26,7 @@ export interface PublicAllocationContext {
   readonly rationale: string;
 }
 
+/** Agent context for one executable public failure contract. */
 export interface PublicFailureProofContext {
   readonly test: string;
   readonly importSource: string;
@@ -40,6 +43,12 @@ export interface PublicSymbolContext {
   readonly symbol: string;
   readonly specifier: string;
   readonly owner: string;
+  readonly audience: string;
+  readonly category: string;
+  readonly surfaceClass: 'paved-road' | 'advanced-module';
+  readonly producer: string;
+  readonly relatedInvariant: string;
+  readonly replacement: string;
   readonly userStory: string;
   readonly lifecycle: string;
   readonly failureContract: string;
@@ -60,6 +69,12 @@ export const PublicSymbolContextSchema = {
     symbol: { type: 'string' },
     specifier: { type: 'string' },
     owner: { type: 'string' },
+    audience: { type: 'string' },
+    category: { type: 'string' },
+    surfaceClass: { enum: ['paved-road', 'advanced-module'] },
+    producer: { type: 'string' },
+    relatedInvariant: { type: 'string' },
+    replacement: { type: 'string' },
     userStory: { type: 'string' },
     lifecycle: { type: 'string' },
     failureContract: { type: 'string' },
@@ -117,6 +132,12 @@ export const PublicSymbolContextSchema = {
     'symbol',
     'specifier',
     'owner',
+    'audience',
+    'category',
+    'surfaceClass',
+    'producer',
+    'relatedInvariant',
+    'replacement',
     'userStory',
     'lifecycle',
     'failureContract',
@@ -137,7 +158,9 @@ export const PUBLIC_SURFACE_CONTEXT = GENERATED_PUBLIC_SURFACE_CONTEXT;
 /** Resolve a facade symbol or allocation operation without package archaeology. */
 export function publicSurfaceForSymbol(query: string): PublicSymbolContext | null {
   const root = GENERATED_PUBLIC_SURFACE_CONTEXT.root.find((entry) => entry.symbol === query);
-  const subpath = GENERATED_PUBLIC_SURFACE_CONTEXT.subpaths.find((entry) => entry.symbol === query);
+  const subpath = GENERATED_PUBLIC_SURFACE_CONTEXT.subpaths.find(
+    (entry) => entry.symbol === query || entry.specifier === query,
+  );
   const allocation = GENERATED_PUBLIC_SURFACE_CONTEXT.lifecycle.find(
     (entry) =>
       entry.operation === query || (entry.operation.endsWith('.create') && entry.operation.slice(0, -7) === query),
@@ -165,6 +188,12 @@ export function publicSurfaceForSymbol(query: string): PublicSymbolContext | nul
       symbol: query,
       specifier: allocation!.specifier,
       owner: allocation!.owner,
+      audience: 'application-author',
+      category: 'lifecycle',
+      surfaceClass: 'advanced-module',
+      producer: allocation!.owner,
+      relatedInvariant: 'INV-FACADE-EXPORT-BUDGET',
+      replacement: 'none',
       userStory: allocation!.rationale,
       lifecycle: allocation!.classification,
       failureContract:
@@ -186,6 +215,12 @@ export function publicSurfaceForSymbol(query: string): PublicSymbolContext | nul
     symbol: anchor.symbol,
     specifier: anchor.specifier,
     owner: anchor.owner,
+    audience: anchor.audience,
+    category: anchor.category,
+    surfaceClass: anchor.surfaceClass,
+    producer: anchor.producer,
+    relatedInvariant: anchor.relatedInvariant,
+    replacement: anchor.replacement,
     userStory: anchor.userStory,
     lifecycle: anchor.lifecycle,
     failureContract: anchor.failureContract,

@@ -16,7 +16,7 @@ export { driveUniformFromSignal } from './uniform-signal.js';
 // element/target with a host-owned genui catalog; the directive runtime composes the
 // same factory internally (`runtime/llm.ts`).
 export { createLLMSession } from './llm-session.js';
-export type { LLMSessionConfig, LLMSessionShape } from './llm-session.js';
+export type { LLMSessionConfig, LLMSession } from './llm-session.js';
 export { bootstrapSlots, getSlotRegistry, reinitializeDirectives, teardownDirectives, rescanSlots } from './slots.js';
 export { bootstrapDirectives, scanAndBootDirectives } from './directive-boot.js';
 export type { DirectiveName } from './directive-boot.js';

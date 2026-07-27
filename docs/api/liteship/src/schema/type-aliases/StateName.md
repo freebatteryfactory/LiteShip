@@ -6,7 +6,7 @@
 
 # Type Alias: StateName\<S\>
 
-> **StateName**\<`S`\> = `_StateName`\<`S`\>
+> **StateName**\<`S`\> = [`StateName`](../../../../spine/type-aliases/StateName.md)\<`S`\>
 
 Defined in: core/dist/schema/brands.d.ts:20
 

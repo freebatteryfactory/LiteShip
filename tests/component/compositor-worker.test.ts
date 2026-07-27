@@ -410,7 +410,9 @@ describe('CompositorWorker', () => {
 
     await Promise.resolve();
 
-    const updateMessages = worker.postedMessages.filter((entry) => (entry.data as { type?: string }).type === 'apply-updates');
+    const updateMessages = worker.postedMessages.filter(
+      (entry) => (entry.data as { type?: string }).type === 'apply-updates',
+    );
     expect(updateMessages).toHaveLength(1);
     expect(updateMessages[0]?.data).toEqual({
       type: 'apply-updates',
@@ -720,7 +722,9 @@ describe('CompositorWorker', () => {
     second.dispose();
     third.dispose();
 
-    const disposeMsg = thirdWorker.postedMessages.find((message) => (message.data as { type?: string }).type === 'dispose');
+    const disposeMsg = thirdWorker.postedMessages.find(
+      (message) => (message.data as { type?: string }).type === 'dispose',
+    );
     expect(firstWorker.terminated).toBe(false);
     expect(disposeMsg?.data).toEqual({ type: 'dispose' });
     expect(thirdWorker.terminated).toBe(true);
@@ -733,20 +737,17 @@ describe('CompositorWorker', () => {
     const createObjectUrl = vi.fn(() => 'blob:fresh-cleanup-url');
     const revokeObjectUrl = vi.fn();
 
-    vi.stubGlobal(
-      'addEventListener',
-      ((type: string, listener: EventListenerOrEventListenerObject) => {
-        if (type === 'pagehide') {
-          cleanupCallbacks.push(() => {
-            if (typeof listener === 'function') {
-              listener(new Event('pagehide'));
-            } else {
-              listener.handleEvent(new Event('pagehide'));
-            }
-          });
-        }
-      }) as typeof globalThis.addEventListener,
-    );
+    vi.stubGlobal('addEventListener', ((type: string, listener: EventListenerOrEventListenerObject) => {
+      if (type === 'pagehide') {
+        cleanupCallbacks.push(() => {
+          if (typeof listener === 'function') {
+            listener(new Event('pagehide'));
+          } else {
+            listener.handleEvent(new Event('pagehide'));
+          }
+        });
+      }
+    }) as typeof globalThis.addEventListener);
     URL.createObjectURL = createObjectUrl;
     URL.revokeObjectURL = revokeObjectUrl;
 
@@ -1404,28 +1405,32 @@ describe('CompositorWorker', () => {
     expect(cw.runtime.registeredNames()).toEqual([]);
   });
 
-  test('dispose clears all listeners', () => {
+  test('dispose clears all listeners through one idempotent async protocol', async () => {
     const cw = CompositorWorker.create();
     const received: any[] = [];
     cw.onState((state) => received.push(state));
     cw.onMetrics(() => {});
 
-    cw.dispose();
+    const first = cw.dispose();
 
     // Messages after dispose should not trigger callbacks
     // (listeners are cleared before terminate)
     const mockState = { discrete: {}, blend: {}, outputs: { css: {}, glsl: {}, aria: {} } };
     // Worker is terminated, but if we had pre-dispose messages queued:
     expect(received).toHaveLength(0);
+    const second = cw.dispose();
+    expect(second).toBe(first);
+    expect(cw[Symbol.asyncDispose]()).toBe(first);
+    await first;
   });
 
-  test('dispose tolerates worker implementations that do not expose removeEventListener', () => {
+  test('dispose tolerates worker implementations that do not expose removeEventListener', async () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
 
     (worker as { removeEventListener?: unknown }).removeEventListener = undefined;
 
-    expect(() => cw.dispose()).not.toThrow();
+    await expect(cw.dispose()).resolves.toBeUndefined();
   });
 
   test('falls back to Date.now timing and registers node cleanup through process.once when pagehide hooks are unavailable', async () => {
@@ -1446,12 +1451,13 @@ describe('CompositorWorker', () => {
     processRecord.process = { once: exitSpy };
 
     try {
-      const { CompositorWorker: FreshCompositorWorker } = await import('../../packages/worker/src/compositor-worker.js');
+      const { CompositorWorker: FreshCompositorWorker } =
+        await import('../../packages/worker/src/compositor-worker.js');
       const fresh = FreshCompositorWorker.create();
 
       expect(exitSpy).toHaveBeenCalledWith('exit', expect.any(Function));
 
-      fresh.dispose();
+      await fresh.dispose();
     } finally {
       vi.unstubAllGlobals();
       Object.defineProperty(globalThis, 'addEventListener', {
@@ -1477,8 +1483,9 @@ describe('CompositorWorker', () => {
     vi.stubGlobal('process', { platform: 'linux' } as never);
 
     try {
-      const { CompositorWorker: FreshCompositorWorker } = await import('../../packages/worker/src/compositor-worker.js');
-      expect(() => FreshCompositorWorker.create().dispose()).not.toThrow();
+      const { CompositorWorker: FreshCompositorWorker } =
+        await import('../../packages/worker/src/compositor-worker.js');
+      await expect(FreshCompositorWorker.create().dispose()).resolves.toBeUndefined();
     } finally {
       Object.defineProperty(globalThis, 'addEventListener', {
         configurable: true,
@@ -1502,8 +1509,9 @@ describe('CompositorWorker', () => {
     processRecord.process = {};
 
     try {
-      const { CompositorWorker: FreshCompositorWorker } = await import('../../packages/worker/src/compositor-worker.js');
-      expect(() => FreshCompositorWorker.create().dispose()).not.toThrow();
+      const { CompositorWorker: FreshCompositorWorker } =
+        await import('../../packages/worker/src/compositor-worker.js');
+      await expect(FreshCompositorWorker.create().dispose()).resolves.toBeUndefined();
     } finally {
       Object.defineProperty(globalThis, 'addEventListener', {
         configurable: true,

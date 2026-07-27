@@ -54,6 +54,7 @@ export const DIAGNOSTIC_AREAS = [
   'migrate',
 ] as const;
 
+/** Closed semantic owner prefix for stable LiteShip diagnostic codes. */
 export type DiagnosticArea = (typeof DIAGNOSTIC_AREAS)[number];
 
 /**
@@ -346,6 +347,12 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'Unregistered intent-debt marker (TODO / FIXME / HACK)',
     'A bare intent-debt directive comment (TODO / FIXME / HACK) in packages/*/src that names no registered obligation is a signed promise of unfinished work left in shipped source — it reads as done while doing nothing. A genuine deferral belongs in the P17 OBLIGATIONS LEDGER (traceability/obligations.yaml), cited on the line by its OBL-<AREA>-<slug> id.',
     'Register the deferral in traceability/obligations.yaml and cite it with `// OBLIGATION: OBL-<AREA>-<slug>` (or `// TODO(OBL-<AREA>-<slug>): …`), or finish the work and remove the marker.',
+  ),
+
+  'gauntlet/authority-integrity': gauntlet(
+    'Gate authority qualification failed',
+    'A required gate failed its red, green, or mutation qualification (or its qualification could not execute). Its semantic findings remain advisory because unqualified logic may not judge source, but the enclosing run blocks because unverified release authority may not mint green.',
+    'Repair the gate fixtures or qualification execution until red is caught, green is clean, and the planted mutation is killed.',
   ),
 
   // ── gauntlet: the waiver-lifecycle rules (waiver.ts) ─────────────────────────
@@ -1067,6 +1074,11 @@ export const DIAGNOSTIC_REGISTRY = Object.freeze({
     'LLM runtime initialization failed',
     'The browser LLM directive could not initialize its selected runtime or model.',
     'Repair the runtime/model configuration or provide the declared fallback.',
+  ),
+  'astro/runtime/owned-resource-dispose-failed': astro(
+    'Owned runtime disposal failed',
+    'A synchronous Astro browser-event boundary initiated the one async disposal protocol, but at least one owned finalizer failed.',
+    'Inspect the reported owner and cause; every sibling release was attempted and the failure was observed instead of dropped.',
   ),
   'astro/motion/motion-program-malformed': astro(
     'Motion program payload is malformed',

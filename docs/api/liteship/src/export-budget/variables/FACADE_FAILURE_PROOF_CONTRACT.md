@@ -8,7 +8,7 @@
 
 > `const` **FACADE\_FAILURE\_PROOF\_CONTRACT**: `Readonly`\<`Record`\<`string`, [`FacadeFailureProofContract`](../interfaces/FacadeFailureProofContract.md)\>\>
 
-Defined in: [liteship/src/export-budget.ts:321](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L321)
+Defined in: [liteship/src/export-budget.ts:702](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L702)
 
 Exact executable evidence for facade failure claims that need an operator-visible
 proof beyond an owner-package filename. The compiler row is intentionally bound

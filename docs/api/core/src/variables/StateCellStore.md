@@ -6,9 +6,9 @@
 
 # Variable: StateCellStore
 
-> `const` **StateCellStore**: `object`
+> **StateCellStore**: `object`
 
-Defined in: [core/src/reactive/state-cell.ts:366](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/state-cell.ts#L366)
+Defined in: [core/src/reactive/state-cell.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/state-cell.ts#L90)
 
 Namespace entry point for the coarse authority store.
 
@@ -16,7 +16,7 @@ Namespace entry point for the coarse authority store.
 
 ### create
 
-> **create**: (`runtime?`) => [`StateCellStoreShape`](../interfaces/StateCellStoreShape.md) = `_createStore`
+> **create**: (`runtime?`) => [`StateCellStore`](../interfaces/StateCellStore.md) = `_createStore`
 
 Create a store backed by a fresh or supplied [RuntimeCoordinator](RuntimeCoordinator.md).
 
@@ -24,8 +24,8 @@ Create a store backed by a fresh or supplied [RuntimeCoordinator](RuntimeCoordin
 
 ##### runtime?
 
-`RuntimeCoordinatorShape`
+[`RuntimeCoordinator`](../interfaces/RuntimeCoordinator.md)
 
 #### Returns
 
-[`StateCellStoreShape`](../interfaces/StateCellStoreShape.md)
+[`StateCellStore`](../interfaces/StateCellStore.md)

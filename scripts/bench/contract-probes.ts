@@ -170,6 +170,7 @@ function buildBeatsOfSize(frameCount: number): () => void {
 const GAUNTLET_PROBE_CONTEXT = memoryContext({ 'subject.ts': 'clean' });
 const GAUNTLET_PROBE_GATE: Gate = defineGate({
   id: 'complexity/gauntlet-clean-token',
+  extension: { namespace: 'complexity', owner: 'LiteShip benchmark harness' },
   level: 'L4',
   describe: 'scan one file for a forbidden complexity-probe token',
   run: (context) =>
@@ -247,8 +248,10 @@ export const genuiValidationProbe: ComplexityProbe = {
   owner: '@liteship/genui',
   describe: 'validateGeneratedUITree — one structural visit per generated node; O(n) in node count.',
   shape: 'generated-ui-nodes',
-  sizes: [32, 128, 512, 2048, 4096],
-  measurement: { innerIterations: 25, replicates: 5, warmupIterations: 10 },
+  // Start above the timer/allocator noise floor while staying below GenUI's
+  // bounded node budget. Five 2× steps still expose the complete linear curve.
+  sizes: [256, 512, 1024, 2048, 4096],
+  measurement: { innerIterations: 25, replicates: 7, warmupIterations: 10 },
   workloadFor: buildGenuiValidationOfSize,
 };
 
@@ -258,7 +261,7 @@ export const genuiRenderHashProbe: ComplexityProbe = {
   describe: 'renderHash — canonical encoding and hashing of one generated tree; O(n) in node count.',
   shape: 'generated-ui-nodes',
   sizes: [32, 128, 512, 2048, 8192],
-  measurement: { innerIterations: 8, replicates: 5, warmupIterations: 5 },
+  measurement: { innerIterations: 8, replicates: 7, warmupIterations: 5 },
   workloadFor: buildGenuiRenderHashOfSize,
 };
 
@@ -268,7 +271,7 @@ export const assetRiffWalkProbe: ComplexityProbe = {
   describe: 'walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.',
   shape: 'riff-chunks',
   sizes: [32, 128, 512, 2048, 8192],
-  measurement: { innerIterations: 25, replicates: 5, warmupIterations: 10 },
+  measurement: { innerIterations: 25, replicates: 7, warmupIterations: 10 },
   workloadFor: buildRiffWalkOfSize,
 };
 
@@ -277,8 +280,8 @@ export const assetWaveformProbe: ComplexityProbe = {
   owner: '@liteship/assets',
   describe: 'computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.',
   shape: 'audio-frames',
-  sizes: [65_536, 131_072, 262_144, 524_288],
-  measurement: { innerIterations: 5, replicates: 5, warmupIterations: 3 },
+  sizes: [65_536, 131_072, 262_144, 524_288, 1_048_576],
+  measurement: { innerIterations: 5, replicates: 7, warmupIterations: 3 },
   workloadFor: buildWaveformOfSize,
 };
 
@@ -287,8 +290,8 @@ export const assetOnsetsProbe: ComplexityProbe = {
   owner: '@liteship/assets',
   describe: 'detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.',
   shape: 'audio-frames',
-  sizes: [65_536, 131_072, 262_144, 524_288],
-  measurement: { innerIterations: 4, replicates: 5, warmupIterations: 3 },
+  sizes: [65_536, 131_072, 262_144, 524_288, 1_048_576],
+  measurement: { innerIterations: 4, replicates: 7, warmupIterations: 3 },
   workloadFor: buildOnsetsOfSize,
 };
 
@@ -297,8 +300,8 @@ export const assetBeatsProbe: ComplexityProbe = {
   owner: '@liteship/assets',
   describe: 'detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.',
   shape: 'audio-frames-fixed-sample-rate',
-  sizes: [65_536, 131_072, 262_144, 524_288],
-  measurement: { innerIterations: 3, replicates: 5, warmupIterations: 2 },
+  sizes: [65_536, 131_072, 262_144, 524_288, 1_048_576],
+  measurement: { innerIterations: 3, replicates: 7, warmupIterations: 2 },
   workloadFor: buildBeatsOfSize,
 };
 
@@ -308,7 +311,7 @@ export const gauntletRunGatesProbe: ComplexityProbe = {
   describe: 'runGates — one qualification and decision fold per gate; O(n) in gate count.',
   shape: 'qualified-gates',
   sizes: [8, 32, 128, 512, 2048],
-  measurement: { innerIterations: 10, replicates: 5, warmupIterations: 5 },
+  measurement: { innerIterations: 10, replicates: 7, warmupIterations: 5 },
   workloadFor: buildGauntletRunOfSize,
 };
 

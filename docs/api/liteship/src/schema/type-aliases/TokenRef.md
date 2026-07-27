@@ -6,7 +6,7 @@
 
 # Type Alias: TokenRef\<N\>
 
-> **TokenRef**\<`N`\> = `_TokenRef`\<`N`\>
+> **TokenRef**\<`N`\> = [`TokenRef`](../../../../spine/type-aliases/TokenRef.md)\<`N`\>
 
 Defined in: core/dist/schema/brands.d.ts:34
 

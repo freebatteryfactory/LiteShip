@@ -8,6 +8,6 @@
 
 > `const` **PACKAGE\_PLUMB**: `Readonly`\<`Record`\<`string`, [`PackagePlumbEntry`](../interfaces/PackagePlumbEntry.md)\>\> = `GENERATED_PACKAGE_PLUMB`
 
-Defined in: [command/src/commands/plumb-registry.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L34)
+Defined in: [command/src/commands/plumb-registry.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L36)
 
 Every published package's live-runtime plumb status.

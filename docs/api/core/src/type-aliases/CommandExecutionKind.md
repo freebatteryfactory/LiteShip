@@ -6,7 +6,7 @@
 
 # Type Alias: CommandExecutionKind
 
-> **CommandExecutionKind** = `_CommandExecutionKind`
+> **CommandExecutionKind** = [`CommandExecutionKind`](../../../spine/type-aliases/CommandExecutionKind.md)
 
 Defined in: [core/src/authoring/command.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L25)
 

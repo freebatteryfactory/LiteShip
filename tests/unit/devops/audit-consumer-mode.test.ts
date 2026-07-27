@@ -24,6 +24,7 @@ import {
   type DevopsProfile,
 } from '@liteship/audit';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -445,7 +446,7 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
   it('the monorepo default profile (no packageRoots) never runs the dist check', () => {
     // dist/ legitimately may not exist on a fresh clone; the floor suites pin
     // 0 errors for the default profile, which this rule must not disturb.
-    const result = runSurfaceAudit();
+    const result = runSurfaceAudit(liteshipDevopsProfile);
     expect(result.findings.filter((f) => f.rule === 'export-target-missing')).toHaveLength(0);
   });
 });
@@ -545,8 +546,7 @@ describe('consumer mode — allowlist entries follow the package, not the monore
     topology: Record<string, { allowedInternalImports: string[]; kind: 'standalone' }>,
   ): DevopsProfile {
     return {
-      ...acmeBase(),
-      internalPackagePrefix: '@liteship/',
+      ...liteshipDevopsProfile,
       packageTopology: topology,
     };
   }

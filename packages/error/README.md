@@ -18,8 +18,9 @@ import { ValidationError, ParseError, hasTag, matchTag } from '@liteship/error';
 // A variant is a VALUE and a TYPE. Throw it — it's a real Error:
 throw ValidationError('defineBoundary', 'width must be > 0');
 
-// Branch on the tag, not `instanceof`. `hasTag` narrows:
-if (hasTag(caught, 'ParseError')) report(caught.source, caught.offset);
+// Branch on the tag, not `instanceof`. From `unknown`, `hasTag` proves the
+// open tagged contract; validate the concrete variant before reading its fields.
+if (hasTag(caught, 'ParseError')) report(caught.message);
 
 // `matchTag` is exhaustive over a closed union — add a variant and every
 // match site must handle it or it fails to compile:

@@ -78,7 +78,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/freebattery
 
 ### toolDescriptors
 
-> `readonly` **toolDescriptors**: readonly `CapsuleCommandDescriptor`[]
+> `readonly` **toolDescriptors**: readonly [`CapsuleCommandDescriptor`](../../../spine/interfaces/CapsuleCommandDescriptor.md)[]
 
 Defined in: [compiler/src/mcp-app-manifest.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L77)
 

@@ -33,7 +33,8 @@ import { systemClock } from '@liteship/core';
 import { ValidationError } from '@liteship/error';
 import {
   ACCEPTED_COMPLEXITY_CEILINGS,
-  MIN_COMPLEXITY_FIT_R2,
+  COMPLEXITY_ADMISSION_POLICY,
+  complexityAdmissionReasons,
 } from '../packages/gauntlet/src/gates/performance-contracts.js';
 import { repoRoot } from '../vitest.shared.js';
 import { PACKAGE_CATALOG } from './package-catalog.js';
@@ -66,11 +67,17 @@ export const BENCHMARK_OWNER_COVERAGE_ARTIFACT_PATH = 'benchmarks/benchmark-owne
 /** One deterministic violation in a measured complexity map. */
 export interface MeasuredComplexityIssue {
   readonly path: string;
-  readonly reason: 'missing' | 'unrecognized-class' | 'class-regression' | 'noisy-fit';
+  readonly reason:
+    | 'missing'
+    | 'unrecognized-class'
+    | 'class-regression'
+    | 'insufficient-size-sweep'
+    | 'invalid-size-sweep'
+    | 'under-replicated'
+    | 'low-r2'
+    | 'unstable-variance';
   readonly detail: string;
 }
-
-export const MAX_COMPLEXITY_COEFFICIENT_OF_VARIATION = 0.25;
 
 export interface BenchmarkProducerIdentity extends BenchmarkEvidenceAuthority {
   readonly platform: string;
@@ -139,9 +146,9 @@ export function projectComplexityBenchmarkEvidence(
       },
       allocation: null,
       confidence: {
-        minimumR2: MIN_COMPLEXITY_FIT_R2,
+        minimumR2: COMPLEXITY_ADMISSION_POLICY.minimumR2,
         coefficientOfVariation: entry.coefficientOfVariation,
-        maximumCoefficientOfVariation: MAX_COMPLEXITY_COEFFICIENT_OF_VARIATION,
+        maximumCoefficientOfVariation: COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation,
       },
     });
   });
@@ -204,11 +211,24 @@ export function verifyMeasuredComplexityMap(map: ComplexityMap): readonly Measur
         detail: `${path} measured ${entry.class}, above its ${ceiling} ceiling`,
       });
     }
-    if (entry.fittedR2 < MIN_COMPLEXITY_FIT_R2) {
+    if (entry.coefficientOfVariation === undefined || entry.measurement === undefined) {
       issues.push({
         path,
-        reason: 'noisy-fit',
-        detail: `${path} fit R² ${entry.fittedR2} is below ${MIN_COMPLEXITY_FIT_R2}`,
+        reason: 'unstable-variance',
+        detail: `${path} has no complete variance/measurement receipt`,
+      });
+      continue;
+    }
+    for (const reason of complexityAdmissionReasons({
+      sizes: entry.sizes,
+      replicates: entry.measurement.replicates,
+      fittedR2: entry.fittedR2,
+      coefficientOfVariation: entry.coefficientOfVariation,
+    })) {
+      issues.push({
+        path,
+        reason,
+        detail: `${path} is not admissible under the claim-bearing complexity policy: ${reason}`,
       });
     }
   }
@@ -340,7 +360,7 @@ function buildComplexityMap(): { readonly map: ComplexityMap; readonly hotPathBu
     }
   }
 
-  return { map: { schemaVersion: 1, entries }, hotPathBudgetOk };
+  return { map: { schemaVersion: 2, entries }, hotPathBudgetOk };
 }
 
 function main(): void {

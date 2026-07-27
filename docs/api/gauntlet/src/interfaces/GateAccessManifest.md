@@ -6,7 +6,7 @@
 
 # Interface: GateAccessManifest
 
-Defined in: [gauntlet/src/gate.ts:453](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L453)
+Defined in: [gauntlet/src/gate.ts:456](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L456)
 
 Machine-readable description of the GateContext surfaces a hosted gate reads.
 Covered IR files need no per-file declaration: their bytes are already folded
@@ -18,7 +18,7 @@ by the coverage digest. Everything outside that domain must be named here.
 
 > `readonly` `optional` **allFiles?**: `true`
 
-Defined in: [gauntlet/src/gate.ts:455](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L455)
+Defined in: [gauntlet/src/gate.ts:458](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L458)
 
 The gate enumerates the unscoped confirmer corpus.
 
@@ -28,7 +28,7 @@ The gate enumerates the unscoped confirmer corpus.
 
 > `readonly` `optional` **facts?**: readonly [`GateFactAccess`](GateFactAccess.md)[]
 
-Defined in: [gauntlet/src/gate.ts:461](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L461)
+Defined in: [gauntlet/src/gate.ts:464](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L464)
 
 Host-produced fact channels the gate reads.
 
@@ -38,7 +38,7 @@ Host-produced fact channels the gate reads.
 
 > `readonly` `optional` **ir?**: readonly (`"refs"` \| `"facts"`)[]
 
-Defined in: [gauntlet/src/gate.ts:459](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L459)
+Defined in: [gauntlet/src/gate.ts:462](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L462)
 
 Host-oracle-computed RepoIR tables the gate reads.
 
@@ -48,6 +48,6 @@ Host-oracle-computed RepoIR tables the gate reads.
 
 > `readonly` `optional` **outOfIrGlobs?**: readonly `string`[]
 
-Defined in: [gauntlet/src/gate.ts:457](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L457)
+Defined in: [gauntlet/src/gate.ts:460](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L460)
 
 Repo-relative globs for files read outside the IR coverage domain.

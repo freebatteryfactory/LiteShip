@@ -38,6 +38,7 @@ export interface AstroCacheProvider {
   invalidate(options: AstroInvalidateOptions): Promise<void>;
 }
 
+/** Host bindings and namespace used by the Cloudflare cache provider. */
 export interface CloudflareCacheProviderOptions {
   /** KV namespace binding name in wrangler.jsonc. Defaults to `LITESHIP_BOUNDARY_CACHE`. */
   readonly binding?: string;
@@ -118,7 +119,9 @@ export function cloudflareCacheProvider(options: CloudflareCacheProviderOptions 
 export function createCloudflareCacheProvider(options: RuntimeOptions = {}): AstroCacheProvider {
   const binding = options.binding ?? 'LITESHIP_BOUNDARY_CACHE';
   const envSource = resolveEnvSource(options);
-  const kv = createCloudflareEdgeCache(envSource, { binding });
+  // Astro's cache provider is module-scoped and has no request ExecutionContext;
+  // disable Cache API L1 rather than advertising a read path that can never be populated.
+  const kv = createCloudflareEdgeCache(envSource, { binding, cache: null });
   const boundaryCache = createBoundaryCache(kv, { prefix: options.prefix });
 
   return {

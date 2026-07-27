@@ -24,13 +24,15 @@
     "packages/command/src/index.ts",
     "packages/cli/src/index.ts",
     "packages/mcp-server/src/index.ts",
-    "packages/_spine/typedoc-entry.ts",
+    "packages/_spine/index.d.ts",
     "packages/create-liteship/src/index.ts",
     "packages/liteship/src"
   ],
   "entryPointStrategy": "expand",
   "out": "docs/api",
-  "plugin": ["typedoc-plugin-markdown"],
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
   "readme": "TYPEDOC.md",
   "excludePrivate": true,
   "excludeInternal": true,
@@ -64,7 +66,6 @@
       "VideoFrameOutput": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md",
       "ContentAddress": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md",
       "Millis": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md",
-      "CapLevel": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md",
       "CapSet": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md",
       "CapTier": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md",
       "Quantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md",

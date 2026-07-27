@@ -24,7 +24,7 @@ Defined in: web/dist/types.d.ts:257
 
 ### initialDelay
 
-> `readonly` **initialDelay**: `Millis`
+> `readonly` **initialDelay**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: web/dist/types.d.ts:255
 
@@ -40,6 +40,6 @@ Defined in: web/dist/types.d.ts:254
 
 ### maxDelay
 
-> `readonly` **maxDelay**: `Millis`
+> `readonly` **maxDelay**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: web/dist/types.d.ts:256

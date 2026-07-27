@@ -42,7 +42,7 @@ Defined in: [core/src/graph/document-graph.ts:50](https://github.com/freebattery
 
 ### components
 
-> `readonly` **components**: readonly `ContentAddress`[]
+> `readonly` **components**: readonly [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)[]
 
 Defined in: [core/src/graph/document-graph.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L67)
 
@@ -64,7 +64,7 @@ Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebattery
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 

@@ -6,7 +6,9 @@
 
 # Interface: CureReproducerInput
 
-Defined in: [command/src/checks/cure-packet.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L16)
+Defined in: [command/src/checks/cure-packet.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L18)
+
+Exact reproducer identity and invocation for one failure.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [command/src/checks/cure-packet.ts:16](https://github.com/freebatter
 
 > `readonly` `optional` **fixture?**: `string`
 
-Defined in: [command/src/checks/cure-packet.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L19)
+Defined in: [command/src/checks/cure-packet.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L21)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [command/src/checks/cure-packet.ts:19](https://github.com/freebatter
 
 > `readonly` **kind**: [`CureReproducerKind`](../type-aliases/CureReproducerKind.md)
 
-Defined in: [command/src/checks/cure-packet.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L17)
+Defined in: [command/src/checks/cure-packet.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L19)
 
 ***
 
@@ -30,7 +32,7 @@ Defined in: [command/src/checks/cure-packet.ts:17](https://github.com/freebatter
 
 > `readonly` `optional` **schedule?**: readonly `unknown`[]
 
-Defined in: [command/src/checks/cure-packet.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L20)
+Defined in: [command/src/checks/cure-packet.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L22)
 
 ***
 
@@ -38,4 +40,4 @@ Defined in: [command/src/checks/cure-packet.ts:20](https://github.com/freebatter
 
 > `readonly` `optional` **seed?**: `string`
 
-Defined in: [command/src/checks/cure-packet.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L18)
+Defined in: [command/src/checks/cure-packet.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L20)

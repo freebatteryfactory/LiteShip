@@ -6,7 +6,9 @@
 
 # Interface: BenchSubjectQualification
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L67)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L75)
+
+Reachability proof and issues for one benchmark distribution.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:67](https://github.com/freebat
 
 > `readonly` **issues**: readonly [`BenchSubjectIssue`](BenchSubjectIssue.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L68)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L76)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:68](https://github.com/freebat
 
 > `readonly` **qualifyingSutSubjects**: readonly [`BenchSubject`](BenchSubject.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L71)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L79)
 
 Reachable module/file/WASM SUTs qualify; baselines and intrinsics never do.
 
@@ -32,4 +34,4 @@ Reachable module/file/WASM SUTs qualify; baselines and intrinsics never do.
 
 > `readonly` **reachableSubjects**: readonly [`BenchSubject`](BenchSubject.md)[]
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L69)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L77)

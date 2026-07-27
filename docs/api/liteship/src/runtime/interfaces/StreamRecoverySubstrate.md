@@ -18,7 +18,7 @@ Host-supplied gap-replay substrate for one streamed artifact.
 
 ### cellStore
 
-> `readonly` **cellStore**: [`StateCellStoreShape`](../../reactive/interfaces/StateCellStoreShape.md)
+> `readonly` **cellStore**: [`StateCellStore`](../../reactive/interfaces/StateCellStore.md)
 
 Defined in: web/dist/stream/recovery-substrate.d.ts:28
 

@@ -6,7 +6,7 @@
 
 # Type Alias: CapsuleCommandInvocation
 
-> **CapsuleCommandInvocation** = `_CapsuleCommandInvocation`
+> **CapsuleCommandInvocation** = [`CapsuleCommandInvocation`](../../../spine/interfaces/CapsuleCommandInvocation.md)
 
 Defined in: core/dist/authoring/command.d.ts:18
 

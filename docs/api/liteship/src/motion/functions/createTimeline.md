@@ -31,7 +31,7 @@ between boundary states; pluggable clock via [Scheduler](../../reactive/variable
 
 #### duration?
 
-`Millis`
+[`Millis`](../../../../spine/type-aliases/Millis.md)
 
 #### loop?
 

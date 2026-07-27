@@ -6,7 +6,7 @@
 
 # Type Alias: OwnedAnimatedQuantizer\<B\>
 
-> **OwnedAnimatedQuantizer**\<`B`\> = [`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\> & [`AsyncOwnedResource`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md)
+> **OwnedAnimatedQuantizer**\<`B`\> = [`AnimatedQuantizer`](../interfaces/AnimatedQuantizer.md)\<`B`\> & [`AsyncOwnedResource`](../../../liteship/src/reactive/interfaces/AsyncOwnedResource.md)
 
 Defined in: [quantizer/src/animated-quantizer.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L67)
 

@@ -28,7 +28,7 @@ import type { ContentAddress, HLC, StateName } from '../schema/brands.js';
 import { Receipt, type ReceiptEnvelope } from '../evidence/receipt.js';
 import { TypedRef } from '../evidence/typed-ref.js';
 import { HLC as HLCOps } from '../clock/hlc.js';
-import type { StateAuthority, StateCell, StateCellStoreShape } from '../reactive/state-cell.js';
+import type { StateAuthority, StateCell, StateCellStore } from '../reactive/state-cell.js';
 
 const STATE_TRANSITION_DECODE_CODE = {
   notAnObject: 'core/state-transition/not_an_object',
@@ -136,7 +136,7 @@ export async function transitionReceipt(
 
 /**
  * Companion mint the authority host calls AFTER a synchronous
- * {@link StateCellStoreShape.applyDiscrete} — builds the transition VALUE from
+ * {@link StateCellStore.applyDiscrete} — builds the transition VALUE from
  * the crossing's `previous`/`next` cells plus the graph identity, then mints its
  * receipt via {@link transitionReceipt}. Kept separate so `applyDiscrete` stays
  * synchronous (no crypto in the hot path).
@@ -222,6 +222,6 @@ export function decodeDiscreteStateTransition(value: unknown): DiscreteStateTran
  * passed here — the wrong call does not compile. The store's generation-rollback
  * guard makes a stale/duplicate transition a byte-identical no-op (Law 15).
  */
-export function applyTransition(cellStore: StateCellStoreShape, transition: DiscreteStateTransition): StateCell {
+export function applyTransition(cellStore: StateCellStore, transition: DiscreteStateTransition): StateCell {
   return cellStore.hydrateDiscrete(transition.cell, transition.next, transition.generation, transition.authority);
 }

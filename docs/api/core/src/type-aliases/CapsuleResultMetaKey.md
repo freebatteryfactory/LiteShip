@@ -6,7 +6,7 @@
 
 # Type Alias: CapsuleResultMetaKey
 
-> **CapsuleResultMetaKey** = `_CapsuleResultMetaKey`
+> **CapsuleResultMetaKey** = [`CapsuleResultMetaKey`](../../../spine/type-aliases/CapsuleResultMetaKey.md)
 
 Defined in: [core/src/authoring/command.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L35)
 

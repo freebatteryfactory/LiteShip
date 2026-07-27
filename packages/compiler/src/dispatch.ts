@@ -21,6 +21,8 @@ import { ARIACompiler } from './aria.js';
 import { AIManifestCompiler } from './ai-manifest.js';
 import { MotionCompiler } from './motion.js';
 import type { MotionCompileInput, MotionCompileResult } from './motion.js';
+import { compileViewTransition } from './view-transition-compile.js';
+import type { ViewTransitionCompileInput, ViewTransitionCompileResult } from './view-transition-compile.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Compiler-specific state types
@@ -87,6 +89,7 @@ const ConfigTemplateCompiler = {
  * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
  * - `ConfigCompiler` — a `Config` → pretty-printed JSON template.
  * - `MotionCompiler`  — a `CssMotionPlan` → `@property` / `@keyframes` / transitions.
+ * - `ViewTransitionCompiler` — an explicit view-transition request → scoped progressive-enhancement CSS.
  */
 export type CompilerDef =
   | {
@@ -101,7 +104,8 @@ export type CompilerDef =
   | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary; readonly states: ARIAStates }
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
   | { readonly _tag: 'ConfigCompiler'; readonly config: Config }
-  | { readonly _tag: 'MotionCompiler'; readonly input: MotionCompileInput };
+  | { readonly _tag: 'MotionCompiler'; readonly input: MotionCompileInput }
+  | { readonly _tag: 'ViewTransitionCompiler'; readonly input: ViewTransitionCompileInput };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CompileResult — discriminated by target string
@@ -120,7 +124,8 @@ export type CompileResult =
   | { readonly target: 'aria'; readonly result: ARIACompileResult }
   | { readonly target: 'ai'; readonly result: AIManifestCompileResult }
   | { readonly target: 'config'; readonly result: ConfigTemplateResult }
-  | { readonly target: 'motion'; readonly result: MotionCompileResult };
+  | { readonly target: 'motion'; readonly result: MotionCompileResult }
+  | { readonly target: 'view-transition'; readonly result: ViewTransitionCompileResult };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dispatch
@@ -189,6 +194,8 @@ export function dispatch(def: CompilerDef): CompileResult {
       return { target: 'config', result: ConfigTemplateCompiler.compile(def.config) };
     case 'MotionCompiler':
       return { target: 'motion', result: MotionCompiler.compile(def.input) };
+    case 'ViewTransitionCompiler':
+      return { target: 'view-transition', result: compileViewTransition(def.input) };
     default:
       // Statement-level exhaustiveness guard (the twin of the type-level
       // narrowing above): every arm is handled, so `def` is `never` here and

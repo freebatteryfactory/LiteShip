@@ -25,13 +25,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./html-transform": {
       "types": "./dist/html-transform.d.ts",
-      "import": "./dist/html-transform.js",
-      "development": "./src/html-transform.ts"
+      "import": "./dist/html-transform.js"
     },
     "./virtual": {
       "types": "./virtual.d.ts"

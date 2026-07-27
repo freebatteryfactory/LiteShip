@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { Millis, CellKernel, StateName, defineBoundary } from '@liteship/core';
 import type { BoundaryCrossing, ReactiveQuantizer } from '@liteship/core';
 import { AnimatedQuantizer, defineQuantizer, createQuantizer } from '@liteship/quantizer';
-import type { AnimatedQuantizerShape, InterpolatedFrame } from '@liteship/quantizer';
+import type { InterpolatedFrame } from '@liteship/quantizer';
 
 function makeBoundary() {
   return defineBoundary({
@@ -56,7 +56,7 @@ type Frame = InterpolatedFrame<ReturnType<typeof makeBoundary>>;
 
 /** Collect the first `n` interpolated frames; `settled` resolves once `n` land. */
 function collectN(
-  animated: AnimatedQuantizerShape<ReturnType<typeof makeBoundary>>,
+  animated: AnimatedQuantizer<ReturnType<typeof makeBoundary>>,
   n: number,
 ): { frames: Frame[]; settled: Promise<Frame[]>; dispose: () => void } {
   const frames: Frame[] = [];
@@ -72,7 +72,7 @@ function collectN(
 }
 
 /** Collect interpolated frames until one lands (`progress >= 1`). */
-function collectUntilLanded(animated: AnimatedQuantizerShape<ReturnType<typeof makeBoundary>>): {
+function collectUntilLanded(animated: AnimatedQuantizer<ReturnType<typeof makeBoundary>>): {
   frames: Frame[];
   settled: Promise<Frame[]>;
   dispose: () => void;

@@ -6,7 +6,7 @@
 
 # Function: createTokenBuffer()
 
-> **createTokenBuffer**\<`T`\>(`config?`): `TokenBufferShape`\<`T`\>
+> **createTokenBuffer**\<`T`\>(`config?`): [`TokenBuffer`](../type-aliases/TokenBuffer.md)\<`T`\>
 
 Defined in: [core/src/media/token-buffer.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/media/token-buffer.ts#L73)
 
@@ -28,4 +28,4 @@ defaults (verb grammar, ADR-0046 — `create` allocates a runtime resource).
 
 ## Returns
 
-`TokenBufferShape`\<`T`\>
+[`TokenBuffer`](../type-aliases/TokenBuffer.md)\<`T`\>

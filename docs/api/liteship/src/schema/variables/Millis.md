@@ -6,7 +6,7 @@
 
 # Variable: Millis
 
-> **Millis**: (`value`) => `Millis`
+> **Millis**: (`value`) => [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: core/dist/schema/brands.d.ts:39
 
@@ -24,7 +24,7 @@ are allowed (sub-millisecond timing). Use `Millis(0)` for immediate.
 
 ## Returns
 
-`Millis`
+[`Millis`](../../../../spine/type-aliases/Millis.md)
 
 ## Throws
 

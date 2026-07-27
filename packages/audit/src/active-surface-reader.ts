@@ -14,62 +14,33 @@ import ts from 'typescript';
 import { resolve } from 'node:path';
 import type { ActiveSurfaceFacts, ActiveSurfaceEntry, ActiveSurfacePromotion } from '@liteship/gauntlet';
 import { createTypeDirectedProgram } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /** The oracle id every active-surface fact is tagged with (traceability). */
 export const ACTIVE_SURFACE_ORACLE_ID = 'ts-active-surface-reader';
 
 type SurfaceField = string;
 
-interface EnrolledSurface {
+/** One host-enrolled modeled surface and the files that must read it. */
+export interface EnrolledActiveSurface {
   readonly family: string;
   readonly switchCaseLabel: string;
   readonly readerFiles: readonly string[];
-  readonly dedicatedReaderFiles: ReadonlySet<string>;
+  readonly dedicatedReaderFiles: readonly string[];
+  /** Identifier used by dedicated readers for this family. */
+  readonly dedicatedReaderSubject: string;
 }
-
-/** Reader paths that MUST consume an active TransitionNode when present. */
-const TRANSITION_READER_FILES = [
-  'packages/astro/src/runtime/graph-lower.ts',
-  'packages/astro/src/runtime/graph-runtime.ts',
-  'packages/core/src/motion/interpret-transition.ts',
-] as const;
-
-/** Reader paths that MUST consume an active ExportNode when present. */
-const EXPORT_READER_FILES = [
-  'packages/stage/src/dual-export.ts',
-  'packages/astro/src/runtime/graph-runtime.ts',
-] as const;
-
-const ENROLLED_SURFACES: readonly EnrolledSurface[] = [
-  {
-    family: 'transition',
-    switchCaseLabel: 'transition',
-    readerFiles: TRANSITION_READER_FILES,
-    dedicatedReaderFiles: new Set(['packages/core/src/motion/interpret-transition.ts']),
-  },
-  {
-    family: 'export',
-    switchCaseLabel: 'export',
-    readerFiles: EXPORT_READER_FILES,
-    dedicatedReaderFiles: new Set(['packages/stage/src/dual-export.ts']),
-  },
-] as const;
 
 /** Injected inputs for {@link buildActiveSurfaceFacts}. */
 export interface ActiveSurfaceReaderOptions {
   /** Absolute repo root; every relative path resolves against it. */
   readonly repoRoot: string;
-  /**
-   * Load-bearing field names for the active `transition` surface — injected by the
-   * HOST from the real `@liteship/core` type (`keyof TransitionNode`), never derived
-   * inside audit (audit-leaf-purity / D9b).
-   */
-  readonly transitionRequiredFields: readonly string[];
-  /**
-   * Load-bearing field names for the active `export` surface — injected by the
-   * HOST from the real `@liteship/core` type (`keyof ExportNode`).
-   */
-  readonly exportRequiredFields?: readonly string[];
+  /** Host-owned surface enrollment; the engine names no project families or paths. */
+  readonly surfaces: readonly EnrolledActiveSurface[];
+  /** Load-bearing fields keyed by the enrolled surface family. */
+  readonly requiredFields: Readonly<Record<string, readonly string[]>>;
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * The live `--ir` path now injects `'blocking'` (#130 landed the `interpretTransition`
    * reader, so the TransitionNode surface has readers and the gate is green at blocking).
@@ -146,14 +117,13 @@ function readsInFile(
   relPath: string,
   absPath: string,
   program: ts.Program,
-  surface: EnrolledSurface,
+  surface: EnrolledActiveSurface,
   requiredFields: readonly string[],
 ): Set<SurfaceField> {
   const sf = program.getSourceFile(absPath);
   if (sf === undefined) return new Set();
-  if (surface.dedicatedReaderFiles.has(relPath)) {
-    const subject = surface.family === 'export' ? 'exportNode' : surface.family;
-    return familyReadsInDedicatedFile(sf, subject, requiredFields);
+  if (surface.dedicatedReaderFiles.includes(relPath)) {
+    return familyReadsInDedicatedFile(sf, surface.dedicatedReaderSubject, requiredFields);
   }
   return familyReadsInSourceFile(sf, surface.switchCaseLabel, requiredFields);
 }
@@ -186,18 +156,13 @@ function makeSurfaceEntry(
  */
 export function buildActiveSurfaceFacts(opts: ActiveSurfaceReaderOptions): ActiveSurfaceFacts {
   const promotion = opts.promotion ?? 'advisory';
-  const fieldObligations: Record<string, readonly string[]> = {
-    transition: [...opts.transitionRequiredFields],
-    ...(opts.exportRequiredFields ? { export: [...opts.exportRequiredFields] } : {}),
-  };
-
-  const allReaderFiles = ENROLLED_SURFACES.flatMap((s) => [...s.readerFiles]);
+  const allReaderFiles = opts.surfaces.flatMap((s) => [...s.readerFiles]);
   const readerAbs = allReaderFiles.map((f) => resolve(opts.repoRoot, f));
-  const program = createTypeDirectedProgram(readerAbs, opts.repoRoot);
+  const program = createTypeDirectedProgram(readerAbs, opts.repoRoot, opts.typeScriptPathAliases);
 
   const surfaces: ActiveSurfaceEntry[] = [];
-  for (const surface of ENROLLED_SURFACES) {
-    const requiredFields = fieldObligations[surface.family];
+  for (const surface of opts.surfaces) {
+    const requiredFields = opts.requiredFields[surface.family];
     if (!requiredFields) continue;
 
     const allReads = new Set<SurfaceField>();

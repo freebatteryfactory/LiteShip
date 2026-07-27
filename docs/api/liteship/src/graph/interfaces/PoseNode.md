@@ -53,7 +53,7 @@ Defined in: core/dist/graph/document-graph.d.ts:79
 
 ### entityRef
 
-> `readonly` **entityRef**: `ContentAddress`
+> `readonly` **entityRef**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:77
 
@@ -81,7 +81,7 @@ Defined in: core/dist/graph/document-graph.d.ts:47
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:49
 

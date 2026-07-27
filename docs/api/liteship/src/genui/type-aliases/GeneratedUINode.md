@@ -6,6 +6,8 @@
 
 # Type Alias: GeneratedUINode
 
-> **GeneratedUINode** = [`_GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+> **GeneratedUINode** = [`GeneratedUINode`](../../../../spine/interfaces/GeneratedUINode.md)
 
-Defined in: genui/dist/types.d.ts:7
+Defined in: genui/dist/types.d.ts:8
+
+Untrusted generated UI node accepted only after catalog validation.

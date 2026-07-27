@@ -205,5 +205,4 @@ export const CanonicalCbor = { encode } as const;
 
 export declare namespace CanonicalCbor {
   /** Output type — raw CBOR bytes per RFC 8949 §4.2.1. */
-  export type Encoded = Uint8Array;
 }

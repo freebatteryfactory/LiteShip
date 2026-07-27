@@ -8,4 +8,6 @@
 
 > **AuditSeverity** = `"error"` \| `"warning"` \| `"info"`
 
-Defined in: [audit/src/types.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L27)
+Defined in: [audit/src/types.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L28)
+
+Severity emitted by an audit finding.

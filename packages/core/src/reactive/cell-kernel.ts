@@ -123,7 +123,7 @@ export interface CellSink<T> {
 export type CellSubscriber<T> = CellSink<T> | ((value: T) => void);
 
 /** Live replay-1 kernel: a current-value slot with synchronous replay-on-subscribe. */
-export interface CellReplayShape<T> {
+export interface CellReplay<T> {
   readonly _tag: 'CellReplay';
   /** The current value — the initial value until the first publish. Readable after close. */
   read(): T;
@@ -140,7 +140,7 @@ export interface CellReplayShape<T> {
 }
 
 /** Live no-replay fan-out kernel: fire-and-forget publish, no current-value slot. */
-export interface CellFanoutShape<T> {
+export interface CellFanout<T> {
   readonly _tag: 'CellFanout';
   /** Fan `value` out to every current subscriber. Late subscribers miss it. Inert after close. */
   publish(value: T): void;
@@ -314,7 +314,7 @@ function replay1<T>(
   initial: T,
   policy: EmissionPolicy<T> = EMIT_ALL,
   reentrancy: ReentrancyPolicy = 'synchronous',
-): CellReplayShape<T> {
+): CellReplay<T> {
   const core = createCore<T>();
   let current = initial;
   // The last value actually FANNED OUT — what a subscriber attaching NOW replays.
@@ -422,7 +422,7 @@ function replay1<T>(
   };
 }
 
-function fanout<T>(policy: EmissionPolicy<T> = EMIT_ALL): CellFanoutShape<T> {
+function fanout<T>(policy: EmissionPolicy<T> = EMIT_ALL): CellFanout<T> {
   const core = createCore<T>();
   // {distinct} state — never allocated on the {all} default (zap/blend/crossings).
   let lastEmitted: { readonly value: T } | undefined;
@@ -479,10 +479,10 @@ export const CellKernel = {
 } as const;
 
 export declare namespace CellKernel {
-  /** Live replay-1 kernel — see {@link CellReplayShape}. */
-  export type Replay<T> = CellReplayShape<T>;
-  /** Live no-replay fan-out kernel — see {@link CellFanoutShape}. */
-  export type Fanout<T> = CellFanoutShape<T>;
+  /** Live replay-1 kernel — see {@link CellReplay}. */
+  export type Replay<T> = CellReplay<T>;
+  /** Live no-replay fan-out kernel — see {@link CellFanout}. */
+  export type Fanout<T> = CellFanout<T>;
   /** A subscription sink — see {@link CellSink}. */
   export type Sink<T> = CellSink<T>;
   /** What `subscribe` accepts — see {@link CellSubscriber}. */

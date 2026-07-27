@@ -8,7 +8,7 @@
 
 > **createCommandRegistry**(`commands`): [`CommandRegistry`](../interfaces/CommandRegistry.md)
 
-Defined in: [command/src/registry.ts:656](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L656)
+Defined in: [command/src/registry.ts:649](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L649)
 
 Allocate an immutable name-indexed command registry.
 

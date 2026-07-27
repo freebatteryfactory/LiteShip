@@ -8,4 +8,4 @@
 
 > `const` **FACADE\_LIFECYCLE\_CONTRACT**: readonly [`FacadeLifecycleOperationContract`](../interfaces/FacadeLifecycleOperationContract.md)[]
 
-Defined in: [liteship/src/export-budget.ts:507](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L507)
+Defined in: [liteship/src/export-budget.ts:925](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L925)

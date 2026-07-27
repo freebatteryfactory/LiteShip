@@ -44,7 +44,7 @@ Defined in: [core/src/graph/document-graph.ts:50](https://github.com/freebattery
 
 ### artifactDigest
 
-> `readonly` **artifactDigest**: `AddressedDigest`
+> `readonly` **artifactDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [core/src/graph/document-graph.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L144)
 
@@ -72,7 +72,7 @@ Defined in: [core/src/graph/document-graph.ts:51](https://github.com/freebattery
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L53)
 
@@ -110,6 +110,6 @@ sha256 receipt-chain head (the receipt byte law / `TypedRef`), distinct from `id
 
 ### sourceRefs
 
-> `readonly` **sourceRefs**: readonly `ContentAddress`[]
+> `readonly` **sourceRefs**: readonly [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)[]
 
 Defined in: [core/src/graph/document-graph.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L143)

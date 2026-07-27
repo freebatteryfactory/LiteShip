@@ -26,6 +26,7 @@ import {
   LITESHIP_SPINE_ADMISSIONS,
   LITESHIP_SPINE_EXACT_RELATION_CATALOG,
 } from '../../../packages/cli/src/lib/spine-relation-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/lib/liteship-typescript-aliases.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '../../../..');
@@ -36,6 +37,10 @@ const REAL_CORE = readFileSync(CORE_DTS, 'utf8');
 
 // The source-owned admission table is already `SpineTypeAdmission[]` — no remap needed.
 const ADMISSIONS: readonly SpineTypeAdmission[] = LITESHIP_SPINE_ADMISSIONS;
+const SPINE_OPTIONS = Object.freeze({
+  spinePackageSpecifier: '@liteship/_spine',
+  typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+});
 
 /** Fold facts through the real gate (a minimal context carrying only the facts). */
 function gateFindings(facts: SpineRelationFacts): readonly Finding[] {
@@ -46,7 +51,13 @@ function gateFindings(facts: SpineRelationFacts): readonly Finding[] {
 function driftedFacts(mutate: (core: string) => string): { facts: SpineRelationFacts; drifted: string } {
   const drifted = mutate(REAL_CORE);
   expect(drifted, 'the drift edit must actually change core.d.ts').not.toBe(REAL_CORE);
-  return { facts: buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, { overlay: { [CORE_DTS]: drifted } }), drifted };
+  return {
+    facts: buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, {
+      ...SPINE_OPTIONS,
+      overlay: { [CORE_DTS]: drifted },
+    }),
+    drifted,
+  };
 }
 
 /** Build facts with any one spine declaration file drifted in-memory. */
@@ -54,7 +65,10 @@ function driftedFileFacts(file: string, mutate: (source: string) => string): Spi
   const real = readFileSync(file, 'utf8');
   const drifted = mutate(real);
   expect(drifted, `the drift edit must actually change ${file}`).not.toBe(real);
-  return buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, { overlay: { [file]: drifted } });
+  return buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, {
+    ...SPINE_OPTIONS,
+    overlay: { [file]: drifted },
+  });
 }
 
 describe('spine-relation exact census — generated from one public-owner catalog', () => {
@@ -81,7 +95,7 @@ describe('spine-relation gate — GREEN on the reconciled spine (no drift, no ga
     'every admitted mirror resolves and conforms — the gate emits zero findings',
     { timeout: scaledTimeout(60_000) },
     () => {
-      const facts = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT);
+      const facts = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, SPINE_OPTIONS);
       expect(facts.observations).toHaveLength(ADMISSIONS.length);
       // No authority gap: EVERY admitted pin resolves (a dangling mirror would red).
       const unresolved = facts.observations.filter((o) => !o.resolved);
@@ -94,8 +108,8 @@ describe('spine-relation gate — GREEN on the reconciled spine (no drift, no ga
   );
 
   it('is byte-deterministic (build twice → identical facts)', { timeout: scaledTimeout(60_000) }, () => {
-    const a = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT);
-    const b = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT);
+    const a = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, SPINE_OPTIONS);
+    const b = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, SPINE_OPTIONS);
     expect(a).toEqual(b);
   });
 });
@@ -234,7 +248,7 @@ describe('spine-relation exact census — planted declaration mutations', () => 
   });
 
   it('reds when an admitted directional relation is reversed', { timeout: scaledTimeout(60_000) }, () => {
-    const facts = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT);
+    const facts = buildSpineRelationFacts(ADMISSIONS, REPO_ROOT, SPINE_OPTIONS);
     const reversed: SpineRelationFacts = {
       observations: facts.observations.map((observation) =>
         observation.typeName === 'Signal.audio'

@@ -8,7 +8,7 @@
 
 > **dispatch**(`def`): [`CompileResult`](../type-aliases/CompileResult.md)
 
-Defined in: compiler/dist/dispatch.d.ts:147
+Defined in: compiler/dist/dispatch.d.ts:155
 
 Dispatch a [CompilerDef](../type-aliases/CompilerDef.md) to the matching compiler and return a
 tagged [CompileResult](../type-aliases/CompileResult.md).

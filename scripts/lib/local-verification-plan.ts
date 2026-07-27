@@ -60,7 +60,7 @@ const DOCS_STEP: LocalVerificationStep = Object.freeze({
 const DOCS_INPUT_PATTERNS: readonly RegExp[] = Object.freeze([
   /^packages\/[^/]+\/src\/.*\.ts$/u,
   /^packages\/_spine\/.*\.d\.ts$/u,
-  /^packages\/_spine\/typedoc-entry\.ts$/u,
+  /^scripts\/(?:gen-spine-surface|lib\/spine-surface-contract)\.ts$/u,
   /^typedoc\.json$/u,
   /^docs\/api(?:\/|$)/u,
 ]);

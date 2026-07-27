@@ -11,7 +11,6 @@ import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
 import { normalizeRepoPath } from './policy.js';
 import { discoverInstalledPackageRoots } from './consumer.js';
-import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import {
   lineAndColumn,
@@ -30,6 +29,7 @@ import type {
   TopologyCoverageEntry,
 } from './types.js';
 
+/** Aggregate repository-structure evidence and coverage classification. */
 export interface StructureSummary {
   readonly packageCount: number;
   readonly sourceFileCount: number;
@@ -72,10 +72,12 @@ export interface ResolvedImport {
   readonly kind: 'relative' | 'internal-package' | 'external';
 }
 
+/** One concrete file selected by a package export-map entry. */
 export interface PackageExportTarget {
   readonly [subpath: string]: string;
 }
 
+/** Test whether a TypeScript node carries one modifier kind. */
 export function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
   return ts.canHaveModifiers(node)
     ? (ts.getModifiers(node)?.some((modifier) => modifier.kind === kind) ?? false)
@@ -97,26 +99,37 @@ function candidatePaths(basePath: string): readonly string[] {
 function resolveRelativeImport(specifier: string, containingFile: string): string | null {
   const basePath = resolve(dirname(containingFile), specifier);
   for (const candidate of candidatePaths(basePath)) {
-    const tsCandidate =
-      candidate.endsWith('.js') && existsSync(candidate.replace(/\.js$/, '.ts'))
-        ? candidate.replace(/\.js$/, '.ts')
-        : candidate.endsWith('.jsx') && existsSync(candidate.replace(/\.jsx$/, '.tsx'))
-          ? candidate.replace(/\.jsx$/, '.tsx')
-          : candidate;
-    if (existsSync(tsCandidate)) {
-      return normalizeRepoPath(tsCandidate);
+    const sourceCandidates = candidate.endsWith('.js')
+      ? [candidate.replace(/\.js$/, '.ts'), candidate.replace(/\.js$/, '.d.ts'), candidate]
+      : candidate.endsWith('.jsx')
+        ? [candidate.replace(/\.jsx$/, '.tsx'), candidate.replace(/\.jsx$/, '.d.ts'), candidate]
+        : [candidate];
+    for (const sourceCandidate of sourceCandidates) {
+      if (existsSync(sourceCandidate)) {
+        return normalizeRepoPath(sourceCandidate);
+      }
     }
   }
   return null;
 }
 
+/** Resolve package export maps into concrete consumer-visible target files. */
 export function buildPackageExportTargets(
   packageInfos: readonly PackageManifestInfo[],
+  profile?: Pick<DevopsProfile, 'repoRoot' | 'sourceEntrypoints' | 'packageRoots'>,
 ): Map<string, PackageExportTarget> {
   const targets = new Map<string, PackageExportTarget>();
 
   for (const pkg of packageInfos) {
     const packageTargets: Record<string, string> = {};
+    const injectedSources = profile?.packageRoots === undefined ? profile?.sourceEntrypoints?.[pkg.name] : undefined;
+    if (profile !== undefined && injectedSources !== undefined) {
+      for (const [subpath, source] of Object.entries(injectedSources)) {
+        packageTargets[subpath] = normalizeRepoPath(resolve(profile.repoRoot, source));
+      }
+      targets.set(pkg.name, packageTargets);
+      continue;
+    }
     const entries = Object.entries(pkg.exports);
 
     for (const [subpath, rawValue] of entries) {
@@ -210,6 +223,7 @@ function resolveInternalPackageImport(
   };
 }
 
+/** Resolve one source import through the injected alias and package policy. */
 export function resolveImport(
   specifier: string,
   containingFile: string,
@@ -228,6 +242,7 @@ export function resolveImport(
   return resolveInternalPackageImport(specifier, packageExportTargets, internalPrefix);
 }
 
+/** Enumerate the names introduced by one export-bearing syntax node. */
 export function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: number }[] {
   if (
     ts.isFunctionDeclaration(node) ||
@@ -269,16 +284,15 @@ export function exportedNamesFromNode(node: ts.Node): readonly { name: string; p
   return [];
 }
 
-export function runStructureAudit(
-  profile: DevopsProfile = liteshipDevopsProfile,
-): AuditSectionResult<StructureSummary> {
+/** Execute the repository-structure pass under one fully injected profile. */
+export function runStructureAudit(profile: DevopsProfile): AuditSectionResult<StructureSummary> {
   // CUT D9a: `profile.repoRoot` is the single, authoritative audit target — no
   // parallel `root` param that could silently shadow it. Callers that want a
   // different tree derive a profile with `withRepoRoot(profile, root)`.
   const root = profile.repoRoot;
   const packageInfos = listProfilePackageManifests(profile);
   const packageByName = new Map(packageInfos.map((pkg) => [pkg.name, pkg] as const));
-  const packageExportTargets = buildPackageExportTargets(packageInfos);
+  const packageExportTargets = buildPackageExportTargets(packageInfos, profile);
 
   // Consumer-mode installed-check (memoized): is an internal package that wasn't
   // in the discovery seed nonetheless actually present in the consumer's
@@ -312,6 +326,11 @@ export function runStructureAudit(
           relativeToRoot(resolveAstroPackageFile(root, astroPackageInfo.dir, file), root),
         )
       : (profile.surfacePolicy.astroRuntimeFiles ?? [])),
+    ...(profile.packageRoots === undefined
+      ? Object.values(profile.sourceEntrypoints ?? {}).flatMap((entries) =>
+          Object.values(entries).map((entry) => relativeToRoot(resolve(root, entry), root)),
+        )
+      : []),
     ...packageInfos.flatMap((pkg) =>
       Object.values(pkg.exports)
         .map((value) => {
@@ -412,12 +431,14 @@ export function runStructureAudit(
             rule: 'unresolved-internal-import',
             severity: 'error',
             title: 'Unresolved relative import',
-            // The candidate set mirrors candidatePaths + the .js→.ts source mapping above.
+            // The candidate set mirrors candidatePaths plus the declaration-aware
+            // .js→(.ts|.d.ts) and .jsx→(.tsx|.d.ts) source mappings above.
             summary:
               `Could not resolve relative import "${specifier}" — tried it verbatim, with ` +
-              `.ts/.tsx/.js/.jsx extensions, as index.ts/index.tsx, and via the .js→.ts (.jsx→.tsx) ` +
-              `source mapping. The file is missing or the specifier is misspelled; a .js specifier ` +
-              `needs a matching .ts source next to the importer.`,
+              `.ts/.tsx/.js/.jsx extensions, as index.ts/index.tsx, and via the ` +
+              `.js→(.ts|.d.ts) (.jsx→(.tsx|.d.ts)) source mapping. The file is missing or ` +
+              `the specifier is misspelled; a JavaScript specifier needs a matching source or ` +
+              `declaration owner next to the importer.`,
             location: {
               file: record.relativePath,
               line,

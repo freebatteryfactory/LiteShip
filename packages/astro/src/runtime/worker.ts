@@ -13,6 +13,7 @@ import {
   type WgslUniformValue,
 } from './boundary.js';
 import { bootDirectiveEntry } from './directive-bound.js';
+import { disposeOwnedResourceFromEvent } from './owned-disposal.js';
 
 type WorkerDirectiveCompositor = Pick<
   WorkerHost['compositor'],
@@ -172,7 +173,9 @@ export function initWorkerDirectiveWithDependencies(
     }
     workerMessageHandler = null;
     workerRef = null;
-    host?.dispose();
+    if (host) {
+      disposeOwnedResourceFromEvent(host, 'worker');
+    }
     host = null;
   };
 

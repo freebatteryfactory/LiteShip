@@ -25,7 +25,7 @@ Defined in: [core/src/authoring/ai-cast.ts:69](https://github.com/freebatteryfac
 
 ### base
 
-> `readonly` **base**: `ContentAddress`
+> `readonly` **base**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/ai-cast.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ai-cast.ts#L71)
 

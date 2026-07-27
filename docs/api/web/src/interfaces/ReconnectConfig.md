@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:294](https://github.com/freebatteryfactory/LiteShi
 
 ### initialDelay
 
-> `readonly` **initialDelay**: `Millis`
+> `readonly` **initialDelay**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [web/src/types.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L292)
 
@@ -40,6 +40,6 @@ Defined in: [web/src/types.ts:291](https://github.com/freebatteryfactory/LiteShi
 
 ### maxDelay
 
-> `readonly` **maxDelay**: `Millis`
+> `readonly` **maxDelay**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [web/src/types.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L293)

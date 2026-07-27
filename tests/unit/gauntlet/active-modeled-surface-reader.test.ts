@@ -11,9 +11,10 @@ import {
 } from '@liteship/gauntlet';
 import { buildActiveSurfaceFacts } from '@liteship/audit';
 import {
-  LITESHIP_EXPORT_REQUIRED_FIELDS,
-  LITESHIP_TRANSITION_REQUIRED_FIELDS,
+  LITESHIP_ACTIVE_SURFACES,
+  LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
 } from '../../../packages/cli/src/lib/active-surface-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from '../../../packages/cli/src/lib/liteship-typescript-aliases.js';
 import { resolve } from 'node:path';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
@@ -47,8 +48,9 @@ describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', ()
     const facts = buildActiveSurfaceFacts({
       repoRoot: REPO_ROOT,
       promotion: 'blocking',
-      transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
-      exportRequiredFields: LITESHIP_EXPORT_REQUIRED_FIELDS,
+      surfaces: LITESHIP_ACTIVE_SURFACES,
+      requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
+      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     });
     const transition = facts.surfaces.find((s) => s.family === 'transition');
     expect(transition).toBeDefined();
@@ -64,8 +66,9 @@ describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', ()
     const facts = buildActiveSurfaceFacts({
       repoRoot: REPO_ROOT,
       promotion: 'blocking',
-      transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
-      exportRequiredFields: LITESHIP_EXPORT_REQUIRED_FIELDS,
+      surfaces: LITESHIP_ACTIVE_SURFACES,
+      requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
+      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     });
     const exportSurface = facts.surfaces.find((s) => s.family === 'export');
     expect(exportSurface).toBeDefined();
@@ -78,7 +81,11 @@ describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', ()
     const facts = buildActiveSurfaceFacts({
       repoRoot: REPO_ROOT,
       promotion: 'blocking',
-      transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+      surfaces: LITESHIP_ACTIVE_SURFACES.filter((surface) => surface.family === 'transition'),
+      requiredFields: {
+        transition: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS.transition,
+      },
+      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     });
     const ctx = { repoRoot: REPO_ROOT, readFile: () => undefined, files: () => [], activeSurfaceFacts: facts };
     const findings = activeModeledSurfaceReaderGate.run(ctx);

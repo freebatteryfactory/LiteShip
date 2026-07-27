@@ -8,7 +8,7 @@
 
 > **parseQualifiedBenchDistribution**(`value`): [`QualifiedBenchDistribution`](../interfaces/QualifiedBenchDistribution.md) \| `null`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L150)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L159)
 
 Parse one schema-v2 distribution without silently dropping malformed fields.
 

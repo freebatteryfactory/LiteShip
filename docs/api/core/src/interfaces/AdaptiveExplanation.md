@@ -23,7 +23,7 @@ Defined in: [core/src/authoring/adaptive.ts:173](https://github.com/freebatteryf
 
 #### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 The boundary's content address (`adaptive.boundary.id`).
 
@@ -43,7 +43,7 @@ The resolved state at `value` (via `Boundary.evaluateResult`).
 
 ### contentAddress
 
-> `readonly` **contentAddress**: `ContentAddress`
+> `readonly` **contentAddress**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/adaptive.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L196)
 
@@ -89,7 +89,7 @@ The quantizer's distinct MotionTier gate, when this Adaptive owns a quantizer.
 
 #### tier
 
-> `readonly` **tier**: `MotionTier` \| `null`
+> `readonly` **tier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md) \| `null`
 
 ***
 

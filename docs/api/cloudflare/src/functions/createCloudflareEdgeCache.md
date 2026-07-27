@@ -6,9 +6,9 @@
 
 # Function: createCloudflareEdgeCache()
 
-> **createCloudflareEdgeCache**(`envSource`, `options`): [`KVNamespace`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md)
+> **createCloudflareEdgeCache**(`envSource`, `options`, `requestContext?`): [`KVNamespace`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md)
 
-Defined in: [cloudflare/src/edge-cache.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L111)
+Defined in: [cloudflare/src/edge-cache.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L116)
 
 Create a lazy [KVNamespace](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md) adapter backed by a Workers env binding.
 
@@ -24,6 +24,10 @@ workerd is respected when the caller passes a fresh getter.
 ### options
 
 [`CloudflareEdgeCacheOptions`](../interfaces/CloudflareEdgeCacheOptions.md)
+
+### requestContext?
+
+[`CloudflareExecutionContext`](../interfaces/CloudflareExecutionContext.md)
 
 ## Returns
 

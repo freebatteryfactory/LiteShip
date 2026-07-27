@@ -38,7 +38,7 @@ Defined in: compiler/dist/scroll-timeline-compile.d.ts:11
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: compiler/dist/scroll-timeline-compile.d.ts:13
 
@@ -46,7 +46,7 @@ Defined in: compiler/dist/scroll-timeline-compile.d.ts:13
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: compiler/dist/scroll-timeline-compile.d.ts:15
 

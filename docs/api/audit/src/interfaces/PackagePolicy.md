@@ -6,7 +6,9 @@
 
 # Interface: PackagePolicy
 
-Defined in: [audit/src/policy.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L41)
+Defined in: [audit/src/policy.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L38)
+
+Injected import and surface policy for one package.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [audit/src/policy.ts:41](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **allowedInternalImports**: readonly `string`[]
 
-Defined in: [audit/src/policy.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L42)
+Defined in: [audit/src/policy.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L39)
 
 ***
 
@@ -22,16 +24,14 @@ Defined in: [audit/src/policy.ts:42](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **analyzableArtifacts?**: readonly `string`[]
 
-Defined in: [audit/src/policy.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L49)
+Defined in: [audit/src/policy.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L42)
 
-Package-relative source/declaration globs that constitute an analyzed
-package. Omission retains the reusable engine's standard TS/TSX default;
-LiteShip's generated catalog projection always emits this field exactly.
+Package-relative source/declaration globs constituting analyzed source.
 
 ***
 
 ### kind
 
-> `readonly` **kind**: `"standalone"` \| `"core"` \| `"layered"` \| `"host-adjacent"`
+> `readonly` **kind**: `"core"` \| `"layered"` \| `"host-adjacent"` \| `"standalone"`
 
-Defined in: [audit/src/policy.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L43)
+Defined in: [audit/src/policy.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L40)

@@ -10,7 +10,8 @@ describe('local verification plan', () => {
   test.each([
     'packages/core/src/index.ts',
     'packages/_spine/core.d.ts',
-    'packages/_spine/typedoc-entry.ts',
+    'scripts/gen-spine-surface.ts',
+    'scripts/lib/spine-surface-contract.ts',
     'typedoc.json',
     'docs/api/index.md',
     'packages\\core\\src\\index.ts',

@@ -47,7 +47,11 @@ import {
   type Finding,
 } from '@liteship/gauntlet';
 import { noConsoleLogGate } from '../../fixtures/gauntlet-downstream/no-console-log.gate.js';
-import { DOWNSTREAM_GATES, runDownstreamGauntlet } from '../../fixtures/gauntlet-downstream/run.js';
+import {
+  DOWNSTREAM_CHECK_GOVERNANCE,
+  DOWNSTREAM_GATES,
+  runDownstreamGauntlet,
+} from '../../fixtures/gauntlet-downstream/run.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // The downstream fixture project root (tests/fixtures/gauntlet-downstream).
@@ -101,6 +105,7 @@ describe('extensibility proof — a downstream project extends @liteship/gauntle
     const result = runGauntletOnRepo(DOWNSTREAM_GATES, {
       repoRoot: FIXTURE_ROOT,
       globs: ['red/**/*.ts'],
+      checkGovernance: DOWNSTREAM_CHECK_GOVERNANCE,
     });
 
     expect(result.blocked, 'the composed run over the red tree must block').toBe(true);
@@ -125,6 +130,7 @@ describe('extensibility proof — a downstream project extends @liteship/gauntle
     const result = runGauntletOnRepo(DOWNSTREAM_GATES, {
       repoRoot: FIXTURE_ROOT,
       globs: ['red/**/*.ts'],
+      checkGovernance: DOWNSTREAM_CHECK_GOVERNANCE,
     });
     const bite = result.findings.find((f) => f.ruleId === noConsoleLogGate.id);
     expect(bite).toBeDefined();

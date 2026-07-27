@@ -67,7 +67,7 @@ describe('createDOMLLMSessionHost genui integration', () => {
     expect(target.dataset.liteshipGenuiRenderHash).toBeTruthy();
   });
 
-  it('streams slots through session ingest and refuses a forbidden slotted child', () => {
+  it('streams slots through session ingest and refuses a forbidden slotted child', async () => {
     const element = document.createElement('section');
     const target = document.createElement('div');
     element.appendChild(target);
@@ -95,6 +95,6 @@ describe('createDOMLLMSessionHost genui integration', () => {
     });
     expect(session.ingest({ type: 'text', partial: false, content: refused })).toBe('continue');
     expect(target.querySelectorAll('section')).toHaveLength(0);
-    session.dispose();
+    await session.dispose();
   });
 });

@@ -15,8 +15,8 @@
  * arrow points one way), nor read the filesystem. A HOST (the `tests/unit/devops`
  * meta-test, or a future CLI host) folds `CHECK_REGISTRY` / `SCRIPT_EXEMPTIONS` /
  * `package.json` into the injected {@link CheckGovernanceFacts.partition}; this gate
- * only decides. Earns blocking authority via red/green/mutation fixtures; when the
- * facts are ABSENT (the lean production path) it folds an empty verdict.
+ * only decides. Earns blocking authority via red/green/mutation fixtures. Selecting
+ * it without the required facts invalidates the execution plan before this fold.
  *
  * @module
  */

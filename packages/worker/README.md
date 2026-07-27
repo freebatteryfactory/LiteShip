@@ -44,7 +44,7 @@ compositor.evaluate('layout', window.innerWidth);
 compositor.requestCompute();
 ```
 
-Logs `compact` (below 768px) or `wide` — selected inside the worker, delivered back as a state snapshot. Call `compositor.dispose()` when finished.
+Logs `compact` (below 768px) or `wide` — selected inside the worker, delivered back as a state snapshot. Call `await compositor.dispose()` when finished.
 
 ## Where it sits
 

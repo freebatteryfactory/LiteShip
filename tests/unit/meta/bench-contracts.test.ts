@@ -25,6 +25,7 @@ import {
   complexityRank,
   extractRegisteredBenches,
   fitComplexityClass,
+  lowerEnvelopeCoefficientOfVariation,
   readComplexityMap,
   readDistributionRegistry,
   type ComplexitySample,
@@ -35,7 +36,11 @@ import {
   benchScriptTargets,
   distributionFilesWithoutExecutionPath,
 } from '../../../scripts/bench/contract-coverage.ts';
-import { ACCEPTED_COMPLEXITY_CEILINGS } from '../../../packages/gauntlet/src/gates/performance-contracts.ts';
+import {
+  ACCEPTED_COMPLEXITY_CEILINGS,
+  COMPLEXITY_ADMISSION_POLICY,
+  complexityAdmissionReasons,
+} from '../../../packages/gauntlet/src/gates/performance-contracts.ts';
 import { verifyMeasuredComplexityMap } from '../../../scripts/bench-contracts.ts';
 import { commentsBlanked } from '../../../packages/gauntlet/src/gates/code-only.ts';
 import { qualifyBenchDistribution } from '../../../packages/audit/src/benchmark-subject-facts.ts';
@@ -131,21 +136,45 @@ describe('classifySlope — wide bands keep the verdict load-robust', () => {
   });
 });
 
+describe('lower-envelope variance — uncertainty matches the best-of-k estimator', () => {
+  it('ignores unrelated additive stalls but retains instability in the attainable floor', () => {
+    expect(lowerEnvelopeCoefficientOfVariation([100, 101, 99, 102, 10_000, 20_000, 30_000])).toBeLessThan(0.02);
+    expect(lowerEnvelopeCoefficientOfVariation([100, 140, 190, 260, 10_000, 20_000, 30_000])).toBeGreaterThan(0.25);
+  });
+
+  it('PROPERTY: coefficient of variation is invariant under positive machine-speed scaling', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.double({ min: 1, max: 1_000_000, noNaN: true }), { minLength: 2, maxLength: 20 }),
+        fc.double({ min: 0.01, max: 100, noNaN: true }),
+        (samples, scale) => {
+          const baseline = lowerEnvelopeCoefficientOfVariation(samples);
+          const scaled = lowerEnvelopeCoefficientOfVariation(samples.map((sample) => sample * scale));
+          return Math.abs(baseline - scaled) <= 1e-10;
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+});
+
 describe('live complexity producer self-proof', () => {
   const entry = (path: string, klass: (typeof COMPLEXITY_CLASSES)[number], fittedR2 = 0.99) => ({
     path,
     describe: path,
     shape: 'fixture',
-    sizes: [8, 16],
+    sizes: [8, 16, 32, 64, 128],
     class: klass,
     fittedSlope: klass === 'O(n^2)' ? 2 : 1,
     fittedR2,
+    coefficientOfVariation: 0.03,
+    measurement: { innerIterations: 10, replicates: 7, warmupIterations: 2 },
   });
 
   it('accepts complete, trustworthy measurements at their ceilings', () => {
     expect(
       verifyMeasuredComplexityMap({
-        schemaVersion: 1,
+        schemaVersion: 2,
         entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, klass]) => entry(path, klass)),
       }),
     ).toEqual([]);
@@ -154,12 +183,56 @@ describe('live complexity producer self-proof', () => {
   it('reds on missing, noisy, and complexity-regressed live evidence', () => {
     const paths = Object.keys(ACCEPTED_COMPLEXITY_CEILINGS);
     const reasons = verifyMeasuredComplexityMap({
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: [entry(paths[0]!, 'O(n^2)', 0.1)],
     }).map((issue) => issue.reason);
     expect(reasons.filter((reason) => reason === 'class-regression')).toHaveLength(1);
-    expect(reasons.filter((reason) => reason === 'noisy-fit')).toHaveLength(1);
+    expect(reasons.filter((reason) => reason === 'low-r2')).toHaveLength(1);
     expect(reasons.filter((reason) => reason === 'missing')).toHaveLength(paths.length - 1);
+  });
+
+  it('reds each independent claim-bearing admission defect', () => {
+    const path = Object.keys(ACCEPTED_COMPLEXITY_CEILINGS)[0]!;
+    const baseline = entry(path, 'O(n)');
+    const cases = [
+      [{ ...baseline, sizes: [8, 16, 32, 64] }, 'insufficient-size-sweep'],
+      [{ ...baseline, sizes: [8, 16, 24, 48, 96] }, 'invalid-size-sweep'],
+      [{ ...baseline, measurement: { ...baseline.measurement, replicates: 6 } }, 'under-replicated'],
+      [{ ...baseline, fittedR2: 0.8999 }, 'low-r2'],
+      [{ ...baseline, coefficientOfVariation: 0.2501 }, 'unstable-variance'],
+    ] as const;
+
+    for (const [candidate, expected] of cases) {
+      const issues = verifyMeasuredComplexityMap({ schemaVersion: 2, entries: [candidate] });
+      expect(
+        issues.map((issue) => issue.reason),
+        expected,
+      ).toContain(expected);
+    }
+  });
+
+  it('PROPERTY: admission is monotone when evidence is strengthened', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: COMPLEXITY_ADMISSION_POLICY.minimumSizes, max: 9 }),
+        fc.integer({ min: COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize, max: 20 }),
+        fc.double({ min: COMPLEXITY_ADMISSION_POLICY.minimumR2, max: 1, noNaN: true }),
+        fc.double({ min: 0, max: COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation, noNaN: true }),
+        (sizeCount, replicates, fittedR2, coefficientOfVariation) => {
+          const sizes = Array.from({ length: sizeCount }, (_, index) => 8 * 2 ** index);
+          return (
+            complexityAdmissionReasons({ sizes, replicates, fittedR2, coefficientOfVariation }).length === 0 &&
+            complexityAdmissionReasons({
+              sizes: [...sizes, sizes.at(-1)! * 2],
+              replicates: replicates + 1,
+              fittedR2: Math.min(1, fittedR2 + 0.01),
+              coefficientOfVariation: Math.max(0, coefficientOfVariation - 0.01),
+            }).length === 0
+          );
+        },
+      ),
+      { numRuns: 200 },
+    );
   });
 });
 
@@ -319,10 +392,7 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
 
   it('Stage render and Remotion frame projection have declared, SUT-reachable throughput contracts', () => {
     const registry = readDistributionRegistry(repoRoot)!;
-    const names = [
-      'Stage exportVideo -- 32 components x 4 frames',
-      'Remotion cssVarsFromState -- 1024 frame outputs',
-    ];
+    const names = ['Stage exportVideo -- 32 components x 4 frames', 'Remotion cssVarsFromState -- 1024 frame outputs'];
     const declared = registry.distributions.filter((entry) => names.includes(entry.name));
     const source = readFileSync(join(repoRoot, 'tests/bench/video.bench.ts'), 'utf8');
 
@@ -347,7 +417,15 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
         complexityRank(ceiling),
       );
       // The fit is trustworthy (well above the gate's R² floor).
-      expect(entry!.fittedR2).toBeGreaterThan(0.5);
+      expect(
+        complexityAdmissionReasons({
+          sizes: entry!.sizes,
+          replicates: entry!.measurement.replicates,
+          fittedR2: entry!.fittedR2,
+          coefficientOfVariation: entry!.coefficientOfVariation,
+        }),
+        path,
+      ).toEqual([]);
     }
   });
 });

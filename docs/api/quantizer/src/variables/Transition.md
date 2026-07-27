@@ -14,7 +14,7 @@ Transition resolver namespace.
 
 `Transition.for(quantizer, map)` (or `Transition.for(boundary, map)`)
 produces a Transition that looks up animation parameters by
-`from->to` state pairs. Consumed by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md) for
+`from->to` state pairs. Consumed by [AnimatedQuantizer](../interfaces/AnimatedQuantizer.md) for
 interpolation setup.
 
 ## Type Declaration

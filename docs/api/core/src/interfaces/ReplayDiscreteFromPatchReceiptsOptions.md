@@ -34,7 +34,7 @@ Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
 ### cellStore
 
-> `readonly` **cellStore**: [`StateCellStoreShape`](StateCellStoreShape.md)
+> `readonly` **cellStore**: [`StateCellStore`](StateCellStore.md)
 
 Defined in: [core/src/graph/graph-query-gap-replay.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L40)
 
@@ -50,7 +50,7 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:39](https://github.com/fre
 
 ### localBaseId
 
-> `readonly` **localBaseId**: `ContentAddress`
+> `readonly` **localBaseId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/graph-query-gap-replay.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L37)
 
@@ -58,6 +58,6 @@ Defined in: [core/src/graph/graph-query-gap-replay.ts:37](https://github.com/fre
 
 ### serverGraphId
 
-> `readonly` **serverGraphId**: `ContentAddress`
+> `readonly` **serverGraphId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/graph-query-gap-replay.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L38)

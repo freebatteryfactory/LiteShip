@@ -16,6 +16,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Compositor, VideoRenderer, wallClock, type Millis } from '@liteship/core';
 import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@liteship/assets';
+import { IoError, ValidationError } from '@liteship/error';
 import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@liteship/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
@@ -130,7 +131,7 @@ export function createNodeCommandContext(
     // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@liteship/cli`
     // injects `runCheckInvariants`, and over MCP it degrades to capabilityUnavailable.
     loadAssetBytes,
-    runAudioProjection: async (bytes, projection, _assetId) => {
+    runAudioProjection: async (bytes, projection) => {
       // This host command consumes a compiled manifest and raw WAV bytes; it
       // does not import the authored scene registry. Keep that explicit host
       // adapter separate from AssetRegistry, whose authority is registered
@@ -143,8 +144,8 @@ export function createNodeCommandContext(
     loadSceneModule: async (scenePath) => {
       try {
         return (await import(/* @vite-ignore */ pathToFileURL(resolveFrom(scenePath)).href)) as Record<string, unknown>;
-      } catch {
-        return null;
+      } catch (cause) {
+        throw IoError('scene-module-import', 'could not import scene module', { path: scenePath, cause });
       }
     },
     runSceneCompile: async (mod) => {
@@ -156,18 +157,22 @@ export function createNodeCommandContext(
         ([name, value]) => /^compile(?:[A-Z_]|$)/.test(name) && typeof value === 'function',
       );
       if (compileEntries.length === 0) {
-        throw new Error('scene module exports no compile function');
+        throw ValidationError('scene.compile', 'module exports no compile function');
       }
       if (compileEntries.length > 1) {
-        throw new Error(
-          `scene module exports multiple compile functions (${compileEntries.map(([name]) => name).join(', ')}); export exactly one`,
+        throw ValidationError(
+          'scene.compile',
+          `module exports multiple compile functions (${compileEntries.map(([name]) => name).join(', ')}); export exactly one`,
         );
       }
       const compileEntry = compileEntries[0]!;
-      if (typeof compileEntry[1] !== 'function') throw new Error('scene compile export is not callable');
+      if (typeof compileEntry[1] !== 'function') throw ValidationError('scene.compile', 'export is not callable');
       const compiled = compileEntry[1]();
       if (typeof compiled !== 'object' || compiled === null) {
-        throw new Error(`scene compile function returned ${String(compiled)} instead of a CompiledScene descriptor`);
+        throw ValidationError(
+          'scene.compile',
+          `function returned ${String(compiled)} instead of a CompiledScene descriptor`,
+        );
       }
       const candidate = compiled as Record<string, unknown>;
       const durationMs = candidate['duration'];
@@ -182,7 +187,7 @@ export function createNodeCommandContext(
         fps <= 0 ||
         !Array.isArray(trackSpawns)
       ) {
-        throw new Error('scene compile function returned an invalid CompiledScene descriptor');
+        throw ValidationError('scene.compile', 'function returned an invalid CompiledScene descriptor');
       }
       return { durationMs, fps, trackCount: trackSpawns.length };
     },

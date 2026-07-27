@@ -35,7 +35,7 @@ fnv1a label over the canonicalized payload (sync).
 
 ### computeId
 
-> **computeId**: (`capsuleWithoutIdentity`) => `AddressedDigest`
+> **computeId**: (`capsuleWithoutIdentity`) => [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 #### Parameters
 
@@ -45,7 +45,7 @@ fnv1a label over the canonicalized payload (sync).
 
 #### Returns
 
-`AddressedDigest`
+[`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 ### decode
 

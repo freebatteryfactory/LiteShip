@@ -6,7 +6,7 @@
 
 # Variable: createCell
 
-> `const` **createCell**: \<`T`\>(`initial`) => `CellShape`\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
+> `const` **createCell**: \<`T`\>(`initial`) => [`Cell`](../type-aliases/Cell.md)\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
 
 Defined in: core/dist/reactive/cell.d.ts:64
 
@@ -33,4 +33,4 @@ The cell IS its own disposable ([AsyncOwnedResource](../interfaces/AsyncOwnedRes
 
 ## Returns
 
-`CellShape`\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)
+[`Cell`](../type-aliases/Cell.md)\<`T`\> & [`AsyncOwnedResource`](../interfaces/AsyncOwnedResource.md)

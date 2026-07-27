@@ -8,6 +8,8 @@
 
 Defined in: [audit/src/surface.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L19)
 
+Aggregate public-surface audit evidence.
+
 ## Properties
 
 ### astroDirectiveCount

@@ -6,7 +6,7 @@
 
 # Type Alias: MotionTier
 
-> **MotionTier** = `_MotionTier`
+> **MotionTier** = [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [core/src/evidence/ui-quality.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/ui-quality.ts#L19)
 

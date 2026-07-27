@@ -18,9 +18,10 @@ import type {
 import { resolveAssetUrlByTier, resolveOutputsByTier } from '@liteship/edge';
 import { liteshipMiddleware } from '@liteship/astro';
 import { ValidationError } from '@liteship/error';
-import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
+import { createCloudflareEdgeCache, type CloudflareExecutionContext, type CloudflareWorkersEnv } from './edge-cache.js';
 import { loadWorkersEnvFromRuntime, resolveEnvSource } from './env-source.js';
 
+/** Configuration for the request-scoped Cloudflare middleware adapter. */
 export interface CloudflareMiddlewareConfig {
   /** KV namespace binding name in wrangler.jsonc. Defaults to `LITESHIP_BOUNDARY_CACHE`. */
   readonly binding?: string;
@@ -66,7 +67,9 @@ export interface CloudflareMiddlewareConfig {
    * and bills storage, so set a TTL (e.g. `2592000` = 30 days) to reclaim
    * keys for superseded builds. Omit to cache indefinitely.
    */
-  readonly ttl?: number;
+  readonly expirationTtl?: number;
+  /** Cloudflare KV edge-cache TTL passed to `KV.get`; distinct from write expiration. */
+  readonly cacheTtl?: number;
   /** Optional KV key prefix. */
   readonly prefix?: string;
   /**
@@ -86,10 +89,29 @@ export interface CloudflareMiddlewareConfig {
    */
   readonly env?: CloudflareWorkersEnv | (() => CloudflareWorkersEnv);
   /**
-   * Workers `ExecutionContext.waitUntil` for deferring KV write-back (#122).
-   * When omitted, boundary-cache writes block the response path.
+   * Resolve the per-request Workers execution context for tests or custom
+   * hosts. Astro Cloudflare uses `context.locals.cfContext` automatically.
    */
-  readonly waitUntil?: (promise: Promise<unknown>) => void;
+  readonly resolveExecutionContext?: (context: CloudflareRequestContext) => CloudflareExecutionContext | undefined;
+}
+
+/** Minimal request surface consumed by the Cloudflare context resolver. */
+export interface CloudflareRequestContext {
+  readonly request: Request;
+  readonly locals: Record<string, unknown>;
+}
+
+function isExecutionContext(value: unknown): value is CloudflareExecutionContext {
+  return typeof value === 'object' && value !== null && typeof Reflect.get(value, 'waitUntil') === 'function';
+}
+
+function resolveRequestExecutionContext(
+  config: CloudflareMiddlewareConfig,
+  context: CloudflareRequestContext,
+): CloudflareExecutionContext | undefined {
+  if (config.resolveExecutionContext !== undefined) return config.resolveExecutionContext(context);
+  const candidate = context.locals.cfContext;
+  return isExecutionContext(candidate) ? candidate : undefined;
 }
 
 function normalizeManifest(manifest: BoundaryManifest | BoundaryManifestFile): BoundaryManifest {
@@ -251,34 +273,37 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
 export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): ReturnType<typeof liteshipMiddleware> {
   const envSource = resolveEnvSource(config);
   const binding = config.binding ?? 'LITESHIP_BOUNDARY_CACHE';
-  const kv = createCloudflareEdgeCache(envSource, { binding });
   const source = resolveCacheSource(config);
-  const inner = liteshipMiddleware({
-    edge: {
-      cache: {
-        kv,
-        ...source,
-        ttl: config.ttl,
-        prefix: config.prefix,
-      },
-      theme: config.theme,
-      ...(config.waitUntil ? { background: { waitUntil: config.waitUntil } } : {}),
-    },
-    detect: config.detect,
-    workers: config.workers,
-  });
-
-  if (config.env) return inner;
 
   let envPrimed = false;
   const wrapped = async (
     context: Parameters<ReturnType<typeof liteshipMiddleware>>[0],
     next: Parameters<ReturnType<typeof liteshipMiddleware>>[1],
   ) => {
-    if (!envPrimed) {
+    if (config.env === undefined && !envPrimed) {
       await loadWorkersEnvFromRuntime();
       envPrimed = true;
     }
+    const requestContext = resolveRequestExecutionContext(config, context);
+    const kv = createCloudflareEdgeCache(
+      envSource,
+      { binding, ...(config.cacheTtl === undefined ? {} : { cacheTtl: config.cacheTtl }) },
+      requestContext,
+    );
+    const inner = liteshipMiddleware({
+      edge: {
+        cache: {
+          kv,
+          ...source,
+          ttl: config.expirationTtl,
+          prefix: config.prefix,
+        },
+        theme: config.theme,
+        ...(requestContext ? { background: requestContext } : {}),
+      },
+      detect: config.detect,
+      workers: config.workers,
+    });
     return inner(context, next);
   };
   return wrapped as ReturnType<typeof liteshipMiddleware>;

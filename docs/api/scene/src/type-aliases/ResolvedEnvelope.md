@@ -6,7 +6,7 @@
 
 # Type Alias: ResolvedEnvelope
 
-> **ResolvedEnvelope** = `_ResolvedEnvelope`
+> **ResolvedEnvelope** = [`ResolvedEnvelope`](../../../spine/type-aliases/ResolvedEnvelope.md)
 
 Defined in: [scene/src/sugar/envelope.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L39)
 

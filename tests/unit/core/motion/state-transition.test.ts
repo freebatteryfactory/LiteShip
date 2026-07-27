@@ -18,15 +18,7 @@ import {
   sealNode,
   transitionReceipt,
 } from '@liteship/core';
-import type {
-  CellMeta,
-  DiscreteStateTransition,
-  DocumentGraph,
-  DocumentGraphNode,
-  SignalNode,
-  StateCellShape,
-  StateCellStoreShape,
-} from '@liteship/core';
+import type { CellMeta, DiscreteStateTransition, DocumentGraph, DocumentGraphNode, SignalNode } from '@liteship/core';
 
 // Self-contained sealed-node/graph helpers (mirrors ai-cast.test.ts) so this
 // typechecked file does not depend on the shared graph-fixtures helper.
@@ -184,7 +176,7 @@ describe('applyTransition', () => {
  * replay payload with a signal" is uncompilable.
  */
 test('applyTransition type-refuses a continuous cell / raw SignalNode (uncompilable seam)', () => {
-  const store: StateCellStoreShape = StateCellStore.create();
+  const store: StateCellStore = StateCellStore.create();
   const continuousCell = StateCell.snapshot(
     'scroll.progress',
     'continuous',
@@ -194,7 +186,7 @@ test('applyTransition type-refuses a continuous cell / raw SignalNode (uncompila
     1,
     0,
     0.42,
-  ) as StateCellShape & { readonly kind: 'continuous' };
+  ) as StateCell & { readonly kind: 'continuous' };
   const signalNode: SignalNode = node('workspace.mode');
 
   // @ts-expect-error a continuous StateCell is NOT a DiscreteStateTransition

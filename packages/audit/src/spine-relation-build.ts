@@ -41,6 +41,7 @@ import ts from 'typescript';
 import type { SpineAuthority, SpineRelationFacts, SpineRelationObservation, SurfaceRelation } from '@liteship/gauntlet';
 import { classifyStructuralRelation } from '@liteship/gauntlet';
 import { typeDirectedCompilerOptions } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 
 /**
  * One admitted mirror type — the host-supplied seed row (frozen from the current
@@ -60,6 +61,10 @@ export interface SpineTypeAdmission {
 
 /** Options for {@link buildSpineRelationFacts}. */
 export interface SpineRelationBuildOptions {
+  /** Host-owned module specifier for the declaration spine under test. */
+  readonly spinePackageSpecifier: string;
+  /** Host-owned source aliases used by the TypeScript resolver. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * In-memory content overrides, keyed by ABSOLUTE path — the seam the acceptance test
    * uses to inject a DRIFTED spine (e.g. CapSet `Set`→array) without touching disk. A
@@ -81,8 +86,6 @@ function syntheticPath(repoRoot: string): string {
  * package-graph law greps raw text and would otherwise false-positive on it (the audit
  * import graph itself only reaches the blessed @liteship/gauntlet leaf).
  */
-const SPINE_PACKAGE = `@liteship/${'_spine'}`;
-
 /** The import specifier for a runtime module: repo-relative `.ts` → `./…/x.js`. */
 function moduleSpecifier(runtimeModule: string): string {
   const normalized = runtimeModule.replace(/\.tsx?$/, '.js');
@@ -109,12 +112,15 @@ interface ProbeLines {
 }
 
 /** Generate the synthetic probe source + the per-admission line map. */
-function generateProbe(admissions: readonly SpineTypeAdmission[]): {
+function generateProbe(
+  admissions: readonly SpineTypeAdmission[],
+  spinePackageSpecifier: string,
+): {
   readonly source: string;
   readonly probes: readonly ProbeLines[];
 } {
   const lines: string[] = [];
-  lines.push(`import type * as Spine from '${SPINE_PACKAGE}';`);
+  lines.push(`import type * as Spine from '${spinePackageSpecifier}';`);
   // The IS-ANY guard: `0 extends (1 & T)` is true ONLY when T is `any`. A per-admission
   // guard line `const _sAny_i: IsAny<Spine.X> = false;` therefore ERRORS iff the type
   // resolved to `any` — the exact silent hole an unaliased cross-package import or a
@@ -201,11 +207,14 @@ function overlayHost(
 export function buildSpineRelationFacts(
   admissions: readonly SpineTypeAdmission[],
   repoRoot: string,
-  options: SpineRelationBuildOptions = {},
+  options: SpineRelationBuildOptions,
 ): SpineRelationFacts {
   const virt = syntheticPath(repoRoot);
-  const { source, probes } = generateProbe(admissions);
-  const compilerOptions = { ...typeDirectedCompilerOptions(repoRoot), noEmit: true };
+  const { source, probes } = generateProbe(admissions, options.spinePackageSpecifier);
+  const compilerOptions = {
+    ...typeDirectedCompilerOptions(repoRoot, options.typeScriptPathAliases),
+    noEmit: true,
+  };
   const host = overlayHost(compilerOptions, virt, source, options.overlay ?? {});
   const program = ts.createProgram({ rootNames: [virt], options: compilerOptions, host });
 

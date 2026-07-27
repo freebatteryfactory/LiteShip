@@ -6,6 +6,8 @@
 
 # Type Alias: ComponentDef
 
-> **ComponentDef** = `_ComponentDef`
+> **ComponentDef** = [`ComponentDef`](../../../../spine/interfaces/ComponentDef.md)
 
-Defined in: genui/dist/types.d.ts:9
+Defined in: genui/dist/types.d.ts:12
+
+Trusted component name, property grammar, and child policy.

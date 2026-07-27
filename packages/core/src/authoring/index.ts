@@ -55,7 +55,7 @@ export type { Component, SlotConfig } from './component.js';
 
 export { Composable, ComposableWorld, createComposable } from './composable.js';
 
-export type { EntityComponents, ComposableEntity, ComposableWorldShape } from './composable.js';
+export type { EntityComponents, ComposableEntity } from './composable.js';
 
 export { Plan } from './plan.js';
 

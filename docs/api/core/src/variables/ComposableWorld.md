@@ -10,7 +10,7 @@
 
 Defined in: [core/src/authoring/composable.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L282)
 
-Bridge between a raw ECS [World](../type-aliases/World.md) and typed [ComposableEntity](../interfaces/ComposableEntity.md)
+Bridge between a raw ECS [World](../interfaces/World.md) and typed [ComposableEntity](../interfaces/ComposableEntity.md)
 operations (`spawn`, `query`, `evaluate`) plus a thin dense-store integration.
 
 ## Type Declaration
@@ -19,13 +19,13 @@ operations (`spawn`, `query`, `evaluate`) plus a thin dense-store integration.
 
 > **dense**: (`world`) => `ComposableDenseStore` = `makeComposableDenseStore`
 
-Build a dense-store bridge over a [World](../type-aliases/World.md) for per-entity numeric data.
+Build a dense-store bridge over a [World](../interfaces/World.md) for per-entity numeric data.
 
 #### Parameters
 
 ##### world
 
-`WorldShape`
+[`World`](../interfaces/World.md)
 
 #### Returns
 
@@ -33,9 +33,9 @@ Build a dense-store bridge over a [World](../type-aliases/World.md) for per-enti
 
 ### make
 
-> **make**: \<`Schema`\>(`world`) => [`ComposableWorldShape`](../interfaces/ComposableWorldShape.md)\<`Schema`\> = `makeComposableWorld`
+> **make**: \<`Schema`\>(`world`) => `TypedComposableWorld`\<`Schema`\> = `makeComposableWorld`
 
-Wrap a [World](../type-aliases/World.md) with the typed composable-entity API.
+Wrap a [World](../interfaces/World.md) with the typed composable-entity API.
 
 #### Type Parameters
 
@@ -47,8 +47,8 @@ Wrap a [World](../type-aliases/World.md) with the typed composable-entity API.
 
 ##### world
 
-`WorldShape`
+[`World`](../interfaces/World.md)
 
 #### Returns
 
-[`ComposableWorldShape`](../interfaces/ComposableWorldShape.md)\<`Schema`\>
+`TypedComposableWorld`\<`Schema`\>

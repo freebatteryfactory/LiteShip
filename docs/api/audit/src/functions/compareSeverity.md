@@ -8,7 +8,9 @@
 
 > **compareSeverity**(`a`, `b`): `number`
 
-Defined in: [audit/src/shared.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L238)
+Defined in: [audit/src/shared.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L246)
+
+Compare audit severities from most to least release-significant.
 
 ## Parameters
 

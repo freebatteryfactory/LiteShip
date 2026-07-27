@@ -41,7 +41,7 @@ timer that fires after dispose does not publish.
 
 ##### ms
 
-`Millis`
+[`Millis`](../../../spine/type-aliases/Millis.md)
 
 #### Returns
 
@@ -236,7 +236,7 @@ is replayable without an ambient time read.
 
 ##### ms
 
-`Millis`
+[`Millis`](../../../spine/type-aliases/Millis.md)
 
 ##### clock?
 

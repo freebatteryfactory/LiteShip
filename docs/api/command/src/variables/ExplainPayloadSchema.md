@@ -316,6 +316,22 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 > `readonly` **type**: readonly \[`"object"`, `"null"`\]
 
+#### properties.symbol.properties.surface.properties.audience
+
+> `readonly` **audience**: `object`
+
+#### properties.symbol.properties.surface.properties.audience.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.symbol.properties.surface.properties.category
+
+> `readonly` **category**: `object`
+
+#### properties.symbol.properties.surface.properties.category.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.symbol.properties.surface.properties.checkIds
 
 > `readonly` **checkIds**: `object`
@@ -460,6 +476,14 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 > `readonly` **type**: `"string"` = `'string'`
 
+#### properties.symbol.properties.surface.properties.producer
+
+> `readonly` **producer**: `object`
+
+#### properties.symbol.properties.surface.properties.producer.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.symbol.properties.surface.properties.proofRefs
 
 > `readonly` **proofRefs**: `object`
@@ -476,11 +500,27 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 > `readonly` **type**: `"array"` = `'array'`
 
+#### properties.symbol.properties.surface.properties.relatedInvariant
+
+> `readonly` **relatedInvariant**: `object`
+
+#### properties.symbol.properties.surface.properties.relatedInvariant.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.symbol.properties.surface.properties.remediation
 
 > `readonly` **remediation**: `object`
 
 #### properties.symbol.properties.surface.properties.remediation.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.symbol.properties.surface.properties.replacement
+
+> `readonly` **replacement**: `object`
+
+#### properties.symbol.properties.surface.properties.replacement.type
 
 > `readonly` **type**: `"string"` = `'string'`
 
@@ -500,6 +540,14 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 > `readonly` **enum**: readonly \[`"stable"`, `"experimental"`\]
 
+#### properties.symbol.properties.surface.properties.surfaceClass
+
+> `readonly` **surfaceClass**: `object`
+
+#### properties.symbol.properties.surface.properties.surfaceClass.enum
+
+> `readonly` **enum**: readonly \[`"paved-road"`, `"advanced-module"`\]
+
 #### properties.symbol.properties.surface.properties.symbol
 
 > `readonly` **symbol**: `object`
@@ -518,7 +566,7 @@ in the structural subset (nullable objects via `type: ['object','null']`).
 
 #### properties.symbol.properties.surface.required
 
-> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
+> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"audience"`, `"category"`, `"surfaceClass"`, `"producer"`, `"relatedInvariant"`, `"replacement"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
 
 #### properties.symbol.properties.surface.type
 

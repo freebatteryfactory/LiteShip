@@ -6,7 +6,7 @@
 
 # Interface: AuditCoverageNotChecked
 
-Defined in: [audit/src/types.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L58)
+Defined in: [audit/src/types.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L63)
 
 An audit relation that was deliberately not executed and therefore proves nothing.
 
@@ -16,7 +16,7 @@ An audit relation that was deliberately not executed and therefore proves nothin
 
 > `readonly` **coverage**: `"not-checked"`
 
-Defined in: [audit/src/types.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L59)
+Defined in: [audit/src/types.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L64)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [audit/src/types.ts:59](https://github.com/freebatteryfactory/LiteSh
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/types.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L60)
+Defined in: [audit/src/types.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L65)

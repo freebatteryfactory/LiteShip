@@ -6,9 +6,9 @@
 
 # Function: typeDirectedCompilerOptions()
 
-> **typeDirectedCompilerOptions**(`baseUrl`): [`CompilerOptions`](https://www.typescriptlang.org/docs/handbook/compiler-options.html)
+> **typeDirectedCompilerOptions**(`baseUrl`, `aliases?`): [`CompilerOptions`](https://www.typescriptlang.org/docs/handbook/compiler-options.html)
 
-Defined in: [audit/src/ts-program.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L83)
+Defined in: [audit/src/ts-program.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L27)
 
 Build the shared [ts.CompilerOptions](https://www.typescriptlang.org/docs/handbook/compiler-options.html) for a type-directed program rooted
 at `baseUrl` (the repo root the `@liteship/*` aliases resolve against). The options
@@ -20,6 +20,10 @@ are the proven capsule-detector configuration: strict, bundler resolution, the
 ### baseUrl
 
 `string`
+
+### aliases?
+
+[`TypeScriptPathAliases`](../type-aliases/TypeScriptPathAliases.md) = `{}`
 
 ## Returns
 

@@ -25,13 +25,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./ffmpeg": {
       "types": "./dist/ffmpeg.d.ts",
-      "import": "./dist/ffmpeg.js",
-      "development": "./src/ffmpeg.ts"
+      "import": "./dist/ffmpeg.js"
     }
   },
   "files": [

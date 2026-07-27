@@ -6,7 +6,7 @@
 
 # Variable: DEFAULT\_MOTION\_SPRING
 
-> `const` **DEFAULT\_MOTION\_SPRING**: `SpringConfigShape`
+> `const` **DEFAULT\_MOTION\_SPRING**: [`Config`](../namespaces/Easing/type-aliases/Config.md)
 
 Defined in: core/dist/motion/easing.d.ts:65
 

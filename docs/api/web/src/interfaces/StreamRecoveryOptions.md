@@ -27,7 +27,7 @@ Defined in: [web/src/stream/recovery.ts:58](https://github.com/freebatteryfactor
 
 ### cellStore?
 
-> `readonly` `optional` **cellStore?**: [`StateCellStoreShape`](../../../liteship/src/reactive/interfaces/StateCellStoreShape.md)
+> `readonly` `optional` **cellStore?**: [`StateCellStore`](../../../liteship/src/reactive/interfaces/StateCellStore.md)
 
 Defined in: [web/src/stream/recovery.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/recovery.ts#L65)
 

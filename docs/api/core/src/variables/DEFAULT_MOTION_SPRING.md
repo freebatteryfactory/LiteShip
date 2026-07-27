@@ -6,7 +6,7 @@
 
 # Variable: DEFAULT\_MOTION\_SPRING
 
-> `const` **DEFAULT\_MOTION\_SPRING**: `SpringConfigShape`
+> `const` **DEFAULT\_MOTION\_SPRING**: [`Config`](../namespaces/Easing/type-aliases/Config.md)
 
 Defined in: [core/src/motion/easing.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/easing.ts#L378)
 

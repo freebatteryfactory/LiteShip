@@ -8,24 +8,29 @@ import type { Boundary, StateUnion, ContentAddress } from './core.js';
 // § 1. CSS COMPILER (Boundary -> @container rules via lightningcss)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** One container-scoped CSS rule emitted by the low-level style compiler. */
 export interface CSSContainerRule {
   readonly name: string;
   readonly query: string;
   readonly rules: readonly CSSRule[];
 }
 
+/** One selector/declaration pair emitted by a CSS compiler. */
 export interface CSSRule {
   readonly selector: string;
   readonly properties: Record<string, string>;
 }
 
+/** Structured declarations for a state, including optional pseudo selectors. */
 export interface CSSStateBody {
   readonly bareProps?: Record<string, string>;
   readonly rules?: readonly CSSRule[];
 }
 
+/** Shorthand or structured authored CSS declarations for one state. */
 export type CSSStateInput = Record<string, string> | CSSStateBody;
 
+/** Deterministic stylesheet projection and its structured rule inventory. */
 export interface CSSCompileResult {
   readonly containerRules: readonly CSSContainerRule[];
   readonly raw: string;
@@ -45,6 +50,7 @@ export declare const CSSCompiler: {
 // § 2. GLSL COMPILER (uniform declarations + bindUniforms)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** GLSL uniform types supported by LiteShip's shader projection. */
 export type GLSLType =
   | 'float'
   | 'int'
@@ -62,18 +68,21 @@ export type GLSLType =
   | 'sampler2D'
   | 'samplerCube';
 
+/** One named GLSL uniform declaration and its authored default. */
 export interface GLSLUniform {
   readonly name: string;
   readonly type: GLSLType;
   readonly comment?: string;
 }
 
+/** One preprocessor define emitted into a GLSL program. */
 export interface GLSLDefine {
   readonly name: string;
   readonly value: string;
   readonly comment?: string;
 }
 
+/** GLSL source plus the uniforms and defines required to drive it. */
 export interface GLSLCompileResult {
   readonly defines: readonly GLSLDefine[];
   readonly uniforms: readonly GLSLUniform[];
@@ -95,6 +104,7 @@ export declare const GLSLCompiler: {
 // § 3. WGSL COMPILER (struct definitions + binding)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** WGSL scalar and vector types supported by LiteShip's shader projection. */
 export type WGSLType =
   | 'f32'
   | 'i32'
@@ -110,6 +120,7 @@ export type WGSLType =
   | 'mat3x3f'
   | 'mat4x4f';
 
+/** One WGSL resource binding in a declared bind group. */
 export interface WGSLBinding {
   readonly group: number;
   readonly binding: number;
@@ -117,16 +128,20 @@ export interface WGSLBinding {
   readonly type: WGSLType;
 }
 
+/** Fixed-width numeric tuple accepted as a WGSL uniform vector. */
 export type WGSLUniformVector =
   readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
 
+/** Runtime value accepted by a generated WGSL uniform. */
 export type WGSLUniformValue = number | WGSLUniformVector;
 
+/** Named WGSL structure and its ordered field declarations. */
 export interface WGSLStruct {
   readonly name: string;
   readonly fields: readonly { readonly name: string; readonly type: WGSLType }[];
 }
 
+/** WGSL source plus its bindings, uniforms, and generated structures. */
 export interface WGSLCompileResult {
   readonly structs: readonly WGSLStruct[];
   readonly bindings: readonly WGSLBinding[];
@@ -148,6 +163,7 @@ export declare const WGSLCompiler: {
 // § 4. ARIA COMPILER (attribute strings from boundary metadata)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Accessibility attributes and announcements projected per adaptive state. */
 export interface ARIACompileResult<S extends string = string> {
   readonly stateAttributes: Record<S, Record<string, string>>;
   readonly currentAttributes: Record<string, string>;
@@ -165,6 +181,7 @@ export declare const ARIACompiler: {
 // § 5. AI MANIFEST COMPILER (tool definitions + grammar validation)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Agent-facing manifest projected from one adaptive definition. */
 export interface AIManifest {
   readonly version: string;
   readonly dimensions: Record<string, AIDimension>;
@@ -182,6 +199,7 @@ export interface AIManifestInput {
   readonly constraints?: readonly AIConstraint[];
 }
 
+/** One state dimension described to an agent. */
 export interface AIDimension {
   readonly states: readonly string[];
   readonly current: string;
@@ -189,17 +207,20 @@ export interface AIDimension {
   readonly description: string;
 }
 
+/** One named content slot available to an agent-authored composition. */
 export interface AISlot {
   readonly accepts: readonly string[];
   readonly description: string;
 }
 
+/** One action an agent may propose through the manifest. */
 export interface AIAction {
   readonly params: Record<string, AIParamSchema>;
   readonly effects: readonly string[];
   readonly description: string;
 }
 
+/** Restricted parameter schema used by agent action declarations. */
 export interface AIParamSchema {
   readonly type: string;
   readonly enum?: readonly string[];
@@ -210,12 +231,14 @@ export interface AIParamSchema {
   readonly description: string;
 }
 
+/** Machine-readable constraint attached to an AI manifest. */
 export interface AIConstraint {
   readonly id: string;
   readonly condition: unknown;
   readonly message: string;
 }
 
+/** Tool definition synthesized from an agent-visible action. */
 export interface AIToolDefinition {
   readonly name: string;
   readonly description: string;
@@ -223,6 +246,7 @@ export interface AIToolDefinition {
   readonly returns: Record<string, unknown>;
 }
 
+/** AI manifest projection together with its generated tool definitions. */
 export interface AIManifestCompileResult {
   readonly manifest: AIManifest;
   readonly toolDefinitions: readonly AIToolDefinition[];
@@ -264,19 +288,25 @@ export declare const AIManifestCompiler: {
 
 import type { Config } from './config.js';
 
+/** State-indexed CSS property tables accepted by compiler dispatch. */
 export type CSSStates = Readonly<Record<string, Readonly<Record<string, string>>>>;
+/** State-indexed GLSL numeric uniform tables accepted by compiler dispatch. */
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
+/** State-indexed WGSL uniform tables accepted by compiler dispatch. */
 export type WGSLStates = Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
+/** State-indexed accessibility output accepted by compiler dispatch. */
 export interface ARIAStates {
   readonly states: Record<string, Record<string, string>>;
   /** Defaults to the boundary's first state. */
   readonly currentState?: string;
 }
 
+/** Generated host-configuration template and its destination filename. */
 export interface ConfigTemplateResult {
   readonly json: string;
 }
 
+/** Closed union of definition projections accepted by the compiler dispatcher. */
 export type CompilerDef =
   | {
       readonly _tag: 'CSSCompiler';
@@ -290,6 +320,7 @@ export type CompilerDef =
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
   | { readonly _tag: 'ConfigCompiler'; readonly config: Config };
 
+/** Closed union returned by the compiler dispatcher for every target. */
 export type CompileResult =
   | { readonly target: 'css'; readonly result: CSSCompileResult }
   | { readonly target: 'glsl'; readonly result: GLSLCompileResult }
@@ -306,28 +337,34 @@ export declare function dispatch(def: CompilerDef): CompileResult;
 
 import type { Token, Style, Theme, Component } from './design.js';
 
+/** Definition kinds accepted by the component-level compiler projections. */
 export type DefKind = 'boundary' | 'token' | 'style' | 'theme' | 'component';
 
+/** CSS custom-property projection of a token definition. */
 export interface TokenCSSResult {
   readonly properties: readonly string[];
   readonly customProperties: string;
   readonly themed: string;
 }
 
+/** Tailwind theme extension projected from a token definition. */
 export interface TokenTailwindResult {
   readonly themeBlock: string;
 }
 
+/** JavaScript-friendly data projection of a token definition. */
 export interface TokenJSResult {
   readonly code: string;
   readonly typeDeclaration: string;
 }
 
+/** CSS projection of a theme and its named variants. */
 export interface ThemeCSSResult {
   readonly selectors: string;
   readonly transitions: string;
 }
 
+/** CSS projection of one adaptive style definition. */
 export interface StyleCSSResult {
   readonly scoped: string;
   readonly layers: string;

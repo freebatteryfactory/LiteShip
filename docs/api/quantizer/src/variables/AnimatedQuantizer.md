@@ -6,9 +6,9 @@
 
 # Variable: AnimatedQuantizer
 
-> `const` **AnimatedQuantizer**: `object`
+> **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:526](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L526)
+Defined in: [quantizer/src/animated-quantizer.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L52)
 
 Animated quantizer namespace.
 

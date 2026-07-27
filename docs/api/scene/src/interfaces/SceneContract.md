@@ -23,7 +23,7 @@ hello-world scene never declares layer-4 audit/ship concepts.
 
 ### beats?
 
-> `readonly` `optional` **beats?**: readonly `BeatComponent`[]
+> `readonly` `optional` **beats?**: readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 Defined in: [scene/src/contract.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L174)
 

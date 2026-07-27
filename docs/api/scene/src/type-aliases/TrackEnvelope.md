@@ -6,7 +6,7 @@
 
 # Type Alias: TrackEnvelope
 
-> **TrackEnvelope** = `_TrackEnvelope`
+> **TrackEnvelope** = [`TrackEnvelope`](../../../spine/type-aliases/TrackEnvelope.md)
 
 Defined in: [scene/src/sugar/envelope.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L32)
 

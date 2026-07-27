@@ -14,7 +14,7 @@ Graph bundle + composed program produced by [lowerRevealChain](../functions/lowe
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/reveal.d.ts:126
 
@@ -30,7 +30,7 @@ Defined in: core/dist/motion/reveal.d.ts:123
 
 ### policyId
 
-> `readonly` **policyId**: `ContentAddress`
+> `readonly` **policyId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/reveal.d.ts:128
 
@@ -46,7 +46,7 @@ Defined in: core/dist/motion/reveal.d.ts:124
 
 ### signalId
 
-> `readonly` **signalId**: `ContentAddress`
+> `readonly` **signalId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/reveal.d.ts:127
 
@@ -54,6 +54,6 @@ Defined in: core/dist/motion/reveal.d.ts:127
 
 ### transitionIds
 
-> `readonly` **transitionIds**: readonly `ContentAddress`[]
+> `readonly` **transitionIds**: readonly [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)[]
 
 Defined in: core/dist/motion/reveal.d.ts:125

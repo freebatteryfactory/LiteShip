@@ -6,7 +6,7 @@
 
 # Function: bindBeats()
 
-> **bindBeats**(`beats`): readonly `BeatSpawn`[]
+> **bindBeats**(`beats`): readonly [`BeatSpawn`](../../../spine/interfaces/BeatSpawn.md)[]
 
 Defined in: [scene/src/beat-binding-capsule.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-binding-capsule.ts#L110)
 
@@ -21,8 +21,8 @@ the input array; the output is a fresh, owned-by-runtime sequence.
 
 ### beats
 
-readonly `BeatComponent`[]
+readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 ## Returns
 
-readonly `BeatSpawn`[]
+readonly [`BeatSpawn`](../../../spine/interfaces/BeatSpawn.md)[]

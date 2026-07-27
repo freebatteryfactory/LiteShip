@@ -11,7 +11,7 @@ import type { ContentAddress } from './core.js';
  * A volatile wall-clock timestamp (CUT B2): an ISO-8601 string stamped at the
  * moment a result/receipt is produced. It is **identity-irrelevant** — excluded
  * from `resultId` (idempotency) and never used for causal ordering. It is NOT an
- * {@link ./core.d.ts!HLC} (the causal, monotonic, hash/chain-relevant clock). Use
+ * `HLC` (the causal, monotonic, hash/chain-relevant clock). Use
  * this alias for every volatile command/result timestamp so the contract is
  * visible at the type level without a breaking field rename.
  */

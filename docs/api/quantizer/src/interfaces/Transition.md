@@ -10,7 +10,7 @@ Defined in: [quantizer/src/transition.ts:56](https://github.com/freebatteryfacto
 
 Resolver that maps a boundary crossing to its [TransitionConfig](TransitionConfig.md).
 
-Produced by [Transition.for](../variables/Transition.md#for); consumed by [AnimatedQuantizer](../type-aliases/AnimatedQuantizer.md)
+Produced by [Transition.for](../variables/Transition.md#for); consumed by [AnimatedQuantizer](AnimatedQuantizer.md)
 during animation loop setup.
 
 ## Type Parameters

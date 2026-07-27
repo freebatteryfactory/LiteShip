@@ -8,6 +8,6 @@
 
 > **DiagnosticCode** = keyof *typeof* `DIAGNOSTIC_REGISTRY`
 
-Defined in: error/dist/codes.d.ts:359
+Defined in: error/dist/codes.d.ts:362
 
 The exact closed union of enrolled stable diagnostic identities.

@@ -29,73 +29,59 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./schema": {
       "types": "./dist/schema.d.ts",
-      "import": "./dist/schema.js",
-      "development": "./src/schema.ts"
+      "import": "./dist/schema.js"
     },
     "./reactive": {
       "types": "./dist/reactive.d.ts",
-      "import": "./dist/reactive.js",
-      "development": "./src/reactive.ts"
+      "import": "./dist/reactive.js"
     },
     "./motion": {
       "types": "./dist/motion.d.ts",
-      "import": "./dist/motion.js",
-      "development": "./src/motion.ts"
+      "import": "./dist/motion.js"
     },
     "./graph": {
       "types": "./dist/graph.d.ts",
-      "import": "./dist/graph.js",
-      "development": "./src/graph.ts"
+      "import": "./dist/graph.js"
     },
     "./media": {
       "types": "./dist/media.d.ts",
-      "import": "./dist/media.js",
-      "development": "./src/media.ts"
+      "import": "./dist/media.js"
     },
     "./evidence": {
       "types": "./dist/evidence.d.ts",
-      "import": "./dist/evidence.js",
-      "development": "./src/evidence.ts"
+      "import": "./dist/evidence.js"
     },
     "./compiler": {
       "types": "./dist/compiler.d.ts",
-      "import": "./dist/compiler.js",
-      "development": "./src/compiler.ts"
+      "import": "./dist/compiler.js"
     },
     "./runtime": {
       "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.js",
-      "development": "./src/runtime.ts"
+      "import": "./dist/runtime.js"
     },
     "./astro": {
       "types": "./dist/astro.d.ts",
-      "import": "./dist/astro.js",
-      "development": "./src/astro.ts"
+      "import": "./dist/astro.js"
     },
     "./vite": {
       "types": "./dist/vite.d.ts",
-      "import": "./dist/vite.js",
-      "development": "./src/vite.ts"
+      "import": "./dist/vite.js"
     },
     "./testing": {
       "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js",
-      "development": "./src/testing.ts"
+      "import": "./dist/testing.js"
     },
     "./migrate": {
       "types": "./dist/migrate.d.ts",
-      "import": "./dist/migrate.js",
-      "development": "./src/migrate.ts"
+      "import": "./dist/migrate.js"
     },
     "./genui": {
       "types": "./dist/genui.d.ts",
-      "import": "./dist/genui.js",
-      "development": "./src/genui.ts"
+      "import": "./dist/genui.js"
     }
   },
   "files": [

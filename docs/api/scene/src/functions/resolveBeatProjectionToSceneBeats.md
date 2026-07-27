@@ -6,7 +6,7 @@
 
 # Function: resolveBeatProjectionToSceneBeats()
 
-> **resolveBeatProjectionToSceneBeats**(`input`): readonly `BeatComponent`[]
+> **resolveBeatProjectionToSceneBeats**(`input`): readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 Defined in: [scene/src/beat-projection.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-projection.ts#L38)
 
@@ -22,11 +22,11 @@ is supplied it is carried onto every marker; otherwise the field is omitted.
 
 ### input
 
-`BeatProjectionResolutionInput`
+[`BeatProjectionResolutionInput`](../../../spine/interfaces/BeatProjectionResolutionInput.md)
 
 ## Returns
 
-readonly `BeatComponent`[]
+readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 ## Throws
 

@@ -16,7 +16,7 @@ to obtain a live tickable handle.
 
 ### beats
 
-> `readonly` **beats**: readonly `BeatComponent`[]
+> `readonly` **beats**: readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 Defined in: [scene/src/compile.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L68)
 

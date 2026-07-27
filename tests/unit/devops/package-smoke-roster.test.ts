@@ -17,7 +17,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { PACKAGES } from '@liteship/command';
-import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 import { PUBLISHABLE_ROSTER } from '../../../scripts/gen-roster.js';
 import { packageManifests } from '../../support/repo-truths.js';
 

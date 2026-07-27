@@ -6,7 +6,7 @@
 
 # Interface: ConfigTemplateResult
 
-Defined in: [compiler/src/dispatch.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L59)
+Defined in: [compiler/src/dispatch.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L61)
 
 Result of the `ConfigCompiler` arm — pretty-printed JSON of a `liteship.config`.
 
@@ -16,6 +16,6 @@ Result of the `ConfigCompiler` arm — pretty-printed JSON of a `liteship.config
 
 > `readonly` **json**: `string`
 
-Defined in: [compiler/src/dispatch.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L61)
+Defined in: [compiler/src/dispatch.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L63)
 
 Pretty-printed JSON string (2-space indent).

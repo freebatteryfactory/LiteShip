@@ -52,7 +52,7 @@ Typed host reflection of an applied crossing (e.g. dispatch to the DOM).
 
 ### cellStore
 
-> `readonly` **cellStore**: [`StateCellStoreShape`](StateCellStoreShape.md)
+> `readonly` **cellStore**: [`StateCellStore`](StateCellStore.md)
 
 Defined in: [core/src/graph/graph-query-gap-replay.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-query-gap-replay.ts#L50)
 

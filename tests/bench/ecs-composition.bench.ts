@@ -9,7 +9,7 @@ import { Bench } from 'tinybench';
 import {
   Boundary,
   ComposableWorld,
-  Part,
+  createDenseStore,
   defineBoundary,
   defineToken,
   defineStyle,
@@ -52,7 +52,7 @@ type TestSchema = {
   style?: typeof style;
 };
 
-const denseStore = Part.dense('hp', 2048);
+const denseStore = createDenseStore('hp', 2048);
 const denseEntityIds = Array.from(
   { length: 256 },
   (_, index) => `entity-${index}:fnv1a:${index.toString(16).padStart(8, '0')}` as never,
@@ -107,7 +107,7 @@ bench.add('DenseStore set -- overwrite hot slot', () => {
 });
 
 bench.add('DenseStore delete + reinsert', () => {
-  const tempStore = Part.dense('temp', 8);
+  const tempStore = createDenseStore('temp', 8);
   const idA = 'entity-a:fnv1a:aaaaaaaa' as never;
   const idB = 'entity-b:fnv1a:bbbbbbbb' as never;
   tempStore.set(idA, 1);
@@ -129,8 +129,8 @@ bench.add('World.tick -- regular system', () => {
 
 bench.add('World.tick -- dense system', () => {
   const scopedWorld = createWorld();
-  const posX = Part.dense('posX', 8);
-  const posY = Part.dense('posY', 8);
+  const posX = createDenseStore('posX', 8);
+  const posY = createDenseStore('posY', 8);
   scopedWorld.addDenseStore(posX);
   scopedWorld.addDenseStore(posY);
   const id = scopedWorld.spawn();

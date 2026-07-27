@@ -265,6 +265,6 @@ describe('SSE saturation diagnostics (BITE)', () => {
     expect(bp.droppedCount).toBe(5);
     expect(bp.policy).toBe('coalesce-by-id');
 
-    client.close();
+    await client.dispose();
   });
 });

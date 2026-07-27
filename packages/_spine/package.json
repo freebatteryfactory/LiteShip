@@ -44,6 +44,7 @@
   },
   "files": [
     "*.d.ts",
+    "SYMBOLS.md",
     "stub.js",
     "tsconfig.json",
     "LICENSE",

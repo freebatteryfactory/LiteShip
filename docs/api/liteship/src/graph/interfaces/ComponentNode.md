@@ -42,7 +42,7 @@ Defined in: core/dist/graph/document-graph.d.ts:46
 
 ### boundaryRef?
 
-> `readonly` `optional` **boundaryRef?**: `ContentAddress`
+> `readonly` `optional` **boundaryRef?**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:66
 
@@ -62,7 +62,7 @@ Defined in: core/dist/graph/document-graph.d.ts:47
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:49
 
@@ -106,6 +106,6 @@ Defined in: core/dist/graph/document-graph.d.ts:68
 
 ### thresholds?
 
-> `readonly` `optional` **thresholds?**: readonly `ThresholdValue`[]
+> `readonly` `optional` **thresholds?**: readonly [`ThresholdValue`](../../../../spine/type-aliases/ThresholdValue.md)[]
 
 Defined in: core/dist/graph/document-graph.d.ts:67

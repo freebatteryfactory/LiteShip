@@ -74,8 +74,9 @@ export interface WaiverFreshnessFact {
  * exactly one slice: `check-registry-complete` reads {@link CheckGovernanceFacts.partition},
  * `check-negative-control` reads {@link CheckGovernanceFacts.negativeControls},
  * `check-waiver-freshness` reads {@link CheckGovernanceFacts.waivers}. When the pack is
- * ABSENT (the lean production path, where no host injects it) every gate folds an empty
- * verdict — the real enforcement over the repo lives in the `tests/unit/devops` meta-test.
+ * ABSENT while a check-governance gate is selected, execution-plan validation fails
+ * before any gate runs. A host with genuinely no checks supplies an explicit empty
+ * pack; absence can never masquerade as a green verdict.
  */
 export interface CheckGovernanceFacts {
   /** The root-script partition evidence (for `check-registry-complete`). */

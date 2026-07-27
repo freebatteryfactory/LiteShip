@@ -156,7 +156,7 @@ function specStateMap(g: GeneratedSpec): Record<string, Record<string, string>> 
  * clock makes HLC crossings replayable; outputChanges includes its initial replay
  * followed by every crossing output, while changes carries the crossing receipts.
  */
-function runtimeReceiptTrace(config: Parameters<typeof createQuantizer>[0], widths: readonly number[]) {
+async function runtimeReceiptTrace(config: Parameters<typeof createQuantizer>[0], widths: readonly number[]) {
   const live = createQuantizer(config, { clock: fixedClock(1_700_000_000_000), node: 'adaptive-proof' });
   const crossings: unknown[] = [];
   const outputs: unknown[] = [];
@@ -169,7 +169,7 @@ function runtimeReceiptTrace(config: Parameters<typeof createQuantizer>[0], widt
   };
   stopOutputs();
   stopCrossings();
-  void live.dispose();
+  await live.dispose();
   return { states, crossings, outputs, final };
 }
 
@@ -283,9 +283,9 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
     );
   });
 
-  it('INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep', () => {
-    fc.assert(
-      fc.property(specArb, (g) => {
+  it('INV-ADAPTIVE-TRACE-EQUAL: public explanations and live crossing/output receipts equal the hand-lowered runtime sweep', async () => {
+    await fc.assert(
+      fc.asyncProperty(specArb, async (g) => {
         const a = defineAdaptive(toSpec(g));
         const hb = defineBoundary(g.boundary as Parameters<typeof defineBoundary>[0]);
 
@@ -314,8 +314,11 @@ describe('defineAdaptive is a pure lowering — content-address, CSS-byte, and t
 
         if (a.quantizer !== undefined && g.quantize !== undefined) {
           const hq = defineQuantizer(hb, g.quantize as Parameters<typeof defineQuantizer>[1]);
-          const adaptiveTrace = runtimeReceiptTrace(a.quantizer as Parameters<typeof createQuantizer>[0], widths);
-          const handTrace = runtimeReceiptTrace(hq as Parameters<typeof createQuantizer>[0], widths);
+          const adaptiveTrace = await runtimeReceiptTrace(
+            a.quantizer as Parameters<typeof createQuantizer>[0],
+            widths,
+          );
+          const handTrace = await runtimeReceiptTrace(hq as Parameters<typeof createQuantizer>[0], widths);
           expect(adaptiveTrace).toEqual(handTrace);
         }
       }),

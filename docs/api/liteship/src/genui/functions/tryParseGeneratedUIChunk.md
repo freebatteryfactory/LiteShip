@@ -6,7 +6,7 @@
 
 # Function: tryParseGeneratedUIChunk()
 
-> **tryParseGeneratedUIChunk**(`content`): [`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts) \| `null`
+> **tryParseGeneratedUIChunk**(`content`): [`GeneratedUINode`](../../../../spine/interfaces/GeneratedUINode.md) \| `null`
 
 Defined in: genui/dist/parse.d.ts:13
 
@@ -21,4 +21,4 @@ Returns `null` for legacy token/text/HTML paths.
 
 ## Returns
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts) \| `null`
+[`GeneratedUINode`](../../../../spine/interfaces/GeneratedUINode.md) \| `null`

@@ -6,8 +6,8 @@
 
 # Variable: defaultAnalyzableArtifacts
 
-> `const` **defaultAnalyzableArtifacts**: readonly `string`[] = `GENERATED_DEFAULT_ANALYZABLE_ARTIFACTS`
+> `const` **defaultAnalyzableArtifacts**: readonly \[`"src/**/*.ts"`, `"src/**/*.tsx"`, `"!src/**/*.d.ts"`\]
 
-Defined in: [audit/src/policy.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L53)
+Defined in: [audit/src/policy.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L46)
 
-Standard source-bearing package artifact contract, projected from the package catalog.
+Generic source-bearing package artifact contract.

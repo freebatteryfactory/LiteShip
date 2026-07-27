@@ -109,13 +109,10 @@ describe('Asset capsule', () => {
     expect(() => AssetRegistry.make([a, b])).toThrow(/duplicate asset id 'dup'/);
   });
 
-  it('builtinDecoderFor maps media kinds to their decoders and analysis kinds to undefined', () => {
+  it('builtinDecoderFor maps every source asset kind to its decoder', () => {
     expect(builtinDecoderFor('audio')).toBe(audioDecoder);
     expect(builtinDecoderFor('video')).toBe(videoDecoder);
     expect(builtinDecoderFor('image')).toBe(imageDecoder);
-    expect(builtinDecoderFor('beat-markers')).toBeUndefined();
-    expect(builtinDecoderFor('onsets')).toBeUndefined();
-    expect(builtinDecoderFor('waveform')).toBeUndefined();
   });
 
   it('defineAsset wires the audio built-in as the derive handler when no decoder is declared', async () => {
@@ -154,16 +151,19 @@ describe('Asset capsule', () => {
     await expect(a.derive!(new ArrayBuffer(0))).resolves.toBe(marker);
   });
 
-  it('defineAsset leaves derive undefined for analysis kinds (no built-in byte decoder)', () => {
-    const a = defineAsset({
-      id: 'analysis-kind-asset',
-      source: 'beats.json',
-      kind: 'beat-markers',
-      budgets: { decodeP95Ms: 10 },
-      invariants: [],
-    });
-    expect(a.derive).toBeUndefined();
-  });
+  it.each(['beat-markers', 'onsets', 'waveform'])(
+    'refuses JavaScript callers that misclassify the %s projection as a source asset',
+    (kind) => {
+      expect(() =>
+        defineAsset({
+          id: 'analysis-kind-asset',
+          source: 'analysis.json',
+          kind,
+          invariants: [],
+        } as never),
+      ).toThrow(/unsupported kind/);
+    },
+  );
 
   it('declared site matches the built-in decoder runtime: builtin video is node-only', () => {
     // The video built-in shells out to ffprobe via node:child_process — a

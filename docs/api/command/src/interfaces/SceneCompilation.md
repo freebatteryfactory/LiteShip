@@ -6,7 +6,7 @@
 
 # Interface: SceneCompilation
 
-Defined in: [command/src/registry.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L278)
+Defined in: [command/src/registry.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L270)
 
 Host-projected facts from one real scene compilation.
 
@@ -16,7 +16,7 @@ Host-projected facts from one real scene compilation.
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [command/src/registry.ts:280](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L280)
+Defined in: [command/src/registry.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L272)
 
 Resolved scene duration, including track-derived duration when authoring omitted it.
 
@@ -26,7 +26,7 @@ Resolved scene duration, including track-derived duration when authoring omitted
 
 > `readonly` **fps**: `number`
 
-Defined in: [command/src/registry.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L282)
+Defined in: [command/src/registry.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L274)
 
 Validated output frame rate.
 
@@ -36,6 +36,6 @@ Validated output frame rate.
 
 > `readonly` **trackCount**: `number`
 
-Defined in: [command/src/registry.ts:284](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L284)
+Defined in: [command/src/registry.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L276)
 
 Number of compiled track spawns, not the unvalidated authoring-array length.

@@ -8,7 +8,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { defaultAnalyzableArtifacts, LITESHIP_PACKAGE_ROSTER, packageTopology } from '@liteship/audit';
+import { defaultAnalyzableArtifacts } from '@liteship/audit';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
+import { packageTopology } from '../../../packages/cli/src/lib/liteship-audit-policy.js';
 import {
   DEFAULT_ANALYZABLE_ARTIFACTS,
   PACKAGE_CATALOG,
@@ -25,6 +27,7 @@ import {
   findAuthoredFleetLists,
   renderGeneratedProjections,
   validatePackageCatalog,
+  resolvePackageSourceEntrypoints,
   type CatalogManifest,
 } from '../../../scripts/gen-roster.js';
 
@@ -97,6 +100,32 @@ describe('PACKAGE_CATALOG negative controls', () => {
     expect(details([...PACKAGE_CATALOG, extra], manifestMap)).toEqual(
       expect.arrayContaining([expect.stringContaining('expected exactly 25 records, found 26')]),
     );
+  });
+
+  it('rejects a sourceEntry outside its package owner', () => {
+    const catalog = replaceRecord(PACKAGE_CATALOG, '@liteship/core', (record) => ({
+      ...record,
+      sourceEntry: 'packages/foreign/src/index.ts',
+    }));
+    expect(details(catalog)).toEqual(
+      expect.arrayContaining([expect.stringContaining('sourceEntry must be a TypeScript file owned by packages/core')]),
+    );
+  });
+
+  it('fails closed when a public subpath has zero or multiple source owners', () => {
+    const core = PACKAGE_CATALOG.find((record) => record.name === '@liteship/core')!;
+    const mutant = {
+      ...core,
+      publicSubpaths: ['.', './ambiguous'],
+    } satisfies PackageCatalogRecord;
+    expect(() => resolvePackageSourceEntrypoints(mutant, (path) => path === core.sourceEntry)).toThrow(
+      /expected exactly one source entrypoint, found 0/,
+    );
+    expect(() =>
+      resolvePackageSourceEntrypoints(mutant, (path) =>
+        path === core.sourceEntry || path.includes('/ambiguous'),
+      ),
+    ).toThrow(/expected exactly one source entrypoint, found 2/);
   });
 
   it.each([
@@ -249,7 +278,7 @@ describe('PACKAGE_CATALOG negative controls', () => {
     ]);
     expect(
       findAuthoredFleetLists([
-        { path: 'packages/audit/src/package-catalog.generated.ts', text: fleet },
+        { path: 'packages/cli/src/lib/audit-package-catalog.generated.ts', text: fleet },
         { path: 'benchmarks/one-install-cost-baseline.json', text: fleet },
         { path: 'tests/fixtures/package-catalog-red/second-roster.ts', text: fleet },
       ]),

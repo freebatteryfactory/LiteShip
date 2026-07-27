@@ -38,7 +38,7 @@ Defined in: [compiler/src/stagger-compile.ts:28](https://github.com/freebatteryf
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [compiler/src/stagger-compile.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/stagger-compile.ts#L29)
 

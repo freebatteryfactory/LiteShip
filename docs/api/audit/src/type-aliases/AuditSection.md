@@ -8,4 +8,6 @@
 
 > **AuditSection** = `"structure"` \| `"integrity"` \| `"surface"`
 
-Defined in: [audit/src/types.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L29)
+Defined in: [audit/src/types.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L31)
+
+One of the three independently executed audit passes.

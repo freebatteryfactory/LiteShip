@@ -8,6 +8,6 @@
 
 > **Config** = [`RuntimeCoordinatorConfig`](../../../interfaces/RuntimeCoordinatorConfig.md)
 
-Defined in: core/dist/reactive/runtime-coordinator.d.ts:71
+Defined in: core/dist/reactive/runtime-coordinator.d.ts:70
 
 Alias for `RuntimeCoordinatorConfig`.

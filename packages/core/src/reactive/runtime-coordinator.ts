@@ -12,7 +12,7 @@
  * @module
  */
 
-import { Part, EntityId } from '../ecs.js';
+import { createDenseStore, EntityId } from '../ecs.js';
 import type { DenseStore } from '../ecs.js';
 import { Plan } from '../authoring/plan.js';
 
@@ -33,7 +33,7 @@ export interface RuntimeCoordinatorConfig {
  * list, dense stores for state index + dirty epoch, and registration/mutation
  * APIs used by the compositor on the hot path.
  */
-export interface RuntimeCoordinatorShape {
+export interface RuntimeCoordinator {
   readonly plan: Plan.IR;
   readonly phases: readonly RuntimePhase[];
   readonly stores: {
@@ -96,12 +96,12 @@ const RUNTIME_PHASES = orderedPhases(RUNTIME_PLAN_TEMPLATE);
  * canonical runtime plan. Prefer {@link RuntimeCoordinator.create}, which is
  * the exported entry point.
  */
-export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): RuntimeCoordinatorShape {
+export function createRuntimeCoordinator(config?: RuntimeCoordinatorConfig): RuntimeCoordinator {
   const name = config?.name ?? 'liteship-runtime';
   const plan = name === RUNTIME_PLAN_TEMPLATE.name ? RUNTIME_PLAN_TEMPLATE : { ...RUNTIME_PLAN_TEMPLATE, name };
   const phases = RUNTIME_PHASES;
-  const stateIndex = Part.dense('state-index', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
-  const dirtyEpoch = Part.dense('dirty-epoch', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
+  const stateIndex = createDenseStore('state-index', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
+  const dirtyEpoch = createDenseStore('dirty-epoch', config?.capacity ?? DEFAULT_RUNTIME_CAPACITY);
   const quantizerByName = new Map<string, RegisteredQuantizer>();
   let nextEntity = 0;
 
@@ -223,8 +223,6 @@ export const RuntimeCoordinator = {
 } as const;
 
 /** Public structural type for `RuntimeCoordinator`. */
-export type RuntimeCoordinator = RuntimeCoordinatorShape;
-
 export declare namespace RuntimeCoordinator {
   /** Alias for `RuntimeCoordinatorConfig`. */
   export type Config = RuntimeCoordinatorConfig;

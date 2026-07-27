@@ -46,7 +46,7 @@ Reuse the existing authority union.
 
 ### base
 
-> `readonly` **base**: `ContentAddress`
+> `readonly` **base**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/state-transition.d.ts:52
 
@@ -106,7 +106,7 @@ Prior state when known (undefined at genesis).
 
 ### resultId?
 
-> `readonly` `optional` **resultId?**: `ContentAddress`
+> `readonly` `optional` **resultId?**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/state-transition.d.ts:54
 

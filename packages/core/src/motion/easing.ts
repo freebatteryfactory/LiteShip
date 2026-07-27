@@ -375,7 +375,7 @@ export declare namespace Easing {
  * sampler ({@link sampleRuntimeEasing}) read the SAME default — Law 4: one kernel,
  * never forked.
  */
-export const DEFAULT_MOTION_SPRING: SpringConfigShape = Object.freeze({ stiffness: 200, damping: 20 });
+export const DEFAULT_MOTION_SPRING: Easing.Config = Object.freeze({ stiffness: 200, damping: 20 });
 
 /**
  * Self-describing easing descriptor carried in the runtime motion plan
@@ -426,7 +426,7 @@ function samplePoints(points: readonly number[]): EasingFnShape {
  * curve. `linear`/`ease` map to `Easing.linear` / `Easing.ease`
  * (the latter being `cubic-bezier(0.25, 0.1, 0.25, 1)`, i.e. CSS `ease`).
  */
-export function sampleRuntimeEasing(easing: RuntimeEasing): EasingFnShape {
+export function sampleRuntimeEasing(easing: RuntimeEasing): Easing.Fn {
   // A serialized point list (Law 4) is the definitive curve whenever present — the floor
   // lerps EXACTLY what the native `linear()` renders. Widened-catalog kinds always carry
   // it; only the legacy analytic kinds fall through to closed-form sampling below.

@@ -8,7 +8,7 @@
 
 > **buildCapabilityLinkFacts**(`opts`): [`CapabilityLinkFacts`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts)
 
-Defined in: [audit/src/repo-ir-capability-link.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L89)
+Defined in: [audit/src/repo-ir-capability-link.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L92)
 
 Build the [CapabilityLinkFacts](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts) — the HOST's heavy job. Pure given the inputs + the source on
 disk: a deterministic `ts.Program` over the capability modules + the sanctioned files yields the same

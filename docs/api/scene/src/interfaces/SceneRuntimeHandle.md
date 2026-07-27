@@ -52,12 +52,12 @@ Number of entities spawned at build time (one per scene track).
 
 ### query
 
-> `readonly` **query**: (...`componentNames`) => `Promise`\<readonly `EntityShape`[]\>
+> `readonly` **query**: (...`componentNames`) => `Promise`\<readonly `Entity`[]\>
 
 Defined in: [scene/src/runtime.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L133)
 
 Query entities carrying ALL named components, resolved through a Promise.
-Wraps the now-synchronous [WorldNS.query](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts) so the astro scene
+Wraps the now-synchronous `World.query` so the Astro scene
 bridge can `await` the result without importing Effect (gate 24's
 Promise-facade decision) — the same entity shape `world.query` returns.
 
@@ -69,7 +69,7 @@ Promise-facade decision) — the same entity shape `world.query` returns.
 
 #### Returns
 
-`Promise`\<readonly `EntityShape`[]\>
+`Promise`\<readonly `Entity`[]\>
 
 ***
 
@@ -148,7 +148,7 @@ registered system once over the world.
 
 ### world
 
-> `readonly` **world**: `WorldShape`
+> `readonly` **world**: `World`
 
 Defined in: [scene/src/runtime.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L126)
 

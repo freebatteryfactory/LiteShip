@@ -24,7 +24,7 @@ transitions through [MotionCompiler](../variables/MotionCompiler.md).
 
 ### transitionId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ### intent
 

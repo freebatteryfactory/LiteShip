@@ -18,7 +18,7 @@ boundary stays declarative. Extended as handlers migrate into this package.
 
 > `readonly` `optional` **cache?**: `CommandCache`
 
-Defined in: [command/src/registry.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L218)
+Defined in: [command/src/registry.ts:210](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L210)
 
 Content-addressed receipt cache (adapter-backed; fs on the CLI side).
 
@@ -50,9 +50,9 @@ Working directory for path resolution; defaults to `process.cwd()` at the adapte
 
 ### decodeShipCapsule?
 
-> `readonly` `optional` **decodeShipCapsule?**: (`bytes`) => `Promise`\<\{ `id`: `ContentAddress`; `ok`: `true`; `tarballManifestAddress`: \{ `display_id`: `string`; `integrity_digest`: `string`; \}; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
+> `readonly` `optional` **decodeShipCapsule?**: (`bytes`) => `Promise`\<\{ `id`: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md); `ok`: `true`; `tarballManifestAddress`: \{ `display_id`: `string`; `integrity_digest`: `string`; \}; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
-Defined in: [command/src/registry.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L247)
+Defined in: [command/src/registry.ts:239](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L239)
 
 Decode a ShipCapsule from CBOR bytes (adapter runs the Effect). Returns the
 capsule id + its claimed tarball-manifest address, or a decode error string.
@@ -65,7 +65,7 @@ capsule id + its claimed tarball-manifest address, or a decode error string.
 
 #### Returns
 
-`Promise`\<\{ `id`: `ContentAddress`; `ok`: `true`; `tarballManifestAddress`: \{ `display_id`: `string`; `integrity_digest`: `string`; \}; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
+`Promise`\<\{ `id`: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md); `ok`: `true`; `tarballManifestAddress`: \{ `display_id`: `string`; `integrity_digest`: `string`; \}; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
 ***
 
@@ -133,7 +133,7 @@ reads the file). Null when no source file is found.
 
 > `readonly` `optional` **loadSceneModule?**: (`scenePath`) => `Promise`\<`Record`\<`string`, `unknown`\> \| `null`\>
 
-Defined in: [command/src/registry.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L216)
+Defined in: [command/src/registry.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L208)
 
 Dynamically load a user scene module (the adapter owns the dynamic import,
 keeping @liteship/command free of it — relevant to the A1-T3 dynamic-import
@@ -188,7 +188,7 @@ Keeps path/env policy on the adapter side.
 
 > `readonly` `optional` **readFileBytes?**: (`path`) => `Uint8Array`\<`ArrayBufferLike`\> \| `null`
 
-Defined in: [command/src/registry.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L242)
+Defined in: [command/src/registry.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L234)
 
 Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable.
 
@@ -208,7 +208,7 @@ Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable.
 
 > `readonly` `optional` **recomputeTarballAddress?**: (`bytes`) => `Promise`\<\{ `display_id`: `string`; `integrity_digest`: `string`; `ok`: `true`; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
-Defined in: [command/src/registry.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L269)
+Defined in: [command/src/registry.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L261)
 
 Recompute a tarball's manifest address (adapter runs the Effect).
 
@@ -228,7 +228,7 @@ Recompute a tarball's manifest address (adapter runs the Effect).
 
 > `readonly` `optional` **renderScene?**: (`params`) => `Promise`\<\{ `elapsedMs`: `number`; `frameCount`: `number`; \}\>
 
-Defined in: [command/src/registry.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L232)
+Defined in: [command/src/registry.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L224)
 
 Render a scene to the output path via the host's compositor + ffmpeg
 pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
@@ -272,7 +272,7 @@ Render width in pixels; the host defaults to 1280 when absent.
 
 > `readonly` `optional` **resolveApiSymbol?**: (`symbol`) => [`ApiSymbolResolution`](ApiSymbolResolution.md) \| `null`
 
-Defined in: [command/src/registry.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L267)
+Defined in: [command/src/registry.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L259)
 
 Resolve an exported symbol → its owning package + source file + one-paragraph
 TSDoc summary — the CLI-side api-index the `explain` command uses for its
@@ -299,18 +299,14 @@ symbol is declared in no scanned package source.
 
 ### runAudioProjection?
 
-> `readonly` `optional` **runAudioProjection?**: (`bytes`, `projection`, `assetId?`) => `Promise`\<`number`\>
+> `readonly` `optional` **runAudioProjection?**: (`bytes`, `projection`) => `Promise`\<`number`\>
 
-Defined in: [command/src/registry.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L206)
+Defined in: [command/src/registry.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L202)
 
 Run an audio projection over decoded bytes and return the marker count.
 Adapter-backed by @liteship/assets — injected (not imported) so @liteship/command
-does not yet take a domain-package build edge. (Heavy-tier decision: whether
-command should depend on assets/scene directly, or keep injecting.)
-
-`assetId` (supplied by the asset.analyze handler) lets the adapter honor
-the asset's OWN decoder (`AssetDecl.decoder`, resolved through the asset
-registry) instead of hardwiring the audio built-in.
+does not take a domain-package build edge. The built-in host consumes raw WAV
+bytes; custom decoders remain explicit AssetRegistry projection factories.
 
 #### Parameters
 
@@ -321,10 +317,6 @@ registry) instead of hardwiring the audio built-in.
 ##### projection
 
 `"beat"` \| `"onset"` \| `"waveform"`
-
-##### assetId?
-
-`string`
 
 #### Returns
 
@@ -520,7 +512,7 @@ the MCP host — an agent can call `plumb` over MCP and read the work-list.
 
 > `readonly` `optional` **runSceneCompile?**: (`sceneModule`) => `Promise`\<[`SceneCompilation`](SceneCompilation.md)\>
 
-Defined in: [command/src/registry.ts:226](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L226)
+Defined in: [command/src/registry.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L218)
 
 Execute a loaded scene module's compile function and project the small
 compiled contract that command handlers consume. The adapter owns arbitrary

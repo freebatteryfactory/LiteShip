@@ -14,7 +14,7 @@ Policy gate for reduced-motion and motion tier.
 
 ### motionTier
 
-> `readonly` **motionTier**: `MotionTier`
+> `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [core/src/motion/reveal.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L58)
 

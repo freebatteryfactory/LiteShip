@@ -102,7 +102,6 @@ export type {
 
 // Slot
 export { SlotRegistry } from './slot/registry.js';
-export type { SlotRegistryShape } from './slot/registry.js';
 export { SlotAddressing } from './slot/addressing.js';
 
 // Stream
@@ -148,7 +147,7 @@ export type { WebCodecsCaptureOptions, RenderFn } from './capture/index.js';
 
 // LLM Adapter
 export { LLMAdapter } from './stream/llm-adapter.js';
-export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig, LLMAdapterShape } from './stream/llm-adapter.js';
+export type { LLMChunk, LLMChunkType, ChunkParser, LLMStreamConfig } from './stream/llm-adapter.js';
 export { LLMChunkNormalization } from './stream/llm-chunks.js';
 export type { ToolCallAccumulator } from './stream/llm-chunks.js';
 

@@ -6,7 +6,7 @@
 
 # Type Alias: MotionTier
 
-> **MotionTier** = `_MotionTier`
+> **MotionTier** = [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: core/dist/evidence/ui-quality.d.ts:17
 

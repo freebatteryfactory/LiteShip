@@ -194,6 +194,24 @@ traces:
       - 'tests/unit/liteship/facade-subpaths.test.ts::a DROPPED listed export reds (the regression direction the old SUBSET gate was blind to)'
       - 'tests/property/facade-export-budget.prop.test.ts::rejects missing, foreign, empty, and non-string contract fields atomically'
       - 'tests/unit/liteship/facade-contract-parser.test.ts::rejects duplicate root and subpath identities'
+      - 'tests/unit/liteship/facade-inhabitation.test.ts::executes one real allocation or read through every public root value'
+
+  # ── Assurance (public declaration ownership + executable paved road) ─
+  - id: INV-PUBLIC-SURFACE-INHABITED
+    tests:
+      - 'tests/unit/devops/public-export-contract.test.ts::the complete package graph has exact declared export contracts'
+      - 'tests/unit/devops/public-export-contract.test.ts::refuses an undocumented phantom instead of counting a small surface as healthy'
+      - 'tests/property/public-export-inhabitation-laws.prop.test.ts::is deterministic under source-map and entrypoint insertion order'
+      - 'tests/unit/liteship/facade-inhabitation.test.ts::executes one real allocation or read through every public root value'
+      - 'tests/unit/liteship/facade-inhabitation.test.ts::refuses a phantom paved-road value with no executable example'
+
+  # ── Assurance (gate qualification cannot false-green) ──────────────────────
+  - id: INV-GATE-AUTHORITY-INTEGRITY
+    tests:
+      - 'tests/property/gauntlet-authority-integrity.prop.test.ts::blocks iff any qualification axis fails and identifies the exact failed axes'
+      - 'tests/unit/gauntlet/foundations.test.ts::blocks failed qualification even when a waiver suppresses the gate semantic finding'
+      - 'tests/unit/gauntlet/foundations.test.ts::turns a thrown qualification fixture into a bounded blocking receipt'
+      - 'tests/unit/gauntlet/foundations.test.ts::preserves a genuine advisory finding from a fully qualified gate'
 
   # ── Assurance (public subpath closure — node16 + bundler) — tests/unit/liteship/facade-subpaths.test.ts ─
   - id: INV-CONSUMER-SUBPATH-CLOSURE

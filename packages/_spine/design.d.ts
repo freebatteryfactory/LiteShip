@@ -12,22 +12,29 @@ import type { Boundary, StateUnion, ContentAddress, Millis, SignalInput, StateNa
 // § 1. BRANDS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Nominal marker for validated design-token references. */
 declare const TokenRefBrand: unique symbol;
+/** Branded reference to a named token definition. */
 export type TokenRef<N extends string = string> = N & { readonly [TokenRefBrand]: N };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. CSS TEMPLATE LITERALS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Syntactically valid CSS custom-property name. */
 export type CSSCustomProp = `--${string}`;
+/** LiteShip-owned CSS custom-property name. */
 export type CSSProp = `--liteship-${string}`;
+/** CSS length units accepted by design-token and style declarations. */
 export type CSSLength = `${number}px` | `${number}rem` | `${number}em` | `${number}%` | `${number}vw` | `${number}vh`;
+/** CSS time value accepted by transitions and animations. */
 export type CSSTime = `${number}ms` | `${number}s`;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 3. TOKEN
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Immutable, content-addressed design token with optional adaptive axes. */
 export interface Token<N extends string = string, Axes extends readonly string[] = readonly string[]> {
   readonly _tag: 'TokenDef';
   readonly _version: 1;
@@ -73,6 +80,7 @@ export declare namespace Token {
 // § 4. STYLE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** One box-shadow layer with explicit geometry and color. */
 export interface ShadowLayer {
   readonly x: number;
   readonly y: number;
@@ -82,6 +90,7 @@ export interface ShadowLayer {
   readonly inset?: boolean;
 }
 
+/** Property, shadow, and pseudo declarations for one style state. */
 export interface StyleLayer {
   readonly properties: Record<string, string>;
   readonly pseudo?: Record<string, Record<string, string>>;
@@ -95,6 +104,7 @@ interface StyleTransitionConfig {
   readonly properties?: readonly string[];
 }
 
+/** Content-addressed adaptive style bound to one boundary definition. */
 export interface Style<B extends Boundary = Boundary> {
   readonly _tag: 'StyleDef';
   readonly _version: 1;
@@ -127,6 +137,7 @@ export declare namespace Style {
 // § 5. THEME
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Named token variants projected as an immutable theme. */
 export interface Theme<V extends readonly string[] = readonly string[]> {
   readonly _tag: 'ThemeDef';
   readonly _version: 1;
@@ -153,12 +164,14 @@ export declare namespace Theme {
 // § 6. COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Authored contract for one named component content slot. */
 export interface SlotConfig {
   /** Default: false. */
   readonly required?: boolean;
   readonly description?: string;
 }
 
+/** Reusable styled component definition with named content slots. */
 export interface Component<B extends Boundary = Boundary, SlotNames extends readonly string[] = readonly string[]> {
   readonly _tag: 'ComponentDef';
   readonly id: ContentAddress;
@@ -173,6 +186,9 @@ export interface Component<B extends Boundary = Boundary, SlotNames extends read
 // § 7. UTILITY TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Token-name union carried by a theme definition. */
 export type TokensOf<T extends Theme> = keyof T['tokens'];
+/** Variant-name union carried by a theme definition. */
 export type VariantsOf<T extends Theme> = T['variants'][number];
+/** Slot-name union carried by a component definition. */
 export type SlotsOf<C extends Component> = keyof C['slots'];

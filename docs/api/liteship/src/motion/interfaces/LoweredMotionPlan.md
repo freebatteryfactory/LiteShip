@@ -30,7 +30,7 @@ Defined in: core/dist/motion/interpret-transition.d.ts:143
 
 ### graphId
 
-> `readonly` **graphId**: `ContentAddress`
+> `readonly` **graphId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/interpret-transition.d.ts:138
 

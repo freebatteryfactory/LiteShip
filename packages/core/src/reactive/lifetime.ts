@@ -27,7 +27,7 @@
  *  - late registration after dispose runs the finalizer immediately.
  *  - aggregate failure: every finalizer runs even if one throws; the failures
  *    fold into one {@link LifetimeDisposeError}, ordered by LIFO invocation.
- *  - AbortSignal projection: {@link LifetimeShape.signal} aborts synchronously
+ *  - AbortSignal projection: {@link Lifetime.signal} aborts synchronously
  *    at dispose start, before any finalizer runs.
  *
  * @module
@@ -47,7 +47,7 @@ import { taggedError, type TaggedError } from '@liteship/error';
 export type Finalizer = () => void | Promise<void>;
 
 /** Live Lifetime handle — the owner of an ordered finalizer stack. */
-export interface LifetimeShape {
+export interface Lifetime {
   readonly _tag: 'Lifetime';
   /** True once `dispose()` has been initiated (flips synchronously). */
   readonly disposed: boolean;
@@ -99,7 +99,7 @@ interface Entry {
 const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
   typeof value === 'object' && value !== null && typeof (value as { then?: unknown }).then === 'function';
 
-function make(): LifetimeShape {
+function make(): Lifetime {
   const stack: Entry[] = [];
   const controller = new AbortController();
   let disposedFlag = false;
@@ -139,7 +139,7 @@ function make(): LifetimeShape {
     }
   };
 
-  const add: LifetimeShape['add'] = (finalizer) => {
+  const add: Lifetime['add'] = (finalizer) => {
     if (disposedFlag) {
       if (disposing) {
         // Registered FROM WITHIN the in-progress disposal (a running finalizer added another):
@@ -163,7 +163,7 @@ function make(): LifetimeShape {
     };
   };
 
-  const dispose: LifetimeShape['dispose'] = () => {
+  const dispose: Lifetime['dispose'] = () => {
     if (disposePromise !== undefined) return disposePromise;
     // Claim disposal synchronously — the executor runs now, so a re-entrant
     // dispose() (from within a finalizer below) returns THIS promise instead of
@@ -239,8 +239,6 @@ export function createLifetime(): Lifetime {
 }
 
 /** Public structural type for `Lifetime`. */
-export type Lifetime = LifetimeShape;
-
 export declare namespace Lifetime {
   /** A registered teardown function — see {@link Finalizer}. */
   export type Finalizer = () => void | Promise<void>;
@@ -251,34 +249,15 @@ export declare namespace Lifetime {
 // ---------------------------------------------------------------------------
 
 /**
- * A resource that owns its teardown SYNCHRONOUSLY. `dispose()` runs the owning
- * {@link Lifetime}'s finalizers (all synchronous) to completion and returns
- * `void`; the `[Symbol.dispose]` well-known method makes it usable with a
- * `using` declaration. `lifetime` stays reachable for advanced/debug
- * composition — registering extra finalizers, threading the handle into a child
- * scope — but the value IS the disposable; there is no pair to destructure.
- *
- * Prefer {@link AsyncOwnedResource}: {@link LifetimeShape.dispose} is async, so
- * this synchronous form is only correct for a resource whose teardown is
- * genuinely synchronous (every finalizer settles inside the `dispose()` call).
- */
-export interface OwnedResource {
-  /** The owning disposal handle — for advanced/debug composition only. */
-  readonly lifetime: Lifetime;
-  /** Tear down exactly once (synchronously). Idempotent — inherited from {@link Lifetime}. */
-  dispose(): void;
-  /** Well-known disposer so the resource works with a `using` declaration. */
-  [Symbol.dispose](): void;
-}
-
-/**
- * A resource that owns its teardown ASYNCHRONOUSLY — the default, because
- * {@link LifetimeShape.dispose} returns a promise that settles once every async
- * finalizer settles. `dispose()` delegates to the owning Lifetime; the
+ * A resource that owns its teardown through LiteShip's one public lifecycle.
+ * {@link Lifetime.dispose} returns a promise that settles once every async
+ * finalizer settles, while every synchronous finalizer still runs before the
+ * `dispose()` call returns. `dispose()` delegates to the owning Lifetime; the
  * `[Symbol.asyncDispose]` well-known method makes it usable with an
  * `await using` declaration. `lifetime` stays reachable for advanced/debug
  * composition, but the value IS the disposable — there is no pair to
- * destructure and separately own.
+ * destructure and separately own. Callers must await disposal when they need
+ * to observe finalizer failure; fire-and-forget disposal is unsupported.
  */
 export interface AsyncOwnedResource {
   /** The owning disposal handle — for advanced/debug composition only. */
@@ -297,9 +276,8 @@ export interface AsyncOwnedResource {
  * `target.lifetime` for advanced/debug composition. Idempotent / exactly-once
  * disposal is inherited from the Lifetime.
  *
- * Async is the default because `Lifetime.dispose` is async; only expose a
- * synchronous {@link OwnedResource} for a resource whose teardown is genuinely
- * synchronous.
+ * The promise is the completion/error channel, not evidence that synchronous
+ * teardown was deferred: sync finalizers run during the `dispose()` call.
  */
 export function attachLifetime<T extends object>(target: T, lifetime: Lifetime): T & AsyncOwnedResource {
   const dispose = (): Promise<void> => lifetime.dispose();

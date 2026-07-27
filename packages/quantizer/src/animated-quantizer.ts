@@ -49,7 +49,7 @@ export interface InterpolatedFrame<B extends Boundary> {
  * Subscribe via `interpolated.subscribe(sink)`; a late subscriber never sees a
  * frame published before it attached.
  */
-export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuantizer<B> {
+export interface AnimatedQuantizer<B extends Boundary> extends ReactiveQuantizer<B> {
   /** Resolver that maps `from -> to` crossings to {@link TransitionConfig}. */
   readonly transition: Transition<B>;
   /** No-replay subscription of interpolated animation frames during crossings. */
@@ -64,7 +64,7 @@ export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuan
  * owning {@link Lifetime} stays reachable as `animated.lifetime` for advanced
  * composition.
  */
-export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizerShape<B> & AsyncOwnedResource;
+export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizer<B> & AsyncOwnedResource;
 
 // ---------------------------------------------------------------------------
 // Linear easing fallback
@@ -474,7 +474,7 @@ function makeAnimatedQuantizer<B extends Boundary>(
     if (firstFault !== undefined) throw firstFault.error;
   });
 
-  const animated: AnimatedQuantizerShape<B> = {
+  const animated: AnimatedQuantizer<B> = {
     _tag: 'Quantizer',
     boundary,
     transition: transitionResolver,
@@ -529,4 +529,3 @@ export const AnimatedQuantizer = {
 } as const;
 
 /** Public structural type for `AnimatedQuantizer`. */
-export type AnimatedQuantizer<B extends Boundary> = AnimatedQuantizerShape<B>;

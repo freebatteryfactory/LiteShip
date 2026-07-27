@@ -32,7 +32,7 @@ console.log(fnv1a('any string'));     // 'fnv1a:xxxxxxxx'
 
 ## Where it sits
 
-This package is a standalone leaf — it carries no `@liteship/core`, no Effect, and no spine imports, which is exactly why upstream and WASM-side code can address content without dragging in the full graph. `@liteship/core` re-anchors `ContentAddress` / `IntegrityDigest` to spine brands at its own boundary (ADR-0012); here they are kept local. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This package is a standalone leaf — it carries no `@liteship/core`, no Effect, and no spine imports, which is exactly why upstream and WASM-side code can address content without dragging in the full graph. `@liteship/core` re-anchors `ContentAddress` / `IntegrityDigest` to spine brands at its own boundary (ADR-0013); here they are kept local. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If encoding throws
 

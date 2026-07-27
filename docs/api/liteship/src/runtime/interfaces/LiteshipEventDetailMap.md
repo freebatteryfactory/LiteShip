@@ -73,7 +73,7 @@ Defined in: web/dist/wire/liteship-events.d.ts:49
 
 #### node
 
-> `readonly` **node**: [`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+> `readonly` **node**: [`GeneratedUINode`](../../../../spine/interfaces/GeneratedUINode.md)
 
 #### renderHash
 

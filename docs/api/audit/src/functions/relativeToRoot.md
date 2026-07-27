@@ -8,7 +8,9 @@
 
 > **relativeToRoot**(`filePath`, `root?`): `string`
 
-Defined in: [audit/src/shared.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L324)
+Defined in: [audit/src/shared.ts:338](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L338)
+
+Normalize an absolute path to a slash-separated audit-root path.
 
 ## Parameters
 

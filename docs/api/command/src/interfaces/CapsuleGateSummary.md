@@ -6,7 +6,7 @@
 
 # Interface: CapsuleGateSummary
 
-Defined in: [command/src/registry.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L396)
+Defined in: [command/src/registry.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L388)
 
 Structured verdict returned by the injected [CommandContext.runCapsuleGate](CommandContext.md#runcapsulegate)
 capability — the capsule-corpus freshness + bench-honesty + green-suite gate.
@@ -25,7 +25,7 @@ benchmark admission ran red.
 
 > `readonly` **benches**: [`CapsuleBenchClassification`](CapsuleBenchClassification.md)
 
-Defined in: [command/src/registry.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L403)
+Defined in: [command/src/registry.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L395)
 
 Per-corpus bench-honesty classification.
 
@@ -35,7 +35,7 @@ Per-corpus bench-honesty classification.
 
 > `readonly` **capsuleCount**: `number`
 
-Defined in: [command/src/registry.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L401)
+Defined in: [command/src/registry.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L393)
 
 Number of capsules in the manifest the gate read.
 
@@ -45,7 +45,7 @@ Number of capsules in the manifest the gate read.
 
 > `readonly` **errors**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L399)
+Defined in: [command/src/registry.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L391)
 
 Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `ok`.
 
@@ -55,4 +55,4 @@ Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `o
 
 > `readonly` **status**: `"ok"` \| `"stale"` \| `"failed"`
 
-Defined in: [command/src/registry.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L397)
+Defined in: [command/src/registry.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L389)

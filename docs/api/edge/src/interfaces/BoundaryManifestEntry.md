@@ -42,7 +42,7 @@ Optional immutable static-asset URL per output-pool index.
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [edge/src/manifest.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L109)
 

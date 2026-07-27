@@ -6,7 +6,7 @@
 
 # Function: MotionSampleSystem()
 
-> **MotionSampleSystem**(`plan`, `frameIndex`, `totalFrames`): `SystemShape`
+> **MotionSampleSystem**(`plan`, `frameIndex`, `totalFrames`): `System`
 
 Defined in: [scene/src/systems/motion.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/motion.ts#L52)
 
@@ -32,4 +32,4 @@ writes `_blend` — the two systems coexist on the same world.
 
 ## Returns
 
-`SystemShape`
+`System`

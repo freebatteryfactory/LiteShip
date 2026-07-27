@@ -6,7 +6,7 @@
 
 # Type Alias: Millis
 
-> **Millis** = `_Millis`
+> **Millis** = [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [core/src/schema/brands.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L60)
 

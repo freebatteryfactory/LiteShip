@@ -15,7 +15,7 @@ over the HTML fragment bytes (meta excluded; same law as graph 304 validators).
 
 ### baseGraphId
 
-> `readonly` **baseGraphId**: `ContentAddress`
+> `readonly` **baseGraphId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [web/src/dpu/watch-and-prepare.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L51)
 
@@ -23,7 +23,7 @@ Defined in: [web/src/dpu/watch-and-prepare.ts:51](https://github.com/freebattery
 
 ### digest
 
-> `readonly` **digest**: `AddressedDigest`
+> `readonly` **digest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [web/src/dpu/watch-and-prepare.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L53)
 
@@ -49,6 +49,6 @@ Stable logical marker name (from `nodeLogicalKey`), never a node id.
 
 ### resultGraphId
 
-> `readonly` **resultGraphId**: `ContentAddress`
+> `readonly` **resultGraphId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [web/src/dpu/watch-and-prepare.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/dpu/watch-and-prepare.ts#L52)

@@ -6,7 +6,7 @@
 
 # Function: createDirtyFlags()
 
-> **createDirtyFlags**\<`K`\>(`keys`): `DirtyFlagsShape`\<`K`\>
+> **createDirtyFlags**\<`K`\>(`keys`): [`DirtyFlags`](../type-aliases/DirtyFlags.md)\<`K`\>
 
 Defined in: [core/src/reactive/dirty.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/dirty.ts#L38)
 
@@ -27,7 +27,7 @@ readonly `K`[]
 
 ## Returns
 
-`DirtyFlagsShape`\<`K`\>
+[`DirtyFlags`](../type-aliases/DirtyFlags.md)\<`K`\>
 
 ## Example
 

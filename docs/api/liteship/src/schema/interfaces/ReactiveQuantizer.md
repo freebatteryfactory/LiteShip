@@ -20,7 +20,7 @@ evaluator produces; a purely-synchronous quantizer omits this extension.
 ## Extended by
 
 - [`LiveQuantizer`](../../../../quantizer/src/interfaces/LiveQuantizer.md)
-- [`AnimatedQuantizerShape`](../../../../quantizer/src/interfaces/AnimatedQuantizerShape.md)
+- [`AnimatedQuantizer`](../../../../quantizer/src/interfaces/AnimatedQuantizer.md)
 - [`LiveQuantizer`](../../reactive/interfaces/LiveQuantizer.md)
 
 ## Type Parameters

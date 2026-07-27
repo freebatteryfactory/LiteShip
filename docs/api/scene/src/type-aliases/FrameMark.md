@@ -6,7 +6,7 @@
 
 # Type Alias: FrameMark
 
-> **FrameMark** = `_FrameMark`
+> **FrameMark** = [`FrameMark`](../../../spine/type-aliases/FrameMark.md)
 
 Defined in: [scene/src/contract.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L39)
 

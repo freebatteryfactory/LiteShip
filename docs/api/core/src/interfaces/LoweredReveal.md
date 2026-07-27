@@ -14,7 +14,7 @@ Graph bundle produced by [lowerRevealIntent](../functions/lowerRevealIntent.md).
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L81)
 
@@ -22,7 +22,7 @@ Defined in: [core/src/motion/reveal.ts:81](https://github.com/freebatteryfactory
 
 ### entityId
 
-> `readonly` **entityId**: `ContentAddress`
+> `readonly` **entityId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L82)
 
@@ -46,7 +46,7 @@ Defined in: [core/src/motion/reveal.ts:79](https://github.com/freebatteryfactory
 
 ### policyId
 
-> `readonly` **policyId**: `ContentAddress`
+> `readonly` **policyId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L83)
 
@@ -54,7 +54,7 @@ Defined in: [core/src/motion/reveal.ts:83](https://github.com/freebatteryfactory
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L84)
 
@@ -62,6 +62,6 @@ Defined in: [core/src/motion/reveal.ts:84](https://github.com/freebatteryfactory
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/reveal.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/reveal.ts#L80)

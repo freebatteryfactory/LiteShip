@@ -70,7 +70,7 @@ interface TokenBufferConfig {
  * arrival and hands tokens out at a smooth cadence. Pass a capacity or reuse the
  * defaults (verb grammar, ADR-0046 — `create` allocates a runtime resource).
  */
-export function createTokenBuffer<T = string>(config?: TokenBufferConfig): TokenBufferShape<T> {
+export function createTokenBuffer<T = string>(config?: TokenBufferConfig): TokenBuffer<T> {
   const capacity = config?.capacity ?? 256;
   const alpha = config?.emaAlpha ?? 0.1;
   const clock = config?.clock ?? systemClock;

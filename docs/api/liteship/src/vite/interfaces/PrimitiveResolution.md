@@ -21,7 +21,7 @@ absolute path of the module it came from (surfaced in diagnostics).
 
 ### primitive
 
-> `readonly` **primitive**: [`PrimitiveShape`](../type-aliases/PrimitiveShape.md)\<`K`\>
+> `readonly` **primitive**: [`Primitive`](../type-aliases/Primitive.md)\<`K`\>
 
 Defined in: vite/dist/primitive-resolve.d.ts:31
 

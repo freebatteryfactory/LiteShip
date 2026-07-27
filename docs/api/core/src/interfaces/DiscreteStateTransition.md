@@ -46,7 +46,7 @@ Reuse the existing authority union.
 
 ### base
 
-> `readonly` **base**: `ContentAddress`
+> `readonly` **base**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/state-transition.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L64)
 
@@ -106,7 +106,7 @@ Prior state when known (undefined at genesis).
 
 ### resultId?
 
-> `readonly` `optional` **resultId?**: `ContentAddress`
+> `readonly` `optional` **resultId?**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/state-transition.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/state-transition.ts#L66)
 

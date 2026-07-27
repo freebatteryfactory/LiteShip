@@ -9,6 +9,7 @@ import {
 
 const BUDGET_FILE = 'packages/liteship/src/export-budget.ts';
 const ROOT_DTS_FILE = 'packages/liteship/dist/index.d.ts';
+const ROOT_SOURCE_FILE = 'packages/liteship/src/index.ts';
 const MANIFEST_FILE = 'packages/liteship/package.json';
 const ROOT_KEYS = [
   'name',
@@ -20,6 +21,12 @@ const ROOT_KEYS = [
   'failureContract',
   'example',
   'stability',
+  'audience',
+  'producer',
+  'surfaceClass',
+  'relatedInvariant',
+  'replacement',
+  'exampleProof',
 ] as const;
 
 type ContractEntry = Record<(typeof ROOT_KEYS)[number], string>;
@@ -36,7 +43,13 @@ type SubpathEntry = Record<
   | 'example'
   | 'stability'
   | 'symbol'
-  | 'reason',
+  | 'reason'
+  | 'audience'
+  | 'producer'
+  | 'surfaceClass'
+  | 'relatedInvariant'
+  | 'replacement'
+  | 'exampleProof',
   string
 >;
 
@@ -60,11 +73,18 @@ function declarationSurface(entries: readonly ContractEntry[]): string {
     .join('\n');
 }
 
+function producerSurface(entries: readonly ContractEntry[]): string {
+  return entries
+    .map((entry) => `${entry.kind === 'type' ? 'export type' : 'export'} { ${entry.name} } from '${entry.producer}';`)
+    .join('\n');
+}
+
 function rootFindings(entries: readonly object[], dts = declarationSurface(ROOT_ENTRIES)): readonly Finding[] {
   return facadeExportBudgetGate.run(
     memoryContext({
       [BUDGET_FILE]: budgetSource(entries),
       [ROOT_DTS_FILE]: dts,
+      [ROOT_SOURCE_FILE]: producerSurface(entries as readonly ContractEntry[]),
     }),
   );
 }
@@ -83,11 +103,12 @@ function completeSubpathFiles(entries: readonly SubpathEntry[] = SUBPATH_ENTRIES
   return {
     [BUDGET_FILE]: budgetSource(ROOT_ENTRIES, entries),
     [ROOT_DTS_FILE]: declarationSurface(ROOT_ENTRIES),
+    [ROOT_SOURCE_FILE]: producerSurface(ROOT_ENTRIES),
     [MANIFEST_FILE]: JSON.stringify({ exports: exportsMap }),
     ...Object.fromEntries(
       entries.map((entry) => [
         `packages/liteship/src/${entry.subpath.slice(2)}.ts`,
-        `export { ${entry.symbol} } from '${entry.owner}';`,
+        `export { ${entry.symbol} } from '${entry.producer}';`,
       ]),
     ),
   };
@@ -266,6 +287,7 @@ describe('facade export-budget adversarial properties', () => {
           'duplicate-subpath',
           'missing-facade',
           'wrong-owner',
+          'wrong-producer',
           'missing-symbol',
         ),
         (index, mutation) => {
@@ -283,6 +305,7 @@ describe('facade export-budget adversarial properties', () => {
           if (mutation === 'duplicate-subpath') entries.push({ ...target });
           if (mutation === 'missing-facade') delete files[facadeFile];
           if (mutation === 'wrong-owner') files[facadeFile] = `export { ${target.symbol} } from '@liteship/error';`;
+          if (mutation === 'wrong-producer') target.producer = '@liteship/error';
           if (mutation === 'missing-symbol') files[facadeFile] = `export { notTheSymbol } from '${target.owner}';`;
 
           files[BUDGET_FILE] = budgetSource(ROOT_ENTRIES, entries);

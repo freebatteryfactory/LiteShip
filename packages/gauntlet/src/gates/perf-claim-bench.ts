@@ -49,6 +49,7 @@ import {
   type QualifiedBenchDistribution,
 } from './bench-subjects.js';
 
+/** Stable rule identity for performance claims without admitted benchmarks. */
 export const PERF_CLAIM_BENCH_RULE_ID = 'gauntlet/perf-claim-without-bench';
 
 const DISTRIBUTIONS_PATH = 'benchmarks/distributions.json';

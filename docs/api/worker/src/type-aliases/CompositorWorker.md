@@ -6,8 +6,8 @@
 
 # Type Alias: CompositorWorker
 
-> **CompositorWorker** = [`CompositorWorkerShape`](../interfaces/CompositorWorkerShape.md)
+> **CompositorWorker** = `CompositorWorkerHandle`
 
-Defined in: [worker/src/compositor-worker.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L207)
+Defined in: [worker/src/compositor-worker.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L43)
 
-Public structural type for `CompositorWorker`.
+Direct public compositor-worker handle implemented by the package-owned factory.

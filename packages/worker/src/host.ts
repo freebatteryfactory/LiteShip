@@ -10,8 +10,8 @@
  * @module
  */
 
-import type { CompositeState, VideoConfig, Millis } from '@liteship/core';
-import { Millis as mkMillis } from '@liteship/core';
+import type { AsyncOwnedResource, CompositeState, VideoConfig, Millis } from '@liteship/core';
+import { Lifetime, Millis as mkMillis, attachLifetime } from '@liteship/core';
 import { HostCapabilityError } from '@liteship/error';
 import type { WorkerConfig } from './messages.js';
 import { CompositorWorker, type CompositorWorkerStartupTelemetry } from './compositor-worker.js';
@@ -26,7 +26,7 @@ type WorkerHostState = CompositeState & {
 // ---------------------------------------------------------------------------
 
 /**
- * The canvas surface {@link WorkerHostShape.attachCanvas} actually needs:
+ * The canvas surface {@link WorkerHost.attachCanvas} actually needs:
  * one transferable handoff. Structural rather than `HTMLCanvasElement` so
  * the dependency is named — test doubles (tests/helpers/mock-dom.ts) conform
  * to THIS type, and non-DOM canvas implementations work unchanged.
@@ -40,7 +40,7 @@ export interface TransferableCanvas {
 }
 
 /**
- * Render configuration accepted by {@link WorkerHostShape.startRender}.
+ * Render configuration accepted by {@link WorkerHost.startRender}.
  * Only `durationMs` is genuinely the caller's decision; the rest default
  * from context the host already has.
  */
@@ -67,9 +67,10 @@ export interface WorkerHostRenderConfig {
 /**
  * Host-facing surface of a worker host. Owns a compositor worker and,
  * optionally, a render worker created on demand via
- * {@link WorkerHostShape.attachCanvas}. Returned by {@link WorkerHost.create}.
+ * {@link WorkerHost.attachCanvas}. Returned by {@link WorkerHost.create}; use
+ * `await host.dispose()` to join every child release.
  */
-export interface WorkerHostShape {
+export interface WorkerHost extends AsyncOwnedResource {
   /** The compositor worker instance. */
   readonly compositor: CompositorWorker;
 
@@ -103,19 +104,13 @@ export interface WorkerHostShape {
    * Returns an unsubscribe function.
    */
   onState(callback: (state: WorkerHostState) => void): () => void;
-
-  /** Dispose both workers and release all resources. */
-  dispose(): void;
 }
 
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
-function _createWorkerHost(
-  config?: WorkerConfig,
-  startupTelemetry?: CompositorWorkerStartupTelemetry,
-): WorkerHostShape {
+function _createWorkerHost(config?: WorkerConfig, startupTelemetry?: CompositorWorkerStartupTelemetry): WorkerHost {
   const compositor = CompositorWorker.create(config, startupTelemetry);
   let renderer: RenderWorker | null = null;
   // Dimensions of the most recently attached canvas, captured BEFORE
@@ -127,80 +122,86 @@ function _createWorkerHost(
   // This keeps the render worker's internal state in sync when the
   // compositor produces new states.
   const stateUnsubscribers: Array<() => void> = [];
+  const lifetime = Lifetime.make();
 
-  const host: WorkerHostShape = {
-    get compositor(): CompositorWorker {
-      return compositor;
-    },
+  // Preserve the historical release order (subscriptions, compositor,
+  // renderer) while making every arm attempt-all and promise-observable.
+  lifetime.add(() => {
+    const current = renderer;
+    renderer = null;
+    return current?.dispose();
+  });
+  lifetime.add(() => compositor.dispose());
+  lifetime.add(() => {
+    for (const unsub of stateUnsubscribers) unsub();
+    stateUnsubscribers.length = 0;
+  });
 
-    get renderer(): RenderWorker | null {
-      return renderer;
-    },
+  const host = attachLifetime(
+    {
+      get compositor(): CompositorWorker {
+        return compositor;
+      },
 
-    attachCanvas(canvas: TransferableCanvas): void {
-      if (renderer === null) {
-        // The host's construction-time config rides through to the lazily
-        // minted render worker (e.g. targetFps frame pacing).
-        renderer = RenderWorker.create(config);
-      }
+      get renderer(): RenderWorker | null {
+        return renderer;
+      },
 
-      // Capture dimensions before the transfer — the canvas just told
-      // us the render target size, so startRender need not re-ask.
-      attachedCanvasSize = { width: canvas.width, height: canvas.height };
-
-      // Transfer control to an OffscreenCanvas and send it to the worker.
-      // `transferControlToOffscreen()` can only be called once per element.
-      const offscreen = canvas.transferControlToOffscreen();
-      renderer.transferCanvas(offscreen);
-    },
-
-    startRender(renderConfig: WorkerHostRenderConfig): void {
-      if (renderer === null || attachedCanvasSize === null) {
-        throw HostCapabilityError(
-          'WorkerHost.canvas',
-          'cannot start render -- no canvas attached. Call attachCanvas() first.',
-        );
-      }
-      const videoConfig: VideoConfig = {
-        // Brand internally — the host accepts plain numbers (mkMillis is
-        // the sanctioned cast site, same pattern as Boundary's thresholds).
-        durationMs: mkMillis(renderConfig.durationMs),
-        fps: renderConfig.fps ?? 60,
-        width: renderConfig.width ?? attachedCanvasSize.width,
-        height: renderConfig.height ?? attachedCanvasSize.height,
-      };
-      renderer.startRender(videoConfig);
-    },
-
-    stopRender(): void {
-      if (renderer !== null) {
-        renderer.stopRender();
-      }
-    },
-
-    onState(callback: (state: WorkerHostState) => void): () => void {
-      const unsub = compositor.onState(callback);
-      stateUnsubscribers.push(unsub);
-      return () => {
-        const index = stateUnsubscribers.indexOf(unsub);
-        if (index >= 0) {
-          stateUnsubscribers.splice(index, 1);
+      attachCanvas(canvas: TransferableCanvas): void {
+        if (renderer === null) {
+          // The host's construction-time config rides through to the lazily
+          // minted render worker (e.g. targetFps frame pacing).
+          renderer = RenderWorker.create(config);
         }
-        unsub();
-      };
-    },
 
-    dispose(): void {
-      for (const unsub of stateUnsubscribers) unsub();
-      stateUnsubscribers.length = 0;
+        // Capture dimensions before the transfer — the canvas just told
+        // us the render target size, so startRender need not re-ask.
+        attachedCanvasSize = { width: canvas.width, height: canvas.height };
 
-      compositor.dispose();
-      if (renderer !== null) {
-        renderer.dispose();
-        renderer = null;
-      }
+        // Transfer control to an OffscreenCanvas and send it to the worker.
+        // `transferControlToOffscreen()` can only be called once per element.
+        const offscreen = canvas.transferControlToOffscreen();
+        renderer.transferCanvas(offscreen);
+      },
+
+      startRender(renderConfig: WorkerHostRenderConfig): void {
+        if (renderer === null || attachedCanvasSize === null) {
+          throw HostCapabilityError(
+            'WorkerHost.canvas',
+            'cannot start render -- no canvas attached. Call attachCanvas() first.',
+          );
+        }
+        const videoConfig: VideoConfig = {
+          // Brand internally — the host accepts plain numbers (mkMillis is
+          // the sanctioned cast site, same pattern as Boundary's thresholds).
+          durationMs: mkMillis(renderConfig.durationMs),
+          fps: renderConfig.fps ?? 60,
+          width: renderConfig.width ?? attachedCanvasSize.width,
+          height: renderConfig.height ?? attachedCanvasSize.height,
+        };
+        renderer.startRender(videoConfig);
+      },
+
+      stopRender(): void {
+        if (renderer !== null) {
+          renderer.stopRender();
+        }
+      },
+
+      onState(callback: (state: WorkerHostState) => void): () => void {
+        const unsub = compositor.onState(callback);
+        stateUnsubscribers.push(unsub);
+        return () => {
+          const index = stateUnsubscribers.indexOf(unsub);
+          if (index >= 0) {
+            stateUnsubscribers.splice(index, 1);
+          }
+          unsub();
+        };
+      },
     },
-  };
+    lifetime,
+  );
 
   return host;
 }
@@ -222,7 +223,7 @@ function _createWorkerHost(
  * 3. `host.startRender(videoConfig)` / `host.stopRender()` to control
  *    the render loop.
  * 4. `host.onState(cb)` to subscribe to composite state updates.
- * 5. `host.dispose()` when the host is unmounted -- releases both
+ * 5. `await host.dispose()` when the host is unmounted -- releases both
  *    workers and every subscription.
  *
  * @example
@@ -236,21 +237,19 @@ function _createWorkerHost(
  * const unsub = host.onState((state) => console.log(state.discrete));
  * // ...
  * unsub();
- * host.dispose();
+ * await host.dispose();
  * ```
  */
 export const WorkerHost = {
   /**
    * Create a worker host. The compositor worker starts immediately; the
    * render worker is created lazily on the first
-   * {@link WorkerHostShape.attachCanvas} call.
+   * {@link WorkerHost.attachCanvas} call.
    */
   create: _createWorkerHost,
 } as const;
 
 /** Public structural type for `WorkerHost`. */
-export type WorkerHost = WorkerHostShape;
-
 export declare namespace WorkerHost {
   /** Telemetry sink forwarded to the inner compositor worker. */
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;

@@ -13,6 +13,7 @@ import { existsSync, readFileSync, readdirSync, type Dirent } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import type { ApiSymbolResolution } from '@liteship/command';
 import { PACKAGE_METADATA_CATALOG } from './package-metadata-catalog.js';
+import { GENERATED_LITESHIP_SOURCE_ENTRYPOINTS } from './audit-package-catalog.generated.js';
 
 const DECLARATION_KINDS = 'const|let|var|function|class|interface|type|enum|namespace';
 
@@ -27,6 +28,7 @@ interface IndexedPackage {
   readonly name: string;
   readonly packageDir: string;
   readonly mode: 'source' | 'installed';
+  readonly sourceEntrypoints?: Readonly<Record<string, string>>;
 }
 
 interface PublicEntrypoint {
@@ -85,7 +87,10 @@ function sourcePackages(repoRoot: string): readonly IndexedPackage[] {
     const packageDir = join(packagesDir, entry.name);
     const manifest = readManifest(packageDir);
     if (manifest === null || PACKAGE_METADATA_CATALOG[manifest.name] === undefined) continue;
-    result.push({ name: manifest.name, packageDir, mode: 'source' });
+    const sourceEntrypoints =
+      GENERATED_LITESHIP_SOURCE_ENTRYPOINTS[manifest.name as keyof typeof GENERATED_LITESHIP_SOURCE_ENTRYPOINTS];
+    if (sourceEntrypoints === undefined) continue;
+    result.push({ name: manifest.name, packageDir, mode: 'source', sourceEntrypoints });
   }
   return result.sort((left, right) => left.name.localeCompare(right.name));
 }
@@ -129,10 +134,7 @@ function selectTarget(target: ExportTarget, mode: IndexedPackage['mode']): strin
     return null;
   }
   const conditions = target as { readonly [condition: string]: ExportTarget };
-  const preferred =
-    mode === 'source'
-      ? ['development', 'types', 'import', 'default', 'require']
-      : ['types', 'import', 'default', 'require', 'development'];
+  const preferred = ['types', 'import', 'default', 'require'];
   for (const condition of preferred) {
     if (!(condition in conditions)) continue;
     const selected = selectTarget(conditions[condition] as ExportTarget, mode);
@@ -146,6 +148,12 @@ function selectTarget(target: ExportTarget, mode: IndexedPackage['mode']): strin
 }
 
 function publicEntrypoints(pkg: IndexedPackage): readonly PublicEntrypoint[] {
+  if (pkg.mode === 'source') {
+    return Object.entries(pkg.sourceEntrypoints ?? {})
+      .map(([subpath, source]) => ({ subpath, file: resolve(pkg.packageDir, '..', '..', source) }))
+      .filter((entry) => existsSync(entry.file))
+      .sort((left, right) => left.subpath.localeCompare(right.subpath));
+  }
   const manifest = readManifest(pkg.packageDir);
   if (manifest?.exports === undefined) return [];
   const exportsField = manifest.exports;

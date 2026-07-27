@@ -23,7 +23,7 @@ transitively via pose → entity → component; diffs bindings into typed tweens
 
 ### transitionId
 
-`ContentAddress`
+[`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 ## Returns
 

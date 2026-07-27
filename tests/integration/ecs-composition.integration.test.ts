@@ -8,7 +8,7 @@
 import { describe, test, expect } from 'vitest';
 import {
   ComposableWorld,
-  Part,
+  createDenseStore,
   RuntimeCoordinator,
   defineBoundary,
   defineToken,
@@ -140,7 +140,7 @@ describe('ECS Composition Integration', () => {
 
   test('entity despawn removes entities from queries and dense stores', () => {
     const world = createWorld();
-    const denseStore = Part.dense('hp', 16);
+    const denseStore = createDenseStore('hp', 16);
     world.addDenseStore(denseStore);
     const id = world.spawn({ boundary, role: 'hero' });
     denseStore.set(id, 99);

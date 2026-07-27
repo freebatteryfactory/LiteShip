@@ -13,7 +13,7 @@ It ships:
 
 - [Morph](variables/Morph.md): idiomorph-style DOM diffing that preserves focus,
   scroll, and form state across re-renders.
-- [SlotRegistry](type-aliases/SlotRegistry.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
+- [SlotRegistry](interfaces/SlotRegistry.md) / [SlotAddressing](variables/SlotAddressing.md): stable addressing
   for server-rendered slots in streaming HTML.
 - [SSE](variables/SSE.md) / [Resumption](variables/Resumption.md): an Effect-scoped Server-Sent
   Events client with reconnect and cross-tab resumption.
@@ -39,7 +39,7 @@ It ships:
 - [LiteshipMorphRejectedDetail](interfaces/LiteshipMorphRejectedDetail.md)
 - [LiteshipStreamErrorDetail](interfaces/LiteshipStreamErrorDetail.md)
 - [LiteshipUniformUpdateDetail](interfaces/LiteshipUniformUpdateDetail.md)
-- [LLMAdapterShape](interfaces/LLMAdapterShape.md)
+- [LLMAdapter](interfaces/LLMAdapter.md)
 - [LLMChunk](interfaces/LLMChunk.md)
 - [LLMStreamConfig](interfaces/LLMStreamConfig.md)
 - [MatchResult](interfaces/MatchResult.md)
@@ -58,7 +58,7 @@ It ships:
 - [ShaderIntegrity](interfaces/ShaderIntegrity.md)
 - [SlotEntry](interfaces/SlotEntry.md)
 - [SlotEntryInput](interfaces/SlotEntryInput.md)
-- [SlotRegistryShape](interfaces/SlotRegistryShape.md)
+- [SlotRegistry](interfaces/SlotRegistry.md)
 - [SSEClient](interfaces/SSEClient.md)
 - [SSEConfig](interfaces/SSEConfig.md)
 - [SSEEventSource](interfaces/SSEEventSource.md)
@@ -82,7 +82,6 @@ It ships:
 - [IslandMode](type-aliases/IslandMode.md)
 - [LiteshipEventDisposer](type-aliases/LiteshipEventDisposer.md)
 - [LiteshipEventName](type-aliases/LiteshipEventName.md)
-- [LLMAdapter](type-aliases/LLMAdapter.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
@@ -95,7 +94,6 @@ It ships:
 - [ShaderIntegrityMode](type-aliases/ShaderIntegrityMode.md)
 - [SlotPath](type-aliases/SlotPath.md)
 - [SlotPath](type-aliases/SlotPath-1.md)
-- [SlotRegistry](type-aliases/SlotRegistry.md)
 - [SSEMessage](type-aliases/SSEMessage.md)
 - [SSEState](type-aliases/SSEState.md)
 - [StreamRecoveryMutationClient](type-aliases/StreamRecoveryMutationClient.md)

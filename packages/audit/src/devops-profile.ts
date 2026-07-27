@@ -1,31 +1,25 @@
 /**
  * DevopsProfile (CUT D7 → relocated D9b-1) — the config/profile seam that drives
- * the audit engine. The default `liteshipDevopsProfile` references this package's
- * reference policy consts; `repoRoot` defaults to the current working directory
- * so the engine audits the caller's tree. A downstream project supplies its own
- * profile (programmatically or via `liteship audit --profile`).
+ * the audit engine. The reusable engine owns no project policy: hosts inject
+ * topology, surface, exemption, and suppression data explicitly. Partial
+ * downstream profiles resolve to conservative empty policy rather than inheriting
+ * the framework host's assumptions.
  *
  * @module
  */
 import { ValidationError } from '@liteship/error';
-import {
-  packageTopology,
-  surfacePolicy,
-  dynamicImportExemptions,
-  foundationalPackages,
-  normalizeRepoPath,
-} from './policy.js';
-import type { PackagePolicy } from './policy.js';
+import { normalizeRepoPath } from './policy.js';
+import type { AuditAllowlistEntry, PackagePolicy } from './policy.js';
 import { listProfilePackageManifests } from './shared.js';
 
 /**
  * Structural shape of the surface policy the audit reads. Every field is
  * OPTIONAL: an absent surface is a surface the profile never declared, so its
  * check does not run — a downstream project with no Astro/Vite host supplies
- * `{}` and carries no host assumptions. The LiteShip `surfacePolicy` const is
- * the fully-populated reference.
+ * `{}` and carries no host assumptions. A framework host may inject a
+ * fully-populated reference policy.
  */
-export interface SurfacePolicyShape {
+export interface SurfacePolicy {
   /** Astro host package name. Absent/empty — no Astro host, no astro checks. */
   readonly astroPackage?: string;
   readonly astroClientDirectives?: readonly string[];
@@ -38,7 +32,7 @@ export interface SurfacePolicyShape {
   readonly astroRuntimeFiles?: readonly string[];
   readonly viteVirtualModules?: readonly string[];
   /**
-   * Package owning the Vite virtual-module inventory (e.g. `'@liteship/vite'`).
+   * Package owning the Vite virtual-module inventory.
    * When absent, the legacy repo-root-relative `packages/vite/...` location
    * is used so existing profiles keep working.
    */
@@ -55,13 +49,13 @@ export interface SurfacePolicyShape {
 export interface DevopsProfile {
   /** Repo root all engine paths resolve against — the authoritative audit target. */
   readonly repoRoot: string;
-  /** Internal workspace package prefix — replaces the hardcoded `'@liteship/'` import gate. */
+  /** Internal workspace package prefix used by the import gate. */
   readonly internalPackagePrefix: string;
   /** Package layering law: package → { allowedInternalImports, kind }. */
   readonly packageTopology: Record<string, PackagePolicy>;
   /**
    * Foundational packages every package may import without an explicit
-   * `allowedInternalImports` entry (the runtime analogue of `@liteship/_spine`).
+   * `allowedInternalImports` entry.
    * Optional: absent ⇒ no foundational exemptions (every internal edge must be
    * listed). Downstream profiles may set their own.
    */
@@ -69,13 +63,17 @@ export interface DevopsProfile {
   /** Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`). */
   readonly dynamicImportExemptions: ReadonlySet<string>;
   /** Known public-surface files (orphan-detection seed). */
-  readonly surfacePolicy: SurfacePolicyShape;
+  readonly surfacePolicy: SurfacePolicy;
+  /** Explicit finding suppressions owned by this profile. Absent policy means no suppression. */
+  readonly allowlist?: readonly AuditAllowlistEntry[];
+  /** Host-owned package/subpath to source-file projection for source-mode analysis. */
+  readonly sourceEntrypoints?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /**
    * Optional explicit package-root map: package name → ABSOLUTE package dir.
    * When present, the passes enumerate THESE roots instead of globbing
    * `repoRoot/packages/*` — the consumer-install seam. Build one with
    * `consumerDevopsProfile()` / `discoverInstalledPackageRoots()` to audit
-   * the `@liteship/*` packages installed in a downstream repo's node_modules.
+   * the profile's packages installed in a downstream repo's node_modules.
    */
   readonly packageRoots?: Readonly<Record<string, string>>;
 }
@@ -91,23 +89,10 @@ export const DEVOPS_PROFILE_KEYS = [
   'foundationalPackages',
   'dynamicImportExemptions',
   'surfacePolicy',
+  'allowlist',
+  'sourceEntrypoints',
   'packageRoots',
 ] as const satisfies readonly (keyof DevopsProfile)[];
-
-/**
- * LiteShip's own profile — the reference DEFAULT. It references this package's
- * policy consts verbatim; `repoRoot` defaults to the current working directory
- * (for in-repo `pnpm run audit`, run from the repo root). Tests and downstream
- * callers point it elsewhere with `withRepoRoot`.
- */
-export const liteshipDevopsProfile: DevopsProfile = {
-  repoRoot: normalizeRepoPath(process.cwd()),
-  internalPackagePrefix: '@liteship/',
-  packageTopology,
-  foundationalPackages,
-  dynamicImportExemptions,
-  surfacePolicy,
-};
 
 /**
  * Derive a profile pointed at a different repo root (CUT D9a). `repoRoot` is the
@@ -139,8 +124,8 @@ function deriveInternalPackagePrefix(profile: DevopsProfile): string {
     'devops-profile',
     `resolveDevopsProfile: internalPackagePrefix was omitted and cannot be derived — ${observed}. ` +
       `Pass it explicitly, e.g. runAuditPasses({ repoRoot, internalPackagePrefix: '@acme/' }). ` +
-      `If this repo only CONSUMES @liteship/* from npm (it has no internal scope of its own), run ` +
-      `\`liteship audit --consumer\` instead — it audits the installed packages and never derives a prefix. ` +
+      `If this repo only consumes a framework fleet from npm (it has no internal scope of its own), run ` +
+      `the host's consumer-audit command instead — it audits installed packages and never derives a prefix. ` +
       `(A silent no-op prefix is deliberately NOT the default: a clean audit must never mean "nothing was checked".)`,
   );
 }
@@ -153,6 +138,7 @@ function deriveInternalPackagePrefix(profile: DevopsProfile): string {
  *   • `packageTopology`          → `{}` (coverage classifies as policy-absent)
  *   • `dynamicImportExemptions`  → empty set (no sanctioned dynamic edges)
  *   • `surfacePolicy`            → `{}` (no host-surface assumptions)
+ *   • `allowlist`                → `[]` (no hidden project suppression)
  *   • `internalPackagePrefix`    → derived from the single common npm scope of
  *     the discovered package manifests; ambiguous or unscoped trees throw a
  *     teaching error instead of guessing.
@@ -168,6 +154,8 @@ export function resolveDevopsProfile(partial: Partial<DevopsProfile>): DevopsPro
     packageTopology: partial.packageTopology ?? {},
     dynamicImportExemptions: partial.dynamicImportExemptions ?? new Set<string>(),
     surfacePolicy: partial.surfacePolicy ?? {},
+    allowlist: partial.allowlist ?? [],
+    ...(partial.sourceEntrypoints !== undefined ? { sourceEntrypoints: partial.sourceEntrypoints } : {}),
     ...(partial.foundationalPackages !== undefined ? { foundationalPackages: partial.foundationalPackages } : {}),
     ...(partial.packageRoots !== undefined ? { packageRoots: partial.packageRoots } : {}),
   };

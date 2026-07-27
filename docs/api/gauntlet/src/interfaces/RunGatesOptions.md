@@ -6,7 +6,7 @@
 
 # Interface: RunGatesOptions
 
-Defined in: [gauntlet/src/engine.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L51)
+Defined in: [gauntlet/src/engine.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L53)
 
 Options for [runGates](../functions/runGates.md) — all optional, all back-compatible.
 
@@ -16,7 +16,7 @@ Options for [runGates](../functions/runGates.md) — all optional, all back-comp
 
 > `readonly` `optional` **assuranceMap?**: readonly [`LevelRule`](LevelRule.md)[]
 
-Defined in: [gauntlet/src/engine.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L56)
+Defined in: [gauntlet/src/engine.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L58)
 
 The assurance map used to SCOPE each gate to files at-or-above its level.
 Omit to run every gate over ALL files (back-compat — no level scoping).
@@ -27,7 +27,7 @@ Omit to run every gate over ALL files (back-compat — no level scoping).
 
 > `readonly` `optional` **cache?**: [`GateVerdictCache`](GateVerdictCache.md)
 
-Defined in: [gauntlet/src/engine.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L86)
+Defined in: [gauntlet/src/engine.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L88)
 
 The INJECTED content-addressed verdict cache (Slice B, B2). When present
 ALONGSIDE [toolchainDigest](#toolchaindigest), each gate's RAW `gate.run` output is cached
@@ -44,7 +44,7 @@ verdict; it only avoids recomputing a provably-identical one. See
 
 > `readonly` `optional` **effectiveLevels?**: `ReadonlyMap`\<`string`, [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)\>
 
-Defined in: [gauntlet/src/engine.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L71)
+Defined in: [gauntlet/src/engine.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L73)
 
 The PROPAGATED effective assurance levels (Slice B, B3.4) — a file's level
 after import-graph propagation (`propagateAssuranceLevels`), so a file PULLED
@@ -65,7 +65,7 @@ via [assuranceMap](#assurancemap), no finding elevation. Never lowers a level (m
 
 > `readonly` `optional` **env?**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [gauntlet/src/engine.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L101)
+Defined in: [gauntlet/src/engine.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L103)
 
 The environment fingerprint folded into every cache key (node / platform /
 arch / pm), so a verdict cached under one toolchain is never served to
@@ -78,7 +78,7 @@ only consulted on the cache path.
 
 > `readonly` `optional` **now?**: `Date`
 
-Defined in: [gauntlet/src/engine.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L75)
+Defined in: [gauntlet/src/engine.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L77)
 
 Injected clock for waiver-expiry evaluation. Defaults to the epoch (no expiry) — NEVER `Date.now()`.
 
@@ -88,7 +88,7 @@ Injected clock for waiver-expiry evaluation. Defaults to the epoch (no expiry) �
 
 > `readonly` `optional` **toolchainDigest?**: `string`
 
-Defined in: [gauntlet/src/engine.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L94)
+Defined in: [gauntlet/src/engine.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L96)
 
 The host's TOOLCHAIN DIGEST — a hash that CHANGES when the gauntlet's gate
 logic changes (a gate edit → rebuilt dist → new digest). REQUIRED for caching
@@ -102,6 +102,6 @@ when the covered files are byte-identical. Host-computed (the CLI), never here.
 
 > `readonly` `optional` **waivers?**: readonly [`Waiver`](Waiver.md)[]
 
-Defined in: [gauntlet/src/engine.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L73)
+Defined in: [gauntlet/src/engine.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L75)
 
 Waivers applied to every gate's findings (matched → suppressed).

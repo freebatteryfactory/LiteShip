@@ -6,7 +6,7 @@
 
 # Type Alias: EaseTag
 
-> **EaseTag** = `_EaseTag`
+> **EaseTag** = [`EaseTag`](../../../spine/type-aliases/EaseTag.md)
 
 Defined in: [scene/src/sugar/ease.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/ease.ts#L27)
 

@@ -39,10 +39,10 @@ function targetsForState<B extends Boundary>(outputs: QuantizerOutputs<B>, state
   });
 }
 
-function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>(
+async function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>(
   config: QuantizerConfig<B, O>,
   value: number,
-): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
+): Promise<Partial<{ [K in OutputTarget]: Record<string, unknown> }>> {
   const live = createQuantizer(config);
   // outputChanges is a replay-1 kernel: subscribe replays the current outputs
   // (events[0]), evaluate() publishes the post-crossing outputs (events[1]) —
@@ -51,7 +51,7 @@ function emittedAfterCrossing<B extends Boundary, O extends QuantizerOutputs<B>>
   const dispose = live.outputChanges.subscribe((record) => events.push(record));
   live.evaluate(value);
   dispose();
-  void live.dispose();
+  await live.dispose();
   return events[1] ?? {};
 }
 

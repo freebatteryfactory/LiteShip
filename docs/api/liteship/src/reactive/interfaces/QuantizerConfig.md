@@ -50,7 +50,7 @@ Targets force-enabled past their tier gate; part of the content address.
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: quantizer/dist/quantizer.d.ts:158
 
@@ -98,7 +98,7 @@ Spring constant (force per unit displacement); higher = snappier.
 
 ### tier?
 
-> `readonly` `optional` **tier?**: `MotionTier`
+> `readonly` `optional` **tier?**: [`MotionTier`](../../../../spine/type-aliases/MotionTier.md)
 
 Defined in: quantizer/dist/quantizer.d.ts:160
 

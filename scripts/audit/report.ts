@@ -40,8 +40,8 @@ import {
 } from './shared.js';
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
-import { liteshipDevopsProfile } from '@liteship/audit';
 import type { DevopsProfile } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../packages/cli/src/lib/liteship-audit-profile.js';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,

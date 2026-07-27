@@ -28,12 +28,12 @@ import { join } from 'node:path';
 import {
   buildRepoIR,
   withRepoRoot,
-  liteshipDevopsProfile,
   detectSkipsAST,
   detectEarlyReturnBeforeExpectAST,
   codeOnlyAST,
   type FactOracle,
 } from '@liteship/audit';
+import { liteshipDevopsProfile } from './liteship-audit-profile.js';
 import { INVARIANTS, matchesInvariantExemption, type CheckInvariantEntry } from '@liteship/command/invariants';
 import { buildCheckGovernanceFacts, currentEnvFingerprint } from '@liteship/command/host';
 import { InvariantViolationError } from '@liteship/error';
@@ -50,7 +50,8 @@ import {
   type SpineRelationBuildOptions,
 } from '@liteship/audit';
 import { LITESHIP_SPINE_ADMISSIONS } from './spine-relation-policy.js';
-import { LITESHIP_EXPORT_REQUIRED_FIELDS, LITESHIP_TRANSITION_REQUIRED_FIELDS } from './active-surface-policy.js';
+import { LITESHIP_ACTIVE_SURFACES, LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS } from './active-surface-policy.js';
+import { LITESHIP_TYPESCRIPT_PATH_ALIASES } from './liteship-typescript-aliases.js';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
 import { LITESHIP_CAPABILITY_MODULES, LITESHIP_CAPABILITY_IDS, resolveCapabilitySites } from './capability-policy.js';
 import {
@@ -289,6 +290,7 @@ export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = fals
   return buildRepoIR(withRepoRoot(liteshipDevopsProfile, repoRoot), {
     extraFactOracles: [liteshipRegexOracle],
     withSymbolReferences,
+    typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     ...(benchmarkDistributions !== undefined ? { benchmarkDistributions } : {}),
   });
 }
@@ -459,7 +461,10 @@ export async function runGauntletWithRepoIR(
   // depth is carried in the facts (the report states what was and was not traced).
   if (cacheOpts.withTaint === true) {
     gateSet.push(taintFlowGate);
-    taintFacts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, { profile: withRepoRoot(liteshipDevopsProfile, repoRoot) });
+    taintFacts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, {
+      profile: withRepoRoot(liteshipDevopsProfile, repoRoot),
+      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+    });
   }
 
   // The `--capability-gate` opt-in (codex round-8, #1b — the capability-link dataflow proof). The host
@@ -476,6 +481,7 @@ export async function runGauntletWithRepoIR(
       capabilityModules: LITESHIP_CAPABILITY_MODULES,
       capabilityIds: LITESHIP_CAPABILITY_IDS,
       sites: resolveCapabilitySites(repoRoot),
+      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
     });
   }
 
@@ -521,7 +527,11 @@ export async function runGauntletWithRepoIR(
   // resolveVerdictCache) so a spine-relation verdict never serves a non-spine-relation run.
   if (cacheOpts.withSpineRelation === true) {
     gateSet.push(spineRelationGate);
-    spineRelationFacts = buildSpineRelationFacts(LITESHIP_SPINE_ADMISSIONS, repoRoot, cacheOpts.spineRelation ?? {});
+    spineRelationFacts = buildSpineRelationFacts(LITESHIP_SPINE_ADMISSIONS, repoRoot, {
+      spinePackageSpecifier: '@liteship/_spine',
+      typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
+      ...cacheOpts.spineRelation,
+    });
   }
 
   // The active-surface field-read oracle (#132) is ALWAYS-ON on the `--ir` path:
@@ -531,8 +541,9 @@ export async function runGauntletWithRepoIR(
   const activeSurfaceFacts: ActiveSurfaceFacts = buildActiveSurfaceFacts({
     repoRoot,
     promotion: 'blocking',
-    transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
-    exportRequiredFields: LITESHIP_EXPORT_REQUIRED_FIELDS,
+    surfaces: LITESHIP_ACTIVE_SURFACES,
+    requiredFields: LITESHIP_ACTIVE_SURFACE_REQUIRED_FIELDS,
+    typeScriptPathAliases: LITESHIP_TYPESCRIPT_PATH_ALIASES,
   });
 
   const launchOpts: LitelaunchCacheOptions = {

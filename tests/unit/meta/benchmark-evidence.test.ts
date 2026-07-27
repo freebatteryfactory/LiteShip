@@ -39,7 +39,7 @@ function input(overrides: Partial<BenchmarkEvidenceInput> = {}): BenchmarkEviden
     },
     input: {
       dimensions: [{ name: 'threshold-count', unit: 'thresholds', distribution: 'powers-of-two' }],
-      sizes: [8, 32, 128, 512],
+      sizes: [8, 32, 128, 512, 2048],
     },
     measurement: {
       mode: 'warm',
@@ -99,7 +99,7 @@ describe('BenchmarkEvidence', () => {
     expect(Object.isFrozen(evidence.input.dimensions)).toBe(true);
 
     (source.input.sizes as number[])[0] = 4;
-    expect(evidence.input.sizes).toEqual([8, 32, 128, 512]);
+    expect(evidence.input.sizes).toEqual([8, 32, 128, 512, 2048]);
   });
 
   it('classifies low R2 as unknown, never pass', () => {
@@ -138,6 +138,28 @@ describe('BenchmarkEvidence', () => {
     );
     expect(evidence.admission).toEqual({ disposition: 'unknown', reasons: ['under-replicated'] });
     expect(evidence.regressionDisposition).toBe('inconclusive');
+  });
+
+  it('classifies a thin or non-geometric complexity sweep as unknown', () => {
+    const thin = createBenchmarkEvidence(input({ input: { ...input().input, sizes: [8, 16, 32, 64] } }));
+    expect(thin.admission).toEqual({ disposition: 'unknown', reasons: ['insufficient-size-sweep'] });
+
+    const clustered = createBenchmarkEvidence(input({ input: { ...input().input, sizes: [8, 16, 24, 48, 96] } }));
+    expect(clustered.admission).toEqual({ disposition: 'unknown', reasons: ['invalid-size-sweep'] });
+  });
+
+  it('refuses an evidence record that attempts to weaken the shared confidence policy', () => {
+    expect(() =>
+      createBenchmarkEvidence(
+        input({
+          confidence: {
+            minimumR2: 0.5,
+            coefficientOfVariation: 0.03,
+            maximumCoefficientOfVariation: 0.25,
+          },
+        }),
+      ),
+    ).toThrow(/cannot weaken the claim-bearing floor/u);
   });
 
   it('keeps deterministic complexity, allocation, leak, and canary violations blocking', () => {
@@ -228,8 +250,8 @@ describe('existing complexity producer → addressed evidence → admission', ()
     owner: '@liteship/core',
     describe: 'fixture',
     shape: 'batch-values',
-    sizes: [8, 32, 128],
-    measurement: { innerIterations: 10, replicates: 5, warmupIterations: 2 },
+    sizes: [8, 16, 32, 64, 128],
+    measurement: { innerIterations: 10, replicates: 7, warmupIterations: 2 },
     workloadFor: () => () => undefined,
   };
   const identity: BenchmarkProducerIdentity = {
@@ -244,7 +266,7 @@ describe('existing complexity producer → addressed evidence → admission', ()
 
   function map(overrides: Partial<ComplexityMap['entries'][number]> = {}): ComplexityMap {
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: [
         {
           path: probe.path,
@@ -255,7 +277,7 @@ describe('existing complexity producer → addressed evidence → admission', ()
           fittedSlope: 1,
           fittedR2: 0.99,
           coefficientOfVariation: 0.03,
-          measurement: { innerIterations: 10, replicates: 5, warmupIterations: 2 },
+          measurement: { innerIterations: 10, replicates: 7, warmupIterations: 2 },
           ...overrides,
         },
       ],

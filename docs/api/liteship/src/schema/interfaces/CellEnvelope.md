@@ -26,7 +26,7 @@ payload in `value`.
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/schema/protocol.d.ts:29
 

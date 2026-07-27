@@ -6,7 +6,7 @@
 
 # Interface: FacadeLifecycleOperationContract
 
-Defined in: [liteship/src/export-budget.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L51)
+Defined in: [liteship/src/export-budget.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L70)
 
 One public allocation operation and its exact resource-ownership law.
 
@@ -16,7 +16,7 @@ One public allocation operation and its exact resource-ownership law.
 
 > `readonly` **classification**: [`FacadeLifecycleClass`](../type-aliases/FacadeLifecycleClass.md)
 
-Defined in: [liteship/src/export-budget.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L55)
+Defined in: [liteship/src/export-budget.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L74)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [liteship/src/export-budget.ts:55](https://github.com/freebatteryfac
 
 > `readonly` **disposal**: [`FacadeDisposalContract`](../type-aliases/FacadeDisposalContract.md)
 
-Defined in: [liteship/src/export-budget.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L56)
+Defined in: [liteship/src/export-budget.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L75)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [liteship/src/export-budget.ts:56](https://github.com/freebatteryfac
 
 > `readonly` **operation**: `string`
 
-Defined in: [liteship/src/export-budget.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L52)
+Defined in: [liteship/src/export-budget.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L71)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [liteship/src/export-budget.ts:52](https://github.com/freebatteryfac
 
 > `readonly` **owner**: `` `@liteship/${string}` ``
 
-Defined in: [liteship/src/export-budget.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L54)
+Defined in: [liteship/src/export-budget.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L73)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [liteship/src/export-budget.ts:54](https://github.com/freebatteryfac
 
 > `readonly` **postDispose**: [`FacadePostDisposeContract`](../type-aliases/FacadePostDisposeContract.md)
 
-Defined in: [liteship/src/export-budget.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L57)
+Defined in: [liteship/src/export-budget.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L76)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [liteship/src/export-budget.ts:57](https://github.com/freebatteryfac
 
 > `readonly` **proof**: `` `tests/${string}` ``
 
-Defined in: [liteship/src/export-budget.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L59)
+Defined in: [liteship/src/export-budget.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L78)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [liteship/src/export-budget.ts:59](https://github.com/freebatteryfac
 
 > `readonly` **rationale**: `string`
 
-Defined in: [liteship/src/export-budget.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L60)
+Defined in: [liteship/src/export-budget.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L79)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [liteship/src/export-budget.ts:60](https://github.com/freebatteryfac
 
 > `readonly` **siblingCleanup**: [`FacadeSiblingCleanupContract`](../type-aliases/FacadeSiblingCleanupContract.md)
 
-Defined in: [liteship/src/export-budget.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L58)
+Defined in: [liteship/src/export-budget.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L77)
 
 ***
 
@@ -80,4 +80,4 @@ Defined in: [liteship/src/export-budget.ts:58](https://github.com/freebatteryfac
 
 > `readonly` **specifier**: `` `liteship/${string}` ``
 
-Defined in: [liteship/src/export-budget.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L53)
+Defined in: [liteship/src/export-budget.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L72)

@@ -30,6 +30,6 @@ Defined in: [detect/src/cap-axes.ts:35](https://github.com/freebatteryfactory/Li
 
 ### motionTier
 
-> `readonly` **motionTier**: `MotionTier`
+> `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [detect/src/cap-axes.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L34)

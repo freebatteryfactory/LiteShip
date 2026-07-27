@@ -8,7 +8,7 @@
 
 > **fileToUri**(`file`, `workspaceRootUri?`): `string`
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L211)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L213)
 
 Convert a finding path to its document URI. Repo-relative paths resolve below
 the initialized workspace root; absolute paths and existing URIs retain their

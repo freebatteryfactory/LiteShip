@@ -3,7 +3,7 @@
  *
  * Kept self-contained (no `@liteship/_spine`) so the bytes kernel carries no
  * peer-dependency baggage. `@liteship/core` re-anchors to spine types at its
- * export boundary (ADR-0012).
+ * export boundary (ADR-0013).
  *
  * The constructors are VALIDATING smart constructors (parse-don't-validate):
  * each throws `ValidationError` on input that does not match the brand's

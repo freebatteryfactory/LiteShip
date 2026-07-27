@@ -1,0 +1,13 @@
+# Public lifecycle drift guard (ADR-0051, D1 closure).
+#
+# LiteShip exposes one owned-resource protocol: AsyncOwnedResource. Synchronous
+# finalizers still execute before dispose() returns; its Promise joins async
+# siblings and carries LifetimeDisposeError. Reintroducing OwnedResource would
+# recreate a second public lifecycle without adding teardown capability.
+id: no-sync-owned-resource
+language: typescript
+severity: error
+message: 'Retired `OwnedResource` lifecycle: public owned handles use `AsyncOwnedResource`, `await dispose()`, and `await using`. Synchronous finalizers still execute before dispose() returns; the Promise is the completion/error channel.'
+rule:
+  kind: identifier
+  regex: '^OwnedResource$'

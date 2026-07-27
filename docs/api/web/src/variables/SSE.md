@@ -8,7 +8,7 @@
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:635](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L635)
+Defined in: [web/src/stream/sse.ts:607](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L607)
 
 SSE client namespace.
 
@@ -130,7 +130,7 @@ const client = SSE.create({ url: '/api/stream', artifactId: 'doc-1' });
 for await (const msg of client.messages) {
   console.log(msg);
 }
-client.close();
+await client.dispose();
 ```
 
 ```ts
@@ -145,7 +145,7 @@ const client = SSE.create({
   onStateChange: (state) => updateBadge(state),
 });
 // Teardown owned by the host (e.g. a Lifetime finalizer):
-// lifetime.add(() => client.close());
+// lifetime.add(() => client.dispose());
 ```
 
 ### parseMessage
@@ -185,5 +185,5 @@ const state = client.state; // 'connecting' | 'connected' | ...
 for await (const msg of client.messages) {
   console.log(msg.type);
 }
-client.close();
+await client.dispose();
 ```

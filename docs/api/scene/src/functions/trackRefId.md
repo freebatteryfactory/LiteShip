@@ -16,7 +16,7 @@ Normalize a [TrackRef](../type-aliases/TrackRef.md) to its id, preserving the ph
 
 ### K
 
-`K` *extends* `TrackKind`
+`K` *extends* [`TrackKind`](../../../spine/type-aliases/TrackKind.md)
 
 ## Parameters
 

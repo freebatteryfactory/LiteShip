@@ -38,6 +38,6 @@ Defined in: [compiler/src/stagger-compile.ts:35](https://github.com/freebatteryf
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [compiler/src/stagger-compile.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/stagger-compile.ts#L37)

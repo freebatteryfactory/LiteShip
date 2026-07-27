@@ -17,7 +17,7 @@ Companion type namespace exposes Spawn and Component shapes (ADR-0001).
 
 ### bind
 
-> `readonly` **bind**: (`beats`) => readonly `BeatSpawn`[] = `bindBeats`
+> `readonly` **bind**: (`beats`) => readonly [`BeatSpawn`](../../../spine/interfaces/BeatSpawn.md)[] = `bindBeats`
 
 Bind a list of beat markers into spawn descriptors.
 
@@ -32,8 +32,8 @@ the input array; the output is a fresh, owned-by-runtime sequence.
 
 ##### beats
 
-readonly `BeatComponent`[]
+readonly [`BeatComponent`](../../../spine/interfaces/BeatComponent.md)[]
 
 #### Returns
 
-readonly `BeatSpawn`[]
+readonly [`BeatSpawn`](../../../spine/interfaces/BeatSpawn.md)[]

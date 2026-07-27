@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "entries": [
     {
       "path": "boundary.evaluateBatch",
@@ -7,8 +7,9 @@
       "shape": "batch-values",
       "sizes": [256, 1024, 4096, 16384, 65536],
       "class": "O(n)",
-      "fittedSlope": 0.9951,
-      "fittedR2": 0.9996,
+      "fittedSlope": 0.9849,
+      "fittedR2": 0.9999,
+      "coefficientOfVariation": 0.1037,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -21,8 +22,9 @@
       "shape": "address-elements",
       "sizes": [8, 32, 128, 512, 2048],
       "class": "O(n)",
-      "fittedSlope": 0.9653,
-      "fittedR2": 0.998,
+      "fittedSlope": 0.9636,
+      "fittedR2": 0.9968,
+      "coefficientOfVariation": 0.0612,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -35,8 +37,9 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0422,
-      "fittedR2": 0.999,
+      "fittedSlope": 1.0285,
+      "fittedR2": 0.9996,
+      "coefficientOfVariation": 0.0876,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -49,8 +52,9 @@
       "shape": "canonical-array-elements",
       "sizes": [64, 256, 1024, 4096, 16384],
       "class": "O(n)",
-      "fittedSlope": 1.0495,
-      "fittedR2": 0.9896,
+      "fittedSlope": 1.0393,
+      "fittedR2": 0.9998,
+      "coefficientOfVariation": 0.0585,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
@@ -61,13 +65,14 @@
       "path": "genui.validate",
       "describe": "validateGeneratedUITree — one structural visit per generated node; O(n) in node count.",
       "shape": "generated-ui-nodes",
-      "sizes": [32, 128, 512, 2048, 8192],
+      "sizes": [256, 512, 1024, 2048, 4096],
       "class": "O(n)",
-      "fittedSlope": 0.938,
-      "fittedR2": 0.9977,
+      "fittedSlope": 0.9872,
+      "fittedR2": 0.9991,
+      "coefficientOfVariation": 0.1439,
       "measurement": {
         "innerIterations": 25,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 10
       }
     },
@@ -77,11 +82,12 @@
       "shape": "generated-ui-nodes",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 0.996,
-      "fittedR2": 0.9998,
+      "fittedSlope": 1.0182,
+      "fittedR2": 0.9989,
+      "coefficientOfVariation": 0.0611,
       "measurement": {
         "innerIterations": 8,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 5
       }
     },
@@ -91,11 +97,12 @@
       "shape": "riff-chunks",
       "sizes": [32, 128, 512, 2048, 8192],
       "class": "O(n)",
-      "fittedSlope": 0.908,
+      "fittedSlope": 0.9386,
       "fittedR2": 0.9983,
+      "coefficientOfVariation": 0.0666,
       "measurement": {
         "innerIterations": 25,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 10
       }
     },
@@ -103,13 +110,14 @@
       "path": "assets.computeWaveform",
       "describe": "computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.",
       "shape": "audio-frames",
-      "sizes": [65536, 131072, 262144, 524288],
+      "sizes": [65536, 131072, 262144, 524288, 1048576],
       "class": "O(n)",
-      "fittedSlope": 0.9749,
-      "fittedR2": 0.9993,
+      "fittedSlope": 0.9945,
+      "fittedR2": 0.9998,
+      "coefficientOfVariation": 0.0568,
       "measurement": {
         "innerIterations": 5,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 3
       }
     },
@@ -117,13 +125,14 @@
       "path": "assets.detectOnsets",
       "describe": "detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.",
       "shape": "audio-frames",
-      "sizes": [65536, 131072, 262144, 524288],
+      "sizes": [65536, 131072, 262144, 524288, 1048576],
       "class": "O(n)",
-      "fittedSlope": 1.0117,
+      "fittedSlope": 1.0069,
       "fittedR2": 1,
+      "coefficientOfVariation": 0.0331,
       "measurement": {
         "innerIterations": 4,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 3
       }
     },
@@ -131,13 +140,14 @@
       "path": "assets.detectBeats",
       "describe": "detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.",
       "shape": "audio-frames-fixed-sample-rate",
-      "sizes": [65536, 131072, 262144, 524288],
+      "sizes": [65536, 131072, 262144, 524288, 1048576],
       "class": "O(n)",
-      "fittedSlope": 1.1532,
-      "fittedR2": 0.9211,
+      "fittedSlope": 1.0384,
+      "fittedR2": 0.9998,
+      "coefficientOfVariation": 0.1694,
       "measurement": {
         "innerIterations": 3,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 2
       }
     },
@@ -147,11 +157,12 @@
       "shape": "qualified-gates",
       "sizes": [8, 32, 128, 512, 2048],
       "class": "O(n)",
-      "fittedSlope": 0.8935,
-      "fittedR2": 0.9926,
+      "fittedSlope": 0.8526,
+      "fittedR2": 0.9951,
+      "coefficientOfVariation": 0.1813,
       "measurement": {
         "innerIterations": 10,
-        "replicates": 5,
+        "replicates": 7,
         "warmupIterations": 5
       }
     }

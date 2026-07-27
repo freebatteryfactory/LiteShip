@@ -8,10 +8,11 @@
 
 > **runGates**(`gates`, `context`, `opts?`): [`GauntletResult`](../interfaces/GauntletResult.md)
 
-Defined in: [gauntlet/src/engine.ts:410](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L410)
+Defined in: [gauntlet/src/engine.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L472)
 
 Run a set of gates over `context`. Each gate is first verified against its own
-fixtures; unproven gates run but are demoted to advisory. When `opts.assuranceMap`
+fixtures; unproven gates run with semantic findings demoted to advisory, while
+their qualification defect blocks independently. When `opts.assuranceMap`
 is given, each gate sees ONLY files at-or-above its level (rigor scoping — no
 more red-drowning); without it every gate sees all files (back-compat). When
 `opts.waivers` are given, they are applied to each gate's findings against the
@@ -19,8 +20,8 @@ injected `opts.now` (defaults to the epoch — NEVER `Date.now()`): matched
 findings are suppressed, and expired/stale/forbidden waivers surface as their
 own findings (expired + forbidden BLOCK).
 
-Returns the merged KEPT findings, the proofs, and whether a blocking gate (or a
-blocking waiver finding) failed the run.
+Returns the merged KEPT findings, the proofs, and whether a blocking gate,
+qualification-integrity finding, or blocking waiver finding failed the run.
 
 ## Parameters
 

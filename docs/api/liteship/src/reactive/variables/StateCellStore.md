@@ -6,9 +6,9 @@
 
 # Variable: StateCellStore
 
-> `const` **StateCellStore**: `object`
+> **StateCellStore**: `object`
 
-Defined in: core/dist/reactive/state-cell.d.ts:105
+Defined in: core/dist/reactive/state-cell.d.ts:69
 
 Namespace entry point for the coarse authority store.
 
@@ -16,6 +16,16 @@ Namespace entry point for the coarse authority store.
 
 ### create
 
-> **create**: *typeof* `_createStore`
+> **create**: (`runtime?`) => [`StateCellStore`](../interfaces/StateCellStore.md)
 
-Create a store backed by a fresh or supplied [RuntimeCoordinator](../namespaces/RuntimeCoordinator/README.md).
+Create a store backed by a fresh or supplied [RuntimeCoordinator](RuntimeCoordinator.md).
+
+#### Parameters
+
+##### runtime?
+
+[`RuntimeCoordinator`](../interfaces/RuntimeCoordinator.md)
+
+#### Returns
+
+[`StateCellStore`](../interfaces/StateCellStore.md)

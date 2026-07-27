@@ -42,7 +42,7 @@ Defined in: core/dist/graph/document-graph.d.ts:46
 
 ### components
 
-> `readonly` **components**: readonly `ContentAddress`[]
+> `readonly` **components**: readonly [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)[]
 
 Defined in: core/dist/graph/document-graph.d.ts:61
 
@@ -64,7 +64,7 @@ Defined in: core/dist/graph/document-graph.d.ts:47
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:49
 

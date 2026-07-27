@@ -56,7 +56,7 @@ Defined in: core/dist/graph/document-graph.d.ts:47
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:49
 
@@ -92,7 +92,7 @@ HLC created/updated + version. Excluded from the content address (volatile).
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:106
 
@@ -100,7 +100,7 @@ Defined in: core/dist/graph/document-graph.d.ts:106
 
 ### sourceRef
 
-> `readonly` **sourceRef**: `ContentAddress`
+> `readonly` **sourceRef**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:104
 

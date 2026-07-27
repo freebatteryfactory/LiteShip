@@ -38,7 +38,7 @@ Defined in: compiler/dist/stagger-compile.d.ts:13
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: compiler/dist/stagger-compile.d.ts:14
 

@@ -8,6 +8,6 @@
 
 > **Phase** = [`RuntimePhase`](../../../type-aliases/RuntimePhase.md)
 
-Defined in: core/dist/reactive/runtime-coordinator.d.ts:73
+Defined in: core/dist/reactive/runtime-coordinator.d.ts:72
 
 Alias for `RuntimePhase`.

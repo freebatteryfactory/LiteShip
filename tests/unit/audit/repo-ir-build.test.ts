@@ -24,10 +24,10 @@ import { resolve, join } from 'node:path';
 import {
   buildRepoIR,
   withRepoRoot,
-  liteshipDevopsProfile,
   resolveDevopsProfile,
   type FactOracle,
 } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 import {
   PLACEHOLDER_DIGEST,
   litelaunchGauntlet,
@@ -238,6 +238,7 @@ describe('the injection seam — litelaunchGauntlet threads an injected IR', () 
   // IR's file count — proof the injected IR reached the gate's context.
   const irEchoGate: Gate = defineGate({
     id: 'test/ir-echo',
+    extension: { namespace: 'test', owner: 'LiteShip test suite' },
     level: 'L0',
     describe: 'echoes the injected IR file count (seam proof)',
     run: (ctx) => {

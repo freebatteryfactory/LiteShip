@@ -20,7 +20,7 @@ Compile a lowered scroll-timeline graph into native CSS + a runtime write plan.
 
 ### transitionId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ### intent
 

@@ -27,7 +27,7 @@ In a browser this logs the device's capability level, its motion tier (reduced-m
 
 ## Where it sits
 
-This package is host-adjacent — it touches browser APIs so nothing else has to. Its only `@liteship` dependency is `@liteship/core`, for the `CapLevel` and `MotionTier` types it maps detected hardware onto. What to *do* at each tier is decided elsewhere: `@liteship/quantizer` gates outputs by motion tier, and `@liteship/astro` applies detection during hydration. It also exports the capability-attribute vocabulary — `CAP_AXES` / `capAxisAttr` for the `tier`/`motion`/`design` axes — the single source `@liteship/edge` and the client runtime project to `data-liteship-*` attributes, so the emitted attribute name and the locals field name can't drift. See the
+This package is host-adjacent — it touches browser APIs so nothing else has to. Its only `@liteship` dependency is `@liteship/core`, for the `CapTier` and `MotionTier` types it maps detected hardware onto. What to *do* at each tier is decided elsewhere: `@liteship/quantizer` gates outputs by motion tier, and `@liteship/astro` applies detection during hydration. It also exports the capability-attribute vocabulary — `CAP_AXES` / `capAxisAttr` for the `tier`/`motion`/`design` axes — the single source `@liteship/edge` and the client runtime project to `data-liteship-*` attributes, so the emitted attribute name and the locals field name can't drift. See the
 [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 

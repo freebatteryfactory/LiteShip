@@ -8,7 +8,7 @@
 
 > **Lifetime** = `object`
 
-Defined in: core/dist/reactive/lifetime.d.ts:79
+Defined in: core/dist/reactive/lifetime.d.ts:41
 
 Lifetime — construct a disposal handle that owns a LIFO finalizer stack.
 Register teardown with `add`, tear down once with `dispose`, and project
@@ -18,7 +18,7 @@ cancellation through `signal`.
 
 ### make
 
-> `readonly` **make**: () => [`LifetimeShape`](../interfaces/LifetimeShape.md)
+> `readonly` **make**: () => `Lifetime`
 
 Defined in: core/dist/reactive/lifetime.d.ts:81
 
@@ -26,4 +26,4 @@ Build a fresh, undisposed Lifetime.
 
 #### Returns
 
-[`LifetimeShape`](../interfaces/LifetimeShape.md)
+`Lifetime`

@@ -53,17 +53,20 @@ const BENCH_FILE =
 function healthyComplexityEntries(
   overrides: Readonly<Record<string, { readonly class: string; readonly fittedR2: number }>> = {},
   omitted: ReadonlySet<string> = new Set(),
-): readonly { readonly path: string; readonly class: string; readonly fittedR2: number }[] {
+) {
   return Object.entries(ACCEPTED_COMPLEXITY_CEILINGS)
     .filter(([path]) => !omitted.has(path))
     .map(([path, ceiling], index) => ({
       path,
       class: overrides[path]?.class ?? ceiling,
-      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.01,
+      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.002,
+      sizes: [16, 32, 64, 128, 256],
+      coefficientOfVariation: 0.05,
+      measurement: { replicates: 7 },
     }));
 }
 
-const HEALTHY_MAP = JSON.stringify({ schemaVersion: 1, entries: healthyComplexityEntries() });
+const HEALTHY_MAP = JSON.stringify({ schemaVersion: 2, entries: healthyComplexityEntries() });
 const HEALTHY_ALLOCATION_MAP = JSON.stringify({
   schemaVersion: 1,
   entries: Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, klass], index) => ({
@@ -297,7 +300,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         entries: healthyComplexityEntries({
           'boundary.evaluateBatch': { class: 'O(n^2)', fittedR2: 0.99 },
         }),
@@ -315,7 +318,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         entries: healthyComplexityEntries({
           'boundary.evaluateBatch': { class: 'O(1)', fittedR2: 0.9 },
         }),
@@ -329,7 +332,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         entries: healthyComplexityEntries({}, new Set(['boundary.evaluateBatch'])),
       }),
     });
@@ -342,7 +345,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         entries: healthyComplexityEntries({
           'boundary.evaluateBatch': { class: 'O(n)', fittedR2: 0.2 },
         }),
@@ -352,6 +355,33 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
     expect(findings.some((f) => f.title.includes('too noisy'))).toBe(true);
   });
 
+  it('FLAGS thin, clustered, under-replicated, and unstable claim evidence', () => {
+    const baseline = healthyComplexityEntries();
+    const target = baseline[0]!;
+    const defects = [
+      { ...target, sizes: [16, 32, 64, 128] },
+      { ...target, sizes: [16, 32, 48, 96, 192] },
+      { ...target, measurement: { replicates: 6 } },
+      { ...target, coefficientOfVariation: 0.26 },
+    ];
+    const expected = ['insufficient-size-sweep', 'invalid-size-sweep', 'under-replicated', 'unstable-variance'];
+
+    for (let index = 0; index < defects.length; index++) {
+      const entries = [defects[index]!, ...baseline.slice(1)];
+      const findings = performanceContractsGate.run(
+        memoryContext({
+          'benchmarks/distributions.json': DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': BENCH_FILE,
+          'benchmarks/complexity-map.json': JSON.stringify({ schemaVersion: 2, entries }),
+        }),
+      );
+      expect(
+        findings.some((finding) => finding.title.includes(expected[index]!)),
+        expected[index],
+      ).toBe(true);
+    }
+  });
+
   it('FLAGS a missing complexity map entirely', () => {
     const ctx = memoryContext({
       'benchmarks/distributions.json': DISTRIBUTIONS,
@@ -359,6 +389,21 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
     });
     const findings = performanceContractsGate.run(ctx);
     expect(findings.some((f) => f.title.includes('Complexity map is missing'))).toBe(true);
+  });
+
+  it('refuses a legacy complexity receipt that cannot prove its admission regime', () => {
+    expect(() =>
+      performanceContractsGate.run(
+        memoryContext({
+          'benchmarks/distributions.json': DISTRIBUTIONS,
+          'tests/bench/core.bench.ts': BENCH_FILE,
+          'benchmarks/complexity-map.json': JSON.stringify({
+            schemaVersion: 1,
+            entries: healthyComplexityEntries(),
+          }),
+        }),
+      ),
+    ).toThrow(/schema-v2/u);
   });
 
   it('pins the accepted ceilings to the trust-spine hot paths', () => {

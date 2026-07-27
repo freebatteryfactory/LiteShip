@@ -8,7 +8,7 @@
 
 > **resolveDevopsProfile**(`partial`): [`DevopsProfile`](../interfaces/DevopsProfile.md)
 
-Defined in: [audit/src/devops-profile.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L164)
+Defined in: [audit/src/devops-profile.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L150)
 
 Resolve a PARTIAL profile into a full [DevopsProfile](../interfaces/DevopsProfile.md) with documented
 defaults, so `runAuditPasses({ repoRoot })` just works:
@@ -17,6 +17,7 @@ defaults, so `runAuditPasses({ repoRoot })` just works:
   • `packageTopology`          → `{}` (coverage classifies as policy-absent)
   • `dynamicImportExemptions`  → empty set (no sanctioned dynamic edges)
   • `surfacePolicy`            → `{}` (no host-surface assumptions)
+  • `allowlist`                → `[]` (no hidden project suppression)
   • `internalPackagePrefix`    → derived from the single common npm scope of
     the discovered package manifests; ambiguous or unscoped trees throw a
     teaching error instead of guessing.

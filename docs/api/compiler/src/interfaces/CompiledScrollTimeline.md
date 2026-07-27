@@ -38,7 +38,7 @@ Defined in: [compiler/src/scroll-timeline-compile.ts:27](https://github.com/free
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [compiler/src/scroll-timeline-compile.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/scroll-timeline-compile.ts#L29)
 
@@ -46,7 +46,7 @@ Defined in: [compiler/src/scroll-timeline-compile.ts:29](https://github.com/free
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [compiler/src/scroll-timeline-compile.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/scroll-timeline-compile.ts#L31)
 

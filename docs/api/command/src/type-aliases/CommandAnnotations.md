@@ -6,7 +6,7 @@
 
 # Type Alias: CommandAnnotations
 
-> **CommandAnnotations** = `_CommandAnnotations`
+> **CommandAnnotations** = [`CommandAnnotations`](../../../spine/interfaces/CommandAnnotations.md)
 
 Defined in: core/dist/authoring/command.d.ts:12
 

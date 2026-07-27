@@ -8,6 +8,7 @@ import type { ComponentCatalog, ComponentDef, GeneratedUIValidationError, Genera
 import { isInteractionProp } from './interaction.js';
 import { inspectGeneratedUITreeShape } from './guards.js';
 
+/** Successful validation or one stable generated-UI refusal. */
 export type ValidateGeneratedUIResult =
   { readonly ok: true } | { readonly ok: false; readonly error: GeneratedUIValidationError };
 

@@ -16,7 +16,7 @@ export { Transition } from './transition.js';
 export type { TransitionConfig, TransitionMap, Transition as TransitionType } from './transition.js';
 
 export { AnimatedQuantizer } from './animated-quantizer.js';
-export type { AnimatedQuantizerShape, OwnedAnimatedQuantizer, InterpolatedFrame } from './animated-quantizer.js';
+export type { OwnedAnimatedQuantizer, InterpolatedFrame } from './animated-quantizer.js';
 
 export type {
   MotionTier,

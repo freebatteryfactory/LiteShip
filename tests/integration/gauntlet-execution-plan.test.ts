@@ -44,6 +44,7 @@ function tokenGate(id: string, level: 'L1' | 'L4', token: string): Gate {
 
   return defineGate({
     id,
+    extension: { namespace: id.slice(0, id.indexOf('/')), owner: 'LiteShip integration suite' },
     level,
     describe: `flags ${token}`,
     run,

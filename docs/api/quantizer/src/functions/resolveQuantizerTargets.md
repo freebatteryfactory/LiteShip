@@ -18,7 +18,7 @@ both runtime dispatch and higher-level explanations.
 
 ### tier
 
-`MotionTier` \| `undefined`
+[`MotionTier`](../../../spine/type-aliases/MotionTier.md) \| `undefined`
 
 ### force?
 

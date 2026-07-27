@@ -13,7 +13,13 @@
  * @module
  */
 
-import { runGauntletOnRepo, LITESHIP_GATES, type Gate, type GauntletResult } from '@liteship/gauntlet';
+import {
+  runGauntletOnRepo,
+  LITESHIP_GATES,
+  type CheckGovernanceFacts,
+  type Gate,
+  type GauntletResult,
+} from '@liteship/gauntlet';
 import { noConsoleLogGate } from './no-console-log.gate.js';
 
 /**
@@ -22,6 +28,17 @@ import { noConsoleLogGate } from './no-console-log.gate.js';
  * alongside the built-ins as a peer; the engine treats them identically.
  */
 export const DOWNSTREAM_GATES: readonly Gate[] = [...LITESHIP_GATES, noConsoleLogGate];
+
+/**
+ * This fixture owns no package scripts, registered checks, or waivers. Supplying
+ * the explicit empty fact pack proves that fact-requiring gates never infer a
+ * green verdict from absent host evidence.
+ */
+export const DOWNSTREAM_CHECK_GOVERNANCE: CheckGovernanceFacts = Object.freeze({
+  partition: Object.freeze({ scripts: Object.freeze([]), registered: Object.freeze([]), exempted: Object.freeze([]) }),
+  negativeControls: Object.freeze([]),
+  waivers: Object.freeze([]),
+});
 
 /**
  * Run the composed gauntlet over the downstream project rooted at `repoRoot`,
@@ -35,5 +52,6 @@ export function runDownstreamGauntlet(repoRoot: string): GauntletResult {
   return runGauntletOnRepo(DOWNSTREAM_GATES, {
     repoRoot,
     globs: ['src/**/*.ts'],
+    checkGovernance: DOWNSTREAM_CHECK_GOVERNANCE,
   });
 }

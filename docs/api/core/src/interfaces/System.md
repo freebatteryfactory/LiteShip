@@ -6,7 +6,9 @@
 
 # Interface: System
 
-Defined in: [core/src/ecs.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L166)
+Defined in: [core/src/ecs.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L171)
+
+A system that processes entities matching a component-name query.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [core/src/ecs.ts:166](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` `optional` **\_denseSystem?**: `undefined`
 
-Defined in: [core/src/ecs.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L169)
+Defined in: [core/src/ecs.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L174)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [core/src/ecs.ts:169](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/ecs.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L167)
+Defined in: [core/src/ecs.ts:172](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L172)
 
 ***
 
@@ -30,7 +32,7 @@ Defined in: [core/src/ecs.ts:167](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **query**: readonly `string`[]
 
-Defined in: [core/src/ecs.ts:168](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L168)
+Defined in: [core/src/ecs.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L173)
 
 ## Methods
 
@@ -38,7 +40,7 @@ Defined in: [core/src/ecs.ts:168](https://github.com/freebatteryfactory/LiteShip
 
 > **execute**(`entities`, `world?`): `void`
 
-Defined in: [core/src/ecs.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L171)
+Defined in: [core/src/ecs.ts:176](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L176)
 
 Second argument is the world — use it to write computed output components back.
 
@@ -50,7 +52,7 @@ readonly [`Entity`](Entity.md)[]
 
 ##### world?
 
-`WorldShape`
+[`World`](World.md)
 
 #### Returns
 

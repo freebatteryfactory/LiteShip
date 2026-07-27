@@ -64,7 +64,7 @@ interface CellShape<T> {
  * The cell IS its own disposable ({@link AsyncOwnedResource}): `await cell.dispose()`
  * (or `await using cell = createCell(0)`) closes the kernel exactly once.
  */
-export const createCell = <T>(initial: T): CellShape<T> & AsyncOwnedResource => {
+export const createCell = <T>(initial: T): Cell<T> & AsyncOwnedResource => {
   // Replay-1 kernel under the captured product law: {all} (no dedup) +
   // 'deferred' (async-append nested writes). See the module doc + scar S6.F.2.
   const kernel = CellKernel.replay1<T>(initial, { kind: 'all' }, 'deferred');

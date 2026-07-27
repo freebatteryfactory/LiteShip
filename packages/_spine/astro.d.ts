@@ -10,6 +10,7 @@ import type { PluginConfig } from './vite.js';
 // § 1. INTEGRATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Options projected into the LiteShip Astro integration and its nested Vite host. */
 export interface IntegrationConfig {
   readonly vite?: PluginConfig;
   readonly exclude?: readonly string[];
@@ -35,6 +36,7 @@ export declare function liteship(config?: IntegrationConfig): import('astro').As
 // § 2. QUANTIZE COMPONENT PROPS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Props accepted by the Astro `<Quantize>` component for one boundary-owned region. */
 export interface QuantizeProps<B extends Boundary = Boundary> {
   readonly boundary: B;
   readonly quantizer?: Quantizer<B>;
@@ -47,6 +49,7 @@ export interface QuantizeProps<B extends Boundary = Boundary> {
 // § 3. SERVER ISLAND RESOLUTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Request evidence used to choose an Astro server island's initial boundary state. */
 export interface ServerIslandContext {
   readonly userAgent?: string;
   readonly clientHints?: Record<string, string>;
@@ -59,14 +62,17 @@ export declare function resolveInitialState<B extends Boundary>(boundary: B, con
 // § 4. MIDDLEWARE / FETCH LAYER / DIAGNOSTICS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Cross-origin isolation modes supported by the Astro worker integration. */
 export type CrossOriginEmbedderPolicy = 'require-corp' | 'credentialless';
 
+/** Configuration shared by Astro middleware and fetch-layer adapters. */
 export interface LiteshipMiddlewareConfig {
   readonly edge?: EdgeHostAdapterConfig;
   readonly detect?: boolean;
   readonly workers?: { readonly enabled?: boolean; readonly coep?: CrossOriginEmbedderPolicy };
 }
 
+/** LiteShip request-local evidence exposed to Astro pages and middleware. */
 export interface LiteshipLocals {
   readonly tiers: Readonly<{
     readonly tier: import('./core.d.ts').CapTier;
@@ -87,9 +93,12 @@ export interface LiteshipLocals {
 
 export declare function liteshipMiddleware(config?: LiteshipMiddlewareConfig): unknown;
 
+/** Downstream request handler invoked by a LiteShip fetch layer. */
 export type FetchLayerNext = (request: Request) => Response | Promise<Response>;
+/** Composable fetch-layer function used outside Astro's middleware object model. */
 export type LiteshipFetchLayer = (request: Request, next: FetchLayerNext) => Promise<Response>;
 
+/** Fetch-layer options including edge-serving and host-rendering decisions. */
 export interface LiteshipFetchLayerConfig extends LiteshipMiddlewareConfig {
   readonly serveFromEdge?: (request: Request, resolution: EdgeHostResolution) => boolean;
   readonly render?: (resolution: EdgeHostResolution) => Response;
@@ -98,6 +107,7 @@ export interface LiteshipFetchLayerConfig extends LiteshipMiddlewareConfig {
 export declare function liteshipFetchLayer(config?: LiteshipFetchLayerConfig): LiteshipFetchLayer;
 export declare function serializeBoundaryCss(resolution: EdgeHostResolution): string;
 
+/** Minimal Astro logger capability required by the diagnostic bridge. */
 export interface AstroLoggerLike {
   warn(message: string): void;
   error(message: string): void;

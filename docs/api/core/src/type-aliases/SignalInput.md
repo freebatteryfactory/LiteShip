@@ -6,7 +6,7 @@
 
 # Type Alias: SignalInput\<I\>
 
-> **SignalInput**\<`I`\> = `_SignalInput`\<`I`\>
+> **SignalInput**\<`I`\> = [`SignalInput`](../../../spine/type-aliases/SignalInput.md)\<`I`\>
 
 Defined in: [core/src/schema/brands.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L30)
 

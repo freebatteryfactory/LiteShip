@@ -5,7 +5,7 @@
  *
  * Authored truth: {@link PACKAGE_CATALOG} in `scripts/package-catalog.ts`.
  * Generated projections:
- *  - audit's scoped fleet roster
+ *  - CLI host's audit fleet roster and profile topology
  *  - liteship's shipped fleet roster
  *  - command's package-smoke specifications
  *  - CLI package metadata
@@ -32,6 +32,9 @@ import {
   type ProjectReferenceSource,
 } from './lib/project-reference-contract.js';
 import { TEMPLATE_RENAMES } from '../packages/create-liteship/src/template-renames.js';
+import { renderSpineProjections } from './gen-spine-surface.js';
+import { renderPublicExportProjections } from './gen-public-export-contract.js';
+import { resolvePackageSourceEntrypoints as resolveSourceEntrypoints } from './lib/package-source-entrypoints.js';
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 
@@ -51,17 +54,18 @@ export const PUBLISHABLE_UMBRELLAS: readonly string[] = PACKAGE_CATALOG.filter(
 export const PUBLISHABLE_ROSTER: readonly string[] = PACKAGE_CATALOG.map((record) => record.name);
 
 export const PUBLISH_ROSTER_JSON = 'scripts/ci/publish-roster.json';
-export const AUDIT_ROSTER_TS = 'packages/audit/src/package-catalog.generated.ts';
+export const AUDIT_ROSTER_TS = 'packages/cli/src/lib/audit-package-catalog.generated.ts';
 export const COMMAND_SMOKE_TS = 'packages/command/src/commands/package-smoke-registry.generated.ts';
 export const CLI_METADATA_TS = 'packages/cli/src/lib/package-metadata-catalog.generated.ts';
 export const CLI_ASSURANCE_CAMPAIGNS_TS = 'packages/cli/src/lib/semantic-assurance-campaigns.generated.ts';
-export const AUDIT_TOPOLOGY_TS = 'packages/audit/src/package-topology.generated.ts';
+export const AUDIT_TOPOLOGY_TS = 'packages/cli/src/lib/audit-package-topology.generated.ts';
 export const COMMAND_PLUMB_TS = 'packages/command/src/commands/plumb-registry.generated.ts';
 export const DOC_PACKAGE_GROUPS_TS = 'scripts/lib/package-docs.generated.ts';
 export const API_SURFACE_PACKAGES_TS = 'tests/fixtures/api-surface-packages.generated.ts';
 export const CLI_FRAGMENT_ROOT = 'packages/cli/fragments';
 export const CLI_TEMPLATE_RENAMES_TS = 'packages/cli/src/lib/template-renames.generated.ts';
 export const ROOT_TSCONFIG_JSON = 'tsconfig.json';
+export const TEST_PATHS_TSCONFIG_JSON = 'tsconfig.test-paths.generated.json';
 export const TYPEDOC_JSON = 'typedoc.json';
 const LITESHIP_ROSTER_REL = 'packages/liteship/src/testing/package-roster.ts';
 const ONE_INSTALL_COST_BASELINE_JSON = 'benchmarks/one-install-cost-baseline.json';
@@ -168,11 +172,44 @@ export function renderLiteshipPackages(): string {
   return `// prettier-ignore\nexport const LITESHIP_PACKAGES = [\n${entries}\n] as const;`;
 }
 
+/**
+ * Resolve every positive public subpath to its source owner. Ordinary subpaths
+ * follow the repo convention; exceptional routes are explicit in the catalog.
+ * Zero or multiple matches fail closed so a new public route cannot silently
+ * disappear from source-mode API and assurance tooling.
+ */
+export function resolvePackageSourceEntrypoints(
+  record: PackageCatalogRecord,
+  fileExists?: (relativePath: string) => boolean,
+): Readonly<Record<string, string>> {
+  return resolveSourceEntrypoints(record, REPO_ROOT, fileExists);
+}
+
 export function renderAuditRoster(): string {
+  const sourceRows = PACKAGE_CATALOG.map((record) => {
+    const entries = Object.entries(resolvePackageSourceEntrypoints(record))
+      .map(([subpath, source]) => `${quote(subpath)}: ${quote(source)}`)
+      .join(', ');
+    return `  ${quote(record.name)}: { ${entries} },`;
+  }).join('\n');
   return (
     generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
-    `// prettier-ignore\nexport const GENERATED_LITESHIP_PACKAGE_ROSTER = ${renderStringArray(CANONICAL_ROSTER)} as const;\n`
+    `// prettier-ignore\nexport const GENERATED_LITESHIP_PACKAGE_ROSTER = ${renderStringArray(CANONICAL_ROSTER)} as const;\n\n` +
+    `// prettier-ignore\nexport const GENERATED_LITESHIP_SOURCE_ENTRYPOINTS = {\n${sourceRows}\n} as const;\n`
   );
+}
+
+/** Source aliases consumed by the focused test typecheck, projected from the source-entry truth. */
+export function renderTestPathsTsconfig(): string {
+  const paths: Record<string, readonly string[]> = {};
+  for (const record of PACKAGE_CATALOG) {
+    for (const [subpath, source] of Object.entries(resolvePackageSourceEntrypoints(record))) {
+      if (!source.endsWith('.ts')) continue;
+      const specifier = subpath === '.' ? record.name : `${record.name}${subpath.slice(1)}`;
+      paths[specifier] = [`./${source}`];
+    }
+  }
+  return `${JSON.stringify({ extends: './tsconfig.json', compilerOptions: { paths } }, null, 2)}\n`;
 }
 
 export function renderCommandSmokeRoster(): string {
@@ -200,39 +237,15 @@ export function renderCliMetadataCatalog(): string {
   );
 }
 
-type ExportTarget = string | readonly ExportTarget[] | Readonly<Record<string, ExportTarget | null>> | null;
-
-function developmentTargets(target: ExportTarget | undefined): readonly string[] {
-  if (target === undefined || target === null) return [];
-  if (typeof target === 'string') return [];
-  if (Array.isArray(target)) return target.flatMap((entry) => developmentTargets(entry));
-  const record = target as Readonly<Record<string, ExportTarget | null>>;
-  const development = record['development'];
-  if (typeof development === 'string') return [development];
-  return Object.values(record).flatMap((entry) => developmentTargets(entry ?? undefined));
-}
-
 function campaignEntrypoints(record: PackageCatalogRecord): readonly string[] {
   if (record.assuranceCampaign === undefined) return [];
-  const manifest = JSON.parse(readFileSync(resolve(REPO_ROOT, record.dir, 'package.json'), 'utf8')) as CatalogManifest;
-  if (typeof manifest.exports !== 'object' || manifest.exports === null || Array.isArray(manifest.exports)) {
-    throw new Error(`${record.name}: semantic assurance campaign requires an object exports map`);
+  if (!record.sourceEntry.startsWith(`${record.dir}/`) || !record.sourceEntry.endsWith('.ts')) {
+    throw new Error(`${record.name}: campaign sourceEntry must be a TypeScript file owned by ${record.dir}`);
   }
-  const exportsMap = manifest.exports as Readonly<Record<string, ExportTarget>>;
-  const entrypoints = record.publicSubpaths.flatMap((subpath) =>
-    developmentTargets(exportsMap[subpath]).map((target) => {
-      if (!target.startsWith('./src/') || !target.endsWith('.ts')) {
-        throw new Error(`${record.name}:${subpath}: campaign development target must be a source TypeScript file`);
-      }
-      const path = `${record.dir}/${target.slice(2)}`;
-      if (!existsSync(resolve(REPO_ROOT, path)))
-        throw new Error(`${record.name}:${subpath}: missing campaign entrypoint ${path}`);
-      return path;
-    }),
-  );
-  if (entrypoints.length === 0)
-    throw new Error(`${record.name}: semantic assurance campaign has no development entrypoint`);
-  return [...new Set(entrypoints)].sort((left, right) => left.localeCompare(right));
+  if (!existsSync(resolve(REPO_ROOT, record.sourceEntry))) {
+    throw new Error(`${record.name}: missing campaign sourceEntry ${record.sourceEntry}`);
+  }
+  return [record.sourceEntry];
 }
 
 export function renderCliAssuranceCampaigns(): string {
@@ -249,7 +262,7 @@ export function renderCliAssuranceCampaigns(): string {
     })
     .join('\n');
   return (
-    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts and package export maps') +
+    generatedHeader('scripts/gen-roster.ts from scripts/package-catalog.ts') +
     `// prettier-ignore\nexport const GENERATED_SEMANTIC_ASSURANCE_CAMPAIGNS = [\n${rows}\n] as const;\n`
   );
 }
@@ -359,6 +372,7 @@ function isSanctionedFleetSource(path: string): boolean {
     normalized === 'pnpm-lock.yaml' ||
     normalized.endsWith('/package.json') ||
     normalized.startsWith(`${CLI_FRAGMENT_ROOT}/`) ||
+    normalized.startsWith('docs/api/') ||
     exactGenerated.has(normalized) ||
     normalized.startsWith('tests/fixtures/package-catalog-red/')
   );
@@ -497,6 +511,8 @@ export function publishJobText(yaml: string): string {
 
 export function renderGeneratedProjections(): ReadonlyArray<readonly [string, string]> {
   return [
+    ...renderSpineProjections(REPO_ROOT),
+    ...renderPublicExportProjections(REPO_ROOT),
     [AUDIT_ROSTER_TS, renderAuditRoster()],
     [COMMAND_SMOKE_TS, renderCommandSmokeRoster()],
     [CLI_METADATA_TS, renderCliMetadataCatalog()],
@@ -511,6 +527,7 @@ export function renderGeneratedProjections(): ReadonlyArray<readonly [string, st
       `${generatedHeader('scripts/gen-roster.ts from packages/create-liteship/src/template-renames.ts')}// prettier-ignore\nexport const GENERATED_TEMPLATE_RENAMES: Readonly<Record<string, string>> = Object.freeze(${JSON.stringify(TEMPLATE_RENAMES, null, 2)});\n`,
     ],
     [ROOT_TSCONFIG_JSON, renderRootTsconfig()],
+    [TEST_PATHS_TSCONFIG_JSON, renderTestPathsTsconfig()],
     [TYPEDOC_JSON, renderTypedocJson()],
     [PUBLISH_ROSTER_JSON, renderPublishRosterJson()],
   ];
@@ -662,6 +679,26 @@ export function validatePackageCatalog(
   const seen = new Set<string>();
   const knownNames = new Set(packageNames);
   for (const record of catalog) {
+    if (!record.sourceEntry.startsWith(`${record.dir}/`) || !record.sourceEntry.endsWith('.ts')) {
+      drift.push({
+        copy: `PACKAGE_CATALOG:${record.name}`,
+        detail: `sourceEntry must be a TypeScript file owned by ${record.dir}`,
+      });
+    }
+    for (const [subpath, sourceEntry] of Object.entries(record.sourceEntryOverrides ?? {})) {
+      if (!record.publicSubpaths.includes(subpath)) {
+        drift.push({
+          copy: `PACKAGE_CATALOG:${record.name}`,
+          detail: `sourceEntryOverrides key ${subpath} is not a public subpath`,
+        });
+      }
+      if (!sourceEntry.startsWith(`${record.dir}/`)) {
+        drift.push({
+          copy: `PACKAGE_CATALOG:${record.name}`,
+          detail: `sourceEntryOverrides[${subpath}] must be owned by ${record.dir}`,
+        });
+      }
+    }
     if (record.apiSurface !== (record.apiSurfaceOrder !== null)) {
       drift.push({ copy: `PACKAGE_CATALOG:${record.name}`, detail: 'apiSurface and apiSurfaceOrder disagree' });
     }
@@ -798,7 +835,16 @@ function catalogDrift(): readonly CatalogDrift[] {
       const manifest = JSON.parse(readFileSync(path, 'utf8')) as CatalogManifest;
       return manifest.private !== true && manifest.publishConfig != null;
     });
-  return validatePackageCatalog(PACKAGE_CATALOG, manifests, dirsOnDisk);
+  const drift = [...validatePackageCatalog(PACKAGE_CATALOG, manifests, dirsOnDisk)];
+  for (const record of PACKAGE_CATALOG) {
+    if (!existsSync(resolve(REPO_ROOT, record.sourceEntry))) {
+      drift.push({
+        copy: `PACKAGE_CATALOG:${record.name}`,
+        detail: `sourceEntry does not exist: ${record.sourceEntry}`,
+      });
+    }
+  }
+  return drift;
 }
 
 function projectReferenceDrift(): readonly CatalogDrift[] {

@@ -88,7 +88,7 @@ describe('LSP method and capability projection', () => {
     expect(projectLspCapabilities(LSP_METHOD_CATALOG)).toEqual(LSP_SERVER_CAPABILITIES);
   });
 
-  it.each(['textDocument/codeAction', 'workspace/diagnostic'] as const)(
+  it.each(['textDocument/codeAction', 'textDocument/diagnostic', 'workspace/diagnostic'] as const)(
     'a missing %s handler makes capability construction fail closed',
     (method) => {
       const mutant = LSP_METHOD_CATALOG.filter((entry) => entry.method !== method);
@@ -110,6 +110,8 @@ describe('LSP method and capability projection', () => {
                 textDocument: { uri: 'file:///repo/file.ts' },
                 range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
               }
+            : descriptor.method === 'textDocument/diagnostic'
+              ? { textDocument: { uri: 'file:///repo/file.ts' } }
             : undefined;
       const raw =
         descriptor.messageKind === 'notification'

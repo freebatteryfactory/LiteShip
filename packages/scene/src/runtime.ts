@@ -126,7 +126,7 @@ export interface SceneRuntimeHandle {
   readonly world: WorldNS;
   /**
    * Query entities carrying ALL named components, resolved through a Promise.
-   * Wraps the now-synchronous {@link WorldNS.query} so the astro scene
+   * Wraps the now-synchronous `World.query` so the Astro scene
    * bridge can `await` the result without importing Effect (gate 24's
    * Promise-facade decision) — the same entity shape `world.query` returns.
    */

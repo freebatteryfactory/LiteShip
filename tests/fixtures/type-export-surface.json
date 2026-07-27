@@ -5,111 +5,131 @@
       "typeExports": [
         {
           "name": "AIAction",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIConstraint",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIDimension",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIManifest",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIManifestCompileResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIManifestInput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIParamSchema",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AISlot",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIToolDefinition",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AIValidationIssue",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ARIACompileResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ARIAStates",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "AddQuantizerMessage",
+          "kind": "type"
         },
         {
           "name": "AddressedDigest",
-          "kind": "interface"
+          "kind": "type"
         },
         {
-          "name": "AnimatedQuantizerShape",
-          "kind": "interface"
+          "name": "AnimatedQuantizer",
+          "kind": "type"
         },
         {
           "name": "Animation",
-          "kind": "namespace"
+          "kind": "type"
+        },
+        {
+          "name": "ApplyResolvedStateMessage",
+          "kind": "type"
+        },
+        {
+          "name": "ApplyUpdatesMessage",
+          "kind": "type"
         },
         {
           "name": "AstroLoggerLike",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "AsyncOwnedResource",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BackpressureHint",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BeatComponent",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BeatHandle",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BeatMarkerSet",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BeatProjectionResolutionInput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BeatSpawn",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BlendNode",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BlendTree",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "BootstrapQuantizerRegistration",
+          "kind": "type"
+        },
+        {
+          "name": "BootstrapQuantizersMessage",
+          "kind": "type"
+        },
+        {
+          "name": "BootstrapResolvedStateMessage",
+          "kind": "type"
         },
         {
           "name": "Boundary",
-          "kind": "interface"
-        },
-        {
-          "name": "Boundary",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "BoundaryAssetUrlMap",
@@ -117,7 +137,7 @@
         },
         {
           "name": "BoundaryCache",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BoundaryCrossing",
@@ -129,23 +149,23 @@
         },
         {
           "name": "BoundaryManifestEntry",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BoundaryManifestFile",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "BoundarySpec",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CSSCompileResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CSSContainerRule",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CSSCustomProp",
@@ -161,11 +181,11 @@
         },
         {
           "name": "CSSRule",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CSSStateBody",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CSSStateInput",
@@ -181,7 +201,7 @@
         },
         {
           "name": "CapSet",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CapTier",
@@ -189,15 +209,15 @@
         },
         {
           "name": "CapsuleCommandDescriptor",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CapsuleCommandInvocation",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CapsuleCommandResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CapsuleResultMetaKey",
@@ -205,31 +225,31 @@
         },
         {
           "name": "CapsuleResultReceipt",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CaptureConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CaptureFrame",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CaptureResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Cell",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CellEnvelope",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CellKernel",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "CellKind",
@@ -237,7 +257,7 @@
         },
         {
           "name": "CellMeta",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ChainValidationError",
@@ -245,39 +265,39 @@
         },
         {
           "name": "ChainValidationOptions",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CheckpointResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ClientHints",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ClientHintsHeaders",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Clock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Codec",
-          "kind": "interface"
-        },
-        {
-          "name": "Codec",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "CollectBoundaryManifestOptions",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "ColorSpace",
+          "kind": "type"
         },
         {
           "name": "CommandAnnotations",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CommandExecutionKind",
@@ -285,7 +305,7 @@
         },
         {
           "name": "CommandJsonSchema",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompileResult",
@@ -293,15 +313,15 @@
         },
         {
           "name": "CompiledGLSLOutput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompiledOutputs",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompiledWGSLOutput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompilerDef",
@@ -309,47 +329,31 @@
         },
         {
           "name": "Component",
-          "kind": "interface"
-        },
-        {
-          "name": "Component",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ComponentCatalog",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ComponentDef",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ComponentPropDef",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompositeState",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Compositor",
-          "kind": "interface"
-        },
-        {
-          "name": "Compositor",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "CompositorWorker",
-          "kind": "interface"
-        },
-        {
-          "name": "CompositorWorker",
-          "kind": "namespace"
-        },
-        {
-          "name": "CompositorWorkerShape",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompositorWorkerStartupStage",
@@ -357,23 +361,27 @@
         },
         {
           "name": "CompositorWorkerStartupTelemetry",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CompositorWorkerState",
           "kind": "type"
         },
         {
+          "name": "ComputeMessage",
+          "kind": "type"
+        },
+        {
           "name": "Config",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ConfigInput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ConfigTemplateResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ContentAddress",
@@ -381,7 +389,7 @@
         },
         {
           "name": "ControllableSignal",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "CrossOriginEmbedderPolicy",
@@ -389,7 +397,7 @@
         },
         {
           "name": "DAGNode",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "DefKind",
@@ -397,27 +405,19 @@
         },
         {
           "name": "DefineQuantizerOptions",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "DenseStore",
-          "kind": "interface"
-        },
-        {
-          "name": "DenseStore",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "DenseSystem",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Derived",
-          "kind": "interface"
-        },
-        {
-          "name": "Derived",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "DesignTier",
@@ -425,15 +425,19 @@
         },
         {
           "name": "DetectionResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "DeviceCapabilities",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "DirtyFlags",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "DisposeMessage",
+          "kind": "type"
         },
         {
           "name": "Disposer",
@@ -449,31 +453,27 @@
         },
         {
           "name": "Easing",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "EdgeHostAdapter",
-          "kind": "interface"
-        },
-        {
-          "name": "EdgeHostAdapter",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "EdgeHostAdapterConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeHostBoundaryConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeHostBoundaryResolution",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeHostCacheConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeHostCacheStatus",
@@ -485,51 +485,71 @@
         },
         {
           "name": "EdgeHostCompileContext",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeHostContext",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeHostResolution",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeTier",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "EdgeTierResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EdgeType",
           "kind": "type"
         },
         {
+          "name": "EdgeWGSLUniformValue",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeWGSLUniformVector",
+          "kind": "type"
+        },
+        {
           "name": "Entity",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "EntityId",
           "kind": "type"
         },
         {
+          "name": "ErrorMessage",
+          "kind": "type"
+        },
+        {
+          "name": "EvaluateMessage",
+          "kind": "type"
+        },
+        {
           "name": "EvaluateResult",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "EvaluateUpdate",
+          "kind": "type"
         },
         {
           "name": "ExtendedDetectionResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ExtendedDeviceCapabilities",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "FadeEnvelope",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "FetchLayerNext",
@@ -537,19 +557,19 @@
         },
         {
           "name": "FocusState",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ForkViolation",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "FrameBudget",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "FrameCapture",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "FrameMark",
@@ -557,7 +577,11 @@
         },
         {
           "name": "FrameMarkSum",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "FrameMessage",
+          "kind": "type"
         },
         {
           "name": "FromWorkerMessage",
@@ -565,11 +589,11 @@
         },
         {
           "name": "GLSLCompileResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "GLSLDefine",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "GLSLStates",
@@ -581,7 +605,7 @@
         },
         {
           "name": "GLSLUniform",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "GPUTier",
@@ -589,31 +613,35 @@
         },
         {
           "name": "GeneratedUINode",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "GeneratedUIValidationError",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "HLC",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "HLCClock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "HMRPayload",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "IMEState",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "InitMessage",
+          "kind": "type"
         },
         {
           "name": "IntegrationConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "IntegrityDigest",
@@ -621,7 +649,7 @@
         },
         {
           "name": "InterpolatedFrame",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "IslandMode",
@@ -629,15 +657,11 @@
         },
         {
           "name": "KVNamespace",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Lifetime",
-          "kind": "interface"
-        },
-        {
-          "name": "Lifetime",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "LiteshipFetchLayer",
@@ -645,23 +669,23 @@
         },
         {
           "name": "LiteshipFetchLayerConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "LiteshipLocals",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "LiteshipMiddlewareConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "LiveCell",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "LiveQuantizer",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "MatchPriority",
@@ -669,15 +693,19 @@
         },
         {
           "name": "MatchResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "MergeResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Messages",
-          "kind": "namespace"
+          "kind": "type"
+        },
+        {
+          "name": "MetricsMessage",
+          "kind": "type"
         },
         {
           "name": "Millis",
@@ -685,22 +713,26 @@
         },
         {
           "name": "MorphCallbacks",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "MorphConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "MorphHints",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "MorphRejection",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "MorphResult",
+          "kind": "type"
+        },
+        {
+          "name": "MotionSampleMessage",
           "kind": "type"
         },
         {
@@ -709,6 +741,10 @@
         },
         {
           "name": "OpType",
+          "kind": "type"
+        },
+        {
+          "name": "OutputRecord",
           "kind": "type"
         },
         {
@@ -732,36 +768,32 @@
           "kind": "type"
         },
         {
-          "name": "OwnedResource",
-          "kind": "interface"
-        },
-        {
           "name": "Part",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "PhysicalState",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Plan",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "PlanBuilder",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "PlanEdge",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "PlanIR",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "PlanStep",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "PlanValidationError",
@@ -773,7 +805,7 @@
         },
         {
           "name": "PluginConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Prettify",
@@ -789,10 +821,6 @@
         },
         {
           "name": "PrimitiveResolution",
-          "kind": "interface"
-        },
-        {
-          "name": "PrimitiveShape",
           "kind": "type"
         },
         {
@@ -800,40 +828,44 @@
           "kind": "type"
         },
         {
+          "name": "ProgramUniforms",
+          "kind": "type"
+        },
+        {
           "name": "PulseEnvelope",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizeBlock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizeNestedRule",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizeProps",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizeSheetContext",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizeStateBody",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Quantizer",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizerBoundarySource",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizerConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizerCrossings",
@@ -841,11 +873,11 @@
         },
         {
           "name": "QuantizerOutputs",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizerRuntime",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "QuantizerState",
@@ -853,27 +885,51 @@
         },
         {
           "name": "ReactiveQuantizer",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "ReadonlyConfigValue",
+          "kind": "type"
+        },
+        {
+          "name": "ReadonlyQuantizerValue",
+          "kind": "type"
+        },
+        {
+          "name": "ReadyMessage",
+          "kind": "type"
         },
         {
           "name": "ReceiptDAG",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ReceiptEnvelope",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ReceiptSubject",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ReconnectConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "RemotionVideoConfig",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "RemoveQuantizerMessage",
+          "kind": "type"
+        },
+        {
+          "name": "RemoveQuantizerUpdate",
+          "kind": "type"
+        },
+        {
+          "name": "RenderCompleteMessage",
+          "kind": "type"
         },
         {
           "name": "RenderFn",
@@ -884,16 +940,20 @@
           "kind": "type"
         },
         {
-          "name": "RenderWorkerShape",
-          "kind": "interface"
-        },
-        {
           "name": "ResolvedEnvelope",
           "kind": "type"
         },
         {
+          "name": "ResolvedStateAckMessage",
+          "kind": "type"
+        },
+        {
           "name": "ResolvedStateAckPayload",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "ResolvedStateEntry",
+          "kind": "type"
         },
         {
           "name": "ResumeResponse",
@@ -901,39 +961,63 @@
         },
         {
           "name": "ResumptionConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ResumptionState",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ResumptionStateInput",
           "kind": "type"
         },
         {
-          "name": "SPSCRing",
-          "kind": "interface"
+          "name": "RuntimeCoordinator",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeCoordinatorConfig",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeCoordinatorDenseStore",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeEasing",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimePhase",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeWritePlan",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeWriteProperty",
+          "kind": "type"
+        },
+        {
+          "name": "RuntimeWriteWindow",
+          "kind": "type"
         },
         {
           "name": "SPSCRing",
-          "kind": "namespace"
-        },
-        {
-          "name": "SPSCRingBufferShape",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SPSCRingPair",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SSEClient",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SSEConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SSEMessage",
@@ -944,12 +1028,12 @@
           "kind": "type"
         },
         {
-          "name": "Scheduler",
-          "kind": "interface"
+          "name": "SceneCompilation",
+          "kind": "type"
         },
         {
           "name": "Scheduler",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "SchemaPort",
@@ -957,27 +1041,31 @@
         },
         {
           "name": "ScrollPosition",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SelectionState",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ServerIslandContext",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "SetBlendMessage",
+          "kind": "type"
+        },
+        {
+          "name": "SetBlendUpdate",
+          "kind": "type"
         },
         {
           "name": "ShadowLayer",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Signal",
-          "kind": "interface"
-        },
-        {
-          "name": "Signal",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "SignalInput",
@@ -993,23 +1081,23 @@
         },
         {
           "name": "SlotConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SlotEntry",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SlotEntryInput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "SlotPath",
           "kind": "type"
         },
         {
-          "name": "SlotRegistryShape",
-          "kind": "interface"
+          "name": "SlotRegistry",
+          "kind": "type"
         },
         {
           "name": "SlotsOf",
@@ -1017,7 +1105,23 @@
         },
         {
           "name": "SpringConfig",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "StartRenderMessage",
+          "kind": "type"
+        },
+        {
+          "name": "StartupComputeMessage",
+          "kind": "type"
+        },
+        {
+          "name": "StartupComputePacket",
+          "kind": "type"
+        },
+        {
+          "name": "StateMessage",
+          "kind": "type"
         },
         {
           "name": "StateName",
@@ -1028,56 +1132,60 @@
           "kind": "type"
         },
         {
+          "name": "StopRenderMessage",
+          "kind": "type"
+        },
+        {
           "name": "Store",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Style",
-          "kind": "interface"
-        },
-        {
-          "name": "Style",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "StyleBlock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "StyleCSSResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "StyleLayer",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "StyleTransitionConfig",
+          "kind": "type"
         },
         {
           "name": "System",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Theme",
-          "kind": "interface"
-        },
-        {
-          "name": "Theme",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "ThemeBlock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ThemeCSSResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ThemeCompileConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ThemeCompileResult",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "ThemeDeclaration",
+          "kind": "type"
         },
         {
           "name": "ThresholdValue",
@@ -1089,7 +1197,7 @@
         },
         {
           "name": "Timeline",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "ToWorkerMessage",
@@ -1097,23 +1205,19 @@
         },
         {
           "name": "Token",
-          "kind": "interface"
-        },
-        {
-          "name": "Token",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "TokenBlock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "TokenCSSResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "TokenJSResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "TokenRef",
@@ -1121,10 +1225,14 @@
         },
         {
           "name": "TokenTailwindResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "TokensOf",
+          "kind": "type"
+        },
+        {
+          "name": "TopoSortResult",
           "kind": "type"
         },
         {
@@ -1140,16 +1248,24 @@
           "kind": "type"
         },
         {
+          "name": "TransferCanvasMessage",
+          "kind": "type"
+        },
+        {
           "name": "TransferableCanvas",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "TransformPart",
+          "kind": "type"
         },
         {
           "name": "Transition",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "TransitionConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "TransitionMap",
@@ -1157,11 +1273,11 @@
         },
         {
           "name": "TypedRef",
-          "kind": "interface"
+          "kind": "type"
         },
         {
-          "name": "TypedRef",
-          "kind": "namespace"
+          "name": "TypedValue",
+          "kind": "type"
         },
         {
           "name": "VariantsOf",
@@ -1169,39 +1285,39 @@
         },
         {
           "name": "VectorClock",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "VideoConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "VideoFrameOutput",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "VideoRenderer",
-          "kind": "interface"
-        },
-        {
-          "name": "VideoRenderer",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "VirtualModuleData",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "VirtualModuleId",
           "kind": "type"
         },
         {
+          "name": "VitePrimitive",
+          "kind": "type"
+        },
+        {
           "name": "WGSLBinding",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "WGSLCompileResult",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "WGSLStates",
@@ -1209,7 +1325,7 @@
         },
         {
           "name": "WGSLStruct",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "WGSLType",
@@ -1228,32 +1344,36 @@
           "kind": "type"
         },
         {
+          "name": "WarmResetMessage",
+          "kind": "type"
+        },
+        {
           "name": "WebCodecsCapture",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "WebCodecsCaptureOptions",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "WorkerConfig",
-          "kind": "interface"
+          "kind": "type"
+        },
+        {
+          "name": "WorkerErrorCode",
+          "kind": "type"
         },
         {
           "name": "WorkerHost",
-          "kind": "interface"
-        },
-        {
-          "name": "WorkerHost",
-          "kind": "namespace"
+          "kind": "type"
         },
         {
           "name": "WorkerHostRenderConfig",
-          "kind": "interface"
+          "kind": "type"
         },
         {
-          "name": "WorkerHostShape",
-          "kind": "interface"
+          "name": "WorkerLike",
+          "kind": "type"
         },
         {
           "name": "WorkerMetrics",
@@ -1265,15 +1385,11 @@
         },
         {
           "name": "World",
-          "kind": "interface"
+          "kind": "type"
         },
         {
           "name": "Zap",
-          "kind": "interface"
-        },
-        {
-          "name": "Zap",
-          "kind": "namespace"
+          "kind": "type"
         }
       ]
     },
@@ -1424,6 +1540,10 @@
           "kind": "interface"
         },
         {
+          "name": "AnalyzedPackageArtifacts",
+          "kind": "interface"
+        },
+        {
           "name": "AuditAllowlistEntry",
           "kind": "interface"
         },
@@ -1436,6 +1556,10 @@
           "kind": "type"
         },
         {
+          "name": "AuditCoverageNotChecked",
+          "kind": "interface"
+        },
+        {
           "name": "AuditFinding",
           "kind": "interface"
         },
@@ -1446,6 +1570,10 @@
         {
           "name": "AuditPassResult",
           "kind": "interface"
+        },
+        {
+          "name": "AuditRuleId",
+          "kind": "type"
         },
         {
           "name": "AuditSection",
@@ -1501,6 +1629,10 @@
         },
         {
           "name": "EarlyReturnMatch",
+          "kind": "interface"
+        },
+        {
+          "name": "EnrolledActiveSurface",
           "kind": "interface"
         },
         {
@@ -1608,6 +1740,10 @@
           "kind": "interface"
         },
         {
+          "name": "PackageArtifactCoverage",
+          "kind": "type"
+        },
+        {
           "name": "PackageExportTarget",
           "kind": "interface"
         },
@@ -1656,7 +1792,7 @@
           "kind": "interface"
         },
         {
-          "name": "SurfacePolicyShape",
+          "name": "SurfacePolicy",
           "kind": "interface"
         },
         {
@@ -1714,6 +1850,14 @@
         {
           "name": "TypeExportSurfaceSnapshot",
           "kind": "interface"
+        },
+        {
+          "name": "TypeScriptPathAliases",
+          "kind": "type"
+        },
+        {
+          "name": "UnverifiedPackageArtifacts",
+          "kind": "interface"
         }
       ]
     },
@@ -1726,6 +1870,10 @@
         {
           "name": "CanonicalCbor",
           "kind": "namespace"
+        },
+        {
+          "name": "CanonicalCborValue",
+          "kind": "type"
         },
         {
           "name": "ContentAddress",
@@ -1751,7 +1899,15 @@
           "kind": "type"
         },
         {
+          "name": "CloudflareExecutionContext",
+          "kind": "type"
+        },
+        {
           "name": "CloudflareMiddlewareConfig",
+          "kind": "type"
+        },
+        {
+          "name": "CloudflareRequestContext",
           "kind": "type"
         },
         {
@@ -1855,7 +2011,15 @@
           "kind": "type"
         },
         {
+          "name": "CheckExecution",
+          "kind": "type"
+        },
+        {
           "name": "CheckInvariantEntry",
+          "kind": "type"
+        },
+        {
+          "name": "CheckInvariantExemption",
           "kind": "type"
         },
         {
@@ -2051,6 +2215,10 @@
           "kind": "type"
         },
         {
+          "name": "PublicFailureProofContext",
+          "kind": "type"
+        },
+        {
           "name": "PublicSurfaceStability",
           "kind": "type"
         },
@@ -2060,6 +2228,14 @@
         },
         {
           "name": "RegisteredCommand",
+          "kind": "type"
+        },
+        {
+          "name": "RootScriptCheckExecution",
+          "kind": "type"
+        },
+        {
+          "name": "SceneCompilation",
           "kind": "type"
         },
         {
@@ -2295,7 +2471,19 @@
           "kind": "type"
         },
         {
+          "name": "ViewTransitionCompileInput",
+          "kind": "type"
+        },
+        {
+          "name": "ViewTransitionCompileResult",
+          "kind": "type"
+        },
+        {
           "name": "WGSLBinding",
+          "kind": "type"
+        },
+        {
+          "name": "WGSLBindingType",
           "kind": "type"
         },
         {
@@ -2439,6 +2627,10 @@
           "kind": "type"
         },
         {
+          "name": "CapsuleCatalog",
+          "kind": "type"
+        },
+        {
           "name": "CapsuleCommandDescriptor",
           "kind": "type"
         },
@@ -2491,7 +2683,7 @@
           "kind": "type"
         },
         {
-          "name": "CellFanoutShape",
+          "name": "CellFanout",
           "kind": "type"
         },
         {
@@ -2507,7 +2699,7 @@
           "kind": "type"
         },
         {
-          "name": "CellReplayShape",
+          "name": "CellReplay",
           "kind": "type"
         },
         {
@@ -2568,10 +2760,6 @@
         },
         {
           "name": "ComposableWorld",
-          "kind": "type"
-        },
-        {
-          "name": "ComposableWorldShape",
           "kind": "type"
         },
         {
@@ -2908,18 +3096,14 @@
         },
         {
           "name": "Lifetime",
-          "kind": "namespace"
+          "kind": "interface"
         },
         {
           "name": "Lifetime",
-          "kind": "type"
+          "kind": "namespace"
         },
         {
           "name": "LifetimeDisposeError",
-          "kind": "type"
-        },
-        {
-          "name": "LifetimeShape",
           "kind": "type"
         },
         {
@@ -3003,14 +3187,6 @@
           "kind": "type"
         },
         {
-          "name": "OwnedResource",
-          "kind": "type"
-        },
-        {
-          "name": "Part",
-          "kind": "namespace"
-        },
-        {
           "name": "Part",
           "kind": "type"
         },
@@ -3084,10 +3260,6 @@
         },
         {
           "name": "ProjectionStateOptions",
-          "kind": "type"
-        },
-        {
-          "name": "ProjectionStateShape",
           "kind": "type"
         },
         {
@@ -3252,11 +3424,11 @@
         },
         {
           "name": "RuntimeCoordinator",
-          "kind": "namespace"
+          "kind": "interface"
         },
         {
           "name": "RuntimeCoordinator",
-          "kind": "type"
+          "kind": "namespace"
         },
         {
           "name": "RuntimeCoordinatorConfig",
@@ -3407,16 +3579,8 @@
           "kind": "type"
         },
         {
-          "name": "StateCellShape",
-          "kind": "type"
-        },
-        {
           "name": "StateCellStore",
-          "kind": "type"
-        },
-        {
-          "name": "StateCellStoreShape",
-          "kind": "type"
+          "kind": "interface"
         },
         {
           "name": "StateName",
@@ -3579,6 +3743,14 @@
           "kind": "type"
         },
         {
+          "name": "CapabilityAxisValues",
+          "kind": "type"
+        },
+        {
+          "name": "CapabilityTierProjection",
+          "kind": "type"
+        },
+        {
           "name": "DesignTier",
           "kind": "type"
         },
@@ -3643,6 +3815,10 @@
           "kind": "type"
         },
         {
+          "name": "CacheOptions",
+          "kind": "type"
+        },
+        {
           "name": "ClientHints",
           "kind": "namespace"
         },
@@ -3651,7 +3827,15 @@
           "kind": "type"
         },
         {
+          "name": "CompiledGLSLOutput",
+          "kind": "type"
+        },
+        {
           "name": "CompiledOutputs",
+          "kind": "type"
+        },
+        {
+          "name": "CompiledWGSLOutput",
           "kind": "type"
         },
         {
@@ -3668,6 +3852,10 @@
         },
         {
           "name": "EdgeHostAdapterConfig",
+          "kind": "type"
+        },
+        {
+          "name": "EdgeHostBackground",
           "kind": "type"
         },
         {
@@ -3720,6 +3908,10 @@
         },
         {
           "name": "ThemeCompileResult",
+          "kind": "type"
+        },
+        {
+          "name": "ThemeDeclaration",
           "kind": "type"
         },
         {
@@ -3859,6 +4051,42 @@
           "kind": "type"
         },
         {
+          "name": "BenchExecution",
+          "kind": "type"
+        },
+        {
+          "name": "BenchSubject",
+          "kind": "type"
+        },
+        {
+          "name": "BenchSubjectIssue",
+          "kind": "type"
+        },
+        {
+          "name": "BenchSubjectIssueKind",
+          "kind": "type"
+        },
+        {
+          "name": "BenchSubjectOrigin",
+          "kind": "type"
+        },
+        {
+          "name": "BenchSubjectQualification",
+          "kind": "type"
+        },
+        {
+          "name": "BenchSubjectRole",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkSubjectFact",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkSubjectFacts",
+          "kind": "type"
+        },
+        {
           "name": "CapabilityLinkFacts",
           "kind": "type"
         },
@@ -3924,6 +4152,10 @@
         },
         {
           "name": "EvidenceRecorder",
+          "kind": "type"
+        },
+        {
+          "name": "ExtensionGateIdentity",
           "kind": "type"
         },
         {
@@ -4007,7 +4239,19 @@
           "kind": "type"
         },
         {
+          "name": "GateAccessManifest",
+          "kind": "type"
+        },
+        {
           "name": "GateContext",
+          "kind": "type"
+        },
+        {
+          "name": "GateFactAccess",
+          "kind": "type"
+        },
+        {
+          "name": "GateFactChannel",
           "kind": "type"
         },
         {
@@ -4172,6 +4416,10 @@
         },
         {
           "name": "ProvenanceFacts",
+          "kind": "type"
+        },
+        {
+          "name": "QualifiedBenchDistribution",
           "kind": "type"
         },
         {
@@ -4531,6 +4779,10 @@
           "kind": "type"
         },
         {
+          "name": "LspMethodDescriptor",
+          "kind": "type"
+        },
+        {
           "name": "LspNotification",
           "kind": "type"
         },
@@ -4543,15 +4795,15 @@
           "kind": "type"
         },
         {
+          "name": "LspServerCapabilities",
+          "kind": "type"
+        },
+        {
           "name": "LspServerState",
           "kind": "type"
         },
         {
-          "name": "LspTextEdit",
-          "kind": "type"
-        },
-        {
-          "name": "LspWorkspaceEdit",
+          "name": "McpListedResource",
           "kind": "type"
         },
         {
@@ -4571,7 +4823,15 @@
           "kind": "type"
         },
         {
+          "name": "McpServerHandle",
+          "kind": "type"
+        },
+        {
           "name": "McpToolCall",
+          "kind": "type"
+        },
+        {
+          "name": "McpToolDescriptor",
           "kind": "type"
         },
         {
@@ -4612,11 +4872,7 @@
       "typeExports": [
         {
           "name": "AnimatedQuantizer",
-          "kind": "type"
-        },
-        {
-          "name": "AnimatedQuantizerShape",
-          "kind": "type"
+          "kind": "interface"
         },
         {
           "name": "DefineQuantizerOptions",
@@ -4903,15 +5159,15 @@
           "kind": "type"
         },
         {
+          "name": "Primitive",
+          "kind": "type"
+        },
+        {
           "name": "PrimitiveKind",
           "kind": "type"
         },
         {
           "name": "PrimitiveResolution",
-          "kind": "type"
-        },
-        {
-          "name": "PrimitiveShape",
           "kind": "type"
         },
         {
@@ -5044,15 +5300,11 @@
         },
         {
           "name": "LLMAdapter",
-          "kind": "namespace"
+          "kind": "interface"
         },
         {
           "name": "LLMAdapter",
-          "kind": "type"
-        },
-        {
-          "name": "LLMAdapterShape",
-          "kind": "type"
+          "kind": "namespace"
         },
         {
           "name": "LLMChunk",
@@ -5216,11 +5468,7 @@
         },
         {
           "name": "SlotRegistry",
-          "kind": "type"
-        },
-        {
-          "name": "SlotRegistryShape",
-          "kind": "type"
+          "kind": "interface"
         },
         {
           "name": "StreamRecoveryHandlers",
@@ -5276,14 +5524,6 @@
       "typeExports": [
         {
           "name": "CompositorWorker",
-          "kind": "namespace"
-        },
-        {
-          "name": "CompositorWorker",
-          "kind": "type"
-        },
-        {
-          "name": "CompositorWorkerShape",
           "kind": "type"
         },
         {
@@ -5312,19 +5552,15 @@
         },
         {
           "name": "RenderWorker",
-          "kind": "type"
+          "kind": "interface"
         },
         {
-          "name": "RenderWorkerShape",
+          "name": "ResolvedStateAckPayload",
           "kind": "type"
         },
         {
           "name": "SPSCRing",
-          "kind": "type"
-        },
-        {
-          "name": "SPSCRingBufferShape",
-          "kind": "type"
+          "kind": "interface"
         },
         {
           "name": "SPSCRingPair",
@@ -5344,18 +5580,14 @@
         },
         {
           "name": "WorkerHost",
-          "kind": "namespace"
+          "kind": "interface"
         },
         {
           "name": "WorkerHost",
-          "kind": "type"
+          "kind": "namespace"
         },
         {
           "name": "WorkerHostRenderConfig",
-          "kind": "type"
-        },
-        {
-          "name": "WorkerHostShape",
           "kind": "type"
         },
         {
@@ -5364,6 +5596,66 @@
         },
         {
           "name": "WorkerMetrics",
+          "kind": "type"
+        }
+      ]
+    },
+    "create-liteship": {
+      "typeExports": [
+        {
+          "name": "RunIo",
+          "kind": "interface"
+        },
+        {
+          "name": "ScaffoldError",
+          "kind": "type"
+        },
+        {
+          "name": "ScaffoldFailureReason",
+          "kind": "type"
+        },
+        {
+          "name": "ScaffoldOptions",
+          "kind": "type"
+        },
+        {
+          "name": "ScaffoldResult",
+          "kind": "type"
+        }
+      ]
+    },
+    "liteship": {
+      "typeExports": [
+        {
+          "name": "Adaptive",
+          "kind": "type"
+        },
+        {
+          "name": "Boundary",
+          "kind": "type"
+        },
+        {
+          "name": "Config",
+          "kind": "type"
+        },
+        {
+          "name": "DiagnosticCode",
+          "kind": "type"
+        },
+        {
+          "name": "Quantizer",
+          "kind": "type"
+        },
+        {
+          "name": "Style",
+          "kind": "type"
+        },
+        {
+          "name": "Theme",
+          "kind": "type"
+        },
+        {
+          "name": "Token",
           "kind": "type"
         }
       ]

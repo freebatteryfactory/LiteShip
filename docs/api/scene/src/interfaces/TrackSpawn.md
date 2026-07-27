@@ -26,7 +26,7 @@ Component seed map passed to `world.spawn(...)` when [SceneRuntime](../namespace
 
 ### trackId
 
-> `readonly` **trackId**: [`TrackId`](../type-aliases/TrackId.md)\<`TrackKind`\>
+> `readonly` **trackId**: [`TrackId`](../type-aliases/TrackId.md)\<[`TrackKind`](../../../spine/type-aliases/TrackKind.md)\>
 
 Defined in: [scene/src/compile.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L42)
 

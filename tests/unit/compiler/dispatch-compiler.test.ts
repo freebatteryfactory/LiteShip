@@ -8,7 +8,7 @@
 import { describe, test, expect } from 'vitest';
 import { defineBoundary, defineConfig } from '@liteship/core';
 import { hasTag } from '@liteship/error';
-import { dispatch } from '@liteship/compiler';
+import { compileViewTransition, dispatch } from '@liteship/compiler';
 import type { AIManifest, CompilerDef } from '@liteship/compiler';
 
 // ---------------------------------------------------------------------------
@@ -94,6 +94,13 @@ describe('dispatch()', () => {
     const result = dispatch(def);
     expect(result.target).toBe('config');
     expect((result as { target: string; result: { json: string } }).result.json).toContain('ConfigDef');
+  });
+
+  test('ViewTransitionCompiler is an explicit opt-in arm and reuses the existing compiler', () => {
+    const input = { boundary: 'hero', durationMs: 420, easing: 'ease' } as const;
+    const result = dispatch({ _tag: 'ViewTransitionCompiler', input });
+    expect(result).toEqual({ target: 'view-transition', result: compileViewTransition(input) });
+    expect(result.result.raw).toContain('view-transition-name: liteship-vt-hero');
   });
 });
 

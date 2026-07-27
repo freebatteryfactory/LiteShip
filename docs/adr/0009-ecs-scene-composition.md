@@ -13,7 +13,7 @@ Scene composition needs a structure that is (a) declaratively authored, (b) stat
 
 Scenes are ECS worlds. The internal expression of a `sceneComposition` capsule is a `World` populated by the scene compiler (`packages/scene/src/compile.ts`). Track helpers (`Track.video`, `Track.audio`, `Track.transition`, `Track.effect`) compile at declare time to entity seeds + system registrations.
 
-Per-frame hot paths use dense `Part` stores (`Part.dense('Opacity', N)`, `Part.dense('Volume', N)`, etc.) for zero-alloc iteration. The runtime ECS and the scene ECS share the same substrate.
+Per-frame hot paths use dense stores (`createDenseStore('Opacity', N)`, `createDenseStore('Volume', N)`, etc.) for zero-allocation iteration. The runtime ECS and the scene ECS share the same substrate.
 
 ## Consequences
 

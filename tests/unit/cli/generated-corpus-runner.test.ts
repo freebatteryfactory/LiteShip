@@ -67,7 +67,10 @@ describe('generated corpus runner', () => {
     [[], ['tests/bench/not-generated.bench.ts']],
     [['tests/generated/a.test.ts', 'tests/generated/a.test.ts'], []],
   ] as const)('refuses paths outside or duplicated within the manifest corpus', async (testFiles, benchFiles) => {
-    await expect(runGeneratedCorpus(repoRoot, { testFiles, benchFiles }, vi.fn())).rejects.toThrow(/generated corpus/u);
+    await expect(runGeneratedCorpus(repoRoot, { testFiles, benchFiles }, vi.fn())).rejects.toMatchObject({
+      _tag: 'ValidationError',
+      module: 'generated-corpus',
+    });
   });
 
   it('admits only exact-file multi-sample measurements with uncertainty and environment', () => {
@@ -158,11 +161,15 @@ describe('generated corpus runner', () => {
     ],
   ])('refuses %s benchmark evidence', (_label, benchmark) => {
     const file = 'tests/generated/remotion-video-frame-output.bench.ts';
-    expect(() =>
+    let failure: unknown;
+    try {
       admitGeneratedBenchmarkReport(repoRoot, [file], {
         files: [{ filepath: `${repoRoot}/${file}`, groups: [{ fullName: file, benchmarks: [benchmark] }] }],
-      }),
-    ).toThrow(/generated benchmark/u);
+      });
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toMatchObject({ _tag: 'ValidationError', module: 'generated-benchmark-report' });
   });
 
   it('refuses omitted, foreign, and source-stale execution receipts', () => {

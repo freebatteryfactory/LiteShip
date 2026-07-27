@@ -14,8 +14,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { consumerDevopsProfile, liteshipDevopsProfile, withRepoRoot, type DevopsProfile } from '@liteship/audit';
+import { consumerDevopsProfile, withRepoRoot, type DevopsProfile } from '@liteship/audit';
 import { NotFoundError, ParseError, ValidationError } from '@liteship/error';
+import { liteshipDevopsProfile } from './liteship-audit-profile.js';
 
 export interface LoadedProfile {
   readonly profile: DevopsProfile;
@@ -34,7 +35,7 @@ function profileFromJson(raw: unknown, jsonPath: string, cwd: string): DevopsPro
   if (!isRecord(raw)) throw ValidationError('profile.load', `profile JSON must be an object: ${jsonPath}`);
   const prefix = raw['internalPackagePrefix'];
   const topology = raw['packageTopology'];
-  // Optional: every SurfacePolicyShape field defaults to "surface not
+  // Optional: every SurfacePolicy field defaults to "surface not
   // declared", so a profile with no Astro/Vite host simply omits it.
   const surface = raw['surfacePolicy'] ?? {};
   if (typeof prefix !== 'string') {
@@ -65,6 +66,7 @@ function profileFromJson(raw: unknown, jsonPath: string, cwd: string): DevopsPro
     packageTopology: topology as unknown as DevopsProfile['packageTopology'],
     dynamicImportExemptions: new Set((exemptions as string[] | undefined) ?? []),
     surfacePolicy: surface as unknown as DevopsProfile['surfacePolicy'],
+    allowlist: [],
   };
 }
 
@@ -114,7 +116,7 @@ export async function loadProfile(
     // just LiteShip's `@liteship/*`. Without `--profile`, the base is LiteShip's own.
     const base = profilePath ? await loadProfileFromPath(profilePath, cwd) : undefined;
     return {
-      profile: base ? consumerDevopsProfile(cwd, base) : consumerDevopsProfile(cwd),
+      profile: consumerDevopsProfile(cwd, base ?? liteshipDevopsProfile),
       source: 'consumer',
     };
   }

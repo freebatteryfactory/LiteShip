@@ -54,7 +54,7 @@ export interface LLMStreamConfig {
  * {@link LLMChunk} stream and the decoded text-token stream derived
  * from it. Returned by {@link LLMAdapter.create}.
  */
-export interface LLMAdapterShape {
+export interface LLMAdapter {
   readonly chunks: AsyncIterable<LLMChunk>;
   readonly textTokens: AsyncIterable<string>;
 }
@@ -88,9 +88,9 @@ export interface LLMAdapterShape {
  * ```
  *
  * @param config - Stream source and parser configuration
- * @returns An {@link LLMAdapterShape} with `chunks` and `textTokens` AsyncIterables
+ * @returns An {@link LLMAdapter} with `chunks` and `textTokens` AsyncIterables
  */
-function _create(config: LLMStreamConfig): LLMAdapterShape {
+function _create(config: LLMStreamConfig): LLMAdapter {
   // Each iteration replays the tool-call accumulator state from scratch and
   // re-reads `source` — matching the former Stream semantics (a fresh run per
   // subscription). Consumers iterate EITHER `chunks` OR `textTokens`.
@@ -180,8 +180,6 @@ function _collect(config: {
 export const LLMAdapter = { create: _create, collect: _collect };
 
 /** Public structural type for `LLMAdapter`. */
-export type LLMAdapter = LLMAdapterShape;
-
 export declare namespace LLMAdapter {
   /** Adapter config type alias. */
   export type Config = LLMStreamConfig;

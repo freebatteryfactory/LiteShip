@@ -14,7 +14,7 @@ Options for [renderFromCatalog](../functions/renderFromCatalog.md).
 
 ### catalog
 
-> `readonly` **catalog**: `ComponentCatalog`
+> `readonly` **catalog**: [`ComponentCatalog`](../../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: genui/dist/render.d.ts:16
 

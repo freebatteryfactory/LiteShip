@@ -8,7 +8,7 @@
 
 > `const` **SSE**: `object`
 
-Defined in: web/dist/stream/sse.d.ts:150
+Defined in: web/dist/stream/sse.d.ts:145
 
 SSE client namespace.
 
@@ -51,5 +51,5 @@ const state = client.state; // 'connecting' | 'connected' | ...
 for await (const msg of client.messages) {
   console.log(msg.type);
 }
-client.close();
+await client.dispose();
 ```

@@ -6,11 +6,11 @@
 
 # Type Alias: Replay\<T\>
 
-> **Replay**\<`T`\> = [`CellReplayShape`](../../../interfaces/CellReplayShape.md)\<`T`\>
+> **Replay**\<`T`\> = [`CellReplay`](../../../interfaces/CellReplay.md)\<`T`\>
 
 Defined in: [core/src/reactive/cell-kernel.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/cell-kernel.ts#L483)
 
-Live replay-1 kernel — see [CellReplayShape](../../../interfaces/CellReplayShape.md).
+Live replay-1 kernel — see [CellReplay](../../../interfaces/CellReplay.md).
 
 ## Type Parameters
 

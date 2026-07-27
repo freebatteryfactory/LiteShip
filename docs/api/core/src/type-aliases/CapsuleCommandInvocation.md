@@ -6,7 +6,7 @@
 
 # Type Alias: CapsuleCommandInvocation
 
-> **CapsuleCommandInvocation** = `_CapsuleCommandInvocation`
+> **CapsuleCommandInvocation** = [`CapsuleCommandInvocation`](../../../spine/interfaces/CapsuleCommandInvocation.md)
 
 Defined in: [core/src/authoring/command.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L29)
 

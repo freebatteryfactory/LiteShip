@@ -8,7 +8,7 @@
 import { describe, test, expect } from 'vitest';
 import {
   ComposableWorld,
-  Part,
+  createDenseStore,
   defineBoundary,
   defineToken,
   defineStyle,
@@ -190,8 +190,8 @@ describe('ECS Composable Infrastructure', () => {
 
   test('dense systems execute only when all queried stores are registered', () => {
     const world = createWorld();
-    const posX = Part.dense('posX', 8);
-    const posY = Part.dense('posY', 8);
+    const posX = createDenseStore('posX', 8);
+    const posY = createDenseStore('posY', 8);
     const id = world.spawn();
     posX.set(id, 1);
     posY.set(id, 2);
@@ -236,8 +236,8 @@ describe('ECS Composable Infrastructure', () => {
     expect(result.y).toBe(3);
   });
 
-  test('Part.dense supports set/get/overwrite/delete/reset/view/entities and capacity checks', () => {
-    const store = Part.dense('hp', 3);
+  test('createDenseStore supports set/get/overwrite/delete/reset/view/entities and capacity checks', () => {
+    const store = createDenseStore('hp', 3);
     const idA = 'entity-1:fnv1a:aaaaaaaa' as never;
     const idB = 'entity-2:fnv1a:bbbbbbbb' as never;
     const idC = 'entity-3:fnv1a:cccccccc' as never;

@@ -6,7 +6,7 @@
 
 # Type Alias: CommandJsonSchema
 
-> **CommandJsonSchema** = `_CommandJsonSchema`
+> **CommandJsonSchema** = [`CommandJsonSchema`](../../../spine/interfaces/CommandJsonSchema.md)
 
 Defined in: [core/src/authoring/command.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L21)
 

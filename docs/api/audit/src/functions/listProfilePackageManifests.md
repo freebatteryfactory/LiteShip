@@ -8,7 +8,7 @@
 
 > **listProfilePackageManifests**(`profile`): readonly [`PackageManifestInfo`](../interfaces/PackageManifestInfo.md)[]
 
-Defined in: [audit/src/shared.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L123)
+Defined in: [audit/src/shared.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L128)
 
 Profile-aware package discovery: with `profile.packageRoots`, enumerate
 exactly those roots (the consumer-install seam — packages live under

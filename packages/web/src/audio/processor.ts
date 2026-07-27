@@ -16,7 +16,7 @@
  * @module
  */
 
-import type { AVBridge } from '@liteship/core';
+import type { AsyncOwnedResource, AVBridge } from '@liteship/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,9 +28,10 @@ import type { AVBridge } from '@liteship/core';
  * The returned `node` should be connected into the host's audio graph;
  * the accompanying {@link AudioProcessor.bridge} is shared between the
  * main thread and the worklet so both sides observe the same
- * sample-accurate clock.
+ * sample-accurate clock. Release it with `await processor.dispose()`; graph
+ * disconnection lands synchronously and the Promise carries teardown failure.
  */
-export interface AudioProcessor {
+export interface AudioProcessor extends AsyncOwnedResource {
   /** The underlying `AudioWorkletNode`. Connect into the graph directly. */
   readonly node: AudioWorkletNode;
   /** Shared AV bridge advanced 128 samples per worklet render quantum. */
@@ -39,8 +40,6 @@ export interface AudioProcessor {
   start(): void;
   /** Pause advancement without tearing down the node. */
   stop(): void;
-  /** Stop, disconnect, and release the worklet node. */
-  dispose(): void;
 }
 
 // Re-export the factory from the bootstrap module so callers keep using

@@ -14,8 +14,10 @@ import { ValidationError } from '@liteship/error';
 export type RootExportKind = 'value' | 'type';
 export type RootExportRole = 'authoring' | 'inspection';
 export type FacadeStability = 'stable' | 'experimental';
+export type FacadeAudience = 'application-author' | 'package-author' | 'host-integrator' | 'operator';
+export type FacadeSurfaceClass = 'paved-road' | 'advanced-module';
 export type FacadeLifecycleClass = 'active-owned' | 'gc-owned-mutable' | 'pure-allocation';
-export type FacadeDisposalContract = 'dispose-async' | 'dispose-sync' | 'close-sync' | 'none';
+export type FacadeDisposalContract = 'dispose-async' | 'none';
 export type FacadePostDisposeContract = 'inert' | 'not-applicable';
 export type FacadeSiblingCleanupContract = 'aggregate' | 'not-applicable';
 
@@ -29,6 +31,16 @@ export interface RootExportContract {
   readonly failureContract: string;
   readonly example: string;
   readonly stability: FacadeStability;
+  /** Who should reach for this symbol. `role` is its product category. */
+  readonly audience: FacadeAudience;
+  /** The concrete module that supplies this public binding. */
+  readonly producer: string;
+  readonly surfaceClass: 'paved-road';
+  readonly relatedInvariant: `INV-${string}`;
+  /** Replacement or deprecation route; `none` means the symbol is current. */
+  readonly replacement: string;
+  /** Executable or compile-time example authority. */
+  readonly exampleProof: `tests/${string}.test.ts`;
 }
 
 export interface FacadeSubpathContract {
@@ -45,6 +57,13 @@ export interface FacadeSubpathContract {
   readonly stability: FacadeStability;
   readonly symbol: string;
   readonly reason: string;
+  readonly audience: FacadeAudience;
+  /** The concrete package/subpath directly re-exported by this advanced route. */
+  readonly producer: `@liteship/${string}`;
+  readonly surfaceClass: 'advanced-module';
+  readonly relatedInvariant: `INV-${string}`;
+  readonly replacement: string;
+  readonly exampleProof: `tests/${string}.test.ts`;
 }
 
 /** One public allocation operation and its exact resource-ownership law. */
@@ -83,7 +102,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Invalid configuration is rejected before host projection.",
     "example": "defineConfig(input)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "defineBoundary",
@@ -94,7 +119,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Invalid thresholds or states are rejected at definition time.",
     "example": "defineBoundary(input)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "defineQuantizer",
@@ -105,7 +136,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Incomplete or invalid output maps are rejected before runtime allocation.",
     "example": "defineQuantizer(boundary, options)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/quantizer",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "defineToken",
@@ -116,7 +153,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Invalid token identity or values are rejected at definition time.",
     "example": "defineToken(input)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "defineTheme",
@@ -127,7 +170,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Invalid variants or token references are rejected at definition time.",
     "example": "defineTheme(input)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "defineStyle",
@@ -138,18 +187,30 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Invalid declarations or state ownership are rejected at definition time.",
     "example": "defineStyle(input)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "defineAdaptive",
     "kind": "value",
     "role": "authoring",
-    "owner": "liteship/authoring",
+    "owner": "liteship",
     "userStory": "Define adaptive behavior, apply its attributes, inspect state, and emit its compiled plan.",
     "lifecycle": "immutable-definition",
     "failureContract": "Lowering rejects invalid definitions and explanation follows the live quantizer contract.",
     "example": "defineAdaptive(spec)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "./authoring/adaptive.js",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "schema",
@@ -160,7 +221,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "immutable-definition",
     "failureContract": "Decode returns structured issues instead of accepting malformed data.",
     "example": "schema.struct(fields)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "explainDiagnostic",
@@ -171,7 +238,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "pure-reader",
     "failureContract": "Unknown codes return no invented explanation.",
     "example": "explainDiagnostic(code)",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "operator",
+    "producer": "@liteship/error",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-inhabitation.test.ts"
   },
   {
     "name": "Config",
@@ -182,7 +255,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking rejects incompatible configuration shapes.",
     "example": "Config",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "Boundary",
@@ -193,7 +272,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking preserves the input and state vocabulary.",
     "example": "Boundary<'viewport.width', readonly ['mobile', 'desktop']>",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "Quantizer",
@@ -204,7 +289,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking rejects state or output mismatches.",
     "example": "Quantizer<Boundary>",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "Token",
@@ -215,7 +306,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking preserves the token value contract.",
     "example": "Token<'brand-accent'>",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "Theme",
@@ -226,7 +323,13 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking preserves variant names and token values.",
     "example": "Theme<readonly ['default', 'dark']>",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "Style",
@@ -237,18 +340,30 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking binds style states to the boundary vocabulary.",
     "example": "Style<Boundary>",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "Adaptive",
     "kind": "type",
     "role": "authoring",
-    "owner": "liteship/authoring",
+    "owner": "@liteship/core",
     "userStory": "Annotate the flagship define, apply, and inspect aggregate.",
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking keeps attrs, explanation, and plan outputs coherent.",
     "example": "Adaptive",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "application-author",
+    "producer": "@liteship/core",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   },
   {
     "name": "DiagnosticCode",
@@ -259,25 +374,291 @@ export const ROOT_EXPORT_CONTRACT_SOURCE = `[
     "lifecycle": "compile-time-only",
     "failureContract": "Type checking rejects unknown diagnostic identifiers.",
     "example": "DiagnosticCode",
-    "stability": "stable"
+    "stability": "stable",
+    "audience": "operator",
+    "producer": "@liteship/error",
+    "surfaceClass": "paved-road",
+    "relatedInvariant": "INV-FACADE-EXPORT-BUDGET",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
   }
 ]`;
 
 /** Authored expert-subpath decisions. No subpath reimplements its owner. */
 export const FACADE_SUBPATH_CONTRACT_SOURCE = `[
-  {"subpath":"./schema","specifier":"liteship/schema","owner":"@liteship/core/schema","role":"schema","userStory":"Define, decode, and project transport-agnostic schemas.","dependencyCost":"pure core schema kernel","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"immutable definitions and pure decoders","failureContract":"Malformed data returns structured decode issues.","example":"schema.struct(fields)","stability":"stable","symbol":"schema","reason":"Schema authoring is a coherent expert domain beyond the first adaptive feature."},
-  {"subpath":"./reactive","specifier":"liteship/reactive","owner":"@liteship/core/reactive","role":"reactive-runtime","userStory":"Allocate and dispose cells, signals, stores, lifetimes, and live quantizers.","dependencyCost":"stateful core and quantizer runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"owned resources require disposal","failureContract":"Disposed resources stop work and invalid state transitions fail loudly.","example":"createCell(initial)","stability":"stable","symbol":"createCell","reason":"Runtime allocation is intentionally distinct from immutable root authoring."},
-  {"subpath":"./motion","specifier":"liteship/motion","owner":"@liteship/core/motion","role":"motion","userStory":"Define and execute transitions, timelines, easing, reveal, and stagger behavior.","dependencyCost":"motion kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"timeline resources require disposal","failureContract":"Unsupported or invalid motion intent is refused before execution.","example":"createTimeline(boundary, options)","stability":"stable","symbol":"createTimeline","reason":"Motion is an expert capability with its own lifecycle and vocabulary."},
-  {"subpath":"./graph","specifier":"liteship/graph","owner":"@liteship/core/graph","role":"document-graph","userStory":"Seal, validate, patch, query, and replay the document graph.","dependencyCost":"graph and evidence kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"immutable sealed graphs plus explicit clients","failureContract":"Invalid nodes, patches, or receipts are rejected before application.","example":"DAG.empty()","stability":"stable","symbol":"DAG","reason":"Graph mutation is an advanced engine workflow, not first-hour authoring."},
-  {"subpath":"./media","specifier":"liteship/media","owner":"@liteship/core/media","role":"media-runtime","userStory":"Resolve responsive media and run compositor, audio, video, and frame-budget paths.","dependencyCost":"media and compositor runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"owned buffers and renderers require disposal","failureContract":"Invalid media inputs and exhausted budgets are surfaced explicitly.","example":"Compositor.create(options)","stability":"stable","symbol":"Compositor","reason":"Media processing has runtime and performance costs unsuitable for root."},
-  {"subpath":"./evidence","specifier":"liteship/evidence","owner":"@liteship/core/evidence","role":"evidence-and-quality","userStory":"Inspect receipts, diagnostics, quality tiers, capabilities, and addressed evidence.","dependencyCost":"pure evidence kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure readers and immutable receipts","failureContract":"Invalid chains, addresses, and capability decisions are refused with structured evidence.","example":"inspectReceipt(receipt)","stability":"stable","symbol":"inspectReceipt","reason":"Receipts and tier policy are expert inspection surfaces."},
-  {"subpath":"./compiler","specifier":"liteship/compiler","owner":"@liteship/compiler","role":"projection-compiler","userStory":"Compile definitions into CSS, shader, accessibility, AI, and motion targets.","dependencyCost":"compiler kernels","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure compilation","failureContract":"CSS state keys outside the boundary are omitted and emit the registered compiler/css/unknown-state-key diagnostic.","example":"CSSCompiler.compile(boundary, input)","stability":"stable","symbol":"CSSCompiler","reason":"Projection targets are advanced escape hatches behind the default Adaptive plan."},
-  {"subpath":"./runtime","specifier":"liteship/runtime","owner":"@liteship/web","role":"browser-runtime","userStory":"Apply streaming, morphing, recovery, integrity, and browser runtime behavior.","dependencyCost":"browser DOM runtime","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"connections and observers require disposal","failureContract":"Unsafe URLs, invalid patches, and broken resumptions fail closed.","example":"Morph.morph(input, input)","stability":"stable","symbol":"Morph","reason":"Browser runtime code must never load through the host-free root."},
-  {"subpath":"./astro","specifier":"liteship/astro","owner":"@liteship/astro","role":"astro-host","userStory":"Install LiteShip into Astro and apply Adaptive attributes and server projections.","dependencyCost":"optional Astro peer and host adapter","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"host integration lifecycle","failureContract":"Invalid host configuration fails during integration setup or build.","example":"adaptiveAttrs(input)","stability":"stable","symbol":"adaptiveAttrs","reason":"Astro ownership and peer cost require an explicit host subpath."},
-  {"subpath":"./vite","specifier":"liteship/vite","owner":"@liteship/vite","role":"vite-host","userStory":"Install LiteShip into Vite and compile directive and virtual-module projections.","dependencyCost":"optional Vite peer and host plugin","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"host plugin lifecycle","failureContract":"Invalid directives and configuration produce stable build diagnostics.","example":"plugin(options)","stability":"stable","symbol":"plugin","reason":"Vite ownership and peer cost require an explicit host subpath."},
-  {"subpath":"./testing","specifier":"liteship/testing","owner":"@liteship/core/harness","role":"test-tooling","userStory":"Generate proof harnesses and inspect the installed fleet roster without exposing test tooling on the production root.","dependencyCost":"test-only harness code and fast-check peer","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"test process only","failureContract":"Invalid harness declarations and stale fleet projections fail deterministically.","example":"generatePureTransform(spec)","stability":"stable","symbol":"generatePureTransform","reason":"Proof generators and fleet metadata are a public package-author contract that must remain isolated from production root imports."},
-  {"subpath":"./migrate","specifier":"liteship/migrate","owner":"@liteship/compiler/migrate","role":"migration","userStory":"Translate supported external syntax into ordinary LiteShip definitions.","dependencyCost":"compiler parser adapters","packedProof":"check/hermetic:runtime-import+node16+bundler","lifecycle":"pure migration","failureContract":"Unrepresentable source is refused with stable diagnostics and no fabricated definition.","example":"fromMediaQueries(css)","stability":"stable","symbol":"fromMediaQueries","reason":"Migration grammar is an explicit expert boundary, not framework ontology."},
-  {"subpath":"./genui","specifier":"liteship/genui","owner":"@liteship/genui","role":"generated-ui","userStory":"Define a trusted component catalog, validate generated UI, and render it without raw package discovery.","dependencyCost":"pure generated-UI catalog and renderer","packedProof":"check/journey:one-install-runtime-reference-identity","lifecycle":"immutable catalog and pure validation/rendering","failureContract":"Unknown components, props, or invalid generated trees are refused before rendering.","example":"defineComponentCatalog(input)","stability":"stable","symbol":"defineComponentCatalog","reason":"Generated UI is a documented product capability that deserves a discoverable facade subpath."}
+  {
+    "subpath": "./schema",
+    "specifier": "liteship/schema",
+    "owner": "@liteship/core/schema",
+    "role": "schema",
+    "userStory": "Define, decode, and project transport-agnostic schemas.",
+    "dependencyCost": "pure core schema kernel",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "immutable definitions and pure decoders",
+    "failureContract": "Malformed data returns structured decode issues.",
+    "example": "schema.struct(fields)",
+    "stability": "stable",
+    "symbol": "schema",
+    "reason": "Schema authoring is a coherent expert domain beyond the first adaptive feature.",
+    "audience": "application-author",
+    "producer": "@liteship/core/schema",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./reactive",
+    "specifier": "liteship/reactive",
+    "owner": "@liteship/core/reactive",
+    "role": "reactive-runtime",
+    "userStory": "Allocate and dispose cells, signals, stores, lifetimes, and live quantizers.",
+    "dependencyCost": "stateful core and quantizer runtime",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "owned resources require disposal",
+    "failureContract": "Disposed resources stop work and invalid state transitions fail loudly.",
+    "example": "createCell(initial)",
+    "stability": "stable",
+    "symbol": "createCell",
+    "reason": "Runtime allocation is intentionally distinct from immutable root authoring.",
+    "audience": "application-author",
+    "producer": "@liteship/core/reactive",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./motion",
+    "specifier": "liteship/motion",
+    "owner": "@liteship/core/motion",
+    "role": "motion",
+    "userStory": "Define and execute transitions, timelines, easing, reveal, and stagger behavior.",
+    "dependencyCost": "motion kernels",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "timeline resources require disposal",
+    "failureContract": "Unsupported or invalid motion intent is refused before execution.",
+    "example": "createTimeline(boundary, options)",
+    "stability": "stable",
+    "symbol": "createTimeline",
+    "reason": "Motion is an expert capability with its own lifecycle and vocabulary.",
+    "audience": "application-author",
+    "producer": "@liteship/core/motion",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./graph",
+    "specifier": "liteship/graph",
+    "owner": "@liteship/core/graph",
+    "role": "document-graph",
+    "userStory": "Seal, validate, patch, query, and replay the document graph.",
+    "dependencyCost": "graph and evidence kernels",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "immutable sealed graphs plus explicit clients",
+    "failureContract": "Invalid nodes, patches, or receipts are rejected before application.",
+    "example": "DAG.empty()",
+    "stability": "stable",
+    "symbol": "DAG",
+    "reason": "Graph mutation is an advanced engine workflow, not first-hour authoring.",
+    "audience": "application-author",
+    "producer": "@liteship/core/graph",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./media",
+    "specifier": "liteship/media",
+    "owner": "@liteship/core/media",
+    "role": "media-runtime",
+    "userStory": "Resolve responsive media and run compositor, audio, video, and frame-budget paths.",
+    "dependencyCost": "media and compositor runtime",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "owned buffers and renderers require disposal",
+    "failureContract": "Invalid media inputs and exhausted budgets are surfaced explicitly.",
+    "example": "Compositor.create(options)",
+    "stability": "stable",
+    "symbol": "Compositor",
+    "reason": "Media processing has runtime and performance costs unsuitable for root.",
+    "audience": "application-author",
+    "producer": "@liteship/core/media",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./evidence",
+    "specifier": "liteship/evidence",
+    "owner": "@liteship/core/evidence",
+    "role": "evidence-and-quality",
+    "userStory": "Inspect receipts, diagnostics, quality tiers, capabilities, and addressed evidence.",
+    "dependencyCost": "pure evidence kernels",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "pure readers and immutable receipts",
+    "failureContract": "Invalid chains, addresses, and capability decisions are refused with structured evidence.",
+    "example": "inspectReceipt(receipt)",
+    "stability": "stable",
+    "symbol": "inspectReceipt",
+    "reason": "Receipts and tier policy are expert inspection surfaces.",
+    "audience": "operator",
+    "producer": "@liteship/core/evidence",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./compiler",
+    "specifier": "liteship/compiler",
+    "owner": "@liteship/compiler",
+    "role": "projection-compiler",
+    "userStory": "Compile definitions into CSS, shader, accessibility, AI, and motion targets.",
+    "dependencyCost": "compiler kernels",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "pure compilation",
+    "failureContract": "CSS state keys outside the boundary are omitted and emit the registered compiler/css/unknown-state-key diagnostic.",
+    "example": "CSSCompiler.compile(boundary, input)",
+    "stability": "stable",
+    "symbol": "CSSCompiler",
+    "reason": "Projection targets are advanced escape hatches behind the default Adaptive plan.",
+    "audience": "application-author",
+    "producer": "@liteship/compiler",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./runtime",
+    "specifier": "liteship/runtime",
+    "owner": "@liteship/web",
+    "role": "browser-runtime",
+    "userStory": "Apply streaming, morphing, recovery, integrity, and browser runtime behavior.",
+    "dependencyCost": "browser DOM runtime",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "connections and observers require disposal",
+    "failureContract": "Unsafe URLs, invalid patches, and broken resumptions fail closed.",
+    "example": "Morph.morph(input, input)",
+    "stability": "stable",
+    "symbol": "Morph",
+    "reason": "Browser runtime code must never load through the host-free root.",
+    "audience": "application-author",
+    "producer": "@liteship/web",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./astro",
+    "specifier": "liteship/astro",
+    "owner": "@liteship/astro",
+    "role": "astro-host",
+    "userStory": "Install LiteShip into Astro and apply Adaptive attributes and server projections.",
+    "dependencyCost": "optional Astro peer and host adapter",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "host integration lifecycle",
+    "failureContract": "Invalid host configuration fails during integration setup or build.",
+    "example": "adaptiveAttrs(input)",
+    "stability": "stable",
+    "symbol": "adaptiveAttrs",
+    "reason": "Astro ownership and peer cost require an explicit host subpath.",
+    "audience": "host-integrator",
+    "producer": "@liteship/astro",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./vite",
+    "specifier": "liteship/vite",
+    "owner": "@liteship/vite",
+    "role": "vite-host",
+    "userStory": "Install LiteShip into Vite and compile directive and virtual-module projections.",
+    "dependencyCost": "optional Vite peer and host plugin",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "host plugin lifecycle",
+    "failureContract": "Invalid directives and configuration produce stable build diagnostics.",
+    "example": "plugin(options)",
+    "stability": "stable",
+    "symbol": "plugin",
+    "reason": "Vite ownership and peer cost require an explicit host subpath.",
+    "audience": "host-integrator",
+    "producer": "@liteship/vite",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./testing",
+    "specifier": "liteship/testing",
+    "owner": "@liteship/core/harness",
+    "role": "test-tooling",
+    "userStory": "Generate proof harnesses and inspect the installed fleet roster without exposing test tooling on the production root.",
+    "dependencyCost": "test-only harness code and fast-check peer",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "test process only",
+    "failureContract": "Invalid harness declarations and stale fleet projections fail deterministically.",
+    "example": "generatePureTransform(spec)",
+    "stability": "stable",
+    "symbol": "generatePureTransform",
+    "reason": "Proof generators and fleet metadata are a public package-author contract that must remain isolated from production root imports.",
+    "audience": "package-author",
+    "producer": "@liteship/core/harness",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./migrate",
+    "specifier": "liteship/migrate",
+    "owner": "@liteship/compiler/migrate",
+    "role": "migration",
+    "userStory": "Translate supported external syntax into ordinary LiteShip definitions.",
+    "dependencyCost": "compiler parser adapters",
+    "packedProof": "check/hermetic:runtime-import+node16+bundler",
+    "lifecycle": "pure migration",
+    "failureContract": "Unrepresentable source is refused with stable diagnostics and no fabricated definition.",
+    "example": "fromMediaQueries(css)",
+    "stability": "stable",
+    "symbol": "fromMediaQueries",
+    "reason": "Migration grammar is an explicit expert boundary, not framework ontology.",
+    "audience": "application-author",
+    "producer": "@liteship/compiler/migrate",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  },
+  {
+    "subpath": "./genui",
+    "specifier": "liteship/genui",
+    "owner": "@liteship/genui",
+    "role": "generated-ui",
+    "userStory": "Define a trusted component catalog, validate generated UI, and render it without raw package discovery.",
+    "dependencyCost": "pure generated-UI catalog and renderer",
+    "packedProof": "check/journey:one-install-runtime-reference-identity",
+    "lifecycle": "immutable catalog and pure validation/rendering",
+    "failureContract": "Unknown components, props, or invalid generated trees are refused before rendering.",
+    "example": "defineComponentCatalog(input)",
+    "stability": "stable",
+    "symbol": "defineComponentCatalog",
+    "reason": "Generated UI is a documented product capability that deserves a discoverable facade subpath.",
+    "audience": "application-author",
+    "producer": "@liteship/genui",
+    "surfaceClass": "advanced-module",
+    "relatedInvariant": "INV-CONSUMER-SUBPATH-CLOSURE",
+    "replacement": "none",
+    "exampleProof": "tests/unit/liteship/facade-subpaths.test.ts"
+  }
 ]`;
 
 /**
@@ -305,11 +686,11 @@ export const FACADE_LIFECYCLE_CONTRACT_SOURCE = `[
   {"operation":"createFrameBudget","specifier":"liteship/media","owner":"@liteship/core/media","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/core/media/frame-budget-runtime.test.ts","rationale":"The frame budget owns an animation-frame loop and must cancel it directly."},
   {"operation":"createTokenBuffer","specifier":"liteship/media","owner":"@liteship/core/media","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/core/media/token-buffer.test.ts","rationale":"The token buffer is bounded synchronous storage and owns no active resource."},
   {"operation":"LLMAdapter.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/llm-adapter.test.ts","rationale":"The adapter transforms caller-driven iteration and starts no independent task or connection."},
-  {"operation":"SSE.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"close-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The client owns timers, one EventSource generation, buffers, and two delivery streams."},
+  {"operation":"SSE.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The client owns timers, one EventSource generation, buffers, and two delivery streams."},
   {"operation":"SlotRegistry.create","specifier":"liteship/runtime","owner":"@liteship/web","classification":"gc-owned-mutable","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/web-runtime-primitives.test.ts","rationale":"The registry is inert storage; DOM observation is a separate operation returning its own disposer."},
-  {"operation":"createAudioProcessor","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The processor owns a worklet node, graph connection, and bridge running state."},
+  {"operation":"createAudioProcessor","specifier":"liteship/runtime","owner":"@liteship/web","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/liteship/facade-lifecycle-contract.test.ts","rationale":"The processor owns a worklet node, graph connection, and bridge running state."},
   {"operation":"createHtmlFragment","specifier":"liteship/runtime","owner":"@liteship/web","classification":"pure-allocation","disposal":"none","postDispose":"not-applicable","siblingCleanup":"not-applicable","proof":"tests/unit/web/runtime-security-helpers.test.ts","rationale":"The helper returns an inert document fragment and starts no observer or background work."},
-  {"operation":"createLLMSession","specifier":"liteship/astro","owner":"@liteship/astro/runtime","classification":"active-owned","disposal":"dispose-sync","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/astro/astro-runtime.test.ts","rationale":"The session owns pooled render runtime state and queued delivery work."}
+  {"operation":"createLLMSession","specifier":"liteship/astro","owner":"@liteship/astro/runtime","classification":"active-owned","disposal":"dispose-async","postDispose":"inert","siblingCleanup":"aggregate","proof":"tests/unit/astro/astro-runtime.test.ts","rationale":"The session owns pooled render runtime state and queued delivery work."}
 ]`;
 
 /**
@@ -341,6 +722,12 @@ const ROOT_KEYS = [
   'failureContract',
   'example',
   'stability',
+  'audience',
+  'producer',
+  'surfaceClass',
+  'relatedInvariant',
+  'replacement',
+  'exampleProof',
 ] as const;
 
 const SUBPATH_KEYS = [
@@ -357,6 +744,12 @@ const SUBPATH_KEYS = [
   'stability',
   'symbol',
   'reason',
+  'audience',
+  'producer',
+  'surfaceClass',
+  'relatedInvariant',
+  'replacement',
+  'exampleProof',
 ] as const;
 
 const LIFECYCLE_KEYS = [
@@ -405,16 +798,26 @@ export function parseRootExportContract(source: string): readonly RootExportCont
   return Object.freeze(
     value.map((entry): RootExportContract => {
       if (!exactStringRecord(entry, ROOT_KEYS)) return invalidContract('root export contract entry is malformed');
-      if (entry.kind !== 'value' && entry.kind !== 'type') return invalidContract('root export kind is invalid');
-      if (entry.role !== 'authoring' && entry.role !== 'inspection')
+      const candidate = entry as Record<(typeof ROOT_KEYS)[number], string>;
+      if (candidate.kind !== 'value' && candidate.kind !== 'type')
+        return invalidContract('root export kind is invalid');
+      if (candidate.role !== 'authoring' && candidate.role !== 'inspection')
         return invalidContract('root export role is invalid');
-      if (entry.stability !== 'stable' && entry.stability !== 'experimental') {
+      if (candidate.stability !== 'stable' && candidate.stability !== 'experimental') {
         return invalidContract('root export stability is invalid');
       }
-      const identity = `${entry.kind}:${entry.name}`;
+      if (!['application-author', 'package-author', 'host-integrator', 'operator'].includes(candidate.audience)) {
+        return invalidContract('root export audience is invalid');
+      }
+      if (candidate.surfaceClass !== 'paved-road') return invalidContract('root export must be a paved-road surface');
+      if (!candidate.relatedInvariant.startsWith('INV-')) return invalidContract('root export invariant is invalid');
+      if (!/^tests\/[A-Za-z0-9_./-]+\.test\.ts$/.test(candidate.exampleProof)) {
+        return invalidContract('root export example proof path is invalid');
+      }
+      const identity = `${candidate.kind}:${candidate.name}`;
       if (seen.has(identity)) return invalidContract(`duplicate root export contract: ${identity}`);
       seen.add(identity);
-      return Object.freeze(entry as unknown as RootExportContract);
+      return Object.freeze(candidate as unknown as RootExportContract);
     }),
   );
 }
@@ -439,6 +842,21 @@ export function parseFacadeSubpathContract(source: string): readonly FacadeSubpa
       }
       if (candidate.stability !== 'stable' && candidate.stability !== 'experimental') {
         return invalidContract('facade subpath stability is invalid');
+      }
+      if (!['application-author', 'package-author', 'host-integrator', 'operator'].includes(candidate.audience)) {
+        return invalidContract('facade subpath audience is invalid');
+      }
+      if (candidate.surfaceClass !== 'advanced-module') {
+        return invalidContract('facade subpath must be an advanced-module surface');
+      }
+      if (!candidate.relatedInvariant.startsWith('INV-')) {
+        return invalidContract('facade subpath invariant is invalid');
+      }
+      if (!/^@liteship\/[a-z0-9][a-z0-9_-]*(?:\/[a-z0-9][a-z0-9_-]*)?$/.test(candidate.producer)) {
+        return invalidContract('facade subpath producer is invalid');
+      }
+      if (!/^tests\/[A-Za-z0-9_./-]+\.test\.ts$/.test(candidate.exampleProof)) {
+        return invalidContract('facade subpath example proof path is invalid');
       }
       if (seen.has(candidate.subpath)) return invalidContract(`duplicate facade subpath: ${candidate.subpath}`);
       seen.add(candidate.subpath);
@@ -469,7 +887,7 @@ export function parseFacadeLifecycleContract(source: string): readonly FacadeLif
       if (!['active-owned', 'gc-owned-mutable', 'pure-allocation'].includes(candidate.classification)) {
         return invalidContract('facade lifecycle classification is invalid');
       }
-      if (!['dispose-async', 'dispose-sync', 'close-sync', 'none'].includes(candidate.disposal)) {
+      if (!['dispose-async', 'none'].includes(candidate.disposal)) {
         return invalidContract('facade lifecycle disposal is invalid');
       }
       if (!['inert', 'not-applicable'].includes(candidate.postDispose)) {

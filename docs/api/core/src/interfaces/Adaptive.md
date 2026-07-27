@@ -27,7 +27,7 @@ Defined in: [core/src/authoring/adaptive.ts:226](https://github.com/freebatteryf
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/adaptive.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/adaptive.ts#L236)
 

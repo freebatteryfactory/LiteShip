@@ -6,7 +6,7 @@
 
 # Type Alias: SignalInput\<I\>
 
-> **SignalInput**\<`I`\> = `_SignalInput`\<`I`\>
+> **SignalInput**\<`I`\> = [`SignalInput`](../../../../spine/type-aliases/SignalInput.md)\<`I`\>
 
 Defined in: core/dist/schema/brands.d.ts:16
 

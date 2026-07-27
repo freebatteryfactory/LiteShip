@@ -8,4 +8,6 @@
 
 > **BenchSubjectRole** = `"sut"` \| `"baseline"`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L13)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L14)
+
+Whether one benchmark binding is the claimed system or a comparison baseline.

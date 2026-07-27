@@ -16,7 +16,7 @@ Resolve a BeatHandle to a frame index using scene BPM and fps.
 
 ### handle
 
-`BeatHandle`
+[`BeatHandle`](../../../spine/interfaces/BeatHandle.md)
 
 ### ctx
 

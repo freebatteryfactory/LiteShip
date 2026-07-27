@@ -78,7 +78,7 @@ Defined in: compiler/dist/mcp-app-manifest.d.ts:76
 
 ### toolDescriptors
 
-> `readonly` **toolDescriptors**: readonly `CapsuleCommandDescriptor`[]
+> `readonly` **toolDescriptors**: readonly [`CapsuleCommandDescriptor`](../../../../spine/interfaces/CapsuleCommandDescriptor.md)[]
 
 Defined in: compiler/dist/mcp-app-manifest.d.ts:83
 

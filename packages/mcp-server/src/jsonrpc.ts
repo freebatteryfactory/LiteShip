@@ -62,10 +62,15 @@ export type JsonRpcResponse = JsonRpcSuccess | JsonRpcErrorResponse;
 
 // ---------- Standard error codes (§5.1) ----------
 
+/** JSON-RPC standard parse-error code. */
 export const ParseError = -32700 as const;
+/** JSON-RPC standard invalid-request code. */
 export const InvalidRequest = -32600 as const;
+/** JSON-RPC standard method-not-found code. */
 export const MethodNotFound = -32601 as const;
+/** JSON-RPC standard invalid-params code. */
 export const InvalidParams = -32602 as const;
+/** JSON-RPC standard internal-error code. */
 export const InternalError = -32603 as const;
 
 // ---------- Parser output classification ----------
@@ -141,9 +146,11 @@ function _successResponse(id: JsonRpcId, result: unknown): JsonRpcSuccess {
   return { jsonrpc: '2.0', id, result };
 }
 
-// Re-export pure functions for direct import sites.
+/** Parse one JSON-RPC wire line into its exact protocol outcome. */
 export const parse = _parse;
+/** Construct one JSON-RPC error response. */
 export const errorResponse = _errorResponse;
+/** Construct one JSON-RPC success response. */
 export const successResponse = _successResponse;
 
 // ---------- Capsule declaration (pureTransform arm) ----------

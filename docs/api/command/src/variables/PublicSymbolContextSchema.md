@@ -8,7 +8,7 @@
 
 > `const` **PublicSymbolContextSchema**: `object`
 
-Defined in: [command/src/commands/public-surface-context.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L57)
+Defined in: [command/src/commands/public-surface-context.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L66)
 
 Structural schema reused by `explain` and `context`.
 
@@ -105,6 +105,22 @@ Structural schema reused by `explain` and `context`.
 #### properties.allocation.type
 
 > `readonly` **type**: readonly \[`"object"`, `"null"`\]
+
+#### properties.audience
+
+> `readonly` **audience**: `object`
+
+#### properties.audience.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.category
+
+> `readonly` **category**: `object`
+
+#### properties.category.type
+
+> `readonly` **type**: `"string"` = `'string'`
 
 #### properties.checkIds
 
@@ -250,6 +266,14 @@ Structural schema reused by `explain` and `context`.
 
 > `readonly` **type**: `"string"` = `'string'`
 
+#### properties.producer
+
+> `readonly` **producer**: `object`
+
+#### properties.producer.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.proofRefs
 
 > `readonly` **proofRefs**: `object`
@@ -266,11 +290,27 @@ Structural schema reused by `explain` and `context`.
 
 > `readonly` **type**: `"array"` = `'array'`
 
+#### properties.relatedInvariant
+
+> `readonly` **relatedInvariant**: `object`
+
+#### properties.relatedInvariant.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.remediation
 
 > `readonly` **remediation**: `object`
 
 #### properties.remediation.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.replacement
+
+> `readonly` **replacement**: `object`
+
+#### properties.replacement.type
 
 > `readonly` **type**: `"string"` = `'string'`
 
@@ -290,6 +330,14 @@ Structural schema reused by `explain` and `context`.
 
 > `readonly` **enum**: readonly \[`"stable"`, `"experimental"`\]
 
+#### properties.surfaceClass
+
+> `readonly` **surfaceClass**: `object`
+
+#### properties.surfaceClass.enum
+
+> `readonly` **enum**: readonly \[`"paved-road"`, `"advanced-module"`\]
+
 #### properties.symbol
 
 > `readonly` **symbol**: `object`
@@ -308,7 +356,7 @@ Structural schema reused by `explain` and `context`.
 
 ### required
 
-> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
+> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"audience"`, `"category"`, `"surfaceClass"`, `"producer"`, `"relatedInvariant"`, `"replacement"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
 
 ### type
 

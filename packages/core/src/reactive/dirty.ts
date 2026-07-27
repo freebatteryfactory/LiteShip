@@ -35,7 +35,7 @@ interface DirtyFlagsShape<K extends string = string> {
  * flags.mask;                // 0
  * ```
  */
-export function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFlagsShape<K> {
+export function createDirtyFlags<K extends string>(keys: readonly K[]): DirtyFlags<K> {
   if (keys.length > DIRTY_FLAGS_MAX) {
     throw ValidationError('createDirtyFlags', `supports at most ${DIRTY_FLAGS_MAX} keys, got ${keys.length}`);
   }

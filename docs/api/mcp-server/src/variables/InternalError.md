@@ -8,4 +8,6 @@
 
 > `const` **InternalError**: `-32603`
 
-Defined in: [mcp-server/src/jsonrpc.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L69)
+Defined in: [mcp-server/src/jsonrpc.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L74)
+
+JSON-RPC standard internal-error code.

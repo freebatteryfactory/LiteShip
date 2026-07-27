@@ -32,7 +32,7 @@ Defined in: [core/src/graph/graph-patch.ts:67](https://github.com/freebatteryfac
 
 ### base
 
-> `readonly` **base**: `ContentAddress`
+> `readonly` **base**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/graph-patch.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L69)
 
@@ -50,7 +50,7 @@ Defined in: [core/src/graph/graph-patch.ts:70](https://github.com/freebatteryfac
 
 ### resultId?
 
-> `readonly` `optional` **resultId?**: `ContentAddress`
+> `readonly` `optional` **resultId?**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/graph-patch.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/graph-patch.ts#L72)
 

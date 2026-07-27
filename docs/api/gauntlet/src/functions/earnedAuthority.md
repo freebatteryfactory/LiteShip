@@ -8,13 +8,15 @@
 
 > **earnedAuthority**(`proof`): [`Authority`](../type-aliases/Authority.md)
 
-Defined in: [gauntlet/src/authority.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L69)
+Defined in: [gauntlet/src/authority.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L73)
 
-The ratchet decision: a self-proven gate earns `blocking`; anything else is
-`advisory` (it surfaces findings but cannot fail the run). The
-advisory→warning→blocking promotion over N low-false-positive runs is a
-calibration layer that sits ON TOP of this floor — but the floor is absolute:
-an unproven gate never blocks.
+The ratchet decision for a gate's SEMANTIC findings: a self-proven gate earns
+`blocking`; anything else is `advisory`. The engine still fails closed on the
+distinct authority-integrity defect, so this demotion can never turn broken
+qualification into a green run. Finding loudness is modeled independently by
+`Severity`; authority has only the two behaviors the engine can execute: block
+or do not block. Any future promotion history belongs in proof receipts, not
+as an unreachable third release behavior.
 
 ## Parameters
 

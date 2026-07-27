@@ -155,7 +155,7 @@ meaningful for `receiptedMutation` arms.
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/authoring/capsule.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/capsule.ts#L139)
 

@@ -6,7 +6,7 @@
 
 # Type Alias: CapsuleResultReceipt
 
-> **CapsuleResultReceipt** = `_CapsuleResultReceipt`
+> **CapsuleResultReceipt** = [`CapsuleResultReceipt`](../../../spine/interfaces/CapsuleResultReceipt.md)
 
 Defined in: [core/src/authoring/command.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L33)
 

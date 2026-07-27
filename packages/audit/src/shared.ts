@@ -26,6 +26,7 @@ import type { PackagePathResolver } from './policy.js';
 import type { DevopsProfile } from './devops-profile.js';
 import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression, PackageArtifactCoverage } from './types.js';
 
+/** Parsed package manifest plus its repository ownership path. */
 export interface PackageManifestInfo {
   readonly name: string;
   readonly dir: string;
@@ -36,6 +37,7 @@ export interface PackageManifestInfo {
   readonly exports: Record<string, unknown>;
 }
 
+/** One discovered source file with normalized repository-relative identity. */
 export interface SourceFileRecord {
   readonly absolutePath: string;
   readonly relativePath: string;
@@ -49,6 +51,7 @@ export function defaultRoot(): string {
   return normalizeRepoPath(process.cwd());
 }
 
+/** Read one UTF-8 JSON file as host-selected data. */
 export function readJsonFile<T>(filePath: string): T {
   // Node's bare SyntaxError/ENOENT names no file; the audit reads dozens.
   try {
@@ -62,6 +65,7 @@ export function readJsonFile<T>(filePath: string): T {
   }
 }
 
+/** Discover executable source files under the audit root in stable order. */
 export function walkAuditSourceFiles(root = defaultRoot()): readonly string[] {
   return fg
     .sync([...auditSourceGlobs], {
@@ -101,6 +105,7 @@ function manifestInfoFromPackageJson(packageJsonPath: string, root: string): Pac
   };
 }
 
+/** Discover publishable and private package manifests in stable path order. */
 export function listPackageManifests(root = defaultRoot()): readonly PackageManifestInfo[] {
   const packageJsons = fg
     .sync(['packages/*/package.json'], {
@@ -160,6 +165,7 @@ function sourceRecordFromFile(
   };
 }
 
+/** Materialize normalized source records for all discovered audit files. */
 export function readSourceFileRecords(root = defaultRoot()): readonly SourceFileRecord[] {
   const packageInfos = listPackageManifests(root);
   const packageByDir = new Map(packageInfos.map((pkg) => [pkg.dir, pkg.name] as const));
@@ -224,6 +230,7 @@ export function readProfileSourceFileRecords(profile: DevopsProfile): readonly S
   return files.map((absolutePath) => sourceRecordFromFile(absolutePath, profile.repoRoot, packageByDir));
 }
 
+/** Fold findings into exact severity counts. */
 export function createCounts(findings: readonly AuditFinding[]): AuditCounts {
   return findings.reduce<AuditCounts>(
     (counts, finding) => ({
@@ -235,11 +242,13 @@ export function createCounts(findings: readonly AuditFinding[]): AuditCounts {
   );
 }
 
+/** Compare audit severities from most to least release-significant. */
 export function compareSeverity(a: AuditSeverity, b: AuditSeverity): number {
   const order: Record<AuditSeverity, number> = { error: 0, warning: 1, info: 2 };
   return order[a] - order[b];
 }
 
+/** Return findings in deterministic severity, rule, and location order. */
 export function sortFindings<T extends AuditFinding>(findings: readonly T[]): T[] {
   return [...findings].sort((left, right) => {
     const severity = compareSeverity(left.severity, right.severity);
@@ -252,6 +261,7 @@ export function sortFindings<T extends AuditFinding>(findings: readonly T[]): T[
   });
 }
 
+/** Return suppressions in deterministic finding order. */
 export function sortSuppressions<T extends AuditSuppression>(suppressions: readonly T[]): T[] {
   return [...suppressions].sort((left, right) => left.finding.id.localeCompare(right.finding.id));
 }
@@ -279,6 +289,7 @@ export function createPackagePathResolver(profile: DevopsProfile): PackagePathRe
   };
 }
 
+/** Partition raw findings through only the allowlist supplied by the host profile. */
 export function partitionAllowlistedFindings(
   findings: readonly AuditFinding[],
   profile: DevopsProfile,
@@ -291,7 +302,7 @@ export function partitionAllowlistedFindings(
   const resolvePackagePath = createPackagePathResolver(profile);
 
   for (const finding of findings) {
-    const reason = findAllowlistReason(finding, resolvePackagePath);
+    const reason = findAllowlistReason(finding, profile.allowlist ?? [], resolvePackagePath);
     if (reason) {
       suppressed.push({
         rule: finding.rule,
@@ -309,10 +320,12 @@ export function partitionAllowlistedFindings(
   };
 }
 
+/** Read normalized source text for one TypeScript node. */
 export function nodeText(node: ts.Node, sourceFile: ts.SourceFile): string {
   return node.getText(sourceFile);
 }
 
+/** Convert an absolute source position to one-based line and column coordinates. */
 export function lineAndColumn(sourceFile: ts.SourceFile, position: number): { line: number; column: number } {
   const { line, character } = sourceFile.getLineAndCharacterOfPosition(position);
   return {
@@ -321,10 +334,12 @@ export function lineAndColumn(sourceFile: ts.SourceFile, position: number): { li
   };
 }
 
+/** Normalize an absolute path to a slash-separated audit-root path. */
 export function relativeToRoot(filePath: string, root = defaultRoot()): string {
   return normalizeRepoPath(relative(root, filePath));
 }
 
+/** Test whether an export-default expression is statically safe to classify. */
 export function isSimpleDefaultExpression(node: ts.Expression): boolean {
   return (
     ts.isArrayLiteralExpression(node) ||

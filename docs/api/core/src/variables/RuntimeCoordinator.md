@@ -6,9 +6,9 @@
 
 # Variable: RuntimeCoordinator
 
-> `const` **RuntimeCoordinator**: `object`
+> **RuntimeCoordinator**: `object`
 
-Defined in: [core/src/reactive/runtime-coordinator.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L220)
+Defined in: [core/src/reactive/runtime-coordinator.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/runtime-coordinator.ts#L36)
 
 Runtime coordinator namespace — single entry point for building the shared
 `Plan` + ECS store bundle consumed by every host adapter.
@@ -17,7 +17,7 @@ Runtime coordinator namespace — single entry point for building the shared
 
 ### create
 
-> `readonly` **create**: (`config?`) => `RuntimeCoordinatorShape` = `createRuntimeCoordinator`
+> `readonly` **create**: (`config?`) => [`RuntimeCoordinator`](../interfaces/RuntimeCoordinator.md) = `createRuntimeCoordinator`
 
 Create a fresh coordinator. See `createRuntimeCoordinator`.
 
@@ -33,4 +33,4 @@ the exported entry point.
 
 #### Returns
 
-`RuntimeCoordinatorShape`
+[`RuntimeCoordinator`](../interfaces/RuntimeCoordinator.md)

@@ -305,7 +305,14 @@ describe('FactGate #7 — self-proves through the SAME authority ratchet', () =>
 
 describe('FactGate #8 — defineFactGate validates the declaration', () => {
   const fixtures = noSkippedTestFactGate.fixtures;
-  const base = { id: 'x/probe', level: 'L2' as const, describe: 'd', decide: (_f: FactBundle): readonly Finding[] => [], fixtures };
+  const base = {
+    id: 'x/probe',
+    extension: { namespace: 'x', owner: 'LiteShip fact-gate test suite' },
+    level: 'L2' as const,
+    describe: 'd',
+    decide: (_f: FactBundle): readonly Finding[] => [],
+    fixtures,
+  };
 
   it('an empty requires throws (a fact gate must declare ≥1 channel)', () => {
     expect(() => defineFactGate({ ...base, requires: [] })).toThrow();
@@ -405,6 +412,7 @@ describe('FactGate #1b — isFactGate is a boundary, not an honor-system string 
     expect(() =>
       defineGate({
         id: 'x/forge',
+        extension: { namespace: 'x', owner: 'LiteShip fact-gate test suite' },
         level: 'L2',
         describe: 'a closure gate falsely claiming the data-only contract',
         form: 'fact',

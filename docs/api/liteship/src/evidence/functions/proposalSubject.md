@@ -6,7 +6,7 @@
 
 # Function: proposalSubject()
 
-> **proposalSubject**\<`T`\>(`proposal`): `ContentAddress`
+> **proposalSubject**\<`T`\>(`proposal`): [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/evidence/validated-output.d.ts:112
 
@@ -28,4 +28,4 @@ token.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)

@@ -6,7 +6,7 @@
 
 # Function: contentAddressOf()
 
-> **contentAddressOf**(`value`): `ContentAddress`
+> **contentAddressOf**(`value`): [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/evidence/content-address.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/content-address.ts#L81)
 
@@ -23,4 +23,4 @@ that identity is paired with `CanonicalCbor`, never cborg / JSON.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)

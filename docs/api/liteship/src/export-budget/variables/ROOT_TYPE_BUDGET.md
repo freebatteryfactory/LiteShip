@@ -8,4 +8,4 @@
 
 > `const` **ROOT\_TYPE\_BUDGET**: readonly `string`[]
 
-Defined in: [liteship/src/export-budget.ts:513](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L513)
+Defined in: [liteship/src/export-budget.ts:931](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L931)

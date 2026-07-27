@@ -196,18 +196,10 @@ export interface CommandContext {
   /**
    * Run an audio projection over decoded bytes and return the marker count.
    * Adapter-backed by @liteship/assets — injected (not imported) so @liteship/command
-   * does not yet take a domain-package build edge. (Heavy-tier decision: whether
-   * command should depend on assets/scene directly, or keep injecting.)
-   *
-   * `assetId` (supplied by the asset.analyze handler) lets the adapter honor
-   * the asset's OWN decoder (`AssetDecl.decoder`, resolved through the asset
-   * registry) instead of hardwiring the audio built-in.
+   * does not take a domain-package build edge. The built-in host consumes raw WAV
+   * bytes; custom decoders remain explicit AssetRegistry projection factories.
    */
-  readonly runAudioProjection?: (
-    bytes: ArrayBuffer,
-    projection: 'beat' | 'onset' | 'waveform',
-    assetId?: string,
-  ) => Promise<number>;
+  readonly runAudioProjection?: (bytes: ArrayBuffer, projection: 'beat' | 'onset' | 'waveform') => Promise<number>;
   /**
    * Dynamically load a user scene module (the adapter owns the dynamic import,
    * keeping @liteship/command free of it — relevant to the A1-T3 dynamic-import
@@ -647,6 +639,7 @@ export function defineCommand<
   };
 }
 
+/** Validated command catalog plus lookup and execution operations. */
 export interface CommandRegistry {
   readonly get: (name: string) => RegisteredCommand | undefined;
   readonly list: () => readonly CapsuleCommandDescriptor[];

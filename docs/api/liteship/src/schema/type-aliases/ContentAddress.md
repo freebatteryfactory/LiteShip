@@ -6,7 +6,7 @@
 
 # Type Alias: ContentAddress
 
-> **ContentAddress** = `_ContentAddress`
+> **ContentAddress** = [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/schema/brands.d.ts:25
 

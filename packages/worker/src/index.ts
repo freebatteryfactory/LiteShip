@@ -34,12 +34,11 @@ export type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } fro
 
 // SPSC Ring Buffer
 export { SPSCRing } from './spsc-ring.js';
-export type { SPSCRingBufferShape, SPSCRingPair } from './spsc-ring.js';
+export type { SPSCRingPair } from './spsc-ring.js';
 
 // Compositor Worker
 export { CompositorWorker } from './compositor-worker.js';
 export type {
-  CompositorWorkerShape,
   CompositorWorkerState,
   ResolvedStateAckPayload,
   QuantizerBoundarySource,
@@ -48,11 +47,10 @@ export type {
 
 // Render Worker
 export { RenderWorker } from './render-worker.js';
-export type { RenderWorkerShape } from './render-worker.js';
 
 // Host
 export { WorkerHost } from './host.js';
-export type { WorkerHostShape, TransferableCanvas, WorkerHostRenderConfig } from './host.js';
+export type { TransferableCanvas, WorkerHostRenderConfig } from './host.js';
 
 // Off-thread motion sampler (#130) — the MINIMAL authored-motion adapter: run the ONE
 // shared `sampleProgram` kernel off-thread and post its uniforms on `liteship:uniform-update`.

@@ -49,6 +49,7 @@ change underneath them.
 - [DecodeViolation](interfaces/DecodeViolation.md)
 - [EarlyReturnMatch](interfaces/EarlyReturnMatch.md)
 - [EvidenceRecorder](interfaces/EvidenceRecorder.md)
+- [ExtensionGateIdentity](interfaces/ExtensionGateIdentity.md)
 - [Fact](interfaces/Fact.md)
 - [FactBundle](interfaces/FactBundle.md)
 - [FactGate](interfaces/FactGate.md)

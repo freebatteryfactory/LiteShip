@@ -6,7 +6,9 @@
 
 # Interface: BenchSubjectIssue
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L59)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L66)
+
+One failed benchmark-subject reachability obligation.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:59](https://github.com/freebat
 
 > `readonly` **detail**: `string`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L64)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L71)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:64](https://github.com/freebat
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L62)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L69)
 
 ***
 
@@ -30,7 +32,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:62](https://github.com/freebat
 
 > `readonly` **kind**: [`BenchSubjectIssueKind`](../type-aliases/BenchSubjectIssueKind.md)
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L60)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L67)
 
 ***
 
@@ -38,7 +40,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:60](https://github.com/freebat
 
 > `readonly` **name**: `string`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L61)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L68)
 
 ***
 
@@ -46,4 +48,4 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:61](https://github.com/freebat
 
 > `readonly` `optional` **subject?**: [`BenchSubject`](BenchSubject.md)
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L63)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L70)

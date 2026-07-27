@@ -6,9 +6,9 @@
 
 # Variable: SlotRegistry
 
-> `const` **SlotRegistry**: `object`
+> **SlotRegistry**: `object`
 
-Defined in: [web/src/slot/registry.ts:353](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L353)
+Defined in: [web/src/slot/registry.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L34)
 
 Slot registry namespace.
 
@@ -20,15 +20,15 @@ elements for efficient lookup and patching. Provides DOM scanning,
 
 ### create
 
-> **create**: () => [`SlotRegistryShape`](../interfaces/SlotRegistryShape.md)
+> **create**: () => [`SlotRegistry`](../interfaces/SlotRegistry.md)
 
 Create a new slot registry that maps slot paths to DOM elements.
 
 #### Returns
 
-[`SlotRegistryShape`](../interfaces/SlotRegistryShape.md)
+[`SlotRegistry`](../interfaces/SlotRegistry.md)
 
-A new [SlotRegistryShape](../interfaces/SlotRegistryShape.md) instance
+A new SlotRegistry instance
 
 #### Example
 
@@ -118,7 +118,7 @@ A separate [scanDOM](#scandom) call before `observe` is no longer required
 
 ##### registry
 
-[`SlotRegistryShape`](../interfaces/SlotRegistryShape.md)
+[`SlotRegistry`](../interfaces/SlotRegistry.md)
 
 The slot registry to keep in sync
 
@@ -158,7 +158,7 @@ register them in the given registry.
 
 ##### registry
 
-[`SlotRegistryShape`](../interfaces/SlotRegistryShape.md)
+[`SlotRegistry`](../interfaces/SlotRegistry.md)
 
 The slot registry to populate
 

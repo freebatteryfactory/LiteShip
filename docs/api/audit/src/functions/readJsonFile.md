@@ -8,7 +8,9 @@
 
 > **readJsonFile**\<`T`\>(`filePath`): `T`
 
-Defined in: [audit/src/shared.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L52)
+Defined in: [audit/src/shared.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L55)
+
+Read one UTF-8 JSON file as host-selected data.
 
 ## Type Parameters
 

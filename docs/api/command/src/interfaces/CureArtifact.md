@@ -6,15 +6,17 @@
 
 # Interface: CureArtifact
 
-Defined in: [command/src/checks/cure-packet.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L23)
+Defined in: [command/src/checks/cure-packet.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L26)
+
+Content-addressed artifact attached to a cure packet.
 
 ## Properties
 
 ### digest
 
-> `readonly` **digest**: `IntegrityDigest`
+> `readonly` **digest**: [`IntegrityDigest`](../../../spine/type-aliases/IntegrityDigest.md)
 
-Defined in: [command/src/checks/cure-packet.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L25)
+Defined in: [command/src/checks/cure-packet.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L28)
 
 ***
 
@@ -22,4 +24,4 @@ Defined in: [command/src/checks/cure-packet.ts:25](https://github.com/freebatter
 
 > `readonly` **path**: `string`
 
-Defined in: [command/src/checks/cure-packet.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L24)
+Defined in: [command/src/checks/cure-packet.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/cure-packet.ts#L27)

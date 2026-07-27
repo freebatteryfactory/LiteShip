@@ -6,7 +6,7 @@
 
 # Type Alias: ThresholdValue
 
-> **ThresholdValue** = `_ThresholdValue`
+> **ThresholdValue** = [`ThresholdValue`](../../../../spine/type-aliases/ThresholdValue.md)
 
 Defined in: core/dist/schema/brands.d.ts:18
 

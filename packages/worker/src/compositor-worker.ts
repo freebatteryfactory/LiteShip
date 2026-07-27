@@ -25,8 +25,8 @@
  * @module
  */
 
-import { Diagnostics } from '@liteship/core';
-import type { RuntimeCoordinator } from '@liteship/core';
+import { Diagnostics, Lifetime, attachLifetime } from '@liteship/core';
+import type { AsyncOwnedResource, RuntimeCoordinator } from '@liteship/core';
 import type { FromWorkerMessage, WorkerConfig } from './messages.js';
 
 // Re-export types from compositor-types
@@ -34,11 +34,13 @@ export type { CompositorWorkerStartupStage, CompositorWorkerStartupTelemetry } f
 
 import type {
   CompositorWorkerStartupTelemetry,
-  CompositorWorkerStartupStage,
-  CompositorWorkerShape,
+  CompositorWorker as CompositorWorkerHandle,
   QuantizerBoundarySource,
 } from './compositor-types.js';
 import type { ContentAddress } from '@liteship/core';
+
+/** Direct public compositor-worker handle implemented by the package-owned factory. */
+export type CompositorWorker = CompositorWorkerHandle;
 
 import { currentTimeNs, claimCompositorLease, parkOrDisposeCompositorLease, _send } from './compositor-startup.js';
 import {
@@ -64,7 +66,7 @@ import { reduceWorkerMessage, applyProtocolEffects } from './compositor-protocol
 function _createCompositorWorker(
   config?: WorkerConfig,
   startupTelemetry?: CompositorWorkerStartupTelemetry,
-): CompositorWorkerShape {
+): CompositorWorker {
   const capacity = config?.poolCapacity ?? 64;
   const { worker, runtime, bootstrapSnapshot } = claimCompositorLease(capacity, startupTelemetry);
   const state = createCompositorWorkerState({ worker, runtime, capacity, bootstrapSnapshot, startupTelemetry });
@@ -95,76 +97,82 @@ function _createCompositorWorker(
     _send(worker, { type: 'init' });
   }
 
-  return {
-    get worker(): Worker {
-      return worker;
-    },
+  const lifetime = Lifetime.make();
+  lifetime.add(() =>
+    parkOrDisposeCompositorLease({
+      worker,
+      runtime,
+      capacity,
+      bootstrapSnapshot: Array.from(state.activeRegistrations.values()),
+    }),
+  );
+  lifetime.add(() => {
+    if (typeof worker.removeEventListener === 'function') {
+      worker.removeEventListener('message', handleMessage);
+      worker.removeEventListener('error', handleError);
+    }
+  });
+  lifetime.add(() => clearTransientState(state));
 
-    get runtime(): RuntimeCoordinator {
-      return runtime;
-    },
-
-    addQuantizer(
-      nameOrBoundary: string | QuantizerBoundarySource,
-      explicitBoundary?: {
-        readonly id: ContentAddress;
-        readonly states: readonly string[];
-        readonly thresholds: readonly number[];
+  return attachLifetime<Omit<CompositorWorker, keyof AsyncOwnedResource>>(
+    {
+      get worker(): Worker {
+        return worker;
       },
-    ): void {
-      addQuantizer(state, nameOrBoundary, explicitBoundary);
-    },
 
-    removeQuantizer(name): void {
-      removeQuantizer(state, name);
-    },
+      get runtime(): RuntimeCoordinator {
+        return runtime;
+      },
 
-    evaluate(name, value): void {
-      evaluate(state, name, value);
-    },
+      addQuantizer(
+        nameOrBoundary: string | QuantizerBoundarySource,
+        explicitBoundary?: {
+          readonly id: ContentAddress;
+          readonly states: readonly string[];
+          readonly thresholds: readonly number[];
+        },
+      ): void {
+        addQuantizer(state, nameOrBoundary, explicitBoundary);
+      },
 
-    setBlendWeights(name, weights): void {
-      setBlendWeights(state, name, weights);
-    },
+      removeQuantizer(name): void {
+        removeQuantizer(state, name);
+      },
 
-    bootstrapResolvedState(states): void {
-      bootstrapResolvedState(state, states);
-    },
+      evaluate(name, value): void {
+        evaluate(state, name, value);
+      },
 
-    applyResolvedState(states): void {
-      applyResolvedState(state, states);
-    },
+      setBlendWeights(name, weights): void {
+        setBlendWeights(state, name, weights);
+      },
 
-    requestCompute(): void {
-      requestCompute(state);
-    },
+      bootstrapResolvedState(states): void {
+        bootstrapResolvedState(state, states);
+      },
 
-    onState(callback): () => void {
-      return onState(state, callback);
-    },
+      applyResolvedState(states): void {
+        applyResolvedState(state, states);
+      },
 
-    onResolvedStateAck(callback): () => void {
-      return onResolvedStateAck(state, callback);
-    },
+      requestCompute(): void {
+        requestCompute(state);
+      },
 
-    onMetrics(callback): () => void {
-      return onMetrics(state, callback);
-    },
+      onState(callback): () => void {
+        return onState(state, callback);
+      },
 
-    dispose(): void {
-      clearTransientState(state);
-      if (typeof worker.removeEventListener === 'function') {
-        worker.removeEventListener('message', handleMessage);
-        worker.removeEventListener('error', handleError);
-      }
-      parkOrDisposeCompositorLease({
-        worker,
-        runtime,
-        capacity,
-        bootstrapSnapshot: Array.from(state.activeRegistrations.values()),
-      });
+      onResolvedStateAck(callback): () => void {
+        return onResolvedStateAck(state, callback);
+      },
+
+      onMetrics(callback): () => void {
+        return onMetrics(state, callback);
+      },
     },
-  };
+    lifetime,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -177,8 +185,8 @@ function _createCompositorWorker(
  * Call {@link CompositorWorker.create} on the main thread to spin up a
  * worker that evaluates quantizer boundaries and emits
  * {@link CompositorWorkerState} snapshots. The returned
- * {@link CompositorWorkerShape} owns the underlying `Worker` -- call
- * `dispose()` (or park via the lease pool) when finished.
+ * {@link CompositorWorker} owns the underlying `Worker` -- call
+ * `await dispose()` (which may park via the lease pool) when finished.
  *
  * @example
  * ```ts
@@ -201,7 +209,7 @@ function _createCompositorWorker(
  * compositor.requestCompute();
  * // ...later:
  * unsub();
- * compositor.dispose();
+ * await compositor.dispose();
  * ```
  */
 export const CompositorWorker = {
@@ -212,13 +220,3 @@ export const CompositorWorker = {
    */
   create: _createCompositorWorker,
 } as const;
-
-/** Public structural type for `CompositorWorker`. */
-export type CompositorWorker = CompositorWorkerShape;
-
-export declare namespace CompositorWorker {
-  /** Named startup stage reported to telemetry sinks. */
-  export type StartupStage = CompositorWorkerStartupStage;
-  /** Telemetry sink accepted by {@link CompositorWorker.create}. */
-  export type StartupTelemetry = CompositorWorkerStartupTelemetry;
-}

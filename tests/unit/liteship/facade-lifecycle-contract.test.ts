@@ -78,14 +78,18 @@ describe('liteship/runtime — AudioProcessor disposal', () => {
     expect(bridge.isRunning()).toBe(true);
     throwOnStop = true;
 
-    expect(() => processor.dispose()).toThrow(AggregateError);
+    const first = processor.dispose();
     expect(bridge.isRunning()).toBe(false);
     expect(posted).toEqual(['start', 'stop']);
     expect(disconnects).toBe(1);
+    await expect(first).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
 
     // The first call claimed disposal even though one host arm failed. Every
     // later lifecycle operation is inert and cannot repeat a side effect.
-    expect(() => processor.dispose()).not.toThrow();
+    const second = processor.dispose();
+    expect(second).toBe(first);
+    await expect(second).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
+    expect(processor[Symbol.asyncDispose]()).toBe(first);
     processor.start();
     processor.stop();
     expect(posted).toEqual(['start', 'stop']);
@@ -93,7 +97,7 @@ describe('liteship/runtime — AudioProcessor disposal', () => {
   });
 });
 
-describe('liteship/runtime — SSE close attempt-all contract', () => {
+describe('liteship/runtime — SSE disposal attempt-all contract', () => {
   test('a throwing EventSource cannot strand either async stream', async () => {
     vi.useFakeTimers();
 
@@ -121,15 +125,19 @@ describe('liteship/runtime — SSE close attempt-all contract', () => {
     const parkedMessage = messages.next();
     const parkedState = states.next();
 
-    expect(() => client.close()).toThrow(AggregateError);
+    const first = client.dispose();
     expect(source?.closeCalls).toBe(1);
     expect(source?.onmessage).toBeNull();
     expect(source?.onerror).toBeNull();
     await expect(parkedMessage).resolves.toEqual({ value: undefined, done: true });
     await expect(parkedState).resolves.toEqual({ value: 'disconnected', done: false });
     await expect(states.next()).resolves.toEqual({ value: undefined, done: true });
+    await expect(first).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
 
-    expect(() => client.close()).not.toThrow();
+    const second = client.dispose();
+    expect(second).toBe(first);
+    await expect(second).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
+    expect(client[Symbol.asyncDispose]()).toBe(first);
     expect(source?.closeCalls).toBe(1);
     expect(vi.getTimerCount()).toBe(0);
   });

@@ -6,7 +6,7 @@
 
 # Type Alias: CapsuleCommandResult\<P\>
 
-> **CapsuleCommandResult**\<`P`\> = `_CapsuleCommandResult`\<`P`\>
+> **CapsuleCommandResult**\<`P`\> = [`CapsuleCommandResult`](../../../spine/interfaces/CapsuleCommandResult.md)\<`P`\>
 
 Defined in: [core/src/authoring/command.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/command.ts#L31)
 

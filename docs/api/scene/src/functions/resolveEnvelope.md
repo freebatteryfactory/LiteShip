@@ -6,7 +6,7 @@
 
 # Function: resolveEnvelope()
 
-> **resolveEnvelope**(`env`, `ctx`): `ResolvedEnvelope`
+> **resolveEnvelope**(`env`, `ctx`): [`ResolvedEnvelope`](../../../spine/type-aliases/ResolvedEnvelope.md)
 
 Defined in: [scene/src/sugar/envelope.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L65)
 
@@ -18,7 +18,7 @@ the result is the `Envelope` component systems read every tick.
 
 ### env
 
-`TrackEnvelope`
+[`TrackEnvelope`](../../../spine/type-aliases/TrackEnvelope.md)
 
 ### ctx
 
@@ -32,4 +32,4 @@ the result is the `Envelope` component systems read every tick.
 
 ## Returns
 
-`ResolvedEnvelope`
+[`ResolvedEnvelope`](../../../spine/type-aliases/ResolvedEnvelope.md)

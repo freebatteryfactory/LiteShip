@@ -6,7 +6,7 @@
 
 # Variable: ThresholdValue
 
-> **ThresholdValue**: (`value`) => `ThresholdValue`
+> **ThresholdValue**: (`value`) => [`ThresholdValue`](../../../../spine/type-aliases/ThresholdValue.md)
 
 Defined in: core/dist/schema/brands.d.ts:18
 
@@ -25,7 +25,7 @@ is the real generic invariant.
 
 ## Returns
 
-`ThresholdValue`
+[`ThresholdValue`](../../../../spine/type-aliases/ThresholdValue.md)
 
 ## Throws
 

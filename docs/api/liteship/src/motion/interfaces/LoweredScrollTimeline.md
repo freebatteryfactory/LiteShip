@@ -14,7 +14,7 @@ Graph bundle produced by [lowerScrollTimelineIntent](../functions/lowerScrollTim
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/scroll-timeline.d.ts:34
 
@@ -22,7 +22,7 @@ Defined in: core/dist/motion/scroll-timeline.d.ts:34
 
 ### entityId
 
-> `readonly` **entityId**: `ContentAddress`
+> `readonly` **entityId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/scroll-timeline.d.ts:35
 
@@ -46,7 +46,7 @@ Defined in: core/dist/motion/scroll-timeline.d.ts:32
 
 ### policyId
 
-> `readonly` **policyId**: `ContentAddress`
+> `readonly` **policyId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/scroll-timeline.d.ts:36
 
@@ -54,7 +54,7 @@ Defined in: core/dist/motion/scroll-timeline.d.ts:36
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/scroll-timeline.d.ts:37
 
@@ -62,6 +62,6 @@ Defined in: core/dist/motion/scroll-timeline.d.ts:37
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/scroll-timeline.d.ts:33

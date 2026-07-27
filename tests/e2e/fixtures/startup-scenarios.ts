@@ -303,7 +303,7 @@ export async function runWorkerStartupScenario(
   stageDurations['state-delivery'] = Number((deliveredAt - requestEndNs / 1e6).toFixed(4));
 
   const disposeStart = now();
-  host.dispose();
+  await host.dispose();
   const disposeMs = now() - disposeStart;
   stageDurations.dispose = Number(disposeMs.toFixed(4));
 

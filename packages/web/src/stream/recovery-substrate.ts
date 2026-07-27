@@ -17,7 +17,7 @@
  * @module
  */
 
-import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStoreShape } from '@liteship/core';
+import type { DiscreteStateTransition, PatchReceiptEntry, ReceiptEnvelope, StateCellStore } from '@liteship/core';
 import {
   Diagnostics,
   Receipt,
@@ -36,7 +36,7 @@ export interface StreamRecoverySubstrate {
   /** The host's mutation client — supplies the local base and receives the adopted graph. */
   readonly mutationClient: StreamRecoveryMutationClient;
   /** The host's StateCell store for discrete crossing replay. */
-  readonly cellStore: StateCellStoreShape;
+  readonly cellStore: StateCellStore;
 }
 
 /** Substrate plus the live receipt buffer, as consumed by the stream directive. */

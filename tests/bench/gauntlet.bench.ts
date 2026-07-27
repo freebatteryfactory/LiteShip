@@ -6,6 +6,7 @@ import { defineGate, finding, memoryContext, runGates, type Gate } from '@litesh
 const context = memoryContext({ 'subject.ts': 'clean' });
 const probe: Gate = defineGate({
   id: 'bench/clean-token',
+  extension: { namespace: 'bench', owner: 'LiteShip benchmark suite' },
   level: 'L4',
   describe: 'scan one file for a forbidden benchmark token',
   run: (candidate) =>

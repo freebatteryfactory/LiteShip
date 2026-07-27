@@ -8,13 +8,16 @@
  * The authority ratchet is encoded in the TYPE: a {@link Gate} cannot be
  * constructed without {@link GateFixtures} (a red that must fail it, a green
  * that must pass, a mutation its own fixtures must kill). A gate that has not
- * self-proven against those fixtures can only ever be `advisory` — it earns
- * blocking authority, it is not granted it. (See `authority.ts`.)
+ * self-proven against those fixtures can only emit semantic findings at
+ * `advisory` authority — it earns blocking authority, it is not granted it.
+ * The engine also emits a separate blocking authority-integrity finding, so a
+ * required but unqualified gate can never make the enclosing run green. (See
+ * `authority.ts`.)
  *
  * @module
  */
 
-import { ValidationError, HostCapabilityError } from '@liteship/error';
+import { DIAGNOSTIC_AREAS, ValidationError, HostCapabilityError } from '@liteship/error';
 import type { AssuranceLevel } from './assurance.js';
 import type { EarlyReturnMatch } from './gates/early-return-detect.js';
 import type { Finding } from './finding.js';
@@ -468,10 +471,20 @@ export interface GateMutation {
   readonly mutate: (gate: Gate) => Gate;
 }
 
+/** Ownership metadata required for a downstream gate namespace. */
+export interface ExtensionGateIdentity {
+  /** First path segment of the gate id (for example `acme` in `acme/no-todo`). */
+  readonly namespace: string;
+  /** Stable package, team, or project identity responsible for the extension. */
+  readonly owner: string;
+}
+
 /** A gate — the registered fitness function. */
 export interface Gate {
   /** Stable id; namespaces every {@link Finding} it emits (traceability). */
   readonly id: string;
+  /** Required when `id` uses a non-LiteShip namespace; absent on built-in gates. */
+  readonly extension?: ExtensionGateIdentity;
   /** The assurance level this gate operates at — aims its rigor. */
   readonly level: AssuranceLevel;
   /** One-line human description of what it checks. */
@@ -794,10 +807,51 @@ export interface FactGate extends Gate {
  * an empty id, or missing any of red/green/mutation, is a malformed plugin and
  * throws {@link ValidationError} at registration, not at run time).
  */
+const RESERVED_GATE_NAMESPACES = new Set<string>(DIAGNOSTIC_AREAS);
+const GATE_NAMESPACE = /^[a-z][a-z0-9.-]*$/u;
+
+function validateGateIdentity(
+  constructor: 'defineGate' | 'defineFactGate',
+  id: string,
+  extension: ExtensionGateIdentity | undefined,
+): void {
+  const separator = id.indexOf('/');
+  if (separator <= 0 || separator === id.length - 1) {
+    throw ValidationError(constructor, `gate id "${id}" must be namespaced as <namespace>/<rule>`);
+  }
+  const namespace = id.slice(0, separator);
+  if (!GATE_NAMESPACE.test(namespace)) {
+    throw ValidationError(constructor, `gate id "${id}" has an invalid namespace "${namespace}"`);
+  }
+  if (RESERVED_GATE_NAMESPACES.has(namespace) || namespace === 'liteship') {
+    if (extension !== undefined) {
+      throw ValidationError(
+        constructor,
+        `gate "${id}" squats on reserved LiteShip namespace "${namespace}" while declaring downstream ownership`,
+      );
+    }
+    return;
+  }
+  if (extension === undefined) {
+    throw ValidationError(
+      constructor,
+      `downstream gate "${id}" must declare extension metadata { namespace: "${namespace}", owner }`,
+    );
+  }
+  if (extension.namespace !== namespace || extension.owner.trim() === '') {
+    throw ValidationError(
+      constructor,
+      `downstream gate "${id}" must declare its exact namespace and a non-empty owner`,
+    );
+  }
+}
+
+/** Validate and freeze one pure gate definition. */
 export function defineGate(spec: Gate): Gate {
   if (spec.id.trim() === '') {
     throw ValidationError('defineGate', 'gate id must be a non-empty string');
   }
+  validateGateIdentity('defineGate', spec.id, spec.extension);
   if (typeof spec.run !== 'function') {
     throw ValidationError('defineGate', `gate "${spec.id}" must supply a run function`);
   }
@@ -840,6 +894,8 @@ const FACT_GATES = new WeakSet<Gate>();
 /** The author surface of a {@link FactGate} — context-free by construction (no `run`). */
 export interface FactGateSpec {
   readonly id: string;
+  /** Required when `id` uses a non-LiteShip namespace; absent on built-in gates. */
+  readonly extension?: ExtensionGateIdentity;
   readonly level: AssuranceLevel;
   readonly describe: string;
   readonly coverage?: (ir: RepoIR) => readonly FileId[];
@@ -935,6 +991,7 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   if (spec.id.trim() === '') {
     throw ValidationError('defineFactGate', 'gate id must be a non-empty string');
   }
+  validateGateIdentity('defineFactGate', spec.id, spec.extension);
   if (!Array.isArray(spec.requires) || spec.requires.length === 0) {
     throw ValidationError('defineFactGate', `fact gate "${spec.id}" must declare at least one required fact kind`);
   }
@@ -968,6 +1025,7 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   const evidenceDigest = (context: GateContext): string => factBundleDigest(context, requires);
   const gate: FactGate = {
     id: spec.id,
+    ...(spec.extension !== undefined ? { extension: Object.freeze({ ...spec.extension }) } : {}),
     level: spec.level,
     describe: spec.describe,
     ...(spec.coverage !== undefined ? { coverage: spec.coverage } : {}),

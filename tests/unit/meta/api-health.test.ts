@@ -62,11 +62,11 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
 
   // ── Compositor / ECS / scheduling ─────────────────────────────────
   Compositor: { methods: ['create'] },
-  // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` / `World` are now
+  // `CompositorStatePool` / `BlendTree` / `DirtyFlags` / `FrameBudget` / `Part` / `World` are now
   // type-only; construction is the standalone `createCompositorStatePool` / `createBlendTree`
-  // / `createDirtyFlags` / `createFrameBudget` / `createWorld` (verb grammar, ADR-0051).
+  // / `createDirtyFlags` / `createFrameBudget` / `createDenseStore` / `createWorld`
+  // (verb grammar, ADR-0051).
   Scheduler: { methods: ['raf', 'noop', 'fixedStep', 'audioSync'] },
-  Part: { methods: ['dense'] },
   // `Composable` construction moved to the standalone `createComposable` (ADR-0051); the
   // namespace object keeps its `compose` / `merge` combinators.
   Composable: { methods: ['compose', 'merge'] },
@@ -281,6 +281,7 @@ const STANDALONE_FUNCTIONS = [
   // escalation reader wired through to the barrel.
   'createSignal',
   'createWorld',
+  'createDenseStore',
   'createBlendTree',
   'createTokenBuffer',
   'createComponent',

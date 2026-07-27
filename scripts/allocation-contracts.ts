@@ -3,7 +3,7 @@
 import { resolve } from 'node:path';
 import {
   ACCEPTED_ALLOCATION_CEILINGS,
-  MIN_COMPLEXITY_FIT_R2,
+  COMPLEXITY_ADMISSION_POLICY,
 } from '../packages/gauntlet/src/gates/performance-contracts.js';
 import { repoRoot } from '../vitest.shared.js';
 import { isDirectExecution, writeTextFile } from './audit/shared.js';
@@ -40,7 +40,7 @@ export function verifyMeasuredAllocationMap(map: AllocationMap): readonly Alloca
       continue;
     }
     if (complexityRank(entry.class) > complexityRank(ceiling)) issues.push({ path, reason: 'class-regression' });
-    if (entry.fittedR2 < MIN_COMPLEXITY_FIT_R2) issues.push({ path, reason: 'noisy-fit' });
+    if (entry.fittedR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) issues.push({ path, reason: 'noisy-fit' });
   }
   return issues;
 }

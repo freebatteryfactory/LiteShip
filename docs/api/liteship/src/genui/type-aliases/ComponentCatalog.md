@@ -6,6 +6,8 @@
 
 # Type Alias: ComponentCatalog
 
-> **ComponentCatalog** = `_ComponentCatalog`
+> **ComponentCatalog** = [`ComponentCatalog`](../../../../spine/interfaces/ComponentCatalog.md)
 
-Defined in: genui/dist/types.d.ts:10
+Defined in: genui/dist/types.d.ts:14
+
+Closed catalog of components a generated tree may reference.

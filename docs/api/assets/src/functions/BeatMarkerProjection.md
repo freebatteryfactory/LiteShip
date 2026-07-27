@@ -6,7 +6,7 @@
 
 # Function: BeatMarkerProjection()
 
-> **BeatMarkerProjection**(`registry`, `audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, `BeatMarkerSet`, `unknown`\>
+> **BeatMarkerProjection**(`registry`, `audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`BeatMarkerSet`](../../../spine/interfaces/BeatMarkerSet.md), `unknown`\>
 
 Defined in: [assets/src/analysis/beat-markers.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L97)
 
@@ -26,4 +26,4 @@ assembled (no module-global lookup).
 
 ## Returns
 
-`CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, `BeatMarkerSet`, `unknown`\>
+`CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`BeatMarkerSet`](../../../spine/interfaces/BeatMarkerSet.md), `unknown`\>

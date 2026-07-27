@@ -12,7 +12,7 @@ the working line.
 
 ## Interfaces
 
-- [AnimatedQuantizerShape](interfaces/AnimatedQuantizerShape.md)
+- [AnimatedQuantizer](interfaces/AnimatedQuantizer.md)
 - [DefineQuantizerOptions](interfaces/DefineQuantizerOptions.md)
 - [EvaluateResult](interfaces/EvaluateResult.md)
 - [InterpolatedFrame](interfaces/InterpolatedFrame.md)
@@ -26,7 +26,6 @@ the working line.
 
 ## Type Aliases
 
-- [AnimatedQuantizer](type-aliases/AnimatedQuantizer.md)
 - [MotionTier](type-aliases/MotionTier.md)
 - [OutputTarget](type-aliases/OutputTarget.md)
 - [OwnedAnimatedQuantizer](type-aliases/OwnedAnimatedQuantizer.md)

@@ -172,6 +172,22 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 > `readonly` **type**: readonly \[`"object"`, `"null"`\]
 
+#### properties.publicSurface.properties.audience
+
+> `readonly` **audience**: `object`
+
+#### properties.publicSurface.properties.audience.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.category
+
+> `readonly` **category**: `object`
+
+#### properties.publicSurface.properties.category.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.publicSurface.properties.checkIds
 
 > `readonly` **checkIds**: `object`
@@ -316,6 +332,14 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 > `readonly` **type**: `"string"` = `'string'`
 
+#### properties.publicSurface.properties.producer
+
+> `readonly` **producer**: `object`
+
+#### properties.publicSurface.properties.producer.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.publicSurface.properties.proofRefs
 
 > `readonly` **proofRefs**: `object`
@@ -332,11 +356,27 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 > `readonly` **type**: `"array"` = `'array'`
 
+#### properties.publicSurface.properties.relatedInvariant
+
+> `readonly` **relatedInvariant**: `object`
+
+#### properties.publicSurface.properties.relatedInvariant.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
 #### properties.publicSurface.properties.remediation
 
 > `readonly` **remediation**: `object`
 
 #### properties.publicSurface.properties.remediation.type
+
+> `readonly` **type**: `"string"` = `'string'`
+
+#### properties.publicSurface.properties.replacement
+
+> `readonly` **replacement**: `object`
+
+#### properties.publicSurface.properties.replacement.type
 
 > `readonly` **type**: `"string"` = `'string'`
 
@@ -356,6 +396,14 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 > `readonly` **enum**: readonly \[`"stable"`, `"experimental"`\]
 
+#### properties.publicSurface.properties.surfaceClass
+
+> `readonly` **surfaceClass**: `object`
+
+#### properties.publicSurface.properties.surfaceClass.enum
+
+> `readonly` **enum**: readonly \[`"paved-road"`, `"advanced-module"`\]
+
 #### properties.publicSurface.properties.symbol
 
 > `readonly` **symbol**: `object`
@@ -374,7 +422,7 @@ The descriptor `outputSchema` for the context command — hand-written JSON-Sche
 
 #### properties.publicSurface.required
 
-> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
+> `readonly` **required**: readonly \[`"symbol"`, `"specifier"`, `"owner"`, `"audience"`, `"category"`, `"surfaceClass"`, `"producer"`, `"relatedInvariant"`, `"replacement"`, `"userStory"`, `"lifecycle"`, `"failureContract"`, `"failureProof"`, `"example"`, `"stability"`, `"expertRoutes"`, `"checkIds"`, `"proofRefs"`, `"remediation"`, `"allocation"`\]
 
 #### properties.publicSurface.type
 

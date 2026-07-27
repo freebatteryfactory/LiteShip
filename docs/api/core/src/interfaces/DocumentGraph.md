@@ -33,7 +33,7 @@ Defined in: [core/src/graph/document-graph.ts:172](https://github.com/freebatter
 
 ### digest
 
-> `readonly` **digest**: `AddressedDigest`
+> `readonly` **digest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [core/src/graph/document-graph.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L174)
 
@@ -49,7 +49,7 @@ Defined in: [core/src/graph/document-graph.ts:177](https://github.com/freebatter
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/graph/document-graph.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph/document-graph.ts#L173)
 

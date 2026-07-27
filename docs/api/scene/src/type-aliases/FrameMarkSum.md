@@ -6,7 +6,7 @@
 
 # Type Alias: FrameMarkSum
 
-> **FrameMarkSum** = `_FrameMarkSum`
+> **FrameMarkSum** = [`FrameMarkSum`](../../../spine/interfaces/FrameMarkSum.md)
 
 Defined in: [scene/src/sugar/beat.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L34)
 

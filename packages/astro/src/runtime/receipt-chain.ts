@@ -4,7 +4,8 @@ import type { Receipt, UIFrame } from '@liteship/core';
 type ReceiptEnvelope = Receipt.Envelope;
 type ReceiptTrustMode = 'advisory-unverified';
 
-interface ReceiptChainShape {
+/** Mutable receipt-DAG projection used to replay, compact, and inspect streamed UI frames. */
+export interface ReceiptChain {
   rememberFrame(frame: UIFrame): void;
   ingestEnvelope(envelope: ReceiptEnvelope): boolean;
   hasFramesAfter(receiptId: string | null): boolean;
@@ -27,7 +28,7 @@ interface ReceiptChainShape {
  * The chain currently treats signatures as advisory; a diagnostic is
  * emitted when signed envelopes arrive without a configured verifier.
  */
-export function createReceiptChain(): ReceiptChainShape {
+export function createReceiptChain(): ReceiptChain {
   let dag = DAG.empty();
   let lastCheckpoint: ReceiptEnvelope | null = null;
   const framesByReceipt = new Map<string, UIFrame>();

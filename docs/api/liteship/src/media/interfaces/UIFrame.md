@@ -41,7 +41,7 @@ Defined in: core/dist/media/gen-frame.d.ts:34
 
 ### receiptId
 
-> `readonly` **receiptId**: `ContentAddress`
+> `readonly` **receiptId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/media/gen-frame.d.ts:37
 

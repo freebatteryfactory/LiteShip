@@ -8,7 +8,9 @@
 
 > **createCounts**(`findings`): [`AuditCounts`](../interfaces/AuditCounts.md)
 
-Defined in: [audit/src/shared.ts:227](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L227)
+Defined in: [audit/src/shared.ts:234](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L234)
+
+Fold findings into exact severity counts.
 
 ## Parameters
 

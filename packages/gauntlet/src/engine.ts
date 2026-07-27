@@ -4,9 +4,11 @@
  * `runGates` verifies each gate against its fixtures (the authority ratchet),
  * runs the qualified gates over the real context, and applies each gate's
  * EARNED authority to its findings: a self-proven gate's `error` findings can
- * block; an unproven gate's findings are capped to `advisory` (they surface but
- * never fail the run). The result carries the findings, the per-gate proofs
- * (the receipts), and the single blocking verdict.
+ * block; an unproven gate's semantic findings are capped to `advisory`. Failed
+ * qualification itself is a separate, unwaivable authority-integrity error, so
+ * a required gate with broken proof can never mint a green run. The result
+ * carries the findings, the per-gate proofs (the receipts), and the single
+ * blocking verdict.
  *
  * This is the metacircular core: the gauntlet's own gates are just gates, run
  * through this same path, qualified by this same ratchet.
@@ -16,7 +18,7 @@
 
 import { ValidationError } from '@liteship/error';
 import type { GateContext, Gate } from './gate.js';
-import type { Finding, Severity } from './finding.js';
+import { finding, type Finding, type Severity } from './finding.js';
 import { verifyGate, earnedAuthority, type Authority, type GateProof } from './authority.js';
 import { atLeast, rankOf, type AssuranceLevel } from './assurance.js';
 import { levelOf, type LevelRule } from './assurance-map.js';
@@ -29,7 +31,7 @@ export interface GateOutcome {
   readonly gateId: string;
   readonly proof: GateProof;
   readonly authority: Authority;
-  /** Findings KEPT (post-waiver), with authority already applied to severity. */
+  /** Findings KEPT (post-waiver), including any unwaivable qualification-integrity defect. */
   readonly findings: readonly Finding[];
   /** Findings a valid waiver suppressed for this gate (audit trail). */
   readonly waived: readonly Finding[];
@@ -43,7 +45,7 @@ export interface GauntletResult {
   readonly findings: readonly Finding[];
   /** Per-gate outcomes (proofs = the qualification receipts). */
   readonly outcomes: readonly GateOutcome[];
-  /** True iff any self-proven (blocking) gate emitted an `error` finding, or a waiver expired/was forbidden. */
+  /** True iff a blocking gate failed, qualification integrity failed, or a waiver expired/was forbidden. */
   readonly blocked: boolean;
 }
 
@@ -104,6 +106,65 @@ export interface RunGatesOptions {
 /** Cap a finding's severity to `advisory` (for gates that have not self-proven). */
 function asAdvisory(f: Finding): Finding {
   return f.severity === 'advisory' ? f : { ...f, severity: 'advisory' };
+}
+
+const AUTHORITY_INTEGRITY_RULE_ID = 'gauntlet/authority-integrity';
+
+interface GateQualification {
+  readonly proof: GateProof;
+  readonly executionFailure?: string;
+}
+
+/**
+ * Execute qualification without letting a fixture exception erase the receipt.
+ * A thrown fixture is represented as an all-false proof plus bounded diagnostic
+ * text; it remains fail-closed while giving humans and agents a cureable result.
+ */
+function qualifyGate(gate: Gate): GateQualification {
+  try {
+    return { proof: verifyGate(gate) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      proof: {
+        gateId: gate.id,
+        redCaught: false,
+        greenClean: false,
+        mutationKilled: false,
+        selfProven: false,
+      },
+      executionFailure: message.slice(0, 1_000),
+    };
+  }
+}
+
+/** Build the engine-owned, never-waivable finding for failed qualification. */
+function authorityIntegrityFinding(gate: Gate, qualification: GateQualification): Finding | undefined {
+  const { proof, executionFailure } = qualification;
+  if (proof.selfProven) return undefined;
+  const failed = [
+    ...(!proof.redCaught ? ['red fixture did not prove detection'] : []),
+    ...(!proof.greenClean ? ['green fixture was not clean'] : []),
+    ...(!proof.mutationKilled ? ['mutation survived'] : []),
+  ];
+  const execution = executionFailure === undefined ? '' : ` Qualification execution failed: ${executionFailure}`;
+  return finding({
+    ruleId: AUTHORITY_INTEGRITY_RULE_ID,
+    severity: 'error',
+    level: gate.level,
+    title: 'Gate authority qualification failed',
+    detail: `Required gate "${gate.id}" is unqualified (${failed.join('; ')}).${execution} Its semantic findings remain advisory, but this run cannot be green while its release authority is unverified.`,
+    remediation: {
+      kind: 'instruction',
+      description: `Repair the red, green, and mutation proof for ${gate.id}.`,
+      steps: [
+        'Make the red fixture produce at least one finding.',
+        'Make the green fixture produce no findings.',
+        'Make the mutation change behavior so the fixtures kill it.',
+        'Rerun the gate through runGates and retain the qualification receipt.',
+      ],
+    },
+  });
 }
 
 /**
@@ -396,7 +457,8 @@ function runRawCached(gate: Gate, scoped: GateContext, cache: ArmedCache): reado
 
 /**
  * Run a set of gates over `context`. Each gate is first verified against its own
- * fixtures; unproven gates run but are demoted to advisory. When `opts.assuranceMap`
+ * fixtures; unproven gates run with semantic findings demoted to advisory, while
+ * their qualification defect blocks independently. When `opts.assuranceMap`
  * is given, each gate sees ONLY files at-or-above its level (rigor scoping — no
  * more red-drowning); without it every gate sees all files (back-compat). When
  * `opts.waivers` are given, they are applied to each gate's findings against the
@@ -404,8 +466,8 @@ function runRawCached(gate: Gate, scoped: GateContext, cache: ArmedCache): reado
  * findings are suppressed, and expired/stale/forbidden waivers surface as their
  * own findings (expired + forbidden BLOCK).
  *
- * Returns the merged KEPT findings, the proofs, and whether a blocking gate (or a
- * blocking waiver finding) failed the run.
+ * Returns the merged KEPT findings, the proofs, and whether a blocking gate,
+ * qualification-integrity finding, or blocking waiver finding failed the run.
  */
 export function runGates(gates: readonly Gate[], context: GateContext, opts: RunGatesOptions = {}): GauntletResult {
   // Composition is validated BEFORE fixture qualification or gate execution. A
@@ -439,8 +501,10 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
   let blocked = false;
 
   for (const gate of gates) {
-    const proof = verifyGate(gate);
+    const qualification = qualifyGate(gate);
+    const { proof } = qualification;
     const authority = earnedAuthority(proof);
+    const integrityFinding = authorityIntegrityFinding(gate, qualification);
 
     // Scope the context to the gate's level when a map is supplied; otherwise the
     // gate sees everything (back-compat). On the --ir path the PROPAGATED effective
@@ -478,7 +542,11 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
     const gateWaivers = waivers.filter((w) => w.ruleId === gate.id);
     const { kept, waived, waiverFindings } = applyWaivers(authed, gateWaivers, now);
 
-    const outcomeFindings = [...kept, ...waiverFindings];
+    // The qualification finding is engine-owned and deliberately bypasses the
+    // waiver path. A waiver can suppress a semantic rule; it cannot make a gate's
+    // broken detector qualified.
+    const keptWithIntegrity = integrityFinding === undefined ? kept : [...kept, integrityFinding];
+    const outcomeFindings = [...keptWithIntegrity, ...waiverFindings];
     for (const f of outcomeFindings) {
       allFindings.push(f);
       // A blocking gate's `error` blocks; a waiver-expired/forbidden `error`
@@ -486,12 +554,17 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
       // gate's earned authority).
       const isWaiverError =
         f.severity === 'error' && (f.ruleId === 'gauntlet/waiver-expired' || f.ruleId === 'gauntlet/waiver-forbidden');
-      if ((authority === 'blocking' && f.severity === 'error' && kept.includes(f)) || isWaiverError) {
+      const isAuthorityIntegrityError = f.severity === 'error' && f.ruleId === AUTHORITY_INTEGRITY_RULE_ID;
+      if (
+        (authority === 'blocking' && f.severity === 'error' && kept.includes(f)) ||
+        isWaiverError ||
+        isAuthorityIntegrityError
+      ) {
         blocked = true;
       }
     }
 
-    outcomes.push({ gateId: gate.id, proof, authority, findings: kept, waived, waiverFindings });
+    outcomes.push({ gateId: gate.id, proof, authority, findings: keptWithIntegrity, waived, waiverFindings });
   }
 
   return { findings: allFindings, outcomes, blocked };

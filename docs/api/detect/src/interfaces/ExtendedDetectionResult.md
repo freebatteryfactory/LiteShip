@@ -88,7 +88,7 @@ Visual fidelity tier derived from display metadata.
 
 ### motionTier
 
-> `readonly` **motionTier**: `MotionTier`
+> `readonly` **motionTier**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [detect/src/detect.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L153)
 

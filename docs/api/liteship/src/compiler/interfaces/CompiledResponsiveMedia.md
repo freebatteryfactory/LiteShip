@@ -30,6 +30,6 @@ Defined in: compiler/dist/responsive-media-compile.d.ts:9
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: compiler/dist/responsive-media-compile.d.ts:11

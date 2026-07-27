@@ -39,7 +39,7 @@ reaches this module — the subpath module graphs are independent.
 
 ## Type Aliases
 
-- [PrimitiveShape](type-aliases/PrimitiveShape.md)
+- [Primitive](type-aliases/Primitive.md)
 - [ThemeManifest](type-aliases/ThemeManifest.md)
 - [ThemeManifestEntry](type-aliases/ThemeManifestEntry.md)
 - [TokenManifest](type-aliases/TokenManifest.md)

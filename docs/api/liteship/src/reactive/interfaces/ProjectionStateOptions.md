@@ -8,7 +8,7 @@
 
 Defined in: core/dist/reactive/state-cell.d.ts:64
 
-Options for [StateCellStoreShape.projectionState](StateCellStoreShape.md#projectionstate).
+Options for [StateCellStore.projectionState](StateCellStore.md#projectionstate).
 
 ## Properties
 

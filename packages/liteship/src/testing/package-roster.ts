@@ -34,4 +34,5 @@ export const LITESHIP_PACKAGES = [
 ] as const;
 /* END gen-roster: LITESHIP_PACKAGES */
 
+/** One package name admitted by the generated matched-version fleet roster. */
 export type LiteshipPackageName = (typeof LITESHIP_PACKAGES)[number];

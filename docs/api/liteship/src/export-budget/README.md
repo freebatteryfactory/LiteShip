@@ -22,11 +22,13 @@ evaluating the facade.
 
 ## Type Aliases
 
+- [FacadeAudience](type-aliases/FacadeAudience.md)
 - [FacadeDisposalContract](type-aliases/FacadeDisposalContract.md)
 - [FacadeLifecycleClass](type-aliases/FacadeLifecycleClass.md)
 - [FacadePostDisposeContract](type-aliases/FacadePostDisposeContract.md)
 - [FacadeSiblingCleanupContract](type-aliases/FacadeSiblingCleanupContract.md)
 - [FacadeStability](type-aliases/FacadeStability.md)
+- [FacadeSurfaceClass](type-aliases/FacadeSurfaceClass.md)
 - [RootExportKind](type-aliases/RootExportKind.md)
 - [RootExportRole](type-aliases/RootExportRole.md)
 - [RootTypeBudgetSymbol](type-aliases/RootTypeBudgetSymbol.md)

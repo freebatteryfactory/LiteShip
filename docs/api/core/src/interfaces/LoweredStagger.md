@@ -38,6 +38,6 @@ Defined in: [core/src/motion/stagger.ts:68](https://github.com/freebatteryfactor
 
 ### signalId
 
-> `readonly` **signalId**: `ContentAddress`
+> `readonly` **signalId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/stagger.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/stagger.ts#L69)

@@ -32,7 +32,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('SSE.create reconnect defaults', () => {
-  test('a partial reconnect override merges over defaultReconnectConfig', () => {
+  test('a partial reconnect override merges over defaultReconnectConfig', async () => {
     uninstallEventSource = MockEventSource.install();
 
     // Only one knob supplied; maxAttempts must come from the defaults (10), so
@@ -45,7 +45,7 @@ describe('SSE.create reconnect defaults', () => {
     MockEventSource.instances.at(-1)!.simulateError();
 
     expect(client.state).toBe('reconnecting');
-    client.close();
+    await client.dispose();
   });
 });
 

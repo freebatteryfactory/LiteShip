@@ -8,4 +8,6 @@
 
 > `const` **auditSourceGlobs**: readonly \[`"packages/*/src/**/*.ts"`, `"packages/*/src/**/*.tsx"`\]
 
-Defined in: [audit/src/policy.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L55)
+Defined in: [audit/src/policy.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L49)
+
+Default source globs used only when a host does not narrow audit discovery.

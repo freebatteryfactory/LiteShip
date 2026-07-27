@@ -53,6 +53,7 @@ function missingFinding(entry: NegativeControlFact): Finding {
   });
 }
 
+/** Decide whether every blocking check has an executable falsifying control. */
 export function decideCheckNegativeControl(facts: FactBundle): readonly Finding[] {
   const pack: CheckGovernanceFacts | undefined = facts.checkGovernance;
   if (pack === undefined) return [];
@@ -111,6 +112,7 @@ const GREEN_FACTS = governance([
   }),
 ]);
 
+/** Blocking fact gate for missing or ineffective check negative controls. */
 export const checkNegativeControlGate: FactGate = defineFactGate({
   id: RULE_ID,
   level: 'L2',

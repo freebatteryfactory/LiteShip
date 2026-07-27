@@ -20,7 +20,7 @@ guard makes a stale/duplicate transition a byte-identical no-op (Law 15).
 
 ### cellStore
 
-[`StateCellStoreShape`](../../reactive/interfaces/StateCellStoreShape.md)
+[`StateCellStore`](../../reactive/interfaces/StateCellStore.md)
 
 ### transition
 

@@ -76,7 +76,7 @@ Defined in: core/dist/graph/document-graph.d.ts:47
 
 ### fromPose
 
-> `readonly` **fromPose**: `ContentAddress`
+> `readonly` **fromPose**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:84
 
@@ -84,7 +84,7 @@ Defined in: core/dist/graph/document-graph.d.ts:84
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:49
 
@@ -120,6 +120,6 @@ Defined in: core/dist/graph/document-graph.d.ts:86
 
 ### toPose
 
-> `readonly` **toPose**: `ContentAddress`
+> `readonly` **toPose**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:85

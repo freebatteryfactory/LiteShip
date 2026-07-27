@@ -6,7 +6,7 @@
 
 # Function: createLifetime()
 
-> **createLifetime**(): [`LifetimeShape`](../interfaces/LifetimeShape.md)
+> **createLifetime**(): [`Lifetime`](../type-aliases/Lifetime.md)
 
 Defined in: core/dist/reactive/lifetime.d.ts:89
 
@@ -17,4 +17,4 @@ this is the curated authoring-surface spelling the `liteship` root re-exports.
 
 ## Returns
 
-[`LifetimeShape`](../interfaces/LifetimeShape.md)
+[`Lifetime`](../type-aliases/Lifetime.md)

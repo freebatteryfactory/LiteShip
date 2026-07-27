@@ -274,7 +274,7 @@ function sendResolvedStateMessage(
 }
 
 // ---------------------------------------------------------------------------
-// Host commands (the public CompositorWorkerShape surface)
+// Host commands (the public CompositorWorker surface)
 // ---------------------------------------------------------------------------
 
 /**

@@ -14,6 +14,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix, relative, resolve } from 'node:path';
 import { spawnArgv, type SpawnArgvOpts, type SpawnResult } from '@liteship/command/host';
+import { ValidationError } from '@liteship/error';
 
 export interface GeneratedCorpusFiles {
   readonly testFiles: readonly string[];
@@ -87,14 +88,14 @@ function record(value: unknown): Record<string, unknown> | null {
 
 function finite(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new TypeError(`generated benchmark report has no finite ${field}`);
+    throw ValidationError('generated-benchmark-report', `has no finite ${field}`);
   }
   return value;
 }
 
 function nonEmpty(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new TypeError(`generated benchmark report has no ${field}`);
+    throw ValidationError('generated-benchmark-report', `has no ${field}`);
   }
   return value;
 }
@@ -123,40 +124,44 @@ export function admitGeneratedBenchmarkReport(
 ): GeneratedBenchmarkExecutionReceipt {
   const top = record(value);
   if (top === null || !Array.isArray(top.files)) {
-    throw new TypeError('generated benchmark report has no files array');
+    throw ValidationError('generated-benchmark-report', 'has no files array');
   }
   if (top.files.length !== benchFiles.length) {
-    throw new TypeError(`generated benchmark report covered ${top.files.length} files; expected ${benchFiles.length}`);
+    throw ValidationError(
+      'generated-benchmark-report',
+      `covered ${top.files.length} files; expected ${benchFiles.length}`,
+    );
   }
 
   const remaining = new Set(benchFiles.map((file) => resolve(cwd, file)));
   const files = top.files.map((rawFile) => {
     const file = record(rawFile);
-    if (file === null) throw new TypeError('generated benchmark report contains a malformed file record');
+    if (file === null) throw ValidationError('generated-benchmark-report', 'contains a malformed file record');
     const filepath = nonEmpty(file.filepath, 'file path');
     const expected = [...remaining].find((candidate) => samePhysicalPath(candidate, filepath));
     if (expected === undefined) {
-      throw new TypeError(`generated benchmark report contains an unexpected or duplicate file: ${filepath}`);
+      throw ValidationError('generated-benchmark-report', `contains an unexpected or duplicate file: ${filepath}`);
     }
     remaining.delete(expected);
     if (!Array.isArray(file.groups) || file.groups.length === 0) {
-      throw new TypeError(`generated benchmark report contains no groups for ${filepath}`);
+      throw ValidationError('generated-benchmark-report', `contains no groups for ${filepath}`);
     }
 
     const benchmarks: GeneratedBenchmarkMeasurement[] = [];
     for (const rawGroup of file.groups) {
       const group = record(rawGroup);
       if (group === null || !Array.isArray(group.benchmarks) || group.benchmarks.length === 0) {
-        throw new TypeError(`generated benchmark report contains an empty group for ${filepath}`);
+        throw ValidationError('generated-benchmark-report', `contains an empty group for ${filepath}`);
       }
       for (const rawBenchmark of group.benchmarks) {
         const benchmark = record(rawBenchmark);
         if (benchmark === null)
-          throw new TypeError(`generated benchmark report contains a malformed task in ${filepath}`);
+          throw ValidationError('generated-benchmark-report', `contains a malformed task in ${filepath}`);
         const sampleCount = finite(benchmark.sampleCount, 'sampleCount');
         if (!Number.isInteger(sampleCount) || sampleCount < 2) {
-          throw new TypeError(
-            `generated benchmark ${String(benchmark.name)} produced ${sampleCount} samples; at least two are required to establish uncertainty`,
+          throw ValidationError(
+            'generated-benchmark-report',
+            `${String(benchmark.name)} produced ${sampleCount} samples; at least two are required to establish uncertainty`,
           );
         }
         const minimum = finite(benchmark.min, 'minimum');
@@ -178,11 +183,14 @@ export function admitGeneratedBenchmarkReport(
           marginOfError < 0 ||
           relativeMarginOfError < 0
         ) {
-          throw new TypeError(`generated benchmark ${String(benchmark.name)} has an incoherent distribution`);
+          throw ValidationError(
+            'generated-benchmark-report',
+            `${String(benchmark.name)} has an incoherent distribution`,
+          );
         }
         const totalTime = finite(benchmark.totalTime, 'total time');
         if (totalTime < 0) {
-          throw new TypeError(`generated benchmark ${String(benchmark.name)} has a negative total time`);
+          throw ValidationError('generated-benchmark-report', `${String(benchmark.name)} has a negative total time`);
         }
         benchmarks.push({
           id: nonEmpty(benchmark.id, 'benchmark id'),
@@ -204,7 +212,7 @@ export function admitGeneratedBenchmarkReport(
     const digest = sourceDigest(expected);
     const expectedDigest = expectedSourceDigests?.get(expected);
     if (expectedDigest !== undefined && expectedDigest !== digest) {
-      throw new TypeError(`generated benchmark source changed during execution: ${filepath}`);
+      throw ValidationError('generated-benchmark-report', `source changed during execution: ${filepath}`);
     }
     const relativeFile = posix.normalize(relative(resolve(cwd), expected).replace(/\\/gu, '/'));
     return Object.freeze({
@@ -215,7 +223,7 @@ export function admitGeneratedBenchmarkReport(
   });
 
   if (remaining.size !== 0) {
-    throw new TypeError(`generated benchmark report omitted ${remaining.size} requested files`);
+    throw ValidationError('generated-benchmark-report', `omitted ${remaining.size} requested files`);
   }
   return Object.freeze({
     schemaVersion: 1,
@@ -271,10 +279,10 @@ function exactFiles(files: readonly string[], suffix: '.test.ts' | '.bench.ts'):
       (file, index) => file !== authored[index] || !file.startsWith('tests/generated/') || !file.endsWith(suffix),
     )
   ) {
-    throw new TypeError(`generated corpus ${suffix} files must stay beneath tests/generated/`);
+    throw ValidationError('generated-corpus', `${suffix} files must stay beneath tests/generated/`);
   }
   const unique = [...new Set(normalized)].sort();
-  if (unique.length !== normalized.length) throw new TypeError(`generated corpus ${suffix} files must be unique`);
+  if (unique.length !== normalized.length) throw ValidationError('generated-corpus', `${suffix} files must be unique`);
   return unique;
 }
 

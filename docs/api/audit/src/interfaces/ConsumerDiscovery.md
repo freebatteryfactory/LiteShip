@@ -6,7 +6,9 @@
 
 # Interface: ConsumerDiscovery
 
-Defined in: [audit/src/consumer.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L36)
+Defined in: [audit/src/consumer.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L23)
+
+Files and package manifests discovered in an external consumer project.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [audit/src/consumer.ts:36](https://github.com/freebatteryfactory/Lit
 
 > `readonly` **missing**: readonly `string`[]
 
-Defined in: [audit/src/consumer.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L40)
+Defined in: [audit/src/consumer.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L27)
 
 Topology packages not installed in this repo — informational, not an error.
 
@@ -24,6 +26,6 @@ Topology packages not installed in this repo — informational, not an error.
 
 > `readonly` **packageRoots**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [audit/src/consumer.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L38)
+Defined in: [audit/src/consumer.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/consumer.ts#L25)
 
 Package name → absolute (realpath'd, normalized) package root.

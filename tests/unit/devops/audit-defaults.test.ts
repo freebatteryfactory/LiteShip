@@ -4,7 +4,7 @@
  * Proves: a PARTIAL profile resolves with documented defaults (prefix derived
  * from the single common npm scope, empty topology/exemptions/surface);
  * derivation never guesses (ambiguous or unscoped trees throw a teaching
- * error); every SurfacePolicyShape field is optional (absent = check skipped);
+ * error); every SurfacePolicy field is optional (absent = check skipped);
  * the CLI JSON loader accepts a profile without `surfacePolicy`; and consumer
  * mode reports not-installed topology packages as info findings (the README
  * promise, previously discarded by consumerDevopsProfile).
@@ -107,7 +107,7 @@ describe('runAuditPasses accepts a partial profile (defaults normalized at the e
   });
 });
 
-describe('SurfacePolicyShape — every field is optional, absent = check skipped', () => {
+describe('SurfacePolicy — every field is optional, absent = check skipped', () => {
   it('an empty surfacePolicy yields zero host/virtual-module findings and zeroed counts', () => {
     const root = acmeRepo();
     const profile: DevopsProfile = {
@@ -143,7 +143,7 @@ describe('SurfacePolicyShape — every field is optional, absent = check skipped
 
   it('the reference surfacePolicy const is typed as the consumed shape (no as-const wart)', () => {
     const policySrc = readFileSync(resolve(REPO, 'packages/audit/src/policy.ts'), 'utf8');
-    expect(policySrc).toContain('export const surfacePolicy: SurfacePolicyShape');
+    expect(policySrc).toContain('export const surfacePolicy: SurfacePolicy');
     const constBody = policySrc.slice(policySrc.indexOf('export const surfacePolicy'));
     expect(constBody.slice(0, constBody.indexOf('};'))).not.toContain('as const');
   });

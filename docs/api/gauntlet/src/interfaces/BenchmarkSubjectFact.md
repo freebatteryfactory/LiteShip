@@ -6,7 +6,9 @@
 
 # Interface: BenchmarkSubjectFact
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L74)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L83)
+
+Host-produced benchmark-subject evidence keyed by name and file.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:74](https://github.com/freebat
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L76)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L85)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:76](https://github.com/freebat
 
 > `readonly` **name**: `string`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L75)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L84)
 
 ***
 
@@ -30,4 +32,4 @@ Defined in: [gauntlet/src/gates/bench-subjects.ts:75](https://github.com/freebat
 
 > `readonly` **qualification**: [`BenchSubjectQualification`](BenchSubjectQualification.md)
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L77)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L86)

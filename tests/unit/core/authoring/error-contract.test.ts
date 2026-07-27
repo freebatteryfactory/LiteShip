@@ -12,7 +12,7 @@ import {
   Diagnostics,
   Easing,
   HLC,
-  Part,
+  createDenseStore,
   Receipt,
   Style,
   Token,
@@ -126,7 +126,7 @@ describe('Receipt.validateChain error contract', () => {
 
 describe('dense store capacity error contract', () => {
   test('capacity overflow names the store, capacity, entity, and both remedies', () => {
-    const store = Part.dense('physics', 1);
+    const store = createDenseStore('physics', 1);
     store.set('e-1' as EntityId, 1);
 
     try {
@@ -135,7 +135,7 @@ describe('dense store capacity error contract', () => {
     } catch (error) {
       expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/store "physics" at capacity \(1\)/);
-      expect(String(error)).toMatch(/Part\.dense\(name, n\)/);
+      expect(String(error)).toMatch(/createDenseStore\(name, n\)/);
       expect(String(error)).toMatch(/remove entities/);
     }
   });

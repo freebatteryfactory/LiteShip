@@ -379,7 +379,13 @@ describe('Compositor', () => {
       const countAtDispose = seen.length; // replay (1)
       expect(countAtDispose).toBe(1);
 
-      await compositor.dispose();
+      const disposal = compositor.dispose();
+      // The compositor currently owns one synchronous, infallible close. Stage's
+      // synchronous caster relies on this immediate teardown while still
+      // observing the returned Promise's error channel.
+      expect(completed).toBe(1);
+      expect(compositor.changes.closed).toBe(true);
+      await expect(disposal).resolves.toBeUndefined();
       expect(completed).toBe(1);
       expect(compositor.changes.closed).toBe(true);
 

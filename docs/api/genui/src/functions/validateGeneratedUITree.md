@@ -8,7 +8,7 @@
 
 > **validateGeneratedUITree**(`node`, `catalog`): [`ValidateGeneratedUIResult`](../type-aliases/ValidateGeneratedUIResult.md)
 
-Defined in: [genui/src/validate.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L129)
+Defined in: [genui/src/validate.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L130)
 
 Validate a generated UI tree against the host catalog. Unknown or unrepresentable input refuses.
 
@@ -16,11 +16,11 @@ Validate a generated UI tree against the host catalog. Unknown or unrepresentabl
 
 ### node
 
-[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](../../../spine/interfaces/GeneratedUINode.md)
 
 ### catalog
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 ## Returns
 

@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LITESHIP_PACKAGE_ROSTER } from '@liteship/audit';
+import { LITESHIP_PACKAGE_ROSTER } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 import { LITESHIP_PACKAGES } from '../../../packages/liteship/src/testing.js';
 import { CANONICAL_ROSTER, renderLiteshipPackages } from '../../../scripts/gen-roster.js';
 import { packageManifests, packageRoster } from '../../support/repo-truths.js';

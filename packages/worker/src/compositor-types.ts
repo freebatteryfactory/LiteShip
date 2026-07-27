@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@liteship/core';
+import type { AsyncOwnedResource, RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@liteship/core';
 import type {
   WorkerUpdate,
   BootstrapQuantizerRegistration,
@@ -14,7 +14,7 @@ import type {
 } from './messages.js';
 
 /**
- * The performance sample delivered to {@link CompositorWorkerShape.onMetrics}
+ * The performance sample delivered to `CompositorWorker.onMetrics`
  * listeners — a single record (reusing the wire {@link MetricsMessage}
  * shape) rather than positional `(fps, budgetUsed)` arguments, so a future
  * metric can be added without changing the callback's arity.
@@ -51,7 +51,7 @@ export interface ResolvedStateAckPayload {
 }
 
 /**
- * The boundary surface {@link CompositorWorkerShape.addQuantizer} derives
+ * The boundary surface `CompositorWorker.addQuantizer` derives
  * a registration from — structurally satisfied by a `defineBoundary`
  * result from `@liteship/core`, whose content-addressed `id` and `input`
  * name make hand-assembled registrations unnecessary.
@@ -70,10 +70,10 @@ export interface QuantizerBoundarySource {
 /**
  * Host-facing surface of a compositor worker. Returned by
  * {@link CompositorWorker} as the public control/observation API. Owns
- * the underlying `Worker` -- call {@link CompositorWorkerShape.dispose}
- * to terminate and release resources.
+ * the underlying `Worker` -- `await` {@link CompositorWorker.dispose}
+ * to park or terminate it and observe release failures.
  */
-export interface CompositorWorkerShape {
+export interface CompositorWorker extends AsyncOwnedResource {
   /** The underlying Worker instance. */
   readonly worker: Worker;
   /** Shared runtime coordination surface reflecting host-side worker state. */
@@ -134,9 +134,6 @@ export interface CompositorWorkerShape {
    * added without breaking existing callbacks (F1).
    */
   onMetrics(callback: (metrics: WorkerMetrics) => void): () => void;
-
-  /** Terminate the worker and clean up resources. */
-  dispose(): void;
 }
 
 /**

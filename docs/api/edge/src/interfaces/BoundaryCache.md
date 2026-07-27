@@ -30,7 +30,7 @@ themes (a per-request theme is a real input to the cached CSS).
 
 ##### boundaryId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ##### tierResult
 
@@ -65,7 +65,7 @@ it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
 
 ##### boundaryId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 #### Returns
 
@@ -108,7 +108,7 @@ Defined in: [edge/src/kv-cache.ts:147](https://github.com/freebatteryfactory/Lit
 
 ##### boundaryId
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ##### tierResult
 

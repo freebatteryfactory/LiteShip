@@ -27,7 +27,7 @@ Defined in: core/dist/authoring/adaptive.d.ts:175
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/authoring/adaptive.d.ts:185
 

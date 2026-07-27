@@ -10,14 +10,17 @@
  * @module
  */
 
+/** Whether one benchmark binding is the claimed system or a comparison baseline. */
 export type BenchSubjectRole = 'sut' | 'baseline';
 
+/** Stable origin of a benchmark subject. */
 export type BenchSubjectOrigin =
   | { readonly kind: 'module'; readonly specifier: string }
   | { readonly kind: 'file'; readonly path: string }
   | { readonly kind: 'intrinsic'; readonly name: string }
   | { readonly kind: 'wasm'; readonly crate: string };
 
+/** One symbol the benchmark body must actually reach. */
 export interface BenchSubject {
   readonly role: BenchSubjectRole;
   readonly origin: BenchSubjectOrigin;
@@ -26,6 +29,7 @@ export interface BenchSubject {
   readonly binding: string;
 }
 
+/** How a benchmark distribution executes its measured subject. */
 export type BenchExecution =
   | { readonly kind: 'callback' }
   | {
@@ -35,6 +39,7 @@ export type BenchExecution =
       readonly resultKey: string;
     };
 
+/** Claim-bearing benchmark distribution with explicit subject ownership. */
 export interface QualifiedBenchDistribution {
   readonly name: string;
   readonly file: string;
@@ -45,6 +50,7 @@ export interface QualifiedBenchDistribution {
   readonly execution?: BenchExecution;
 }
 
+/** Closed refusal vocabulary for benchmark-subject admission. */
 export type BenchSubjectIssueKind =
   | 'missing-subject'
   | 'missing-execution-source'
@@ -56,6 +62,7 @@ export type BenchSubjectIssueKind =
   | 'wrong-origin'
   | 'uninvoked-subject';
 
+/** One failed benchmark-subject reachability obligation. */
 export interface BenchSubjectIssue {
   readonly kind: BenchSubjectIssueKind;
   readonly name: string;
@@ -64,6 +71,7 @@ export interface BenchSubjectIssue {
   readonly detail: string;
 }
 
+/** Reachability proof and issues for one benchmark distribution. */
 export interface BenchSubjectQualification {
   readonly issues: readonly BenchSubjectIssue[];
   readonly reachableSubjects: readonly BenchSubject[];
@@ -71,6 +79,7 @@ export interface BenchSubjectQualification {
   readonly qualifyingSutSubjects: readonly BenchSubject[];
 }
 
+/** Host-produced benchmark-subject evidence keyed by name and file. */
 export interface BenchmarkSubjectFact {
   readonly name: string;
   readonly file: string;

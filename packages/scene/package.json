@@ -25,13 +25,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./dev": {
       "types": "./dist/dev/server.d.ts",
-      "import": "./dist/dev/server.js",
-      "development": "./src/dev/server.ts"
+      "import": "./dist/dev/server.js"
     }
   },
   "files": [

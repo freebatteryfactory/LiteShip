@@ -12,7 +12,9 @@
 
 - [CloudflareCacheApi](interfaces/CloudflareCacheApi.md)
 - [CloudflareEdgeCacheOptions](interfaces/CloudflareEdgeCacheOptions.md)
+- [CloudflareExecutionContext](interfaces/CloudflareExecutionContext.md)
 - [CloudflareMiddlewareConfig](interfaces/CloudflareMiddlewareConfig.md)
+- [CloudflareRequestContext](interfaces/CloudflareRequestContext.md)
 
 ## Type Aliases
 

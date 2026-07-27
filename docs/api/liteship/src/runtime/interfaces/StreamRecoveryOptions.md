@@ -27,7 +27,7 @@ Defined in: web/dist/stream/recovery.d.ts:44
 
 ### cellStore?
 
-> `readonly` `optional` **cellStore?**: [`StateCellStoreShape`](../../reactive/interfaces/StateCellStoreShape.md)
+> `readonly` `optional` **cellStore?**: [`StateCellStore`](../../reactive/interfaces/StateCellStore.md)
 
 Defined in: web/dist/stream/recovery.d.ts:51
 

@@ -8,7 +8,7 @@
 
 > **dualExport**(`graph`): `Promise`\<[`DualExportResult`](../interfaces/DualExportResult.md)\>
 
-Defined in: [stage/src/dual-export.ts:571](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L571)
+Defined in: [stage/src/dual-export.ts:582](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L582)
 
 THE JEWEL. Cast one [DocumentGraph](../../../liteship/src/graph/interfaces/DocumentGraph.md) to a static Astro page AND a video,
 then prove both derive from one source.

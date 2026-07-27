@@ -4,17 +4,14 @@
 
 import type { CapTier, CapSet, MotionTier } from './core.js';
 
-// MotionTier canonical declaration lives in core.d.ts; re-exported here so
-// `@liteship/_spine` consumers reading the detect surface still see it on this
-// sub-spine without an extra import.
-export type { MotionTier };
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. DETECTION TIERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Coarse GPU capability bucket reported by browser detection. */
 export type GPUTier = 0 | 1 | 2 | 3;
 
+/** Browser-observed hardware, preference, viewport, and connection capabilities. */
 export interface DeviceCapabilities {
   readonly gpu: GPUTier;
   readonly cores: number;
@@ -33,6 +30,7 @@ export interface DeviceCapabilities {
   };
 }
 
+/** Base capability evidence and the rendering tier derived from it. */
 export interface DetectionResult {
   readonly capabilities: DeviceCapabilities;
   readonly capTier: CapTier;
@@ -68,8 +66,10 @@ export declare function resetDetectionCaches(): void;
 // § 3. 2-AXIS TIERS (design × motion)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Ordered visual-detail tier selected from device evidence. */
 export type DesignTier = 'minimal' | 'standard' | 'enhanced' | 'rich';
 
+/** Optional browser capabilities used by richer host decisions. */
 export interface ExtendedDeviceCapabilities extends DeviceCapabilities {
   readonly prefersContrast: 'no-preference' | 'more' | 'less' | 'custom';
   readonly forcedColors: boolean;
@@ -79,6 +79,7 @@ export interface ExtendedDeviceCapabilities extends DeviceCapabilities {
   readonly updateRate: 'fast' | 'slow' | 'none';
 }
 
+/** Detection result extended with motion and design-tier decisions. */
 export interface ExtendedDetectionResult extends DetectionResult {
   readonly capabilities: ExtendedDeviceCapabilities;
   readonly designTier: DesignTier;

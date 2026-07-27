@@ -26,7 +26,7 @@ export const PUBLIC_SURFACE_CONTEXT_TS = 'packages/command/src/commands/public-s
 const ROOT_EXPERT_ROUTES: Readonly<Record<string, readonly string[]>> = {
   '@liteship/core/authoring': ['liteship/reactive', 'liteship/compiler'],
   '@liteship/quantizer': ['liteship/reactive', 'liteship/compiler'],
-  'liteship/authoring': [
+  liteship: [
     'liteship/reactive',
     'liteship/motion',
     'liteship/compiler',
@@ -87,6 +87,12 @@ export function buildPublicSurfaceContext() {
       symbol: entry.name,
       specifier: 'liteship',
       owner: entry.owner,
+      audience: entry.audience,
+      category: entry.role,
+      surfaceClass: entry.surfaceClass,
+      producer: entry.producer,
+      relatedInvariant: entry.relatedInvariant,
+      replacement: entry.replacement,
       userStory: entry.userStory,
       lifecycle: entry.lifecycle,
       failureContract: entry.failureContract,
@@ -95,7 +101,7 @@ export function buildPublicSurfaceContext() {
       stability: entry.stability,
       expertRoutes: ROOT_EXPERT_ROUTES[entry.owner] ?? [],
       checkIds,
-      proofRefs: rootProofs(entry.name, entry.kind),
+      proofRefs: dedupe([entry.exampleProof, ...rootProofs(entry.name, entry.kind)]),
       remediation: remediation(entry.owner, entry.example, checkIds),
     };
   });
@@ -111,6 +117,12 @@ export function buildPublicSurfaceContext() {
       symbol: entry.symbol,
       specifier: entry.specifier,
       owner: entry.owner,
+      audience: entry.audience,
+      category: entry.role,
+      surfaceClass: entry.surfaceClass,
+      producer: entry.producer,
+      relatedInvariant: entry.relatedInvariant,
+      replacement: entry.replacement,
       role: entry.role,
       userStory: entry.userStory,
       lifecycle: entry.lifecycle,
@@ -124,6 +136,7 @@ export function buildPublicSurfaceContext() {
       expertRoutes: [entry.specifier],
       checkIds,
       proofRefs: dedupe([
+        entry.exampleProof,
         'tests/unit/liteship/facade-subpaths.test.ts',
         ...(failureProof === null ? [] : [failureProof.test.split('::', 1)[0]!]),
         ...lifecycleProofs,

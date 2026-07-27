@@ -8,11 +8,12 @@ export {
   createCloudflareEdgeCache,
   resolveKvBinding,
   type CloudflareCacheApi,
+  type CloudflareExecutionContext,
   type CloudflareEdgeCacheOptions,
   type CloudflareWorkersEnv,
 } from './edge-cache.js';
 
-export { cloudflareMiddleware, type CloudflareMiddlewareConfig } from './middleware.js';
+export { cloudflareMiddleware, type CloudflareMiddlewareConfig, type CloudflareRequestContext } from './middleware.js';
 
 export { cloudflareAdapterCapsule } from './capsules/cloudflare-adapter.js';
 

@@ -6,7 +6,7 @@ import { Bench } from 'tinybench';
 import {
   Boundary,
   Compositor,
-  Part,
+  createDenseStore,
   Config,
   defineBoundary,
   defineToken,
@@ -141,8 +141,8 @@ bench.add('Compositor.compute() -- empty', () => {
 
 {
   const world100Dense = createWorld();
-  const posX = Part.dense('posX', 128);
-  const posY = Part.dense('posY', 128);
+  const posX = createDenseStore('posX', 128);
+  const posY = createDenseStore('posY', 128);
 
   world100Dense.addDenseStore(posX);
   world100Dense.addDenseStore(posY);

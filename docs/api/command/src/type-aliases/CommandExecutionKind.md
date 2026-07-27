@@ -6,7 +6,7 @@
 
 # Type Alias: CommandExecutionKind
 
-> **CommandExecutionKind** = `_CommandExecutionKind`
+> **CommandExecutionKind** = [`CommandExecutionKind`](../../../spine/type-aliases/CommandExecutionKind.md)
 
 Defined in: core/dist/authoring/command.d.ts:14
 

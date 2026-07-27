@@ -274,8 +274,8 @@ describe('Cloudflare L1 projection and host faults', () => {
       {
         binding: 'KV',
         cache: { match: async () => undefined, put: async () => Promise.reject(fault) },
-        ctx: { waitUntil: (promise) => deferred.push(promise) },
       },
+      { waitUntil: (promise) => deferred.push(promise) },
     );
 
     await expect(cache.get('key')).resolves.toBe('authoritative-kv');

@@ -8,4 +8,6 @@
 
 > **DiagnosticArea** = *typeof* [`DIAGNOSTIC_AREAS`](../variables/DIAGNOSTIC_AREAS.md)\[`number`\]
 
-Defined in: [error/src/codes.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L57)
+Defined in: [error/src/codes.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/codes.ts#L58)
+
+Closed semantic owner prefix for stable LiteShip diagnostic codes.

@@ -6,7 +6,9 @@
 
 # Interface: DenseSystem
 
-Defined in: [core/src/ecs.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L151)
+Defined in: [core/src/ecs.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L155)
+
+A system that operates directly over dense numeric stores.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [core/src/ecs.ts:151](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **\_denseSystem**: `true`
 
-Defined in: [core/src/ecs.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L154)
+Defined in: [core/src/ecs.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L158)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [core/src/ecs.ts:154](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/ecs.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L152)
+Defined in: [core/src/ecs.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L156)
 
 ***
 
@@ -30,7 +32,7 @@ Defined in: [core/src/ecs.ts:152](https://github.com/freebatteryfactory/LiteShip
 
 > `readonly` **query**: readonly `string`[]
 
-Defined in: [core/src/ecs.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L153)
+Defined in: [core/src/ecs.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L157)
 
 ## Methods
 
@@ -38,7 +40,7 @@ Defined in: [core/src/ecs.ts:153](https://github.com/freebatteryfactory/LiteShip
 
 > **execute**(`stores`): `void`
 
-Defined in: [core/src/ecs.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L159)
+Defined in: [core/src/ecs.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ecs.ts#L163)
 
 Execute receives dense stores keyed by component name.
 Systems iterate the typed arrays directly -- zero allocation per tick.

@@ -6,7 +6,7 @@
 
 # Function: detectBeats()
 
-> **detectBeats**(`audio`): `BeatMarkerSet`
+> **detectBeats**(`audio`): [`BeatMarkerSet`](../../../spine/interfaces/BeatMarkerSet.md)
 
 Defined in: [assets/src/analysis/beat-markers.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L26)
 
@@ -30,4 +30,4 @@ Detect downbeats on a decoded audio buffer.
 
 ## Returns
 
-`BeatMarkerSet`
+[`BeatMarkerSet`](../../../spine/interfaces/BeatMarkerSet.md)

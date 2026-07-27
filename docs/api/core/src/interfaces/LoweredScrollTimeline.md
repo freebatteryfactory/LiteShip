@@ -14,7 +14,7 @@ Graph bundle produced by [lowerScrollTimelineIntent](../functions/lowerScrollTim
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/scroll-timeline.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L55)
 
@@ -22,7 +22,7 @@ Defined in: [core/src/motion/scroll-timeline.ts:55](https://github.com/freebatte
 
 ### entityId
 
-> `readonly` **entityId**: `ContentAddress`
+> `readonly` **entityId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/scroll-timeline.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L56)
 
@@ -46,7 +46,7 @@ Defined in: [core/src/motion/scroll-timeline.ts:53](https://github.com/freebatte
 
 ### policyId
 
-> `readonly` **policyId**: `ContentAddress`
+> `readonly` **policyId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/scroll-timeline.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L57)
 
@@ -54,7 +54,7 @@ Defined in: [core/src/motion/scroll-timeline.ts:57](https://github.com/freebatte
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/scroll-timeline.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L58)
 
@@ -62,6 +62,6 @@ Defined in: [core/src/motion/scroll-timeline.ts:58](https://github.com/freebatte
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/motion/scroll-timeline.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/scroll-timeline.ts#L54)

@@ -65,11 +65,24 @@ Finish the sweep on the reactive substrate, mirroring the P7 patterns exactly:
    EXACTLY the post-sweep root surface (the stale reserved `Computed` type slot,
    which had no backing type, was removed).
 
+5. **One owned-resource lifecycle.** Every public owned handle implements
+   `AsyncOwnedResource`: `dispose(): Promise<void>` plus
+   `[Symbol.asyncDispose]`. The retired `OwnedResource` / `[Symbol.dispose]`
+   branch is removed. This does not defer synchronous teardown: `Lifetime`
+   invokes every synchronous finalizer before `dispose()` returns; the Promise
+   joins async siblings and carries `LifetimeDisposeError`. Consumers must await
+   disposal (or use `await using`) when they need a complete, observable release.
+   Event-driven hosts that cannot await attach an explicit rejection handler and
+   surface the failure through their diagnostic owner.
+
 ## Consequences
 
 - The reactive substrate speaks ONE grammar: `create*` everywhere, no `.make`
   next to `createCell`. The public disposal contract is uniform — every owned
   reactive value is `await x.dispose()` / `await using x = create…()`.
+- The same lifecycle law covers SSE, audio and LLM sessions, DPU watch handles,
+  and worker/compositor hosts. A consumer never chooses among `close`, sync
+  `dispose`, and async `dispose` based on resource kind.
 - `@liteship/core`'s value surface gains `createSignal`, `createWorld`,
   `createBlendTree`, `createTokenBuffer`, `createComponent`, `createComposable`,
   `createDirtyFlags`, `createFrameBudget`, `createCompositorStatePool`,
@@ -85,6 +98,9 @@ Finish the sweep on the reactive substrate, mirroring the P7 patterns exactly:
   spelling is REINTRODUCED, pinned to the specific dead spellings so honest
   surviving `.make` factories (`Zap.make`, `Plan.make`, `HLC.makeClock`, …) never
   trip.
+- `sgrules/no-sync-owned-resource.yml` reds if the retired second public
+  lifecycle is reintroduced; its red/green meta-proof keeps internal queue
+  `close()` operations legal.
 
 ## Evidence
 
@@ -95,9 +111,14 @@ Finish the sweep on the reactive substrate, mirroring the P7 patterns exactly:
 - `packages/liteship/src/export-budget.ts` — the exact allowlist; `packages/gauntlet/src/gates/facade-export-budget.ts` — the bidirectional gate + red/green/mutation fixtures.
 - `tests/fixtures/api-surface-snapshot.json`, `tests/fixtures/type-export-surface.json` — the regenerated public-surface snapshots.
 - `sgrules/no-reactive-make-factory.yml` + `tests/unit/meta/source-grammar-rules.test.ts` (rule g) — the drift guard + its red/green proof.
+- `sgrules/no-sync-owned-resource.yml` + `tests/unit/meta/source-grammar-rules.test.ts` (rule h) — the single-lifecycle drift guard.
 
 ## Rejected alternatives
 
+- **A synchronous `OwnedResource` alongside `AsyncOwnedResource`** — duplicates
+  the public protocol and requires a second Lifetime implementation while adding
+  no synchrony: the existing Lifetime already runs synchronous finalizers before
+  `dispose()` returns. The Promise is retained as the aggregate error channel.
 - **Keep `.make` as a deprecated alias** — leaves the exact side-by-side surface
   the sweep exists to eliminate; the constitution's "old spellings DIE" is the
   cleaner contract for a pre-1.0 framework.

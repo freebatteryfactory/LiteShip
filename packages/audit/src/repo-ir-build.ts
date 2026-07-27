@@ -71,12 +71,12 @@ import {
   type Fact,
   type CoverageClass,
 } from '@liteship/gauntlet';
-import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { listProfilePackageManifests, readProfileSourceFileRecords } from './shared.js';
 import type { SourceFileRecord } from './shared.js';
 import { buildPackageExportTargets, hasModifier, resolveImport } from './structure.js';
 import { createTypeDirectedProgram } from './ts-program.js';
+import type { TypeScriptPathAliases } from './ts-program.js';
 import { symbolReferenceOracle } from './repo-ir-language-service.js';
 import { buildBenchmarkSubjectFacts, parseBenchmarkSubjectDistribution } from './benchmark-subject-facts.js';
 
@@ -114,6 +114,8 @@ export type FactOracle = (input: {
 
 /** Options for {@link buildRepoIR} — the host-injection surface. */
 export interface BuildRepoIROptions {
+  /** Host-owned source aliases used by type-directed analysis. */
+  readonly typeScriptPathAliases?: TypeScriptPathAliases;
   /**
    * Host-supplied extra oracles (e.g. the LiteShip `invariant-regex` oracle the
    * CLI injects). Each is invoked per source file and its facts merged into the
@@ -340,20 +342,22 @@ interface Tables {
  *   facts merge into the IR alongside audit's own structural AST facts. The audit
  *   engine itself imports no repo-local rule set — the boundary is the hook.
  */
-export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, options: BuildRepoIROptions = {}): RepoIR {
+export function buildRepoIR(profile: DevopsProfile, options: BuildRepoIROptions = {}): RepoIR {
   const extraFactOracles = options.extraFactOracles ?? [];
   const records = readProfileSourceFileRecords(profile);
   const packageInfos = listProfilePackageManifests(profile);
-  const packageExportTargets = buildPackageExportTargets(packageInfos);
+  const packageExportTargets = buildPackageExportTargets(packageInfos, profile);
 
-  // ONE type-directed program over the whole corpus (reuses the shared config +
-  // WORKSPACE_ALIASES so cross-package types resolve, never collapsing to `any`).
+  // ONE type-directed program over the whole corpus. Project-shaped source aliases
+  // are injected by the host so cross-package types resolve without coupling the
+  // reusable engine to one workspace.
   // The checker is available for later symbol-evidenced oracles; B1's facts are
   // AST-precise (file-proxy-only), so the program is built for the seam + future
   // oracles, and its source files give a canonical parse.
   const program = createTypeDirectedProgram(
     records.map((r) => r.absolutePath),
     profile.repoRoot,
+    options.typeScriptPathAliases,
   );
   void program.getTypeChecker();
 
@@ -532,7 +536,11 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, opti
   // the same table; the symbol-orphan divergence gate cross-checks them against the
   // file-proxy-only `refs` graph. Heaviest oracle → opt-in (default off).
   if (options.withSymbolReferences === true) {
-    for (const fact of symbolReferenceOracle({ profile })) tables.facts.push(fact);
+    for (const fact of symbolReferenceOracle({
+      profile,
+      typeScriptPathAliases: options.typeScriptPathAliases,
+    }))
+      tables.facts.push(fact);
   }
 
   // Deterministic ordering — sort every table so the IR is byte-stable.

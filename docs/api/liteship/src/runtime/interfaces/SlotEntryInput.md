@@ -8,7 +8,7 @@
 
 Defined in: web/dist/types.d.ts:44
 
-Input accepted by `SlotRegistryShape.register`. Registered entries are
+Input accepted by `SlotRegistry.register`. Registered entries are
 normalized to a full [SlotEntry](SlotEntry.md): `mode` defaults to `'partial'`
 and `mounted` defaults to `true`.
 

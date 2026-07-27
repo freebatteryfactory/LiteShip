@@ -8,4 +8,6 @@
 
 > **PublicSurfaceStability** = `"stable"` \| `"experimental"`
 
-Defined in: [command/src/commands/public-surface-context.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L13)
+Defined in: [command/src/commands/public-surface-context.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L14)
+
+Stability label carried by agent-facing public-surface context.

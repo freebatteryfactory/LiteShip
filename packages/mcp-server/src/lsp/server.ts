@@ -20,7 +20,8 @@
  * exactly `codeActionProvider` + a (no-op) text sync; there is no hover,
  * completion, rename, or semantic-tokens surface. Diagnostics are PUSHED on a
  * `liteship/check` request (a custom method an editor extension triggers) and on
- * `initialized`; the server also answers a pull-style `workspace/diagnostic`.
+ * `initialized`; the server also answers the LSP 3.17 pull-diagnostic pair:
+ * `textDocument/diagnostic` and `workspace/diagnostic`.
  *
  * @module
  */
@@ -54,6 +55,7 @@ const LSP_METHOD = {
   initialize: 'initialize',
   initialized: 'initialized',
   check: 'liteship/check',
+  textDocumentDiagnostic: 'textDocument/diagnostic',
   workspaceDiagnostic: 'workspace/diagnostic',
   codeAction: 'textDocument/codeAction',
   shutdown: 'shutdown',
@@ -80,6 +82,12 @@ const LSP_METHOD_DESCRIPTORS = [
   { method: LSP_METHOD.initialized, direction: 'client-to-server', messageKind: 'notification', phase: 'active' },
   { method: LSP_METHOD.check, direction: 'client-to-server', messageKind: 'either', phase: 'active' },
   {
+    method: LSP_METHOD.textDocumentDiagnostic,
+    direction: 'client-to-server',
+    messageKind: 'request',
+    phase: 'active',
+  },
+  {
     method: LSP_METHOD.workspaceDiagnostic,
     direction: 'client-to-server',
     messageKind: 'request',
@@ -97,6 +105,7 @@ const LSP_METHOD_DESCRIPTORS = [
   { method: LSP_METHOD.logMessage, direction: 'server-to-client', messageKind: 'notification', phase: 'outbound' },
 ] as const satisfies readonly LspMethodDescriptor[];
 
+/** Closed LSP method catalog that drives routing and advertised capabilities. */
 export const LSP_METHOD_CATALOG: readonly LspMethodDescriptor[] = Object.freeze(
   LSP_METHOD_DESCRIPTORS.map((descriptor) => Object.freeze(descriptor)),
 );
@@ -136,7 +145,7 @@ export function projectLspCapabilities(catalog: readonly LspMethodDescriptor[]):
   const handled = new Set(
     catalog.filter((entry) => entry.direction === 'client-to-server').map((entry) => entry.method),
   );
-  for (const required of [LSP_METHOD.codeAction, LSP_METHOD.workspaceDiagnostic]) {
+  for (const required of [LSP_METHOD.codeAction, LSP_METHOD.textDocumentDiagnostic, LSP_METHOD.workspaceDiagnostic]) {
     if (!handled.has(required)) {
       throw InvariantViolationError('lsp-capability-projection', `capability has no registered handler: ${required}`);
     }
@@ -148,6 +157,7 @@ export function projectLspCapabilities(catalog: readonly LspMethodDescriptor[]):
   });
 }
 
+/** Server capabilities projected from the same method catalog used for routing. */
 export const LSP_SERVER_CAPABILITIES = projectLspCapabilities(LSP_METHOD_CATALOG);
 
 /** Server identity in the `initialize` response (§InitializeResult.serverInfo). */
@@ -359,10 +369,27 @@ async function route(
       requireActive(state, method);
       const { findings } = await runGauntlet(undefined);
       const grouped = groupDiagnosticsByUri(findings, state.workspaceRootUri);
-      const items = grouped.map((g) => ({ uri: g.uri, kind: 'full', items: g.diagnostics }));
+      const items = grouped.map((g) => ({ uri: g.uri, version: null, kind: 'full', items: g.diagnostics }));
       return {
         state: { ...state, lastFindings: findings },
         result: { response: successResponse(id, { items }), notifications: [], exit: false },
+      };
+    }
+    case LSP_METHOD.textDocumentDiagnostic: {
+      // LSP 3.17 pull diagnostics for one document. The gauntlet remains the
+      // sole producer; this is only a URI-filtered projection of the same fold
+      // used by workspace/diagnostic and liteship/check.
+      requireActive(state, method);
+      const uri = readTextDocumentDiagnosticUri(params);
+      const { findings } = await runGauntlet(undefined);
+      const group = groupDiagnosticsByUri(findings, state.workspaceRootUri).find((candidate) => candidate.uri === uri);
+      return {
+        state: { ...state, lastFindings: findings },
+        result: {
+          response: successResponse(id, { kind: 'full', items: group?.diagnostics ?? [] }),
+          notifications: [],
+          exit: false,
+        },
       };
     }
     case LSP_METHOD.codeAction: {
@@ -595,4 +622,16 @@ function readCodeActionParams(params: unknown): {
     throw ValidationError('textDocument/codeAction', 'range.start.line and range.end.line must be numbers');
   }
   return { uri, range: { start: { line: startLine }, end: { line: endLine } } };
+}
+
+/** Read the document URI required by LSP 3.17 `textDocument/diagnostic`. */
+function readTextDocumentDiagnosticUri(params: unknown): string {
+  if (typeof params !== 'object' || params === null || Array.isArray(params)) {
+    throw ValidationError('textDocument/diagnostic', 'params must be an object with textDocument.uri');
+  }
+  const uri = (params as { textDocument?: { uri?: unknown } }).textDocument?.uri;
+  if (typeof uri !== 'string' || uri.trim().length === 0) {
+    throw ValidationError('textDocument/diagnostic', 'textDocument.uri must be a non-empty string');
+  }
+  return uri;
 }

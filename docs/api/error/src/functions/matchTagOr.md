@@ -8,7 +8,7 @@
 
 > **matchTagOr**\<`E`, `R`\>(`error`, `handlers`, `orElse`): `R`
 
-Defined in: [error/src/contract.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L187)
+Defined in: [error/src/contract.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L188)
 
 Partial match with a fallback — the OPEN counterpart to [matchTag](matchTag.md).
 Handle the tags you care about; `orElse` covers the rest. This is the

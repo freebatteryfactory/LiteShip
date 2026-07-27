@@ -24,7 +24,7 @@ Present iff this entry was selected from a `choice` — the audit receipt.
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/transition-program.d.ts:89
 

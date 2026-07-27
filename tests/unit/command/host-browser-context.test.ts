@@ -31,7 +31,7 @@ describe('createBrowserCommandContext — local stubs', () => {
       exitCode: 1,
       stderrTail: 'vitest unavailable in browser host',
     });
-    expect(await context.runAudioProjection!('onset', new ArrayBuffer(0))).toBe(0);
+    expect(context.runAudioProjection).toBeUndefined();
     expect(context.hostVersion!()).toBe('browser');
     expect(await context.spawnCapture!('ls', [])).toEqual({ exitCode: 1, stdout: '' });
     expect(context.runSceneCompile).toBeUndefined();

@@ -14,7 +14,7 @@ Configuration for a [VideoRenderer](../variables/VideoRenderer.md): resolution, 
 
 ### durationMs
 
-> `readonly` **durationMs**: `Millis`
+> `readonly` **durationMs**: [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: core/dist/media/video.d.ts:19
 

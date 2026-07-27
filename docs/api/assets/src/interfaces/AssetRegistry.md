@@ -6,7 +6,7 @@
 
 # Interface: AssetRegistry
 
-Defined in: [assets/src/contract.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L331)
+Defined in: [assets/src/contract.ts:322](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L322)
 
 An immutable, explicitly-assembled index of asset capsules. Replaces the
 old mutable module-global registry: there is no import-time mutation, so
@@ -23,7 +23,7 @@ resolve an id (`ref`, `resolveDecoder`, the projection factories).
 
 > **assertAudioRegistered**(`audioAssetId`, `factory`): `void`
 
-Defined in: [assets/src/contract.ts:348](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L348)
+Defined in: [assets/src/contract.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L339)
 
 Validate that an audio asset id is registered before constructing a
 projection capsule for it. Throws a registry-miss teaching error naming
@@ -49,7 +49,7 @@ projection capsule for it. Throws a registry-miss teaching error naming
 
 > **capsule**(`id`): [`AnyAssetCapsule`](../type-aliases/AnyAssetCapsule.md) \| `undefined`
 
-Defined in: [assets/src/contract.ts:337](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L337)
+Defined in: [assets/src/contract.ts:328](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L328)
 
 The capsule registered under `id`, or `undefined`.
 
@@ -69,7 +69,7 @@ The capsule registered under `id`, or `undefined`.
 
 > **has**(`id`): `boolean`
 
-Defined in: [assets/src/contract.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L333)
+Defined in: [assets/src/contract.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L324)
 
 True when `id` names a capsule in this registry.
 
@@ -89,7 +89,7 @@ True when `id` names a capsule in this registry.
 
 > **ids**(): readonly `string`[]
 
-Defined in: [assets/src/contract.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L335)
+Defined in: [assets/src/contract.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L326)
 
 Sorted ids of every capsule in this registry (for teaching errors / listing).
 
@@ -103,7 +103,7 @@ readonly `string`[]
 
 > **ref**(`id`): [`AssetRefId`](../type-aliases/AssetRefId.md)
 
-Defined in: [assets/src/contract.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L342)
+Defined in: [assets/src/contract.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L333)
 
 Validate `id` is registered and return it as a branded [AssetRefId](../type-aliases/AssetRefId.md).
 Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
@@ -124,7 +124,7 @@ Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
 
 > **resolveAudioDecoder**(`assetId`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)\<`"audio"`\>
 
-Defined in: [assets/src/contract.ts:356](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L356)
+Defined in: [assets/src/contract.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L347)
 
 Resolve a registered audio decoder and reject unknown or non-audio assets.
 
@@ -144,7 +144,7 @@ Resolve a registered audio decoder and reject unknown or non-audio assets.
 
 > **resolveDecoder**(`assetId`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)
 
-Defined in: [assets/src/contract.ts:354](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L354)
+Defined in: [assets/src/contract.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L345)
 
 Resolve the registered byte decoder for an asset id. Unknown ids and
 assets without a decoder fail closed; hosts that only have a manifest

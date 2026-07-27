@@ -285,7 +285,7 @@ interface ErrorMessage {
 
 /**
  * Performance sample emitted by a worker's render/compute loop. Doubles as
- * the record delivered to {@link CompositorWorkerShape.onMetrics} listeners
+ * the record delivered to `CompositorWorker.onMetrics` listeners
  * (see {@link WorkerMetrics}) — so adding a future metric field extends the
  * callback payload without changing its arity.
  */

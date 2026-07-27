@@ -46,7 +46,7 @@ manifest export name). Exclusive with the top-level
 
 ### boundaryId?
 
-> `readonly` `optional` **boundaryId?**: `ContentAddress`
+> `readonly` `optional` **boundaryId?**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [edge/src/host-adapter.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L113)
 

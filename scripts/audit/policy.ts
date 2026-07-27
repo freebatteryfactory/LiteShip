@@ -1,8 +1,9 @@
 /**
  * Audit policy — split (CUT D9b-1). The reusable ENGINE policy (topology,
- * surface data, exemptions, allowlist, source globs, prefix normalizer) lives in
- * `@liteship/audit` and is re-exported here so existing `./policy.js` importers are
- * unchanged. The LiteShip HICP rubric (section taxonomy, file-class weights,
+ * matching primitives and source globs live in `@liteship/audit`; LiteShip's
+ * topology, surface data, exemptions, and allowlist live in the CLI host and are
+ * re-exported here so repo-local audit reporters share that one policy owner.
+ * The LiteShip HICP rubric (section taxonomy, file-class weights,
  * named-offense map, inventory matchers, report paths) stays repo-local below.
  *
  * @module
@@ -14,13 +15,16 @@ import type { AuditFileClass, FullAuditSectionId } from './types.js';
 export {
   auditSourceGlobs,
   auditIgnoreGlobs,
-  packageTopology,
-  dynamicImportExemptions,
-  surfacePolicy,
-  auditAllowlist,
   findAllowlistReason,
   normalizeRepoPath,
 } from '@liteship/audit';
+export {
+  packageTopology,
+  foundationalPackages,
+  dynamicImportExemptions,
+  surfacePolicy,
+  auditAllowlist,
+} from '../../packages/cli/src/lib/liteship-audit-policy.js';
 export type { PackagePolicy, AuditAllowlistEntry } from '@liteship/audit';
 
 // ── LiteShip HICP rubric (repo-local) ────────────────────────────────────

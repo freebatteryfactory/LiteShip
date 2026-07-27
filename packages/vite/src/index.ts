@@ -97,5 +97,5 @@ export { handleHMR } from './hmr.js';
 // Consumers building custom Vite plugin layers use `resolvePrimitive`
 // (and `primitiveSearchPatterns` to mirror the plugin's "searched here"
 // diagnostics); they don't need the internal config map.
-export type { PrimitiveKind, PrimitiveResolution, PrimitiveShape } from './primitive-resolve.js';
+export type { PrimitiveKind, PrimitiveResolution, Primitive } from './primitive-resolve.js';
 export { resolvePrimitive, primitiveSearchPatterns } from './primitive-resolve.js';

@@ -18,6 +18,7 @@ import type {
   Clock,
 } from './core.js';
 
+/** Recursive immutable snapshot applied to retained quantizer values. */
 type ReadonlyQuantizerValue<T> = T extends (...args: never[]) => unknown
   ? T
   : T extends string | number | boolean | bigint | symbol | null | undefined
@@ -28,23 +29,21 @@ type ReadonlyQuantizerValue<T> = T extends (...args: never[]) => unknown
         ? { readonly [K in keyof T]: ReadonlyQuantizerValue<T[K]> }
         : T;
 
-// MotionTier canonical declaration lives in core.d.ts; re-exported here so
-// `@liteship/_spine` consumers reading the quantizer surface still see it on
-// this sub-spine without an extra import.
-export type { MotionTier };
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. QUANTIZER API (defineQuantizer(boundary, { outputs }) → createQuantizer(config))
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Closed compiler targets a quantizer can project for each state. */
 export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
 
+/** Physical spring parameters used for animated state transitions. */
 export interface SpringConfig {
   readonly stiffness: number;
   readonly damping: number;
   readonly mass?: number;
 }
 
+/** Immutable definition options for state outputs, tier gating, and spring motion. */
 export interface DefineQuantizerOptions<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
   readonly outputs: O;
   readonly tier?: MotionTier;
@@ -53,7 +52,7 @@ export interface DefineQuantizerOptions<B extends Boundary, O extends QuantizerO
 }
 
 /**
- * Per-instantiation runtime injection for {@link createQuantizer}: the wall-clock
+ * Per-instantiation runtime injection for `createQuantizer`: the wall-clock
  * boundary advancing this instance's monotonic crossing HLC (defaults to
  * `wallClock`) and the HLC node id. Injected at instantiation, never part of the
  * cached config's content-addressed identity.
@@ -65,6 +64,7 @@ export interface QuantizerRuntime {
 
 export declare const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>>;
 
+/** Complete target-specific output tables for every boundary state. */
 export interface QuantizerOutputs<B extends Boundary> {
   readonly css?: OutputsFor<B, Record<string, string | number>>;
   readonly glsl?: OutputsFor<B, Record<string, number>>;
@@ -78,7 +78,7 @@ type OutputRecord = Partial<{ [K in OutputTarget]: Record<string, unknown> }>;
 
 /**
  * Immutable, content-addressed quantizer definition (authored intent). Pass it to
- * {@link createQuantizer} to materialize a live {@link LiveQuantizer} paired with
+ * `createQuantizer` to materialize a live {@link LiveQuantizer} paired with
  * the {@link Lifetime} that owns its teardown.
  */
 export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<B> = QuantizerOutputs<B>> {
@@ -90,6 +90,7 @@ export interface QuantizerConfig<B extends Boundary, O extends QuantizerOutputs<
   readonly force?: readonly OutputTarget[];
 }
 
+/** Running quantizer that publishes state and target updates from a signal. */
 export interface LiveQuantizer<
   B extends Boundary,
   O extends QuantizerOutputs<B> = QuantizerOutputs<B>,
@@ -127,6 +128,7 @@ export declare function createQuantizer<B extends Boundary, O extends QuantizerO
 // § 2. EVALUATE (boundary detection + hysteresis)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Pure boundary-evaluation result with hysteresis bookkeeping. */
 export interface EvaluateResult<S extends string = string> {
   readonly state: S;
   readonly index: number;
@@ -144,18 +146,21 @@ export declare function evaluate<B extends Boundary>(
 // § 3. TRANSITION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Duration and easing applied to one state-to-state transition. */
 export interface TransitionConfig {
   readonly duration: number | Millis;
   readonly easing?: Easing.Fn;
   readonly delay?: number | Millis;
 }
 
+/** Sparse transition configuration indexed by source and destination state. */
 export type TransitionMap<S extends string = string> = {
   readonly '*'?: TransitionConfig;
 } & {
   readonly [K in `${S}->${S}`]?: TransitionConfig;
 };
 
+/** One running transition between two states of a boundary. */
 export interface Transition<B extends Boundary> {
   readonly config: TransitionMap<StateUnion<B> & string>;
   getTransition(from: StateUnion<B>, to: StateUnion<B>): TransitionConfig;
@@ -177,7 +182,8 @@ export interface InterpolatedFrame<B extends Boundary> {
   readonly outputs: Record<string, number | string>;
 }
 
-export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuantizer<B> {
+/** Reactive quantizer extended with transition progress and interruption semantics. */
+export interface AnimatedQuantizer<B extends Boundary> extends ReactiveQuantizer<B> {
   readonly transition: Transition<B>;
   /**
    * No-replay subscription of interpolated animation frames during crossings (was
@@ -193,7 +199,7 @@ export interface AnimatedQuantizerShape<B extends Boundary> extends ReactiveQuan
  * wrapped quantizer's crossings, aborts any in-flight animation, and closes the
  * `interpolated` fan-out. The value IS the disposable — no pair to destructure.
  */
-export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizerShape<B> & AsyncOwnedResource;
+export type OwnedAnimatedQuantizer<B extends Boundary> = AnimatedQuantizer<B> & AsyncOwnedResource;
 
 export declare const AnimatedQuantizer: {
   make<B extends Boundary>(

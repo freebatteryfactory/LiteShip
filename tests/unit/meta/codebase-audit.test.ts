@@ -15,7 +15,8 @@ import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
 import { buildRuntimeSeamsReport } from '../../../scripts/report-runtime-seams.js';
-import { liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
+import { withRepoRoot } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../../packages/cli/src/lib/liteship-audit-profile.js';
 
 // CUT D9a — the audit target is `profile.repoRoot`, not a positional `root`.
 // These fixtures use @liteship/ package names, so the LiteShip default profile
@@ -1051,7 +1052,7 @@ export const ids = [
     // Runs against the REAL repo policy + sources (no fixture root). The dropped
     // edges are imports those packages never make, so once removed from policy
     // they cannot appear in allowlistUnexercised at all.
-    const unexercised = runStructureAudit().summary.coverageClassification.allowlistUnexercised;
+    const unexercised = runStructureAudit(liteshipDevopsProfile).summary.coverageClassification.allowlistUnexercised;
     const has = (pkg: string, permitted: string): boolean =>
       unexercised.some((entry) => entry.package === pkg && entry.permitted === permitted);
 

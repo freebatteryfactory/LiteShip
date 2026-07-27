@@ -6,7 +6,7 @@
 
 # Type Alias: ComposableWorld\<Schema\>
 
-> **ComposableWorld**\<`Schema`\> = [`ComposableWorldShape`](../interfaces/ComposableWorldShape.md)\<`Schema`\>
+> **ComposableWorld**\<`Schema`\> = `TypedComposableWorld`\<`Schema`\>
 
 Defined in: [core/src/authoring/composable.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/composable.ts#L282)
 

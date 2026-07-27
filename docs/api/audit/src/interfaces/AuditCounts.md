@@ -6,7 +6,9 @@
 
 # Interface: AuditCounts
 
-Defined in: [audit/src/types.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L127)
+Defined in: [audit/src/types.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L137)
+
+Aggregate finding counts by severity.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [audit/src/types.ts:127](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **error**: `number`
 
-Defined in: [audit/src/types.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L128)
+Defined in: [audit/src/types.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L138)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [audit/src/types.ts:128](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **info**: `number`
 
-Defined in: [audit/src/types.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L130)
+Defined in: [audit/src/types.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L140)
 
 ***
 
@@ -30,4 +32,4 @@ Defined in: [audit/src/types.ts:130](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **warning**: `number`
 
-Defined in: [audit/src/types.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L129)
+Defined in: [audit/src/types.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L139)

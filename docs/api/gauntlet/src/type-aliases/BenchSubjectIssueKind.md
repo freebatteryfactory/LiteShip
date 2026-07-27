@@ -8,4 +8,6 @@
 
 > **BenchSubjectIssueKind** = `"missing-subject"` \| `"missing-execution-source"` \| `"missing-registration"` \| `"ambiguous-registration"` \| `"missing-callback"` \| `"missing-collector"` \| `"missing-result-key"` \| `"wrong-origin"` \| `"uninvoked-subject"`
 
-Defined in: [gauntlet/src/gates/bench-subjects.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L48)
+Defined in: [gauntlet/src/gates/bench-subjects.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/bench-subjects.ts#L54)
+
+Closed refusal vocabulary for benchmark-subject admission.

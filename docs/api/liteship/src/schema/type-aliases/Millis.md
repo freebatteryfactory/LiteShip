@@ -6,7 +6,7 @@
 
 # Type Alias: Millis
 
-> **Millis** = `_Millis`
+> **Millis** = [`Millis`](../../../../spine/type-aliases/Millis.md)
 
 Defined in: core/dist/schema/brands.d.ts:39
 

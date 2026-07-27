@@ -4,7 +4,8 @@
  *
  * @module
  */
-import { runIntegrityAudit, liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
+import { runIntegrityAudit, withRepoRoot } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../packages/cli/src/lib/liteship-audit-profile.js';
 import { reportPaths } from './policy.js';
 import { createCounts, isDirectExecution, repoRoot, writeTextFile } from './shared.js';
 

@@ -4,7 +4,8 @@
  *
  * @module
  */
-import { runSurfaceAudit, liteshipDevopsProfile, withRepoRoot } from '@liteship/audit';
+import { runSurfaceAudit, withRepoRoot } from '@liteship/audit';
+import { liteshipDevopsProfile } from '../../packages/cli/src/lib/liteship-audit-profile.js';
 import { reportPaths } from './policy.js';
 import { createCounts, isDirectExecution, repoRoot, writeTextFile } from './shared.js';
 

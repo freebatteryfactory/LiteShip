@@ -8,4 +8,4 @@
 
 > `const` **ROOT\_EXPORT\_CONTRACT**: readonly [`RootExportContract`](../interfaces/RootExportContract.md)[]
 
-Defined in: [liteship/src/export-budget.ts:505](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L505)
+Defined in: [liteship/src/export-budget.ts:923](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/liteship/src/export-budget.ts#L923)

@@ -14,7 +14,7 @@ Options for [castContext](../variables/AICast.md#castcontext).
 
 ### catalog?
 
-> `readonly` `optional` **catalog?**: `ComponentCatalog`
+> `readonly` `optional` **catalog?**: [`ComponentCatalog`](../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: [core/src/authoring/ai-cast.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/authoring/ai-cast.ts#L140)
 

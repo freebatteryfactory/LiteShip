@@ -6,7 +6,7 @@
 
 # Type Alias: TokenRef\<N\>
 
-> **TokenRef**\<`N`\> = `_TokenRef`\<`N`\>
+> **TokenRef**\<`N`\> = [`TokenRef`](../../../spine/type-aliases/TokenRef.md)\<`N`\>
 
 Defined in: [core/src/schema/brands.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L54)
 

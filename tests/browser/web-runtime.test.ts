@@ -137,7 +137,7 @@ describe('browser web runtime coverage', () => {
 
     processor.start();
     processor.stop();
-    processor.dispose();
+    await processor.dispose();
 
     expect(addModule).toHaveBeenCalledWith('blob:audio-processor');
     expect(createObjectURL).toHaveBeenCalledOnce();

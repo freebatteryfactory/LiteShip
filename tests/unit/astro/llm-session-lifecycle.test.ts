@@ -19,7 +19,7 @@ function inertHost(overrides?: Partial<LLMSessionHost>): LLMSessionHost {
 }
 
 describe('createLLMSession lifecycle', () => {
-  test('dispose is monotonic and later operations remain inert', () => {
+  test('dispose is monotonic and later operations remain inert', async () => {
     const setTarget = vi.fn();
     const emitToken = vi.fn();
     const session = createLLMSessionWithHost(
@@ -28,15 +28,18 @@ describe('createLLMSession lifecycle', () => {
     );
     session.activate();
 
-    session.dispose();
-    session.dispose();
+    const first = session.dispose();
+    const second = session.dispose();
+    expect(second).toBe(first);
     expect(session.state).toBe('disposed');
     expect(setTarget).toHaveBeenCalledTimes(1);
     expect(session.ingest({ type: 'text', partial: false, content: 'late' })).toBe('done');
     expect(emitToken).not.toHaveBeenCalled();
+    await expect(first).resolves.toBeUndefined();
+    await expect(session[Symbol.asyncDispose]()).resolves.toBeUndefined();
   });
 
-  test('a hostile host release arm cannot prevent the remaining cleanup attempts', () => {
+  test('a hostile host release arm cannot prevent the remaining cleanup attempts', async () => {
     const session = createLLMSessionWithHost(
       { mode: 'append', getDeviceTier: () => 'animations' },
       inertHost({
@@ -47,9 +50,12 @@ describe('createLLMSession lifecycle', () => {
     );
     session.activate();
 
-    expect(() => session.dispose()).toThrow(AggregateError);
+    const first = session.dispose();
     expect(session.state).toBe('disposed');
-    expect(() => session.dispose()).not.toThrow();
     expect(session.ingest({ type: 'text', partial: false, content: 'late' })).toBe('done');
+    await expect(first).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
+    const second = session.dispose();
+    expect(second).toBe(first);
+    await expect(second).rejects.toMatchObject({ _tag: 'LifetimeDisposeError' });
   });
 });

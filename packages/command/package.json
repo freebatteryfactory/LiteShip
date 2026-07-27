@@ -25,23 +25,19 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "development": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./host": {
       "types": "./dist/host/index.d.ts",
-      "import": "./dist/host/index.js",
-      "development": "./src/host/index.ts"
+      "import": "./dist/host/index.js"
     },
     "./host-browser": {
       "types": "./dist/host-browser/index.d.ts",
-      "import": "./dist/host-browser/index.js",
-      "development": "./src/host-browser/index.ts"
+      "import": "./dist/host-browser/index.js"
     },
     "./invariants": {
       "types": "./dist/commands/check-invariants-registry.d.ts",
-      "import": "./dist/commands/check-invariants-registry.js",
-      "development": "./src/commands/check-invariants-registry.ts"
+      "import": "./dist/commands/check-invariants-registry.js"
     }
   },
   "files": [

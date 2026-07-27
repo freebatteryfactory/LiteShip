@@ -207,7 +207,7 @@ describe('marker dedup registry (adversarial QA)', () => {
     expect(target.innerHTML).toBe('');
   });
 
-  it('throws when a marker is re-watched on a DIFFERENT connected element', () => {
+  it('throws when a marker is re-watched on a DIFFERENT connected element', async () => {
     const first = document.createElement('div');
     const second = document.createElement('div');
     document.body.append(first, second);
@@ -215,14 +215,16 @@ describe('marker dedup registry (adversarial QA)', () => {
     const handle = watchAndPrepare('signal dup.marker', first);
     expect(() => watchAndPrepare('signal dup.marker', second)).toThrow(/already watched/);
 
-    handle.dispose();
+    const disposed = handle.dispose();
+    expect(handle.lifetime.disposed).toBe(true);
+    await disposed;
     // After dispose the name is free again.
     const rebound = watchAndPrepare('signal dup.marker', second);
     expect(rebound.target).toBe(second);
-    rebound.dispose();
+    await rebound.dispose();
   });
 
-  it('a registration for a DISCONNECTED element is stale and silently superseded', () => {
+  it('a registration for a DISCONNECTED element is stale and silently superseded', async () => {
     const detached = document.createElement('div');
     watchAndPrepare('signal vt.swap', detached);
 
@@ -230,7 +232,7 @@ describe('marker dedup registry (adversarial QA)', () => {
     document.body.appendChild(live);
     const handle = watchAndPrepare('signal vt.swap', live);
     expect(handle.target).toBe(live);
-    handle.dispose();
+    await handle.dispose();
   });
 });
 

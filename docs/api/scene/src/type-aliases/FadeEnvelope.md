@@ -6,7 +6,7 @@
 
 # Type Alias: FadeEnvelope
 
-> **FadeEnvelope** = `_FadeEnvelope`
+> **FadeEnvelope** = [`FadeEnvelope`](../../../spine/interfaces/FadeEnvelope.md)
 
 Defined in: [scene/src/sugar/envelope.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L26)
 

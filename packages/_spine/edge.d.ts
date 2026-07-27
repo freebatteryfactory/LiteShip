@@ -9,6 +9,7 @@ import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabili
 // § 1. CLIENT HINTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** HTTP client-hint headers consumed by edge capability resolution. */
 export interface ClientHintsHeaders {
   readonly 'sec-ch-ua-arch'?: string;
   readonly 'sec-ch-ua-model'?: string;
@@ -29,6 +30,7 @@ export declare const ClientHints: {
   criticalCHHeader(): string;
 };
 
+/** Parsers and normalizers for edge-visible client-hint evidence. */
 export declare namespace ClientHints {
   export type Headers = ClientHintsHeaders;
 }
@@ -37,6 +39,7 @@ export declare namespace ClientHints {
 // § 2. EDGE TIER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Provisional tier decision and the evidence available at the edge. */
 export interface EdgeTierResult {
   readonly capTier: CapTier;
   readonly motionTier: MotionTier;
@@ -50,6 +53,7 @@ export declare const EdgeTier: {
   tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<string, string>>;
 };
 
+/** Conservative edge-tier inference helpers. */
 export declare namespace EdgeTier {
   export type Result = EdgeTierResult;
 }
@@ -58,6 +62,7 @@ export declare namespace EdgeTier {
 // § 3. KV BOUNDARY CACHE
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Minimal key-value namespace capability required by the edge cache. */
 export interface KVNamespace {
   get(key: string, options?: { cacheTtl?: number }): Promise<string | null>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
@@ -68,6 +73,7 @@ export interface KVNamespace {
   }): Promise<{ keys: ReadonlyArray<{ name: string }>; list_complete: boolean; cursor?: string }>;
 }
 
+/** Precompiled CSS, shader, accessibility, and agent projections for a boundary. */
 export interface CompiledOutputs {
   readonly css: string;
   readonly propertyRegistrations: string;
@@ -77,23 +83,28 @@ export interface CompiledOutputs {
   readonly wgsl?: CompiledWGSLOutput;
 }
 
+/** GLSL source and numeric uniforms stored in an edge manifest. */
 export interface CompiledGLSLOutput {
   readonly declarations: string;
   readonly uniformValues: Readonly<Record<string, number>>;
   readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
+/** Fixed-width WGSL vector retained in an edge manifest. */
 type EdgeWGSLUniformVector =
   readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
 
+/** Scalar or vector WGSL uniform retained in an edge manifest. */
 type EdgeWGSLUniformValue = number | EdgeWGSLUniformVector;
 
+/** WGSL source and uniform values stored in an edge manifest. */
 export interface CompiledWGSLOutput {
   readonly declarations: string;
   readonly bindingValues: Readonly<Record<string, EdgeWGSLUniformValue>>;
   readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, EdgeWGSLUniformValue>>>>;
 }
 
+/** Async cache contract for content-addressed boundary outputs. */
 export interface BoundaryCache {
   /**
    * `qualifier` joins the key when two NAMES share one boundary
@@ -137,11 +148,13 @@ export declare const KVCache: {
 export declare const MOTION_TIERS: readonly MotionTier[];
 export declare const DESIGN_TIERS: readonly DesignTier[];
 
+/** Stable cache partition composed from motion and design tiers. */
 export type TierKey = `${MotionTier}:${DesignTier}`;
 
 export declare function tierKey(tier: Pick<EdgeTierResult, 'motionTier' | 'designTier'>): TierKey;
 export declare function enumerateTierKeys(): readonly TierKey[];
 
+/** One boundary's precompiled target outputs indexed by tier pair. */
 export interface BoundaryManifestEntry {
   readonly id: ContentAddress;
   readonly outputs: readonly CompiledOutputs[];
@@ -162,8 +175,10 @@ export declare function resolveAssetUrlByTier(
   key: TierKey,
 ): string | undefined;
 
+/** Immutable boundary-manifest index keyed by boundary content address. */
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
 
+/** Versioned, content-addressed serialized boundary manifest. */
 export interface BoundaryManifestFile {
   readonly _tag: 'LiteshipBoundaryManifest';
   readonly _version: 2;
@@ -174,16 +189,19 @@ export interface BoundaryManifestFile {
 // § 4. THEME COMPILER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Options controlling edge-side theme stylesheet generation. */
 export interface ThemeCompileConfig {
   readonly tokens: Readonly<Record<string, string | number>>;
   readonly prefix?: string;
 }
 
+/** Internal normalized custom-property declaration for one theme variant. */
 interface ThemeDeclaration {
   readonly property: string;
   readonly value: string;
 }
 
+/** Compiled theme CSS and its normalized declaration inventory. */
 export interface ThemeCompileResult {
   readonly declarations: readonly ThemeDeclaration[];
   readonly css: string;
@@ -196,20 +214,24 @@ export declare function compileTheme(config: ThemeCompileConfig): ThemeCompileRe
 // § 5. EDGE HOST ADAPTER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Request evidence available to an edge host adapter. */
 export interface EdgeHostContext {
   readonly capabilities: ExtendedDeviceCapabilities;
   readonly tier: EdgeTierResult;
 }
 
+/** Edge host context extended with the selected manifest entry and tiers. */
 export interface EdgeHostCompileContext extends EdgeHostContext {
   readonly theme?: ThemeCompileResult;
   readonly boundaryId: ContentAddress;
   readonly boundaryName?: string;
 }
 
+/** Static cache tags or a resolver derived from one edge compile context. */
 export type EdgeHostCacheTags =
   readonly string[] | ((context: EdgeHostCompileContext) => readonly string[] | null | undefined);
 
+/** Boundary manifest and precompiled-asset inputs for edge host resolution. */
 export interface EdgeHostBoundaryConfig {
   readonly boundaryId: ContentAddress;
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
@@ -218,6 +240,7 @@ export interface EdgeHostBoundaryConfig {
   readonly tags?: EdgeHostCacheTags;
 }
 
+/** TTL, tags, and cache implementation used by an edge host. */
 export interface EdgeHostCacheConfig {
   readonly kv: KVNamespace;
   readonly boundaryId?: ContentAddress;
@@ -230,8 +253,10 @@ export interface EdgeHostCacheConfig {
   readonly prefix?: string;
 }
 
+/** Observable cache disposition of an edge host resolution. */
 export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
 
+/** Resolved state and compiled outputs for one boundary. */
 export interface EdgeHostBoundaryResolution {
   readonly boundaryId: ContentAddress;
   readonly compiledOutputs?: CompiledOutputs;
@@ -239,11 +264,13 @@ export interface EdgeHostBoundaryResolution {
   readonly cacheStatus: Exclude<EdgeHostCacheStatus, 'disabled'>;
 }
 
+/** Complete configuration accepted by an edge host adapter. */
 export interface EdgeHostAdapterConfig {
   readonly theme?: ThemeCompileConfig | ((context: EdgeHostContext) => ThemeCompileConfig | null | undefined);
   readonly cache?: EdgeHostCacheConfig;
 }
 
+/** Tier, theme, boundary, asset, and cache evidence returned by an edge host. */
 export interface EdgeHostResolution extends EdgeHostContext {
   readonly theme?: ThemeCompileResult;
   readonly compiledOutputs?: CompiledOutputs;
@@ -259,6 +286,7 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly cacheStatus: EdgeHostCacheStatus;
 }
 
+/** Host-neutral edge adapter that resolves request evidence into LiteShip outputs. */
 export interface EdgeHostAdapter {
   resolve(headers: Headers | ClientHintsHeaders): Promise<EdgeHostResolution>;
 }

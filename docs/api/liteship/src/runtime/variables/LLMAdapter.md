@@ -6,9 +6,9 @@
 
 # Variable: LLMAdapter
 
-> `const` **LLMAdapter**: `object`
+> **LLMAdapter**: `object`
 
-Defined in: web/dist/stream/llm-adapter.d.ts:108
+Defined in: web/dist/stream/llm-adapter.d.ts:41
 
 LLM adapter namespace.
 
@@ -22,11 +22,69 @@ token buffer.
 
 ### collect
 
-> **collect**: *typeof* `_collect`
+> **collect**: (`config`) => readonly [`LLMChunk`](../interfaces/LLMChunk.md)[]
+
+#### Parameters
+
+##### config
+
+###### parser
+
+[`ChunkParser`](../type-aliases/ChunkParser.md)
+
+###### source
+
+`Iterable`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
+
+#### Returns
+
+readonly [`LLMChunk`](../interfaces/LLMChunk.md)[]
 
 ### create
 
-> **create**: *typeof* `_create`
+> **create**: (`config`) => [`LLMAdapter`](../interfaces/LLMAdapter.md)
+
+Create an LLM adapter that normalizes any LLM streaming API into typed
+chunk and text-token streams.
+
+The user supplies a [ChunkParser](../type-aliases/ChunkParser.md) function that converts SSE messages
+into [LLMChunk](../interfaces/LLMChunk.md) objects. The adapter handles tool-call accumulation,
+JSON argument parsing, and text-token extraction.
+
+#### Parameters
+
+##### config
+
+[`LLMStreamConfig`](../interfaces/LLMStreamConfig.md)
+
+Stream source and parser configuration
+
+#### Returns
+
+[`LLMAdapter`](../interfaces/LLMAdapter.md)
+
+An LLMAdapter with `chunks` and `textTokens` AsyncIterables
+
+#### Example
+
+```ts
+import { LLMAdapter } from '@liteship/web';
+
+const adapter = LLMAdapter.create({
+  source: sseMessageStream,
+  parser: (event) => {
+    if (event.type !== 'patch') return null;
+    const data = event.data as { type?: string; content?: string };
+    if (data.type === 'text' && typeof data.content === 'string') {
+      return { type: 'text', partial: false, content: data.content };
+    }
+    return null;
+  },
+});
+// adapter.textTokens is an AsyncIterable<string> of text content
+// adapter.chunks is an AsyncIterable<LLMChunk> of all parsed chunks
+for await (const token of adapter.textTokens) process.stdout.write(token);
+```
 
 ## Example
 

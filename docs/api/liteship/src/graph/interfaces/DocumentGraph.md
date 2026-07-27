@@ -33,7 +33,7 @@ Defined in: core/dist/graph/document-graph.d.ts:156
 
 ### digest
 
-> `readonly` **digest**: `AddressedDigest`
+> `readonly` **digest**: [`AddressedDigest`](../../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:158
 
@@ -49,7 +49,7 @@ Defined in: core/dist/graph/document-graph.d.ts:161
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:157
 

@@ -27,7 +27,7 @@ Defined in: core/dist/evidence/validated-output.d.ts:48
 
 ### subject
 
-> `readonly` **subject**: `ContentAddress`
+> `readonly` **subject**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/evidence/validated-output.d.ts:50
 

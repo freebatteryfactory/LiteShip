@@ -6,7 +6,7 @@
 
 # Type Alias: IntegrityDigest
 
-> **IntegrityDigest** = `_IntegrityDigest`
+> **IntegrityDigest** = [`IntegrityDigest`](../../../spine/type-aliases/IntegrityDigest.md)
 
 Defined in: [core/src/schema/brands.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/schema/brands.ts#L48)
 

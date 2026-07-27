@@ -54,7 +54,7 @@ The quantizer owner's exact tier + force target resolver used by live dispatch.
 
 ##### tier
 
-`MotionTier` \| `undefined`
+[`MotionTier`](../../../spine/type-aliases/MotionTier.md) \| `undefined`
 
 ##### force
 

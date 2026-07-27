@@ -14,7 +14,7 @@ One lowered child with its transition id and computed delay.
 
 ### componentId
 
-> `readonly` **componentId**: `ContentAddress`
+> `readonly` **componentId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/stagger.d.ts:37
 
@@ -38,6 +38,6 @@ Defined in: core/dist/motion/stagger.d.ts:35
 
 ### transitionId
 
-> `readonly` **transitionId**: `ContentAddress`
+> `readonly` **transitionId**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/motion/stagger.d.ts:36

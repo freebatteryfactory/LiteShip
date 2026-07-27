@@ -8,7 +8,7 @@
 
 > **detectDpuCapability**(): [`DpuCapability`](../type-aliases/DpuCapability.md)
 
-Defined in: web/dist/dpu/watch-and-prepare.d.ts:105
+Defined in: web/dist/dpu/watch-and-prepare.d.ts:103
 
 Detect native DPU `setHTML` support; floor-morph is the permanent fallback.
 

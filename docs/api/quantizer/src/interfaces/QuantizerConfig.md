@@ -50,7 +50,7 @@ Targets force-enabled past their tier gate; part of the content address.
 
 ### id
 
-> `readonly` **id**: `ContentAddress`
+> `readonly` **id**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [quantizer/src/quantizer.ts:255](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L255)
 
@@ -98,7 +98,7 @@ Spring constant (force per unit displacement); higher = snappier.
 
 ### tier?
 
-> `readonly` `optional` **tier?**: `MotionTier`
+> `readonly` `optional` **tier?**: [`MotionTier`](../../../spine/type-aliases/MotionTier.md)
 
 Defined in: [quantizer/src/quantizer.ts:257](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L257)
 

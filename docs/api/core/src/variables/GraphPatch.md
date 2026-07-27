@@ -118,7 +118,7 @@ readonly [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]
 
 ### patchId
 
-> **patchId**: (`patch`) => `ContentAddress`
+> **patchId**: (`patch`) => [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 The receipt subject id for a patch: a content address over `{ base, ops }`, so
 structurally-equal patches share a receipt subject (the mutation's identity,
@@ -132,7 +132,7 @@ minted through the one kernel — distinct from the sha256 receipt byte law).
 
 #### Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 ### preview
 

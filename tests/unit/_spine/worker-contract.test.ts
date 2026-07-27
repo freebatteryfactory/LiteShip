@@ -30,9 +30,9 @@ import type {
   WorkerConfig as SpineWorkerConfig,
   WorkerUpdate as SpineWorkerUpdate,
   WorkerMetrics as SpineWorkerMetrics,
-  SPSCRingBufferShape as SpineRingShape,
+  SPSCRing as SpineRingShape,
   SPSCRingPair as SpineRingPair,
-  CompositorWorkerShape as SpineCompositorShape,
+  CompositorWorker as SpineCompositorShape,
   QuantizerBoundarySource as SpineBoundarySource,
   CompositorWorkerStartupTelemetry as SpineStartupTelemetry,
   MotionSampleMessage as SpineMotionSampleMessage,
@@ -51,12 +51,12 @@ import type {
 } from '../../../packages/worker/src/messages.js';
 import type {
   WorkerMetrics as RtWorkerMetrics,
-  CompositorWorkerShape as RtCompositorShape,
+  CompositorWorker as RtCompositorShape,
   QuantizerBoundarySource as RtBoundarySource,
   CompositorWorkerStartupTelemetry as RtStartupTelemetry,
 } from '../../../packages/worker/src/compositor-types.js';
 import type {
-  SPSCRingBufferShape as RtRingShape,
+  SPSCRing as RtRingShape,
   SPSCRingPair as RtRingPair,
 } from '../../../packages/worker/src/spsc-ring.js';
 import type {
@@ -104,7 +104,7 @@ type StartRenderOf<U> = Extract<U, { readonly type: 'start-render' }>;
 type StateMsgOf<U> = Extract<U, { readonly type: 'state' }>;
 type FrameOf<U> = Extract<U, { readonly type: 'frame' }>;
 
-// § CompositorWorkerShape — the host-facing control surface. Two fields are
+// § CompositorWorker — the host-facing control surface. Two fields are
 //   intentionally NOT bidirectionally equal and are excluded from the structural
 //   assertion:
 //     - `runtime`: the spine declares `unknown` (RuntimeCoordinator is out of

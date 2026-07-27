@@ -8,6 +8,6 @@
 
 > **Config** = [`LLMStreamConfig`](../../../interfaces/LLMStreamConfig.md)
 
-Defined in: web/dist/stream/llm-adapter.d.ts:116
+Defined in: web/dist/stream/llm-adapter.d.ts:115
 
 Adapter config type alias.

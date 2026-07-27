@@ -38,7 +38,7 @@ Defined in: [compiler/src/reveal-compile.ts:30](https://github.com/freebatteryfa
 
 ### projectionId
 
-> `readonly` **projectionId**: `ContentAddress`
+> `readonly` **projectionId**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [compiler/src/reveal-compile.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L32)
 
@@ -46,7 +46,7 @@ Defined in: [compiler/src/reveal-compile.ts:32](https://github.com/freebatteryfa
 
 ### resultDigest
 
-> `readonly` **resultDigest**: `AddressedDigest`
+> `readonly` **resultDigest**: [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)
 
 Defined in: [compiler/src/reveal-compile.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/reveal-compile.ts#L34)
 

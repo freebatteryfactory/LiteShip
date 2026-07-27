@@ -8,7 +8,9 @@
 
 > **nodeText**(`node`, `sourceFile`): `string`
 
-Defined in: [audit/src/shared.ts:312](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L312)
+Defined in: [audit/src/shared.ts:324](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L324)
+
+Read normalized source text for one TypeScript node.
 
 ## Parameters
 

@@ -8,17 +8,10 @@
  */
 
 export { attachLifetime, createLifetime } from '@liteship/core/reactive';
-export type {
-  Lifetime,
-  LifetimeShape,
-  LifetimeDisposeError,
-  Finalizer,
-  OwnedResource,
-  AsyncOwnedResource,
-} from '@liteship/core/reactive';
+export type { Lifetime, LifetimeDisposeError, Finalizer, AsyncOwnedResource } from '@liteship/core/reactive';
 
 export { CellKernel } from '@liteship/core/reactive';
-export type { Disposer, CellSink, CellSubscriber, CellReplayShape, CellFanoutShape } from '@liteship/core/reactive';
+export type { Disposer, CellSink, CellSubscriber, CellReplay, CellFanout } from '@liteship/core/reactive';
 
 export { Signal, createSignal } from '@liteship/core/reactive';
 export type { SignalSourceType, SignalSource } from '@liteship/core/reactive';
@@ -29,13 +22,10 @@ export { StateCell, ProjectionState, StateCellStore } from '@liteship/core/react
 export type {
   StateAuthority,
   StateCellKind,
-  StateCellShape,
   StateResolutionReceipt,
-  ProjectionStateShape,
   ResolvedStateSnapshot,
   StateCellRegisterOptions,
   ProjectionStateOptions,
-  StateCellStoreShape,
 } from '@liteship/core/reactive';
 
 export {

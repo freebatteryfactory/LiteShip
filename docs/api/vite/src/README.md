@@ -62,8 +62,8 @@ const config = defineConfig({
 
 ## Type Aliases
 
+- [Primitive](type-aliases/Primitive.md)
 - [PrimitiveKind](type-aliases/PrimitiveKind.md)
-- [PrimitiveShape](type-aliases/PrimitiveShape.md)
 - [ProjectConfigLoader](type-aliases/ProjectConfigLoader.md)
 - [ThemeManifest](type-aliases/ThemeManifest.md)
 - [ThemeManifestEntry](type-aliases/ThemeManifestEntry.md)

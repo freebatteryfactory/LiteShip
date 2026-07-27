@@ -35,6 +35,7 @@ package — it stays repo-local and composes these passes.
 - [CoverageMap](interfaces/CoverageMap.md)
 - [DevopsProfile](interfaces/DevopsProfile.md)
 - [EarlyReturnMatch](interfaces/EarlyReturnMatch.md)
+- [EnrolledActiveSurface](interfaces/EnrolledActiveSurface.md)
 - [EquivalentMutantEntry](interfaces/EquivalentMutantEntry.md)
 - [EquivalentMutantRegistry](interfaces/EquivalentMutantRegistry.md)
 - [EquivalentVerdict](interfaces/EquivalentVerdict.md)
@@ -67,7 +68,7 @@ package — it stays repo-local and composes these passes.
 - [SpineTypeAdmission](interfaces/SpineTypeAdmission.md)
 - [StructureCoverageClassification](interfaces/StructureCoverageClassification.md)
 - [StructureSummary](interfaces/StructureSummary.md)
-- [SurfacePolicyShape](interfaces/SurfacePolicyShape.md)
+- [SurfacePolicy](interfaces/SurfacePolicy.md)
 - [SurfaceReader](interfaces/SurfaceReader.md)
 - [SurfaceSummary](interfaces/SurfaceSummary.md)
 - [SurvivedVerdict](interfaces/SurvivedVerdict.md)
@@ -98,12 +99,12 @@ package — it stays repo-local and composes these passes.
 - [PackageArtifactCoverage](type-aliases/PackageArtifactCoverage.md)
 - [PackagePathResolver](type-aliases/PackagePathResolver.md)
 - [TypeExportKind](type-aliases/TypeExportKind.md)
+- [TypeScriptPathAliases](type-aliases/TypeScriptPathAliases.md)
 
 ## Variables
 
 - [ACTIVE\_SURFACE\_ORACLE\_ID](variables/ACTIVE_SURFACE_ORACLE_ID.md)
 - [AUDIT\_RULE\_IDS](variables/AUDIT_RULE_IDS.md)
-- [auditAllowlist](variables/auditAllowlist.md)
 - [auditIgnoreGlobs](variables/auditIgnoreGlobs.md)
 - [auditSourceGlobs](variables/auditSourceGlobs.md)
 - [CAPABILITY\_LINK\_ORACLE\_ID](variables/CAPABILITY_LINK_ORACLE_ID.md)
@@ -113,18 +114,11 @@ package — it stays repo-local and composes these passes.
 - [DEFAULT\_TAINT\_INTERPROCEDURAL\_DEPTH](variables/DEFAULT_TAINT_INTERPROCEDURAL_DEPTH.md)
 - [defaultAnalyzableArtifacts](variables/defaultAnalyzableArtifacts.md)
 - [DEVOPS\_PROFILE\_KEYS](variables/DEVOPS_PROFILE_KEYS.md)
-- [dynamicImportExemptions](variables/dynamicImportExemptions.md)
-- [foundationalPackages](variables/foundationalPackages.md)
 - [LANGUAGE\_SERVICE\_ORACLE\_ID](variables/LANGUAGE_SERVICE_ORACLE_ID.md)
-- [LITESHIP\_PACKAGE\_ROSTER](variables/LITESHIP_PACKAGE_ROSTER.md)
-- [liteshipDevopsProfile](variables/liteshipDevopsProfile.md)
 - [MUTATION\_OPERATORS](variables/MUTATION_OPERATORS.md)
-- [packageTopology](variables/packageTopology.md)
-- [surfacePolicy](variables/surfacePolicy.md)
 - [SYMBOL\_ORPHAN\_PROPERTY](variables/SYMBOL_ORPHAN_PROPERTY.md)
 - [SYMBOL\_REFERENCE\_COUNT\_PROPERTY](variables/SYMBOL_REFERENCE_COUNT_PROPERTY.md)
 - [TAINT\_ORACLE\_ID](variables/TAINT_ORACLE_ID.md)
-- [WORKSPACE\_ALIASES](variables/WORKSPACE_ALIASES.md)
 
 ## Functions
 

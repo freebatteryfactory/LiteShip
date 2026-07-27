@@ -10,6 +10,8 @@
  * @module
  */
 
+import { ValidationError } from '@liteship/error';
+
 type JsonRecord = Readonly<Record<string, unknown>>;
 
 function isPlainRecord(value: object): value is JsonRecord {
@@ -23,7 +25,7 @@ function pathKey(path: string, key: string): string {
 
 function encodePrimitive(value: null | boolean | number | string): string {
   const encoded = JSON.stringify(value);
-  if (encoded === undefined) throw new TypeError('canonical JSON primitive has no JSON representation');
+  if (encoded === undefined) throw ValidationError('canonicalJson', 'primitive has no JSON representation');
   return encoded;
 }
 
@@ -36,43 +38,43 @@ export function canonicalJson(value: unknown): string {
       return encodePrimitive(current);
     }
     if (typeof current === 'number') {
-      if (!Number.isFinite(current)) throw new TypeError(`${path} must contain only finite JSON numbers`);
+      if (!Number.isFinite(current)) throw ValidationError('canonicalJson', `${path} must contain only finite numbers`);
       return encodePrimitive(current);
     }
     if (typeof current !== 'object') {
-      throw new TypeError(`${path} cannot contain ${typeof current}`);
+      throw ValidationError('canonicalJson', `${path} cannot contain ${typeof current}`);
     }
-    if (ancestors.has(current)) throw new TypeError(`${path} cannot contain a cycle`);
+    if (ancestors.has(current)) throw ValidationError('canonicalJson', `${path} cannot contain a cycle`);
 
     ancestors.add(current);
     try {
       if (Array.isArray(current)) {
         if (Object.getOwnPropertySymbols(current).some((symbol) => Object.propertyIsEnumerable.call(current, symbol))) {
-          throw new TypeError(`${path} cannot contain enumerable symbol keys`);
+          throw ValidationError('canonicalJson', `${path} cannot contain enumerable symbol keys`);
         }
         const encoded: string[] = [];
         for (let index = 0; index < current.length; index += 1) {
-          if (!Object.hasOwn(current, index)) throw new TypeError(`${path} must be a dense JSON array`);
+          if (!Object.hasOwn(current, index)) throw ValidationError('canonicalJson', `${path} must be a dense array`);
           const descriptor = Object.getOwnPropertyDescriptor(current, String(index));
           if (descriptor === undefined || !('value' in descriptor)) {
-            throw new TypeError(`${path}[${index}] must be a data property`);
+            throw ValidationError('canonicalJson', `${path}[${index}] must be a data property`);
           }
           encoded.push(encode(descriptor.value, `${path}[${index}]`));
         }
         const foreignKeys = Object.keys(current).filter((key) => !/^(?:0|[1-9]\d*)$/u.test(key));
-        if (foreignKeys.length > 0) throw new TypeError(`${path} contains non-index array keys`);
+        if (foreignKeys.length > 0) throw ValidationError('canonicalJson', `${path} contains non-index array keys`);
         return `[${encoded.join(',')}]`;
       }
 
-      if (!isPlainRecord(current)) throw new TypeError(`${path} must contain only plain JSON records`);
+      if (!isPlainRecord(current)) throw ValidationError('canonicalJson', `${path} must contain only plain records`);
       if (Object.getOwnPropertySymbols(current).some((symbol) => Object.propertyIsEnumerable.call(current, symbol))) {
-        throw new TypeError(`${path} cannot contain enumerable symbol keys`);
+        throw ValidationError('canonicalJson', `${path} cannot contain enumerable symbol keys`);
       }
       const entries: string[] = [];
       for (const key of Object.keys(current).sort()) {
         const descriptor = Object.getOwnPropertyDescriptor(current, key);
         if (descriptor === undefined || !('value' in descriptor)) {
-          throw new TypeError(`${pathKey(path, key)} must be a data property`);
+          throw ValidationError('canonicalJson', `${pathKey(path, key)} must be a data property`);
         }
         entries.push(`${JSON.stringify(key)}:${encode(descriptor.value, pathKey(path, key))}`);
       }

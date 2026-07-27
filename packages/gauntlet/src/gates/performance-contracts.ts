@@ -87,8 +87,68 @@ export const ACCEPTED_ALLOCATION_CEILINGS: Readonly<Record<string, ComplexityCla
   'assets.computeWaveform.retainedAllocation': 'O(n)',
 };
 
-/** The R² floor below which a complexity fit is too noisy to trust as a verdict. */
-export const MIN_COMPLEXITY_FIT_R2 = 0.5;
+/**
+ * One authority policy for every claim-bearing complexity curve. The policy is
+ * owned beside the deterministic gate and consumed by the measurement producer;
+ * callers cannot grant themselves a weaker evidentiary floor.
+ *
+ * Five geometrically spaced sizes produce a real curve rather than a local
+ * tangent. Seven best-of-k replicates expose variance while remaining practical
+ * on shared CI hosts. R² and coefficient-of-variation then decide whether the
+ * measured class is admissible rather than merely present.
+ */
+export const COMPLEXITY_ADMISSION_POLICY = Object.freeze({
+  minimumR2: 0.9,
+  minimumSizes: 5,
+  minimumReplicatesPerSize: 7,
+  minimumSizeGrowthFactor: 2,
+  maximumCoefficientOfVariation: 0.25,
+});
+
+export type ComplexityAdmissionReason =
+  'insufficient-size-sweep' | 'invalid-size-sweep' | 'under-replicated' | 'low-r2' | 'unstable-variance';
+
+export interface ComplexityAdmissionCandidate {
+  readonly sizes: readonly number[];
+  readonly replicates: number;
+  readonly fittedR2: number;
+  readonly coefficientOfVariation: number;
+}
+
+/** Pure admission fold shared by the live producer and deterministic gate. */
+export function complexityAdmissionReasons(
+  candidate: ComplexityAdmissionCandidate,
+): readonly ComplexityAdmissionReason[] {
+  const reasons: ComplexityAdmissionReason[] = [];
+  if (candidate.sizes.length < COMPLEXITY_ADMISSION_POLICY.minimumSizes) {
+    reasons.push('insufficient-size-sweep');
+  }
+  const validSweep = candidate.sizes.every((size, index) => {
+    if (!Number.isFinite(size) || size <= 0) return false;
+    const previous = candidate.sizes[index - 1];
+    return (
+      index === 0 || (previous !== undefined && size / previous >= COMPLEXITY_ADMISSION_POLICY.minimumSizeGrowthFactor)
+    );
+  });
+  if (!validSweep) reasons.push('invalid-size-sweep');
+  if (
+    !Number.isInteger(candidate.replicates) ||
+    candidate.replicates < COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize
+  ) {
+    reasons.push('under-replicated');
+  }
+  if (!Number.isFinite(candidate.fittedR2) || candidate.fittedR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) {
+    reasons.push('low-r2');
+  }
+  if (
+    !Number.isFinite(candidate.coefficientOfVariation) ||
+    candidate.coefficientOfVariation < 0 ||
+    candidate.coefficientOfVariation > COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation
+  ) {
+    reasons.push('unstable-variance');
+  }
+  return reasons;
+}
 
 // The complexity-class ladder, ordered ascending by growth — DUPLICATED here as
 // the gate's own closed constant (the gauntlet is lean and must NOT import the
@@ -109,11 +169,13 @@ function rankOfClass(klass: string): number {
 
 type BenchDistributionRecord = QualifiedBenchDistribution;
 
-interface ComplexityMapEntryRecord {
+interface GrowthMapEntryRecord {
   readonly path: string;
   readonly class: string;
   readonly fittedR2: number;
 }
+
+interface ComplexityMapEntryRecord extends GrowthMapEntryRecord, ComplexityAdmissionCandidate {}
 
 const BENCH_REGISTRATION = /\bbench(?:\.add)?\(\s*(['"`])((?:\\.|(?!\1)[^\\])*)\1/g;
 
@@ -155,7 +217,7 @@ function readDistributions(context: GateContext): readonly BenchDistributionReco
   return distributions as readonly BenchDistributionRecord[];
 }
 
-function readGrowthEntries(context: GateContext, artifactPath: string): readonly ComplexityMapEntryRecord[] | null {
+function readGrowthEntries(context: GateContext, artifactPath: string): readonly GrowthMapEntryRecord[] | null {
   const text = context.readFile(artifactPath);
   if (text === undefined) {
     return null;
@@ -165,16 +227,50 @@ function readGrowthEntries(context: GateContext, artifactPath: string): readonly
     throw ValidationError(PERFORMANCE_CONTRACTS_RULE_ID, `${artifactPath} is missing an entries array`);
   }
   return parsed.entries.filter(
-    (e): e is ComplexityMapEntryRecord =>
+    (e): e is GrowthMapEntryRecord =>
       isRecord(e) && typeof e.path === 'string' && typeof e.class === 'string' && typeof e.fittedR2 === 'number',
   );
 }
 
 function readComplexityEntries(context: GateContext): readonly ComplexityMapEntryRecord[] | null {
-  return readGrowthEntries(context, COMPLEXITY_MAP_PATH);
+  const text = context.readFile(COMPLEXITY_MAP_PATH);
+  if (text === undefined) return null;
+  const parsed = parseJson(text, COMPLEXITY_MAP_PATH);
+  if (!isRecord(parsed) || parsed.schemaVersion !== 2 || !Array.isArray(parsed.entries)) {
+    throw ValidationError(
+      PERFORMANCE_CONTRACTS_RULE_ID,
+      `${COMPLEXITY_MAP_PATH} must be a schema-v2 artifact with an entries array`,
+    );
+  }
+  return parsed.entries.map((entry, index) => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.path !== 'string' ||
+      typeof entry.class !== 'string' ||
+      typeof entry.fittedR2 !== 'number' ||
+      typeof entry.coefficientOfVariation !== 'number' ||
+      !Array.isArray(entry.sizes) ||
+      !entry.sizes.every((size) => typeof size === 'number') ||
+      !isRecord(entry.measurement) ||
+      typeof entry.measurement.replicates !== 'number'
+    ) {
+      throw ValidationError(
+        PERFORMANCE_CONTRACTS_RULE_ID,
+        `${COMPLEXITY_MAP_PATH} entry ${index} is missing claim-bearing measurement evidence`,
+      );
+    }
+    return {
+      path: entry.path,
+      class: entry.class,
+      fittedR2: entry.fittedR2,
+      sizes: entry.sizes,
+      coefficientOfVariation: entry.coefficientOfVariation,
+      replicates: entry.measurement.replicates,
+    };
+  });
 }
 
-function readAllocationEntries(context: GateContext): readonly ComplexityMapEntryRecord[] | null {
+function readAllocationEntries(context: GateContext): readonly GrowthMapEntryRecord[] | null {
   return readGrowthEntries(context, ALLOCATION_MAP_PATH);
 }
 
@@ -334,7 +430,7 @@ interface GrowthContract {
   readonly producer: string;
 }
 
-function checkGrowthMap(entries: readonly ComplexityMapEntryRecord[] | null, contract: GrowthContract): Finding[] {
+function checkGrowthMap(entries: readonly GrowthMapEntryRecord[] | null, contract: GrowthContract): Finding[] {
   if (entries === null) {
     return [
       finding({
@@ -371,14 +467,14 @@ function checkGrowthMap(entries: readonly ComplexityMapEntryRecord[] | null, con
       continue;
     }
 
-    if (entry.fittedR2 < MIN_COMPLEXITY_FIT_R2) {
+    if (entry.fittedR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) {
       findings.push(
         finding({
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
           severity: 'error',
           level: 'L3',
           title: `${contract.label} fit too noisy to trust`,
-          detail: `${contract.artifactPath} records path "${entry.path}" with R² ${entry.fittedR2} (below the ${MIN_COMPLEXITY_FIT_R2} floor). A fit this noisy gives no trustworthy class verdict — re-measure with more replicates/sizes.`,
+          detail: `${contract.artifactPath} records path "${entry.path}" with R² ${entry.fittedR2} (below the ${COMPLEXITY_ADMISSION_POLICY.minimumR2} floor). A fit this noisy gives no trustworthy class verdict — re-measure with more replicates/sizes.`,
           location: { file: contract.artifactPath },
         }),
       );
@@ -428,15 +524,47 @@ function checkGrowthMap(entries: readonly ComplexityMapEntryRecord[] | null, con
 }
 
 function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null): Finding[] {
-  return checkGrowthMap(entries, {
+  const findings = checkGrowthMap(entries, {
     artifactPath: COMPLEXITY_MAP_PATH,
     label: 'Complexity',
     ceilings: ACCEPTED_COMPLEXITY_CEILINGS,
     producer: '`tsx scripts/bench-contracts.ts`',
   });
+  if (entries === null) return findings;
+
+  for (const entry of entries) {
+    for (const reason of complexityAdmissionReasons(entry)) {
+      // Low R² is already rendered by the shared growth-class fold above.
+      if (reason === 'low-r2') continue;
+      const detail =
+        reason === 'insufficient-size-sweep'
+          ? `${entry.path} records ${entry.sizes.length} size(s); claim-bearing complexity evidence requires at least ${COMPLEXITY_ADMISSION_POLICY.minimumSizes}.`
+          : reason === 'invalid-size-sweep'
+            ? `${entry.path} sizes must be positive and grow geometrically by at least ${COMPLEXITY_ADMISSION_POLICY.minimumSizeGrowthFactor}× at each step; recorded [${entry.sizes.join(', ')}].`
+            : reason === 'under-replicated'
+              ? `${entry.path} records ${entry.replicates} replicate(s) per size; claim-bearing complexity evidence requires at least ${COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize}.`
+              : `${entry.path} records coefficient of variation ${entry.coefficientOfVariation}; claim-bearing complexity evidence requires a finite value no greater than ${COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation}.`;
+      findings.push(
+        finding({
+          ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
+          severity: 'error',
+          level: 'L3',
+          title: `Complexity evidence is not admissible: ${reason}`,
+          detail,
+          location: { file: COMPLEXITY_MAP_PATH },
+          remediation: {
+            kind: 'instruction',
+            description: 'Re-measure the complete complexity curve under the uniform admission policy.',
+            steps: ['Run `pnpm run bench:contracts` once on a suitable host and inspect the resulting curve.'],
+          },
+        }),
+      );
+    }
+  }
+  return findings;
 }
 
-function checkAllocationMap(entries: readonly ComplexityMapEntryRecord[] | null): Finding[] {
+function checkAllocationMap(entries: readonly GrowthMapEntryRecord[] | null): Finding[] {
   return checkGrowthMap(entries, {
     artifactPath: ALLOCATION_MAP_PATH,
     label: 'Retained-allocation',
@@ -561,11 +689,14 @@ function fixtureComplexityMap(
   overrides: Readonly<Record<string, { readonly class: ComplexityClass; readonly fittedR2: number }>> = {},
 ): string {
   return JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 2,
     entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, ceiling], index) => ({
       path,
       class: overrides[path]?.class ?? ceiling,
-      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.01,
+      fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.002,
+      sizes: [16, 32, 64, 128, 256],
+      coefficientOfVariation: 0.05,
+      measurement: { replicates: 7 },
     })),
   });
 }

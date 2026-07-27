@@ -8,7 +8,7 @@
 
 > **FrameEncoder** = (`frames`, `config`) => `Promise`\<[`EncodedVideo`](../interfaces/EncodedVideo.md)\>
 
-Defined in: [stage/src/dual-export.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L88)
+Defined in: [stage/src/dual-export.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L89)
 
 The byte-encode seam: turn the produced per-frame [CompositeState](../../../liteship/src/media/interfaces/CompositeState.md)
 snapshots into real encoded video bytes. Stage's CORE owns no encoder — this

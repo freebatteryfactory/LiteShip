@@ -6,7 +6,7 @@
 
 # Function: EffectSystem()
 
-> **EffectSystem**(`frameIndex`): `SystemShape`
+> **EffectSystem**(`frameIndex`): `System`
 
 Defined in: [scene/src/systems/effect.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/effect.ts#L19)
 
@@ -20,4 +20,4 @@ Build an EffectSystem keyed to a frame index.
 
 ## Returns
 
-`SystemShape`
+`System`

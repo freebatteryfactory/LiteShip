@@ -6,7 +6,7 @@
 
 # Interface: LspServerState
 
-Defined in: [mcp-server/src/lsp/server.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L186)
+Defined in: [mcp-server/src/lsp/server.ts:196](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L196)
 
 The server's mutable lifecycle state. Composition-over-inheritance: this is a
 DATA record threaded through [handle](../functions/handleLspMessage.md), not an object with methods. The
@@ -20,7 +20,7 @@ request resolves remediations against the same fold the diagnostics came from
 
 > `readonly` **initialized**: `boolean`
 
-Defined in: [mcp-server/src/lsp/server.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L188)
+Defined in: [mcp-server/src/lsp/server.ts:198](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L198)
 
 Set by `initialize`; a request before it is a protocol violation (§Lifecycle).
 
@@ -30,7 +30,7 @@ Set by `initialize`; a request before it is a protocol violation (§Lifecycle).
 
 > `readonly` **lastFindings**: readonly [`FindingLike`](FindingLike.md)[]
 
-Defined in: [mcp-server/src/lsp/server.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L194)
+Defined in: [mcp-server/src/lsp/server.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L204)
 
 The findings from the most recent gauntlet run, keyed for codeAction resolution.
 
@@ -40,7 +40,7 @@ The findings from the most recent gauntlet run, keyed for codeAction resolution.
 
 > `readonly` **shuttingDown**: `boolean`
 
-Defined in: [mcp-server/src/lsp/server.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L190)
+Defined in: [mcp-server/src/lsp/server.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L200)
 
 Set by `shutdown`; a non-`exit` request after it must error (§Lifecycle: -32600).
 
@@ -50,6 +50,6 @@ Set by `shutdown`; a non-`exit` request after it must error (§Lifecycle: -32600
 
 > `readonly` `optional` **workspaceRootUri?**: `string`
 
-Defined in: [mcp-server/src/lsp/server.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L192)
+Defined in: [mcp-server/src/lsp/server.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L202)
 
 File URI supplied by the initialize handshake; relative Findings resolve beneath it.

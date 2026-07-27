@@ -6,7 +6,7 @@
 
 # Function: createLifetime()
 
-> **createLifetime**(): [`LifetimeShape`](../interfaces/LifetimeShape.md)
+> **createLifetime**(): [`Lifetime`](../interfaces/Lifetime.md)
 
 Defined in: [core/src/reactive/lifetime.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/reactive/lifetime.ts#L237)
 
@@ -17,4 +17,4 @@ this is the curated authoring-surface spelling the `liteship` root re-exports.
 
 ## Returns
 
-[`LifetimeShape`](../interfaces/LifetimeShape.md)
+[`Lifetime`](../interfaces/Lifetime.md)

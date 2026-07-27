@@ -25,7 +25,7 @@ Appended to the stream URL as a path segment; also the key the
 
 ### heartbeatInterval?
 
-> `readonly` `optional` **heartbeatInterval?**: `Millis`
+> `readonly` `optional` **heartbeatInterval?**: [`Millis`](../../../spine/type-aliases/Millis.md)
 
 Defined in: [web/src/types.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L259)
 

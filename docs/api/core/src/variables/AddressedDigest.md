@@ -16,7 +16,7 @@ Namespace surface: call [AddressedDigest.of](#of) to mint a digest pair from raw
 
 ### of
 
-> **of**: (`bytes`, `algo`) => `AddressedDigest` = `addressedDigestOfCore`
+> **of**: (`bytes`, `algo`) => [`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md) = `addressedDigestOfCore`
 
 Derive an AddressedDigest from raw bytes (sync).
 
@@ -32,4 +32,4 @@ Derive an AddressedDigest from raw bytes (sync).
 
 #### Returns
 
-`AddressedDigest`
+[`AddressedDigest`](../../../spine/interfaces/AddressedDigest.md)

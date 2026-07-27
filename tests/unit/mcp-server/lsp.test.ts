@@ -339,7 +339,103 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
   });
 });
 
-// ---------- 4. liteship/check → publishDiagnostics ----------
+// ---------- 4. LSP 3.17 pull diagnostics ----------
+
+describe('LSP — pull diagnostics share the gauntlet Finding projection', () => {
+  it('textDocument/diagnostic returns only the requested document and caches the full fold', async () => {
+    const runner = stubRunner([ERR_FINDING, WARN_FINDING, UNANCHORED_FINDING]);
+    const init = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { rootUri: 'file:///repo' },
+      }),
+      initialLspState(),
+      runner,
+    );
+    const pulled = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'textDocument/diagnostic',
+        params: { textDocument: { uri: 'file:///repo/packages/x/src/a.ts' } },
+      }),
+      init.state,
+      runner,
+    );
+    const body = (pulled.result.response as JsonRpcSuccess).result as {
+      kind: string;
+      items: readonly LspDiagnostic[];
+    };
+    expect(body.kind).toBe('full');
+    expect(body.items.map((item) => item.code)).toEqual(['no-default-export']);
+    expect(pulled.state.lastFindings).toEqual([ERR_FINDING, WARN_FINDING, UNANCHORED_FINDING]);
+    expect(pulled.result.notifications).toEqual([]);
+  });
+
+  it('textDocument/diagnostic returns an honest empty full report for a clean document', async () => {
+    const runner = stubRunner([ERR_FINDING]);
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { rootUri: 'file:///repo' } }),
+      initialLspState(),
+      runner,
+    );
+    const pulled = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'textDocument/diagnostic',
+        params: { textDocument: { uri: 'file:///repo/packages/x/src/clean.ts' } },
+      }),
+      init.state,
+      runner,
+    );
+    expect((pulled.result.response as JsonRpcSuccess).result).toEqual({ kind: 'full', items: [] });
+  });
+
+  it('workspace/diagnostic emits the LSP 3.17 version field and the same diagnostics', async () => {
+    const runner = stubRunner([ERR_FINDING]);
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { rootUri: 'file:///repo' } }),
+      initialLspState(),
+      runner,
+    );
+    const pulled = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'workspace/diagnostic' }),
+      init.state,
+      runner,
+    );
+    expect((pulled.result.response as JsonRpcSuccess).result).toEqual({
+      items: [
+        {
+          uri: 'file:///repo/packages/x/src/a.ts',
+          version: null,
+          kind: 'full',
+          items: [projectFinding(ERR_FINDING, 'file:///repo/')!.diagnostic],
+        },
+      ],
+    });
+  });
+
+  it('rejects a pull request whose textDocument URI is absent or empty', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    for (const params of [{}, { textDocument: { uri: '' } }]) {
+      const result = await handle(
+        JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'textDocument/diagnostic', params }),
+        init.state,
+        stubRunner([]),
+      );
+      expect((result.result.response as JsonRpcErrorResponse).error.code).toBe(-32602);
+    }
+  });
+});
+
+// ---------- 5. liteship/check → publishDiagnostics ----------
 
 describe('LSP — liteship/check publishes diagnostics grouped by URI (injected runner)', () => {
   it('runs the injected runner and emits one publishDiagnostics per file URI', async () => {

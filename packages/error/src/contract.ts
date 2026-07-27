@@ -124,9 +124,10 @@ export function isTaggedError(u: unknown): u is TaggedError {
 }
 
 /**
- * Narrowing guard for a specific tag — the data-oriented replacement for
- * `instanceof SomeError`. `hasTag(e, 'ParseError')` narrows `e` to the
- * `ParseError` variant.
+ * Structural narrowing guard for a specific tag — the data-oriented replacement
+ * for `instanceof`. From `unknown`, it proves only the open
+ * {@link TaggedError} contract (`_tag` + `message`); validate a concrete variant
+ * before reading variant-specific fields such as `ParseError.source`.
  */
 export function hasTag<Tag extends string>(u: unknown, tag: Tag): u is TaggedError<Tag> {
   return isTaggedError(u) && u._tag === tag;

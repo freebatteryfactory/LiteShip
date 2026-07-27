@@ -6,9 +6,9 @@
 
 # Type Alias: CompilerDef
 
-> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: [`Config`](../../../liteship/src/type-aliases/Config.md); \} \| \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \}
+> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary`](../../../liteship/src/type-aliases/Boundary.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: [`Config`](../../../liteship/src/type-aliases/Config.md); \} \| \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \} \| \{ `_tag`: `"ViewTransitionCompiler"`; `input`: [`ViewTransitionCompileInput`](../interfaces/ViewTransitionCompileInput.md); \}
 
-Defined in: [compiler/src/dispatch.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L91)
+Defined in: [compiler/src/dispatch.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L94)
 
 Tagged discriminated union describing a single compilation request.
 
@@ -25,6 +25,7 @@ Arms:
 - `AICompiler`     — an [AIManifestInput](../interfaces/AIManifestInput.md) → tool-call-ready manifest JSON.
 - `ConfigCompiler` — a `Config` → pretty-printed JSON template.
 - `MotionCompiler`  — a `CssMotionPlan` → `@property` / `@keyframes` / transitions.
+- `ViewTransitionCompiler` — an explicit view-transition request → scoped progressive-enhancement CSS.
 
 ## Union Members
 
@@ -85,3 +86,9 @@ CSS selector for bare properties; defaults to `.liteship-boundary`.
 ### Type Literal
 
 \{ `_tag`: `"MotionCompiler"`; `input`: [`MotionCompileInput`](../interfaces/MotionCompileInput.md); \}
+
+***
+
+### Type Literal
+
+\{ `_tag`: `"ViewTransitionCompiler"`; `input`: [`ViewTransitionCompileInput`](../interfaces/ViewTransitionCompileInput.md); \}

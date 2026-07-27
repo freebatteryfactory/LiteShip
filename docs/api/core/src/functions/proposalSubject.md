@@ -6,7 +6,7 @@
 
 # Function: proposalSubject()
 
-> **proposalSubject**\<`T`\>(`proposal`): `ContentAddress`
+> **proposalSubject**\<`T`\>(`proposal`): [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/evidence/validated-output.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/validated-output.ts#L175)
 
@@ -28,4 +28,4 @@ token.
 
 ## Returns
 
-`ContentAddress`
+[`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)

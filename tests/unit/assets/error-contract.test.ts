@@ -108,8 +108,8 @@ describe('defineAsset DX defaults (#153, #155, #159)', () => {
 
   it('omitted decodeP95Ms uses per-kind defaults', () => {
     expect(defineAsset({ id: 'a', source: 'a.wav', kind: 'audio' }).budgets.p95Ms).toBe(defaultDecodeP95MsFor('audio'));
-    expect(defineAsset({ id: 'b', source: 'b.json', kind: 'beat-markers' }).budgets.p95Ms).toBe(200);
-    expect(defineAsset({ id: 'w', source: 'w.json', kind: 'waveform' }).budgets.p95Ms).toBe(100);
+    expect(defineAsset({ id: 'v', source: 'v.mp4', kind: 'video' }).budgets.p95Ms).toBe(100);
+    expect(defineAsset({ id: 'i', source: 'i.png', kind: 'image' }).budgets.p95Ms).toBe(20);
   });
 
   it('defineAsset returns a typed cachedProjection capsule for audio', async () => {

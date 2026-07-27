@@ -10,9 +10,11 @@ import type { BoundaryManifest, CompiledOutputs } from './edge.js';
 // § 0. PRIMITIVE KIND
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Authored definition kinds discovered by the Vite integration. */
 export type PrimitiveKind = 'boundary' | 'token' | 'theme' | 'style';
 
-export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
+/** Definition type selected by a Vite primitive kind. */
+type VitePrimitive<K extends PrimitiveKind> = K extends 'boundary'
   ? Boundary
   : K extends 'token'
     ? Token
@@ -20,8 +22,9 @@ export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
       ? Theme
       : Style;
 
+/** Resolved authored definition and the source file that owns it. */
 export interface PrimitiveResolution<K extends PrimitiveKind> {
-  readonly primitive: PrimitiveShape<K>;
+  readonly primitive: VitePrimitive<K>;
   readonly source: string;
 }
 
@@ -29,6 +32,7 @@ export interface PrimitiveResolution<K extends PrimitiveKind> {
 // § 1. PLUGIN CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** LiteShip Vite plugin discovery, HMR, environment, and WASM options. */
 export interface PluginConfig {
   readonly dirs?: Partial<Record<PrimitiveKind, string>>;
   readonly hmr?: boolean;
@@ -47,16 +51,19 @@ export declare function plugin(config?: PluginConfig): import('vite').Plugin;
 // § 3. @quantize CSS TRANSFORM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Nested selector or at-rule preserved inside a quantized state block. */
 export interface QuantizeNestedRule {
   readonly selector: string;
   readonly props: Record<string, string>;
 }
 
+/** Parsed declarations and nested rules for one quantized state. */
 export interface QuantizeStateBody {
   readonly bareProps: Record<string, string>;
   readonly rules: readonly QuantizeNestedRule[];
 }
 
+/** Parsed `@quantize` block and its source location. */
 export interface QuantizeBlock {
   readonly boundaryName: string;
   readonly states: Record<string, QuantizeStateBody>;
@@ -69,7 +76,7 @@ export declare function parseQuantizeBlocks(css: string, sourceFile: string): re
 /**
  * Sheet-level aggregation context for viewport containment: thread ONE
  * instance through every `compileQuantizeBlock` call of a stylesheet and
- * emit a single `:root` rule via {@link viewportContainmentRule}
+ * emit a single `:root` rule via `viewportContainmentRule`
  * (`container-name` is a replaced property -- per-block rules would
  * overwrite each other).
  */
@@ -89,6 +96,7 @@ export declare function viewportContainmentRule(names: Iterable<string>): string
 // § 4. @token CSS TRANSFORM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Parsed token directive and its normalized declaration data. */
 export interface TokenBlock {
   readonly tokenName: string;
   readonly declarations: Record<string, string>;
@@ -104,6 +112,7 @@ export declare function compileTokenBlock(block: TokenBlock, token: Token): stri
 // § 5. @theme CSS TRANSFORM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Parsed theme directive and its named variant declarations. */
 export interface ThemeBlock {
   readonly themeName: string;
   readonly declarations: Record<string, string>;
@@ -119,6 +128,7 @@ export declare function compileThemeBlock(block: ThemeBlock, theme: Theme): stri
 // § 6. @style CSS TRANSFORM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Parsed style directive and its state-layer declarations. */
 export interface StyleBlock {
   readonly styleName: string;
   readonly states: Record<string, Record<string, string>>;
@@ -159,6 +169,7 @@ export declare function primitiveSearchPatterns(
 // § 11. VIRTUAL MODULES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Closed virtual-module identifiers served by the Vite plugin. */
 export type VirtualModuleId =
   | 'virtual:liteship/tokens'
   | 'virtual:liteship/tokens.css'
@@ -168,8 +179,10 @@ export type VirtualModuleId =
   | 'virtual:liteship/wasm-url'
   | 'virtual:liteship/config';
 
+/** Boundary threshold-to-asset URL table emitted for host consumption. */
 export type BoundaryAssetUrlMap = Readonly<Record<string, Readonly<Record<number, string>>>>;
 
+/** Data projected into LiteShip's generated Vite virtual modules. */
 export interface VirtualModuleData {
   readonly boundaries?: BoundaryManifest;
   readonly boundaryAssetUrls?: BoundaryAssetUrlMap;
@@ -183,6 +196,7 @@ export declare function loadVirtualModule(id: string, data?: VirtualModuleData):
 // § 11b. BOUNDARY MANIFEST COLLECTION (build-to-edge handoff)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Inputs required to assemble a build-time boundary manifest. */
 export interface CollectBoundaryManifestOptions {
   readonly boundaryDir?: string;
 }
@@ -198,6 +212,7 @@ export declare function serializeBoundaryOutput(output: CompiledOutputs): string
 // § 12. HMR
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Typed payload sent when a LiteShip definition changes during HMR. */
 export interface HMRPayload {
   readonly type: 'liteship:update';
   readonly boundary: string;

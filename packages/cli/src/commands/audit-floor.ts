@@ -15,6 +15,7 @@ import { AUDIT_WARNING_FLOOR, diffInventories } from '@liteship/command';
 import type { CommandContext } from '@liteship/command';
 import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@liteship/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
+import { liteshipDevopsProfile } from '../lib/liteship-audit-profile.js';
 
 /** Receipt emitted by `liteship audit-floor`. */
 export interface AuditFloorReceipt extends AuditFloorPayload {
@@ -32,12 +33,16 @@ export interface AuditFloorReceipt extends AuditFloorPayload {
  * re-running the heavy engine. Kept unexported so the api-surface is unchanged.
  */
 interface AuditFloorDeps {
-  readonly runStructureAudit: typeof runStructureAudit;
-  readonly runIntegrityAudit: typeof runIntegrityAudit;
-  readonly runSurfaceAudit: typeof runSurfaceAudit;
+  readonly runStructureAudit: () => ReturnType<typeof runStructureAudit>;
+  readonly runIntegrityAudit: () => ReturnType<typeof runIntegrityAudit>;
+  readonly runSurfaceAudit: () => ReturnType<typeof runSurfaceAudit>;
 }
 
-const defaultAuditFloorDeps: AuditFloorDeps = { runStructureAudit, runIntegrityAudit, runSurfaceAudit };
+const defaultAuditFloorDeps: AuditFloorDeps = {
+  runStructureAudit: () => runStructureAudit(liteshipDevopsProfile),
+  runIntegrityAudit: () => runIntegrityAudit(liteshipDevopsProfile),
+  runSurfaceAudit: () => runSurfaceAudit(liteshipDevopsProfile),
+};
 
 /**
  * Collect the sorted `rule@file` warning inventory from the artifact-independent

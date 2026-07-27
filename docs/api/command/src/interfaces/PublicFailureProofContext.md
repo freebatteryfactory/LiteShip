@@ -6,7 +6,9 @@
 
 # Interface: PublicFailureProofContext
 
-Defined in: [command/src/commands/public-surface-context.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L27)
+Defined in: [command/src/commands/public-surface-context.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L30)
+
+Agent context for one executable public failure contract.
 
 ## Properties
 
@@ -14,7 +16,7 @@ Defined in: [command/src/commands/public-surface-context.ts:27](https://github.c
 
 > `readonly` **importSource**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L29)
+Defined in: [command/src/commands/public-surface-context.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L32)
 
 ***
 
@@ -22,7 +24,7 @@ Defined in: [command/src/commands/public-surface-context.ts:29](https://github.c
 
 > `readonly` **observation**: `object`
 
-Defined in: [command/src/commands/public-surface-context.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L31)
+Defined in: [command/src/commands/public-surface-context.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L34)
 
 #### code
 
@@ -42,7 +44,7 @@ Defined in: [command/src/commands/public-surface-context.ts:31](https://github.c
 
 > `readonly` **operation**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L30)
+Defined in: [command/src/commands/public-surface-context.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L33)
 
 ***
 
@@ -50,4 +52,4 @@ Defined in: [command/src/commands/public-surface-context.ts:30](https://github.c
 
 > `readonly` **test**: `string`
 
-Defined in: [command/src/commands/public-surface-context.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L28)
+Defined in: [command/src/commands/public-surface-context.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/public-surface-context.ts#L31)

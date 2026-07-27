@@ -8,6 +8,6 @@
 
 > **Request** = [`JsonRpcRequest`](../../../interfaces/JsonRpcRequest.md)
 
-Defined in: [mcp-server/src/jsonrpc.ts:268](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L268)
+Defined in: [mcp-server/src/jsonrpc.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L275)
 
 Wire-shape request (§4).

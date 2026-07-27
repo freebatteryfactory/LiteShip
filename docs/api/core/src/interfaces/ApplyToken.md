@@ -27,7 +27,7 @@ Defined in: [core/src/evidence/validated-output.ts:53](https://github.com/freeba
 
 ### subject
 
-> `readonly` **subject**: `ContentAddress`
+> `readonly` **subject**: [`ContentAddress`](../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: [core/src/evidence/validated-output.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/evidence/validated-output.ts#L55)
 

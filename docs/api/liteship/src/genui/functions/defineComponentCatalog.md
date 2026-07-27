@@ -6,11 +6,11 @@
 
 # Function: defineComponentCatalog()
 
-> **defineComponentCatalog**(`input`): `ComponentCatalog`
+> **defineComponentCatalog**(`input`): [`ComponentCatalog`](../../../../spine/interfaces/ComponentCatalog.md)
 
 Defined in: genui/dist/catalog.d.ts:19
 
-Register a host-owned component catalog. Mints [ComponentCatalog.catalogHash](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
+Register a host-owned component catalog. Mints [ComponentCatalog.catalogHash](../../../../spine/interfaces/ComponentCatalog.md#cataloghash)
 over canonical catalog bytes (version + component defs).
 
 ## Parameters
@@ -21,4 +21,4 @@ over canonical catalog bytes (version + component defs).
 
 ## Returns
 
-`ComponentCatalog`
+[`ComponentCatalog`](../../../../spine/interfaces/ComponentCatalog.md)

@@ -40,7 +40,7 @@ afterEach(() => {
 });
 
 describe('compositor worker error contract', () => {
-  test('worker-message-error names the message type being handled and the common cause', () => {
+  test('worker-message-error names the message type being handled and the common cause', async () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
 
@@ -53,10 +53,10 @@ describe('compositor worker error contract', () => {
     // Merged contract: detail is the structured envelope (code/hint from the
     // ErrorMessage extension + context from this cluster), not bare prose.
     expect(event?.detail).toMatchObject({ message: 'boom from compute', context: 'compute' });
-    cw.dispose();
+    await cw.dispose();
   });
 
-  test('worker-message-error without context keeps the generic message', () => {
+  test('worker-message-error without context keeps the generic message', async () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
 
@@ -64,10 +64,10 @@ describe('compositor worker error contract', () => {
 
     const event = diagnosticEvents.find((e) => e.code === 'worker-message-error');
     expect(event?.message).toBe('Compositor worker reported an error.');
-    cw.dispose();
+    await cw.dispose();
   });
 
-  test('worker-unhandled-error teaches the worker-src blob: CSP fix', () => {
+  test('worker-unhandled-error teaches the worker-src blob: CSP fix', async () => {
     const cw = CompositorWorker.create();
     const worker = MockWorker.instances[0]!;
 
@@ -77,6 +77,6 @@ describe('compositor worker error contract', () => {
     expect(event?.message).toBe(
       'Compositor worker raised an unhandled error (often the Blob-URL worker being blocked by a strict CSP — allow worker-src blob:). Detail: script blocked',
     );
-    cw.dispose();
+    await cw.dispose();
   });
 });

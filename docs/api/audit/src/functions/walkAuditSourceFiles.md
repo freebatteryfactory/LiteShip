@@ -8,7 +8,9 @@
 
 > **walkAuditSourceFiles**(`root?`): readonly `string`[]
 
-Defined in: [audit/src/shared.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L65)
+Defined in: [audit/src/shared.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L69)
+
+Discover executable source files under the audit root in stable order.
 
 ## Parameters
 

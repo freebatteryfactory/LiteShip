@@ -26,23 +26,23 @@ named re-exports only — no behavior lives here.
 ## Interfaces
 
 - [AsyncOwnedResource](interfaces/AsyncOwnedResource.md)
-- [CellFanoutShape](interfaces/CellFanoutShape.md)
-- [CellReplayShape](interfaces/CellReplayShape.md)
+- [CellFanout](interfaces/CellFanout.md)
+- [CellReplay](interfaces/CellReplay.md)
 - [CellSink](interfaces/CellSink.md)
+- [Lifetime](interfaces/Lifetime.md)
 - [LifetimeDisposeError](interfaces/LifetimeDisposeError.md)
-- [LifetimeShape](interfaces/LifetimeShape.md)
 - [LiveQuantizer](interfaces/LiveQuantizer.md)
-- [OwnedResource](interfaces/OwnedResource.md)
 - [ProjectionState](interfaces/ProjectionState.md)
 - [ProjectionStateOptions](interfaces/ProjectionStateOptions.md)
 - [QuantizerConfig](interfaces/QuantizerConfig.md)
 - [QuantizerRuntime](interfaces/QuantizerRuntime.md)
 - [RafDebouncedTrigger](interfaces/RafDebouncedTrigger.md)
 - [ResolvedStateSnapshot](interfaces/ResolvedStateSnapshot.md)
+- [RuntimeCoordinator](interfaces/RuntimeCoordinator.md)
 - [RuntimeCoordinatorConfig](interfaces/RuntimeCoordinatorConfig.md)
 - [StateCell](interfaces/StateCell.md)
 - [StateCellRegisterOptions](interfaces/StateCellRegisterOptions.md)
-- [StateCellStoreShape](interfaces/StateCellStoreShape.md)
+- [StateCellStore](interfaces/StateCellStore.md)
 - [StateResolutionReceipt](interfaces/StateResolutionReceipt.md)
 
 ## Type Aliases
@@ -55,13 +55,11 @@ named re-exports only — no behavior lives here.
 - [Disposer](type-aliases/Disposer.md)
 - [Finalizer](type-aliases/Finalizer.md)
 - [Lifetime](type-aliases/Lifetime.md)
-- [Lifetime](type-aliases/Lifetime-1.md)
 - [LifetimeDisposeError](type-aliases/LifetimeDisposeError.md)
 - [LiveCell](type-aliases/LiveCell.md)
 - [OwnedQuantizer](type-aliases/OwnedQuantizer.md)
 - [Primitive](type-aliases/Primitive.md)
 - [ReplayableRecoveryCell](type-aliases/ReplayableRecoveryCell.md)
-- [RuntimeCoordinator](type-aliases/RuntimeCoordinator.md)
 - [RuntimePhase](type-aliases/RuntimePhase.md)
 - [Scheduler](type-aliases/Scheduler.md)
 - [Signal](type-aliases/Signal.md)
@@ -70,7 +68,6 @@ named re-exports only — no behavior lives here.
 - [SpeculativeEvaluator](type-aliases/SpeculativeEvaluator.md)
 - [StateAuthority](type-aliases/StateAuthority.md)
 - [StateCellKind](type-aliases/StateCellKind.md)
-- [StateCellStore](type-aliases/StateCellStore.md)
 - [Store](type-aliases/Store.md)
 - [Zap](type-aliases/Zap.md)
 
@@ -114,15 +111,3 @@ named re-exports only — no behavior lives here.
 - [sourceToInput](functions/sourceToInput.md)
 - [startRafLoop](functions/startRafLoop.md)
 - [validateSnapshotSignalsField](functions/validateSnapshotSignalsField.md)
-
-## References
-
-### ProjectionStateShape
-
-Renames and re-exports [ProjectionState](variables/ProjectionState.md)
-
-***
-
-### StateCellShape
-
-Renames and re-exports [StateCell](variables/StateCell.md)

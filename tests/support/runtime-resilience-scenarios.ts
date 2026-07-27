@@ -19,10 +19,7 @@ import { consultFault, type SimScenario, type SimStep, type SimWorld } from '@li
 import { createQuantizer, defineQuantizer } from '@liteship/quantizer';
 import { SSE, Resumption } from '@liteship/web';
 import { SPSCRing } from '@liteship/worker';
-import {
-  campaignObservation,
-  type RecoveryCorpusEntry,
-} from '../../packages/cli/src/lib/simulation-corpus.js';
+import { campaignObservation, type RecoveryCorpusEntry } from '../../packages/cli/src/lib/simulation-corpus.js';
 import { MockEventSource } from '../helpers/mock-event-source.js';
 
 const WORKER_FAULT_POINT = 'worker.producer-crash';
@@ -178,7 +175,7 @@ const webTransportScenario: SimScenario = {
       },
       {
         label: 'web.recovered',
-        act: (): unknown => {
+        act: async (): Promise<unknown> => {
           const recovered =
             disconnectActivated &&
             reorderActivated &&
@@ -186,7 +183,7 @@ const webTransportScenario: SimScenario = {
             saturated &&
             client.state === 'connected' &&
             Resumption.canResume(client.lastEventId ?? '', '2');
-          client.close();
+          await client.dispose();
           return campaignObservation('recovery', recovered);
         },
       },
@@ -267,7 +264,12 @@ const quantizerTimeScenario: SimScenario = {
           const second = stamps[1] === undefined ? undefined : HLC.decode(stamps[1]);
           const third = stamps[2] === undefined ? undefined : HLC.decode(stamps[2]);
           const recovered =
-            degradedSafely && held && crossed && second !== undefined && third !== undefined && HLC.compare(second, third) < 0;
+            degradedSafely &&
+            held &&
+            crossed &&
+            second !== undefined &&
+            third !== undefined &&
+            HLC.compare(second, third) < 0;
           unsubscribe();
           await quantizer.dispose();
           return campaignObservation('recovery', recovered);
@@ -282,7 +284,8 @@ export const RUNTIME_RESILIENCE_CORPUS: readonly RecoveryCorpusEntry[] = Object.
   {
     scenario: workerLifecycleScenario,
     owner: '@liteship/worker',
-    invariant: 'bounded worker transport survives backpressure and a producer-generation restart without loss or reordering',
+    invariant:
+      'bounded worker transport survives backpressure and a producer-generation restart without loss or reordering',
     seeds: [101, 0xc0ffee],
     faultSchedule: [
       { point: WORKER_FAULT_POINT, kind: 'error', probability: 1, detail: 'terminate the current producer generation' },
@@ -299,8 +302,18 @@ export const RUNTIME_RESILIENCE_CORPUS: readonly RecoveryCorpusEntry[] = Object.
     invariant: 'SSE reconnect ignores stale-generation frames and sheds only bounded idempotent work under pressure',
     seeds: [202, 0xbadc0de],
     faultSchedule: [
-      { point: WEB_DISCONNECT_POINT, kind: 'error', probability: 1, detail: 'disconnect the active EventSource generation' },
-      { point: WEB_REORDER_POINT, kind: 'reorder', probability: 1, detail: 'deliver one old-generation frame after reconnect' },
+      {
+        point: WEB_DISCONNECT_POINT,
+        kind: 'error',
+        probability: 1,
+        detail: 'disconnect the active EventSource generation',
+      },
+      {
+        point: WEB_REORDER_POINT,
+        kind: 'reorder',
+        probability: 1,
+        detail: 'deliver one old-generation frame after reconnect',
+      },
     ],
     recoveryExpectation: {
       steadyState: 'the live EventSource advances the cursor',
@@ -314,7 +327,13 @@ export const RUNTIME_RESILIENCE_CORPUS: readonly RecoveryCorpusEntry[] = Object.
     invariant: 'hysteresis suppresses threshold jitter and crossing HLCs remain monotonic across wall-clock regression',
     seeds: [303, 0xdecaf],
     faultSchedule: [
-      { point: QUANTIZER_TIME_POINT, kind: 'delay', probability: 1, delayTicks: 100, detail: 'move wall time behind the prior crossing' },
+      {
+        point: QUANTIZER_TIME_POINT,
+        kind: 'delay',
+        probability: 1,
+        delayTicks: 100,
+        detail: 'move wall time behind the prior crossing',
+      },
     ],
     recoveryExpectation: {
       steadyState: 'the quantizer crosses only after clearing the upward dead zone',

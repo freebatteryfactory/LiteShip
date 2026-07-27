@@ -16,7 +16,7 @@ verbatim from `plan.ts` (both endpoints stay in the fnv1a identity law).
 
 ### from
 
-> `readonly` **from**: `ContentAddress`
+> `readonly` **from**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:144
 
@@ -24,7 +24,7 @@ Defined in: core/dist/graph/document-graph.d.ts:144
 
 ### to
 
-> `readonly` **to**: `ContentAddress`
+> `readonly` **to**: [`ContentAddress`](../../../../spine/type-aliases/ContentAddress.md)
 
 Defined in: core/dist/graph/document-graph.d.ts:145
 
