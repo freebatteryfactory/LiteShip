@@ -72,6 +72,8 @@ function input(overrides: Partial<BenchmarkEvidenceInput> = {}): BenchmarkEviden
       minimumR2: 0.9,
       coefficientOfVariation: 0.03,
       maximumCoefficientOfVariation: 0.1,
+      minimumObservedBatchDurationMs: 20,
+      minimumTimedBatchDurationMs: 10,
     },
   };
   return { ...base, ...overrides };
@@ -119,6 +121,10 @@ describe('BenchmarkEvidence', () => {
           minimumR2: 0.9,
           coefficientOfVariation: 0.4,
           maximumCoefficientOfVariation: 0.1,
+          minimumObservedBatchDurationMs: 20,
+          minimumTimedBatchDurationMs: 10,
+          minimumObservedBatchDurationMs: 20,
+          minimumTimedBatchDurationMs: 10,
         },
       }),
     );
@@ -156,6 +162,8 @@ describe('BenchmarkEvidence', () => {
             minimumR2: 0.5,
             coefficientOfVariation: 0.03,
             maximumCoefficientOfVariation: 0.25,
+            minimumObservedBatchDurationMs: 20,
+            minimumTimedBatchDurationMs: 10,
           },
         }),
       ),
@@ -232,6 +240,8 @@ describe('BenchmarkEvidence', () => {
           minimumR2: 0.9,
           coefficientOfVariation: 0.4,
           maximumCoefficientOfVariation: 0.1,
+          minimumObservedBatchDurationMs: 20,
+          minimumTimedBatchDurationMs: 10,
         },
       }),
     );
@@ -266,7 +276,7 @@ describe('existing complexity producer → addressed evidence → admission', ()
 
   function map(overrides: Partial<ComplexityMap['entries'][number]> = {}): ComplexityMap {
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       entries: [
         {
           path: probe.path,
@@ -277,7 +287,21 @@ describe('existing complexity producer → addressed evidence → admission', ()
           fittedSlope: 1,
           fittedR2: 0.99,
           coefficientOfVariation: 0.03,
-          measurement: { innerIterations: 10, replicates: 7, warmupIterations: 2 },
+          measurement: {
+            innerIterations: 10,
+            replicates: 7,
+            warmupIterations: 2,
+            calibrationReplicates: 3,
+            calibrationTargetBatchDurationMs: 20,
+            minimumTimedBatchDurationMs: 10,
+            maximumCalibratedInnerIterations: 1_000_000,
+          },
+          replicateSamplesNs: probe.sizes.map((size) => ({
+            size,
+            effectiveInnerIterations: 100,
+            samples: [100, 101, 99, 102, 100, 101, 99],
+            batchDurationsMs: [20, 20.2, 19.8, 20.4, 20, 20.2, 19.8],
+          })),
           ...overrides,
         },
       ],

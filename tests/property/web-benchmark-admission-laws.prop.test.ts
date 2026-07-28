@@ -96,6 +96,8 @@ function webEvidence(overrides: Partial<BenchmarkEvidenceInput> = {}): Benchmark
       minimumR2: COMPLEXITY_ADMISSION_POLICY.minimumR2,
       coefficientOfVariation: 0.02,
       maximumCoefficientOfVariation: COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation,
+      minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
+      minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
     },
   };
   return createBenchmarkEvidence({ ...input, ...overrides });
@@ -136,9 +138,11 @@ describe('Web benchmark admission laws', () => {
     }
 
     const registry = readDistributionRegistry(repoRoot)!;
-    expect(projectBenchmarkOwnerCoverage(PACKAGE_CATALOG, registry.distributions, []).find(
-      (entry) => entry.packageName === '@liteship/web',
-    )).toMatchObject({ status: 'covered', distributionCount: 2 });
+    expect(
+      projectBenchmarkOwnerCoverage(PACKAGE_CATALOG, registry.distributions, []).find(
+        (entry) => entry.packageName === '@liteship/web',
+      ),
+    ).toMatchObject({ status: 'covered', distributionCount: 2 });
   });
 
   it('rejects a no-op benchmark body even when it retains the subject import', () => {
@@ -148,8 +152,9 @@ describe('Web benchmark admission laws', () => {
       `bench.add('${OVERFLOW_BENCH}', () => saturatedBuffer.length);`,
       'void applyOverflow;',
     ].join('\n');
-    expect(qualifyBenchDistribution(distribution, (path) => (path === BENCH_FILE ? noOp : source(path))).issues)
-      .toContainEqual(expect.objectContaining({ kind: 'uninvoked-subject' }));
+    expect(
+      qualifyBenchDistribution(distribution, (path) => (path === BENCH_FILE ? noOp : source(path))).issues,
+    ).toContainEqual(expect.objectContaining({ kind: 'uninvoked-subject' }));
   });
 
   it('measures the live saturated-buffer scan as linear and makes the result behavior-sensitive', () => {

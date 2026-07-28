@@ -26,6 +26,7 @@ import {
   extractRegisteredBenches,
   fitComplexityClass,
   lowerEnvelopeCoefficientOfVariation,
+  measureComplexityCurve,
   readComplexityMap,
   readDistributionRegistry,
   type ComplexitySample,
@@ -158,6 +159,65 @@ describe('lower-envelope variance — uncertainty matches the best-of-k estimato
   });
 });
 
+describe('complexity batch calibration — escaped shared-runner variance cure', () => {
+  it('calibrates before evidence collection and records the effective batches', () => {
+    const durations = Array.from({ length: 5 }, () => [1, 1, 1, 24, 24, 24, 20, 20, 20, 20, 20, 20, 20]).flat();
+    let now = 0;
+    let read = 0;
+    const clock = {
+      now: () => {
+        if (read % 2 === 1) now += durations[Math.floor(read / 2)]!;
+        read += 1;
+        return now;
+      },
+    };
+    let calls = 0;
+    const curve = measureComplexityCurve(
+      {
+        path: 'fixture.calibrated',
+        owner: '@liteship/gauntlet',
+        describe: 'deterministic calibration fixture',
+        shape: 'items',
+        sizes: [1, 2, 4, 8, 16],
+        measurement: { innerIterations: 1, replicates: 7, warmupIterations: 0 },
+        workloadFor: () => () => {
+          calls += 1;
+        },
+      },
+      { clock },
+    );
+
+    expect(curve.minimumObservedBatchDurationMs).toBe(20);
+    expect(curve.fit.class).toBe('O(1)');
+    expect(curve.replicateSamplesNs).toEqual(
+      [1, 2, 4, 8, 16].map((size) => ({
+        size,
+        effectiveInnerIterations: 32,
+        samples: Array<number>(7).fill(625_000),
+        batchDurationsMs: Array<number>(7).fill(20),
+      })),
+    );
+    expect(calls).toBe(5 * (3 * 1 + 3 * 32 + 7 * 32));
+  });
+
+  it('fails closed when a monotonic clock cannot establish a measurable batch before the cap', () => {
+    expect(() =>
+      measureComplexityCurve(
+        {
+          path: 'fixture.unmeasurable',
+          owner: '@liteship/gauntlet',
+          describe: 'zero-resolution fixture',
+          shape: 'items',
+          sizes: [1, 2, 4, 8, 16],
+          measurement: { innerIterations: 1_000_000, replicates: 7, warmupIterations: 0 },
+          workloadFor: () => () => undefined,
+        },
+        { clock: { now: () => 0 } },
+      ),
+    ).toThrow(/could not reach 20ms/u);
+  });
+});
+
 describe('live complexity producer self-proof', () => {
   const entry = (path: string, klass: (typeof COMPLEXITY_CLASSES)[number], fittedR2 = 0.99) => ({
     path,
@@ -168,17 +228,27 @@ describe('live complexity producer self-proof', () => {
     fittedSlope: klass === 'O(n^2)' ? 2 : 1,
     fittedR2,
     coefficientOfVariation: 0.03,
-    measurement: { innerIterations: 10, replicates: 7, warmupIterations: 2 },
+    measurement: {
+      innerIterations: 10,
+      replicates: 7,
+      warmupIterations: 2,
+      calibrationReplicates: COMPLEXITY_ADMISSION_POLICY.calibrationReplicates,
+      calibrationTargetBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
+      minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
+      maximumCalibratedInnerIterations: COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations,
+    },
     replicateSamplesNs: [8, 16, 32, 64, 128].map((size) => ({
       size,
+      effectiveInnerIterations: 100,
       samples: [100, 101, 99, 102, 100, 101, 99],
+      batchDurationsMs: [20, 20.2, 19.8, 20.4, 20, 20.2, 19.8],
     })),
   });
 
   it('accepts complete, trustworthy measurements at their ceilings', () => {
     expect(
       verifyMeasuredComplexityMap({
-        schemaVersion: 2,
+        schemaVersion: 3,
         entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, klass]) => entry(path, klass)),
       }),
     ).toEqual([]);
@@ -187,7 +257,7 @@ describe('live complexity producer self-proof', () => {
   it('reds on missing, noisy, and complexity-regressed live evidence', () => {
     const paths = Object.keys(ACCEPTED_COMPLEXITY_CEILINGS);
     const reasons = verifyMeasuredComplexityMap({
-      schemaVersion: 2,
+      schemaVersion: 3,
       entries: [entry(paths[0]!, 'O(n^2)', 0.1)],
     }).map((issue) => issue.reason);
     expect(reasons.filter((reason) => reason === 'class-regression')).toHaveLength(1);
@@ -202,12 +272,21 @@ describe('live complexity producer self-proof', () => {
       [{ ...baseline, sizes: [8, 16, 32, 64] }, 'insufficient-size-sweep'],
       [{ ...baseline, sizes: [8, 16, 24, 48, 96] }, 'invalid-size-sweep'],
       [{ ...baseline, measurement: { ...baseline.measurement, replicates: 6 } }, 'under-replicated'],
+      [
+        {
+          ...baseline,
+          replicateSamplesNs: baseline.replicateSamplesNs.map((sampleSet, index) =>
+            index === 0 ? { ...sampleSet, batchDurationsMs: [9, 20, 20, 20, 20, 20, 20] } : sampleSet,
+          ),
+        },
+        'under-timed-batch',
+      ],
       [{ ...baseline, fittedR2: 0.8999 }, 'low-r2'],
       [{ ...baseline, coefficientOfVariation: 0.2501 }, 'unstable-variance'],
     ] as const;
 
     for (const [candidate, expected] of cases) {
-      const issues = verifyMeasuredComplexityMap({ schemaVersion: 2, entries: [candidate] });
+      const issues = verifyMeasuredComplexityMap({ schemaVersion: 3, entries: [candidate] });
       expect(
         issues.map((issue) => issue.reason),
         expected,
@@ -225,10 +304,17 @@ describe('live complexity producer self-proof', () => {
         (sizeCount, replicates, fittedR2, coefficientOfVariation) => {
           const sizes = Array.from({ length: sizeCount }, (_, index) => 8 * 2 ** index);
           return (
-            complexityAdmissionReasons({ sizes, replicates, fittedR2, coefficientOfVariation }).length === 0 &&
+            complexityAdmissionReasons({
+              sizes,
+              replicates,
+              minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
+              fittedR2,
+              coefficientOfVariation,
+            }).length === 0 &&
             complexityAdmissionReasons({
               sizes: [...sizes, sizes.at(-1)! * 2],
               replicates: replicates + 1,
+              minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
               fittedR2: Math.min(1, fittedR2 + 0.01),
               coefficientOfVariation: Math.max(0, coefficientOfVariation - 0.01),
             }).length === 0
@@ -425,6 +511,9 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
         complexityAdmissionReasons({
           sizes: entry!.sizes,
           replicates: entry!.measurement.replicates,
+          minimumObservedBatchDurationMs: Math.min(
+            ...entry!.replicateSamplesNs.flatMap((sampleSet) => sampleSet.batchDurationsMs),
+          ),
           fittedR2: entry!.fittedR2,
           coefficientOfVariation: entry!.coefficientOfVariation,
         }),
