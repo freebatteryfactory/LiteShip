@@ -20,6 +20,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve, sep } from 'node:path';
 import ts from 'typescript';
+import { buildCiPlan } from '../ci-plan.js';
 
 const portable = (path: string): string => path.split(sep).join('/').replaceAll('\\', '/');
 
@@ -90,6 +91,8 @@ const JOB_HEADER = /^ {2}([A-Za-z0-9_-]+):\s*$/u;
 const STEP_START = /^\s*-\s/u;
 const DOWNLOAD_ARTIFACT = /\bactions\/download-artifact\b/u;
 const PATH_KEY = /^\s*path:\s*(.*)$/u;
+const PROJECTED_SPECIALIZED_COMMAND =
+  /fromJSON\(needs\.plan\.outputs\.matrix\)\.specializedChecks\.([A-Za-z0-9_]+)\.command/gu;
 
 interface ExpandedCommand {
   readonly entrypoints: readonly PrebuildEntrypoint[];
@@ -189,6 +192,7 @@ export function enumerateWorkflowEntrypoints(
   workflowFile: string,
   text: string,
   scripts: Readonly<Record<string, string>> = {},
+  projectedSpecializedCommands: Readonly<Record<string, string>> = {},
 ): readonly PrebuildEntrypoint[] {
   const lines = text.split(/\r?\n/u);
   const jobsAt = lines.findIndex((line) => /^jobs:\s*$/u.test(line));
@@ -203,6 +207,18 @@ export function enumerateWorkflowEntrypoints(
     let provision: DistProvision = 'none';
     for (let index = 0; index < jobLines.length; index += 1) {
       if (index > artifactProvider && provision === 'none') provision = 'artifact';
+      for (const projected of jobLines[index]!.matchAll(PROJECTED_SPECIALIZED_COMMAND)) {
+        const key = projected[1]!;
+        const command = projectedSpecializedCommands[key];
+        if (command === undefined) {
+          throw new Error(
+            `cold-entrypoint census cannot resolve projected specialized command "${key}" in ${portable(workflowFile)}#${job}`,
+          );
+        }
+        const expanded = expandRootCommandEntrypoints(command, `${portable(workflowFile)}#${job}`, scripts, provision);
+        out.push(...expanded.entrypoints);
+        provision = expanded.finalProvision;
+      }
       const expanded = expandRootCommandEntrypoints(
         jobLines[index]!,
         `${portable(workflowFile)}#${job}`,
@@ -464,6 +480,9 @@ export function buildPrebuildClosureReceipt(repoRoot: string): PrebuildClosureRe
     readonly scripts?: Readonly<Record<string, string>>;
   };
   const scripts = rootManifest.scripts ?? {};
+  const projectedSpecializedCommands = Object.fromEntries(
+    Object.entries(buildCiPlan().specializedChecks).map(([key, check]) => [key, check.command]),
+  );
   const workflowDir = resolve(repoRoot, '.github', 'workflows');
   const entrypoints: PrebuildEntrypoint[] = [];
   const workflowDigests: { readonly file: string; readonly digest: string }[] = [];
@@ -473,7 +492,7 @@ export function buildPrebuildClosureReceipt(repoRoot: string): PrebuildClosureRe
       const repoRelative = `.github/workflows/${file}`;
       const text = readFileSync(resolve(workflowDir, file), 'utf8');
       workflowDigests.push({ file: repoRelative, digest: createHash('sha256').update(text).digest('hex') });
-      entrypoints.push(...enumerateWorkflowEntrypoints(repoRelative, text, scripts));
+      entrypoints.push(...enumerateWorkflowEntrypoints(repoRelative, text, scripts, projectedSpecializedCommands));
     }
   }
   entrypoints.push(...enumerateLifecycleEntrypoints(rootManifest));

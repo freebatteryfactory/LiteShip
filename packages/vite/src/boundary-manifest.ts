@@ -34,7 +34,7 @@ import {
   type QuantizeAtRuleGroup,
   type QuantizeStateBody,
 } from './css-quantize.js';
-import { findConventionFiles } from './resolve-fs.js';
+import { findConventionFiles, reportProjectWalkIssue } from './resolve-fs.js';
 
 const DIAGNOSTIC_SOURCE = 'liteship/vite.boundary-manifest';
 
@@ -80,7 +80,11 @@ export function scanProject(projectRoot: string): ProjectScan {
   // Symlink-following, realpath cycle-safe walk (the shared fs-walk owner);
   // its per-target filter can't express `boundaries.ts`'s exact/suffix split,
   // so classify each absolute path by basename here.
-  for (const file of walkFiles(projectRoot, { skipDirs: SKIP_DIRS, followSymlinks: true })) {
+  for (const file of walkFiles(projectRoot, {
+    skipDirs: SKIP_DIRS,
+    followSymlinks: true,
+    onIssue: (issue) => reportProjectWalkIssue(DIAGNOSTIC_SOURCE, issue),
+  })) {
     const name = path.basename(file);
     if (isBoundaryModuleFile(name)) {
       boundaryFiles.push(file);

@@ -19,6 +19,14 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Every test host receives the same exact review baseline inputs. The
+# cross-platform preparation script fetches only this object (or the named
+# fallback branch on first-push/manual events) and fails closed if the committed
+# standards snapshot is absent.
+env:
+  LITESHIP_CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+  LITESHIP_CI_BASE_REF: ${{ github.base_ref || 'main' }}
+
 jobs:
   format:
     runs-on: ubuntu-latest
@@ -67,6 +75,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Validate change intent before expensive authority
+        run: pnpm exec tsx scripts/validate-github-change-intent.ts
       - id: plan
         name: Emit the registry-projected lane matrix
         # The projection emits compact one-line JSON. Capture it before writing
@@ -92,8 +102,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Pull-request authority: cheap registry checks plus the canonical package-DAG
-  # affected closure. Global authority changes fail broad to the full Node suite.
+  # Pull-request fast feedback: cheap registry checks plus the canonical package-DAG
+  # affected closure. This supplements, but never replaces, the full candidate authority below.
   pr-affected:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -110,6 +120,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare Node-test host authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg --standards-base
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: affected-plan
@@ -226,6 +238,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare Node-test host authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg --standards-base
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: affected-plan
@@ -331,65 +345,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Prepare Node-test host authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg --standards-base
       - run: pnpm run build
       - name: Configure git identity for doctor --ci
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-      # Resolve the standards-integrity base ref DETERMINISTICALLY (the snapshot the
-      # change is REVIEWED against). The raccoon-rule backstop (gauntlet:full's
-      # `standards:gate` phase) diffs the LIVE standards surface against the snapshot AS
-      # COMMITTED ON THIS REF — so a same-commit weaken+regenerate still diffs as a
-      # weakening versus the base. Two cases, both choosing a ref that HAS the snapshot:
-      #   - pull_request: the PR base BRANCH, fetched and named as `origin/<base>`. The
-      #     diff is exactly "this PR vs what it merges into" (the true review base). The
-      #     checkout above already created `refs/remotes/pull/<n>/merge`; we fetch the
-      #     base branch tip explicitly so `git show origin/<base>:…` resolves.
-      #   - push (to main or a feature branch): `github.event.before` — the SHA the ref
-      #     pointed at BEFORE this push. This covers the ENTIRE pushed range, NOT just the
-      #     last commit. (`HEAD~1` only diffed the last commit's parent, so a weakening
-      #     introduced EARLIER in a multi-commit push — already present at HEAD~1 — sailed
-      #     through. `before` is the true range base, so an earlier-commit weakening is
-      #     diffed and caught.) `before` is the prior tip, which HAS the snapshot; we fetch
-      #     it explicitly so `git show <before>:…` resolves even on a non-default checkout.
-      #     BOOTSTRAP: the FIRST push of a brand-new branch has no prior tip, so `before`
-      #     is the all-zeros sentinel. We then fall back to the merge-base with the
-      #     integration branch (main) — the true divergence point — IF main carries the
-      #     snapshot; otherwise we leave the zero-SHA in place and the resolver +
-      #     readBaseSnapshot FAIL CLOSED (the gate THROWS, never a silent pass).
-      # FAIL-CLOSED is preserved throughout: if the chosen ref has no snapshot, the gate
-      # THROWS rather than fall back to the working-tree snapshot.
-      - name: Resolve standards-integrity base ref
-        env:
-          PUSH_BEFORE: ${{ github.event.before }}
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags --depth=1 origin "$BASE_REF"
-            echo "LITESHIP_STANDARDS_BASE_REF=origin/$BASE_REF" >> "$GITHUB_ENV"
-          else
-            ZERO="0000000000000000000000000000000000000000"
-            BASE="$PUSH_BEFORE"
-            if [ "$BASE" = "$ZERO" ] || [ -z "$BASE" ]; then
-              # Brand-new-branch bootstrap: no prior tip. Use the merge-base with main as
-              # the range base (the divergence point) IF main has the snapshot; else keep
-              # the zero-SHA so the gate fails CLOSED rather than silently passing.
-              git fetch --no-tags origin main || true
-              if MB="$(git merge-base origin/main HEAD 2>/dev/null)" \
-                 && git cat-file -e "$MB:traceability/standards-snapshot.json" 2>/dev/null; then
-                BASE="$MB"
-              else
-                BASE="$ZERO"
-              fi
-            else
-              # The prior tip the ref pointed at before this push — fetch it so
-              # `git show <before>:…` resolves over the whole pushed range.
-              git fetch --no-tags origin "$BASE" || true
-            fi
-            echo "LITESHIP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
-          fi
       - run: pnpm run gauntlet:full
         env:
           CI: true
@@ -403,11 +365,11 @@ jobs:
             reports
             benchmarks
 
-  # Parallel truth-linux lane — merge gate (serial demoted to nightly after Phase B).
+  # Parallel truth-linux lane — the pre-merge candidate gate and post-merge confirmation.
   # Build once, fan out: vitest shards N=4, isolated bench, quarantined capsule:verify.
   # Bench is NEVER sharded.
   truth-linux-parallel-setup:
-    if: github.event_name == 'push' || github.event_name == 'workflow_call'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs:
@@ -429,7 +391,8 @@ jobs:
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Prepare ffmpeg render capability
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
       - name: Configure git identity for doctor --ci
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -464,6 +427,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare preflight standards authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --standards-base
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: dist-packages
@@ -496,6 +461,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare sharded Node-test host authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg --standards-base
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: dist-packages
@@ -554,7 +521,8 @@ jobs:
           toolchain: 1.85.1
           targets: wasm32-unknown-unknown
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Prepare ffmpeg render capability
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
       - run: pnpm run build:wasm
       - name: Confirm lane matches the registry-projected plan
         env:
@@ -621,7 +589,8 @@ jobs:
           name: dist-packages
           path: .
       - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Prepare ffmpeg render capability
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg
       - name: Confirm lane matches the registry-projected plan
         env:
           PLANNED_PROFILE: ${{ fromJSON(needs.plan.outputs.matrix).lanes.integration.profile }}
@@ -807,6 +776,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare final standards authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --standards-base
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: dist-packages
@@ -815,31 +786,6 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-      - name: Resolve standards-integrity base ref
-        env:
-          PUSH_BEFORE: ${{ github.event.before }}
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -euo pipefail
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags --depth=1 origin "$BASE_REF"
-            echo "LITESHIP_STANDARDS_BASE_REF=origin/$BASE_REF" >> "$GITHUB_ENV"
-          else
-            ZERO="0000000000000000000000000000000000000000"
-            BASE="$PUSH_BEFORE"
-            if [ "$BASE" = "$ZERO" ] || [ -z "$BASE" ]; then
-              git fetch --no-tags origin main || true
-              if MB="$(git merge-base origin/main HEAD 2>/dev/null)" \
-                 && git cat-file -e "$MB:traceability/standards-snapshot.json" 2>/dev/null; then
-                BASE="$MB"
-              else
-                BASE="$ZERO"
-              fi
-            else
-              git fetch --no-tags origin "$BASE" || true
-            fi
-            echo "LITESHIP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
-          fi
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: coverage-shard-*
@@ -884,7 +830,7 @@ jobs:
       - run: echo "Parallel truth-linux lane passed."
 
   browser-e2e:
-    if: github.event_name != 'pull_request'
+    needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -932,7 +878,6 @@ jobs:
   # property suite running against that fresh artifact — the "build truth"
   # doctrine applied to the compute kernels (nothing prebuilt is trusted).
   rust-wasm-parity:
-    if: github.event_name != 'pull_request' || needs.plan.outputs.affected-rust-wasm-required == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: plan
@@ -991,7 +936,7 @@ jobs:
           CI: true
 
   windows-smoke:
-    if: github.event_name != 'pull_request'
+    needs: plan
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -1004,6 +949,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare Node-test host authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg --standards-base
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
@@ -1028,18 +975,12 @@ jobs:
       - run: pnpm run test:redteam
       - run: node packages/liteship/bin/liteship.mjs package-smoke
 
-  # macOS is tier-2: not gating, but a real signal so the docs aren't
-  # asking adopters to discover macOS-specific drift after they ship.
-  # `continue-on-error: true` keeps a macOS regression from blocking
-  # merges into main; it surfaces in the PR check list as a yellow,
-  # not a red. Promotion to tier-1 (= remove continue-on-error and
-  # add to ci-summary needs) requires the smoke passing reliably for
-  # a full release cycle on a fresh `macos-latest` image.
+  # macOS is release authority: platform-specific path and package-manager
+  # behavior must be proven before merge, not first discovered on main.
   macos-smoke:
-    if: github.event_name != 'pull_request'
+    needs: plan
     runs-on: macos-latest
     timeout-minutes: 60
-    continue-on-error: true
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1050,6 +991,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare Node-test host authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --ffmpeg --standards-base
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
@@ -1074,13 +1017,11 @@ jobs:
       - run: pnpm run test:redteam
       - run: node packages/liteship/bin/liteship.mjs package-smoke
 
-  # Milestone-2: Playwright browser lane on macOS — proves green for a cycle
-  # before promotion to tier-1 (drop continue-on-error + add to ci-summary).
+  # Browser authority on the same macOS candidate tree.
   macos-browser:
-    if: github.event_name != 'pull_request'
+    needs: plan
     runs-on: macos-latest
     timeout-minutes: 90
-    continue-on-error: true
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1234,6 +1175,37 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  security-audit:
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - plan
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prove governed security minimums
+        run: pnpm run security:minimum
+      - name: Query the live advisory registry
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        continue-on-error: true
+        with:
+          name: security-audit-${{ github.run_attempt }}
+          path: |
+            reports/pnpm-audit.json
+            reports/pnpm-audit.stderr.txt
+          if-no-files-found: warn
+          retention-days: 30
+
   ci-summary:
     if: always()
     runs-on: ubuntu-latest
@@ -1249,7 +1221,10 @@ jobs:
       - truth-linux-parallel
       - browser-e2e
       - windows-smoke
+      - macos-smoke
+      - macos-browser
       - rust-wasm-parity
+      - security-audit
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc
@@ -1268,29 +1243,33 @@ jobs:
           PARALLEL: ${{ needs.truth-linux-parallel.result }}
           BROWSER: ${{ needs.browser-e2e.result }}
           WINDOWS: ${{ needs.windows-smoke.result }}
+          MACOS: ${{ needs.macos-smoke.result }}
+          MACOS_BROWSER: ${{ needs.macos-browser.result }}
           RUST_WASM: ${{ needs.rust-wasm-parity.result }}
-          RUST_WASM_REQUIRED: ${{ needs.plan.outputs.affected-rust-wasm-required }}
           EXHAUSTIVE_ANALYSIS: ${{ needs.exhaustive-analysis.result }}
           EXHAUSTIVE_MUTATION: ${{ needs.exhaustive-mutation.result }}
           EXHAUSTIVE_MCDC: ${{ needs.exhaustive-mcdc.result }}
           SEMANTIC_ASSURANCE_ADMISSION: ${{ needs.semantic-assurance-admission.result }}
+          SECURITY_AUDIT: ${{ needs.security-audit.result }}
           EVIDENCE_ADMISSION: ${{ needs.evidence-admission.result }}
           REF: ${{ github.ref }}
         run: |
           set -euo pipefail
           test "$EVIDENCE_ADMISSION" = "success"
           test "$FORMAT" = "success"
+          test "$SECURITY_AUDIT" = "success"
           if [ "$EVENT" = "pull_request" ]; then
             test "$PR_AFFECTED" = "success"
             test "$PR_WINDOWS" = "success"
             test "$PR_EVIDENCE" = "success"
             test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
-            if [ "$RUST_WASM_REQUIRED" = "true" ]; then
-              test "$RUST_WASM" = "success"
-            else
-              test "$RUST_WASM" = "skipped"
-            fi
-            echo "CI pull-request authority passed (quick + affected Linux/Windows + affected browser)."
+            test "$PARALLEL" = "success"
+            test "$BROWSER" = "success"
+            test "$WINDOWS" = "success"
+            test "$MACOS" = "success"
+            test "$MACOS_BROWSER" = "success"
+            test "$RUST_WASM" = "success"
+            echo "CI pull-request authority passed (affected feedback + full release candidate)."
           else
             if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
               test "$SERIAL" = "success"
@@ -1299,6 +1278,8 @@ jobs:
             fi
             test "$BROWSER" = "success"
             test "$WINDOWS" = "success"
+            test "$MACOS" = "success"
+            test "$MACOS_BROWSER" = "success"
             test "$RUST_WASM" = "success"
             if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ] || [[ "$REF" == refs/tags/v* ]]; then
               test "$EXHAUSTIVE_ANALYSIS" = "success"
@@ -1323,7 +1304,10 @@ jobs:
       - truth-linux-parallel
       - browser-e2e
       - windows-smoke
+      - macos-smoke
+      - macos-browser
       - rust-wasm-parity
+      - security-audit
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc

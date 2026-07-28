@@ -22,7 +22,7 @@ Defined in: [\_spine/events.generated.d.ts:10](https://github.com/freebatteryfac
 
 ### liteship:detect-ready
 
-> **liteship:detect-ready**: [`ProtocolEvent`](ProtocolEvent.md)\<`"detect"`, `"dom"`, `any`\>
+> **liteship:detect-ready**: [`ProtocolEvent`](ProtocolEvent.md)\<`"detect"`, `"dom"`, [`DetectReadyDetail`](../type-aliases/DetectReadyDetail.md)\>
 
 Defined in: [\_spine/events.generated.d.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/events.generated.d.ts#L18)
 
@@ -62,7 +62,7 @@ Defined in: [\_spine/events.generated.d.ts:29](https://github.com/freebatteryfac
 
 ### liteship:llm-frame
 
-> **liteship:llm-frame**: [`ProtocolEvent`](ProtocolEvent.md)\<`"astro"`, `"dom"`, `any`\>
+> **liteship:llm-frame**: [`ProtocolEvent`](ProtocolEvent.md)\<`"astro"`, `"dom"`, [`UIFrame`](UIFrame.md)\>
 
 Defined in: [\_spine/events.generated.d.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/events.generated.d.ts#L30)
 
@@ -118,7 +118,7 @@ Defined in: [\_spine/events.generated.d.ts:36](https://github.com/freebatteryfac
 
 ### liteship:mutation
 
-> **liteship:mutation**: [`ProtocolEvent`](ProtocolEvent.md)\<`"web"`, `"dom"`, `any`\>
+> **liteship:mutation**: [`ProtocolEvent`](ProtocolEvent.md)\<`"web"`, `"dom"`, [`GraphMutationResponse`](../type-aliases/GraphMutationResponse.md)\>
 
 Defined in: [\_spine/events.generated.d.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/events.generated.d.ts#L37)
 

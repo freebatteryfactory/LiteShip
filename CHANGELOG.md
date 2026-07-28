@@ -4,6 +4,22 @@ All notable changes to LiteShip. The format follows [Keep a Changelog](https://k
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.24.0] (unreleased)
+
+### Changed
+
+- **Cold release authority.** Pull-request candidates now run the release-grade platform and consumer proof selected
+  by risk; governed exceptions are tree-local; packed journeys resolve package owners through ESM and preserve
+  canonical dotfiles; convergence, TypeScript qualification, and physical-path receipts fail with durable evidence.
+- **Measured package and benchmark admission.** Packed-cost baselines carry exact file/module deltas, all complexity
+  contracts retain their 5×7 raw samples, and Web's real SSE parsing/backpressure path owns an admitted benchmark.
+- **Honest schema, filesystem, and motion boundaries.** Standard Schema validation no longer advertises an
+  unsupported JSON projection, encoded input and decoded output schemas are distinct, fail-soft filesystem walking is
+  observable, CSS transitions preserve authored single-segment easing, and every emitted motion tier reports when
+  mixed-easing overlap requires the runtime floor.
+- **Security closure.** PostCSS is pinned above the disclosed vulnerable range; deterministic minimum and live audit
+  checks, raw receipts, CodeQL, secret scanning, and push protection join the release authority.
+
 ## [0.23.0] (unreleased)
 
 ### Changed

@@ -8,7 +8,7 @@
 
 > **fileHasSanctionedSkip**(`file`): `boolean`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:509](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L509)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:503](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L503)
 
 Does `file` carry ANY sanctioned skip site at all? (Cheap pre-check / audit helper.)
 

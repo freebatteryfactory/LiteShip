@@ -101,6 +101,17 @@ export interface DetectionResult {
 /** A teardown function — call it to remove the listeners it added. */
 export type Disposer = () => void;
 
+/** Payload emitted when the head capability probe settles successfully or fails closed. */
+export type DetectReadyDetail =
+  | {
+      readonly tier: CapTier;
+      readonly gpuTier: GPUTier;
+      readonly webgpu: boolean;
+      readonly motionTier: MotionTier;
+      readonly error?: undefined;
+    }
+  | { readonly error: true };
+
 export declare function detect(): ExtendedDetectionResult;
 
 export declare function detectGPUTier(): GPUTier;

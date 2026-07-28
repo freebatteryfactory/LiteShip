@@ -7,7 +7,7 @@
  */
 
 import { normalizeRepoPath, scanModuleScopeDateReads } from '@liteship/audit';
-import { walkFiles } from '@liteship/core/fs-walk';
+import { walkFiles, type WalkFilesIssue } from '@liteship/core/fs-walk';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -151,14 +151,21 @@ function scanFile(rel: string, source: string): ConsumerAppFinding[] {
 /** Scan consumer app source under `cwd` (prefers `src/` when present). */
 export function scanConsumerAppSource(cwd: string): readonly ConsumerAppFinding[] {
   const scanRoot = existsSync(join(cwd, 'src')) ? join(cwd, 'src') : cwd;
+  const walkIssues: WalkFilesIssue[] = [];
   // The shared `@liteship/core/fs-walk` walker (SKIP_DIRS pruned, source extensions);
   // repo-relative POSIX ids to match the original walker's output.
   const files = walkFiles(scanRoot, {
     skipDirs: SKIP_DIRS,
     extensions: ['ts', 'tsx', 'js', 'jsx', 'astro', 'mjs'],
+    onIssue: (issue) => walkIssues.push(issue),
   }).map((abs) => normalizeRepoPath(relative(cwd, abs)));
 
-  const findings: ConsumerAppFinding[] = [];
+  const findings: ConsumerAppFinding[] = walkIssues.map((issue) => ({
+    rule: 'consumer.filesystem-scan',
+    severity: 'warning',
+    title: `${issue.operation} failed during source scan (${issue.code}): ${issue.message}`,
+    file: normalizeRepoPath(relative(cwd, issue.path)) || '.',
+  }));
   for (const rel of files) {
     const path = join(cwd, rel);
     if (!existsSync(path)) continue;

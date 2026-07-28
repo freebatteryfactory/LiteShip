@@ -7,9 +7,9 @@
  *
  * Real temp `node_modules` trees drive `findConsumerDependencyRoot`'s three
  * resolution strategies (no mocks); property-based + table cases pin
- * `peerDependenciesOnly`'s scoped-specifier split; `resolveExecutable` is pinned
- * over the real `process.platform`/`npm_execpath` (host-honest, no mutation of
- * globals); `tarballFileUrl` is pinned as a valid `file://` URL round-trip.
+ * `peerDependenciesOnly`'s scoped-specifier split; package-manager invocation is
+ * pinned over synthetic platforms and executed once on the real host;
+ * `tarballFileUrl` is pinned as a valid `file://` URL round-trip.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync, realpathSync } from 'node:fs';
@@ -19,8 +19,10 @@ import { fileURLToPath } from 'node:url';
 import * as fc from 'fast-check';
 import ts from 'typescript';
 import { hasTag } from '@liteship/error';
+import { spawnArgvCapture } from '../../../../scripts/lib/spawn.js';
+import { resolveLauncher as resolveCanonicalLauncher } from '../../../../packages/command/src/host/launcher.js';
 import {
-  resolveExecutable,
+  resolvePackageManagerInvocation,
   tarballFileUrl,
   peerDependenciesOnly,
   findConsumerDependencyRoot,
@@ -78,47 +80,62 @@ describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
   });
 });
 
-describe('resolveExecutable — platform/npm_execpath executable resolution', () => {
-  it('a non-pnpm command passes through unchanged', () => {
-    expect(resolveExecutable('node')).toBe('node');
-    expect(resolveExecutable('tar')).toBe('tar');
+describe('resolvePackageManagerInvocation — closed executable/platform launcher resolution', () => {
+  it('passes an ordinary POSIX executable and its argv through unchanged', () => {
+    expect(resolvePackageManagerInvocation('node', ['--version'], { platform: 'linux' })).toEqual({
+      command: 'node',
+      args: ['--version'],
+      windowsVerbatimArguments: false,
+    });
   });
 
-  it('pnpm under a JS npm_execpath resolves to the current Node binary', () => {
-    const prev = process.env['npm_execpath'];
-    process.env['npm_execpath'] = '/some/pnpm.cjs';
+  it('does not let npm_execpath replace the package-smoke executable', () => {
+    const prior = process.env['npm_execpath'];
+    process.env['npm_execpath'] = '/attacker/controlled/pnpm.cjs';
     try {
-      expect(resolveExecutable('pnpm')).toBe(process.execPath);
+      expect(resolvePackageManagerInvocation('pnpm', ['pack'], { platform: 'linux' })).toEqual({
+        command: 'pnpm',
+        args: ['pack'],
+        windowsVerbatimArguments: false,
+      });
     } finally {
-      if (prev === undefined) delete process.env['npm_execpath'];
-      else process.env['npm_execpath'] = prev;
+      if (prior === undefined) delete process.env['npm_execpath'];
+      else process.env['npm_execpath'] = prior;
     }
   });
 
-  it('pnpm under a NATIVE-binary npm_execpath runs the binary directly (@pnpm/exe — Blacksmith runners)', () => {
-    const prev = process.env['npm_execpath'];
-    // No .js/.cjs/.mjs extension → a standalone binary that must NOT be wrapped in
-    // `node <path>` (which chokes on the ELF/Mach-O/PE header).
-    process.env['npm_execpath'] = '/runner/.bin/store/v11/links/@pnpm/exe/pnpm';
-    try {
-      expect(resolveExecutable('pnpm')).toBe('/runner/.bin/store/v11/links/@pnpm/exe/pnpm');
-    } finally {
-      if (prev === undefined) delete process.env['npm_execpath'];
-      else process.env['npm_execpath'] = prev;
-    }
+  it('routes a Windows pnpm shim through cmd.exe instead of passing .cmd to spawnSync', () => {
+    expect(
+      resolvePackageManagerInvocation('pnpm', ['pack', '--pack-destination', 'C:\\tmp dir'], {
+        platform: 'win32',
+      }),
+    ).toEqual({
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', 'pnpm pack --pack-destination "C:\\tmp dir"'],
+      windowsVerbatimArguments: true,
+    });
   });
 
-  it('pnpm with no npm_execpath resolves to a literal (platform-dependent)', () => {
-    const prev = process.env['npm_execpath'];
-    delete process.env['npm_execpath'];
-    try {
-      const resolved = resolveExecutable('pnpm');
-      // POSIX → 'pnpm'; win32 → 'pnpm.cmd'. Either way it is the bare command form.
-      expect(resolved === 'pnpm' || resolved === 'pnpm.cmd').toBe(true);
-    } finally {
-      if (prev === undefined) delete process.env['npm_execpath'];
-      else process.env['npm_execpath'] = prev;
-    }
+  it('property: the synchronous adapter stays byte-identical to the canonical host launcher', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom<NodeJS.Platform>('linux', 'darwin', 'win32'),
+        fc.constantFrom<'node' | 'pnpm'>('node', 'pnpm'),
+        fc.array(fc.string({ maxLength: 24 }), { maxLength: 6 }),
+        (platform, command, args) => {
+          expect(resolvePackageManagerInvocation(command, args, { platform })).toEqual(
+            resolveCanonicalLauncher(command, args, platform),
+          );
+        },
+      ),
+    );
+  });
+
+  it('executes the canonical pnpm launcher on the real host', async () => {
+    const invocation = resolvePackageManagerInvocation('pnpm', ['--version']);
+    const result = await spawnArgvCapture(invocation.command, invocation.args, { timeoutMs: 10_000 });
+    expect(result).toMatchObject({ exitCode: 0 });
+    expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/u);
   });
 });
 

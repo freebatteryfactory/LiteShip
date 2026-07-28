@@ -76,7 +76,8 @@ export interface BenchmarkOwnerCoverage {
   readonly benchmarks: readonly string[];
 }
 
-function packageForSubject(
+/** Resolve one qualified benchmark subject to its canonical package-catalog owner. */
+export function benchmarkOwnerForSubject(
   catalog: readonly PackageCatalogRecord[],
   subject: BenchDistribution['subjects'][number],
 ): string | null {
@@ -110,7 +111,7 @@ export function projectBenchmarkOwnerCoverage(
   const distributions = new Map<string, Set<string>>();
   for (const distribution of declared) {
     for (const subject of distribution.subjects) {
-      const owner = packageForSubject(catalog, subject);
+      const owner = benchmarkOwnerForSubject(catalog, subject);
       if (owner === null) continue;
       const names = distributions.get(owner) ?? new Set<string>();
       names.add(`${distribution.file}::${distribution.name}`);

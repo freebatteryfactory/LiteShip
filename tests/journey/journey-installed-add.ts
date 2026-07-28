@@ -13,6 +13,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { restoredTemplateName } from '../../packages/create-liteship/src/template-renames.js';
 import {
   findFiles,
   installConsumer,
@@ -37,18 +38,26 @@ function relativeFiles(dir: string): readonly string[] {
     .sort();
 }
 
+function restoredRelativePath(path: string): string {
+  const [head, ...tail] = path.split('/');
+  return [restoredTemplateName(head!), ...tail].join('/');
+}
+
 function assertCanonicalCopy(copiedDir: string): number {
-  const expected = relativeFiles(CANONICAL_TEMPLATE);
+  const canonical = relativeFiles(CANONICAL_TEMPLATE);
+  const expected = canonical.map(restoredRelativePath).sort();
   const actual = relativeFiles(copiedDir);
   journeyAssert(
     JSON.stringify(actual) === JSON.stringify(expected),
     `installed add copied a different file set\n  expected: ${expected.join(', ')}\n  actual:   ${actual.join(', ')}`,
   );
-  for (const path of expected) {
-    const canonical = readFileSync(resolve(CANONICAL_TEMPLATE, path));
-    const copied = readFileSync(resolve(copiedDir, path));
-    journeyAssert(copied.equals(canonical), `installed add changed bytes for ${path}`);
+  for (const sourcePath of canonical) {
+    const consumerPath = restoredRelativePath(sourcePath);
+    const sourceBytes = readFileSync(resolve(CANONICAL_TEMPLATE, sourcePath));
+    const copied = readFileSync(resolve(copiedDir, consumerPath));
+    journeyAssert(copied.equals(sourceBytes), `installed add changed bytes for ${sourcePath} -> ${consumerPath}`);
   }
+  journeyAssert(!actual.includes('gitignore'), 'installed add retained the package-safe gitignore placeholder');
   return expected.length;
 }
 

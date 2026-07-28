@@ -39,6 +39,26 @@ export interface MotionScrollTimeline {
   readonly range: readonly [string, string];
 }
 
+/** Plan-specific truth about the last-resort CSS transition projection. */
+export interface MotionTransitionFallbackSupport {
+  /** A CSS transition can faithfully express one monotonic point-to-point segment only. */
+  readonly contract: 'single-segment-monotonic-only';
+  /** Whether this plan is exact in that tier or is reduced to its monotonic endpoint. */
+  readonly fidelity: 'faithful-single-segment' | 'monotonic-endpoint-only';
+  /** Properties whose authored value path or easing cannot be represented faithfully. */
+  readonly approximatedProperties: readonly string[];
+  /** Approximated properties that leave and later return to their initial value. */
+  readonly returningProperties: readonly string[];
+}
+
+/** Generated support metadata for the CSS motion tiers emitted by the compiler. */
+export interface MotionSupportMetadata {
+  readonly keyframes:
+    | { readonly fidelity: 'faithful' }
+    | { readonly fidelity: 'runtime-floor-required'; readonly reason: 'mixed-easing-overlap' };
+  readonly transitionFallback: MotionTransitionFallbackSupport;
+}
+
 /** Input to {@link MotionCompiler.compile}. */
 export interface MotionCompileInput {
   readonly plan: CssMotionPlan;
@@ -60,6 +80,8 @@ export interface MotionCompileResult {
   readonly transition: string;
   /** `@supports (animation-timeline: …)` block; empty when no view timeline. */
   readonly scrollTimeline: string;
+  /** Generated fidelity receipt for the emitted keyframe and transition tiers. */
+  readonly support: MotionSupportMetadata;
 }
 
 function syntaxForTypedValue(value: TypedValue): string | null {
@@ -246,6 +268,25 @@ function propertyActiveWindow(
   return end > start ? { start, end } : { start: first, end: last };
 }
 
+/** Exact segment easing when a property changes once; otherwise the tier is already approximate. */
+function transitionEasingForProperty(stops: readonly CssKeyframeStep[], property: string, fallback: string): string {
+  let priorValue: string | undefined;
+  let priorStop: CssKeyframeStep | undefined;
+  let authored: RuntimeEasing | undefined;
+  let changes = 0;
+  for (const stop of stops) {
+    const value = stop.properties[property];
+    if (value === undefined) continue;
+    if (priorValue !== undefined && value !== priorValue) {
+      changes++;
+      authored = priorStop?.easing;
+    }
+    priorValue = value;
+    priorStop = stop;
+  }
+  return changes === 1 && authored !== undefined ? resolveStepEasing(authored) : fallback;
+}
+
 /**
  * Compose the `transition` shorthand. Each property animates over ITS OWN window
  * (`propertyActiveWindow`), so a `par`/stagger program whose opacity completes at
@@ -285,9 +326,40 @@ function transitionDecls(plan: CssMotionPlan, easingFn: string, delayMs?: number
       const { start, end } = propertyActiveWindow(stops, p);
       const durationMs = Math.round((end - start) * plan.durationMs);
       const delayMsForProp = Math.round(baseDelayMs + start * plan.durationMs);
-      return `${p} ${durationMs}ms ${easingFn}${delayMsForProp > 0 ? ` ${delayMsForProp}ms` : ''}`;
+      const propertyEasing = transitionEasingForProperty(stops, p, easingFn);
+      return `${p} ${durationMs}ms ${propertyEasing}${delayMsForProp > 0 ? ` ${delayMsForProp}ms` : ''}`;
     })
     .join(', ');
+}
+
+function transitionFallbackSupport(plan: CssMotionPlan): MotionTransitionFallbackSupport {
+  const properties = plan.transitionProperty
+    .split(',')
+    .map((property) => property.trim())
+    .filter(Boolean);
+  const stops = [...plan.keyframes].sort((left, right) => left.offset - right.offset);
+  const approximatedProperties: string[] = [];
+  const returningProperties: string[] = [];
+  const nativeEasingIsInexpressible = !plan.nativeTimeline.eligible;
+
+  for (const property of properties) {
+    const values = stops
+      .map((stop) => stop.properties[property])
+      .filter((value): value is string => value !== undefined)
+      .filter((value, index, all) => index === 0 || value !== all[index - 1]);
+    const pathIsMultiSegment = values.length > 2;
+    if (pathIsMultiSegment || nativeEasingIsInexpressible) approximatedProperties.push(property);
+    if (pathIsMultiSegment && values[0] === values.at(-1) && values.slice(1, -1).some((value) => value !== values[0])) {
+      returningProperties.push(property);
+    }
+  }
+
+  return Object.freeze({
+    contract: 'single-segment-monotonic-only',
+    fidelity: approximatedProperties.length === 0 ? 'faithful-single-segment' : 'monotonic-endpoint-only',
+    approximatedProperties: Object.freeze(approximatedProperties),
+    returningProperties: Object.freeze(returningProperties),
+  });
 }
 
 function emitBaseRule(plan: CssMotionPlan): string {
@@ -435,6 +507,14 @@ function compile(input: MotionCompileInput): MotionCompileResult {
     startingStyle,
     transition,
     scrollTimeline: scrollTimelineCss,
+    support: Object.freeze({
+      keyframes: Object.freeze(
+        plan.nativeTimeline.eligible
+          ? { fidelity: 'faithful' as const }
+          : { fidelity: 'runtime-floor-required' as const, reason: plan.nativeTimeline.reason },
+      ),
+      transitionFallback: transitionFallbackSupport(plan),
+    }),
   };
 }
 

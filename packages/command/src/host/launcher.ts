@@ -23,6 +23,8 @@ export interface BootstrapCaptureResult {
   readonly exitCode: number;
   readonly stdout: string;
   readonly stderr: string;
+  /** Native termination signal; null for an ordinary process exit. */
+  readonly signal: NodeJS.Signals | null;
 }
 
 /** Exact platform launcher invocation. */
@@ -43,8 +45,12 @@ export function quoteWindowsArg(arg: string): string {
 }
 
 /** Resolve `.cmd`/`.bat` shims explicitly on Windows; POSIX is identity. */
-export function resolveLauncher(command: string, args: readonly string[]): Launcher {
-  if (process.platform !== 'win32') {
+export function resolveLauncher(
+  command: string,
+  args: readonly string[],
+  platform: NodeJS.Platform = process.platform,
+): Launcher {
+  if (platform !== 'win32') {
     return { command, args, windowsVerbatimArguments: false };
   }
   if (/\.(?:exe|com)$/iu.test(command)) {
@@ -121,11 +127,12 @@ export function spawnArgvCaptureWithEnv(
     proc.stdout?.on('data', (chunk: Buffer) => stdout.push(chunk));
     proc.stderr?.on('data', (chunk: Buffer) => stderr.push(chunk));
     proc.on('error', rejectPromise);
-    proc.on('close', (code) => {
+    proc.on('close', (code, signal) => {
       resolvePromise({
         exitCode: code ?? 1,
         stdout: Buffer.concat(stdout).toString('utf8'),
         stderr: Buffer.concat(stderr).toString('utf8'),
+        signal,
       });
     });
   });

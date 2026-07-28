@@ -107,6 +107,8 @@ function cliEvidence(overrides: Partial<BenchmarkEvidenceInput> = {}): Benchmark
       minimumR2: COMPLEXITY_ADMISSION_POLICY.minimumR2,
       coefficientOfVariation: 0.05,
       maximumCoefficientOfVariation: COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation,
+      minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
+      minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
     },
   };
   return createBenchmarkEvidence({ ...input, ...overrides });

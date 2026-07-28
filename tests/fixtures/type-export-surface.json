@@ -516,6 +516,10 @@
           "kind": "type"
         },
         {
+          "name": "DetectReadyDetail",
+          "kind": "type"
+        },
+        {
           "name": "DetectionResult",
           "kind": "type"
         },
@@ -732,6 +736,10 @@
           "kind": "type"
         },
         {
+          "name": "GraphMutationResponse",
+          "kind": "type"
+        },
+        {
           "name": "HLC",
           "kind": "type"
         },
@@ -912,7 +920,15 @@
           "kind": "type"
         },
         {
+          "name": "MotionSupportMetadata",
+          "kind": "type"
+        },
+        {
           "name": "MotionTier",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTransitionFallbackSupport",
           "kind": "type"
         },
         {
@@ -1581,6 +1597,10 @@
         },
         {
           "name": "TypedValue",
+          "kind": "type"
+        },
+        {
+          "name": "UIFrame",
           "kind": "type"
         },
         {
@@ -2815,6 +2835,14 @@
           "kind": "type"
         },
         {
+          "name": "MotionSupportMetadata",
+          "kind": "type"
+        },
+        {
+          "name": "MotionTransitionFallbackSupport",
+          "kind": "type"
+        },
+        {
           "name": "MotionViewTimeline",
           "kind": "type"
         },
@@ -3463,6 +3491,10 @@
           "kind": "type"
         },
         {
+          "name": "LiteshipStandardJsonSchema",
+          "kind": "type"
+        },
+        {
           "name": "LiteshipStandardSchema",
           "kind": "type"
         },
@@ -3908,6 +3940,10 @@
         },
         {
           "name": "StaggerIntentInput",
+          "kind": "type"
+        },
+        {
+          "name": "StandardJsonSchemaProjection",
           "kind": "type"
         },
         {

@@ -6,7 +6,7 @@
 
 # Interface: DecodeIssueView
 
-Defined in: core/dist/schema/standard.d.ts:34
+Defined in: core/dist/schema/standard.d.ts:33
 
 The subset of a kernel decode issue this bridge reads: its machine `code` and
 its path from the decode root. The kernel `DecodeIssue` carries more (a
@@ -19,7 +19,7 @@ so `Result<A, readonly DecodeIssue[]>` is accepted wherever this is expected.
 
 > `readonly` **code**: `string`
 
-Defined in: core/dist/schema/standard.d.ts:36
+Defined in: core/dist/schema/standard.d.ts:35
 
 The machine-readable failure code, e.g. `'schema/type'`, `'schema/missing'`.
 
@@ -29,6 +29,6 @@ The machine-readable failure code, e.g. `'schema/type'`, `'schema/missing'`.
 
 > `readonly` **path**: readonly `PropertyKey`[]
 
-Defined in: core/dist/schema/standard.d.ts:38
+Defined in: core/dist/schema/standard.d.ts:37
 
 Path segments from the decode root to the offending value.

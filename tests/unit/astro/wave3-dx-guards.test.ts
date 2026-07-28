@@ -204,6 +204,21 @@ describe('LESSON (#92): worker isolation is configured once and derived, never d
     expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
     expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
   });
+
+  test('PUBLIC CONFIG: workers off emits no LiteShip COOP/COEP while detection remains available', async () => {
+    resetIntegrationTogglesForTesting();
+    integration({ detect: true, workers: { enabled: false } });
+
+    const middleware = liteshipMiddleware();
+    const response = await middleware(
+      { request: new Request('http://localhost/'), locals: {} },
+      () => Promise.resolve(new Response('OK')),
+    );
+
+    expect(response.headers.get('Cross-Origin-Opener-Policy')).toBeNull();
+    expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBeNull();
+    expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
+  });
 });
 
 // ---------------------------------------------------------------------------

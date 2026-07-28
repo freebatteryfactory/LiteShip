@@ -319,12 +319,6 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     why: 'the Boundary.evaluateBatch parity property needs the loaded Rust kernel; absent the wasm it skips (the scalar evaluate path is covered without it).',
   },
   {
-    file: 'tests/smoke/intro-render.test.ts',
-    site: "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
-    capability: 'ffmpeg-absent',
-    why: 'the end-to-end intro-scene smoke render needs ffmpeg+libx264; absent the codec it skips (see `liteship doctor`).',
-  },
-  {
     file: 'tests/unit/command/error-contract.test.ts',
     site: "it.runIf(FFMPEG_RENDER_CAPABLE)('a stream failure mentioning stdin/EPIPE surfaces the probe verdict', async () => {",
     capability: 'ffmpeg-absent',

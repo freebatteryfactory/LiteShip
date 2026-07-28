@@ -146,15 +146,27 @@ export interface ComplexityMapEntry {
   readonly coefficientOfVariation: number;
   /** Measurement regime used to produce the curve. */
   readonly measurement: {
+    /** Declared starting batch size; calibration may raise it per input size. */
     readonly innerIterations: number;
     readonly replicates: number;
     readonly warmupIterations: number;
+    readonly calibrationReplicates: number;
+    readonly calibrationTargetBatchDurationMs: number;
+    readonly minimumTimedBatchDurationMs: number;
+    readonly maximumCalibratedInnerIterations: number;
   };
+  /** Raw per-size replicate receipts; retained so instability and timing adequacy are diagnosable. */
+  readonly replicateSamplesNs: readonly {
+    readonly size: number;
+    readonly effectiveInnerIterations: number;
+    readonly samples: readonly number[];
+    readonly batchDurationsMs: readonly number[];
+  }[];
 }
 
 /** The committed complexity-map artifact. */
 export interface ComplexityMap {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly entries: readonly ComplexityMapEntry[];
 }
 
@@ -174,6 +186,7 @@ export type BenchmarkEvidenceReason =
   | 'under-replicated'
   | 'insufficient-size-sweep'
   | 'invalid-size-sweep'
+  | 'under-timed-batch'
   | 'low-r2'
   | 'unstable-variance'
   | 'stale-source-sha'
@@ -246,6 +259,8 @@ export interface BenchmarkEvidenceInput {
     readonly minimumR2: number;
     readonly coefficientOfVariation: number;
     readonly maximumCoefficientOfVariation: number;
+    readonly minimumObservedBatchDurationMs: number;
+    readonly minimumTimedBatchDurationMs: number;
   };
 }
 
@@ -256,7 +271,7 @@ export interface BenchmarkEvidenceInput {
  * and environment identities before using the verdict.
  */
 export interface BenchmarkEvidence extends BenchmarkEvidenceInput {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly evidenceId: IntegrityDigest;
   readonly regressionDisposition: 'none' | 'blocking' | 'inconclusive';
   readonly admission: {
@@ -281,7 +296,7 @@ export interface BenchmarkEvidenceAdmission {
 
 /** Addressed aggregate emitted by the existing benchmark-contract producer. */
 export interface BenchmarkEvidenceArtifact {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly artifactId: IntegrityDigest;
   readonly evidence: readonly BenchmarkEvidence[];
 }
@@ -307,12 +322,12 @@ function finiteSigned(value: number, field: string): number {
   return value;
 }
 
-function positiveInteger(value: number, field: string): number {
+function evidencePositiveInteger(value: number, field: string): number {
   if (!Number.isInteger(value) || value <= 0) evidenceValidation(`${field} must be a positive integer`);
   return value;
 }
 
-function nonNegativeInteger(value: number, field: string): number {
+function evidenceNonNegativeInteger(value: number, field: string): number {
   if (!Number.isInteger(value) || value < 0) evidenceValidation(`${field} must be a non-negative integer`);
   return value;
 }
@@ -372,6 +387,7 @@ function deriveBenchmarkAdmission(input: BenchmarkEvidenceInput): BenchmarkEvide
       ...complexityAdmissionReasons({
         sizes: input.input.sizes,
         replicates: input.measurement.repetitions,
+        minimumObservedBatchDurationMs: input.confidence.minimumObservedBatchDurationMs,
         fittedR2: input.complexity.fittedR2,
         coefficientOfVariation: input.confidence.coefficientOfVariation,
       }),
@@ -448,8 +464,8 @@ function snapshotBenchmarkEvidenceInput(input: BenchmarkEvidenceInput): Benchmar
     },
     measurement: {
       mode: input.measurement.mode,
-      warmupIterations: nonNegativeInteger(input.measurement.warmupIterations, 'measurement.warmupIterations'),
-      repetitions: positiveInteger(input.measurement.repetitions, 'measurement.repetitions'),
+      warmupIterations: evidenceNonNegativeInteger(input.measurement.warmupIterations, 'measurement.warmupIterations'),
+      repetitions: evidencePositiveInteger(input.measurement.repetitions, 'measurement.repetitions'),
       canaries: input.measurement.canaries.map((canary, index) => ({
         id: nonEmpty(canary.id, `measurement.canaries[${index}].id`),
         verdict: canary.verdict,
@@ -481,6 +497,14 @@ function snapshotBenchmarkEvidenceInput(input: BenchmarkEvidenceInput): Benchmar
         input.confidence.maximumCoefficientOfVariation,
         'confidence.maximumCoefficientOfVariation',
       ),
+      minimumObservedBatchDurationMs: finite(
+        input.confidence.minimumObservedBatchDurationMs,
+        'confidence.minimumObservedBatchDurationMs',
+      ),
+      minimumTimedBatchDurationMs: finite(
+        input.confidence.minimumTimedBatchDurationMs,
+        'confidence.minimumTimedBatchDurationMs',
+      ),
     },
   };
 
@@ -504,6 +528,14 @@ function snapshotBenchmarkEvidenceInput(input: BenchmarkEvidenceInput): Benchmar
       `confidence.maximumCoefficientOfVariation cannot weaken the claim-bearing ceiling ${COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation}`,
     );
   }
+  if (
+    snapshot.complexity !== null &&
+    snapshot.confidence.minimumTimedBatchDurationMs < COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs
+  ) {
+    evidenceValidation(
+      `confidence.minimumTimedBatchDurationMs cannot weaken the claim-bearing floor ${COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs}`,
+    );
+  }
   return snapshot;
 }
 
@@ -512,7 +544,7 @@ export function createBenchmarkEvidence(input: BenchmarkEvidenceInput): Benchmar
   const snapshot = snapshotBenchmarkEvidenceInput(input);
   const derived = deriveBenchmarkAdmission(snapshot);
   const payload = {
-    schemaVersion: 1 as const,
+    schemaVersion: 2 as const,
     ...snapshot,
     regressionDisposition: derived.regressionDisposition,
     admission: { disposition: derived.disposition, reasons: derived.reasons },
@@ -531,7 +563,7 @@ export function createBenchmarkEvidenceArtifact(records: readonly BenchmarkEvide
   if (new Set(ids).size !== ids.length) evidenceValidation('benchmark evidence artifact ids must be unique');
   const paths = evidence.map((record) => record.sut.id);
   if (new Set(paths).size !== paths.length) evidenceValidation('benchmark evidence artifact SUT ids must be unique');
-  const unsigned = { schemaVersion: 1 as const, evidence };
+  const unsigned = { schemaVersion: 2 as const, evidence };
   const artifactId = addressedDigestOf(CanonicalCbor.encode(unsigned), 'sha256').integrity_digest;
   return deepFreezeEvidence({ ...unsigned, artifactId });
 }
@@ -561,7 +593,7 @@ export function parseBenchmarkEvidence(value: unknown): BenchmarkEvidence {
     'regressionDisposition',
     'admission',
   ]);
-  if (root['schemaVersion'] !== 1) evidenceValidation('schemaVersion must be 1');
+  if (root['schemaVersion'] !== 2) evidenceValidation('schemaVersion must be 2');
 
   const sut = exactObject(root['sut'], 'sut', ['id', 'owner', 'benchmark', 'file']);
   const input = exactObject(root['input'], 'input', ['dimensions', 'sizes']);
@@ -584,6 +616,8 @@ export function parseBenchmarkEvidence(value: unknown): BenchmarkEvidence {
     'minimumR2',
     'coefficientOfVariation',
     'maximumCoefficientOfVariation',
+    'minimumObservedBatchDurationMs',
+    'minimumTimedBatchDurationMs',
   ]);
   if (!Array.isArray(input['dimensions']) || !Array.isArray(input['sizes'])) {
     evidenceValidation('input dimensions and sizes must be arrays');
@@ -668,6 +702,14 @@ export function parseBenchmarkEvidence(value: unknown): BenchmarkEvidence {
         confidence['maximumCoefficientOfVariation'],
         'confidence.maximumCoefficientOfVariation',
       ),
+      minimumObservedBatchDurationMs: asNumber(
+        confidence['minimumObservedBatchDurationMs'],
+        'confidence.minimumObservedBatchDurationMs',
+      ),
+      minimumTimedBatchDurationMs: asNumber(
+        confidence['minimumTimedBatchDurationMs'],
+        'confidence.minimumTimedBatchDurationMs',
+      ),
     },
   });
 
@@ -688,7 +730,7 @@ export function parseBenchmarkEvidence(value: unknown): BenchmarkEvidence {
 /** Strict decoder for the aggregate emitted by `scripts/bench-contracts.ts`. */
 export function parseBenchmarkEvidenceArtifact(value: unknown): BenchmarkEvidenceArtifact {
   const root = exactObject(value, 'benchmark evidence artifact', ['schemaVersion', 'artifactId', 'evidence']);
-  if (root['schemaVersion'] !== 1) evidenceValidation('benchmark evidence artifact schemaVersion must be 1');
+  if (root['schemaVersion'] !== 2) evidenceValidation('benchmark evidence artifact schemaVersion must be 2');
   if (!Array.isArray(root['evidence'])) evidenceValidation('benchmark evidence artifact evidence must be an array');
   const rebuilt = createBenchmarkEvidenceArtifact(root['evidence'].map(parseBenchmarkEvidence));
   if (root['artifactId'] !== rebuilt.artifactId) {
@@ -912,6 +954,14 @@ export interface ComplexityCurve {
   readonly fit: ComplexityFit;
   /** Maximum lower-envelope coefficient of variation across timings at one size. */
   readonly coefficientOfVariation: number;
+  /** Shortest actual timed batch; admission refuses evidence below the shared floor. */
+  readonly minimumObservedBatchDurationMs: number;
+  readonly replicateSamplesNs: readonly {
+    readonly size: number;
+    readonly effectiveInnerIterations: number;
+    readonly samples: readonly number[];
+    readonly batchDurationsMs: readonly number[];
+  }[];
 }
 
 /**
@@ -936,9 +986,63 @@ export function lowerEnvelopeCoefficientOfVariation(samples: readonly number[]):
   return mean === 0 ? (variance === 0 ? 0 : Number.POSITIVE_INFINITY) : Math.sqrt(variance) / mean;
 }
 
+function positiveInteger(value: number, field: string): number {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw ValidationError('measureComplexityCurve', `${field} must be a positive integer; got ${String(value)}`);
+  }
+  return value;
+}
+
+function nonNegativeInteger(value: number, field: string): number {
+  if (!Number.isInteger(value) || value < 0) {
+    throw ValidationError('measureComplexityCurve', `${field} must be a non-negative integer; got ${String(value)}`);
+  }
+  return value;
+}
+
 /**
- * Measure a complexity curve: for each declared size, time `innerIterations`
- * calls of the size's workload, take the BEST (minimum) per-call latency across
+ * Choose one batch size before evidence collection. The loop depends only on
+ * elapsed calibration duration, never on CV, fitted class, or admission. Each
+ * round uses the fastest of several batches so a scheduler stall cannot trick a
+ * short sample into looking adequately timed.
+ */
+function calibrateInnerIterations(workload: () => void, declaredIterations: number, clock: Clock): number {
+  const targetMs = COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs;
+  const calibrationReplicates = COMPLEXITY_ADMISSION_POLICY.calibrationReplicates;
+  const maximum = COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations;
+  let candidate = declaredIterations;
+
+  while (candidate <= maximum) {
+    let fastestMs = Number.POSITIVE_INFINITY;
+    for (let replicate = 0; replicate < calibrationReplicates; replicate++) {
+      const startMs = clock.now();
+      for (let iteration = 0; iteration < candidate; iteration++) workload();
+      const elapsedMs = clock.now() - startMs;
+      if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+        throw ValidationError(
+          'measureComplexityCurve',
+          `calibration clock produced invalid duration ${String(elapsedMs)}`,
+        );
+      }
+      fastestMs = Math.min(fastestMs, elapsedMs);
+    }
+    if (fastestMs >= targetMs) return candidate;
+
+    const scale = fastestMs === 0 ? 2 : Math.max(2, Math.ceil(targetMs / fastestMs));
+    const next = candidate * 2 ** Math.ceil(Math.log2(scale));
+    if (!Number.isSafeInteger(next) || next > maximum) break;
+    candidate = next;
+  }
+
+  throw ValidationError(
+    'measureComplexityCurve',
+    `timed batch could not reach ${targetMs}ms before the ${maximum}-iteration calibration ceiling`,
+  );
+}
+
+/**
+ * Measure a complexity curve: for each declared size, calibrate a batch to the
+ * shared duration target, take the BEST (minimum) per-call latency across
  * `replicates` replicates, then fit the resulting (size, latency) samples.
  *
  * Why the MINIMUM across replicates: on shared hardware the noise is strictly
@@ -962,13 +1066,29 @@ export function measureComplexityCurve(
     readonly clock?: Clock;
   } = {},
 ): ComplexityCurve {
-  const innerIterations = options.innerIterations ?? probe.measurement?.innerIterations ?? 200;
-  const replicates = options.replicates ?? probe.measurement?.replicates ?? 7;
-  const warmupIterations = options.warmupIterations ?? probe.measurement?.warmupIterations ?? 50;
+  const innerIterations = positiveInteger(
+    options.innerIterations ?? probe.measurement?.innerIterations ?? 200,
+    'innerIterations',
+  );
+  const replicates = positiveInteger(options.replicates ?? probe.measurement?.replicates ?? 7, 'replicates');
+  if (replicates < 2) {
+    throw ValidationError('measureComplexityCurve', `replicates must be at least 2; got ${replicates}`);
+  }
+  const warmupIterations = nonNegativeInteger(
+    options.warmupIterations ?? probe.measurement?.warmupIterations ?? 50,
+    'warmupIterations',
+  );
   const clock = options.clock ?? systemClock;
 
   const samples: ComplexitySample[] = [];
   const coefficientsOfVariation: number[] = [];
+  const observedBatchDurationsMs: number[] = [];
+  const replicateSamplesNs: Array<{
+    size: number;
+    effectiveInnerIterations: number;
+    samples: number[];
+    batchDurationsMs: number[];
+  }> = [];
   for (const size of probe.sizes) {
     const workload = probe.workloadFor(size);
 
@@ -976,23 +1096,34 @@ export function measureComplexityCurve(
     for (let w = 0; w < warmupIterations; w++) {
       workload();
     }
+    const effectiveInnerIterations = calibrateInnerIterations(workload, innerIterations, clock);
 
     let bestPerCallNs = Number.POSITIVE_INFINITY;
     const replicateSamples: number[] = [];
+    const batchDurationsMs: number[] = [];
     for (let r = 0; r < replicates; r++) {
       const startMs = clock.now();
-      for (let i = 0; i < innerIterations; i++) {
+      for (let i = 0; i < effectiveInnerIterations; i++) {
         workload();
       }
       const elapsedMs = clock.now() - startMs;
-      const perCallNs = (elapsedMs * 1e6) / innerIterations;
+      if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+        throw ValidationError(
+          'measureComplexityCurve',
+          `measurement clock produced invalid duration ${String(elapsedMs)}`,
+        );
+      }
+      const perCallNs = (elapsedMs * 1e6) / effectiveInnerIterations;
       replicateSamples.push(perCallNs);
+      batchDurationsMs.push(elapsedMs);
+      observedBatchDurationsMs.push(elapsedMs);
       if (perCallNs < bestPerCallNs) {
         bestPerCallNs = perCallNs;
       }
     }
 
     coefficientsOfVariation.push(lowerEnvelopeCoefficientOfVariation(replicateSamples));
+    replicateSamplesNs.push({ size, effectiveInnerIterations, samples: replicateSamples, batchDurationsMs });
 
     samples.push({ size, latencyNs: bestPerCallNs });
   }
@@ -1004,6 +1135,8 @@ export function measureComplexityCurve(
     samples,
     fit: fitComplexityClass(samples),
     coefficientOfVariation: Math.max(...coefficientsOfVariation),
+    minimumObservedBatchDurationMs: Math.min(...observedBatchDurationsMs),
+    replicateSamplesNs,
   };
 }
 
@@ -1027,25 +1160,51 @@ export function readDistributionRegistry(root: string): DistributionRegistry | n
 /** Read + validate the committed complexity map, or `null` if absent. */
 export function readComplexityMap(root: string): ComplexityMap | null {
   return readArtifact<ComplexityMap>(resolve(root, COMPLEXITY_MAP_ARTIFACT_PATH), (parsed): parsed is ComplexityMap => {
-    if (parsed.schemaVersion !== 2 || !Array.isArray((parsed as ComplexityMap).entries)) return false;
+    if (parsed.schemaVersion !== 3 || !Array.isArray((parsed as ComplexityMap).entries)) return false;
     return (parsed as unknown as { readonly entries: readonly unknown[] }).entries.every((value) => {
       if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
       const entry = value as Record<string, unknown>;
       if (entry['measurement'] === null || typeof entry['measurement'] !== 'object') return false;
       const measurement = entry['measurement'] as Record<string, unknown>;
+      const replicates = measurement['replicates'];
+      if (typeof replicates !== 'number') return false;
+      const sizes = entry['sizes'];
+      if (!Array.isArray(sizes) || !sizes.every((size) => typeof size === 'number')) return false;
+      const replicateSamplesNs = entry['replicateSamplesNs'];
+      if (!Array.isArray(replicateSamplesNs) || replicateSamplesNs.length !== sizes.length) return false;
       return (
         typeof entry['path'] === 'string' &&
         typeof entry['describe'] === 'string' &&
         typeof entry['shape'] === 'string' &&
-        Array.isArray(entry['sizes']) &&
-        entry['sizes'].every((size) => typeof size === 'number') &&
         COMPLEXITY_CLASSES.includes(entry['class'] as ComplexityClass) &&
         typeof entry['fittedSlope'] === 'number' &&
         typeof entry['fittedR2'] === 'number' &&
         typeof entry['coefficientOfVariation'] === 'number' &&
+        replicateSamplesNs.every(
+          (sampleSet, index) =>
+            sampleSet !== null &&
+            typeof sampleSet === 'object' &&
+            !Array.isArray(sampleSet) &&
+            (sampleSet as Record<string, unknown>)['size'] === sizes[index] &&
+            typeof (sampleSet as Record<string, unknown>)['effectiveInnerIterations'] === 'number' &&
+            Array.isArray((sampleSet as Record<string, unknown>)['samples']) &&
+            ((sampleSet as Record<string, unknown>)['samples'] as unknown[]).length === replicates &&
+            ((sampleSet as Record<string, unknown>)['samples'] as unknown[]).every(
+              (sample) => typeof sample === 'number' && Number.isFinite(sample) && sample >= 0,
+            ) &&
+            Array.isArray((sampleSet as Record<string, unknown>)['batchDurationsMs']) &&
+            ((sampleSet as Record<string, unknown>)['batchDurationsMs'] as unknown[]).length === replicates &&
+            ((sampleSet as Record<string, unknown>)['batchDurationsMs'] as unknown[]).every(
+              (duration) => typeof duration === 'number' && Number.isFinite(duration) && duration >= 0,
+            ),
+        ) &&
         typeof measurement['innerIterations'] === 'number' &&
-        typeof measurement['replicates'] === 'number' &&
-        typeof measurement['warmupIterations'] === 'number'
+        typeof measurement['warmupIterations'] === 'number' &&
+        measurement['calibrationReplicates'] === COMPLEXITY_ADMISSION_POLICY.calibrationReplicates &&
+        measurement['calibrationTargetBatchDurationMs'] ===
+          COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs &&
+        measurement['minimumTimedBatchDurationMs'] === COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs &&
+        measurement['maximumCalibratedInnerIterations'] === COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations
       );
     });
   });

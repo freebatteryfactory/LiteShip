@@ -33,6 +33,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
+import { repositoryProofTimeout } from '../../../vitest.shared.js';
 
 const REPO = process.cwd();
 
@@ -150,52 +151,56 @@ describe('brand residue — the LiteShip brand is the only brand (ADR-0044)', ()
     expect(files.length).toBeGreaterThan(500);
   });
 
-  it('no `czap` residue outside the sanctioned ARCHITECTURE sentence and the frozen allowlist', () => {
-    const violations: string[] = [];
-    let sanctionedCount = 0;
-    const sanctionedFiles: string[] = [];
+  it(
+    'no `czap` residue outside the sanctioned ARCHITECTURE sentence and the frozen allowlist',
+    () => {
+      const violations: string[] = [];
+      let sanctionedCount = 0;
+      const sanctionedFiles: string[] = [];
 
-    for (const rel of files) {
-      if (isAllowlisted(rel)) continue;
+      for (const rel of files) {
+        if (isAllowlisted(rel)) continue;
 
-      let content: string;
-      try {
-        content = readFileSync(join(REPO, rel), 'utf8');
-      } catch {
-        continue; // unreadable (e.g. a socket) — nothing to scan
-      }
+        let content: string;
+        try {
+          content = readFileSync(join(REPO, rel), 'utf8');
+        } catch {
+          continue; // unreadable (e.g. a socket) — nothing to scan
+        }
 
-      const hits = occurrences(content, SANCTIONED_SENTENCE);
-      if (hits > 0) {
-        sanctionedCount += hits;
-        sanctionedFiles.push(rel);
-      }
+        const hits = occurrences(content, SANCTIONED_SENTENCE);
+        if (hits > 0) {
+          sanctionedCount += hits;
+          sanctionedFiles.push(rel);
+        }
 
-      // Strip the sanctioned sentence; anything left that still matches is residue.
-      let stripped = content.split(SANCTIONED_SENTENCE).join('\u0000');
-      if (rel === PRIOR_OPERATION_BRAND_FIXTURE) {
-        for (const literal of PRIOR_OPERATION_BRAND_LITERALS) {
-          expect(occurrences(stripped, literal), `${rel} must retain exactly one frozen ${literal} literal`).toBe(1);
-          stripped = stripped.split(literal).join('\u0000');
+        // Strip the sanctioned sentence; anything left that still matches is residue.
+        let stripped = content.split(SANCTIONED_SENTENCE).join('\u0000');
+        if (rel === PRIOR_OPERATION_BRAND_FIXTURE) {
+          for (const literal of PRIOR_OPERATION_BRAND_LITERALS) {
+            expect(occurrences(stripped, literal), `${rel} must retain exactly one frozen ${literal} literal`).toBe(1);
+            stripped = stripped.split(literal).join('\u0000');
+          }
+        }
+        if (RESIDUE.test(stripped)) {
+          stripped.split('\n').forEach((line, i) => {
+            if (RESIDUE.test(line)) violations.push(`${rel}:${i + 1}: ${line.trim().slice(0, 160)}`);
+          });
         }
       }
-      if (RESIDUE.test(stripped)) {
-        stripped.split('\n').forEach((line, i) => {
-          if (RESIDUE.test(line)) violations.push(`${rel}:${i + 1}: ${line.trim().slice(0, 160)}`);
-        });
-      }
-    }
 
-    expect(
-      violations,
-      `czap residue found outside the allowlist (${violations.length}):\n${violations.join('\n')}`,
-    ).toEqual([]);
+      expect(
+        violations,
+        `czap residue found outside the allowlist (${violations.length}):\n${violations.join('\n')}`,
+      ).toEqual([]);
 
-    // The sanctioned sentence must exist exactly once, and only in ARCHITECTURE.md.
-    expect(
-      sanctionedCount,
-      `the sanctioned ARCHITECTURE sentence must appear exactly once; found ${sanctionedCount} in ${sanctionedFiles.join(', ')}`,
-    ).toBe(1);
-    expect(sanctionedFiles).toEqual(['ARCHITECTURE.md']);
-  });
+      // The sanctioned sentence must exist exactly once, and only in ARCHITECTURE.md.
+      expect(
+        sanctionedCount,
+        `the sanctioned ARCHITECTURE sentence must appear exactly once; found ${sanctionedCount} in ${sanctionedFiles.join(', ')}`,
+      ).toBe(1);
+      expect(sanctionedFiles).toEqual(['ARCHITECTURE.md']);
+    },
+    repositoryProofTimeout(),
+  );
 });

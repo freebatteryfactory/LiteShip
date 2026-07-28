@@ -6,6 +6,7 @@ import {
   type ChangeIntent,
   type ChangeIntentAdmission,
 } from './change-intent.js';
+import { parseGitHubChangeIntentDeclaration } from './github-change-intent-declaration.js';
 
 export type GitHubChangeIntentEvent = 'pull-request' | 'push' | 'tag';
 export type GitHubRepositoryPermission = 'admin' | 'maintain' | 'write' | 'triage' | 'read' | 'none';
@@ -32,17 +33,6 @@ export interface AdmittedGitHubChangeIntent {
 }
 
 type RecordValue = Record<string, unknown>;
-
-const DECLARED_KEYS = [
-  'sponsor',
-  'hypothesis',
-  'affectedUserSurface',
-  'expectedOutcome',
-  'guardrails',
-  'reversibility',
-  'actorClass',
-  'uncertainty',
-] as const;
 
 function exactRecord(value: unknown, path: string, keys: readonly string[]): RecordValue {
   if (
@@ -97,22 +87,6 @@ function parseHostInput(value: unknown): GitHubChangeIntentInput {
   };
 }
 
-function declaredBlock(body: string): RecordValue | null {
-  const marker = '<!-- liteship-change-intent';
-  const markerCount = body.split(marker).length - 1;
-  if (markerCount === 0) return null;
-  if (markerCount !== 1) throw new TypeError('GitHub body must contain exactly one liteship-change-intent block');
-  const match = body.match(/<!-- liteship-change-intent\r?\n([\s\S]*?)\r?\n-->/u);
-  if (match === null) throw new TypeError('liteship-change-intent block is malformed');
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(match[1]!);
-  } catch (error) {
-    throw new TypeError(`liteship-change-intent JSON is malformed: ${String(error)}`);
-  }
-  return exactRecord(parsed, 'liteship-change-intent', DECLARED_KEYS);
-}
-
 function fallbackDeclaration(event: 'push' | 'tag', actor: string): RecordValue {
   return {
     sponsor: actor,
@@ -136,7 +110,7 @@ function provenance(value: unknown, kind: 'github-verified' | 'agent-self-declar
  */
 export function admitGitHubChangeIntent(value: unknown): AdmittedGitHubChangeIntent {
   const input = parseHostInput(value);
-  const parsed = input.body === null ? null : declaredBlock(input.body);
+  const parsed = input.body === null ? null : parseGitHubChangeIntentDeclaration(input.body);
   if (parsed === null && input.event === 'pull-request') {
     throw new TypeError('pull-request requires exactly one liteship-change-intent block');
   }

@@ -539,12 +539,14 @@ export async function proveInstalledRuntimeFacadeIdentity(
   ownerSpecifier: string,
 ): Promise<InstalledRuntimeFacadeIdentity> {
   const probe = [
-    "import { createRequire } from 'node:module';",
-    "import { pathToFileURL } from 'node:url';",
     `const facadeSpecifier = ${JSON.stringify(facadeSpecifier)};`,
     `const ownerSpecifier = ${JSON.stringify(ownerSpecifier)};`,
     'const facadeUrl = import.meta.resolve(facadeSpecifier);',
-    'const ownerUrl = pathToFileURL(createRequire(facadeUrl).resolve(ownerSpecifier)).href;',
+    // The second parameter is Node's package-export-aware parent URL. The
+    // journey opts into it explicitly below so an import-only owner is resolved
+    // through the facade package's installed dependency graph rather than the
+    // consumer root or CommonJS `require` conditions.
+    'const ownerUrl = import.meta.resolve(ownerSpecifier, facadeUrl);',
     'const [facade, owner] = await Promise.all([import(facadeUrl), import(ownerUrl)]);',
     'const facadeNames = Object.keys(facade).sort();',
     'const ownerNames = Object.keys(owner).sort();',
@@ -559,7 +561,7 @@ export async function proveInstalledRuntimeFacadeIdentity(
     'process.stdout.write(JSON.stringify({ facadeUrl, ownerUrl, exportNames: ownerNames }));',
   ].join('\n');
 
-  const result = await runInstalledNode(['--input-type=module', '--eval', probe], cwd);
+  const result = await runInstalledNode(['--experimental-import-meta-resolve', '--input-type=module', '--eval', probe], cwd);
   journeyAssert(
     result.code === 0,
     `installed runtime identity probe failed for ${facadeSpecifier} → ${ownerSpecifier} ` +
@@ -581,4 +583,34 @@ export function parseReceipt(stdout: string): Record<string, unknown> {
     if (line === undefined) throw new JourneyAssertionError(`no JSON receipt on stdout:\n${stdout.slice(0, 400)}`);
     return JSON.parse(line) as Record<string, unknown>;
   }
+}
+
+/** Durable, bounded evidence for an installed command that failed before its receipt could be asserted. */
+export function installedCommandFailure(
+  command: readonly string[],
+  result: { readonly code: number; readonly stdout: string; readonly stderr: string },
+): string {
+  let receiptState = 'absent';
+  for (const [stream, text] of [
+    ['stdout', result.stdout],
+    ['stderr', result.stderr],
+  ] as const) {
+    if (text.trim().length === 0) continue;
+    try {
+      const receipt = parseReceipt(text);
+      receiptState = `${stream}:${JSON.stringify(receipt).slice(0, 600)}`;
+      break;
+    } catch {
+      // The bounded raw tails below remain the authority when a process failed
+      // before emitting a structured receipt.
+    }
+  }
+
+  return [
+    `command: liteship ${command.join(' ')}`,
+    `exitCode: ${result.code}`,
+    `receipt: ${receiptState}`,
+    `stdoutTail:\n${boundedJourneyOutput(result.stdout) || '(empty)'}`,
+    `stderrTail:\n${boundedJourneyOutput(result.stderr) || '(empty)'}`,
+  ].join('\n');
 }

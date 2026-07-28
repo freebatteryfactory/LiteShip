@@ -6,7 +6,7 @@
 
 # Interface: ThemeCSSResult
 
-Defined in: [\_spine/compiler.d.ts:470](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L470)
+Defined in: [\_spine/compiler.d.ts:488](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L488)
 
 CSS projection of a theme and its named variants.
 
@@ -16,7 +16,7 @@ CSS projection of a theme and its named variants.
 
 > `readonly` **selectors**: `string`
 
-Defined in: [\_spine/compiler.d.ts:471](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L471)
+Defined in: [\_spine/compiler.d.ts:489](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L489)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:471](https://github.com/freebatteryfactory/Li
 
 > `readonly` **transitions**: `string`
 
-Defined in: [\_spine/compiler.d.ts:472](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L472)
+Defined in: [\_spine/compiler.d.ts:490](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L490)

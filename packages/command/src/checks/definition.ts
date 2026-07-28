@@ -190,6 +190,12 @@ interface CheckDefinitionBase {
   readonly inputs: readonly string[];
   /** The profiles this check is a member of — a projection runs it iff its profile is listed. */
   readonly profiles: readonly CheckProfile[];
+  /**
+   * Check identities whose successful artifacts are required before this check
+   * can make its own claim. The planner closes and topologically orders this
+   * graph, so an artifact consumer cannot run before an unlisted producer.
+   */
+  readonly prerequisites: readonly string[];
   /** The context(s) in which this check's claim is applicable and authoritative. */
   readonly contexts: readonly CheckContext[];
   /** The platforms this check runs on — a plan on an unlisted platform SKIPS it (with a reason). */

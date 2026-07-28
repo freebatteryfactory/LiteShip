@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { admitGitHubChangeIntent } from '../../../scripts/lib/github-change-intent.js';
+import {
+  GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR,
+  validateGitHubChangeIntentDeclaration,
+  validateGitHubChangeIntentTemplate,
+} from '../../../scripts/lib/github-change-intent-declaration.js';
 
 function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'public'): Record<string, unknown> {
   return {
@@ -30,6 +35,118 @@ function input(overrides: Record<string, unknown> = {}): Record<string, unknown>
 }
 
 describe('GitHub ChangeIntent host adapter', () => {
+  it('keeps the required declaration discoverable and structurally valid in the PR template', () => {
+    const template = `<!-- Replace ${GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR} before opening the PR. -->\n${block({
+      ...declaration('internal'),
+      sponsor: GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR,
+    })}`;
+    const parsed = validateGitHubChangeIntentTemplate(template);
+
+    expect(parsed['sponsor']).toBe(GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR);
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: {
+          body: template.replaceAll(GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR, 'heyoub'),
+          user: { login: 'heyoub' },
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it('returns an immutable cold-admission snapshot instead of retaining mutable JSON data', () => {
+    const template = `<!-- Replace ${GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR} before opening the PR. -->\n${block({
+      ...declaration('internal'),
+      sponsor: GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR,
+    })}`;
+    const parsed = validateGitHubChangeIntentTemplate(template);
+    expect(Object.isFrozen(parsed)).toBe(true);
+    expect(Object.isFrozen(parsed.affectedUserSurface)).toBe(true);
+    expect(Object.isFrozen(parsed.affectedUserSurface.areas)).toBe(true);
+    expect(Object.isFrozen(parsed.guardrails)).toBe(true);
+    expect(Object.isFrozen(parsed.reversibility)).toBe(true);
+    expect(Object.isFrozen(parsed.uncertainty)).toBe(true);
+    expect(Object.isFrozen(parsed.uncertainty.unknowns)).toBe(true);
+  });
+
+  it('refuses a template that hides or silently pre-fills the author-bound sponsor', () => {
+    expect(() => validateGitHubChangeIntentTemplate(block(declaration('internal')))).toThrow(/template sponsor/u);
+    expect(() =>
+      validateGitHubChangeIntentTemplate(
+        block({ ...declaration('internal'), sponsor: GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR }),
+      ),
+    ).toThrow(/tell the author/u);
+  });
+
+  it('cold-validates the exact declaration and GitHub event author before planning', () => {
+    expect(
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(), user: { login: 'heyoub' } },
+      }),
+    ).toEqual({ kind: 'declared', sponsor: 'heyoub' });
+    expect(validateGitHubChangeIntentDeclaration('push', {})).toEqual({ kind: 'fail-broad', event: 'push' });
+  });
+
+  it('cold-refuses the escaped malformed-block and sponsor-mismatch defects', () => {
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: '<!-- liteship-change-intent {} -->', user: { login: 'heyoub' } },
+      }),
+    ).toThrow(/malformed/u);
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(), user: { login: 'someone-else' } },
+      }),
+    ).toThrow(/does not match/u);
+  });
+
+  it.each([
+    ['invalid actor class', { ...declaration(), actorClass: 'robot' }, /actorClass/u],
+    ['empty guardrails', { ...declaration(), guardrails: [] }, /guardrails must not be empty/u],
+    [
+      'malformed affected surface',
+      { ...declaration(), affectedUserSurface: { visibility: 'public', areas: [] } },
+      /areas must not be empty/u,
+    ],
+    [
+      'foreign nested surface key',
+      { ...declaration(), affectedUserSurface: { visibility: 'public', areas: ['facade'], secret: true } },
+      /keys must be exactly/u,
+    ],
+    [
+      'malformed reversibility',
+      { ...declaration(), reversibility: { kind: 'reversible', rollback: '' } },
+      /rollback must be a non-empty string/u,
+    ],
+    [
+      'duplicate uncertainty values',
+      { ...declaration(), uncertainty: { level: 'high', unknowns: ['same', 'same'] } },
+      /duplicate values/u,
+    ],
+  ])('cold-refuses %s before planning', (_name, candidate, message) => {
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(candidate), user: { login: 'heyoub' } },
+      }),
+    ).toThrow(message);
+  });
+
+  it.each([
+    ['null event payload', null, /payload must be an object/u],
+    ['array event payload', [], /payload must be an object/u],
+    ['missing pull object', {}, /pull_request object/u],
+    ['scalar pull object', { pull_request: 7 }, /pull_request object/u],
+    ['missing body', { pull_request: { user: { login: 'heyoub' } } }, /no body/u],
+    ['missing author', { pull_request: { body: block() } }, /no author/u],
+    ['empty author login', { pull_request: { body: block(), user: { login: '' } } }, /no author login/u],
+    [
+      'duplicate declaration',
+      { pull_request: { body: `${block()}\n${block()}`, user: { login: 'heyoub' } } },
+      /exactly one/u,
+    ],
+  ])('cold-refuses %s', (_name, payload, message) => {
+    expect(() => validateGitHubChangeIntentDeclaration('pull_request', payload)).toThrow(message);
+  });
+
   it('binds declared semantics to GitHub-verified repository, commit, and owner facts', () => {
     const result = admitGitHubChangeIntent(input());
     expect(result.origin).toBe('declared');

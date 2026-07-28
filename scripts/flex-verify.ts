@@ -38,6 +38,14 @@ if (FLEX_POLICY_FAILURES.length > 0) {
   process.exit(1);
 }
 
+/**
+ * Registry mode consumes the typed check-DAG authorities that precede this
+ * roll-up. Standalone `pnpm run flex:verify` deliberately remains exhaustive.
+ * This flag is safe only because CHECK_REGISTRY declares every trusted producer
+ * as a prerequisite; removing one makes the prerequisite-law tests red.
+ */
+const PRECHECKED = process.argv.includes('--prechecked');
+
 interface CheckResult {
   pass: boolean;
   detail: string;
@@ -183,7 +191,7 @@ const checks: Check[] = [
       // (it strips comments/strings before judging); this roll-up matches the same
       // intent coarsely so it agrees with it (a prose mention is never a violation).
       const tsHits = scanFiles(['packages/*/src/**/*.ts'], /^\s*\/(?:\/|\*)\s*@ts-(ignore|nocheck)\b/, false);
-      const lint = sh('pnpm run lint');
+      const lint = PRECHECKED ? { ok: true, out: 'trusted check/lint prerequisite' } : sh('pnpm run lint');
 
       const anyOk = anyHits.length === 0;
       const tsOk = tsHits.length === 0;
@@ -193,7 +201,7 @@ const checks: Check[] = [
       const details: string[] = [];
       details.push(`as-any-clean=${anyOk ? 'true' : `${anyHits.length} hits`}`);
       details.push(`ts-comment-clean=${tsOk ? 'true' : `${tsHits.length} hits`}`);
-      details.push(`lint-clean=${lintOk}`);
+      details.push(`lint-clean=${lintOk}${PRECHECKED ? '(prerequisite)' : ''}`);
 
       return { pass, detail: details.join(' ') };
     },
@@ -202,6 +210,9 @@ const checks: Check[] = [
   {
     dim: 'Testing rigor',
     check: () => {
+      if (PRECHECKED) {
+        return { pass: true, detail: 'check/test prerequisite passed' };
+      }
       const r = sh('pnpm test');
       // pnpm test outputs the count; just rely on exit status here.
       return {
@@ -215,7 +226,9 @@ const checks: Check[] = [
   {
     dim: 'Performance',
     check: () => {
-      const gate = sh('pnpm run bench:gate');
+      const gate = PRECHECKED
+        ? { ok: true, out: 'BENCH GATE PASSED (check/bench-gate prerequisite)' }
+        : sh('pnpm run bench:gate');
       const gatePassed = /BENCH GATE PASSED/.test(gate.out) && gate.ok;
 
       const sseSrc = readFileSync('packages/web/src/stream/sse.ts', 'utf8');
@@ -326,6 +339,12 @@ const checks: Check[] = [
   {
     dim: 'Release discipline',
     check: () => {
+      if (PRECHECKED) {
+        return {
+          pass: true,
+          detail: 'check/feedback-verify + check/docs prerequisites passed',
+        };
+      }
       const docsCheck = sh('pnpm run docs:check');
 
       // Inside the gauntlet, the orchestrator runs feedback:verify itself one

@@ -33,13 +33,21 @@ const INSTALLED: InstalledCostObservation = {
   duplicateExternalVersions: [],
 };
 
+const filesFor = (count: number, bytes: number) =>
+  Array.from({ length: count }, (_, index) => ({ path: `dist/file-${index}.js`, bytes: index === 0 ? bytes : 0 }));
+
 function tarballs() {
-  return NAMES.map((packageName, index) => ({
-    package: packageName,
-    compressedBytes: 1_000 + index,
-    unpackedBytes: 2_000 + index,
-    fileCount: 10 + index,
-  }));
+  return NAMES.map((packageName, index) => {
+    const unpackedBytes = 2_000 + index;
+    const fileCount = 10 + index;
+    return {
+      package: packageName,
+      compressedBytes: 1_000 + index,
+      unpackedBytes,
+      fileCount,
+      files: filesFor(fileCount, unpackedBytes),
+    };
+  });
 }
 
 function build(

@@ -8,7 +8,7 @@
  */
 
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import {
   buildCatalogFeatureEdgeFamily,
@@ -40,6 +40,7 @@ import {
 } from '../../scripts/lib/event-protocol-contract.js';
 import { buildLiveLiteShipFeatureEdgeFacts } from '../../scripts/lib/feature-edge-profile.js';
 import { loadHistoricalDefect } from '../support/historical-defect-corpus.js';
+import { repositoryProofTimeout } from '../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
 const DIGEST = `sha256:${'a'.repeat(64)}` as const;
@@ -184,6 +185,13 @@ function qualificationGate(
 }
 
 describe('feature-edge authority adversarial model', () => {
+  // The live TypeScript census is one repository proof shared by every family.
+  // Build it once under the canonical repository-proof budget rather than making
+  // the first `it.each` case own a machine-load-sensitive generic 10 s timeout.
+  beforeAll(() => {
+    liveFacts();
+  }, repositoryProofTimeout());
+
   it.each(FEATURE_EDGE_FAMILIES)('detects a producer erasure in the live %s owner projection', (family) => {
     const facts = liveFacts();
     const pack = facts.families.find((candidate) => candidate.family === family)!;

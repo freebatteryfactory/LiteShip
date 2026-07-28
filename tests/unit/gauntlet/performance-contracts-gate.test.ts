@@ -26,6 +26,7 @@ import {
   PERFORMANCE_CONTRACTS_RULE_ID,
   ACCEPTED_ALLOCATION_CEILINGS,
   ACCEPTED_COMPLEXITY_CEILINGS,
+  COMPLEXITY_ADMISSION_POLICY,
 } from '../../../packages/gauntlet/src/gates/performance-contracts.js';
 
 const DISTRIBUTIONS = JSON.stringify({
@@ -62,11 +63,23 @@ function healthyComplexityEntries(
       fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.002,
       sizes: [16, 32, 64, 128, 256],
       coefficientOfVariation: 0.05,
-      measurement: { replicates: 7 },
+      measurement: {
+        replicates: 7,
+        calibrationReplicates: COMPLEXITY_ADMISSION_POLICY.calibrationReplicates,
+        calibrationTargetBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
+        minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
+        maximumCalibratedInnerIterations: COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations,
+      },
+      replicateSamplesNs: [16, 32, 64, 128, 256].map((size) => ({
+        size,
+        effectiveInnerIterations: 100,
+        samples: [100, 101, 99, 102, 100, 101, 99],
+        batchDurationsMs: [20, 20.2, 19.8, 20.4, 20, 20.2, 19.8],
+      })),
     }));
 }
 
-const HEALTHY_MAP = JSON.stringify({ schemaVersion: 2, entries: healthyComplexityEntries() });
+const HEALTHY_MAP = JSON.stringify({ schemaVersion: 3, entries: healthyComplexityEntries() });
 const HEALTHY_ALLOCATION_MAP = JSON.stringify({
   schemaVersion: 1,
   entries: Object.entries(ACCEPTED_ALLOCATION_CEILINGS).map(([path, klass], index) => ({
@@ -300,7 +313,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         entries: healthyComplexityEntries({
           'boundary.evaluateBatch': { class: 'O(n^2)', fittedR2: 0.99 },
         }),
@@ -318,7 +331,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         entries: healthyComplexityEntries({
           'boundary.evaluateBatch': { class: 'O(1)', fittedR2: 0.9 },
         }),
@@ -332,7 +345,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         entries: healthyComplexityEntries({}, new Set(['boundary.evaluateBatch'])),
       }),
     });
@@ -345,7 +358,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
       'benchmarks/distributions.json': DISTRIBUTIONS,
       'tests/bench/core.bench.ts': BENCH_FILE,
       'benchmarks/complexity-map.json': JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: 3,
         entries: healthyComplexityEntries({
           'boundary.evaluateBatch': { class: 'O(n)', fittedR2: 0.2 },
         }),
@@ -355,24 +368,60 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
     expect(findings.some((f) => f.title.includes('too noisy'))).toBe(true);
   });
 
-  it('FLAGS thin, clustered, under-replicated, and unstable claim evidence', () => {
+  it('FLAGS thin, clustered, under-replicated, under-timed, and unstable claim evidence', () => {
     const baseline = healthyComplexityEntries();
     const target = baseline[0]!;
     const defects = [
       { ...target, sizes: [16, 32, 64, 128] },
       { ...target, sizes: [16, 32, 48, 96, 192] },
-      { ...target, measurement: { replicates: 6 } },
+      {
+        ...target,
+        measurement: { ...target.measurement, replicates: 6 },
+        replicateSamplesNs: target.replicateSamplesNs.map((entry) => ({
+          ...entry,
+          samples: entry.samples.slice(0, 6),
+          batchDurationsMs: entry.batchDurationsMs.slice(0, 6),
+        })),
+      },
+      {
+        ...target,
+        replicateSamplesNs: target.replicateSamplesNs.map((entry, index) =>
+          index === 0 ? { ...entry, batchDurationsMs: [9, 20, 20, 20, 20, 20, 20] } : entry,
+        ),
+      },
       { ...target, coefficientOfVariation: 0.26 },
     ];
-    const expected = ['insufficient-size-sweep', 'invalid-size-sweep', 'under-replicated', 'unstable-variance'];
+    const expected = [
+      'insufficient-size-sweep',
+      'invalid-size-sweep',
+      'under-replicated',
+      'under-timed-batch',
+      'unstable-variance',
+    ];
 
     for (let index = 0; index < defects.length; index++) {
-      const entries = [defects[index]!, ...baseline.slice(1)];
+      const defect = defects[index]!;
+      const replicates = defect.measurement.replicates;
+      const entries = [
+        {
+          ...defect,
+          replicateSamplesNs: defect.sizes.map((size) => ({
+            size,
+            effectiveInnerIterations: 100,
+            samples: Array.from({ length: replicates }, (_, sample) => 100 + (sample % 3)),
+            batchDurationsMs:
+              expected[index] === 'under-timed-batch'
+                ? [9, ...Array.from({ length: replicates - 1 }, () => 20)]
+                : Array.from({ length: replicates }, () => 20),
+          })),
+        },
+        ...baseline.slice(1),
+      ];
       const findings = performanceContractsGate.run(
         memoryContext({
           'benchmarks/distributions.json': DISTRIBUTIONS,
           'tests/bench/core.bench.ts': BENCH_FILE,
-          'benchmarks/complexity-map.json': JSON.stringify({ schemaVersion: 2, entries }),
+          'benchmarks/complexity-map.json': JSON.stringify({ schemaVersion: 3, entries }),
         }),
       );
       expect(
@@ -403,7 +452,7 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
           }),
         }),
       ),
-    ).toThrow(/schema-v2/u);
+    ).toThrow(/schema-v3/u);
   });
 
   it('pins the accepted ceilings to the trust-spine hot paths', () => {

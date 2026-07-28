@@ -47,6 +47,18 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
     'check/lockfile-frozen',
   ],
   [
+    'check/security-minimum',
+    'pnpm run security:minimum',
+    'tests/unit/devops/security-audit-contract.test.ts',
+    'shared:security-audit-contract',
+  ],
+  [
+    'check/security-audit',
+    'pnpm run security:audit',
+    'tests/unit/devops/security-audit-contract.test.ts',
+    'shared:security-audit-contract',
+  ],
+  [
     'check/prebuild-dist-free',
     'pnpm run prebuild:gate',
     'tests/unit/meta/prebuild-dist-free-closure.test.ts',
@@ -160,7 +172,7 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   ],
   [
     'check/flex-verify',
-    'pnpm run flex:verify',
+    'pnpm run flex:verify -- --prechecked',
     'tests/unit/devops/flex-policy-negative-control.test.ts',
     'shared:flex-policy-owner',
   ],
@@ -267,7 +279,7 @@ const BLOCKING_CHECKS = CHECK_REGISTRY.filter((check): check is BlockingCheck =>
 const EXPECTED_BY_ID = new Map(EXPECTED_CONTROLS.map((row) => [row[0], row]));
 let fixtureRoot = '';
 
-function planned(check: BlockingCheck): PlannedCheck {
+function planned(check: CheckDefinition): PlannedCheck {
   return {
     id: check.id,
     title: check.title,
@@ -281,17 +293,32 @@ function planned(check: BlockingCheck): PlannedCheck {
     cacheable: check.cache === 'content-addressed',
     timeoutMs: check.timeoutMs,
     inputs: check.inputs,
+    prerequisites: check.prerequisites,
     remediation: check.remediation,
   };
 }
 
 function planFor(check: BlockingCheck): CheckPlan {
+  const byId = new Map(CHECK_REGISTRY.map((entry) => [entry.id, entry] as const));
+  const ordered: CheckDefinition[] = [];
+  const visited = new Set<string>();
+  const visit = (entry: CheckDefinition): void => {
+    if (visited.has(entry.id)) return;
+    for (const prerequisiteId of entry.prerequisites) {
+      const prerequisite = byId.get(prerequisiteId);
+      if (prerequisite === undefined) throw new Error(`${entry.id} has a missing prerequisite ${prerequisiteId}`);
+      visit(prerequisite);
+    }
+    visited.add(entry.id);
+    ordered.push(entry);
+  };
+  visit(check);
   return {
     profile: check.profiles[0]!,
     platform: 'linux',
     context: check.contexts[0]!,
-    checks: [planned(check)],
-    estimatedMs: check.timeoutMs,
+    checks: ordered.map(planned),
+    estimatedMs: ordered.reduce((total, entry) => total + entry.timeoutMs, 0),
     skipped: [],
   };
 }
@@ -305,15 +332,22 @@ function execute(
   status: number,
 ): { readonly calls: readonly string[]; readonly ok: boolean; readonly blocked: boolean; readonly verdict: string } {
   const calls: string[] = [];
+  const plan = planFor(check);
   const report = createCheckPlanRunner({
     spawn: (command) => {
       calls.push(command);
-      return { status, signal: null, stdout: '', stderr: status === 0 ? '' : `planted ${check.id} failure` };
+      const selectedStatus = calls.length === plan.checks.length ? status : 0;
+      return {
+        status: selectedStatus,
+        signal: null,
+        stdout: '',
+        stderr: selectedStatus === 0 ? '' : `planted ${check.id} failure`,
+      };
     },
     now: () => 7,
     env: { node: 'negative-control', platform: 'linux' },
-  })(planFor(check), fixtureRoot, { noCache: true });
-  return { calls, ok: report.ok, blocked: report.blocked, verdict: report.results[0]!.verdict };
+  })(plan, fixtureRoot, { noCache: true });
+  return { calls, ok: report.ok, blocked: report.blocked, verdict: report.results.at(-1)!.verdict };
 }
 
 function canonicalRelation(rows: readonly BlockingCheck[]): string {
@@ -357,7 +391,7 @@ function relationProblems(rows: readonly BlockingCheck[]): readonly string[] {
 beforeAll(() => {
   fixtureRoot = mkdtempSync(join(tmpdir(), 'liteship-control-relation-'));
   const scripts = Object.fromEntries(
-    BLOCKING_CHECKS.flatMap((check) => {
+    CHECK_REGISTRY.flatMap((check) => {
       const script = invokedScriptName(check.command);
       return script === null ? [] : [[script, 'fixture-authority']];
     }),
@@ -396,10 +430,12 @@ describe('blocking-check negative-control relation properties', () => {
       fc.assert(
         fc.property(fc.constantFrom(...BLOCKING_CHECKS), fc.integer({ min: 1, max: 255 }), (check, nonzero) => {
           const red = execute(check, nonzero);
-          expect(red.calls).toEqual([expectedSpawnCommand(check)]);
+          expect(red.calls.at(-1)).toBe(expectedSpawnCommand(check));
+          expect(red.calls).toHaveLength(planFor(check).checks.length);
           expect(red).toMatchObject({ ok: false, blocked: true, verdict: 'fail' });
           const green = execute(check, 0);
-          expect(green.calls).toEqual([expectedSpawnCommand(check)]);
+          expect(green.calls.at(-1)).toBe(expectedSpawnCommand(check));
+          expect(green.calls).toHaveLength(planFor(check).checks.length);
           expect(green).toMatchObject({ ok: true, blocked: false, verdict: 'pass' });
         }),
         { seed: 0xb10c, numRuns: 84 },
@@ -416,7 +452,7 @@ describe('blocking-check negative-control relation properties', () => {
     const execution = parseRootScriptCheckExecution(command);
     expect(execution).not.toBeNull();
     const synthetic = { ...BLOCKING_CHECKS[0]!, id: 'check/quoted', command, execution: execution! };
-    expect(execute(synthetic, 0).calls).toEqual(['pnpm run lint -- --label "two words"']);
+    expect(execute(synthetic, 0).calls.at(-1)).toBe('pnpm run lint -- --label "two words"');
   });
 
   it('rejects an unrelated existing control path instead of accepting file existence as proof', () => {

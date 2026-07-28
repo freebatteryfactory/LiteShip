@@ -248,7 +248,13 @@ describe('delivery metrics and SLO fold', () => {
         },
         complexity: { expected: 'O(n)', measured: 'O(n)', fittedSlope: 1, fittedR2: 0.99 },
         allocation: null,
-        confidence: { minimumR2: 0.9, coefficientOfVariation: 0.01, maximumCoefficientOfVariation: 0.1 },
+        confidence: {
+          minimumR2: 0.9,
+          coefficientOfVariation: 0.01,
+          maximumCoefficientOfVariation: 0.1,
+          minimumObservedBatchDurationMs: 20,
+          minimumTimedBatchDurationMs: 10,
+        },
       });
     const authority = {
       sourceSha: plan.headSha,

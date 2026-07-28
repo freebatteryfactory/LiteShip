@@ -2,13 +2,13 @@
 
 Generated from the typed 25-package catalog and the TypeScript export graph. The `liteship` root is the paved road; package and facade subpaths are advanced modules. `public-exports:check` proves every named binding is export-reachable and has a source declaration owner, consumer import spelling, TSDoc purpose, failure policy, invariant, replacement status, and named package proof. The binding total is not a claim that every structural type has a concrete runtime inhabitant: executable allocation/read proof is exhaustive only for paved-road root values; advanced type inhabitation remains an explicit owner contract. Use `liteship explain <symbol>` for the symbol-level answer.
 
-Bindings: **4120** across **87** public specifiers.
+Bindings: **4138** across **87** public specifiers.
 
 | Specifier | Surface | Audience | Stability | Bindings | Declaration owners | Invariant |
 | --- | --- | --- | --- | ---: | ---: | --- |
-| `@liteship/_spine` | advanced-module | package-author | stable | 427 | 17 | `INV-SPINE-EXACT-RELATION` |
+| `@liteship/_spine` | advanced-module | package-author | stable | 432 | 17 | `INV-SPINE-EXACT-RELATION` |
 | `@liteship/_spine/command` | advanced-module | package-author | stable | 10 | 1 | `INV-SPINE-EXACT-RELATION` |
-| `@liteship/_spine/core` | advanced-module | package-author | stable | 175 | 1 | `INV-SPINE-EXACT-RELATION` |
+| `@liteship/_spine/core` | advanced-module | package-author | stable | 177 | 1 | `INV-SPINE-EXACT-RELATION` |
 | `@liteship/_spine/design` | advanced-module | package-author | stable | 20 | 1 | `INV-SPINE-EXACT-RELATION` |
 | `@liteship/_spine/events` | advanced-module | package-author | stable | 8 | 1 | `INV-SPINE-EXACT-RELATION` |
 | `@liteship/_spine/genui` | advanced-module | package-author | stable | 5 | 1 | `INV-SPINE-EXACT-RELATION` |
@@ -41,21 +41,21 @@ Bindings: **4120** across **87** public specifiers.
 | `@liteship/command/host` | advanced-module | operator | stable | 33 | 11 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/command/host-browser` | advanced-module | operator | stable | 6 | 2 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/command/invariants` | advanced-module | operator | stable | 4 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/compiler` | advanced-module | package-author | stable | 82 | 22 | `INV-ADAPTIVE-CSS-BYTE-EQUIVALENCE` |
+| `@liteship/compiler` | advanced-module | package-author | stable | 84 | 22 | `INV-ADAPTIVE-CSS-BYTE-EQUIVALENCE` |
 | `@liteship/compiler/migrate` | advanced-module | package-author | stable | 18 | 7 | `INV-ADAPTIVE-CSS-BYTE-EQUIVALENCE` |
 | `@liteship/compiler/parse` | advanced-module | package-author | stable | 10 | 2 | `INV-ADAPTIVE-CSS-BYTE-EQUIVALENCE` |
-| `@liteship/core` | advanced-module | package-author | stable | 462 | 109 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/core` | advanced-module | package-author | stable | 464 | 109 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/authoring` | advanced-module | package-author | stable | 108 | 27 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/clock` | advanced-module | package-author | stable | 11 | 4 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/ecs` | advanced-module | package-author | stable | 25 | 3 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/evidence` | advanced-module | package-author | stable | 51 | 16 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/core/fs-walk` | advanced-module | package-author | stable | 2 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/core/fs-walk` | advanced-module | package-author | stable | 3 | 1 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/graph` | advanced-module | package-author | stable | 67 | 10 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/harness` | advanced-module | package-author | stable | 23 | 10 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/media` | advanced-module | package-author | stable | 39 | 9 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/motion` | advanced-module | package-author | stable | 87 | 13 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/reactive` | advanced-module | package-author | stable | 62 | 17 | `INV-PUBLIC-SURFACE-INHABITED` |
-| `@liteship/core/schema` | advanced-module | package-author | stable | 75 | 13 | `INV-PUBLIC-SURFACE-INHABITED` |
+| `@liteship/core/schema` | advanced-module | package-author | stable | 77 | 13 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/simulation` | advanced-module | package-author | stable | 27 | 6 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/core/wasm` | advanced-module | package-author | stable | 6 | 3 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `@liteship/detect` | advanced-module | host-integrator | stable | 45 | 7 | `INV-PUBLIC-SURFACE-INHABITED` |
@@ -81,7 +81,7 @@ Bindings: **4120** across **87** public specifiers.
 | `create-liteship` | advanced-module | operator | stable | 10 | 2 | `INV-PUBLIC-SURFACE-INHABITED` |
 | `liteship` | paved-road | package-author | stable | 17 | 11 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/astro` | advanced-module | package-author | stable | 37 | 12 | `INV-FACADE-EXPORT-BUDGET` |
-| `liteship/compiler` | advanced-module | package-author | stable | 76 | 18 | `INV-FACADE-EXPORT-BUDGET` |
+| `liteship/compiler` | advanced-module | package-author | stable | 78 | 18 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/evidence` | advanced-module | package-author | stable | 42 | 12 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/genui` | advanced-module | package-author | stable | 17 | 8 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/graph` | advanced-module | package-author | stable | 67 | 10 | `INV-FACADE-EXPORT-BUDGET` |
@@ -90,7 +90,7 @@ Bindings: **4120** across **87** public specifiers.
 | `liteship/motion` | advanced-module | package-author | stable | 81 | 11 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/reactive` | advanced-module | package-author | stable | 66 | 17 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/runtime` | advanced-module | package-author | stable | 127 | 30 | `INV-FACADE-EXPORT-BUDGET` |
-| `liteship/schema` | advanced-module | package-author | stable | 72 | 12 | `INV-FACADE-EXPORT-BUDGET` |
+| `liteship/schema` | advanced-module | package-author | stable | 74 | 12 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/testing` | advanced-module | package-author | stable | 25 | 11 | `INV-FACADE-EXPORT-BUDGET` |
 | `liteship/vite` | advanced-module | package-author | stable | 47 | 13 | `INV-FACADE-EXPORT-BUDGET` |
 

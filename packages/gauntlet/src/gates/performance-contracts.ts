@@ -77,6 +77,7 @@ export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityCla
   'assets.computeWaveform': 'O(n)',
   'assets.detectOnsets': 'O(n)',
   'assets.detectBeats': 'O(n)',
+  'web.parseMessage': 'O(n)',
   'gauntlet.runGates': 'O(n)',
 };
 
@@ -95,7 +96,10 @@ export const ACCEPTED_ALLOCATION_CEILINGS: Readonly<Record<string, ComplexityCla
  * Five geometrically spaced sizes produce a real curve rather than a local
  * tangent. Seven best-of-k replicates expose variance while remaining practical
  * on shared CI hosts. R² and coefficient-of-variation then decide whether the
- * measured class is admissible rather than merely present.
+ * measured class is admissible rather than merely present. Every replicate also
+ * clears a real timed-batch floor; the producer calibrates toward a higher target
+ * before sampling so timer resolution and scheduler jitter cannot dominate a
+ * claim-bearing curve on a slower or faster host.
  */
 export const COMPLEXITY_ADMISSION_POLICY = Object.freeze({
   minimumR2: 0.9,
@@ -103,14 +107,24 @@ export const COMPLEXITY_ADMISSION_POLICY = Object.freeze({
   minimumReplicatesPerSize: 7,
   minimumSizeGrowthFactor: 2,
   maximumCoefficientOfVariation: 0.25,
+  minimumTimedBatchDurationMs: 10,
+  calibrationTargetBatchDurationMs: 20,
+  calibrationReplicates: 3,
+  maximumCalibratedInnerIterations: 1_000_000,
 });
 
 export type ComplexityAdmissionReason =
-  'insufficient-size-sweep' | 'invalid-size-sweep' | 'under-replicated' | 'low-r2' | 'unstable-variance';
+  | 'insufficient-size-sweep'
+  | 'invalid-size-sweep'
+  | 'under-replicated'
+  | 'under-timed-batch'
+  | 'low-r2'
+  | 'unstable-variance';
 
 export interface ComplexityAdmissionCandidate {
   readonly sizes: readonly number[];
   readonly replicates: number;
+  readonly minimumObservedBatchDurationMs: number;
   readonly fittedR2: number;
   readonly coefficientOfVariation: number;
 }
@@ -136,6 +150,12 @@ export function complexityAdmissionReasons(
     candidate.replicates < COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize
   ) {
     reasons.push('under-replicated');
+  }
+  if (
+    !Number.isFinite(candidate.minimumObservedBatchDurationMs) ||
+    candidate.minimumObservedBatchDurationMs < COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs
+  ) {
+    reasons.push('under-timed-batch');
   }
   if (!Number.isFinite(candidate.fittedR2) || candidate.fittedR2 < COMPLEXITY_ADMISSION_POLICY.minimumR2) {
     reasons.push('low-r2');
@@ -236,12 +256,51 @@ function readComplexityEntries(context: GateContext): readonly ComplexityMapEntr
   const text = context.readFile(COMPLEXITY_MAP_PATH);
   if (text === undefined) return null;
   const parsed = parseJson(text, COMPLEXITY_MAP_PATH);
-  if (!isRecord(parsed) || parsed.schemaVersion !== 2 || !Array.isArray(parsed.entries)) {
+  if (!isRecord(parsed) || parsed.schemaVersion !== 3 || !Array.isArray(parsed.entries)) {
     throw ValidationError(
       PERFORMANCE_CONTRACTS_RULE_ID,
-      `${COMPLEXITY_MAP_PATH} must be a schema-v2 artifact with an entries array`,
+      `${COMPLEXITY_MAP_PATH} must be a schema-v3 artifact with an entries array`,
     );
   }
+  const hasMeasurementReceipt = (entry: Record<string, unknown>): boolean => {
+    const sizes = entry['sizes'];
+    const measurement = entry['measurement'];
+    const replicateSamples = entry['replicateSamplesNs'];
+    if (
+      !Array.isArray(sizes) ||
+      !isRecord(measurement) ||
+      typeof measurement['replicates'] !== 'number' ||
+      measurement['calibrationReplicates'] !== COMPLEXITY_ADMISSION_POLICY.calibrationReplicates ||
+      measurement['calibrationTargetBatchDurationMs'] !==
+        COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs ||
+      measurement['minimumTimedBatchDurationMs'] !== COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs ||
+      measurement['maximumCalibratedInnerIterations'] !== COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations
+    ) {
+      return false;
+    }
+    return (
+      Array.isArray(replicateSamples) &&
+      replicateSamples.length === sizes.length &&
+      replicateSamples.every(
+        (sampleSet, sampleIndex) =>
+          isRecord(sampleSet) &&
+          sampleSet['size'] === sizes[sampleIndex] &&
+          typeof sampleSet['effectiveInnerIterations'] === 'number' &&
+          Number.isInteger(sampleSet['effectiveInnerIterations']) &&
+          sampleSet['effectiveInnerIterations'] > 0 &&
+          Array.isArray(sampleSet['samples']) &&
+          sampleSet['samples'].length === measurement['replicates'] &&
+          sampleSet['samples'].every(
+            (sample) => typeof sample === 'number' && Number.isFinite(sample) && sample >= 0,
+          ) &&
+          Array.isArray(sampleSet['batchDurationsMs']) &&
+          sampleSet['batchDurationsMs'].length === measurement['replicates'] &&
+          sampleSet['batchDurationsMs'].every(
+            (duration) => typeof duration === 'number' && Number.isFinite(duration) && duration >= 0,
+          ),
+      )
+    );
+  };
   return parsed.entries.map((entry, index) => {
     if (
       !isRecord(entry) ||
@@ -252,7 +311,8 @@ function readComplexityEntries(context: GateContext): readonly ComplexityMapEntr
       !Array.isArray(entry.sizes) ||
       !entry.sizes.every((size) => typeof size === 'number') ||
       !isRecord(entry.measurement) ||
-      typeof entry.measurement.replicates !== 'number'
+      typeof entry.measurement.replicates !== 'number' ||
+      !hasMeasurementReceipt(entry)
     ) {
       throw ValidationError(
         PERFORMANCE_CONTRACTS_RULE_ID,
@@ -266,6 +326,11 @@ function readComplexityEntries(context: GateContext): readonly ComplexityMapEntr
       sizes: entry.sizes,
       coefficientOfVariation: entry.coefficientOfVariation,
       replicates: entry.measurement.replicates,
+      minimumObservedBatchDurationMs: Math.min(
+        ...(entry.replicateSamplesNs as ReadonlyArray<Record<string, unknown>>).flatMap(
+          (sampleSet) => sampleSet['batchDurationsMs'] as number[],
+        ),
+      ),
     };
   });
 }
@@ -543,7 +608,9 @@ function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null)
             ? `${entry.path} sizes must be positive and grow geometrically by at least ${COMPLEXITY_ADMISSION_POLICY.minimumSizeGrowthFactor}× at each step; recorded [${entry.sizes.join(', ')}].`
             : reason === 'under-replicated'
               ? `${entry.path} records ${entry.replicates} replicate(s) per size; claim-bearing complexity evidence requires at least ${COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize}.`
-              : `${entry.path} records coefficient of variation ${entry.coefficientOfVariation}; claim-bearing complexity evidence requires a finite value no greater than ${COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation}.`;
+              : reason === 'under-timed-batch'
+                ? `${entry.path} records a shortest timed batch of ${entry.minimumObservedBatchDurationMs}ms; claim-bearing complexity evidence requires every batch to last at least ${COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs}ms after calibration.`
+                : `${entry.path} records coefficient of variation ${entry.coefficientOfVariation}; claim-bearing complexity evidence requires a finite value no greater than ${COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation}.`;
       findings.push(
         finding({
           ruleId: PERFORMANCE_CONTRACTS_RULE_ID,
@@ -689,14 +756,26 @@ function fixtureComplexityMap(
   overrides: Readonly<Record<string, { readonly class: ComplexityClass; readonly fittedR2: number }>> = {},
 ): string {
   return JSON.stringify({
-    schemaVersion: 2,
+    schemaVersion: 3,
     entries: Object.entries(ACCEPTED_COMPLEXITY_CEILINGS).map(([path, ceiling], index) => ({
       path,
       class: overrides[path]?.class ?? ceiling,
       fittedR2: overrides[path]?.fittedR2 ?? 0.99 - index * 0.002,
       sizes: [16, 32, 64, 128, 256],
       coefficientOfVariation: 0.05,
-      measurement: { replicates: 7 },
+      measurement: {
+        replicates: 7,
+        calibrationReplicates: COMPLEXITY_ADMISSION_POLICY.calibrationReplicates,
+        calibrationTargetBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
+        minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
+        maximumCalibratedInnerIterations: COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations,
+      },
+      replicateSamplesNs: [16, 32, 64, 128, 256].map((size) => ({
+        size,
+        effectiveInnerIterations: 100,
+        samples: [100, 101, 99, 102, 100, 101, 99],
+        batchDurationsMs: [20, 20.2, 19.8, 20.4, 20, 20.2, 19.8],
+      })),
     })),
   });
 }

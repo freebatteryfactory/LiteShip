@@ -170,7 +170,7 @@ function noSkippedTestEvidenceDigest(context: GateContext): string {
 // ---------------------------------------------------------------------------
 
 /** A real (sanctioned) file path used in the GREEN fixture — must match the allowlist. */
-const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
+const SANCTIONED_FILE = 'tests/integration/cli/scene-render.test.ts';
 
 /** The qualified gate — fixtures included, so it self-proves via the ratchet. */
 export const noSkippedTestGate: Gate = defineGate({
@@ -216,7 +216,7 @@ export const noSkippedTestGate: Gate = defineGate({
         // exact sanctioned SITE (byte-for-byte the enumerated `site` line) — it is the
         // audited, visible capability gate, so it is ALLOWED. Per-site sanctioning: a
         // DIFFERENT skip in this same file would NOT pass (see the class-guard test).
-        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n",
+        [SANCTIONED_FILE]: 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;\n',
         // A REAL test plus a docstring + string that MENTION it.skip descriptively — the
         // codeOnly strip blanks both so neither trips the gate (no false positive).
         'tests/unit/widget/good.test.ts':

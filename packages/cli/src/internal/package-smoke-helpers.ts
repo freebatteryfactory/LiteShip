@@ -5,7 +5,7 @@
  * exclusion ONLY once its composable pure helpers are extracted + tested).
  *
  * These helpers are the real decision logic the orchestrator composes:
- *  - {@link resolveExecutable} — the platform/npm_execpath executable resolution.
+ *  - {@link resolvePackageManagerInvocation} — the platform launcher resolution.
  *  - {@link tarballFileUrl} — the cross-platform `file://` URL for a tarball path
  *    (the Windows 8.3 short-path realpath fix-up).
  *  - {@link packedLiteshipBin} — the facade-owned executable inside a packed
@@ -26,27 +26,48 @@ import { createHash } from 'node:crypto';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type * as TypeScript from 'typescript';
+import { quoteWindowsArg } from '@liteship/command/host';
 import { IntegrityError } from '@liteship/error';
 
+export interface ExecutableInvocation {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly windowsVerbatimArguments: boolean;
+}
+
+/** Executables owned by the package-smoke orchestration contract. */
+export type PackageSmokeExecutable = 'node' | 'pnpm';
+
+function synchronousInvocation(
+  command: string,
+  args: readonly string[],
+  platform: NodeJS.Platform,
+): ExecutableInvocation {
+  if (platform !== 'win32' || /\.(?:exe|com)$/iu.test(command)) {
+    return { command, args, windowsVerbatimArguments: false };
+  }
+  return {
+    command: 'cmd.exe',
+    args: ['/d', '/s', '/c', [command, ...args].map(quoteWindowsArg).join(' ')],
+    windowsVerbatimArguments: true,
+  };
+}
+
 /**
- * Resolve the executable to spawn for `command`. `pnpm` invoked through an
- * `npm_execpath` is re-pointed at the current Node WHEN that entrypoint is a JS
- * file (the common pnpm CLI). But some setups point `npm_execpath` at a NATIVE
- * standalone binary (`@pnpm/exe`, e.g. Blacksmith runners' `setup-pnpm`), which
- * must be run DIRECTLY — `node <binary>` chokes on the ELF/Mach-O/PE header
- * (`SyntaxError: Invalid or unexpected token`). On Windows the `pnpm.cmd` shim
- * is required.
+ * Resolve a package-smoke-owned executable through the canonical platform law.
+ * The executable identity is a closed union owned by this command; inherited
+ * environment such as `npm_execpath` may configure pnpm internals but cannot
+ * replace the process we execute. Windows `.cmd`/`.bat` shims are routed through
+ * `cmd.exe`; POSIX resolves the literal tool name through the ordinary PATH.
  */
-export function resolveExecutable(command: string): string {
-  const execpath = process.env['npm_execpath'];
-  if (command === 'pnpm' && execpath) {
-    // JS entrypoint → run via node; native binary → run it directly.
-    return /\.[cm]?js$/i.test(execpath) ? process.execPath : execpath;
-  }
-  if (process.platform === 'win32' && command === 'pnpm') {
-    return 'pnpm.cmd';
-  }
-  return command;
+export function resolvePackageManagerInvocation(
+  command: PackageSmokeExecutable,
+  args: readonly string[],
+  options: {
+    readonly platform?: NodeJS.Platform;
+  } = {},
+): ExecutableInvocation {
+  return synchronousInvocation(command, args, options.platform ?? process.platform);
 }
 
 /**

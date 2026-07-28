@@ -150,7 +150,7 @@ LiteShip can adopt one surface at a time; existing CSS keeps working beside it. 
 
 | Dimension | Tier-1 (CI-gated) | Tier-2 (best-effort) |
 | --- | --- | --- |
-| OS | Windows + Linux | macOS |
+| OS | Windows + Linux + macOS | — |
 | Shell | PowerShell + bash | zsh / bash on macOS |
 | Node.js | 22, pnpm 10 | same — no known gap |
 | Vite / Astro | 8 / 7 | same — no known gap |
@@ -158,20 +158,11 @@ LiteShip can adopt one surface at a time; existing CSS keeps working beside it. 
 
 **No Effect runtime; host peers stay explicit.** The root authoring layer produces plain CSS strings, GLSL preambles, ARIA records, and TypeScript unions through a synchronous API (`.read()` / `.subscribe()` / plain function calls). The `effect` runtime that earlier previews carried was fully removed (see `traceability/effect-shed-receipt.json`, ADR-0042 / ADR-0043). Optional or host-specific surfaces still declare the peers they truly execute against — including Astro, Vite, fast-check for the harness subpath, and React/Remotion for video integration — so consumer dependency validation matches the selected surface instead of making a repository-wide zero-peer claim.
 
-**Windows + Linux are tier-1, with event-shaped authority.** Pull requests require `format`, `pr-affected`, and `pr-windows-affected`; `pr-browser-affected` and `rust-wasm-parity` join that fold when the generated affected plan selects those surfaces. Pushes require `format`, `truth-linux-parallel`, `browser-e2e`, `windows-smoke`, and `rust-wasm-parity`. Scheduled and manual runs require `format`, serial `truth-linux`, `browser-e2e`, `windows-smoke`, `rust-wasm-parity`, `exhaustive-analysis`, `exhaustive-mutation`, `exhaustive-mcdc`, and `semantic-assurance-admission`. The authoritative event-to-job mapping lives in `scripts/lib/ci-authority.ts` and is executed by `.github/workflows/ci.yml`.
+**Every push and pull request runs the full release candidate before merge.** Affected Linux/Windows/browser jobs remain fast feedback, while `truth-linux-parallel`, `browser-e2e`, `windows-smoke`, `macos-smoke`, `macos-browser`, `rust-wasm-parity`, and `security-audit` prove the exact candidate tree. The main-push run repeats that same fold as confirmation; it is never the first place a release defect is allowed to surface. Scheduled, manual, and release-tag runs add serial and exhaustive mutation/MC/DC authority. The authoritative event-to-job mapping lives in `scripts/lib/ci-authority.ts` and is executed by `.github/workflows/ci.yml`.
 
-**macOS is tier-2: best-effort with a real CI signal.** The push/scheduled/manual matrix carries `macos-smoke` and `macos-browser` as `continue-on-error` evidence. They do not participate in the ordinary pull-request authority fold and do not block merge, but failures remain visible on the events that execute them. Known areas where macOS may differ from the gated paths:
+The event-authority census covers `format`, `pr-affected`, `pr-windows-affected`, conditional `pr-browser-affected`, `truth-linux-parallel`, serial `truth-linux`, `browser-e2e`, `windows-smoke`, `macos-smoke`, `macos-browser`, `rust-wasm-parity`, `security-audit`, `exhaustive-analysis`, `exhaustive-mutation`, `exhaustive-mcdc`, and `semantic-assurance-admission`.
 
-- **Playwright browser-dep install** — the smoke job runs the test suites that don't depend on Playwright browsers; full `test:e2e` and `coverage:browser` lanes stay Linux-only because Playwright dep install on macOS is a separate path.
-- **Vite filesystem watchers** — chokidar takes different code paths on APFS (FSEvents) vs ext4 / NTFS. HMR watch behavior under `@liteship/vite` may differ.
-- **Bench-gate distributions on Apple Silicon** — worker startup is faster than the Linux baseline some bench pairs are calibrated against. Hard gates should still pass; the numeric distributions will look different.
-
-Promotion path: macOS moves to tier-1 (drop `continue-on-error`, add to `ci-summary` needs) in two milestones:
-
-1. **macOS smoke green for a release cycle.** `macos-smoke` (covering build / typecheck / lint / invariants / non-browser tests / package:smoke) stays green on a fresh `macos-latest` image across a full release cycle.
-2. **macOS browser authority green for a release cycle.** `macos-browser` runs Playwright E2E and browser coverage and stays green for a release cycle.
-
-Both milestones are signal-gated, not promise-gated. Contributors are welcome to file macOS-specific issues against the smoke job's logs and to PR the `macos-browser` job once they can verify the Playwright-deps path locally.
+**macOS is tier-1 release authority.** `macos-smoke` and `macos-browser` run on pull requests and pushes and participate in the final CI fold. Platform-specific path aliases, package-manager behavior, browser execution, and package smoke therefore block before merge instead of becoming post-merge advisory evidence.
 
 ## Documentation
 

@@ -6,7 +6,7 @@
 
 # Interface: ViewTransitionCompileInput
 
-Defined in: [\_spine/compiler.d.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L395)
+Defined in: [\_spine/compiler.d.ts:413](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L413)
 
 Input contract for one view-transition projection.
 
@@ -16,7 +16,7 @@ Input contract for one view-transition projection.
 
 > `readonly` **boundary**: `string`
 
-Defined in: [\_spine/compiler.d.ts:396](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L396)
+Defined in: [\_spine/compiler.d.ts:414](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L414)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:396](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **delayMs?**: `number`
 
-Defined in: [\_spine/compiler.d.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L401)
+Defined in: [\_spine/compiler.d.ts:419](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L419)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:401](https://github.com/freebatteryfactory/Li
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [\_spine/compiler.d.ts:398](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L398)
+Defined in: [\_spine/compiler.d.ts:416](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L416)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/compiler.d.ts:398](https://github.com/freebatteryfactory/Li
 
 > `readonly` **easing**: `string`
 
-Defined in: [\_spine/compiler.d.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L399)
+Defined in: [\_spine/compiler.d.ts:417](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L417)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [\_spine/compiler.d.ts:399](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **mpaNavigation?**: `boolean`
 
-Defined in: [\_spine/compiler.d.ts:400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L400)
+Defined in: [\_spine/compiler.d.ts:418](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L418)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [\_spine/compiler.d.ts:400](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **selector?**: `string`
 
-Defined in: [\_spine/compiler.d.ts:397](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L397)
+Defined in: [\_spine/compiler.d.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L415)

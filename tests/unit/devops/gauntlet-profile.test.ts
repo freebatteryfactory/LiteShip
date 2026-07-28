@@ -35,6 +35,8 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'lockfile:gate', command: 'pnpm run lockfile:gate' },
+  { label: 'security:minimum', command: 'pnpm run security:minimum' },
+  { label: 'security:audit', command: 'pnpm run security:audit' },
   { label: 'prebuild:gate', command: 'pnpm run prebuild:gate' },
   { label: 'workflow-output:gate', command: 'pnpm run workflow-output:gate' },
   { label: 'workspace-deps:gate', command: 'pnpm run workspace-deps:gate' },
@@ -79,7 +81,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'transition:gate', command: 'pnpm run transition:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
-  { label: 'flex:verify', command: 'pnpm run flex:verify' },
+  { label: 'flex:verify', command: 'pnpm run flex:verify -- --prechecked' },
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {

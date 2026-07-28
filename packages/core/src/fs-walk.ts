@@ -33,6 +33,30 @@ export interface WalkFilesOptions {
    * never recurse forever.
    */
   readonly followSymlinks?: boolean;
+  /**
+   * Opt into fail-soft traversal with an observable issue receipt. Without this
+   * callback, filesystem failures throw. Supplying a callback means the failed
+   * subject is skipped only after the caller has observed its operation/path.
+   */
+  readonly onIssue?: (issue: WalkFilesIssue) => void;
+}
+
+/** Observable filesystem failure emitted only by an explicitly fail-soft walk. */
+export interface WalkFilesIssue {
+  readonly operation: 'realpath' | 'readdir' | 'stat';
+  readonly path: string;
+  readonly code: string;
+  readonly message: string;
+}
+
+function issueOf(operation: WalkFilesIssue['operation'], path: string, cause: unknown): WalkFilesIssue {
+  const record = typeof cause === 'object' && cause !== null ? (cause as Record<string, unknown>) : undefined;
+  return Object.freeze({
+    operation,
+    path,
+    code: typeof record?.['code'] === 'string' ? record['code'] : 'UNKNOWN',
+    message: cause instanceof Error ? cause.message : String(cause),
+  });
 }
 
 /**
@@ -42,8 +66,8 @@ export interface WalkFilesOptions {
  *
  * With no `suffixes`/`extensions` every file is returned; with both, a file matches
  * if it satisfies EITHER list. Directories named in `skipDirs` are pruned. An
- * unreadable directory is skipped (a vanished/permission-denied subtree never aborts
- * the whole walk).
+ * unreadable directory throws by default. Pass `onIssue` to make that failure
+ * observable and skip only the affected subtree.
  *
  * Returned paths are `root` joined with each entry — ABSOLUTE when `root` is absolute
  * (the majority need: vite's `scanProject` and the cli's `collectJsFiles`). A caller
@@ -56,6 +80,10 @@ export function walkFiles(root: string, options: WalkFilesOptions = {}): string[
   const extensions = (options.extensions ?? []).map((e) => (e.startsWith('.') ? e : `.${e}`));
   const follow = options.followSymlinks ?? false;
   const filtered = suffixes.length > 0 || extensions.length > 0;
+  const reportOrThrow = (operation: WalkFilesIssue['operation'], path: string, cause: unknown): void => {
+    if (options.onIssue === undefined) throw cause;
+    options.onIssue(issueOf(operation, path, cause));
+  };
 
   const matches = (name: string): boolean => {
     if (!filtered) return true;
@@ -74,8 +102,9 @@ export function walkFiles(root: string, options: WalkFilesOptions = {}): string[
     let real: string;
     try {
       real = realpathSync(dir);
-    } catch {
-      real = resolve(dir);
+    } catch (cause) {
+      reportOrThrow('realpath', resolve(dir), cause);
+      return;
     }
     if (visited.has(real)) return;
     visited.add(real);
@@ -83,8 +112,8 @@ export function walkFiles(root: string, options: WalkFilesOptions = {}): string[
     let entries: Dirent[];
     try {
       entries = readdirSync(dir, { withFileTypes: true });
-    } catch {
-      // Broken link, vanished dir, or permission denied — skip its subtree.
+    } catch (cause) {
+      reportOrThrow('readdir', dir, cause);
       return;
     }
     // Name-sorted for deterministic, host-independent traversal order.
@@ -100,8 +129,9 @@ export function walkFiles(root: string, options: WalkFilesOptions = {}): string[
           const st = statSync(entryPath);
           isDir = st.isDirectory();
           isFile = st.isFile();
-        } catch {
-          continue; // Dangling symlink — nothing to walk.
+        } catch (cause) {
+          reportOrThrow('stat', entryPath, cause);
+          continue;
         }
       }
       if (isDir) {

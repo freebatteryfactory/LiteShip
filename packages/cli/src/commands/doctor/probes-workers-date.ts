@@ -9,7 +9,7 @@
  */
 
 import { normalizeRepoPath, scanModuleScopeDateReads } from '@liteship/audit';
-import { walkFiles } from '@liteship/core/fs-walk';
+import { walkFiles, type WalkFilesIssue } from '@liteship/core/fs-walk';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { readWranglerConfig } from './manifest.js';
@@ -57,9 +57,13 @@ function parseWranglerMain(cwd: string): string {
  * original also pruned any dot-prefixed directory (e.g. `.astro`, `.git`), which
  * `skipDirs` can't express, so a file under a dot-dir segment is dropped here.
  */
-function collectSourceFiles(cwd: string, root: string): string[] {
+function collectSourceFiles(cwd: string, root: string, issues: WalkFilesIssue[]): string[] {
   const files: string[] = [];
-  for (const abs of walkFiles(root, { skipDirs: ['node_modules', 'dist'], extensions: ['ts', 'tsx', 'js', 'mjs'] })) {
+  for (const abs of walkFiles(root, {
+    skipDirs: ['node_modules', 'dist'],
+    extensions: ['ts', 'tsx', 'js', 'mjs'],
+    onIssue: (issue) => issues.push(issue),
+  })) {
     const dirSegs = normalizeRepoPath(relative(root, abs)).split('/').slice(0, -1);
     if (dirSegs.some((seg) => seg.startsWith('.'))) continue;
     files.push(relative(cwd, abs));
@@ -94,7 +98,8 @@ export function probeWorkersModuleScopeDate(cwd: string): DoctorCheck {
   const wranglerMain = workersProject ? parseWranglerMain(cwd) : DEFAULT_WRANGLER_MAIN;
 
   const srcDir = join(cwd, 'src');
-  const files = collectSourceFiles(cwd, existsSync(srcDir) ? srcDir : cwd);
+  const walkIssues: WalkFilesIssue[] = [];
+  const files = collectSourceFiles(cwd, existsSync(srcDir) ? srcDir : cwd, walkIssues);
 
   if (workersProject && !files.some((rel) => normalizeRepoPath(rel) === wranglerMain)) {
     const mainAbs = join(cwd, wranglerMain);
@@ -110,7 +115,7 @@ export function probeWorkersModuleScopeDate(cwd: string): DoctorCheck {
     if (hasModuleScopeDate(source, rel)) hits.push(normalizeRepoPath(rel));
   }
 
-  if (hits.length === 0) {
+  if (hits.length === 0 && walkIssues.length === 0) {
     return {
       id: 'workers.module-scope-date',
       label: 'Workers module-scope Date',
@@ -123,7 +128,24 @@ export function probeWorkersModuleScopeDate(cwd: string): DoctorCheck {
     id: 'workers.module-scope-date',
     label: 'Workers module-scope Date',
     status: 'warn',
-    detail: `module-scope Date reads in: ${hits.slice(0, 5).join(', ')}${hits.length > 5 ? ` (+${hits.length - 5} more)` : ''}`,
-    hint: 'Workers freeze module-scope time at epoch — inject wallClock per request instead',
+    detail: [
+      ...(hits.length === 0
+        ? []
+        : [
+            `module-scope Date reads in: ${hits.slice(0, 5).join(', ')}${hits.length > 5 ? ` (+${hits.length - 5} more)` : ''}`,
+          ]),
+      ...(walkIssues.length === 0
+        ? []
+        : [
+            `source scan incomplete: ${walkIssues
+              .slice(0, 3)
+              .map((issue) => `${issue.operation} ${normalizeRepoPath(relative(cwd, issue.path))} (${issue.code})`)
+              .join(', ')}${walkIssues.length > 3 ? ` (+${walkIssues.length - 3} more)` : ''}`,
+          ]),
+    ].join('; '),
+    hint:
+      hits.length > 0
+        ? 'Workers freeze module-scope time at epoch — inject wallClock per request instead'
+        : 'Restore filesystem access and rerun doctor; an incomplete scan cannot prove Workers source safe',
   };
 }

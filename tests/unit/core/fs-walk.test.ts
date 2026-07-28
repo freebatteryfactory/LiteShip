@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative } from 'node:path';
-import { walkFiles } from '@liteship/core/fs-walk';
+import { walkFiles, type WalkFilesIssue } from '@liteship/core/fs-walk';
 
 let root: string;
 
@@ -83,6 +83,16 @@ describe('walkFiles — filters + ordering', () => {
     file('one.ts');
     mkdirSync(join(root, 'empty-dir'), { recursive: true });
     expect(relIds(walkFiles(root))).toEqual(['one.ts']);
+  });
+
+  it('throws by default and makes intentional fail-soft traversal observable', () => {
+    const missing = join(root, 'vanished');
+    expect(() => walkFiles(missing)).toThrow();
+    const issues: WalkFilesIssue[] = [];
+    expect(walkFiles(missing, { onIssue: (issue) => issues.push(issue) })).toEqual([]);
+    expect(issues).toEqual([
+      expect.objectContaining({ operation: 'realpath', path: missing, code: expect.any(String), message: expect.any(String) }),
+    ]);
   });
 });
 

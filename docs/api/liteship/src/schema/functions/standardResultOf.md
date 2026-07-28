@@ -8,7 +8,7 @@
 
 > **standardResultOf**\<`A`\>(`result`): `Result`\<`A`\>
 
-Defined in: core/dist/schema/standard.d.ts:53
+Defined in: core/dist/schema/standard.d.ts:61
 
 Map a kernel [KernelDecodeResult](../type-aliases/KernelDecodeResult.md) to a Standard Schema V1 validate
 result: a success carries `{ value }`; a failure carries `{ issues }` whose

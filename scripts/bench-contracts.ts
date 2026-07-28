@@ -149,6 +149,10 @@ export function projectComplexityBenchmarkEvidence(
         minimumR2: COMPLEXITY_ADMISSION_POLICY.minimumR2,
         coefficientOfVariation: entry.coefficientOfVariation,
         maximumCoefficientOfVariation: COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation,
+        minimumObservedBatchDurationMs: Math.min(
+          ...entry.replicateSamplesNs.flatMap((sampleSet) => sampleSet.batchDurationsMs),
+        ),
+        minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
       },
     });
   });
@@ -222,6 +226,9 @@ export function verifyMeasuredComplexityMap(map: ComplexityMap): readonly Measur
     for (const reason of complexityAdmissionReasons({
       sizes: entry.sizes,
       replicates: entry.measurement.replicates,
+      minimumObservedBatchDurationMs: Math.min(
+        ...entry.replicateSamplesNs.flatMap((sampleSet) => sampleSet.batchDurationsMs),
+      ),
       fittedR2: entry.fittedR2,
       coefficientOfVariation: entry.coefficientOfVariation,
     })) {
@@ -343,7 +350,19 @@ function buildComplexityMap(): { readonly map: ComplexityMap; readonly hotPathBu
         innerIterations: probe.measurement?.innerIterations ?? 200,
         replicates: probe.measurement?.replicates ?? 7,
         warmupIterations: probe.measurement?.warmupIterations ?? 50,
+        calibrationReplicates: COMPLEXITY_ADMISSION_POLICY.calibrationReplicates,
+        calibrationTargetBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
+        minimumTimedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
+        maximumCalibratedInnerIterations: COMPLEXITY_ADMISSION_POLICY.maximumCalibratedInnerIterations,
       },
+      replicateSamplesNs: curve.replicateSamplesNs.map((entry) => ({
+        size: entry.size,
+        effectiveInnerIterations: entry.effectiveInnerIterations,
+        samples: entry.samples.map((sample) => Number(sample.toFixed(4))),
+        // Round toward zero so serialization can never inflate a sub-floor batch
+        // into admissibility at the exact boundary.
+        batchDurationsMs: entry.batchDurationsMs.map((duration) => Math.floor(duration * 10_000) / 10_000),
+      })),
     });
 
     // HOT-PATH/FRAME BUDGET: the per-call cost of the smallest-size workload must
@@ -360,7 +379,7 @@ function buildComplexityMap(): { readonly map: ComplexityMap; readonly hotPathBu
     }
   }
 
-  return { map: { schemaVersion: 2, entries }, hotPathBudgetOk };
+  return { map: { schemaVersion: 3, entries }, hotPathBudgetOk };
 }
 
 function main(): void {

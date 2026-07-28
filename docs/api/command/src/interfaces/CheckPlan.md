@@ -6,7 +6,7 @@
 
 # Interface: CheckPlan
 
-Defined in: [command/src/checks/plan.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L72)
+Defined in: [command/src/checks/plan.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L89)
 
 The ordered, cache-annotated projection of the registry for one `(profile, platform)`.
 
@@ -16,7 +16,7 @@ The ordered, cache-annotated projection of the registry for one `(profile, platf
 
 > `readonly` **checks**: readonly [`PlannedCheck`](PlannedCheck.md)[]
 
-Defined in: [command/src/checks/plan.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L80)
+Defined in: [command/src/checks/plan.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L97)
 
 The checks to run, in declared plan order.
 
@@ -26,7 +26,7 @@ The checks to run, in declared plan order.
 
 > `readonly` **context**: [`CheckContext`](../type-aliases/CheckContext.md)
 
-Defined in: [command/src/checks/plan.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L78)
+Defined in: [command/src/checks/plan.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L95)
 
 The repository/application fact domain this plan is authoritative over.
 
@@ -36,7 +36,7 @@ The repository/application fact domain this plan is authoritative over.
 
 > `readonly` **estimatedMs**: `number`
 
-Defined in: [command/src/checks/plan.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L86)
+Defined in: [command/src/checks/plan.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L103)
 
 The UPPER-BOUND estimated wall-clock (ms) — the sum of the planned checks'
 `timeoutMs` ceilings. It is a ceiling, not a measured mean: no timing corpus
@@ -48,7 +48,7 @@ exists yet, so the plan reports the worst case a host must budget for.
 
 > `readonly` **platform**: [`CheckPlatform`](../type-aliases/CheckPlatform.md)
 
-Defined in: [command/src/checks/plan.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L76)
+Defined in: [command/src/checks/plan.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L93)
 
 The platform this plan targets.
 
@@ -58,7 +58,7 @@ The platform this plan targets.
 
 > `readonly` **profile**: [`CheckProfile`](../type-aliases/CheckProfile.md)
 
-Defined in: [command/src/checks/plan.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L74)
+Defined in: [command/src/checks/plan.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L91)
 
 The profile this plan projects.
 
@@ -68,6 +68,6 @@ The profile this plan projects.
 
 > `readonly` **skipped**: readonly [`SkippedCheck`](SkippedCheck.md)[]
 
-Defined in: [command/src/checks/plan.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L88)
+Defined in: [command/src/checks/plan.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/checks/plan.ts#L105)
 
 The registry checks in this profile that were skipped, with reasons.

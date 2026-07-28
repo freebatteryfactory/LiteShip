@@ -19,6 +19,8 @@ const DECLARATION_DIGEST = qualificationDigest('export interface Value {}\n');
 function run(overrides: Partial<TypeScriptQualificationRun> = {}): TypeScriptQualificationRun {
   return {
     exitCode: 1,
+    signal: null,
+    stderrTail: 'src/index.ts(12,14): error TS2322: planted diagnostic',
     diagnostics: [{ code: 2322, file: 'src/index.ts', line: 12, column: 14 }],
     declarationGraph: [{ path: 'index.d.ts', digest: DECLARATION_DIGEST, dependencies: [] }],
     emittedPackageSurfaces: [
@@ -112,6 +114,18 @@ describe('TypeScript dual-toolchain qualification', () => {
   it('reds when an admitted diagnostic fixture unexpectedly exits cleanly', () => {
     const invalid = run({ exitCode: 0 });
     const report = qualify(observation('compatibility', { cold: invalid, warm: invalid }));
+    expect(report.findings.filter((finding) => finding.code === 'unexpected-exit')).toHaveLength(2);
+  });
+
+  it('admits nonzero compiler-specific diagnostic exits when the semantic receipt is complete', () => {
+    const compatibility = observation('compatibility', { cold: run({ exitCode: 2 }), warm: run({ exitCode: 2 }) });
+    const native = observation('native', { cold: run({ exitCode: 2 }), warm: run({ exitCode: 2 }) });
+    expect(qualify(compatibility, native).ok).toBe(true);
+  });
+
+  it('rejects signal termination even when stale output resembles a complete semantic receipt', () => {
+    const signaled = run({ exitCode: 1, signal: 'SIGKILL' });
+    const report = qualify(observation('compatibility', { cold: signaled, warm: signaled }));
     expect(report.findings.filter((finding) => finding.code === 'unexpected-exit')).toHaveLength(2);
   });
 });

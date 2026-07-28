@@ -12,6 +12,7 @@ import { lowerEnvelopeCoefficientOfVariation } from '../../scripts/bench/contrac
 const GREEN: ComplexityAdmissionCandidate = {
   sizes: [16, 32, 64, 128, 256],
   replicates: 7,
+  minimumObservedBatchDurationMs: 20,
   fittedR2: 0.95,
   coefficientOfVariation: 0.05,
 };
@@ -28,6 +29,10 @@ describe('uniform performance evidence admission', () => {
       minimumReplicatesPerSize: 7,
       minimumSizeGrowthFactor: 2,
       maximumCoefficientOfVariation: 0.25,
+      minimumTimedBatchDurationMs: 10,
+      calibrationTargetBatchDurationMs: 20,
+      calibrationReplicates: 3,
+      maximumCalibratedInnerIterations: 1_000_000,
     });
     expect(Object.isFrozen(COMPLEXITY_ADMISSION_POLICY)).toBe(true);
     expect(reasons()).toEqual([]);
@@ -41,6 +46,8 @@ describe('uniform performance evidence admission', () => {
     ['negative size', { sizes: [-1, 16, 32, 64, 128] }, ['invalid-size-sweep']],
     ['six replicates', { replicates: 6 }, ['under-replicated']],
     ['fractional replicates', { replicates: 7.5 }, ['under-replicated']],
+    ['short timed batch', { minimumObservedBatchDurationMs: 9.999 }, ['under-timed-batch']],
+    ['NaN batch duration', { minimumObservedBatchDurationMs: Number.NaN }, ['under-timed-batch']],
     ['low fit', { fittedR2: 0.899_999 }, ['low-r2']],
     ['NaN fit', { fittedR2: Number.NaN }, ['low-r2']],
     ['infinite fit', { fittedR2: Number.POSITIVE_INFINITY }, ['low-r2']],
@@ -57,6 +64,7 @@ describe('uniform performance evidence admission', () => {
       complexityAdmissionReasons({
         sizes: [1, 2, 4, 8, 16],
         replicates: COMPLEXITY_ADMISSION_POLICY.minimumReplicatesPerSize,
+        minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
         fittedR2: COMPLEXITY_ADMISSION_POLICY.minimumR2,
         coefficientOfVariation: COMPLEXITY_ADMISSION_POLICY.maximumCoefficientOfVariation,
       }),
@@ -68,10 +76,18 @@ describe('uniform performance evidence admission', () => {
       reasons({
         sizes: [0, 0],
         replicates: 1,
+        minimumObservedBatchDurationMs: 0,
         fittedR2: 0.2,
         coefficientOfVariation: 2,
       }),
-    ).toEqual(['insufficient-size-sweep', 'invalid-size-sweep', 'under-replicated', 'low-r2', 'unstable-variance']);
+    ).toEqual([
+      'insufficient-size-sweep',
+      'invalid-size-sweep',
+      'under-replicated',
+      'under-timed-batch',
+      'low-r2',
+      'unstable-variance',
+    ]);
   });
 
   it('is deterministic for arbitrary numeric evidence, including non-finite inputs', () => {
@@ -83,7 +99,13 @@ describe('uniform performance evidence admission', () => {
         number,
         number,
         (sizes, replicates, fittedR2, cv) => {
-          const candidate = { sizes, replicates, fittedR2, coefficientOfVariation: cv };
+          const candidate = {
+            sizes,
+            replicates,
+            minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.minimumTimedBatchDurationMs,
+            fittedR2,
+            coefficientOfVariation: cv,
+          };
           expect(complexityAdmissionReasons(candidate)).toEqual(complexityAdmissionReasons({ ...candidate }));
         },
       ),
@@ -119,6 +141,7 @@ describe('uniform performance evidence admission', () => {
           expect(
             reasons({
               replicates: replicates + 1,
+              minimumObservedBatchDurationMs: COMPLEXITY_ADMISSION_POLICY.calibrationTargetBatchDurationMs,
               fittedR2: Math.min(1, fittedR2 + 0.01),
               coefficientOfVariation: coefficientOfVariation / 2,
             }),

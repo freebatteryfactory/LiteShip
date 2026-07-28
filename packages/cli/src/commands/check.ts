@@ -473,34 +473,48 @@ function executeCheckPlan(
   } catch (error) {
     const manifestFailure = invalidProjectManifestFailure(resolve(cwd, 'package.json'), error);
     const failure = `${projectPackageManagerFailureMessage(manifestFailure)}; ${projectPackageManagerFailureHint(manifestFailure)}`;
-    const treeDigest = digestEvidence({ failure, profile: plan.profile, platform: plan.platform });
-    const failedResults = plan.checks.map((check) => {
-      const packet = curePacketForCheck(check, plan, env, resolveHeadSha(cwd), treeDigest, [failure]);
-      curePackets.push(packet);
-      return {
-        id: check.id,
-        verdict: 'fail' as const,
-        durationMs: 0,
-        cacheHit: false,
-        findings: [failure],
-        curePacketId: packet.packetId,
-      };
-    });
-    return {
-      profile: plan.profile,
-      platform: plan.platform,
-      context: plan.context,
-      ok: false,
-      blocked: true,
-      results: failedResults,
-      curePackets,
-    };
+    return failedCheckPlanReport(plan, cwd, env, failure);
   }
 
-  const inputCorpus = createInputCorpus(cwd);
+  let inputCorpus: InputCorpus;
+  try {
+    inputCorpus = createInputCorpus(cwd);
+  } catch (error) {
+    const failure = `check input-corpus scan failed: ${error instanceof Error ? error.message : String(error)}`;
+    return failedCheckPlanReport(plan, cwd, env, failure);
+  }
   const headSha = resolveHeadSha(cwd);
   let blocked = false;
   for (const check of plan.checks) {
+    const unavailablePrerequisite = check.prerequisites
+      .map((id) => ({ id, result: results.find((candidate) => candidate.id === id) }))
+      .find(({ result }) => result?.verdict !== 'pass');
+    if (unavailablePrerequisite !== undefined) {
+      if (check.authority === 'blocking') blocked = true;
+      const prerequisiteVerdict = unavailablePrerequisite.result?.verdict ?? 'missing';
+      const findings = [
+        `prerequisite ${unavailablePrerequisite.id} did not pass (${prerequisiteVerdict}); ${check.command} was not executed`,
+      ];
+      const packet = curePacketForCheck(
+        check,
+        plan,
+        env,
+        headSha,
+        checkEvidenceDigest(check, plan, inputCorpus, env),
+        findings,
+      );
+      curePackets.push(packet);
+      results.push({
+        id: check.id,
+        verdict: 'fail',
+        durationMs: 0,
+        cacheHit: false,
+        findings,
+        curePacketId: packet.packetId,
+      });
+      continue;
+    }
+
     // Applicability was decided by planChecks before execution. Once a check is in
     // the plan, a missing declared script is a broken authority, never a skip.
     const script = check.execution.kind === 'root-script' ? check.execution.script : null;
@@ -671,6 +685,39 @@ function curePacketForCheck(
   });
 }
 
+/** One fail-closed projection for admission failures that invalidate the whole plan. */
+function failedCheckPlanReport(
+  plan: CheckPlan,
+  cwd: string,
+  env: Readonly<Record<string, string>>,
+  failure: string,
+): CheckReport {
+  const treeDigest = digestEvidence({ failure, profile: plan.profile, platform: plan.platform });
+  const headSha = resolveHeadSha(cwd);
+  const curePackets: CurePacket[] = [];
+  const results = plan.checks.map((check) => {
+    const packet = curePacketForCheck(check, plan, env, headSha, treeDigest, [failure]);
+    curePackets.push(packet);
+    return {
+      id: check.id,
+      verdict: 'fail' as const,
+      durationMs: 0,
+      cacheHit: false,
+      findings: [failure],
+      curePacketId: packet.packetId,
+    };
+  });
+  return {
+    profile: plan.profile,
+    platform: plan.platform,
+    context: plan.context,
+    ok: false,
+    blocked: true,
+    results,
+    curePackets,
+  };
+}
+
 type MaterializedCheckCommand =
   | { readonly kind: 'command'; readonly command: string }
   | { readonly kind: 'manager-failure'; readonly finding: string };
@@ -699,11 +746,21 @@ interface InputCorpus {
 /** Walk once per profile run and digest matched files lazily across all checks. */
 function createInputCorpus(cwd: string): InputCorpus {
   const absoluteByRelative = new Map<string, string>();
+  const walkIssues: string[] = [];
   for (const absolute of walkFiles(cwd, {
     skipDirs: ['.git', '.liteship', 'node_modules', 'dist', 'coverage'],
+    onIssue: (issue) =>
+      walkIssues.push(
+        `${issue.operation} ${normalizeRepoPath(relative(cwd, issue.path))} (${issue.code}): ${issue.message}`,
+      ),
   })) {
     const rel = normalizeRepoPath(relative(cwd, absolute));
     absoluteByRelative.set(rel, absolute);
+  }
+  if (walkIssues.length > 0) {
+    throw IoError('check.cache-input', 'input-corpus traversal was incomplete', {
+      path: walkIssues.join('; '),
+    });
   }
   const files = [...absoluteByRelative.keys()].sort((a, b) => a.localeCompare(b));
   const digests = new Map<string, string>();

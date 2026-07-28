@@ -6,10 +6,11 @@
  * @module
  */
 import { gunzipSync } from 'node:zlib';
-import { lstatSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { basename, isAbsolute, join, relative, resolve } from 'node:path';
+import { existsSync, lstatSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { basename, join, relative, resolve } from 'node:path';
 import { normalizeRepoPath } from '@liteship/audit';
 import { IntegrityError } from '@liteship/error';
+import { canonicalPhysicalPath, relativePhysicalPath } from './physical-path.js';
 
 export const ONE_INSTALL_COST_SCHEMA_VERSION = 1 as const;
 export const ONE_INSTALL_FLEET_PACKAGE_COUNT = 25 as const;
@@ -60,6 +61,14 @@ export interface PackedPackageCost {
   readonly compressedBytes: number;
   readonly unpackedBytes: number;
   readonly fileCount: number;
+  /** Added to addressed baselines after the original aggregate-only schema shipped. */
+  readonly files?: readonly PackedFileCost[];
+}
+
+export interface PackedFileCost {
+  /** Package-relative POSIX path, with npm's archive-level `package/` prefix removed. */
+  readonly path: string;
+  readonly bytes: number;
 }
 
 export interface ColdImportModule {
@@ -288,6 +297,41 @@ function tarOctal(field: Uint8Array, label: string): number {
   return value;
 }
 
+function tarText(field: Uint8Array): string {
+  return Buffer.from(field).toString('utf8').split('\0', 1)[0] ?? '';
+}
+
+function packageRelativeTarPath(path: string, packageName: string): string {
+  const normalizedPath = normalized(path).replace(/^\.\//u, '');
+  const relativePath = normalizedPath.startsWith('package/') ? normalizedPath.slice('package/'.length) : normalizedPath;
+  if (
+    relativePath.length === 0 ||
+    relativePath.startsWith('/') ||
+    relativePath === '..' ||
+    relativePath.startsWith('../') ||
+    relativePath.includes('/../')
+  ) {
+    return fail(`${packageName} tar entry has an unsafe path: ${path}`);
+  }
+  return relativePath;
+}
+
+function parsePaxPath(payload: Buffer): string | undefined {
+  let offset = 0;
+  let path: string | undefined;
+  while (offset < payload.length) {
+    const space = payload.indexOf(0x20, offset);
+    if (space < 0) break;
+    const length = Number.parseInt(payload.subarray(offset, space).toString('ascii'), 10);
+    if (!Number.isSafeInteger(length) || length <= 0 || offset + length > payload.length) break;
+    const record = payload.subarray(space + 1, offset + length - 1).toString('utf8');
+    const equals = record.indexOf('=');
+    if (equals > 0 && record.slice(0, equals) === 'path') path = record.slice(equals + 1);
+    offset += length;
+  }
+  return path;
+}
+
 /** Measure regular-file payload bytes from one npm-compatible gzip tarball. */
 export function measurePackedTarball(tarballPath: string, packageName: string): PackedPackageCost {
   const compressedBytes = safeBytes(statSync(tarballPath).size, `${packageName} tarball`, false);
@@ -301,6 +345,8 @@ export function measurePackedTarball(tarballPath: string, packageName: string): 
   let unpackedBytes = 0;
   let fileCount = 0;
   let terminated = false;
+  let pendingPath: string | undefined;
+  const files: PackedFileCost[] = [];
   while (offset + 512 <= archive.length) {
     const header = archive.subarray(offset, offset + 512);
     if (header.every((byte) => byte === 0)) {
@@ -316,24 +362,39 @@ export function measurePackedTarball(tarballPath: string, packageName: string): 
     const type = String.fromCharCode(header[156] ?? 0);
     const padded = Math.ceil(size / 512) * 512;
     if (offset + 512 + padded > archive.length) fail(`${packageName} tar entry escapes the archive`);
+    const payload = archive.subarray(offset + 512, offset + 512 + size);
+    const prefix = tarText(header.subarray(345, 500));
+    const headerPath = [prefix, tarText(header.subarray(0, 100))].filter((part) => part.length > 0).join('/');
+    if (type === 'x') pendingPath = parsePaxPath(payload) ?? pendingPath;
+    if (type === 'L') pendingPath = tarText(payload);
     if (type === '\0' || type === '0') {
+      const path = packageRelativeTarPath(pendingPath ?? headerPath, packageName);
       unpackedBytes += size;
       fileCount += 1;
+      files.push({ path, bytes: size });
       safeBytes(unpackedBytes, `${packageName} unpacked total`, true);
+      pendingPath = undefined;
     }
     offset += 512 + padded;
   }
   if (!terminated || fileCount === 0) fail(`${packageName} tarball has no complete regular-file payload`);
-  return { package: packageName, compressedBytes, unpackedBytes, fileCount };
+  files.sort((left, right) => left.path.localeCompare(right.path));
+  if (new Set(files.map((entry) => entry.path)).size !== files.length) {
+    fail(`${packageName} tarball contains duplicate regular-file paths`);
+  }
+  return { package: packageName, compressedBytes, unpackedBytes, fileCount, files };
 }
 
 function packageCoordinates(
   path: string,
   nodeModulesRoot: string,
 ): { root: string; package: string; modulePath: string } | null {
-  const physicalPath = resolve(path);
-  const fromRoot = relative(resolve(nodeModulesRoot), physicalPath);
-  if (fromRoot === '' || fromRoot.startsWith('..') || isAbsolute(fromRoot)) return null;
+  // Inspector also reports virtual/eval scripts whose file URL has no physical
+  // subject. They are outside the packed-module census by construction.
+  if (!existsSync(path)) return null;
+  const physicalPath = canonicalPhysicalPath(path);
+  const fromRoot = relativePhysicalPath(nodeModulesRoot, physicalPath);
+  if (fromRoot === null || fromRoot === '') return null;
   const normalizedPath = normalized(physicalPath);
   const marker = '/node_modules/';
   const markerIndex = normalizedPath.lastIndexOf(marker);
@@ -422,6 +483,12 @@ export function buildOneInstallCostReport(input: {
       compressedBytes: safeBytes(entry.compressedBytes, `${entry.package} compressed tarball`, false),
       unpackedBytes: safeBytes(entry.unpackedBytes, `${entry.package} unpacked tarball`, false),
       fileCount: safeBytes(entry.fileCount, `${entry.package} tarball file count`, false),
+      files: (entry.files ?? [])
+        .map((file) => ({
+          path: packageRelativeTarPath(file.path, entry.package),
+          bytes: safeBytes(file.bytes, `${entry.package}:${file.path} unpacked file`, true),
+        }))
+        .sort((left, right) => left.path.localeCompare(right.path)),
     }))
     .sort((a, b) => a.package.localeCompare(b.package));
   const tarballNames = tarballs.map((entry) => entry.package);
@@ -432,6 +499,17 @@ export function buildOneInstallCostReport(input: {
     fleetPackages.some((name) => !tarballNames.includes(name))
   ) {
     fail('compressed tarball census must equal the exact 25-package fleet identity');
+  }
+  if (
+    tarballs.some(
+      (entry) =>
+        entry.files === undefined ||
+        entry.fileCount !== entry.files.length ||
+        entry.unpackedBytes !== entry.files.reduce((total, file) => total + file.bytes, 0) ||
+        new Set(entry.files.map((file) => file.path)).size !== entry.files.length,
+    )
+  ) {
+    fail('packed file census must exactly account for every unpacked regular file');
   }
   if (input.installed.fleetPackageCount !== ONE_INSTALL_FLEET_PACKAGE_COUNT) {
     fail(`installed fleet count is stale: expected 25, observed ${input.installed.fleetPackageCount}`);

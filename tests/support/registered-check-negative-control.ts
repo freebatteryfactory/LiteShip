@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { expect, it } from 'vitest';
 import { CHECK_REGISTRY, type CheckPlan, type PlannedCheck } from '@liteship/command';
 import { createCheckPlanRunner } from '../../packages/cli/src/commands/check.js';
+import { canonicalPhysicalPath } from '../../packages/cli/src/internal/physical-path.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
@@ -58,14 +59,16 @@ export function vitestFaultFixture(label: string): ExecutableFaultFixture {
 export function viteFaultFixture(): ExecutableFaultFixture {
   const config = (root: string) => join(root, 'vite.config.mjs');
   return {
-    authorityScript: (root) =>
-      nodeCli(resolve(REPO_ROOT, 'node_modules/vite/bin/vite.js'), [
+    authorityScript: (root) => {
+      const physicalRoot = canonicalPhysicalPath(root);
+      return nodeCli(resolve(REPO_ROOT, 'node_modules/vite/bin/vite.js'), [
         'build',
-        root,
+        physicalRoot,
         '--config',
-        config(root),
+        config(physicalRoot),
         '--emptyOutDir',
-      ]),
+      ]);
+    },
     plant: (root) => {
       writeFileSync(join(root, 'index.html'), '<main>liteship authority fixture</main>\n');
       writeFileSync(config(root), `throw new Error('planted Vite configuration fault');\n`);
@@ -177,6 +180,7 @@ function plannedCheck(id: string, expectedCommand: string, expectedControl: stri
     cacheable: definition.cache === 'content-addressed',
     timeoutMs: definition.timeoutMs,
     inputs: definition.inputs,
+    prerequisites: definition.prerequisites,
   };
 }
 

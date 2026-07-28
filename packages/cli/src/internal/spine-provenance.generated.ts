@@ -622,6 +622,14 @@ export const GENERATED_LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] 
     runtimeExpr: 'DesignTier',
   },
   {
+    typeName: 'DetectReadyDetail',
+    authority: 'runtime',
+    admittedRelation: 'exact',
+    spineExpr: 'DetectReadyDetail',
+    runtimeModule: 'packages/detect/src/detect-ready.ts',
+    runtimeExpr: 'DetectReadyDetail',
+  },
+  {
     typeName: 'DetectionResult',
     authority: 'runtime',
     admittedRelation: 'exact',
@@ -870,6 +878,14 @@ export const GENERATED_LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] 
     runtimeExpr: 'GeneratedUIValidationError',
   },
   {
+    typeName: 'GraphMutationResponse',
+    authority: 'runtime',
+    admittedRelation: 'exact',
+    spineExpr: 'GraphMutationResponse',
+    runtimeModule: 'packages/core/src/graph/graph-mutation.ts',
+    runtimeExpr: 'GraphMutationResponse',
+  },
+  {
     typeName: 'HLC',
     authority: 'runtime',
     admittedRelation: 'exact',
@@ -1092,6 +1108,22 @@ export const GENERATED_LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] 
     spineExpr: 'MotionSpringConfig',
     runtimeModule: 'packages/compiler/src/motion.ts',
     runtimeExpr: 'MotionSpringConfig',
+  },
+  {
+    typeName: 'MotionSupportMetadata',
+    authority: 'runtime',
+    admittedRelation: 'exact',
+    spineExpr: 'MotionSupportMetadata',
+    runtimeModule: 'packages/compiler/src/motion.ts',
+    runtimeExpr: 'MotionSupportMetadata',
+  },
+  {
+    typeName: 'MotionTransitionFallbackSupport',
+    authority: 'runtime',
+    admittedRelation: 'exact',
+    spineExpr: 'MotionTransitionFallbackSupport',
+    runtimeModule: 'packages/compiler/src/motion.ts',
+    runtimeExpr: 'MotionTransitionFallbackSupport',
   },
   {
     typeName: 'MotionViewTimeline',
@@ -1676,6 +1708,14 @@ export const GENERATED_LITESHIP_SPINE_ADMISSIONS: readonly SpineTypeAdmission[] 
     spineExpr: 'TypedRef',
     runtimeModule: 'packages/core/src/evidence/typed-ref.ts',
     runtimeExpr: 'TypedRef',
+  },
+  {
+    typeName: 'UIFrame',
+    authority: 'runtime',
+    admittedRelation: 'exact',
+    spineExpr: 'UIFrame',
+    runtimeModule: 'packages/core/src/media/gen-frame.ts',
+    runtimeExpr: 'UIFrame',
   },
   {
     typeName: 'VectorClock',

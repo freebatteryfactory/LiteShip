@@ -20,7 +20,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
-import { walkFiles } from '@liteship/core/fs-walk';
+import { walkFiles, type WalkFilesIssue, type WalkFilesOptions } from '@liteship/core/fs-walk';
 import { IoError } from '@liteship/error';
 import { normalizeRepoPath } from '@liteship/audit';
 import {
@@ -62,6 +62,17 @@ function isExempt(relativePath: string, invariant: CheckInvariantEntry): boolean
   return invariant.exemptions?.some((exemption) => matchesInvariantExemption(relativePath, exemption)) ?? false;
 }
 
+function walkOptionalDeclaredRoot(scanRoot: string, options: Omit<WalkFilesOptions, 'onIssue'>): readonly string[] {
+  const handleWalkIssue = (issue: WalkFilesIssue): void => {
+    // A fixture or downstream project need not contain every LiteShip-owned
+    // scan root. Only absence of the declared root is non-applicable. A nested
+    // disappearance or any other I/O fault is evidence loss and remains fatal.
+    if (issue.operation === 'realpath' && issue.code === 'ENOENT' && issue.path === scanRoot) return;
+    throw IoError(`check-invariants.${issue.operation}`, issue.message, { path: issue.path });
+  };
+  return walkFiles(scanRoot, { ...options, onIssue: handleWalkIssue });
+}
+
 /**
  * Every banned-pattern violation of `invariant` under `root`. A repo-relative,
  * slash-normalized `file` + 1-based `line` + trimmed `content` per hit.
@@ -70,13 +81,15 @@ export function findViolations(invariant: CheckInvariantEntry, root: string): In
   const violations: InvariantViolation[] = [];
 
   for (const dir of invariant.dirs) {
+    const scanRoot = resolve(root, dir);
     // The shared `@liteship/core/fs-walk` walker (skips `dist`/`node_modules`, keeps
     // `.ts`); a `.d.ts` is filtered here since `suffixes: ['.ts']` also matches it.
-    // An invariant scoped to a subtree that doesn't exist in the scanned root
-    // contributes zero violations -- walkFiles tolerates a missing dir (returns
-    // []), so a nested-`dirs` invariant whose subtree is absent in the adaptive
-    // fixture root is empty, not a crash.
-    for (const file of walkFiles(resolve(root, dir), { skipDirs: ['dist', 'node_modules'], suffixes: ['.ts'] })) {
+    // This caller explicitly observes the walker's fail-soft callback and admits
+    // only a missing declared rule root. The walker itself stays strict by default.
+    for (const file of walkOptionalDeclaredRoot(scanRoot, {
+      skipDirs: ['dist', 'node_modules'],
+      suffixes: ['.ts'],
+    })) {
       if (file.endsWith('.d.ts')) continue;
       // relative-then-normalize (a relativeToRoot composition); the slash step is
       // normalizeRepoPath applied to a repo-relative path.
@@ -241,7 +254,9 @@ export async function runCheckInvariantsScan(
   }
 
   const actionPinViolations: InvariantViolation[] = [];
-  for (const file of walkFiles(resolve(root, '.github/workflows'), { suffixes: ['.yml', '.yaml'] })) {
+  for (const file of walkOptionalDeclaredRoot(resolve(root, '.github/workflows'), {
+    suffixes: ['.yml', '.yaml'],
+  })) {
     const rel = normalizeRepoPath(relative(root, file));
     const workflow = readFileSync(file, 'utf8');
     for (const violation of [...scanWorkflowActionPins(workflow), ...scanWorkflowCheckoutCredentials(workflow)]) {

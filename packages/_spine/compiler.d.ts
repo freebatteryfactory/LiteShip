@@ -371,6 +371,23 @@ interface MotionScrollTimeline {
   readonly range: readonly [string, string];
 }
 
+/** Plan-specific truth about the last-resort CSS transition projection. */
+interface MotionTransitionFallbackSupport {
+  readonly contract: 'single-segment-monotonic-only';
+  readonly fidelity: 'faithful-single-segment' | 'monotonic-endpoint-only';
+  /** Properties whose authored value path or easing cannot be represented faithfully. */
+  readonly approximatedProperties: readonly string[];
+  readonly returningProperties: readonly string[];
+}
+
+/** Generated support metadata for the CSS motion tiers emitted by the compiler. */
+interface MotionSupportMetadata {
+  readonly keyframes:
+    | { readonly fidelity: 'faithful' }
+    | { readonly fidelity: 'runtime-floor-required'; readonly reason: 'mixed-easing-overlap' };
+  readonly transitionFallback: MotionTransitionFallbackSupport;
+}
+
 /** Input contract for one motion compiler projection. */
 interface MotionCompileInput {
   readonly plan: CssMotionPlan;
@@ -389,6 +406,7 @@ interface MotionCompileResult {
   readonly startingStyle: string;
   readonly transition: string;
   readonly scrollTimeline: string;
+  readonly support: MotionSupportMetadata;
 }
 
 /** Input contract for one view-transition projection. */

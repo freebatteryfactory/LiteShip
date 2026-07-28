@@ -112,6 +112,27 @@ const QUANTIZE_CSS = `
 `;
 
 describe('collectBoundaryManifest', () => {
+  test('a dangling project symlink is diagnosed and does not abort boundary collection', async () => {
+    const root = makeTempDir();
+    const target = makeTempDir();
+    const link = join(root, 'dangling');
+    symlinkSync(target, link, 'dir');
+    rmSync(target, { recursive: true, force: true });
+
+    const { manifest, events } = await captureDiagnosticsAsync(async ({ events: captured }) => ({
+      manifest: await collectBoundaryManifest(root),
+      events: captured,
+    }));
+
+    expect(manifest).toEqual({});
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        source: 'liteship/vite.boundary-manifest',
+        code: 'filesystem-walk-skipped-path',
+      }),
+    );
+  });
+
   test('serializeBoundaryOutput emits the canonical compiled css payload without re-prepending sections', () => {
     expect(
       serializeBoundaryOutput({
@@ -545,7 +566,8 @@ export const drawer = {
       expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
     });
 
-  // prettier-ignore -- same exact-site capability contract as the preceding test.
+  // Same exact-site capability contract as the preceding test.
+  // prettier-ignore
   test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {
       const root = makeTempDir();
       const external = makeTempDir();

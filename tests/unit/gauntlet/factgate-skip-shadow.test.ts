@@ -82,12 +82,12 @@ function splitCtx(judged: Record<string, string>, extra: Record<string, string>)
   return { ...base, skipSites: produceSkipSiteFactsFromContext(base) };
 }
 
-/** A STUB "AST" detector that tags every `it.skip(` line with a fixed conditionality. */
+/** A STUB "AST" detector that tags every `it.skip` reference with a fixed conditionality. */
 function stubAstDetector(conditional: SkipConditionality): SkipDetector {
   return (source: string): readonly SkipMatch[] => {
     const out: SkipMatch[] = [];
     source.split('\n').forEach((line, i) => {
-      if (/\bit\.skip\s*\(/.test(line)) out.push({ line: i + 1, form: 'call', token: 'it.skip', conditional });
+      if (/\bit\.skip\b/.test(line)) out.push({ line: i + 1, form: 'call', token: 'it.skip', conditional });
     });
     return out;
   };
@@ -107,7 +107,13 @@ function astDualCtx(corpus: Record<string, string>, detector: SkipDetector): Gat
 
 /** Normalize a finding to the fields both gates must agree on, for an order-independent diff. */
 function norm(f: Finding): string {
-  return JSON.stringify({ ruleId: f.ruleId, file: f.location?.file, line: f.location?.line, title: f.title, detail: f.detail });
+  return JSON.stringify({
+    ruleId: f.ruleId,
+    file: f.location?.file,
+    line: f.location?.line,
+    title: f.title,
+    detail: f.detail,
+  });
 }
 function normSet(findings: readonly Finding[]): readonly string[] {
   return findings
@@ -117,7 +123,11 @@ function normSet(findings: readonly Finding[]): readonly string[] {
 }
 
 /** An in-memory verdict store + write counter — the cache test-double. */
-function makeMemoryCache(): { read(k: string): readonly Finding[] | null; write(k: string, f: readonly Finding[]): void; writes: number } {
+function makeMemoryCache(): {
+  read(k: string): readonly Finding[] | null;
+  write(k: string, f: readonly Finding[]): void;
+  writes: number;
+} {
   const store = new Map<string, readonly Finding[]>();
   const self = {
     writes: 0,
@@ -147,8 +157,8 @@ function factCacheCtx(testBody: string): GateContext {
 }
 
 // The SANCTIONED green site (must match the allowlist byte-for-byte) + its file.
-const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
-const SANCTIONED_LINE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n";
+const SANCTIONED_FILE = 'tests/integration/cli/scene-render.test.ts';
+const SANCTIONED_LINE = 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;\n';
 
 /** The adversarial corpus the shadow-diff runs both gates over — every hazard class. */
 const SHADOW_CORPORA: Record<string, Record<string, string>> = {
@@ -212,7 +222,17 @@ describe('FactGate #1 — no GateContext-reading author function', () => {
     // decide takes the FactBundle (data), never a context — it produces findings from a
     // hand-built pack with NO context anywhere in scope.
     const pack: SkipSiteFacts = {
-      sites: [{ file: 'tests/a.test.ts', line: 3, form: 'call', token: 'it.skip', carriesPlaceholder: false, sanctionMatched: false, capabilityConsistent: false }],
+      sites: [
+        {
+          file: 'tests/a.test.ts',
+          line: 3,
+          form: 'call',
+          token: 'it.skip',
+          carriesPlaceholder: false,
+          sanctionMatched: false,
+          capabilityConsistent: false,
+        },
+      ],
     };
     const findings = noSkippedTestFactGate.decide({ skipSites: pack });
     expect(findings.length).toBe(1);
@@ -223,9 +243,33 @@ describe('FactGate #1 — no GateContext-reading author function', () => {
 // ── #2 — cache identity derives from the DECLARED fact, not the corpus ────────
 
 describe('FactGate #2 — cache identity is the FactPack digest, not a gate-authored evidenceDigest', () => {
-  const pack: SkipSiteFacts = { sites: [{ file: 'tests/x.test.ts', line: 1, form: 'call', token: 'it.skip', carriesPlaceholder: false, sanctionMatched: false, capabilityConsistent: false }] };
-  const withCorpusA: GateContext = { repoRoot: '/v', readFile: () => 'AAA', files: () => ['a.ts'], allFiles: () => ['a.ts'], skipSites: pack };
-  const withCorpusB: GateContext = { repoRoot: '/v', readFile: () => 'totally different bytes', files: () => ['b.ts', 'c.ts'], allFiles: () => ['b.ts', 'c.ts'], skipSites: pack };
+  const pack: SkipSiteFacts = {
+    sites: [
+      {
+        file: 'tests/x.test.ts',
+        line: 1,
+        form: 'call',
+        token: 'it.skip',
+        carriesPlaceholder: false,
+        sanctionMatched: false,
+        capabilityConsistent: false,
+      },
+    ],
+  };
+  const withCorpusA: GateContext = {
+    repoRoot: '/v',
+    readFile: () => 'AAA',
+    files: () => ['a.ts'],
+    allFiles: () => ['a.ts'],
+    skipSites: pack,
+  };
+  const withCorpusB: GateContext = {
+    repoRoot: '/v',
+    readFile: () => 'totally different bytes',
+    files: () => ['b.ts', 'c.ts'],
+    allFiles: () => ['b.ts', 'c.ts'],
+    skipSites: pack,
+  };
 
   it('identical skipSites + DIFFERENT corpus/readFile → SAME identity (undeclared evidence ignored)', () => {
     expect(noSkippedTestFactGate.evidenceDigest!(withCorpusA)).toBe(noSkippedTestFactGate.evidenceDigest!(withCorpusB));
@@ -234,7 +278,9 @@ describe('FactGate #2 — cache identity is the FactPack digest, not a gate-auth
   it('DIFFERENT skipSites → DIFFERENT identity', () => {
     const other: SkipSiteFacts = { sites: [{ ...pack.sites[0]!, line: 2 }] };
     const ctxOther: GateContext = { ...withCorpusA, skipSites: other };
-    expect(noSkippedTestFactGate.evidenceDigest!(ctxOther)).not.toBe(noSkippedTestFactGate.evidenceDigest!(withCorpusA));
+    expect(noSkippedTestFactGate.evidenceDigest!(ctxOther)).not.toBe(
+      noSkippedTestFactGate.evidenceDigest!(withCorpusA),
+    );
   });
 });
 
@@ -243,9 +289,17 @@ describe('FactGate #2 — cache identity is the FactPack digest, not a gate-auth
 describe('FactGate #3 — out-of-IR byte change refolds (cache soundness is structural)', () => {
   it('adding an unsanctioned skip to a tests/ file flips the key → MISS → re-folded (not stale-green)', () => {
     const cache = makeMemoryCache();
-    const r1 = runGates([noSkippedTestFactGate], factCacheCtx("it('runs', () => { expect(1).toBe(1); });\n"), { cache, toolchainDigest: TC, env: ENV });
+    const r1 = runGates([noSkippedTestFactGate], factCacheCtx("it('runs', () => { expect(1).toBe(1); });\n"), {
+      cache,
+      toolchainDigest: TC,
+      env: ENV,
+    });
     expect(r1.findings.filter((f) => f.ruleId === RULE).length).toBe(0);
-    const r2 = runGates([noSkippedTestFactGate], factCacheCtx("it.skip('not wired', () => {});\n"), { cache, toolchainDigest: TC, env: ENV });
+    const r2 = runGates([noSkippedTestFactGate], factCacheCtx("it.skip('not wired', () => {});\n"), {
+      cache,
+      toolchainDigest: TC,
+      env: ENV,
+    });
     expect(r2.findings.filter((f) => f.ruleId === RULE).length).toBeGreaterThan(0);
   });
 
@@ -267,7 +321,13 @@ describe('FactGate #4 — a detector change that alters the facts changes the ca
     const read = (): string => 'maybeSkip();\n';
     const blind = produceSkipSiteFacts(files, read, () => []);
     const sees = produceSkipSiteFacts(files, read, () => [{ line: 1, form: 'call', token: 'it.skip' }]);
-    const ctxBlind: GateContext = { repoRoot: '/v', readFile: read, files: () => files, allFiles: () => files, skipSites: blind };
+    const ctxBlind: GateContext = {
+      repoRoot: '/v',
+      readFile: read,
+      files: () => files,
+      allFiles: () => files,
+      skipSites: blind,
+    };
     const ctxSees: GateContext = { ...ctxBlind, skipSites: sees };
     expect(factBundleDigest(ctxSees, ['skipSites'])).not.toBe(factBundleDigest(ctxBlind, ['skipSites']));
     // NOTE: producer-IMPLEMENTATION identity independent of output (the 5-digest provenance —
@@ -279,9 +339,26 @@ describe('FactGate #4 — a detector change that alters the facts changes the ca
 
 describe('FactGate #5 — a sanction change changes the FactPack identity', () => {
   it('the same skip, sanctioned vs not, yields different facts → different identity', () => {
-    const base: SkipSiteFact = { file: 'tests/x.test.ts', line: 1, form: 'call', token: 'it.skip', carriesPlaceholder: false, sanctionMatched: false, capabilityConsistent: false };
-    const unsanctioned: GateContext = { repoRoot: '/v', readFile: () => '', files: () => [], allFiles: () => [], skipSites: { sites: [base] } };
-    const sanctioned: GateContext = { ...unsanctioned, skipSites: { sites: [{ ...base, sanctionMatched: true, capabilityConsistent: true }] } };
+    const base: SkipSiteFact = {
+      file: 'tests/x.test.ts',
+      line: 1,
+      form: 'call',
+      token: 'it.skip',
+      carriesPlaceholder: false,
+      sanctionMatched: false,
+      capabilityConsistent: false,
+    };
+    const unsanctioned: GateContext = {
+      repoRoot: '/v',
+      readFile: () => '',
+      files: () => [],
+      allFiles: () => [],
+      skipSites: { sites: [base] },
+    };
+    const sanctioned: GateContext = {
+      ...unsanctioned,
+      skipSites: { sites: [{ ...base, sanctionMatched: true, capabilityConsistent: true }] },
+    };
     expect(factBundleDigest(sanctioned, ['skipSites'])).not.toBe(factBundleDigest(unsanctioned, ['skipSites']));
     // And the kernel decides them oppositely — the registry-fold actually drives the verdict.
     expect(decideSkipSite(base)).toBe('block');
@@ -345,7 +422,15 @@ describe('FactGate #9 — the decision is a data-only kernel (the floor truth ta
       for (const consistent of [false, true]) {
         const expected = !placeholder && matched && consistent ? 'allow' : 'block';
         it(`placeholder=${placeholder} matched=${matched} consistent=${consistent} → ${expected}`, () => {
-          const site: SkipSiteFact = { file: 'f.ts', line: 1, form: 'call', token: 'it.skip', carriesPlaceholder: placeholder, sanctionMatched: matched, capabilityConsistent: consistent };
+          const site: SkipSiteFact = {
+            file: 'f.ts',
+            line: 1,
+            form: 'call',
+            token: 'it.skip',
+            carriesPlaceholder: placeholder,
+            sanctionMatched: matched,
+            capabilityConsistent: consistent,
+          };
           expect(decideSkipSite(site)).toBe(expected);
         });
       }
@@ -492,13 +577,33 @@ describe('FactGate #1b — isFactGate is a boundary, not an honor-system string 
 // ── #6b — the AST (detectSkipsAST) path is exercised (review HIGH-1) ──────────
 
 describe('FactGate #6b — shadow-diff over the INJECTED AST detector (conditional ≠ undefined)', () => {
-  const cases: { name: string; conditional: SkipConditionality; corpus: Record<string, string>; expectFindings: boolean }[] = [
+  const cases: {
+    name: string;
+    conditional: SkipConditionality;
+    corpus: Record<string, string>;
+    expectFindings: boolean;
+  }[] = [
     // The sanctioned ffmpeg site, but the AST proves it UNCONDITIONAL → non-sanctionable → BLOCK.
-    { name: 'sanctioned site proven unconditional → both block', conditional: 'unconditional', corpus: { [SANCTIONED_FILE]: SANCTIONED_LINE }, expectFindings: true },
+    {
+      name: 'sanctioned site proven unconditional → both block',
+      conditional: 'unconditional',
+      corpus: { [SANCTIONED_FILE]: SANCTIONED_LINE },
+      expectFindings: true,
+    },
     // The same site proven enclosing-if conditional → consistent → ALLOW.
-    { name: 'sanctioned site proven enclosing-if → both allow', conditional: 'enclosing-if', corpus: { [SANCTIONED_FILE]: SANCTIONED_LINE }, expectFindings: false },
+    {
+      name: 'sanctioned site proven enclosing-if → both allow',
+      conditional: 'enclosing-if',
+      corpus: { [SANCTIONED_FILE]: SANCTIONED_LINE },
+      expectFindings: false,
+    },
     // An unsanctioned conditional skip → not enumerated → BLOCK regardless of conditionality.
-    { name: 'unsanctioned conditional skip → both block', conditional: 'enclosing-if', corpus: { 'tests/unit/widget/cond.test.ts': "it.skip('gated but unenumerated', () => {});\n" }, expectFindings: true },
+    {
+      name: 'unsanctioned conditional skip → both block',
+      conditional: 'enclosing-if',
+      corpus: { 'tests/unit/widget/cond.test.ts': "it.skip('gated but unenumerated', () => {});\n" },
+      expectFindings: true,
+    },
   ];
   for (const c of cases) {
     it(`closure ≡ fact on the AST path: ${c.name}`, () => {
@@ -541,7 +646,8 @@ describe('FactGate #11 — belt-and-suspenders (real-repo equivalence + producer
     const literalOnly: SkipDetector = (src: string): readonly SkipMatch[] => {
       const out: SkipMatch[] = [];
       src.split('\n').forEach((line, i) => {
-        if (/\b(?:it|test|describe|bench)\.skip\s*\(/.test(line)) out.push({ line: i + 1, form: 'call', token: 'literal.skip' });
+        if (/\b(?:it|test|describe|bench)\.skip\s*\(/.test(line))
+          out.push({ line: i + 1, form: 'call', token: 'literal.skip' });
       });
       return out;
     };

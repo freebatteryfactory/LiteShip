@@ -1,170 +1,1649 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "entries": [
     {
       "path": "boundary.evaluateBatch",
       "describe": "Boundary.evaluateBatch — one scan over the value array; O(n) in value count.",
       "shape": "batch-values",
-      "sizes": [256, 1024, 4096, 16384, 65536],
+      "sizes": [
+        256,
+        1024,
+        4096,
+        16384,
+        65536
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9849,
-      "fittedR2": 0.9999,
-      "coefficientOfVariation": 0.1037,
+      "fittedSlope": 0.9593,
+      "fittedR2": 0.9995,
+      "coefficientOfVariation": 0.1505,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
-        "warmupIterations": 50
-      }
+        "warmupIterations": 50,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 256,
+          "effectiveInnerIterations": 6400,
+          "samples": [
+            7982.8906,
+            4858.7344,
+            6065.7344,
+            6792.6562,
+            5056.9219,
+            5021,
+            7165.4687
+          ],
+          "batchDurationsMs": [
+            51.0904,
+            31.0958,
+            38.8207,
+            43.4729,
+            32.3642,
+            32.1343,
+            45.8589
+          ]
+        },
+        {
+          "size": 1024,
+          "effectiveInnerIterations": 3200,
+          "samples": [
+            19542,
+            21181.4688,
+            16511.8437,
+            19198.0625,
+            20201.6875,
+            17599.9687,
+            21035.2812
+          ],
+          "batchDurationsMs": [
+            62.5344,
+            67.7807,
+            52.8378,
+            61.4338,
+            64.6453,
+            56.3198,
+            67.3128
+          ]
+        },
+        {
+          "size": 4096,
+          "effectiveInnerIterations": 400,
+          "samples": [
+            102712.25,
+            81459.75,
+            82840.25,
+            107799.75,
+            69039.5,
+            104556.5,
+            69062.5
+          ],
+          "batchDurationsMs": [
+            41.0848,
+            32.5839,
+            33.1361,
+            43.1199,
+            27.6158,
+            41.8225,
+            27.625
+          ]
+        },
+        {
+          "size": 16384,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            366203.5,
+            423772,
+            314949,
+            241890,
+            387164.5,
+            398804,
+            283460
+          ],
+          "batchDurationsMs": [
+            73.2407,
+            84.7543,
+            62.9897,
+            48.3779,
+            77.4328,
+            79.7608,
+            56.692
+          ]
+        },
+        {
+          "size": 65536,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            1199519.5,
+            980689,
+            1039954,
+            1185887.5,
+            1055822,
+            1220927,
+            1026626.5
+          ],
+          "batchDurationsMs": [
+            239.9039,
+            196.1378,
+            207.9908,
+            237.1774,
+            211.1643,
+            244.1854,
+            205.3253
+          ]
+        }
+      ]
     },
     {
       "path": "contentAddress.of",
       "describe": "contentAddressOf — canonicalize → CanonicalCbor → fnv1a; O(n) in element count.",
       "shape": "address-elements",
-      "sizes": [8, 32, 128, 512, 2048],
+      "sizes": [
+        8,
+        32,
+        128,
+        512,
+        2048
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9636,
-      "fittedR2": 0.9968,
-      "coefficientOfVariation": 0.0612,
+      "fittedSlope": 0.9837,
+      "fittedR2": 0.9994,
+      "coefficientOfVariation": 0.0255,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
-        "warmupIterations": 50
-      }
+        "warmupIterations": 50,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 8,
+          "effectiveInnerIterations": 800,
+          "samples": [
+            45814.875,
+            42294.25,
+            42597.75,
+            43084.25,
+            39723.625,
+            41759.625,
+            42286.375
+          ],
+          "batchDurationsMs": [
+            36.6518,
+            33.8353,
+            34.0781,
+            34.4673,
+            31.7789,
+            33.4077,
+            33.829
+          ]
+        },
+        {
+          "size": 32,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            142796,
+            137537,
+            145389.5,
+            154115,
+            142723,
+            140382.5,
+            141241
+          ],
+          "batchDurationsMs": [
+            28.5591,
+            27.5073,
+            29.0778,
+            30.823,
+            28.5446,
+            28.0765,
+            28.2482
+          ]
+        },
+        {
+          "size": 128,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            561868,
+            567441.5,
+            563856,
+            563772,
+            561993,
+            545640,
+            554801
+          ],
+          "batchDurationsMs": [
+            112.3735,
+            113.4883,
+            112.7712,
+            112.7543,
+            112.3986,
+            109.128,
+            110.9601
+          ]
+        },
+        {
+          "size": 512,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            2447907,
+            2346645.5,
+            2245079.5,
+            2522078,
+            2236365,
+            2251122,
+            2195973
+          ],
+          "batchDurationsMs": [
+            489.5814,
+            469.3291,
+            449.0159,
+            504.4156,
+            447.273,
+            450.2243,
+            439.1946
+          ]
+        },
+        {
+          "size": 2048,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            9164957.5,
+            9119597,
+            9091947,
+            9138909.5,
+            9493302.5,
+            9228406,
+            9326066
+          ],
+          "batchDurationsMs": [
+            1832.9915,
+            1823.9193,
+            1818.3894,
+            1827.7818,
+            1898.6604,
+            1845.6811,
+            1865.2132
+          ]
+        }
+      ]
     },
     {
       "path": "canonical.encode",
       "describe": "CanonicalCbor.encode — one deterministic fold over array elements; O(n) in element count.",
       "shape": "canonical-array-elements",
-      "sizes": [64, 256, 1024, 4096, 16384],
+      "sizes": [
+        64,
+        256,
+        1024,
+        4096,
+        16384
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0285,
-      "fittedR2": 0.9996,
-      "coefficientOfVariation": 0.0876,
+      "fittedSlope": 1.019,
+      "fittedR2": 0.9997,
+      "coefficientOfVariation": 0.0385,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
-        "warmupIterations": 50
-      }
+        "warmupIterations": 50,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 64,
+          "effectiveInnerIterations": 1600,
+          "samples": [
+            30239.6875,
+            29078.375,
+            21721.625,
+            20458,
+            19743.4375,
+            19844.375,
+            22046.3125
+          ],
+          "batchDurationsMs": [
+            48.3834,
+            46.5254,
+            34.7546,
+            32.7327,
+            31.5895,
+            31.751,
+            35.274
+          ]
+        },
+        {
+          "size": 256,
+          "effectiveInnerIterations": 400,
+          "samples": [
+            75879.75,
+            80447.25,
+            76505.5,
+            90099,
+            82239,
+            75788,
+            74660.5
+          ],
+          "batchDurationsMs": [
+            30.3519,
+            32.1789,
+            30.6022,
+            36.0396,
+            32.8955,
+            30.3151,
+            29.8642
+          ]
+        },
+        {
+          "size": 1024,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            327770.5,
+            313691.5,
+            314715.5,
+            307390,
+            321640.5,
+            303917.5,
+            314663
+          ],
+          "batchDurationsMs": [
+            65.554,
+            62.7383,
+            62.9431,
+            61.478,
+            64.328,
+            60.7834,
+            62.9326
+          ]
+        },
+        {
+          "size": 4096,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            1311463.5,
+            1326446,
+            1296767.5,
+            1316406.5,
+            1317154,
+            1422690,
+            1314018
+          ],
+          "batchDurationsMs": [
+            262.2926,
+            265.2891,
+            259.3534,
+            263.2813,
+            263.4308,
+            284.538,
+            262.8035
+          ]
+        },
+        {
+          "size": 16384,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            5633034,
+            5561677,
+            5572474,
+            5535588.5,
+            5793315.5,
+            5604731,
+            5808135.5
+          ],
+          "batchDurationsMs": [
+            1126.6068,
+            1112.3353,
+            1114.4948,
+            1107.1177,
+            1158.6631,
+            1120.9462,
+            1161.627
+          ]
+        }
+      ]
     },
     {
       "path": "canonical.decode",
       "describe": "canonical decode — one strict cursor walk over encoded array elements; O(n) in element count.",
       "shape": "canonical-array-elements",
-      "sizes": [64, 256, 1024, 4096, 16384],
+      "sizes": [
+        64,
+        256,
+        1024,
+        4096,
+        16384
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0393,
-      "fittedR2": 0.9998,
-      "coefficientOfVariation": 0.0585,
+      "fittedSlope": 1.0229,
+      "fittedR2": 0.9997,
+      "coefficientOfVariation": 0.0138,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
-        "warmupIterations": 50
-      }
+        "warmupIterations": 50,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 64,
+          "effectiveInnerIterations": 1600,
+          "samples": [
+            21394.1875,
+            20792.6875,
+            20961.5625,
+            23447.125,
+            20925.75,
+            21106.8125,
+            21085.9375
+          ],
+          "batchDurationsMs": [
+            34.2307,
+            33.2683,
+            33.5385,
+            37.5154,
+            33.4811,
+            33.7709,
+            33.7375
+          ]
+        },
+        {
+          "size": 256,
+          "effectiveInnerIterations": 400,
+          "samples": [
+            81143,
+            85469.5,
+            81672.25,
+            82451.25,
+            84479.5,
+            80168.5,
+            80166.75
+          ],
+          "batchDurationsMs": [
+            32.4571,
+            34.1877,
+            32.6689,
+            32.9804,
+            33.7917,
+            32.0673,
+            32.0667
+          ]
+        },
+        {
+          "size": 1024,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            368166,
+            336650,
+            333183.5,
+            333300.5,
+            348582,
+            326988.5,
+            343209.5
+          ],
+          "batchDurationsMs": [
+            73.6332,
+            67.3299,
+            66.6366,
+            66.6601,
+            69.7163,
+            65.3977,
+            68.6419
+          ]
+        },
+        {
+          "size": 4096,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            1611430,
+            1393953,
+            1460091,
+            1408802,
+            1397481.5,
+            1417171,
+            1436344.5
+          ],
+          "batchDurationsMs": [
+            322.286,
+            278.7906,
+            292.0181,
+            281.7603,
+            279.4962,
+            283.4342,
+            287.2688
+          ]
+        },
+        {
+          "size": 16384,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            6031637.5,
+            6256784.5,
+            6304562,
+            6126579.5,
+            5984745.5,
+            6252679,
+            6201707
+          ],
+          "batchDurationsMs": [
+            1206.3274,
+            1251.3568,
+            1260.9124,
+            1225.3159,
+            1196.9491,
+            1250.5358,
+            1240.3413
+          ]
+        }
+      ]
     },
     {
       "path": "genui.validate",
       "describe": "validateGeneratedUITree — one structural visit per generated node; O(n) in node count.",
       "shape": "generated-ui-nodes",
-      "sizes": [256, 512, 1024, 2048, 4096],
+      "sizes": [
+        256,
+        512,
+        1024,
+        2048,
+        4096
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9872,
-      "fittedR2": 0.9991,
-      "coefficientOfVariation": 0.1439,
+      "fittedSlope": 1.043,
+      "fittedR2": 0.9999,
+      "coefficientOfVariation": 0.0234,
       "measurement": {
-        "innerIterations": 25,
+        "innerIterations": 100,
         "replicates": 7,
-        "warmupIterations": 10
-      }
+        "warmupIterations": 20,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 256,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            125314,
+            131980.5,
+            128340,
+            127979.5,
+            125625.5,
+            126236,
+            137154.5
+          ],
+          "batchDurationsMs": [
+            25.0627,
+            26.396,
+            25.6679,
+            25.5959,
+            25.125,
+            25.2472,
+            27.4308
+          ]
+        },
+        {
+          "size": 512,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            267788,
+            253810,
+            260352,
+            255438,
+            275588,
+            259345,
+            255898
+          ],
+          "batchDurationsMs": [
+            26.7788,
+            25.3809,
+            26.0352,
+            25.5437,
+            27.5588,
+            25.9345,
+            25.5898
+          ]
+        },
+        {
+          "size": 1024,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            532326,
+            552575,
+            520990,
+            621660,
+            617090,
+            608132,
+            523306
+          ],
+          "batchDurationsMs": [
+            53.2326,
+            55.2574,
+            52.099,
+            62.1659,
+            61.709,
+            60.8131,
+            52.3306
+          ]
+        },
+        {
+          "size": 2048,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            1263873,
+            1081924,
+            1085097,
+            1081970,
+            1080391,
+            1113154,
+            1109171
+          ],
+          "batchDurationsMs": [
+            126.3872,
+            108.1923,
+            108.5096,
+            108.197,
+            108.0391,
+            111.3154,
+            110.917
+          ]
+        },
+        {
+          "size": 4096,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            2730083,
+            2281284,
+            2271099,
+            2256139,
+            2282664,
+            2259077,
+            2605251
+          ],
+          "batchDurationsMs": [
+            273.0083,
+            228.1284,
+            227.1098,
+            225.6138,
+            228.2663,
+            225.9076,
+            260.525
+          ]
+        }
+      ]
     },
     {
       "path": "genui.renderHash",
       "describe": "renderHash — canonical encoding and hashing of one generated tree; O(n) in node count.",
       "shape": "generated-ui-nodes",
-      "sizes": [32, 128, 512, 2048, 8192],
+      "sizes": [
+        32,
+        128,
+        512,
+        2048,
+        8192
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0182,
-      "fittedR2": 0.9989,
-      "coefficientOfVariation": 0.0611,
+      "fittedSlope": 1.0067,
+      "fittedR2": 1,
+      "coefficientOfVariation": 0.0365,
       "measurement": {
         "innerIterations": 8,
         "replicates": 7,
-        "warmupIterations": 5
-      }
+        "warmupIterations": 5,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 32,
+          "effectiveInnerIterations": 128,
+          "samples": [
+            162548.4375,
+            195762.5,
+            174538.2812,
+            158934.375,
+            174610.1562,
+            169632.8125,
+            177261.7188
+          ],
+          "batchDurationsMs": [
+            20.8062,
+            25.0576,
+            22.3408,
+            20.3435,
+            22.35,
+            21.713,
+            22.6895
+          ]
+        },
+        {
+          "size": 128,
+          "effectiveInnerIterations": 64,
+          "samples": [
+            691243.75,
+            658370.3125,
+            649460.9375,
+            693020.3125,
+            656384.375,
+            644901.5625,
+            678326.5625
+          ],
+          "batchDurationsMs": [
+            44.2396,
+            42.1356,
+            41.5654,
+            44.3533,
+            42.0086,
+            41.2737,
+            43.4129
+          ]
+        },
+        {
+          "size": 512,
+          "effectiveInnerIterations": 8,
+          "samples": [
+            2689800,
+            2609462.5,
+            2647975,
+            2515387.5,
+            2570300,
+            2580350,
+            2695125
+          ],
+          "batchDurationsMs": [
+            21.5184,
+            20.8757,
+            21.1837,
+            20.1231,
+            20.5623,
+            20.6428,
+            21.561
+          ]
+        },
+        {
+          "size": 2048,
+          "effectiveInnerIterations": 8,
+          "samples": [
+            10516200,
+            10669412.5,
+            10851950,
+            10751537.5,
+            10681637.5,
+            10441475,
+            10686612.5
+          ],
+          "batchDurationsMs": [
+            84.1296,
+            85.3552,
+            86.8155,
+            86.0123,
+            85.453,
+            83.5317,
+            85.4928
+          ]
+        },
+        {
+          "size": 8192,
+          "effectiveInnerIterations": 8,
+          "samples": [
+            43094525,
+            49257187.5,
+            42374312.5,
+            42879225,
+            42495537.5,
+            42912812.5,
+            43153812.5
+          ],
+          "batchDurationsMs": [
+            344.7562,
+            394.0574,
+            338.9944,
+            343.0337,
+            339.9643,
+            343.3024,
+            345.2305
+          ]
+        }
+      ]
     },
     {
       "path": "assets.walkRiff",
       "describe": "walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.",
       "shape": "riff-chunks",
-      "sizes": [32, 128, 512, 2048, 8192],
+      "sizes": [
+        512,
+        1024,
+        2048,
+        4096,
+        8192
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9386,
-      "fittedR2": 0.9983,
-      "coefficientOfVariation": 0.0666,
+      "fittedSlope": 1.0127,
+      "fittedR2": 0.9999,
+      "coefficientOfVariation": 0.018,
       "measurement": {
-        "innerIterations": 25,
+        "innerIterations": 100,
         "replicates": 7,
-        "warmupIterations": 10
-      }
+        "warmupIterations": 20,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 512,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            174481,
+            180941,
+            174462.5,
+            179471,
+            189721.5,
+            167007.5,
+            173251
+          ],
+          "batchDurationsMs": [
+            34.8962,
+            36.1882,
+            34.8925,
+            35.8941,
+            37.9443,
+            33.4014,
+            34.6502
+          ]
+        },
+        {
+          "size": 1024,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            333193,
+            346538,
+            338440,
+            329002,
+            360045,
+            340613,
+            327348
+          ],
+          "batchDurationsMs": [
+            33.3193,
+            34.6538,
+            33.8439,
+            32.9002,
+            36.0045,
+            34.0613,
+            32.7347
+          ]
+        },
+        {
+          "size": 2048,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            691254,
+            693805,
+            681114,
+            694993,
+            681284,
+            676085,
+            713045
+          ],
+          "batchDurationsMs": [
+            69.1254,
+            69.3804,
+            68.1113,
+            69.4992,
+            68.1284,
+            67.6084,
+            71.3044
+          ]
+        },
+        {
+          "size": 4096,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            1355094,
+            1393902,
+            1375644,
+            1410899,
+            1390598,
+            1383578,
+            1413487
+          ],
+          "batchDurationsMs": [
+            135.5094,
+            139.3901,
+            137.5644,
+            141.0899,
+            139.0597,
+            138.3577,
+            141.3487
+          ]
+        },
+        {
+          "size": 8192,
+          "effectiveInnerIterations": 100,
+          "samples": [
+            2778518,
+            2744744,
+            2772689,
+            2892752,
+            2866245,
+            2760485,
+            2891377
+          ],
+          "batchDurationsMs": [
+            277.8518,
+            274.4744,
+            277.2689,
+            289.2752,
+            286.6245,
+            276.0485,
+            289.1376
+          ]
+        }
+      ]
     },
     {
       "path": "assets.computeWaveform",
       "describe": "computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.",
       "shape": "audio-frames",
-      "sizes": [65536, 131072, 262144, 524288, 1048576],
+      "sizes": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9945,
-      "fittedR2": 0.9998,
-      "coefficientOfVariation": 0.0568,
+      "fittedSlope": 0.9903,
+      "fittedR2": 0.9997,
+      "coefficientOfVariation": 0.0267,
       "measurement": {
         "innerIterations": 5,
         "replicates": 7,
-        "warmupIterations": 3
-      }
+        "warmupIterations": 3,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 65536,
+          "effectiveInnerIterations": 160,
+          "samples": [
+            187704.375,
+            178916.25,
+            179570.625,
+            181723.75,
+            177365.625,
+            182460.625,
+            179909.375
+          ],
+          "batchDurationsMs": [
+            30.0326,
+            28.6265,
+            28.7312,
+            29.0758,
+            28.3785,
+            29.1936,
+            28.7854
+          ]
+        },
+        {
+          "size": 131072,
+          "effectiveInnerIterations": 80,
+          "samples": [
+            356256.25,
+            345545,
+            350931.25,
+            345361.25,
+            359951.25,
+            354505,
+            372601.25
+          ],
+          "batchDurationsMs": [
+            28.5005,
+            27.6436,
+            28.0745,
+            27.6289,
+            28.796,
+            28.3604,
+            29.808
+          ]
+        },
+        {
+          "size": 262144,
+          "effectiveInnerIterations": 40,
+          "samples": [
+            669752.5,
+            721522.5,
+            820852.5,
+            785507.5,
+            938942.5,
+            701120,
+            692622.5
+          ],
+          "batchDurationsMs": [
+            26.79,
+            28.8608,
+            32.834,
+            31.4202,
+            37.5577,
+            28.0448,
+            27.7049
+          ]
+        },
+        {
+          "size": 524288,
+          "effectiveInnerIterations": 20,
+          "samples": [
+            1576375,
+            1391545,
+            1378320,
+            1418900,
+            1385345,
+            1404985,
+            1403000
+          ],
+          "batchDurationsMs": [
+            31.5274,
+            27.8309,
+            27.5664,
+            28.378,
+            27.7069,
+            28.0996,
+            28.0599
+          ]
+        },
+        {
+          "size": 1048576,
+          "effectiveInnerIterations": 10,
+          "samples": [
+            2964230,
+            2838610,
+            2755100,
+            2765730,
+            2877860,
+            2747490,
+            2802340
+          ],
+          "batchDurationsMs": [
+            29.6422,
+            28.3861,
+            27.551,
+            27.6573,
+            28.7785,
+            27.4749,
+            28.0234
+          ]
+        }
+      ]
     },
     {
       "path": "assets.detectOnsets",
       "describe": "detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.",
       "shape": "audio-frames",
-      "sizes": [65536, 131072, 262144, 524288, 1048576],
+      "sizes": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0069,
+      "fittedSlope": 1.0013,
       "fittedR2": 1,
-      "coefficientOfVariation": 0.0331,
+      "coefficientOfVariation": 0.023,
       "measurement": {
         "innerIterations": 4,
         "replicates": 7,
-        "warmupIterations": 3
-      }
+        "warmupIterations": 3,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 65536,
+          "effectiveInnerIterations": 64,
+          "samples": [
+            334495.3125,
+            336110.9375,
+            328554.6875,
+            511909.375,
+            534681.25,
+            383239.0625,
+            346615.625
+          ],
+          "batchDurationsMs": [
+            21.4076,
+            21.5111,
+            21.0274,
+            32.7621,
+            34.2195,
+            24.5273,
+            22.1834
+          ]
+        },
+        {
+          "size": 131072,
+          "effectiveInnerIterations": 32,
+          "samples": [
+            662971.875,
+            770512.5,
+            731834.375,
+            673471.875,
+            671115.625,
+            660834.375,
+            701096.875
+          ],
+          "batchDurationsMs": [
+            21.2151,
+            24.6563,
+            23.4187,
+            21.551,
+            21.4757,
+            21.1466,
+            22.435
+          ]
+        },
+        {
+          "size": 262144,
+          "effectiveInnerIterations": 16,
+          "samples": [
+            1343218.75,
+            1364331.25,
+            1361506.25,
+            1337887.5,
+            1392456.25,
+            1357937.5,
+            1806181.25
+          ],
+          "batchDurationsMs": [
+            21.4914,
+            21.8292,
+            21.7841,
+            21.4061,
+            22.2793,
+            21.7269,
+            28.8989
+          ]
+        },
+        {
+          "size": 524288,
+          "effectiveInnerIterations": 8,
+          "samples": [
+            2957150,
+            2793537.5,
+            2648762.5,
+            2645362.5,
+            2819375,
+            2712887.5,
+            2701650
+          ],
+          "batchDurationsMs": [
+            23.6572,
+            22.3482,
+            21.19,
+            21.1628,
+            22.555,
+            21.703,
+            21.6132
+          ]
+        },
+        {
+          "size": 1048576,
+          "effectiveInnerIterations": 4,
+          "samples": [
+            5800600,
+            5798575,
+            5278125,
+            5579600,
+            5381800,
+            5558550,
+            5923775
+          ],
+          "batchDurationsMs": [
+            23.2023,
+            23.1942,
+            21.1124,
+            22.3183,
+            21.5271,
+            22.2342,
+            23.695
+          ]
+        }
+      ]
     },
     {
       "path": "assets.detectBeats",
       "describe": "detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.",
       "shape": "audio-frames-fixed-sample-rate",
-      "sizes": [65536, 131072, 262144, 524288, 1048576],
+      "sizes": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0384,
-      "fittedR2": 0.9998,
-      "coefficientOfVariation": 0.1694,
+      "fittedSlope": 1.0213,
+      "fittedR2": 0.9999,
+      "coefficientOfVariation": 0.0222,
       "measurement": {
         "innerIterations": 3,
         "replicates": 7,
-        "warmupIterations": 2
-      }
+        "warmupIterations": 2,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 65536,
+          "effectiveInnerIterations": 96,
+          "samples": [
+            366033.3333,
+            355695.8333,
+            363715.625,
+            363436.4583,
+            362094.7917,
+            360270.8333,
+            367823.9583
+          ],
+          "batchDurationsMs": [
+            35.1392,
+            34.1468,
+            34.9167,
+            34.8898,
+            34.7611,
+            34.5859,
+            35.3111
+          ]
+        },
+        {
+          "size": 131072,
+          "effectiveInnerIterations": 48,
+          "samples": [
+            742966.6667,
+            765660.4167,
+            743231.25,
+            735185.4167,
+            748839.5833,
+            750693.75,
+            753306.25
+          ],
+          "batchDurationsMs": [
+            35.6624,
+            36.7517,
+            35.675,
+            35.2888,
+            35.9443,
+            36.0333,
+            36.1586
+          ]
+        },
+        {
+          "size": 262144,
+          "effectiveInnerIterations": 24,
+          "samples": [
+            1995608.3333,
+            1537733.3333,
+            1545262.5,
+            1462279.1667,
+            1553358.3333,
+            1543120.8333,
+            1491316.6667
+          ],
+          "batchDurationsMs": [
+            47.8945,
+            36.9055,
+            37.0862,
+            35.0947,
+            37.2805,
+            37.0348,
+            35.7916
+          ]
+        },
+        {
+          "size": 524288,
+          "effectiveInnerIterations": 12,
+          "samples": [
+            3134491.6667,
+            3152050,
+            3020916.6667,
+            3126125,
+            3143008.3333,
+            3030258.3333,
+            3106591.6667
+          ],
+          "batchDurationsMs": [
+            37.6138,
+            37.8246,
+            36.2509,
+            37.5135,
+            37.7161,
+            36.3631,
+            37.279
+          ]
+        },
+        {
+          "size": 1048576,
+          "effectiveInnerIterations": 6,
+          "samples": [
+            6681433.3333,
+            6606533.3333,
+            6311016.6667,
+            6045250,
+            6336400,
+            6096450,
+            6214500
+          ],
+          "batchDurationsMs": [
+            40.0886,
+            39.6391,
+            37.866,
+            36.2715,
+            38.0184,
+            36.5786,
+            37.2869
+          ]
+        }
+      ]
+    },
+    {
+      "path": "web.parseMessage",
+      "describe": "parseMessage — preflight plus JSON decoding of one SSE patch; O(n) in serialized payload bytes.",
+      "shape": "serialized-sse-patch-bytes",
+      "sizes": [
+        1024,
+        4096,
+        16384,
+        65536,
+        262144
+      ],
+      "class": "O(n)",
+      "fittedSlope": 0.9169,
+      "fittedR2": 0.9881,
+      "coefficientOfVariation": 0.1149,
+      "measurement": {
+        "innerIterations": 50,
+        "replicates": 7,
+        "warmupIterations": 20,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 1024,
+          "effectiveInnerIterations": 25600,
+          "samples": [
+            2242.5313,
+            1753.3828,
+            1179.1211,
+            1129.0859,
+            1135.6484,
+            1148.9609,
+            1171.7383
+          ],
+          "batchDurationsMs": [
+            57.4088,
+            44.8865,
+            30.1854,
+            28.9045,
+            29.0725,
+            29.4134,
+            29.9964
+          ]
+        },
+        {
+          "size": 4096,
+          "effectiveInnerIterations": 12800,
+          "samples": [
+            2909.3906,
+            2864.3594,
+            3000.7734,
+            2956.9609,
+            2970.6953,
+            3091.7031,
+            2927.4219
+          ],
+          "batchDurationsMs": [
+            37.2402,
+            36.6637,
+            38.4098,
+            37.8491,
+            38.0248,
+            39.5737,
+            37.4709
+          ]
+        },
+        {
+          "size": 16384,
+          "effectiveInnerIterations": 3200,
+          "samples": [
+            9533.0312,
+            9078.2812,
+            9426.2813,
+            9487.375,
+            9163.9063,
+            9449.5937,
+            9237.75
+          ],
+          "batchDurationsMs": [
+            30.5056,
+            29.0504,
+            30.1641,
+            30.3596,
+            29.3245,
+            30.2386,
+            29.5607
+          ]
+        },
+        {
+          "size": 65536,
+          "effectiveInnerIterations": 800,
+          "samples": [
+            35867.5,
+            35486.25,
+            36834.5,
+            52342.75,
+            60541,
+            40125.625,
+            35955.125
+          ],
+          "batchDurationsMs": [
+            28.694,
+            28.3889,
+            29.4675,
+            41.8742,
+            48.4328,
+            32.1005,
+            28.7641
+          ]
+        },
+        {
+          "size": 262144,
+          "effectiveInnerIterations": 200,
+          "samples": [
+            187992,
+            236133.5,
+            244099,
+            232965.5,
+            184604.5,
+            290813,
+            270521.5
+          ],
+          "batchDurationsMs": [
+            37.5984,
+            47.2266,
+            48.8197,
+            46.593,
+            36.9208,
+            58.1625,
+            54.1043
+          ]
+        }
+      ]
     },
     {
       "path": "gauntlet.runGates",
       "describe": "runGates — one qualification and decision fold per gate; O(n) in gate count.",
       "shape": "qualified-gates",
-      "sizes": [8, 32, 128, 512, 2048],
+      "sizes": [
+        8,
+        32,
+        128,
+        512,
+        2048
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.8526,
-      "fittedR2": 0.9951,
-      "coefficientOfVariation": 0.1813,
+      "fittedSlope": 0.9984,
+      "fittedR2": 1,
+      "coefficientOfVariation": 0.0387,
       "measurement": {
         "innerIterations": 10,
         "replicates": 7,
-        "warmupIterations": 5
-      }
+        "warmupIterations": 5,
+        "calibrationReplicates": 3,
+        "calibrationTargetBatchDurationMs": 20,
+        "minimumTimedBatchDurationMs": 10,
+        "maximumCalibratedInnerIterations": 1000000
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 8,
+          "effectiveInnerIterations": 2560,
+          "samples": [
+            6575.6641,
+            6150.5859,
+            6823.7891,
+            6236.25,
+            6386.0937,
+            6215.0781,
+            6266.2891
+          ],
+          "batchDurationsMs": [
+            16.8337,
+            15.7455,
+            17.4688,
+            15.9648,
+            16.3483,
+            15.9106,
+            16.0417
+          ]
+        },
+        {
+          "size": 32,
+          "effectiveInnerIterations": 1280,
+          "samples": [
+            24900,
+            33042.5781,
+            30979.0625,
+            26497.1094,
+            26118.2031,
+            24884.9219,
+            23947.9688
+          ],
+          "batchDurationsMs": [
+            31.872,
+            42.2945,
+            39.6532,
+            33.9162,
+            33.4313,
+            31.8527,
+            30.6534
+          ]
+        },
+        {
+          "size": 128,
+          "effectiveInnerIterations": 320,
+          "samples": [
+            103663.75,
+            102977.8125,
+            96065,
+            100215.625,
+            102911.25,
+            96115.9375,
+            101570
+          ],
+          "batchDurationsMs": [
+            33.1723,
+            32.9528,
+            30.7407,
+            32.069,
+            32.9315,
+            30.757,
+            32.5023
+          ]
+        },
+        {
+          "size": 512,
+          "effectiveInnerIterations": 80,
+          "samples": [
+            392313.75,
+            398743.75,
+            431180,
+            429166.25,
+            404612.5,
+            426742.5,
+            397188.75
+          ],
+          "batchDurationsMs": [
+            31.385,
+            31.8994,
+            34.4943,
+            34.3332,
+            32.3689,
+            34.1394,
+            31.775
+          ]
+        },
+        {
+          "size": 2048,
+          "effectiveInnerIterations": 10,
+          "samples": [
+            2681270,
+            1700100,
+            2364890,
+            1846450,
+            1677290,
+            1678640,
+            1539320
+          ],
+          "batchDurationsMs": [
+            26.8127,
+            17.001,
+            23.6489,
+            18.4645,
+            16.7729,
+            16.7863,
+            15.3931
+          ]
+        }
+      ]
     }
   ]
 }

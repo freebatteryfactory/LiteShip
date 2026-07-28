@@ -125,11 +125,11 @@ describe('no-skipped-test — scope widened to the tests/ tree, with teeth', () 
   });
 
   it('(c) a SANCTIONED capability-gate skip AT ITS EXACT SITE (in the allowlist) PASSES', () => {
-    // tests/smoke/intro-render.test.ts is enumerated (ffmpeg-absent) at this exact line.
-    const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});";
-    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', SITE)?.capability).toBe('ffmpeg-absent');
+    // scene-render.test.ts is enumerated (ffmpeg-absent) at this exact line.
+    const SITE = 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;';
+    expect(sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', SITE)?.capability).toBe('ffmpeg-absent');
     const findings = run(noSkippedTestGate, {
-      'tests/smoke/intro-render.test.ts': `${SITE}\n`,
+      'tests/integration/cli/scene-render.test.ts': `${SITE}\n`,
     });
     expect(findings).toEqual([]);
   });
@@ -222,10 +222,10 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
     // capability — it is not auto-sanctionable. Even pointed at a REAL sanctioned file (intro-render,
     // ffmpeg-absent), the (file, site) does not match the enumerated site, so it stays unsanctioned;
     // and the consistency floor independently rejects the title even if the site DID match.
-    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
+    expect(sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
     // The real ffmpeg-named site at the same file IS sanctioned (the floor passes a genuine gate).
     expect(
-      sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});")?.capability,
+      sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;')?.capability,
     ).toBe('ffmpeg-absent');
   });
 });
@@ -236,8 +236,8 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
 // in a sanctioned file shipped green. These prove the sanction is per-SITE.
 // ───────────────────────────────────────────────────────────────────────────
 describe('per-site sanctioning — a sanctioned file is NOT a blind spot (FORTIFY A)', () => {
-  const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
-  const SANCTIONED_SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});";
+  const SANCTIONED_FILE = 'tests/integration/cli/scene-render.test.ts';
+  const SANCTIONED_SITE = 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;';
 
   it('the EXACT sanctioned site passes (baseline)', () => {
     expect(run(noSkippedTestGate, { [SANCTIONED_FILE]: `${SANCTIONED_SITE}\n` })).toEqual([]);

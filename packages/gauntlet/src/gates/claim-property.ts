@@ -36,7 +36,7 @@
  * THE ADVISORY CLASS (Rice: an undecidable confirmer ⟹ never blocking). A
  * DECLARATION-LEADING DOC comment (the leading JSDoc/comment block immediately above a
  * declaration) that claims `deterministic`/`reproducible` or `content-addressed`/
- * `canonical` for THAT declaration, with no confirmer referencing it, is an `advisory`
+ * `canonicalize` for THAT declaration, with no confirmer referencing it, is an `advisory`
  * finding — a calibrating work-item for the owner, NOT a block. Why advisory and not
  * hard: a prose claim's confirmer is genuinely undecidable — the comment may describe
  * an aspiration, a neighboring concept, or a property proven elsewhere; we cannot
@@ -101,12 +101,12 @@ interface ClaimVocab {
  * The curated semantic-claim vocabulary. Deliberately PRECISE — every term denotes a
  * property with a MEASURABLE confirmer (Rice): `deterministic`/`reproducible` (a
  * determinism test), `pure` (an in-file ambient-entropy check), `content-addressed`/
- * `canonical` (a round-trip identity test). Vague adjectives (`fast`, `robust`,
- * `safe`) are NOT here — they have no decidable confirmer, so a gate on them would be
- * fairy dust. `canonical` maps to the content-address confirmer because the LiteShip
- * `canonical` package IS the content-address kernel (`CanonicalCbor` →
- * `addressedDigestOf`), so a "canonical" claim is confirmed by a round-trip identity
- * test exactly as a "content-addressed" one is.
+ * `canonicalize` (a round-trip identity test). Vague or overloaded adjectives (`fast`,
+ * `robust`, `safe`, bare `canonical`) are NOT here — they have no decidable confirmer,
+ * so a gate on them would be fairy dust. In particular, "canonical command registry"
+ * means the authoritative registry, not a content-addressing claim. The producer verbs
+ * `canonicalize` / `canonicalized` remain governed because they unambiguously promise a
+ * canonical-form operation backed by the LiteShip content-address kernel.
  */
 const CLAIM_VOCAB: readonly ClaimVocab[] = [
   {
@@ -131,10 +131,11 @@ const CLAIM_VOCAB: readonly ClaimVocab[] = [
     // `canonical` as an identifier word is DELIBERATELY NOT here: `canonicalBytes`,
     // `canonicalHead`, `canonicalRule`, `canonicalJson` use `canonical` as the ordinary
     // adjective "the standard/normalized one", NOT a behavioural content-address claim —
-    // an ambiguous name cannot earn a BLOCKING verdict (Rice). A `canonical` DOC claim
-    // still fires (advisory) when it leads a declaration, where the prose context binds it.
+    // an ambiguous name cannot earn a BLOCKING verdict (Rice). Bare `canonical` is
+    // equally ambiguous in prose (canonical registry/head/rule), so it cannot honestly
+    // earn even advisory authority. Explicit producer/content-address forms remain.
     identifierFragments: ['contentaddressed', 'contentaddress', 'canonicalize', 'canonicalized'],
-    docWords: ['content-addressed', 'content-address', 'canonical', 'canonicalize', 'canonicalized'],
+    docWords: ['content-addressed', 'content-address', 'canonicalize', 'canonicalized'],
     label: 'content-addressing',
   },
 ];

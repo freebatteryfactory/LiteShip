@@ -35,6 +35,8 @@ import { CanonicalCbor, decode as decodeCanonicalCbor } from '@liteship/canonica
 import { defineComponentCatalog, renderHash, validateGeneratedUITree, type GeneratedUINode } from '@liteship/genui';
 import { computeWaveform, detectBeats, detectOnsets, walkRiff } from '@liteship/assets';
 import { defineGate, finding, memoryContext, runGates, type Gate } from '@liteship/gauntlet';
+import type { SSEMessage } from '@liteship/web';
+import { parseMessage } from '../../packages/web/src/stream/sse-pure.ts';
 import type { ComplexityProbe } from './contracts.ts';
 
 /** A fixed 3-threshold boundary the batch probe evaluates many values against. */
@@ -167,6 +169,14 @@ function buildBeatsOfSize(frameCount: number): () => void {
   };
 }
 
+function buildWebParseMessageOfSize(payloadBytes: number): () => void {
+  const message: SSEMessage = { type: 'patch', data: { id: 'incoming', html: 'x'.repeat(payloadBytes) } };
+  const event = { data: JSON.stringify(message) } as MessageEvent;
+  return (): void => {
+    void parseMessage(event);
+  };
+}
+
 const GAUNTLET_PROBE_CONTEXT = memoryContext({ 'subject.ts': 'clean' });
 const GAUNTLET_PROBE_GATE: Gate = defineGate({
   id: 'complexity/gauntlet-clean-token',
@@ -251,7 +261,9 @@ export const genuiValidationProbe: ComplexityProbe = {
   // Start above the timer/allocator noise floor while staying below GenUI's
   // bounded node budget. Five 2× steps still expose the complete linear curve.
   sizes: [256, 512, 1024, 2048, 4096],
-  measurement: { innerIterations: 25, replicates: 7, warmupIterations: 10 },
+  // A full validation remains below GenUI's 4096-node admission ceiling, so
+  // lengthen the timed batch instead of trusting sub-millisecond timer noise.
+  measurement: { innerIterations: 100, replicates: 7, warmupIterations: 20 },
   workloadFor: buildGenuiValidationOfSize,
 };
 
@@ -270,8 +282,10 @@ export const assetRiffWalkProbe: ComplexityProbe = {
   owner: '@liteship/assets',
   describe: 'walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.',
   shape: 'riff-chunks',
-  sizes: [32, 128, 512, 2048, 8192],
-  measurement: { innerIterations: 25, replicates: 7, warmupIterations: 10 },
+  // The former 32-chunk floor was shorter than shared-runner clock jitter.
+  // These are still geometrically spaced real RIFF walks, not retry padding.
+  sizes: [512, 1024, 2048, 4096, 8192],
+  measurement: { innerIterations: 100, replicates: 7, warmupIterations: 20 },
   workloadFor: buildRiffWalkOfSize,
 };
 
@@ -305,6 +319,16 @@ export const assetBeatsProbe: ComplexityProbe = {
   workloadFor: buildBeatsOfSize,
 };
 
+export const webParseMessageProbe: ComplexityProbe = {
+  path: 'web.parseMessage',
+  owner: '@liteship/web',
+  describe: 'parseMessage — preflight plus JSON decoding of one SSE patch; O(n) in serialized payload bytes.',
+  shape: 'serialized-sse-patch-bytes',
+  sizes: [1024, 4096, 16384, 65536, 262144],
+  measurement: { innerIterations: 50, replicates: 7, warmupIterations: 20 },
+  workloadFor: buildWebParseMessageOfSize,
+};
+
 export const gauntletRunGatesProbe: ComplexityProbe = {
   path: 'gauntlet.runGates',
   owner: '@liteship/gauntlet',
@@ -327,5 +351,6 @@ export const COMPLEXITY_PROBES: readonly ComplexityProbe[] = [
   assetWaveformProbe,
   assetOnsetsProbe,
   assetBeatsProbe,
+  webParseMessageProbe,
   gauntletRunGatesProbe,
 ];

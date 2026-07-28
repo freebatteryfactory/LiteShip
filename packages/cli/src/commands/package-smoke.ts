@@ -16,7 +16,7 @@ import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   packageSmokeCommand,
@@ -39,7 +39,8 @@ import {
   partitionRuntimeClosureSpecifiers,
   packedLiteshipBin,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
-  resolveExecutable,
+  resolvePackageManagerInvocation,
+  type PackageSmokeExecutable,
   semanticClosureFileHash,
   tarballFileUrl,
 } from '../internal/package-smoke-helpers.js';
@@ -53,8 +54,10 @@ import {
 } from '../internal/one-install-cost-evidence.js';
 import { PACKAGE_METADATA_CATALOG } from '../internal/package-metadata-catalog.js';
 import {
+  buildOneInstallCostDeltaLedger,
   buildOneInstallCostBaseline,
   ONE_INSTALL_COST_BASELINE_PATH,
+  ONE_INSTALL_COST_DELTA_PATH,
   ONE_INSTALL_COST_REPORT_PATH,
   ONE_INSTALL_COST_UPDATE_ENV,
   oneInstallCostFindings,
@@ -89,20 +92,19 @@ async function createScratchDir(root: string): Promise<string> {
   return mkdtemp(join(tmpdir(), 'liteship-package-smoke-'));
 }
 
-function run(command: string, args: readonly string[], cwd: string): string {
-  const executable = resolveExecutable(command);
-  // Node-wrapper case (JS pnpm CLI): `executable` is node and `npm_execpath` is
-  // the script arg. Native-binary case (@pnpm/exe) or plain command: args go
-  // straight to the executable.
-  const commandArgs =
-    command === 'pnpm' && executable === process.execPath && process.env['npm_execpath']
-      ? [process.env['npm_execpath'], ...args]
-      : args;
-  return execFileSync(executable, commandArgs, {
+function run(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
+  const invocation = resolvePackageManagerInvocation(command, args);
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
-  }).trim();
+    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw IntegrityError('package-smoke', `${command} exited with status ${result.status ?? 'unknown'}`);
+  }
+  return (result.stdout ?? '').trim();
 }
 
 function measureFacadeColdImports(consumerDir: string): readonly ColdImportGraph[] {
@@ -302,17 +304,14 @@ function buildConsumerManifest(tarballByPackage: Map<string, string>): {
  * NEVER mutated — the overrides live only on the object handed to this one child,
  * so the offline constraint is scoped to the install subprocess.
  */
-function runOffline(command: string, args: readonly string[], cwd: string): string {
-  const executable = resolveExecutable(command);
-  const commandArgs =
-    command === 'pnpm' && executable === process.execPath && process.env['npm_execpath']
-      ? [process.env['npm_execpath'], ...args]
-      : args;
+function runOffline(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
+  const invocation = resolvePackageManagerInvocation(command, args);
   const deadProxy = 'http://127.0.0.1:1';
-  return execFileSync(executable, commandArgs, {
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
+    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
     env: {
       ...process.env,
       npm_config_offline: 'true',
@@ -321,7 +320,12 @@ function runOffline(command: string, args: readonly string[], cwd: string): stri
       https_proxy: deadProxy,
       http_proxy: deadProxy,
     },
-  }).trim();
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw IntegrityError('package-smoke', `${command} exited with status ${result.status ?? 'unknown'}`);
+  }
+  return (result.stdout ?? '').trim();
 }
 
 interface PublicSubpath {
@@ -833,9 +837,27 @@ export async function runPackageSmokeScan(
     const costBaselineRelative = ONE_INSTALL_COST_BASELINE_PATH;
     await mkdir(join(root, 'benchmarks'), { recursive: true });
     await writeFile(join(root, costReportRelative), `${JSON.stringify(costReport, null, 2)}\n`);
+    const existingBaseline = existsSync(join(root, costBaselineRelative))
+      ? parseOneInstallCostBaseline(JSON.parse(readFileSync(join(root, costBaselineRelative), 'utf8')) as unknown)
+      : undefined;
+    const deltaLedger =
+      existingBaseline === undefined ? undefined : buildOneInstallCostDeltaLedger(costReport, existingBaseline);
+    if (
+      deltaLedger !== undefined &&
+      (deltaLedger.candidateId !== deltaLedger.baselineId || !existsSync(join(root, ONE_INSTALL_COST_DELTA_PATH)))
+    ) {
+      await writeFile(join(root, ONE_INSTALL_COST_DELTA_PATH), `${JSON.stringify(deltaLedger, null, 2)}\n`);
+      stepOk(`one-install cost delta recorded -> ${ONE_INSTALL_COST_DELTA_PATH}`);
+    }
     if (process.env[ONE_INSTALL_COST_UPDATE_ENV] === '1') {
       const baseline = buildOneInstallCostBaseline(costReport);
       await writeFile(join(root, costBaselineRelative), `${JSON.stringify(baseline, null, 2)}\n`);
+      if (deltaLedger !== undefined && deltaLedger.candidateId !== deltaLedger.baselineId) {
+        await writeFile(
+          join(root, ONE_INSTALL_COST_DELTA_PATH),
+          `${JSON.stringify({ ...deltaLedger, admission: 'accepted' }, null, 2)}\n`,
+        );
+      }
       stepOk(`one-install cost baseline updated at ${baseline.baselineId} -> ${costBaselineRelative}`);
     } else {
       if (!existsSync(join(root, costBaselineRelative))) {
@@ -844,9 +866,7 @@ export async function runPackageSmokeScan(
           `one-install cost baseline is missing: ${costBaselineRelative} (regenerate explicitly with ${ONE_INSTALL_COST_UPDATE_ENV}=1)`,
         );
       }
-      const baseline = parseOneInstallCostBaseline(
-        JSON.parse(readFileSync(join(root, costBaselineRelative), 'utf8')) as unknown,
-      );
+      const baseline = existingBaseline!;
       const findings = oneInstallCostFindings(costReport, baseline);
       if (findings.length > 0) {
         throw IntegrityError(

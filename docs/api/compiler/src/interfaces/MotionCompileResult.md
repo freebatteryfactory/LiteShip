@@ -6,7 +6,7 @@
 
 # Interface: MotionCompileResult
 
-Defined in: [compiler/src/motion.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L54)
+Defined in: [compiler/src/motion.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L74)
 
 CSS artifacts emitted by [MotionCompiler.compile](../variables/MotionCompiler.md#compile).
 
@@ -16,7 +16,7 @@ CSS artifacts emitted by [MotionCompiler.compile](../variables/MotionCompiler.md
 
 > `readonly` **keyframes**: `string`
 
-Defined in: [compiler/src/motion.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L58)
+Defined in: [compiler/src/motion.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L78)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [compiler/src/motion.ts:58](https://github.com/freebatteryfactory/Li
 
 > `readonly` **propertyRegistrations**: `string`
 
-Defined in: [compiler/src/motion.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L57)
+Defined in: [compiler/src/motion.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L77)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [compiler/src/motion.ts:57](https://github.com/freebatteryfactory/Li
 
 > `readonly` **raw**: `string`
 
-Defined in: [compiler/src/motion.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L56)
+Defined in: [compiler/src/motion.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L76)
 
 Full concatenated CSS sheet (sections joined by blank lines).
 
@@ -42,7 +42,7 @@ Full concatenated CSS sheet (sections joined by blank lines).
 
 > `readonly` **scrollTimeline**: `string`
 
-Defined in: [compiler/src/motion.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L62)
+Defined in: [compiler/src/motion.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L82)
 
 `@supports (animation-timeline: …)` block; empty when no view timeline.
 
@@ -52,7 +52,17 @@ Defined in: [compiler/src/motion.ts:62](https://github.com/freebatteryfactory/Li
 
 > `readonly` **startingStyle**: `string`
 
-Defined in: [compiler/src/motion.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L59)
+Defined in: [compiler/src/motion.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L79)
+
+***
+
+### support
+
+> `readonly` **support**: [`MotionSupportMetadata`](MotionSupportMetadata.md)
+
+Defined in: [compiler/src/motion.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L84)
+
+Generated fidelity receipt for the emitted keyframe and transition tiers.
 
 ***
 
@@ -60,4 +70,4 @@ Defined in: [compiler/src/motion.ts:59](https://github.com/freebatteryfactory/Li
 
 > `readonly` **transition**: `string`
 
-Defined in: [compiler/src/motion.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L60)
+Defined in: [compiler/src/motion.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L80)

@@ -1634,3 +1634,139 @@ export interface CaptureResult {
   readonly frames: number;
   readonly durationMs: Millis;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 16. EVENT PAYLOAD MIRRORS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** One generated-UI frame carried by the typed fleet event protocol. */
+export interface UIFrame {
+  readonly type: 'keyframe' | 'delta' | 'interpolated';
+  readonly tokens: readonly string[];
+  readonly qualityTier: 'skeleton' | 'text-only' | 'styled' | 'interactive' | 'rich';
+  readonly morphStrategy: 'replace' | 'patch' | 'css-only';
+  readonly timestamp: number;
+  readonly receiptId: ContentAddress;
+  readonly bufferPosition: number;
+}
+
+/** Result carried by the graph-mutation fleet event after server admission. */
+export type GraphMutationResponse =
+  | {
+      readonly status: 'applied';
+      readonly graph: {
+        readonly _tag: 'DocumentGraph';
+        readonly _version: 1;
+        readonly id: ContentAddress;
+        readonly digest: AddressedDigest;
+        readonly meta: CellMeta;
+        readonly nodes: readonly (
+          | {
+              readonly _tag: 'DocGraphSignalNode';
+              readonly _version: 1;
+              readonly family: 'signal';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly input: SignalInput;
+              readonly range?: readonly [number, number];
+            }
+          | {
+              readonly _tag: 'DocGraphEntityNode';
+              readonly _version: 1;
+              readonly family: 'entity';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly components: readonly ContentAddress[];
+            }
+          | {
+              readonly _tag: 'DocGraphComponentNode';
+              readonly _version: 1;
+              readonly family: 'component';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly name: string;
+              readonly boundaryRef?: ContentAddress;
+              readonly thresholds?: readonly ThresholdValue[];
+              readonly states?: readonly StateName[];
+            }
+          | {
+              readonly _tag: 'DocGraphPoseNode';
+              readonly _version: 1;
+              readonly family: 'pose';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly entityRef: ContentAddress;
+              readonly state: StateName;
+              readonly bindings: Readonly<Record<string, number | string>>;
+              readonly evaluated?: {
+                readonly state: string;
+                readonly index: number;
+                readonly value: number;
+                readonly crossed: boolean;
+              };
+            }
+          | {
+              readonly _tag: 'DocGraphTransitionNode';
+              readonly _version: 1;
+              readonly family: 'transition';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly fromPose: ContentAddress;
+              readonly toPose: ContentAddress;
+              readonly routing: EdgeType;
+              readonly durationMs?: number;
+              readonly easing?: RuntimeEasing;
+            }
+          | {
+              readonly _tag: 'DocGraphProjectionNode';
+              readonly _version: 1;
+              readonly family: 'projection';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly target: 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai' | 'config' | 'svg';
+              readonly sourceRef: ContentAddress;
+              readonly keys: {
+                readonly cssKey: string;
+                readonly glslKey: string;
+                readonly wgslKey: string;
+                readonly ariaKey: string;
+              };
+              readonly resultDigest: AddressedDigest;
+            }
+          | {
+              readonly _tag: 'DocGraphPolicyNode';
+              readonly _version: 1;
+              readonly family: 'policy';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly appliesTo: readonly ContentAddress[];
+              readonly requires: CapTier;
+              readonly grants: CapSet;
+              readonly sites: readonly ('node' | 'browser' | 'worker' | 'edge')[];
+              readonly budgets?: {
+                readonly p95Ms?: number;
+                readonly memoryMb?: number;
+                readonly allocClass?: 'zero' | 'bounded' | 'unbounded';
+              };
+            }
+          | {
+              readonly _tag: 'DocGraphExportNode';
+              readonly _version: 1;
+              readonly family: 'export';
+              readonly id: ContentAddress;
+              readonly meta: CellMeta;
+              readonly carrier: 'astro-page' | 'video' | 'svg' | 'ship-capsule' | 'receipt';
+              readonly sourceRefs: readonly ContentAddress[];
+              readonly artifactDigest: AddressedDigest;
+              readonly receiptHash?: string;
+            }
+        )[];
+        readonly edges: readonly {
+          readonly from: ContentAddress;
+          readonly to: ContentAddress;
+          readonly type: EdgeType;
+        }[];
+      };
+    }
+  | { readonly status: 'refused'; readonly errors: readonly string[]; readonly staleBase?: true }
+  | { readonly status: 'error'; readonly message: string };

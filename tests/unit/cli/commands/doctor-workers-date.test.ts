@@ -1,10 +1,22 @@
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { probeWorkersModuleScopeDate } from '../../../../packages/cli/src/commands/doctor/probes-workers-date.js';
 
 describe('doctor workers module-scope Date (#115)', () => {
+  test('warns that proof is incomplete when the source root cannot be traversed', () => {
+    const parent = mkdtempSync(join(tmpdir(), 'liteship-workers-date-missing-'));
+    try {
+      const check = probeWorkersModuleScopeDate(join(parent, 'absent'));
+      expect(check).toMatchObject({ status: 'warn' });
+      expect(check.detail).toContain('source scan incomplete');
+      expect(check.hint).toContain('Restore filesystem access');
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   test('flags export-bound Date.now() when export is the first statement', () => {
     const dir = mkdtempSync(join(tmpdir(), 'liteship-workers-date-'));
     mkdirSync(join(dir, 'src'), { recursive: true });

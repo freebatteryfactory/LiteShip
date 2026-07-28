@@ -18,6 +18,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { noBareThrowGate, nodeContext } from '@liteship/gauntlet';
@@ -68,5 +71,23 @@ describe('dogfood — noBareThrowGate over the real packages/*/src tree', () => 
     const sorted = [...files].sort();
     expect(files).toEqual(sorted);
     expect(files.some((f) => f.includes('node_modules') || f.includes('/dist/'))).toBe(false);
+  });
+
+  it('nodeContext snapshots each file once so one fold cannot observe a mixed tree', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-node-context-'));
+    const file = join(root, 'subject.ts');
+
+    try {
+      writeFileSync(file, 'export const state = "before";\n', 'utf8');
+      const context = nodeContext(root, ['**/*.ts']);
+
+      expect(context.readFile('subject.ts')).toContain('before');
+      writeFileSync(file, 'export const state = "after";\n', 'utf8');
+
+      expect(context.readFile('subject.ts')).toContain('before');
+      expect(nodeContext(root, ['**/*.ts']).readFile('subject.ts')).toContain('after');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

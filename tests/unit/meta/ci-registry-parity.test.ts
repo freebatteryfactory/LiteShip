@@ -176,12 +176,13 @@ describe('blocking release checks have one real CI owner', () => {
   it('provisions every doctor tool in its owning setup job before running doctor', () => {
     const setup = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
     const doctor = setup.indexOf('specializedChecks.doctor.command');
+    const ffmpeg = setup.indexOf('prepare-ci-test-host.ts --ffmpeg');
     expect(setup.indexOf('toolchain: 1.85.1')).toBeGreaterThanOrEqual(0);
     expect(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell')).toBeGreaterThanOrEqual(0);
-    expect(setup.indexOf('apt-get install -y ffmpeg')).toBeGreaterThanOrEqual(0);
+    expect(ffmpeg).toBeGreaterThanOrEqual(0);
     expect(doctor).toBeGreaterThan(setup.indexOf('toolchain: 1.85.1'));
     expect(doctor).toBeGreaterThan(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell'));
-    expect(doctor).toBeGreaterThan(setup.indexOf('apt-get install -y ffmpeg'));
+    expect(doctor).toBeGreaterThan(ffmpeg);
     expect(doctor).toBeGreaterThan(setup.indexOf('pnpm run build && pnpm run capsule:compile'));
   });
 });
@@ -225,6 +226,20 @@ describe('(a) every gauntlet-lane command is a registry-projected profile invoca
     const profilesInYml = new Set(laneCommands.map((lane) => lane.profile));
     const profilesInPlan = new Set(LANE_BY_PROFILE.keys());
     expect(profilesInYml).toEqual(profilesInPlan);
+  });
+
+  it('prepares an independent standards base in every lane whose profile consumes it', () => {
+    const standardsLabels = new Set(['governed-exceptions:gate', 'standards:gate']);
+    for (const { command, profile } of laneCommands) {
+      const labels = gauntletPhaseProfiles[profile]!;
+      if (!labels.some((label) => standardsLabels.has(label))) continue;
+      const job = [...JOB_BLOCKS.entries()].find(([, block]) => block.includes(command))?.[0];
+      expect(job, `no workflow job owns ${command}`).toBeDefined();
+      expect(
+        JOB_BLOCKS.get(job!),
+        `${job}/${profile} consumes standards authority without preparing its base`,
+      ).toContain('prepare-ci-test-host.ts --standards-base');
+    }
   });
 
   it.each([...new Set([...CI_YML.matchAll(LANE_COMMAND_RE)].map((m) => m[1]!))])(
@@ -289,6 +304,10 @@ describe('(c) projected lane commands equal the recorded baseline (byte-identica
 describe('(d) CI event tiers execute the intended authority', () => {
   it('plans pull-request impact from the canonical affected-test planner', () => {
     const plan = JOB_BLOCKS.get('plan')!;
+    expect(plan).toContain('pnpm exec tsx scripts/validate-github-change-intent.ts');
+    expect(plan.indexOf('scripts/validate-github-change-intent.ts')).toBeLessThan(
+      plan.indexOf('pnpm exec tsx scripts/ci-plan.ts'),
+    );
     expect(plan).toContain('affected-browser-required: ${{ steps.affected.outputs.browser-required }}');
     expect(plan).toContain('affected-benchmark-required: ${{ steps.affected.outputs.benchmark-required }}');
     expect(plan).toContain('affected-rust-wasm-required: ${{ steps.affected.outputs.rust-wasm-required }}');
@@ -350,17 +369,23 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(browser).toContain('pnpm run test:e2e');
   });
 
-  it('runs Rust/WASM authority on pull requests when the impact plan requires it', () => {
+  it('runs Rust/WASM authority for every pull-request release candidate', () => {
     const rust = JOB_BLOCKS.get('rust-wasm-parity')!;
-    expect(rust).toContain(
-      "github.event_name != 'pull_request' || needs.plan.outputs.affected-rust-wasm-required == 'true'",
-    );
+    expect(rust).not.toContain("github.event_name != 'pull_request'");
+    expect(rust).not.toContain('affected-rust-wasm-required');
     expect(rust).toContain('needs: plan');
   });
 
-  it('keeps full parallel authority on pushes and serial authority on nightly/manual runs', () => {
+  it('does not start expensive platform authority before change-intent planning succeeds', () => {
+    for (const owner of ['browser-e2e', 'windows-smoke', 'macos-smoke', 'macos-browser']) {
+      expect(JOB_BLOCKS.get(owner), owner).toContain('needs: plan');
+    }
+  });
+
+  it('keeps full parallel authority on pull requests and pushes, with serial authority nightly/manual', () => {
     const parallel = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
     expect(parallel).toContain("github.event_name == 'push'");
+    expect(parallel).toContain("github.event_name == 'pull_request'");
     expect(parallel).toContain("github.event_name == 'workflow_call'");
     const serial = JOB_BLOCKS.get('truth-linux')!;
     expect(serial).toContain("github.event_name == 'schedule'");
@@ -391,7 +416,10 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'truth-linux-parallel',
       'browser-e2e',
       'windows-smoke',
+      'macos-smoke',
+      'macos-browser',
       'rust-wasm-parity',
+      'security-audit',
       'exhaustive-analysis',
       'exhaustive-mutation',
       'exhaustive-mcdc',
@@ -402,6 +430,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(summary).toContain('test "$SERIAL" = "success"');
     expect(summary).toContain('test "$PR_AFFECTED" = "success"');
     expect(summary).toContain('test "$PARALLEL" = "success"');
+    expect(summary).toContain('test "$MACOS" = "success"');
+    expect(summary).toContain('test "$MACOS_BROWSER" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_ANALYSIS" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_MUTATION" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_MCDC" = "success"');
@@ -421,7 +451,10 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'truth-linux-parallel',
       'browser-e2e',
       'windows-smoke',
+      'macos-smoke',
+      'macos-browser',
       'rust-wasm-parity',
+      'security-audit',
       'exhaustive-analysis',
       'exhaustive-mutation',
       'exhaustive-mcdc',

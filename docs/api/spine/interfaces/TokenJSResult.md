@@ -6,7 +6,7 @@
 
 # Interface: TokenJSResult
 
-Defined in: [\_spine/compiler.d.ts:464](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L464)
+Defined in: [\_spine/compiler.d.ts:482](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L482)
 
 JavaScript-friendly data projection of a token definition.
 
@@ -16,7 +16,7 @@ JavaScript-friendly data projection of a token definition.
 
 > `readonly` **code**: `string`
 
-Defined in: [\_spine/compiler.d.ts:465](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L465)
+Defined in: [\_spine/compiler.d.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L483)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [\_spine/compiler.d.ts:465](https://github.com/freebatteryfactory/Li
 
 > `readonly` **typeDeclaration**: `string`
 
-Defined in: [\_spine/compiler.d.ts:466](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L466)
+Defined in: [\_spine/compiler.d.ts:484](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L484)

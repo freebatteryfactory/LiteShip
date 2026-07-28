@@ -104,7 +104,7 @@ function factContext(files: Record<string, string>): GateContext {
 }
 
 /** A real (sanctioned) file path used in the GREEN fixture — must match the allowlist. */
-const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
+const SANCTIONED_FILE = 'tests/integration/cli/scene-render.test.ts';
 
 /** The qualified fact gate — fixtures included, so it self-proves through the SAME ratchet. */
 export const noSkippedTestFactGate: FactGate = defineFactGate({
@@ -134,7 +134,7 @@ export const noSkippedTestFactGate: FactGate = defineFactGate({
     green: {
       name: 'a SANCTIONED capability-gate skip passes + a prose mention of it.skip is clean',
       context: factContext({
-        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});\n",
+        [SANCTIONED_FILE]: 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;\n',
         'tests/unit/widget/good.test.ts':
           "// This suite never uses it.skip — every test runs.\nit('asserts a real fact', () => {\n  const label = 'unlike an it.skip placeholder, this asserts';\n  expect(label.length).toBeGreaterThan(0);\n});\n",
       }),

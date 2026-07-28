@@ -47,10 +47,11 @@ export type { CrossOriginEmbedderPolicy };
  * hand-kept copy) so the values liteship EMITS and the values `liteship doctor --deployed`
  * VALIDATES can never diverge. Pinned by tests/unit/astro/critical-ch-drift.test.ts.
  *
- * Parked-by-design (#129): COEP is consumer-overridable (set-only-when-absent
- * via {@link CONSUMER_OVERRIDABLE_HEADERS}) but cannot be disabled while workers
- * are enabled — `SharedArrayBuffer` requires cross-origin isolation. A workers-off
- * isolation escape remains a future first-party option; neither dogfood site needs it.
+ * Cross-origin isolation is capability-bound, not a global Astro default: when
+ * workers are disabled LiteShip emits neither header. When workers are enabled,
+ * `SharedArrayBuffer` requires the pair; a consumer may replace their values via
+ * {@link CONSUMER_OVERRIDABLE_HEADERS} but LiteShip does not offer a misleading
+ * "workers enabled, isolation disabled" configuration.
  */
 export const CROSS_ORIGIN_HEADERS: Record<string, string> = CrossOriginIsolation.isolationHeaders();
 

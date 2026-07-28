@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { spawnArgvCapture } from './spawn.js';
 import {
   buildStandardsIntegrityFacts,
+  liveStandardsSignoffKeys,
   readStandardsWaivers,
   STANDARDS_WAIVERS_PATH,
   type StandardsIntegrityResult,
@@ -45,6 +46,8 @@ export interface GovernedException {
 export interface GovernedExceptionSources {
   readonly standardsWaivers: ReturnType<typeof readStandardsWaivers>;
   readonly standardsIntegrity: StandardsIntegrityResult;
+  /** Current-tree exception identities; sign-off liveness never depends on Git history. */
+  readonly liveStandardsSignoffKeys: ReadonlySet<string>;
   readonly traceability: TraceabilityFacts;
   readonly obligations: ObligationLedger;
 }
@@ -59,9 +62,36 @@ function liveGovernedExceptionSources(repoRoot: string, now: Date): GovernedExce
   return {
     standardsWaivers: readStandardsWaivers(repoRoot),
     standardsIntegrity: buildStandardsIntegrityFacts(repoRoot, now),
+    liveStandardsSignoffKeys: liveStandardsSignoffKeys(repoRoot),
     traceability: buildTraceabilityFacts(repoRoot, now),
     obligations: buildObligationLedger(repoRoot),
   };
+}
+
+/**
+ * Decide whether a sign-off still governs the current tree.
+ *
+ * Baseline-relative standards facts answer a different question: whether this
+ * change weakened rigor compared with the review base. They cannot decide
+ * current liveness because the same tree has different diffs on a PR branch and
+ * after merge. Presence-based exception classes are intentionally the only
+ * admitted classes here. A future state-relative sign-off must add an explicit
+ * tree-local after-state witness instead of borrowing Git history.
+ */
+function standardsSignoffIsLive(
+  sourceId: string,
+  weakening: GovernedExceptionSources['standardsWaivers'][number]['weakening'],
+  liveSignoffKeys: ReadonlySet<string>,
+): boolean {
+  switch (weakening) {
+    case 'skip-allowlist-added':
+    case 'waiver-added':
+      return liveSignoffKeys.has(sourceId);
+    default:
+      throw new Error(
+        `governed exception ${sourceId} uses ${weakening}, which has no tree-local liveness witness; refusing the view`,
+      );
+  }
 }
 
 function requireText(value: string, field: string, sourceId: string): string {
@@ -114,15 +144,6 @@ export function projectGovernedExceptions(
   }
 
   const out: GovernedException[] = [];
-  const signed = new Map(
-    sources.standardsIntegrity.facts.signedWeakenings.map((change) => [
-      `${change.elementKey}::${change.weakening ?? ''}`,
-      change,
-    ]),
-  );
-  const expiredStandards = new Set(
-    sources.standardsIntegrity.facts.expiredSignoffs.map(({ elementKey }) => elementKey),
-  );
   const standardsEffective = effectiveDateOf(STANDARDS_WAIVERS_PATH);
   for (const waiver of sources.standardsWaivers) {
     const sourceId = `${waiver.elementKey}::${waiver.weakening}`;
@@ -130,18 +151,18 @@ export function projectGovernedExceptions(
     requireText(waiver.weakening, 'scope', sourceId);
     requireText(waiver.owner, 'owner', sourceId);
     requireText(waiver.justification, 'rationale', sourceId);
-    const live = signed.get(sourceId);
-    const sourceStatus: GovernedExceptionStatus = expiredStandards.has(waiver.elementKey)
-      ? 'expired'
-      : live === undefined
+    const dateStatus = activeDateStatus(standardsEffective, waiver.expiry, now, sourceId);
+    const sourceStatus: GovernedExceptionStatus =
+      dateStatus === 'active' &&
+      !standardsSignoffIsLive(sourceId, waiver.weakening, sources.liveStandardsSignoffKeys)
         ? 'stale'
-        : activeDateStatus(standardsEffective, waiver.expiry, now, sourceId);
+        : dateStatus;
     out.push(
       admitted({
         owner: waiver.owner,
         scope: `${waiver.weakening} at ${waiver.elementKey}`,
         rationale: waiver.justification,
-        compensatingProof: live?.detail ?? 'missing live standards weakening',
+        compensatingProof: `Current-tree liveness admits the governed standards element ${waiver.elementKey}.`,
         effectiveDate: standardsEffective,
         expiry: waiver.expiry,
         status: sourceStatus,

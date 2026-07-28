@@ -282,6 +282,8 @@ const PINNED_GAUNTLET_LABELS: readonly string[] = [
   'lint',
   'lint:structural',
   'lockfile:gate',
+  'security:minimum',
+  'security:audit',
   'prebuild:gate',
   'workflow-output:gate',
   'workspace-deps:gate',
