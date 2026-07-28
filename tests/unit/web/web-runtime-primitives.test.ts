@@ -40,6 +40,7 @@ import {
 } from '../../../packages/web/src/physical/restore.js';
 import { SlotRegistry } from '../../../packages/web/src/slot/registry.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
+import { testCssEscape } from '../../helpers/css-escape.js';
 
 function flushMutations(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -69,13 +70,7 @@ function defineScrollBox(element: HTMLElement, scrollHeight: number, clientHeigh
 describe('web runtime primitives', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
-    if (!globalThis.CSS) {
-      vi.stubGlobal('CSS', {
-        escape(value: string) {
-          return value.replace(/"/g, '\\"');
-        },
-      });
-    }
+    vi.stubGlobal('CSS', { escape: testCssEscape });
   });
 
   afterEach(() => {

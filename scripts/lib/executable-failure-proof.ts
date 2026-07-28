@@ -36,7 +36,7 @@ interface ParsedProofRef {
 
 function parseProofRef(ref: string): ParsedProofRef | undefined {
   const separator = ref.indexOf('::');
-  if (separator <= 0 || separator === ref.length - 2) return undefined;
+  if (separator <= 0 || separator + 2 >= ref.length) return undefined;
   return { file: ref.slice(0, separator), title: ref.slice(separator + 2) };
 }
 

@@ -34,6 +34,7 @@ import {
   semanticClosureFileHash,
   assertPackedTypeClosure,
   packedLiteshipBin,
+  PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
   packageSmokeProcessFailure,
   qualifiedHostOverrides,
 } from '../../../../packages/cli/src/internal/package-smoke-helpers.js';
@@ -88,6 +89,24 @@ describe('packageSmokeProcessFailure — failed child diagnostics', () => {
     expect(receipt).toContain('stdout tail:\nboom\nlink\nstderr tail:\nnope');
     expect(receipt).not.toMatch(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/u);
   });
+
+  it('preserves bounded partial evidence when spawnSync reports ENOBUFS', () => {
+    const error = Object.assign(new Error('spawnSync pnpm ENOBUFS'), { code: 'ENOBUFS' });
+    const receipt = packageSmokeProcessFailure('pnpm', null, 'partial stdout', 'partial stderr', error);
+
+    expect(PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES).toBeGreaterThanOrEqual(16 * 1_024 * 1_024);
+    expect(receipt).toContain('pnpm exited with status unknown');
+    expect(receipt).toContain('spawn error:\nError: spawnSync pnpm ENOBUFS');
+    expect(receipt).toContain('stdout tail:\npartial stdout');
+    expect(receipt).toContain('stderr tail:\npartial stderr');
+  });
+
+  it('treats cross-spawn success null as no spawn error', () => {
+    const receipt = packageSmokeProcessFailure('pnpm', 1, 'out', 'err', null);
+    expect(receipt).not.toContain('spawn error:');
+    expect(receipt).toContain('stdout tail:\nout');
+    expect(receipt).toContain('stderr tail:\nerr');
+  });
 });
 
 describe('packedLiteshipBin — facade owns the public executable', () => {
@@ -99,15 +118,25 @@ describe('packedLiteshipBin — facade owns the public executable', () => {
 });
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
-  it('projects the qualified Vite/Rolldown/WASM graph from the single exact Vite install pin', () => {
+  it('projects the complete qualified Astro/Vite/Rolldown/WASM graph from exact host pins', () => {
     expect(qualifiedHostOverrides(PEER_INSTALLS)).toEqual({
       vite: '8.1.0',
+      astro: '7.1.0',
       rolldown: '1.1.3',
       '@napi-rs/wasm-runtime': '1.1.6',
+      '@emnapi/core': '1.11.1',
+      '@emnapi/runtime': '1.11.1',
     });
     expect(() => qualifiedHostOverrides(['astro@7.1.0'])).toThrow('requires an exact Vite install');
-    expect(() => qualifiedHostOverrides(['vite@^8.1.0'])).toThrow('requires an exact Vite install');
-    expect(() => qualifiedHostOverrides(['vite@8.1.1'])).toThrow('has no qualified packed-consumer graph');
+    expect(() => qualifiedHostOverrides(['vite@8.1.0'])).toThrow('requires an exact Astro install');
+    expect(() => qualifiedHostOverrides(['vite@^8.1.0', 'astro@7.1.0'])).toThrow('requires an exact Vite install');
+    expect(() => qualifiedHostOverrides(['vite@8.1.0', 'astro@^7.1.0'])).toThrow('requires an exact Astro install');
+    expect(() => qualifiedHostOverrides(['vite@8.1.1', 'astro@7.1.0'])).toThrow(
+      'has no qualified packed-consumer graph',
+    );
+    expect(() => qualifiedHostOverrides(['vite@8.1.0', 'astro@7.1.1'])).toThrow(
+      'has no qualified packed-consumer graph',
+    );
   });
 
   it('keeps the leading scope @ for a scoped specifier', () => {
@@ -170,15 +199,15 @@ describe('resolvePackageManagerInvocation — closed executable/platform launche
     }
   });
 
-  it('routes a Windows pnpm shim through cmd.exe instead of passing .cmd to spawnSync', () => {
+  it('preserves Windows argv for the canonical shell-free spawn adapter', () => {
     expect(
       resolvePackageManagerInvocation('pnpm', ['pack', '--pack-destination', 'C:\\tmp dir'], {
         platform: 'win32',
       }),
     ).toEqual({
-      command: 'cmd.exe',
-      args: ['/d', '/s', '/c', 'pnpm pack --pack-destination "C:\\tmp dir"'],
-      windowsVerbatimArguments: true,
+      command: 'pnpm',
+      args: ['pack', '--pack-destination', 'C:\\tmp dir'],
+      windowsVerbatimArguments: false,
     });
   });
 

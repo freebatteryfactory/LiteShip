@@ -12,17 +12,12 @@ import { hasTag } from '@liteship/error';
 import { Morph, SlotAddressing, SSE } from '@liteship/web';
 import { resolveHtmlString } from '../../../packages/web/src/security/html-trust.js';
 import { restoreFocusState } from '../../../packages/web/src/physical/restore.js';
+import { testCssEscape } from '../../helpers/css-escape.js';
 
 beforeEach(() => {
   Diagnostics.reset();
   document.body.innerHTML = '';
-  if (!globalThis.CSS) {
-    vi.stubGlobal('CSS', {
-      escape(value: string) {
-        return value.replace(/"/g, '\\"');
-      },
-    });
-  }
+  vi.stubGlobal('CSS', { escape: testCssEscape });
 });
 
 afterEach(() => {

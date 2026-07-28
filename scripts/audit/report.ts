@@ -2416,9 +2416,22 @@ export function buildCodebaseAuditReport(options: BuildReportOptions = {}): Code
   return buildAuditArtifactBundle(options).codebase;
 }
 
-function escapeCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\n/g, '<br>');
+export function escapeMarkdownTableCell(value: string): string {
+  let escaped = '';
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index]!;
+    if (char === '\\') escaped += '\\\\';
+    else if (char === '|') escaped += '\\|';
+    else if (char === '\r') {
+      if (value[index + 1] === '\n') index++;
+      escaped += '<br>';
+    } else if (char === '\n') escaped += '<br>';
+    else escaped += char;
+  }
+  return escaped;
 }
+
+const escapeCell = escapeMarkdownTableCell;
 
 export function renderCodebaseAuditMarkdown(report: CodebaseAuditReport): string {
   const lines = [

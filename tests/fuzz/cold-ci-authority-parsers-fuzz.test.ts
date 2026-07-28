@@ -250,7 +250,7 @@ describe('workflow output parser fuzz', () => {
         (payload) => {
           const workflow = [
             'echo "value<<SAFE_EOF" >> "$GITHUB_OUTPUT"',
-            `echo '${payload};|&&||\$(not-run)\`not-run\`'`,
+            `echo '${payload};|&&||$(not-run)\`not-run\`'`,
             'echo "SAFE_EOF"',
           ].join('\n');
           expect(scanWorkflowOutputHeredocs('fixture.yml', workflow).findings).toEqual([]);

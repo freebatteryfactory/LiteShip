@@ -9,6 +9,7 @@ import fc from 'fast-check';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import ts from 'typescript';
 import { buildTraceabilityFacts } from '../../packages/cli/src/internal/traceability.js';
 
 let root = '';
@@ -31,14 +32,42 @@ afterAll(() => {
 });
 
 function writeCorpus(leftSuite: string, rightSuite: string, leaf: string): void {
+  const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+  const suite = (title: string): ts.Statement =>
+    ts.factory.createExpressionStatement(
+      ts.factory.createCallExpression(ts.factory.createIdentifier('describe'), undefined, [
+        ts.factory.createStringLiteral(title),
+        ts.factory.createArrowFunction(
+          undefined,
+          undefined,
+          [],
+          undefined,
+          ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+          ts.factory.createBlock([
+            ts.factory.createExpressionStatement(
+              ts.factory.createCallExpression(ts.factory.createIdentifier('it'), undefined, [
+                ts.factory.createStringLiteral(leaf),
+                ts.factory.createArrowFunction(
+                  undefined,
+                  undefined,
+                  [],
+                  undefined,
+                  ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+                  ts.factory.createBlock([], false),
+                ),
+              ]),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  const sourceFile = ts.factory.updateSourceFile(
+    ts.createSourceFile('title.test.ts', '', ts.ScriptTarget.Latest, false, ts.ScriptKind.TS),
+    [suite(leftSuite), suite(rightSuite)],
+  );
   writeFileSync(
     join(root, 'tests/property/title.test.ts'),
-    [
-      '// PROVES: INV-TITLE',
-      "import { describe, it } from 'vitest';",
-      `describe(${JSON.stringify(leftSuite)}, () => { it(${JSON.stringify(leaf)}, () => {}); });`,
-      `describe(${JSON.stringify(rightSuite)}, () => { it(${JSON.stringify(leaf)}, () => {}); });`,
-    ].join('\n'),
+    `// PROVES: INV-TITLE\n${printer.printFile(sourceFile)}`,
     'utf8',
   );
 }

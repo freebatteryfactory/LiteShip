@@ -14,9 +14,9 @@ Classify a generated bench file: 'real' if at least one `bench(...)`
 closure contains executable code, 'placeholder' if every closure body is
 empty or comment-only (or no bench call exists at all).
 
-The lazy body capture stops at the first `}`, so a real body with nested
-braces is truncated — but the truncated prefix is still non-empty, which
-is all the classification needs.
+The scanner is deliberately linear: comments and string literals are masked,
+then balanced braces locate each arrow closure. That keeps hostile generated
+input bounded without mistaking comment text or nested closures for evidence.
 
 ## Parameters
 

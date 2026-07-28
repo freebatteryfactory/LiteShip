@@ -26,15 +26,118 @@ import { BENCH_NOT_APPLICABLE_RE } from './bench-marker.js';
  * closure contains executable code, 'placeholder' if every closure body is
  * empty or comment-only (or no bench call exists at all).
  *
- * The lazy body capture stops at the first `}`, so a real body with nested
- * braces is truncated — but the truncated prefix is still non-empty, which
- * is all the classification needs.
+ * The scanner is deliberately linear: comments and string literals are masked,
+ * then balanced braces locate each arrow closure. That keeps hostile generated
+ * input bounded without mistaking comment text or nested closures for evidence.
  */
 export function classifyBenchSource(source: string): 'real' | 'placeholder' {
-  const stripped = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-  const closures = [...stripped.matchAll(/\bbench\s*\([\s\S]*?=>\s*\{([\s\S]*?)\}/g)];
-  if (closures.length === 0) return 'placeholder';
-  return closures.some((m) => m[1]!.trim().length > 0) ? 'real' : 'placeholder';
+  const code = maskCommentsAndLiterals(source);
+  for (let cursor = 0; cursor < code.length; cursor++) {
+    if (!wordAt(code, cursor, 'bench')) continue;
+    let at = skipWhitespace(code, cursor + 'bench'.length);
+    if (code[at] !== '(') continue;
+    const callEnd = matchingDelimiter(code, at, '(', ')');
+    if (callEnd < 0) continue;
+    const arrow = code.indexOf('=>', at + 1);
+    if (arrow < 0 || arrow > callEnd) {
+      cursor = callEnd;
+      continue;
+    }
+    at = skipWhitespace(code, arrow + 2);
+    if (code[at] !== '{') {
+      cursor = callEnd;
+      continue;
+    }
+    const bodyEnd = matchingDelimiter(code, at, '{', '}');
+    if (bodyEnd < 0 || bodyEnd > callEnd) {
+      cursor = callEnd;
+      continue;
+    }
+    if (code.slice(at + 1, bodyEnd).trim().length > 0) return 'real';
+    cursor = callEnd;
+  }
+  return 'placeholder';
+}
+
+function isIdentifierPart(char: string | undefined): boolean {
+  return char !== undefined && /[A-Za-z0-9_$]/.test(char);
+}
+
+function wordAt(source: string, at: number, word: string): boolean {
+  return (
+    source.startsWith(word, at) && !isIdentifierPart(source[at - 1]) && !isIdentifierPart(source[at + word.length])
+  );
+}
+
+function skipWhitespace(source: string, at: number): number {
+  while (
+    at < source.length &&
+    (source[at] === ' ' || source[at] === '\t' || source[at] === '\r' || source[at] === '\n')
+  ) {
+    at++;
+  }
+  return at;
+}
+
+function matchingDelimiter(source: string, start: number, open: string, close: string): number {
+  let depth = 0;
+  for (let at = start; at < source.length; at++) {
+    if (source[at] === open) depth++;
+    else if (source[at] === close && --depth === 0) return at;
+  }
+  return -1;
+}
+
+/** Mask comments and quoted literals while preserving offsets and delimiters. */
+function maskCommentsAndLiterals(source: string): string {
+  const chars = [...source];
+  let mode: 'code' | 'line-comment' | 'block-comment' | 'single' | 'double' | 'template' = 'code';
+  let escaped = false;
+  for (let at = 0; at < chars.length; at++) {
+    const char = chars[at]!;
+    const next = chars[at + 1];
+    if (mode === 'code') {
+      if (char === '/' && next === '/') {
+        chars[at] = chars[at + 1] = ' ';
+        at++;
+        mode = 'line-comment';
+      } else if (char === '/' && next === '*') {
+        chars[at] = chars[at + 1] = ' ';
+        at++;
+        mode = 'block-comment';
+      } else if (char === "'" || char === '"' || char === '`') {
+        chars[at] = ' ';
+        mode = char === "'" ? 'single' : char === '"' ? 'double' : 'template';
+      }
+      continue;
+    }
+    if (mode === 'line-comment') {
+      if (char === '\n') mode = 'code';
+      else chars[at] = ' ';
+      continue;
+    }
+    if (mode === 'block-comment') {
+      if (char === '*' && next === '/') {
+        chars[at] = chars[at + 1] = ' ';
+        at++;
+        mode = 'code';
+      } else if (char !== '\n') chars[at] = ' ';
+      continue;
+    }
+    chars[at] = char === '\n' ? '\n' : ' ';
+    if (escaped) {
+      escaped = false;
+    } else if (char === '\\') {
+      escaped = true;
+    } else if (
+      (mode === 'single' && char === "'") ||
+      (mode === 'double' && char === '"') ||
+      (mode === 'template' && char === '`')
+    ) {
+      mode = 'code';
+    }
+  }
+  return chars.join('');
 }
 
 function normalizeReason(reason: string): string {

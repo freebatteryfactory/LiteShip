@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:cb15ee65",
+  "address": "fnv1a:69eb4c64",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4507,6 +4507,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/ci-test-host-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/cloudflare-dev-contract.ts",
       "level": "L1"
     },
     {

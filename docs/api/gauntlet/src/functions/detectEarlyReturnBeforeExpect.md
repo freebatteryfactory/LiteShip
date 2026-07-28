@@ -8,7 +8,7 @@
 
 > **detectEarlyReturnBeforeExpect**(`source`): readonly [`EarlyReturnMatch`](../interfaces/EarlyReturnMatch.md)[]
 
-Defined in: [gauntlet/src/gates/early-return-detect.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L31)
+Defined in: [gauntlet/src/gates/early-return-detect.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/early-return-detect.ts#L105)
 
 Best-effort scan for `return;` inside `it(` / `test(` callbacks before `expect(`.
 The AST detector (`detectEarlyReturnBeforeExpectAST`) is authoritative when injected.

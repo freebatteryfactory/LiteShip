@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { delimiter, resolve } from 'node:path';
 import { runPnpm, spawnPnpm } from './support/pnpm-process.ts';
 import { cloudflareChildEnv } from './support/cloudflare-env.ts';
+import { resolveSameOriginHttpReference } from './lib/cloudflare-dev-contract.ts';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = resolve(REPO_ROOT, 'examples/cloudflare-astro');
@@ -212,9 +213,8 @@ function parseAttributes(tag: string): Readonly<Record<string, string>> {
 }
 
 function addReference(refs: Map<string, PageReference>, base: URL, kind: PageReference['kind'], source: string): void {
-  if (source.length === 0 || source.startsWith('data:') || source.startsWith('javascript:')) return;
-  const url = new URL(source, base);
-  if (url.origin !== base.origin) return;
+  const url = resolveSameOriginHttpReference(base, source);
+  if (url === null) return;
   refs.set(`${kind}:${url.href}`, { kind, source, url });
 }
 

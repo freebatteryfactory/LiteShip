@@ -46,6 +46,14 @@ describe('classifyBenchSource', () => {
     const src = "bench('n', () => { if (x) { y(); } });";
     expect(classifyBenchSource(src)).toBe('real');
   });
+
+  it('stays linear on long comment/string decoys and finds the real nested body', () => {
+    const decoys = `${'/* bench("x", () => { fake(); }) */'.repeat(4_000)}\n${'"bench";'.repeat(4_000)}`;
+    expect(classifyBenchSource(`${decoys}\nbench('real', () => { if (ready) { measure(); } });`)).toBe('real');
+    expect(classifyBenchSource(`${decoys}\nbench('empty', () => { /* ${'x'.repeat(20_000)} */ });`)).toBe(
+      'placeholder',
+    );
+  });
 });
 
 // The gate the capsule:verify bench lane earns its blocking authority from: a

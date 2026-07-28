@@ -56,6 +56,12 @@ describe('compileViewTransition — view-transition-name per boundary', () => {
     expect(result.viewTransitionName).toMatch(/^liteship-vt-[A-Za-z0-9_-]+$/);
     expect(result.viewTransitionName).not.toMatch(/-$/);
   });
+
+  test('collapses a long hostile invalid run in one pass', () => {
+    const boundary = `hero${' #!'.repeat(20_000)}card`;
+    const result = compileViewTransition({ boundary, durationMs: 200, easing: 'ease' });
+    expect(result.viewTransitionName).toBe('liteship-vt-hero-card');
+  });
 });
 
 describe('compileViewTransition — ::view-transition pseudo styles reuse the compiled easing', () => {

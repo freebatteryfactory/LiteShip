@@ -502,6 +502,9 @@ importers:
       '@liteship/scene':
         specifier: workspace:*
         version: link:../scene
+      cross-spawn:
+        specifier: ^7.0.6
+        version: 7.0.6
       typescript:
         specifier: npm:@typescript/typescript6@6.0.2
         version: '@typescript/typescript6@6.0.2'
@@ -541,6 +544,9 @@ importers:
       '@liteship/gauntlet':
         specifier: workspace:*
         version: link:../gauntlet
+      cross-spawn:
+        specifier: ^7.0.6
+        version: 7.0.6
 
   packages/compiler:
     dependencies:

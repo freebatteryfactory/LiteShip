@@ -6,7 +6,7 @@
 
 # Interface: CollectBoundaryManifestOptions
 
-Defined in: vite/dist/boundary-manifest.d.ts:20
+Defined in: vite/dist/boundary-manifest.d.ts:21
 
 Options for [collectBoundaryManifest](../functions/collectBoundaryManifest.md).
 
@@ -16,7 +16,7 @@ Options for [collectBoundaryManifest](../functions/collectBoundaryManifest.md).
 
 > `readonly` `optional` **boundaryDir?**: `string`
 
-Defined in: vite/dist/boundary-manifest.d.ts:25
+Defined in: vite/dist/boundary-manifest.d.ts:26
 
 Extra directory holding boundary definitions -- mirror of the plugin's
 `dirs.boundary` override; scanned in addition to the project walk.
@@ -27,7 +27,7 @@ Extra directory holding boundary definitions -- mirror of the plugin's
 
 > `readonly` `optional` **container?**: `string`
 
-Defined in: vite/dist/boundary-manifest.d.ts:31
+Defined in: vite/dist/boundary-manifest.d.ts:32
 
 Selector the auto-emitted viewport `@container` containment is declared
 on (default `:root`) -- mirror of the plugin's `quantize.container`, so

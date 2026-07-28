@@ -172,6 +172,12 @@ describe('lite parseEventId', () => {
     const result = parseEventId('totally-random');
     expect(result.sequence).toBe(0);
   });
+
+  test('extracts only a contiguous trailing decimal suffix from long opaque ids', () => {
+    const prefix = 'node-'.repeat(20_000);
+    expect(parseEventId(`${prefix}123`).sequence).toBe(123);
+    expect(parseEventId(`${prefix}123x`).sequence).toBe(0);
+  });
 });
 
 // ===========================================================================

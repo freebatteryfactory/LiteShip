@@ -17,11 +17,85 @@ const TEST_RUNNER_START = /(^|[^\w$.])(?:it|test)\s*\(/;
 const CONTROL_FLOW_HEADS = new Set(['if', 'for', 'while', 'switch', 'catch', 'with']);
 
 function startsNestedFunction(line: string): boolean {
-  if (/\bfunction\b/.test(line) || /=>\s*\{/.test(line)) return true;
-  const trimmed = line.trimStart();
-  const method = /^(?:static\s+)?(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*(?::[^{]+)?\{/.exec(trimmed);
-  if (method !== null) return !CONTROL_FLOW_HEADS.has(method[1]!);
-  return /[,{]\s*(?:static\s+)?(?:async\s+)?[A-Za-z_$][\w$]*\s*\([^)]*\)\s*(?::[^{]+)?\{/.test(line);
+  if (containsWord(line, 'function') || hasArrowBlock(line)) return true;
+  for (let at = 0; at < line.length; at++) {
+    if (at > 0 && line[at - 1] !== ',' && line[at - 1] !== '{') continue;
+    const name = methodNameAt(line, at);
+    if (name !== null && !CONTROL_FLOW_HEADS.has(name)) return true;
+  }
+  return false;
+}
+
+function isIdentifierStart(char: string | undefined): boolean {
+  return (
+    char !== undefined && ((char >= 'A' && char <= 'Z') || (char >= 'a' && char <= 'z') || char === '_' || char === '$')
+  );
+}
+
+function isIdentifierPart(char: string | undefined): boolean {
+  return isIdentifierStart(char) || (char !== undefined && char >= '0' && char <= '9');
+}
+
+function skipSpaces(source: string, at: number): number {
+  while (source[at] === ' ' || source[at] === '\t') at++;
+  return at;
+}
+
+function readIdentifier(source: string, at: number): { readonly value: string; readonly end: number } | null {
+  if (!isIdentifierStart(source[at])) return null;
+  const start = at++;
+  while (isIdentifierPart(source[at])) at++;
+  return { value: source.slice(start, at), end: at };
+}
+
+function containsWord(source: string, word: string): boolean {
+  let at = source.indexOf(word);
+  while (at >= 0) {
+    if (!isIdentifierPart(source[at - 1]) && !isIdentifierPart(source[at + word.length])) return true;
+    at = source.indexOf(word, at + word.length);
+  }
+  return false;
+}
+
+function hasArrowBlock(source: string): boolean {
+  let at = source.indexOf('=>');
+  while (at >= 0) {
+    if (source[skipSpaces(source, at + 2)] === '{') return true;
+    at = source.indexOf('=>', at + 2);
+  }
+  return false;
+}
+
+/** Recognize a class/object method head without a backtracking signature regex. */
+function methodNameAt(source: string, start: number): string | null {
+  let at = skipSpaces(source, start);
+  let token = readIdentifier(source, at);
+  if (token === null) return null;
+  if (token.value === 'static') {
+    at = skipSpaces(source, token.end);
+    token = readIdentifier(source, at);
+    if (token === null) return null;
+  }
+  if (token.value === 'async') {
+    at = skipSpaces(source, token.end);
+    token = readIdentifier(source, at);
+    if (token === null) return null;
+  }
+  const name = token.value;
+  at = skipSpaces(source, token.end);
+  if (source[at] !== '(') return null;
+  let depth = 0;
+  for (; at < source.length; at++) {
+    if (source[at] === '(') depth++;
+    else if (source[at] === ')' && --depth === 0) break;
+  }
+  if (depth !== 0) return null;
+  at = skipSpaces(source, at + 1);
+  if (source[at] === ':') {
+    at++;
+    while (at < source.length && source[at] !== '{' && source[at] !== ';' && source[at] !== '=') at++;
+  }
+  return source[skipSpaces(source, at)] === '{' ? name : null;
 }
 
 /**

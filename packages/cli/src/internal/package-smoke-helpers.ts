@@ -26,7 +26,6 @@ import { createHash } from 'node:crypto';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type * as TypeScript from 'typescript';
-import { quoteWindowsArg } from '@liteship/command/host';
 import { IntegrityError } from '@liteship/error';
 import { stripTerminalControlSequences } from './ansi.js';
 
@@ -37,6 +36,16 @@ export interface ExecutableInvocation {
 }
 
 const PACKAGE_SMOKE_PROCESS_TAIL_CHARS = 4_096;
+
+/**
+ * Hard ceiling for synchronous package-manager output retained in memory.
+ *
+ * Package installs can legitimately exceed Node's small default child-process
+ * buffer on warning-heavy failure paths. The orchestration captures enough
+ * output to reach the actionable tail, then the receipt below sanitizes and
+ * bounds what crosses the CI boundary.
+ */
+export const PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES = 16 * 1_024 * 1_024;
 
 function boundedProcessTail(raw: string | null | undefined): string {
   const normalized = stripTerminalControlSequences(raw ?? '')
@@ -58,9 +67,17 @@ export function packageSmokeProcessFailure(
   status: number | null,
   stdout: string | null | undefined,
   stderr: string | null | undefined,
+  spawnError?: unknown,
 ): string {
+  const errorDetail =
+    spawnError == null
+      ? undefined
+      : spawnError instanceof Error
+        ? `${spawnError.name}: ${spawnError.message}`
+        : String(spawnError);
   return [
     `${command} exited with status ${status ?? 'unknown'}`,
+    ...(errorDetail === undefined ? [] : [`spawn error:\n${boundedProcessTail(errorDetail)}`]),
     `stdout tail:\n${boundedProcessTail(stdout)}`,
     `stderr tail:\n${boundedProcessTail(stderr)}`,
   ].join('\n');
@@ -74,22 +91,16 @@ function synchronousInvocation(
   args: readonly string[],
   platform: NodeJS.Platform,
 ): ExecutableInvocation {
-  if (platform !== 'win32' || /\.(?:exe|com)$/iu.test(command)) {
-    return { command, args, windowsVerbatimArguments: false };
-  }
-  return {
-    command: 'cmd.exe',
-    args: ['/d', '/s', '/c', [command, ...args].map(quoteWindowsArg).join(' ')],
-    windowsVerbatimArguments: true,
-  };
+  void platform;
+  return { command, args, windowsVerbatimArguments: false };
 }
 
 /**
  * Resolve a package-smoke-owned executable through the canonical platform law.
  * The executable identity is a closed union owned by this command; inherited
  * environment such as `npm_execpath` may configure pnpm internals but cannot
- * replace the process we execute. Windows `.cmd`/`.bat` shims are routed through
- * `cmd.exe`; POSIX resolves the literal tool name through the ordinary PATH.
+ * replace the process we execute. The host's canonical cross-platform spawn
+ * adapter resolves Windows shims without LiteShip assembling a shell command.
  */
 export function resolvePackageManagerInvocation(
   command: PackageSmokeExecutable,
@@ -145,11 +156,12 @@ export function peerDependenciesOnly(peerInstalls: readonly string[]): Record<st
  *
  * Public peer ranges stay broad, but a release receipt must not change meaning
  * when a transitive package is published after its source SHA. Vite 8.1.0
- * admits Rolldown `~1.1.2`, while both Rolldown's optional WASI binding and
- * Astro's compiler binding admit `@napi-rs/wasm-runtime ^1.1.6`. Runtime 1.2.0
+ * admits Rolldown `~1.1.2`, while Astro 7.1.0's compiler binding and Rolldown's
+ * optional WASI binding admit `@napi-rs/wasm-runtime ^1.1.6`. Runtime 1.2.0
  * changed to the incompatible `@emnapi/*` 2.0-alpha peer line and made fresh
- * strict-peer installs fail. The repository lock has qualified Rolldown 1.1.3
- * with the WASM runtime at 1.1.6, so every packed proof projects that graph.
+ * strict-peer installs fail. The repository lock qualifies the complete tuple,
+ * including the WASM runtime's own Emscripten/N-API peer closure, so every
+ * packed proof projects the same graph rather than accepting later publications.
  */
 export function qualifiedHostOverrides(peerInstalls: readonly string[]): Readonly<Record<string, string>> {
   const peers = peerDependenciesOnly(peerInstalls);
@@ -157,11 +169,28 @@ export function qualifiedHostOverrides(peerInstalls: readonly string[]): Readonl
   if (vite === undefined || !/^\d+\.\d+\.\d+$/u.test(vite)) {
     throw IntegrityError('package-smoke host graph', 'Qualified host graph requires an exact Vite install.');
   }
-  const qualified = Object.freeze({ vite: '8.1.0', rolldown: '1.1.3', '@napi-rs/wasm-runtime': '1.1.6' });
+  const astro = peers['astro'];
+  if (astro === undefined || !/^\d+\.\d+\.\d+$/u.test(astro)) {
+    throw IntegrityError('package-smoke host graph', 'Qualified host graph requires an exact Astro install.');
+  }
+  const qualified = Object.freeze({
+    vite: '8.1.0',
+    astro: '7.1.0',
+    rolldown: '1.1.3',
+    '@napi-rs/wasm-runtime': '1.1.6',
+    '@emnapi/core': '1.11.1',
+    '@emnapi/runtime': '1.11.1',
+  });
   if (vite !== qualified.vite) {
     throw IntegrityError(
       'package-smoke host graph',
       `Vite ${vite} has no qualified packed-consumer graph; expected ${qualified.vite}.`,
+    );
+  }
+  if (astro !== qualified.astro) {
+    throw IntegrityError(
+      'package-smoke host graph',
+      `Astro ${astro} has no qualified packed-consumer graph; expected ${qualified.astro}.`,
     );
   }
   return qualified;

@@ -20,9 +20,9 @@
  * @module
  */
 
-import { execSync, spawn, type ChildProcess } from 'node:child_process';
+import { execFileSync, type ChildProcess } from 'node:child_process';
 import { IoError } from '@liteship/error';
-import { resolveLauncher, type SpawnResult } from './launcher.js';
+import { resolveLauncher, spawnCrossPlatform, type SpawnResult } from './launcher.js';
 
 export { quoteWindowsArg, spawnArgvVisible } from './launcher.js';
 export type { SpawnResult } from './launcher.js';
@@ -137,7 +137,7 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
   const launcher = resolveLauncher(command, args);
   return new Promise((resolvePromise, rejectPromise) => {
     const stdio = (opts.stdio ?? ['ignore', 'inherit', 'pipe']) as ('ignore' | 'inherit' | 'pipe')[];
-    const proc = spawn(launcher.command, launcher.args as string[], {
+    const proc = spawnCrossPlatform(launcher.command, launcher.args, {
       stdio,
       shell: false,
       cwd: opts.cwd,
@@ -176,7 +176,7 @@ export function spawnArgvCapture(
   const cap = opts.captureBytes ?? 1_048_576;
   const launcher = resolveLauncher(command, args);
   return new Promise((resolvePromise, rejectPromise) => {
-    const proc = spawn(launcher.command, launcher.args as string[], {
+    const proc = spawnCrossPlatform(launcher.command, launcher.args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       cwd: opts.cwd,
@@ -206,7 +206,7 @@ export function spawnArgvCapture(
       if (proc.pid === undefined) return;
       if (process.platform === 'win32') {
         try {
-          execSync(`taskkill /T /F /PID ${proc.pid}`, { stdio: 'ignore' });
+          execFileSync('taskkill.exe', ['/T', '/F', '/PID', String(proc.pid)], { stdio: 'ignore' });
         } catch (err) {
           if (!isProcessGoneError(err)) {
             throw IoError('spawn.killNow', `taskkill failed for pid ${proc.pid}`, { cause: err });
@@ -287,7 +287,7 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
   const cap = opts.stderrCapBytes ?? 16_384;
   const launcher = resolveLauncher(command, args);
   const stdio = (opts.stdio ?? ['ignore', 'pipe', 'pipe']) as ('ignore' | 'inherit' | 'pipe')[];
-  const child = spawn(launcher.command, launcher.args as string[], {
+  const child = spawnCrossPlatform(launcher.command, launcher.args, {
     stdio,
     shell: false,
     detached: process.platform !== 'win32',
@@ -333,7 +333,7 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
         // uses for the same reason. /F is acceptable here: the SIGINT-grace
         // path was already a lie on Windows (no signal was ever delivered).
         try {
-          execSync(`taskkill /T /F /PID ${child.pid}`, { stdio: 'ignore' });
+          execFileSync('taskkill.exe', ['/T', '/F', '/PID', String(child.pid)], { stdio: 'ignore' });
         } catch (err) {
           if (!isProcessGoneError(err)) {
             throw IoError('spawn.dispose', `taskkill failed for pid ${child.pid}`, { cause: err });

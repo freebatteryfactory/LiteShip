@@ -46,6 +46,53 @@ function warnInterpolate(code: DiagnosticCodeFor<'core'>, message: string, detai
   });
 }
 
+interface ParsedDecimal {
+  readonly value: number;
+  readonly percent: boolean;
+}
+
+/** Strict decimal parser for authored CSS channels; never accepts a numeric prefix. */
+function parseDecimal(source: string, allowPercent = false, allowTrailingDot = true): ParsedDecimal | null {
+  if (source.length === 0) return null;
+  let at = source[0] === '-' || source[0] === '+' ? 1 : 0;
+  let wholeDigits = 0;
+  while (at < source.length && source.charCodeAt(at) >= 48 && source.charCodeAt(at) <= 57) {
+    wholeDigits++;
+    at++;
+  }
+  let fractionDigits = 0;
+  if (source[at] === '.') {
+    at++;
+    while (at < source.length && source.charCodeAt(at) >= 48 && source.charCodeAt(at) <= 57) {
+      fractionDigits++;
+      at++;
+    }
+    if (!allowTrailingDot && fractionDigits === 0) return null;
+  }
+  if (wholeDigits + fractionDigits === 0) return null;
+  const percent = source[at] === '%';
+  if (percent) at++;
+  if (at !== source.length || (percent && !allowPercent)) return null;
+  const value = Number(percent ? source.slice(0, -1) : source);
+  return Number.isFinite(value) ? { value, percent } : null;
+}
+
+function splitComponents(source: string): readonly string[] {
+  const parts: string[] = [];
+  let start = -1;
+  for (let at = 0; at <= source.length; at++) {
+    const char = source[at];
+    const separator =
+      char === undefined || char === ',' || char === ' ' || char === '\t' || char === '\r' || char === '\n';
+    if (!separator && start < 0) start = at;
+    if (separator && start >= 0) {
+      parts.push(source.slice(start, at));
+      start = -1;
+    }
+  }
+  return parts;
+}
+
 /**
  * Normalize one functional-color channel into its space's canonical numeric domain.
  * A percentage maps INTO that domain (never left as its raw magnitude); a plain number is
@@ -54,8 +101,10 @@ function warnInterpolate(code: DiagnosticCodeFor<'core'>, message: string, detai
  * either space) is `0..1` (50% → 0.5). Hue (OKLCH index 2) never carries `%`.
  */
 function colorChannel(part: string, space: 'srgb' | 'oklch', index: number): number {
-  const value = Number.parseFloat(part);
-  if (!part.includes('%')) return value;
+  const parsed = parseDecimal(part, true);
+  if (parsed === null) return Number.NaN;
+  const value = parsed.value;
+  if (!parsed.percent) return value;
   if (index === 3) return value / 100; // alpha, both spaces
   if (space === 'srgb') return (value / 100) * 255;
   return index === 1 ? (value / 100) * 0.4 : value / 100; // oklch chroma vs lightness
@@ -70,28 +119,27 @@ function colorChannel(part: string, space: 'srgb' | 'oklch', index: number): num
  * interpolation is refused loudly in {@link interpolateTyped}, never coerced.
  */
 function parseColor(trimmed: string): Extract<TypedValue, { k: 'color' }> | null {
-  const hexMatch = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(trimmed);
-  if (hexMatch) {
-    const hex = hexMatch[1]!;
+  const hex = trimmed.startsWith('#') ? trimmed.slice(1) : '';
+  if ((hex.length === 3 || hex.length === 6) && [...hex].every((char) => /[0-9a-fA-F]/.test(char))) {
     const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
     const components = [0, 2, 4].map((i) => Number.parseInt(full.slice(i, i + 2), 16));
     return { k: 'color', space: 'srgb', components };
   }
 
-  const fnMatch = /^(oklch|rgb)\(\s*([^)]+?)\s*\)$/i.exec(trimmed);
-  if (fnMatch) {
-    const fn = fnMatch[1]!.toLowerCase();
+  const open = trimmed.indexOf('(');
+  if (open > 0 && trimmed.endsWith(')') && trimmed.indexOf(')', open) === trimmed.length - 1) {
+    const fn = trimmed.slice(0, open).toLowerCase();
+    if (fn !== 'oklch' && fn !== 'rgb') return null;
     const space = fn === 'oklch' ? 'oklch' : 'srgb';
     // Both comma- and space-separated component syntaxes (CSS Color 4). A percentage channel
     // is NORMALIZED into this space's canonical numeric domain — NOT stripped to its raw
     // magnitude, which would corrupt the color: `rgb(100% 0 0)` is 255 red (not 100/255 ≈ 39%),
     // and `oklch(70% 0.1 30)` is lightness 0.7 (not 70). Normalizing keeps every channel in one
     // domain so mixed `%`/number authoring interpolates and formats correctly.
-    const components = fnMatch[2]!
-      .split(/[\s,]+/)
-      .filter(Boolean)
-      .map((part, index) => colorChannel(part, space, index));
-    if (components.some((n) => Number.isNaN(n))) return null;
+    const components = splitComponents(trimmed.slice(open + 1, -1)).map((part, index) =>
+      colorChannel(part, space, index),
+    );
+    if ((components.length !== 3 && components.length !== 4) || components.some((n) => Number.isNaN(n))) return null;
     return { k: 'color', space, components };
   }
 
@@ -112,16 +160,16 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
 
   const trimmed = value.trim();
 
-  const lengthMatch = /^(-?\d*\.?\d+)(px|rem|%|vw|vh)$/.exec(trimmed);
-  if (lengthMatch) {
-    const unit = lengthMatch[2]!;
-    return { k: 'length', v: Number.parseFloat(lengthMatch[1]!), unit: unit as LengthUnit };
+  for (const unit of ['rem', 'px', 'vw', 'vh', '%'] as const) {
+    if (!trimmed.endsWith(unit)) continue;
+    const parsed = parseDecimal(trimmed.slice(0, -unit.length), false, false);
+    if (parsed !== null) return { k: 'length', v: parsed.value, unit: unit as LengthUnit };
   }
 
-  const angleMatch = /^(-?\d*\.?\d+)(deg|rad|turn)$/.exec(trimmed);
-  if (angleMatch) {
-    const unit = angleMatch[2]!;
-    return { k: 'angle', v: Number.parseFloat(angleMatch[1]!), unit: unit as AngleUnit };
+  for (const unit of ['turn', 'deg', 'rad'] as const) {
+    if (!trimmed.endsWith(unit)) continue;
+    const parsed = parseDecimal(trimmed.slice(0, -unit.length), false, false);
+    if (parsed !== null) return { k: 'angle', v: parsed.value, unit: unit as AngleUnit };
   }
 
   // Color MUST be probed before the generic transform arm below: `rgb(...)` /
@@ -129,10 +177,16 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
   const color = parseColor(trimmed);
   if (color) return color;
 
-  const transformMatch = /^([a-zA-Z]+)\((.+)\)$/.exec(trimmed);
-  if (transformMatch) {
-    const fn = transformMatch[1]!;
-    const argStr = transformMatch[2]!.trim();
+  const transformOpen = trimmed.indexOf('(');
+  if (
+    transformOpen > 0 &&
+    trimmed.endsWith(')') &&
+    [...trimmed.slice(0, transformOpen)].every((char) => /[A-Za-z]/.test(char)) &&
+    trimmed.slice(0, transformOpen).toLowerCase() !== 'rgb' &&
+    trimmed.slice(0, transformOpen).toLowerCase() !== 'oklch'
+  ) {
+    const fn = trimmed.slice(0, transformOpen);
+    const argStr = trimmed.slice(transformOpen + 1, -1).trim();
     const argParts = argStr.split(/,\s*/);
     const args = argParts.map((part, i) => parseTypedBinding(`${key}:${i}`, part));
     return { k: 'transform', parts: [{ fn, args }] };
@@ -146,8 +200,9 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
     }
   }
 
-  const asNumber = Number.parseFloat(trimmed);
-  if (!Number.isNaN(asNumber) && /^-?(?:\d+\.?\d*|\.\d+)$/.test(trimmed)) {
+  const parsedNumber = parseDecimal(trimmed);
+  if (parsedNumber !== null && !parsedNumber.percent) {
+    const asNumber = parsedNumber.value;
     if (key === 'opacity' || key.endsWith('-opacity')) {
       return { k: 'opacity', v: asNumber };
     }

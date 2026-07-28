@@ -8,7 +8,7 @@
 
 > **formatTypedValue**(`value`): `string`
 
-Defined in: [core/src/motion/interpolate.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpolate.ts#L162)
+Defined in: [core/src/motion/interpolate.ts:217](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpolate.ts#L217)
 
 Format a [TypedValue](../type-aliases/TypedValue.md) for CSS custom-property / style emission.
 

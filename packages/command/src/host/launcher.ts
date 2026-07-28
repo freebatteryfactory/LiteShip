@@ -1,16 +1,20 @@
 /**
- * Dependency-free subprocess launcher kernel.
+ * Cold-buildable subprocess launcher kernel.
  *
  * This is the cold-buildable portion of the command host: it owns Windows shim
  * resolution and inherited-environment additions without importing any workspace
- * package. The repository's native TypeScript bootstrap imports this source
- * directly before `@liteship/command` dist exists; the full spawn host reuses the
- * same functions after build.
+ * workspace package. Its one third-party process dependency, `cross-spawn`, is
+ * declared directly so the repository's native TypeScript bootstrap can import
+ * this source before `@liteship/command` dist exists.
  *
  * @module
  */
 
-import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import type { ChildProcess, SpawnOptions } from 'node:child_process';
+
+type CrossSpawn = (command: string, args: readonly string[], options: SpawnOptions) => ChildProcess;
+const crossSpawn = createRequire(import.meta.url)('cross-spawn') as CrossSpawn;
 
 /** Result of a one-shot visible spawn. */
 export interface SpawnResult {
@@ -35,8 +39,10 @@ export interface Launcher {
 }
 
 /**
- * Quote one argv token for a Windows cmd.exe command line. Shell metacharacters
- * remain literal bytes inside the quoted token.
+ * Render one argv token for legacy diagnostics and compatibility tests.
+ *
+ * This is not a process-launch security boundary. Live launches pass an argv
+ * tuple to `cross-spawn` with `shell: false`; they never concatenate this string.
  */
 export function quoteWindowsArg(arg: string): string {
   if (arg.length === 0) return '""';
@@ -44,20 +50,22 @@ export function quoteWindowsArg(arg: string): string {
   return `"${arg.replaceAll('"', '\\"')}"`;
 }
 
-/** Resolve `.cmd`/`.bat` shims explicitly on Windows; POSIX is identity. */
+/**
+ * Preserve the authored argv tuple. Cross-platform executable/shebang/shim
+ * resolution belongs to `cross-spawn`; LiteShip never assembles a shell command.
+ */
 export function resolveLauncher(
   command: string,
   args: readonly string[],
   platform: NodeJS.Platform = process.platform,
 ): Launcher {
-  if (platform !== 'win32') {
-    return { command, args, windowsVerbatimArguments: false };
-  }
-  if (/\.(?:exe|com)$/iu.test(command)) {
-    return { command, args, windowsVerbatimArguments: false };
-  }
-  const commandLine = [command, ...args].map(quoteWindowsArg).join(' ');
-  return { command: 'cmd.exe', args: ['/d', '/s', '/c', commandLine], windowsVerbatimArguments: true };
+  void platform;
+  return { command, args, windowsVerbatimArguments: false };
+}
+
+/** Launch one argv tuple without exposing a shell-command string to the host. */
+export function spawnCrossPlatform(command: string, args: readonly string[], options: SpawnOptions): ChildProcess {
+  return crossSpawn(command, args, { ...options, shell: false });
 }
 
 /** Merge tool-specific variables without dropping parent coverage/toolchain state. */
@@ -76,7 +84,7 @@ export function spawnArgvVisibleWithEnv(
 ): Promise<SpawnResult> {
   const launcher = resolveLauncher(command, args);
   return new Promise((resolvePromise, rejectPromise) => {
-    const proc = spawn(launcher.command, launcher.args as string[], {
+    const proc = spawnCrossPlatform(launcher.command, launcher.args, {
       stdio: ['ignore', 'pipe', 'inherit'],
       shell: false,
       cwd: opts.cwd,
@@ -117,7 +125,7 @@ export function spawnArgvCaptureWithEnv(
   return new Promise((resolvePromise, rejectPromise) => {
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
-    const proc = spawn(launcher.command, launcher.args as string[], {
+    const proc = spawnCrossPlatform(launcher.command, launcher.args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
       cwd: opts.cwd,

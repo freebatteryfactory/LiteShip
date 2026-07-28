@@ -16,7 +16,8 @@ import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   packageSmokeCommand,
@@ -38,6 +39,7 @@ import {
   diffSemanticClosures,
   partitionRuntimeClosureSpecifiers,
   packedLiteshipBin,
+  PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
   packageSmokeProcessFailure,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
   qualifiedHostOverrides,
@@ -68,6 +70,13 @@ import {
 import { verifyReleaseArtifactBundle } from '../internal/release-artifact-bundle.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
+type CrossSpawnSync = (
+  command: string,
+  args: readonly string[],
+  options: SpawnSyncOptionsWithStringEncoding,
+) => SpawnSyncReturns<string>;
+const crossSpawnSync = (createRequire(import.meta.url)('cross-spawn') as { sync: CrossSpawnSync }).sync;
+
 /** `PEER_INSTALLS` → `{name: version}` map (the extracted, unit-tested helper). */
 function peerDependenciesOnly(): Record<string, string> {
   return peerDependenciesOnlyHelper(PEER_INSTALLS);
@@ -96,17 +105,17 @@ async function createScratchDir(root: string): Promise<string> {
 
 function run(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
   const invocation = resolvePackageManagerInvocation(command, args);
-  const result = spawnSync(invocation.command, invocation.args, {
+  const result = crossSpawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
+    maxBuffer: PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsVerbatimArguments: invocation.windowsVerbatimArguments,
   });
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
+  if (result.error != null || result.status !== 0) {
     throw IntegrityError(
       'package-smoke',
-      packageSmokeProcessFailure(command, result.status, result.stdout, result.stderr),
+      packageSmokeProcessFailure(command, result.status, result.stdout, result.stderr, result.error),
     );
   }
   return (result.stdout ?? '').trim();
@@ -315,10 +324,11 @@ function buildConsumerManifest(tarballByPackage: Map<string, string>): {
 function runOffline(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
   const invocation = resolvePackageManagerInvocation(command, args);
   const deadProxy = 'http://127.0.0.1:1';
-  const result = spawnSync(invocation.command, invocation.args, {
+  const result = crossSpawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
+    maxBuffer: PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
+    stdio: ['ignore', 'pipe', 'pipe'],
     windowsVerbatimArguments: invocation.windowsVerbatimArguments,
     env: {
       ...process.env,
@@ -329,9 +339,11 @@ function runOffline(command: PackageSmokeExecutable, args: readonly string[], cw
       http_proxy: deadProxy,
     },
   });
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw IntegrityError('package-smoke', `${command} exited with status ${result.status ?? 'unknown'}`);
+  if (result.error != null || result.status !== 0) {
+    throw IntegrityError(
+      'package-smoke',
+      packageSmokeProcessFailure(command, result.status, result.stdout, result.stderr, result.error),
+    );
   }
   return (result.stdout ?? '').trim();
 }

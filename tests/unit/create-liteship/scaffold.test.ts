@@ -251,6 +251,7 @@ describe('create-liteship scaffold', () => {
     expect(projectNameFromDir('--weird--')).toBe('weird');
     expect(projectNameFromDir('ok-name')).toBe('ok-name');
     expect(projectNameFromDir('!!!')).toBe('liteship-app');
+    expect(projectNameFromDir(`alpha${' !'.repeat(20_000)}omega`)).toBe('alpha-omega');
   });
 
   it('embedded template itself carries no workspace:/file: specs (ship-tarball truth)', () => {
