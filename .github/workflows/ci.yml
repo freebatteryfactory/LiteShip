@@ -830,6 +830,7 @@ jobs:
       - run: echo "Parallel truth-linux lane passed."
 
   browser-e2e:
+    needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -935,6 +936,7 @@ jobs:
           CI: true
 
   windows-smoke:
+    needs: plan
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -976,6 +978,7 @@ jobs:
   # macOS is release authority: platform-specific path and package-manager
   # behavior must be proven before merge, not first discovered on main.
   macos-smoke:
+    needs: plan
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
@@ -1016,6 +1019,7 @@ jobs:
 
   # Browser authority on the same macOS candidate tree.
   macos-browser:
+    needs: plan
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
@@ -1220,11 +1224,11 @@ jobs:
       - macos-smoke
       - macos-browser
       - rust-wasm-parity
+      - security-audit
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc
       - semantic-assurance-admission
-      - security-audit
       - evidence-admission
     steps:
       - name: Fold the event-appropriate authority tier
@@ -1303,6 +1307,7 @@ jobs:
       - macos-smoke
       - macos-browser
       - rust-wasm-parity
+      - security-audit
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc

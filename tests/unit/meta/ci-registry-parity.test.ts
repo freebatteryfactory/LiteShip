@@ -376,6 +376,12 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(rust).toContain('needs: plan');
   });
 
+  it('does not start expensive platform authority before change-intent planning succeeds', () => {
+    for (const owner of ['browser-e2e', 'windows-smoke', 'macos-smoke', 'macos-browser']) {
+      expect(JOB_BLOCKS.get(owner), owner).toContain('needs: plan');
+    }
+  });
+
   it('keeps full parallel authority on pull requests and pushes, with serial authority nightly/manual', () => {
     const parallel = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
     expect(parallel).toContain("github.event_name == 'push'");
@@ -413,6 +419,7 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'macos-smoke',
       'macos-browser',
       'rust-wasm-parity',
+      'security-audit',
       'exhaustive-analysis',
       'exhaustive-mutation',
       'exhaustive-mcdc',
@@ -447,6 +454,7 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'macos-smoke',
       'macos-browser',
       'rust-wasm-parity',
+      'security-audit',
       'exhaustive-analysis',
       'exhaustive-mutation',
       'exhaustive-mcdc',

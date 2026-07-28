@@ -33,6 +33,12 @@ const harmlessText = fc.string({ maxLength: 80 }).filter((value) => !value.inclu
 const hex40 = fc
   .array(fc.constantFrom(...'0123456789abcdef'), { minLength: 40, maxLength: 40 })
   .map((digits) => digits.join(''));
+const authoredText = fc.string({ minLength: 1, maxLength: 48 }).filter((value) => value.trim().length > 0);
+const authoredSet = fc.uniqueArray(authoredText, {
+  minLength: 1,
+  maxLength: 4,
+  selector: (value) => value.trim(),
+});
 
 describe('GitHub ChangeIntent adapter properties', () => {
   it('ignores harmless surrounding prose while preserving the addressed declaration', () => {
@@ -162,6 +168,95 @@ describe('GitHub ChangeIntent adapter properties', () => {
         ).toThrow(/keys must be exactly/u);
       }),
       { seed: 0x0eac, numRuns: 60 },
+    );
+  });
+
+  it('cold and full admission converge on malformed nested declarations', () => {
+    const invalidDeclarations = [
+      { ...declaration(), actorClass: 'robot' },
+      { ...declaration(), guardrails: [] },
+      { ...declaration(), affectedUserSurface: { visibility: 'public', areas: [] } },
+      { ...declaration(), reversibility: { kind: 'reversible', rollback: '' } },
+      { ...declaration(), uncertainty: { level: 'medium', unknowns: ['duplicate', 'duplicate'] } },
+    ];
+    fc.assert(
+      fc.property(fc.constantFrom(...invalidDeclarations), (candidate) => {
+        expect(() =>
+          validateGitHubChangeIntentDeclaration('pull_request', {
+            pull_request: { body: comment(candidate), user: { login: 'heyoub' } },
+          }),
+        ).toThrow();
+        expect(() => admitGitHubChangeIntent(input({ body: comment(candidate) }))).toThrow();
+      }),
+      { seed: 0xc01dc01d, numRuns: 50 },
+    );
+  });
+
+  it('cold parsing and full admission preserve every valid authored semantic axis', () => {
+    fc.assert(
+      fc.property(
+        authoredText,
+        authoredText,
+        authoredText,
+        authoredSet,
+        authoredSet,
+        fc.uniqueArray(authoredText, { maxLength: 4, selector: (value) => value.trim() }),
+        fc.constantFrom('internal', 'public', 'trust-boundary'),
+        fc.constantFrom('human', 'agent', 'automation'),
+        fc.constantFrom('low', 'medium', 'high'),
+        fc.boolean(),
+        (
+          hypothesis,
+          expectedOutcome,
+          rollbackOrRationale,
+          areas,
+          guardrails,
+          unknowns,
+          visibility,
+          actorClass,
+          level,
+          reversible,
+        ) => {
+          const payload = {
+            sponsor: 'heyoub',
+            hypothesis,
+            affectedUserSurface: { visibility, areas },
+            expectedOutcome,
+            guardrails,
+            reversibility: reversible
+              ? { kind: 'reversible', rollback: rollbackOrRationale }
+              : { kind: 'irreversible', rationale: rollbackOrRationale },
+            actorClass,
+            uncertainty: { level, unknowns },
+          };
+          const cold = validateGitHubChangeIntentDeclaration('pull_request', {
+            pull_request: { body: comment(payload), user: { login: 'heyoub' } },
+          });
+          const full = admitGitHubChangeIntent(input({ body: comment(payload) }));
+
+          expect(cold).toEqual({ kind: 'declared', sponsor: 'heyoub' });
+          expect(full.intent.hypothesis.value).toBe(hypothesis.trim());
+          expect(full.intent.expectedOutcome.value).toBe(expectedOutcome.trim());
+          expect(full.intent.affectedUserSurface.value).toEqual({
+            visibility,
+            areas: areas.map((value) => value.trim()).sort((left, right) => left.localeCompare(right)),
+          });
+          expect(full.intent.guardrails.value).toEqual(
+            guardrails.map((value) => value.trim()).sort((left, right) => left.localeCompare(right)),
+          );
+          expect(full.intent.actorClass.value).toBe(actorClass);
+          expect(full.intent.uncertainty.value).toEqual({
+            level,
+            unknowns: unknowns.map((value) => value.trim()).sort((left, right) => left.localeCompare(right)),
+          });
+          expect(full.intent.reversibility.value).toEqual(
+            reversible
+              ? { kind: 'reversible', rollback: rollbackOrRationale.trim() }
+              : { kind: 'irreversible', rationale: rollbackOrRationale.trim() },
+          );
+        },
+      ),
+      { seed: 0x5e6a17c, numRuns: 120 },
     );
   });
 

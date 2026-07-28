@@ -1,10 +1,26 @@
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { scanConsumerAppSource } from '../../../packages/cli/src/internal/consumer-app-audit.js';
 
 describe('consumer-app audit (#117)', () => {
+  test('reports an unreadable scan root instead of silently proving a missing app clean', () => {
+    const parent = mkdtempSync(join(tmpdir(), 'liteship-consumer-missing-'));
+    try {
+      const findings = scanConsumerAppSource(join(parent, 'absent'));
+      expect(findings).toEqual([
+        expect.objectContaining({
+          rule: 'consumer.filesystem-scan',
+          severity: 'warning',
+          file: '.',
+        }),
+      ]);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   test('flags raw Request passed to resolveInitialState', () => {
     const dir = mkdtempSync(join(tmpdir(), 'liteship-consumer-'));
     mkdirSync(join(dir, 'src'), { recursive: true });

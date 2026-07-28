@@ -397,6 +397,22 @@ describe('check profile cache and diagnostic execution', () => {
     };
   }
 
+  it('returns a blocking CurePacket report when the input corpus cannot be traversed', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-check-missing-corpus-'));
+    const plan = oneCheckPlan(root);
+    rmSync(root, { recursive: true, force: true });
+    const spawn = vi.fn();
+
+    const report = createCheckPlanRunner({ spawn })(plan, root);
+
+    expect(spawn).not.toHaveBeenCalled();
+    expect(report).toMatchObject({ ok: false, blocked: true });
+    expect(report.results[0]).toMatchObject({ verdict: 'fail', durationMs: 0, cacheHit: false });
+    expect(report.results[0]!.findings.join(' ')).toContain('input-corpus scan failed');
+    expect(report.curePackets).toHaveLength(1);
+    expect(report.results[0]!.curePacketId).toBe(report.curePackets[0]!.packetId);
+  });
+
   it('serves a truthful warm hit and invalidates on declared input and toolchain changes', () => {
     const root = mkdtempSync(join(tmpdir(), 'liteship-check-cache-'));
     try {
