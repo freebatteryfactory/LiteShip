@@ -74,6 +74,35 @@ export function ffmpegPostInstallPathProjection(
   });
 }
 
+/**
+ * Hard per-child budgets for host preparation (scar for CI run 30382383876:
+ * an unbounded preparation child consumed a full 30-minute shard budget).
+ * Generous for slow mirrors, yet the complete worst-case preparation chain
+ * stays an order of magnitude under the job ceiling.
+ */
+export interface HostPreparationBudgets {
+  readonly installStepTimeoutMs: number;
+  readonly fetchTimeoutMs: number;
+}
+
+function budgetFrom(env: Readonly<Record<string, string | undefined>>, name: string, defaultMs: number): number {
+  const raw = env[name];
+  if (raw === undefined || raw === '') return defaultMs;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer of milliseconds, got ${JSON.stringify(raw)}`);
+  }
+  return parsed;
+}
+
+/** Resolve preparation budgets, honoring explicit env overrides and refusing malformed ones. */
+export function hostPreparationBudgets(env: Readonly<Record<string, string | undefined>>): HostPreparationBudgets {
+  return Object.freeze({
+    installStepTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS', 300_000),
+    fetchTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_FETCH_TIMEOUT_MS', 120_000),
+  });
+}
+
 /** Package-manager commands used only when the canonical ffmpeg probe is red. */
 export function ffmpegInstallPlan(platform: NodeJS.Platform): readonly HostCommand[] {
   switch (platform) {

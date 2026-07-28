@@ -25,9 +25,17 @@ vi.mock('node:fs', async (importOriginal) => ({
   readFileSync: readFileSyncMock,
 }));
 
-import { probeFfmpegRender, ffmpegRenderCapable } from '../../../packages/command/src/host/ffmpeg-probe.js';
+import {
+  probeFfmpegRender,
+  ffmpegRenderCapable,
+  ffmpegProbeTimedOut,
+} from '../../../packages/command/src/host/ffmpeg-probe.js';
 
 const versionOk = { status: 0, stdout: 'ffmpeg version 7.0', stderr: '' };
+
+function timeoutError(): Error {
+  return Object.assign(new Error('spawnSync ffmpeg ETIMEDOUT'), { code: 'ETIMEDOUT' });
+}
 
 function withOsRelease(contents: string | null): void {
   if (contents === null) {
@@ -44,6 +52,7 @@ afterEach(() => {
   existsSyncMock.mockReturnValue(false);
   readFileSyncMock.mockReset();
   readFileSyncMock.mockReturnValue('');
+  delete process.env.LITESHIP_FFMPEG_PROBE_TIMEOUT_MS;
 });
 
 describe('probeFfmpegRender — failure arms (spawn mocked)', () => {
@@ -69,7 +78,7 @@ describe('probeFfmpegRender — failure arms (spawn mocked)', () => {
     withOsRelease('ID=fedora\nPRETTY_NAME="Fedora Linux 44"\n');
     spawnSyncMock
       .mockReturnValueOnce(versionOk)
-      .mockReturnValueOnce({ status: 1, stderr: 'Unknown encoder \'libx264\'' });
+      .mockReturnValueOnce({ status: 1, stderr: "Unknown encoder 'libx264'" });
     const probe = probeFfmpegRender();
     expect(probe.ok).toBe(false);
     expect(probe.detail).toBe('ffmpeg present but libx264 encoder unavailable');
@@ -113,6 +122,60 @@ describe('probeFfmpegRender — failure arms (spawn mocked)', () => {
     });
     spawnSyncMock.mockReturnValue({ error: new Error('ENOENT'), status: null });
     expect(probeFfmpegRender().hint).toMatch(/Install ffmpeg with libx264 support/);
+  });
+});
+
+describe('probeFfmpegRender — bounded execution (scar for CI run 30382383876)', () => {
+  it('passes a finite timeout to both probe subprocesses', () => {
+    spawnSyncMock.mockReturnValueOnce(versionOk).mockReturnValueOnce({ status: 0, stderr: '' });
+    probeFfmpegRender();
+    expect(spawnSyncMock).toHaveBeenCalledTimes(2);
+    for (const call of spawnSyncMock.mock.calls) {
+      const options = call[2] as { timeout?: number };
+      expect(options.timeout).toBe(10_000);
+    }
+  });
+
+  it('classifies a hung version probe as a timeout, not a missing binary', () => {
+    withOsRelease('ID=ubuntu\n');
+    spawnSyncMock.mockReturnValue({ error: timeoutError(), status: null, signal: 'SIGTERM' });
+    const probe = probeFfmpegRender();
+    expect(probe.ok).toBe(false);
+    expect(probe.detail).toBe('ffmpeg version probe timed out after 10000ms');
+    expect(probe.hint).toMatch(/instead of reinstalling/u);
+    expect(ffmpegProbeTimedOut(probe)).toBe(true);
+  });
+
+  it('classifies a hung libx264 encode probe as a timeout', () => {
+    spawnSyncMock
+      .mockReturnValueOnce(versionOk)
+      .mockReturnValueOnce({ error: timeoutError(), status: null, signal: 'SIGTERM' });
+    const probe = probeFfmpegRender();
+    expect(probe.ok).toBe(false);
+    expect(probe.detail).toBe('libx264 encode probe timed out after 10000ms');
+    expect(ffmpegProbeTimedOut(probe)).toBe(true);
+  });
+
+  it('does not classify ordinary failures as timeouts', () => {
+    spawnSyncMock.mockReturnValue({ error: new Error('ENOENT'), status: null });
+    expect(ffmpegProbeTimedOut(probeFfmpegRender())).toBe(false);
+
+    spawnSyncMock.mockReset();
+    spawnSyncMock.mockReturnValueOnce(versionOk).mockReturnValueOnce({ status: 1, stderr: 'pipe burst' });
+    expect(ffmpegProbeTimedOut(probeFfmpegRender())).toBe(false);
+  });
+
+  it('honors an explicit LITESHIP_FFMPEG_PROBE_TIMEOUT_MS budget override', () => {
+    process.env.LITESHIP_FFMPEG_PROBE_TIMEOUT_MS = '1234';
+    spawnSyncMock.mockReturnValue({ error: timeoutError(), status: null, signal: 'SIGTERM' });
+    const probe = probeFfmpegRender();
+    expect((spawnSyncMock.mock.calls[0]?.[2] as { timeout?: number }).timeout).toBe(1234);
+    expect(probe.detail).toBe('ffmpeg version probe timed out after 1234ms');
+  });
+
+  it('refuses a malformed probe-budget override instead of running unbounded', () => {
+    process.env.LITESHIP_FFMPEG_PROBE_TIMEOUT_MS = 'soon';
+    expect(() => probeFfmpegRender()).toThrow(/positive integer/u);
   });
 });
 

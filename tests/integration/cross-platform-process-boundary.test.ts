@@ -85,6 +85,7 @@ describe('cross-platform process boundary', () => {
       stdout: 'admitted',
       stderr: 'diagnostic-tail',
       signal: null,
+      timedOut: false,
     });
   });
 

@@ -29,6 +29,8 @@ export interface BootstrapCaptureResult {
   readonly stderr: string;
   /** Native termination signal; null for an ordinary process exit. */
   readonly signal: NodeJS.Signals | null;
+  /** True when the caller's `timeoutMs` budget expired and the child was killed. */
+  readonly timedOut: boolean;
 }
 
 /** Exact platform launcher invocation. */
@@ -119,12 +121,22 @@ export function spawnArgvCaptureWithEnv(
   opts: {
     readonly cwd?: string;
     readonly envAdditions?: Readonly<Record<string, string>>;
+    /** Hard child budget; on expiry the child is killed and the result reports `timedOut`. */
+    readonly timeoutMs?: number;
   } = {},
 ): Promise<BootstrapCaptureResult> {
+  if (opts.timeoutMs !== undefined && (!Number.isInteger(opts.timeoutMs) || opts.timeoutMs <= 0)) {
+    return Promise.reject(
+      new Error(`timeoutMs must be a positive integer of milliseconds, got ${JSON.stringify(opts.timeoutMs)}`),
+    );
+  }
   const launcher = resolveLauncher(command, args);
   return new Promise((resolvePromise, rejectPromise) => {
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
+    let timedOut = false;
+    let settled = false;
+    const timers: NodeJS.Timeout[] = [];
     const proc = spawnCrossPlatform(launcher.command, launcher.args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
@@ -132,16 +144,46 @@ export function spawnArgvCaptureWithEnv(
       windowsVerbatimArguments: launcher.windowsVerbatimArguments,
       env: mergedEnv(opts.envAdditions),
     });
+    const settle = (result: () => BootstrapCaptureResult | Error): void => {
+      if (settled) return;
+      settled = true;
+      for (const timer of timers) clearTimeout(timer);
+      const outcome = result();
+      if (outcome instanceof Error) rejectPromise(outcome);
+      else resolvePromise(outcome);
+    };
+    const captured = (code: number | null, signal: NodeJS.Signals | null): BootstrapCaptureResult => ({
+      exitCode: code ?? 1,
+      stdout: Buffer.concat(stdout).toString('utf8'),
+      stderr: Buffer.concat(stderr).toString('utf8'),
+      signal,
+      timedOut,
+    });
+    const schedule = (delayMs: number, work: () => void): void => {
+      const timer = setTimeout(work, delayMs);
+      timer.unref();
+      timers.push(timer);
+    };
+    if (opts.timeoutMs !== undefined) {
+      schedule(opts.timeoutMs, () => {
+        timedOut = true;
+        proc.kill('SIGTERM');
+        // A child ignoring SIGTERM must still die inside the caller's turn.
+        schedule(2_000, () => proc.kill('SIGKILL'));
+        // A grandchild that inherited the pipes can outlive the child and hold
+        // 'close' open forever — the exact shape of the 30-minute shard hang.
+        // The budget bounds settlement itself: destroy our pipe ends and
+        // resolve with whatever was captured.
+        schedule(3_000, () => {
+          proc.stdout?.destroy();
+          proc.stderr?.destroy();
+          settle(() => captured(proc.exitCode, proc.signalCode));
+        });
+      });
+    }
     proc.stdout?.on('data', (chunk: Buffer) => stdout.push(chunk));
     proc.stderr?.on('data', (chunk: Buffer) => stderr.push(chunk));
-    proc.on('error', rejectPromise);
-    proc.on('close', (code, signal) => {
-      resolvePromise({
-        exitCode: code ?? 1,
-        stdout: Buffer.concat(stdout).toString('utf8'),
-        stderr: Buffer.concat(stderr).toString('utf8'),
-        signal,
-      });
-    });
+    proc.on('error', (error) => settle(() => error));
+    proc.on('close', (code, signal) => settle(() => captured(code, signal)));
   });
 }

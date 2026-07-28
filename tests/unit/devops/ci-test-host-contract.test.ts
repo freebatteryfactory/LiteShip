@@ -6,6 +6,7 @@ import {
   WINDOWS_FFMPEG_CHOCOLATEY_VERSION,
   ffmpegInstallPlan,
   ffmpegPostInstallPathProjection,
+  hostPreparationBudgets,
   standardsBaseTarget,
 } from '../../../scripts/lib/ci-test-host-contract.js';
 
@@ -69,5 +70,31 @@ describe('ffmpeg provisioning', () => {
 
   it('fails closed on an unsupported platform instead of pretending capability', () => {
     expect(() => ffmpegInstallPlan('aix')).toThrow(/no CI ffmpeg provisioning law/u);
+  });
+});
+
+describe('host preparation budgets (scar for CI run 30382383876)', () => {
+  it('defaults every provisioning child to a finite budget far under the 30-minute job ceiling', () => {
+    expect(hostPreparationBudgets({})).toEqual({
+      installStepTimeoutMs: 300_000,
+      fetchTimeoutMs: 120_000,
+    });
+  });
+
+  it('honors explicit environment overrides', () => {
+    expect(
+      hostPreparationBudgets({
+        LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS: '5000',
+        LITESHIP_CI_HOST_FETCH_TIMEOUT_MS: '700',
+      }),
+    ).toEqual({ installStepTimeoutMs: 5000, fetchTimeoutMs: 700 });
+  });
+
+  it('refuses malformed or non-positive overrides instead of running unbounded', () => {
+    expect(() => hostPreparationBudgets({ LITESHIP_CI_HOST_FETCH_TIMEOUT_MS: 'soon' })).toThrow(/positive integer/u);
+    expect(() => hostPreparationBudgets({ LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS: '0' })).toThrow(
+      /positive integer/u,
+    );
+    expect(() => hostPreparationBudgets({ LITESHIP_CI_HOST_FETCH_TIMEOUT_MS: '1.5' })).toThrow(/positive integer/u);
   });
 });

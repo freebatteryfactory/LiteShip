@@ -22,11 +22,58 @@ export function ffmpegRenderCapable(): boolean {
 }
 
 /**
- * Probe ffmpeg + libx264 the same way scene render uses them.
- * Fast (sub-second) — safe for doctor and test module init.
+ * Default hard budget per probe subprocess. The probe is normally sub-second,
+ * but "normally" is not a contract: a wedged ffmpeg once consumed an entire
+ * 30-minute CI job budget, so every probe child is killed at this bound.
+ */
+const DEFAULT_PROBE_TIMEOUT_MS = 10_000;
+
+/** Module-private timeout classification, matched exactly by {@link ffmpegProbeTimedOut}. */
+const PROBE_TIMEOUT_DETAIL = /probe timed out after \d+ms$/u;
+
+const PROBE_TIMEOUT_HINT =
+  'ffmpeg did not respond within the probe budget; investigate the stuck host process instead of reinstalling.';
+
+/**
+ * True when the probe failed because a probe subprocess hit its time budget.
+ * A timeout is evidence the host is wedged, not that ffmpeg is missing —
+ * callers must not respond to it by provisioning ffmpeg.
+ */
+export function ffmpegProbeTimedOut(probe: FfmpegRenderProbe): boolean {
+  return !probe.ok && PROBE_TIMEOUT_DETAIL.test(probe.detail);
+}
+
+function probeTimeoutMs(): number {
+  const raw = process.env.LITESHIP_FFMPEG_PROBE_TIMEOUT_MS;
+  if (raw === undefined || raw === '') return DEFAULT_PROBE_TIMEOUT_MS;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(
+      `LITESHIP_FFMPEG_PROBE_TIMEOUT_MS must be a positive integer of milliseconds, got ${JSON.stringify(raw)}`,
+    );
+  }
+  return parsed;
+}
+
+function isTimeout(result: { readonly error?: Error }): boolean {
+  return result.error !== undefined && (result.error as NodeJS.ErrnoException).code === 'ETIMEDOUT';
+}
+
+/**
+ * Probe ffmpeg + libx264 the same way scene render uses them. Each probe child
+ * is bounded by {@link DEFAULT_PROBE_TIMEOUT_MS}; a timeout is reported as its
+ * own failure class rather than being misread as a missing binary.
  */
 export function probeFfmpegRender(): FfmpegRenderProbe {
-  const version = spawnSync('ffmpeg', ['-version'], { encoding: 'utf8' });
+  const timeoutMs = probeTimeoutMs();
+  const version = spawnSync('ffmpeg', ['-version'], { encoding: 'utf8', timeout: timeoutMs });
+  if (isTimeout(version)) {
+    return {
+      ok: false,
+      detail: `ffmpeg version probe timed out after ${timeoutMs}ms`,
+      hint: PROBE_TIMEOUT_HINT,
+    };
+  }
   if (version.error || version.status !== 0) {
     return {
       ok: false,
@@ -51,8 +98,15 @@ export function probeFfmpegRender(): FfmpegRenderProbe {
       'null',
       '-',
     ],
-    { encoding: 'utf8' },
+    { encoding: 'utf8', timeout: timeoutMs },
   );
+  if (isTimeout(encode)) {
+    return {
+      ok: false,
+      detail: `libx264 encode probe timed out after ${timeoutMs}ms`,
+      hint: PROBE_TIMEOUT_HINT,
+    };
+  }
   if (encode.status === 0) {
     return { ok: true, detail: 'libx264 encode probe ok' };
   }
