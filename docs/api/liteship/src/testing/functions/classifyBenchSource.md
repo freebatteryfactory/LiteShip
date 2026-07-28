@@ -16,7 +16,7 @@ empty or comment-only (or no bench call exists at all).
 
 The scanner is deliberately linear: comments, strings, templates, and regular
 expressions are masked, then delimiter depth locates the callback arrow and
-its balanced body. That keeps hostile generated input bounded without
+its balanced body. That keeps hostile-generated input bounded without
 mistaking lexical decoys or a nested default-parameter arrow for evidence.
 
 ## Parameters

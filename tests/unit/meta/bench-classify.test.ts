@@ -64,6 +64,10 @@ describe('classifyBenchSource', () => {
     expect(classifyBenchSource("const ratio = total / count; bench('x', () => { consume(ratio); });")).toBe('real');
   });
 
+  it.each(['++', '--'])('keeps division visible after postfix %s', (operator) => {
+    expect(classifyBenchSource(`bench('x', () => { total${operator} / count; });`)).toBe('real');
+  });
+
   it('stays linear on long comment/string decoys and finds the real nested body', () => {
     const decoys = `${'/* bench("x", () => { fake(); }) */'.repeat(4_000)}\n${'"bench";'.repeat(4_000)}`;
     expect(classifyBenchSource(`${decoys}\nbench('real', () => { if (ready) { measure(); } });`)).toBe('real');

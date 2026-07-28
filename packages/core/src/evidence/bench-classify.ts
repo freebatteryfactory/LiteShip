@@ -28,7 +28,7 @@ import { BENCH_NOT_APPLICABLE_RE } from './bench-marker.js';
  *
  * The scanner is deliberately linear: comments, strings, templates, and regular
  * expressions are masked, then delimiter depth locates the callback arrow and
- * its balanced body. That keeps hostile generated input bounded without
+ * its balanced body. That keeps hostile-generated input bounded without
  * mistaking lexical decoys or a nested default-parameter arrow for evidence.
  */
 export function classifyBenchSource(source: string): 'real' | 'placeholder' {
@@ -153,6 +153,14 @@ function maskCommentsAndLiterals(source: string): string {
         regexAllowed = regexMayFollowWord(chars.slice(start, at + 1).join(''));
       } else if (/[0-9]/u.test(char)) {
         while (at + 1 < chars.length && /[A-Za-z0-9_.]/u.test(chars[at + 1]!)) at++;
+        regexAllowed = false;
+      } else if ((char === '+' || char === '-') && next === char) {
+        // Both prefix and postfix update expressions produce an operand. In
+        // particular, `value++ / divisor` must leave `/` classified as
+        // division; treating the second `+` as a generic prefix operator made
+        // the scanner swallow the rest of the callback as an unterminated
+        // regular-expression literal.
+        at++;
         regexAllowed = false;
       } else if (!/\s/u.test(char)) {
         regexAllowed = !')]}'.includes(char);
