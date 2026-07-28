@@ -75,9 +75,12 @@ describe('project package-manager ancestry model', () => {
     );
   });
 
-  it('lets the exact application marker win even when it is not a workspace owner', () => {
+  it('lets the exact application marker win before an ancestor workspace owner', () => {
     fc.assert(
       fc.property(managerArb, markerArb, managerArb, markerArb, (rootManager, rootMarker, appManager, appMarker) => {
+        // The filesystem adapter marks the exact cwd boundary as eligible even
+        // when its manifest has no `workspaces` field; `ownsNestedProjects`
+        // means "owns this command context" for that first observation.
         const observations = [boundary(appManager, appMarker), boundary(rootManager, rootMarker)];
         expect(selectProjectPackageManager(observations, {})).toEqual(expected(appManager));
       }),

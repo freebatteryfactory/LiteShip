@@ -68,6 +68,17 @@ describe('classifyBenchSource', () => {
     expect(classifyBenchSource(`bench('x', () => { total${operator} / count; });`)).toBe('real');
   });
 
+  it('preserves executable template interpolations while masking template text', () => {
+    expect(classifyBenchSource("bench('x', () => { `${work()}` });")).toBe('real');
+    expect(classifyBenchSource("bench('x', () => { `work()` });")).toBe('placeholder');
+    expect(classifyBenchSource("bench('x', () => { `${'work()'}` });")).toBe('placeholder');
+  });
+
+  it('preserves executable code through nested template interpolations', () => {
+    const source = "bench('x', () => { `${format(`${work()}`)}`; });";
+    expect(classifyBenchSource(source)).toBe('real');
+  });
+
   it('stays linear on long comment/string decoys and finds the real nested body', () => {
     const decoys = `${'/* bench("x", () => { fake(); }) */'.repeat(4_000)}\n${'"bench";'.repeat(4_000)}`;
     expect(classifyBenchSource(`${decoys}\nbench('real', () => { if (ready) { measure(); } });`)).toBe('real');

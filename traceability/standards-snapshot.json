@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:69eb4c64",
+  "address": "fnv1a:a64a154c",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4702,6 +4702,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/lib/test-constitution.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/lib/typedoc-build-pipeline.ts",
       "level": "L1"
     },
     {

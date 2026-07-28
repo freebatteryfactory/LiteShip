@@ -124,6 +124,7 @@ function regexMayFollowWord(word: string): boolean {
 function maskCommentsAndLiterals(source: string): string {
   const chars = [...source];
   let mode: 'code' | 'line-comment' | 'block-comment' | 'single' | 'double' | 'template' | 'regex' = 'code';
+  const templateExpressionDepths: number[] = [];
   let escaped = false;
   let regexClass = false;
   let regexAllowed = true;
@@ -131,7 +132,21 @@ function maskCommentsAndLiterals(source: string): string {
     const char = chars[at]!;
     const next = chars[at + 1];
     if (mode === 'code') {
-      if (char === '/' && next === '/') {
+      const templateExpressionDepth = templateExpressionDepths.length - 1;
+      if (templateExpressionDepth >= 0 && char === '{') {
+        templateExpressionDepths[templateExpressionDepth] = templateExpressionDepths[templateExpressionDepth]! + 1;
+        regexAllowed = true;
+      } else if (templateExpressionDepth >= 0 && char === '}') {
+        const remainingDepth = templateExpressionDepths[templateExpressionDepth]! - 1;
+        templateExpressionDepths[templateExpressionDepth] = remainingDepth;
+        if (remainingDepth === 0) {
+          templateExpressionDepths.pop();
+          chars[at] = ' ';
+          mode = 'template';
+        } else {
+          regexAllowed = false;
+        }
+      } else if (char === '/' && next === '/') {
         chars[at] = chars[at + 1] = ' ';
         at++;
         mode = 'line-comment';
@@ -142,6 +157,7 @@ function maskCommentsAndLiterals(source: string): string {
       } else if (char === "'" || char === '"' || char === '`') {
         chars[at] = ' ';
         mode = char === "'" ? 'single' : char === '"' ? 'double' : 'template';
+        escaped = false;
       } else if (char === '/' && regexAllowed) {
         chars[at] = ' ';
         mode = 'regex';
@@ -178,6 +194,19 @@ function maskCommentsAndLiterals(source: string): string {
         at++;
         mode = 'code';
       } else if (char !== '\n') chars[at] = ' ';
+      continue;
+    }
+    if (mode === 'template' && !escaped && char === '$' && next === '{') {
+      // Template text is inert benchmark evidence, but interpolation bodies
+      // execute. Mask the `${` wrapper itself, then scan its JavaScript using
+      // the ordinary code states. A depth stack keeps nested object literals,
+      // blocks, and nested templates balanced without treating literal text as
+      // work performed by the benchmark.
+      chars[at] = chars[at + 1] = ' ';
+      at++;
+      templateExpressionDepths.push(1);
+      mode = 'code';
+      regexAllowed = true;
       continue;
     }
     chars[at] = char === '\n' ? '\n' : ' ';
