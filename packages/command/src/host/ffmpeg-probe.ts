@@ -43,12 +43,28 @@ export function ffmpegProbeTimedOut(probe: FfmpegRenderProbe): boolean {
   return !probe.ok && PROBE_TIMEOUT_DETAIL.test(probe.detail);
 }
 
+/**
+ * Structurally construct the `@liteship/error` ValidationError variant. This
+ * module sits in the cold-build closure of `scripts/prepare-ci-test-host.ts`,
+ * so it may not VALUE-import `@liteship/error` before dist exists
+ * (prebuild-dist-free law); the same `_tag`/`module`/`detail` own properties
+ * the factory installs are defined here directly, preserving the tagged,
+ * catchable identity the error contract requires.
+ */
+function probeValidationError(detail: string): Error {
+  const error = new Error(`ffmpeg-probe: ${detail}`);
+  Object.defineProperty(error, '_tag', { value: 'ValidationError', enumerable: true });
+  Object.defineProperty(error, 'module', { value: 'ffmpeg-probe', enumerable: true });
+  Object.defineProperty(error, 'detail', { value: detail, enumerable: true });
+  return error;
+}
+
 function probeTimeoutMs(): number {
   const raw = process.env.LITESHIP_FFMPEG_PROBE_TIMEOUT_MS;
   if (raw === undefined || raw === '') return DEFAULT_PROBE_TIMEOUT_MS;
   const parsed = Number(raw);
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(
+    throw probeValidationError(
       `LITESHIP_FFMPEG_PROBE_TIMEOUT_MS must be a positive integer of milliseconds, got ${JSON.stringify(raw)}`,
     );
   }
