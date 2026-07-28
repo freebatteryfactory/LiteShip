@@ -12,7 +12,11 @@
 import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 import { probeFfmpegRender } from '../packages/command/src/host/ffmpeg-probe.js';
 import { spawnArgvCaptureWithEnv } from '../packages/command/src/host/launcher.js';
-import { ffmpegInstallPlan, standardsBaseTarget } from './lib/ci-test-host-contract.js';
+import {
+  ffmpegInstallPlan,
+  ffmpegPostInstallPathProjection,
+  standardsBaseTarget,
+} from './lib/ci-test-host-contract.js';
 
 const args = new Set(process.argv.slice(2));
 const prepareFfmpeg = args.has('--ffmpeg');
@@ -64,6 +68,16 @@ if (prepareFfmpeg) {
   let probe = probeFfmpegRender();
   if (!probe.ok) {
     for (const step of ffmpegInstallPlan(process.platform)) await run(step.command, step.args);
+    const pathProjection = ffmpegPostInstallPathProjection(
+      process.platform,
+      process.env.PATH,
+      process.env.ChocolateyInstall,
+    );
+    process.env.PATH = pathProjection.processPath;
+    const githubPath = process.env.GITHUB_PATH;
+    if (pathProjection.githubPathEntry !== undefined && githubPath !== undefined && githubPath !== '') {
+      await appendFile(githubPath, `${pathProjection.githubPathEntry}\n`, 'utf8');
+    }
     probe = probeFfmpegRender();
   }
   if (!probe.ok) throw new Error(`ffmpeg host preparation failed: ${probe.detail}; ${probe.hint ?? 'no hint'}`);
