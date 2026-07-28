@@ -28,6 +28,7 @@ import { pathToFileURL } from 'node:url';
 import type * as TypeScript from 'typescript';
 import { quoteWindowsArg } from '@liteship/command/host';
 import { IntegrityError } from '@liteship/error';
+import { stripTerminalControlSequences } from './ansi.js';
 
 export interface ExecutableInvocation {
   readonly command: string;
@@ -38,8 +39,7 @@ export interface ExecutableInvocation {
 const PACKAGE_SMOKE_PROCESS_TAIL_CHARS = 4_096;
 
 function boundedProcessTail(raw: string | null | undefined): string {
-  const normalized = (raw ?? '')
-    .replace(/\u001B\[[0-?]*[ -/]*[@-~]/gu, '')
+  const normalized = stripTerminalControlSequences(raw ?? '')
     .replaceAll('\r\n', '\n')
     .trimEnd();
   if (normalized.length === 0) return '(empty)';
@@ -157,7 +157,14 @@ export function qualifiedHostOverrides(peerInstalls: readonly string[]): Readonl
   if (vite === undefined || !/^\d+\.\d+\.\d+$/u.test(vite)) {
     throw IntegrityError('package-smoke host graph', 'Qualified host graph requires an exact Vite install.');
   }
-  return Object.freeze({ vite, rolldown: '1.1.3', '@napi-rs/wasm-runtime': '1.1.6' });
+  const qualified = Object.freeze({ vite: '8.1.0', rolldown: '1.1.3', '@napi-rs/wasm-runtime': '1.1.6' });
+  if (vite !== qualified.vite) {
+    throw IntegrityError(
+      'package-smoke host graph',
+      `Vite ${vite} has no qualified packed-consumer graph; expected ${qualified.vite}.`,
+    );
+  }
+  return qualified;
 }
 
 /**

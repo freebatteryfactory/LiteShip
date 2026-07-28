@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import * as fc from 'fast-check';
 import ts from 'typescript';
 import { hasTag } from '@liteship/error';
+import { PEER_INSTALLS } from '../../../../packages/command/src/commands/package-smoke-registry.js';
 import { spawnArgvCapture } from '../../../../scripts/lib/spawn.js';
 import { resolveLauncher as resolveCanonicalLauncher } from '../../../../packages/command/src/host/launcher.js';
 import {
@@ -77,10 +78,15 @@ describe('packageSmokeProcessFailure — failed child diagnostics', () => {
     );
   });
 
-  it('normalizes CRLF and strips terminal color codes before the receipt crosses CI', () => {
-    expect(packageSmokeProcessFailure('node', 2, '\u001B[31mboom\u001B[0m\r\n', 'nope\r\n')).toContain(
-      'stdout tail:\nboom\nstderr tail:\nnope',
+  it('normalizes CRLF and strips terminal control sequences before the receipt crosses CI', () => {
+    const receipt = packageSmokeProcessFailure(
+      'node',
+      2,
+      '\u001B[31mboom\u001B[0m\r\n\u001B]8;;https://example.com\u0007link\u001B]8;;\u001B\\\r\n',
+      '\u001BPignored\u001B\\nope\r\n',
     );
+    expect(receipt).toContain('stdout tail:\nboom\nlink\nstderr tail:\nnope');
+    expect(receipt).not.toMatch(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/u);
   });
 });
 
@@ -94,13 +100,14 @@ describe('packedLiteshipBin — facade owns the public executable', () => {
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
   it('projects the qualified Vite/Rolldown/WASM graph from the single exact Vite install pin', () => {
-    expect(qualifiedHostOverrides(['vite@8.1.0'])).toEqual({
+    expect(qualifiedHostOverrides(PEER_INSTALLS)).toEqual({
       vite: '8.1.0',
       rolldown: '1.1.3',
       '@napi-rs/wasm-runtime': '1.1.6',
     });
     expect(() => qualifiedHostOverrides(['astro@7.1.0'])).toThrow('requires an exact Vite install');
     expect(() => qualifiedHostOverrides(['vite@^8.1.0'])).toThrow('requires an exact Vite install');
+    expect(() => qualifiedHostOverrides(['vite@8.1.1'])).toThrow('has no qualified packed-consumer graph');
   });
 
   it('keeps the leading scope @ for a scoped specifier', () => {

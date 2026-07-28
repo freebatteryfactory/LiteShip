@@ -37,6 +37,73 @@ const CODES = {
   magenta: '\x1b[35m',
 } as const;
 
+function skipTerminalControlString(input: string, start: number, bellTerminates: boolean): number {
+  let index = start;
+  while (index < input.length) {
+    const code = input.charCodeAt(index);
+    if ((bellTerminates && code === 0x07) || code === 0x9c) return index + 1;
+    if (code === 0x1b && input.charCodeAt(index + 1) === 0x5c) return index + 2;
+    index += 1;
+  }
+  return index;
+}
+
+/**
+ * Remove terminal control sequences while preserving ordinary Unicode text,
+ * tabs, and newlines. Handles CSI styling, OSC hyperlinks/titles, and the
+ * DCS/SOS/PM/APC control strings that can otherwise mutate CI log rendering.
+ */
+export function stripTerminalControlSequences(input: string): string {
+  let clean = '';
+  let index = 0;
+  while (index < input.length) {
+    const code = input.charCodeAt(index);
+    if (code === 0x1b) {
+      const introducer = input.charCodeAt(index + 1);
+      if (introducer === 0x5b) {
+        index += 2;
+        while (index < input.length) {
+          const current = input.charCodeAt(index++);
+          if (current >= 0x40 && current <= 0x7e) break;
+        }
+        continue;
+      }
+      if (introducer === 0x5d) {
+        index = skipTerminalControlString(input, index + 2, true);
+        continue;
+      }
+      if (introducer === 0x50 || introducer === 0x58 || introducer === 0x5e || introducer === 0x5f) {
+        index = skipTerminalControlString(input, index + 2, false);
+        continue;
+      }
+      index = Math.min(index + 2, input.length);
+      continue;
+    }
+    if (code === 0x9b) {
+      index += 1;
+      while (index < input.length) {
+        const current = input.charCodeAt(index++);
+        if (current >= 0x40 && current <= 0x7e) break;
+      }
+      continue;
+    }
+    if (code === 0x9d) {
+      index = skipTerminalControlString(input, index + 1, true);
+      continue;
+    }
+    if (code === 0x90 || code === 0x98 || code === 0x9e || code === 0x9f) {
+      index = skipTerminalControlString(input, index + 1, false);
+      continue;
+    }
+    if ((code < 0x20 && code !== 0x09 && code !== 0x0a) || (code >= 0x7f && code <= 0x9f)) {
+      index += 1;
+      continue;
+    }
+    clean += input[index++];
+  }
+  return clean;
+}
+
 type ColorName = keyof typeof CODES;
 
 /** Wrap `text` in ANSI codes for `name`. No-op when color is disabled. */
