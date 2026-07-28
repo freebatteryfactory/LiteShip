@@ -38,19 +38,33 @@ function writeJson(path: string, value: unknown): void {
 async function runNpm(args: readonly string[], cwd: string) {
   const bundled = resolve(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
   return existsSync(bundled)
-    ? spawnArgvCapture(process.execPath, [bundled, ...args], { cwd })
-    : spawnArgvCapture('npm', args, { cwd });
+    ? spawnArgvCapture(process.execPath, [bundled, ...args], { cwd, timeoutMs: scaledTimeout(40_000) })
+    : spawnArgvCapture('npm', args, { cwd, timeoutMs: scaledTimeout(40_000) });
 }
 
-async function pack(packageDir: string, destination: string): Promise<string> {
-  const result = await runNpm(['pack', '--ignore-scripts', '--pack-destination', destination], packageDir);
+interface NpmPackReceipt {
+  readonly name: string;
+  readonly version: string;
+  readonly filename: string;
+}
+
+/** Pack the complete synthetic fleet in one bounded npm transaction. */
+async function packSyntheticFleet(
+  packageDirs: readonly string[],
+  destination: string,
+  cwd: string,
+): Promise<ReadonlyMap<string, string>> {
+  const result = await runNpm(
+    ['pack', '--json', '--ignore-scripts', '--pack-destination', destination, ...packageDirs],
+    cwd,
+  );
+  expect(result.timedOut, result.stderr || result.stdout).not.toBe(true);
   expect(result.exitCode, result.stderr || result.stdout).toBe(0);
-  const name = result.stdout
-    .trim()
-    .split(/\r?\n/)
-    .findLast((line) => line.endsWith('.tgz'));
-  expect(name, result.stdout).toBeDefined();
-  return join(destination, name!);
+  const receipts = JSON.parse(result.stdout) as readonly NpmPackReceipt[];
+  expect(receipts, result.stdout).toHaveLength(packageDirs.length);
+  return new Map(
+    receipts.map((receipt) => [`${receipt.name}@${receipt.version}`, join(destination, receipt.filename)]),
+  );
 }
 
 beforeAll(
@@ -94,8 +108,6 @@ beforeAll(
       join(cli, 'bin/liteship.mjs'),
       "#!/usr/bin/env node\nimport { run } from '../index.js';\nprocess.exit(await run(process.argv.slice(2)));\n",
     );
-    cliTarball = await pack(cli, tarballs);
-
     writeJson(join(mcpServer, 'package.json'), {
       name: '@liteship/mcp-server',
       version: '1.0.0',
@@ -116,8 +128,6 @@ beforeAll(
         '',
       ].join('\n'),
     );
-    mcpServerTarball = await pack(mcpServer, tarballs);
-
     writeJson(join(facade, 'package.json'), {
       name: 'liteship',
       version: '1.0.0',
@@ -127,20 +137,22 @@ beforeAll(
       dependencies: { '@liteship/cli': '^1.0.0', '@liteship/mcp-server': '^1.0.0' },
     });
     copyFileSync(resolve(ROOT, 'packages/liteship/bin/liteship.mjs'), join(facade, 'bin/liteship.mjs'));
-    facadeTarball = await pack(facade, tarballs);
-
     writeJson(join(noBinFacade, 'package.json'), {
       name: 'liteship',
       version: '1.0.1',
       type: 'module',
       dependencies: { '@liteship/cli': '^1.0.0' },
     });
-    noBinFacadeTarball = await pack(noBinFacade, tarballs);
+    const packed = await packSyntheticFleet([cli, mcpServer, facade, noBinFacade], tarballs, scratch);
+    cliTarball = packed.get('@liteship/cli@1.0.0')!;
+    mcpServerTarball = packed.get('@liteship/mcp-server@1.0.0')!;
+    facadeTarball = packed.get('liteship@1.0.0')!;
+    noBinFacadeTarball = packed.get('liteship@1.0.1')!;
+    expect([cliTarball, mcpServerTarball, facadeTarball, noBinFacadeTarball].every(existsSync)).toBe(true);
   },
-  // Four real package-manager pack subprocesses are shared by the npm and pnpm
-  // product proofs. Under the full corpus they compete with other workers, so
-  // use the same host-scaled budget as the install assertions instead of
-  // Vitest's unit-speed 20-second hook default.
+  // One bounded package-manager transaction builds the synthetic fleet shared
+  // by the npm and pnpm product proofs. Its child deadline is shorter than this
+  // hook budget, so a wedged npm process is reaped before cleanup starts.
   scaledTimeout(60_000),
 );
 
