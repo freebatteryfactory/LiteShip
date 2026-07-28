@@ -5,7 +5,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { restoreTemplateNames, TEMPLATE_RENAMES } from '../../packages/create-liteship/src/template-renames.js';
+import {
+  restoredTemplateName,
+  restoreTemplateNames,
+  TEMPLATE_RENAMES,
+} from '../../packages/create-liteship/src/template-renames.js';
 import { GENERATED_TEMPLATE_RENAMES } from '../../packages/cli/src/internal/template-renames.generated.js';
 
 const roots: string[] = [];
@@ -45,6 +49,15 @@ describe('canonical template filename restoration', () => {
       expect(from.startsWith('.')).toBe(false);
       expect(to.startsWith('.')).toBe(true);
     }
+  });
+
+  it('projects only canonical placeholder names and leaves every other filename unchanged', () => {
+    fc.assert(
+      fc.property(fc.string(), (name) => {
+        expect(restoredTemplateName(name)).toBe(TEMPLATE_RENAMES[name] ?? name);
+      }),
+      { seed: 0x7e4d_0107, numRuns: 200 },
+    );
   });
 
   it('moves arbitrary bytes to the public dotfile name without transformation', () => {

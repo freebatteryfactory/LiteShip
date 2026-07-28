@@ -110,6 +110,7 @@ export const CI_LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
       'check/lint',
       'check/lint-structural',
       'check/lockfile-frozen',
+      'check/security-minimum',
       'check/prebuild-dist-free',
       'check/workflow-output-safety',
       'check/workspace-deps',
@@ -220,6 +221,10 @@ export const CI_SPECIALIZED_CHECK_SPECS: Readonly<Record<string, SpecializedChec
   devx: {
     checkId: 'check/devx',
     job: 'truth-linux-parallel-final',
+  },
+  securityAudit: {
+    checkId: 'check/security-audit',
+    job: 'security-audit',
   },
 };
 

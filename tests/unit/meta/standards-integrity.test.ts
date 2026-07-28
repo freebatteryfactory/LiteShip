@@ -1044,13 +1044,13 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     // and the live allowlist's positive case.)
     expect(
       sanctionedSkipFor(
-        'tests/smoke/intro-render.test.ts',
-        "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
+        'tests/integration/cli/scene-render.test.ts',
+        'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;',
       )?.capability,
     ).toBe('ffmpeg-absent');
     // Even a real sanctioned FILE cannot launder a marker-free placeholder at a DIFFERENT site —
     // the site does not match, so it is unsanctioned regardless of consistency.
-    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
+    expect(sanctionedSkipFor('tests/integration/cli/scene-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
   });
 
   test('RED→GREEN partition: an UNCONDITIONAL `it.skip("later")` + a sign-off stays BLOCKING (void sign-off)', () => {

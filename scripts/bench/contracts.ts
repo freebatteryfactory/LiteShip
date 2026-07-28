@@ -150,6 +150,11 @@ export interface ComplexityMapEntry {
     readonly replicates: number;
     readonly warmupIterations: number;
   };
+  /** Raw per-size replicate latencies; retained so an unstable verdict is diagnosable. */
+  readonly replicateSamplesNs: readonly {
+    readonly size: number;
+    readonly samples: readonly number[];
+  }[];
 }
 
 /** The committed complexity-map artifact. */
@@ -912,6 +917,7 @@ export interface ComplexityCurve {
   readonly fit: ComplexityFit;
   /** Maximum lower-envelope coefficient of variation across timings at one size. */
   readonly coefficientOfVariation: number;
+  readonly replicateSamplesNs: readonly { readonly size: number; readonly samples: readonly number[] }[];
 }
 
 /**
@@ -969,6 +975,7 @@ export function measureComplexityCurve(
 
   const samples: ComplexitySample[] = [];
   const coefficientsOfVariation: number[] = [];
+  const replicateSamplesNs: Array<{ size: number; samples: number[] }> = [];
   for (const size of probe.sizes) {
     const workload = probe.workloadFor(size);
 
@@ -993,6 +1000,7 @@ export function measureComplexityCurve(
     }
 
     coefficientsOfVariation.push(lowerEnvelopeCoefficientOfVariation(replicateSamples));
+    replicateSamplesNs.push({ size, samples: replicateSamples });
 
     samples.push({ size, latencyNs: bestPerCallNs });
   }
@@ -1004,6 +1012,7 @@ export function measureComplexityCurve(
     samples,
     fit: fitComplexityClass(samples),
     coefficientOfVariation: Math.max(...coefficientsOfVariation),
+    replicateSamplesNs,
   };
 }
 
@@ -1033,18 +1042,33 @@ export function readComplexityMap(root: string): ComplexityMap | null {
       const entry = value as Record<string, unknown>;
       if (entry['measurement'] === null || typeof entry['measurement'] !== 'object') return false;
       const measurement = entry['measurement'] as Record<string, unknown>;
+      const replicates = measurement['replicates'];
+      if (typeof replicates !== 'number') return false;
+      const sizes = entry['sizes'];
+      if (!Array.isArray(sizes) || !sizes.every((size) => typeof size === 'number')) return false;
+      const replicateSamplesNs = entry['replicateSamplesNs'];
+      if (!Array.isArray(replicateSamplesNs) || replicateSamplesNs.length !== sizes.length) return false;
       return (
         typeof entry['path'] === 'string' &&
         typeof entry['describe'] === 'string' &&
         typeof entry['shape'] === 'string' &&
-        Array.isArray(entry['sizes']) &&
-        entry['sizes'].every((size) => typeof size === 'number') &&
         COMPLEXITY_CLASSES.includes(entry['class'] as ComplexityClass) &&
         typeof entry['fittedSlope'] === 'number' &&
         typeof entry['fittedR2'] === 'number' &&
         typeof entry['coefficientOfVariation'] === 'number' &&
+        replicateSamplesNs.every(
+          (sampleSet, index) =>
+            sampleSet !== null &&
+            typeof sampleSet === 'object' &&
+            !Array.isArray(sampleSet) &&
+            (sampleSet as Record<string, unknown>)['size'] === sizes[index] &&
+            Array.isArray((sampleSet as Record<string, unknown>)['samples']) &&
+            ((sampleSet as Record<string, unknown>)['samples'] as unknown[]).length === replicates &&
+            ((sampleSet as Record<string, unknown>)['samples'] as unknown[]).every(
+              (sample) => typeof sample === 'number' && Number.isFinite(sample) && sample >= 0,
+            ),
+        ) &&
         typeof measurement['innerIterations'] === 'number' &&
-        typeof measurement['replicates'] === 'number' &&
         typeof measurement['warmupIterations'] === 'number'
       );
     });

@@ -9,8 +9,8 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@liteship/core": "0.23.0",
-    "@liteship/astro": "0.23.0",
+    "@liteship/core": "0.24.0",
+    "@liteship/astro": "0.24.0",
     "astro": "^7.1.0",
     "typescript": "^5.7.0"
   }

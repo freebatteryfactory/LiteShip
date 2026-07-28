@@ -47,6 +47,18 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
     'check/lockfile-frozen',
   ],
   [
+    'check/security-minimum',
+    'pnpm run security:minimum',
+    'tests/unit/devops/security-audit-contract.test.ts',
+    'shared:security-audit-contract',
+  ],
+  [
+    'check/security-audit',
+    'pnpm run security:audit',
+    'tests/unit/devops/security-audit-contract.test.ts',
+    'shared:security-audit-contract',
+  ],
+  [
     'check/prebuild-dist-free',
     'pnpm run prebuild:gate',
     'tests/unit/meta/prebuild-dist-free-closure.test.ts',
@@ -160,7 +172,7 @@ const EXPECTED_CONTROLS: readonly ExpectedControl[] = [
   ],
   [
     'check/flex-verify',
-    'pnpm run flex:verify',
+    'pnpm run flex:verify -- --prechecked',
     'tests/unit/devops/flex-policy-negative-control.test.ts',
     'shared:flex-policy-owner',
   ],
@@ -281,6 +293,7 @@ function planned(check: BlockingCheck): PlannedCheck {
     cacheable: check.cache === 'content-addressed',
     timeoutMs: check.timeoutMs,
     inputs: check.inputs,
+    prerequisites: check.prerequisites,
     remediation: check.remediation,
   };
 }

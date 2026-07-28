@@ -6,11 +6,11 @@
 
 # Type Alias: LiteshipStandardSchema\<I, A\>
 
-> **LiteshipStandardSchema**\<`I`, `A`\> = `StandardSchemaV1`\<`I`, `A`\> & `StandardJSONSchemaV1`\<`I`, `A`\>
+> **LiteshipStandardSchema**\<`I`, `A`\> = `StandardSchemaV1`\<`I`, `A`\>
 
-Defined in: core/dist/schema/standard.d.ts:45
+Defined in: core/dist/schema/standard.d.ts:44
 
-A bridged schema conforms to BOTH the validate and the jsonSchema Standard interfaces.
+Universal validation bridge. It deliberately promises no JSON projection.
 
 ## Type Parameters
 

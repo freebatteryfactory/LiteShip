@@ -16,6 +16,8 @@ export const TRUSTED_ACTION_SOURCES: ReadonlySet<string> = new Set([
   'actions/setup-node',
   'actions/upload-artifact',
   'dtolnay/rust-toolchain',
+  'github/codeql-action/init',
+  'github/codeql-action/analyze',
   'pnpm/action-setup',
 ]);
 

@@ -169,6 +169,10 @@ describe('live complexity producer self-proof', () => {
     fittedR2,
     coefficientOfVariation: 0.03,
     measurement: { innerIterations: 10, replicates: 7, warmupIterations: 2 },
+    replicateSamplesNs: [8, 16, 32, 64, 128].map((size) => ({
+      size,
+      samples: [100, 101, 99, 102, 100, 101, 99],
+    })),
   });
 
   it('accepts complete, trustworthy measurements at their ceilings', () => {

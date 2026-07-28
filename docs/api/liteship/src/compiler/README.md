@@ -50,6 +50,8 @@ behavior lives here.
 - [MotionCompileResult](interfaces/MotionCompileResult.md)
 - [MotionScrollTimeline](interfaces/MotionScrollTimeline.md)
 - [MotionSpringConfig](interfaces/MotionSpringConfig.md)
+- [MotionSupportMetadata](interfaces/MotionSupportMetadata.md)
+- [MotionTransitionFallbackSupport](interfaces/MotionTransitionFallbackSupport.md)
 - [MotionViewTimeline](interfaces/MotionViewTimeline.md)
 - [StyleCSSResult](interfaces/StyleCSSResult.md)
 - [ThemeCSSResult](interfaces/ThemeCSSResult.md)

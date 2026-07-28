@@ -9,6 +9,18 @@ const EXHAUSTIVE = [
   'semantic-assurance-admission',
 ] as const;
 
+/** Release claims that must be proven before merge and reproduced after merge. */
+const RELEASE_CANDIDATE = [
+  'format',
+  'truth-linux-parallel',
+  'browser-e2e',
+  'windows-smoke',
+  'macos-smoke',
+  'macos-browser',
+  'rust-wasm-parity',
+  'security-audit',
+] as const;
+
 function uniqueSorted(values: readonly string[]): readonly string[] {
   return Object.freeze([...new Set(values)].sort());
 }
@@ -22,11 +34,10 @@ export function requiredAuthorityJobs(input: {
 }): readonly string[] {
   if (input.event === 'pull_request') {
     return uniqueSorted([
-      'format',
+      ...RELEASE_CANDIDATE,
       'pr-affected',
       'pr-windows-affected',
       ...(input.browserAffected ? ['pr-browser-affected'] : []),
-      ...(input.rustWasmAffected ? ['rust-wasm-parity'] : []),
     ]);
   }
   const exhaustive =
@@ -37,16 +48,12 @@ export function requiredAuthorityJobs(input: {
       'truth-linux',
       'browser-e2e',
       'windows-smoke',
+      'macos-smoke',
+      'macos-browser',
       'rust-wasm-parity',
+      'security-audit',
       ...(exhaustive ? EXHAUSTIVE : []),
     ]);
   }
-  return uniqueSorted([
-    'format',
-    'truth-linux-parallel',
-    'browser-e2e',
-    'windows-smoke',
-    'rust-wasm-parity',
-    ...(exhaustive ? EXHAUSTIVE : []),
-  ]);
+  return uniqueSorted([...RELEASE_CANDIDATE, ...(exhaustive ? EXHAUSTIVE : [])]);
 }

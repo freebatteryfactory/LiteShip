@@ -69,6 +69,8 @@ Generated from the live declaration-leaf census. A symbol cannot enter the root 
 | `MotionPropertyTween` | interface | `compiler.d.ts` | One typed property transition in a compiled motion plan. |
 | `MotionScrollTimeline` | interface | `compiler.d.ts` | Scroll-timeline axis and range projected into CSS. |
 | `MotionSpringConfig` | interface | `compiler.d.ts` | Spring parameters accepted by motion compilation. |
+| `MotionSupportMetadata` | interface | `compiler.d.ts` | Generated support metadata for the CSS motion tiers emitted by the compiler. |
+| `MotionTransitionFallbackSupport` | interface | `compiler.d.ts` | Plan-specific truth about the last-resort CSS transition projection. |
 | `MotionViewTimeline` | interface | `compiler.d.ts` | View-timeline range projected into CSS. |
 | `NativeTimelineEligibility` | type | `compiler.d.ts` | Whether a compiled plan can use a native timeline without semantic loss. |
 | `StyleCSSResult` | interface | `compiler.d.ts` | CSS projection of one adaptive style definition. |
@@ -141,6 +143,7 @@ Generated from the live declaration-leaf census. A symbol cannot enter the root 
 | `FrameBudget` | interface | `core.d.ts` | Frame-time admission controller for prioritized work. |
 | `FrameCapture` | interface | `core.d.ts` | Live browser capture handle with one async-uniform encoder lifecycle. |
 | `FrameSchedule` | interface | `core.d.ts` | Host-neutral frame timing shared by every renderer adapter. |
+| `GraphMutationResponse` | type | `core.d.ts` | Result carried by the graph-mutation fleet event after server admission. |
 | `HLC` | interface | `core.d.ts` | Hybrid Logical Clock -- physical time + logical counter + node identity |
 | `HLCClock` | interface | `core.d.ts` | A managed HLC clock handle — a plain (Effect-free) mutable holder over the pure increment/merge ops, reading wall time through an injected {@link Clock} (Wave 6). \`tick\`/\`receive\` advance the closure-held timestamp and return it; \`current\` reads without advancing. |
 | `HoleSchemaNode` | interface | `core.d.ts` | Named hole schema AST node. |
@@ -218,6 +221,7 @@ Generated from the live declaration-leaf census. A symbol cannot enter the root 
 | `TupleSchemaNode` | interface | `core.d.ts` | Tuple schema AST node. |
 | `TypedRef` | interface | `core.d.ts` | Content-addressed reference to a payload validated against a schema hash. |
 | `TypedValue` | type | `core.d.ts` | Runtime value whose unit or color space is explicit in the type. |
+| `UIFrame` | interface | `core.d.ts` | One generated-UI frame carried by the typed fleet event protocol. |
 | `UnionSchemaNode` | interface | `core.d.ts` | Union schema AST node. |
 | `UnknownSchemaNode` | interface | `core.d.ts` | Unknown schema AST node. |
 | `VectorClock` | interface | `core.d.ts` | Immutable peer-counter map used for causal ordering. |
@@ -251,6 +255,7 @@ Generated from the live declaration-leaf census. A symbol cannot enter the root 
 | `CapabilityTierEvidence` | type | `detect.d.ts` | Per-axis provenance for one complete tier projection. |
 | `CapabilityTierProjection` | interface | `detect.d.ts` | Source tier triple projected onto the canonical capability axes. |
 | `DesignTier` | type | `detect.d.ts` | Ordered visual-detail tier selected from device evidence. |
+| `DetectReadyDetail` | type | `detect.d.ts` | Payload emitted when the head capability probe settles successfully or fails closed. |
 | `DetectionResult` | interface | `detect.d.ts` | Base capability evidence and the rendering tier derived from it. |
 | `DeviceCapabilities` | interface | `detect.d.ts` | Browser-observed hardware, preference, viewport, and connection capabilities. |
 | `Disposer` | type | `detect.d.ts` | A teardown function — call it to remove the listeners it added. |

@@ -16,6 +16,28 @@ import { LITESHIP_WAIVERS, type CheckGovernanceFacts } from '@liteship/gauntlet'
 import { CHECK_REGISTRY } from '../checks/registry.js';
 import { SCRIPT_EXEMPTIONS } from '../checks/script-exemptions.js';
 
+/** True only for the LiteShip source tree that owns the repository governance records. */
+export function hasCheckGovernanceSurface(repoRoot: string): boolean {
+  return (
+    existsSync(resolve(repoRoot, 'scripts', 'package-catalog.ts')) &&
+    existsSync(resolve(repoRoot, 'packages', 'command', 'src', 'checks', 'registry.ts')) &&
+    existsSync(resolve(repoRoot, 'traceability', 'testing-ledger.yaml'))
+  );
+}
+
+/** Neutral governance facts for an application that does not own LiteShip's repository controls. */
+export function applicationCheckGovernanceFacts(): CheckGovernanceFacts {
+  return Object.freeze({
+    partition: Object.freeze({
+      scripts: Object.freeze([]),
+      registered: Object.freeze([]),
+      exempted: Object.freeze([]),
+    }),
+    negativeControls: Object.freeze([]),
+    waivers: Object.freeze([]),
+  });
+}
+
 function readRootScripts(repoRoot: string): readonly string[] {
   const manifestPath = resolve(repoRoot, 'package.json');
   let parsed: unknown;

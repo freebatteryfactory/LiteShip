@@ -24,6 +24,8 @@ const installed: InstalledCostObservation = {
   externalVersions: [],
   duplicateExternalVersions: [],
 };
+const filesFor = (count: number, bytes: number) =>
+  Array.from({ length: count }, (_, index) => ({ path: `dist/file-${index}.js`, bytes: index === 0 ? bytes : 0 }));
 
 function observation(order = names) {
   return buildOneInstallCostReport({
@@ -36,12 +38,18 @@ function observation(order = names) {
       packageManagerVersion: '10.14.0',
     },
     fleetPackages: order,
-    tarballs: order.map((packageName, index) => ({
-      package: packageName,
-      compressedBytes: 1000 + names.indexOf(packageName),
-      unpackedBytes: 2000 + names.indexOf(packageName),
-      fileCount: 10 + names.indexOf(packageName),
-    })),
+    tarballs: order.map((packageName) => {
+      const packageIndex = names.indexOf(packageName);
+      const unpackedBytes = 2000 + packageIndex;
+      const fileCount = 10 + packageIndex;
+      return {
+        package: packageName,
+        compressedBytes: 1000 + packageIndex,
+        unpackedBytes,
+        fileCount,
+        files: filesFor(fileCount, unpackedBytes),
+      };
+    }),
     installed,
     facadeDependencies: names.slice(0, 2).map((packageName) => ({
       package: packageName,

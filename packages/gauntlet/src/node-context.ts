@@ -148,6 +148,32 @@ export function nodeContext(
   });
   const allFilesList = [...new Set(allMatched)].sort();
 
+  // A GateContext is one immutable observation of the repository. Multiple
+  // gates routinely read the same source path; going back to disk for every
+  // read was both needlessly expensive and allowed a concurrent edit to give
+  // one fold mutually inconsistent bytes. Cache the first observation of each
+  // path, including absence. A new fold constructs a new context and therefore
+  // observes the next tree state.
+  const fileSnapshots = new Map<string, string | undefined>();
+
+  const readSnapshot = (relativePath: string): string | undefined => {
+    if (fileSnapshots.has(relativePath)) return fileSnapshots.get(relativePath);
+
+    try {
+      const source = readFileSync(resolve(repoRoot, relativePath), 'utf8');
+      fileSnapshots.set(relativePath, source);
+      return source;
+    } catch (error) {
+      // Absent file -> undefined (the contract). Anything else (EACCES,
+      // EISDIR, ...) is a real fault and must surface -- no silent swallow.
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        fileSnapshots.set(relativePath, undefined);
+        return undefined;
+      }
+      throw error;
+    }
+  };
+
   return {
     repoRoot,
     files: (): readonly string[] => files,
@@ -156,16 +182,7 @@ export function nodeContext(
     // a confirmer-reading gate sees the full corpus as evidence in production exactly as
     // in its self-test.
     allFiles: (): readonly string[] => allFilesList,
-    readFile: (relativePath: string): string | undefined => {
-      try {
-        return readFileSync(resolve(repoRoot, relativePath), 'utf8');
-      } catch (error) {
-        // Absent file → undefined (the contract). Anything else (EACCES, EISDIR,
-        // …) is a real fault and must surface — no silent swallow.
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
-        throw error;
-      }
-    },
+    readFile: readSnapshot,
     // Thread the injected IR through; omit the key entirely when none was
     // supplied so the context shape stays minimal (an IR-free run is identical).
     ...(ir !== undefined ? { ir } : {}),

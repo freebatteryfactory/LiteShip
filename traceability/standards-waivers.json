@@ -2,13 +2,6 @@
   "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the exact live element being weakened, the weakening class it authorizes, the owner, a justification, and an expiry. Expired, stale, cured, unmatched, placeholder-bearing, and always-blocking weakenings are not retained as governed exceptions. Entries are reconciled against the live standards diff; obsolete approvals are removed rather than preserved as historical sediment.",
   "signoffs": [
     {
-      "elementKey": "skip-allowlist::tests/smoke/intro-render.test.ts::it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
-      "weakening": "skip-allowlist-added",
-      "owner": "heyoub",
-      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the end-to-end intro-scene smoke render BODY runs through ffmpeg+libx264 when present; absent the codec the doctor-probe skips (see `liteship doctor`). The title names the capability (render probe failed), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
-      "expiry": "2027-06-20"
-    },
-    {
       "elementKey": "skip-allowlist::tests/unit/core/wasm-parity.test.ts::describe.skipIf(!wasmPresent)('WASM/TS kernel parity (liteship-compute vs fallbackKernels)', () => {",
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",

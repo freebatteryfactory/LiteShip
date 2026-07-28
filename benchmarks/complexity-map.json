@@ -5,166 +5,997 @@
       "path": "boundary.evaluateBatch",
       "describe": "Boundary.evaluateBatch — one scan over the value array; O(n) in value count.",
       "shape": "batch-values",
-      "sizes": [256, 1024, 4096, 16384, 65536],
+      "sizes": [
+        256,
+        1024,
+        4096,
+        16384,
+        65536
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9849,
-      "fittedR2": 0.9999,
-      "coefficientOfVariation": 0.1037,
+      "fittedSlope": 1.001,
+      "fittedR2": 0.9995,
+      "coefficientOfVariation": 0.0897,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
         "warmupIterations": 50
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 256,
+          "samples": [
+            13901,
+            7167,
+            6177,
+            5221.5,
+            4848,
+            4951,
+            4501.5
+          ]
+        },
+        {
+          "size": 1024,
+          "samples": [
+            16573.5,
+            20918,
+            21322,
+            16056.5,
+            15925,
+            18520.5,
+            19739.5
+          ]
+        },
+        {
+          "size": 4096,
+          "samples": [
+            69878.5,
+            70214.5,
+            119709.5,
+            89614,
+            66852,
+            72083.5,
+            66265
+          ]
+        },
+        {
+          "size": 16384,
+          "samples": [
+            337054,
+            333839,
+            342470,
+            268530,
+            364000,
+            337588.5,
+            301336.5
+          ]
+        },
+        {
+          "size": 65536,
+          "samples": [
+            1356257.5,
+            1253381.5,
+            1227220.5,
+            1202608,
+            1130392,
+            1141936.5,
+            1499634.5
+          ]
+        }
+      ]
     },
     {
       "path": "contentAddress.of",
       "describe": "contentAddressOf — canonicalize → CanonicalCbor → fnv1a; O(n) in element count.",
       "shape": "address-elements",
-      "sizes": [8, 32, 128, 512, 2048],
+      "sizes": [
+        8,
+        32,
+        128,
+        512,
+        2048
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9636,
-      "fittedR2": 0.9968,
-      "coefficientOfVariation": 0.0612,
+      "fittedSlope": 0.9371,
+      "fittedR2": 0.9935,
+      "coefficientOfVariation": 0.1006,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
         "warmupIterations": 50
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 8,
+          "samples": [
+            64776,
+            73800,
+            80707.5,
+            95546,
+            83425.5,
+            56248.5,
+            61038
+          ]
+        },
+        {
+          "size": 32,
+          "samples": [
+            156132,
+            147256.5,
+            156487.5,
+            141669,
+            141894.5,
+            136578,
+            154303
+          ]
+        },
+        {
+          "size": 128,
+          "samples": [
+            596714.5,
+            568533.5,
+            554956.5,
+            550911.5,
+            614935.5,
+            561548,
+            567716.5
+          ]
+        },
+        {
+          "size": 512,
+          "samples": [
+            2297257.5,
+            2207837,
+            2251743,
+            2268155,
+            2365240,
+            2357193.5,
+            2374590.5
+          ]
+        },
+        {
+          "size": 2048,
+          "samples": [
+            9306957.5,
+            10061757,
+            9263306,
+            9412581.5,
+            9340743,
+            9383557.5,
+            9541317
+          ]
+        }
+      ]
     },
     {
       "path": "canonical.encode",
       "describe": "CanonicalCbor.encode — one deterministic fold over array elements; O(n) in element count.",
       "shape": "canonical-array-elements",
-      "sizes": [64, 256, 1024, 4096, 16384],
+      "sizes": [
+        64,
+        256,
+        1024,
+        4096,
+        16384
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0285,
-      "fittedR2": 0.9996,
-      "coefficientOfVariation": 0.0876,
+      "fittedSlope": 1.0294,
+      "fittedR2": 0.9998,
+      "coefficientOfVariation": 0.0496,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
         "warmupIterations": 50
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 64,
+          "samples": [
+            22006,
+            21857,
+            24871.5,
+            21914.5,
+            21184,
+            21084,
+            19092
+          ]
+        },
+        {
+          "size": 256,
+          "samples": [
+            80110,
+            80142.5,
+            79474,
+            74149,
+            76837,
+            75586,
+            74687.5
+          ]
+        },
+        {
+          "size": 1024,
+          "samples": [
+            336418.5,
+            376255,
+            425170.5,
+            317810,
+            323003,
+            313560,
+            318963
+          ]
+        },
+        {
+          "size": 4096,
+          "samples": [
+            1337705,
+            1304612,
+            1380493,
+            1313598.5,
+            1360939.5,
+            1462219.5,
+            1365198
+          ]
+        },
+        {
+          "size": 16384,
+          "samples": [
+            5967294,
+            5714866.5,
+            5995555.5,
+            5760859.5,
+            5733221,
+            5995529.5,
+            6040977
+          ]
+        }
+      ]
     },
     {
       "path": "canonical.decode",
       "describe": "canonical decode — one strict cursor walk over encoded array elements; O(n) in element count.",
       "shape": "canonical-array-elements",
-      "sizes": [64, 256, 1024, 4096, 16384],
+      "sizes": [
+        64,
+        256,
+        1024,
+        4096,
+        16384
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0393,
+      "fittedSlope": 1.0313,
       "fittedR2": 0.9998,
-      "coefficientOfVariation": 0.0585,
+      "coefficientOfVariation": 0.0766,
       "measurement": {
         "innerIterations": 200,
         "replicates": 7,
         "warmupIterations": 50
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 64,
+          "samples": [
+            24706,
+            30333,
+            29396.5,
+            22807,
+            24531.5,
+            29233.5,
+            20306.5
+          ]
+        },
+        {
+          "size": 256,
+          "samples": [
+            91660.5,
+            86922,
+            88519,
+            87883,
+            82818,
+            81118,
+            87659.5
+          ]
+        },
+        {
+          "size": 1024,
+          "samples": [
+            348499,
+            333032,
+            330702,
+            350401,
+            382198,
+            342745.5,
+            349784
+          ]
+        },
+        {
+          "size": 4096,
+          "samples": [
+            1421834.5,
+            1451939,
+            1451825,
+            1506227,
+            1422512.5,
+            1530787.5,
+            1426828.5
+          ]
+        },
+        {
+          "size": 16384,
+          "samples": [
+            6270599,
+            6169032.5,
+            6493900,
+            6193105.5,
+            6220392.5,
+            6388651.5,
+            6322431
+          ]
+        }
+      ]
     },
     {
       "path": "genui.validate",
       "describe": "validateGeneratedUITree — one structural visit per generated node; O(n) in node count.",
       "shape": "generated-ui-nodes",
-      "sizes": [256, 512, 1024, 2048, 4096],
+      "sizes": [
+        256,
+        512,
+        1024,
+        2048,
+        4096
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9872,
-      "fittedR2": 0.9991,
-      "coefficientOfVariation": 0.1439,
+      "fittedSlope": 1.0347,
+      "fittedR2": 0.9996,
+      "coefficientOfVariation": 0.0485,
       "measurement": {
-        "innerIterations": 25,
+        "innerIterations": 100,
         "replicates": 7,
-        "warmupIterations": 10
-      }
+        "warmupIterations": 20
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 256,
+          "samples": [
+            253910,
+            185184,
+            149971,
+            140303,
+            148009,
+            131933,
+            131925
+          ]
+        },
+        {
+          "size": 512,
+          "samples": [
+            272077,
+            274752,
+            262714,
+            276906,
+            272697,
+            264510,
+            268788
+          ]
+        },
+        {
+          "size": 1024,
+          "samples": [
+            565594,
+            547924,
+            527569,
+            554567,
+            603761,
+            604867,
+            545357
+          ]
+        },
+        {
+          "size": 2048,
+          "samples": [
+            1121022,
+            1212383,
+            1128410,
+            1096465,
+            1799483,
+            1113813,
+            1114628
+          ]
+        },
+        {
+          "size": 4096,
+          "samples": [
+            2495865,
+            2362059,
+            2648066,
+            2418514,
+            2840168,
+            2406160,
+            2330233
+          ]
+        }
+      ]
     },
     {
       "path": "genui.renderHash",
       "describe": "renderHash — canonical encoding and hashing of one generated tree; O(n) in node count.",
       "shape": "generated-ui-nodes",
-      "sizes": [32, 128, 512, 2048, 8192],
+      "sizes": [
+        32,
+        128,
+        512,
+        2048,
+        8192
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0182,
-      "fittedR2": 0.9989,
-      "coefficientOfVariation": 0.0611,
+      "fittedSlope": 1.0231,
+      "fittedR2": 0.9999,
+      "coefficientOfVariation": 0.0479,
       "measurement": {
         "innerIterations": 8,
         "replicates": 7,
         "warmupIterations": 5
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 32,
+          "samples": [
+            158800,
+            165087.5,
+            269912.5,
+            148500,
+            154725,
+            163087.5,
+            179912.5
+          ]
+        },
+        {
+          "size": 128,
+          "samples": [
+            823700,
+            705012.5,
+            680937.5,
+            675062.5,
+            852775,
+            615137.5,
+            700950
+          ]
+        },
+        {
+          "size": 512,
+          "samples": [
+            3026550,
+            2622800,
+            2713237.5,
+            3046725,
+            2672750,
+            2684337.5,
+            2705112.5
+          ]
+        },
+        {
+          "size": 2048,
+          "samples": [
+            11393137.5,
+            10337912.5,
+            12170412.5,
+            10525600,
+            11051975,
+            10421987.5,
+            10601037.5
+          ]
+        },
+        {
+          "size": 8192,
+          "samples": [
+            46154687.5,
+            46776425,
+            45539900,
+            43582650,
+            43679350,
+            43545337.5,
+            43888250
+          ]
+        }
+      ]
     },
     {
       "path": "assets.walkRiff",
       "describe": "walkRiff — one bounded structural visit per declared RIFF chunk; O(n) in chunk count.",
       "shape": "riff-chunks",
-      "sizes": [32, 128, 512, 2048, 8192],
+      "sizes": [
+        512,
+        1024,
+        2048,
+        4096,
+        8192
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9386,
-      "fittedR2": 0.9983,
-      "coefficientOfVariation": 0.0666,
+      "fittedSlope": 1.0227,
+      "fittedR2": 0.9998,
+      "coefficientOfVariation": 0.0288,
       "measurement": {
-        "innerIterations": 25,
+        "innerIterations": 100,
         "replicates": 7,
-        "warmupIterations": 10
-      }
+        "warmupIterations": 20
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 512,
+          "samples": [
+            216453,
+            186275,
+            186391,
+            166145,
+            179546,
+            176108,
+            171929
+          ]
+        },
+        {
+          "size": 1024,
+          "samples": [
+            345851,
+            361138,
+            354340,
+            344839,
+            396417,
+            395378,
+            345554
+          ]
+        },
+        {
+          "size": 2048,
+          "samples": [
+            692476,
+            788381,
+            686388,
+            714715,
+            707336,
+            672070,
+            718174
+          ]
+        },
+        {
+          "size": 4096,
+          "samples": [
+            1407818,
+            1415003,
+            1396603,
+            1409609,
+            1436203,
+            1412328,
+            1533873
+          ]
+        },
+        {
+          "size": 8192,
+          "samples": [
+            2858511,
+            2871253,
+            2967029,
+            2879790,
+            2887430,
+            2921626,
+            3350104
+          ]
+        }
+      ]
     },
     {
       "path": "assets.computeWaveform",
       "describe": "computeWaveform — one frame fold plus one fixed-bin normalization pass; O(n) in frame count.",
       "shape": "audio-frames",
-      "sizes": [65536, 131072, 262144, 524288, 1048576],
+      "sizes": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.9945,
-      "fittedR2": 0.9998,
-      "coefficientOfVariation": 0.0568,
+      "fittedSlope": 0.9998,
+      "fittedR2": 0.9997,
+      "coefficientOfVariation": 0.0229,
       "measurement": {
         "innerIterations": 5,
         "replicates": 7,
         "warmupIterations": 3
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 65536,
+          "samples": [
+            525600,
+            980300,
+            162320,
+            157860,
+            167800,
+            163180,
+            162140
+          ]
+        },
+        {
+          "size": 131072,
+          "samples": [
+            322100,
+            314200,
+            319280,
+            308560,
+            308180,
+            314220,
+            308900
+          ]
+        },
+        {
+          "size": 262144,
+          "samples": [
+            610800,
+            611520,
+            611900,
+            775600,
+            846240,
+            652320,
+            619260
+          ]
+        },
+        {
+          "size": 524288,
+          "samples": [
+            1278640,
+            1259680,
+            1223120,
+            1294580,
+            1223720,
+            1408240,
+            1322960
+          ]
+        },
+        {
+          "size": 1048576,
+          "samples": [
+            2828220,
+            2833860,
+            2689400,
+            2554520,
+            2533820,
+            2675140,
+            2645700
+          ]
+        }
+      ]
     },
     {
       "path": "assets.detectOnsets",
       "describe": "detectOnsets — bounded frame, flux, and selection passes; O(n) in frame count.",
       "shape": "audio-frames",
-      "sizes": [65536, 131072, 262144, 524288, 1048576],
+      "sizes": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0069,
-      "fittedR2": 1,
-      "coefficientOfVariation": 0.0331,
+      "fittedSlope": 1.0109,
+      "fittedR2": 0.9999,
+      "coefficientOfVariation": 0.0285,
       "measurement": {
         "innerIterations": 4,
         "replicates": 7,
         "warmupIterations": 3
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 65536,
+          "samples": [
+            917850,
+            1974100,
+            330075,
+            322300,
+            323150,
+            323075,
+            322275
+          ]
+        },
+        {
+          "size": 131072,
+          "samples": [
+            674050,
+            820850,
+            763375,
+            648600,
+            646550,
+            646800,
+            654525
+          ]
+        },
+        {
+          "size": 262144,
+          "samples": [
+            1391100,
+            1360200,
+            1805575,
+            1315425,
+            1467450,
+            1366325,
+            1317325
+          ]
+        },
+        {
+          "size": 524288,
+          "samples": [
+            2805800,
+            2764800,
+            2694625,
+            2690050,
+            2597850,
+            2832600,
+            2974775
+          ]
+        },
+        {
+          "size": 1048576,
+          "samples": [
+            5360775,
+            6114725,
+            5342150,
+            5387925,
+            6095100,
+            5754550,
+            5720750
+          ]
+        }
+      ]
     },
     {
       "path": "assets.detectBeats",
       "describe": "detectBeats — O(n * lagRange), linear in frame count at a fixed sample-rate lag range.",
       "shape": "audio-frames-fixed-sample-rate",
-      "sizes": [65536, 131072, 262144, 524288, 1048576],
+      "sizes": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576
+      ],
       "class": "O(n)",
-      "fittedSlope": 1.0384,
-      "fittedR2": 0.9998,
-      "coefficientOfVariation": 0.1694,
+      "fittedSlope": 1.0325,
+      "fittedR2": 1,
+      "coefficientOfVariation": 0.1925,
       "measurement": {
         "innerIterations": 3,
         "replicates": 7,
         "warmupIterations": 2
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 65536,
+          "samples": [
+            614433.3333,
+            517800,
+            1806300,
+            1522700,
+            345766.6667,
+            344333.3333,
+            345433.3333
+          ]
+        },
+        {
+          "size": 131072,
+          "samples": [
+            714166.6667,
+            712633.3333,
+            713433.3333,
+            829433.3333,
+            988700,
+            734900,
+            723300
+          ]
+        },
+        {
+          "size": 262144,
+          "samples": [
+            1937833.3333,
+            1451066.6667,
+            1447766.6667,
+            1695300,
+            1539633.3333,
+            1469533.3333,
+            1473566.6667
+          ]
+        },
+        {
+          "size": 524288,
+          "samples": [
+            3247733.3333,
+            2950366.6667,
+            4134100,
+            4965133.3333,
+            3001166.6667,
+            3248900,
+            3294466.6667
+          ]
+        },
+        {
+          "size": 1048576,
+          "samples": [
+            6269733.3333,
+            6061000,
+            6353533.3333,
+            6197166.6667,
+            6745633.3333,
+            6293333.3333,
+            6352766.6667
+          ]
+        }
+      ]
+    },
+    {
+      "path": "web.parseMessage",
+      "describe": "parseMessage — preflight plus JSON decoding of one SSE patch; O(n) in serialized payload bytes.",
+      "shape": "serialized-sse-patch-bytes",
+      "sizes": [
+        1024,
+        4096,
+        16384,
+        65536,
+        262144
+      ],
+      "class": "O(n)",
+      "fittedSlope": 0.8675,
+      "fittedR2": 0.9712,
+      "coefficientOfVariation": 0.0493,
+      "measurement": {
+        "innerIterations": 50,
+        "replicates": 7,
+        "warmupIterations": 20
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 1024,
+          "samples": [
+            1550,
+            1566,
+            1546,
+            1570,
+            1564,
+            1582,
+            1566
+          ]
+        },
+        {
+          "size": 4096,
+          "samples": [
+            3676,
+            3706,
+            3124,
+            3100,
+            2742,
+            2766,
+            2892
+          ]
+        },
+        {
+          "size": 16384,
+          "samples": [
+            9144,
+            9312,
+            8532,
+            9254,
+            8512,
+            8504,
+            8760
+          ]
+        },
+        {
+          "size": 65536,
+          "samples": [
+            34748,
+            36176,
+            44440,
+            35798,
+            34216,
+            134306,
+            53490
+          ]
+        },
+        {
+          "size": 262144,
+          "samples": [
+            178896,
+            195788,
+            184116,
+            192754,
+            428348,
+            219178,
+            194176
+          ]
+        }
+      ]
     },
     {
       "path": "gauntlet.runGates",
       "describe": "runGates — one qualification and decision fold per gate; O(n) in gate count.",
       "shape": "qualified-gates",
-      "sizes": [8, 32, 128, 512, 2048],
+      "sizes": [
+        8,
+        32,
+        128,
+        512,
+        2048
+      ],
       "class": "O(n)",
-      "fittedSlope": 0.8526,
-      "fittedR2": 0.9951,
-      "coefficientOfVariation": 0.1813,
+      "fittedSlope": 0.8106,
+      "fittedR2": 0.9878,
+      "coefficientOfVariation": 0.1547,
       "measurement": {
         "innerIterations": 10,
         "replicates": 7,
         "warmupIterations": 5
-      }
+      },
+      "replicateSamplesNs": [
+        {
+          "size": 8,
+          "samples": [
+            20670,
+            35780,
+            28810,
+            20900,
+            33100,
+            27910,
+            35670
+          ]
+        },
+        {
+          "size": 32,
+          "samples": [
+            48580,
+            44060,
+            38120,
+            37830,
+            37750,
+            37870,
+            38490
+          ]
+        },
+        {
+          "size": 128,
+          "samples": [
+            174800,
+            143350,
+            141970,
+            155440,
+            145240,
+            391770,
+            266700
+          ]
+        },
+        {
+          "size": 512,
+          "samples": [
+            1258040,
+            552720,
+            582970,
+            796270,
+            559790,
+            677370,
+            460430
+          ]
+        },
+        {
+          "size": 2048,
+          "samples": [
+            2255060,
+            2057540,
+            1820240,
+            1630740,
+            1646200,
+            1723210,
+            1778910
+          ]
+        }
+      ]
     }
   ]
 }

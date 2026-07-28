@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  buildOneInstallCostDeltaLedger,
   buildOneInstallCostBaseline,
   ONE_INSTALL_COST_BASELINE_PATH,
   ONE_INSTALL_COST_UPDATE_ENV,
@@ -32,6 +33,8 @@ const installed: InstalledCostObservation = {
   ],
   duplicateExternalVersions: [],
 };
+const filesFor = (count: number, bytes: number) =>
+  Array.from({ length: count }, (_, index) => ({ path: `dist/file-${index}.js`, bytes: index === 0 ? bytes : 0 }));
 
 function report(): OneInstallCostReport {
   return buildOneInstallCostReport({
@@ -44,12 +47,17 @@ function report(): OneInstallCostReport {
       packageManagerVersion: '10.14.0',
     },
     fleetPackages: names,
-    tarballs: names.map((packageName, index) => ({
-      package: packageName,
-      compressedBytes: 10_000 + index,
-      unpackedBytes: 20_000 + index,
-      fileCount: 10 + index,
-    })),
+    tarballs: names.map((packageName, index) => {
+      const unpackedBytes = 20_000 + index;
+      const fileCount = 10 + index;
+      return {
+        package: packageName,
+        compressedBytes: 10_000 + index,
+        unpackedBytes,
+        fileCount,
+        files: filesFor(fileCount, unpackedBytes),
+      };
+    }),
     installed,
     facadeDependencies: [
       { package: names[0]!, reason: 'Provides the first qualified facade capability.' },
@@ -150,6 +158,75 @@ describe('one-install cost baseline gate', () => {
       'cold-import-drift',
       'duplicate-version-drift',
     ]);
+  });
+
+  it('does not misclassify a matched-version fleet bump as newly parsed modules', () => {
+    const source = report();
+    const baseline = buildOneInstallCostBaseline(source);
+    const bumped = withReport(source, {
+      coldImports: source.observation.coldImports.map((graph) => ({
+        ...graph,
+        packages: graph.packages.map((identity) => identity.replace('@0.19.0', '@99.0.0')),
+        modules: graph.modules.map((module) => ({ ...module, version: '99.0.0' })),
+      })),
+    });
+
+    expect(oneInstallCostFindings(bumped, baseline).filter((finding) => finding.code === 'cold-import-drift')).toEqual(
+      [],
+    );
+  });
+
+  it('emits an addressed file/module/importer/owner delta before a baseline moves', () => {
+    const source = report();
+    const baseline = buildOneInstallCostBaseline(source);
+    const packed = source.observation.compressedTarballs;
+    const first = packed.packages[0]!;
+    const removed = first.files![0]!;
+    const added = { path: 'dist/new-feature.js', bytes: removed.bytes + 7 };
+    const packages = packed.packages.map((entry, index) =>
+      index === 0
+        ? {
+            ...entry,
+            compressedBytes: entry.compressedBytes + 3,
+            unpackedBytes: entry.unpackedBytes + 7,
+            files: [added, ...entry.files!.slice(1)],
+          }
+        : entry,
+    );
+    const cold = source.observation.coldImports[0]!;
+    const newModule = { package: names[0]!, version: '99.0.0', path: added.path };
+    const observed = withReport(source, {
+      compressedTarballs: {
+        ...packed,
+        totalBytes: packed.totalBytes + 3,
+        totalUnpackedBytes: packed.totalUnpackedBytes + 7,
+        packages,
+      },
+      coldImports: [{ ...cold, moduleCount: cold.moduleCount + 1, modules: [...cold.modules, newModule] }],
+    });
+
+    const ledger = buildOneInstallCostDeltaLedger(observed, baseline);
+    expect(ledger).toMatchObject({
+      baselineFileCensus: 'complete',
+      total: { compressedBytes: 3, unpackedBytes: 7, fileCount: 0 },
+      packages: [
+        {
+          package: names[0],
+          addedFiles: [added],
+          removedFiles: [removed],
+        },
+      ],
+      coldImports: [
+        {
+          specifier: 'liteship',
+          importerEdge: 'import("liteship")',
+          addedModules: [
+            expect.objectContaining({ package: names[0], path: added.path, owningFeature: expect.any(String) }),
+          ],
+        },
+      ],
+    });
+    expect(ledger.candidateId).toMatch(/^sha256:[0-9a-f]{64}$/u);
   });
 
   it('accepts supported cross-platform observations and refuses unsupported toolchains', () => {

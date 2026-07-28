@@ -344,6 +344,10 @@ function buildComplexityMap(): { readonly map: ComplexityMap; readonly hotPathBu
         replicates: probe.measurement?.replicates ?? 7,
         warmupIterations: probe.measurement?.warmupIterations ?? 50,
       },
+      replicateSamplesNs: curve.replicateSamplesNs.map((entry) => ({
+        size: entry.size,
+        samples: entry.samples.map((sample) => Number(sample.toFixed(4))),
+      })),
     });
 
     // HOT-PATH/FRAME BUDGET: the per-call cost of the smallest-size workload must

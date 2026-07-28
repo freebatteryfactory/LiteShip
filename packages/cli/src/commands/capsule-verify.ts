@@ -76,6 +76,12 @@ interface CapsuleProvenanceDeps {
   readonly sourceProvenanceDigest?: typeof sourceProvenanceDigest;
   readonly generatorVersionDigest?: typeof generatorVersionDigest;
   readonly runGeneratedCorpus?: typeof runGeneratedCorpus;
+  /**
+   * Regeneration confirmer seam. Production always uses the real isolated
+   * compiler below; tests inject its verdict so parallel Vitest workers never
+   * rewrite a live package source merely to create a stale suspect.
+   */
+  readonly confirmStaleByRegeneration?: typeof confirmStaleByRegeneration;
 }
 
 /**
@@ -174,6 +180,7 @@ export async function runCapsuleGateScan(root: string, deps: CapsuleProvenanceDe
   const srcDigest = deps.sourceProvenanceDigest ?? sourceProvenanceDigest;
   const genDigest = deps.generatorVersionDigest ?? generatorVersionDigest;
   const executeGeneratedCorpus = deps.runGeneratedCorpus ?? runGeneratedCorpus;
+  const confirmStale = deps.confirmStaleByRegeneration ?? confirmStaleByRegeneration;
   const errors: string[] = [];
   const manifestPath = getCapsuleManifestPath(root);
 
@@ -246,7 +253,7 @@ export async function runCapsuleGateScan(root: string, deps: CapsuleProvenanceDe
   // the cache's correctness property pairs a key with re-verification).
   if (digestSuspects.length > 0) {
     const committedNames = new Set(manifest.capsules.map((c) => c.name));
-    for (const detail of confirmStaleByRegeneration(root, digestSuspects, committedNames)) {
+    for (const detail of confirmStale(root, digestSuspects, committedNames)) {
       errors.push(`stale: ${detail}; run \`pnpm run capsule:compile\` and commit the resulting changes`);
     }
   }

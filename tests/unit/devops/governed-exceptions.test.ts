@@ -39,7 +39,7 @@ describe('governed exception view', () => {
           owner: 'standards-owner',
           scope: expect.stringContaining('skip-allowlist-added'),
           rationale: 'The capability-gated body runs on the qualified host.',
-          compensatingProof: 'The live capability-gated test is the compensating execution proof.',
+          compensatingProof: expect.stringContaining('Current-tree liveness admits'),
           effectiveDate: GOVERNED_EFFECTIVE_DATE,
           expiry: '2027-01-01',
           status: 'active',
@@ -64,24 +64,35 @@ describe('governed exception view', () => {
     expect(view.every(Object.isFrozen)).toBe(true);
   });
 
-  test('a standards sign-off absent from the live signed partition is stale and fails closed', () => {
+  test('a standards sign-off absent from the current standards tree is stale and fails closed', () => {
     const sources = governedExceptionSources();
     expect(() =>
       projectGovernedExceptions(
         {
           ...sources,
-          standardsIntegrity: {
-            ...sources.standardsIntegrity,
-            facts:
-              sources.standardsIntegrity._tag === 'active'
-                ? { ...sources.standardsIntegrity.facts, signedWeakenings: [] }
-                : neverSources(),
-          },
+          liveStandardsSignoffKeys: new Set(),
         },
         GOVERNED_NOW,
         effectiveDateOf,
       ),
     ).toThrow(/is stale/);
+  });
+
+  test('standards sign-off liveness is invariant across branch, merge, and post-merge history', () => {
+    const branch = governedExceptionSources();
+    const postMerge = {
+      ...branch,
+      standardsIntegrity:
+        branch.standardsIntegrity._tag === 'active'
+          ? {
+              ...branch.standardsIntegrity,
+              facts: { ...branch.standardsIntegrity.facts, signedWeakenings: [] },
+            }
+          : branch.standardsIntegrity,
+    };
+    expect(projectGovernedExceptions(branch, GOVERNED_NOW, effectiveDateOf)).toEqual(
+      projectGovernedExceptions(postMerge, GOVERNED_NOW, effectiveDateOf),
+    );
   });
 
   test('expired testing waivers and obligations fail closed', () => {
@@ -192,7 +203,3 @@ describe('governed exception view', () => {
     }
   });
 });
-
-function neverSources(): never {
-  throw new Error('fixture expected active standards facts');
-}

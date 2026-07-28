@@ -6,7 +6,7 @@
 
 # Interface: MotionCompileResult
 
-Defined in: [\_spine/compiler.d.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L385)
+Defined in: [\_spine/compiler.d.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L399)
 
 CSS fragments emitted by motion compilation.
 
@@ -16,7 +16,7 @@ CSS fragments emitted by motion compilation.
 
 > `readonly` **keyframes**: `string`
 
-Defined in: [\_spine/compiler.d.ts:388](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L388)
+Defined in: [\_spine/compiler.d.ts:402](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L402)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [\_spine/compiler.d.ts:388](https://github.com/freebatteryfactory/Li
 
 > `readonly` **propertyRegistrations**: `string`
 
-Defined in: [\_spine/compiler.d.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L387)
+Defined in: [\_spine/compiler.d.ts:401](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L401)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [\_spine/compiler.d.ts:387](https://github.com/freebatteryfactory/Li
 
 > `readonly` **raw**: `string`
 
-Defined in: [\_spine/compiler.d.ts:386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L386)
+Defined in: [\_spine/compiler.d.ts:400](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L400)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [\_spine/compiler.d.ts:386](https://github.com/freebatteryfactory/Li
 
 > `readonly` **scrollTimeline**: `string`
 
-Defined in: [\_spine/compiler.d.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L391)
+Defined in: [\_spine/compiler.d.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L405)
 
 ***
 
@@ -48,7 +48,15 @@ Defined in: [\_spine/compiler.d.ts:391](https://github.com/freebatteryfactory/Li
 
 > `readonly` **startingStyle**: `string`
 
-Defined in: [\_spine/compiler.d.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L389)
+Defined in: [\_spine/compiler.d.ts:403](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L403)
+
+***
+
+### support
+
+> `readonly` **support**: [`MotionSupportMetadata`](MotionSupportMetadata.md)
+
+Defined in: [\_spine/compiler.d.ts:406](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L406)
 
 ***
 
@@ -56,4 +64,4 @@ Defined in: [\_spine/compiler.d.ts:389](https://github.com/freebatteryfactory/Li
 
 > `readonly` **transition**: `string`
 
-Defined in: [\_spine/compiler.d.ts:390](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L390)
+Defined in: [\_spine/compiler.d.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/compiler.d.ts#L404)

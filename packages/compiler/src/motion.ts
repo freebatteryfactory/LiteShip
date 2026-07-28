@@ -39,6 +39,24 @@ export interface MotionScrollTimeline {
   readonly range: readonly [string, string];
 }
 
+/** Plan-specific truth about the last-resort CSS transition projection. */
+export interface MotionTransitionFallbackSupport {
+  /** A CSS transition can faithfully express one monotonic point-to-point segment only. */
+  readonly contract: 'single-segment-monotonic-only';
+  /** Whether this plan is exact in that tier or is reduced to its monotonic endpoint. */
+  readonly fidelity: 'faithful-single-segment' | 'monotonic-endpoint-only';
+  /** Properties whose authored path has more than one value-changing segment. */
+  readonly approximatedProperties: readonly string[];
+  /** Approximated properties that leave and later return to their initial value. */
+  readonly returningProperties: readonly string[];
+}
+
+/** Generated support metadata for the CSS motion tiers emitted by the compiler. */
+export interface MotionSupportMetadata {
+  readonly keyframes: { readonly fidelity: 'faithful' };
+  readonly transitionFallback: MotionTransitionFallbackSupport;
+}
+
 /** Input to {@link MotionCompiler.compile}. */
 export interface MotionCompileInput {
   readonly plan: CssMotionPlan;
@@ -60,6 +78,8 @@ export interface MotionCompileResult {
   readonly transition: string;
   /** `@supports (animation-timeline: …)` block; empty when no view timeline. */
   readonly scrollTimeline: string;
+  /** Generated fidelity receipt for the emitted keyframe and transition tiers. */
+  readonly support: MotionSupportMetadata;
 }
 
 function syntaxForTypedValue(value: TypedValue): string | null {
@@ -290,6 +310,35 @@ function transitionDecls(plan: CssMotionPlan, easingFn: string, delayMs?: number
     .join(', ');
 }
 
+function transitionFallbackSupport(plan: CssMotionPlan): MotionTransitionFallbackSupport {
+  const properties = plan.transitionProperty
+    .split(',')
+    .map((property) => property.trim())
+    .filter(Boolean);
+  const stops = [...plan.keyframes].sort((left, right) => left.offset - right.offset);
+  const approximatedProperties: string[] = [];
+  const returningProperties: string[] = [];
+
+  for (const property of properties) {
+    const values = stops
+      .map((stop) => stop.properties[property])
+      .filter((value): value is string => value !== undefined)
+      .filter((value, index, all) => index === 0 || value !== all[index - 1]);
+    if (values.length <= 2) continue;
+    approximatedProperties.push(property);
+    if (values[0] === values.at(-1) && values.slice(1, -1).some((value) => value !== values[0])) {
+      returningProperties.push(property);
+    }
+  }
+
+  return Object.freeze({
+    contract: 'single-segment-monotonic-only',
+    fidelity: approximatedProperties.length === 0 ? 'faithful-single-segment' : 'monotonic-endpoint-only',
+    approximatedProperties: Object.freeze(approximatedProperties),
+    returningProperties: Object.freeze(returningProperties),
+  });
+}
+
 function emitBaseRule(plan: CssMotionPlan): string {
   const fromDecls = fromStateDecls(plan);
   if (fromDecls.length === 0) return '';
@@ -435,6 +484,10 @@ function compile(input: MotionCompileInput): MotionCompileResult {
     startingStyle,
     transition,
     scrollTimeline: scrollTimelineCss,
+    support: Object.freeze({
+      keyframes: Object.freeze({ fidelity: 'faithful' }),
+      transitionFallback: transitionFallbackSupport(plan),
+    }),
   };
 }
 

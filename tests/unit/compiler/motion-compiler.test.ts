@@ -398,6 +398,47 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     expect(result.transition).not.toContain('opacity 250ms');
   });
 
+  test('returning motion emits an explicit monotonic-only fallback receipt while keyframes retain the arc', () => {
+    const plan: CssMotionPlan = {
+      ...revealCssPlan(),
+      properties: [{ property: 'opacity', from: { k: 'opacity', v: 0 }, to: { k: 'opacity', v: 0 } }],
+      transitionProperty: 'opacity',
+      durationMs: 1000,
+      keyframes: [
+        { offset: 0, properties: { opacity: '0' } },
+        { offset: 0.5, properties: { opacity: '1' } },
+        { offset: 1, properties: { opacity: '0' } },
+      ],
+    };
+
+    const result = MotionCompiler.compile({ plan });
+    expect(result.keyframes).toContain('  50% {\n    opacity: 1;');
+    expect(result.transition).toContain('opacity: 0;');
+    expect(result.support).toEqual({
+      keyframes: { fidelity: 'faithful' },
+      transitionFallback: {
+        contract: 'single-segment-monotonic-only',
+        fidelity: 'monotonic-endpoint-only',
+        approximatedProperties: ['opacity'],
+        returningProperties: ['opacity'],
+      },
+    });
+    expect(Object.isFrozen(result.support)).toBe(true);
+    expect(Object.isFrozen(result.support.transitionFallback.returningProperties)).toBe(true);
+  });
+
+  test('single-segment motion is faithfully represented by the transition fallback', () => {
+    expect(MotionCompiler.compile({ plan: revealCssPlan() }).support).toEqual({
+      keyframes: { fidelity: 'faithful' },
+      transitionFallback: {
+        contract: 'single-segment-monotonic-only',
+        fidelity: 'faithful-single-segment',
+        approximatedProperties: [],
+        returningProperties: [],
+      },
+    });
+  });
+
   test('seq transition fallback carries per-property delay — a later step starts at its seam', () => {
     // seq total = 200+600 = 800ms. Step A (opacity) owns [0, 0.25]; step B (x) owns
     // [0.25, 1] → duration 600ms after a 200ms delay, so the fallback holds x until B

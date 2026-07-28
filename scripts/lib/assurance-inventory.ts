@@ -19,6 +19,7 @@ import { rankOf, type AssuranceLevel } from '../../packages/gauntlet/src/assuran
 import { levelOf } from '../../packages/gauntlet/src/assurance-map.js';
 import { parseQualifiedBenchDistribution } from '../../packages/gauntlet/src/gates/bench-subjects.js';
 import { qualifyBenchDistribution } from '../../packages/audit/src/benchmark-subject-facts.js';
+import { benchmarkOwnerForSubject } from '../bench/contract-coverage.js';
 import { buildRepoIRForRepo } from '../../packages/cli/src/internal/repo-ir-gauntlet.js';
 import { isNodeTestEntrypoint } from '../../packages/cli/src/internal/test-corpus.js';
 import {
@@ -411,13 +412,8 @@ function qualifiedBenchmarkOwners(cwd: string): ReadonlyMap<string, ReadonlySet<
     if (qualification.issues.length > 0) continue;
     const fileOwners = owners.get(distribution.file) ?? new Set<string>();
     for (const subject of qualification.qualifyingSutSubjects) {
-      if (subject.origin.kind !== 'module') continue;
-      const owner = PACKAGE_CATALOG.find(
-        (record) =>
-          subject.origin.kind === 'module' &&
-          (subject.origin.specifier === record.name || subject.origin.specifier.startsWith(`${record.name}/`)),
-      );
-      if (owner !== undefined) fileOwners.add(owner.name);
+      const owner = benchmarkOwnerForSubject(PACKAGE_CATALOG, subject);
+      if (owner !== null) fileOwners.add(owner);
     }
     owners.set(distribution.file, fileOwners);
   }

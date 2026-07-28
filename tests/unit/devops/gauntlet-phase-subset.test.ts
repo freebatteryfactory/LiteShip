@@ -24,6 +24,7 @@ describe('gauntlet phase subset selection', () => {
       'lint',
       'lint:structural',
       'lockfile:gate',
+      'security:minimum',
       'prebuild:gate',
       'workflow-output:gate',
       'workspace-deps:gate',

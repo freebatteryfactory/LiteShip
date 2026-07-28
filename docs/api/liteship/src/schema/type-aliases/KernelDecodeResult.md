@@ -8,7 +8,7 @@
 
 > **KernelDecodeResult**\<`A`\> = `Result`\<`A`, readonly [`DecodeIssueView`](../interfaces/DecodeIssueView.md)[]\>
 
-Defined in: core/dist/schema/standard.d.ts:41
+Defined in: core/dist/schema/standard.d.ts:40
 
 A strict-decode outcome: the repo `Result` carrying a value or a fail-closed issue list.
 

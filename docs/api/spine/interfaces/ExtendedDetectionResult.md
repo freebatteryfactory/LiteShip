@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDetectionResult
 
-Defined in: [\_spine/detect.d.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L139)
+Defined in: [\_spine/detect.d.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L150)
 
 Detection result extended with motion and design-tier decisions.
 
@@ -20,7 +20,7 @@ Detection result extended with motion and design-tier decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [\_spine/detect.d.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L140)
+Defined in: [\_spine/detect.d.ts:151](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L151)
 
 #### Overrides
 
@@ -56,7 +56,7 @@ Defined in: [\_spine/detect.d.ts:92](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` **designTier**: [`DesignTier`](../type-aliases/DesignTier.md)
 
-Defined in: [\_spine/detect.d.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L141)
+Defined in: [\_spine/detect.d.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L152)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [\_spine/detect.d.ts:141](https://github.com/freebatteryfactory/Lite
 
 > `readonly` **motionTier**: [`MotionTier`](../type-aliases/MotionTier.md)
 
-Defined in: [\_spine/detect.d.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L142)
+Defined in: [\_spine/detect.d.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/detect.d.ts#L153)
 
 ***
 

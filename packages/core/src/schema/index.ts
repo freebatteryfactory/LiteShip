@@ -55,7 +55,14 @@ export type { JsonSchemaObject, JsonSchemaFragment } from './to-json-schema.js';
 
 // ── `~standard` conformance bridge ───────────────────────────────────────────
 export { toStandardSchema, standardResultOf, VENDOR } from './standard.js';
-export type { LiteshipStandardSchema, DecodeIssueView, KernelDecodeResult, SchemaDecoder } from './standard.js';
+export type {
+  LiteshipStandardSchema,
+  LiteshipStandardJsonSchema,
+  StandardJsonSchemaProjection,
+  DecodeIssueView,
+  KernelDecodeResult,
+  SchemaDecoder,
+} from './standard.js';
 
 // ── Moved-in kernels (core migration) — the effect-free schema neighbours that
 // now live under schema/: the branded id constructors + HLC brand (brands.ts),

@@ -7,6 +7,7 @@ import {
   renderEventProtocolHostProjection,
   renderWebEventProjection,
   validateEventProtocolRecords,
+  validateProjectedDetailReferences,
 } from '../../../scripts/lib/event-protocol-contract.js';
 
 const root = process.cwd();
@@ -65,5 +66,18 @@ describe('fleet event protocol projection', () => {
     expect(first).toBeDefined();
     expect(() => validateEventProtocolRecords([first!, { ...first!, owner: 'web' }])).toThrow(/duplicate/);
     expect(() => validateEventProtocolRecords([{ ...first!, producers: [] }])).toThrow(/no real producer/);
+  });
+
+  test('a projected payload type must exist in the target spine leaf', () => {
+    const record = {
+      ...collectEventProtocol(root)[0]!,
+      detail: 'import("./core.js").MissingDetail',
+    };
+    expect(() =>
+      validateProjectedDetailReferences([record], new Map([['./core.js', new Set(['ExistingDetail'])]])),
+    ).toThrow(/projects missing spine export \.\/core\.js\.MissingDetail/u);
+    expect(() =>
+      validateProjectedDetailReferences([record], new Map([['./core.js', new Set(['MissingDetail'])]])),
+    ).not.toThrow();
   });
 });

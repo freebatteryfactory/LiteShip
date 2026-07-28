@@ -24,7 +24,11 @@ import { VitestRunner } from './vitest-runner.js';
 import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
-import { buildCheckGovernanceFacts } from './check-governance.js';
+import {
+  applicationCheckGovernanceFacts,
+  buildCheckGovernanceFacts,
+  hasCheckGovernanceSurface,
+} from './check-governance.js';
 import { runPlumbScan } from './plumb-scan.js';
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
@@ -113,6 +117,13 @@ export function createNodeCommandContext(
     // every waiver).
     runGauntlet: async (globs) => {
       const now = new Date(wallClock.now());
+      // Registry coverage, negative controls, and testing-ledger waivers are
+      // governance facts owned by the LiteShip repository. A packed consumer
+      // still gets the real semantic gates over its own source, but must not be
+      // required to carry LiteShip's private repository ledger.
+      const governance = hasCheckGovernanceSurface(cwd)
+        ? buildCheckGovernanceFacts(cwd, now)
+        : applicationCheckGovernanceFacts();
       return litelaunchGauntlet(
         cwd,
         now,
@@ -121,7 +132,7 @@ export function createNodeCommandContext(
         opts.skipDetector,
         opts.earlyReturnDetector,
         undefined,
-        buildCheckGovernanceFacts(cwd, now),
+        governance,
       );
     },
     // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the

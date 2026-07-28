@@ -350,17 +350,17 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(browser).toContain('pnpm run test:e2e');
   });
 
-  it('runs Rust/WASM authority on pull requests when the impact plan requires it', () => {
+  it('runs Rust/WASM authority for every pull-request release candidate', () => {
     const rust = JOB_BLOCKS.get('rust-wasm-parity')!;
-    expect(rust).toContain(
-      "github.event_name != 'pull_request' || needs.plan.outputs.affected-rust-wasm-required == 'true'",
-    );
+    expect(rust).not.toContain("github.event_name != 'pull_request'");
+    expect(rust).not.toContain('affected-rust-wasm-required');
     expect(rust).toContain('needs: plan');
   });
 
-  it('keeps full parallel authority on pushes and serial authority on nightly/manual runs', () => {
+  it('keeps full parallel authority on pull requests and pushes, with serial authority nightly/manual', () => {
     const parallel = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
     expect(parallel).toContain("github.event_name == 'push'");
+    expect(parallel).toContain("github.event_name == 'pull_request'");
     expect(parallel).toContain("github.event_name == 'workflow_call'");
     const serial = JOB_BLOCKS.get('truth-linux')!;
     expect(serial).toContain("github.event_name == 'schedule'");
@@ -391,6 +391,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'truth-linux-parallel',
       'browser-e2e',
       'windows-smoke',
+      'macos-smoke',
+      'macos-browser',
       'rust-wasm-parity',
       'exhaustive-analysis',
       'exhaustive-mutation',
@@ -402,6 +404,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
     expect(summary).toContain('test "$SERIAL" = "success"');
     expect(summary).toContain('test "$PR_AFFECTED" = "success"');
     expect(summary).toContain('test "$PARALLEL" = "success"');
+    expect(summary).toContain('test "$MACOS" = "success"');
+    expect(summary).toContain('test "$MACOS_BROWSER" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_ANALYSIS" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_MUTATION" = "success"');
     expect(summary).toContain('test "$EXHAUSTIVE_MCDC" = "success"');
@@ -421,6 +425,8 @@ describe('(d) CI event tiers execute the intended authority', () => {
       'truth-linux-parallel',
       'browser-e2e',
       'windows-smoke',
+      'macos-smoke',
+      'macos-browser',
       'rust-wasm-parity',
       'exhaustive-analysis',
       'exhaustive-mutation',

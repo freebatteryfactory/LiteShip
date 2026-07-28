@@ -6,7 +6,7 @@
 
 # Interface: MotionCompileInput
 
-Defined in: compiler/dist/motion.d.ts:28
+Defined in: compiler/dist/motion.d.ts:46
 
 Input to [MotionCompiler.compile](../variables/MotionCompiler.md#compile).
 
@@ -16,7 +16,7 @@ Input to [MotionCompiler.compile](../variables/MotionCompiler.md#compile).
 
 > `readonly` `optional` **delayMs?**: `number`
 
-Defined in: compiler/dist/motion.d.ts:35
+Defined in: compiler/dist/motion.d.ts:53
 
 Stagger offset applied as animation/transition delay (#124).
 
@@ -26,7 +26,7 @@ Stagger offset applied as animation/transition delay (#124).
 
 > `readonly` `optional` **easing?**: [`MotionEasing`](../type-aliases/MotionEasing.md)
 
-Defined in: compiler/dist/motion.d.ts:30
+Defined in: compiler/dist/motion.d.ts:48
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: compiler/dist/motion.d.ts:30
 
 > `readonly` **plan**: [`CssMotionPlan`](../../motion/interfaces/CssMotionPlan.md)
 
-Defined in: compiler/dist/motion.d.ts:29
+Defined in: compiler/dist/motion.d.ts:47
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: compiler/dist/motion.d.ts:29
 
 > `readonly` `optional` **scrollTimeline?**: [`MotionScrollTimeline`](MotionScrollTimeline.md)
 
-Defined in: compiler/dist/motion.d.ts:33
+Defined in: compiler/dist/motion.d.ts:51
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: compiler/dist/motion.d.ts:33
 
 > `readonly` `optional` **spring?**: [`MotionSpringConfig`](MotionSpringConfig.md)
 
-Defined in: compiler/dist/motion.d.ts:31
+Defined in: compiler/dist/motion.d.ts:49
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: compiler/dist/motion.d.ts:31
 
 > `readonly` `optional` **viewTimeline?**: [`MotionViewTimeline`](MotionViewTimeline.md)
 
-Defined in: compiler/dist/motion.d.ts:32
+Defined in: compiler/dist/motion.d.ts:50

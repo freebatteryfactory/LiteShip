@@ -242,6 +242,28 @@ describe('PRECISION — the hard-vs-advisory Rice cut (name/contradiction HARD, 
     expect(findings).toHaveLength(0);
   });
 
+  it('does NOT advisory-flag bare `canonical` prose used as the ordinary authoritative adjective', () => {
+    const findings = claimPropertyGate.run(
+      memoryContext({
+        'packages/widget/src/registry.ts':
+          '/** Dispatcher built from the canonical command registry. */\nexport function createDispatcher(): object { return {}; }\n',
+      }),
+    );
+    expect(findings).toHaveLength(0);
+  });
+
+  it('still advisory-flags an explicit canonicalization prose claim without a confirmer', () => {
+    const findings = claimPropertyGate.run(
+      memoryContext({
+        'packages/widget/src/canon.ts':
+          '/** Returns canonicalized bytes for the input. */\nexport function encodeInput(): Uint8Array { return new Uint8Array(); }\n',
+      }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.severity).toBe('advisory');
+    expect(findings[0]?.title).toContain('Content-addressing claim');
+  });
+
   it('a NAME claim + its leading DOC of the SAME kind is ONE finding (deduped per declaration)', () => {
     // `/** A pure projection. */ function pureProject` claims purity by NAME and by DOC.
     // That is one claim about one symbol — emit it once (and, with the Date.now read,

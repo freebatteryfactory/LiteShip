@@ -52,4 +52,29 @@ describe('benchmark owner coverage projection', () => {
       status: 'uncovered',
     });
   });
+
+  it('attributes a qualified file-owned subject to its package without requiring a public API expansion', () => {
+    const web = PACKAGE_CATALOG.find((entry) => entry.name === '@liteship/web')!;
+    const distribution: BenchDistribution = {
+      name: 'web file-owned hot path',
+      file: 'tests/bench/web.bench.ts',
+      inputSize: 256,
+      shape: 'saturated-buffer',
+      replicates: 1,
+      subjects: [
+        {
+          role: 'sut',
+          origin: { kind: 'file', path: 'packages/web/src/stream/sse-pure.ts' },
+          symbol: 'applyOverflow',
+          binding: 'applyOverflow',
+        },
+      ],
+    };
+
+    expect(projectBenchmarkOwnerCoverage([web], [distribution], [])[0]).toMatchObject({
+      packageName: '@liteship/web',
+      distributionCount: 1,
+      status: 'covered',
+    });
+  });
 });

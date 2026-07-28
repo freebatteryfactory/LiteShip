@@ -26,9 +26,24 @@ import type {
   CheckPlatform,
   CheckProfile,
   CheckExecution,
+  CheckDefinition,
 } from './definition.js';
 import { CHECK_REGISTRY } from './registry.js';
 import type { CurePacket } from './cure-packet.js';
+
+function checkPlanValidation(detail: string): Error & {
+  readonly _tag: 'ValidationError';
+  readonly module: string;
+  readonly detail: string;
+} {
+  const module = 'check-plan.prerequisites';
+  return Object.assign(Error(`${module}: ${detail}`), {
+    name: 'ValidationError',
+    _tag: 'ValidationError' as const,
+    module,
+    detail,
+  });
+}
 
 /** One check as scheduled into a plan — the registry entry projected to what a run needs. */
 export interface PlannedCheck {
@@ -58,6 +73,8 @@ export interface PlannedCheck {
   readonly timeoutMs: number;
   /** Globs whose change invalidates this check's content-addressed verdict. */
   readonly inputs: readonly string[];
+  /** Check identities that must execute successfully before this row. */
+  readonly prerequisites: readonly string[];
 }
 
 /** A registry check dropped from a plan, with the exact applicability reason. */
@@ -151,12 +168,56 @@ export function planChecks(
   platform: CheckPlatform,
   context: CheckContext = 'repository',
 ): CheckPlan {
-  const inProfile = CHECK_REGISTRY.filter((check) => check.profiles.includes(profile));
+  return planChecksFromRegistry(CHECK_REGISTRY, profile, platform, context);
+}
+
+/**
+ * Pure registry projection used by {@link planChecks} and its adversarial tests.
+ * Profile members seed a prerequisite closure; depth-first projection places
+ * every producer before its consumers and fails closed on a dangling edge or
+ * cycle. Platform/context non-applicability propagates to dependants rather than
+ * allowing a consumer to run against a missing receipt.
+ */
+export function planChecksFromRegistry(
+  registry: readonly CheckDefinition[],
+  profile: CheckProfile,
+  platform: CheckPlatform,
+  context: CheckContext = 'repository',
+): CheckPlan {
+  const byId = new Map(registry.map((check) => [check.id, check] as const));
+  const ordered: CheckDefinition[] = [];
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (check: CheckDefinition, path: readonly string[]): void => {
+    if (visited.has(check.id)) return;
+    if (visiting.has(check.id)) {
+      throw checkPlanValidation(`check prerequisite cycle: ${[...path, check.id].join(' -> ')}`);
+    }
+    visiting.add(check.id);
+    for (const prerequisiteId of check.prerequisites) {
+      const prerequisite = byId.get(prerequisiteId);
+      if (prerequisite === undefined) {
+        throw checkPlanValidation(`check "${check.id}" references unknown prerequisite "${prerequisiteId}"`);
+      }
+      visit(prerequisite, [...path, check.id]);
+    }
+    visiting.delete(check.id);
+    visited.add(check.id);
+    ordered.push(check);
+  };
+  for (const check of registry) if (check.profiles.includes(profile)) visit(check, []);
+
   const checks: PlannedCheck[] = [];
   const skipped: SkippedCheck[] = [];
-  for (const check of inProfile) {
-    if (!check.contexts.includes(context)) {
+  const available = new Map<string, boolean>();
+  for (const check of ordered) {
+    const unavailablePrerequisite = check.prerequisites.find((id) => available.get(id) !== true);
+    if (unavailablePrerequisite !== undefined) {
+      skipped.push({ id: check.id, reason: `prerequisite ${unavailablePrerequisite} is unavailable` });
+      available.set(check.id, false);
+    } else if (!check.contexts.includes(context)) {
       skipped.push({ id: check.id, reason: `not applicable in ${context} context` });
+      available.set(check.id, false);
     } else if (check.platforms.includes(platform)) {
       checks.push({
         id: check.id,
@@ -172,9 +233,12 @@ export function planChecks(
         cacheable: check.cache === 'content-addressed',
         timeoutMs: check.timeoutMs,
         inputs: check.inputs,
+        prerequisites: check.prerequisites,
       });
+      available.set(check.id, true);
     } else {
       skipped.push({ id: check.id, reason: `not supported on ${platform}` });
+      available.set(check.id, false);
     }
   }
   const estimatedMs = checks.reduce((sum, check) => sum + check.timeoutMs, 0);

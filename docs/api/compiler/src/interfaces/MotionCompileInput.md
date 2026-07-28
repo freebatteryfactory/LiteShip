@@ -6,7 +6,7 @@
 
 # Interface: MotionCompileInput
 
-Defined in: [compiler/src/motion.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L43)
+Defined in: [compiler/src/motion.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L61)
 
 Input to [MotionCompiler.compile](../variables/MotionCompiler.md#compile).
 
@@ -16,7 +16,7 @@ Input to [MotionCompiler.compile](../variables/MotionCompiler.md#compile).
 
 > `readonly` `optional` **delayMs?**: `number`
 
-Defined in: [compiler/src/motion.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L50)
+Defined in: [compiler/src/motion.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L68)
 
 Stagger offset applied as animation/transition delay (#124).
 
@@ -26,7 +26,7 @@ Stagger offset applied as animation/transition delay (#124).
 
 > `readonly` `optional` **easing?**: [`MotionEasing`](../type-aliases/MotionEasing.md)
 
-Defined in: [compiler/src/motion.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L45)
+Defined in: [compiler/src/motion.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L63)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [compiler/src/motion.ts:45](https://github.com/freebatteryfactory/Li
 
 > `readonly` **plan**: [`CssMotionPlan`](../../../liteship/src/motion/interfaces/CssMotionPlan.md)
 
-Defined in: [compiler/src/motion.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L44)
+Defined in: [compiler/src/motion.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L62)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [compiler/src/motion.ts:44](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **scrollTimeline?**: [`MotionScrollTimeline`](MotionScrollTimeline.md)
 
-Defined in: [compiler/src/motion.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L48)
+Defined in: [compiler/src/motion.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L66)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [compiler/src/motion.ts:48](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **spring?**: [`MotionSpringConfig`](MotionSpringConfig.md)
 
-Defined in: [compiler/src/motion.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L46)
+Defined in: [compiler/src/motion.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L64)
 
 ***
 
@@ -58,4 +58,4 @@ Defined in: [compiler/src/motion.ts:46](https://github.com/freebatteryfactory/Li
 
 > `readonly` `optional` **viewTimeline?**: [`MotionViewTimeline`](MotionViewTimeline.md)
 
-Defined in: [compiler/src/motion.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L47)
+Defined in: [compiler/src/motion.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L65)

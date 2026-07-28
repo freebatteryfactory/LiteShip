@@ -76,8 +76,8 @@ describe('REAL REPO — detectSkipsAST over the whole tests/ tree', () => {
 });
 
 describe('F2 — structural conditionality is the sanctioning proof', () => {
-  const FILE = 'tests/smoke/intro-render.test.ts';
-  const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});";
+  const FILE = 'tests/integration/cli/scene-render.test.ts';
+  const SITE = 'const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;';
 
   it('an UNCONDITIONAL it.skip("later") is non-sanctionable via structure', () => {
     const [m] = detectSkipsAST('it.skip("later", () => {});');

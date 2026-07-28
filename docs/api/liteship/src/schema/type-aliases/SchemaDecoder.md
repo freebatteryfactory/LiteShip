@@ -8,7 +8,7 @@
 
 > **SchemaDecoder**\<`A`, `I`\> = (`schema`, `value`) => [`KernelDecodeResult`](KernelDecodeResult.md)\<`A`\>
 
-Defined in: core/dist/schema/standard.d.ts:43
+Defined in: core/dist/schema/standard.d.ts:42
 
 A strict decoder: schema + `unknown` → typed-or-issues (the shape of `decode`).
 

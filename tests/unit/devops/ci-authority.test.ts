@@ -7,7 +7,7 @@ const README = readFileSync(resolve(import.meta.dirname, '../../..', 'README.md'
 const SUPPORT_MATRIX = README.slice(README.indexOf('## Support matrix'), README.indexOf('## Documentation'));
 
 describe('CI authority requirements', () => {
-  it('selects only the addressed PR closure and conditionally requires browser authority', () => {
+  it('requires the full release candidate on every PR while retaining affected fast feedback', () => {
     expect(
       requiredAuthorityJobs({
         event: 'pull_request',
@@ -15,7 +15,18 @@ describe('CI authority requirements', () => {
         browserAffected: false,
         rustWasmAffected: false,
       }),
-    ).toEqual(['format', 'pr-affected', 'pr-windows-affected']);
+    ).toEqual([
+      'browser-e2e',
+      'format',
+      'macos-browser',
+      'macos-smoke',
+      'pr-affected',
+      'pr-windows-affected',
+      'rust-wasm-parity',
+      'security-audit',
+      'truth-linux-parallel',
+      'windows-smoke',
+    ]);
     expect(
       requiredAuthorityJobs({
         event: 'pull_request',
@@ -26,21 +37,45 @@ describe('CI authority requirements', () => {
     ).toContain('pr-browser-affected');
   });
 
-  it('requires Rust/WASM authority for a pull request that changes the kernel', () => {
+  it('requires Rust/WASM for every release candidate and affected browser feedback only when selected', () => {
     expect(
       requiredAuthorityJobs({
         event: 'pull_request',
         ref: 'refs/pull/161/merge',
-        browserAffected: false,
+        browserAffected: true,
         rustWasmAffected: true,
       }),
-    ).toContain('rust-wasm-parity');
+    ).toEqual(
+      expect.arrayContaining(['rust-wasm-parity', 'truth-linux-parallel', 'browser-e2e', 'pr-browser-affected']),
+    );
   });
 
-  it('requires parallel release, browser, Windows, and Rust/WASM authority on pushes', () => {
+  it('requires the same full candidate authority on pushes and pull requests', () => {
+    const pullRequest = requiredAuthorityJobs({
+      event: 'pull_request',
+      ref: 'refs/pull/161/merge',
+      browserAffected: false,
+      rustWasmAffected: false,
+    }).filter((job) => !job.startsWith('pr-'));
+    const push = requiredAuthorityJobs({
+      event: 'push',
+      ref: 'refs/heads/main',
+      browserAffected: false,
+      rustWasmAffected: false,
+    });
+    expect(pullRequest).toEqual(push);
     expect(
-      requiredAuthorityJobs({ event: 'push', ref: 'refs/heads/main', browserAffected: false, rustWasmAffected: false }),
-    ).toEqual(['browser-e2e', 'format', 'rust-wasm-parity', 'truth-linux-parallel', 'windows-smoke']);
+      push,
+    ).toEqual([
+      'browser-e2e',
+      'format',
+      'macos-browser',
+      'macos-smoke',
+      'rust-wasm-parity',
+      'security-audit',
+      'truth-linux-parallel',
+      'windows-smoke',
+    ]);
   });
 
   it('requires serial and exhaustive authority for manual/nightly runs and tags', () => {
@@ -88,7 +123,7 @@ describe('CI authority requirements', () => {
     for (const job of new Set(matrices.flat())) {
       expect(SUPPORT_MATRIX, `README support matrix omitted CI authority job ${job}`).toContain(`\`${job}\``);
     }
-    expect(SUPPORT_MATRIX).not.toContain('Every push and pull request runs the full');
-    expect(SUPPORT_MATRIX).not.toContain('macos-smoke` job runs on every push and pull request');
+    expect(SUPPORT_MATRIX).toContain('Every push and pull request runs the full release candidate');
+    expect(SUPPORT_MATRIX).toContain('`macos-smoke` and `macos-browser`');
   });
 });

@@ -68,6 +68,7 @@ interface RepositoryCheckRowBase {
   readonly command: string;
   readonly inputs: readonly string[];
   readonly profiles: readonly CheckProfile[];
+  readonly prerequisites?: readonly string[];
   readonly platforms: readonly CheckPlatform[];
   readonly timeoutMs: number;
   readonly cache: 'content-addressed' | 'none';
@@ -114,6 +115,7 @@ function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   if (row.authority === 'blocking') {
     return {
       ...row,
+      prerequisites: row.prerequisites ?? [],
       execution,
       contexts: ['repository'],
       authority: 'blocking',
@@ -123,6 +125,7 @@ function materializeRepositoryCheck(row: RepositoryCheckRow): CheckDefinition {
   const { negativeControl: _unused, ...advisory } = row;
   return {
     ...advisory,
+    prerequisites: row.prerequisites ?? [],
     execution,
     contexts: ['repository'],
     authority: 'advisory',
@@ -194,6 +197,37 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     authority: 'blocking',
     negativeControl: 'tests/unit/meta/lockfile-freeze-control.test.ts',
     remediation: "run 'pnpm install' to re-resolve, then commit the updated pnpm-lock.yaml.",
+  },
+  {
+    id: 'check/security-minimum',
+    title: 'Security-sensitive dependency floors',
+    claim: 'Every governed security override and resolved lockfile instance meets its fixed minimum version.',
+    owner: 'scripts/lib/security-audit-contract.ts',
+    command: 'pnpm run security:minimum',
+    inputs: ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml'],
+    profiles: ['quick', 'full', 'release'],
+    platforms: ['linux', 'darwin', 'win32'],
+    timeoutMs: 30_000,
+    cache: 'content-addressed',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/security-audit-contract.test.ts',
+    remediation: 'raise the canonical override to the governed fixed version and regenerate pnpm-lock.yaml.',
+  },
+  {
+    id: 'check/security-audit',
+    title: 'Live package-registry vulnerability audit',
+    claim: 'The current lockfile has no high- or critical-severity advisory in the live pnpm registry receipt.',
+    owner: 'scripts/security-audit.ts',
+    command: 'pnpm run security:audit',
+    inputs: ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc'],
+    profiles: ['full', 'release'],
+    platforms: ['linux'],
+    timeoutMs: 120_000,
+    cache: 'none',
+    authority: 'blocking',
+    negativeControl: 'tests/unit/devops/security-audit-contract.test.ts',
+    remediation:
+      'inspect reports/pnpm-audit.json, update the owning dependency or override, and regenerate the lockfile.',
   },
   {
     id: 'check/prebuild-dist-free',
@@ -450,6 +484,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     command: 'pnpm run runtime:gate',
     inputs: [SRC_GLOB, 'scripts/runtime-gate.ts'],
     profiles: ['full', 'release'],
+    prerequisites: ['check/report-adaptive-scan'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
     cache: 'none',
@@ -540,6 +575,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     command: 'pnpm run feedback:verify',
     inputs: [SRC_GLOB, 'scripts/feedback-verify.ts'],
     profiles: ['full', 'release'],
+    prerequisites: ['check/report-adaptive-scan'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
     cache: 'none',
@@ -549,18 +585,27 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
   },
   {
     id: 'check/flex-verify',
-    title: 'Flex policy verification',
-    claim: 'The bench flex policy (accepted noise labels + thresholds) is internally consistent.',
+    title: '10/10 acceptance roll-up',
+    claim:
+      'The static acceptance laws hold and every expensive dimension authority passed earlier in the typed check DAG.',
     owner: 'scripts/flex-verify.ts',
-    command: 'pnpm run flex:verify',
-    inputs: ['scripts/flex-verify.ts', 'scripts/bench/flex-policy.ts'],
+    command: 'pnpm run flex:verify -- --prechecked',
+    inputs: ['scripts/flex-verify.ts', 'scripts/bench/flex-policy.ts', 'packages/command/src/checks/registry.ts'],
     profiles: ['full', 'release'],
+    prerequisites: [
+      'check/lint',
+      'check/test',
+      'check/bench-gate',
+      'check/feedback-verify',
+      'check/docs',
+      'check/capsule-verify',
+    ],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
     cache: 'none',
     authority: 'blocking',
     negativeControl: 'tests/unit/devops/flex-policy-negative-control.test.ts',
-    remediation: 'fix the flex-policy inconsistency the verifier reported.',
+    remediation: 'fix the failed prerequisite or static acceptance law reported by the roll-up.',
   },
   {
     id: 'check/devx',
@@ -602,6 +647,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     command: 'pnpm run audit',
     inputs: [SRC_GLOB, 'scripts/audit/**/*.ts'],
     profiles: ['full', 'release'],
+    prerequisites: ['check/report-runtime-seams'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 180_000,
     cache: 'none',
@@ -616,6 +662,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     command: 'pnpm run report:runtime-seams',
     inputs: [SRC_GLOB, 'scripts/report-runtime-seams.ts'],
     profiles: ['release'],
+    prerequisites: ['check/coverage', 'check/bench-gate', 'check/bench-reality'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
     cache: 'none',
@@ -630,6 +677,7 @@ const REPOSITORY_CHECKS: readonly RepositoryCheckRow[] = [
     command: 'pnpm run report:adaptive-scan',
     inputs: [SRC_GLOB, 'scripts/report-adaptive-scan.ts'],
     profiles: ['release'],
+    prerequisites: ['check/report-runtime-seams', 'check/audit', 'check/bench-reality'],
     platforms: ['linux', 'darwin', 'win32'],
     timeoutMs: 120_000,
     cache: 'none',
@@ -987,6 +1035,7 @@ const APP_BUILD_CHECK: CheckDefinition = {
   execution: { kind: 'cli-command', argv: ['build'] },
   inputs: ['package.json', 'liteship.config.ts', 'astro.config.*', 'vite.config.*', 'src/**'],
   profiles: ['quick'],
+  prerequisites: [],
   contexts: ['application'],
   platforms: ['linux', 'darwin', 'win32'],
   timeoutMs: 300_000,

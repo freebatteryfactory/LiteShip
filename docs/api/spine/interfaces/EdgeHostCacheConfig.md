@@ -14,7 +14,7 @@ TTL, tags, and cache implementation used by an edge host.
 
 ### assetUrlsByTier?
 
-> `readonly` `optional` **assetUrlsByTier?**: `Readonly`\<`Partial`\<`Record`\<`"none:minimal"` \| `"none:standard"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:minimal"` \| `"transitions:standard"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:minimal"` \| `"animations:standard"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:minimal"` \| `"physics:standard"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:minimal"` \| `"compute:standard"` \| `"compute:enhanced"` \| `"compute:rich"`, `string`\>\>\>
+> `readonly` `optional` **assetUrlsByTier?**: `Readonly`\<`Partial`\<`Record`\<`"none:rich"` \| `"none:minimal"` \| `"none:standard"` \| `"none:enhanced"` \| `"transitions:rich"` \| `"transitions:minimal"` \| `"transitions:standard"` \| `"transitions:enhanced"` \| `"animations:rich"` \| `"animations:minimal"` \| `"animations:standard"` \| `"animations:enhanced"` \| `"physics:rich"` \| `"physics:minimal"` \| `"physics:standard"` \| `"physics:enhanced"` \| `"compute:rich"` \| `"compute:minimal"` \| `"compute:standard"` \| `"compute:enhanced"`, `string`\>\>\>
 
 Defined in: [\_spine/edge.d.ts:268](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L268)
 
@@ -64,7 +64,7 @@ Defined in: [\_spine/edge.d.ts:265](https://github.com/freebatteryfactory/LiteSh
 
 ### precompiled?
 
-> `readonly` `optional` **precompiled?**: `Readonly`\<`Partial`\<`Record`\<`"none:minimal"` \| `"none:standard"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:minimal"` \| `"transitions:standard"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:minimal"` \| `"animations:standard"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:minimal"` \| `"physics:standard"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:minimal"` \| `"compute:standard"` \| `"compute:enhanced"` \| `"compute:rich"`, [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
+> `readonly` `optional` **precompiled?**: `Readonly`\<`Partial`\<`Record`\<`"none:rich"` \| `"none:minimal"` \| `"none:standard"` \| `"none:enhanced"` \| `"transitions:rich"` \| `"transitions:minimal"` \| `"transitions:standard"` \| `"transitions:enhanced"` \| `"animations:rich"` \| `"animations:minimal"` \| `"animations:standard"` \| `"animations:enhanced"` \| `"physics:rich"` \| `"physics:minimal"` \| `"physics:standard"` \| `"physics:enhanced"` \| `"compute:rich"` \| `"compute:minimal"` \| `"compute:standard"` \| `"compute:enhanced"`, [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
 
 Defined in: [\_spine/edge.d.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/edge.d.ts#L267)
 

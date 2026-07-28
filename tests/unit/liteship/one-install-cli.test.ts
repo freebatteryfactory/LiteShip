@@ -53,92 +53,104 @@ async function pack(packageDir: string, destination: string): Promise<string> {
   return join(destination, name!);
 }
 
-beforeAll(async () => {
-  scratchRoot = mkdtempSync(join(tmpdir(), 'liteship-one-install-'));
-  // Plant the Windows CI spelling that npm/pnpm must open literally. This is
-  // intentionally part of every real install below, not a string-only fixture.
-  scratch = join(scratchRoot, 'RUNNER~1');
-  mkdirSync(scratch);
-  const packages = join(scratch, 'packages');
-  const tarballs = join(scratch, 'tarballs');
-  const cli = join(packages, 'cli');
-  const mcpServer = join(packages, 'mcp-server');
-  const facade = join(packages, 'liteship');
-  const noBinFacade = join(packages, 'liteship-no-bin');
-  mkdirSync(join(facade, 'bin'), { recursive: true });
-  mkdirSync(noBinFacade, { recursive: true });
-  mkdirSync(join(cli, 'bin'), { recursive: true });
-  mkdirSync(mcpServer, { recursive: true });
-  mkdirSync(tarballs, { recursive: true });
+beforeAll(
+  async () => {
+    scratchRoot = mkdtempSync(join(tmpdir(), 'liteship-one-install-'));
+    // Plant the Windows CI spelling that npm/pnpm must open literally. This is
+    // intentionally part of every real install below, not a string-only fixture.
+    scratch = join(scratchRoot, 'RUNNER~1');
+    mkdirSync(scratch);
+    const packages = join(scratch, 'packages');
+    const tarballs = join(scratch, 'tarballs');
+    const cli = join(packages, 'cli');
+    const mcpServer = join(packages, 'mcp-server');
+    const facade = join(packages, 'liteship');
+    const noBinFacade = join(packages, 'liteship-no-bin');
+    mkdirSync(join(facade, 'bin'), { recursive: true });
+    mkdirSync(noBinFacade, { recursive: true });
+    mkdirSync(join(cli, 'bin'), { recursive: true });
+    mkdirSync(mcpServer, { recursive: true });
+    mkdirSync(tarballs, { recursive: true });
 
-  writeJson(join(cli, 'package.json'), {
-    name: '@liteship/cli',
-    version: '1.0.0',
-    type: 'module',
-    exports: './index.js',
-  });
-  writeFileSync(
-    join(cli, 'index.js'),
-    [
-      'export async function run(args, deps = {}) {',
-      "  if (args[0] === 'mcp') { const server = await deps.importMcpServer(); const handle = await server.start(); await handle.done; return 0; }",
-      "  if (args[0] === 'lsp') { const server = await deps.importMcpServer(); await server.runLspStdio(); return 0; }",
-      "  process.stdout.write(JSON.stringify({ owner: '@liteship/cli', args }) + '\\n');",
-      '  return 0;',
-      '}',
-      '',
-    ].join('\n'),
-  );
-  writeFileSync(
-    join(cli, 'bin/liteship.mjs'),
-    "#!/usr/bin/env node\nimport { run } from '../index.js';\nprocess.exit(await run(process.argv.slice(2)));\n",
-  );
-  cliTarball = await pack(cli, tarballs);
+    writeJson(join(cli, 'package.json'), {
+      name: '@liteship/cli',
+      version: '1.0.0',
+      type: 'module',
+      exports: './index.js',
+    });
+    writeFileSync(
+      join(cli, 'index.js'),
+      [
+        'export async function run(args, deps = {}) {',
+        "  if (args[0] === 'mcp') { const server = await deps.importMcpServer(); const handle = await server.start(); await handle.done; return 0; }",
+        "  if (args[0] === 'lsp') { const server = await deps.importMcpServer(); await server.runLspStdio(); return 0; }",
+        "  process.stdout.write(JSON.stringify({ owner: '@liteship/cli', args }) + '\\n');",
+        '  return 0;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    writeFileSync(
+      join(cli, 'bin/liteship.mjs'),
+      "#!/usr/bin/env node\nimport { run } from '../index.js';\nprocess.exit(await run(process.argv.slice(2)));\n",
+    );
+    cliTarball = await pack(cli, tarballs);
 
-  writeJson(join(mcpServer, 'package.json'), {
-    name: '@liteship/mcp-server',
-    version: '1.0.0',
-    type: 'module',
-    exports: './index.js',
-  });
-  writeFileSync(
-    join(mcpServer, 'index.js'),
-    [
-      "import { writeFileSync } from 'node:fs';",
-      "import { join } from 'node:path';",
-      'export async function start() {',
-      "  process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'mcp' }) + '\\n');",
-      "  const done = new Promise((resolve) => setTimeout(() => { writeFileSync(join(process.cwd(), '.mcp-lifecycle-done'), 'done'); resolve(); }, 20));",
-      "  return { transport: 'stdio', done, stop: async () => {} };",
-      '}',
-      "export async function runLspStdio() { process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'lsp' }) + '\\n'); }",
-      '',
-    ].join('\n'),
-  );
-  mcpServerTarball = await pack(mcpServer, tarballs);
+    writeJson(join(mcpServer, 'package.json'), {
+      name: '@liteship/mcp-server',
+      version: '1.0.0',
+      type: 'module',
+      exports: './index.js',
+    });
+    writeFileSync(
+      join(mcpServer, 'index.js'),
+      [
+        "import { writeFileSync } from 'node:fs';",
+        "import { join } from 'node:path';",
+        'export async function start() {',
+        "  process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'mcp' }) + '\\n');",
+        "  const done = new Promise((resolve) => setTimeout(() => { writeFileSync(join(process.cwd(), '.mcp-lifecycle-done'), 'done'); resolve(); }, 20));",
+        "  return { transport: 'stdio', done, stop: async () => {} };",
+        '}',
+        "export async function runLspStdio() { process.stdout.write(JSON.stringify({ owner: '@liteship/mcp-server', command: 'lsp' }) + '\\n'); }",
+        '',
+      ].join('\n'),
+    );
+    mcpServerTarball = await pack(mcpServer, tarballs);
 
-  writeJson(join(facade, 'package.json'), {
-    name: 'liteship',
-    version: '1.0.0',
-    type: 'module',
-    bin: { liteship: './bin/liteship.mjs' },
-    files: ['bin'],
-    dependencies: { '@liteship/cli': '^1.0.0', '@liteship/mcp-server': '^1.0.0' },
-  });
-  copyFileSync(resolve(ROOT, 'packages/liteship/bin/liteship.mjs'), join(facade, 'bin/liteship.mjs'));
-  facadeTarball = await pack(facade, tarballs);
+    writeJson(join(facade, 'package.json'), {
+      name: 'liteship',
+      version: '1.0.0',
+      type: 'module',
+      bin: { liteship: './bin/liteship.mjs' },
+      files: ['bin'],
+      dependencies: { '@liteship/cli': '^1.0.0', '@liteship/mcp-server': '^1.0.0' },
+    });
+    copyFileSync(resolve(ROOT, 'packages/liteship/bin/liteship.mjs'), join(facade, 'bin/liteship.mjs'));
+    facadeTarball = await pack(facade, tarballs);
 
-  writeJson(join(noBinFacade, 'package.json'), {
-    name: 'liteship',
-    version: '1.0.1',
-    type: 'module',
-    dependencies: { '@liteship/cli': '^1.0.0' },
-  });
-  noBinFacadeTarball = await pack(noBinFacade, tarballs);
-});
+    writeJson(join(noBinFacade, 'package.json'), {
+      name: 'liteship',
+      version: '1.0.1',
+      type: 'module',
+      dependencies: { '@liteship/cli': '^1.0.0' },
+    });
+    noBinFacadeTarball = await pack(noBinFacade, tarballs);
+  },
+  // Four real package-manager pack subprocesses are shared by the npm and pnpm
+  // product proofs. Under the full corpus they compete with other workers, so
+  // use the same host-scaled budget as the install assertions instead of
+  // Vitest's unit-speed 20-second hook default.
+  scaledTimeout(60_000),
+);
 
 afterAll(() => {
-  if (scratchRoot) rmSync(scratchRoot, { recursive: true, force: true });
+  if (scratchRoot) {
+    // Windows scanners can retain a just-closed package tarball briefly. These
+    // bounded filesystem retries affect cleanup only; no product command or
+    // assertion is retried.
+    rmSync(scratchRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  }
 });
 
 async function prove(manager: Manager): Promise<void> {

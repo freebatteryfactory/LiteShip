@@ -8,7 +8,8 @@
  *  1. The PURE scan primitives over a real temp fixture tree (deterministic, no
  *     mocks): `findViolations` (banned-pattern hits with repo-relative slash-
  *     normalized file + 1-based line + trimmed content; the `dist`/`node_modules`/
- *     `.d.ts` skips; exact/subtree exemptions; the missing-scoped-dir → empty branch)
+ *     `.d.ts` skips; exact/subtree exemptions; the explicitly admitted
+ *     missing-scoped-dir branch; and non-ENOENT I/O propagation)
  *     and `expectedLineEnding`'s precedence / binary / no-match branches.
  *
  *  2. The ADAPTER projection: with the heavy `@liteship/audit`-backed scan mocked, the
@@ -120,6 +121,18 @@ describe('findViolations — banned-pattern scan (real fixture tree)', () => {
       pattern: /bannedToken/,
     };
     expect(findViolations(inv, root)).toEqual([]);
+  });
+
+  it('refuses a malformed scope instead of broadening fail-soft beyond an absent declared root', () => {
+    write('not-a-directory', 'ordinary file');
+    const inv = {
+      name: 'NO_BANNED',
+      message: 'no banned token',
+      dirs: ['not-a-directory'],
+      pattern: /bannedToken/,
+    };
+
+    expect(() => findViolations(inv, root)).toThrow(/check-invariants\.readdir/u);
   });
 
   it('treats generated CLI fragments as packaged data, while their authored owners remain independently guarded', () => {

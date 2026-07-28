@@ -63,6 +63,10 @@ function healthyComplexityEntries(
       sizes: [16, 32, 64, 128, 256],
       coefficientOfVariation: 0.05,
       measurement: { replicates: 7 },
+      replicateSamplesNs: [16, 32, 64, 128, 256].map((size) => ({
+        size,
+        samples: [100, 101, 99, 102, 100, 101, 99],
+      })),
     }));
 }
 
@@ -361,13 +365,28 @@ describe('THE COMPLEXITY-CLASS LAW — a hot path must not regress its class', (
     const defects = [
       { ...target, sizes: [16, 32, 64, 128] },
       { ...target, sizes: [16, 32, 48, 96, 192] },
-      { ...target, measurement: { replicates: 6 } },
+      {
+        ...target,
+        measurement: { replicates: 6 },
+        replicateSamplesNs: target.replicateSamplesNs.map((entry) => ({ ...entry, samples: entry.samples.slice(0, 6) })),
+      },
       { ...target, coefficientOfVariation: 0.26 },
     ];
     const expected = ['insufficient-size-sweep', 'invalid-size-sweep', 'under-replicated', 'unstable-variance'];
 
     for (let index = 0; index < defects.length; index++) {
-      const entries = [defects[index]!, ...baseline.slice(1)];
+      const defect = defects[index]!;
+      const replicates = defect.measurement.replicates;
+      const entries = [
+        {
+          ...defect,
+          replicateSamplesNs: defect.sizes.map((size) => ({
+            size,
+            samples: Array.from({ length: replicates }, (_, sample) => 100 + (sample % 3)),
+          })),
+        },
+        ...baseline.slice(1),
+      ];
       const findings = performanceContractsGate.run(
         memoryContext({
           'benchmarks/distributions.json': DISTRIBUTIONS,

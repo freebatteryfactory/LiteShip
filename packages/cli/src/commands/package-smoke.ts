@@ -53,8 +53,10 @@ import {
 } from '../internal/one-install-cost-evidence.js';
 import { PACKAGE_METADATA_CATALOG } from '../internal/package-metadata-catalog.js';
 import {
+  buildOneInstallCostDeltaLedger,
   buildOneInstallCostBaseline,
   ONE_INSTALL_COST_BASELINE_PATH,
+  ONE_INSTALL_COST_DELTA_PATH,
   ONE_INSTALL_COST_REPORT_PATH,
   ONE_INSTALL_COST_UPDATE_ENV,
   oneInstallCostFindings,
@@ -833,9 +835,27 @@ export async function runPackageSmokeScan(
     const costBaselineRelative = ONE_INSTALL_COST_BASELINE_PATH;
     await mkdir(join(root, 'benchmarks'), { recursive: true });
     await writeFile(join(root, costReportRelative), `${JSON.stringify(costReport, null, 2)}\n`);
+    const existingBaseline = existsSync(join(root, costBaselineRelative))
+      ? parseOneInstallCostBaseline(JSON.parse(readFileSync(join(root, costBaselineRelative), 'utf8')) as unknown)
+      : undefined;
+    const deltaLedger =
+      existingBaseline === undefined ? undefined : buildOneInstallCostDeltaLedger(costReport, existingBaseline);
+    if (
+      deltaLedger !== undefined &&
+      (deltaLedger.candidateId !== deltaLedger.baselineId || !existsSync(join(root, ONE_INSTALL_COST_DELTA_PATH)))
+    ) {
+      await writeFile(join(root, ONE_INSTALL_COST_DELTA_PATH), `${JSON.stringify(deltaLedger, null, 2)}\n`);
+      stepOk(`one-install cost delta recorded -> ${ONE_INSTALL_COST_DELTA_PATH}`);
+    }
     if (process.env[ONE_INSTALL_COST_UPDATE_ENV] === '1') {
       const baseline = buildOneInstallCostBaseline(costReport);
       await writeFile(join(root, costBaselineRelative), `${JSON.stringify(baseline, null, 2)}\n`);
+      if (deltaLedger !== undefined && deltaLedger.candidateId !== deltaLedger.baselineId) {
+        await writeFile(
+          join(root, ONE_INSTALL_COST_DELTA_PATH),
+          `${JSON.stringify({ ...deltaLedger, admission: 'accepted' }, null, 2)}\n`,
+        );
+      }
       stepOk(`one-install cost baseline updated at ${baseline.baselineId} -> ${costBaselineRelative}`);
     } else {
       if (!existsSync(join(root, costBaselineRelative))) {
@@ -844,9 +864,7 @@ export async function runPackageSmokeScan(
           `one-install cost baseline is missing: ${costBaselineRelative} (regenerate explicitly with ${ONE_INSTALL_COST_UPDATE_ENV}=1)`,
         );
       }
-      const baseline = parseOneInstallCostBaseline(
-        JSON.parse(readFileSync(join(root, costBaselineRelative), 'utf8')) as unknown,
-      );
+      const baseline = existingBaseline!;
       const findings = oneInstallCostFindings(costReport, baseline);
       if (findings.length > 0) {
         throw IntegrityError(

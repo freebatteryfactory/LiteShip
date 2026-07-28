@@ -5,7 +5,7 @@
  * @module
  */
 // PROVES: INV-ROSTER-SINGLE-SOURCE
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defaultAnalyzableArtifacts } from '@liteship/audit';
@@ -257,16 +257,14 @@ describe('PACKAGE_CATALOG negative controls', () => {
     'rejects one stale generated projection without touching the checkout',
     () => {
       const source = new Map(renderGeneratedProjections());
-      for (const path of [
-        'ARCHITECTURE.md',
-        'PACKAGE-SURFACES.md',
-        'AGENTS.md',
-        'packages/liteship/src/package-roster.generated.ts',
-      ]) {
-        source.set(path, readFileSync(resolve(REPO, path), 'utf8'));
-      }
       source.set('scripts/ci/publish-roster.json', '{"stale":true}\n');
-      expect(collectGeneratedProjectionDrift((path) => source.get(path))).toEqual([
+      const readProjection = (path: string): string | undefined => {
+        const rendered = source.get(path);
+        if (rendered !== undefined) return rendered;
+        const absolute = resolve(REPO, path);
+        return existsSync(absolute) ? readFileSync(absolute, 'utf8') : undefined;
+      };
+      expect(collectGeneratedProjectionDrift(readProjection)).toEqual([
         expect.objectContaining({ copy: 'scripts/ci/publish-roster.json' }),
       ]);
     },

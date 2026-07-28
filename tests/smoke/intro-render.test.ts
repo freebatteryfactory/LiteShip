@@ -19,9 +19,9 @@
  *     can resolve `@liteship/scene` from a sibling-of-packages location.
  *   - The compile/render/ffmpeg chain is unchanged either way.
  *
- * Skipped when the shared libx264 render probe fails (ffmpeg-free,
- * missing binary, etc.) so machines without a CI-capable ffmpeg don't
- * false-fail or hang — see `liteship doctor` / tests/helpers/ffmpeg.ts.
+ * This repository smoke requires the declared ffmpeg+libx264 toolchain. A host
+ * without it is an environment failure reported by `liteship doctor`, not a
+ * silently skipped product proof.
  *
  * @module
  */
@@ -29,7 +29,6 @@
 import { describe, it, expect } from 'vitest';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { execSync, spawnSync } from 'node:child_process';
-import { FFMPEG_RENDER_CAPABLE } from '../helpers/ffmpeg.js';
 import {
   existsSync,
   mkdirSync,
@@ -64,10 +63,7 @@ async function quiet<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 describe('Spec 1.1 E2E smoke — intro scene render', () => {
-  if (!FFMPEG_RENDER_CAPABLE) {
-    it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});
-  } else {
-    it('renders examples/scenes/intro.ts to a non-empty mp4 via ffmpeg', async () => {
+  it('renders examples/scenes/intro.ts to a non-empty mp4 via ffmpeg', async () => {
       const out = resolve('tests/smoke/.out-intro-smoke.mp4');
       if (existsSync(out)) unlinkSync(out);
       if (!existsSync(dirname(out))) mkdirSync(dirname(out), { recursive: true });
@@ -105,6 +101,5 @@ describe('Spec 1.1 E2E smoke — intro scene render', () => {
       } catch {
         // Ignore — Windows file locks occasionally prevent immediate unlink.
       }
-    }, scaledTimeout(240_000));
-  }
+  }, scaledTimeout(240_000));
 });

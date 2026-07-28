@@ -1880,6 +1880,36 @@
       ]
     },
     {
+      "name": "web applyOverflow -- 256 saturated keyed patches",
+      "file": "tests/bench/web.bench.ts",
+      "inputSize": 256,
+      "shape": "saturated-keyed-sse-buffer",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "file", "path": "packages/web/src/stream/sse-pure.ts" },
+          "symbol": "applyOverflow",
+          "binding": "applyOverflow"
+        }
+      ]
+    },
+    {
+      "name": "web parseMessage -- 8192-byte patch payload",
+      "file": "tests/bench/web.bench.ts",
+      "inputSize": 8192,
+      "shape": "serialized-sse-patch-bytes",
+      "replicates": 1,
+      "subjects": [
+        {
+          "role": "sut",
+          "origin": { "kind": "file", "path": "packages/web/src/stream/sse-pure.ts" },
+          "symbol": "parseMessage",
+          "binding": "parseMessage"
+        }
+      ]
+    },
+    {
       "name": "alloc curve -- assets.computeWaveform",
       "file": "tests/bench/allocation-curves.bench.ts",
       "inputSize": 65536,

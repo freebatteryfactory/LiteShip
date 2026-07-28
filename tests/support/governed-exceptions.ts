@@ -38,6 +38,7 @@ export function governedExceptionSources(): GovernedExceptionSources {
         liveAddress: 'fnv1a:22222222',
       },
     },
+    liveStandardsSignoffKeys: new Set([`${elementKey}::${weakening}`]),
     traceability: {
       invariants: [
         {

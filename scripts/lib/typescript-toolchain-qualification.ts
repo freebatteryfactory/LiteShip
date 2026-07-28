@@ -69,6 +69,10 @@ export interface TypeScriptExecutionMetrics {
 /** One cold or warm compiler run. */
 export interface TypeScriptQualificationRun {
   readonly exitCode: number;
+  /** Null for an ordinary exit; non-null means the compiler was terminated. */
+  readonly signal: NodeJS.Signals | null;
+  /** Bounded raw compiler context retained for failed cloud qualification. */
+  readonly stderrTail: string;
   readonly diagnostics: readonly TypeScriptDiagnosticIdentity[];
   readonly declarationGraph: readonly DeclarationGraphNode[];
   readonly emittedPackageSurfaces: readonly EmittedPackageSurface[];
@@ -255,11 +259,14 @@ function addObservationFindings(
     ['cold', observation.cold],
     ['warm', observation.warm],
   ] as const) {
-    if (run.exitCode !== 1) {
+    if (run.signal !== null || run.exitCode === 0) {
       findings.push({
         code: 'unexpected-exit',
         owner: observation.role,
-        message: `${observation.role} ${mode} execution exited ${run.exitCode}; the admitted diagnostic fixture must exit 1.`,
+        message:
+          run.signal !== null
+            ? `${observation.role} ${mode} execution terminated by ${run.signal}; compiler signals are never semantic diagnostic outcomes.`
+            : `${observation.role} ${mode} execution exited cleanly; the admitted diagnostic fixture must produce a nonzero diagnostic outcome.`,
       });
     }
     if (

@@ -94,6 +94,8 @@ export type {
   MotionSpringConfig,
   MotionViewTimeline,
   MotionScrollTimeline,
+  MotionSupportMetadata,
+  MotionTransitionFallbackSupport,
 } from '@liteship/compiler';
 
 export { compileReveal } from '@liteship/compiler';

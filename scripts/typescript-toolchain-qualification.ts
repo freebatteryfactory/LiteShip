@@ -35,6 +35,7 @@ interface PackageMetadata {
 
 interface MeasuredProcess {
   readonly exitCode: number;
+  readonly signal: NodeJS.Signals | null;
   readonly stdout: string;
   readonly stderr: string;
   readonly wallMs: number;
@@ -95,6 +96,7 @@ async function runMeasured(
   const marker = new RegExp(`${RSS_MARKER}(\\d+)`, 'u').exec(result.stderr);
   return {
     exitCode: result.exitCode,
+    signal: result.signal,
     stdout: result.stdout,
     stderr: result.stderr.replace(new RegExp(`(?:^|\\r?\\n)${RSS_MARKER}\\d+\\r?\\n?`, 'gu'), '\n'),
     wallMs: performance.now() - started,
@@ -178,6 +180,8 @@ async function observeRun(input: {
   );
   return {
     exitCode: result.exitCode,
+    signal: result.signal,
+    stderrTail: result.stderr.slice(-2_000),
     diagnostics: parseDiagnostics(`${result.stdout}\n${result.stderr}`, input.fixtureRoot),
     declarationGraph: declarationGraph(input.outputRoot),
     emittedPackageSurfaces: emittedPackageSurfaces(input.outputRoot),

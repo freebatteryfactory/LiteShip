@@ -73,6 +73,8 @@ export type {
   DecodePath,
   DecodeResult,
   LiteshipStandardSchema,
+  LiteshipStandardJsonSchema,
+  StandardJsonSchemaProjection,
   JsonSchemaObject,
   JsonSchemaFragment,
 } from './schema/index.js';

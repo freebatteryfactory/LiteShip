@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:49ead474",
+  "address": "fnv1a:3ee55310",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -1322,6 +1322,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "packages/cli/src/internal/package-smoke-helpers.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "packages/cli/src/internal/physical-path.ts",
       "level": "L1"
     },
     {
@@ -4656,6 +4661,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/security-audit-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/source-import-contract.ts",
       "level": "L1"
     },
@@ -4787,6 +4797,16 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/scripts-index.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/security-audit.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/security-minimum-gate.ts",
       "level": "L1"
     },
     {
@@ -5306,6 +5326,12 @@
     {
       "_tag": "floor",
       "name": "complexity-class::genui.validate",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::web.parseMessage",
       "value": 2,
       "direction": "lower-is-stronger"
     },
@@ -6043,12 +6069,6 @@
       "file": "tests/property/boundary-evaluate-batch.prop.test.ts",
       "site": "describe.skipIf(!wasmPresent)('Boundary.evaluateBatch agrees with scalar evaluate (Rust kernel loaded)', () => {",
       "capability": "wasm-absent"
-    },
-    {
-      "_tag": "skip-allowlist",
-      "file": "tests/smoke/intro-render.test.ts",
-      "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see liteship doctor)', () => {});",
-      "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",

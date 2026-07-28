@@ -35,6 +35,8 @@ export const CATEGORIES: readonly CategorySpec[] = [
       'typecheck:spine',
       'typecheck:qualify',
       'lockfile:gate',
+      'security:minimum',
+      'security:audit',
       'prebuild:gate',
       'workflow-output:gate',
       'workspace-deps:gate',

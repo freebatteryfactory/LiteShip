@@ -17,6 +17,8 @@ import {
 } from '../../../../packages/cli/src/internal/one-install-cost-evidence.js';
 
 const fleet = (): string[] => Array.from({ length: 25 }, (_, index) => `@liteship/package-${index}`);
+const filesFor = (count: number, bytes: number) =>
+  Array.from({ length: count }, (_, index) => ({ path: `dist/file-${index}.js`, bytes: index === 0 ? bytes : 0 }));
 
 const installed = (overrides: Partial<InstalledCostObservation> = {}): InstalledCostObservation => ({
   uniqueRegularFileBytes: 1_000,
@@ -50,12 +52,17 @@ describe('one-install cost evidence', () => {
         packageManagerVersion: '10.14.0',
       },
       fleetPackages: names,
-      tarballs: names.map((packageName, index) => ({
-        package: packageName,
-        compressedBytes: index + 1,
-        unpackedBytes: index + 10,
-        fileCount: index + 1,
-      })),
+      tarballs: names.map((packageName, index) => {
+        const fileCount = index + 1;
+        const unpackedBytes = index + 10;
+        return {
+          package: packageName,
+          compressedBytes: index + 1,
+          unpackedBytes,
+          fileCount,
+          files: filesFor(fileCount, unpackedBytes),
+        };
+      }),
       installed: installed(),
       facadeDependencies: [{ package: names[0]!, reason: 'Provides the first qualified facade capability.' }],
       coldImports: [
@@ -186,6 +193,7 @@ describe('one-install cost evidence', () => {
         package: '@liteship/example',
         unpackedBytes: 5,
         fileCount: 1,
+        files: [{ path: 'dist/index.js', bytes: 5 }],
       });
       header[0] = (header[0] ?? 0) ^ 1;
       writeFileSync(

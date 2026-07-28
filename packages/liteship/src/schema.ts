@@ -52,7 +52,14 @@ export { toJsonSchema } from '@liteship/core/schema';
 export type { JsonSchemaObject, JsonSchemaFragment } from '@liteship/core/schema';
 
 export { toStandardSchema, standardResultOf, VENDOR } from '@liteship/core/schema';
-export type { LiteshipStandardSchema, DecodeIssueView, KernelDecodeResult, SchemaDecoder } from '@liteship/core/schema';
+export type {
+  LiteshipStandardSchema,
+  LiteshipStandardJsonSchema,
+  StandardJsonSchemaProjection,
+  DecodeIssueView,
+  KernelDecodeResult,
+  SchemaDecoder,
+} from '@liteship/core/schema';
 
 export {
   SignalInput,

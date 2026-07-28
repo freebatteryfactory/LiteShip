@@ -14,6 +14,7 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { FACADE_LIFECYCLE_CONTRACT } from '../../packages/liteship/src/export-budget.js';
 import { CHECK_REGISTRY } from '../../packages/command/src/checks/registry.js';
 import { journeyAssert, parseReceipt, REPO_ROOT, runInstalledLiteshipCliAt, type JourneyResult } from './harness.js';
 
@@ -98,13 +99,33 @@ export async function journeyColdAgentContext(installedAppDir: string): Promise<
     journeyAssert(describeResult.code === 0, `packed describe exited ${describeResult.code}`);
     const described = parseReceipt(describeResult.stdout);
     const publicSurface = described['publicSurface'] as
-      { root?: readonly unknown[]; subpaths?: readonly unknown[]; lifecycle?: readonly unknown[] } | undefined;
+      {
+        root?: readonly unknown[];
+        subpaths?: readonly unknown[];
+        lifecycle?: readonly { readonly operation?: unknown; readonly specifier?: unknown }[];
+      } | undefined;
+    const expectedLifecycle = FACADE_LIFECYCLE_CONTRACT.map(
+      (entry) => `${entry.specifier}:${entry.operation}`,
+    ).sort();
+    const receivedLifecycle = (publicSurface?.lifecycle ?? [])
+      .map((entry) => `${String(entry.specifier)}:${String(entry.operation)}`)
+      .sort();
+    const expectedSet = new Set(expectedLifecycle);
+    const receivedSet = new Set(receivedLifecycle);
+    const missingLifecycle = expectedLifecycle.filter((identity) => !receivedSet.has(identity));
+    const unexpectedLifecycle = receivedLifecycle.filter((identity) => !expectedSet.has(identity));
+    const duplicateLifecycle = receivedLifecycle.filter((identity, index) => receivedLifecycle.indexOf(identity) !== index);
     journeyAssert(
       Array.isArray(publicSurface?.root) &&
         Array.isArray(publicSurface?.subpaths) &&
         Array.isArray(publicSurface?.lifecycle) &&
-        publicSurface.lifecycle.length === 24,
-      'packed describe does not expose the generated facade and lifecycle projection',
+        missingLifecycle.length === 0 &&
+        unexpectedLifecycle.length === 0 &&
+        duplicateLifecycle.length === 0,
+      'packed describe lifecycle projection drifted' +
+        `\n  missing: ${missingLifecycle.join(', ') || '(none)'}` +
+        `\n  unexpected: ${unexpectedLifecycle.join(', ') || '(none)'}` +
+        `\n  duplicate: ${duplicateLifecycle.join(', ') || '(none)'}`,
     );
 
     const explainResult = await runInstalledLiteshipCliAt(

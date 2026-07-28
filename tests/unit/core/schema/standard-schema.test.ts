@@ -8,8 +8,8 @@
  *     the issue `code` surfaced as the message.
  *  2. `toStandardSchema` — the bridge object: `~standard` carries `version:1`,
  *     `vendor:'liteship'`, a `validate` that runs the injected decoder + lowers
- *     its result, and a `jsonSchema` hook whose `input`/`output` derive the
- *     JSON-Schema via the kernel `toJsonSchema`.
+ *     its result. JSON hooks appear only with explicit encoded-input and
+ *     decoded-output schema evidence.
  *
  * The decoder is passed in (the kernel `decode` lands in a sibling slice), so the
  * bridge is exercised with a deterministic stub decoder — no clock, no ambient
@@ -108,7 +108,7 @@ describe('toStandardSchema — the ~standard bridge', () => {
   });
 
   it('jsonSchema.input/output derive the same JSON-Schema the kernel deriver produces', () => {
-    const bridged = toStandardSchema(nameAge, decodeNameAge);
+    const bridged = toStandardSchema(nameAge, decodeNameAge, { input: nameAge, output: nameAge });
     const expected = toJsonSchema(nameAge);
     expect(bridged['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toEqual(expected);
     expect(bridged['~standard'].jsonSchema.output({ target: 'draft-2020-12' })).toEqual(expected);
@@ -119,13 +119,38 @@ describe('toStandardSchema — the ~standard bridge', () => {
     });
   });
 
-  it('the bridge object carries the required Standard members (validate + jsonSchema hooks)', () => {
-    // Type-level conformance to StandardSchemaV1 & StandardJSONSchemaV1 is enforced
-    // by `toStandardSchema`'s return type (LiteshipStandardSchema); this pins the
-    // runtime shape.
+  it('does not advertise JSON hooks without separate projection evidence', () => {
     const bridged = toStandardSchema(nameAge, decodeNameAge);
     expect(typeof bridged['~standard'].validate).toBe('function');
-    expect(typeof bridged['~standard'].jsonSchema.input).toBe('function');
-    expect(typeof bridged['~standard'].jsonSchema.output).toBe('function');
+    expect('jsonSchema' in bridged['~standard']).toBe(false);
+  });
+
+  it('keeps encoded input and representation-changing decoded output distinct', () => {
+    const encoded = schema.struct({ value: schema.string });
+    const decoded = schema.struct({ value: schema.number });
+    const changing = schema.brand(encoded, (value) => ({ value: value.value.length }), 'string-length');
+    const bridged = toStandardSchema(
+      changing,
+      (_schema, value) =>
+        typeof value === 'object' && value !== null && typeof (value as { value?: unknown }).value === 'string'
+          ? { ok: true, value: { value: (value as { value: string }).value.length } }
+          : { ok: false, error: [{ code: 'schema/type', path: ['value'] }] },
+      { input: encoded, output: decoded },
+    );
+    expect(bridged['~standard'].jsonSchema.input({ target: 'draft-2020-12' })).toEqual(toJsonSchema(encoded));
+    expect(bridged['~standard'].jsonSchema.output({ target: 'draft-2020-12' })).toEqual(toJsonSchema(decoded));
+  });
+
+  it('a non-derivable schema remains a valid validator and cannot advertise a delayed throwing hook', () => {
+    const union = schema.union(schema.string, schema.number);
+    const bridged = toStandardSchema(union, (_schema, value) =>
+      typeof value === 'string' || typeof value === 'number'
+        ? { ok: true, value }
+        : { ok: false, error: [{ code: 'schema/type', path: [] }] },
+    );
+    expect('jsonSchema' in bridged['~standard']).toBe(false);
+    expect(() => toStandardSchema(union, () => ({ ok: true, value: '' }), { input: union, output: union })).toThrow(
+      /cannot be derived/u,
+    );
   });
 });

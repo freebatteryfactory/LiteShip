@@ -77,6 +77,7 @@ export const ACCEPTED_COMPLEXITY_CEILINGS: Readonly<Record<string, ComplexityCla
   'assets.computeWaveform': 'O(n)',
   'assets.detectOnsets': 'O(n)',
   'assets.detectBeats': 'O(n)',
+  'web.parseMessage': 'O(n)',
   'gauntlet.runGates': 'O(n)',
 };
 
@@ -242,6 +243,24 @@ function readComplexityEntries(context: GateContext): readonly ComplexityMapEntr
       `${COMPLEXITY_MAP_PATH} must be a schema-v2 artifact with an entries array`,
     );
   }
+  const hasRawReplicates = (entry: Record<string, unknown>): boolean => {
+    const sizes = entry['sizes'];
+    const measurement = entry['measurement'];
+    const replicateSamples = entry['replicateSamplesNs'];
+    if (!Array.isArray(sizes) || !isRecord(measurement) || typeof measurement['replicates'] !== 'number') return false;
+    return (
+      Array.isArray(replicateSamples) &&
+      replicateSamples.length === sizes.length &&
+      replicateSamples.every(
+        (sampleSet, sampleIndex) =>
+          isRecord(sampleSet) &&
+          sampleSet['size'] === sizes[sampleIndex] &&
+          Array.isArray(sampleSet['samples']) &&
+          sampleSet['samples'].length === measurement['replicates'] &&
+          sampleSet['samples'].every((sample) => typeof sample === 'number' && Number.isFinite(sample) && sample >= 0),
+      )
+    );
+  };
   return parsed.entries.map((entry, index) => {
     if (
       !isRecord(entry) ||
@@ -252,7 +271,8 @@ function readComplexityEntries(context: GateContext): readonly ComplexityMapEntr
       !Array.isArray(entry.sizes) ||
       !entry.sizes.every((size) => typeof size === 'number') ||
       !isRecord(entry.measurement) ||
-      typeof entry.measurement.replicates !== 'number'
+      typeof entry.measurement.replicates !== 'number' ||
+      !hasRawReplicates(entry)
     ) {
       throw ValidationError(
         PERFORMANCE_CONTRACTS_RULE_ID,
@@ -697,6 +717,10 @@ function fixtureComplexityMap(
       sizes: [16, 32, 64, 128, 256],
       coefficientOfVariation: 0.05,
       measurement: { replicates: 7 },
+      replicateSamplesNs: [16, 32, 64, 128, 256].map((size) => ({
+        size,
+        samples: [100, 101, 99, 102, 100, 101, 99],
+      })),
     })),
   });
 }

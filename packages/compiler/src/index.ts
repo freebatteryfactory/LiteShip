@@ -93,6 +93,8 @@ export type {
   MotionSpringConfig,
   MotionViewTimeline,
   MotionScrollTimeline,
+  MotionSupportMetadata,
+  MotionTransitionFallbackSupport,
 } from './motion.js';
 
 export { compileReveal } from './reveal-compile.js';

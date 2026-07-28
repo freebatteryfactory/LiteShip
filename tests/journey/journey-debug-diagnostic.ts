@@ -19,7 +19,14 @@
 
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { findFiles, journeyAssert, parseReceipt, runInstalledLiteshipCli, type JourneyResult } from './harness.js';
+import {
+  findFiles,
+  installedCommandFailure,
+  journeyAssert,
+  parseReceipt,
+  runInstalledLiteshipCli,
+  type JourneyResult,
+} from './harness.js';
 
 /** The stable diagnostic code the planted bare-throw misconfig must surface. */
 const EXPECTED_CODE = 'gauntlet/no-bare-throw';
@@ -48,10 +55,15 @@ export async function journeyDebugDiagnostic(appDir: string): Promise<JourneyRes
     writeFileSync(plantedPath, MISCONFIG_SOURCE);
 
     // Run the INSTALLED facade-owned gate fold, cwd-scoped to the planted tree.
-    const check = await runInstalledLiteshipCli(['check', 'gates', '--json'], appDir);
+    const checkCommand = ['check', 'gates', '--json'] as const;
+    const check = await runInstalledLiteshipCli(checkCommand, appDir);
     journeyAssert(
       check.code === 1,
-      `expected a blocked check (exit 1) over the planted misconfig, got exit ${check.code}\n${check.stderr.slice(-600)}`,
+      `expected a blocked check over the planted misconfig\n${installedCommandFailure(checkCommand, check)}`,
+    );
+    journeyAssert(
+      check.stdout.trim().length > 0,
+      `blocked check emitted no machine receipt\n${installedCommandFailure(checkCommand, check)}`,
     );
     const receipt = parseReceipt(check.stdout);
     const findings = (receipt['findings'] as ReadonlyArray<{ ruleId?: string }> | undefined) ?? [];

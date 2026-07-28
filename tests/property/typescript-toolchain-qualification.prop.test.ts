@@ -1,4 +1,4 @@
-/** Property laws for deterministic dual-toolchain evidence normalization. @module */
+/** Semantic TypeScript qualification laws across process exit conventions. */
 
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
@@ -10,102 +10,61 @@ import {
   type TypeScriptToolchainObservation,
 } from '../../scripts/lib/typescript-toolchain-qualification.js';
 
-const fixtureDigest = qualificationDigest('property-fixture');
-const declarationA = qualificationDigest('A');
-const declarationB = qualificationDigest('B');
-const hexUnit = fc.constantFrom(...'0123456789abcdef'.split(''));
-const digestHex = fc.string({ unit: hexUnit, minLength: 64, maxLength: 64 });
+const digest = qualificationDigest('fixture');
+const declarationDigest = qualificationDigest('export interface Value {}\n');
 
-function run(order: boolean): TypeScriptQualificationRun {
-  const diagnostics = [
-    { code: 2322, file: 'src/index.ts', line: 4, column: 7 },
-    { code: 2322, file: 'src/other.ts', line: 2, column: 3 },
-  ];
-  const graph = [
-    { path: 'index.d.ts', digest: declarationA, dependencies: ['./other.js', './value.js'] },
-    { path: 'other.d.ts', digest: declarationB, dependencies: [] },
-  ];
-  const surfaces = [
-    { specifier: 'fixture', declaration: 'index.d.ts', digest: declarationA },
-    { specifier: 'fixture/other', declaration: 'other.d.ts', digest: declarationB },
-  ];
+function run(exitCode: number, signal: NodeJS.Signals | null = null): TypeScriptQualificationRun {
   return {
-    exitCode: 1,
-    diagnostics: order ? diagnostics : [...diagnostics].reverse(),
-    declarationGraph: order ? graph : [...graph].reverse(),
-    emittedPackageSurfaces: order ? surfaces : [...surfaces].reverse(),
+    exitCode,
+    signal,
+    stderrTail: 'src/index.ts(1,1): error TS2322: expected',
+    diagnostics: [{ code: 2322, file: 'src/index.ts', line: 1, column: 1 }],
+    declarationGraph: [{ path: 'index.d.ts', digest: declarationDigest, dependencies: [] }],
+    emittedPackageSurfaces: [
+      { specifier: 'typescript-dual-toolchain-fixture', declaration: 'index.d.ts', digest: declarationDigest },
+    ],
     metrics: { wallMs: 1, peakRssBytes: 1 },
   };
 }
 
-function observation(role: 'compatibility' | 'native', order: boolean): TypeScriptToolchainObservation {
+function observation(role: 'compatibility' | 'native', sample: TypeScriptQualificationRun): TypeScriptToolchainObservation {
   const contract = TYPESCRIPT_TOOLCHAIN_CONTRACT[role];
   return {
     role,
-    dependency: contract.dependency,
-    packageName: contract.packageName,
-    version: contract.version,
-    implementationVersion: contract.implementationVersion,
-    bin: contract.bin,
-    fixtureDigest,
+    ...contract,
+    fixtureDigest: digest,
     requestedWorkers: role === 'native' ? 2 : 1,
-    cold: run(order),
-    warm: run(order),
+    cold: sample,
+    warm: sample,
   };
 }
 
-function report(compatibilityOrder: boolean, nativeOrder: boolean) {
+function qualify(sample: TypeScriptQualificationRun) {
   return qualifyTypeScriptToolchains({
-    fixtureDigest,
+    fixtureDigest: digest,
     nativeWorkerCeiling: 2,
-    compatibility: observation('compatibility', compatibilityOrder),
-    native: observation('native', nativeOrder),
+    compatibility: observation('compatibility', sample),
+    native: observation('native', sample),
   });
 }
 
-describe('TypeScript qualification properties', () => {
-  it('is invariant to compiler enumeration order', () => {
+describe('TypeScript qualification process semantics', () => {
+  it('admits every ordinary nonzero diagnostic exit when the semantic outputs are complete', () => {
     fc.assert(
-      fc.property(fc.boolean(), fc.boolean(), (compatibilityOrder, nativeOrder) => {
-        const candidate = report(compatibilityOrder, nativeOrder);
-        const canonical = report(true, true);
-        expect(candidate.ok).toBe(true);
-        expect(candidate.reportId).toBe(canonical.reportId);
+      fc.property(fc.integer({ min: 1, max: 255 }), (exitCode) => {
+        expect(qualify(run(exitCode)).ok).toBe(true);
       }),
+      { seed: 0x7500_0001, numRuns: 255 },
     );
   });
 
-  it('always reds when one emitted package digest changes', () => {
+  it('rejects clean exits and signal termination regardless of otherwise valid output', () => {
+    expect(qualify(run(0)).findings.map((finding) => finding.code)).toContain('unexpected-exit');
     fc.assert(
-      fc.property(digestHex, (hex) => {
-        fc.pre(hex !== declarationA.slice('sha256:'.length));
-        const native = observation('native', true);
-        const altered: TypeScriptToolchainObservation = {
-          ...native,
-          cold: {
-            ...native.cold,
-            emittedPackageSurfaces: [
-              { ...native.cold.emittedPackageSurfaces[0]!, digest: `sha256:${hex}` },
-              native.cold.emittedPackageSurfaces[1]!,
-            ],
-          },
-          warm: {
-            ...native.warm,
-            emittedPackageSurfaces: [
-              { ...native.warm.emittedPackageSurfaces[0]!, digest: `sha256:${hex}` },
-              native.warm.emittedPackageSurfaces[1]!,
-            ],
-          },
-        };
-        const result = qualifyTypeScriptToolchains({
-          fixtureDigest,
-          nativeWorkerCeiling: 2,
-          compatibility: observation('compatibility', true),
-          native: altered,
-        });
-        expect(result.ok).toBe(false);
-        expect(result.findings).toContainEqual(expect.objectContaining({ code: 'emitted-surface-mismatch' }));
+      fc.property(fc.constantFrom<NodeJS.Signals>('SIGABRT', 'SIGKILL', 'SIGSEGV', 'SIGTERM'), (signal) => {
+        expect(qualify(run(1, signal)).findings.map((finding) => finding.code)).toContain('unexpected-exit');
       }),
+      { seed: 0x7500_0002, numRuns: 40 },
     );
   });
 });

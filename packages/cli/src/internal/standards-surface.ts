@@ -636,6 +636,35 @@ export function readStandardsWaivers(repoRoot: string): readonly StandardsWaiver
   return out;
 }
 
+/**
+ * Current-tree identities of sign-offs that still govern a live exception.
+ *
+ * This is deliberately independent of the review-base diff. A PR branch and
+ * the byte-identical post-merge tree have different histories but must agree
+ * about whether an exception site still exists. Presence-based waiver records
+ * are live while their canonical waiver remains declared; sanctioned skips are
+ * live only while the exact AST site still exists in the current source.
+ */
+export function liveStandardsSignoffKeys(repoRoot: string): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const element of waiverElements()) {
+    if (element._tag === 'waiver') keys.add(`${surfaceElementKey(element)}::waiver-added`);
+  }
+
+  const conditionality = buildSiteConditionalityResolver(repoRoot);
+  for (const skip of SANCTIONED_SKIPS) {
+    if (conditionality(skip.file, skip.site) === undefined) continue;
+    const element: StandardsElement = {
+      _tag: 'skip-allowlist',
+      file: skip.file,
+      site: normalizeSiteLine(skip.site),
+      capability: skip.capability,
+    };
+    keys.add(`${surfaceElementKey(element)}::skip-allowlist-added`);
+  }
+  return keys;
+}
+
 /** Optional injection seams for {@link buildStandardsIntegrityFacts} (defaulted; tests override). */
 export interface StandardsFactsOptions {
   /** The environment the base ref is resolved from (default `process.env`). */

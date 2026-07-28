@@ -22,6 +22,90 @@ export interface EventProtocolRecord {
   readonly catalog: string;
 }
 
+interface ProjectedDetailReference {
+  readonly moduleName: string;
+  readonly symbolName: string;
+}
+
+function projectedDetailReferences(detail: string): readonly ProjectedDetailReference[] {
+  const source = ts.createSourceFile(
+    'event-detail.ts',
+    `type __EventDetail = ${detail};`,
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const references: ProjectedDetailReference[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument) && ts.isStringLiteral(node.argument.literal)) {
+      const moduleName = node.argument.literal.text;
+      if (/^\.\/[a-z0-9-]+\.js$/u.test(moduleName)) {
+        if (node.qualifier === undefined || !ts.isIdentifier(node.qualifier)) {
+          throw new Error(`projected event detail import ${moduleName} must select one named spine export`);
+        }
+        references.push({ moduleName, symbolName: node.qualifier.text });
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  ts.forEachChild(source, visit);
+  return references;
+}
+
+/** Refuse generated event payload references that do not exist in their projected spine leaf. */
+export function validateProjectedDetailReferences(
+  records: readonly EventProtocolRecord[],
+  exportsByModule: ReadonlyMap<string, ReadonlySet<string>>,
+): void {
+  for (const record of records) {
+    for (const { moduleName, symbolName } of projectedDetailReferences(record.detail)) {
+      if (!exportsByModule.get(moduleName)?.has(symbolName)) {
+        throw new Error(
+          `${record.catalog}: ${record.name} detail projects missing spine export ${moduleName}.${symbolName}`,
+        );
+      }
+    }
+  }
+}
+
+function projectedDetailExports(repoRoot: string, records: readonly EventProtocolRecord[]): ReadonlyMap<string, ReadonlySet<string>> {
+  const modules = new Set<string>();
+  for (const record of records) {
+    for (const { moduleName } of projectedDetailReferences(record.detail)) {
+      modules.add(moduleName);
+    }
+  }
+  return new Map(
+    [...modules].sort().map((moduleName) => {
+      const leaf = moduleName.replace(/^\.\//u, '').replace(/\.js$/u, '.d.ts');
+      const source = ts.createSourceFile(
+        leaf,
+        readFileSync(resolve(repoRoot, 'packages/_spine', leaf), 'utf8'),
+        ts.ScriptTarget.Latest,
+        true,
+      );
+      const names = new Set<string>();
+      for (const statement of source.statements) {
+        if (
+          !(
+            ts.isInterfaceDeclaration(statement) ||
+            ts.isTypeAliasDeclaration(statement) ||
+            ts.isClassDeclaration(statement) ||
+            ts.isEnumDeclaration(statement) ||
+            ts.isFunctionDeclaration(statement) ||
+            ts.isModuleDeclaration(statement)
+          ) ||
+          statement.name === undefined ||
+          !ts.isIdentifier(statement.name)
+        )
+          continue;
+        if (ts.getModifiers(statement)?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword))
+          names.add(statement.name.text);
+      }
+      return [moduleName, names] as const;
+    }),
+  );
+}
+
 function literal(member: ts.TypeElement | undefined, field: string, catalog: string): string {
   if (
     !member ||
@@ -147,6 +231,7 @@ export function collectEventProtocol(repoRoot: string): readonly EventProtocolRe
   }
   records.sort((left, right) => left.name.localeCompare(right.name));
   validateEventProtocolRecords(records);
+  validateProjectedDetailReferences(records, projectedDetailExports(repoRoot, records));
   return records;
 }
 

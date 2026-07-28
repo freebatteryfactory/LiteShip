@@ -92,8 +92,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Pull-request authority: cheap registry checks plus the canonical package-DAG
-  # affected closure. Global authority changes fail broad to the full Node suite.
+  # Pull-request fast feedback: cheap registry checks plus the canonical package-DAG
+  # affected closure. This supplements, but never replaces, the full candidate authority below.
   pr-affected:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -403,11 +403,11 @@ jobs:
             reports
             benchmarks
 
-  # Parallel truth-linux lane — merge gate (serial demoted to nightly after Phase B).
+  # Parallel truth-linux lane — the pre-merge candidate gate and post-merge confirmation.
   # Build once, fan out: vitest shards N=4, isolated bench, quarantined capsule:verify.
   # Bench is NEVER sharded.
   truth-linux-parallel-setup:
-    if: github.event_name == 'push' || github.event_name == 'workflow_call'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs:
@@ -884,7 +884,6 @@ jobs:
       - run: echo "Parallel truth-linux lane passed."
 
   browser-e2e:
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -932,7 +931,6 @@ jobs:
   # property suite running against that fresh artifact — the "build truth"
   # doctrine applied to the compute kernels (nothing prebuilt is trusted).
   rust-wasm-parity:
-    if: github.event_name != 'pull_request' || needs.plan.outputs.affected-rust-wasm-required == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: plan
@@ -991,7 +989,6 @@ jobs:
           CI: true
 
   windows-smoke:
-    if: github.event_name != 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -1028,18 +1025,11 @@ jobs:
       - run: pnpm run test:redteam
       - run: node packages/liteship/bin/liteship.mjs package-smoke
 
-  # macOS is tier-2: not gating, but a real signal so the docs aren't
-  # asking adopters to discover macOS-specific drift after they ship.
-  # `continue-on-error: true` keeps a macOS regression from blocking
-  # merges into main; it surfaces in the PR check list as a yellow,
-  # not a red. Promotion to tier-1 (= remove continue-on-error and
-  # add to ci-summary needs) requires the smoke passing reliably for
-  # a full release cycle on a fresh `macos-latest` image.
+  # macOS is release authority: platform-specific path and package-manager
+  # behavior must be proven before merge, not first discovered on main.
   macos-smoke:
-    if: github.event_name != 'pull_request'
     runs-on: macos-latest
     timeout-minutes: 60
-    continue-on-error: true
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1074,13 +1064,10 @@ jobs:
       - run: pnpm run test:redteam
       - run: node packages/liteship/bin/liteship.mjs package-smoke
 
-  # Milestone-2: Playwright browser lane on macOS — proves green for a cycle
-  # before promotion to tier-1 (drop continue-on-error + add to ci-summary).
+  # Browser authority on the same macOS candidate tree.
   macos-browser:
-    if: github.event_name != 'pull_request'
     runs-on: macos-latest
     timeout-minutes: 90
-    continue-on-error: true
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -1234,6 +1221,37 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  security-audit:
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - plan
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b0f76dfb45f55f8421693e4803ac7bb65143bd34 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prove governed security minimums
+        run: pnpm run security:minimum
+      - name: Query the live advisory registry
+        run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        continue-on-error: true
+        with:
+          name: security-audit-${{ github.run_attempt }}
+          path: |
+            reports/pnpm-audit.json
+            reports/pnpm-audit.stderr.txt
+          if-no-files-found: warn
+          retention-days: 30
+
   ci-summary:
     if: always()
     runs-on: ubuntu-latest
@@ -1249,11 +1267,14 @@ jobs:
       - truth-linux-parallel
       - browser-e2e
       - windows-smoke
+      - macos-smoke
+      - macos-browser
       - rust-wasm-parity
       - exhaustive-analysis
       - exhaustive-mutation
       - exhaustive-mcdc
       - semantic-assurance-admission
+      - security-audit
       - evidence-admission
     steps:
       - name: Fold the event-appropriate authority tier
@@ -1268,29 +1289,33 @@ jobs:
           PARALLEL: ${{ needs.truth-linux-parallel.result }}
           BROWSER: ${{ needs.browser-e2e.result }}
           WINDOWS: ${{ needs.windows-smoke.result }}
+          MACOS: ${{ needs.macos-smoke.result }}
+          MACOS_BROWSER: ${{ needs.macos-browser.result }}
           RUST_WASM: ${{ needs.rust-wasm-parity.result }}
-          RUST_WASM_REQUIRED: ${{ needs.plan.outputs.affected-rust-wasm-required }}
           EXHAUSTIVE_ANALYSIS: ${{ needs.exhaustive-analysis.result }}
           EXHAUSTIVE_MUTATION: ${{ needs.exhaustive-mutation.result }}
           EXHAUSTIVE_MCDC: ${{ needs.exhaustive-mcdc.result }}
           SEMANTIC_ASSURANCE_ADMISSION: ${{ needs.semantic-assurance-admission.result }}
+          SECURITY_AUDIT: ${{ needs.security-audit.result }}
           EVIDENCE_ADMISSION: ${{ needs.evidence-admission.result }}
           REF: ${{ github.ref }}
         run: |
           set -euo pipefail
           test "$EVIDENCE_ADMISSION" = "success"
           test "$FORMAT" = "success"
+          test "$SECURITY_AUDIT" = "success"
           if [ "$EVENT" = "pull_request" ]; then
             test "$PR_AFFECTED" = "success"
             test "$PR_WINDOWS" = "success"
             test "$PR_EVIDENCE" = "success"
             test "$PR_BROWSER" = "success" -o "$PR_BROWSER" = "skipped"
-            if [ "$RUST_WASM_REQUIRED" = "true" ]; then
-              test "$RUST_WASM" = "success"
-            else
-              test "$RUST_WASM" = "skipped"
-            fi
-            echo "CI pull-request authority passed (quick + affected Linux/Windows + affected browser)."
+            test "$PARALLEL" = "success"
+            test "$BROWSER" = "success"
+            test "$WINDOWS" = "success"
+            test "$MACOS" = "success"
+            test "$MACOS_BROWSER" = "success"
+            test "$RUST_WASM" = "success"
+            echo "CI pull-request authority passed (affected feedback + full release candidate)."
           else
             if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
               test "$SERIAL" = "success"
@@ -1299,6 +1324,8 @@ jobs:
             fi
             test "$BROWSER" = "success"
             test "$WINDOWS" = "success"
+            test "$MACOS" = "success"
+            test "$MACOS_BROWSER" = "success"
             test "$RUST_WASM" = "success"
             if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ] || [[ "$REF" == refs/tags/v* ]]; then
               test "$EXHAUSTIVE_ANALYSIS" = "success"
@@ -1323,6 +1350,8 @@ jobs:
       - truth-linux-parallel
       - browser-e2e
       - windows-smoke
+      - macos-smoke
+      - macos-browser
       - rust-wasm-parity
       - exhaustive-analysis
       - exhaustive-mutation

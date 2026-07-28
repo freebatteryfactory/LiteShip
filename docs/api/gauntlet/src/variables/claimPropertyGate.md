@@ -8,6 +8,6 @@
 
 > `const` **claimPropertyGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/claim-property.ts:777](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/claim-property.ts#L777)
+Defined in: [gauntlet/src/gates/claim-property.ts:778](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/claim-property.ts#L778)
 
 The qualified gate — fixtures included, so it self-proves via the ratchet.
