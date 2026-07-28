@@ -77,13 +77,19 @@ describe('spawnArgvCapture', () => {
       process.execPath,
       [
         '-e',
-        `process.stdout.write('x'.repeat(${17 * 1024 * 1024})); process.stdout.write('ACTUAL_TAIL'); process.exit(7);`,
+        `process.stdout.write('x'.repeat(${17 * 1024 * 1024})); ` +
+          `process.stderr.write('y'.repeat(${1024 * 1024})); ` +
+          `process.stdout.write('STDOUT_ACTUAL_TAIL'); ` +
+          `process.stderr.write('STDERR_ACTUAL_TAIL'); ` +
+          `process.exitCode = 7;`,
       ],
       { captureBytes: 4_096 },
     );
     expect(result.exitCode).toBe(7);
     expect(result.stdout).toHaveLength(4_096);
-    expect(result.stdout).toMatch(/ACTUAL_TAIL$/u);
+    expect(result.stderr).toHaveLength(4_096);
+    expect(result.stdout).toMatch(/STDOUT_ACTUAL_TAIL$/u);
+    expect(result.stderr).toMatch(/STDERR_ACTUAL_TAIL$/u);
   });
 });
 

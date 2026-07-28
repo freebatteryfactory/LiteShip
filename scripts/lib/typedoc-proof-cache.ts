@@ -93,6 +93,7 @@ export function buildTypeDocProofIdentity(repoRoot: string): TypeDocProofIdentit
     'scripts/docs-check.ts',
     'scripts/docs-input-fingerprint.ts',
     'scripts/lib/local-resource-profile.ts',
+    'scripts/lib/typedoc-build-pipeline.ts',
     'scripts/lib/typedoc-input-fingerprint.ts',
     'scripts/lib/typedoc-proof-cache.ts',
   ];

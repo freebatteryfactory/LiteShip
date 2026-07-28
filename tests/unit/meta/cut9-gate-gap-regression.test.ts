@@ -51,12 +51,15 @@ describe('CUT 9 — gate-gap regressions (pre-commit ⊂ full CI)', () => {
     };
     const buildOwner = readFileSync(resolve(REPO, 'scripts/docs-build.ts'), 'utf8');
     const checkOwner = readFileSync(resolve(REPO, 'scripts/docs-check.ts'), 'utf8');
+    const pipelineOwner = readFileSync(resolve(REPO, 'scripts/lib/typedoc-build-pipeline.ts'), 'utf8');
     expect(pkg.scripts['docs:build']).toContain('scripts/docs-build.ts');
     expect(pkg.scripts['docs:check']).toContain('scripts/docs-check.ts');
     expect(pkg.scripts['docs:build']).not.toContain('build-api-docs');
     expect(pkg.scripts['docs:build:sharded']).toContain('build-api-docs');
     for (const owner of [buildOwner, checkOwner]) {
       expect(owner).toContain('awaitLocalDocsAdmission');
+    }
+    for (const owner of [pipelineOwner, checkOwner]) {
       expect(owner).toContain("['exec', 'typedoc'");
     }
   });

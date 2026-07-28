@@ -8,7 +8,7 @@
 
 > **benchNotApplicableMarker**(`reason`): `string`
 
-Defined in: core/dist/evidence/bench-marker.d.ts:52
+Defined in: core/dist/evidence/bench-marker.d.ts:20
 
 Build the marker line for a given reason. Collapses whitespace to a single
 line so the marker is always exactly one source line (the manifest records
