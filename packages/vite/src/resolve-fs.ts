@@ -8,10 +8,26 @@
  * @module
  */
 import { Diagnostics } from '@liteship/core';
+import type { WalkFilesIssue } from '@liteship/core/fs-walk';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 type FsError = NodeJS.ErrnoException;
+
+/**
+ * Observable fail-soft policy for consumer project scans. A dangling link or
+ * concurrently removed subtree must not abort Vite dev/build, but it also must
+ * never disappear silently: both manifest scanners route the shared walker's
+ * exact operation/path/code through this diagnostic owner.
+ */
+export function reportProjectWalkIssue(source: string, issue: WalkFilesIssue): void {
+  Diagnostics.warnOnce({
+    source,
+    code: 'filesystem-walk-skipped-path',
+    message: `Skipped "${issue.path}" while scanning the project (${issue.operation}: ${issue.code}).`,
+    detail: issue,
+  });
+}
 
 function isMissingFilesystemError(error: unknown): error is FsError {
   /* v8 ignore next — Node's fs APIs always throw objects (Error subclasses); the

@@ -1,16 +1,16 @@
 /** Live pnpm registry audit with an always-written raw JSON receipt. @module */
 
 import { mkdir, writeFile } from 'node:fs/promises';
-import { spawnArgvCapture } from './lib/spawn.ts';
+import { spawnArgvCaptureWithEnv } from '../packages/command/src/host/launcher.ts';
 import { blockingAuditFindings, parsePnpmAuditReceipt } from './lib/security-audit-contract.ts';
 
 const reportPath = 'reports/pnpm-audit.json';
 const stderrPath = 'reports/pnpm-audit.stderr.txt';
 await mkdir('reports', { recursive: true });
-const result = await spawnArgvCapture('pnpm', ['audit', '--json'], { cwd: process.cwd() });
+const result = await spawnArgvCaptureWithEnv('pnpm', ['audit', '--json'], { cwd: process.cwd() });
 await writeFile(reportPath, result.stdout.length > 0 ? `${result.stdout.trimEnd()}\n` : '{}\n');
 await writeFile(stderrPath, result.stderr);
-if (result.signal !== undefined && result.signal !== null) {
+if (result.signal !== null) {
   throw new Error(`pnpm audit terminated by ${result.signal}; raw receipt: ${reportPath}`);
 }
 let receipt: ReturnType<typeof parsePnpmAuditReceipt>;

@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { run } from '@liteship/cli';
 import { dispatchToolCall } from '@liteship/mcp-server';
-import { mcpExposedDescriptors } from '@liteship/command';
+import { failed, mcpExposedDescriptors, ok, type CheckPayload } from '@liteship/command';
 import { captureCli } from './cli/capture.js';
 
 let tmpDir: string;
@@ -20,8 +20,18 @@ let prevEnv: string | undefined;
 
 const MANIFEST = {
   capsules: [
-    { name: 'alpha', kind: 'pureTransform', source: 'a.ts', generated: { testFile: 'a.test.ts', benchFile: 'a.bench.ts' } },
-    { name: 'beta', kind: 'stateMachine', source: 'b.ts', generated: { testFile: 'b.test.ts', benchFile: 'b.bench.ts' } },
+    {
+      name: 'alpha',
+      kind: 'pureTransform',
+      source: 'a.ts',
+      generated: { testFile: 'a.test.ts', benchFile: 'a.bench.ts' },
+    },
+    {
+      name: 'beta',
+      kind: 'stateMachine',
+      source: 'b.ts',
+      generated: { testFile: 'b.test.ts', benchFile: 'b.bench.ts' },
+    },
   ],
 };
 
@@ -146,10 +156,23 @@ describe('A1-T5 — CLI and MCP converge on shared handler commands', () => {
       `${descriptor.name}: CLI receipt and MCP structuredContent agree on command + status`,
       async () => {
         const argv = cliArgvForTool(descriptor.name);
-        const { exit, stdout } = await captureCli(() => run(argv));
-
         const mcp = await dispatchToolCall({ name: descriptor.name, arguments: mcpArgsForTool(descriptor.name) });
         const mcpPayload = mcp.structuredContent as Record<string, unknown>;
+        // `check.gates` is a repo-wide fold. Its CLI and MCP hosts each have a
+        // separate real-host proof; this convergence law projects ONE real MCP
+        // result through the CLI skin instead of paying for the same fold twice
+        // under shard coverage/contention. Every other lightweight command keeps
+        // the ordinary two-host execution below.
+        const { exit, stdout } = await captureCli(() =>
+          descriptor.name === 'check.gates'
+            ? run(argv, {
+                checkHandler: async () =>
+                  mcp.isError
+                    ? failed('check.gates', mcpPayload as CheckPayload, 1)
+                    : ok('check.gates', mcpPayload as CheckPayload),
+              })
+            : run(argv),
+        );
 
         expect(mcp.isError).toBe(exit !== 0);
 

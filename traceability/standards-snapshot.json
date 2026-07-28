@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:3ee55310",
+  "address": "fnv1a:317ad940",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4506,6 +4506,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/ci-test-host-contract.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/command-docs.ts",
       "level": "L1"
     },
@@ -4772,6 +4777,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/preflight.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/prepare-ci-test-host.ts",
       "level": "L1"
     },
     {

@@ -124,6 +124,45 @@ describe('workflow entrypoint enumeration (dist provisioning)', () => {
     });
   });
 
+  it('resolves registry-projected specialized commands before walking their cold import closure', () => {
+    const workflow = [
+      'jobs:',
+      '  security-audit:',
+      '    steps:',
+      '      - run: pnpm install --frozen-lockfile',
+      '      - run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.securityAudit.command }}',
+    ].join('\n');
+    expect(
+      enumerateWorkflowEntrypoints(
+        '.github/workflows/fixture.yml',
+        workflow,
+        {
+          ...ROOT_SCRIPTS,
+          'security:audit': 'pnpm exec tsx scripts/security-audit.ts',
+        },
+        {
+          securityAudit: 'pnpm run security:audit',
+        },
+      ),
+    ).toContainEqual({
+      script: 'scripts/security-audit.ts',
+      declaredBy: '.github/workflows/fixture.yml#security-audit',
+      distProvision: 'none',
+    });
+  });
+
+  it('fails closed when a projected workflow command has no enumerated owner', () => {
+    const workflow = [
+      'jobs:',
+      '  opaque:',
+      '    steps:',
+      '      - run: ${{ fromJSON(needs.plan.outputs.matrix).specializedChecks.unknown.command }}',
+    ].join('\n');
+    expect(() => enumerateWorkflowEntrypoints('.github/workflows/fixture.yml', workflow, ROOT_SCRIPTS)).toThrow(
+      /cannot resolve projected specialized command "unknown"/u,
+    );
+  });
+
   it('preserves command ordering inside wrapper scripts', () => {
     const expanded = expandRootCommandEntrypoints('pnpm run release-proof', 'fixture#job', {
       build: 'pnpm exec tsx scripts/native-tsc.ts -- --build',
@@ -286,6 +325,7 @@ describe('live tree', () => {
     const cold = receipt.entrypoints.filter((entry) => entry.distProvision === 'none');
     const built = receipt.entrypoints.filter((entry) => entry.distProvision === 'build');
     expect(cold.map((entry) => entry.script)).toContain('scripts/ci-plan.ts');
+    expect(cold.map((entry) => entry.script)).toContain('scripts/security-audit.ts');
     expect(built.map((entry) => entry.script)).toContain('scripts/assurance-inventory.ts');
     expect(built.map((entry) => entry.script)).toContain('scripts/verify-affected-result-evidence.ts');
     expect(cold.some((entry) => entry.declaredBy.startsWith('package.json#'))).toBe(true);

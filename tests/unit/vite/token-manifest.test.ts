@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Diagnostics, defineToken, defineTheme } from '@liteship/core';
 import { symlinkUnprivileged } from '../../helpers/capabilities.js';
+import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import {
   collectTokenManifest,
   collectThemeManifest,
@@ -120,14 +121,38 @@ describe('collectTokenManifest', () => {
     expect(manifest.accent!.id).toBe(referenceToken.id);
   });
 
+  // Keep the capability-sanction identity on one line: the allowlist pins the
+  // complete guard + title, not a formatter-dependent line number.
+  // prettier-ignore
   test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives entries', async () => {
-    const root = makeTempDir();
-    const srcDir = join(root, 'src');
-    writeModule(srcDir, 'tokens.ts', TOKEN_MODULE);
-    symlinkSync(root, join(srcDir, 'loop'), 'dir');
+      const root = makeTempDir();
+      const srcDir = join(root, 'src');
+      writeModule(srcDir, 'tokens.ts', TOKEN_MODULE);
+      symlinkSync(root, join(srcDir, 'loop'), 'dir');
 
-    const manifest = await collectTokenManifest(root);
-    expect(manifest.accent!.id).toBe(referenceToken.id);
+      const manifest = await collectTokenManifest(root);
+      expect(manifest.accent!.id).toBe(referenceToken.id);
+    });
+
+  test('a dangling project symlink is diagnosed and does not abort token collection', async () => {
+    const root = makeTempDir();
+    const target = makeTempDir();
+    const link = join(root, 'dangling');
+    symlinkSync(target, link, 'dir');
+    rmSync(target, { recursive: true, force: true });
+
+    const { manifest, events } = await captureDiagnosticsAsync(async ({ events: captured }) => ({
+      manifest: await collectTokenManifest(root),
+      events: captured,
+    }));
+
+    expect(manifest).toEqual({});
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        source: 'liteship/vite.token-manifest',
+        code: 'filesystem-walk-skipped-path',
+      }),
+    );
   });
 });
 

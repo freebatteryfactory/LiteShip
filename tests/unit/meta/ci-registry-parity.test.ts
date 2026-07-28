@@ -176,12 +176,13 @@ describe('blocking release checks have one real CI owner', () => {
   it('provisions every doctor tool in its owning setup job before running doctor', () => {
     const setup = JOB_BLOCKS.get('truth-linux-parallel-setup')!;
     const doctor = setup.indexOf('specializedChecks.doctor.command');
+    const ffmpeg = setup.indexOf('prepare-ci-test-host.ts --ffmpeg');
     expect(setup.indexOf('toolchain: 1.85.1')).toBeGreaterThanOrEqual(0);
     expect(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell')).toBeGreaterThanOrEqual(0);
-    expect(setup.indexOf('apt-get install -y ffmpeg')).toBeGreaterThanOrEqual(0);
+    expect(ffmpeg).toBeGreaterThanOrEqual(0);
     expect(doctor).toBeGreaterThan(setup.indexOf('toolchain: 1.85.1'));
     expect(doctor).toBeGreaterThan(setup.indexOf('playwright install --with-deps chromium chromium-headless-shell'));
-    expect(doctor).toBeGreaterThan(setup.indexOf('apt-get install -y ffmpeg'));
+    expect(doctor).toBeGreaterThan(ffmpeg);
     expect(doctor).toBeGreaterThan(setup.indexOf('pnpm run build && pnpm run capsule:compile'));
   });
 });

@@ -16,7 +16,7 @@ import type { Theme, Token } from '@liteship/core';
 import { Diagnostics } from '@liteship/core';
 import { walkFiles } from '@liteship/core/fs-walk';
 import { TokenCSSCompiler } from '@liteship/compiler';
-import { findConventionFiles } from './resolve-fs.js';
+import { findConventionFiles, reportProjectWalkIssue } from './resolve-fs.js';
 import { tryImportNamed } from './resolve-utils.js';
 
 const DIAGNOSTIC_SOURCE = 'liteship/vite.token-manifest';
@@ -82,7 +82,11 @@ function scanProject(projectRoot: string): ProjectScan {
   // Symlink-following, realpath cycle-safe walk (the shared fs-walk owner);
   // classify each absolute path by basename since the token/theme predicates
   // are exact/suffix splits the owner's filter can't express.
-  for (const file of walkFiles(projectRoot, { skipDirs: SKIP_DIRS, followSymlinks: true })) {
+  for (const file of walkFiles(projectRoot, {
+    skipDirs: SKIP_DIRS,
+    followSymlinks: true,
+    onIssue: (issue) => reportProjectWalkIssue(DIAGNOSTIC_SOURCE, issue),
+  })) {
     const name = path.basename(file);
     if (isTokenModuleFile(name)) {
       tokenFiles.push(file);
