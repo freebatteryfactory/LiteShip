@@ -35,6 +35,37 @@ export interface ExecutableInvocation {
   readonly windowsVerbatimArguments: boolean;
 }
 
+const PACKAGE_SMOKE_PROCESS_TAIL_CHARS = 4_096;
+
+function boundedProcessTail(raw: string | null | undefined): string {
+  const normalized = (raw ?? '')
+    .replace(/\u001B\[[0-?]*[ -/]*[@-~]/gu, '')
+    .replaceAll('\r\n', '\n')
+    .trimEnd();
+  if (normalized.length === 0) return '(empty)';
+  if (normalized.length <= PACKAGE_SMOKE_PROCESS_TAIL_CHARS) return normalized;
+  const omitted = normalized.length - PACKAGE_SMOKE_PROCESS_TAIL_CHARS;
+  return `[... ${omitted} earlier chars omitted ...]\n${normalized.slice(-PACKAGE_SMOKE_PROCESS_TAIL_CHARS)}`;
+}
+
+/**
+ * Preserve the bounded stdout/stderr evidence for a failed package-smoke child.
+ * Package managers may write their actionable error to either stream; exit
+ * status alone is never enough to classify a release-gate failure.
+ */
+export function packageSmokeProcessFailure(
+  command: PackageSmokeExecutable,
+  status: number | null,
+  stdout: string | null | undefined,
+  stderr: string | null | undefined,
+): string {
+  return [
+    `${command} exited with status ${status ?? 'unknown'}`,
+    `stdout tail:\n${boundedProcessTail(stdout)}`,
+    `stderr tail:\n${boundedProcessTail(stderr)}`,
+  ].join('\n');
+}
+
 /** Executables owned by the package-smoke orchestration contract. */
 export type PackageSmokeExecutable = 'node' | 'pnpm';
 
@@ -107,6 +138,26 @@ export function peerDependenciesOnly(peerInstalls: readonly string[]): Record<st
       return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
     }),
   );
+}
+
+/**
+ * Project the exact host graph qualified by every packed-consumer authority.
+ *
+ * Public peer ranges stay broad, but a release receipt must not change meaning
+ * when a transitive package is published after its source SHA. Vite 8.1.0
+ * admits Rolldown `~1.1.2`, while both Rolldown's optional WASI binding and
+ * Astro's compiler binding admit `@napi-rs/wasm-runtime ^1.1.6`. Runtime 1.2.0
+ * changed to the incompatible `@emnapi/*` 2.0-alpha peer line and made fresh
+ * strict-peer installs fail. The repository lock has qualified Rolldown 1.1.3
+ * with the WASM runtime at 1.1.6, so every packed proof projects that graph.
+ */
+export function qualifiedHostOverrides(peerInstalls: readonly string[]): Readonly<Record<string, string>> {
+  const peers = peerDependenciesOnly(peerInstalls);
+  const vite = peers['vite'];
+  if (vite === undefined || !/^\d+\.\d+\.\d+$/u.test(vite)) {
+    throw IntegrityError('package-smoke host graph', 'Qualified host graph requires an exact Vite install.');
+  }
+  return Object.freeze({ vite, rolldown: '1.1.3', '@napi-rs/wasm-runtime': '1.1.6' });
 }
 
 /**

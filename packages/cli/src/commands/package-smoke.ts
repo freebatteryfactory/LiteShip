@@ -38,7 +38,9 @@ import {
   diffSemanticClosures,
   partitionRuntimeClosureSpecifiers,
   packedLiteshipBin,
+  packageSmokeProcessFailure,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
+  qualifiedHostOverrides,
   resolvePackageManagerInvocation,
   type PackageSmokeExecutable,
   semanticClosureFileHash,
@@ -97,12 +99,15 @@ function run(command: PackageSmokeExecutable, args: readonly string[], cwd: stri
   const result = spawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
+    stdio: ['ignore', 'pipe', 'pipe'],
     windowsVerbatimArguments: invocation.windowsVerbatimArguments,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
-    throw IntegrityError('package-smoke', `${command} exited with status ${result.status ?? 'unknown'}`);
+    throw IntegrityError(
+      'package-smoke',
+      packageSmokeProcessFailure(command, result.status, result.stdout, result.stderr),
+    );
   }
   return (result.stdout ?? '').trim();
 }
@@ -292,7 +297,10 @@ function buildConsumerManifest(tarballByPackage: Map<string, string>): {
     type: 'module',
     dependencies,
     pnpm: {
-      overrides: Object.fromEntries(PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)])),
+      overrides: {
+        ...qualifiedHostOverrides(PEER_INSTALLS),
+        ...Object.fromEntries(PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)])),
+      },
     },
   };
 }
@@ -768,6 +776,7 @@ export async function runPackageSmokeScan(
             private: true,
             type: 'module',
             dependencies: { ...peerDependenciesOnly(), ...externalDeps },
+            pnpm: { overrides: qualifiedHostOverrides(PEER_INSTALLS) },
           },
           null,
           2,

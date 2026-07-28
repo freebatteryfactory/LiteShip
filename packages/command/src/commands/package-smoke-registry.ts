@@ -29,12 +29,14 @@ import { GENERATED_PACKAGE_SMOKE_SPECS } from './package-smoke-registry.generate
 /** Generated from the one typed package catalog in `scripts/package-catalog.ts`. */
 export const PACKAGES: readonly PackageSmokeSpec[] = GENERATED_PACKAGE_SMOKE_SPECS;
 
+const QUALIFIED_VITE_VERSION = '8.1.0';
+
 /** External peer set the consumer fixture installs alongside the packed `@liteship/*` tarballs. */
 export const PEER_INSTALLS: readonly string[] = [
   // vite must be >= 8.1.0: astro@7 depends on esbuild ^0.28, and vite@8.0.0
   // peered esbuild ^0.27.0 only (→ strict-peer install failure in the smoke
   // consumer). vite@8.1.0 widened the peer to `^0.27.0 || ^0.28.0`.
-  'vite@8.1.0',
+  `vite@${QUALIFIED_VITE_VERSION}`,
   // Must satisfy @liteship/astro's security floor (`astro >=7.1.0 <8`) as well
   // as its major. A stale host pin makes the packed proof certify a consumer
   // configuration the published facade deliberately refuses.

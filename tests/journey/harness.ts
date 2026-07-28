@@ -31,7 +31,11 @@ import { fileURLToPath } from 'node:url';
 import { PACKAGES, PEER_INSTALLS } from '../../packages/command/src/commands/package-smoke-registry.js';
 import { scaffold } from '../../packages/create-liteship/src/scaffold.js';
 import { packInWorkspace } from '../support/pack.js';
-import { peerDependenciesOnly, tarballFileUrl } from '../../packages/cli/src/internal/package-smoke-helpers.js';
+import {
+  peerDependenciesOnly,
+  qualifiedHostOverrides,
+  tarballFileUrl,
+} from '../../packages/cli/src/internal/package-smoke-helpers.js';
 import { verifyReleaseArtifactBundle } from '../../packages/cli/src/internal/release-artifact-bundle.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 import { runPnpm, type PnpmRunResult } from '../../scripts/support/pnpm-process.js';
@@ -315,7 +319,7 @@ export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspac
       astro: peerVersion('astro'),
       typescript: peerVersion('typescript'),
     };
-    manifest['pnpm'] = { overrides };
+    manifest['pnpm'] = { overrides: { ...qualifiedHostOverrides(PEER_INSTALLS), ...overrides } };
   } else {
     // npm supports root overrides using any dependency specifier, including file:
     // tarballs. Keep the authored dependency surface identical to pnpm while the
@@ -325,9 +329,12 @@ export function rewriteConsumerToTarballs(appDir: string, packed: PackedWorkspac
       astro: peerVersion('astro'),
       typescript: peerVersion('typescript'),
     };
-    manifest['overrides'] = Object.fromEntries(
-      Object.entries(overrides).filter(([name]) => name !== 'liteship' && name !== 'create-liteship'),
-    );
+    manifest['overrides'] = {
+      ...qualifiedHostOverrides(PEER_INSTALLS),
+      ...Object.fromEntries(
+        Object.entries(overrides).filter(([name]) => name !== 'liteship' && name !== 'create-liteship'),
+      ),
+    };
     delete manifest['pnpm'];
   }
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -355,7 +362,7 @@ export function rewritePriorConsumerToTarballs(appDir: string, prior: PriorPacke
     astro: peerVersion('astro'),
     typescript: peerVersion('typescript'),
   };
-  manifest['pnpm'] = { overrides };
+  manifest['pnpm'] = { overrides: { ...qualifiedHostOverrides(PEER_INSTALLS), ...overrides } };
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   writeFileSync(join(appDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
 }
@@ -561,7 +568,10 @@ export async function proveInstalledRuntimeFacadeIdentity(
     'process.stdout.write(JSON.stringify({ facadeUrl, ownerUrl, exportNames: ownerNames }));',
   ].join('\n');
 
-  const result = await runInstalledNode(['--experimental-import-meta-resolve', '--input-type=module', '--eval', probe], cwd);
+  const result = await runInstalledNode(
+    ['--experimental-import-meta-resolve', '--input-type=module', '--eval', probe],
+    cwd,
+  );
   journeyAssert(
     result.code === 0,
     `installed runtime identity probe failed for ${facadeSpecifier} → ${ownerSpecifier} ` +

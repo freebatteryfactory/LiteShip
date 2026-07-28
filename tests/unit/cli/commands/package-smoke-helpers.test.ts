@@ -33,7 +33,56 @@ import {
   semanticClosureFileHash,
   assertPackedTypeClosure,
   packedLiteshipBin,
+  packageSmokeProcessFailure,
+  qualifiedHostOverrides,
 } from '../../../../packages/cli/src/internal/package-smoke-helpers.js';
+
+describe('packageSmokeProcessFailure — failed child diagnostics', () => {
+  it('preserves the stdout-only package-manager error that escaped main CI', () => {
+    expect(
+      packageSmokeProcessFailure(
+        'pnpm',
+        1,
+        'ERR_PNPM_PEER_DEP_ISSUES Unmet peer dependencies\n@napi-rs/wasm-runtime 1.2.0 requires @emnapi/core ^2.0.0-alpha.3\n',
+        '',
+      ),
+    ).toBe(
+      [
+        'pnpm exited with status 1',
+        'stdout tail:',
+        'ERR_PNPM_PEER_DEP_ISSUES Unmet peer dependencies',
+        '@napi-rs/wasm-runtime 1.2.0 requires @emnapi/core ^2.0.0-alpha.3',
+        'stderr tail:',
+        '(empty)',
+      ].join('\n'),
+    );
+  });
+
+  it('keeps both streams bounded and retains their newest evidence', () => {
+    const logText = (minLength: number) =>
+      fc.array(fc.constantFrom('a', 'b', 'c', ' '), { minLength, maxLength: 12_000 }).map((chars) => chars.join(''));
+    fc.assert(
+      fc.property(logText(4_200), logText(0), (out, err) => {
+        const detail = packageSmokeProcessFailure('pnpm', null, out, err);
+        const expectedTail = (value: string) => {
+          const normalized = value.trimEnd();
+          return normalized.length === 0 ? '(empty)' : normalized.slice(-4_096);
+        };
+        expect(detail).toContain('pnpm exited with status unknown');
+        expect(detail).toContain(expectedTail(out));
+        expect(detail).toContain(expectedTail(err));
+        expect(detail.length).toBeLessThanOrEqual(8_400);
+      }),
+      { seed: 0x51a6_0e, numRuns: 80 },
+    );
+  });
+
+  it('normalizes CRLF and strips terminal color codes before the receipt crosses CI', () => {
+    expect(packageSmokeProcessFailure('node', 2, '\u001B[31mboom\u001B[0m\r\n', 'nope\r\n')).toContain(
+      'stdout tail:\nboom\nstderr tail:\nnope',
+    );
+  });
+});
 
 describe('packedLiteshipBin — facade owns the public executable', () => {
   it('never points release smoke at the implementation-only @liteship/cli package', () => {
@@ -44,6 +93,16 @@ describe('packedLiteshipBin — facade owns the public executable', () => {
 });
 
 describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
+  it('projects the qualified Vite/Rolldown/WASM graph from the single exact Vite install pin', () => {
+    expect(qualifiedHostOverrides(['vite@8.1.0'])).toEqual({
+      vite: '8.1.0',
+      rolldown: '1.1.3',
+      '@napi-rs/wasm-runtime': '1.1.6',
+    });
+    expect(() => qualifiedHostOverrides(['astro@7.1.0'])).toThrow('requires an exact Vite install');
+    expect(() => qualifiedHostOverrides(['vite@^8.1.0'])).toThrow('requires an exact Vite install');
+  });
+
   it('keeps the leading scope @ for a scoped specifier', () => {
     expect(peerDependenciesOnly(['@scope/pkg@1.2.3'])).toEqual({ '@scope/pkg': '1.2.3' });
   });
