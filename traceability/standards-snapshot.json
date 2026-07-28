@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 2,
-  "address": "fnv1a:317ad940",
+  "address": "fnv1a:cb15ee65",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -4591,6 +4591,11 @@
     },
     {
       "_tag": "assurance-coverage",
+      "file": "scripts/lib/github-change-intent-declaration.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
       "file": "scripts/lib/github-change-intent.ts",
       "level": "L1"
     },
@@ -4917,6 +4922,11 @@
     {
       "_tag": "assurance-coverage",
       "file": "scripts/typescript-toolchain-qualification.ts",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance-coverage",
+      "file": "scripts/validate-github-change-intent.ts",
       "level": "L1"
     },
     {

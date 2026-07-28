@@ -9,6 +9,7 @@ import { describe, expect, test } from 'vitest';
 import {
   Composable,
   ComposableWorld,
+  type ComposableEntity,
   createComposable,
   defineBoundary,
   defineStyle,
@@ -68,12 +69,16 @@ describe('Composable ECS projection', () => {
     expect(composed.components.boundary).not.toBe(boundary);
     expect(Object.isFrozen(composed.components)).toBe(true);
     expect(() => Composable.merge()).toThrow('Composable.merge: called with no entities');
+    expect(() =>
+      (Composable.merge as (...entities: Array<ComposableEntity | undefined>) => ComposableEntity)(undefined),
+    ).toThrow('entities[0] is undefined');
   });
 
   test('spawn, query, and evaluate share the admitted component snapshot', () => {
     const world = createWorld();
     const composableWorld = ComposableWorld.make<TestSchema>(world);
     const entity = composableWorld.spawn({ boundary, token, style });
+    const fallbackEntity = composableWorld.spawn({ boundary, token });
     const queried = composableWorld.query('boundary', 'token');
     const evaluation = composableWorld.evaluate(entity, {
       'viewport.width': 800,
@@ -81,8 +86,12 @@ describe('Composable ECS projection', () => {
     });
 
     expect(entity.id).toMatch(/^fnv1a:[0-9a-f]{8}$/u);
-    expect(queried).toHaveLength(1);
+    expect(queried).toHaveLength(2);
     expect(queried[0]?.components.boundary).toStrictEqual(boundary);
+    expect(composableWorld.evaluate(fallbackEntity, {})).toMatchObject({
+      'viewport.width': 'mobile',
+      primary: '#00e5ff',
+    });
     expect(evaluation).toMatchObject({
       'viewport.width': 'tablet',
       primary: '#00e5ff',
@@ -100,6 +109,17 @@ describe('Composable ECS projection', () => {
     expect(composableWorld.evaluate(entity, {})).toEqual({});
   });
 
+  test('spawnWith re-admits a structurally copied entity instead of trusting WeakMap provenance', () => {
+    const world = createWorld();
+    const composableWorld = ComposableWorld.make<TestSchema>(world);
+    const original = createComposable<TestSchema>({ boundary, token });
+    const copied = { ...original, components: { ...original.components } } as ComposableEntity<TestSchema>;
+
+    composableWorld.spawnWith(copied);
+
+    expect(composableWorld.query('boundary', 'token')).toHaveLength(1);
+  });
+
   test('the dense bridge creates one Part-owned store and auto-spawns tracked entities', () => {
     const world = createWorld();
     const dense = ComposableWorld.dense(world);
@@ -107,9 +127,11 @@ describe('Composable ECS projection', () => {
 
     expect(dense.retrieve(entity)).toBeUndefined();
     const store = dense.create('metrics', 16);
+    expect(dense.retrieve(entity)).toBeUndefined();
     dense.store(entity, 42);
+    dense.store(entity, 84);
 
-    expect(dense.retrieve(entity)).toBe(42);
+    expect(dense.retrieve(entity)).toBe(84);
     expect(store.name).toBe('metrics');
     expect(store.count).toBe(1);
   });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { admitGitHubChangeIntent } from '../../scripts/lib/github-change-intent.js';
+import { validateGitHubChangeIntentDeclaration } from '../../scripts/lib/github-change-intent-declaration.js';
 
 function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'public'): Record<string, unknown> {
   return {
@@ -110,6 +111,67 @@ describe('GitHub ChangeIntent adapter properties', () => {
         );
       }),
       { seed: 0xf0e16, numRuns: 70 },
+    );
+  });
+
+  it('cold validation preserves arbitrary harmless prose and login casing', () => {
+    fc.assert(
+      fc.property(harmlessText, harmlessText, fc.boolean(), (before, after, uppercase) => {
+        const sponsor = uppercase ? 'HEYOUB' : 'heyoub';
+        const payload = { ...declaration(), sponsor };
+        const result = validateGitHubChangeIntentDeclaration('pull_request', {
+          pull_request: {
+            body: `${before}\n${comment(payload)}\n${after}`,
+            user: { login: 'heyoub' },
+          },
+        });
+        expect(result).toEqual({ kind: 'declared', sponsor: 'heyoub' });
+      }),
+      { seed: 0xc01d, numRuns: 100 },
+    );
+  });
+
+  it('cold validation rejects every non-author sponsor before planning', () => {
+    const foreignLogin = fc
+      .stringMatching(/^[a-z][a-z0-9-]{0,20}$/u)
+      .filter((login) => login.toLowerCase() !== 'heyoub');
+    fc.assert(
+      fc.property(foreignLogin, (sponsor) => {
+        expect(() =>
+          validateGitHubChangeIntentDeclaration('pull_request', {
+            pull_request: {
+              body: comment({ ...declaration(), sponsor }),
+              user: { login: 'heyoub' },
+            },
+          }),
+        ).toThrow(/does not match/u);
+      }),
+      { seed: 0x5a0e, numRuns: 80 },
+    );
+  });
+
+  it('cold validation rejects any missing required declaration field', () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...Object.keys(declaration())), (missing) => {
+        const candidate = declaration();
+        delete candidate[missing];
+        expect(() =>
+          validateGitHubChangeIntentDeclaration('pull_request', {
+            pull_request: { body: comment(candidate), user: { login: 'heyoub' } },
+          }),
+        ).toThrow(/keys must be exactly/u);
+      }),
+      { seed: 0x0eac, numRuns: 60 },
+    );
+  });
+
+  it('cold validation remains explicitly fail-broad for every non-PR event name', () => {
+    fc.assert(
+      fc.property(harmlessText, (event) => {
+        fc.pre(event !== 'pull_request');
+        expect(validateGitHubChangeIntentDeclaration(event, null)).toEqual({ kind: 'fail-broad', event });
+      }),
+      { seed: 0xfa11, numRuns: 80 },
     );
   });
 });

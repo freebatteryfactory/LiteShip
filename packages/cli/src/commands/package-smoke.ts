@@ -16,7 +16,7 @@ import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   packageSmokeCommand,
@@ -39,7 +39,7 @@ import {
   partitionRuntimeClosureSpecifiers,
   packedLiteshipBin,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
-  resolveExecutable,
+  resolvePackageManagerInvocation,
   semanticClosureFileHash,
   tarballFileUrl,
 } from '../internal/package-smoke-helpers.js';
@@ -92,19 +92,18 @@ async function createScratchDir(root: string): Promise<string> {
 }
 
 function run(command: string, args: readonly string[], cwd: string): string {
-  const executable = resolveExecutable(command);
-  // Node-wrapper case (JS pnpm CLI): `executable` is node and `npm_execpath` is
-  // the script arg. Native-binary case (@pnpm/exe) or plain command: args go
-  // straight to the executable.
-  const commandArgs =
-    command === 'pnpm' && executable === process.execPath && process.env['npm_execpath']
-      ? [process.env['npm_execpath'], ...args]
-      : args;
-  return execFileSync(executable, commandArgs, {
+  const invocation = resolvePackageManagerInvocation(command, args);
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
-  }).trim();
+    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw IntegrityError('package-smoke', `${command} exited with status ${result.status ?? 'unknown'}`);
+  }
+  return (result.stdout ?? '').trim();
 }
 
 function measureFacadeColdImports(consumerDir: string): readonly ColdImportGraph[] {
@@ -305,16 +304,13 @@ function buildConsumerManifest(tarballByPackage: Map<string, string>): {
  * so the offline constraint is scoped to the install subprocess.
  */
 function runOffline(command: string, args: readonly string[], cwd: string): string {
-  const executable = resolveExecutable(command);
-  const commandArgs =
-    command === 'pnpm' && executable === process.execPath && process.env['npm_execpath']
-      ? [process.env['npm_execpath'], ...args]
-      : args;
+  const invocation = resolvePackageManagerInvocation(command, args);
   const deadProxy = 'http://127.0.0.1:1';
-  return execFileSync(executable, commandArgs, {
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
+    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
     env: {
       ...process.env,
       npm_config_offline: 'true',
@@ -323,7 +319,12 @@ function runOffline(command: string, args: readonly string[], cwd: string): stri
       https_proxy: deadProxy,
       http_proxy: deadProxy,
     },
-  }).trim();
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw IntegrityError('package-smoke', `${command} exited with status ${result.status ?? 'unknown'}`);
+  }
+  return (result.stdout ?? '').trim();
 }
 
 interface PublicSubpath {

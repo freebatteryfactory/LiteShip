@@ -5,7 +5,7 @@
  * exclusion ONLY once its composable pure helpers are extracted + tested).
  *
  * These helpers are the real decision logic the orchestrator composes:
- *  - {@link resolveExecutable} — the platform/npm_execpath executable resolution.
+ *  - {@link resolvePackageManagerInvocation} — the platform/npm_execpath launcher resolution.
  *  - {@link tarballFileUrl} — the cross-platform `file://` URL for a tarball path
  *    (the Windows 8.3 short-path realpath fix-up).
  *  - {@link packedLiteshipBin} — the facade-owned executable inside a packed
@@ -26,27 +26,62 @@ import { createHash } from 'node:crypto';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type * as TypeScript from 'typescript';
+import { quoteWindowsArg } from '@liteship/command/host';
 import { IntegrityError } from '@liteship/error';
 
+export interface ExecutableInvocation {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly windowsVerbatimArguments: boolean;
+}
+
+function synchronousInvocation(
+  command: string,
+  args: readonly string[],
+  platform: NodeJS.Platform,
+): ExecutableInvocation {
+  if (platform !== 'win32' || /\.(?:exe|com)$/iu.test(command)) {
+    return { command, args, windowsVerbatimArguments: false };
+  }
+  return {
+    command: 'cmd.exe',
+    args: ['/d', '/s', '/c', [command, ...args].map(quoteWindowsArg).join(' ')],
+    windowsVerbatimArguments: true,
+  };
+}
+
 /**
- * Resolve the executable to spawn for `command`. `pnpm` invoked through an
+ * Resolve the complete executable invocation for `command`. `pnpm` invoked through an
  * `npm_execpath` is re-pointed at the current Node WHEN that entrypoint is a JS
  * file (the common pnpm CLI). But some setups point `npm_execpath` at a NATIVE
  * standalone binary (`@pnpm/exe`, e.g. Blacksmith runners' `setup-pnpm`), which
  * must be run DIRECTLY — `node <binary>` chokes on the ELF/Mach-O/PE header
- * (`SyntaxError: Invalid or unexpected token`). On Windows the `pnpm.cmd` shim
- * is required.
+ * (`SyntaxError: Invalid or unexpected token`). The canonical command-host
+ * launcher owns Windows `.cmd`/`.bat` execution; calling those shims directly
+ * through `spawnSync`/`execFileSync` raises `EINVAL` on supported Node releases.
  */
-export function resolveExecutable(command: string): string {
-  const execpath = process.env['npm_execpath'];
+export function resolvePackageManagerInvocation(
+  command: string,
+  args: readonly string[],
+  options: {
+    readonly platform?: NodeJS.Platform;
+    readonly npmExecPath?: string | null;
+    readonly nodeExecPath?: string;
+  } = {},
+): ExecutableInvocation {
+  const execpath = options.npmExecPath === undefined ? process.env['npm_execpath'] : options.npmExecPath;
+  let executable = command;
+  let executableArgs = args;
   if (command === 'pnpm' && execpath) {
     // JS entrypoint → run via node; native binary → run it directly.
-    return /\.[cm]?js$/i.test(execpath) ? process.execPath : execpath;
+    if (/\.[cm]?js$/i.test(execpath)) {
+      executable = options.nodeExecPath ?? process.execPath;
+      executableArgs = [execpath, ...args];
+    } else {
+      executable = execpath;
+    }
   }
-  if (process.platform === 'win32' && command === 'pnpm') {
-    return 'pnpm.cmd';
-  }
-  return command;
+  return synchronousInvocation(executable, executableArgs, options.platform ?? process.platform);
 }
 
 /**

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { admitGitHubChangeIntent } from '../../../scripts/lib/github-change-intent.js';
+import { validateGitHubChangeIntentDeclaration } from '../../../scripts/lib/github-change-intent-declaration.js';
 
 function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'public'): Record<string, unknown> {
   return {
@@ -30,6 +31,45 @@ function input(overrides: Record<string, unknown> = {}): Record<string, unknown>
 }
 
 describe('GitHub ChangeIntent host adapter', () => {
+  it('cold-validates the exact declaration and GitHub event author before planning', () => {
+    expect(
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(), user: { login: 'heyoub' } },
+      }),
+    ).toEqual({ kind: 'declared', sponsor: 'heyoub' });
+    expect(validateGitHubChangeIntentDeclaration('push', {})).toEqual({ kind: 'fail-broad', event: 'push' });
+  });
+
+  it('cold-refuses the escaped malformed-block and sponsor-mismatch defects', () => {
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: '<!-- liteship-change-intent {} -->', user: { login: 'heyoub' } },
+      }),
+    ).toThrow(/malformed/u);
+    expect(() =>
+      validateGitHubChangeIntentDeclaration('pull_request', {
+        pull_request: { body: block(), user: { login: 'someone-else' } },
+      }),
+    ).toThrow(/does not match/u);
+  });
+
+  it.each([
+    ['null event payload', null, /payload must be an object/u],
+    ['array event payload', [], /payload must be an object/u],
+    ['missing pull object', {}, /pull_request object/u],
+    ['scalar pull object', { pull_request: 7 }, /pull_request object/u],
+    ['missing body', { pull_request: { user: { login: 'heyoub' } } }, /no body/u],
+    ['missing author', { pull_request: { body: block() } }, /no author/u],
+    ['empty author login', { pull_request: { body: block(), user: { login: '' } } }, /no author login/u],
+    [
+      'duplicate declaration',
+      { pull_request: { body: `${block()}\n${block()}`, user: { login: 'heyoub' } } },
+      /exactly one/u,
+    ],
+  ])('cold-refuses %s', (_name, payload, message) => {
+    expect(() => validateGitHubChangeIntentDeclaration('pull_request', payload)).toThrow(message);
+  });
+
   it('binds declared semantics to GitHub-verified repository, commit, and owner facts', () => {
     const result = admitGitHubChangeIntent(input());
     expect(result.origin).toBe('declared');

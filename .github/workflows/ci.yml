@@ -75,6 +75,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Validate change intent before expensive authority
+        run: pnpm exec tsx scripts/validate-github-change-intent.ts
       - id: plan
         name: Emit the registry-projected lane matrix
         # The projection emits compact one-line JSON. Capture it before writing
@@ -425,6 +427,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare preflight standards authority
+        run: pnpm exec tsx scripts/prepare-ci-test-host.ts --standards-base
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: dist-packages

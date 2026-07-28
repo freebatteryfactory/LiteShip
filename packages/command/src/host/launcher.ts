@@ -45,8 +45,12 @@ export function quoteWindowsArg(arg: string): string {
 }
 
 /** Resolve `.cmd`/`.bat` shims explicitly on Windows; POSIX is identity. */
-export function resolveLauncher(command: string, args: readonly string[]): Launcher {
-  if (process.platform !== 'win32') {
+export function resolveLauncher(
+  command: string,
+  args: readonly string[],
+  platform: NodeJS.Platform = process.platform,
+): Launcher {
+  if (platform !== 'win32') {
     return { command, args, windowsVerbatimArguments: false };
   }
   if (/\.(?:exe|com)$/iu.test(command)) {

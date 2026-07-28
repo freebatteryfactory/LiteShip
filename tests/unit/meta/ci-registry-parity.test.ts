@@ -228,6 +228,20 @@ describe('(a) every gauntlet-lane command is a registry-projected profile invoca
     expect(profilesInYml).toEqual(profilesInPlan);
   });
 
+  it('prepares an independent standards base in every lane whose profile consumes it', () => {
+    const standardsLabels = new Set(['governed-exceptions:gate', 'standards:gate']);
+    for (const { command, profile } of laneCommands) {
+      const labels = gauntletPhaseProfiles[profile]!;
+      if (!labels.some((label) => standardsLabels.has(label))) continue;
+      const job = [...JOB_BLOCKS.entries()].find(([, block]) => block.includes(command))?.[0];
+      expect(job, `no workflow job owns ${command}`).toBeDefined();
+      expect(
+        JOB_BLOCKS.get(job!),
+        `${job}/${profile} consumes standards authority without preparing its base`,
+      ).toContain('prepare-ci-test-host.ts --standards-base');
+    }
+  });
+
   it.each([...new Set([...CI_YML.matchAll(LANE_COMMAND_RE)].map((m) => m[1]!))])(
     'lane profile %s exists, projects registry checks, and matches the plan',
     (profile) => {
@@ -290,6 +304,10 @@ describe('(c) projected lane commands equal the recorded baseline (byte-identica
 describe('(d) CI event tiers execute the intended authority', () => {
   it('plans pull-request impact from the canonical affected-test planner', () => {
     const plan = JOB_BLOCKS.get('plan')!;
+    expect(plan).toContain('pnpm exec tsx scripts/validate-github-change-intent.ts');
+    expect(plan.indexOf('scripts/validate-github-change-intent.ts')).toBeLessThan(
+      plan.indexOf('pnpm exec tsx scripts/ci-plan.ts'),
+    );
     expect(plan).toContain('affected-browser-required: ${{ steps.affected.outputs.browser-required }}');
     expect(plan).toContain('affected-benchmark-required: ${{ steps.affected.outputs.benchmark-required }}');
     expect(plan).toContain('affected-rust-wasm-required: ${{ steps.affected.outputs.rust-wasm-required }}');
