@@ -80,47 +80,34 @@ describe('peerDependenciesOnly — PEER_INSTALLS → {name: version}', () => {
   });
 });
 
-describe('resolvePackageManagerInvocation — platform/npm_execpath launcher resolution', () => {
+describe('resolvePackageManagerInvocation — closed executable/platform launcher resolution', () => {
   it('passes an ordinary POSIX executable and its argv through unchanged', () => {
-    expect(resolvePackageManagerInvocation('tar', ['--version'], { platform: 'linux', npmExecPath: null })).toEqual({
-      command: 'tar',
+    expect(resolvePackageManagerInvocation('node', ['--version'], { platform: 'linux' })).toEqual({
+      command: 'node',
       args: ['--version'],
       windowsVerbatimArguments: false,
     });
   });
 
-  it('runs a JS npm_execpath through Node with the script prepended to argv', () => {
-    expect(
-      resolvePackageManagerInvocation('pnpm', ['pack'], {
-        platform: 'linux',
-        npmExecPath: '/some/pnpm.cjs',
-        nodeExecPath: '/usr/bin/node',
-      }),
-    ).toEqual({
-      command: '/usr/bin/node',
-      args: ['/some/pnpm.cjs', 'pack'],
-      windowsVerbatimArguments: false,
-    });
-  });
-
-  it('pnpm under a NATIVE-binary npm_execpath runs the binary directly (@pnpm/exe — Blacksmith runners)', () => {
-    expect(
-      resolvePackageManagerInvocation('pnpm', ['pack'], {
-        platform: 'linux',
-        npmExecPath: '/runner/.bin/store/v11/links/@pnpm/exe/pnpm',
-      }),
-    ).toEqual({
-      command: '/runner/.bin/store/v11/links/@pnpm/exe/pnpm',
-      args: ['pack'],
-      windowsVerbatimArguments: false,
-    });
+  it('does not let npm_execpath replace the package-smoke executable', () => {
+    const prior = process.env['npm_execpath'];
+    process.env['npm_execpath'] = '/attacker/controlled/pnpm.cjs';
+    try {
+      expect(resolvePackageManagerInvocation('pnpm', ['pack'], { platform: 'linux' })).toEqual({
+        command: 'pnpm',
+        args: ['pack'],
+        windowsVerbatimArguments: false,
+      });
+    } finally {
+      if (prior === undefined) delete process.env['npm_execpath'];
+      else process.env['npm_execpath'] = prior;
+    }
   });
 
   it('routes a Windows pnpm shim through cmd.exe instead of passing .cmd to spawnSync', () => {
     expect(
       resolvePackageManagerInvocation('pnpm', ['pack', '--pack-destination', 'C:\\tmp dir'], {
         platform: 'win32',
-        npmExecPath: null,
       }),
     ).toEqual({
       command: 'cmd.exe',
@@ -133,10 +120,10 @@ describe('resolvePackageManagerInvocation — platform/npm_execpath launcher res
     fc.assert(
       fc.property(
         fc.constantFrom<NodeJS.Platform>('linux', 'darwin', 'win32'),
-        fc.constantFrom('tool', 'tool.cmd', 'C:\\Program Files\\tool.exe'),
+        fc.constantFrom<'node' | 'pnpm'>('node', 'pnpm'),
         fc.array(fc.string({ maxLength: 24 }), { maxLength: 6 }),
         (platform, command, args) => {
-          expect(resolvePackageManagerInvocation(command, args, { platform, npmExecPath: null })).toEqual(
+          expect(resolvePackageManagerInvocation(command, args, { platform })).toEqual(
             resolveCanonicalLauncher(command, args, platform),
           );
         },
@@ -144,8 +131,8 @@ describe('resolvePackageManagerInvocation — platform/npm_execpath launcher res
     );
   });
 
-  it('executes the no-npm_execpath fallback on the real host', async () => {
-    const invocation = resolvePackageManagerInvocation('pnpm', ['--version'], { npmExecPath: null });
+  it('executes the canonical pnpm launcher on the real host', async () => {
+    const invocation = resolvePackageManagerInvocation('pnpm', ['--version']);
     const result = await spawnArgvCapture(invocation.command, invocation.args, { timeoutMs: 10_000 });
     expect(result).toMatchObject({ exitCode: 0 });
     expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/u);

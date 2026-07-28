@@ -5,7 +5,7 @@
  * exclusion ONLY once its composable pure helpers are extracted + tested).
  *
  * These helpers are the real decision logic the orchestrator composes:
- *  - {@link resolvePackageManagerInvocation} — the platform/npm_execpath launcher resolution.
+ *  - {@link resolvePackageManagerInvocation} — the platform launcher resolution.
  *  - {@link tarballFileUrl} — the cross-platform `file://` URL for a tarball path
  *    (the Windows 8.3 short-path realpath fix-up).
  *  - {@link packedLiteshipBin} — the facade-owned executable inside a packed
@@ -35,6 +35,9 @@ export interface ExecutableInvocation {
   readonly windowsVerbatimArguments: boolean;
 }
 
+/** Executables owned by the package-smoke orchestration contract. */
+export type PackageSmokeExecutable = 'node' | 'pnpm';
+
 function synchronousInvocation(
   command: string,
   args: readonly string[],
@@ -51,37 +54,20 @@ function synchronousInvocation(
 }
 
 /**
- * Resolve the complete executable invocation for `command`. `pnpm` invoked through an
- * `npm_execpath` is re-pointed at the current Node WHEN that entrypoint is a JS
- * file (the common pnpm CLI). But some setups point `npm_execpath` at a NATIVE
- * standalone binary (`@pnpm/exe`, e.g. Blacksmith runners' `setup-pnpm`), which
- * must be run DIRECTLY — `node <binary>` chokes on the ELF/Mach-O/PE header
- * (`SyntaxError: Invalid or unexpected token`). The canonical command-host
- * launcher owns Windows `.cmd`/`.bat` execution; calling those shims directly
- * through `spawnSync`/`execFileSync` raises `EINVAL` on supported Node releases.
+ * Resolve a package-smoke-owned executable through the canonical platform law.
+ * The executable identity is a closed union owned by this command; inherited
+ * environment such as `npm_execpath` may configure pnpm internals but cannot
+ * replace the process we execute. Windows `.cmd`/`.bat` shims are routed through
+ * `cmd.exe`; POSIX resolves the literal tool name through the ordinary PATH.
  */
 export function resolvePackageManagerInvocation(
-  command: string,
+  command: PackageSmokeExecutable,
   args: readonly string[],
   options: {
     readonly platform?: NodeJS.Platform;
-    readonly npmExecPath?: string | null;
-    readonly nodeExecPath?: string;
   } = {},
 ): ExecutableInvocation {
-  const execpath = options.npmExecPath === undefined ? process.env['npm_execpath'] : options.npmExecPath;
-  let executable = command;
-  let executableArgs = args;
-  if (command === 'pnpm' && execpath) {
-    // JS entrypoint → run via node; native binary → run it directly.
-    if (/\.[cm]?js$/i.test(execpath)) {
-      executable = options.nodeExecPath ?? process.execPath;
-      executableArgs = [execpath, ...args];
-    } else {
-      executable = execpath;
-    }
-  }
-  return synchronousInvocation(executable, executableArgs, options.platform ?? process.platform);
+  return synchronousInvocation(command, args, options.platform ?? process.platform);
 }
 
 /**

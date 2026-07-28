@@ -40,6 +40,7 @@ import {
   packedLiteshipBin,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
   resolvePackageManagerInvocation,
+  type PackageSmokeExecutable,
   semanticClosureFileHash,
   tarballFileUrl,
 } from '../internal/package-smoke-helpers.js';
@@ -91,7 +92,7 @@ async function createScratchDir(root: string): Promise<string> {
   return mkdtemp(join(tmpdir(), 'liteship-package-smoke-'));
 }
 
-function run(command: string, args: readonly string[], cwd: string): string {
+function run(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
   const invocation = resolvePackageManagerInvocation(command, args);
   const result = spawnSync(invocation.command, invocation.args, {
     cwd,
@@ -303,7 +304,7 @@ function buildConsumerManifest(tarballByPackage: Map<string, string>): {
  * NEVER mutated — the overrides live only on the object handed to this one child,
  * so the offline constraint is scoped to the install subprocess.
  */
-function runOffline(command: string, args: readonly string[], cwd: string): string {
+function runOffline(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
   const invocation = resolvePackageManagerInvocation(command, args);
   const deadProxy = 'http://127.0.0.1:1';
   const result = spawnSync(invocation.command, invocation.args, {
