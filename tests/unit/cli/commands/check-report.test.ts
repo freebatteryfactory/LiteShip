@@ -390,6 +390,7 @@ describe('check profile cache and diagnostic execution', () => {
           cacheable: true,
           timeoutMs: 1_000,
           inputs: ['input.txt'],
+          prerequisites: [],
           ...overrides,
         },
       ],
@@ -615,6 +616,45 @@ describe('check profile cache and diagnostic execution', () => {
       expect(runner(plan, root).results[0]).toMatchObject({ verdict: 'pass', cacheHit: true });
       expect(runner(plan, root, { noCache: true }).results[0]).toMatchObject({ verdict: 'pass', cacheHit: false });
       expect(spawn).toHaveBeenCalledTimes(3);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('fails a dependent check without executing it when a runtime prerequisite fails', () => {
+    const root = mkdtempSync(join(tmpdir(), 'liteship-check-prerequisite-fail-'));
+    try {
+      writeFileSync(join(root, 'input.txt'), 'same');
+      const base = oneCheckPlan(root);
+      const producer = base.checks[0]!;
+      const consumer = {
+        ...producer,
+        id: 'check/flex-verify',
+        title: 'Prechecked consumer',
+        command: 'pnpm run flex:verify -- --prechecked',
+        cache: 'none' as const,
+        cacheable: false,
+        prerequisites: [producer.id],
+      };
+      const plan: CheckPlan = { ...base, checks: [producer, consumer] };
+      const spawn = vi.fn(() => ({ status: 1, signal: null, stdout: '', stderr: 'producer failed' }));
+
+      const report = createCheckPlanRunner({ spawn })(plan, root);
+
+      expect(spawn).toHaveBeenCalledTimes(1);
+      expect(report).toMatchObject({ ok: false, blocked: true });
+      expect(report.results).toHaveLength(2);
+      expect(report.results[0]).toMatchObject({ id: producer.id, verdict: 'fail' });
+      expect(report.results[1]).toMatchObject({
+        id: consumer.id,
+        verdict: 'fail',
+        durationMs: 0,
+        cacheHit: false,
+      });
+      expect(report.results[1]!.findings).toEqual([
+        `prerequisite ${producer.id} did not pass (fail); ${consumer.command} was not executed`,
+      ]);
+      expect(report.results[1]!.curePacketId).toBe(report.curePackets[1]!.packetId);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

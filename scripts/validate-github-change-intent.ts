@@ -8,7 +8,10 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { validateGitHubChangeIntentDeclaration } from './lib/github-change-intent-declaration.js';
+import {
+  validateGitHubChangeIntentDeclaration,
+  validateGitHubChangeIntentTemplate,
+} from './lib/github-change-intent-declaration.js';
 
 const requireEnv = (name: string): string => {
   const value = process.env[name];
@@ -18,6 +21,7 @@ const requireEnv = (name: string): string => {
 
 const eventName = requireEnv('GITHUB_EVENT_NAME');
 const payload = JSON.parse(readFileSync(requireEnv('GITHUB_EVENT_PATH'), 'utf8')) as unknown;
+validateGitHubChangeIntentTemplate(readFileSync('.github/PULL_REQUEST_TEMPLATE.md', 'utf8'));
 const result = validateGitHubChangeIntentDeclaration(eventName, payload);
 process.stdout.write(
   result.kind === 'declared'

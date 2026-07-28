@@ -501,6 +501,35 @@ function executeCheckPlan(
   const headSha = resolveHeadSha(cwd);
   let blocked = false;
   for (const check of plan.checks) {
+    const unavailablePrerequisite = check.prerequisites
+      .map((id) => ({ id, result: results.find((candidate) => candidate.id === id) }))
+      .find(({ result }) => result?.verdict !== 'pass');
+    if (unavailablePrerequisite !== undefined) {
+      if (check.authority === 'blocking') blocked = true;
+      const prerequisiteVerdict = unavailablePrerequisite.result?.verdict ?? 'missing';
+      const findings = [
+        `prerequisite ${unavailablePrerequisite.id} did not pass (${prerequisiteVerdict}); ${check.command} was not executed`,
+      ];
+      const packet = curePacketForCheck(
+        check,
+        plan,
+        env,
+        headSha,
+        checkEvidenceDigest(check, plan, inputCorpus, env),
+        findings,
+      );
+      curePackets.push(packet);
+      results.push({
+        id: check.id,
+        verdict: 'fail',
+        durationMs: 0,
+        cacheHit: false,
+        findings,
+        curePacketId: packet.packetId,
+      });
+      continue;
+    }
+
     // Applicability was decided by planChecks before execution. Once a check is in
     // the plan, a missing declared script is a broken authority, never a skip.
     const script = check.execution.kind === 'root-script' ? check.execution.script : null;

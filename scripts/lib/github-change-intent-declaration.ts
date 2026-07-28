@@ -54,6 +54,22 @@ export function parseGitHubChangeIntentDeclaration(body: string): GitHubChangeIn
 export type GitHubChangeIntentDeclarationValidation =
   { readonly kind: 'fail-broad'; readonly event: string } | { readonly kind: 'declared'; readonly sponsor: string };
 
+/** Placeholder that makes the checked PR template discoverable but not silently admissible unchanged. */
+export const GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR = 'REPLACE_WITH_YOUR_GITHUB_LOGIN';
+
+/** Validate the checked PR template without importing built workspace code. */
+export function validateGitHubChangeIntentTemplate(template: string): GitHubChangeIntentDeclaration {
+  const declaration = parseGitHubChangeIntentDeclaration(template);
+  if (declaration === null) throw new TypeError('pull-request template must contain one liteship-change-intent block');
+  if (declaration['sponsor'] !== GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR) {
+    throw new TypeError(`pull-request template sponsor must be ${GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR}`);
+  }
+  if (!template.includes(`Replace ${GITHUB_CHANGE_INTENT_TEMPLATE_SPONSOR}`)) {
+    throw new TypeError('pull-request template must tell the author to replace its sponsor placeholder');
+  }
+  return declaration;
+}
+
 /** Validate the event-payload facts available before any workspace build. */
 export function validateGitHubChangeIntentDeclaration(
   eventName: string,
