@@ -2,7 +2,13 @@
 
 /** A prerequisite identity. These describe executable setup, never assertion semantics. */
 export type ExecutionPrerequisiteId =
-  'install' | 'workspace-build' | 'browser-install' | 'wasm-build' | 'packed-artifacts' | 'coverage-inputs';
+  | 'install'
+  | 'workspace-build'
+  | 'browser-binary-install'
+  | 'browser-install'
+  | 'wasm-build'
+  | 'packed-artifacts'
+  | 'coverage-inputs';
 
 /** One executable prerequisite projected into a plan. */
 export interface ExecutionPrerequisite {
@@ -22,6 +28,11 @@ export const EXECUTION_PREREQUISITES = Object.freeze({
     id: 'workspace-build',
     command: 'pnpm run build',
     claim: 'Every source-level workspace runtime import has current executable output.',
+  },
+  'browser-binary-install': {
+    id: 'browser-binary-install',
+    command: 'pnpm exec playwright install chromium chromium-headless-shell',
+    claim: 'The selected pinned browser executables are installed without repeating host provisioning.',
   },
   'browser-install': {
     id: 'browser-install',

@@ -27,6 +27,7 @@ const horizontalWhitespace = fc
   .array(fc.constantFrom(' ', '\t'), { minLength: 1, maxLength: 24 })
   .map((chars) => chars.join(''));
 const finiteInteger = fc.integer({ min: -1_000_000, max: 1_000_000 });
+const blockCommentPayload = fc.string({ maxLength: 512 }).map((payload) => payload.replaceAll('*/', '* /'));
 
 describe('root-script command grammar', () => {
   test('tokenizes every admitted pnpm-run command independently of whitespace width', () => {
@@ -83,6 +84,25 @@ describe('numeric grammar projections', () => {
         },
       ),
       { seed: 0xdec1a1, numRuns: 256 },
+    );
+  });
+
+  test('projects every bounded scientific CSS length through its complete exponent', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: -10_000, max: 10_000 }),
+        fc.integer({ min: -6, max: 6 }),
+        fc.constantFrom('px', 'rem', 'vw', 'vh'),
+        (coefficient, exponent, unit) => {
+          const source = `${coefficient}e${exponent}${unit}`;
+          expect(parseTypedBinding('--length', source)).toEqual({
+            k: 'length',
+            v: Number(`${coefficient}e${exponent}`),
+            unit,
+          });
+        },
+      ),
+      { seed: 0x5c1e17, numRuns: 256 },
     );
   });
 
@@ -158,7 +178,7 @@ describe('event, benchmark, and early-return topology', () => {
 
   test('comment and string decoys never make an empty bench executable', () => {
     fc.assert(
-      fc.property(fc.string({ maxLength: 512 }), (payload) => {
+      fc.property(blockCommentPayload, (payload) => {
         const escaped = JSON.stringify(`bench('fake', () => { ${payload} })`);
         expect(classifyBenchSource(`const decoy = ${escaped}; bench('real', () => { /* ${payload} */ });`)).toBe(
           'placeholder',

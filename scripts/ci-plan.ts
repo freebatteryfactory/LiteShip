@@ -157,6 +157,7 @@ export const CI_LANE_SPECS: Readonly<Record<string, LaneSpec>> = {
       'check/test-flake',
       'check/test-redteam',
     ],
+    prerequisiteIds: ['install', 'workspace-build', 'browser-binary-install'],
   },
   mid: {
     job: 'truth-linux-parallel-mid',

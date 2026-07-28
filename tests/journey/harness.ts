@@ -380,7 +380,7 @@ export function writePackedAuthorManifest(appDir: string, packed: PackedWorkspac
         private: true,
         type: 'module',
         dependencies: { liteship: tarballFileUrl(liteship!), typescript: peerVersion('typescript') },
-        pnpm: { overrides },
+        pnpm: { overrides: { ...qualifiedHostOverrides(PEER_INSTALLS), ...overrides } },
       },
       null,
       2,

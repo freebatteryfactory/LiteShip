@@ -8,7 +8,7 @@
 
 > **interpolate**\<`T`\>(`from`, `to`, `eased`, `defaults?`): `T`
 
-Defined in: [core/src/motion/interpolate.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpolate.ts#L242)
+Defined in: [core/src/motion/interpolate.ts:249](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/motion/interpolate.ts#L249)
 
 Interpolate between two numeric records using an eased value [0..1].
 Returns a new record with each property lerped: from[k] + (to[k] - from[k]) * eased.

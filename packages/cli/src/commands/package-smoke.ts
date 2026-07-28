@@ -17,7 +17,6 @@ import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   packageSmokeCommand,
@@ -39,7 +38,6 @@ import {
   diffSemanticClosures,
   partitionRuntimeClosureSpecifiers,
   packedLiteshipBin,
-  PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
   packageSmokeProcessFailure,
   peerDependenciesOnly as peerDependenciesOnlyHelper,
   qualifiedHostOverrides,
@@ -69,13 +67,7 @@ import {
 } from '../internal/one-install-cost-gate.js';
 import { verifyReleaseArtifactBundle } from '../internal/release-artifact-bundle.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-
-type CrossSpawnSync = (
-  command: string,
-  args: readonly string[],
-  options: SpawnSyncOptionsWithStringEncoding,
-) => SpawnSyncReturns<string>;
-const crossSpawnSync = (createRequire(import.meta.url)('cross-spawn') as { sync: CrossSpawnSync }).sync;
+import { spawnArgvCapture } from '../internal/spawn.js';
 
 /** `PEER_INSTALLS` → `{name: version}` map (the extracted, unit-tested helper). */
 function peerDependenciesOnly(): Record<string, string> {
@@ -103,22 +95,24 @@ async function createScratchDir(root: string): Promise<string> {
   return mkdtemp(join(tmpdir(), 'liteship-package-smoke-'));
 }
 
-function run(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
+async function run(command: PackageSmokeExecutable, args: readonly string[], cwd: string): Promise<string> {
   const invocation = resolvePackageManagerInvocation(command, args);
-  const result = crossSpawnSync(invocation.command, invocation.args, {
-    cwd,
-    encoding: 'utf8',
-    maxBuffer: PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
-  });
-  if (result.error != null || result.status !== 0) {
+  let result: Awaited<ReturnType<typeof spawnArgvCapture>>;
+  try {
+    result = await spawnArgvCapture(invocation.command, invocation.args, {
+      cwd,
+      captureBytes: 16 * 1024,
+    });
+  } catch (error) {
+    throw IntegrityError('package-smoke', packageSmokeProcessFailure(command, null, '', '', error));
+  }
+  if (result.exitCode !== 0) {
     throw IntegrityError(
       'package-smoke',
-      packageSmokeProcessFailure(command, result.status, result.stdout, result.stderr, result.error),
+      packageSmokeProcessFailure(command, result.exitCode, result.stdout, result.stderr),
     );
   }
-  return (result.stdout ?? '').trim();
+  return result.stdout.trim();
 }
 
 function measureFacadeColdImports(consumerDir: string): readonly ColdImportGraph[] {
@@ -268,7 +262,7 @@ function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: s
 
 async function packPackage(cwd: string, tarballDir: string): Promise<string> {
   const before = new Set(await readdir(tarballDir));
-  run('pnpm', ['pack', '--pack-destination', tarballDir], cwd);
+  await run('pnpm', ['pack', '--pack-destination', tarballDir], cwd);
   const after = await readdir(tarballDir);
   const created = after.filter((entry) => !before.has(entry) && entry.endsWith('.tgz'));
   if (created.length !== 1) {
@@ -315,37 +309,12 @@ function buildConsumerManifest(tarballByPackage: Map<string, string>): {
 }
 
 /**
- * `run`, but with the CHILD's network DISABLED via its spawn env ONLY: pnpm's
- * `npm_config_offline=true` plus a dead HTTP(S) proxy so any accidental fetch dies
- * fast instead of hanging. The session's own `process.env` (its real proxy) is
- * NEVER mutated — the overrides live only on the object handed to this one child,
- * so the offline constraint is scoped to the install subprocess.
+ * `run`, but with the CHILD's package manager in explicit offline mode. The
+ * constraint is an argv-level pnpm law, so the session's own environment and
+ * network configuration are never mutated.
  */
-function runOffline(command: PackageSmokeExecutable, args: readonly string[], cwd: string): string {
-  const invocation = resolvePackageManagerInvocation(command, args);
-  const deadProxy = 'http://127.0.0.1:1';
-  const result = crossSpawnSync(invocation.command, invocation.args, {
-    cwd,
-    encoding: 'utf8',
-    maxBuffer: PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
-    env: {
-      ...process.env,
-      npm_config_offline: 'true',
-      HTTPS_PROXY: deadProxy,
-      HTTP_PROXY: deadProxy,
-      https_proxy: deadProxy,
-      http_proxy: deadProxy,
-    },
-  });
-  if (result.error != null || result.status !== 0) {
-    throw IntegrityError(
-      'package-smoke',
-      packageSmokeProcessFailure(command, result.status, result.stdout, result.stderr, result.error),
-    );
-  }
-  return (result.stdout ?? '').trim();
+async function runOffline(args: readonly string[], cwd: string): Promise<void> {
+  await run('pnpm', [...args, '--offline'], cwd);
 }
 
 interface PublicSubpath {
@@ -457,7 +426,10 @@ type HermeticResult = NonNullable<PackageSmokePayload['hermetic']>;
  * promised proof, never a green skip. The release/consumer lane runs this on
  * Linux; an explicit invocation on an unsupported host fails with the reason.
  */
-function runHermeticBuild(scratch: string, tarballByPackage: Map<string, string>): HermeticResult['hermeticBuild'] {
+async function runHermeticBuild(
+  scratch: string,
+  tarballByPackage: Map<string, string>,
+): Promise<HermeticResult['hermeticBuild']> {
   if (process.platform === 'win32') {
     return {
       ok: false,
@@ -471,7 +443,7 @@ function runHermeticBuild(scratch: string, tarballByPackage: Map<string, string>
   writeFileSync(join(dir, 'package.json'), JSON.stringify(buildConsumerManifest(tarballByPackage), null, 2));
   process.stderr.write('[package:smoke] > hermetic-build: offline pnpm install (network disabled on the child only)\n');
   try {
-    runOffline('pnpm', ['install'], dir);
+    await runOffline(['install'], dir);
     process.stderr.write(
       '[package:smoke] ok hermetic-build: offline install succeeded from warm store + file:// tarballs\n',
     );
@@ -696,7 +668,7 @@ async function runHermeticChecks(args: {
   generatedAt: string;
 }): Promise<HermeticResult> {
   const { root, scratch, consumerDir, tarballByPackage, generatedAt } = args;
-  const hermeticBuild = runHermeticBuild(scratch, tarballByPackage);
+  const hermeticBuild = await runHermeticBuild(scratch, tarballByPackage);
   const packedConsumerClosure = await runPackedConsumerClosure(root, consumerDir);
   const doubleBuildRepro = await runDoubleBuildRepro({ root, scratch, tarballByPackage, generatedAt });
   return { hermeticBuild, packedConsumerClosure, doubleBuildRepro };
@@ -804,7 +776,7 @@ export async function runPackageSmokeScan(
       // Consumer scratch lives under the repo; without --ignore-workspace pnpm
       // treats this as a workspace root install and never materializes cborg/mediabunny here.
       step(`pnpm install consumer dependencies in ${consumerDir}`);
-      run('pnpm', ['install', '--ignore-workspace'], consumerDir);
+      await run('pnpm', ['install', '--ignore-workspace'], consumerDir);
       stepOk('pnpm install complete');
 
       for (const name of Object.keys(externalDeps)) {
@@ -833,7 +805,7 @@ export async function runPackageSmokeScan(
       stepOk(`consumer package.json written (sample dep: ${firstPkg.name} → ${sampleDep})`);
 
       step(`pnpm install in consumer dir (${consumerDir})`);
-      run('pnpm', ['install'], consumerDir);
+      await run('pnpm', ['install'], consumerDir);
       stepOk('pnpm install complete');
     }
 
@@ -846,7 +818,7 @@ export async function runPackageSmokeScan(
         architecture: process.arch,
         nodeVersion: process.version,
         packageManager: 'pnpm',
-        packageManagerVersion: run('pnpm', ['--version'], root),
+        packageManagerVersion: await run('pnpm', ['--version'], root),
       },
       fleetPackages: PACKAGES.map((pkg) => pkg.name),
       tarballs: tarballByPackage,
@@ -945,7 +917,7 @@ for (const specifier of imports) {
 }
 `;
     await writeFile(join(consumerDir, 'smoke.mjs'), smokeModule);
-    run('node', ['smoke.mjs'], consumerDir);
+    await run('node', ['smoke.mjs'], consumerDir);
     importsSmoked = allImports.length;
     stepOk('all imports resolved');
 
@@ -954,9 +926,9 @@ for (const specifier of imports) {
       // Tar extraction has no node_modules/.bin shim; execute the facade-owned
       // public binary directly. @liteship/cli is implementation-only and ships no bin.
       const liteshipBin = packedLiteshipBin(consumerDir);
-      run('node', [liteshipBin, 'describe', '--format=json'], consumerDir);
+      await run('node', [liteshipBin, 'describe', '--format=json'], consumerDir);
     } else {
-      run('pnpm', ['exec', 'liteship', 'describe', '--format=json'], consumerDir);
+      await run('pnpm', ['exec', 'liteship', 'describe', '--format=json'], consumerDir);
     }
     stepOk('liteship binstub resolved and produced a describe receipt');
 

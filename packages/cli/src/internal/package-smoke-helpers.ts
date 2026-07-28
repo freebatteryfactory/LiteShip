@@ -37,16 +37,6 @@ export interface ExecutableInvocation {
 
 const PACKAGE_SMOKE_PROCESS_TAIL_CHARS = 4_096;
 
-/**
- * Hard ceiling for synchronous package-manager output retained in memory.
- *
- * Package installs can legitimately exceed Node's small default child-process
- * buffer on warning-heavy failure paths. The orchestration captures enough
- * output to reach the actionable tail, then the receipt below sanitizes and
- * bounds what crosses the CI boundary.
- */
-export const PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES = 16 * 1_024 * 1_024;
-
 function boundedProcessTail(raw: string | null | undefined): string {
   const normalized = stripTerminalControlSequences(raw ?? '')
     .replaceAll('\r\n', '\n')

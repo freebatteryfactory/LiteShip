@@ -26,9 +26,10 @@ import { BENCH_NOT_APPLICABLE_RE } from './bench-marker.js';
  * closure contains executable code, 'placeholder' if every closure body is
  * empty or comment-only (or no bench call exists at all).
  *
- * The scanner is deliberately linear: comments and string literals are masked,
- * then balanced braces locate each arrow closure. That keeps hostile generated
- * input bounded without mistaking comment text or nested closures for evidence.
+ * The scanner is deliberately linear: comments, strings, templates, and regular
+ * expressions are masked, then delimiter depth locates the callback arrow and
+ * its balanced body. That keeps hostile generated input bounded without
+ * mistaking lexical decoys or a nested default-parameter arrow for evidence.
  */
 export function classifyBenchSource(source: string): 'real' | 'placeholder' {
   const code = maskCommentsAndLiterals(source);
@@ -38,8 +39,8 @@ export function classifyBenchSource(source: string): 'real' | 'placeholder' {
     if (code[at] !== '(') continue;
     const callEnd = matchingDelimiter(code, at, '(', ')');
     if (callEnd < 0) continue;
-    const arrow = code.indexOf('=>', at + 1);
-    if (arrow < 0 || arrow > callEnd) {
+    const arrow = shallowestArrow(code, at, callEnd);
+    if (arrow < 0) {
       cursor = callEnd;
       continue;
     }
@@ -88,11 +89,44 @@ function matchingDelimiter(source: string, start: number, open: string, close: s
   return -1;
 }
 
-/** Mask comments and quoted literals while preserving offsets and delimiters. */
+/** Find the callback arrow at the shallowest argument depth inside one call. */
+function shallowestArrow(source: string, callStart: number, callEnd: number): number {
+  let parenDepth = 1;
+  let bracketDepth = 0;
+  let braceDepth = 0;
+  let shallowest = Number.POSITIVE_INFINITY;
+  let candidate = -1;
+  for (let at = callStart + 1; at < callEnd; at++) {
+    const char = source[at];
+    if (char === '(') parenDepth++;
+    else if (char === ')') parenDepth--;
+    else if (char === '[') bracketDepth++;
+    else if (char === ']') bracketDepth--;
+    else if (char === '{') braceDepth++;
+    else if (char === '}') braceDepth--;
+    else if (char === '=' && source[at + 1] === '>') {
+      const depth = parenDepth + bracketDepth + braceDepth;
+      if (depth < shallowest) {
+        shallowest = depth;
+        candidate = at;
+      }
+      at++;
+    }
+  }
+  return candidate;
+}
+
+function regexMayFollowWord(word: string): boolean {
+  return /^(?:await|case|delete|else|in|instanceof|new|of|return|throw|typeof|void|yield)$/u.test(word);
+}
+
+/** Mask comments and JavaScript literal forms while preserving offsets. */
 function maskCommentsAndLiterals(source: string): string {
   const chars = [...source];
-  let mode: 'code' | 'line-comment' | 'block-comment' | 'single' | 'double' | 'template' = 'code';
+  let mode: 'code' | 'line-comment' | 'block-comment' | 'single' | 'double' | 'template' | 'regex' = 'code';
   let escaped = false;
+  let regexClass = false;
+  let regexAllowed = true;
   for (let at = 0; at < chars.length; at++) {
     const char = chars[at]!;
     const next = chars[at + 1];
@@ -108,6 +142,20 @@ function maskCommentsAndLiterals(source: string): string {
       } else if (char === "'" || char === '"' || char === '`') {
         chars[at] = ' ';
         mode = char === "'" ? 'single' : char === '"' ? 'double' : 'template';
+      } else if (char === '/' && regexAllowed) {
+        chars[at] = ' ';
+        mode = 'regex';
+        escaped = false;
+        regexClass = false;
+      } else if (/[A-Za-z_$]/u.test(char)) {
+        const start = at;
+        while (at + 1 < chars.length && /[A-Za-z0-9_$]/u.test(chars[at + 1]!)) at++;
+        regexAllowed = regexMayFollowWord(chars.slice(start, at + 1).join(''));
+      } else if (/[0-9]/u.test(char)) {
+        while (at + 1 < chars.length && /[A-Za-z0-9_.]/u.test(chars[at + 1]!)) at++;
+        regexAllowed = false;
+      } else if (!/\s/u.test(char)) {
+        regexAllowed = !')]}'.includes(char);
       }
       continue;
     }
@@ -129,12 +177,21 @@ function maskCommentsAndLiterals(source: string): string {
       escaped = false;
     } else if (char === '\\') {
       escaped = true;
+    } else if (mode === 'regex' && char === '[') {
+      regexClass = true;
+    } else if (mode === 'regex' && char === ']') {
+      regexClass = false;
+    } else if (mode === 'regex' && char === '/' && !regexClass) {
+      while (at + 1 < chars.length && /[A-Za-z]/u.test(chars[at + 1]!)) chars[++at] = ' ';
+      mode = 'code';
+      regexAllowed = false;
     } else if (
       (mode === 'single' && char === "'") ||
       (mode === 'double' && char === '"') ||
       (mode === 'template' && char === '`')
     ) {
       mode = 'code';
+      regexAllowed = false;
     }
   }
   return chars.join('');

@@ -4,7 +4,9 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
+import { PEER_INSTALLS } from '@liteship/command';
 import { boundedJourneyOutput, writePackedAuthorManifest, type PackedWorkspace } from '../../journey/harness.js';
+import { qualifiedHostOverrides } from '../../../packages/cli/src/internal/package-smoke-helpers.js';
 
 describe('bounded journey diagnostics', () => {
   test('preserves the owning error and the process epilogue when output is long', () => {
@@ -40,7 +42,10 @@ describe('current packed package-author manifest', () => {
       };
       expect(Object.keys(manifest.dependencies).sort()).toEqual(['liteship', 'typescript']);
       expect(manifest.dependencies['liteship']).toMatch(/^file:/);
-      expect(manifest.pnpm.overrides['liteship']).toMatch(/^file:/);
+      expect(manifest.pnpm.overrides).toEqual({
+        ...qualifiedHostOverrides(PEER_INSTALLS),
+        liteship: manifest.dependencies['liteship'],
+      });
       expect(existsSync(join(root, '.npmrc'))).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });

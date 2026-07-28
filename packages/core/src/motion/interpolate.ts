@@ -70,6 +70,13 @@ function parseDecimal(source: string, allowPercent = false, allowTrailingDot = t
     if (!allowTrailingDot && fractionDigits === 0) return null;
   }
   if (wholeDigits + fractionDigits === 0) return null;
+  if (source[at] === 'e' || source[at] === 'E') {
+    at++;
+    if (source[at] === '-' || source[at] === '+') at++;
+    const exponentStart = at;
+    while (at < source.length && source.charCodeAt(at) >= 48 && source.charCodeAt(at) <= 57) at++;
+    if (at === exponentStart) return null;
+  }
   const percent = source[at] === '%';
   if (percent) at++;
   if (at !== source.length || (percent && !allowPercent)) return null;

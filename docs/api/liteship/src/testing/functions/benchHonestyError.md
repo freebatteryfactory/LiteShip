@@ -8,7 +8,7 @@
 
 > **benchHonestyError**(`capName`, `benchSource`, `benchExemption`): `string` \| `null`
 
-Defined in: core/dist/evidence/bench-classify.d.ts:25
+Defined in: core/dist/evidence/bench-classify.d.ts:26
 
 Honesty verdict for ONE generated bench — the ONE definition the gate
 (capsule-verify) and its meta-test share. Returns a human-readable error for a

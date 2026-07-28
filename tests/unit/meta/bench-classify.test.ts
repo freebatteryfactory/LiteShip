@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { classifyBenchSource, benchHonestyError } from '@liteship/core/harness';
+import { hasTag } from '@liteship/error';
+import { benchNotApplicableMarker } from '../../../packages/core/src/evidence/bench-marker.js';
 
 // Pins the real-vs-placeholder semantics the capsule:verify receipt is built
 // on. The integration test derives its expected receipt from this classifier,
@@ -45,6 +47,21 @@ describe('classifyBenchSource', () => {
   it('survives nested braces in the body (truncated capture is still non-empty)', () => {
     const src = "bench('n', () => { if (x) { y(); } });";
     expect(classifyBenchSource(src)).toBe('real');
+  });
+
+  it('selects the bench callback rather than an arrow nested in its default parameters', () => {
+    expect(classifyBenchSource("bench('x', (make = () => work) => { make(); });")).toBe('real');
+    expect(classifyBenchSource("bench('x', (make = () => work) => { /* empty */ });")).toBe('placeholder');
+  });
+
+  it('masks regex literals containing quote, comment, and delimiter decoys', () => {
+    const decoy = String.raw`const grammar = /['\"{}/*=>]/giu;`;
+    expect(classifyBenchSource(`${decoy}\nbench('x', () => { measure(); });`)).toBe('real');
+    expect(classifyBenchSource(`${decoy}\nbench('x', () => { /* empty */ });`)).toBe('placeholder');
+  });
+
+  it('does not mistake division operators for regex literals', () => {
+    expect(classifyBenchSource("const ratio = total / count; bench('x', () => { consume(ratio); });")).toBe('real');
   });
 
   it('stays linear on long comment/string decoys and finds the real nested body', () => {
@@ -96,5 +113,16 @@ describe('benchHonestyError', () => {
 
   it('a marker reason disagreeing with the manifest reason FAILS', () => {
     expect(benchHonestyError('demo', `${NA}\n${guardBody}`, { reason: 'a different reason' })).toMatch(/disagrees/);
+  });
+
+  it.each(['', ' ', '\t\n'])('refuses an empty generated marker reason %j', (reason) => {
+    let failure: unknown;
+    try {
+      benchNotApplicableMarker(reason);
+    } catch (error) {
+      failure = error;
+    }
+    expect(hasTag(failure, 'ValidationError')).toBe(true);
+    expect(failure).toMatchObject({ module: 'benchNotApplicableMarker', detail: expect.stringMatching(/non-empty/u) });
   });
 });

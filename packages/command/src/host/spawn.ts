@@ -162,11 +162,11 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
 }
 
 /**
- * Run a subprocess and fully capture stdout + stderr to strings, with an
- * optional `cwd`. Used by ship/verify where the publisher needs the
- * subprocess output (pnpm pack's tarball path, pnpm publish --dry-run's
- * notice block) as a byte sequence to hash. Like spawnArgv, never throws
- * on nonzero exit — callers branch on `exitCode`.
+ * Run a subprocess while continuously draining stdout + stderr into bounded
+ * tail buffers. Used by ship/verify where the publisher needs semantic process
+ * output and by verbose package-manager gates that must not terminate merely
+ * because diagnostics are large. Like spawnArgv, never throws on nonzero exit —
+ * callers branch on `exitCode`.
  */
 export function spawnArgvCapture(
   command: string,

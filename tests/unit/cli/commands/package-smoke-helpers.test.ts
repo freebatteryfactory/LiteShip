@@ -34,7 +34,6 @@ import {
   semanticClosureFileHash,
   assertPackedTypeClosure,
   packedLiteshipBin,
-  PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES,
   packageSmokeProcessFailure,
   qualifiedHostOverrides,
 } from '../../../../packages/cli/src/internal/package-smoke-helpers.js';
@@ -90,13 +89,12 @@ describe('packageSmokeProcessFailure — failed child diagnostics', () => {
     expect(receipt).not.toMatch(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/u);
   });
 
-  it('preserves bounded partial evidence when spawnSync reports ENOBUFS', () => {
-    const error = Object.assign(new Error('spawnSync pnpm ENOBUFS'), { code: 'ENOBUFS' });
+  it('preserves bounded partial evidence when the launcher reports a spawn error', () => {
+    const error = Object.assign(new Error('spawnSync pnpm EACCES'), { code: 'EACCES' });
     const receipt = packageSmokeProcessFailure('pnpm', null, 'partial stdout', 'partial stderr', error);
 
-    expect(PACKAGE_SMOKE_PROCESS_MAX_BUFFER_BYTES).toBeGreaterThanOrEqual(16 * 1_024 * 1_024);
     expect(receipt).toContain('pnpm exited with status unknown');
-    expect(receipt).toContain('spawn error:\nError: spawnSync pnpm ENOBUFS');
+    expect(receipt).toContain('spawn error:\nError: spawnSync pnpm EACCES');
     expect(receipt).toContain('stdout tail:\npartial stdout');
     expect(receipt).toContain('stderr tail:\npartial stderr');
   });

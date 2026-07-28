@@ -200,7 +200,7 @@ function resolveInternalPackageImport(
     const suffix = subpath.slice(2);
     return {
       specifier,
-      targetFile: normalizeRepoPath(wildcard.replaceAll('*', suffix)),
+      targetFile: normalizeRepoPath(wildcard.replaceAll('*', () => suffix)),
       targetPackage: packageName,
       kind: 'internal-package',
     };
