@@ -1,58 +1,29 @@
-/** Model-based filesystem properties for consumer package-manager ownership. */
+/** Pure model properties for consumer package-manager ownership precedence. */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
-import { detectProjectPackageManager } from '../../packages/cli/src/internal/project-package-manager.js';
+import {
+  selectProjectPackageManager,
+  type ProjectPackageManagerBoundary,
+} from '../../packages/cli/src/internal/project-package-manager.js';
 
 type Manager = 'npm' | 'pnpm' | 'yarn';
 type Marker = 'manifest' | 'lockfile';
 
-interface Boundary {
-  readonly manager: Manager;
-  readonly marker: Marker;
+const managerArb = fc.constantFrom<Manager>('npm', 'pnpm', 'yarn');
+const markerArb = fc.constantFrom<Marker>('manifest', 'lockfile');
+
+function boundary(manager: Manager, marker: Marker, ownsNestedProjects = true): ProjectPackageManagerBoundary {
+  return {
+    kind: 'boundary',
+    ownsNestedProjects,
+    ...(marker === 'manifest' ? { packageManager: `${manager}@1.0.0` } : {}),
+    lockfileManagers: marker === 'lockfile' ? [manager] : [],
+  };
 }
 
-const roots: string[] = [];
-
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
-
-function fixture(depth: number): { readonly root: string; readonly directories: readonly string[] } {
-  const root = mkdtempSync(join(tmpdir(), 'liteship-pm-model-'));
-  roots.push(root);
-  const directories = [root];
-  let current = root;
-  for (let index = 0; index < depth; index += 1) {
-    current = join(current, `level-${index}`);
-    mkdirSync(current, { recursive: true });
-    directories.push(current);
-  }
-  return { root, directories };
-}
-
-function lockfile(manager: Manager): string {
-  if (manager === 'npm') return 'package-lock.json';
-  if (manager === 'pnpm') return 'pnpm-lock.yaml';
-  return 'yarn.lock';
-}
-
-function writeBoundary(directory: string, boundary: Boundary, ownsNested: boolean): void {
-  if (boundary.marker === 'manifest') {
-    writeFileSync(
-      join(directory, 'package.json'),
-      JSON.stringify({
-        packageManager: `${boundary.manager}@1.0.0`,
-        ...(ownsNested ? { workspaces: ['**/*'] } : {}),
-      }),
-    );
-    return;
-  }
-  if (ownsNested) writeFileSync(join(directory, 'package.json'), JSON.stringify({ workspaces: ['**/*'] }));
-  writeFileSync(join(directory, lockfile(boundary.manager)), `${boundary.manager} fixture\n`);
+function emptyBoundary(ownsNestedProjects: boolean): ProjectPackageManagerBoundary {
+  return { kind: 'boundary', ownsNestedProjects, lockfileManagers: [] };
 }
 
 function expected(manager: Manager): unknown {
@@ -61,85 +32,78 @@ function expected(manager: Manager): unknown {
     : { kind: 'supported', manager };
 }
 
-const managerArb = fc.constantFrom<Manager>('npm', 'pnpm', 'yarn');
-const markerArb = fc.constantFrom<Marker>('manifest', 'lockfile');
-
 describe('project package-manager ancestry model', () => {
   it('selects the nearest owning boundary at arbitrary nesting depth', () => {
     fc.assert(
       fc.property(
-        fc.integer({ min: 1, max: 6 }),
+        fc.integer({ min: 0, max: 6 }),
+        fc.integer({ min: 0, max: 6 }),
         managerArb,
         markerArb,
         managerArb,
         markerArb,
-        fc.integer({ min: 0, max: 5 }),
-        (depth, rootManager, rootMarker, nearManager, nearMarker, rawNearIndex) => {
-          const tree = fixture(depth);
-          const nearIndex = 1 + (rawNearIndex % depth);
-          writeBoundary(tree.root, { manager: rootManager, marker: rootMarker }, true);
-          writeBoundary(tree.directories[nearIndex]!, { manager: nearManager, marker: nearMarker }, true);
+        (nearDistance, rootDistance, rootManager, rootMarker, nearManager, nearMarker) => {
+          const observations: ProjectPackageManagerBoundary[] = [emptyBoundary(true)];
+          observations.push(...Array.from({ length: nearDistance }, () => emptyBoundary(false)));
+          observations.push(boundary(nearManager, nearMarker));
+          observations.push(...Array.from({ length: rootDistance }, () => emptyBoundary(false)));
+          observations.push(boundary(rootManager, rootMarker));
 
-          expect(detectProjectPackageManager(tree.directories.at(-1)!, {})).toEqual(expected(nearManager));
+          expect(selectProjectPackageManager(observations, {})).toEqual(expected(nearManager));
         },
       ),
-      { seed: 0x50_4d_01, numRuns: 120 },
+      { seed: 0x50_4d_01, numRuns: 240 },
     );
   });
 
-  it('uses the workspace root when intermediate package manifests do not own nested projects', () => {
+  it('uses the workspace root when intermediate manifests do not own nested projects', () => {
     fc.assert(
-      fc.property(fc.integer({ min: 2, max: 7 }), managerArb, markerArb, (depth, manager, marker) => {
-        const tree = fixture(depth);
-        writeBoundary(tree.root, { manager, marker }, true);
-        for (const directory of tree.directories.slice(1, -1)) {
-          writeFileSync(join(directory, 'package.json'), JSON.stringify({ private: true }));
-        }
+      fc.property(
+        fc.integer({ min: 0, max: 8 }),
+        managerArb,
+        markerArb,
+        managerArb,
+        (depth, manager, marker, intermediateManager) => {
+          const observations: ProjectPackageManagerBoundary[] = [emptyBoundary(true)];
+          observations.push(...Array.from({ length: depth }, () => boundary(intermediateManager, 'manifest', false)));
+          observations.push(boundary(manager, marker));
 
-        expect(detectProjectPackageManager(tree.directories.at(-1)!, {})).toEqual(expected(manager));
-      }),
-      { seed: 0x50_4d_02, numRuns: 80 },
+          expect(selectProjectPackageManager(observations, {})).toEqual(expected(manager));
+        },
+      ),
+      { seed: 0x50_4d_02, numRuns: 160 },
     );
   });
 
   it('lets the exact application marker win even when it is not a workspace owner', () => {
     fc.assert(
-      fc.property(
-        fc.integer({ min: 1, max: 5 }),
-        managerArb,
-        markerArb,
-        managerArb,
-        markerArb,
-        (depth, rootManager, rootMarker, appManager, appMarker) => {
-          const tree = fixture(depth);
-          const app = tree.directories.at(-1)!;
-          writeBoundary(tree.root, { manager: rootManager, marker: rootMarker }, true);
-          writeBoundary(app, { manager: appManager, marker: appMarker }, false);
-
-          expect(detectProjectPackageManager(app, {})).toEqual(expected(appManager));
-        },
-      ),
-      { seed: 0x50_4d_03, numRuns: 100 },
+      fc.property(managerArb, markerArb, managerArb, markerArb, (rootManager, rootMarker, appManager, appMarker) => {
+        const observations = [boundary(appManager, appMarker), boundary(rootManager, rootMarker)];
+        expect(selectProjectPackageManager(observations, {})).toEqual(expected(appManager));
+      }),
+      { seed: 0x50_4d_03, numRuns: 180 },
     );
   });
 
   it('prefers packageManager to colocated lockfiles without consulting ambient user-agent state', () => {
     fc.assert(
-      fc.property(managerArb, markerArb, managerArb, (declared, _marker, invoking) => {
-        const tree = fixture(1);
-        const app = tree.directories.at(-1)!;
-        writeBoundary(app, { manager: declared, marker: 'manifest' }, false);
-        for (const manager of ['npm', 'pnpm', 'yarn'] as const) {
-          writeFileSync(join(app, lockfile(manager)), `${manager}\n`);
-        }
+      fc.property(managerArb, managerArb, (declared, invoking) => {
+        const observations: ProjectPackageManagerBoundary[] = [
+          {
+            kind: 'boundary',
+            ownsNestedProjects: true,
+            packageManager: `${declared}@1.0.0`,
+            lockfileManagers: ['npm', 'pnpm', 'yarn'],
+          },
+        ];
 
         expect(
-          detectProjectPackageManager(app, {
+          selectProjectPackageManager(observations, {
             npm_config_user_agent: `${invoking}/1.0.0 node/v22`,
           }),
         ).toEqual(expected(declared));
       }),
-      { seed: 0x50_4d_04, numRuns: 60 },
+      { seed: 0x50_4d_04, numRuns: 120 },
     );
   });
 
@@ -152,54 +116,142 @@ describe('project package-manager ancestry model', () => {
     ];
     fc.assert(
       fc.property(fc.constantFrom(...subsets), (managers) => {
-        const tree = fixture(1);
-        const app = tree.directories.at(-1)!;
-        for (const manager of managers) writeFileSync(join(app, lockfile(manager)), `${manager}\n`);
-
-        const detection = detectProjectPackageManager(app, {
-          npm_config_user_agent: 'npm/10.0.0 node/v22',
-        });
+        const detection = selectProjectPackageManager(
+          [{ kind: 'boundary', ownsNestedProjects: true, lockfileManagers: managers }],
+          { npm_config_user_agent: 'npm/10.0.0 node/v22' },
+        );
         expect(detection).toEqual({
           kind: 'unsupported',
           manager: `conflicting lockfiles (${[...managers].sort().join(', ')})`,
           source: 'lockfile',
         });
       }),
-      { seed: 0x50_4d_05, numRuns: 40 },
+      { seed: 0x50_4d_05, numRuns: 80 },
     );
   });
 
   it('ignores unrelated ancestor markers that do not declare workspace ownership', () => {
     fc.assert(
       fc.property(managerArb, markerArb, managerArb, (ambient, marker, invoking) => {
-        const tree = fixture(3);
-        writeBoundary(tree.root, { manager: ambient, marker }, false);
-        const app = tree.directories.at(-1)!;
-
         expect(
-          detectProjectPackageManager(app, {
+          selectProjectPackageManager([emptyBoundary(true), boundary(ambient, marker, false)], {
             npm_config_user_agent: `${invoking}/1.0.0 node/v22`,
           }),
         ).toEqual(expected(invoking));
       }),
-      { seed: 0x50_4d_06, numRuns: 80 },
+      { seed: 0x50_4d_06, numRuns: 160 },
     );
   });
 
-  it('treats null and scalar workspaces fields as data, not ownership authority', () => {
+  it('is invariant to duplicate lockfile observations from one owner', () => {
     fc.assert(
-      fc.property(fc.constantFrom<unknown>(null, false, true, 0, 1, 'apps/*'), managerArb, (workspaces, invoking) => {
-        const tree = fixture(2);
-        writeFileSync(join(tree.root, 'package.json'), JSON.stringify({ workspaces }));
-        writeFileSync(join(tree.root, 'yarn.lock'), '# ambient marker\n');
-
+      fc.property(managerArb, fc.integer({ min: 1, max: 8 }), (manager, copies) => {
         expect(
-          detectProjectPackageManager(tree.directories.at(-1)!, {
+          selectProjectPackageManager(
+            [
+              {
+                kind: 'boundary',
+                ownsNestedProjects: true,
+                lockfileManagers: Array.from({ length: copies }, () => manager),
+              },
+            ],
+            {},
+          ),
+        ).toEqual(expected(manager));
+      }),
+      { seed: 0x50_4d_07, numRuns: 120 },
+    );
+  });
+
+  it('stops consuming ancestry after the nearest decisive owner', () => {
+    fc.assert(
+      fc.property(managerArb, markerArb, (manager, marker) => {
+        function* observations(): Iterable<ProjectPackageManagerBoundary> {
+          yield boundary(manager, marker);
+          throw new Error('outer ancestry must remain unread after a decisive owner');
+        }
+
+        expect(selectProjectPackageManager(observations(), {})).toEqual(expected(manager));
+      }),
+      { seed: 0x50_4d_08, numRuns: 120 },
+    );
+  });
+
+  it('admits invalid manifests only when they precede every decisive owner', () => {
+    fc.assert(
+      fc.property(managerArb, markerArb, fc.string({ minLength: 1, maxLength: 80 }), (manager, marker, reason) => {
+        const invalid: ProjectPackageManagerBoundary = {
+          kind: 'invalid-manifest',
+          manifestPath: 'outer/package.json',
+          reason,
+        };
+        expect(selectProjectPackageManager([invalid, boundary(manager, marker)], {})).toEqual(invalid);
+        expect(selectProjectPackageManager([boundary(manager, marker), invalid], {})).toEqual(expected(manager));
+      }),
+      { seed: 0x50_4d_09, numRuns: 160 },
+    );
+  });
+
+  it('is invariant to arbitrary non-owning ancestor insertions', () => {
+    fc.assert(
+      fc.property(
+        managerArb,
+        markerArb,
+        fc.array(fc.tuple(managerArb, markerArb), { maxLength: 20 }),
+        (ownerManager, ownerMarker, ignored) => {
+          const observations = [
+            emptyBoundary(true),
+            ...ignored.map(([manager, marker]) => boundary(manager, marker, false)),
+            boundary(ownerManager, ownerMarker),
+          ];
+          expect(selectProjectPackageManager(observations, {})).toEqual(expected(ownerManager));
+        },
+      ),
+      { seed: 0x50_4d_0a, numRuns: 200 },
+    );
+  });
+
+  it('uses the invoking manager exactly when ancestry is exhausted without an owner', () => {
+    fc.assert(
+      fc.property(managerArb, fc.integer({ min: 0, max: 20 }), (invoking, depth) => {
+        const observations = Array.from({ length: depth }, () => emptyBoundary(false));
+        expect(
+          selectProjectPackageManager(observations, {
             npm_config_user_agent: `${invoking}/1.0.0 node/v22`,
           }),
         ).toEqual(expected(invoking));
+        expect(selectProjectPackageManager(observations, {})).toEqual({ kind: 'supported', manager: 'npm' });
       }),
-      { seed: 0x50_4d_07, numRuns: 60 },
+      { seed: 0x50_4d_0b, numRuns: 160 },
+    );
+  });
+
+  it('normalizes authored manager spelling without losing packageManager provenance', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom('NPM', 'PnPm', 'YARN', 'BUN'),
+        fc.stringMatching(/^\s{0,8}$/u),
+        (authored, padding) => {
+          const result = selectProjectPackageManager(
+            [
+              {
+                kind: 'boundary',
+                ownsNestedProjects: true,
+                packageManager: `${padding}${authored}@1.0.0${padding}`,
+                lockfileManagers: [],
+              },
+            ],
+            {},
+          );
+          const normalized = authored.toLowerCase();
+          expect(result).toEqual(
+            normalized === 'npm' || normalized === 'pnpm'
+              ? { kind: 'supported', manager: normalized }
+              : { kind: 'unsupported', manager: normalized, source: 'packageManager' },
+          );
+        },
+      ),
+      { seed: 0x50_4d_0c, numRuns: 160 },
     );
   });
 });
