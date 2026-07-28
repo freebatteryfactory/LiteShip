@@ -6,7 +6,7 @@
 
 # Interface: MotionCompileResult
 
-Defined in: compiler/dist/motion.d.ts:56
+Defined in: compiler/dist/motion.d.ts:59
 
 CSS artifacts emitted by [MotionCompiler.compile](../variables/MotionCompiler.md#compile).
 
@@ -16,7 +16,7 @@ CSS artifacts emitted by [MotionCompiler.compile](../variables/MotionCompiler.md
 
 > `readonly` **keyframes**: `string`
 
-Defined in: compiler/dist/motion.d.ts:60
+Defined in: compiler/dist/motion.d.ts:63
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: compiler/dist/motion.d.ts:60
 
 > `readonly` **propertyRegistrations**: `string`
 
-Defined in: compiler/dist/motion.d.ts:59
+Defined in: compiler/dist/motion.d.ts:62
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: compiler/dist/motion.d.ts:59
 
 > `readonly` **raw**: `string`
 
-Defined in: compiler/dist/motion.d.ts:58
+Defined in: compiler/dist/motion.d.ts:61
 
 Full concatenated CSS sheet (sections joined by blank lines).
 
@@ -42,7 +42,7 @@ Full concatenated CSS sheet (sections joined by blank lines).
 
 > `readonly` **scrollTimeline**: `string`
 
-Defined in: compiler/dist/motion.d.ts:64
+Defined in: compiler/dist/motion.d.ts:67
 
 `@supports (animation-timeline: …)` block; empty when no view timeline.
 
@@ -52,7 +52,7 @@ Defined in: compiler/dist/motion.d.ts:64
 
 > `readonly` **startingStyle**: `string`
 
-Defined in: compiler/dist/motion.d.ts:61
+Defined in: compiler/dist/motion.d.ts:64
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: compiler/dist/motion.d.ts:61
 
 > `readonly` **support**: [`MotionSupportMetadata`](MotionSupportMetadata.md)
 
-Defined in: compiler/dist/motion.d.ts:66
+Defined in: compiler/dist/motion.d.ts:69
 
 Generated fidelity receipt for the emitted keyframe and transition tiers.
 
@@ -70,4 +70,4 @@ Generated fidelity receipt for the emitted keyframe and transition tiers.
 
 > `readonly` **transition**: `string`
 
-Defined in: compiler/dist/motion.d.ts:62
+Defined in: compiler/dist/motion.d.ts:65

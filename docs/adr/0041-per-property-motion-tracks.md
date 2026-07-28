@@ -86,6 +86,10 @@ the differently-eased composed case to the per-window runtime floor — retiring
   silenced approximation: the composed differently-eased case now has a faithful
   renderer (the runtime floor) that is asserted exact, and the native leg that could not
   express it is no longer asked to.
+- Compiler support metadata makes that ownership explicit: native-eligible keyframes
+  report `faithful`; mixed-easing overlap reports `runtime-floor-required`. The
+  transition fallback emits a property segment's authored easing when one segment is
+  exactly representable and otherwise lists the affected property as approximated.
 - Lockstep version bump 0.13.0 → 0.14.0 (all `@czap/*`), api-surface snapshot regen,
   api-health registry entry for `easingToLinearCSS`.
 

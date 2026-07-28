@@ -8,7 +8,7 @@
 
 > `const` **MotionCompiler**: `object`
 
-Defined in: compiler/dist/motion.d.ts:76
+Defined in: compiler/dist/motion.d.ts:79
 
 Native-CSS motion compiler namespace.
 

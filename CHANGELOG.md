@@ -15,7 +15,8 @@ break policy is intentionally aggressive — minor version bumps may carry break
   contracts retain their 5×7 raw samples, and Web's real SSE parsing/backpressure path owns an admitted benchmark.
 - **Honest schema, filesystem, and motion boundaries.** Standard Schema validation no longer advertises an
   unsupported JSON projection, encoded input and decoded output schemas are distinct, fail-soft filesystem walking is
-  observable, and the CSS transition fallback reports its generated single-segment/returning-motion fidelity.
+  observable, CSS transitions preserve authored single-segment easing, and every emitted motion tier reports when
+  mixed-easing overlap requires the runtime floor.
 - **Security closure.** PostCSS is pinned above the disclosed vulnerable range; deterministic minimum and live audit
   checks, raw receipts, CodeQL, secret scanning, and push protection join the release authority.
 

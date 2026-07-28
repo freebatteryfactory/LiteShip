@@ -14,13 +14,9 @@ Generated support metadata for the CSS motion tiers emitted by the compiler.
 
 ### keyframes
 
-> `readonly` **keyframes**: `object`
+> `readonly` **keyframes**: \{ `fidelity`: `"faithful"`; \} \| \{ `fidelity`: `"runtime-floor-required"`; `reason`: `"mixed-easing-overlap"`; \}
 
 Defined in: compiler/dist/motion.d.ts:40
-
-#### fidelity
-
-> `readonly` **fidelity**: `"faithful"`
 
 ***
 
@@ -28,4 +24,4 @@ Defined in: compiler/dist/motion.d.ts:40
 
 > `readonly` **transitionFallback**: [`MotionTransitionFallbackSupport`](MotionTransitionFallbackSupport.md)
 
-Defined in: compiler/dist/motion.d.ts:43
+Defined in: compiler/dist/motion.d.ts:46

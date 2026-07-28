@@ -375,13 +375,16 @@ interface MotionScrollTimeline {
 interface MotionTransitionFallbackSupport {
   readonly contract: 'single-segment-monotonic-only';
   readonly fidelity: 'faithful-single-segment' | 'monotonic-endpoint-only';
+  /** Properties whose authored value path or easing cannot be represented faithfully. */
   readonly approximatedProperties: readonly string[];
   readonly returningProperties: readonly string[];
 }
 
 /** Generated support metadata for the CSS motion tiers emitted by the compiler. */
 interface MotionSupportMetadata {
-  readonly keyframes: { readonly fidelity: 'faithful' };
+  readonly keyframes:
+    | { readonly fidelity: 'faithful' }
+    | { readonly fidelity: 'runtime-floor-required'; readonly reason: 'mixed-easing-overlap' };
   readonly transitionFallback: MotionTransitionFallbackSupport;
 }
 

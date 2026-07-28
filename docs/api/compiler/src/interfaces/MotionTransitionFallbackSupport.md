@@ -18,7 +18,7 @@ Plan-specific truth about the last-resort CSS transition projection.
 
 Defined in: [compiler/src/motion.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L49)
 
-Properties whose authored path has more than one value-changing segment.
+Properties whose authored value path or easing cannot be represented faithfully.
 
 ***
 

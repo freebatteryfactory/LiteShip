@@ -439,6 +439,24 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
     });
   });
 
+  test('single-segment fallback emits the authored non-default segment easing', () => {
+    const plan: CssMotionPlan = {
+      ...revealCssPlan(),
+      keyframes: [
+        {
+          offset: 0,
+          properties: { opacity: '0' },
+          easing: { kind: 'spring', spring: { stiffness: 210, damping: 18 } },
+        },
+        { offset: 1, properties: { opacity: '1' } },
+      ],
+    };
+    const result = MotionCompiler.compile({ plan });
+    expect(result.transition).toContain('opacity 420ms linear(');
+    expect(result.transition).not.toContain('opacity 420ms ease');
+    expect(result.support.transitionFallback.fidelity).toBe('faithful-single-segment');
+  });
+
   test('seq transition fallback carries per-property delay — a later step starts at its seam', () => {
     // seq total = 200+600 = 800ms. Step A (opacity) owns [0, 0.25]; step B (x) owns
     // [0.25, 1] → duration 600ms after a 200ms delay, so the fallback holds x until B
@@ -608,6 +626,14 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
       ],
     });
     const out = MotionCompiler.compile({ plan: par.css!, scrollTimeline: SCROLL });
+    expect(out.support.keyframes).toEqual({
+      fidelity: 'runtime-floor-required',
+      reason: 'mixed-easing-overlap',
+    });
+    expect(out.support.transitionFallback).toMatchObject({
+      fidelity: 'monotonic-endpoint-only',
+      approximatedProperties: par.css!.transitionProperty.split(',').map((property) => property.trim()),
+    });
     // No native ownership: no `animation-name` binding and no `@supports (animation-timeline)`
     // OWNERSHIP block (distinct from the `@supports not (...)` fallback) — so getComputedStyle
     // carries no liteship-motion name.
@@ -634,6 +660,7 @@ describe('MotionCompiler — composed TransitionProgram keyframes (#141, backend
       ],
     });
     const uniform = MotionCompiler.compile({ plan: seq.css!, scrollTimeline: SCROLL });
+    expect(uniform.support.keyframes).toEqual({ fidelity: 'faithful' });
     expect(uniform.scrollTimeline).toContain('@supports (animation-timeline: scroll())');
     expect(uniform.scrollTimeline).toContain('animation-name: liteship-motion-');
     expect(uniform.scrollTimeline).toContain('animation-timeline: scroll()');

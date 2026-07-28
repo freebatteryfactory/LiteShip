@@ -18,7 +18,7 @@ Plan-specific truth about the last-resort CSS transition projection.
 
 Defined in: compiler/dist/motion.d.ts:34
 
-Properties whose authored path has more than one value-changing segment.
+Properties whose authored value path or easing cannot be represented faithfully.
 
 ***
 
