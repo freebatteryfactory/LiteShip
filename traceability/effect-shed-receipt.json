@@ -29,6 +29,7 @@
     "packages/_spine/web.d.ts (prose: 'was Effect.Effect<...>')"
   ],
   "guards": {
+    "fullScopeResidueScan": "tests/unit/devops/effect-residue-scan.test.ts (the shed's self-proving exit criterion: underscore packages, scaffolder templates, examples, scripts, tests, every manifest's dependency keys incl. pnpm overrides, dynamic import/require spellings, and vendored Effect. call sites)",
     "productionEffectFreeInvariant": "tests/unit/core/invariants.test.ts (Invariant 14)",
     "shippedDocsEffectFreeGate": "tests/unit/devops/docs-effect-residue.test.ts (package READMEs + root README + GETTING-STARTED carry no Effect install/pin/import/usage instruction — the ecosystem-zero claim now covers consumer docs, not just src)",
     "declaredDependencyClosureGate": "tests/unit/devops/declared-dependency-closure.test.ts (every publishable package is dependency-closed across EVERY public runtime export, not just `.`)",
