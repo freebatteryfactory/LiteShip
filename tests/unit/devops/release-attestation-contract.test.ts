@@ -67,7 +67,7 @@ describe('release evidence attestation closure', () => {
 
   it.each([
     '.verdict == "accepted"',
-    '.verifier == "delivery-evidence/standalone-v2"',
+    '.verifier == "delivery-evidence/standalone-v3"',
     '.manifestId == $manifest',
     '.headSha == $head',
     '.github.repository == $repository',

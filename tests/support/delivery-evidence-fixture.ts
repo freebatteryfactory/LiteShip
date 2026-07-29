@@ -168,7 +168,7 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
   const fixtureBase = { root, plan, expected };
   const evidence = selected.map((selection) => writeCheckEvidence(fixtureBase, selection));
   const intent = buildChangeIntent({
-    schemaVersion: 1,
+    schemaVersion: 2,
     sponsor: { value: { login: 'heyoub', ownership: 'repository-owner' }, provenance: 'github-verified' },
     hypothesis: { value: 'The evidence-native change is admitted.', provenance: 'agent-self-declared' },
     affectedUserSurface: {
@@ -187,6 +187,18 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
     repositoryIdentity: {
       value: { host: 'github.com', owner: 'freebatteryfactory', name: 'LiteShip', nodeId: 'R_fixture' },
       provenance: 'github-verified',
+    },
+    execution: {
+      value: {
+        executionId: 'session-delivery-fixture',
+        model: { provider: 'anthropic', id: 'claude-fable-5' },
+        toolScopes: ['network', 'read', 'write'],
+        budgets: { wallClockMs: null, tokens: null },
+        digests: { prompt: null, context: null, toolPolicy: null },
+        actionTrace: null,
+        autonomy: 'execute',
+      },
+      provenance: 'agent-self-declared',
     },
   });
   const admission = admitChangeIntent(intent);
@@ -251,7 +263,7 @@ export function createDeliveryEvidenceFixture(): DeliveryEvidenceFixture {
       kind: 'change-intent',
       path: 'reports/change-intent.json',
       digest: sha256RawBytes(intentRaw),
-      verifier: 'delivery-evidence/change-intent-v1',
+      verifier: 'delivery-evidence/change-intent-v2',
     },
     authority: {
       id: authority.evidenceId,

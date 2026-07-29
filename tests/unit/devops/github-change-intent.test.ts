@@ -16,6 +16,15 @@ function declaration(visibility: 'internal' | 'public' | 'trust-boundary' = 'pub
     reversibility: { kind: 'reversible', rollback: 'Revert the facade projection.' },
     actorClass: 'agent',
     uncertainty: { level: 'medium', unknowns: ['browser host variation'] },
+    execution: {
+      executionId: 'session-gh',
+      model: { provider: 'anthropic', id: 'claude-fable-5' },
+      toolScopes: ['read', 'write'],
+      budgets: { wallClockMs: null, tokens: null },
+      digests: { prompt: null, context: null, toolPolicy: null },
+      actionTrace: null,
+      autonomy: 'execute',
+    },
   };
 }
 

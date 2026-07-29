@@ -97,6 +97,7 @@ function fallbackDeclaration(event: 'push' | 'tag', actor: string): RecordValue 
     reversibility: { kind: 'reversible', rollback: 'Revert the admitted source commit.' },
     actorClass: 'automation',
     uncertainty: { level: 'high', unknowns: ['authored semantic intent is absent'] },
+    execution: null,
   };
 }
 
@@ -121,7 +122,7 @@ export function admitGitHubChangeIntent(value: unknown): AdmittedGitHubChangeInt
   }
   const ownerPermission = input.actor.permission === 'admin' || input.actor.permission === 'maintain';
   const intent = buildChangeIntent({
-    schemaVersion: 1,
+    schemaVersion: 2,
     sponsor: provenance(
       { login: input.actor.login, ownership: ownerPermission ? 'code-owner' : 'none' },
       'github-verified',
@@ -135,6 +136,10 @@ export function admitGitHubChangeIntent(value: unknown): AdmittedGitHubChangeInt
     uncertainty: provenance(declaration['uncertainty'], 'agent-self-declared'),
     sourceSha: provenance(input.sourceSha, 'github-verified'),
     repositoryIdentity: provenance({ host: 'github.com', ...input.repository }, 'github-verified'),
+    // Execution provenance is inherently self-reported by the run that authored
+    // the change; the kernel's admission rules (agent requires identity; no
+    // non-human approve/release) bite on the DECLARED values.
+    execution: provenance(declaration['execution'] ?? null, 'agent-self-declared'),
   });
   const admission = admitChangeIntent(intent);
   if (!admission.accepted) {
