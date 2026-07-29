@@ -154,19 +154,44 @@ const checks: Check[] = [
     check: () => {
       // Architectural decisions live as ENFORCEMENT, not prose: the structural
       // rule corpus (sgrules/) and the source-layout authority are the decision
-      // record. A repo whose rules vanished has lost its architecture.
+      // record. The inventory is PINNED by name — a count would let any single
+      // unpinned rule vanish while the roll-up stayed green (removing a rule is
+      // a deliberate act that edits this list, same as adding one).
       if (!existsSync('sgrules')) {
         return { pass: false, detail: 'sgrules/ does not exist' };
       }
-      const rules = readdirSync('sgrules').filter((f) => f.endsWith('.yml'));
+      const required = [
+        'a1-no-cli-import.yml',
+        'a1-no-stdout-monkeypatch.yml',
+        'c8-ignore-without-reason.yml',
+        'detect-tier-vocab-drift.yml',
+        'facade-only-reexports.yml',
+        'float-determinism-boundary.yml',
+        'hallucinated-themes-option.yml',
+        'no-fire-and-forget-dispose.yml',
+        'no-internal-vi-mock-tsx.yml',
+        'no-internal-vi-mock.yml',
+        'no-reactive-make-factory.yml',
+        'no-rung-ladder-vocab.yml',
+        'no-shape-namespace-type.yml',
+        'no-sync-owned-resource.yml',
+        'no-utils-file.yml',
+        'no-wildcard-facade-export.yml',
+        'raw-vitest-option-timeout.yml',
+        'raw-vitest-trailing-timeout.yml',
+        'repo-truths-no-script-parse.yml',
+        'types-file-purity.yml',
+      ];
+      const rules = new Set(readdirSync('sgrules').filter((f) => f.endsWith('.yml')));
+      const missing = required.filter((f) => !rules.has(f));
       const layoutGate = existsSync('scripts/source-layout-gate.ts');
-      if (rules.length < 8 || !layoutGate) {
+      if (missing.length > 0 || !layoutGate) {
         return {
           pass: false,
-          detail: `structural rules=${rules.length} (≥ 8 required) source-layout-gate=${layoutGate}`,
+          detail: `missing structural rules: [${missing.join(', ')}] source-layout-gate=${layoutGate}`,
         };
       }
-      return { pass: true, detail: `${rules.length} structural rules enforced + source-layout gate present` };
+      return { pass: true, detail: `${rules.size} structural rules enforced (${required.length} pinned) + source-layout gate present` };
     },
   },
 

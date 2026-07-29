@@ -40,7 +40,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawnArgvCapture } from '@liteship/command/host';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import ts from 'typescript';
@@ -198,21 +198,35 @@ describe('source-grammar rules are registered with ast-grep', () => {
     expect(cfg).toMatch(/ruleDirs:\s*[\s\S]*-\s*sgrules/);
   });
 
-  it('every source-grammar rule file exists under sgrules/', () => {
-    for (const r of [
+  it('the sgrules/ inventory matches the pinned rule set exactly (deletion AND unpinned addition both red)', () => {
+    // A subset-existence check let any unpinned rule vanish silently; exact
+    // equality makes removing OR adding a rule a deliberate edit to this pin.
+    const PINNED_RULES = [
+      'a1-no-cli-import.yml',
+      'a1-no-stdout-monkeypatch.yml',
+      'c8-ignore-without-reason.yml',
+      'detect-tier-vocab-drift.yml',
       'facade-only-reexports.yml',
-      'no-wildcard-facade-export.yml',
-      'no-utils-file.yml',
-      'types-file-purity.yml',
-      'no-shape-namespace-type.yml',
-      'no-internal-vi-mock.yml',
-      'no-internal-vi-mock-tsx.yml',
-      'no-reactive-make-factory.yml',
-      'no-sync-owned-resource.yml',
+      'float-determinism-boundary.yml',
+      'hallucinated-themes-option.yml',
       'no-fire-and-forget-dispose.yml',
-    ]) {
-      expect(existsSync(resolve(SGRULES, r)), r).toBe(true);
-    }
+      'no-internal-vi-mock-tsx.yml',
+      'no-internal-vi-mock.yml',
+      'no-reactive-make-factory.yml',
+      'no-rung-ladder-vocab.yml',
+      'no-shape-namespace-type.yml',
+      'no-sync-owned-resource.yml',
+      'no-utils-file.yml',
+      'no-wildcard-facade-export.yml',
+      'raw-vitest-option-timeout.yml',
+      'raw-vitest-trailing-timeout.yml',
+      'repo-truths-no-script-parse.yml',
+      'types-file-purity.yml',
+    ];
+    const onDisk = readdirSync(SGRULES)
+      .filter((f) => f.endsWith('.yml'))
+      .sort();
+    expect(onDisk).toEqual([...PINNED_RULES].sort());
   });
 });
 
