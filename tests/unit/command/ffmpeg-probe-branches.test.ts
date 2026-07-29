@@ -126,13 +126,17 @@ describe('probeFfmpegRender — failure arms (spawn mocked)', () => {
 });
 
 describe('probeFfmpegRender — bounded execution (scar for CI run 30382383876)', () => {
-  it('passes a finite timeout to both probe subprocesses', () => {
+  it('passes a finite timeout and an untrappable kill signal to both probe subprocesses', () => {
     spawnSyncMock.mockReturnValueOnce(versionOk).mockReturnValueOnce({ status: 0, stderr: '' });
     probeFfmpegRender();
     expect(spawnSyncMock).toHaveBeenCalledTimes(2);
     for (const call of spawnSyncMock.mock.calls) {
-      const options = call[2] as { timeout?: number };
+      const options = call[2] as { timeout?: number; killSignal?: string };
       expect(options.timeout).toBe(10_000);
+      // spawnSync WAITS for the child to exit after sending killSignal; a
+      // SIGTERM-trapping ffmpeg would hang the probe past its budget, so the
+      // kill must be the untrappable SIGKILL.
+      expect(options.killSignal).toBe('SIGKILL');
     }
   });
 

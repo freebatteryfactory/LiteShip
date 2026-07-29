@@ -82,7 +82,10 @@ function isTimeout(result: { readonly error?: Error }): boolean {
  */
 export function probeFfmpegRender(): FfmpegRenderProbe {
   const timeoutMs = probeTimeoutMs();
-  const version = spawnSync('ffmpeg', ['-version'], { encoding: 'utf8', timeout: timeoutMs });
+  // killSignal is SIGKILL because spawnSync WAITS for the killed child to
+  // exit: a SIGTERM-trapping ffmpeg would hang the probe past its budget —
+  // the exact wedged-host scenario this bound exists to classify.
+  const version = spawnSync('ffmpeg', ['-version'], { encoding: 'utf8', timeout: timeoutMs, killSignal: 'SIGKILL' });
   if (isTimeout(version)) {
     return {
       ok: false,
@@ -114,7 +117,7 @@ export function probeFfmpegRender(): FfmpegRenderProbe {
       'null',
       '-',
     ],
-    { encoding: 'utf8', timeout: timeoutMs },
+    { encoding: 'utf8', timeout: timeoutMs, killSignal: 'SIGKILL' },
   );
   if (isTimeout(encode)) {
     return {

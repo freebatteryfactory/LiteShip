@@ -167,7 +167,23 @@ export function spawnArgvCaptureWithEnv(
     if (opts.timeoutMs !== undefined) {
       schedule(opts.timeoutMs, () => {
         timedOut = true;
-        proc.kill('SIGTERM');
+        if (process.platform === 'win32' && proc.pid !== undefined) {
+          // TerminateProcess cannot be trapped but reaches only the direct
+          // child; a .cmd shim's descendants (the choco/installer shape)
+          // survive it and would keep mutating the host after the caller
+          // reports failure. taskkill /T fells the whole tree — and must be
+          // the ONLY first strike: killing the root here first would orphan
+          // the descendants before taskkill can enumerate them. The SIGKILL
+          // escalation and settle timer below remain the backstop.
+          spawnCrossPlatform('taskkill', ['/pid', String(proc.pid), '/t', '/f'], { stdio: 'ignore' }).on('error', () =>
+            proc.kill('SIGTERM'),
+          );
+        } else {
+          // On POSIX the direct kill reaches the real provisioning parents
+          // (sudo relays SIGTERM to its command); orphaned descendants are
+          // bounded by the settle timer rather than a group kill.
+          proc.kill('SIGTERM');
+        }
         // A child ignoring SIGTERM must still die inside the caller's turn.
         schedule(2_000, () => proc.kill('SIGKILL'));
         // A grandchild that inherited the pipes can outlive the child and hold

@@ -10,6 +10,9 @@
  * @module
  */
 import { describe, expect, it } from 'vitest';
+import { chmodSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { spawnArgvCaptureWithEnv } from '../../../packages/command/src/host/launcher.js';
 
@@ -45,6 +48,49 @@ describe('spawnArgvCaptureWithEnv — bounded execution', () => {
       const result = await spawnArgvCaptureWithEnv(process.execPath, ['-e', grandchildHolder], { timeoutMs: 400 });
       expect(result.timedOut).toBe(true);
       expect(result.stdout).not.toContain('LATE');
+    },
+  );
+
+  it(
+    'fells the process tree of a timed-out shim child so descendants stop mutating the host',
+    { timeout: scaledTimeout(15_000) },
+    async () => {
+      // The installer shape: a .cmd/sh shim (choco, apt wrappers) whose
+      // descendants are NOT reached by killing the shim itself. libuv's
+      // kill-on-close Job Object covers direct node children on Windows, but a
+      // cmd.exe shim's children escape it — the exact survivor my manual choco
+      // repro produced. The descendant writes a marker file if it is still
+      // alive 2s in; after a budget kill the marker must never appear on
+      // Windows (taskkill /T fells the tree). On POSIX the direct kill reaches
+      // signal-relaying parents (sudo relays SIGTERM) and the settle bound is
+      // the backstop, so only settlement is asserted there.
+      const dir = mkdtempSync(join(tmpdir(), 'liteship-treekill-'));
+      const markerPath = join(dir, 'descendant-alive');
+      try {
+        writeFileSync(
+          join(dir, 'survive.cjs'),
+          "setTimeout(() => { require('node:fs').writeFileSync(process.env.LITESHIP_TEST_TREEKILL_MARKER, 'alive'); }, 2_000);\n" +
+            'setTimeout(() => {}, 20_000);\n',
+        );
+        const isWindows = process.platform === 'win32';
+        const runner = join(dir, isWindows ? 'runner.cmd' : 'runner');
+        if (isWindows) {
+          writeFileSync(runner, '@echo off\r\nnode "%~dp0survive.cjs"\r\n');
+        } else {
+          writeFileSync(runner, '#!/bin/sh\nnode "$(dirname "$0")/survive.cjs"\n');
+          chmodSync(runner, 0o755);
+        }
+        const result = await spawnArgvCaptureWithEnv(runner, [], {
+          timeoutMs: 400,
+          envAdditions: { LITESHIP_TEST_TREEKILL_MARKER: markerPath },
+        });
+        expect(result.timedOut).toBe(true);
+        if (isWindows) {
+          expect(existsSync(markerPath)).toBe(false);
+        }
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     },
   );
 

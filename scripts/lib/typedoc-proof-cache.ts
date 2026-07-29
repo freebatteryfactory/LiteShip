@@ -82,22 +82,34 @@ export function createTypeDocProofIdentity(input: {
   });
 }
 
+/**
+ * Every file whose content participates in the toolchain digest — the pipeline
+ * scripts AND their direct execution dependencies (the pipeline runs
+ * `scripts/native-tsc.ts` through `scripts/lib/spawn.ts`; a change to either
+ * can alter emitted declarations or process behavior, so both must invalidate
+ * cached TypeDoc evidence).
+ */
+export const TYPEDOC_TOOLCHAIN_PATHS: readonly string[] = [
+  'package.json',
+  'pnpm-lock.yaml',
+  'typedoc.json',
+  'scripts/docs-build.ts',
+  'scripts/docs-check.ts',
+  'scripts/docs-input-fingerprint.ts',
+  'scripts/lib/local-resource-profile.ts',
+  'scripts/lib/spawn.ts',
+  'scripts/lib/typedoc-build-pipeline.ts',
+  'scripts/lib/typedoc-input-fingerprint.ts',
+  'scripts/lib/typedoc-proof-cache.ts',
+  'scripts/native-tsc.ts',
+];
+
 /** Build a conservative identity over sources, committed output, tools, and host. */
 export function buildTypeDocProofIdentity(repoRoot: string): TypeDocProofIdentity {
   const fingerprint = buildTypeDocInputFingerprint(repoRoot);
-  const toolchainPaths = [
-    'package.json',
-    'pnpm-lock.yaml',
-    'typedoc.json',
-    'scripts/docs-build.ts',
-    'scripts/docs-check.ts',
-    'scripts/docs-input-fingerprint.ts',
-    'scripts/lib/local-resource-profile.ts',
-    'scripts/lib/typedoc-build-pipeline.ts',
-    'scripts/lib/typedoc-input-fingerprint.ts',
-    'scripts/lib/typedoc-proof-cache.ts',
-  ];
-  const toolchainDigest = digestParts(toolchainPaths.flatMap((path) => [path, readFileSync(resolve(repoRoot, path))]));
+  const toolchainDigest = digestParts(
+    TYPEDOC_TOOLCHAIN_PATHS.flatMap((path) => [path, readFileSync(resolve(repoRoot, path))]),
+  );
   return createTypeDocProofIdentity({
     inputDigest: fingerprint.digest,
     outputDigest: digestTypeDocOutput(repoRoot),

@@ -7,12 +7,22 @@ import {
   createTypeDocProofIdentity,
   digestTypeDocOutput,
   readTypeDocProofReceipt,
+  TYPEDOC_TOOLCHAIN_PATHS,
   writeTypeDocProofReceipt,
 } from '../../../scripts/lib/typedoc-proof-cache.js';
 
 const digest = (char: string): `sha256:${string}` => `sha256:${char.repeat(64)}`;
 
 describe('TypeDoc proof cache', () => {
+  test('the toolchain identity covers the pipeline AND its direct execution dependencies', () => {
+    // The pipeline executes native-tsc through the shared spawn helper; a change
+    // to either can alter emitted declarations or process behavior, so both must
+    // invalidate cached TypeDoc evidence alongside the pipeline file itself.
+    expect(TYPEDOC_TOOLCHAIN_PATHS).toContain('scripts/lib/typedoc-build-pipeline.ts');
+    expect(TYPEDOC_TOOLCHAIN_PATHS).toContain('scripts/native-tsc.ts');
+    expect(TYPEDOC_TOOLCHAIN_PATHS).toContain('scripts/lib/spawn.ts');
+  });
+
   test('serves only the exact content-addressed identity', () => {
     const root = mkdtempSync(join(tmpdir(), 'liteship-typedoc-proof-'));
     try {
