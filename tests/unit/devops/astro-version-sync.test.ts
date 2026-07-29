@@ -128,6 +128,42 @@ describe('astro version sync', () => {
     }
   });
 
+  it('every non-workspace liteship pin scaffolds exactly the facade version (issue #173)', () => {
+    // The scaffolder template's `liteship` range is hand-written data, not a
+    // workspace spec — nothing resolves it at install time in THIS repo, so a
+    // release that forgets the bump silently scaffolds new users onto the
+    // previous minor. The law: every `liteship` pin that is not workspace:
+    // protocol must have the published facade version as its exact minimum
+    // (below = stale scaffold; above = unresolvable range at publish time).
+    const facadeVersion = readJson(join(REPO_ROOT, 'packages/liteship/package.json')).version as string;
+    const facadeMinimum = minimumVersionOf(facadeVersion);
+    expect(facadeMinimum, `facade version ${facadeVersion} must be a complete semver`).not.toBeNull();
+
+    const liteshipPins: Pin[] = [];
+    for (const manifestPath of collectManifests()) {
+      if (!existsSync(manifestPath)) continue;
+      const pkg = readJson(manifestPath);
+      for (const field of DEP_FIELDS) {
+        const range = (pkg[field] as Record<string, string> | undefined)?.liteship;
+        if (typeof range === 'string' && !range.startsWith('workspace:')) {
+          liteshipPins.push({ file: relative(REPO_ROOT, manifestPath).replace(/\\/g, '/'), field, range });
+        }
+      }
+    }
+    // Drift guard: the scaffolder template is the load-bearing pin — if the
+    // sweep stops finding it, the loop below passes vacuously.
+    expect(liteshipPins.map((pin) => pin.file)).toContain('packages/create-liteship/templates/default/package.json');
+
+    for (const pin of liteshipPins) {
+      const minimum = minimumVersionOf(pin.range);
+      expect(minimum, `${pin.file} ${pin.field}.liteship = ${pin.range} must name a complete minimum`).not.toBeNull();
+      expect(
+        minimum,
+        `${pin.file} ${pin.field}.liteship (${pin.range}) must scaffold exactly the facade version (${facadeVersion})`,
+      ).toEqual(facadeMinimum);
+    }
+  });
+
   it('no Astro manifest admits a host below the workspace compatibility and security floor', () => {
     expect(overrideMinimum).not.toBeNull();
     for (const pin of pins) {
