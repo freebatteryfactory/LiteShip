@@ -56,10 +56,10 @@ The official scaffold already registers the Astro integration. In an existing As
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration } from 'liteship/astro';
+import { liteship } from 'liteship/astro';
 
 export default defineConfig({
-  integrations: [integration()],
+  integrations: [liteship()],
 });
 ```
 
@@ -128,7 +128,7 @@ Rendered output carries `data-liteship-genui-render-hash` for cache/replay; clic
 
 ## Dev inspector (astro dev only)
 
-While running `pnpm dev`, open the liteship boundary inspector from the Astro dev-toolbar (click the liteship toolbar icon) — a panel that lists every `[data-liteship-boundary]` element, live signal values, draggable threshold notches, and a **Copy defineBoundary** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
+While running `pnpm dev`, open the liteship boundary inspector from the Astro dev-toolbar (click the liteship toolbar icon) — a panel that lists every `[data-liteship-boundary]` element, live signal values, draggable threshold notches, and a **Copy defineBoundary** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `liteship({ inspector: false })` in `astro.config.mjs`.
 
 <!-- gif: inspector dev-toolbar app tuning thresholds and copying snippet -->
 

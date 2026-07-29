@@ -557,6 +557,35 @@ describe('liteship/genui — direct owner identity', () => {
   });
 });
 
+// The closed-catalog renderer is admitted to the facade under the SAME host-free
+// discipline as the root: importing `liteship/genui` may evaluate only the genui
+// owner and its pure deps — never a host integration.
+const GENUI_SOURCE = resolve(LITESHIP_PKG, 'src/genui.ts');
+const GENUI_JS = resolve(LITESHIP_PKG, 'dist/genui.js');
+const GENUI_RUNTIME_SCOPES = ['@liteship/genui'] as const;
+
+describe('liteship/genui — host-integration-free like the root', () => {
+  it('the complete transitive source graph contains no host integration or Node builtin edge', () => {
+    expect(transitiveHostEdges(GENUI_SOURCE, sourceResolutionOptions())).toEqual([]);
+  });
+
+  it('the built dist/genui.js evaluates only the genui owner and its pure deps', () => {
+    const js = readFileSync(GENUI_JS, 'utf8');
+    const scopes = new Set<string>();
+    const re = /from\s*['"](@liteship\/[^'"]+)['"]/g;
+    for (let m = re.exec(js); m !== null; m = re.exec(js)) scopes.add(m[1]!);
+    for (const host of HOST_SCOPES) {
+      expect([...scopes], `importing liteship/genui must not evaluate ${host}`).not.toContain(host);
+    }
+    const allowed = new Set<string>(GENUI_RUNTIME_SCOPES);
+    const rogue = [...scopes].filter((s) => !allowed.has(s));
+    expect(
+      rogue,
+      `liteship/genui evaluates unexpected scopes (only ${GENUI_RUNTIME_SCOPES.join(', ')} allowed): [${rogue.join(', ')}]`,
+    ).toEqual([]);
+  });
+});
+
 describe('liteship facade — the root is host-integration-free', () => {
   it('the complete transitive source graph contains no host integration or Node builtin edge', () => {
     expect(transitiveHostEdges(ROOT_SOURCE, sourceResolutionOptions())).toEqual([]);

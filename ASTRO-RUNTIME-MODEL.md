@@ -47,7 +47,7 @@ These form the Astro host layer.
 
 ## Integration
 
-`integration()` is the Astro integration entry point: the host-level hook that registers transforms and rigs detection alongside Astro's lifecycle.
+`liteship()` is the Astro integration entry point (exported alongside its internal name `integration`): the host-level hook that registers transforms and rigs detection alongside Astro's lifecycle.
 
 It is responsible for:
 
@@ -59,14 +59,14 @@ Use it when the site itself is a LiteShip-aware Astro host.
 
 ### Defaults (0.2.0 ergonomics)
 
-`integration()` runs with batteries included — most surfaces need no config:
+`liteship()` runs with batteries included — most surfaces need no config:
 
 - **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (an Astro dev-toolbar app in `astro dev`).
 - **opt-in:** `workers` (`workers: { enabled: true }` — only the `client:worker` directive needs it) and `wasm`.
 - **auto-resolved:** initial state defaults from the server-resolved bearing, and the `liteship-compute` WASM artifact — shipped inside `@liteship/core` (0.2.1+) — resolves itself from `node_modules`; you don't thread either by hand.
 - **dev watch (0.4.0):** the integration registers the convention primitive sources (`boundaries.ts` / `tokens.ts` / `themes.ts` / `styles.ts` and their `*.boundaries.ts`-style siblings) with Astro's `addWatchFile`, so editing a definition restarts the dev server and re-collects the boundary manifest even before a CSS `@quantize`/`@token` block imports it.
 
-So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
+So `liteship()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
 
 **Scoping liteship off some routes (0.2.2+):** when liteship shares a site with another Astro sub-app — say a Starlight `/docs` section — pass `exclude` so liteship's costly scripts (detect, the GPU probe, wasm, inspector) don't run there: `liteship({ exclude: ['/docs/**'] })`. Astro's `injectScript` is global (no build-time route filter), so this is a runtime guard — a head-inline script, injected first, sets `window.__LITESHIP_OFF__` from `location.pathname` (re-evaluating on View-Transition swaps) and those scripts short-circuit on it. The directive bootstrap stays wired (a no-op without liteship markers) so View Transitions keep working across the boundary. Matches exact paths and a trailing `**` (`/docs/**` covers `/docs` and under it; `/documentation` is not matched). Default `[]`.
 

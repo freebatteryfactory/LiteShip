@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
-import { integration } from '@liteship/astro';
+import { liteship } from '@liteship/astro';
 
 const dir = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
@@ -14,7 +14,7 @@ export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   integrations: [
-    integration({
+    liteship({
       // Auto-wire the liteship middleware so responses carry `Accept-CH` /
       // `Critical-CH` (`Sec-CH-Viewport-Width`). `Critical-CH` makes the browser
       // resend the hint BEFORE the first render, so even a cold first visit is

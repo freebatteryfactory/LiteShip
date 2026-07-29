@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
-import { integration } from '@liteship/astro';
+import { liteship } from '@liteship/astro';
 
 const dir = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
@@ -13,7 +13,7 @@ export default defineConfig({
   output: 'static',
   adapter: cloudflare(),
   integrations: [
-    integration({
+    liteship({
       // `gpu` defaults on; this example only overrides the WebGPU preference.
       // `detect` / `stream` / `llm` are on by default too, so they need no
       // opt-in. `workers` does default off — the worker.astro demo needs it.

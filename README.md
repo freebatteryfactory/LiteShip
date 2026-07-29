@@ -101,9 +101,9 @@ Register the Astro integration once (the scaffold already does this), then apply
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration } from 'liteship/astro';
+import { liteship } from 'liteship/astro';
 
-export default defineConfig({ integrations: [integration()] });
+export default defineConfig({ integrations: [liteship()] });
 ```
 
 ```astro

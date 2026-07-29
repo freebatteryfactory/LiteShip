@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
-import { integration } from 'liteship/astro';
+import { liteship } from 'liteship/astro';
 
 export default defineConfig({
-  integrations: [integration({ detect: true })],
+  integrations: [liteship({ detect: true })],
 });

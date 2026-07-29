@@ -124,12 +124,12 @@ If a Cloudflare `run_worker_first` config is present, exclude Vite dev-infrastru
 ```javascript
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
-import { integration } from '@liteship/astro';
+import { liteship } from '@liteship/astro';
 
 export default defineConfig({
   output: 'server',
   adapter: cloudflare(),
-  integrations: [integration({ detect: true })],
+  integrations: [liteship({ detect: true })],
 });
 ```
 
