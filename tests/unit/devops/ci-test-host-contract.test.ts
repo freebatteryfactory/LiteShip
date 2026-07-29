@@ -35,7 +35,15 @@ describe('ffmpeg provisioning', () => {
   it('has one explicit non-shell install plan for every supported CI platform', () => {
     expect(ffmpegInstallPlan('linux')).toEqual([
       { command: 'sudo', args: ['apt-get', 'update'] },
-      { command: 'sudo', args: ['apt-get', 'install', '-y', 'ffmpeg'] },
+      // --no-install-recommends: ffmpeg's recommends drag a long package tail that
+      // dominated the slow-mirror timeouts; the render capability needs the binary,
+      // not the docs/extras. Acquire::Retries: a stalled mirror fetch retries
+      // instead of eating the whole budget (runs 30460154199 + 30471364736 both
+      // died mid-download on transient mirror slowness).
+      {
+        command: 'sudo',
+        args: ['apt-get', 'install', '-y', '--no-install-recommends', '-o', 'Acquire::Retries=3', 'ffmpeg'],
+      },
     ]);
     expect(ffmpegInstallPlan('darwin')).toEqual([{ command: 'brew', args: ['install', 'ffmpeg'] }]);
     expect(ffmpegInstallPlan('win32')).toEqual([
@@ -75,11 +83,14 @@ describe('ffmpeg provisioning', () => {
 
 describe('host preparation budgets (scar for CI run 30382383876)', () => {
   it('defaults every provisioning child to a finite budget far under the 30-minute job ceiling', () => {
-    // 600s install: CI run 30460154199 shard 3 measured apt-get actively installing
-    // packages when the prior 300s budget killed it (a slow-mirror day) — valid work
-    // proving the budget insufficient, the only sanctioned reason to raise one.
+    // 900s install: run 30460154199 measured apt-get killed mid-install at 300s;
+    // run 30471364736 measured it killed at 600s STILL actively downloading
+    // ("...[604 kB]" at the kill) — twice-measured valid work proving mirror-speed
+    // variance exceeds both prior budgets (the only sanctioned reason to raise
+    // one). Paired with the recommends-trim + Acquire::Retries hardening above so
+    // the budget covers variance, not waste. Still 2x under the job ceiling.
     expect(hostPreparationBudgets({})).toEqual({
-      installStepTimeoutMs: 600_000,
+      installStepTimeoutMs: 900_000,
       fetchTimeoutMs: 120_000,
     });
   });

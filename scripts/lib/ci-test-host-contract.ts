@@ -98,9 +98,12 @@ function budgetFrom(env: Readonly<Record<string, string | undefined>>, name: str
 /** Resolve preparation budgets, honoring explicit env overrides and refusing malformed ones. */
 export function hostPreparationBudgets(env: Readonly<Record<string, string | undefined>>): HostPreparationBudgets {
   return Object.freeze({
-    // 600s: run 30460154199 measured apt-get killed mid-install at 300s on a slow
-    // mirror — valid work proving the budget insufficient (still 20x under the job cap).
-    installStepTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS', 600_000),
+    // 900s: run 30460154199 measured apt-get killed mid-install at 300s; run
+    // 30471364736 measured it killed at 600s still actively downloading — twice-
+    // measured valid work proving mirror-speed variance exceeds both prior budgets.
+    // Paired with the recommends-trim + Acquire::Retries hardening in the install
+    // plan below, so the budget absorbs variance rather than waste.
+    installStepTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_INSTALL_STEP_TIMEOUT_MS', 900_000),
     fetchTimeoutMs: budgetFrom(env, 'LITESHIP_CI_HOST_FETCH_TIMEOUT_MS', 120_000),
   });
 }
@@ -111,7 +114,21 @@ export function ffmpegInstallPlan(platform: NodeJS.Platform): readonly HostComma
     case 'linux':
       return Object.freeze([
         Object.freeze({ command: 'sudo', args: Object.freeze(['apt-get', 'update']) }),
-        Object.freeze({ command: 'sudo', args: Object.freeze(['apt-get', 'install', '-y', 'ffmpeg']) }),
+        // --no-install-recommends: the render capability needs the ffmpeg binary, not
+        // its recommends tail (the bulk of the slow-mirror download). Acquire::Retries:
+        // a stalled fetch retries instead of consuming the whole install budget.
+        Object.freeze({
+          command: 'sudo',
+          args: Object.freeze([
+            'apt-get',
+            'install',
+            '-y',
+            '--no-install-recommends',
+            '-o',
+            'Acquire::Retries=3',
+            'ffmpeg',
+          ]),
+        }),
       ]);
     case 'darwin':
       return Object.freeze([Object.freeze({ command: 'brew', args: Object.freeze(['install', 'ffmpeg']) })]);
