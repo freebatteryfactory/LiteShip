@@ -110,9 +110,9 @@ describe('create-liteship scaffold', () => {
     const base = readFileSync(join(result.projectDir, 'src/layouts/Base.astro'), 'utf8');
     expect(base).not.toContain('container-name');
     expect(base).not.toContain('container-type');
-    // The astro.config wires the integration from the liteship/astro subpath.
+    // The astro.config wires the taught liteship() entry from the liteship/astro subpath.
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
-    expect(config).toContain("import { integration } from 'liteship/astro'");
+    expect(config).toContain("import { liteship } from 'liteship/astro'");
     // The README teaches the author model (define -> apply -> inspect) and the verify hint.
     const readme = readFileSync(join(result.projectDir, 'README.md'), 'utf8');
     expect(readme).toContain('define → apply → inspect');
