@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { coverageExclude } from '../../../vitest.shared.js';
 
@@ -53,6 +53,20 @@ describe('coverage config drift guard', () => {
     // exclusion. The exported declarations are now owned by authoring, reactive,
     // and schema, but remain erased by TypeScript and therefore uninstrumentable.
     expect(coverageExclude).toHaveLength(25);
+  });
+
+  it('every coverageExclude entry names a file that exists (anti-rot)', () => {
+    // The defect class (PR #186 review): a rename orphaned the spawn shim's
+    // exclusion — the length pin above stayed green while the exclusion
+    // silently stopped applying and the renamed file re-entered measurement.
+    // An exclusion pointing at nothing is always a bug: either the file moved
+    // (fix the entry) or it was deleted (drop the entry). Glob entries are
+    // structural (dist trees etc.) and exempt — only concrete paths can rot.
+    const concrete = coverageExclude.filter((entry) => !entry.includes('*'));
+    expect(concrete.length).toBeGreaterThan(10); // anti-vacuity: most entries are concrete
+    for (const entry of concrete) {
+      expect(existsSync(resolve(REPO_ROOT, entry)), `${entry} does not exist — stale coverage exclusion`).toBe(true);
+    }
   });
 
   it('merge-coverage.ts PACKAGE_THRESHOLD_OVERRIDES are pinned', () => {

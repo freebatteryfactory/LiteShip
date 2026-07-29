@@ -14,7 +14,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
   classifyEffectResidueLine,
@@ -49,6 +50,7 @@ describe('effect residue — full-scope scan', () => {
     for (const requiredPrefix of [
       'packages/_spine/', // underscore packages, excluded from Invariant 14
       'packages/create-liteship/templates/', // scaffolder templates
+      'packages/cli/fragments/', // CLI-shipped fragments, copied verbatim into user projects
       'examples/', // example apps
       'scripts/', // repo scripts
       'tests/', // the test tree itself
@@ -60,6 +62,10 @@ describe('effect residue — full-scope scan', () => {
     }
     expect(scan.swept).toContain('package.json');
     expect(scan.swept).toContain('packages/create-liteship/templates/default/package.json');
+    // The recursive manifest walk must reach EVERY workspace member and shipped
+    // fragment manifest — the shallow list this replaced missed both of these.
+    expect(scan.swept).toContain('tests/integration/vite/package.json');
+    expect(scan.swept).toContain('packages/cli/fragments/example/default/package.json');
   });
 
   it('the allowlist names only files that still exist (anti-rot)', () => {
@@ -71,15 +77,56 @@ describe('effect residue — full-scope scan', () => {
   it('negative controls — every residue kind fires on its planted line', () => {
     expect(classifyEffectResidueLine("import { Effect } from 'effect';")).toContain('static-import');
     expect(classifyEffectResidueLine('import { pipe } from "effect/Function";')).toContain('static-import');
+    // Side-effect imports execute without any `from` (PR #186 review, confirmed
+    // false green): the bare spelling must classify too.
+    expect(classifyEffectResidueLine("import 'effect';")).toContain('static-import');
+    expect(classifyEffectResidueLine('import "effect/Runtime";')).toContain('static-import');
     expect(classifyEffectResidueLine("const effect = await import('effect');")).toContain('dynamic-import');
     expect(classifyEffectResidueLine("const effect = require('effect');")).toContain('require');
     expect(classifyEffectResidueLine('return Effect.runSync(program);')).toContain('call-site');
     expect(classifyEffectResidueLine('Effect.gen(function* () {')).toContain('call-site');
+    // ANY namespace method is residue — the shed removed the library, so an
+    // unlisted method name must not be a false green (PR #186 review, confirmed).
+    expect(classifyEffectResidueLine('return Effect.catchAll(handler);')).toContain('call-site');
+    expect(classifyEffectResidueLine('Effect.anythingAtAll(x);')).toContain('call-site');
+    // Unrelated identifiers must NOT classify: the widened pattern is namespace-
+    // anchored, not substring-hungry.
+    expect(classifyEffectResidueLine('sideEffect.run(x);')).toEqual([]);
+    expect(classifyEffectResidueLine("import { x } from 'redux-effects';")).toEqual([]);
   });
 
   it('negative controls — comment lines are history, not residue', () => {
     expect(classifyEffectResidueLine("// import { Effect } from 'effect';")).toEqual([]);
     expect(classifyEffectResidueLine(' * was Effect.runSync(compute()) before the shed')).toEqual([]);
+  });
+
+  it('the scanner reds planted residue in a fragment tree, across line boundaries, and in a nested manifest (executed mutants)', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'liteship-effect-residue-'));
+    try {
+      const fragments = join(fixture, 'packages', 'cli', 'fragments', 'example', 'app');
+      mkdirSync(fragments, { recursive: true });
+      // Multiline dynamic import: no single physical line matches, so only the
+      // collapsed second pass can see it.
+      writeFileSync(join(fragments, 'main.ts'), "const mod = await import(\n  // lazy\n  'effect',\n);\n");
+      writeFileSync(join(fragments, 'package.json'), JSON.stringify({ dependencies: { effect: '^3.0.0' } }));
+      const planted = scanEffectResidue(fixture, new Set());
+      expect(planted.findings).toEqual([
+        {
+          file: 'packages/cli/fragments/example/app/main.ts',
+          line: 0,
+          kind: 'dynamic-import',
+          detail: 'construct spans line boundaries (collapsed-source match)',
+        },
+        {
+          file: 'packages/cli/fragments/example/app/package.json',
+          line: 0,
+          kind: 'manifest-dependency',
+          detail: 'dependencies.effect',
+        },
+      ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
   });
 
   it('negative controls — every manifest field flags an effect dependency', () => {
