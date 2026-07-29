@@ -956,7 +956,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
-      - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
+      - run: pnpm exec tsx packages/cli/src/bin.ts check invariants
       - name: Run Node tests with durable results
         run: >-
           pnpm exec vitest run --config vitest.config.ts
@@ -998,7 +998,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
-      - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
+      - run: pnpm exec tsx packages/cli/src/bin.ts check invariants
       - name: Run Node tests with durable results
         run: >-
           pnpm exec vitest run --config vitest.config.ts

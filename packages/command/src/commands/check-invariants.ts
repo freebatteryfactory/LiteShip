@@ -81,7 +81,7 @@ export type CheckInvariantsPayload = {
 /** `check-invariants` — scan source for banned patterns + line-ending policy; emit a structured verdict. */
 export const checkInvariantsCommand: HandledCommand = {
   descriptor: {
-    name: 'check-invariants',
+    name: 'check.invariants',
     summary:
       'Fast-lane invariant gate: fail on any banned source pattern (require/module.exports/var/ESM violation) or line-ending policy breach.',
     requires: ['runCheckInvariants'] satisfies readonly CommandCapability[],
@@ -93,7 +93,7 @@ export const checkInvariantsCommand: HandledCommand = {
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.
-    if (!context.runCheckInvariants) return capabilityUnavailable('check-invariants', ['runCheckInvariants']);
+    if (!context.runCheckInvariants) return capabilityUnavailable('check.invariants', ['runCheckInvariants']);
 
     const summary = await context.runCheckInvariants();
 
@@ -102,6 +102,6 @@ export const checkInvariantsCommand: HandledCommand = {
       groups: summary.groups,
       lineEndings: summary.lineEndings,
     } satisfies CheckInvariantsPayload;
-    return summary.ok ? ok('check-invariants', payload) : failed('check-invariants', payload, 1);
+    return summary.ok ? ok('check.invariants', payload) : failed('check.invariants', payload, 1);
   },
 };

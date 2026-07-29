@@ -100,7 +100,7 @@ const RELEASE_GAUNTLET_PROJECTION: readonly PhaseProjection[] = [
   { checkId: 'check/docs', label: 'docs:check' },
   { checkId: 'check/assurance-density', label: 'assurance:gate' },
   { checkId: 'check/test-constitution', label: 'test:constitution' },
-  { phase: { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' } },
+  { phase: { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check invariants' } },
   { checkId: 'check/gates', label: 'check:gates' },
   { checkId: 'check/audit-floor', label: 'audit:floor' },
 

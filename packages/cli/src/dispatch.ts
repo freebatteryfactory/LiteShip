@@ -370,6 +370,9 @@ function execCapsule(rest: readonly string[]): number | Promise<number> {
     }
     return sub === 'inspect' ? capsuleInspect(name) : capsuleVerify(name);
   }
+  // `capsule gate` — the whole-corpus release gate (identity capsule.gate; the old
+  // flat `capsule-verify` sat one keystroke from `capsule.verify`, issue #174).
+  if (sub === 'gate') return capsuleVerifyGate();
   if (sub === 'list') {
     const kind = takeFlagValue(subRest, catalogFlag('capsule.list', 'kind'));
     if (kind.present && kind.value === undefined) {
@@ -391,6 +394,9 @@ function execAudit(rest: readonly string[]): Promise<number> {
     emitError('audit', 'cli/usage', 'usage: liteship audit --profile <path>');
     return Promise.resolve(1);
   }
+  // `audit floor` — the warning-floor gate (identity audit.floor; the old flat
+  // `audit-floor` hyphen-shadowed the `audit` verb, issue #174).
+  if (positional(rest) === 'floor') return auditFloor();
   const profile = profileFlag.value;
   const consumer = rest.includes(catalogFlag('audit', 'consumer'));
   const consumerApp = rest.includes(catalogFlag('audit', '--consumer-app'));
@@ -411,8 +417,11 @@ function execCheck(rest: readonly string[], deps: ResolvedDeps): Promise<number>
     return Promise.resolve(1);
   }
   const subcommand = positional(rest);
+  // `check invariants` — the fast-lane invariant gate (identity check.invariants;
+  // the old flat `check-invariants` hyphen-shadowed the check family, issue #174).
+  if (subcommand === 'invariants') return checkInvariants();
   if (subcommand !== undefined && subcommand !== 'gates') {
-    emitError('check', 'cli/invalid-argument', `expected subcommand: gates (got: ${subcommand})`);
+    emitError('check', 'cli/invalid-argument', `expected subcommand: gates | invariants (got: ${subcommand})`);
     return Promise.resolve(1);
   }
   const gates = subcommand === 'gates';
@@ -598,9 +607,7 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
   },
   version: () => version(),
   audit: (rest) => execAudit(rest),
-  'audit-floor': () => auditFloor(),
   plumb: () => plumb(),
-  'check-invariants': () => checkInvariants(),
   'package-smoke': (rest) => {
     const artifactDir = takeFlagValue(rest, catalogFlag('package-smoke', '--artifact-dir'));
     if (artifactDir.present && artifactDir.value === undefined) {
@@ -614,7 +621,6 @@ const HANDLER_EXECUTORS: Record<string, Executor> = {
       ...(process.env.LITESHIP_AFFECTED_PLAN_ID ? { expectedPlanId: process.env.LITESHIP_AFFECTED_PLAN_ID } : {}),
     });
   },
-  'capsule-verify': () => capsuleVerifyGate(),
   verify: (rest) => verify(rest),
 };
 

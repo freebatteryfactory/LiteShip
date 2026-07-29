@@ -43,17 +43,17 @@ Defined in: [command/src/catalog.ts:70](https://github.com/freebatteryfactory/Li
 
 ***
 
-### audit-floor
+### audit.floor
 
-> `readonly` **audit-floor**: [`AuditFloorPayload`](../type-aliases/AuditFloorPayload.md)
+> `readonly` **audit.floor**: [`AuditFloorPayload`](../type-aliases/AuditFloorPayload.md)
 
 Defined in: [command/src/catalog.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L71)
 
 ***
 
-### capsule-verify
+### capsule.gate
 
-> `readonly` **capsule-verify**: [`CapsuleVerifyPayload`](../type-aliases/CapsuleVerifyPayload.md)
+> `readonly` **capsule.gate**: [`CapsuleVerifyPayload`](../type-aliases/CapsuleVerifyPayload.md)
 
 Defined in: [command/src/catalog.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L75)
 
@@ -83,19 +83,19 @@ Defined in: [command/src/catalog.ts:63](https://github.com/freebatteryfactory/Li
 
 ***
 
-### check-invariants
-
-> `readonly` **check-invariants**: [`CheckInvariantsPayload`](../type-aliases/CheckInvariantsPayload.md)
-
-Defined in: [command/src/catalog.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L74)
-
-***
-
 ### check.gates
 
 > `readonly` **check.gates**: [`CheckPayload`](../type-aliases/CheckPayload.md)
 
 Defined in: [command/src/catalog.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L76)
+
+***
+
+### check.invariants
+
+> `readonly` **check.invariants**: [`CheckInvariantsPayload`](../type-aliases/CheckInvariantsPayload.md)
+
+Defined in: [command/src/catalog.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/catalog.ts#L74)
 
 ***
 
